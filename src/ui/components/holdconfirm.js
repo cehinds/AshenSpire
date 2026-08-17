@@ -572,6 +572,64 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
 let activeConfirm = null;
 
 /**
+ * reveal(panel, actions) — bring a freshly-opened confirm panel ON SCREEN.
+ *
+ * ⚠ WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
+ * inserted `afterend` of the control it asks about, so where it LANDS is decided
+ * by however tall the screen above it happens to be. At `db09846`, tapping a
+ * Smith candidate put both answers at
+ *
+ *     390x844   .beat-yes / .beat-no  top 1000.22 .. 1044.22   0% on screen
+ *     360x640   .beat-yes / .beat-no  top  938.66 ..  982.66   0% on screen
+ *
+ * — 156 px and 299 px below the fold respectively (`node tools/uprightgate.mjs`,
+ * both shapes, and `tools/holdconfirm.mjs` red on two cells because a CDP touch
+ * at y=1022 lands on nothing).
+ *
+ * IT IS A LEGIBILITY DEFECT AND NOT A STRANDING, and getting that distinction
+ * right cost two seats a measurement each. I read `document.scrollHeight === 844`
+ * and concluded the panel could not be answered at all. **The DOCUMENT does not
+ * scroll; `.screen` does** — `overflow-y: auto`, real travel — so the player CAN
+ * reach it, by scrolling 156 px that nothing on the screen advertises (Vira
+ * re-measured on `b30e624` and corrected my conclusion while confirming my
+ * position; the reach word her probe prints is `scrollable`, not `unreachable`).
+ * A question the player has to go looking for is not a question, so this scrolls
+ * it into view for them.
+ *
+ * NEAREST, NOT CENTRE, AND NOT SMOOTH. `block: 'nearest'` is the least scroll
+ * that makes the thing visible, which keeps the ARMED CARD — `.beat-armed`, one
+ * row above — on screen with it: the player must be able to see which card the
+ * question is about, and a centred or `start` scroll pushes it off. Instant
+ * rather than smooth because a 300 ms animation is a window in which the buttons
+ * are still off screen and a fast second tap lands on nothing, and because a
+ * reduced-motion player is owed no animation at all.
+ *
+ * THE PANEL FIRST, THE ANSWERS SECOND, AND THE SECOND CALL IS NOT BELT-AND-BRACES.
+ * A panel TALLER than the viewport cannot be brought wholly into view, and
+ * `nearest` on the panel would align its TOP — leaving the buttons, which are at
+ * its bottom, exactly where they were. So the actions row is asked for after the
+ * panel, and it is the one that must win. At Text XL on a 360x640 phone the
+ * question, the preview and a wrapped button row are what make that reachable
+ * rather than hypothetical.
+ *
+ * NOTHING IS POSITIONED. This is a scroll, not a placement: the panel keeps the
+ * rect the stylesheet gave it, and Law 2's container/coordinate rules have no
+ * new subject. That also means the fix is INVISIBLE to any probe that refuses to
+ * scroll on principle — see the note in tools/uprightgate.mjs, whose whole
+ * reason for clicking through the Smith by hand is that it will not
+ * scrollIntoView a target itself. Its clause R gates `unreachable` only, so it
+ * was GREEN on this defect and is GREEN on this fix; the cells that can tell the
+ * two apart are in tools/holdconfirm.mjs.
+ */
+function reveal(panel, actions) {
+  if (!panel || typeof panel.scrollIntoView !== 'function') return;
+  panel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (actions && typeof actions.scrollIntoView === 'function') {
+    actions.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+
+/**
  * armConfirm(el, { question, detailHtml, confirmLabel, onConfirm, id })
  *   -> disarm()
  *
@@ -632,6 +690,7 @@ export function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONF
     row.appendChild(no);
     panel.appendChild(row);
     el.insertAdjacentElement('afterend', panel);
+    reveal(panel, row);
     activeConfirm = close;
     beatCue('confirmArm', id, 'confirm');
 

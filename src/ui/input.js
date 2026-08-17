@@ -67,7 +67,21 @@ const FOCUS_SELECTOR = [
 // (rebindable) keys / the Menu overlay instead of by wandering into them
 // (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
 // a modal/overlay is open, where its own contents ARE the scope.
-const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
+//
+// `.hint-bar` JOINED THIS LIST the day its chips became real buttons (2026-08-17).
+// It is the purest case in the list rather than an exception to it: every chip in
+// that bar exists to SAY which dedicated key reaches a thing, so a focus cursor
+// wandering onto "D Deck" in order to press it, when `d` presses it, is five new
+// stops in the ring for no new reach. The keyboard and the pad already had these
+// five actions; what they never had was a THUMB, and that is what the buttons are
+// for.
+//
+// ⚠ AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
+// in CHROME has no focus-cursor story at all, so Enter and pad-Confirm can never
+// arrive on a chip. Here that costs nothing, and it is stated rather than assumed
+// — a chip's whole subject is a binding those two inputs already carry. The day a
+// chip is the ONLY door to something, it has to leave this list.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb, .hint-bar';
 
 // Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
 // button (defBtn), and both are rebindable (Controls tab). Delivery:
@@ -267,6 +281,50 @@ export function keyLabel(id) {
   if (k === 'Escape') return 'Esc';
   if (k === ' ') return 'Space';
   return k.length === 1 ? k.toUpperCase() : k;
+}
+
+/**
+ * actionLabel(id) — THE SYMBOL TO PUT IN FRONT OF A PLAYER, RIGHT NOW.
+ *
+ * ONE HOME FOR "which device is answering", and it had two before: the hint bar
+ * carried `pad ? padLabel(id) || keyLabel(id) : keyLabel(id)` inline and every
+ * other surface in the tree typed the letter. His words are
+ * *"auto map to the current controls configured AND the active device controller
+ * type"* — two derivations, and this function is the second one. The first is
+ * `keyLabel`/`padLabel` reading the live binding maps.
+ *
+ * ⚠ THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
+ * ACTIVE. `hasGamepad()` is true from the moment a pad is plugged in, so a player
+ * with a pad resting on the desk and both hands on the keyboard reads pad glyphs.
+ * The tree HAS the material for last-used — `doAction` already takes a `source`
+ * and the poller sets `engaged` — and I have not spent it, because switching on
+ * last-used also flips `body.pad-mode`, which hides the cards' quick-play badges,
+ * and a badge that appears and disappears as a player alternates hands is a
+ * legibility call belonging to the seat that owns those badges. `unknown`, named
+ * here rather than in a report nobody reads at the line.
+ */
+export function actionLabel(id) {
+  return (hasGamepad() && padLabel(id)) || keyLabel(id);
+}
+
+/**
+ * actionHint(id) — "Menu (M)", derived, for a `title=` or any prose prompt.
+ *
+ * ⚠ WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
+ * `screens/combat.js` and `screens/map.js` both shipped `title="Menu (M)"`, and
+ * `components/tutorial.js` shipped *"Done? End Turn (or press E)."* All three are
+ * LAW 1 CLAUSE 7 BREACHES OF THE SHARPEST KIND — a second copy of a binding, in
+ * prose, where the first rebind orphans it and nothing says so. A tooltip that
+ * tells a player to press M when M no longer opens the menu is not stale
+ * decoration; it is the game lying about its own controls, and the player has no
+ * way to tell which of the two is wrong.
+ *
+ * Anything that renders one of these into an attribute should also carry
+ * `data-action-hint="<id>"`, so `refreshHintBars()` can re-derive it in place when
+ * a pad arrives or a binding changes without waiting for the screen to re-render.
+ */
+export function actionHint(id) {
+  return `${actionShort(id)} (${actionLabel(id)})`;
 }
 
 // ---- focus cursor -----------------------------------------------------------
@@ -608,6 +666,47 @@ function doAction(id, source = 'key') {
   // rebinds (screens match by binding via matchAction). Fixed-key actions
   // (cancel) fall back to a.key.
   synthKey(keyBindings[id] || a.defKey || a.key);
+}
+
+/**
+ * beginActionPress(id) / endActionPress(cancelled) — A TAP IS AN INPUT.
+ *
+ * Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+ * and auto map to the current controls configured and the active device
+ * controller type."* The hint bar had been an ADVERTISEMENT — `pointer-events:
+ * none`, `aria-hidden`, five spans naming five keys — so on a touchscreen it
+ * described controls the device does not have and answered to nothing.
+ *
+ * THIS IS `doAction`, NOT A FOURTH DELIVERY PATH, and that is the whole design.
+ * A chip is a THUMB arriving at a binding the keyboard and the pad already reach,
+ * so it enters by the door the pad poller enters by and inherits every rule that
+ * lives behind it, free and un-restated:
+ *   - the CURRENT binding is dispatched, so a rebind moves the chip with the key;
+ *   - `pressTarget` gives the chip a HOLD wherever the action owes one — press
+ *     and hold the End Turn chip and `.end-turn` itself fills under the words,
+ *     short-press and it aborts, exactly as `e` does (S7, six hours old);
+ *   - `scopeRoot()` means a chip is refused while a veil stands, for the same
+ *     reason the key is;
+ *   - the dial at `off` collapses both to one press.
+ * A second implementation here would be a second chance to disagree with all of
+ * that, which is the defect this house is named for.
+ *
+ * ⚠ IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+ * `engaged` means "this player drives with a keyboard or a pad", and screens use
+ * it to decide whether to plant a focus ring nobody asked for. A thumb on a chip
+ * is the opposite of that evidence. A mouse-only player pressing a chip must not
+ * inherit a focus cursor.
+ *
+ * `cancelled` exists for a pointer the browser takes away mid-press (a scroll, a
+ * drag out of the chip): the same verdict a cancelled hold gets everywhere else
+ * — nothing commits.
+ */
+export function beginActionPress(id) {
+  if (!enabled) return;
+  doAction(id, 'pointer');
+}
+export function endActionPress(cancelled = false) {
+  pressEnd(cancelled);
 }
 
 // ---- keyboard navigation ----------------------------------------------------

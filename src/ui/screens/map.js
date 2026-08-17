@@ -28,7 +28,7 @@ import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { veilIsOpen } from '../components/veil.js';
-import { matchAction, isEngaged, focusFirst } from '../input.js';
+import { matchAction, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
@@ -112,7 +112,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}

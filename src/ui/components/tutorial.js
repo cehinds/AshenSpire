@@ -15,12 +15,27 @@
 
 import { anchorLocalBox } from '../fx.js';
 import { veilIsOpen } from './veil.js';
+import { actionLabel } from '../input.js';
 
+// `text` IS A FUNCTION WHEREVER IT NAMES A CONTROL, and that is the whole of the
+// change here. The End Turn step shipped as *"Done? End Turn (or press E)."* — a
+// hardcoded `E` in the FIRST THING a new player ever reads, which the first rebind
+// orphans in the one place a player has no way to know it is lying (Law 1 clause
+// 7). It derives from the live binding now, resolved at the moment the callout is
+// SHOWN rather than at module load, so a rebind between boot and first fight still
+// carries. `actionLabel` also answers the active device, so a pad player is told
+// the glyph on the button under their thumb rather than a letter they cannot press.
+//
+// `press 1–9` in the Play-cards step is DELIBERATELY LEFT AS PROSE: the positional
+// quick-play keys are not rows in ACTIONS, are not rebindable, and have no binding
+// to derive from. Said here rather than leaving the next reader to work out which
+// of the two rules applied to which line.
 const STEPS = [
   { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
-  { sel: '.end-turn', title: 'End your turn', text: 'Done? End Turn (or press E). Unspent energy and most Block are lost at your next turn.' },
+  { sel: '.end-turn', title: 'End your turn',
+    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
 ];
 
 export function mountTutorial(root, { onDone }) {
@@ -83,7 +98,7 @@ export function mountTutorial(root, { onDone }) {
   function show() {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = step.title;
-    veil.querySelector('.tut-text').textContent = step.text;
+    veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }

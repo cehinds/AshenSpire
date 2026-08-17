@@ -288,16 +288,43 @@
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
 
-/* ---------- contextual control-hint bar ---------- */
+/* ---------- contextual control strip ---------- */
+/* `pointer-events: none` WAS ON `.hint-bar` AND IS GONE — Constantine,
+   2026-08-17: "all the buttons on those tool tips should also work". That one
+   declaration was the whole of the defect: five chips naming five keys,
+   unpressable, on a device with no keys. They are `<button>`s now
+   (components/hints.js). The bar itself keeps NO pointer-events rule, so its
+   padding stays inert and only the chips take a press — a 96vw invisible
+   click-eater across the board would be a worse bug than the one being fixed. */
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
-  display: flex; gap: 1.4rem; pointer-events: none; white-space: nowrap;
+  display: flex; gap: 1.4rem; white-space: nowrap;
   padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96vw; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
 .hint-bar.hint-combat { top: 5.8rem; bottom: auto; } /* under the 5.2rem topbar; combat's bottom is full */
-.hint-bar .hint { display: inline-flex; align-items: center; gap: 0.5rem; }
+/* LAW 4 CLAUSE 4, ON A CONTROL THAT WAS TEXT UNTIL TODAY. A fixed floor with
+   intrinsic growth, never a multiple of the text unit: `--tap-floor` is the
+   ergonomic constant (and answers UI size, not Text size), the glyphs inside push
+   the box taller at XL, and the padding is px because it is geometry. The chip
+   was a `<span>` yesterday and owed no floor; the day it became pressable it
+   acquired one.
+   `min-width` IS DELIBERATELY NOT FLOORED, and that is a partial rather than an
+   oversight: five 44 px squares is 220 px of a 390 px phone, and on a strip of
+   words the axis that decides whether a thumb lands is the HEIGHT. */
+.hint-bar .hint {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: var(--tap-floor); height: auto;
+  padding: 2px 6px; margin: 0; border: 0; border-radius: 6px;
+  background: none; color: inherit; font: inherit; letter-spacing: inherit;
+  cursor: pointer; touch-action: manipulation;
+}
+.hint-bar .hint:hover, .hint-bar .hint:focus-visible { background: rgba(var(--accent-rgb), 0.14); }
+/* The press acknowledged WHERE THE THUMB IS. The fill of a second beat belongs to
+   the control being pressed (`.end-turn` fills under its own words); this is only
+   the chip saying it took the press. */
+.hint-bar .hint:active { background: rgba(var(--accent-rgb), 0.24); }
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
   padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);
@@ -2757,6 +2784,21 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   font-size: calc(1.4rem / var(--ui-zoom, 1));
   line-height: 1.5;
   color: var(--muted);
+}
+/* THE WAY OUT, NAMED (Constantine's amendment, 2026-08-17). Third and smallest of
+   the three lines, on purpose: the instruction is the heading, the reassurance
+   answers "have I lost my run", and this answers a question only some players
+   have. Dimmer and a size down so it cannot outrank either.
+   It is a POINTER AND NOT A CONTROL — the gate still has no interactive element
+   in it, which is what keeps the ruling in this file's header intact. Same
+   `/ var(--ui-zoom)` carve-out as its siblings and for the same reason written
+   there: this is the message ABOUT the app having zoomed itself to its floor. */
+.upright-hint {
+  font-size: calc(1.25rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  margin-top: 14px;
+  color: var(--muted);
+  opacity: 0.78;
 }
 /* The glyph is a phone standing up. Box geometry in px — chrome, not type
    (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it

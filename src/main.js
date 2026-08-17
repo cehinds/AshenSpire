@@ -447,7 +447,17 @@ function applyUiScale(settings) {
   // recovery line, and the gate stands or falls on the geometry either way.
   const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     && window.matchMedia('(pointer: coarse)').matches;
-  updateUprightGate({ short, offerRotate: !turned.short && coarse });
+  // AND HIS AMENDMENT (2026-08-17): *"revert that back, or make that a
+  // configurable setting."* One row — `Display / Short-screen warning`. It is
+  // passed as its OWN argument rather than folded into `short`, deliberately:
+  // `short` is a fact about the viewport that this decider computes, and the
+  // setting is a fact about what the player asked us to do about it. Collapsing
+  // them would hide a preference inside the geometry, and the next reader of
+  // `layoutForCap` would find a `short` that is sometimes false on a short
+  // screen. `!== false` so a profile written before this row existed keeps the
+  // gate — and so does a `?shot=` boot, which by construction has no durable
+  // settings and resolves every one of them to its default.
+  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in

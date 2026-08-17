@@ -1,6 +1,43 @@
 // src/ui/components/upright.js — THE ORIENTATION GATE.
 //
 // ============================================================================
+// ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
+// ============================================================================
+//
+// Constantine, unprompted, in his own words:
+//
+//   "rotating to horizontal should work again. I hate that it tells me to
+//    rerotate to verticle. revert that back, or make that a configurable
+//    setting."
+//
+// HE OFFERED TWO ANSWERS AND MARINA RULED THE SECOND — a revert deletes whatever
+// the gate was protecting; a setting keeps the protection reachable. So the gate
+// now takes an `enabled` argument fed by ONE row, `Display / Short-screen
+// warning`, and `SAY.hint` names that row on the gate's own face.
+//
+// ⚠ AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
+// lines down: *"A gate that tells a desktop player to rotate their monitor is a
+// gate nobody trusts the second time."* WE WROTE DOWN THAT THIS NAG CAN BE WRONG,
+// SHIPPED IT WITH NO WAY TO TURN IT OFF, AND LEFT THE OWNER TO ASK. The sentence
+// was about the *wording* being false on a desktop; the amendment is about there
+// being no door at all. Two different defects, one root — a refusal we knew could
+// misfire and gave nobody a switch for.
+//
+// WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
+// on it: **the wall is still there.** At 844x390 on this tree, measured, not
+// argued (`node tools/uprightgate.mjs`):
+//
+//     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+//     .energy-orb 0% on screen, unreachable · .hand-area 32.05% on screen
+//
+// So the row ships DEFAULTING ON. Off, the board draws and the turn cannot be
+// ended — that is a choice a player may make with the note in front of them, and
+// it is not "rotating to horizontal should work again". **LANDSCAPE SUPPORT IS
+// STILL OWED** and it is still the thing the four reasons below are about. The
+// default is one token (`def: true` in screens/settings.js) and it is the one part
+// of this held for his word.
+//
+// ============================================================================
 // THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
 // ============================================================================
 //
@@ -152,27 +189,54 @@ let gate = null;
 // the pointer query is ever wrong about someone, they still read a true
 // sentence here — which is exactly why it must not name the fix.
 const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
+// ONE LINE NAMING THE WAY OUT, ADDED FOR HIS AMENDMENT, AND IT IS A POINTER AND
+// NOT A CONTROL. He wrote *"I hate that it tells me to rerotate to verticle"* —
+// and the reason he had to ASK is that this screen never said a setting existed.
+// A refusal a player cannot turn off, that does not admit it can be turned off,
+// is the shape of the complaint. It stays a sentence rather than a button, which
+// keeps the header's no-bypass argument intact: what it costs is one tap in a
+// menu, and what that buys is a player who read the row's note before choosing.
+// SHARED BY BOTH VARIANTS for the same reason SAFE is — two doors with two
+// strings is how they drift.
+const HINT = 'Rather draw it anyway? Settings › Display › Short-screen warning.';
 const SAY = {
   rotate: {
     title: 'Turn your phone upright',
     body: 'Sideways there isn’t enough height for the board, and END TURN ends up somewhere your thumb can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
   resize: {
     title: 'This window is too short',
     body: 'There isn’t enough height for the board, and END TURN ends up somewhere you can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
 };
 
 /**
- * updateUprightGate({ short, offerRotate })
+ * updateUprightGate({ short, offerRotate, enabled })
  *
- *   short        the viewport is shorter than `uiScale.gateBelowH` — THE ONLY
- *                thing that decides whether the game refuses this shape
+ *   short        the viewport is shorter than `uiScale.gateBelowH` — the only
+ *                GEOMETRIC thing that decides whether this shape is refused
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.
+ *   enabled      the player's own answer — `Display / Short-screen warning`.
+ *                `false` and nothing stands, whatever the geometry says. It is a
+ *                SECOND, INDEPENDENT gate rather than a term inside `short`,
+ *                because "is this screen too short" and "does this player want to
+ *                be told" are two questions and one of them is his.
+ *
+ * ⚠ `enabled === false` IS THE ONE DOOR THROUGH THIS REFUSAL AND IT IS NOT THE
+ * "CONTINUE ANYWAY" BUTTON THE HEADER RULES OUT. The header's argument stands
+ * unchanged — a door into a wall placed AT the wall is worse than the wall,
+ * because it is pressed in the moment of annoyance by someone who has not been
+ * told what is on the other side. This one is a persisted setting, in the Display
+ * list, reached from a screen that is working, with the cost written on the row;
+ * and the gate does not offer it, it merely NAMES it (see SAY.hint below), which
+ * is the difference between an escape hatch and an informed choice. **His word
+ * amended the ruling and it is recorded here rather than reinterpreted.**
  *
  * Idempotent, and deliberately so: it is called from every applyUiScale, which
  * fires on boot, on every settings change and on a 150ms resize debounce. When
@@ -180,9 +244,12 @@ const SAY = {
  * — the part that matters — NOTHING BENEATH IT RE-RENDERS. Turning the phone
  * back removes one element; the run underneath never knew.
  */
-export function updateUprightGate({ short, offerRotate } = {}) {
+export function updateUprightGate({ short, offerRotate, enabled = true } = {}) {
   if (typeof document === 'undefined') return null;
-  if (!short) {
+  // `enabled === false` takes the gate down by the SAME path a fitting screen
+  // does, so turning the setting off mid-fight removes one element and the run
+  // underneath never knows — the idempotence promise above, applied to his row.
+  if (!short || enabled === false) {
     if (gate) { gate.remove(); gate = null; }
     return null;
   }
@@ -206,6 +273,7 @@ export function updateUprightGate({ short, offerRotate } = {}) {
       <h2 id="upright-title">${say.title}</h2>
       <p class="upright-say">${say.body}</p>
       <p class="upright-safe">${say.safe}</p>
+      <p class="upright-hint">${say.hint}</p>
     </div>`;
   return gate;
 }

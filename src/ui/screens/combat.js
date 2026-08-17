@@ -16,7 +16,7 @@ import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.j
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
-import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } from '../input.js';
+import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -57,7 +57,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         <div class="hud-top">
           <div class="resbars-host"></div>
           <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>

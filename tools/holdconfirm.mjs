@@ -279,6 +279,28 @@ const PLANTS = [
     mustRed: (out) => /FAIL\s+endTurn: ON, a short key press does NOT end the turn/.test(out),
     mustStay: (out) => /ok\s+endTurn: ON, a short pad press does NOT end the turn/.test(out),
   },
+  {
+    // THE ONE PLANT IN THIS CORPUS THAT IS ABOUT WHERE A THING IS, NOT WHAT IT
+    // DOES. Every plant above cuts a contract and the panel keeps working
+    // perfectly somewhere the player cannot see; this one leaves every contract
+    // intact and puts the question 156 px below the fold, which is how it
+    // shipped. It exists because the surface's OWN gate could not go red on
+    // that (uprightgate's clause R gates `unreachable`, and this was
+    // `scrollable`) — so the plant is aimed at the two cells that can.
+    name: 'Q7 the confirm panel left below the fold',
+    file: 'src/ui/components/holdconfirm.js',
+    from: "    el.insertAdjacentElement('afterend', panel);\n    reveal(panel, row);",
+    to: "    el.insertAdjacentElement('afterend', panel);",
+    what: 'the scroll that brings a freshly-armed confirm panel into the viewport',
+    expect: 'both answers open below the fold again — 0% on screen at 390x844 and at 360x640, '
+      + 'reachable only by a scroll nothing advertises',
+    mustRed: (out) => /FAIL\s+the confirm panel's ANSWERS open on screen at 390x844/.test(out)
+      && /FAIL\s+the confirm panel's ANSWERS open on screen at 360x640/.test(out),
+    // THE UNTOUCHED CORNER, AND IT IS THE ONE THAT MAKES THE POINT: the panel is
+    // still built correctly. It arms, it carries the preview, and both answers
+    // still meet the tap floor — all of that was green while the defect shipped.
+    mustStay: (out) => /ok\s+both answers meet the tap floor \(Law 4\)/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -1333,6 +1355,131 @@ async function main() {
         }
       }
     }
+  }
+
+  // ---- THE PANEL MUST BE ON SCREEN — TWO SHAPES, MEASURED ------------------
+  //
+  // ⚠ THE DEFECT THIS SECTION EXISTS FOR SHIPPED, AND EVERY GREEN IN THIS FILE
+  // WAS HONEST WHILE IT DID. At db09846, arming a Smith candidate put both
+  // answers below the fold:
+  //
+  //     390x844   .beat-yes / .beat-no  top 1000.22 .. 1044.22   0% on screen
+  //     360x640   .beat-yes / .beat-no  top  938.66 ..  982.66   0% on screen
+  //
+  // The panel armed, carried its preview, met both tap floors and added no
+  // sideways travel — every assertion above this line PASSED — and the player
+  // could not see the question. Two cells further up went red only by accident:
+  // `pointOf` hands back a centre at y=1022 and a CDP touch there lands on
+  // nothing, so `CANCEL takes it back` failed with `panel=true`, which reads as
+  // a wiring fault and was a POSITION fault. A tool that finds the right defect
+  // for the wrong reason has not measured it.
+  //
+  // WHY IT IS NOT IN tools/uprightgate.mjs, WHICH OWNS THIS SURFACE. Its clause
+  // R gates `unreachable` — nothing on screen and no gesture to it — and this
+  // was `scrollable`: `.screen` is `overflow-y: auto` with real travel, so the
+  // player COULD reach it by scrolling 156 px that nothing advertised. That gate
+  // was GREEN on the defect (24/24 shapes) and is GREEN on the fix, and its
+  // `(cut)` lines report the rect either way. **THE INSTRUMENT THAT OWNS THE
+  // SURFACE COULD NOT SEE THE DEFECT, AND SAYING SO IS THE FINDING** — it is
+  // Vira's file and her clause to widen, not mine to reach into.
+  //
+  // BOTH SHAPES, AND THE SECOND ONE IS NOT DECORATION. 360x640 is 204 px shorter
+  // and puts the panel 299 px down rather than 156; a fix that scrolls the panel
+  // but not its buttons would pass at one and fail at the other.
+  //
+  // WATCHED RED: `--selftest` plant Q7 deletes the `reveal(panel, row)` call
+  // from src/ui/components/holdconfirm.js. Both cells go red, in both shapes,
+  // with the pre-fix numbers.
+  {
+    console.log(`\n  THE CONFIRM PANEL IS ON SCREEN WHERE IT OPENS (the 156 px nobody advertised)`);
+    for (const shape of [{ w: 390, h: 844 }, { w: 360, h: 640 }]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride',
+        { width: shape.w, height: shape.h, deviceScaleFactor: 2, mobile: true }, sessionId);
+      await openShot('rest');
+      // ⚠ THE DRIVE HAS TO ANSWER FOR ITSELF BEFORE THE PANEL DOES, AND THE FIRST
+      // RUN OF THIS SECTION TAUGHT ME WHY. At 360x640 both cells went red with
+      // `.beat-armed present=false` — no panel at all — and read exactly like the
+      // fix having failed at the second shape. It is not: A CDP TOUCH AT A CENTRE
+      // OUTSIDE THE VIEWPORT LANDS ON NOTHING, so if the control I have to tap to
+      // GET here is itself below the fold, my finger misses and the panel never
+      // opens. That is a real defect and it is a DIFFERENT one, on a different
+      // control, and reporting it as this fix's failure would have been the tool
+      // blaming my change for someone else's rect.
+      //
+      // So each step in the drive is measured before it is pressed, and a step
+      // whose target is off screen is an `unknown` WITH ITS NUMBERS — never a red
+      // about the panel and never a silent skip.
+      // THE CENTRE, NOT THE WHOLE BOX, AND THAT DISTINCTION IS THE WHOLE OF THIS
+      // HELPER. `pointOf` taps the centre, so the centre is the only point whose
+      // reachability decides whether the press lands. My first cut of this asked
+      // for full containment and skipped 390x844 — where the Smith candidate runs
+      // 740.73..903.01 past an 844 px fold with its centre at 821.87, comfortably
+      // on screen and comfortably tappable. A gate stricter than the thing it
+      // guards manufactures unknowns, which is the same lie as a green.
+      const reach = async (sel) => ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)});
+        if (!e) return { present: false };
+        const r = e.getBoundingClientRect();
+        const cy = r.top + r.height / 2, cx = r.left + r.width / 2;
+        return { present: true, top: +r.top.toFixed(2), bottom: +r.bottom.toFixed(2),
+                 cy: +cy.toFixed(2), vh: innerHeight, vw: innerWidth,
+                 onscreen: r.height > 0 && r.width > 0 && cy >= 0 && cy <= innerHeight && cx >= 0 && cx <= innerWidth };
+      })()`);
+      const step = async (sel, what) => {
+        const r = await reach(sel);
+        if (!r.present) { skip('panel-onscreen', 'unasked', `${what} (${sel}) is not in the DOM at ${shape.w}x${shape.h}`); return null; }
+        if (!r.onscreen) {
+          skip('panel-onscreen', 'undrivable',
+            `${what} (${sel}) cannot be TAPPED at ${shape.w}x${shape.h} — rect top ${r.top}..${r.bottom}, centre y ${r.cy}, `
+            + `in a ${r.vh} px viewport, so a touch at its centre lands on nothing and the panel cannot be reached to be `
+            + `measured HERE. A SEPARATE DEFECT ON A SEPARATE CONTROL and not this fix's: reported as unknown rather than `
+            + `as a red about the panel. (tools/uprightgate.mjs reaches the same panel at this shape by CLICKING rather `
+            + `than touching, and reads the panel's rect there — so the shape is not unmeasured, it is unmeasured by THIS door.)`);
+          return null;
+        }
+        return pointOf(sel);
+      };
+      const sp = await step('#smith-opt', 'the Smith opener');
+      if (!sp) continue;
+      await press(sp, 30); await wait(250);
+      const cp = await step('#smith-grid .card', 'the first Smith candidate');
+      if (!cp) continue;
+      await press(cp, 30); await wait(300);
+      // ONE READ, THE WHOLE PANEL AND BOTH ANSWERS, off the frame the app left.
+      // NOTHING HERE SCROLLS ANYTHING: if the rect is on screen it is because
+      // the APP put it there. A probe that positions its own target has already
+      // left the door (Bjorn's rule, borrowed from uprightgate.mjs).
+      const seen = await ev(`(() => {
+        const vh = innerHeight, vw = innerWidth;
+        const box = (sel) => { const e = document.querySelector(sel); if (!e) return { present: false };
+          const r = e.getBoundingClientRect();
+          const overlap = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))
+                        * Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0));
+          return { present: true, top: +r.top.toFixed(2), bottom: +r.bottom.toFixed(2),
+                   whole: r.top >= -0.5 && r.bottom <= vh + 0.5 && r.left >= -0.5 && r.right <= vw + 0.5,
+                   pct: r.width * r.height > 0 ? +(100 * overlap / (r.width * r.height)).toFixed(2) : 0 }; };
+        return { vh, panel: box('.beat-confirm'), yes: box('.beat-confirm .beat-yes'), no: box('.beat-confirm .beat-no'),
+                 armed: !!document.querySelector('.beat-armed'),
+                 armedWhole: (() => { const e = document.querySelector('.beat-armed'); if (!e) return false;
+                   const r = e.getBoundingClientRect(); return r.bottom > 0 && r.top < vh; })() };
+      })()`);
+      const at = `${shape.w}x${shape.h}`;
+      // BOTH ANSWERS, NOT THE PANEL. A panel taller than the viewport cannot be
+      // wholly on screen and does not have to be; the ANSWERS must, because a
+      // question with one reachable button is a trap and CANCEL going with
+      // CONFIRM is what makes this a wall rather than a nuisance.
+      ok(`the confirm panel's ANSWERS open on screen at ${at}`,
+        seen.yes.present && seen.no.present && seen.yes.pct >= 99.9 && seen.no.pct >= 99.9,
+        `viewport height ${seen.vh} · CONFIRM top ${seen.yes.top}..${seen.yes.bottom} ${seen.yes.pct}% on screen`
+        + ` · CANCEL top ${seen.no.top}..${seen.no.bottom} ${seen.no.pct}% on screen`);
+      // AND THE CARD THE QUESTION IS ABOUT. `block: 'nearest'` was chosen over
+      // centring for exactly this: a player who cannot see which candidate is
+      // armed is being asked to confirm an unnamed thing.
+      ok(`and the armed card it is asking about is still visible at ${at}`,
+        seen.armed && seen.armedWhole,
+        `.beat-armed present=${seen.armed} at least partly on screen=${seen.armedWhole}`);
+    }
+    await cdp.send('Emulation.setDeviceMetricsOverride',
+      { width: SHAPE.w, height: SHAPE.h, deviceScaleFactor: 2, mobile: true }, sessionId);
   }
 
   // ---- THE MERCHANT: the one nobody asked for ------------------------------

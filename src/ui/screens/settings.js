@@ -181,6 +181,44 @@ const ROWS = [
     note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
+  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
+  //
+  //   "rotating to horizontal should work again. I hate that it tells me to
+  //    rerotate to verticle. revert that back, or make that a configurable
+  //    setting."
+  //
+  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
+  // gate was protecting, a row keeps it reachable. So this is one row in a table
+  // of about forty, and it is deliberately NOT the Settings layout act (E3).
+  //
+  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
+  // MINE — with the measurement that decided it, because his sentence points the
+  // other way and a reader is owed the reason I did not simply follow it.
+  // `node tools/uprightgate.mjs`, 844x390, this tree:
+  //
+  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
+  //
+  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
+  // again."** It replaces a legible refusal with an illegible wall: the board
+  // draws, and the button that ends the turn is off screen inside a container
+  // that scrolls programmatically and never by hand. Defaulting it off would
+  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
+  // a third composition and it is still owed** (upright.js's header sets out why
+  // it is not one change) — this row is the switch he asked for and the honest
+  // half of the answer, not the whole of it.
+  //
+  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
+  // token, no other line in the tree. The default is the only part of this row I
+  // am holding for him.
+  //
+  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
+  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
+  // one is found by a player who has just been refused, mid-annoyance, on a phone
+  // — and the gate's own copy now points at it by name. A switch you need because
+  // something is in your way does not live in the debugging surface.
+  { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
+    note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
   // being PLAYED rather than looked at: today, and two readings of "the ☰ button
