@@ -590,16 +590,106 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
 .reduced-motion .gp-focus { box-shadow: none !important; }
 
-/* ---------- contextual control-hint bar ---------- */
+/* ---------- contextual control strip ---------- */
+/* `pointer-events: none` WAS ON `.hint-bar` AND IS GONE — Constantine,
+   2026-08-17: "all the buttons on those tool tips should also work". That one
+   declaration was the whole of the defect: five chips naming five keys,
+   unpressable, on a device with no keys. They are `<button>`s now
+   (components/hints.js). The bar itself keeps NO pointer-events rule, so its
+   padding stays inert and only the chips take a press — a 96vw invisible
+   click-eater across the board would be a worse bug than the one being fixed. */
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
-  display: flex; gap: 1.4rem; pointer-events: none; white-space: nowrap;
+  display: flex; gap: 1.4rem; white-space: nowrap;
   padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96vw; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
-.hint-bar.hint-combat { top: 5.8rem; bottom: auto; } /* under the 5.2rem topbar; combat's bottom is full */
-.hint-bar .hint { display: inline-flex; align-items: center; gap: 0.5rem; }
+/* ⚠ TWO LANES MEET IN THIS BLOCK AND BOTH HALVES ARE HERE ON PURPOSE — the
+   rebase resolution is recorded rather than smoothed. Sten's act (15d4bca) made
+   these chips REAL BUTTONS with a tap floor and derived labels: his truth. Mine
+   moves the combat strip to the bottom of the column and lets it wrap: my
+   layout. Neither half was reshaped to fit the other. The one line that
+   genuinely conflicted was `.hint-bar.hint-combat { top: 5.8rem }` — the pinned
+   position he carried forward untouched and I was sent to change — and it is
+   MINE, replaced below. Everything he wrote about the chip itself stands.
+
+   ⚠ AND THE SEAM BIT, ON THE AXIS NOBODY WATCHED. Marina warned that his labels
+   could change WIDTH and told me to measure a wider one; I did, and width is
+   fine (a 9-character rebind wraps, 0 chips clipped). IT BIT ON HEIGHT.
+   `--tap-floor` on `.hint` takes the chip from a line of text to 44 px, so the
+   strip is 54 px tall instead of 25 — and combat's column is then 18 px SHORT at
+   1200x730 Text M, the SHIPPED DEFAULT. Measured on the merged tree: strip
+   687.5..741.5 against a 730 viewport, so 42.5 of 54 px visible — 78.7%,
+   legible, clipped at its bottom edge. At Text XL it is wholly below the fold
+   (+127 px).
+   BOTH HALVES ARE RIGHT AND THE COLUMN IS OVER-SUBSCRIBED: a pressable control
+   owes the tap floor, and his other sentence puts a row at the bottom. What
+   cannot pay for either is `.hand-area height:23rem` plus `.field`'s min-content
+   — Law 4 clause 4's named 400-of-548 debt. NOT resolved here, NOT resolved in
+   the rebase, NOT painted green: tools/hintstrip.mjs prints the number every run
+   as `unknown` and states what turns it into an assertion. It goes to Marina. */
+/* LAW 4 CLAUSE 4, ON A CONTROL THAT WAS TEXT UNTIL TODAY. A fixed floor with
+   intrinsic growth, never a multiple of the text unit: `--tap-floor` is the
+   ergonomic constant (and answers UI size, not Text size), the glyphs inside push
+   the box taller at XL, and the padding is px because it is geometry. The chip
+   was a `<span>` yesterday and owed no floor; the day it became pressable it
+   acquired one.
+   `min-width` IS DELIBERATELY NOT FLOORED, and that is a partial rather than an
+   oversight: five 44 px squares is 220 px of a 390 px phone, and on a strip of
+   words the axis that decides whether a thumb lands is the HEIGHT. */
+.hint-bar .hint {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  min-height: var(--tap-floor); height: auto;
+  padding: 2px 6px; margin: 0; border: 0; border-radius: 6px;
+  background: none; color: inherit; font: inherit; letter-spacing: inherit;
+  cursor: pointer; touch-action: manipulation;
+}
+.hint-bar .hint:hover, .hint-bar .hint:focus-visible { background: rgba(var(--accent-rgb), 0.14); }
+/* The press acknowledged WHERE THE THUMB IS. The fill of a second beat belongs to
+   the control being pressed (`.end-turn` fills under its own words); this is only
+   the chip saying it took the press. */
+.hint-bar .hint:active { background: rgba(var(--accent-rgb), 0.24); }
+/* COMBAT'S STRIP JOINS THE FLOW AT THE BOTTOM OF THE COLUMN. His words,
+   2026-08-17: "this should be at the bottom under the cards, not over lapped by
+   the cards. perhaps shift the cards up a bit to make space for this tool tip."
+
+   ⚠ HIS PREMISE IS HALF RIGHT AND THE HALF THAT IS WRONG IS RECORDED RATHER
+   THAN QUIETLY FIXED. The strip was never overlapped by the CARDS: measured at
+   db09846 on eight wide shapes (1200x730, 1200x600, 1366x768, 1440x900,
+   1920x1080, 1024x640, 900x560, 800x600) it touched 0 of 5 cards at every one,
+   and it WAS 100% inside the TOPBAR at all eight — a bar this rule's old
+   comment called 5.2rem and which measures 141 local px. What the pill actually
+   sat on was the POISE track. So the element he pointed at is right, the
+   direction he wants it moved is right, and the occluder is not the one he
+   named. His instruction is followed exactly; the correction is his to keep.
+
+   IN THE FLOW, NOT PINNED, and it is the same fix and the same reason as the
+   map's (styles/map.css .mapscreen .hint-bar). A fixed pill reserves no height,
+   so "under the cards" written as a bottom offset is a number somebody re-tunes
+   every time the hand changes. As the last row of the .combat column it takes
+   its own height out of .field — which IS the "shift the cards up" half of his
+   sentence, derived from the strip's own box instead of typed.
+
+   IT WRAPS, and this is the seam with Sten's lane (item 1(b): making these
+   chips work and deriving their labels from the live binding and device). The
+   base rule is `white-space: nowrap; overflow: hidden`, so a label WIDER than
+   `E` — a rebind to Backspace, a pad glyph — was silently CLIPPED. A control
+   strip that hides a control is worse than one that is two rows tall. Wrapping
+   is between chips only: `.hint` is an inline-flex unit, so a key never
+   separates from its verb (Law 5 clause 3's shape — the row wraps around items
+   that do not). Measured against a 9-character rebound label, both shapes;
+   tools/hintstrip.mjs holds it.
+
+   `max-width: 96vw` becomes `96%` here — Law 2 forbids vw/vh below body and
+   this is a new write of this rule. The base .hint-bar above keeps its vw and
+   is NOT swept (ratchet, not sweep). */
+.hint-bar.hint-combat {
+  position: static; top: auto; bottom: auto; transform: none;
+  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;
+  flex-wrap: wrap; justify-content: center; row-gap: 0.4rem;
+  white-space: normal; overflow: visible;
+}
 .hint-bar kbd {
   font-family: var(--font-body); font-size: 1rem; min-width: 1.5rem; text-align: center;
   padding: 0.1rem 0.5rem; border-radius: 4px; color: var(--parchment);
@@ -3060,6 +3150,21 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   line-height: 1.5;
   color: var(--muted);
 }
+/* THE WAY OUT, NAMED (Constantine's amendment, 2026-08-17). Third and smallest of
+   the three lines, on purpose: the instruction is the heading, the reassurance
+   answers "have I lost my run", and this answers a question only some players
+   have. Dimmer and a size down so it cannot outrank either.
+   It is a POINTER AND NOT A CONTROL — the gate still has no interactive element
+   in it, which is what keeps the ruling in this file's header intact. Same
+   `/ var(--ui-zoom)` carve-out as its siblings and for the same reason written
+   there: this is the message ABOUT the app having zoomed itself to its floor. */
+.upright-hint {
+  font-size: calc(1.25rem / var(--ui-zoom, 1));
+  line-height: 1.5;
+  margin-top: 14px;
+  color: var(--muted);
+  opacity: 0.78;
+}
 /* The glyph is a phone standing up. Box geometry in px — chrome, not type
    (Law 4 clause 3) — and it is `aria-hidden`, so a reader that cannot see it
    loses nothing the sentences do not already say. */
@@ -3611,7 +3716,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
 /* ---------- hand + controls ---------- */
 .hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
-.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; }
+/* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
+   components/hand.js anchors the fan on its DEEPEST card and publishes the lift
+   it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0
+   clause 4). Absent -> 0px, so a stylesheet that forgets to reserve it SHOWS the
+   clipping rather than hiding it (Law 0 clause 5).
+   ⚠ `.hand-area`'s `height: 23rem` above is a BOX in text units — Law 4 clause 4,
+   inside the known 400-of-548 set, and NOT converted here (ratchet, not sweep).
+   This act LEANS on it: the wide fan's clearance comes out of that box's slack,
+   so at Text S the slack shrinks with the cards and not with the 6 px step.
+   Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
+   shapes. */
+.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
 .hand .card { margin: 0 -1.4rem; transform-origin: bottom center; }
 .hand .card:hover, .hand .card.selected {
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
@@ -3969,8 +4085,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     grid-template-areas: "hand hand" "orb  end";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
   }
+  /* Same reservation, and the phone is the shape that PROVED it was needed: the
+     fan's lift at the shipped hand of five is 12 px and this rule's own 1.2rem
+     is 12 px, so the centre card's top landed exactly on the border edge —
+     clearance 0.00, measured. At six cards the lift is 15 and the scroller
+     starts eating the card it is featuring. The added room costs the phone up to
+     `--fan-lift` of height, which Law 5 clause 4 spends on purpose. */
   :root[data-layout='narrow'] .hand {
-    grid-area: hand; height: auto; padding: 1.2rem 0 1.6rem;
+    grid-area: hand; height: auto; padding: calc(1.2rem + var(--fan-lift, 0px)) 0 1.6rem;
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
   }
@@ -4894,7 +5016,17 @@ function applyUiScale(settings) {
   // recovery line, and the gate stands or falls on the geometry either way.
   const coarse = typeof window !== 'undefined' && typeof window.matchMedia === 'function'
     && window.matchMedia('(pointer: coarse)').matches;
-  updateUprightGate({ short, offerRotate: !turned.short && coarse });
+  // AND HIS AMENDMENT (2026-08-17): *"revert that back, or make that a
+  // configurable setting."* One row — `Display / Short-screen warning`. It is
+  // passed as its OWN argument rather than folded into `short`, deliberately:
+  // `short` is a fact about the viewport that this decider computes, and the
+  // setting is a fact about what the player asked us to do about it. Collapsing
+  // them would hide a preference inside the geometry, and the next reader of
+  // `layoutForCap` would find a `short` that is sometimes false on a short
+  // screen. `!== false` so a profile written before this row existed keeps the
+  // gate — and so does a `?shot=` boot, which by construction has no durable
+  // settings and resolves every one of them to its default.
+  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });
 }
 
 // MINIMUM TAP SIZE → `--tap-target` on <html>, read by `--tap-floor` in
@@ -6806,16 +6938,20 @@ const balance = {
     // 5: the silent plausible answer is the dangerous one).
     pointsPerLevelMin: 1,
     pointsPerLevelMax: 20,
-    // How many points buy one tier of a derived stat. 5 is what ships and is
-    // the reason one level currently moves no number at all; 1 makes every
-    // point visible, and the span between the two is the experiment.
+    // How many points buy one tier of a derived stat — the DOMAIN, not a ladder,
+    // for the same reason the level value stopped being one. His purpose clause
+    // was "that way I can test each", and a 1-2-3-5 ladder cannot express 4 or
+    // 7. (The four-chip shape a previous seat measured — 92.1 px at 390x844
+    // against 301.2 for a seven-chip row — is why a LADDER could never have been
+    // widened to cover the domain instead: a typed field has no chip count.)
     //
-    // FOUR, NOT FIVE, and the fourth is 5 rather than 10. A previous seat
-    // MEASURED this row shape: four chips renders 92.1 px at 390x844 and a
-    // seven-chip row runs to 301.2 px with its last chip off the viewport
-    // (settings.js, the Hold-to-confirm note). His sentence names 5 as the
-    // number to test against, so 5 stays and the extreme goes.
-    tierSizeChoices: [1, 2, 3, 5],
+    // MIN IS 1 AND IT IS ARITHMETIC, NOT TASTE. The tier is `floor(points /
+    // pointsPerTier)`, so 0 divides by zero, and the content door already
+    // refuses a non-positive value by name (model/validate.js). 20 is the
+    // ceiling for the same reason as the level value's: an experimental bound,
+    // one number here, no code.
+    tierSizeMin: 1,
+    tierSizeMax: 20,
   },
 
   // ---- what a grace hands back ----------------------------------------------
@@ -31676,6 +31812,64 @@ function armInspect(el, { ms, onOpen = null } = {}) {
 let activeConfirm = null;
 
 /**
+ * reveal(panel, actions) — bring a freshly-opened confirm panel ON SCREEN.
+ *
+ * ⚠ WHY THIS EXISTS, AND THE MEASUREMENT IS THE WHOLE ARGUMENT. The panel is
+ * inserted `afterend` of the control it asks about, so where it LANDS is decided
+ * by however tall the screen above it happens to be. At `db09846`, tapping a
+ * Smith candidate put both answers at
+ *
+ *     390x844   .beat-yes / .beat-no  top 1000.22 .. 1044.22   0% on screen
+ *     360x640   .beat-yes / .beat-no  top  938.66 ..  982.66   0% on screen
+ *
+ * — 156 px and 299 px below the fold respectively (`node tools/uprightgate.mjs`,
+ * both shapes, and `tools/holdconfirm.mjs` red on two cells because a CDP touch
+ * at y=1022 lands on nothing).
+ *
+ * IT IS A LEGIBILITY DEFECT AND NOT A STRANDING, and getting that distinction
+ * right cost two seats a measurement each. I read `document.scrollHeight === 844`
+ * and concluded the panel could not be answered at all. **The DOCUMENT does not
+ * scroll; `.screen` does** — `overflow-y: auto`, real travel — so the player CAN
+ * reach it, by scrolling 156 px that nothing on the screen advertises (Vira
+ * re-measured on `b30e624` and corrected my conclusion while confirming my
+ * position; the reach word her probe prints is `scrollable`, not `unreachable`).
+ * A question the player has to go looking for is not a question, so this scrolls
+ * it into view for them.
+ *
+ * NEAREST, NOT CENTRE, AND NOT SMOOTH. `block: 'nearest'` is the least scroll
+ * that makes the thing visible, which keeps the ARMED CARD — `.beat-armed`, one
+ * row above — on screen with it: the player must be able to see which card the
+ * question is about, and a centred or `start` scroll pushes it off. Instant
+ * rather than smooth because a 300 ms animation is a window in which the buttons
+ * are still off screen and a fast second tap lands on nothing, and because a
+ * reduced-motion player is owed no animation at all.
+ *
+ * THE PANEL FIRST, THE ANSWERS SECOND, AND THE SECOND CALL IS NOT BELT-AND-BRACES.
+ * A panel TALLER than the viewport cannot be brought wholly into view, and
+ * `nearest` on the panel would align its TOP — leaving the buttons, which are at
+ * its bottom, exactly where they were. So the actions row is asked for after the
+ * panel, and it is the one that must win. At Text XL on a 360x640 phone the
+ * question, the preview and a wrapped button row are what make that reachable
+ * rather than hypothetical.
+ *
+ * NOTHING IS POSITIONED. This is a scroll, not a placement: the panel keeps the
+ * rect the stylesheet gave it, and Law 2's container/coordinate rules have no
+ * new subject. That also means the fix is INVISIBLE to any probe that refuses to
+ * scroll on principle — see the note in tools/uprightgate.mjs, whose whole
+ * reason for clicking through the Smith by hand is that it will not
+ * scrollIntoView a target itself. Its clause R gates `unreachable` only, so it
+ * was GREEN on this defect and is GREEN on this fix; the cells that can tell the
+ * two apart are in tools/holdconfirm.mjs.
+ */
+function reveal(panel, actions) {
+  if (!panel || typeof panel.scrollIntoView !== 'function') return;
+  panel.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (actions && typeof actions.scrollIntoView === 'function') {
+    actions.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+
+/**
  * armConfirm(el, { question, detailHtml, confirmLabel, onConfirm, id })
  *   -> disarm()
  *
@@ -31736,6 +31930,7 @@ function armConfirm(el, { question, detailHtml = '', confirmLabel = 'CONFIRM', o
     row.appendChild(no);
     panel.appendChild(row);
     el.insertAdjacentElement('afterend', panel);
+    reveal(panel, row);
     activeConfirm = close;
     beatCue('confirmArm', id, 'confirm');
 
@@ -32113,7 +32308,21 @@ const FOCUS_SELECTOR = [
 // (rebindable) keys / the Menu overlay instead of by wandering into them
 // (StS2-style: navigation stays on cards, targets, and map nodes). Ignored when
 // a modal/overlay is open, where its own contents ARE the scope.
-const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb';
+//
+// `.hint-bar` JOINED THIS LIST the day its chips became real buttons (2026-08-17).
+// It is the purest case in the list rather than an exception to it: every chip in
+// that bar exists to SAY which dedicated key reaches a thing, so a focus cursor
+// wandering onto "D Deck" in order to press it, when `d` presses it, is five new
+// stops in the ring for no new reach. The keyboard and the pad already had these
+// five actions; what they never had was a THUMB, and that is what the buttons are
+// for.
+//
+// ⚠ AND IT INHERITS THE HOLE I MEASURED ON `.end-turn` SIX HOURS AGO: a control
+// in CHROME has no focus-cursor story at all, so Enter and pad-Confirm can never
+// arrive on a chip. Here that costs nothing, and it is stated rather than assumed
+// — a chip's whole subject is a binding those two inputs already carry. The day a
+// chip is the ONLY door to something, it has to leave this list.
+const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .energy-orb, .hint-bar';
 
 // Rebindable actions. Each carries BOTH a keyboard key (defKey) and a gamepad
 // button (defBtn), and both are rebindable (Controls tab). Delivery:
@@ -32313,6 +32522,50 @@ function keyLabel(id) {
   if (k === 'Escape') return 'Esc';
   if (k === ' ') return 'Space';
   return k.length === 1 ? k.toUpperCase() : k;
+}
+
+/**
+ * actionLabel(id) — THE SYMBOL TO PUT IN FRONT OF A PLAYER, RIGHT NOW.
+ *
+ * ONE HOME FOR "which device is answering", and it had two before: the hint bar
+ * carried `pad ? padLabel(id) || keyLabel(id) : keyLabel(id)` inline and every
+ * other surface in the tree typed the letter. His words are
+ * *"auto map to the current controls configured AND the active device controller
+ * type"* — two derivations, and this function is the second one. The first is
+ * `keyLabel`/`padLabel` reading the live binding maps.
+ *
+ * ⚠ THE BOUNDARY, AND IT IS THE HONEST WORD FOR IT: this answers CONNECTED, not
+ * ACTIVE. `hasGamepad()` is true from the moment a pad is plugged in, so a player
+ * with a pad resting on the desk and both hands on the keyboard reads pad glyphs.
+ * The tree HAS the material for last-used — `doAction` already takes a `source`
+ * and the poller sets `engaged` — and I have not spent it, because switching on
+ * last-used also flips `body.pad-mode`, which hides the cards' quick-play badges,
+ * and a badge that appears and disappears as a player alternates hands is a
+ * legibility call belonging to the seat that owns those badges. `unknown`, named
+ * here rather than in a report nobody reads at the line.
+ */
+function actionLabel(id) {
+  return (hasGamepad() && padLabel(id)) || keyLabel(id);
+}
+
+/**
+ * actionHint(id) — "Menu (M)", derived, for a `title=` or any prose prompt.
+ *
+ * ⚠ WHY THIS EXISTS AT ALL: three places in this tree had typed the letter.
+ * `screens/combat.js` and `screens/map.js` both shipped `title="Menu (M)"`, and
+ * `components/tutorial.js` shipped *"Done? End Turn (or press E)."* All three are
+ * LAW 1 CLAUSE 7 BREACHES OF THE SHARPEST KIND — a second copy of a binding, in
+ * prose, where the first rebind orphans it and nothing says so. A tooltip that
+ * tells a player to press M when M no longer opens the menu is not stale
+ * decoration; it is the game lying about its own controls, and the player has no
+ * way to tell which of the two is wrong.
+ *
+ * Anything that renders one of these into an attribute should also carry
+ * `data-action-hint="<id>"`, so `refreshHintBars()` can re-derive it in place when
+ * a pad arrives or a binding changes without waiting for the screen to re-render.
+ */
+function actionHint(id) {
+  return `${actionShort(id)} (${actionLabel(id)})`;
 }
 
 // ---- focus cursor -----------------------------------------------------------
@@ -32656,6 +32909,47 @@ function doAction(id, source = 'key') {
   synthKey(keyBindings[id] || a.defKey || a.key);
 }
 
+/**
+ * beginActionPress(id) / endActionPress(cancelled) — A TAP IS AN INPUT.
+ *
+ * Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+ * and auto map to the current controls configured and the active device
+ * controller type."* The hint bar had been an ADVERTISEMENT — `pointer-events:
+ * none`, `aria-hidden`, five spans naming five keys — so on a touchscreen it
+ * described controls the device does not have and answered to nothing.
+ *
+ * THIS IS `doAction`, NOT A FOURTH DELIVERY PATH, and that is the whole design.
+ * A chip is a THUMB arriving at a binding the keyboard and the pad already reach,
+ * so it enters by the door the pad poller enters by and inherits every rule that
+ * lives behind it, free and un-restated:
+ *   - the CURRENT binding is dispatched, so a rebind moves the chip with the key;
+ *   - `pressTarget` gives the chip a HOLD wherever the action owes one — press
+ *     and hold the End Turn chip and `.end-turn` itself fills under the words,
+ *     short-press and it aborts, exactly as `e` does (S7, six hours old);
+ *   - `scopeRoot()` means a chip is refused while a veil stands, for the same
+ *     reason the key is;
+ *   - the dial at `off` collapses both to one press.
+ * A second implementation here would be a second chance to disagree with all of
+ * that, which is the defect this house is named for.
+ *
+ * ⚠ IT DOES NOT SET `engaged`, AND THAT IS DELIBERATE RATHER THAN AN OMISSION.
+ * `engaged` means "this player drives with a keyboard or a pad", and screens use
+ * it to decide whether to plant a focus ring nobody asked for. A thumb on a chip
+ * is the opposite of that evidence. A mouse-only player pressing a chip must not
+ * inherit a focus cursor.
+ *
+ * `cancelled` exists for a pointer the browser takes away mid-press (a scroll, a
+ * drag out of the chip): the same verdict a cancelled hold gets everywhere else
+ * — nothing commits.
+ */
+function beginActionPress(id) {
+  if (!enabled) return;
+  doAction(id, 'pointer');
+}
+function endActionPress(cancelled = false) {
+  pressEnd(cancelled);
+}
+
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
@@ -32930,7 +33224,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, focusFirst, setActionControl, releaseActionControl, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -33804,7 +34098,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '60dedec740';
+const SOURCE = 'b7ba75ff2d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -33838,7 +34132,7 @@ const SOURCE = '60dedec740';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0785';
+const ORDINAL = '0788';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -36989,7 +37283,7 @@ const { passiveFlag } = require("src/model/registries.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { matchAction, isEngaged, focusFirst } = require("src/ui/input.js");
+const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
@@ -37073,7 +37367,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-          <button class="topbar-btn" id="open-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
@@ -37268,15 +37562,82 @@ Object.assign(module.exports, { mountMap });
 
 },
 "src/ui/components/hints.js": function (module, exports, require) {
-// src/ui/components/hints.js — the contextual control-hint bar (SPEC §7.3).
+// src/ui/components/hints.js — the contextual control strip (SPEC §7.3).
 //
-// A thin, unobtrusive strip pinned to the bottom of the map and combat screens
-// that lists the currently-bound keys for the dedicated overlay/zone actions, so
-// the rebindable D/R/T/M/E keys are discoverable. Labels come from the live
-// keyLabel() binding, so they reflect rebinds. The whole bar is hidden by CSS
-// when the "Control hints" setting is off (body.hide-hints).
+// A thin strip pinned to the map and combat screens carrying one chip per
+// dedicated overlay/zone action. Each chip says which control reaches that
+// action, and — since 2026-08-17 — IS one.
+//
+// ============================================================================
+// IT WAS AN ADVERTISEMENT AND HE ASKED FOR A CONTROL BAR
+// ============================================================================
+//
+// Constantine, 2026-08-17: *"all the buttons on those tool tips should also work
+// and auto map to the current controls configured and the active device
+// controller type."*
+//
+// TWO HALVES, AND ONLY ONE OF THEM WAS MISSING — measured before anything was
+// written, because Marina's dispatch and my own instinct both said "the strip
+// prints a hardcoded E":
+//
+//   THE LABELS WERE ALREADY DERIVED. `keyLabel(id)` / `padLabel(id)` off the live
+//   binding maps, and `actionShort(id)` off the ACTIONS registry, since this file
+//   was written. A rebind already moved the chip. There was no `E` here to
+//   delete, and I am recording that rather than claiming a fix I did not make.
+//
+//   THE CHIPS DID NOTHING. `pointer-events: none` on `.hint-bar`, `<span>`s,
+//   `role="presentation"`, `aria-hidden="true"`, no handler. On a touchscreen
+//   that is a strip naming five keys the device does not have, answering to
+//   nothing — which is the whole of his complaint.
+//
+// WHERE THE `E` ACTUALLY WAS, and it was three places, none of them here:
+// `screens/combat.js` and `screens/map.js` each shipped `title="Menu (M)"`, and
+// `components/tutorial.js` shipped *"(or press E)"*. All three now derive through
+// `actionHint(id)`. Law 1 clause 7: a binding written by hand is a second copy,
+// and the next rebind orphans it silently.
+//
+// ============================================================================
+// WHAT A TAP ON A CHIP IS
+// ============================================================================
+//
+// It enters `input.js` by the door the GAMEPAD POLLER enters by
+// (`beginActionPress` / `endActionPress` → `doAction`), so it is one thumb
+// arriving at a binding, not a fourth delivery path. Everything behind that door
+// comes free and is not restated here: the current binding, the hold wherever an
+// action owes a second beat (press-and-hold the End Turn chip and `.end-turn`
+// fills under the words; let go early and nothing happens), the veil refusal, and
+// the dial at `off` collapsing it to one press.
+//
+// POINTERDOWN/UP RATHER THAN `click`, for exactly that reason: a hold has a
+// beginning and an end, and `click` only has an end. `pointercancel` and
+// `pointerleave` end it as CANCELLED — the browser taking the gesture, or a thumb
+// sliding off the chip mid-hold, must not commit.
+//
+// ⚠ THE STRIP IS `display: none` ON A NARROW LAYOUT, AND THAT IS THE SEAM.
+// `styles/ui.css` hides `.hint-bar` under `:root[data-layout='narrow']`, with its
+// reason written at the line: *"On a phone it offers 'E End Turn' to a device with
+// no E."* THAT PREMISE IS THE THING THIS CHANGE RETIRES — the chips are now the
+// phone's affordance rather than a keyboard's. **I have not touched that rule**:
+// where the strip sits on a phone, and what the hand does with the room, is
+// Sunna's layout act (moving the strip below the cards and shifting the hand up),
+// and unhiding it from here would be me doing her half in her absence. So today
+// the working buttons are observable on a WIDE shape and hidden on a narrow one,
+// and that is measured, not assumed (1200x730: five chips, all pressable; 390x844:
+// `display: none`). The day her act lands they work for free.
+//
+// LAW 3 CLAUSE 4 NOW HAS A SUBJECT HERE AND IT IS ANSWERED IN PART. These are
+// interactive controls, so each owes a contextual tooltip that fires for the focus
+// cursor too. Each carries a `title` and an `aria-label`, and Law 3 clause 4 says
+// plainly that a native `title=` alone does not satisfy it. The focus cursor
+// cannot reach a chip by design (`.hint-bar` is in input.js's CHROME set), so the
+// cursor half of the clause has no subject; the TOUCH half is the chip's own words
+// under the thumb. Named as partial rather than claimed: the game's own tooltip
+// component is not wired here.
 
-const { keyLabel, padLabel, hasGamepad, actionShort } = require("src/ui/input.js");
+const { keyLabel, padLabel, hasGamepad, actionShort, actionLabel, actionHint, beginActionPress, endActionPress } = require("src/ui/input.js");
+
+
+
 
 // Which action chips each context shows, in reading order — ids only. The
 // labels come from the ACTIONS registry (actionShort), so this can't drift from
@@ -37299,12 +37660,23 @@ function setHintMode(mode) {
 }
 
 // Show controller glyphs when a gamepad is connected, keyboard keys otherwise.
+//
+// `actionLabel(id)` IS THAT CHOICE AND IT USED TO LIVE INLINE HERE. It moved into
+// input.js beside the binding maps it reads, because two other surfaces now ask
+// the same question and three copies of `pad ? padLabel : keyLabel` is three
+// chances to answer it differently. Its boundary — connected, not last-used — is
+// stated at that function.
 function chipsHtml(context, pad) {
   const set = context === 'combat' && hintMode === 'targeting' ? CHIPS.targeting : CHIPS[context];
   return (set || [])
     .map((id) => {
       const key = pad ? padLabel(id) || keyLabel(id) : keyLabel(id);
-      return `<span class="hint"><kbd>${key}</kbd>${actionShort(id)}</span>`;
+      // `type="button"` because these live inside no form and a default submit
+      // button in a game screen is a page reload waiting for a keyboard.
+      // `data-action` is the id, read back at PRESS TIME rather than closed over,
+      // so the strip can be rebuilt under a live press without stranding it.
+      return `<button type="button" class="hint" data-action="${id}" data-action-hint="${id}"`
+        + ` title="${actionHint(id)}" aria-label="${actionHint(id)}"><kbd>${key}</kbd>${actionShort(id)}</button>`;
     })
     .join('');
 }
@@ -37314,7 +37686,55 @@ function hintBarHtml(context) {
   const chips = CHIPS[context] || [];
   if (!chips.length) return '';
   const pad = hasGamepad();
-  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="presentation" aria-hidden="true">${chipsHtml(context, pad)}</div>`;
+  // `role="presentation"` and `aria-hidden="true"` are GONE, and their removal is
+  // the accessibility half of his ask: a bar of five real buttons announced as
+  // decoration is five controls a screen reader cannot find. `role="toolbar"`
+  // says what it is — a set of sibling controls, not a list and not a tab strip
+  // (Law 3: a tab set is a different thing and takes the bumpers).
+  return `<div class="hint-bar hint-${context}${pad ? ' hint-pad' : ''}" role="toolbar" aria-label="Controls">${chipsHtml(context, pad)}</div>`;
+}
+
+// ---- the press, delegated once at the document -------------------------------
+//
+// ONE LISTENER FOR EVERY CHIP THAT WILL EVER EXIST, rather than a pair per chip
+// per rebuild. `chipsHtml` runs on every pad connect, every targeting change and
+// every combat re-render; per-chip listeners on a bar that is thrown away and
+// rebuilt is the leak this file would otherwise grow, and the id is read off the
+// element at press time so a rebuild mid-press cannot strand a stale closure.
+//
+// THE RELEASE IS BOUND AT THE DOCUMENT, NOT THE CHIP, on purpose: a press that
+// begins on a chip and ends anywhere at all must still END. A pointerup that
+// never arrives at the element is exactly how the pre-S7 shape left a control
+// filling forever.
+if (typeof document !== 'undefined') {
+  let pressing = false;
+  const chipOf = (ev) => (ev.target && ev.target.closest ? ev.target.closest('.hint-bar .hint[data-action]') : null);
+  document.addEventListener('pointerdown', (ev) => {
+    const chip = chipOf(ev);
+    if (!chip) return;
+    // The default would focus the button and, on touch, may synthesise a click
+    // later — both of which arrive after the press door has already answered.
+    ev.preventDefault();
+    pressing = true;
+    beginActionPress(chip.dataset.action);
+  });
+  document.addEventListener('pointerup', () => {
+    if (!pressing) return;
+    pressing = false;
+    endActionPress(false);
+  });
+  document.addEventListener('pointercancel', () => {
+    if (!pressing) return;
+    pressing = false;
+    endActionPress(true);
+  });
+  // Sliding off the chip mid-hold is a cancel, matching every other hold in the
+  // tree: the gesture must be able to be taken back by moving away from it.
+  document.addEventListener('pointerout', (ev) => {
+    if (!pressing || chipOf(ev)) return;
+    pressing = false;
+    endActionPress(true);
+  });
 }
 
 /** Rebuild any visible hint bars in place — called when a pad (dis)connects. */
@@ -37331,6 +37751,21 @@ function refreshHintBars() {
   // The End Turn button carries its own key chip — keep it in sync too.
   const etKey = document.querySelector('.end-turn .et-key');
   if (etKey) etKey.textContent = pad ? padLabel('endTurn') || keyLabel('endTurn') : keyLabel('endTurn');
+  // EVERY DERIVED CONTROL PROMPT IN THE TREE, wherever it was rendered. A screen
+  // that painted `title="Menu (M)"` an hour ago is not going to re-render because
+  // a pad was plugged in, so the attribute is re-derived in place from the id the
+  // element carries. One loop, no list of screens — a new prompt joins it by
+  // writing `data-action-hint`, which is Law 0 clause 1 on a tooltip.
+  document.querySelectorAll('[data-action-hint]').forEach((el) => {
+    const hint = actionHint(el.dataset.actionHint);
+    el.setAttribute('title', hint);
+    if (el.hasAttribute('aria-label')) el.setAttribute('aria-label', hint);
+  });
+  // Prose that names a control (the tutorial's "or press E") re-derives the same
+  // way: the element says which action it is quoting and gets the live symbol.
+  document.querySelectorAll('[data-action-key]').forEach((el) => {
+    el.textContent = actionLabel(el.dataset.actionKey);
+  });
 }
 
 if (typeof window !== 'undefined') {
@@ -39332,7 +39767,7 @@ const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/qu
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad } = require("src/ui/input.js");
+const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -39373,7 +39808,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         <div class="hud-top">
           <div class="resbars-host"></div>
           <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" title="Menu (M)">☰</button>
+          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
@@ -40664,12 +41099,27 @@ Object.assign(module.exports, { openPileModal });
 
 const { anchorLocalBox } = require("src/ui/fx.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
+const { actionLabel } = require("src/ui/input.js");
 
+// `text` IS A FUNCTION WHEREVER IT NAMES A CONTROL, and that is the whole of the
+// change here. The End Turn step shipped as *"Done? End Turn (or press E)."* — a
+// hardcoded `E` in the FIRST THING a new player ever reads, which the first rebind
+// orphans in the one place a player has no way to know it is lying (Law 1 clause
+// 7). It derives from the live binding now, resolved at the moment the callout is
+// SHOWN rather than at module load, so a rebind between boot and first fight still
+// carries. `actionLabel` also answers the active device, so a pad player is told
+// the glyph on the button under their thumb rather than a letter they cannot press.
+//
+// `press 1–9` in the Play-cards step is DELIBERATELY LEFT AS PROSE: the positional
+// quick-play keys are not rows in ACTIONS, are not rebindable, and have no binding
+// to derive from. Said here rather than leaving the next reader to work out which
+// of the two rules applied to which line.
 const STEPS = [
   { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
-  { sel: '.end-turn', title: 'End your turn', text: 'Done? End Turn (or press E). Unspent energy and most Block are lost at your next turn.' },
+  { sel: '.end-turn', title: 'End your turn',
+    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
 ];
 
 function mountTutorial(root, { onDone }) {
@@ -40732,7 +41182,7 @@ function mountTutorial(root, { onDone }) {
   function show() {
     const step = steps[i];
     veil.querySelector('.tut-title').textContent = step.title;
-    veil.querySelector('.tut-text').textContent = step.text;
+    veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show
   }
@@ -42063,6 +42513,13 @@ const { armInspect } = require("src/ui/components/holdconfirm.js");
 const { stickTooltip } = require("src/ui/components/tooltip.js");
 const { applyHandExemption } = require("src/ui/handAxis.js");
 
+// The custom property this component publishes so the stylesheets can reserve
+// room for the fan's upward lift without knowing how it is computed. Named here
+// because the value has exactly one author; tools/hintstrip.mjs reads the NAME
+// out of this file rather than typing it, so a rename cannot leave a check
+// asserting a property nobody writes.
+const FAN_LIFT_PROP = '--fan-lift';
+
 function mountHand(handEl, { registries, wireCard = null }) {
   // The one home of the duration is balance.ui.inspectHold; the Number()||0
   // shape is why model/validate.js checks that row loud — an unreadable
@@ -42134,13 +42591,50 @@ function mountHand(handEl, { registries, wireCard = null }) {
     handEl.innerHTML = '';
     handEls = [];
     handFan = [];
-    if (emptyHtml != null) { handEl.innerHTML = emptyHtml; return; }
+    // An empty hand fans nothing, so it reserves nothing — stated rather than
+    // left at the last render's value.
+    if (emptyHtml != null) { handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml; return; }
     const n = cards.length;
+    // ONE HOME FOR THE FAN'S OWN HEIGHT COST. The lift is derived here, so the
+    // room for it is published here too and the stylesheets READ it — they never
+    // restate it (Law 0 clause 4). Both `.hand` rules reserve
+    // var(--fan-lift) in padding-top; a stylesheet that forgets falls back to
+    // 0px and the defect is visible, not plausible (Law 0 clause 5).
+    handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const el = renderCard(registries, entry.inst,
         entry.preview ? { preview: entry.preview, affordable: entry.affordable } : { affordable: entry.affordable });
       const spread = Math.min(6, n) * 1.2;
-      el.style.transform = `rotate(${(i - (n - 1) / 2) * (spread / Math.max(n - 1, 1))}deg) translateY(${Math.abs(i - (n - 1) / 2) * 6}px)`;
+      // THE FAN HANGS UPWARD FROM ITS DEEPEST CARD, NOT DOWNWARD FROM ITS
+      // CENTRE. Same arc, same step, same look — translated so the LOWEST card
+      // sits on the strip's own baseline and nothing is pushed below it.
+      //
+      // WHY, and it is his ask plus a defect the ask uncovered. He asked for the
+      // control strip to sit "at the bottom under the cards ... perhaps shift
+      // the cards up a bit to make space". The strip is now the last row of the
+      // .combat column (styles/ui.css .hint-bar.hint-combat), so the column
+      // supplies the space. But the old expression pushed the OUTER cards DOWN
+      // by |i-mid| * 6, and the outermost card's box therefore ended 5.65 local
+      // px BELOW .hand — measured identical, to two decimals, on all eight wide
+      // shapes at db09846, which is a constant and not a coincidence of one
+      // window. Off the bottom of the viewport before this change; onto the
+      // strip after it. A gap constant on the strip would have hidden that
+      // instead of removing it, and would have been re-tuned by the next hand
+      // change: the fan's own overflow is the fan's to not have.
+      //
+      // max|i-mid| is mid, at i = 0 and i = n-1, so subtracting mid puts those
+      // two at 0 and lifts the centre by mid * 6. DERIVED from the same mid the
+      // rotation already uses — no second constant, and n = 1 stays 0.
+      //
+      // THE LIFT HAS TO BE RESERVED, AND IT IS RESERVED FROM HERE — see
+      // FAN_LIFT_PROP below. Measured at 390x844 with the shipped hand of five:
+      // mid * 6 = 12 px and the narrow strip's padding-top is 1.2rem = 12 px, so
+      // the centre card's top landed EXACTLY on .hand's border edge, clearance
+      // 0.00. That is an accident of n = 5, not a fit: at n = 6 the lift is 15 px
+      // against the same 12 and the phone's scroller starts clipping the card it
+      // is meant to feature. A number that is only right for today's hand size.
+      const mid = (n - 1) / 2;
+      el.style.transform = `rotate(${(i - mid) * (spread / Math.max(n - 1, 1))}deg) translateY(${(Math.abs(i - mid) - mid) * 6}px)`;
       el.style.zIndex = i;
       if (entry.selected) el.classList.add('selected');
       // The spelled-out unavailability reason is VIEWER data (co-op supplies
@@ -42198,7 +42692,7 @@ function mountHand(handEl, { registries, wireCard = null }) {
 }
 
 
-Object.assign(module.exports, { mountHand });
+Object.assign(module.exports, { FAN_LIFT_PROP, mountHand });
 
 },
 "src/ui/handAxis.js": function (module, exports, require) {
@@ -42517,7 +43011,31 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
         </div>
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
+        <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
+             Constantine: "make the flask and the level up collapsible (with
+             level up being grayed out or not visible when there isn't enough
+             cinders)". The fold and the grey-out are the player-experience
+             seat's; the PREDICATE is model/levelup.js's, and these attributes
+             are the seam between them. A styling seat reads data-affordable,
+             data-blocked-by and data-short and never subtracts a cost from a
+             purse - the day it did there would be two answers to "can he afford
+             this" and the screen would eventually disagree with the commit path
+             below.
+             THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
+             come off ONE level plan, computed once per mount, so a disabled card
+             and a refused purchase cannot diverge. An instrument reads them too,
+             which is why they are on the element and not in a closure.
+             NO BACKTICKS IN THIS BLOCK. It sits inside a template literal. I
+             closed the string with a pair of them THREE TIMES tonight, in three
+             files, every time inside a comment explaining myself - and
+             node --check exits 0 on the result because it parses the file as a
+             SCRIPT, so my own "parses" check was silent on all three. The gate
+             that caught this one is tools/linkcheck.mjs. -->
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             data-affordable="${level.affordable ? '1' : '0'}"
+             data-blocked-by="${level.blockedBy || ''}"
+             data-cost="${level.cost}"
+             data-short="${level.short}">
           <div class="glyph">✦</div>
           <h3>Level up</h3>
           <p>${level.capped
@@ -42743,13 +43261,24 @@ function levelsAffordable(registries, cinders) {
 /**
  * levelUpPlan(registries, run, { pointsPerLevel }) → what the shrine may offer.
  *
- *   { levelsTaken, cost, cinders, affordable, capped, offerable,
- *     pointsPerLevel, attributes }
+ *   { levelsTaken, cost, cinders, affordable, capped, short, blockedBy,
+ *     offerable, pointsPerLevel, attributes }
  *
  * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
  * this feature's Law 0 falsifier: a sixth attribute is one row in
  * `content/attributes.js` and it appears at the shrine with zero UI edits. The
  * shrine screen never names a stat.
+ *
+ * ⚠ AFFORDABILITY DOES NOT DEPEND ON `pointsPerLevel`, AND THE DISPATCH THAT
+ * ASKED FOR THIS PREDICATE ASSUMED IT DID. Measured rather than relayed:
+ * `levelCost` is `firstCost + costStep × levelsTaken` and takes no third
+ * argument. The typed value decides what a level GRANTS, never what it COSTS —
+ * which is asserted in `tests/engine.test.js` 60c, in those words, one act
+ * before the question was asked. So the predicate moves with `run.cinders` and
+ * with `levelsTaken`, and is INDIFFERENT to the dial.
+ *
+ * It is still not a constant, and the fold must re-read it rather than cache it:
+ * every purchase raises the next price, and every fight changes the purse.
  *
  * `pointsPerLevel` IS AN ARGUMENT, NOT A LOOKUP — Constantine, 2026-08-17:
  * "leave the level up value configurable". The caller resolves the player's
@@ -42772,6 +43301,30 @@ function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
     cinders,
     affordable,
     capped,
+    // ---- THE AFFORDABILITY PREDICATE, for the fold ------------------------
+    //
+    // Constantine: "make the flask and the level up collapsible (with level up
+    // being grayed out or not visible when there isn't enough cinders)".
+    //
+    // ONE DERIVATION, ONE HOME, AND NO SECOND COPY OF THE PRICE. The seat that
+    // authors the fold and the grey-out reads these three fields; it never
+    // subtracts cinders from a cost, because the day it did there would be two
+    // answers to "can he afford this" and the screen would eventually disagree
+    // with the purchase. `#level-opt` publishes them as data attributes
+    // (ui/screens/rest.js) so a component and an instrument read the SAME
+    // derivation the commit path used, rather than re-deriving it.
+    //
+    // `short` — how many cinders are missing, 0 when none are. It is here and
+    // not computed by the caller for exactly the reason above: it is the one
+    // number a disabled label wants, and a caller computing `cost - cinders`
+    // would be the second copy in its cheapest disguise.
+    short: Math.max(0, cost - cinders),
+    // `blockedBy` — WHY it is not offerable, as a token and never as prose. A
+    // closed set of three, so a presentation seat switches on a word instead of
+    // inferring the reason from two numbers: 'cinders' and 'cap' are different
+    // sentences to a player, and only one of them is fixed by fighting a
+    // monster. `null` means it IS offerable.
+    blockedBy: capped ? 'cap' : (affordable ? null : 'cinders'),
     // A cap of `null` is "no ceiling but the cinders themselves" — his range is
     // an economy, not a limit, so the shipped table refuses on price alone.
     offerable: affordable && !capped,
@@ -43977,6 +44530,44 @@ const ROWS = [
     note: 'Show the run seed in the map header bar.' },
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
     note: 'Fill the screen (also toggles with F11 in most browsers).' },
+  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
+  //
+  //   "rotating to horizontal should work again. I hate that it tells me to
+  //    rerotate to verticle. revert that back, or make that a configurable
+  //    setting."
+  //
+  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
+  // gate was protecting, a row keeps it reachable. So this is one row in a table
+  // of about forty, and it is deliberately NOT the Settings layout act (E3).
+  //
+  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
+  // MINE — with the measurement that decided it, because his sentence points the
+  // other way and a reader is owed the reason I did not simply follow it.
+  // `node tools/uprightgate.mjs`, 844x390, this tree:
+  //
+  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
+  //
+  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
+  // again."** It replaces a legible refusal with an illegible wall: the board
+  // draws, and the button that ends the turn is off screen inside a container
+  // that scrolls programmatically and never by hand. Defaulting it off would
+  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
+  // a third composition and it is still owed** (upright.js's header sets out why
+  // it is not one change) — this row is the switch he asked for and the honest
+  // half of the answer, not the whole of it.
+  //
+  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
+  // token, no other line in the tree. The default is the only part of this row I
+  // am holding for him.
+  //
+  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
+  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
+  // one is found by a player who has just been refused, mid-annoyance, on a phone
+  // — and the gate's own copy now points at it by name. A switch you need because
+  // something is in your way does not live in the debugging surface.
+  { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
+    note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
   // being PLAYED rather than looked at: today, and two readings of "the ☰ button
@@ -44135,17 +44726,18 @@ const ROWS = [
   // cannot drift from the rule it turns.
   { cat: 'Advanced', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
-    label: 'Level-up value', applied: levelValueAppliedHtml,
+    label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
-  { cat: 'Advanced', key: 'statTierSize', type: 'choice', def: String(DERIVED_DEFAULTS.pointsPerTier),
-    choices: (LEVEL_DEFAULTS.tierSizeChoices || []).map(String), label: 'Stat points per tier',
+  { cat: 'Advanced', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
+    label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
     // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
     // progress — which is correct, and which means turning this dial and loading
     // an existing save shows NOTHING. It is written on the row because the
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -44558,14 +45150,6 @@ function resolveNumberRow(settings, row) {
   return Math.min(row.max, Math.max(row.min, Math.floor(n)));
 }
 
-function resolveChoiceNumber(settings, key) {
-  const row = ROWS.find((r) => r.key === key);
-  if (!row) throw new Error(`resolveChoiceNumber: no settings row named '${key}'`);
-  const stored = (settings || {})[key];
-  const s = stored === undefined || stored === null ? '' : String(stored);
-  return row.choices.includes(s) ? Number(s) : Number(row.def);
-}
-
 /**
  * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
  * than its value. Exported so a test asserts against the row the screen actually
@@ -44582,7 +45166,7 @@ function resolveLevelUpValue(settings) {
 }
 
 /**
- * The `applied` line for the level-value row — SILENT WHEN THE PROMISE IS KEPT,
+ * The `applied` line for ANY `number` row — SILENT WHEN THE PROMISE IS KEPT,
  * which is Sunna's rule and is why this is not just a readout: "a line that says
  * the same thing every time you open the screen is not a warning, it is
  * decoration with a worried face."
@@ -44590,7 +45174,7 @@ function resolveLevelUpValue(settings) {
  * It speaks only when what he typed is NOT what the game will use, which is the
  * one case a typed field creates and a ladder never could.
  */
-function levelValueAppliedHtml(settings, row) {
+function numberAppliedHtml(settings, row) {
   const stored = (settings || {})[row.key];
   if (stored === undefined || stored === null || stored === '') return '';
   const used = resolveNumberRow(settings, row);
@@ -44599,7 +45183,7 @@ function levelValueAppliedHtml(settings, row) {
 }
 
 function resolveStatTierSize(settings) {
-  return resolveChoiceNumber(settings, 'statTierSize');
+  return resolveNumberRow(settings, settingsRow('statTierSize'));
 }
 
 /**
@@ -48084,6 +48668,43 @@ Object.assign(module.exports, { installHoldBeat });
 // src/ui/components/upright.js — THE ORIENTATION GATE.
 //
 // ============================================================================
+// ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
+// ============================================================================
+//
+// Constantine, unprompted, in his own words:
+//
+//   "rotating to horizontal should work again. I hate that it tells me to
+//    rerotate to verticle. revert that back, or make that a configurable
+//    setting."
+//
+// HE OFFERED TWO ANSWERS AND MARINA RULED THE SECOND — a revert deletes whatever
+// the gate was protecting; a setting keeps the protection reachable. So the gate
+// now takes an `enabled` argument fed by ONE row, `Display / Short-screen
+// warning`, and `SAY.hint` names that row on the gate's own face.
+//
+// ⚠ AND THE LEAST FLATTERING FACT IN THIS LANE IS ALREADY IN THIS FILE, sixty
+// lines down: *"A gate that tells a desktop player to rotate their monitor is a
+// gate nobody trusts the second time."* WE WROTE DOWN THAT THIS NAG CAN BE WRONG,
+// SHIPPED IT WITH NO WAY TO TURN IT OFF, AND LEFT THE OWNER TO ASK. The sentence
+// was about the *wording* being false on a desktop; the amendment is about there
+// being no door at all. Two different defects, one root — a refusal we knew could
+// misfire and gave nobody a switch for.
+//
+// WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
+// on it: **the wall is still there.** At 844x390 on this tree, measured, not
+// argued (`node tools/uprightgate.mjs`):
+//
+//     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
+//     .energy-orb 0% on screen, unreachable · .hand-area 32.05% on screen
+//
+// So the row ships DEFAULTING ON. Off, the board draws and the turn cannot be
+// ended — that is a choice a player may make with the note in front of them, and
+// it is not "rotating to horizontal should work again". **LANDSCAPE SUPPORT IS
+// STILL OWED** and it is still the thing the four reasons below are about. The
+// default is one token (`def: true` in screens/settings.js) and it is the one part
+// of this held for his word.
+//
+// ============================================================================
 // THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
 // ============================================================================
 //
@@ -48235,27 +48856,54 @@ let gate = null;
 // the pointer query is ever wrong about someone, they still read a true
 // sentence here — which is exactly why it must not name the fix.
 const SAFE = 'Your run is safe — nothing is lost, and it comes right back.';
+// ONE LINE NAMING THE WAY OUT, ADDED FOR HIS AMENDMENT, AND IT IS A POINTER AND
+// NOT A CONTROL. He wrote *"I hate that it tells me to rerotate to verticle"* —
+// and the reason he had to ASK is that this screen never said a setting existed.
+// A refusal a player cannot turn off, that does not admit it can be turned off,
+// is the shape of the complaint. It stays a sentence rather than a button, which
+// keeps the header's no-bypass argument intact: what it costs is one tap in a
+// menu, and what that buys is a player who read the row's note before choosing.
+// SHARED BY BOTH VARIANTS for the same reason SAFE is — two doors with two
+// strings is how they drift.
+const HINT = 'Rather draw it anyway? Settings › Display › Short-screen warning.';
 const SAY = {
   rotate: {
     title: 'Turn your phone upright',
     body: 'Sideways there isn’t enough height for the board, and END TURN ends up somewhere your thumb can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
   resize: {
     title: 'This window is too short',
     body: 'There isn’t enough height for the board, and END TURN ends up somewhere you can’t reach.',
     safe: SAFE,
+    hint: HINT,
   },
 };
 
 /**
- * updateUprightGate({ short, offerRotate })
+ * updateUprightGate({ short, offerRotate, enabled })
  *
- *   short        the viewport is shorter than `uiScale.gateBelowH` — THE ONLY
- *                thing that decides whether the game refuses this shape
+ *   short        the viewport is shorter than `uiScale.gateBelowH` — the only
+ *                GEOMETRIC thing that decides whether this shape is refused
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.
+ *   enabled      the player's own answer — `Display / Short-screen warning`.
+ *                `false` and nothing stands, whatever the geometry says. It is a
+ *                SECOND, INDEPENDENT gate rather than a term inside `short`,
+ *                because "is this screen too short" and "does this player want to
+ *                be told" are two questions and one of them is his.
+ *
+ * ⚠ `enabled === false` IS THE ONE DOOR THROUGH THIS REFUSAL AND IT IS NOT THE
+ * "CONTINUE ANYWAY" BUTTON THE HEADER RULES OUT. The header's argument stands
+ * unchanged — a door into a wall placed AT the wall is worse than the wall,
+ * because it is pressed in the moment of annoyance by someone who has not been
+ * told what is on the other side. This one is a persisted setting, in the Display
+ * list, reached from a screen that is working, with the cost written on the row;
+ * and the gate does not offer it, it merely NAMES it (see SAY.hint below), which
+ * is the difference between an escape hatch and an informed choice. **His word
+ * amended the ruling and it is recorded here rather than reinterpreted.**
  *
  * Idempotent, and deliberately so: it is called from every applyUiScale, which
  * fires on boot, on every settings change and on a 150ms resize debounce. When
@@ -48263,9 +48911,12 @@ const SAY = {
  * — the part that matters — NOTHING BENEATH IT RE-RENDERS. Turning the phone
  * back removes one element; the run underneath never knew.
  */
-function updateUprightGate({ short, offerRotate } = {}) {
+function updateUprightGate({ short, offerRotate, enabled = true } = {}) {
   if (typeof document === 'undefined') return null;
-  if (!short) {
+  // `enabled === false` takes the gate down by the SAME path a fitting screen
+  // does, so turning the setting off mid-fight removes one element and the run
+  // underneath never knows — the idempotence promise above, applied to his row.
+  if (!short || enabled === false) {
     if (gate) { gate.remove(); gate = null; }
     return null;
   }
@@ -48289,6 +48940,7 @@ function updateUprightGate({ short, offerRotate } = {}) {
       <h2 id="upright-title">${say.title}</h2>
       <p class="upright-say">${say.body}</p>
       <p class="upright-safe">${say.safe}</p>
+      <p class="upright-hint">${say.hint}</p>
     </div>`;
   return gate;
 }
