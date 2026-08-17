@@ -58,7 +58,16 @@ class FakeElement extends EventTarget {
     this.hidden = false;
     this.parentNode = null;
     this.className = '';
+    this.style = {};
   }
+  // ENOUGH DOM FOR THE MENU TO PLACE ITSELF, AND NOT ONE INCH MORE. Since
+  // 2026-08-17 mountFlaskActionMenu calls fx.js placeAnchored, which measures
+  // both boxes and reads --place-gap off the cascade; without these three stubs
+  // the import throws and this tool tests nothing. THE NUMBERS BELOW ARE NOT A
+  // PLACEMENT CHECK and must never be read as one — every rect is 0x0 at the
+  // origin and the gap resolves to 0, so the arithmetic runs and asserts
+  // nothing. Placement is measured on a real boot in tools/placement.mjs P5.
+  getBoundingClientRect() { return { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 }; }
   set innerHTML(value) { this._html = value; this._detail = new FakeElement('div'); this._detail.hidden = true; }
   get innerHTML() { return this._html || ''; }
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
@@ -83,8 +92,12 @@ class FakeKeyboardEvent extends Event {
 const win = new EventTarget();
 globalThis.window = win;
 globalThis.KeyboardEvent = FakeKeyboardEvent;
+globalThis.innerWidth = 0;
+globalThis.innerHeight = 0;
+globalThis.getComputedStyle = () => ({ getPropertyValue: () => '' });
 globalThis.document = {
   activeElement: null,
+  documentElement: new FakeElement('html'),
   body: new FakeElement('body'),
   createElement: (tag) => new FakeElement(tag),
 };

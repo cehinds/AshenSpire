@@ -1,5 +1,6 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
+import { placeAnchored, viewportLocalBox } from '../fx.js';
 
 let activeFlaskActionMenu = null;
 
@@ -25,23 +26,24 @@ export function flaskPresentation(def, options = {}) {
  * Shared flask action menu. The caller supplies the plan and owns mutations;
  * selection and inspection are inert here.
  *
- * IT IS NOT "PLACEMENT-INDEPENDENT" — IT IS UNPLACED, AND THIS LINE SAID THE
- * FIRST THING UNTIL 2026-08-17. `.flask-action-menu` has NO rule in any
- * stylesheet, so the root below is `position: static`, transparent, `z-index:
- * auto`, appended last to `.combat` / `.mapscreen`. Photographed on ?shot=combat
- * tapping the first flask slot: at 1200x730 it renders (0,689)-(1200,730) — full
- * width, 593 local px BELOW an anchor at (251,96); at 390x844 it renders
- * (0,897.8)-(433.3,937.8), 727 local px below an anchor at (10,144.9), on the
- * bottom edge, its Use and Inspect rows colliding with the DRAW and DISCARD
- * counters. A context menu that opens at the other end of the screen from the
- * control that summoned it.
+ * IT IS PLACED UNDER THE SLOT THE PLAYER TAPPED, SINCE 2026-08-17. Before that
+ * this docstring said "placement-independent" and the menu was UNPLACED:
+ * `.flask-action-menu` had no rule in any stylesheet, so the root below was
+ * `position: static`, appended last to `.combat` / `.mapscreen`, and it rendered
+ * as a full-width strip on the bottom edge — 567 local px below its own control
+ * at 1200x730, 726.9 at 390x844, its Inspect row 39% buried under the DRAW pile.
+ * Constantine reported it; Bjorn photographed it and corrected the wording;
+ * Sunna placed it. The before/after numbers and the reason `under` beat `beside`
+ * are in `.flask-action-menu`'s block in styles/ui.css — the placement's costs
+ * are a design record and they live with the design, not in two files.
  *
- * WHY THE WORDING MATTERED: gating d705b66, this docstring was cited as evidence
- * that the menu wants no anchored placement, and Marina's relay that it DOES
- * want one was scored wrong on the strength of it. The artifact wins. NOT fixed
- * here — anchoring it is a design act (Sunna's read, and it adds a placeAnchored
- * caller, which she has refused twice on other surfaces), and it is owed a card.
- * This comment exists so nobody cites the old sentence again. — Bjorn
+ * WHY THE WORDING MATTERED, kept because the lesson outlives the defect: gating
+ * d705b66 this docstring was cited as evidence that the menu wants no anchored
+ * placement, and Marina's relay that it DOES want one was scored wrong on the
+ * strength of it. NO SEARCH FOR PLACEMENT CODE CAN FIND A SURFACE WHOSE DEFECT
+ * IS THAT IT PLACES NOTHING. The artifact wins over the comment about it. — Bjorn
+ *
+ * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
 export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
@@ -56,6 +58,26 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     + `<div class="flask-action-detail" hidden>${esc(def.textTemplate || '')}</div>`;
   const buttons = [];
   let closed = false;
+  // THE SCREEN MARGIN HAS ONE HOME IN THIS FILE AND IT IS PASSED, NOT ASSUMED.
+  // placeAnchored uses `pad` for the fit test AND for the bound; the cap below
+  // needs the same number for the room under the slot, so it is handed over
+  // explicitly rather than matched against the default by hand. (quicknav.js
+  // writes the doubled literal `8` next to a call that does not pass `pad` —
+  // that pairing works today and nothing checks it. Named, not touched.)
+  const PAD = 4;
+  // UNDER THE SLOT, AND ONLY UNDER IT — the intent is named HERE, never guessed
+  // in fx.js. `align: 'start'` puts the panel's left edge on the slot's, so the
+  // corner nearest the finger is the one that does not move. No `clear`: 'under'
+  // has a single candidate, so a group preference would be inert, and a
+  // preference that cannot change an answer is a comment pretending to be code.
+  const place = () => {
+    const view = viewportLocalBox();
+    const at = placeAnchored(root, anchor, { intent: 'under', align: 'start', view, pad: PAD });
+    // The panel's height is CONTENT — Inspect un-hides a description a designer
+    // authors in a table. Cap it at the room below the slot so a long flask text
+    // scrolls inside the panel instead of hanging its last row off the screen.
+    root.style.maxHeight = `${Math.max(0, view.height - at.top - PAD * 2)}px`;
+  };
   const close = ({ cancelled = false } = {}) => {
     if (closed) return;
     closed = true;
@@ -90,6 +112,11 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
       if (!row.enabled) return;
       if (row.id === 'inspect') {
         root.querySelector('.flask-action-detail').hidden = false;
+        // THE PANEL JUST GREW, AND PLACEMENT IS A ONE-SHOT. Re-run it: the
+        // top-left corner is pinned to the slot so nothing jumps under the
+        // finger, but the bound and the cap are recomputed against the taller
+        // box. Without this the expanded menu is placed as the collapsed one.
+        place();
         return;
       }
       if (onAction) onAction(row.id);
@@ -113,6 +140,7 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   });
   window.addEventListener('keydown', onGlobalCancel);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
+  place();
   (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
   activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
   return activeFlaskActionMenu;

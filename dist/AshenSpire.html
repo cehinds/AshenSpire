@@ -2507,6 +2507,107 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
 .qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
 
+/* ---------- flask action menu (combat / map / co-op) ---------------------- */
+/* IT HANGS OFF THE SLOT THE PLAYER TAPPED, AND UNTIL 2026-08-17 IT DID NOT
+   EXIST. `.flask-action-menu` had NO rule in any stylesheet — `position:
+   static`, no background, appended last to `.combat` — so the menu rendered as
+   a full-width strip on the BOTTOM EDGE of the screen. Measured on ?shot=combat
+   tapping the first slot, in local px (Sunna, re-measuring Bjorn's photographs
+   at b968e28): 1200x730 the menu (0,689)-(1200,730) against a slot whose bottom
+   is 122 — 567 px below its own control; 390x844 the menu (0,897.8)-(433.3,
+   937.8) against a slot bottom of 170.9 — 726.9 px below it, on the bottom edge,
+   its Inspect row 39% buried under the DRAW pile. Constantine reported it.
+   (Bjorn's docstring quoted 593 and 727: 593 is top-of-slot to top-of-menu and
+   727 is bottom-of-slot to top-of-menu. Both numbers are real and they are two
+   different measurements; the pair above is bottom-to-top at both shapes.)
+
+   WHY UNDER IT AND NOT BESIDE IT — the design call, and it is a legibility call
+   before it is a geometry one. A context menu that opens at the other end of the
+   screen from the control that summoned it is not a menu, it is a surprise: the
+   player cannot tell what they just tapped, and a player who tapped a flask by
+   accident cannot see how to back out. Proximity is the fix. `under` rather than
+   `beside` because the slots are a ROW — `beside` tries "right of it" first, and
+   right of a flask slot is the NEXT flask slot, which is P3's hand-card finding
+   with different furniture. `under` also has exactly ONE candidate, so this menu
+   has no chosen side that can flip on a shape nobody photographed.
+
+   WHAT IT COSTS, said out loud. The slots live in the top HUD, so on a tall
+   phone the Use row lands around y=200 of a 938 px column — the top quarter,
+   further up than a one-handed thumb likes. The alternative that IS thumb-first
+   is a bottom sheet, which is what this accidentally was, and it costs the link
+   to the control plus the busiest strip in combat (END TURN, DRAW, DISCARD).
+   The thumb is already at the slot: one zone per interaction beats two. If a
+   narrow-shape bottom sheet is wanted later it is Constantine's call and Law 5
+   clause 3 licenses it — `intent` is named per call site, so it costs one word.
+
+   `position: fixed` and the default VIEWPORT_ORIGIN layer, the same as #tooltip
+   and .qn-panel. `.combat.shake` puts a 200 ms transform on the parent, which
+   makes it the containing block for that beat — measured harmless because
+   `.combat` IS the viewport box here, so the menu rides the shake instead of
+   jumping. z-index 450: over the piles (20/30), the fx layer (300) and the
+   target arrow (400); under the modal veil (500) and the tooltip (1000).
+
+   LAW 4 CLAUSE 3, deliberately, because this is a NEW write and the law is a
+   ratchet: every box value below is `px` and answers only the UI-size dial.
+   Rows get a 44 px FLOOR and `height: auto` (clause 4) — the glyphs inside push
+   them taller at Text XL, the box is never a multiple of the text unit. Only
+   `font-size` is `rem`. */
+.flask-action-menu {
+  /* One home for the hairline under the slot — see #tooltip's --place-gap at the
+     top of this file for why it lives in CSS and why it is px. 6, the same
+     number `.qn-panel` declares, because it is the same idiom: a panel hanging
+     off the control that opened it. TWO LENGTHS THAT AGREE, not one length with
+     two homes — `--place-gap` is per placed element by construction, and folding
+     these into a shared token would re-commit the second copy this property was
+     invented to remove. */
+  --place-gap: 6px;
+  position: fixed; z-index: 450;
+  display: flex; flex-direction: column;
+  min-width: 150px; max-width: 280px;
+  /* 5 px of side room is not decoration: `.gp-focus` draws `outline: 3px` at
+     `outline-offset: 2px`, and this panel is a scroll container, so a
+     full-bleed row would have its focus ring clipped at the padding box —
+     the pad player's cursor, cut off on the surface it is navigating. */
+  padding: 4px 5px;
+  background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  color: var(--parchment);
+  /* The Inspect row un-hides the description INSIDE the panel, so its height is
+     content the player can author (Law 1: a long flask text is one table edit
+     away). The cap is recomputed by flask.js against the room below the slot;
+     `hidden auto` so the overflow can only ever be vertical (Law 5 clause 1). */
+  overflow: hidden auto;
+}
+.flask-action-menu > strong {
+  padding: 8px 14px 6px; font-family: var(--font-display);
+  font-size: 1.3rem; letter-spacing: 0.05em; color: var(--gold);
+}
+.flask-action-detail {
+  padding: 0 14px 8px; margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+  font-size: 1.15rem; line-height: 1.5; color: var(--muted);
+}
+/* A menu ROW, not a button-shaped button: the base `button` rule is a gold
+   2 px pill with 26 px of side padding, which in a 150 px column reads as three
+   stacked call-to-actions. 44 px is the house tap floor and it is a FLOOR. */
+.flask-action {
+  display: flex; align-items: center;
+  width: 100%; min-height: 44px; height: auto;
+  padding: 8px 14px; text-align: left;
+  background: transparent; border: 0; border-radius: 0;
+  color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
+}
+.flask-action:hover { background: var(--bg-raise); }
+.flask-action.gp-focus, .flask-action:focus-visible { background: var(--bg-raise); color: var(--gold); }
+/* AN UNAVAILABLE ROW HAS TO LOOK UNAVAILABLE. These rows are `aria-disabled`,
+   not `disabled` (they stay focusable so the pad can land on them and read the
+   reason), so `button:disabled` in base.css never applied and an unusable Use
+   was pixel-identical to a usable one. The reason itself still reaches only
+   hover and a native `title=` — Law 3 clause 4 wants a real tooltip on it, and
+   that is owed, not done here. */
+.flask-action[aria-disabled='true'] { color: var(--muted); cursor: default; }
+.flask-action[aria-disabled='true']:hover { background: transparent; }
+
 /* Variant B: the whole tab strip, folded into one control that names where you
    are. Same set, same order, same bumpers (Law 3 clause 1a). */
 .ov-switch {
@@ -31242,7 +31343,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '88d90a85e6';
+const SOURCE = 'cb09bf45fd';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -31276,7 +31377,7 @@ const SOURCE = '88d90a85e6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0770';
+const ORDINAL = '0772';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -37678,6 +37779,7 @@ Object.assign(module.exports, { flaskActionPlan });
 "src/ui/components/flask.js": function (module, exports, require) {
 const { esc } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
+const { placeAnchored, viewportLocalBox } = require("src/ui/fx.js");
 
 let activeFlaskActionMenu = null;
 
@@ -37703,23 +37805,24 @@ function flaskPresentation(def, options = {}) {
  * Shared flask action menu. The caller supplies the plan and owns mutations;
  * selection and inspection are inert here.
  *
- * IT IS NOT "PLACEMENT-INDEPENDENT" — IT IS UNPLACED, AND THIS LINE SAID THE
- * FIRST THING UNTIL 2026-08-17. `.flask-action-menu` has NO rule in any
- * stylesheet, so the root below is `position: static`, transparent, `z-index:
- * auto`, appended last to `.combat` / `.mapscreen`. Photographed on ?shot=combat
- * tapping the first flask slot: at 1200x730 it renders (0,689)-(1200,730) — full
- * width, 593 local px BELOW an anchor at (251,96); at 390x844 it renders
- * (0,897.8)-(433.3,937.8), 727 local px below an anchor at (10,144.9), on the
- * bottom edge, its Use and Inspect rows colliding with the DRAW and DISCARD
- * counters. A context menu that opens at the other end of the screen from the
- * control that summoned it.
+ * IT IS PLACED UNDER THE SLOT THE PLAYER TAPPED, SINCE 2026-08-17. Before that
+ * this docstring said "placement-independent" and the menu was UNPLACED:
+ * `.flask-action-menu` had no rule in any stylesheet, so the root below was
+ * `position: static`, appended last to `.combat` / `.mapscreen`, and it rendered
+ * as a full-width strip on the bottom edge — 567 local px below its own control
+ * at 1200x730, 726.9 at 390x844, its Inspect row 39% buried under the DRAW pile.
+ * Constantine reported it; Bjorn photographed it and corrected the wording;
+ * Sunna placed it. The before/after numbers and the reason `under` beat `beside`
+ * are in `.flask-action-menu`'s block in styles/ui.css — the placement's costs
+ * are a design record and they live with the design, not in two files.
  *
- * WHY THE WORDING MATTERED: gating d705b66, this docstring was cited as evidence
- * that the menu wants no anchored placement, and Marina's relay that it DOES
- * want one was scored wrong on the strength of it. The artifact wins. NOT fixed
- * here — anchoring it is a design act (Sunna's read, and it adds a placeAnchored
- * caller, which she has refused twice on other surfaces), and it is owed a card.
- * This comment exists so nobody cites the old sentence again. — Bjorn
+ * WHY THE WORDING MATTERED, kept because the lesson outlives the defect: gating
+ * d705b66 this docstring was cited as evidence that the menu wants no anchored
+ * placement, and Marina's relay that it DOES want one was scored wrong on the
+ * strength of it. NO SEARCH FOR PLACEMENT CODE CAN FIND A SURFACE WHOSE DEFECT
+ * IS THAT IT PLACES NOTHING. The artifact wins over the comment about it. — Bjorn
+ *
+ * The check is tools/placement.mjs P5, at both shapes, through the real tap.
  */
 function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
@@ -37734,6 +37837,26 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
     + `<div class="flask-action-detail" hidden>${esc(def.textTemplate || '')}</div>`;
   const buttons = [];
   let closed = false;
+  // THE SCREEN MARGIN HAS ONE HOME IN THIS FILE AND IT IS PASSED, NOT ASSUMED.
+  // placeAnchored uses `pad` for the fit test AND for the bound; the cap below
+  // needs the same number for the room under the slot, so it is handed over
+  // explicitly rather than matched against the default by hand. (quicknav.js
+  // writes the doubled literal `8` next to a call that does not pass `pad` —
+  // that pairing works today and nothing checks it. Named, not touched.)
+  const PAD = 4;
+  // UNDER THE SLOT, AND ONLY UNDER IT — the intent is named HERE, never guessed
+  // in fx.js. `align: 'start'` puts the panel's left edge on the slot's, so the
+  // corner nearest the finger is the one that does not move. No `clear`: 'under'
+  // has a single candidate, so a group preference would be inert, and a
+  // preference that cannot change an answer is a comment pretending to be code.
+  const place = () => {
+    const view = viewportLocalBox();
+    const at = placeAnchored(root, anchor, { intent: 'under', align: 'start', view, pad: PAD });
+    // The panel's height is CONTENT — Inspect un-hides a description a designer
+    // authors in a table. Cap it at the room below the slot so a long flask text
+    // scrolls inside the panel instead of hanging its last row off the screen.
+    root.style.maxHeight = `${Math.max(0, view.height - at.top - PAD * 2)}px`;
+  };
   const close = ({ cancelled = false } = {}) => {
     if (closed) return;
     closed = true;
@@ -37768,6 +37891,11 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
       if (!row.enabled) return;
       if (row.id === 'inspect') {
         root.querySelector('.flask-action-detail').hidden = false;
+        // THE PANEL JUST GREW, AND PLACEMENT IS A ONE-SHOT. Re-run it: the
+        // top-left corner is pinned to the slot so nothing jumps under the
+        // finger, but the bound and the cap are recomputed against the taller
+        // box. Without this the expanded menu is placed as the collapsed one.
+        place();
         return;
       }
       if (onAction) onAction(row.id);
@@ -37791,6 +37919,7 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
   });
   window.addEventListener('keydown', onGlobalCancel);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
+  place();
   (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
   activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
   return activeFlaskActionMenu;

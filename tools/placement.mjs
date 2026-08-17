@@ -35,6 +35,19 @@
 //                 and its right edge is on the button's. That is the OTHER
 //                 intent — `under`, not `beside` — and the reason the intent is
 //                 named by the caller instead of guessed from the geometry.
+//   P5 FLASK      the flask action menu opens under the SLOT THE PLAYER TAPPED,
+//                 and its box touches none of the combat furniture a thumb aims
+//                 at — the DRAW and DISCARD piles, END TURN, the hand cards, the
+//                 sibling flask slots, the topbar buttons. Asserted twice: as it
+//                 first opens, and again with Inspect expanded, because the
+//                 description un-hides INSIDE the panel and placement is a
+//                 one-shot. Before (b968e28, measured through this same door):
+//                 1200x730 the menu (0,689)-(1200,730) — 567 local px below its
+//                 own slot, DRAW and DISCARD 72.5% buried each; 390x844
+//                 (0,897.8)-(433.3,937.8) — 726.9 px below its slot, piles 66.7%
+//                 and 66.5%, the Inspect row's right 39% under the DRAW pile so
+//                 a tap there opened the draw modal. THE COUNT IS ZERO, NOT A
+//                 BUDGET: it is a count of touched controls, not a threshold.
 //
 // THE DOOR, AND IT IS NARROWER THAN THIS HEADER CLAIMED UNTIL 2026-08-17. Every
 // number is read off a real boot: served over http, loaded in headless Chromium,
@@ -65,16 +78,25 @@
 // the same door: plant A moves the stylesheet by ONE local px while the code
 // keeps its own copy (measured 14, declared 15 → 1.0, red) and the clean run
 // measures ~0.0 (green). One step of the check's own unit flips the verdict, and
-// both cells arrive as a CSS edit in a copied tree. P1, P3 and P4 are not
-// thresholds at all: P1 is "declared or not", P3 is a count that must be zero,
-// P4 is a sign test.
+// both cells arrive as a CSS edit in a copied tree. P1, P3, P4 and P5 are not
+// thresholds at all: P1 is "declared or not", P3 and P5's collision half are
+// counts that must be zero, P4 and P5's under half are sign tests. P5 adds no
+// new number to this file — it reuses P2's tolerance through gapChecks.
 //
 // BOUNDARIES, and they are real.
-//   · TWO SURFACES, NOT EVERY PLACED THING. The tooltip and the quick-nav panel
-//     are placeAnchored's only callers today. tutorial.js still places its own
-//     bubble in the veil's local space with its own clamp, and main.js's
-//     ?shot=fx points are a third hand-rolled site. Neither is measured here and
-//     neither is converted — `unknown`, named rather than implied.
+//   · THREE SURFACES, NOT EVERY PLACED THING — and this bullet said TWO until
+//     2026-08-17, when the flask menu became placeAnchored's third caller. The
+//     tooltip, the quick-nav panel and the flask action menu are its callers
+//     today; all three are measured here. tutorial.js still places its own bubble
+//     in the veil's local space with its own clamp, and main.js's ?shot=fx points
+//     are a third hand-rolled site. Neither is measured here and neither is
+//     converted — `unknown`, named rather than implied.
+//   · AND THE FLASK MENU HAS A MOUNT SITE THIS TOOL CANNOT REACH. flask.js is
+//     mounted from combat.js, map.js and coop.js. `?shot=combat` is what P5
+//     drives; `?shot=map` renders no `.mh-flask` at either shape, so the MAP
+//     surface is unphotographed — `unknown`. Co-op was measured by hand
+//     (`?shot=coop`, last slot, both shapes: under, on screen, left-aligned) and
+//     is not in P5, because a by-hand receipt is not coverage.
 //   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.
 //     Every other attachTooltip caller passes `clear: el.parentElement` too and
 //     none is sampled HERE. It is no longer unknown: 160 tooltip-bearing controls
@@ -99,17 +121,21 @@
 //     card there are none, so `0 sibling cards touched` is green about nothing.
 //     Named rather than asserted — an unwatched floor is decoration, and no
 //     plant in this corpus renders a short hand.
-//   · THE FLASK ACTION MENU IS NOT MEASURED HERE AND IT IS THE WORST PLACED
-//     SURFACE IN THE TREE. flask.js calls itself "placement-independent" and has
-//     no stylesheet rule at all, so it is `position: static`, transparent, and
-//     appended last to `.combat`. Measured 2026-08-17, tapping the first flask
-//     slot on ?shot=combat: at 1200x730 the menu renders (0,689)-(1200,730),
-//     593 local px below an anchor at (251,96); at 390x844 it renders
-//     (0,897.8)-(433.3,937.8), 727 local px below an anchor at (10,144.9), on
-//     the bottom edge, colliding with the DRAW and DISCARD counters. It is not
-//     placement-independent; it is unplaced. It is NOT wired to placeAnchored
-//     here — that is a design act and Sunna's read — but nobody should read this
-//     tool's green as covering it.
+//   · THE FLASK ACTION MENU IS MEASURED SINCE 2026-08-17 — P5, and this bullet
+//     used to say the opposite. It is a third placeAnchored caller now. Two
+//     things P5 does NOT claim. (a) IT DOES NOT ASSERT THE ENEMY ROW. At 1200
+//     the menu grazes the leftmost `.combatant` by 1.0% of its box; that is
+//     reported, not asserted, because the menu and targeting are never on
+//     screen together (choosing Use closes it before an enemy is aimed at) and
+//     because any menu anchored to a HUD that sits above the field must land on
+//     the field. Turning that graze into a number to stay under would be a
+//     budget nobody derived. (b) IT DOES NOT EXERCISE THE HEIGHT CAP.
+//     flask.js caps the panel at the room below the slot; with today's flask
+//     texts the expanded panel is 156.9 local px against 761 of room at 390x844,
+//     so the cap is computed and never binding here. Measured binding once, by
+//     hand, with an injected 4000-character description — the panel stayed on
+//     screen and scrolled inside itself — but that is a receipt, not coverage:
+//     no plant in this corpus renders a long flask.
 //   · LINUX HEADLESS CHROMIUM, two shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
 //     NOT. Law 4 clause 3 says the gap must not answer the Text-size dial;
 //     measured at 1200x730 with ?shotSettings textSize S/M/L/XL, html font-size
@@ -208,6 +234,45 @@ if (process.argv.includes('--selftest')) {
         replace: "{ intent: 'beside', view } /* planted: the wrong intent, named at the call site */",
         expectRed: /P4 /,
       },
+      {
+        // THE CLASS CONSTANTINE REPORTED, PUT BACK: A MENU THAT PLACES NOTHING.
+        // It is not a byte-for-byte replay of the shipped defect and the
+        // difference is worth stating — the original had no stylesheet rule at
+        // all, so it was `position: static` and rendered as a full-width strip on
+        // the bottom edge; strip only the call and the rule stays, so the menu is
+        // `fixed` with `left/top: auto` and lands at (0,0). Measured, not
+        // assumed. Either way it is nowhere near its slot, which is the whole
+        // point: no search for placement code can find a surface whose defect is
+        // that it places nothing, so the check has to be aimed at the ABSENCE.
+        name: 'the flask menu goes back to being UNPLACED — flask.js stops calling place()',
+        file: 'src/ui/components/flask.js',
+        find: '.appendChild(root);\n  place();',
+        replace: '.appendChild(root);\n  /* planted: the menu is never placed */',
+        expectRed: /P5 .*NOT under its slot/,
+      },
+      {
+        // The intent misnamed at the flask call site, the same shape as the
+        // quicknav plant above and a different answer: at 1200 there is room to
+        // the right of the slot, so `beside` opens the menu ON THE NEXT FLASK
+        // SLOT. That is why `under` is the design call and not a preference.
+        name: 'the flask menu asks for the WRONG INTENT — beside its slot instead of under it',
+        file: 'src/ui/components/flask.js',
+        find: "{ intent: 'under', align: 'start', view, pad: PAD }",
+        replace: "{ intent: 'beside', view, pad: PAD } /* planted: the wrong intent, named at the call site */",
+        expectRed: /P5 /,
+      },
+      {
+        // The gap loses its home on THIS surface. A second site for the P1
+        // assertion, and the find-string carries the end of the comment above it
+        // because `  --place-gap: 6px;` alone also matches `.qn-panel` — a plant
+        // aimed at a neighbourhood instead of a defect is the drift Sten was
+        // bitten by on quicknav-reach's R1 the same night.
+        name: 'the flask menu\'s gap has NO home — .flask-action-menu stops declaring --place-gap',
+        file: 'styles/ui.css',
+        find: 'invented to remove. */\n  --place-gap: 6px;\n',
+        replace: 'invented to remove. */\n',
+        expectRed: /P1 .*flask menu/,
+      },
     ],
   }));
 }
@@ -302,6 +367,44 @@ const COVER = `(() => {
     return { i, pct: r.width*r.height ? +(100*area/(r.width*r.height)).toFixed(1) : 0 }; })
     .filter((c) => c.pct > 0);
   return { shown: true, n: cards.length, hit };
+})()`;
+
+// THE FURNITURE A THUMB AIMS AT WHILE A FLASK MENU IS OPEN, and the list is the
+// assertion. Everything here is a control that is ALREADY ON SCREEN and stays
+// there: the two pile counters, END TURN, the hand, the other flask slots, the
+// topbar buttons. A menu that lands on any of them steals a tap — which is
+// exactly what the unplaced menu did (the Inspect row's right 39% sat under the
+// DRAW pile, and the pile's z-index 20 beat it, so the draw modal opened).
+// `.combatant` is DELIBERATELY ABSENT — see the boundaries in the header.
+const FURNITURE = ['.pile.draw', '.pile.discard', '.end-turn', '.hand .card', '.flask-charge', '.topbar-btn'];
+
+// What the flask menu is sitting on, per control, in local px. Reported whole:
+// the assertion is over FURNITURE, and `field` is printed beside it so a reader
+// can see where the menu went rather than only that it left.
+const FLASK_COVER = `(() => {
+  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  const m = document.querySelector('.flask-action-menu');
+  if (!m) return { missing: true };
+  const L = (el) => { const r = el.getBoundingClientRect();
+    return { left: r.left/z, top: r.top/z, right: r.right/z, bottom: r.bottom/z, w: r.width/z, h: r.height/z }; };
+  const ov = (x, y) => Math.max(0, Math.min(x.right,y.right)-Math.max(x.left,y.left))
+                     * Math.max(0, Math.min(x.bottom,y.bottom)-Math.max(x.top,y.top));
+  const mb = L(m);
+  const anchor = document.querySelectorAll('.flask-charge')[0];
+  const hits = [];
+  for (const sel of ${JSON.stringify(FURNITURE)}) {
+    for (const el of document.querySelectorAll(sel)) {
+      if (el === anchor) continue; // the slot it hangs off is not furniture it stole
+      const r = L(el); const area = ov(mb, r);
+      if (area > 0) hits.push({ sel, pct: +(100*area/((r.w*r.h)||1)).toFixed(1) });
+    }
+  }
+  const soft = [];
+  for (const el of document.querySelectorAll('.combatant')) {
+    const r = L(el); const area = ov(mb, r);
+    if (area > 0) soft.push(+(100*area/((r.w*r.h)||1)).toFixed(1));
+  }
+  return { menu: mb, hits, soft, expanded: !document.querySelector('.flask-action-detail')?.hidden };
 })()`;
 
 const findings = [];
@@ -451,6 +554,50 @@ async function main() {
     }
     if (touchedCards === 0) ok('P3', shape, `the tooltip clears its neighbours on all ${n} hand cards (0 sibling cards touched)`);
     else bad('P3', shape, `the tooltip sits on ${touchedCards} sibling card(s) across ${n} hovers — worst ${worst.pct}% of card #${worst.i}, from card #${worst.from}. A tooltip may not cover the hand it is explaining`);
+
+    // ---- the flask action menu, on the slot the player tapped ---------------
+    // Same page, same boot as P3 above: the hand is already rendered, so this
+    // costs one click. The gesture is `.flask-charge[0].click()` — the same
+    // synthesized-event door as the hover above, with the same boundary (it
+    // measures where the menu LANDS, never whether a thumb can reach the slot).
+    const nf = await ev(`document.querySelectorAll('.flask-charge').length`);
+    if (!nf) bad('P5', shape, 'no flask slots on ?shot=combat — nothing measured');
+    else {
+      await ev(`document.querySelectorAll('.flask-charge')[0].click(); true`);
+      const up = await until(`!!document.querySelector('.flask-action-menu')`, 'flask menu', 4000)
+        .then(() => true).catch(() => false);
+      if (!up) bad('P5', shape, 'tapping the first flask slot opened no menu — nothing measured');
+      else {
+        await wait(250);
+        // TWO STATES, because Inspect grows the panel INSIDE itself and
+        // placement is a one-shot. The second reading is the one that catches a
+        // menu re-placed as if it were still collapsed.
+        for (const state of ['as it opens', 'with Inspect expanded']) {
+          if (state !== 'as it opens') {
+            const clicked = await ev(`(() => { const b = [...document.querySelectorAll('.flask-action')]
+              .find((x) => /Inspect/i.test(x.textContent)); if (!b) return false; b.click(); return true; })()`);
+            if (!clicked) { bad('P5', shape, 'the menu has no Inspect row — the expanded state was not measured'); break; }
+            await wait(250);
+          }
+          const at = `flask menu (${state})`;
+          gapChecks(shape, at, await ev(READ('.flask-charge', '.flask-action-menu')));
+          const c = await ev(FLASK_COVER);
+          if (c.missing) { bad('P5', shape, `${at}: the menu left the DOM before it was measured`); break; }
+          const a = await ev(`(() => { const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+            const r = document.querySelectorAll('.flask-charge')[0].getBoundingClientRect();
+            return { left: r.left/z, bottom: r.bottom/z }; })()`);
+          if (c.menu.top >= a.bottom - 0.5) {
+            ok('P5', shape, `${at}: opens UNDER its slot (menu top ${c.menu.top.toFixed(1)} ≥ slot bottom ${a.bottom.toFixed(1)} local px)`);
+          } else {
+            bad('P5', shape, `${at}: NOT under its slot — menu (${c.menu.left.toFixed(1)},${c.menu.top.toFixed(1)})-(${c.menu.right.toFixed(1)},${c.menu.bottom.toFixed(1)}) against slot bottom ${a.bottom.toFixed(1)}. A context menu that opens away from the control that summoned it is the defect Constantine reported`);
+          }
+          const softest = c.soft.length ? ` (over the field: ${c.soft.map((p) => `${p}% of a combatant`).join(', ')} — reported, not asserted)` : '';
+          if (!c.hits.length) ok('P5', shape, `${at}: touches none of ${FURNITURE.length} combat controls${softest}`);
+          else bad('P5', shape, `${at}: sits on ${c.hits.map((h) => `${h.sel} ${h.pct}%`).join(', ')}. A flask menu may not cover a control the player still has to tap${softest}`);
+        }
+        await ev(`document.querySelector('.flask-action-menu')?.remove(); true`);
+      }
+    }
 
     // ---- the quick-nav panel, the OTHER intent ------------------------------
     // The list is behind a setting, so it is turned on the way the game turns it
