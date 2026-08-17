@@ -82,6 +82,19 @@ if (process.argv.includes('--selftest')) {
         // ui.css — so a declaration added above it cannot drift it again. The
         // known-bad is unchanged: a forced width wider than the phone, clamp
         // defeated.
+        //
+        // SCORED 2026-08-17 (Bjorn, gating d705b66): the re-aim STANDS — the
+        // defect bytes are identical, the drift was caught LOUDLY rather than
+        // skipped, and `grep -c` says this find-string occurs exactly ONCE in
+        // ui.css. ONE BOUNDARY, because the uniqueness changed KIND: the old
+        // string carried `.qn-panel {`, so it could only ever match this rule;
+        // this one is unique by coincidence, and doorplant does not assert
+        // uniqueness — it calls String.replace, first match only (its own `all`
+        // note says what that costs). If a second rule ever carries this exact
+        // triple, the plant lands on the wrong rule and R1 reports NOT CAUGHT —
+        // LOUD, not a silent green, which is why this is a boundary and not a
+        // repair. The real fix is a uniqueness assertion in doorplant; that
+        // touches every corpus in the tree and is not a gate's act to make.
         find: '  position: fixed; width: 26rem; max-width: 92%;',
         replace: '  position: fixed !important; width: 60rem !important; max-width: none !important; left: -8rem !important;',
         expectRed: /R1.*(spans .* in a .* px view|escapes)/,

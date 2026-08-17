@@ -31242,7 +31242,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '160adeb637';
+const SOURCE = '88d90a85e6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -31276,7 +31276,7 @@ const SOURCE = '160adeb637';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0769';
+const ORDINAL = '0770';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -37700,8 +37700,26 @@ function flaskPresentation(def, options = {}) {
 }
 
 /**
- * Shared, placement-independent flask action menu. The caller supplies the
- * plan and owns mutations; selection and inspection are inert here.
+ * Shared flask action menu. The caller supplies the plan and owns mutations;
+ * selection and inspection are inert here.
+ *
+ * IT IS NOT "PLACEMENT-INDEPENDENT" — IT IS UNPLACED, AND THIS LINE SAID THE
+ * FIRST THING UNTIL 2026-08-17. `.flask-action-menu` has NO rule in any
+ * stylesheet, so the root below is `position: static`, transparent, `z-index:
+ * auto`, appended last to `.combat` / `.mapscreen`. Photographed on ?shot=combat
+ * tapping the first flask slot: at 1200x730 it renders (0,689)-(1200,730) — full
+ * width, 593 local px BELOW an anchor at (251,96); at 390x844 it renders
+ * (0,897.8)-(433.3,937.8), 727 local px below an anchor at (10,144.9), on the
+ * bottom edge, its Use and Inspect rows colliding with the DRAW and DISCARD
+ * counters. A context menu that opens at the other end of the screen from the
+ * control that summoned it.
+ *
+ * WHY THE WORDING MATTERED: gating d705b66, this docstring was cited as evidence
+ * that the menu wants no anchored placement, and Marina's relay that it DOES
+ * want one was scored wrong on the strength of it. The artifact wins. NOT fixed
+ * here — anchoring it is a design act (Sunna's read, and it adds a placeAnchored
+ * caller, which she has refused twice on other surfaces), and it is owed a card.
+ * This comment exists so nobody cites the old sentence again. — Bjorn
  */
 function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');

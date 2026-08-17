@@ -36,13 +36,28 @@
 //                 intent — `under`, not `beside` — and the reason the intent is
 //                 named by the caller instead of guessed from the geometry.
 //
-// THE DOOR. Every number is read off a real boot: served over http, loaded in
-// headless Chromium, the real hover / the real click, `getBoundingClientRect`
-// converted to local px once (fx.js's rule) before anything is compared. The
-// declared gap is read with `getComputedStyle(el).getPropertyValue('--place-gap')`
-// — the same call placeAnchored makes, off the same cascade. `--selftest` plants
+// THE DOOR, AND IT IS NARROWER THAN THIS HEADER CLAIMED UNTIL 2026-08-17. Every
+// number is read off a real boot: served over http, loaded in headless Chromium,
+// `getBoundingClientRect` converted to local px once (fx.js's rule) before
+// anything is compared. The declared gap is read with
+// `getComputedStyle(el).getPropertyValue(PLACE_GAP_PROP)` — the same call
+// placeAnchored makes, off the same cascade, and the property NAME is read out
+// of src/ui/fx.js rather than typed here (see PROP below). `--selftest` plants
 // its known-bads as file bytes in a copied real tree (tools/doorplant.mjs) and
 // runs this whole tool from the copy.
+//
+// WHAT THE GESTURE ACTUALLY IS. This header said "the real hover / the real
+// click" and that was wider than its predicate (Bjorn, gating d705b66). The
+// hover is `el.dispatchEvent(new PointerEvent('pointerenter'))` and the open is
+// `button.click()` — SYNTHESIZED DOM EVENTS dispatched inside the page, not CDP
+// `Input.dispatchMouseEvent`. Placement is computed from the element's own rect
+// either way, so every geometry number below is sound. What this door CANNOT
+// see is REACHABILITY: a control covered by another element, scrolled out of the
+// hit-test, or behind a full-screen layer answers a dispatched pointerenter
+// exactly as a reachable one does. A green P3 is a claim about where the tooltip
+// LANDS, never about whether a thumb can summon it. Reachability has its own
+// tools — actionreach.mjs, screenreach.mjs — and this one points at them rather
+// than implying it covered them.
 //
 // THE NEIGHBOURHOOD, stated because the Gate asks (CHARTER 2b). P2's 0.5 is not
 // a verdict threshold — it separates float noise from a real disagreement, and
@@ -60,12 +75,51 @@
 //     bubble in the veil's local space with its own clamp, and main.js's
 //     ?shot=fx points are a third hand-rolled site. Neither is measured here and
 //     neither is converted — `unknown`, named rather than implied.
-//   · P3 IS THE HAND AND NOTHING ELSE. Every other attachTooltip caller now
-//     passes `clear: el.parentElement` too, and none of them is sampled. The
-//     disclosure faces (`.disc-faces`) are the obvious next one.
-//   · LINUX HEADLESS CHROMIUM, two shapes, default Text size and UI size. The
-//     gap is `px` and must not track either dial (Law 4 clause 3); that it does
-//     not is a claim about the CSS, and this tool never turns the dials.
+//   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.
+//     Every other attachTooltip caller passes `clear: el.parentElement` too and
+//     none is sampled HERE. It is no longer unknown: 160 tooltip-bearing controls
+//     over EIGHT ?shot= surfaces (customize, combat, map, compendium, coop, shop,
+//     profile, event) at both shapes, 8c34bc0 against d705b66, same synthesized
+//     door as P3. 158 matched by key — 84 placements moved, 74 unchanged, ZERO
+//     regressions (not one control where the sibling count or the worst sibling
+//     coverage rose); worst coverage IMPROVED on 79 and went from >=99.9% to
+//     exactly 0 on TWENTY-ONE, including the settings tab strip (`.set-tabs`,
+//     5 siblings at 100% — a Law 3 surface), `.cp-grid` (96.3%), `.disc-faces`
+//     (6 siblings at 100%), `.mh-actions` and `.coop-flasks`. The 2 unmatched
+//     rows each side are the same hovered map node, whose own rect differs by
+//     ~2 px under its hover scale. That sweep is a scratch probe, not a shipped
+//     check: P3 stays the hand because the hand is where the corpus can plant,
+//     and a one-off measurement is a receipt, not coverage.
+//   · A RED P1 TAKES P2 WITH IT AND THE DENOMINATOR MOVES SILENTLY. gapChecks
+//     returns after a P1 finding, so a run with an undeclared gap prints 5
+//     checks where the clean run prints 7. It cannot hide a VERDICT — P1 is
+//     already red and the exit is 1 — but "N check(s)" in the summary is not a
+//     constant and must not be read as a coverage number.
+//   · P3 IS VACUOUS ON A HAND OF ONE. It counts SIBLINGS touched; with a single
+//     card there are none, so `0 sibling cards touched` is green about nothing.
+//     Named rather than asserted — an unwatched floor is decoration, and no
+//     plant in this corpus renders a short hand.
+//   · THE FLASK ACTION MENU IS NOT MEASURED HERE AND IT IS THE WORST PLACED
+//     SURFACE IN THE TREE. flask.js calls itself "placement-independent" and has
+//     no stylesheet rule at all, so it is `position: static`, transparent, and
+//     appended last to `.combat`. Measured 2026-08-17, tapping the first flask
+//     slot on ?shot=combat: at 1200x730 the menu renders (0,689)-(1200,730),
+//     593 local px below an anchor at (251,96); at 390x844 it renders
+//     (0,897.8)-(433.3,937.8), 727 local px below an anchor at (10,144.9), on
+//     the bottom edge, colliding with the DRAW and DISCARD counters. It is not
+//     placement-independent; it is unplaced. It is NOT wired to placeAnchored
+//     here — that is a design act and Sunna's read — but nobody should read this
+//     tool's green as covering it.
+//   · LINUX HEADLESS CHROMIUM, two shapes. TEXT SIZE IS NOW MEASURED, UI SIZE IS
+//     NOT. Law 4 clause 3 says the gap must not answer the Text-size dial;
+//     measured at 1200x730 with ?shotSettings textSize S/M/L/XL, html font-size
+//     9/10/11/12 px, the declared gap stays "14px" and the rendered separation
+//     stays 14.01 local px at S, M and L. At XL the tooltip is tall enough that
+//     the `left` candidate stops fitting and it flips to `above` — the GAP is
+//     still 14, the SIDE is not the same, and no check watches the side at XL.
+//     UI size is untouched: the gap is local px under `body { zoom }`, so it
+//     scales with UI size by construction (Law 4 clause 2 wants exactly that),
+//     which is an argument and not a measurement.
 //   · P2 SAYS THE RENDERED GAP MATCHES THE DECLARED ONE. It says nothing about
 //     whether 14 px is the right number for a human — that is Sunna's read.
 //
@@ -80,7 +134,7 @@
 // stops being a length a stylesheet owns.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -169,6 +223,23 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const SHAPES = [{ w: 390, h: 844, d: 3, mobile: true }, { w: 1200, h: 730, d: 1, mobile: false }];
 const GAP_TOL = 0.5; // local px — float noise, not a verdict threshold (see header)
 
+// THE PROPERTY NAME HAS ONE HOME TOO, AND IT IS NOT THIS FILE. fx.js exports
+// PLACE_GAP_PROP with the docstring "so the stylesheet, the code and any
+// instrument agree" — and until 2026-08-17 this instrument typed the literal
+// instead, which is the same second-copy shape the tool exists to catch, one
+// level up on the NAME rather than the value (Bjorn, gating d705b66). Its
+// failure mode was a FALSE RED: rename the property in fx.js and ui.css together
+// — a correct change — and this tool reported "--place-gap is UNDECLARED" and
+// accused the code of a defect it did not have. Read out of the source instead,
+// so there is nothing to disagree with. A missing export is exit 2 (NOTHING
+// RAN), never a default: a guessed name would measure the wrong cascade and
+// call it green.
+const PROP = (/export const PLACE_GAP_PROP = '([^']+)'/.exec(readFileSync(join(ROOT, 'src/ui/fx.js'), 'utf8')) || [])[1];
+if (!PROP) {
+  console.error('placement: src/ui/fx.js no longer exports PLACE_GAP_PROP — the gap property name has no home to read, and guessing it would measure the wrong cascade');
+  process.exit(2);
+}
+
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
   ws.addEventListener('message', (e) => { const m = JSON.parse(e.data);
@@ -209,7 +280,7 @@ const READ = (anchorSel, placedSel) => `(() => {
   const L = (el) => { const r = el.getBoundingClientRect();
     return { left: r.left/z, top: r.top/z, right: r.right/z, bottom: r.bottom/z, w: r.width/z, h: r.height/z }; };
   const a = L(a0), p = L(p0);
-  const raw = getComputedStyle(p0).getPropertyValue('--place-gap').trim();
+  const raw = getComputedStyle(p0).getPropertyValue(${JSON.stringify(PROP)}).trim();
   const declared = parseFloat(raw);
   const axes = [];
   if (p.left  >= a.right)  axes.push({ side: 'right', gap: p.left - a.right });
@@ -242,10 +313,10 @@ const bad = (id, where, msg) => { checks++; findings.push(`${id}  ${where} — $
 function gapChecks(where, surface, r) {
   if (r.missing) { bad('P1', where, `${surface}: ${r.missing} is not on the screen — nothing measured`); return; }
   if (r.declared == null || !(r.declared > 0)) {
-    bad('P1', where, `${surface}: --place-gap is ${r.raw ? `"${r.raw}"` : 'UNDECLARED'} — placeAnchored resolves that to 0 and welds the panel to its anchor`);
+    bad('P1', where, `${surface}: ${PROP} is ${r.raw ? `"${r.raw}"` : 'UNDECLARED'} — placeAnchored resolves that to 0 and welds the panel to its anchor`);
     return;
   }
-  ok('P1', where, `${surface}: --place-gap declared "${r.raw}" (${r.declared} local px)`);
+  ok('P1', where, `${surface}: ${PROP} declared "${r.raw}" (${r.declared} local px)`);
   if (!r.axes.length) {
     bad('P2', where, `${surface}: the panel overlaps its anchor on BOTH axes — the bound answered, not a side, so there is no rendered gap to compare`);
     return;
@@ -256,15 +327,31 @@ function gapChecks(where, surface, r) {
   else bad('P2', where, `${surface}: rendered ${seen} — declared ${r.declared}. The gap the browser drew is not the gap the stylesheet owns: the code is carrying a second copy`);
 }
 
+// THE PROFILE IS REMOVED, AND IT IS NOT HOUSEKEEPING. A headless Chromium
+// --user-data-dir is ~11 MB and this tool makes one per invocation; --selftest
+// invokes it six times. Measured 2026-08-17, from this tool's own first day:
+// 18 stranded `placement-*` dirs (~180 MB) in the authoring session's TMPDIR and
+// 7 more in the gating session's, on a box already at 88% disk with /tmp holding
+// 22 GB over 2583 directories. 063ccdd fixed exactly this for creationbrief.mjs
+// three commits below and the pattern did not travel: 37 tools in tools/ launch
+// Chrome on a mkdtemp'd profile and 25 of them never remove it. THIS IS A PATCH,
+// SAID OUT LOUD — the collapse is one shared launcher, not a thirteenth copy of
+// the removal (Bjorn, gating d705b66).
+let PROFILE = null;
+const dropProfile = () => { if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; } };
+
 async function main() {
   const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
   const profile = mkdtempSync(join(tmpdir(), 'placement-'));
+  PROFILE = profile;
   const s = await serve({ root: ROOT, port: 8294, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`placement — ${base} (root ${ROOT})`);
-  console.log('DOOR: real boot over http in headless Chromium, real hover and real click; every');
-  console.log('      box converted to LOCAL px once before anything is compared; the declared gap');
-  console.log(`      read with the same getComputedStyle('--place-gap') placeAnchored uses.`);
+  console.log('DOOR: real boot over http in headless Chromium; every box converted to LOCAL px');
+  console.log('      once before anything is compared; the declared gap');
+  console.log(`      read with the same getComputedStyle('${PROP}') placeAnchored uses — the name`);
+  console.log(`      out of src/ui/fx.js PLACE_GAP_PROP, not typed here. The hover and the open are`);
+  console.log('      DISPATCHED DOM events, not CDP input: placement is measured, reachability is not.');
   const { child, wsUrl } = await launchChrome(browserPath, profile);
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let ran = 0;
@@ -353,9 +440,10 @@ async function main() {
   }
 
   cdp.close(); child.kill(); await s.close?.();
+  dropProfile();
   if (!ran) { console.error('placement: NOTHING RAN'); process.exit(2); }
   console.log(findings.length ? `\nplacement: ${findings.length} FINDING(S) over ${checks} check(s)` : `\nplacement: all green — ${checks} check(s)`);
   process.exit(findings.length ? 1 : 0);
 }
 
-main().catch((e) => { console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });
+main().catch((e) => { dropProfile(); console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });
