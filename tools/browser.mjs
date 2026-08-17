@@ -54,8 +54,33 @@
 // `TMPDIR=<short empty dir>` makes a leftover this run's BY CONSTRUCTION.
 // Keep it SHORT — the profile holds `SingletonSocket`, a UNIX socket path is
 // capped at 108 bytes, and an over-long TMPDIR means Chrome never comes up.
-// `launchBrowser` refuses a profile path over PATH_BUDGET rather than handing
-// you a browser that mysteriously does not start.
+// `launchBrowser` refuses a profile path over PATH_BUDGET.
+//
+// AND THAT REFUSAL DOES NOT COVER THE BAND IT SAYS IT COVERS — measured by
+// Bjorn gating this file, and the sentence is narrowed to the measurement
+// rather than kept. It read "rather than handing you a browser that
+// mysteriously does not start"; between 62 and 90 bytes it hands you exactly
+// that. Ladder, `/opt/pw-browsers/chromium`, profile path built to an exact
+// length, twice each, same door as every other number here:
+//
+//   pinTmp ON   58 / 60 / 61 -> LAUNCHED, wsUrl, removed
+//   pinTmp ON   62 .. 90     -> Chrome dies SIGTRAP with no endpoint. LEGAL by
+//                               the guard (<= 90), dead in fact, and the error
+//                               names the BINARY, not the path.
+//   pinTmp OFF  66 / 70      -> LAUNCHED. 80 / 90 -> SIGTRAP.
+//
+// So the real ceiling under the pin is 61, not 90, and the pin — the mechanism
+// that closes the 2208 — is what costs the ~10 bytes: it puts Chrome's own
+// scoped temp INSIDE the profile, and those paths are longer than
+// `SingletonSocket`. With the longest prefix in tools/ (`arcane-exposure-visual-`,
+// 23 bytes + 6 of mkdtemp + a slash) a WORKING TMPDIR is 31 bytes, not 83.
+// `/home/user/AshenSpire-bjorn-g6` is 30. An ordinary seat setting TMPDIR to
+// their own clone directory is one byte inside the cliff for that tool and over
+// it for the next, and PATH_BUDGET is silent for all 29 bytes of the band.
+// THE NUMBER IS THE PREDICATE AND THE PREDICATE IS VIRA'S — not narrowed here
+// (MR-101), and no plant is left behind red on it. A card is owed: move the
+// budget to the measured ceiling, or measure `SingletonSocket` and the pinned
+// temp path separately and refuse on the longer one.
 //
 // SELFTEST: `node tools/browser.mjs --selftest` (needs CHROME). Eight
 // scenarios, each in its own private TMPDIR, each asserting the leftover SET.
@@ -65,6 +90,32 @@
 // pin — one run with pinning ON (nothing left) and one with it OFF (a
 // `.org.chromium.Chromium.*` left, named). A check born red is a check nobody
 // keeps, so the removal was made whole first and the plants were watched after.
+//
+// WHAT THE EIGHT COULD NOT SEE, AND ONE OF THE TWO IS FIXED HERE (Bjorn):
+//   * FIVE OF EIGHT PASSED AGAINST A LAUNCHER THAT LAUNCHED NOTHING. Watched:
+//     `launchBrowser` replaced by a stub returning no profile and no child ->
+//     5 PASS / 3 FAIL; the same five also passed when the import failed to
+//     resolve at all. Every one of them asserted only `leftover: 'none'`, and an
+//     empty directory is what you get either way. REPAIRED: each scenario that
+//     expects a launch now asserts a receipt — a browser launched, with its
+//     profile INSIDE that scenario's private TMPDIR, which is also what makes
+//     the leftover count attributable. Re-watched, both edges: real launcher
+//     8 PASS / 0 FAIL, the same stub 0 PASS / 8 FAIL where it used to be 5/3.
+//   * THE GROUP KILL HAS NO PLANT — see signalGroup. Stripping it leaves the
+//     suite green. Not repaired here: a plant for it would have to reproduce a
+//     ~2.5%-per-run race, and a check that flakes is worse than a named gap.
+//
+// AND THE LAUNCHER CLOSES THE SOURCE IN THIS TREE ONLY — measured on this box
+// while gating, 2026-08-17 07:21 UTC. Seven top-level Chromiums alive, all
+// reparented to init: six hold PRE-MIGRATION profiles (`placement-*`,
+// `creationbrief-*`, aged 3 h 09 m to 4 h 45 m, all older than this commit), and
+// the seventh — pid 7245, no `--user-data-dir` at all, `--headless=new`,
+// `--remote-debugging-port=9396` — is the OLD `profile-first-run.mjs` spawn line
+// verbatim, from a checkout that has not taken this commit. Nothing in this tree
+// can spawn that: every launch here passes `--user-data-dir` and `--no-first-run`.
+// So the door is shut where it is installed and every unmigrated worktree on the
+// box is still a source until it pulls. That is a fact about clones, not a defect
+// in this file, and it is why the pile keeps growing after tonight.
 //
 // BOUNDARY. Linux, headless Chromium 141, one box. Nothing here is measured on
 // Windows or macOS; `SIGKILL` and the socket budget are POSIX assumptions.
@@ -86,6 +137,9 @@ import { join, resolve } from 'node:path';
 
 // A UNIX socket path is capped at 108 bytes and Chrome puts `SingletonSocket`
 // inside the profile. 90 leaves room for that name and for the mkdtemp suffix.
+// MEASURED CEILING IS 61 WITH pinTmp ON, NOT 90 — see the header. This number
+// is 29 bytes too generous and nothing watches either side of it; it is left as
+// its author set it and named rather than moved.
 export const PATH_BUDGET = 90;
 
 const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--remote-debugging-port=0', '--no-first-run'];
@@ -140,8 +194,33 @@ export function removeTree(dir, { attempts = 12, delayMs = 60, settleMs = 250 } 
 /**
  * SIGNAL THE WHOLE PROCESS GROUP, NOT THE BROWSER PROCESS.
  *
- * This is the correction that made the removal deterministic, and it was
- * MEASURED, not reasoned. With `child.kill()` alone — the shape every tool in
+ * THE WORD WAS "DETERMINISTIC" AND IT IS NARROWED, BY COUNTING (Bjorn, gating
+ * this file — and I prescribed this mechanism before it was measured, so scoring
+ * it is scoring my own prescription and the reader should weigh it that way).
+ * Re-derived here: this launcher is 96/96 clean at 12-way concurrency (36 + 60,
+ * private TMPDIR per run) and the selftest is 8/8 three times. But a 2x2 over
+ * the two mechanisms this file credits — the group signal, and removeTree's
+ * settle-and-recheck — cannot tell them apart, and cannot license the word:
+ *
+ *   both (as shipped)          60/60 clean
+ *   group signal stripped      60/60 clean   <- and --selftest still 8 PASS / 0 FAIL
+ *   settle/recheck stripped    60/60 clean
+ *   NEITHER (~the first cut)   57/60 — three profiles left with close()
+ *                              reporting removed=true and exit 0. The silent
+ *                              partial, reproduced. Then 60/60 on the RE-RUN of
+ *                              the same mutant.
+ *
+ * So: the defect is real and watched; the fix is right; and the population that
+ * could contradict "deterministic" fails at ~3/120 with a re-run of ZERO. At
+ * that rate 44 clean runs — the evidence this shipped on — would be expected
+ * about a third of the time FROM THE BROKEN SHAPE. What is licensed is the
+ * count, not the word, and NEITHER mechanism alone failed in 60 trials: which of
+ * the two did the work is `unknown` and needs a denominator nobody has spent.
+ * The 0/8 comparator is a different and larger claim — that shape had no exit
+ * guard, no real join, a swallowed catch AND no TMPDIR pin, and the pin alone
+ * strands a `.org.chromium.Chromium.*` on EVERY run (P7). 0/8 measures the pin.
+ *
+ * With `child.kill()` alone — the shape every tool in
  * this tree uses — ten concurrent runs left ONE profile behind, 16 KB holding a
  * fresh `Default/`, and `close()` reported SUCCESS and exited 0. `existsSync`
  * was false when it was asked: the tree really was gone, and then an ORPHANED
@@ -294,8 +373,11 @@ export async function launchBrowser({
   let child;
   try {
     // `detached: true` makes the child a PROCESS GROUP LEADER so `-pid` reaches
-    // its renderers and zygote. See signalGroup — this is load-bearing, not
-    // tidiness, and it is the difference between 9-of-10 and 10-of-10.
+    // its renderers and zygote. See signalGroup — the mechanism is reasoned and
+    // right; the claim that it is "the difference between 9-of-10 and 10-of-10"
+    // is NOT what was measured, and the 2x2 in signalGroup's note says so:
+    // stripping it left 60/60 clean and the selftest 8/8. Nothing here defends
+    // it, so a hand that deletes it gets a green suite.
     child = spawn(bin, argv, { stdio, env, detached: true });
   } catch (e) {
     hardSweep(entry);
@@ -394,6 +476,10 @@ const SCENARIOS = [
     expect: 'launchBrowser throws AND the profile it made is gone',
     body: `try { await launchBrowser({ prefix: 'st-', browser: '/bin/true', timeoutMs: 4000 }); } catch (e) { console.log('THREW ' + e.message.split('\\n')[0]); }`,
     leftover: 'none',
+    // The one scenario where NO launch is expected to succeed: the profile is
+    // made and the launch then throws, so the LAUNCHED receipt below never
+    // prints and must not be required.
+    launches: false,
     mustSay: /THREW browser: \/bin\/true exited/,
   },
   {
@@ -454,10 +540,17 @@ async function selftest() {
   for (const s of SCENARIOS) {
     const td = mk('/tmp/vbst/r');
     const script = join(td, 'run.mjs');
-    writeFileSync(script, `import { launchBrowser } from ${JSON.stringify(join(HERE, 'browser.mjs'))};\n`
-      + `import { chmodSync, writeFileSync } from 'node:fs';\n`
+    // EVERY 'none' SCENARIO PRINTS A RECEIPT THAT A BROWSER WAS ACTUALLY
+    // LAUNCHED, AND IT IS NOT DECORATION — see the note above SCENARIOS.
+    // `writeSync(1, …)` and not `console.log`, because P4 calls `process.exit`
+    // in the next statement and a piped `console.log` can be truncated by it:
+    // the receipt has to be on disk before the exit, or the assertion goes red
+    // for the wrong reason.
+    writeFileSync(script, `import { launchBrowser as _launchBrowser } from ${JSON.stringify(join(HERE, 'browser.mjs'))};\n`
+      + `import { chmodSync, writeFileSync, writeSync } from 'node:fs';\n`
       + `import { spawnSync } from 'node:child_process';\n`
       + `import { join } from 'node:path';\n`
+      + `const launchBrowser = async (o) => { const b = await _launchBrowser(o); writeSync(1, 'LAUNCHED ' + b.profile + ' pid=' + (b.child && b.child.pid) + '\\n'); return b; };\n`
       + `const BIN = ${JSON.stringify(BIN)};\n`
       + `${s.body}\n`);
     const env = { ...process.env, TMPDIR: td, TMP: td, TEMP: td };
@@ -482,6 +575,22 @@ async function selftest() {
     const chromiumTemp = left.filter((n) => n.startsWith('.org.chromium.Chromium.'));
 
     const checks = [];
+    // AN EMPTY DIRECTORY IS NOT A PASS UNTIL SOMETHING PUT A PROFILE IN IT.
+    // Measured 2026-08-17 by Bjorn while gating this file: replace
+    // `launchBrowser` with a function that launches nothing, makes no profile
+    // and removes nothing, and FIVE OF THE EIGHT SCENARIOS — C, P1, P2, P3, P4,
+    // every one whose whole assertion is `leftover: 'none'` — still print PASS.
+    // The same five pass when the import itself fails to resolve. `leftover 0`
+    // was being satisfied by absence for the wrong reason, which is the exact
+    // silent-partial shape this file exists to end, one level up in the
+    // instrument. So each of them now also asserts the receipt: a browser was
+    // launched, and its profile was INSIDE this scenario's private TMPDIR —
+    // which is also what makes the leftover count attributable at all.
+    if (s.launches !== false) {
+      const m = /LAUNCHED (\S+) pid=(\S+)/.exec(out);
+      checks.push([!!m, `a browser was actually launched (receipt: ${m ? `${m[1]} pid=${m[2]}` : 'NONE — nothing launched, so an empty TMPDIR proves nothing'})`]);
+      if (m) checks.push([m[1].startsWith(`${td}/`), `and its profile was inside this scenario's private TMPDIR (${m[1]} under ${td})`]);
+    }
     if (s.leftover === 'none') {
       checks.push([left.length === 0, `nothing left in the private TMPDIR (found ${left.length}: ${left.join(', ') || '-'})`]);
     } else if (s.leftover === 'some') {
