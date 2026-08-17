@@ -569,8 +569,49 @@ const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
 //     would have called that shape working and failed the gate for refusing it.
 //     I know because it did.
 const WHOLE_SET = ['.end-turn', '.hand-area', '.energy-orb', '.pile.draw', '.pile.discard'];
+// ⚠ THIS LIST WAS ONE `?shot=` LONG AND WE READ ITS GREEN AS WIDE.
+//
+// `grep "q: '?shot=" tools/uprightgate.mjs` returned exactly ONE match — combat
+// — for as long as this file has existed. Then a confirm panel landed off the
+// bottom of the Smith at y≈991 in an 844 px viewport, on a screen NO anchor gate
+// we own had ever opened, and every gate in the tree stayed green through it
+// (measured by Sten, re-measured here on `b30e624`).
+//
+// The green was HONEST AND NARROW; the reading was wide. That is this house's own
+// rule broken on this house's own instrument, and the fix is a surface, not a
+// sentence: a `?shot=` per screen where a run can be stranded by a control it
+// cannot reach.
+//
+// `drive` IS WHY THE REST SCREEN COULD NOT BE ADDED BEFORE. Its dangerous control
+// does not exist at mount: the Smith grid opens on a tap and the confirm panel
+// only exists once a card is armed. A surface whose subject is two taps deep
+// needs a way to take those taps, and `read()` now runs `drive` after `ready`
+// and before it measures. Nothing here POSITIONS anything — Bjorn's rule holds,
+// and it is why the drive clicks the controls a player clicks instead of calling
+// scrollIntoView on the panel.
 const SURFACES = [
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.end-turn')`, required: '.end-turn', whole: WHOLE_SET },
+  {
+    // THE SMITH'S CONFIRM PANEL. `required` is the ACCEPT button, because losing
+    // it is what strands the player: the upgrade cannot be taken and — the half
+    // that makes it a wall rather than a nuisance — CANCEL is beside it and just
+    // as gone, so the panel cannot be dismissed either. `?shot=rest` poses floor
+    // 8 with twenty cards, which is the shape the grid actually reaches.
+    name: 'rest-smith',
+    q: '?shot=rest',
+    ready: `!!document.querySelector('#smith-opt')`,
+    drive: `(() => {
+      const smith = document.querySelector('#smith-opt');
+      if (!smith) return 'no smith panel';
+      smith.click();
+      const card = document.querySelector('#smith-grid .card');
+      if (!card) return 'no candidate card in the grid';
+      card.click();
+      return document.querySelector('.beat-confirm .beat-yes') ? 'ok' : 'no confirm panel armed';
+    })()`,
+    required: '.beat-confirm .beat-yes',
+    whole: ['.beat-confirm .beat-yes', '.beat-confirm .beat-no'],
+  },
   { name: 'title', q: '', ready: `!!document.querySelector('#app *')`, required: null, whole: [] },
 ];
 
@@ -1256,6 +1297,18 @@ async function main() {
     await cdp.send('Page.navigate', { url: base + surface.q }, S);
     await until(surface.ready, `${surface.name} to mount at ${w}x${h}`);
     await ev(`document.documentElement.style.fontSize='${TEXT[tKey]}'; 'ok'`);
+    // A SURFACE WHOSE SUBJECT IS TWO TAPS DEEP TAKES THE TAPS — after the text
+    // size is applied, so the drive lays the panel out at the size being
+    // measured. It NEVER positions the target; it clicks what a player clicks.
+    // A drive that cannot reach its own subject is `unknown`, and unknown is not
+    // a pass: it fails loudly here rather than measuring an absent element.
+    if (surface.drive) {
+      const drove = await ev(surface.drive);
+      if (drove !== 'ok') {
+        throw new Error(`uprightgate: ${surface.name} drive failed at ${w}x${h} (${drove}) — NOTHING WAS MEASURED`);
+      }
+      await wait(120);
+    }
     // The auto-zoom re-flexes on a 150ms debounce and re-applies at +300ms from
     // boot; 800 clears both, and the gate is written by the same call.
     await wait(800);
@@ -1312,6 +1365,50 @@ async function main() {
     }
 
     const bad = [];
+
+    // --- clause R: EVERY declared required control, on EVERY fitting shape ---
+    //
+    // ⚠ WHY THIS CLAUSE EXISTS, AND IT IS A SHARPER FINDING THAN THE ONE THAT
+    // SENT ME HERE. The brief said this file held ONE `?shot=` and read its
+    // green as wide. True — and not the whole defect. Three lines above,
+    // clause W reads `rows.find(([s]) => s.name === 'combat')`: **THE SURFACE IS
+    // HARDCODED IN THE CLAUSE.** This list could have held ten surfaces and
+    // every one of them would have been measured, printed, and gated on
+    // nothing. Adding a surface would have LOOKED like widening the gate.
+    //
+    // So clause R is a LOOP over `SURFACES`, not a second hardcoded name, and it
+    // is ADDITIVE: clause W keeps combat's verdict and its wall/K bookkeeping
+    // untouched, because 24 shapes' verdicts hang off it and flipping those
+    // while chasing a panel would be two changes wearing one commit.
+    //
+    // WHAT IT GATES: a required control that is `unreachable` on a shape the
+    // game does NOT refuse. On a shape the upright gate is standing over, the
+    // player is being told to rotate and nothing behind the notice is a wall —
+    // that is clause W's whole argument and it applies here unchanged.
+    for (const [surface, r] of rows) {
+      if (!surface.required || surface.name === 'combat') continue;
+      if (r.gate) continue;                      // the game already refuses this shape
+      if (!r.ctl || !r.ctl.present) {
+        bad.push(`clause R: ${surface.required} is not in the DOM on ${surface.q || 'the title screen'} — UNKNOWN, and unknown is not a pass`);
+        continue;
+      }
+      if (r.ctl.reach === 'unreachable') {
+        const c = r.ctl.clipper;
+        bad.push(`clause R: ${surface.name} — ${surface.required} is UNREACHABLE at ${shape}: `
+          + `top ${r.ctl.top}..${r.ctl.bottom} in a ${h} px viewport, ${r.ctl.onScreenPct}% on screen, no scroll path`
+          + (c ? ` (nearest clipper ${c.el}, overflow-y ${c.overflowY}, scrollHeight ${c.scrollH} > clientHeight ${c.clientH})` : '')
+          + ` — and the shape is NOT refused, so the player is stranded on it`);
+      }
+      // The partner control is reported, never gated: CANCEL going with ACCEPT
+      // is what turns a nuisance into a trap, and saying so is worth a line.
+      for (const sel of Object.keys(r.boxes || {})) {
+        const b = r.boxes[sel];
+        if (b.pct >= 99.9) continue;
+        console.log(`      (cut) ${surface.name}: ${sel.padEnd(24)} ${b.pct}% on screen, ${r.reach[sel]}, rect top ${b.top} bottom ${b.bottom} in ${shape}`
+          + `${b.scroller ? ` — scroller ${b.scroller}` : ' — NO scroll path to the rest'}`);
+      }
+    }
+
     // --- clause W: the wall must be gated ------------------------------------
     if (!combat.ctl || !combat.ctl.present) {
       bad.push(`.end-turn is not in the DOM on ?shot=combat — the required control is UNKNOWN, and unknown is not a pass`);
@@ -1464,7 +1561,11 @@ async function main() {
   (b) TEXT SIZE — this run measured ${textKey} only. Content height moves with the
       setting, so a shape that fits at M can wall at XL. \`--text XL\` is the other
       cell and it is not run by default.
-  (c) SURFACES BEYOND combat AND title. The map at 844x390 is a maze rather than a
+  (c) SURFACES BEYOND THE DECLARED LIST. Clause W still reads combat and only
+      combat; clause R covers every OTHER surface that declares a required
+      control, and today that is the Smith's confirm panel. A screen with no
+      entry in that list is still unmeasured, and the list is the honest
+      statement of coverage: combat, rest-smith, title. The map at 844x390 is a maze rather than a
       wall (Bjorn: the ENTRANCE—BOSS strip is display:none above 700 px, 1074 px of
       the choice off screen) and the gate covers it by standing everywhere — but
       this tool names no required control there and therefore proves nothing there.

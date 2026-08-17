@@ -131,10 +131,24 @@ export const balance = {
     costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
-    // What a level GRANTS. 1 is his own number ("increase a stat by 1 point");
-    // the rest exist so he can find out what a level should feel like by
-    // playing it, which is what "that way I can test each" asks for.
-    pointsPerLevelChoices: [1, 2, 3, 5],
+    // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
+    // ladder in his own words: "i don't want a dial for hte level up, I want to
+    // be able to enter the value myself and maybe a slider with it that is
+    // synced with the value." Four chips let him test four things; he said he
+    // wants to test.
+    //
+    // ONE DOMAIN, TWO CONTROLS. The typed field and the slider read these two
+    // numbers, so they cannot disagree about what is enterable — a field that
+    // accepted 50 while the slider stopped at 20 would be the second copy of a
+    // domain, and the player would find it by dragging.
+    //
+    // THE CEILING IS ONE NUMBER HERE AND NOTHING ELSE. 20 is an experimental
+    // bound, not a design claim: at 20 a single level is four tiers of a stat.
+    // If he wants 50, this line is the whole change — no code, no UI, and the
+    // field will say it clamped rather than swallowing the value (Law 0 clause
+    // 5: the silent plausible answer is the dangerous one).
+    pointsPerLevelMin: 1,
+    pointsPerLevelMax: 20,
     // How many points buy one tier of a derived stat. 5 is what ships and is
     // the reason one level currently moves no number at all; 1 makes every
     // point visible, and the span between the two is the experiment.

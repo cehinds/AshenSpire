@@ -337,9 +337,10 @@ const ROWS = [
   // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
   // `derivedStatRules.defaults` — its one home, one import away, so this row
   // cannot drift from the rule it turns.
-  { cat: 'Advanced', key: 'levelUpValue', type: 'choice', def: String(LEVEL_DEFAULTS.pointsPerLevel),
-    choices: (LEVEL_DEFAULTS.pointsPerLevelChoices || []).map(String), label: 'Level-up value',
-    note: 'How many stat points one level at a shrine grants. Takes effect on the next level you buy, in any run — including one already in progress.' },
+  { cat: 'Advanced', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+    min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
+    label: 'Level-up value', applied: levelValueAppliedHtml,
+    note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
   { cat: 'Advanced', key: 'statTierSize', type: 'choice', def: String(DERIVED_DEFAULTS.pointsPerTier),
     choices: (LEVEL_DEFAULTS.tierSizeChoices || []).map(String), label: 'Stat points per tier',
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
@@ -497,6 +498,60 @@ function rowHtml(settings, r) {
     return `<div class="set-row set-row-wide">
         <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
+      </div>`;
+  }
+  // ---- 'number': A FIELD HE TYPES INTO, WITH A SLIDER BOUND TO IT ----------
+  //
+  // Constantine, 2026-08-17: "i don't want a dial for hte level up, I want to be
+  // able to enter the value myself and maybe a slider with it that is synced
+  // with the value."
+  //
+  // ⚠ WHY THIS IS A NEW TYPE AND NOT `type: 'range'`, WHICH IS THE OBVIOUS
+  // REUSE AND IS WRONG TWICE OVER:
+  //
+  //   1. `range` IS A VOLUME SLIDER. Its markup hardcodes min="0" max="100"
+  //      step="5" — a level value of 0 is legal in it, 1 is not reachable, and
+  //      the domain belongs to the row here, not to the control.
+  //   2. THOSE ARE THE EXACT LINES AURORA'S #181 EDITS. Reusing `range` would
+  //      have meant editing the one branch another house has a reviewed diff in,
+  //      to add the attributes it needs — turning a collision Marina published as
+  //      VOID at the code level into a real one, in the same act.
+  //
+  // So this branch is a sibling, it never enters the `range` branch, and it
+  // touches neither `.set-range` nor its handler. **Marina's published
+  // conclusion still holds; her stated REASON for it (a boolean row cannot
+  // reach that code path) is no longer the reason, and that is hers to correct
+  // rather than mine to quietly inherit.**
+  //
+  // PART A ONLY, AND PART B'S ABSENCE IS A RULING. His word was "MAYBE a slider
+  // with it that is synced with the value" — a maybe. Marina held the slider
+  // behind Aurora's #181 rather than spend their thirteen reviewed lines on our
+  // not-yet-existing ones, and Part B IS the rebase-behind she published to them.
+  //
+  // I MEASURED THE COLLISION SHE DEFERRED IT ON AND IT IS NOT THERE: this row is
+  // `type: 'number'`, so it never enters the `range` branch below and never
+  // touches `.set-range` or its handler, which are precisely and only what #181
+  // edits. THE DEFERRAL IS HONOURED ANYWAY — she published an order to another
+  // house, and correcting her own sentence is hers, not something I overtake by
+  // shipping. The measurement is the relay; the order is the order.
+  //
+  // `min`/`max`/`step` are the ROW's, so the domain lives in content and this
+  // markup states no number of its own — which is also why Part B cannot drift
+  // from the field: neither control is the value, the resolved number is.
+  if (r.type === 'number') {
+    const val = resolveNumberRow(settings, r);
+    return `<div class="set-row">
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div class="num-wrap">
+          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
+                 min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
+                 aria-label="${r.label}">
+          <!-- PART B, THE SYNCED SLIDER, IS NOT HERE. See the note above this
+               branch: it is one range input plus three lines in the handler, and
+               it waits on Aurora's 181 by Marina's order. NO BACKTICKS IN THIS
+               BLOCK - it sits inside a template literal, and I closed the string
+               with a pair of them once already tonight. -->
+        </div>
       </div>`;
   }
   if (r.type === 'range') {
@@ -669,6 +724,44 @@ function graceRefillAppliedHtml(settings, r) {
  * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
  * from content, so neither of these functions contains a number.
  */
+/**
+ * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
+ *
+ * THE ONE GATE. Every road into a `number` setting runs through here: the markup
+ * that renders it, the handler that commits it, the resolver the game reads it
+ * with, and a hand-edited profile arriving from disk. So the model can only ever
+ * receive an integer inside the row's own domain, whatever is stored — which is
+ * the property `tests/engine.test.js` 60d asserts over a table of rubbish.
+ *
+ * A TYPED FIELD IS A DOOR A LADDER NEVER OPENED, and every one of these answers
+ * had no reason to exist an hour ago:
+ *
+ *   ''  ·  null  ·  undefined      the DEFAULT. An empty field is not a zero.
+ *   'lots'  ·  NaN  ·  Infinity    the DEFAULT. Unreadable is unset — the same
+ *                                  rule `savedZoom` and `resolveMapMode` use.
+ *   0  ·  -3                       CLAMPED UP to `min`. A level that grants
+ *                                  nothing is a purchase that does nothing, and
+ *                                  a negative one would take points away.
+ *   1e9                            CLAMPED DOWN to `max`.
+ *   2.7                            FLOORED. `validateRunShape` requires integer
+ *                                  attributes, so a fractional grant would break
+ *                                  the run's shape three files downstream. It
+ *                                  never gets to leave this function.
+ *   '  7  '                        7. Trimmed, because a field lets him type it.
+ *
+ * FLOOR, NOT ROUND, and it is the tree's own rule rather than my preference:
+ * `derivedStatRules.defaults.rounding` is 'floor' and Constantine settled it in
+ * his own words on the HP formula — "CON 14 gives +2, not +3".
+ */
+export function resolveNumberRow(settings, row) {
+  if (!row) throw new Error('resolveNumberRow: no row');
+  const def = Number(row.def);
+  const raw = (settings || {})[row.key];
+  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw);
+  if (raw === '' || raw === null || raw === undefined || !Number.isFinite(n)) return def;
+  return Math.min(row.max, Math.max(row.min, Math.floor(n)));
+}
+
 function resolveChoiceNumber(settings, key) {
   const row = ROWS.find((r) => r.key === key);
   if (!row) throw new Error(`resolveChoiceNumber: no settings row named '${key}'`);
@@ -677,8 +770,36 @@ function resolveChoiceNumber(settings, key) {
   return row.choices.includes(s) ? Number(s) : Number(row.def);
 }
 
+/**
+ * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
+ * than its value. Exported so a test asserts against the row the screen actually
+ * renders instead of a second copy of its bounds.
+ */
+export function settingsRow(key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`settingsRow: no settings row named '${key}'`);
+  return row;
+}
+
 export function resolveLevelUpValue(settings) {
-  return resolveChoiceNumber(settings, 'levelUpValue');
+  return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
+}
+
+/**
+ * The `applied` line for the level-value row — SILENT WHEN THE PROMISE IS KEPT,
+ * which is Sunna's rule and is why this is not just a readout: "a line that says
+ * the same thing every time you open the screen is not a warning, it is
+ * decoration with a worried face."
+ *
+ * It speaks only when what he typed is NOT what the game will use, which is the
+ * one case a typed field creates and a ladder never could.
+ */
+function levelValueAppliedHtml(settings, row) {
+  const stored = (settings || {})[row.key];
+  if (stored === undefined || stored === null || stored === '') return '';
+  const used = resolveNumberRow(settings, row);
+  if (String(stored).trim() === String(used)) return '';
+  return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
 }
 
 export function resolveStatTierSize(settings) {
@@ -1020,6 +1141,43 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     };
     input.addEventListener('change', commit);
     input.addEventListener('blur', commit);
+  });
+
+  // 'number' rows: the typed field and its slider are ONE value.
+  //
+  // THE FIELD COMMITS ON change/blur, NOT ON EVERY KEYSTROKE, and that is the
+  // whole reason a typed field is usable here: clamping mid-type would fight
+  // him. Typing "12" passes through "1", and a per-keystroke clamp would rewrite
+  // it under his fingers. The slider commits on `input`, because dragging IS the
+  // gesture.
+  //
+  // EVERY COMMIT GOES THROUGH `resolveNumberRow`, so what reaches the profile is
+  // always an integer inside the row's own domain — and it WRITES BACK what it
+  // resolved, so a clamp or a rejection is visible in the field instead of being
+  // swallowed (Law 0 clause 5).
+  container.querySelectorAll('.num-wrap').forEach((wrap) => {
+    const field = wrap.querySelector('.set-num');
+    const key = field.dataset.key;
+    const row = ROWS.find((r) => r.key === key);
+    // ONE COMMIT PATH, WRITTEN FOR TWO CONTROLS BEFORE THE SECOND ONE EXISTS.
+    // `mirror` walks every input in the wrap, so Part B's slider is three lines
+    // — a tag in the markup above — and cannot fall out of sync with the field,
+    // because neither control is the value: the resolved number is.
+    const mirror = (val) => {
+      for (const input of wrap.querySelectorAll('input')) input.value = String(val);
+    };
+    const commit = (raw) => {
+      const val = resolveNumberRow({ [key]: raw }, row);
+      mirror(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+    };
+    // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
+    // clamp on every keypress would rewrite the value under his fingers.
+    field.addEventListener('change', () => commit(field.value));
+    field.addEventListener('blur', () => commit(field.value));
+    // Part B's slider commits on `input`, because dragging IS the gesture:
+    //   slider.addEventListener('input', () => commit(slider.value));
   });
 
   container.querySelectorAll('.set-range').forEach((slider) => {

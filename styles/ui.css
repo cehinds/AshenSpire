@@ -1589,6 +1589,39 @@ button.ev-choice.gp-focus .hold-hint { display: none; }
   flex-shrink: 0;
 }
 .choice-group .choice.on { background: rgba(201, 162, 39, 0.25); border-color: var(--gold); color: var(--gold); }
+/* ---- 'number' rows: a typed field with a slider bound to it ----------------
+   Constantine, 2026-08-17: "I want to be able to enter the value myself and
+   maybe a slider with it that is synced with the value."
+
+   ITS OWN SELECTORS, not `.set-range`'s — that class is a volume slider with a
+   0-100 domain and it is the code path Aurora's #181 has a reviewed diff in.
+   Sharing the styling would have re-coupled what the markup deliberately split.
+
+   THE FIELD IS THE CONTROL AND THE SLIDER IS THE AFFORDANCE, which is why the
+   field comes first in the DOM and takes the tab stop: he asked to type, and the
+   slider is his "maybe". `min-width` on the field, never a fixed width, so a
+   two-digit value is not clipped at XL text — Law 4 clause 4, a floor with
+   intrinsic growth. */
+.num-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+.num-wrap input.set-num {
+  min-width: 4.5rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--panel);
+  color: var(--gold);
+  border: 1px solid var(--map-structure);
+  border-radius: 4px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.num-wrap input.set-num:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+/* PART B'S SLIDER IS NOT STYLED HERE YET — it waits on Aurora's #181 (Marina's
+   order). Its rules land here, with its own selector and NOT `.set-range`'s: that
+   class is a 0-100 volume slider and is the code path #181 edits. On a narrow
+   shape it will be `display: none` — Law 5, a narrow shape spends width on
+   height, and the slider is the half he called "maybe" — with the field, which is
+   the half he asked for, fully enterable at every size. */
+
 .range-wrap { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .range-wrap .range-val { color: var(--gold); font-size: 1.1rem; width: 2.4rem; text-align: right; font-variant-numeric: tabular-nums; }
 input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor: pointer; }
