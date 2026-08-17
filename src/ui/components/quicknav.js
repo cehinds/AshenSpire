@@ -36,7 +36,7 @@
 // (measured: `combat-menu @ 18,49` at 390×844), so "hang it off the top-right"
 // would have put the list off-screen on exactly the shape it is for.
 
-import { anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { viewportLocalBox, placeAnchored } from '../fx.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { menuRows } from '../uiContent.js';
 import { isEngaged, focusFirst } from '../input.js';
@@ -200,19 +200,26 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
 }
 
 // Right-aligned under its button, then bounded regardless — see the header for
-// why the bound is not optional on a phone. `keep: Infinity`: this is a list of
-// words a player has to read, so all of it stays on screen.
+// why the bound is not optional on a phone. `keep: Infinity` (placeAnchored's
+// default): this is a list of words a player has to read, so all of it stays on
+// screen.
+//
+// THIS FUNCTION USED TO BE THE ARITHMETIC. It was tooltip.js's place() written
+// out a second time with two answers changed — one side instead of four, and
+// right-aligned instead of sliding — and neither file knew the other existed, so
+// a placement fix had two homes to land in and landed in neither. It is now the
+// two answers and nothing else: `intent: 'under'` (a dropdown hangs off its
+// button; when it does not fit, the bound answers, and that is this caller's
+// declared preference, not an oversight) and `align: 'end'` (its right edge on
+// the button's). The gap moved with it — `.qn-panel { --place-gap }` in ui.css,
+// the same one home #tooltip now reads, instead of `const gap = 6` here.
+//
+// NO `clear` HERE, ON PURPOSE. The ☰ button's group is the topbar, and a
+// dropdown that refused to hang under its own bar would have nowhere left to go.
+// A preference is only worth naming where the caller wants it.
 function position(anchorEl, panel) {
   const view = viewportLocalBox();
-  const a = anchorLocalBox(VIEWPORT_ORIGIN, anchorEl);
-  const b = anchorLocalBox(VIEWPORT_ORIGIN, panel);
-  const gap = 6; // local px, and meant to be: a hairline gap is not read text
-  const at = clampBox(
-    { left: a.left + a.width - b.width, top: a.top + a.height + gap, width: b.width, height: b.height },
-    view
-  );
-  panel.style.left = `${at.left}px`;
-  panel.style.top = `${at.top}px`;
+  const at = placeAnchored(panel, anchorEl, { intent: 'under', align: 'end', view });
   // A list taller than the screen scrolls inside itself rather than pinning its
   // tail off the bottom — Save & Quit is the last row and must be reachable.
   panel.style.maxHeight = `${Math.max(0, view.height - at.top - 8)}px`;

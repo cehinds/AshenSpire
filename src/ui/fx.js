@@ -121,6 +121,166 @@ export function clampBox(box, view, { pad = 4, keep = Infinity } = {}) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// ANCHORED PLACEMENT — one home for "put this element next to that one".
+//
+// WHY IT IS HERE AND NOT IN A NEW FILE. anchorLocalBox / viewportLocalBox /
+// clampBox above are already the placement home: measure in one space, bound in
+// that space. What they never held is the layer on top — WHICH SIDE, and how far
+// off. That was written out twice: tooltip.js place() and quicknav.js position().
+// Same shape both times (measure anchor, measure self, offset, clamp), different
+// answers, and neither could be fixed without editing the other.
+//
+// THE INTENT IS NAMED BY THE CALLER, NEVER GUESSED HERE. "Beside it" and "under
+// it" are DIFFERENT ANSWERS to different questions, and a function that picks
+// between them from the geometry is a function that will pick wrong on the shape
+// nobody photographed. A tooltip must not cover what it explains, so it takes any
+// side that fits; a dropdown hangs off its button, so it takes one.
+//
+// THE GAP HAS ONE HOME AND IT IS THE STYLESHEET (Law 0 clause 4). A distance
+// between two boxes is a length, lengths live in CSS, and the number a harness
+// measures must be the number the code used. `--place-gap` on the PLACED element
+// is that one home: `#tooltip { --place-gap: 14px }` replaces `const pad = 14`,
+// and an instrument reads the same declaration through getComputedStyle that this
+// function does. It is deliberately an unregistered custom property, so it
+// computes to its own token and does NOT track --ui-zoom or the text-size dial —
+// which is exactly what the two literals it replaces did (Law 2 rule 3: px where
+// a value must not answer to text size, and a hairline gap is not read text).
+//
+// A MISSING DECLARATION RESOLVES TO 0, NOT TO A PLAUSIBLE DEFAULT. Law 0 clause
+// 5: a generated thing that is wrong but reasonable is invisible. A panel welded
+// to its anchor is a defect anyone sees in one screenshot; a panel 14 px off a
+// stylesheet that says 6 is a defect nobody ever sees.
+// ---------------------------------------------------------------------------
+
+/** The one property name, so the stylesheet, the code and any instrument agree. */
+export const PLACE_GAP_PROP = '--place-gap';
+
+/** The gap `el` declares, in the local px this module writes in. 0 if undeclared. */
+export function placeGap(el) {
+  const n = parseFloat(getComputedStyle(el).getPropertyValue(PLACE_GAP_PROP));
+  return Number.isFinite(n) ? n : 0;
+}
+
+const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left))
+  * Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+
+/**
+ * placeAnchored(el, anchor, { intent, ... }) → { left, top, width, height }
+ *
+ * Writes `el`'s style.left/top in the local space of `layer` and returns the box
+ * it resolved, so a caller that needs to do more with it (a max-height off the
+ * remaining room) has the number rather than re-deriving it.
+ *
+ *   intent  'beside' — any of right / left / below / above, first that fits.
+ *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
+ *                      the offset-from-the-point rule, per-axis flip and all —
+ *                      arithmetic, not a second branch at the call site.
+ *           'under'  — under it, and only under it. When it does not fit, the
+ *                      bound answers; that is the caller's declared preference,
+ *                      not a failure to consider the alternatives.
+ *   align   'start' | 'end' — which edge of the anchor the free axis lines up
+ *                      with. Only 'under' reads it; 'beside' slides the free axis
+ *                      to stay on screen, which is what made three of its
+ *                      candidates usable at all.
+ *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
+ *           named at the call site. Of the candidates that fit, the one that
+ *           overlaps this least wins; ties fall to the declared order, so a
+ *           caller that passes nothing gets exactly `first that fits`. It is a
+ *           PREFERENCE and never a veto: when no candidate can clear the group,
+ *           the answer is the one the caller would have got without it.
+ *   layer   the containing block, VIEWPORT_ORIGIN by default (a `fixed` element).
+ *   view    that container's box, in its own local space.
+ *   pad     the screen margin, one home for both the fit test and the bound.
+ *   keep    passed to clampBox. Infinity — a placed panel is read.
+ */
+export function placeAnchored(el, anchor, {
+  intent,
+  align = 'start',
+  clear = null,
+  layer = VIEWPORT_ORIGIN,
+  view = null,
+  pad = 4,
+  keep = Infinity,
+} = {}) {
+  if (intent !== 'beside' && intent !== 'under') {
+    throw new Error(`placeAnchored: intent must be 'beside' or 'under', got ${JSON.stringify(intent)}`);
+  }
+  const room = view || viewportLocalBox();
+  const gap = placeGap(el);
+  // MEASURE ITS NATURAL BOX, NOT THE ONE ITS LAST POSITION SQUEEZED IT INTO.
+  // A `fixed`/`absolute` element with a max-width and no width is laid out in the
+  // space between style.left and the far edge: parked at 384 in a 433-wide room it
+  // gets 49 px, wraps tall and narrow, and THAT is the box the next placement is
+  // computed from — the same tooltip measured 280x220 or 171x384 depending only on
+  // what you hovered before it. Zeroing first costs one layout and makes the
+  // measurement a property of the CONTENT. Found in tooltip.js; it was never a
+  // tooltip fact.
+  el.style.left = '0px';
+  el.style.top = '0px';
+  const b = anchorLocalBox(layer, el);
+  const a = anchorLocalBox(layer, anchor);
+  const box = (p) => ({ left: p.left, top: p.top, width: b.width, height: b.height });
+  // 4 low, 8 high — one home now (`pad` and `pad * 2`), the two literals tooltip.js
+  // carried. The same `pad` goes to clampBox below, so the fit test and the bound
+  // cannot disagree about where the screen ends.
+  const fits = (p) => p.left >= pad && p.top >= pad
+    && p.left + b.width <= room.width - pad * 2 && p.top + b.height <= room.height - pad * 2;
+
+  let at0;
+  if (intent === 'beside' && !(a.width || a.height)) {
+    // A POINT has no sides to be outside of, so "outside the anchor" degenerates
+    // to the offset-from-the-pointer rule — which is what a tap wants anyway.
+    // These four lines are tooltip.js's ORIGINAL arithmetic, unchanged, including
+    // the independent per-axis flip: this path is not being retuned, and keeping
+    // it verbatim is how that is checkable rather than asserted.
+    let left = a.left + gap;
+    let top = a.top + gap;
+    if (left + b.width > room.width - pad * 2) left = a.left - b.width - gap;
+    if (top + b.height > room.height - pad * 2) top = a.top - b.height - gap;
+    at0 = { left, top };
+  } else {
+    // ONLY THE SEPARATING AXIS IS PINNED. A tooltip below a control has to be
+    // below it; it does not have to be left-aligned with it, and pinning the free
+    // axis as well is what made three candidates fail — the below/above ones were
+    // rejected for horizontal overflow while the vertical room they existed to use
+    // sat empty.
+    const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
+    const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
+    const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
+    const candidates = intent === 'under' ? [under] : [
+      { left: a.left + a.width + gap, top: slideY },  // right of it
+      { left: a.left - b.width - gap, top: slideY },  // left of it
+      { left: slideX, top: a.top + a.height + gap },  // below it
+      { left: slideX, top: a.top - b.height - gap },  // above it
+    ];
+    const usable = candidates.filter(fits);
+    if (clear && usable.length > 1) {
+      const c = anchorLocalBox(layer, clear);
+      // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
+      // where the group fills the room, and "no answer" resolves to the bound,
+      // which lands ON the group — worse than the candidate that grazes it.
+      let best = usable[0];
+      let bestArea = overlapArea(box(best), c);
+      for (const p of usable.slice(1)) {
+        const area = overlapArea(box(p), c);
+        if (area < bestArea) { best = p; bestArea = area; }
+      }
+      at0 = best;
+    } else {
+      at0 = usable[0] || candidates[0];
+    }
+  }
+  // …and then bound it regardless, so a wrong answer above is a misplaced panel
+  // and never an absent one. When no side fits, this is what puts it back on
+  // screen — ON the control, which is the right trade: unreadable beats
+  // misplaced, absent beats neither.
+  const at = clampBox(box(at0), room, { pad, keep });
+  el.style.left = `${at.left}px`;
+  el.style.top = `${at.top}px`;
+  return { left: at.left, top: at.top, width: b.width, height: b.height };
+}
+
 /**
  * Spawn a floating number over an anchor element.
  *

@@ -1,7 +1,19 @@
 /* styles/ui.css — tooltips, cards, modals, screens shared chrome */
 
 /* ---------- tooltip ---------- */
+/* --place-gap: THE DISTANCE FROM THE ANCHOR, AND THIS IS ITS ONE HOME.
+   src/ui/fx.js placeAnchored() reads it from here through getComputedStyle, and
+   so can any instrument — which is the point. It used to be `const pad = 14`
+   inside tooltip.js: a length no stylesheet and no harness could see, and the
+   reason Sunna refused to extract that placement twice (a shared placement
+   function that hard-codes a gap re-commits the second-copy defect while
+   claiming to remove one). Law 0 clause 4.
+   `px`, not `rem`: a hairline gap between two boxes is chrome, not read text, so
+   it must not answer the Text-size dial (Law 4 clause 3, Law 2 rule 3). Left
+   UNREGISTERED on purpose, so it computes to its own token and does not track
+   --ui-zoom either — which is exactly what the literal it replaces did. */
 #tooltip {
+  --place-gap: 14px;
   position: fixed; z-index: 1000; max-width: 28rem; pointer-events: none;
   background: #14100c; border: 1px solid var(--gold); border-radius: 8px;
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
@@ -2162,6 +2174,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    the panel places itself against its button, in local px, through fx.js. */
 .qn-veil { background: transparent; display: block; }
 .qn-panel {
+  /* One home for the hairline under the ☰ button — see #tooltip's --place-gap at
+     the top of this file for why it lives in CSS and why it is px. Was
+     `const gap = 6` in quicknav.js. */
+  --place-gap: 6px;
   position: fixed; width: 26rem; max-width: 92%;
   background: var(--panel); border: 1px solid var(--line-soft); border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);

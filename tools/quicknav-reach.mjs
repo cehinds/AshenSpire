@@ -72,8 +72,18 @@ if (process.argv.includes('--selftest')) {
         // the clamp is what stops exactly this.
         name: 'R1: the panel is allowed to hang off the side of the phone (the clamp gone)',
         file: 'styles/ui.css',
-        find: '.qn-panel {\n  position: fixed; width: 26rem; max-width: 92%;',
-        replace: '.qn-panel {\n  position: fixed !important; width: 60rem !important; max-width: none !important; left: -8rem !important;',
+        // RE-AIMED 2026-08-17 (Sten) — NOT relaxed, and not deleted. When
+        // quicknav.js's placement arithmetic moved into fx.js placeAnchored(),
+        // `--place-gap: 6px` became `.qn-panel`'s first declaration; this
+        // find-string carried the selector and the brace, so it stopped matching
+        // and doorplant hard-red'd it as PLANT SITE DRIFTED. That is the
+        // mechanism working, and the fix is to re-aim, never to loosen. It now
+        // anchors on the width triple it actually overrides — verified unique in
+        // ui.css — so a declaration added above it cannot drift it again. The
+        // known-bad is unchanged: a forced width wider than the phone, clamp
+        // defeated.
+        find: '  position: fixed; width: 26rem; max-width: 92%;',
+        replace: '  position: fixed !important; width: 60rem !important; max-width: none !important; left: -8rem !important;',
         expectRed: /R1.*(spans .* in a .* px view|escapes)/,
       },
     ],
