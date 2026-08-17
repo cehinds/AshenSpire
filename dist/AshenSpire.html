@@ -29001,6 +29001,61 @@ const { anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require(
 let tipEl = null;
 let showTimer = null;
 
+// ---------------------------------------------------------------------------
+// E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
+//
+//   "when selecting and holding on a card the tool tip pops up for a second and
+//    then the zoom in card replaces it. instead keep the tooltip up after
+//    holding the card for a set period of time and disappears once another card
+//    is selected or it is played or another menu or game state activates"
+//
+// So a tooltip a COMPLETED HOLD summoned is STUCK: it outlives the thing that
+// used to kill it — the zoom card opening, and then the pointer leaving on the
+// lift, which on a phone is the same instant. Nothing else changes. A hover
+// tooltip, a focus-cursor tooltip and the tap refusal keep today's behaviour to
+// the line, because he was talking about the hold and about nothing else.
+//
+// WHAT ENDS IT — his three, on TWO wires, and the split is measured.
+// He named: another card selected · it is played · another menu or game state
+// activates.
+//   · PLAYED, END TURN, a flask, Escape, arming a self card, a menu opening —
+//     every one of those ALREADY calls hideTooltip(), from combat.js, quicknav
+//     and disclosure. They keep working with no edit at all, because
+//     hideTooltip() is still the unconditional off switch. Two thirds of his
+//     ask turned out to be wired before he asked for it; only the zoom was
+//     fighting it.
+//   · ANOTHER CARD SELECTED had NO wire. Merely selecting a targetable card
+//     hides no tooltip anywhere in the tree — invisible until now, because the
+//     pointer leaving killed it first. That one is carried below: A STUCK
+//     TOOLTIP ENDS WHEN THE CARD IT EXPLAINS LEAVES THE DOM, and combat
+//     rebuilds `.hand` wholesale on every state change (hand.js: `innerHTML =
+//     ''`). Derived from the screen instead of restated at each select site —
+//     click, keyboard and flask all re-render, so all three are covered by one
+//     watch rather than by three lines nobody will keep in sync.
+// I WROTE "ALL THREE ARE ONE MECHANISM" HERE FIRST AND IT WAS WRONG:
+// tooltippersist --selftest P3 cuts the watch and only the SELECT case goes
+// red. The sentence now says what the plant showed.
+//
+// AND THE FLOOR, WHICH IS THE HALF THAT COULD HURT SOMEONE: a tooltip that
+// cannot be got rid of is a worse bug than one that vanishes too soon. Three
+// things hold it down. (1) `#tooltip` is `pointer-events: none` (ui.css:5), so
+// however long it stays it can never swallow a tap meant for the game. (2) Any
+// other tooltip replaces it — hover anything and the stick is gone with it.
+// (3) stickTooltip() REFUSES to stick at all unless the thing that will end it
+// is watchable; see there. Persistence is granted only where an exit exists.
+//
+// WHAT IS DELIBERATELY NOT HERE: no timeout — his sentence gives a closed list
+// of endings and a clock is not on it; no dismissal on a press elsewhere — he
+// did not say that, and inventing it is how a silence becomes a rule.
+// ---------------------------------------------------------------------------
+let stuck = false;
+let stuckWatch = null;
+
+function unstick() {
+  stuck = false;
+  if (stuckWatch) { stuckWatch.disconnect(); stuckWatch = null; }
+}
+
 function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
@@ -29121,6 +29176,10 @@ function place(anchor) {
  */
 function showWith(html, anchor) {
   if (!html) return false;
+  // "…until SOMETHING REPLACES IT." This is that something, and it is the only
+  // place the word is spoken: whatever was stuck is now gone, and what takes its
+  // place is an ordinary tooltip again unless its own hold sticks it.
+  unstick();
   const t = ensure();
   t.innerHTML = html;
   t.style.display = 'block';
@@ -29146,14 +29205,52 @@ function attachTooltip(el, contentFn) {
     showTimer = setTimeout(show, 140);
   });
   el.addEventListener('pointerleave', () => {
+    // The timer is cleared either way — that is today's behaviour and a stuck
+    // tooltip is no reason to let a half-started hover fire behind it.
     clearTimeout(showTimer);
+    if (stuck) return; // E8: a completed hold outlives the pointer leaving
     if (tipEl) tipEl.style.display = 'none';
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, 160);
   });
-  el.addEventListener('gpblur', hideTooltip);
+  el.addEventListener('gpblur', () => {
+    // Same guard, and it can only ever fire on a tooltip the pad did not
+    // summon: the hold is a pointer gesture, so nothing the focus cursor shows
+    // is ever stuck. Guarded for consistency, not for a case we have seen.
+    if (stuck) return;
+    hideTooltip();
+  });
+}
+
+/**
+ * stickTooltip(el) → boolean — keep the tooltip that is on screen NOW until
+ * something replaces it or `el` leaves the DOM. Returns whether it stuck.
+ *
+ * The one caller is the hand's completed reading hold (hand.js), which is the
+ * gesture E8 is about; `el` is the card being read.
+ *
+ * IT REFUSES MORE THAN IT ACCEPTS, ON PURPOSE. No tooltip on screen → nothing
+ * to keep. No element, or an element with no parent, or no MutationObserver in
+ * this runtime → NOTHING COULD EVER END IT, so it does not begin: the tooltip
+ * stays ordinary and hides on the next leave, exactly as it does today. A
+ * refusal here is a tooltip that behaves like dev's; the alternative is one a
+ * player cannot get rid of, and between those two the choice is not close.
+ */
+function stickTooltip(el) {
+  const host = el && el.parentNode;
+  if (!tipEl || tipEl.style.display !== 'block') return false;
+  if (!host || typeof MutationObserver === 'undefined') return false;
+  unstick();
+  // The hand is rebuilt wholesale on every combat state change, so watching the
+  // card's own parent for childList is the whole of "another card is selected,
+  // or it is played, or another menu or game state activates" — derived from
+  // the screen instead of restated at each of his three events.
+  stuckWatch = new MutationObserver(() => { if (!el.isConnected) hideTooltip(); });
+  stuckWatch.observe(host, { childList: true });
+  stuck = true;
+  return true;
 }
 
 /**
@@ -29173,6 +29270,12 @@ function showTooltipAt(x, y, html) {
 }
 
 function hideTooltip() {
+  // Still the unconditional off switch, and deliberately so: every screen that
+  // already calls it — play, flask, end turn, Escape, self-arm, drag start,
+  // quicknav, disclosure — is one of his endings, and none of them had to
+  // change. A stuck tooltip is not a stronger tooltip; it is one that ignores
+  // the pointer leaving, and nothing else.
+  unstick();
   clearTimeout(showTimer);
   if (tipEl) tipEl.style.display = 'none';
 }
@@ -29182,7 +29285,7 @@ function esc(s) {
 }
 
 
-Object.assign(module.exports, { attachTooltip, showTooltipAt, hideTooltip, esc });
+Object.assign(module.exports, { attachTooltip, stickTooltip, showTooltipAt, hideTooltip, esc });
 
 },
 "src/ui/fx.js": function (module, exports, require) {
@@ -30927,7 +31030,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2403a8c75d';
+const SOURCE = '50f439fbf0';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -30961,7 +31064,7 @@ const SOURCE = '2403a8c75d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0760';
+const ORDINAL = '0761';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -30988,7 +31091,7 @@ const ORDINAL = '0760';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-16';
+const BUILT = '2026-08-17';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -40207,7 +40310,7 @@ Object.assign(module.exports, { arcaneExposureReceipt, renderArcaneExposure });
 
 const { renderCard } = require("src/ui/components/card.js");
 const { armInspect } = require("src/ui/components/holdconfirm.js");
-const { hideTooltip } = require("src/ui/components/tooltip.js");
+const { stickTooltip } = require("src/ui/components/tooltip.js");
 const { applyHandExemption } = require("src/ui/handAxis.js");
 
 function mountHand(handEl, { registries, wireCard = null }) {
@@ -40316,7 +40419,10 @@ function mountHand(handEl, { registries, wireCard = null }) {
       // for is the one you most need to read), and same-element listeners run
       // in registration order, which is what lets a completed read's lift die
       // in armInspect's click handler instead of selecting or playing below.
-      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
+      // E8, and it is the one line of his ask that lives outside tooltip.js:
+      // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
+      // it — same moment, opposite verb — and tooltip.js owns what ends it.
+      armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       if (wireCard) wireCard(el, entry, i);
       handEl.appendChild(el);
     });

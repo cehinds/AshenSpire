@@ -50,7 +50,7 @@
 
 import { renderCard } from './card.js';
 import { armInspect } from './holdconfirm.js';
-import { hideTooltip } from './tooltip.js';
+import { stickTooltip } from './tooltip.js';
 import { applyHandExemption } from '../handAxis.js';
 
 export function mountHand(handEl, { registries, wireCard = null }) {
@@ -159,7 +159,10 @@ export function mountHand(handEl, { registries, wireCard = null }) {
       // for is the one you most need to read), and same-element listeners run
       // in registration order, which is what lets a completed read's lift die
       // in armInspect's click handler instead of selecting or playing below.
-      armInspect(el, { ms: inspectMs, onOpen: hideTooltip });
+      // E8, and it is the one line of his ask that lives outside tooltip.js:
+      // the zoom used to HIDE the tooltip here. Now the completed hold KEEPS
+      // it — same moment, opposite verb — and tooltip.js owns what ends it.
+      armInspect(el, { ms: inspectMs, onOpen: () => stickTooltip(el) });
       if (wireCard) wireCard(el, entry, i);
       handEl.appendChild(el);
     });
