@@ -4,6 +4,10 @@
 file** (all JS inlined as a classic script, all CSS inlined, all art inlined as
 `data:` URIs — no server, no Node, no network). Double-click it to play.
 
+The repository root also carries `AshenSpire.html` as a byte-identical,
+easy-to-find current-build alias. `tools/launch.mjs` refreshes both paths in one
+operation and `tools/verify-shipped.mjs` verifies both against `build/`.
+
 - `AshenSpire.html` — the current standalone build, **tracked in git** because
   `README.md:25` hands this exact path to a player who has no Node and no
   toolchain. It is a build output living in source control, which is a second

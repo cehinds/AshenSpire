@@ -51,12 +51,14 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
 const BUILD = 'build/AshenSpire.html';
 const DIST_DIR = 'dist';
 const SHIPPED = 'dist/AshenSpire.html'; // the path README.md:25 gives a player
+const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
 // three inlined images instead of 101. Kept as a corpus entry by blob id rather
@@ -342,6 +344,15 @@ if (!existsSync(shippedPath)) {
   record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
 }
 
+const rootCurrentPath = resolve(ROOT, ROOT_CURRENT);
+if (!existsSync(rootCurrentPath)) {
+  record({ ok: false, code: 'MISSING', detail: `${ROOT_CURRENT} does not exist, but README.md links it as the current build.` });
+} else {
+  const rootCurrentBytes = readFileSync(rootCurrentPath);
+  record(checkCarriesArt(ROOT_CURRENT, rootCurrentBytes));
+  record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
+}
+
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
 // launcher run is correct and must not fail this. Only a TRACKED one is the bug.
 let trackedDist = [];
@@ -378,7 +389,7 @@ boundary([
 const failed = results.filter((r) => !r.ok);
 if (failed.length) {
   console.error(`\nverify-shipped: FAILED ${failed.length} of ${results.length}.`);
-  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ AND refreshes dist/)');
+  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ and refreshes the root + dist current-build aliases)');
   process.exit(1);
 }
 console.log(`\nverify-shipped: OK — ${results.length} checks passed.`);

@@ -4,6 +4,18 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Three classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
+## Current build
+
+**Play the current reviewed development build:** download or open
+**[`AshenSpire.html`](AshenSpire.html)** from the repository root. It is a
+self-contained file: double-click it to play without installing dependencies.
+
+The root file is a discoverability alias for [`dist/AshenSpire.html`](dist/AshenSpire.html).
+Both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by
+`node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if
+either copy differs from that build. The file is development evidence, not a
+release declaration; release status remains governed separately.
+
 ## Preview
 
 ![Combat](docs/preview/combat.png)
@@ -22,7 +34,8 @@ time with `node tools/screenshot.mjs` (uses your local Chrome/Edge headlessly).
 [Node.js](https://nodejs.org) (used only as a tiny static server + bundler — no
 packages to install).
 
-**Standalone file:** grab **[`dist/AshenSpire.html`](dist/AshenSpire.html)** — the
+**Standalone file:** grab **[`AshenSpire.html`](AshenSpire.html)** from the root
+(or the byte-identical [`dist/AshenSpire.html`](dist/AshenSpire.html)) — the
 entire game compiled into one self-contained HTML file. Double-click to play,
 no server needed. (External music folders need http; see [dist/README.md](dist/README.md).)
 
@@ -62,6 +75,7 @@ Acceptance criteria per milestone are in [SPEC.md §9](SPEC.md).
 ```
 PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
+AshenSpire.html  current standalone development build (root convenience copy)
 index.html       game entry point (lands with M1)
 styles/          CSS
 src/model/       schemas, registries, formula evaluator, validation
