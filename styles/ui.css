@@ -2536,6 +2536,69 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .flask-name { color: var(--ink, #f2ead8); }
 
+/* ---------- A FLASK THAT IS A CONTROL HAS ONE BOX ------------------------- */
+/* THE DEFECT THIS CLOSES, MEASURED AT dev = b83bda1 BEFORE A LINE CHANGED.
+   The same flask, drawn as something a player TAPS, had THREE boxes and only
+   co-op declared one:
+
+     .coop-flask   min-height: var(--tap-floor); height: auto   — right, below
+     .flask-slot   borrowed `.topbar .relic`'s width/height: 2.6rem
+                   -> 54.2 x 26.0 local px at 390x844 AND at 1200x730, against a
+                   --tap-target of 44. 41% under the house floor, on the control
+                   a player spends a flask with, every fight.
+     .mh-flask     declared NOTHING. A bare <button>, so base.css's generic
+                   `padding: 1rem 2.6rem` sized it: 81.2 x 49.2 local px around a
+                   20 px glyph, three times the relic chip beside it.
+
+   ONE ITEM, THREE ANSWERS, TWO OF THEM WRONG — Law 0 clause 4. And it is the
+   same shape as the flask action menu six hundred lines up: A SURFACE WHOSE
+   DEFECT IS THAT NOTHING STYLES IT. No grep for a bad number finds either;
+   `tools/flaskpresentation.mjs` reads all three files and passes, because it
+   reads SOURCE TEXT and the defect is an absence. It took a photograph.
+
+   WHY --tap-floor AND NOT 4.4rem. `--tap-floor` is `--tap-target / --ui-zoom`,
+   so this box answers HIS Minimum-tap-size setting and the UI-size dial —
+   Law 4 clause 3, and Law 0 clause 1: the number is data, not mine. A player
+   who picks 24 gets 24. `min-height` + `height: auto` is clause 4 verbatim:
+   an ergonomic floor, growth granted by the content. `min-height: 4.4rem` is
+   the breach that clause names BY EXAMPLE, and four sites in this file still
+   carry it (:864, :2195, :2312, :2324) citing Law 2's struck "or touches"
+   clause. THAT IS A REAL DEFECT AND IT IS NOT THIS ACT — none of the four is a
+   flask surface, and `4.4rem` and `--tap-floor` answer two DIFFERENT settings,
+   so converting them is a behaviour change on four screens that needs its own
+   measurement at both settings. Named here so it cannot go quiet; mine to fix.
+
+   WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
+   flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads
+   AFTER ui.css — so `.topbar .flask-slot` ties on specificity and loses on
+   order. `.relic.flask-slot` states the real thing: when an element is both,
+   the flask rule governs the box. combat.js is untouched on purpose — Sten is
+   live in that file's `useFlask` wiring tonight. */
+.topbar .relic.flask-slot,
+.map-substrip .mh-flask {
+  min-height: var(--tap-floor);
+  min-width: var(--tap-floor);
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  /* IT OPENS A MENU. map.css said `cursor: default` on a <button> that mounts
+     the flask action menu — the one hint a mouse player gets, saying the
+     opposite of the truth. */
+  cursor: pointer;
+}
+/* The relic beside it stays small ON PURPOSE and the line is principled, not a
+   leftover: a relic chip is READ (tooltip only, map.js:152 / combat.js:444), a
+   flask is TAPPED. The thing a thumb aims at gets the floor; the thing an eye
+   reads does not. */
+
 /* ---------- the orientation gate (components/upright.js) -------------------- */
 /* THE DECISION AND ITS REASONS LIVE IN THAT FILE'S HEADER, NOT HERE. This
    stylesheet measures nothing and decides nothing — main.js's resolveLayout()

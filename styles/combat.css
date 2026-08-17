@@ -446,9 +446,29 @@
 body.pad-mode .card .key-hint { display: none; }
 
 /* Flask quick-use badge on the top-bar flask icons (F/G/H or pad glyphs). */
+/* THE SLOT'S OWN BOX IS NOT HERE — one home, `.relic.flask-slot` in ui.css
+   beside `.flask-identity`. Pointer, not a second copy: `.topbar .relic` below
+   no longer decides how big a flask is, and a reader who edits it should know. */
 .flask-slot { position: relative; }
 .flask-slot .flask-key {
-  position: absolute; bottom: -0.7rem; left: 50%; transform: translateX(-50%);
+  /* INSIDE THE BOX, SINCE 2026-08-17. It was `bottom: -0.7rem`, and measured on
+     ?shot=combat at BOTH shapes the badge ran y 161.5 -> 176.7 while its slot
+     ended at 170.9: 5.8 local px hung out of the bottom — over the BUILD stamp
+     line at 390x844 — and its top edge sat 6.4 px above the art's bottom, so
+     27% of a 23.4 px flask art was under a keycap. The slot had no room to hold
+     it because the slot was 26 px tall; it is now at --tap-floor and does.
+     `px`: this is chrome (Law 4 clause 3), and it is a new write.
+
+     AND IT MOVED TO THE CORNER, WHICH IS THE HALF THAT COST THINKING. Inside
+     the box at bottom-CENTRE the keycap still lay across the widest part of the
+     bottle: measured 3.9 px deep x the art's full 23.4 px width = 91 px^2, 17%
+     of a 548 px^2 art. Bottom-RIGHT overlaps only a corner — 4.9 x 3.9 px, 19
+     px^2, 3.5%. The alternative was reserving a band with
+     `:has(.flask-key) { padding-bottom }`, and I measured that instead of
+     preferring it: at Minimum tap size 24 it makes a badged slot 48.4 px tall
+     beside an unbadged charge slot at 36.9, so one row would hold two heights
+     to spare an icon a corner. The corner is one line and costs no cell. */
+  position: absolute; bottom: 2px; right: 2px;
   min-width: 1.4rem; padding: 0 0.3rem; border-radius: 3px; text-align: center;
   background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; line-height: 1.3rem;

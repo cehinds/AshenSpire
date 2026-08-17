@@ -2838,6 +2838,69 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .flask-name { color: var(--ink, #f2ead8); }
 
+/* ---------- A FLASK THAT IS A CONTROL HAS ONE BOX ------------------------- */
+/* THE DEFECT THIS CLOSES, MEASURED AT dev = b83bda1 BEFORE A LINE CHANGED.
+   The same flask, drawn as something a player TAPS, had THREE boxes and only
+   co-op declared one:
+
+     .coop-flask   min-height: var(--tap-floor); height: auto   — right, below
+     .flask-slot   borrowed `.topbar .relic`'s width/height: 2.6rem
+                   -> 54.2 x 26.0 local px at 390x844 AND at 1200x730, against a
+                   --tap-target of 44. 41% under the house floor, on the control
+                   a player spends a flask with, every fight.
+     .mh-flask     declared NOTHING. A bare <button>, so base.css's generic
+                   `padding: 1rem 2.6rem` sized it: 81.2 x 49.2 local px around a
+                   20 px glyph, three times the relic chip beside it.
+
+   ONE ITEM, THREE ANSWERS, TWO OF THEM WRONG — Law 0 clause 4. And it is the
+   same shape as the flask action menu six hundred lines up: A SURFACE WHOSE
+   DEFECT IS THAT NOTHING STYLES IT. No grep for a bad number finds either;
+   `tools/flaskpresentation.mjs` reads all three files and passes, because it
+   reads SOURCE TEXT and the defect is an absence. It took a photograph.
+
+   WHY --tap-floor AND NOT 4.4rem. `--tap-floor` is `--tap-target / --ui-zoom`,
+   so this box answers HIS Minimum-tap-size setting and the UI-size dial —
+   Law 4 clause 3, and Law 0 clause 1: the number is data, not mine. A player
+   who picks 24 gets 24. `min-height` + `height: auto` is clause 4 verbatim:
+   an ergonomic floor, growth granted by the content. `min-height: 4.4rem` is
+   the breach that clause names BY EXAMPLE, and four sites in this file still
+   carry it (:864, :2195, :2312, :2324) citing Law 2's struck "or touches"
+   clause. THAT IS A REAL DEFECT AND IT IS NOT THIS ACT — none of the four is a
+   flask surface, and `4.4rem` and `--tap-floor` answer two DIFFERENT settings,
+   so converting them is a behaviour change on four screens that needs its own
+   measurement at both settings. Named here so it cannot go quiet; mine to fix.
+
+   WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
+   flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads
+   AFTER ui.css — so `.topbar .flask-slot` ties on specificity and loses on
+   order. `.relic.flask-slot` states the real thing: when an element is both,
+   the flask rule governs the box. combat.js is untouched on purpose — Sten is
+   live in that file's `useFlask` wiring tonight. */
+.topbar .relic.flask-slot,
+.map-substrip .mh-flask {
+  min-height: var(--tap-floor);
+  min-width: var(--tap-floor);
+  width: auto;
+  height: auto;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--panel);
+  border: 1px solid var(--gold);
+  /* IT OPENS A MENU. map.css said `cursor: default` on a <button> that mounts
+     the flask action menu — the one hint a mouse player gets, saying the
+     opposite of the truth. */
+  cursor: pointer;
+}
+/* The relic beside it stays small ON PURPOSE and the line is principled, not a
+   leftover: a relic chip is READ (tooltip only, map.js:152 / combat.js:444), a
+   flask is TAPPED. The thing a thumb aims at gets the floor; the thing an eye
+   reads does not. */
+
 /* ---------- the orientation gate (components/upright.js) -------------------- */
 /* THE DECISION AND ITS REASONS LIVE IN THAT FILE'S HEADER, NOT HERE. This
    stylesheet measures nothing and decides nothing — main.js's resolveLayout()
@@ -3403,9 +3466,29 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 body.pad-mode .card .key-hint { display: none; }
 
 /* Flask quick-use badge on the top-bar flask icons (F/G/H or pad glyphs). */
+/* THE SLOT'S OWN BOX IS NOT HERE — one home, `.relic.flask-slot` in ui.css
+   beside `.flask-identity`. Pointer, not a second copy: `.topbar .relic` below
+   no longer decides how big a flask is, and a reader who edits it should know. */
 .flask-slot { position: relative; }
 .flask-slot .flask-key {
-  position: absolute; bottom: -0.7rem; left: 50%; transform: translateX(-50%);
+  /* INSIDE THE BOX, SINCE 2026-08-17. It was `bottom: -0.7rem`, and measured on
+     ?shot=combat at BOTH shapes the badge ran y 161.5 -> 176.7 while its slot
+     ended at 170.9: 5.8 local px hung out of the bottom — over the BUILD stamp
+     line at 390x844 — and its top edge sat 6.4 px above the art's bottom, so
+     27% of a 23.4 px flask art was under a keycap. The slot had no room to hold
+     it because the slot was 26 px tall; it is now at --tap-floor and does.
+     `px`: this is chrome (Law 4 clause 3), and it is a new write.
+
+     AND IT MOVED TO THE CORNER, WHICH IS THE HALF THAT COST THINKING. Inside
+     the box at bottom-CENTRE the keycap still lay across the widest part of the
+     bottle: measured 3.9 px deep x the art's full 23.4 px width = 91 px^2, 17%
+     of a 548 px^2 art. Bottom-RIGHT overlaps only a corner — 4.9 x 3.9 px, 19
+     px^2, 3.5%. The alternative was reserving a band with
+     `:has(.flask-key) { padding-bottom }`, and I measured that instead of
+     preferring it: at Minimum tap size 24 it makes a badged slot 48.4 px tall
+     beside an unbadged charge slot at 36.9, so one row would hold two heights
+     to spare an icon a corner. The corner is one line and costs no cell. */
+  position: absolute; bottom: 2px; right: 2px;
   min-width: 1.4rem; padding: 0 0.3rem; border-radius: 3px; text-align: center;
   background: #2b2b28; border: 1px solid #8d887c; color: #d8d3c4;
   font-family: var(--font-body); font-weight: 700; font-size: 0.9rem; line-height: 1.3rem;
@@ -4049,6 +4132,45 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .map-edge { stroke: var(--map-structure); stroke-width: 2; fill: none; }
 .map-edge.traveled { stroke: var(--gold); stroke-width: 3; }
 
+/* ---- the shrine lane (Settings → Display · Shrine path glow) ---------------
+   "as new paths open, the path to the nearest shrine should have a glowing
+   effect" — Constantine, 2026-08-16. WHICH nodes is decided in
+   model/mapknowledge.js and clipped to what the fog already draws
+   (ui/components/mapboard.js); this block is only what that set looks like.
+
+   IT MUST NOT READ AS `reachable`, which is the one thing this could break. The
+   halo and the gold stroke already mean "you may step here", and a second gold
+   cue on nodes you cannot click would make the strongest signal on the screen
+   ambiguous. So the lane is a GLOW AROUND the node rather than a stroke on it —
+   a different channel from every existing cue — and the reachable ring still
+   paints on top of any node wearing both. This is a placeholder that stays out
+   of the way of the cues that already work: the look is Freja's to author and
+   whether it reads is Sunna's to judge. Neither has seen it.
+
+   NO NEW UNIT AND NO STRAY px. The stroke width below is in the SVG's own user
+   space, the one space every other line on this board is drawn in (Law 2).
+   Nothing here is text and nothing here is a box, so Law 4 has no subject. */
+.map-edge.shrine-lane {
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-opacity: 0.9;
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
+}
+.map-node.shrine-lane > circle:not(.node-halo) {
+  animation: shrineLanePulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes shrineLanePulse {
+  from { filter: drop-shadow(0 0 2px var(--gold)); }
+  to { filter: drop-shadow(0 0 7px var(--gold)); }
+}
+/* Same contract as every other pulse on this board: the cue survives, the
+   motion does not. A player on Reduced motion still sees the lane. */
+.reduced-motion .map-edge.shrine-lane,
+.reduced-motion .map-node.shrine-lane > circle:not(.node-halo) {
+  animation: none;
+  filter: drop-shadow(0 0 5px var(--gold));
+}
+
 /* ---------------------------- fog of war (Settings → Display · Map reveal) ---
    Everything here is inert unless .mapscreen carries .map-fog, so `path` mode is
    byte-for-byte the screen that shipped.
@@ -4133,7 +4255,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .map-substrip[hidden] { display: none; }
 .map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
-.map-substrip .mh-flask { cursor: default; }
+/* THE FLASK'S BOX IS NOT HERE — one home, `.relic.flask-slot, .map-substrip
+   .mh-flask` in ui.css beside `.flask-identity`, so the same flask is the same
+   control on the map as in the topbar. This line used to be the ONLY rule
+   `.mh-flask` had, and it declared `cursor: default` on a <button> that mounts
+   the flask action menu (map.js:170-193) — the one hint a mouse player gets,
+   saying the opposite of the truth. Deleted rather than moved. */
 .map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
 .map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .map-substrip .relic {
@@ -5713,6 +5840,10 @@ function showRest() {
     refill,
     meta: saves.loadMeta(),
     onReallocate: () => persist(),
+    // A level is cinders and a permanent point. It persists the moment it is
+    // bought, not when the player leaves the shrine, for the same reason the
+    // reallocation above does: a closed tab must not be able to un-spend it.
+    onLevelUp: () => persist(),
     onDone: () => {
       persist();
       showMap();
@@ -6126,6 +6257,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     // deck the bug was reproduced on.
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
+    // AND A PURSE THAT CAN PAY, for the reason `?shot=shop` twelve lines below
+    // already states about its own remove grid: a fresh run holds 0 cinders, so
+    // the Level up panel this state now has to reach mounts LOCKED, and a
+    // photograph of a greyed-out feature is a green on nothing. Same posing
+    // discipline as the twenty-card deck above — enough to reach the control,
+    // no rng, identical every run.
+    run.cinders = 999;
     showRest();
   } else if (shotState === 'shop') {
     // A REACH STATE, and the fourth of the same shape (`?shotEvent`, `?shotAt`,
@@ -6462,6 +6600,49 @@ const balance = {
   },
 
   shrine: { healPct: 35 },
+
+  // ---- levelling at a shrine (Constantine, D10 wave 1 + E13) ----------------
+  //
+  // His words, and the whole feature is in them:
+  //
+  //   "also at graces, players should have the option to level up their
+  //    character (per run) by trading cinders to level up. at level up they may
+  //    increase a stat by 1 point."
+  //   "rest sites become where you level, cinders spent past a threshold — 1
+  //    stat point per level, 10–20 level-ups a run, scalable."   (E13)
+  //
+  // FOUR NUMBERS AND NOTHING ELSE, because the rest is derived (Law 0 clause 1):
+  // which attributes may be raised is `content/attributes.js` — adding a sixth
+  // attribute puts a sixth button on the shrine with no UI edit, and that is
+  // this feature's Law 0 falsifier. What a point is WORTH is
+  // `content/derivedStats.js`, already: a CON point is +1 HP per five, a WIS
+  // point is Mana. Nothing about the value of a level is authored here.
+  //
+  //   firstCost   what the FIRST level of a run costs.
+  //   costStep    what each level adds to the next one's price. "cinders spent
+  //               past a threshold, scalable" — a linear ramp, and the ramp is
+  //               the scalable part: raise this and the run gets fewer levels
+  //               with no code touched.
+  //   pointsPerLevel  "they may increase a stat by 1 point". His number.
+  //   maxLevels   null = no ceiling but the cinders themselves. His range is an
+  //               ECONOMY, not a cap, and a cap would answer it by refusing
+  //               rather than by pricing.
+  //
+  // WHY 20 AND 4, AND WHAT IS UNKNOWN ABOUT THEM. Cost(n) = 20 + 4(n−1), so a
+  // run's nth level costs 20, 24, 28 … and n levels cost 2n² + 18n cinders in
+  // total. Against a run's whole cinder budget that is 10 levels at 400, 13 at
+  // 600, 20 at 1200 — inside his 10–20 band across the entire plausible range,
+  // which is the property `tests/engine.test.js` asserts on this table.
+  // **WHAT IS NOT MEASURED IS THE BUDGET ITSELF.** Nobody here has simulated
+  // what a real climb actually earns, or what the shop takes out of it first.
+  // The curve is checked; the range it is checked over is an assumption, and it
+  // is stated as one rather than reported as balance.
+  levelUp: {
+    firstCost: 20,
+    costStep: 4,
+    pointsPerLevel: 1,
+    maxLevels: null,
+  },
 
   // ---- what a grace hands back ----------------------------------------------
   // Grace refills the current Crimson/Azure counts to the allocation stored on
@@ -17431,6 +17612,24 @@ const ACTIONS = Object.freeze({
     hazard: 'pointing',
     note: 'Rest and Smith are two adjacent panels; taking either closes the other',
   },
+  shrineLevelUp: {
+    of: 'buying a level at the shrine',
+    lives: 'src/ui/screens/rest.js',
+    surface: 'rest',
+    // A ROW, NOT A LINE IN A SCREEN — which is the whole point of this file, and
+    // it is why levelling arrived with a second beat without anyone deciding it
+    // should have one. The FORM is `choosing` and not `pointing`, and the
+    // difference is the same one the Smith made: the five stat buttons are far
+    // enough apart that the finger is not the risk — the STAT is. A point spent
+    // on Wisdom by a player who meant Constitution is gone for the run, and
+    // what they need first is to read what the point actually does, which is
+    // why the confirm panel carries the derived-stat sentence rather than a
+    // second copy of it (content/derivedStats.js `presentation.sense`).
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+    note: 'five stat buttons on one panel; the point is permanent and the cinders are gone',
+  },
   smithUpgrade: {
     of: 'smithing a card',
     lives: 'src/ui/screens/rest.js',
@@ -20665,6 +20864,7 @@ function tables(source) {
       creationModes: source.creationModes.all(),
       attributeRules: source.attributeRules,
       classes: source.classes.all(),
+      balance: source.balance || {},
     };
   }
   return {
@@ -20672,7 +20872,45 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
+    balance: (source && source.balance) || {},
   };
+}
+
+/**
+ * grantedAttributePoints(run, source) — points this run holds ON TOP OF its
+ * creation allocation.
+ *
+ * THE CREATION RULES ARE ABOUT CREATION, AND THIS IS THE LINE THAT SAYS SO.
+ * `standard` is `fixedTotal` at 55 with every cell in 10..15 — rules about the
+ * five minutes at the character screen, enforced at the LOAD DOOR, where they
+ * were the only rules that had ever applied because nothing could change an
+ * allocation after creation. Levelling at a shrine changes one (Constantine:
+ * "at level up they may increase a stat by 1 point"), so those two clauses now
+ * have to be told how many points the run legitimately grew by.
+ *
+ * THIS IS NOT A LOOSENING. A run claiming points it did not buy is still
+ * refused by name; what moved is that the expected total is `55 + granted` and
+ * the per-cell ceiling rises by the same points, since a player may pour every
+ * level into one stat.
+ *
+ * WHY THE SEAM IS HERE AND NOT IN THE SHRINE SCREEN, measured: `save.js` calls
+ * `normalizeRunAttributes` inside the try whose catch ARCHIVES THE SAVE. A
+ * level-up that only incremented `run.attributes` would look perfect on screen
+ * and destroy the player's run at the next load.
+ *
+ * ⚠ ONE HAZARD, NAMED RATHER THAN HIDDEN: `pointsPerLevel` is content, so
+ * editing it re-prices every IN-FLIGHT save's expected total, and those runs are
+ * refused at the door — loudly and by name, never silently healed. It is his
+ * number, it is 1, and nothing has asked for a second value. The day something
+ * does, this needs the treatment `derivedStatRuleSnapshot` already gets:
+ * snapshot the conversion into the run so a content edit cannot re-price a
+ * climb in progress.
+ */
+function grantedAttributePoints(run, source) {
+  const levels = run && Number.isInteger(run.levelUps) ? run.levelUps : 0;
+  if (levels <= 0) return 0;
+  const per = (tables(source).balance.levelUp || {}).pointsPerLevel;
+  return levels * (Number.isInteger(per) && per > 0 ? per : 1);
 }
 
 function orderedAttributes(source) {
@@ -20704,7 +20942,7 @@ function retiredNames(t) {
   return plainObject(map) ? map : {};
 }
 
-function allocationProblems(t, classId, modeId, values, path) {
+function allocationProblems(t, classId, modeId, values, path, granted = 0) {
   const problems = [];
   const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
   const mode = t.creationModes.find((m) => m && m.id === modeId);
@@ -20734,18 +20972,30 @@ function allocationProblems(t, classId, modeId, values, path) {
       continue;
     }
     const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
-    if (value < floor || value > mode.maximum) problems.push({ path: `${path}.${id}`, msg: `must be between ${floor} and ${mode.maximum} for mode '${mode.id}'` });
+    // The ceiling rises with granted points because a player may pour every
+    // level into one stat; the FLOOR does not move, because nothing about
+    // levelling can take a point away.
+    const ceiling = mode.maximum + granted;
+    if (value < floor || value > ceiling) {
+      problems.push({ path: `${path}.${id}`, msg: granted
+        ? `must be between ${floor} and ${ceiling} for mode '${mode.id}' with ${granted} levelled point(s)`
+        : `must be between ${floor} and ${ceiling} for mode '${mode.id}'` });
+    }
     total += value;
   }
   if (allIntegers && mode.redistribution === 'fixedTotal') {
-    const expected = mode.baseline * ids.length + mode.bonusPool;
-    if (total !== expected) problems.push({ path, msg: `total ${total} must equal ${expected} for mode '${mode.id}'` });
+    const expected = mode.baseline * ids.length + mode.bonusPool + granted;
+    if (total !== expected) {
+      problems.push({ path, msg: granted
+        ? `total ${total} must equal ${expected} for mode '${mode.id}' with ${granted} levelled point(s)`
+        : `total ${total} must equal ${expected} for mode '${mode.id}'` });
+    }
   }
   return problems;
 }
 
-function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes') {
-  return allocationProblems(tables(source), classId, modeId, values, path);
+function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes', granted = 0) {
+  return allocationProblems(tables(source), classId, modeId, values, path, granted);
 }
 
 function classAttributePreset(source, classId, modeId = defaultCreationModeId(source)) {
@@ -20854,7 +21104,14 @@ function normalizeRunAttributes(run, registries) {
     });
     return run;
   }
-  const problems = attributeAllocationProblems(registries, run.class, run.attributeMode, run.attributes);
+  // THE ALLOCATION IS JUDGED AGAINST CREATION PLUS WHAT WAS LEVELLED. A run
+  // that has bought no levels is judged by exactly the rules it always was —
+  // `granted` is 0 and every message is byte-for-byte the one it printed
+  // before.
+  const problems = attributeAllocationProblems(
+    registries, run.class, run.attributeMode, run.attributes, 'attributes',
+    grantedAttributePoints(run, registries),
+  );
   if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
   run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));
   return run;
@@ -20909,7 +21166,7 @@ function attributeContentProblems(source) {
 }
 
 
-Object.assign(module.exports, { orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, migrateRetiredAttributeNames, normalizeRunAttributes, attributeContentProblems });
+Object.assign(module.exports, { grantedAttributePoints, orderedAttributes, defaultCreationModeId, creationMode, allocationTotal, attributeAllocationProblems, classAttributePreset, migrateRetiredAttributeNames, normalizeRunAttributes, attributeContentProblems });
 
 },
 "src/model/healLedger.js": function (module, exports, require) {
@@ -24000,6 +24257,14 @@ function createRunState({
     startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
     attributes,
+    // LEVELS BOUGHT AT SHRINES, per run — Constantine: "players should have the
+    // option to level up their character (per run) by trading cinders". It is a
+    // COUNT and not a copy of anything: the points themselves live in
+    // `attributes` (where every reader already looks, so a level is worth
+    // exactly what the derived-stat table says a point is worth), and this
+    // number is what the creation-rule check at the load door needs in order to
+    // tell a levelled run from a hand-edited one. `model/levelup.js`.
+    levelUps: 0,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -24268,6 +24533,9 @@ const RUN_SHAPE = [
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
+  // Optional so a run saved before shrine levelling existed still loads: absent
+  // reads as zero levels bought, which is what such a run is.
+  { key: 'levelUps', type: 'number', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -24332,6 +24600,13 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
     }
+  }
+  // A level count is a whole number of purchases and can never be negative. The
+  // ALLOCATION check that reads it lives at the load door
+  // (attributes.js:grantedAttributePoints); this is the shape check, and a
+  // fractional or negative value would silently shift the expected total there.
+  if (run.levelUps !== undefined && (!Number.isInteger(run.levelUps) || run.levelUps < 0)) {
+    problems.push('levelUps must be a non-negative integer');
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
@@ -31531,7 +31806,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '23f56f19f6';
+const SOURCE = '335420fe11';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -31565,7 +31840,7 @@ const SOURCE = '23f56f19f6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0774';
+const ORDINAL = '0777';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -36739,7 +37014,8 @@ const { attachTooltip } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { nodeIcon, actTitle, parchmentAsset, parchmentClass } = require("src/ui/uiContent.js");
 const { trackGesture } = require("src/ui/gesture.js");
-const { mapKnowledge, nodeReading, resolveMapMode, HIDDEN, KNOWN, MAP_MODE_DEFAULT } = require("src/model/mapknowledge.js");
+const { mapKnowledge, nodeReading, resolveMapMode, resolveShrineGlow, shrineLane, HIDDEN, KNOWN, MAP_MODE_DEFAULT } = require("src/model/mapknowledge.js");
+
 
 
 const { ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT, clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight, NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx } = require("src/model/mapview.js");
@@ -36830,6 +37106,9 @@ function indexNodes(nodes) {
  *   `path`      the ids already travelled, in order. Feeds the fog light.
  *   `mode`      'fog' | 'path'; omitted, it is read from `meta`.
  *   `reveal`    the Sealstone Key.
+ *   `shrineGlow` OPTIONAL override for the shrine-lane setting. Omitted, it is
+ *              read from `meta` — the setting is the player's, and this exists
+ *              so a harness can pose both answers without writing a profile.
  *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
  *   `classes`   (node) → extra classes. `my-vote` lives here.
  *   `tooltip`   (node, reading) → html.
@@ -36895,6 +37174,33 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   });
   const isDrawn = (id) => know.drawn.has(id);
 
+  // ---- the shrine lane ---------------------------------------------------
+  //
+  // "as new paths open, the path to the nearest shrine should have a glowing
+  // effect. (make this toggleable in the settings)" — Constantine, 2026-08-16.
+  //
+  // THE LANE IS THE VIEWER'S, NOT THE ACT'S, which is why it is computed here
+  // beside the knowledge and not handed in by the screen: it is aimed from
+  // where THIS viewer is standing, and two players on one act have two lanes.
+  //
+  // CLIPPED TO WHAT IS DRAWN, and the clip is the whole safety of the feature.
+  // Under fog the walk to the nearest shrine runs through nodes the player has
+  // not earned; painting the lane over them would leak the act's shape through
+  // a highlight, and it would be the one thing here a player could not un-see.
+  // So a node glows only if it is drawn, and an edge only if BOTH its ends are
+  // — the same rule the edge loop below already applies, for the same reason.
+  const glowOn = viewer.shrineGlow !== undefined
+    ? !!viewer.shrineGlow
+    : resolveShrineGlow(viewer.meta);
+  const lane = glowOn
+    ? shrineLane({ graph: { nodes: byId, startIds: act.startIds, bossId: act.bossId }, run })
+    : [];
+  const laneNodes = new Set(lane.filter(isDrawn));
+  const laneEdge = new Set();
+  for (let i = 0; i + 1 < lane.length; i++) {
+    if (isDrawn(lane[i]) && isDrawn(lane[i + 1])) laneEdge.add(`${lane[i]}>${lane[i + 1]}`);
+  }
+
   // ---- edges (a traveled edge = consecutive pair in the path) ----
   //
   // AN EDGE NEEDS BOTH ITS ENDS. Under fog the nodes one step past the split are
@@ -36910,7 +37216,8 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       if (!to) continue;
       const ia = path.indexOf(n.id);
       const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      const isLane = laneEdge.has(`${n.id}>${toId}`);
+      edgeSvg += `<line class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
     }
   }
 
@@ -37024,6 +37331,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       `k-${rung}`,
       traveled.has(n.id) || n.id === current ? 'visited' : '',
       n.id === current ? 'current' : '',
+      laneNodes.has(n.id) ? 'shrine-lane' : '',
       isReachable ? 'reachable' : '',
       revealed ? 'revealed' : '',
       extra,
@@ -37058,6 +37366,13 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   scroll.dataset.nodesTotal = String(nodes.length);
   scroll.dataset.nodesHidden = String(know.counts.hidden);
   scroll.dataset.nodesPlaced = String(know.counts.placed);
+  // WHAT THE BOARD SAYS IT GLOWED — the same discipline as the fog census one
+  // line up, and for the same reason: a lane that cannot report itself cannot
+  // be caught painting through the fog. This is the CLIPPED lane, i.e. exactly
+  // the set that should carry `.shrine-lane` in the DOM, so an instrument can
+  // compare two sets rather than trust one count. The full walk is deliberately
+  // NOT published: it names nodes the player has not earned.
+  scroll.dataset.shrineLane = [...laneNodes].join(',');
 
   const saved = savedZoom(viewer.meta);
   let framing = saved == null ? 'fit' : 'saved';
@@ -37862,6 +38177,119 @@ function resolveMapMode(meta) {
   return MAP_MODES.includes(m) ? m : MAP_MODE_DEFAULT;
 }
 
+/**
+ * THE SHRINE LANE — one setting, and the row reads its default from here for
+ * the same reason `mapMode` does: a row and a resolver that carry the same
+ * default separately are one fact written twice.
+ *
+ * Constantine scoped this himself — "(make this toggleable in the settings)" —
+ * so the switch exists whether or not the glow is judged to need one. ON is the
+ * shipping default because the glow is the thing he asked for; the row turns it
+ * OFF.
+ */
+const SHRINE_GLOW_DEFAULT = true;
+
+/** resolveShrineGlow(meta) → boolean. Unset, or unreadable, is the default. */
+function resolveShrineGlow(meta) {
+  const v = ((meta && meta.settings) || {}).shrinePathGlow;
+  return typeof v === 'boolean' ? v : SHRINE_GLOW_DEFAULT;
+}
+
+/* --------------------------------------------------- the nearest shrine -- */
+
+/**
+ * nearestShrine({ graph, from }) → { id, path, distance } | null
+ *
+ * ONE COMPUTATION, TWO ASKS, and that is why it lives in this file rather than
+ * in either caller. Constantine asked for two things on 2026-08-16:
+ *
+ *   "strines should unfog the next nearest shine node"
+ *   "as new paths open, the path to the nearest shrine should have a glowing
+ *    effect"
+ *
+ * Both are the same question — *which shrine is nearest, walking forward from
+ * here, and what is the walk* — asked from two different `from`s. The unfog
+ * asks it from every shrine the player has STOOD ON; the glow asks it from
+ * where the player is standing NOW. Two answers, one function: a second
+ * traversal would be the second copy that lets the lit shrine and the glowing
+ * lane disagree about which shrine is next.
+ *
+ * (The third ask of that message — levelling at a shrine — shares the SUBJECT
+ * and shares nothing else. It is `model/levelup.js`, and it needs no graph.)
+ *
+ * FORWARD ONLY. `next` is a one-way edge and the climb is one-way, so this is
+ * a plain BFS with no back-edges: a shrine you have already climbed past is
+ * not a shrine you can reach.
+ *
+ * THE SOURCE IS NEVER THE ANSWER. Standing on a shrine, the nearest shrine is
+ * the NEXT one — which is what both asks mean and is why there is no
+ * `includeSource` option to get wrong.
+ *
+ * DETERMINISTIC AT EVERY TIE, and it is a property this file's instrument
+ * asserts rather than a habit. Two shrines at equal distance are settled by
+ * the smaller node id, and every frontier is walked in sorted order, so the
+ * answer does not depend on object key order or on which walker laid the edge
+ * down first. A glow that picks a different lane on a re-mount is a glow the
+ * player cannot follow.
+ *
+ * `from` may be one id or an array of them — the array is what the entrance
+ * needs, where the player is standing on nothing and every door is a source.
+ */
+function nearestShrine({ graph, from }) {
+  if (!graph || !graph.nodes) return null;
+  const sources = (Array.isArray(from) ? from : [from]).filter((id) => id && graph.nodes[id]);
+  if (!sources.length) return null;
+  const prev = new Map();
+  const seen = new Set(sources);
+  let frontier = [...seen].sort();
+  let distance = 0;
+  while (frontier.length) {
+    distance++;
+    const step = [];
+    for (const id of frontier) {
+      for (const to of graph.nodes[id].next || []) {
+        if (!graph.nodes[to] || seen.has(to)) continue;
+        seen.add(to);
+        prev.set(to, id);
+        step.push(to);
+      }
+    }
+    step.sort();
+    const hit = step.find((id) => graph.nodes[id].type === 'shrine');
+    if (hit) {
+      const path = [hit];
+      let at = hit;
+      while (prev.has(at)) { at = prev.get(at); path.unshift(at); }
+      return { id: hit, path, distance };
+    }
+    frontier = step;
+  }
+  return null;
+}
+
+/**
+ * shrineLane({ graph, run }) → the ids of the walk to the nearest shrine,
+ * source first, shrine last. `[]` when no shrine is reachable ahead.
+ *
+ * "AS NEW PATHS OPEN" IS WHY NOTHING IS STORED. The lane is recomputed from
+ * where the player is standing every time the board mounts, so stepping to a
+ * new node re-aims it — which is the whole of his "as new paths open" with no
+ * event, no cache and nothing to invalidate.
+ *
+ * THE LANE IS NOT THE LIGHT. This returns the whole walk, including nodes the
+ * fog is covering; the board draws the glow only where the node is already
+ * drawn, exactly as it already draws an edge only when both its ends are. A
+ * lane that painted through the fog would be a fog leak wearing a highlight,
+ * and it is the one thing this feature could break that the player could never
+ * un-see. `tools/mapfog.mjs --selftest` asserts the containment.
+ */
+function shrineLane({ graph, run }) {
+  if (!graph || !graph.nodes) return [];
+  const from = (run && run.mapNodeId) ? run.mapNodeId : (graph.startIds || []);
+  const found = nearestShrine({ graph, from });
+  return found ? found.path : [];
+}
+
 /* ------------------------------------------------------- the type reading -- */
 
 /**
@@ -37976,6 +38404,19 @@ const FOG_TRAIL_CLAUSE = 'Fog never closes behind you — anywhere you have seen
  *                    the end node." The shrine below it is not a landmark and
  *                    stays fogged until it is reached — the boss is what the
  *                    climb is aimed at; the shrine is a stop on the way.
+ *   the next shrine  "strines should unfog the next nearest shine node"
+ *                    (Constantine, 2026-08-16). For every shrine the player has
+ *                    STOOD ON, the nearest shrine ahead of it (nearestShrine
+ *                    above). The NODE, not the walk to it — his sentence names
+ *                    a node, and lighting the walk would hand over the shape of
+ *                    an act nobody has climbed.
+ *
+ * ARRIVAL, NOT THE REST BUTTON, and the difference is named rather than
+ * discovered. This fires when the player REACHES a shrine, because reaching one
+ * is what `run.path` records; "did they press Rest" is not in the run at all,
+ * and adding a `run.rested` to carry it would be the second copy of the trail
+ * that the paragraph below refuses. A player who walks into a shrine and smiths
+ * instead of resting has still seen the shrine, and the light says so.
  *
  * NOTHING IS STORED, and the stickiness is why that is worth saying twice. A
  * cumulative reveal is the obvious candidate for a `run.seen` array, and a
@@ -37997,14 +38438,25 @@ function litNodes({ graph, run }) {
     for (const to of n.next || []) add(to);
   };
 
+  // A shrine the player has stood on lights the next shrine ahead of it. The
+  // set of shrines stood on can only grow (`run.path` only grows), so this
+  // source is monotone by the same construction as the trail itself — which is
+  // what keeps FOG_TRAIL_CLAUSE true with a fifth source in the light.
+  const shrineAhead = (id) => {
+    const n = graph.nodes[id];
+    if (!n || n.type !== 'shrine') return;
+    const found = nearestShrine({ graph, from: id });
+    if (found) add(found.id);
+  };
+
   for (const id of (graph.startIds || [])) add(id);
   add(graph.bossId);
   const path = (run && run.path) || [];
-  for (const id of path) shine(id);
+  for (const id of path) { shine(id); shrineAhead(id); }
   // Belt and braces: in play `mapNodeId` is always the last element of `path`
   // (`enterNode` pushes it), but `?shotAt` poses a node without a history and a
   // hand-edited save could too. Standing somewhere always lights it AND its split.
-  if (run && run.mapNodeId) shine(run.mapNodeId);
+  if (run && run.mapNodeId) { shine(run.mapNodeId); shrineAhead(run.mapNodeId); }
   return lit;
 }
 
@@ -38048,7 +38500,7 @@ function mapKnowledge({ graph, run, mode = MAP_MODE_DEFAULT, reveal = false }) {
 }
 
 
-Object.assign(module.exports, { HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT, resolveMapMode, nodeReading, FOG_TRAIL_CLAUSE, litNodes, mapKnowledge });
+Object.assign(module.exports, { HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MODES, MAP_MODE_DEFAULT, resolveMapMode, SHRINE_GLOW_DEFAULT, resolveShrineGlow, nearestShrine, shrineLane, nodeReading, FOG_TRAIL_CLAUSE, litNodes, mapKnowledge });
 
 },
 "src/model/flaskActions.js": function (module, exports, require) {
@@ -41294,6 +41746,7 @@ Object.assign(module.exports, { mountRewards });
 // characteristics; this screen names its actions.
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
+const { levelUpPlan, applyLevelUp } = require("src/model/levelup.js");
 const { passiveFlag, resolveCard } = require("src/model/registries.js");
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc } = require("src/ui/components/tooltip.js");
@@ -41337,13 +41790,40 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, healMult = 1, refill = null }) {
+// WHAT A POINT IN THIS STAT DOES, READ AND NEVER TYPED. Every word comes from
+// the content tables — the attribute's own `sense` (content/attributes.js) and
+// the `presentation.label` of every derived stat whose `sourceStat` is this
+// attribute (content/derivedStats.js). So the sixth attribute, or a sixth
+// derived stat, describes itself at the shrine with nothing edited here, and no
+// number a player reads is a copy of one in a table (Law 1 clause 2).
+//
+// THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
+// the run: the point is permanent and the player is owed the arithmetic before
+// they spend, not a promise about it.
+function levelDetailHtml(registries, run, attr) {
+  const rules = (registries.derivedStatRules || {}).rules || {};
+  const presentation = (registries.derivedStatRules || {}).presentation || {};
+  const feeds = Object.keys(rules)
+    .filter((id) => rules[id] && rules[id].sourceStat === attr.id)
+    .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
+    .map((id) => (presentation[id] || {}).label || id);
+  const now = run.attributes[attr.id];
+  return `<p><b>${esc(attr.label)} ${now} → ${now + 1}</b></p>
+    <p>${esc(attr.sense || '')}</p>
+    ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
+}
+
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
   const arm = beatArmer(meta, registries);
   const hpCharge = chargeFlaskDefinition(registries, 'hp');
   const manaCharge = chargeFlaskDefinition(registries, 'mana');
+  // "also at graces, players should have the option to level up their character
+  // (per run) by trading cinders to level up." The screen asks the model what
+  // it may offer and prices nothing itself.
+  const level = levelUpPlan(registries, run);
 
   app.innerHTML = `
     <div class="screen">
@@ -41369,6 +41849,16 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, he
             ${Array.from({ length: run.flaskCharges.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${run.flaskCharges.capacity - hp}</button>`).join('')}
           </div>
         </div>
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
+          <div class="glyph">✦</div>
+          <h3>Level up</h3>
+          <p>${level.capped
+            ? `You have taken every level this climb allows (${level.levelsTaken}).`
+            : `${level.cost} cinders for 1 point. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
+          <div class="flask-allocation-controls">
+            ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          </div>
+        </div>
       </div>
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
@@ -41389,6 +41879,31 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, he
     if (onReallocate) onReallocate({ ...run.flaskCharges });
     mountRest(app, { registries, run, meta, onDone, onReallocate, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
   }));
+  // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
+  // model/secondbeat.js and the machinery picks the form from its
+  // characteristics. This screen names the action and hands over the commit,
+  // which is the rule that whole file exists to enforce.
+  if (level.offerable) {
+    for (const attr of level.attributes) {
+      const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
+      if (!btn) continue;
+      arm(btn, 'shrineLevelUp', {
+        question: `Spend ${level.cost} cinders on ${attr.label}? The point is permanent.`,
+        detailHtml: levelDetailHtml(registries, run, attr),
+        confirmLabel: 'LEVEL UP',
+        onConfirm: () => {
+          applyLevelUp(registries, run, attr.id);
+          sfx.play('shrine');
+          if (onLevelUp) onLevelUp();
+          // RE-MOUNT, the same shape the flask reallocation above already uses:
+          // the price has moved, the purse has moved, and so has a derived pool
+          // the Rest panel is quoting. A screen that stayed put would be
+          // offering the old price for the next point.
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill });
+        },
+      });
+    }
+  }
   if (upgradable.length) {
     // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
     // is the point: this button commits nothing — it reveals the candidates,
@@ -41425,6 +41940,204 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, he
 
 
 Object.assign(module.exports, { mountRest });
+
+},
+"src/model/levelup.js": function (module, exports, require) {
+// src/model/levelup.js — LEVELLING AT A SHRINE. Constantine, D10 wave 1:
+//
+//   "also at graces, players should have the option to level up their character
+//    (per run) by trading cinders to level up. at level up they may increase a
+//    stat by 1 point."
+//
+// and again in E13, with the acceptance test attached:
+//
+//   "rest sites become where you level, cinders spent past a threshold — 1 stat
+//    point per level, 10–20 level-ups a run, scalable."
+//
+// WHAT LEVELLING TURNED OUT TO BE, because there was no level system in this
+// tree to add to and the shape had to be derived rather than invented. There is
+// no XP, no character level, no class progression, and nothing anywhere named
+// `level`. What there IS, already, is the exact machinery a level-up needs:
+//
+//   `run.attributes`      five integers, the only growth surface the run has.
+//   `content/derivedStats.js`  what a point is WORTH — CON → HP and Stamina,
+//                         WIS → Mana, DEX → Actions, INT → Draw. E6 shipped
+//                         this tonight.
+//   `run.cinders`         the currency, already spent this way at the shop.
+//
+// So a level is not a new system. **A level is one attribute point, bought with
+// cinders, at a shrine** — and every consequence of it is already derived by
+// tables somebody else owns. This file adds a PRICE and a PURCHASE and nothing
+// else: it authors no stat, no curve of HP, and no idea of what a point does.
+//
+// THE ONE THING THAT IS NOT OBVIOUS, and it is the whole reason this is a model
+// file rather than four lines in the shrine screen. Three separate mechanisms
+// have to move together or the run breaks, and two of them break LATER:
+//
+//   1. the attribute goes up — the visible half;
+//   2. the derived pools have to be re-derived from the run's OWN snapshot, or
+//      the next load throws `Persisted maxMana N contradicts derived-stat
+//      snapshot value N+1` (state.js:initializeRunDerivedStats);
+//   3. `run.levelUps` has to record the purchase, or the creation-rule check at
+//      the load door sees a 56-point allocation where the mode says 55 and the
+//      save is ARCHIVED (attributes.js:grantedAttributePoints, save.js).
+//
+// A level-up that does only (1) looks perfect on screen and destroys the run on
+// the next load. That is why this is one function and not a screen's business.
+
+const { deriveStat } = require("src/model/derivedStats.js");
+const { orderedAttributes } = require("src/model/attributes.js");
+const { reconcileRunLoadoutHp } = require("src/model/loadout.js");
+const { note } = require("src/model/healLedger.js");
+
+/** The authored table, or the shape of one, so a bundle without it fails soft
+ *  in tools rather than throwing on a missing key. Bad data is caught at the
+ *  content door, not here. */
+function table(registries) {
+  return (registries && registries.balance && registries.balance.levelUp) || {};
+}
+
+/**
+ * levelCost(registries, levelsTaken) → the price of the NEXT level.
+ *
+ * "cinders spent past a threshold … scalable" — a linear ramp, `firstCost +
+ * costStep × levelsTaken`, so n levels cost `n × firstCost + costStep × n(n−1)/2`
+ * in total. Both numbers are data (content/balance.js `levelUp`), which is what
+ * makes his "scalable" a knob rather than an edit.
+ */
+function levelCost(registries, levelsTaken) {
+  const t = table(registries);
+  const first = Number.isFinite(t.firstCost) ? t.firstCost : 0;
+  const step = Number.isFinite(t.costStep) ? t.costStep : 0;
+  return Math.max(0, Math.round(first + step * Math.max(0, levelsTaken)));
+}
+
+/**
+ * levelsAffordable(registries, cinders) → how many levels a given purse buys,
+ * from a standing start, if it is spent on nothing else.
+ *
+ * THIS IS THE ACCEPTANCE TEST'S FUNCTION, and it is exported so the test is a
+ * property of the shipped curve rather than arithmetic retyped beside it. His
+ * band is 10–20 levels a run.
+ *
+ * WHAT IT IS NOT: a claim about a real climb. Nobody has simulated what an act
+ * actually pays out, or what the shop takes first. The curve is checked; the
+ * purse it is checked against is an assumption and is named as one wherever it
+ * is used.
+ */
+function levelsAffordable(registries, cinders) {
+  let n = 0;
+  let left = Number.isFinite(cinders) ? cinders : 0;
+  // The ramp only rises, so this terminates on any non-negative purse; the
+  // guard is against a zero-or-negative step making every level free.
+  while (left >= levelCost(registries, n) && levelCost(registries, n) > 0) {
+    left -= levelCost(registries, n);
+    n++;
+    if (n > 10000) break;
+  }
+  return n;
+}
+
+/**
+ * levelUpPlan(registries, run) → what the shrine may offer, and why not.
+ *
+ *   { levelsTaken, cost, cinders, affordable, capped, offerable, attributes }
+ *
+ * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
+ * this feature's Law 0 falsifier: a sixth attribute is one row in
+ * `content/attributes.js` and it appears at the shrine with zero UI edits. The
+ * shrine screen never names a stat.
+ */
+function levelUpPlan(registries, run) {
+  const t = table(registries);
+  const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
+  const cost = levelCost(registries, levelsTaken);
+  const cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
+  const capped = Number.isInteger(t.maxLevels) && levelsTaken >= t.maxLevels;
+  const affordable = cinders >= cost;
+  return {
+    levelsTaken,
+    cost,
+    cinders,
+    affordable,
+    capped,
+    // A cap of `null` is "no ceiling but the cinders themselves" — his range is
+    // an economy, not a limit, so the shipped table refuses on price alone.
+    offerable: affordable && !capped,
+    pointsPerLevel: Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1,
+    attributes: orderedAttributes(registries),
+  };
+}
+
+/**
+ * applyLevelUp(registries, run, attributeId) → the plan that was paid for, or
+ * throws by name.
+ *
+ * THE THREE MECHANISMS, IN ONE ACT, in the order that keeps the run loadable at
+ * every point in between. Nothing here is a screen's to reorder.
+ *
+ * RE-DERIVED FROM THE RUN'S OWN SNAPSHOT, never from today's content tables.
+ * `run.derivedStatRuleSnapshot` is what the run was born under and what its
+ * persisted pools are validated against; re-deriving from `registries` would
+ * hand a climb in progress whatever the tables say tonight — the exact drift
+ * the snapshot exists to prevent.
+ *
+ * MAX-HP IS NOT COMPUTED HERE. `reconcileRunLoadoutHp` is max-HP home 3 of 3
+ * and already does derived + equipment + adjustment with the deficit carried;
+ * a fourth home doing the same sum is the second copy this tree keeps catching.
+ *
+ * WHAT A LEVEL DOES TO A CURRENT POOL, ruled rather than assumed: the pool
+ * grows and **the deficit is carried** — levelling CON at 12/40 HP gives 12/41,
+ * not a heal. A level-up is not a rest, the shrine already sells the heal
+ * beside it, and a level that healed would make the Rest panel pointless at the
+ * same counter. Mana, Stamina and the per-turn stats have no deficit to carry
+ * inside a shrine (combat is over), so they take the new maximum.
+ */
+function applyLevelUp(registries, run, attributeId) {
+  const plan = levelUpPlan(registries, run);
+  const ids = plan.attributes.map((a) => a.id);
+  if (!ids.includes(attributeId)) {
+    throw new Error(`levelUp: '${attributeId}' is not an attribute id (${ids.join(', ')})`);
+  }
+  if (plan.capped) throw new Error(`levelUp: this run is at its ${plan.levelsTaken}-level ceiling`);
+  if (!plan.affordable) throw new Error(`levelUp: ${plan.cost} cinders needed, ${plan.cinders} held`);
+  if (!run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules) {
+    throw new Error('levelUp: the run carries no derived-stat snapshot to re-derive against');
+  }
+
+  run.cinders -= plan.cost;
+  run.attributes[attributeId] += plan.pointsPerLevel;
+  run.levelUps = plan.levelsTaken + 1;
+
+  const rules = run.derivedStatRuleSnapshot.rules;
+  const classDef = registries.classes.get(run.class);
+  const before = { maxMana: run.maxMana, maxStamina: run.maxStamina, energyMax: run.energyMax, drawPerTurn: run.drawPerTurn };
+  for (const [key, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina'], ['energyMax', 'energy'], ['drawPerTurn', 'draw']]) {
+    if (run[key] === undefined) continue;
+    run[key] = deriveStat(rules, statId, { attributes: run.attributes, classDef }).value;
+  }
+  // Current pools ride their own maximum up; they are never reduced by a level.
+  if (run.mana !== undefined && before.maxMana !== undefined) {
+    run.mana = Math.min(run.maxMana, run.mana + Math.max(0, run.maxMana - before.maxMana));
+  }
+  if (run.stamina !== undefined && before.maxStamina !== undefined) {
+    run.stamina = Math.min(run.maxStamina, run.stamina + Math.max(0, run.maxStamina - before.maxStamina));
+  }
+  const hp = reconcileRunLoadoutHp(registries, run);
+
+  note(run, {
+    kind: 'write',
+    site: 'levelup.js:applyLevelUp',
+    field: `attributes.${attributeId}`,
+    was: run.attributes[attributeId] - plan.pointsPerLevel,
+    now: run.attributes[attributeId],
+    why: `level ${run.levelUps} bought for ${plan.cost} cinders; pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
+  });
+  return { ...plan, spent: plan.cost, attributeId, level: run.levelUps };
+}
+
+
+Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, applyLevelUp });
 
 },
 "src/ui/screens/shop.js": function (module, exports, require) {
@@ -42365,7 +43078,9 @@ const { renderAboutSection } = require("src/ui/screens/about.js");
 const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
-const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE } = require("src/model/mapknowledge.js");
+const { MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT } = require("src/model/mapknowledge.js");
+
+
 const { flasks } = require("src/content/flasks.js");
 const { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } = require("src/model/gracerefill.js");
 
@@ -42479,6 +43194,15 @@ const ROWS = [
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
     choices: MAP_MODES, label: 'Map reveal',
     note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
+  // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
+  // nearest shrine should have a glowing effect. (make this toggleable in the
+  // settings)". He scoped the switch himself in the same sentence that asked
+  // for the effect, so the row exists whatever anyone thinks the glow needs.
+  // `def` is the resolver's own const (model/mapknowledge.js) rather than a
+  // second `true` typed here — the row three above learned that lesson with the
+  // zoom ladder.
+  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
+    note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
   // his number as the default and the customization he asked for as the row
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or

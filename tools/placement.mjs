@@ -93,8 +93,19 @@
 //     converted — `unknown`, named rather than implied.
 //   · AND THE FLASK MENU HAS A MOUNT SITE THIS TOOL CANNOT REACH. flask.js is
 //     mounted from combat.js, map.js and coop.js. `?shot=combat` is what P5
-//     drives; `?shot=map` renders no `.mh-flask` at either shape, so the MAP
-//     surface is unphotographed — `unknown`. Co-op was measured by hand
+//     drives; the MAP surface is not in P5 — `unknown` for THIS tool.
+//     THE `unknown` UNDER IT IS RESOLVED, 2026-08-17, AND THE ANSWER IS THE
+//     OPPOSITE OF WHAT THE OLD WORDING IMPLIED. This line read "`?shot=map`
+//     renders no `.mh-flask` at either shape" — true, and it reads as a missing
+//     mount. It is a PRECONDITION: main.js seeds `run.flasks` only inside its
+//     `combat || fx` shot branch, so `?shot=map` boots a FRESH run with zero
+//     flasks and the mount correctly draws nothing. Reached the way a player
+//     reaches it — `?shot=shop`, buy the shelf, LEAVE — the strip renders one
+//     `.mh-flask` per flask and this menu opens under it at both shapes. That
+//     surface is measured by tools/flaskbox.mjs, which uses that door and prints
+//     it. A NAMED `unknown` ON AN EMPTY SCREEN IS STILL A GUESS ABOUT WHY IT IS
+//     EMPTY, and this one was read as a missing feature for a night.
+//     Co-op was measured by hand
 //     (`?shot=coop`, last slot, both shapes: under, on screen, left-aligned) and
 //     is not in P5, because a by-hand receipt is not coverage.
 //   · P3 IS THE HAND AND NOTHING ELSE, AND THE REST IS NOW MEASURED ELSEWHERE.

@@ -334,7 +334,12 @@
 }
 .map-substrip[hidden] { display: none; }
 .map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
-.map-substrip .mh-flask { cursor: default; }
+/* THE FLASK'S BOX IS NOT HERE — one home, `.relic.flask-slot, .map-substrip
+   .mh-flask` in ui.css beside `.flask-identity`, so the same flask is the same
+   control on the map as in the topbar. This line used to be the ONLY rule
+   `.mh-flask` had, and it declared `cursor: default` on a <button> that mounts
+   the flask action menu (map.js:170-193) — the one hint a mouse player gets,
+   saying the opposite of the truth. Deleted rather than moved. */
 .map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
 .map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .map-substrip .relic {
