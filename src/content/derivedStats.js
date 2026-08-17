@@ -25,12 +25,23 @@ export const derivedStatRules = {
     },
     hp: {
       // E6 — Constantine, 2026-08-16, his own words: "50 + (con/5) + other
-      // bonuses". One base for every class, and the CON term is the TIER
-      // ITSELF, with no class coefficient multiplying it. His answer on the
+      // bonuses". WHAT THAT SENTENCE MOVED IS THE CON TERM: a tier is worth
+      // ONE, with no class coefficient multiplying it. His answer on the
       // read-back page settles the rounding in the same breath — ALWAYS FLOOR,
       // "CON 14 gives +2, not +3" — which is `defaults.rounding` and is why
       // this row does not restate it.
-      base: 50,
+      //
+      // THE CLASS CONTRIBUTION STAYS, AND THE BASE IS WHERE IT LIVES. Marina's
+      // ruling, 2026-08-17 (`56c90d2`), against my own first reading of this
+      // row: "other bonuses" is exactly the slot a class contribution lives in,
+      // his words never said the three classes are the same, and MR-241 holds —
+      // a new word does not silently delete an old one. So the base is the
+      // class's own authored number again and `classes.js` is LIVE, not a knob
+      // whose value is ignored. My reading was that a base is not a bonus and
+      // that his literal 50 should therefore appear in this file; it does not
+      // appear anywhere now, and that is the stated cost of her call, recorded
+      // here rather than argued.
+      base: { strategy: 'classField', field: 'maxHp' },
       sourceStat: 'constitution',
       pointsPerTier: 5,
       gainPerTier: 1,
@@ -51,22 +62,22 @@ export const derivedStatRules = {
       // subtraction, not a bonus), the `Math.max(1, …)` floor on the pool, and
       // the mode/run/explicit override layers.
       //
-      // WHY `classes.js` STILL CARRIES `maxHp` AND `hpPerConTier` WHEN THIS
-      // ROW NO LONGER READS EITHER. D22/F9 — "why isn't hp + classlevel hp
-      // bonus* floor(con/5)" — is `waiting-on-him` and is NOT closed by this
-      // formula (Marina's ruling: a formula does not answer a shape question).
-      // Deleting those two class fields would make restoring that shape a
-      // schema-and-validator act; leaving them authored makes it one data line
-      // here — `base: { strategy: 'classField', field: 'maxHp' }` and
-      // `gainPerTier: { strategy: 'classField', field: 'hpPerConTier' }`, which
-      // is exactly the pair this edit replaced. Reversible by data is the whole
-      // reason they stay.
+      // ONE DEAD KNOB REMAINS AND IT IS NAMED RATHER THAN QUIETLY LEFT.
+      // `classes.js` also authors `hpPerConTier` (4/5/6) and NOTHING READS IT
+      // at this ref. Making it live means multiplying the CON tier by it, which
+      // is D22's shape — "why isn't hp + classlevel hp bonus* floor(con/5)" —
+      // and D22/`F9` is `waiting-on-him`. NOBODY BUILDS EITHER READING OF F9,
+      // so the knob stays authored, unread, and OWED HIS ONE WORD. If he says
+      // D22, this row's `gainPerTier: 1` becomes
+      // `{ strategy: 'classField', field: 'hpPerConTier' }` and the knob is
+      // live again — one data line, no schema act. That is why it was not
+      // deleted, and Law 0 clause 3 is the reason the reversal costs one line
+      // in either direction.
       //
-      // THE COST, STATED: the three classes now share one HP base, so nothing
-      // in the shipped tables makes one class tougher than another except its
-      // CON preset and its starting relic's tagged rows. `F10` is the carded
-      // row for putting a class's HP number on that relic's tag; nobody holds
-      // it, and this lane did not build it.
+      // THE COST, STATED: a CON tier is now worth 1 for every class instead of
+      // 4/5/6, so the spread BETWEEN classes is now their authored bases and
+      // their starting relics' tagged rows, and CON is worth the same to
+      // everyone. Enemy numbers did not move.
     },
     stamina: {
       base: 0,

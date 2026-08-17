@@ -1427,10 +1427,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       // the DERIVED total, not the class base. Re-hardcode cls.maxHp here and
       // this goes red by name; the "fight concluded" assertion below would not.
       // `!==`, NOT `>`: the old comparison read `> cls.maxHp` and was true only
-      // because the class base happened to be the smaller half. E6 makes the
-      // derived total SMALLER than the class field (50-based vs 72/78), so the
-      // direction was never the property — being a different number from the
-      // field is. Same falsifier, same red, one fewer accident.
+      // because a CON tier used to be worth 4/5/6. Under E6 a tier is worth 1,
+      // so the gap between the derived total and the class field is now small
+      // enough that the DIRECTION was never the property — being a different
+      // number from the field is. Same falsifier, same red, one fewer accident.
       assert(c.player.maxHp === fresh.maxHp && c.player.maxHp !== cls.maxHp,
         `${classId} bot fights at its derived maxHp (${fresh.maxHp}), not the class base (${cls.maxHp})`);
       let guard = 0;
@@ -4119,15 +4119,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rules.stamina.sourceStat, 'constitution', "the snapshot's stamina rule now sources constitution");
     // Healing must not move a number: same points, same seat, same outputs.
     const old = JSON.parse(legacyVigourSave);
-    // 56, not 96, since E6 (2026-08-16). THIS SAVE CARRIES rulesetVersion 2 —
+    // 90, not 96, since E6 (2026-08-16). THIS SAVE CARRIES rulesetVersion 2 —
     // it has NO current-ruleset snapshot, so the load door resolves the CURRENT
     // host rules for it, by the design this test's own name calls migration.
     // That door already re-derived it (86 → 96) before E6 and now re-derives it
-    // to 50 + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
+    // to 84 class + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
     // CURRENT snapshot is NOT touched — test 50e is that edge, and the pair is
     // the whole save story of the formula change.
-    eq(run.maxHp, 56, 'legacy maxHp is re-derived through the current CON/class/relic authority');
-    eq(run.hp, 56, 'a legacy full-HP save remains full after current-rule migration');
+    eq(run.maxHp, 90, 'legacy maxHp is re-derived through the current CON/class/relic authority');
+    eq(run.hp, 90, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
     eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
     // Forward hygiene: the next save writes zero dead bytes.
@@ -4141,22 +4141,25 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test('50d. HP is 50 + floor(CON/5) + every tagged bonus, and the tier flips one CON either side of 15 — E6', () => {
+  test('50d. a CON tier is worth 1 for everyone, the class base still differs, and the tier flips one CON either side of 15 — E6', () => {
     // E6, his words, 2026-08-16: "50 + (con/5) + other bonuses". The screen's
     // own read model is the door here — the printed receipt and the run pool
     // come through the same host-stamped rules rather than a UI-only formula.
     //
-    // THE 50 IS ONE NUMBER FOR EVERY CLASS. `classes.js` still authors `maxHp`
-    // and `hpPerConTier`; the HP rule reads NEITHER, and this loop is what goes
-    // red if either creeps back into the base or the coefficient.
+    // WHAT E6 MOVED IS THE CON TERM, NOT THE CLASS BASE. Marina's ruling of
+    // 2026-08-17 (`56c90d2`), against the first build of this row: "other
+    // bonuses" is the slot a class contribution lives in, so `classes.js`'s
+    // `maxHp` is LIVE and this loop goes red if it goes dead again. What E6
+    // did remove is the class COEFFICIENT on the tier — `hpPerConTier` is
+    // D22/F9's shape and is waiting on his word.
     for (const [classId, con] of [['reaver', 12], ['starseer', 10], ['herald', 12]]) {
       const cls = REG.classes.get(classId);
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       eq(run.attributes.constitution, con, `${classId} preset CON`);
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(hp.tier, Math.floor(con / 5), `${classId}: printed HP uses floor(CON/5)`);
-      assert(hp.base !== cls.maxHp,
-        `${classId}: the HP base is E6's 50 (+ tagged flat), not the class field ${cls.maxHp} — got ${hp.base}`);
+      assert(hp.base >= cls.maxHp,
+        `${classId}: the HP base is the class's own authored ${cls.maxHp} plus any tagged flat — got ${hp.base}`);
       assert(hp.gainPerTier !== cls.hpPerConTier,
         `${classId}: the CON tier is worth 1 (+ tagged per-tier), not the class coefficient ${cls.hpPerConTier} — got ${hp.gainPerTier}`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`),
@@ -4164,13 +4167,25 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       eq(run.maxHp, hp.base + hp.tier * hp.gainPerTier + hp.equipmentBonus + hp.adjustment,
         `${classId}: max HP derives from stamped base + CON tiers + gear + permanent adjustment`);
     }
-    // A class with NO tagged HP bonus is the bare formula with nothing else in
-    // it — 50 exactly, and one HP per five CON.
+    // THE CELL MARINA'S RULING EXISTS FOR — and it is a set, not a pair, so a
+    // single class drifting into agreement with another still shows. Retune a
+    // `maxHp` in classes.js to match another and this goes red; make the base a
+    // constant again and it goes red the loudest way there is.
+    const bases = ['reaver', 'starseer', 'herald'].map((id) => statProjection(
+      REG, createRunState({ seed: 0xf4, classId: id, registries: REG }),
+    ).derived.find((row) => row.id === 'hp').base);
+    eq(new Set(bases).size, 3, `the three classes carry three different HP bases — got ${bases.join(', ')}`);
+    // And the class field is what they carry: a change there is a change here,
+    // which is the whole meaning of "live knob".
+    for (const id of ['starseer', 'herald']) {
+      const cls = REG.classes.get(id);
+      const hp = statProjection(REG, createRunState({ seed: 0xf5, classId: id, registries: REG }))
+        .derived.find((row) => row.id === 'hp');
+      eq(hp.base, cls.maxHp, `${id} tags no flat HP, so its base IS its authored class number`);
+      eq(hp.gainPerTier, 1, `${id} tags no per-tier HP, so a CON tier is E6's bare 1`);
+    }
     const bare = createRunState({ seed: 0xf3, classId: 'herald', registries: REG });
-    const bareHp = statProjection(REG, bare).derived.find((row) => row.id === 'hp');
-    eq(bareHp.base, 50, 'a class whose starting relic tags no HP shows E6\'s bare 50');
-    eq(bareHp.gainPerTier, 1, 'and one HP per completed five-point CON tier');
-    eq(bare.maxHp, 52, 'herald CON 12 = 50 + floor(12/5)');
+    eq(bare.maxHp, 80, 'herald CON 12 = its authored 78 + floor(12/5) × 1');
 
     // ---- BOTH EDGES OF THE DOMAIN, through the real creation door ----------
     // `standard` allows CON 10–15 (attributes.js creationModes), and the door
@@ -4180,8 +4195,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       seed: 0xf2, classId: 'reaver', registries: REG,
       attributes: { strength: 25 - con, dexterity: 10, constitution: con, wisdom: 10, intelligence: 10 },
     });
-    eq(at(10).maxHp, 56, 'CON floor 10: 52 + 2 tiers × 2');
-    eq(at(15).maxHp, 58, 'CON ceiling 15: 52 + 3 tiers × 2');
+    eq(at(10).maxHp, 90, 'CON floor 10: 86 + 2 tiers × 2');
+    eq(at(15).maxHp, 92, 'CON ceiling 15: 86 + 3 tiers × 2');
     for (const outside of [9, 16]) {
       let refused = false;
       try { at(outside); } catch (e) { refused = /between 10 and 15/.test(e.message); }
@@ -4243,7 +4258,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // number. If both came out 96 this test would be measuring nothing.
     const fresh = createRunState({ seed: 7, classId: before.class, registries: REG });
     eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
-    eq(fresh.maxHp, 56, 'a NEW run of the same class gets E6, so 96 above is preservation and not a coincidence');
+    eq(fresh.maxHp, 90, 'a NEW run of the same class gets E6, so 96 above is preservation and not a coincidence');
   });
 
   const passed = results.filter((r) => r.ok).length;
