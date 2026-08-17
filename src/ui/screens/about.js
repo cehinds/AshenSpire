@@ -11,9 +11,43 @@
 
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
+import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
 import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
 
-export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+function changelogHtml(entries) {
+  return entries.map((release) => `
+    <section class="about-release" aria-labelledby="about-release-${esc(release.version)}">
+      <h4 id="about-release-${esc(release.version)}">${esc(release.version)} · ${esc(release.label)}</h4>
+      <p class="set-note about-release-date">${esc(release.date)}</p>
+      <ul class="about-change-list">
+        ${release.changes.map((change) => `
+          <li>
+            <details class="about-change">
+              <summary>${esc(change.summary)}</summary>
+              <p>${esc(change.detail)}</p>
+            </details>
+          </li>`).join('')}
+      </ul>
+    </section>`).join('');
+}
+
+function buildLineHtml(buildLine, runPath, repositoryUrl) {
+  // A source-tree or raw-file run is a development/debug artifact. The shipped
+  // standalone file stays plain text: it must not turn an offline version label
+  // into an external navigation control. RUN_PATH is injected by the existing
+  // build/serve door, so this renderer does not invent a second build-mode flag.
+  if (runPath === 'standalone file') return esc(buildLine);
+  const label = `Open the AshenSpire source repository for debug build ${BUILD_VERSION}`;
+  return `<a class="about-version-link" href="${esc(repositoryUrl)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(label)}">${esc(buildLine)}</a>`;
+}
+
+export function renderAboutSection(container, {
+  disclosure = AI_DISCLOSURE,
+  changelog = CHANGELOG,
+  repositoryUrl = PROJECT_REPOSITORY_URL,
+  runPath = RUN_PATH,
+  buildLine = ABOUT_BUILD_LINE,
+} = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -59,11 +93,16 @@ export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {
     <div class="about-ai">
       ${lead}
       ${sections}
+      <section class="about-changelog" aria-labelledby="about-changelog-heading">
+        <h3 id="about-changelog-heading">Changelog</h3>
+        <p class="set-note">Open a change for the full notes.</p>
+        ${changelogHtml(changelog)}
+      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${buildLineHtml(buildLine, runPath, repositoryUrl)}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the

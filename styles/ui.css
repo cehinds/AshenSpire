@@ -2587,6 +2587,23 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .about-ai .about-block .set-note { line-height: 1.45; max-width: 62ch; }
 .about-ai .about-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .about-ai .about-result:empty { display: none; }
+.about-changelog {
+  display: flex; flex-direction: column; gap: 0.45rem; max-width: 62ch;
+  border-top: 1px solid var(--line); padding-top: 0.9rem;
+}
+.about-changelog h3,
+.about-release h4 { margin: 0; color: var(--parchment); }
+.about-release { display: flex; flex-direction: column; gap: 0.2rem; }
+.about-release-date { opacity: 0.75; }
+.about-change-list { display: flex; flex-direction: column; gap: 0.4rem; padding-left: 1.35rem; }
+.about-change summary {
+  min-height: var(--tap-floor); display: flex; align-items: center;
+  color: var(--gold); cursor: pointer; line-height: 1.4;
+}
+.about-change summary:focus-visible,
+.about-version-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.about-change p { margin: 0 0 0.5rem; line-height: 1.5; color: var(--muted); }
+.about-version-link { color: inherit; text-underline-offset: 0.2em; }
 /* The A4 version line is TWO rows and it has to be allowed to be two rows.
    `.set-note` caps at 23rem = 207px at this shape, which is narrower than
    either row, so each `<br>` row wrapped again and the line Constantine picked
