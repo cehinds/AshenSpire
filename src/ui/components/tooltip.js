@@ -36,6 +36,11 @@ let showTimer = null;
 //     ''`). Derived from the screen instead of restated at each select site —
 //     click, keyboard and flask all re-render, so all three are covered by one
 //     watch rather than by three lines nobody will keep in sync.
+//     THE WATCH IS ON THE DOCUMENT, NOT ON THE CARD'S PARENT, and the reason is
+//     measured: co-op replaces `.hand` instead of emptying it, which a parent
+//     watch cannot see. See stickTooltip() — the sentence that used to stand
+//     here was true of combat.js and false of the other screen that mounts
+//     this same hand. (Bjorn, gating this commit.)
 // I WROTE "ALL THREE ARE ONE MECHANISM" HERE FIRST AND IT WAS WRONG:
 // tooltippersist --selftest P3 cuts the watch and only the SELECT case goes
 // red. The sentence now says what the plant showed.
@@ -236,23 +241,44 @@ export function attachTooltip(el, contentFn) {
  * gesture E8 is about; `el` is the card being read.
  *
  * IT REFUSES MORE THAN IT ACCEPTS, ON PURPOSE. No tooltip on screen → nothing
- * to keep. No element, or an element with no parent, or no MutationObserver in
+ * to keep. An element that is not in the document, or no MutationObserver in
  * this runtime → NOTHING COULD EVER END IT, so it does not begin: the tooltip
  * stays ordinary and hides on the next leave, exactly as it does today. A
  * refusal here is a tooltip that behaves like dev's; the alternative is one a
  * player cannot get rid of, and between those two the choice is not close.
+ *
+ * THE REFUSAL IS SILENT AND THAT IS A KNOWN BOUNDARY, NOT A CLAIM: hand.js
+ * ignores the return value, nothing renders it, and no check plants a runtime
+ * without MutationObserver. A refused stick is indistinguishable from dev's
+ * behaviour from the outside — which is the point of the floor and also the
+ * reason it cannot currently be observed. (Bjorn, gating 87a8ad2.)
  */
 export function stickTooltip(el) {
-  const host = el && el.parentNode;
   if (!tipEl || tipEl.style.display !== 'block') return false;
-  if (!host || typeof MutationObserver === 'undefined') return false;
+  // `isConnected`, not `parentNode`: the predicate the watch below tests IS
+  // `el.isConnected`, and a detached subtree has a parentNode. One fact, one
+  // reading — the guard and the watch can no longer disagree.
+  if (!el || !el.isConnected || typeof MutationObserver === 'undefined') return false;
   unstick();
-  // The hand is rebuilt wholesale on every combat state change, so watching the
-  // card's own parent for childList is the whole of "another card is selected,
-  // or it is played, or another menu or game state activates" — derived from
-  // the screen instead of restated at each of his three events.
+  // WATCHED AT THE DOCUMENT, NOT AT THE CARD'S PARENT, AND THE DIFFERENCE IS A
+  // MEASURED DEFECT rather than a preference. The predicate is `isConnected`,
+  // so the watch has to fire on every change that can falsify it. A childList
+  // observer on the card's own parent fires when that parent's CHILDREN change
+  // and NEVER when the PARENT ITSELF is removed — and both topologies ship:
+  // combat.js empties `.hand` in place (`handEl.innerHTML = ''`, hand.js), so
+  // the parent watch worked there, while coop.js rebuilds the whole screen
+  // (`app.innerHTML = …`) and REPLACES `.hand`, so the watched node was
+  // detached, the callback never ran, and the tooltip outlived the card.
+  // Measured 2026-08-17 on `?shot=coop` at 390x844, before this line changed:
+  // after the hold, "another card selected", END TURN and three further taps
+  // ALL left it standing, naming a card that had left the DOM three renders
+  // ago — all three of his endings dead on that surface, because coop.js also
+  // carries zero hideTooltip() calls of its own. One watch that cannot be
+  // wrong about which parent, instead of two screens that must agree.
+  // Cost, stated: one `isConnected` test per structural mutation anywhere, and
+  // only while a tooltip is stuck. Held by tools/tooltippersist.mjs plant P4.
   stuckWatch = new MutationObserver(() => { if (!el.isConnected) hideTooltip(); });
-  stuckWatch.observe(host, { childList: true });
+  stuckWatch.observe(document.documentElement, { childList: true, subtree: true });
   stuck = true;
   return true;
 }

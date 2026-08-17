@@ -29,6 +29,19 @@
 //   9. UNCHANGED: an ordinary hover on the same card, with NO hold, still hides
 //      on pointerleave. The change is the hold, not the tooltip.
 //
+// AND ONE MORE CELL, ON THE OTHER SCREEN THAT MOUNTS THIS SAME HAND — added
+// 2026-08-17 by Bjorn gating this commit, because co-op was `unknown` here and
+// `unknown` turned out to be a defect. ?shot=coop, 390x844:
+//  10. COOP HOLD  — the hold sticks on the co-op hand too.
+//  11. COOP LIFT  — and survives the release, same as solo.
+//  12. COOP SELECTED — tapping another card ENDS it. THIS ONE WAS RED. coop.js
+//      rebuilds its whole screen (`app.innerHTML = …`) instead of emptying
+//      `.hand`, so the watch's host was DETACHED rather than mutated, the
+//      callback never ran, and nothing on that surface could end the tooltip:
+//      measured before the fix, "another card selected", END TURN and three
+//      further taps all left it standing. coop.js carries zero hideTooltip()
+//      calls, so unlike combat.js it has no second wire to fall back on.
+//
 // BOUNDARY — HIS THREE ENDINGS ARE CARRIED BY TWO DIFFERENT WIRES, AND THE
 // SPLIT WAS MEASURED, NOT REASONED. I wrote "one mechanism" here first and P3
 // disproved it in the same hour: cutting the DOM watch turned check 5 red and
@@ -48,11 +61,11 @@
 // re-render the hand, so both should end a stuck tooltip; neither is sampled
 // here and both are `unknown`.
 //
-// NOT MEASURED, AND A WHOLE SURFACE: CO-OP. src/ui/screens/coop.js mounts the
-// same hand.js, so the hold sticks there too, and this tool has never booted a
-// co-op surface — the same standing hole handlayout and inspecthold carry
-// (docs/HAND-COLLAPSE-CONSULT.md). `unknown`, not green, and named because a
-// reader will otherwise take "the hand" to mean both of them.
+// CO-OP: NO LONGER UNKNOWN, AND NARROWER THAN IT LOOKS. Checks 10-12 boot
+// ?shot=coop, so the hold, the lift and his ending (a) are measured on that
+// surface. What is still NOT measured there: his (b) played and (c) end turn
+// as co-op performs them (a network intent, not combat.js's local call), the
+// wide shape, and every co-op scene that is not combat. `unknown`, not green.
 //
 // OTHER BOUNDARIES. Linux headless Chromium; synthesized touch is not a finger.
 // Nothing here measures WHERE the tooltip sits beyond "inside the viewport" —
@@ -164,6 +177,24 @@ const PLANTS = [
     mustStay: (out) => /PASS lift: the tooltip is still up after release/.test(out)
       && /PASS played:/.test(out) && /PASS endturn:/.test(out),
   },
+  {
+    // Bjorn, 2026-08-17, gating 87a8ad2. THIS PLANT IS THE DEFECT AS SHIPPED,
+    // rebuilt: the watch pointed at the card's parent, which fires when that
+    // parent's CHILDREN change and never when the PARENT ITSELF is replaced.
+    // Combat empties `.hand` in place, so solo could not see it; co-op swaps
+    // the whole screen, so on co-op nothing ended the tooltip at all. The
+    // asymmetry is the finding, so this asserts BOTH directions the way P3
+    // does: coop red, solo green. A plant that only demanded a red somewhere
+    // would have been satisfied by the version that shipped.
+    name: 'P4 the watch is on the parent again',
+    file: 'src/ui/components/tooltip.js',
+    from: '  stuckWatch.observe(document.documentElement, { childList: true, subtree: true });',
+    to: '  stuckWatch.observe(el.parentNode, { childList: true }); /* tooltippersist --selftest P4 */',
+    what: 'the DOM watch goes back to the card\'s parent — blind to a parent that is REPLACED',
+    expect: 'CO-OP loses his (a) and solo keeps it — "coop selected" red, "selected" still green',
+    mustRed: (out) => /FAIL coop selected:/.test(out),
+    mustStay: (out) => /PASS selected:/.test(out) && /PASS coop lift:/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -206,8 +237,10 @@ async function selftest() {
   console.log('  DOOR: every known-bad below is a SOURCE EDIT to a disposable copy of this tree');
   console.log(`  (root ${ROOT}), judged by re-running this whole tool at --root COPY: served over`);
   console.log('  http, booted in headless Chromium, held with real CDP touch at real coordinates');
-  console.log('  on the real combat screen. Nothing is handed to stickTooltip().');
-  console.log('  SCOPE: the planted runs are 390x844 (one cell); the full run sweeps both shapes.\n');
+  console.log('  on the real combat screen, and on the real CO-OP screen. Nothing is handed to');
+  console.log('  stickTooltip().');
+  console.log('  SCOPE: the planted runs are 390x844 — the combat cell and the coop cell; the full');
+  console.log('  run sweeps both shapes plus coop at 390x844.\n');
 
   let fails = 0;
   const ok = (b, what) => { if (b) console.log(`  PASS ${what}`); else { fails++; console.log(`  FAIL ${what}`); } };
@@ -236,10 +269,28 @@ async function selftest() {
 
   console.log(fails
     ? `\ntooltippersist --selftest: ${fails} FAIL — this instrument's red is NOT re-observed; treat its greens as unknown`
-    : '\ntooltippersist --selftest: held — clean copy green, all three contracts red by name, through the finger\'s own door');
-  console.log('  BOUNDARY: the plants cover the stick, the lift and the END. The viewport check,');
-  console.log('  the pointer-events floor and the replacement are asserted every run and have');
-  console.log('  never been watched to fail.');
+    : `\ntooltippersist --selftest: held — clean copy green, all ${PLANTS.length} contracts red by name, through the finger's own door`);
+  // CORRECTED 2026-08-17 by Bjorn at the gate — the sentence here said "the
+  // viewport check, the pointer-events floor and the replacement ... have never
+  // been watched to fail", and two thirds of that is wrong in this tool's own
+  // transcript. Counted, not judged, over the plants above:
+  console.log('  BOUNDARY: the plants cover the stick, the lift, the END and the WATCH TOPOLOGY.');
+  console.log('  FOUR of the twelve checks have never gone red for their OWN reason, and naming');
+  console.log('  three of them was the old wording\'s error:');
+  console.log('    · 3 readable — it DOES print FAIL under P1 and P2, at box (0,0)-(0,0), because');
+  console.log('      it is a rider on check 2: `ok(t2.shown && …inside…)`. Every red it has ever');
+  console.log('      produced is check 2\'s red repeated. PLACEMENT is untested. A check that goes');
+  console.log('      red for the wrong reason will go green for the wrong reason.');
+  console.log('    · 4 inert — PASSES on a HIDDEN tooltip (pointer-events and the element count');
+  console.log('      do not depend on the feature). It passed on dev at 5597166 where none of');
+  console.log('      this existed. It is a guard on ui.css, not coverage of persistence.');
+  console.log('    · 8 replaced — also passed on dev at 5597166, for the same reason: with no');
+  console.log('      stick to release, "swapped then gone" is just two ordinary hovers.');
+  console.log('    · 9 unchanged — never red under any plant, and the old wording omitted it.');
+  console.log('  RED FIRST, RE-DERIVED at 5597166 through this same door: 6 of 9 FAIL, not 7 —');
+  console.log('  and the three that passed are 4, 8 and 9, none of which is on the new mechanism.');
+  console.log('  ALSO UNPLANTED: every branch of stickTooltip()\'s refusal floor. A silent refusal');
+  console.log('  is indistinguishable from dev, which is its design and also why nothing sees it.');
   process.exit(fails ? 1 : 0);
 }
 
@@ -431,13 +482,101 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
+  // ---- 10-12 · THE OTHER SCREEN THAT MOUNTS THIS SAME HAND ------------------
+  // One cell, 390x844, ?shot=coop. Deliberately a SUBSET of the nine above:
+  // co-op plays and ends its turn by network intent through a stub, not by
+  // combat.js's local calls, so his (b) and (c) are a different mechanism there
+  // and are NOT claimed here. What this cell holds is the hold, the lift, and
+  // his (a) — the one that was dead on this surface until the watch moved to
+  // the document. Runs under the same --only filter, so --selftest's planted
+  // runs (pinned to 390x844) include it. — Bjorn, gating 87a8ad2.
+  if (!only || only === '390x844') {
+    ran++;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }, S);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, S);
+    const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
+    const until = async (x, w, ms = 20000) => { const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+    const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points }, S);
+    const ok = (b, what) => { if (b) console.log(`    PASS ${what}`); else { fails++; console.log(`    FAIL ${what}`); } };
+
+    console.log('\n  390x844 · ?shot=coop');
+    await cdp.send('Page.navigate', { url: base + '?shot=coop' }, S);
+    await until(`!!document.querySelector('.hand .card')`, 'coop hand');
+    await wait(600);
+    // Tag the live `.hand` so the report can say WHICH topology this screen
+    // uses — emptied in place, or replaced. That one word is the whole defect,
+    // and printing it means a future reader does not have to re-derive it.
+    await ev(`window.__ttpHand = document.querySelector('.hand'); true`);
+
+    const tip = `(() => { const t = document.getElementById('tooltip');
+      if (!t) return { present: false };
+      const cs = getComputedStyle(t); const r = t.getBoundingClientRect();
+      return { present: true, shown: cs.display !== 'none' && r.width > 0 && r.height > 0,
+        title: (t.querySelector('.tt-title')||{textContent:''}).textContent.trim() }; })()`;
+    const handTopology = `(() => { const h = document.querySelector('.hand');
+      return h === window.__ttpHand ? 'emptied in place' : 'REPLACED'; })()`;
+    const aimFn = `const __aim = (c) => { const r = c.getBoundingClientRect();
+      const sib = c.nextElementSibling; const sr = sib ? sib.getBoundingClientRect() : null;
+      const right = sr && sr.left < r.right && sr.left > r.left ? sr.left : r.right;
+      return { x: (r.left + right) / 2, y: r.top + r.height / 2 }; };`;
+    const cardAt = (pick) => `(() => { ${aimFn} const cs=[...document.querySelectorAll('.hand .card')];
+      const c=${pick}; if (!c) return null; c.scrollIntoView({ inline: 'center', block: 'nearest' });
+      return Object.assign(__aim(c), { name: (c.querySelector('.cname')||{textContent:''}).textContent.trim() }); })()`;
+
+    const c0 = await ev(cardAt('cs[0]'));
+    if (!c0) {
+      ok(false, 'coop hold: no card in the co-op hand — nothing to hold');
+    } else {
+      await touch('touchStart', [{ x: c0.x, y: c0.y, id: 21 }]); await wait(650);
+      const t10 = await ev(tip);
+      ok(t10.shown, `coop hold: the tooltip survives the zoom on the co-op hand (${t10.shown ? 'shown' : 'HIDDEN'}, "${t10.title || '—'}")`);
+      await touch('touchEnd', []); await wait(300);
+      const t11 = await ev(tip);
+      ok(t11.shown, `coop lift: still up after release (${t11.shown ? 'shown' : 'HIDDEN'}, "${t11.title || '—'}")`);
+
+      const c1 = await ev(cardAt(`cs.find(x => ((x.querySelector('.cname')||{textContent:''}).textContent.trim()) !== ${JSON.stringify(c0.name)}) || cs[1]`));
+      if (c1 && t11.shown) {
+        await touch('touchStart', [{ x: c1.x, y: c1.y, id: 22 }]); await touch('touchEnd', []); await wait(600);
+        const t12 = await ev(tip);
+        const topo = await ev(handTopology);
+        ok(!t12.shown,
+          `coop selected: tapping another card ends it (tooltip ${t12.shown ? `STILL SHOWN, "${t12.title}"` : 'gone'}; this screen's .hand was ${topo})`);
+      } else {
+        ok(false, `coop selected: setup failed (stuck ${t11.shown}, second card ${!!c1})`);
+      }
+    }
+    await cdp.send('Target.closeTarget', { targetId });
+  }
+
   cdp.close(); child.kill(); s.server.close();
+  // THE PROFILE DIRECTORY IS THIS RUN'S, SO THIS RUN TAKES IT WITH IT — the
+  // pattern `063ccdd` established for creationbrief.mjs, applied here because
+  // this tool leaked an ~11 MB Chrome profile per invocation and --selftest is
+  // one invocation per plant plus the control: five, ~34 MB, measured.
+  // AND IT IS A PATCH, NOT A COLLAPSE, SAID PLAINLY: 36 tools in this directory
+  // launch Chrome on a mkdtemp'd --user-data-dir and 8 of them remove it. This
+  // makes 9. The removal discipline is a fact written nine times with nothing
+  // checking the other twenty-seven agree, which is the shape that keeps
+  // producing this bug — measured on this box 2026-08-17: /tmp at 22 GB over
+  // 2583 directories, disk 87%, including 167 creationbrief-* from before that
+  // fix and 23 ttpersist-*. The real answer is one shared launcher; it is a
+  // finding filed at the gate, not this act. — Bjorn
+  try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
   if (!ran) { console.error('tooltippersist: NOTHING RAN'); process.exit(2); }
   console.log('\n  BOUNDARY (measured by --selftest P3, not reasoned): check 5 is the ONLY line on the');
   console.log('  new DOM watch. Checks 6 and 7 are carried by hideTooltip() calls already in');
   console.log('  combat.js and pass with the watch removed — do not cite them as coverage of this');
   console.log('  change. Keyboard select and flask select route through the same watch as 5 and are');
-  console.log('  NOT sampled: unknown. Placement is not measured beyond "inside the viewport".');
+  console.log('  NOT sampled: unknown. Placement is not measured beyond "inside the viewport", and');
+  console.log('  check 3 has only ever gone red as a rider on check 2 — see --selftest\'s boundary.');
+  console.log('  CO-OP: 10-12 measure the hold, the lift and his (a) on ?shot=coop. His (b) and (c)');
+  console.log('  are a DIFFERENT mechanism there (network intent, and coop.js has no hideTooltip');
+  console.log('  call of its own) and are not claimed. The wide shape on co-op is not sampled.');
   console.log(fails ? `\ntooltippersist: ${fails} FAIL` : '\ntooltippersist: all green');
   process.exit(fails ? 1 : 0);
 }
