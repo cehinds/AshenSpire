@@ -77,7 +77,7 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -365,7 +365,7 @@ function judge(r, cell, wide) {
 }
 
 async function main() {
-  const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
+  const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')));
   const s = await serve({ root: ROOT, port: 8352, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`hintstrip — ${base} (root ${ROOT})`);
