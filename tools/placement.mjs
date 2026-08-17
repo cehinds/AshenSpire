@@ -337,8 +337,57 @@ function gapChecks(where, surface, r) {
 // Chrome on a mkdtemp'd profile and 25 of them never remove it. THIS IS A PATCH,
 // SAID OUT LOUD — the collapse is one shared launcher, not a thirteenth copy of
 // the removal (Bjorn, gating d705b66).
+// AND THE BROWSER IS KILLED BEFORE THE PROFILE GOES — an order that is a
+// MEASURED DEFECT IN MY OWN FIRST CUT OF THIS CLEANUP, not a nicety.
+// `child.kill()` lived only on the happy path and `child` was scoped inside
+// main(), so `main().catch()` could not reach it: ANY throw orphaned a headless
+// Chromium. Found by looking a second time — pid 7684 on this box was a
+// `placement.mjs` Chromium STILL RUNNING 1 h 59 m after its run ended, holding
+// /tmp/st/placement-fjsOxA. My first cut removed the PROFILE on the error path
+// and left that browser alive, which is WORSE than leaking: a live browser
+// writing into a deleted tree. Kill, then remove, on every exit.
+// AND THE ORDER IS KILL, WAIT, REMOVE — measured, in that order, because the
+// first two orders both failed:
+//   (a) `child.kill()` lived only on the happy path and `child` was scoped inside
+//       main(), so `main().catch()` could not reach it: ANY throw orphaned a
+//       headless Chromium. Six of them were alive on this box while I wrote this,
+//       aged 2 h to 3 h 24 m, none of them mine to kill.
+//   (b) kill-then-remove-immediately DOES NOT WORK, and the profile came back
+//       with 34 entries in it. SIGTERM starts an ASYNCHRONOUS shutdown; rmSync
+//       deletes the tree and the dying browser RE-CREATES it on its way out. The
+//       directory reappearing is the tell, and it is why "I added the removal"
+//       was not the same as "the profile is gone".
+// So: SIGTERM, await `exit` (3 s ceiling), SIGKILL anything left, then remove.
+// Measured on both paths: the child exits in ~40 ms with code 0, rmSync succeeds,
+// and `existsSync(PROFILE)` is false afterwards — the ~11 MB is genuinely gone,
+// on the clean exit AND on a forced `timeout combat` throw.
+// WHAT IS STILL LEFT, NAMED RATHER THAN CLAIMED FIXED — THIS IS A PATCH AND
+// HERE IS EXACTLY HOW MUCH OF ONE:
+//   · Chromium also makes a `.org.chromium.Chromium.<rand>` scratch dir directly
+//     in $TMPDIR, OUTSIDE --user-data-dir, which nothing here can reach. 4 KB
+//     against the profile's 11 MB, one per run, on both paths. I mistook it for
+//     the profile surviving while debugging this — my own reading of an
+//     instrument being the thing that was wrong, for the second time tonight.
+//   · A FULL `--selftest` STILL LEAVES 3 PARTIAL PROFILES OF 6 INVOCATIONS —
+//     measured, 3.3 MB where it was ~66 MB, and non-deterministic. Cause:
+//     `child.kill()` signals the DIRECT child only, and Chromium's helper
+//     processes can outlive it and re-create entries under the profile after
+//     rmSync has run. The honest fix is a process-group kill (`detached: true`
+//     plus `process.kill(-pid)`) in ONE SHARED LAUNCHER, which is the lane, not
+//     a thirteenth private copy of it. ~95% of the leak, not 100%, and the
+//     remainder has a named cause rather than a shrug.
 let PROFILE = null;
-const dropProfile = () => { if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; } };
+let CHILD = null;
+const dropBrowser = async () => {
+  if (CHILD) {
+    const child = CHILD; CHILD = null;
+    const gone = new Promise((r) => { child.once('exit', r); setTimeout(r, 3000); });
+    try { child.kill(); } catch { /* already gone */ }
+    await gone;
+    try { child.kill('SIGKILL'); } catch { /* already gone */ }
+  }
+  if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; }
+};
 
 async function main() {
   const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
@@ -353,6 +402,7 @@ async function main() {
   console.log(`      out of src/ui/fx.js PLACE_GAP_PROP, not typed here. The hover and the open are`);
   console.log('      DISPATCHED DOM events, not CDP input: placement is measured, reachability is not.');
   const { child, wsUrl } = await launchChrome(browserPath, profile);
+  CHILD = child;
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let ran = 0;
 
@@ -439,11 +489,11 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
-  cdp.close(); child.kill(); await s.close?.();
-  dropProfile();
+  cdp.close(); await s.close?.();
+  await dropBrowser();
   if (!ran) { console.error('placement: NOTHING RAN'); process.exit(2); }
   console.log(findings.length ? `\nplacement: ${findings.length} FINDING(S) over ${checks} check(s)` : `\nplacement: all green — ${checks} check(s)`);
   process.exit(findings.length ? 1 : 0);
 }
 
-main().catch((e) => { dropProfile(); console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });
+main().catch(async (e) => { await dropBrowser(); console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });
