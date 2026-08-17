@@ -24,7 +24,11 @@ export const relics = [
           tag: 'resource.attributeTier',
           resource: 'hp',
           sourceStat: 'constitution',
-          pointsPerTier: 5,
+          // NO `pointsPerTier` — it said 5, which is derivedStatRules' own tier
+          // size written a second time. The row means "+1 HP per TIER of CON";
+          // what a tier is belongs to the rule it folds into. At the shipping
+          // tier size this changes no number (tests 57 and 60c), and stating it
+          // again is still legal if a relic ever wants its own granularity.
           amountPerTier: 1,
         },
       ],

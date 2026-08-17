@@ -43,7 +43,28 @@ export const derivedStatRules = {
       // here rather than argued.
       base: { strategy: 'classField', field: 'maxHp' },
       sourceStat: 'constitution',
-      pointsPerTier: 5,
+      // `pointsPerTier: 5` WAS HERE AND IS DELETED — it restated
+      // `defaults.pointsPerTier`, which is also 5, so it moved no number today
+      // and was a second copy with a live consequence tomorrow (Law 1 clause 2).
+      //
+      // WHAT IT COSTS, MEASURED RATHER THAN ASSUMED — and my first draft of this
+      // comment was WRONG, which is why it says what it says now. A row's own
+      // value beats the defaults it is merged over
+      // (`resolveDerivedStatRules`), so turning `defaults.pointsPerTier` IN
+      // THIS FILE moves Mana, Actions, Draw and Stamina and LEAVES HP ALONE —
+      // silently, and HP is the stat a tier dial is for.
+      //
+      // WHAT IT DOES **NOT** AFFECT, and I claimed it did until a plant said
+      // otherwise: Constantine's Settings → Advanced tier dial. That arrives as
+      // an override LAYER, and a layer's `defaults` is assigned over every row
+      // (same function), so it reached HP with the restatement present.
+      // Restoring the line leaves all 91 tests green.
+      //
+      // So this deletion is a SECOND-COPY fix and not a bug fix: it closes the
+      // OTHER door — the one a designer uses when they edit this file directly
+      // — where the two doors gave two different answers. `tests/engine.test.js`
+      // 60c pins that door, so the copy can now go red instead of being
+      // remembered.
       gainPerTier: 1,
       // WHAT "OTHER BONUSES" COVERS, and it is not a list anyone maintains.
       // Every HP bonus in this tree already arrives through a declared tag or

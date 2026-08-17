@@ -39,7 +39,7 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
-import { deriveStat } from '../src/model/derivedStats.js';
+import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
@@ -69,7 +69,7 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -4513,23 +4513,38 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(back.levelUps, 6, 'and so does the count that makes them legal');
     eq(back.maxHp, run.maxHp, 'the derived pool the levels moved is accepted, not re-derived away');
 
-    // THE PLANT — the exact failure this feature would have shipped, watched.
-    // Strip the count and keep the points: a 61-point allocation with no record
-    // of buying them is a hand-edited save, and the door must refuse it.
+    // THE e05be89 SAVE SHAPE, AND IT MUST LOAD. That build recorded `levelUps`
+    // and no `levelPoints`, and it had exactly one possible level value, so for
+    // those saves the count IS the points. This cell is the migration; it is
+    // not a plant, and it is the reason the fallback is exact rather than a
+    // guess at today's dial.
     const raw = JSON.parse(storage.getItem(RUN_KEY));
-    delete raw.levelUps;
-    storage.setItem(RUN_KEY, JSON.stringify(raw));
-    eq(createSaveManager(storage).loadRun(REG), null,
-      'PLANT: the same points with no levelUps are REFUSED — so the green above is the count doing work');
+    const legacy = JSON.parse(JSON.stringify(raw));
+    delete legacy.levelPoints;
+    eq(legacy.levelUps, 6, 'the legacy shape really carries the count (the probe has a referent)');
+    storage.setItem(RUN_KEY, JSON.stringify(legacy));
+    const migrated = createSaveManager(storage).loadRun(REG);
+    assert(migrated !== null, 'a run saved by e05be89 — levelUps, no levelPoints — still loads');
+    eq(migrated.attributes.constitution, run.attributes.constitution, 'and keeps every point it bought');
 
-    // THE MIRROR PLANT, so this is not "levelUps makes anything legal": six
-    // levels claimed and none spent is refused too.
+    // THE PLANT — the failure this feature would have shipped, watched. Strip
+    // BOTH records and keep the points: a 61-point allocation with nothing
+    // saying they were bought is exactly a hand-edited save.
+    const forged = JSON.parse(JSON.stringify(raw));
+    delete forged.levelPoints;
+    delete forged.levelUps;
+    storage.setItem(RUN_KEY, JSON.stringify(forged));
+    eq(createSaveManager(storage).loadRun(REG), null,
+      'PLANT: the same points with no record of buying them are REFUSED — the green above is the record doing work');
+
+    // THE MIRROR PLANT, so this is not "levelPoints makes anything legal": six
+    // points claimed and none spent is refused too.
     const inflated = JSON.parse(JSON.stringify(raw));
-    inflated.levelUps = 6;
+    inflated.levelPoints = 6;
     inflated.attributes.constitution = 12;
     storage.setItem(RUN_KEY, JSON.stringify(inflated));
     eq(createSaveManager(storage).loadRun(REG), null,
-      'PLANT: six levels claimed and none spent is refused — the total is checked in both directions');
+      'PLANT: six points claimed and none spent is refused — the total is checked in both directions');
 
     // AND A RUN WITH NO LEVELS IS JUDGED BY EXACTLY THE OLD RULES.
     const plain = createRunState({ seed: 7, classId: 'reaver', registries: REG });
@@ -4537,6 +4552,116 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const s2 = createSaveManager(createMemoryStorage());
     s2.saveRun(plain);
     assert(s2.loadRun(REG) !== null, 'an unlevelled run loads exactly as it always did');
+  });
+
+  // ---- 60c. his two dials actually move the game ---------------------------
+  test('60c. the level value and the tier size each change what a level does', () => {
+    // Constantine, 2026-08-17: "leave the level up value configurable. also,
+    // let's make the increment of 5 points for reasonable change be confurable
+    // as well. that way I can test each." THAT WAY I CAN TEST EACH is the
+    // requirement, so each dial is tested at both edges — the value that makes
+    // a level visible and the value that does not.
+
+    // ---- DIAL 1: the level value ------------------------------------------
+    const one = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
+    one.cinders = 5000;
+    applyLevelUp(REG, one, 'constitution', { pointsPerLevel: 1 });
+    eq(one.attributes.constitution - 12, 1, 'at 1, a level grants one point');
+    eq(one.levelPoints, 1, 'and records one point granted');
+
+    const three = createRunState({ seed: 0xd1a1, classId: 'reaver', registries: REG });
+    three.cinders = 5000;
+    const hpBefore = three.maxHp;
+    applyLevelUp(REG, three, 'constitution', { pointsPerLevel: 3 });
+    eq(three.attributes.constitution - 12, 3, 'at 3, one level grants three points');
+    eq(three.levelPoints, 3, 'and records three');
+    eq(three.levelUps, 1, 'while still being ONE purchase — the ramp indexes on purchases');
+    eq(three.cinders, one.cinders, 'and costs the same: the value is what a level GRANTS, not what it costs');
+    // AND IT IS VISIBLE, which is the whole point of the ask: 12 → 15 crosses
+    // the tier boundary that 12 → 13 does not.
+    assert(three.maxHp > hpBefore, 'at 3, ONE level moves max HP — the dial answers the dead-level finding');
+    eq(one.maxHp, hpBefore, 'at 1, the same one level moves nothing — both edges, one run apart');
+
+    // MIXED VALUES IN ONE RUN, which is what "I can test each" produces the
+    // moment he turns the dial mid-climb — and the case where the count and
+    // the points stop being the same number.
+    applyLevelUp(REG, three, 'wisdom', { pointsPerLevel: 1 });
+    eq(three.levelUps, 2, 'two purchases');
+    eq(three.levelPoints, 4, 'four points — the two numbers have diverged, as they must');
+    const mixedStore = createMemoryStorage();
+    three.seedString = 'MIXED';
+    createSaveManager(mixedStore).saveRun(three);
+    assert(createSaveManager(mixedStore).loadRun(REG) !== null,
+      'AND A MIXED-VALUE RUN STILL LOADS — turning the dial mid-climb cannot archive a save');
+
+    // ---- DIAL 2: the tier size --------------------------------------------
+    // Through the REAL door a new run is born with: the settings resolver, then
+    // createRunState's derivedStatOptions. Nothing here hand-builds an override
+    // layer, or the test would be measuring a shape the game cannot reach.
+    eq(JSON.stringify(derivedStatDialOptions({})), '{}',
+      'at the shipping value the dial adds NO override layer at all');
+    eq(resolveStatTierSize({}), 5, 'and the resolver reads the shipping tier size from its one home');
+    eq(resolveLevelUpValue({}), 1, "and the level value's default is his own number");
+    eq(resolveStatTierSize({ statTierSize: 99 }), 5, 'a value the row does not offer is the default, never 99');
+    eq(resolveLevelUpValue({ levelUpValue: 'lots' }), 1, 'and so is a value that is not a number at all');
+    const dialled = derivedStatDialOptions({ statTierSize: 1 });
+    const born = (opts) => createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG, derivedStatOptions: opts });
+    const at5 = born(derivedStatDialOptions({}));
+    const at1 = born(dialled);
+    eq(at5.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 5, 'a default run stamps a 5-point tier');
+    eq(at1.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1, 'and the dialled run stamps a 1-point tier');
+    // ⚠ HP IS THE CELL THAT MATTERS AND IT IS WHY THE RESTATEMENT HAD TO GO.
+    // `hp` used to author `pointsPerTier: 5` on its own row, and a row beats
+    // the defaults it is merged over — so this assertion is the one that would
+    // have caught the dial silently skipping the stat it exists for.
+    for (const id of ['hp', 'mana', 'energy', 'draw', 'stamina']) {
+      eq(at1.derivedStatRuleSnapshot.rules.rules[id].pointsPerTier, 1,
+        `${id} answers the tier dial — every derived stat, not just the ones that inherited`);
+    }
+    assert(at1.maxHp > at5.maxHp, 'at a 1-point tier the same CON 12 is worth more HP — the dial reaches the game');
+
+    // ⚠ THE OTHER DOOR, and it is here because a plant proved my own comment
+    // wrong. `hp` used to author `pointsPerTier: 5` on its own row, restating
+    // `defaults.pointsPerTier`. I claimed that copy would make HIS DIAL skip
+    // HP; it would not — a dial arrives as an override LAYER, and a layer's
+    // `defaults` is assigned over every row, so it reaches HP either way.
+    // Restoring the line leaves every other cell in this suite green.
+    //
+    // WHAT THE COPY ACTUALLY BREAKS is the door a designer uses when they edit
+    // the content file directly: a row's own value beats the defaults it is
+    // merged over, so editing `defaults` there moves four stats and silently
+    // leaves HP behind. One intent, two doors, two answers. This cell is that
+    // door, and it is the only thing in the tree that can fail on the copy.
+    const edited = { ...REG.derivedStatRules, defaults: { ...REG.derivedStatRules.defaults, pointsPerTier: 1 } };
+    const byHand = resolveDerivedStatRules(edited, {
+      attributeIds: REG.attributes.ids(), classFields: ['maxHp', 'maxMana', 'hpPerConTier'],
+    });
+    for (const id of ['hp', 'mana', 'energy', 'draw', 'stamina']) {
+      eq(byHand.rules[id].pointsPerTier, 1,
+        `${id} follows an edit to defaults.pointsPerTier in the content file — no row may restate it`);
+    }
+
+    // AND ONE LEVEL IS NOW VISIBLE, which is the sentence his ask is made of.
+    at1.cinders = 5000;
+    const at1Hp = at1.maxHp;
+    applyLevelUp(REG, at1, 'constitution', { pointsPerLevel: 1 });
+    assert(at1.maxHp > at1Hp, 'at a 1-point tier, ONE point of CON moves max HP');
+    at5.cinders = 5000;
+    const at5Hp = at5.maxHp;
+    applyLevelUp(REG, at5, 'constitution', { pointsPerLevel: 1 });
+    eq(at5.maxHp, at5Hp, 'at 5 it still does not — the two edges of the dial, measured in one test');
+
+    // A RUN IN PROGRESS KEEPS THE RULES IT WAS BORN UNDER. This is what the
+    // settings row's note promises a player, and it is the behaviour that makes
+    // the dial safe rather than a defect.
+    const store = createMemoryStorage();
+    at1.seedString = 'TIER1';
+    createSaveManager(store).saveRun(at1);
+    const reloaded = createSaveManager(store).loadRun(REG);
+    assert(reloaded !== null, 'a dialled run loads');
+    eq(reloaded.derivedStatRuleSnapshot.rules.rules.hp.pointsPerTier, 1,
+      'and still carries ITS OWN tier size, whatever the setting says today');
+    eq(reloaded.maxHp, at1.maxHp, 'so its HP is not re-stated behind the player');
   });
 
   const passed = results.filter((r) => r.ok).length;

@@ -94,22 +94,31 @@ export function levelsAffordable(registries, cinders) {
 }
 
 /**
- * levelUpPlan(registries, run) → what the shrine may offer, and why not.
+ * levelUpPlan(registries, run, { pointsPerLevel }) → what the shrine may offer.
  *
- *   { levelsTaken, cost, cinders, affordable, capped, offerable, attributes }
+ *   { levelsTaken, cost, cinders, affordable, capped, offerable,
+ *     pointsPerLevel, attributes }
  *
  * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
  * this feature's Law 0 falsifier: a sixth attribute is one row in
  * `content/attributes.js` and it appears at the shrine with zero UI edits. The
  * shrine screen never names a stat.
+ *
+ * `pointsPerLevel` IS AN ARGUMENT, NOT A LOOKUP — Constantine, 2026-08-17:
+ * "leave the level up value configurable". The caller resolves the player's
+ * setting (`resolveLevelUpValue`, settings.js) and hands it in; omitted, the
+ * content default applies. This model stays pure and knows nothing about a
+ * profile, and — the reason that matters — NOTHING AT THE LOAD DOOR EVER READS
+ * THE LIVE VALUE. See `run.levelPoints` in `applyLevelUp`.
  */
-export function levelUpPlan(registries, run) {
+export function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
   const t = table(registries);
   const levelsTaken = Number.isInteger(run && run.levelUps) ? run.levelUps : 0;
   const cost = levelCost(registries, levelsTaken);
   const cinders = Number.isFinite(run && run.cinders) ? run.cinders : 0;
   const capped = Number.isInteger(t.maxLevels) && levelsTaken >= t.maxLevels;
   const affordable = cinders >= cost;
+  const authored = Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1;
   return {
     levelsTaken,
     cost,
@@ -119,7 +128,7 @@ export function levelUpPlan(registries, run) {
     // A cap of `null` is "no ceiling but the cinders themselves" — his range is
     // an economy, not a limit, so the shipped table refuses on price alone.
     offerable: affordable && !capped,
-    pointsPerLevel: Number.isInteger(t.pointsPerLevel) && t.pointsPerLevel > 0 ? t.pointsPerLevel : 1,
+    pointsPerLevel: Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored,
     attributes: orderedAttributes(registries),
   };
 }
@@ -147,9 +156,26 @@ export function levelUpPlan(registries, run) {
  * beside it, and a level that healed would make the Rest panel pointless at the
  * same counter. Mana, Stamina and the per-turn stats have no deficit to carry
  * inside a shrine (combat is over), so they take the new maximum.
+ *
+ * ⚠ `run.levelPoints` IS NOT A SECOND COPY OF `run.levelUps`, AND IT BECAME A
+ * SECOND FACT THE MOMENT THE LEVEL VALUE BECAME A DIAL. Six levels at 1 point
+ * and three levels at 2 points are the same nine points and a different number
+ * of purchases; the COST RAMP indexes on purchases, the LOAD DOOR's allocation
+ * check needs points, and there is no arithmetic between them once the dial has
+ * moved mid-run. Deriving one from the other would need the value each purchase
+ * was made at, which is a history nobody is keeping.
+ *
+ * AND IT IS WHAT DELETES THE HAZARD I SHIPPED THIS EVENING. `e05be89` had the
+ * door multiply `levelUps × balance.levelUp.pointsPerLevel` — a LIVE content
+ * read — so turning this dial would have re-priced every in-flight save's
+ * expected total and archived runs at the next load. He has just told us he
+ * intends to turn it repeatedly between test runs, which would have made that
+ * the FIRST thing he hit. The run now records the points it was actually
+ * granted, the door reads what the run recorded, and no setting can refuse a
+ * save. A friendlier error message would have been the wrong fix.
  */
-export function applyLevelUp(registries, run, attributeId) {
-  const plan = levelUpPlan(registries, run);
+export function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = {}) {
+  const plan = levelUpPlan(registries, run, { pointsPerLevel });
   const ids = plan.attributes.map((a) => a.id);
   if (!ids.includes(attributeId)) {
     throw new Error(`levelUp: '${attributeId}' is not an attribute id (${ids.join(', ')})`);
@@ -163,6 +189,10 @@ export function applyLevelUp(registries, run, attributeId) {
   run.cinders -= plan.cost;
   run.attributes[attributeId] += plan.pointsPerLevel;
   run.levelUps = plan.levelsTaken + 1;
+  // The POINTS this run was actually granted — what the load door checks the
+  // allocation against, recorded at the moment they were granted so no later
+  // change to the dial can re-price them. See the paragraph above.
+  run.levelPoints = (Number.isInteger(run.levelPoints) ? run.levelPoints : 0) + plan.pointsPerLevel;
 
   const rules = run.derivedStatRuleSnapshot.rules;
   const classDef = registries.classes.get(run.class);
@@ -186,7 +216,7 @@ export function applyLevelUp(registries, run, attributeId) {
     field: `attributes.${attributeId}`,
     was: run.attributes[attributeId] - plan.pointsPerLevel,
     now: run.attributes[attributeId],
-    why: `level ${run.levelUps} bought for ${plan.cost} cinders; pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
+    why: `level ${run.levelUps} bought for ${plan.cost} cinders at ${plan.pointsPerLevel} point(s) each (${run.levelPoints} granted in total); pools re-derived from the run's own snapshot (maxHp ${hp ? hp.maxHp : 'unchanged'})`,
   });
   return { ...plan, spent: plan.cost, attributeId, level: run.levelUps };
 }

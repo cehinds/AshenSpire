@@ -74,7 +74,7 @@ function refillLineHtml(registries, refill) {
 // THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
 // the run: the point is permanent and the player is owed the arithmetic before
 // they spend, not a promise about it.
-function levelDetailHtml(registries, run, attr) {
+function levelDetailHtml(registries, run, attr, points) {
   const rules = (registries.derivedStatRules || {}).rules || {};
   const presentation = (registries.derivedStatRules || {}).presentation || {};
   const feeds = Object.keys(rules)
@@ -82,7 +82,10 @@ function levelDetailHtml(registries, run, attr) {
     .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
     .map((id) => (presentation[id] || {}).label || id);
   const now = run.attributes[attr.id];
-  return `<p><b>${esc(attr.label)} ${now} → ${now + 1}</b></p>
+  // BOTH SIDES OF THE ARROW ARE READ, including the step: the level value is a
+  // dial he turns (Settings → Advanced), so a hard-coded +1 here would be the
+  // confirm panel promising one thing while the purchase does another.
+  return `<p><b>${esc(attr.label)} ${now} → ${now + points}</b></p>
     <p>${esc(attr.sense || '')}</p>
     ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
 }
@@ -94,7 +97,7 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -111,7 +114,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // "also at graces, players should have the option to level up their character
   // (per run) by trading cinders to level up." The screen asks the model what
   // it may offer and prices nothing itself.
-  const level = levelUpPlan(registries, run);
+  const level = levelUpPlan(registries, run, { pointsPerLevel: levelValue });
 
   app.innerHTML = `
     <div class="screen">
@@ -171,7 +174,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           <h3>Level up</h3>
           <p>${level.capped
             ? `You have taken every level this climb allows (${level.levelsTaken}).`
-            : `${level.cost} cinders for 1 point. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
+            : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
           <div class="flask-allocation-controls">
             ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
           </div>
@@ -227,7 +230,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
   // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
@@ -239,18 +242,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
       if (!btn) continue;
       arm(btn, 'shrineLevelUp', {
-        question: `Spend ${level.cost} cinders on ${attr.label}? The point is permanent.`,
-        detailHtml: levelDetailHtml(registries, run, attr),
+        question: `Spend ${level.cost} cinders on ${attr.label}? ${level.pointsPerLevel === 1 ? 'The point is' : `All ${level.pointsPerLevel} points are`} permanent.`,
+        detailHtml: levelDetailHtml(registries, run, attr, level.pointsPerLevel),
         confirmLabel: 'LEVEL UP',
         onConfirm: () => {
-          applyLevelUp(registries, run, attr.id);
+          applyLevelUp(registries, run, attr.id, { pointsPerLevel: levelValue });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
           // RE-MOUNT, the same shape the flask reallocation above already uses:
           // the price has moved, the purse has moved, and so has a derived pool
           // the Rest panel is quoting. A screen that stayed put would be
           // offering the old price for the next point.
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill });
         },
       });
     }

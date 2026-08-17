@@ -13,6 +13,7 @@ import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
 import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
@@ -22,6 +23,11 @@ import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } f
 
 const UI_DEFAULTS = balance.ui;
 const EQ_DEFAULTS = balance.equipment;
+const LEVEL_DEFAULTS = balance.levelUp || {};
+// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
+// value the engine actually resolves rows against, so the row that turns it
+// reads it from there and a copy cannot drift.
+const DERIVED_DEFAULTS = derivedStatRules.defaults;
 
 // ---- the grace-refill rows: DERIVED, one per row of the table --------------
 //
@@ -307,6 +313,42 @@ const ROWS = [
     // a long note squeezes the text column beside a chip strip. Three chips,
     // three clauses.
     note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
+  // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
+  //
+  //   "leave the level up value configurable. also, let's make the increment of
+  //    5 points for reasonable change be confurable as well. that way I can
+  //    test each."
+  //
+  // ADVANCED, AND THE PRECEDENT IS HIS OWN SENTENCE TWO ROWS UP: *"alternatively,
+  // or by a setting, different weapon categories have weapon swap costs. THAT
+  // WAY I CAN TRY EACH."* That ask was ruled into an Advanced row for a reason
+  // that applies here word for word — a tuning question he wants to answer by
+  // playing, not a preference to put in front of a first-time player. Advanced
+  // is this game's debugging surface, his word, and the third knob he has asked
+  // to "test" now sits beside the other two.
+  //
+  // A ROW, NOT A FILE HE EDITS AND REBUILDS. "That way I can test each" is the
+  // requirement and not a footnote: a content edit plus `node tools/launch.mjs
+  // --build-only` between every comparison is a friction that ends an
+  // experiment after two turns of the dial.
+  //
+  // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
+  // ladders are `balance.levelUp`, the level value's default is that table's own
+  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
+  // `derivedStatRules.defaults` — its one home, one import away, so this row
+  // cannot drift from the rule it turns.
+  { cat: 'Advanced', key: 'levelUpValue', type: 'choice', def: String(LEVEL_DEFAULTS.pointsPerLevel),
+    choices: (LEVEL_DEFAULTS.pointsPerLevelChoices || []).map(String), label: 'Level-up value',
+    note: 'How many stat points one level at a shrine grants. Takes effect on the next level you buy, in any run — including one already in progress.' },
+  { cat: 'Advanced', key: 'statTierSize', type: 'choice', def: String(DERIVED_DEFAULTS.pointsPerTier),
+    choices: (LEVEL_DEFAULTS.tierSizeChoices || []).map(String), label: 'Stat points per tier',
+    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
+    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
+    // progress — which is correct, and which means turning this dial and loading
+    // an existing save shows NOTHING. It is written on the row because the
+    // alternative is him concluding the dial is broken. The middle sentence is
+    // the finding that caused the ask: at 5, one level moves no number at all.
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -613,6 +655,58 @@ function graceRefillAppliedHtml(settings, r) {
  * say so: main.js writes it into the command log by name, and the row prints
  * the rejected value where the choice is made.
  */
+/**
+ * resolveLevelUpValue(settings) → how many stat points one level grants.
+ * resolveStatTierSize(settings) → how many points buy one tier.
+ *
+ * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
+ * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
+ * the same reason. A hand-edited profile or an older build's value must behave
+ * exactly like an absent one, because the alternative is a run created under a
+ * number nothing in the game admits to.
+ *
+ * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
+ * from content, so neither of these functions contains a number.
+ */
+function resolveChoiceNumber(settings, key) {
+  const row = ROWS.find((r) => r.key === key);
+  if (!row) throw new Error(`resolveChoiceNumber: no settings row named '${key}'`);
+  const stored = (settings || {})[key];
+  const s = stored === undefined || stored === null ? '' : String(stored);
+  return row.choices.includes(s) ? Number(s) : Number(row.def);
+}
+
+export function resolveLevelUpValue(settings) {
+  return resolveChoiceNumber(settings, 'levelUpValue');
+}
+
+export function resolveStatTierSize(settings) {
+  return resolveChoiceNumber(settings, 'statTierSize');
+}
+
+/**
+ * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
+ * with, or `{}` when the dial is at its shipping value.
+ *
+ * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
+ * already takes layered overrides — `modeModifiers`, `runModifiers`,
+ * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
+ * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
+ * derived stats, and a row may still say otherwise". The shape he asked about
+ * already existed; this hands it a number.
+ *
+ * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
+ * no override layer at all, so its snapshot is byte-identical to one created
+ * before this dial existed. Turning the dial and turning it back leaves no
+ * residue in a save.
+ */
+export function derivedStatDialOptions(settings) {
+  const size = resolveStatTierSize(settings);
+  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
+  return { explicitOverride: { defaults: { pointsPerTier: size } } };
+}
+
 export function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');
   const def = Number(row.def);

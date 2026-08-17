@@ -14,7 +14,6 @@ function tables(source) {
       creationModes: source.creationModes.all(),
       attributeRules: source.attributeRules,
       classes: source.classes.all(),
-      balance: source.balance || {},
     };
   }
   return {
@@ -22,13 +21,12 @@ function tables(source) {
     creationModes: Array.isArray(source && source.creationModes) ? source.creationModes : [],
     attributeRules: source && source.attributeRules,
     classes: Array.isArray(source && source.classes) ? source.classes : [],
-    balance: (source && source.balance) || {},
   };
 }
 
 /**
- * grantedAttributePoints(run, source) — points this run holds ON TOP OF its
- * creation allocation.
+ * grantedAttributePoints(run) — points this run holds ON TOP OF its creation
+ * allocation.
  *
  * THE CREATION RULES ARE ABOUT CREATION, AND THIS IS THE LINE THAT SAYS SO.
  * `standard` is `fixedTotal` at 55 with every cell in 10..15 — rules about the
@@ -48,19 +46,30 @@ function tables(source) {
  * level-up that only incremented `run.attributes` would look perfect on screen
  * and destroy the player's run at the next load.
  *
- * ⚠ ONE HAZARD, NAMED RATHER THAN HIDDEN: `pointsPerLevel` is content, so
- * editing it re-prices every IN-FLIGHT save's expected total, and those runs are
- * refused at the door — loudly and by name, never silently healed. It is his
- * number, it is 1, and nothing has asked for a second value. The day something
- * does, this needs the treatment `derivedStatRuleSnapshot` already gets:
- * snapshot the conversion into the run so a content edit cannot re-price a
- * climb in progress.
+ * ⚠ THE HAZARD THIS FUNCTION SHIPPED WITH IS GONE, AND THE FIX WAS NOT A BETTER
+ * ERROR MESSAGE. At `e05be89` it multiplied `run.levelUps` by a LIVE read of
+ * `balance.levelUp.pointsPerLevel`. Constantine then asked for that number to be
+ * a dial he turns between test runs — which would have made every in-flight save
+ * fail this check the first time he turned it, and `save.js` ARCHIVES what fails
+ * here. The right answer was to delete the dependency, not to soften the
+ * refusal: the run records the points it was actually granted, at the moment it
+ * was granted them, and this reads what the run recorded.
+ *
+ * **NOTHING IN THIS FUNCTION READS CONTENT ANY MORE.** No setting, no table and
+ * no edit anywhere can refuse a save that was legal when it was written. That is
+ * also why `source` is gone from the signature — a parameter nothing uses is an
+ * invitation to start using it again.
+ *
+ * `levelUps` IS THE FALLBACK AND IT IS EXACT, NOT A GUESS. Runs saved by
+ * `e05be89` carry `levelUps` and no `levelPoints`; THAT BUILD HAD EXACTLY ONE
+ * POSSIBLE VALUE, 1, because the dial did not exist in it. So one point per
+ * level is what those saves were made under — read off the build that wrote
+ * them, never inferred from today's tables (Law 0 clause 5: the plausible guess
+ * is the dangerous one).
  */
-export function grantedAttributePoints(run, source) {
-  const levels = run && Number.isInteger(run.levelUps) ? run.levelUps : 0;
-  if (levels <= 0) return 0;
-  const per = (tables(source).balance.levelUp || {}).pointsPerLevel;
-  return levels * (Number.isInteger(per) && per > 0 ? per : 1);
+export function grantedAttributePoints(run) {
+  if (run && Number.isInteger(run.levelPoints)) return Math.max(0, run.levelPoints);
+  return run && Number.isInteger(run.levelUps) ? Math.max(0, run.levelUps) : 0;
 }
 
 export function orderedAttributes(source) {
@@ -260,7 +269,7 @@ export function normalizeRunAttributes(run, registries) {
   // before.
   const problems = attributeAllocationProblems(
     registries, run.class, run.attributeMode, run.attributes, 'attributes',
-    grantedAttributePoints(run, registries),
+    grantedAttributePoints(run),
   );
   if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
   run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));

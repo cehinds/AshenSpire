@@ -45,7 +45,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -710,7 +710,18 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   saves.ensureProfile();
   activeSlot = slot;
   const seed = seedFromString(asked);
-  run = createRunState({ seed, classId, registries, startingKitId, profileMeta: saves.loadMeta() });
+  // HIS TIER DIAL, AND THE ONLY PLACE IT CAN BE SPENT — Constantine,
+  // 2026-08-17: "let's make the increment of 5 points for reasonable change be
+  // confurable as well." A run SNAPSHOTS its derived-stat rules at birth so a
+  // later content change can never re-stat a climb in progress, which is right
+  // and which means this dial has exactly one moment to apply: here. At the
+  // shipping value `derivedStatDialOptions` returns {} and the snapshot is
+  // byte-identical to one made before the dial existed. The settings row says
+  // this out loud so he does not turn it, load a save, and see nothing.
+  run = createRunState({
+    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
+  });
   run.seedString = seedToString(seed);
   run.customization = customization || { name: 'Forsaken', glyph: '⚔', tint: 'gold' };
   run.custom = custom || { ascension: 0, mods: {}, deckMode: 'standard' };
@@ -1498,6 +1509,12 @@ function showRest() {
     healMult,
     refill,
     meta: saves.loadMeta(),
+    // HIS LEVEL-VALUE DIAL, resolved at the door of the screen that spends it,
+    // so turning it applies to the NEXT level bought — in any run, including
+    // one already in progress. Unlike the tier size it needs no new run,
+    // because nothing about it is snapshotted: the run records the POINTS it
+    // was granted (model/levelup.js) rather than the rule that granted them.
+    levelValue: resolveLevelUpValue(saves.loadMeta().settings),
     onReallocate: () => persist(),
     // A level is cinders and a permanent point. It persists the moment it is
     // bought, not when the player leaves the shrine, for the same reason the

@@ -488,8 +488,14 @@ export function validateContent(bundle) {
         : row.tag === 'resource.attributeTier'
           ? ['tag', 'resource', 'sourceStat', 'pointsPerTier', 'amountPerTier']
           : ['tag', 'school', 'amount'];
+      // `pointsPerTier` is ALLOWED and no longer REQUIRED on an attributeTier
+      // row: omitted, it inherits the derived rule it folds into
+      // (model/relicModifiers.js). It stayed required while the tier size was a
+      // constant; the day Constantine asked for that size to be a dial, a row
+      // restating it became a copy that made a reaver unable to start a run.
+      const optional = row.tag === 'resource.attributeTier' ? ['pointsPerTier'] : [];
       for (const key of Object.keys(row)) if (!fields.includes(key)) err(`${path}.${key}`, `unknown field '${key}' for '${row.tag}'`);
-      for (const key of fields) if (row[key] === undefined) err(`${path}.${key}`, `missing required field '${key}'`);
+      for (const key of fields) if (row[key] === undefined && !optional.includes(key)) err(`${path}.${key}`, `missing required field '${key}'`);
       if (row.resource !== undefined && !resourceIds.has(row.resource)) err(`${path}.resource`, `unknown resource '${row.resource}'`);
       if (row.sourceStat !== undefined && !attributeIds.has(row.sourceStat)) err(`${path}.sourceStat`, `unknown attribute '${row.sourceStat}'`);
       if (row.school !== undefined && !DAMAGE_SCHOOLS.includes(row.school)) err(`${path}.school`, `unknown damage school '${row.school}'`);

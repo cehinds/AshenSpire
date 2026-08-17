@@ -103,11 +103,48 @@ export const balance = {
   // what a real climb actually earns, or what the shop takes out of it first.
   // The curve is checked; the range it is checked over is an assumption, and it
   // is stated as one rather than reported as balance.
+  //
+  // ---- TWO DIALS HE ASKED FOR BY NAME, 2026-08-17 ---------------------------
+  //
+  //   "leave the level up value configurable. also, let's make the increment of
+  //    5 points for reasonable change be confurable as well. that way I can
+  //    test each."
+  //
+  // Only the LADDERS live here. `pointsPerLevel` is the level value's shipping
+  // default and this is its home. The TIER SIZE's default is deliberately NOT
+  // restated in this file — it is `derivedStatRules.defaults.pointsPerTier`,
+  // read at the settings row from its one home, because this file is exactly
+  // where a copy of it would drift. Adding a value he may pick is a row in
+  // these arrays and ZERO UI code (the `tapFloor` row's shape, and the Law 0
+  // falsifier for the dials themselves).
+  //
+  // WHAT THE TIER DIAL DOES NOT REACH, said out loud rather than discovered:
+  // THREE separate vocabularies in this tree carry a 5-point tier —
+  // derived stats (this dial), `equipment.basicCardProfiles[*].pointsPerTier`,
+  // and relic `resource.attributeTier` rows. His sentence is about what a stat
+  // point is WORTH, which is the derived-stat one and the one my HP finding was
+  // about. The other two are their own systems with their own tiers, and a
+  // single global reaching into all three would be collapsing three
+  // distinctions into one number because it is tidier.
   levelUp: {
     firstCost: 20,
     costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
+    // What a level GRANTS. 1 is his own number ("increase a stat by 1 point");
+    // the rest exist so he can find out what a level should feel like by
+    // playing it, which is what "that way I can test each" asks for.
+    pointsPerLevelChoices: [1, 2, 3, 5],
+    // How many points buy one tier of a derived stat. 5 is what ships and is
+    // the reason one level currently moves no number at all; 1 makes every
+    // point visible, and the span between the two is the experiment.
+    //
+    // FOUR, NOT FIVE, and the fourth is 5 rather than 10. A previous seat
+    // MEASURED this row shape: four chips renders 92.1 px at 390x844 and a
+    // seven-chip row runs to 301.2 px with its last chip off the viewport
+    // (settings.js, the Hold-to-confirm note). His sentence names 5 as the
+    // number to test against, so 5 stays and the extreme goes.
+    tierSizeChoices: [1, 2, 3, 5],
   },
 
   // ---- what a grace hands back ----------------------------------------------

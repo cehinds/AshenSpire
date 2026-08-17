@@ -304,7 +304,11 @@ export function relicAttributeTierFoldProblems(term, rule) {
   if (term.sourceStat !== rule.sourceStat) {
     problems.push({ field: 'sourceStat', msg: `must match target rule sourceStat '${rule.sourceStat}'` });
   }
-  if (term.pointsPerTier !== rule.pointsPerTier) {
+  // AN UNSTATED GRANULARITY INHERITS THE RULE IT FOLDS INTO and can never
+  // mismatch it (Law 0 clause 1). A STATED one must still match exactly: "+1 HP
+  // per 5 CON" genuinely cannot be added to a per-1 rule, and that refusal is
+  // the arithmetic protecting itself, not a rule to relax.
+  if (term.pointsPerTier !== undefined && term.pointsPerTier !== rule.pointsPerTier) {
     problems.push({ field: 'pointsPerTier', msg: `must match target rule pointsPerTier ${rule.pointsPerTier}` });
   }
   if (rule.rounding !== 'floor') {

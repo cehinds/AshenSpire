@@ -16,6 +16,7 @@ import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } f
 import {
   createDerivedStatRuleSnapshot,
   restoreDerivedStatRuleSnapshot,
+  resolveDerivedStatRules,
   deriveStat,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
@@ -103,9 +104,16 @@ export function createRunState({
     // COUNT and not a copy of anything: the points themselves live in
     // `attributes` (where every reader already looks, so a level is worth
     // exactly what the derived-stat table says a point is worth), and this
-    // number is what the creation-rule check at the load door needs in order to
-    // tell a levelled run from a hand-edited one. `model/levelup.js`.
+    // number is what the COST RAMP indexes on. `model/levelup.js`.
     levelUps: 0,
+    // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
+    // two are one number only while the level value is one number. Constantine
+    // made it a dial on 2026-08-17 ("leave the level up value configurable"),
+    // so six levels at 1 point and three at 2 are the same nine points and a
+    // different number of purchases. The ramp indexes on purchases, the load
+    // door checks points, and neither derives from the other once the dial has
+    // moved mid-run. This is what makes a dial change unable to refuse a save.
+    levelPoints: 0,
     floor: 0,
     actNumber: 1,
     mapNodeId: null,
@@ -283,7 +291,25 @@ export function initializeRunDerivedStats(run, registries, {
 
   // v1 carried class-authored 40/60/80 Mana pools. It is readable so its
   // current/max ratio can be migrated, but it is never retained as authority.
-  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, { attributes: run.attributes });
+  // THE HOST'S RESOLVED TIER SIZE, HANDED TO THE RECEIPT THAT HAS TO FOLD INTO
+  // IT. A relic `resource.attributeTier` row that states no `pointsPerTier`
+  // inherits the rule it folds into, and this is where "the rule" is known: the
+  // authored table plus whatever override layer this run is being born with
+  // (Constantine's Settings → Advanced tier dial). Resolved twice — once here
+  // for the granularity, once inside the snapshot for the numbers — because a
+  // receipt computed at one granularity and folded at another is the silent
+  // wrong answer Law 0 clause 5 is about.
+  const hostRules = resolveDerivedStatRules(
+    registries.derivedStatRules,
+    derivedOptions(registries, derivedStatOptions),
+  );
+  const tierSizes = Object.fromEntries(
+    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+  );
+  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
+    attributes: run.attributes,
+    tierSizes,
+  });
   const receipt = existingIsCurrent
     ? restoredExisting
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
@@ -375,8 +401,11 @@ export const RUN_SHAPE = [
   { key: 'attributeMode', type: 'string', optional: true },
   { key: 'attributes', type: 'object', optional: true },
   // Optional so a run saved before shrine levelling existed still loads: absent
-  // reads as zero levels bought, which is what such a run is.
+  // reads as zero levels bought, which is what such a run is. `levelPoints` is
+  // additionally absent from e05be89's saves, where it is exactly `levelUps` —
+  // that build had one possible level value (attributes.js).
   { key: 'levelUps', type: 'number', optional: true },
+  { key: 'levelPoints', type: 'number', optional: true },
   // Optional only for the one pre-derived migration at the load door.
   { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
   { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
@@ -446,8 +475,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   // ALLOCATION check that reads it lives at the load door
   // (attributes.js:grantedAttributePoints); this is the shape check, and a
   // fractional or negative value would silently shift the expected total there.
-  if (run.levelUps !== undefined && (!Number.isInteger(run.levelUps) || run.levelUps < 0)) {
-    problems.push('levelUps must be a non-negative integer');
+  for (const key of ['levelUps', 'levelPoints']) {
+    if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
+      problems.push(`${key} must be a non-negative integer`);
+    }
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
