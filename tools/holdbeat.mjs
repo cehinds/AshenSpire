@@ -93,6 +93,7 @@
 // holds — with no hold there is no beat and this tool has no subject.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -204,13 +205,12 @@ async function main() {
   if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
   else { const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8291), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
 
-  const dir = mkdtempSync(join(tmpdir(), 'holdbeat-'));
-  const { child, wsUrl } = await new Promise((res, rej) => {
-    const c = spawn(browserPath, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--no-first-run', '--hide-scrollbars', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let buf = ''; const on = (x) => { buf += x; const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf); if (m) res({ child: c, wsUrl: m[1] }); };
-    c.stderr.on('data', on); c.stdout.on('data', on); c.on('error', rej);
-    setTimeout(() => rej(new Error('holdbeat: chromium never printed an endpoint')), 20000);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'holdbeat-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--hide-scrollbars'],
+    timeoutMs: 20000,
   });
   const cdp = cdpConnect(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -290,7 +290,7 @@ async function main() {
   await open('normal');
   {
     const p = await barPoint(0);
-    if (!p) { console.error(`holdbeat: '${EVENT}' has no binding bar; nothing here measures the feature. That is unknown, not a pass.`); cdp.close(); child.kill(); stop(); process.exit(2); }
+    if (!p) { console.error(`holdbeat: '${EVENT}' has no binding bar; nothing here measures the feature. That is unknown, not a pass.`); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
     // TWO WINDOWS, AND THE SPLIT IS THE WHOLE POINT. A suspended context does
     // not lose what was scheduled into it — it holds it and dumps the lot the
     // instant it starts. Measured before the drop rule went into ui/audio.js:
@@ -510,7 +510,7 @@ async function main() {
     console.log(`         NOBODY HAS LISTENED TO THIS. That read is Sunna's and it is not discharged here.`);
   }
 
-  cdp.close(); child.kill(); stop();
+  cdp.close(); await dropBrowser(); stop();
 
   if (!checks) { console.error(`\nholdbeat: nothing was measured. That is unknown, not a pass.`); process.exit(2); }
 

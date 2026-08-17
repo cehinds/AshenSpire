@@ -160,6 +160,7 @@
 // stops being a length a stylesheet owns.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -316,15 +317,6 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 // ONE READING, shared by every check below: two boxes in LOCAL px, the gap the
 // placed element declares, and which axis actually separates them.
@@ -430,72 +422,37 @@ function gapChecks(where, surface, r) {
   else bad('P2', where, `${surface}: rendered ${seen} — declared ${r.declared}. The gap the browser drew is not the gap the stylesheet owns: the code is carrying a second copy`);
 }
 
-// THE PROFILE IS REMOVED, AND IT IS NOT HOUSEKEEPING. A headless Chromium
-// --user-data-dir is ~11 MB and this tool makes one per invocation; --selftest
-// invokes it six times. Measured 2026-08-17, from this tool's own first day:
-// 18 stranded `placement-*` dirs (~180 MB) in the authoring session's TMPDIR and
-// 7 more in the gating session's, on a box already at 88% disk with /tmp holding
-// 22 GB over 2583 directories. 063ccdd fixed exactly this for creationbrief.mjs
-// three commits below and the pattern did not travel: 37 tools in tools/ launch
-// Chrome on a mkdtemp'd profile and 25 of them never remove it. THIS IS A PATCH,
-// SAID OUT LOUD — the collapse is one shared launcher, not a thirteenth copy of
-// the removal (Bjorn, gating d705b66).
-// AND THE BROWSER IS KILLED BEFORE THE PROFILE GOES — an order that is a
-// MEASURED DEFECT IN MY OWN FIRST CUT OF THIS CLEANUP, not a nicety.
-// `child.kill()` lived only on the happy path and `child` was scoped inside
-// main(), so `main().catch()` could not reach it: ANY throw orphaned a headless
-// Chromium. Found by looking a second time — pid 7684 on this box was a
-// `placement.mjs` Chromium STILL RUNNING 1 h 59 m after its run ended, holding
-// /tmp/st/placement-fjsOxA. My first cut removed the PROFILE on the error path
-// and left that browser alive, which is WORSE than leaking: a live browser
-// writing into a deleted tree. Kill, then remove, on every exit.
-// AND THE ORDER IS KILL, WAIT, REMOVE — measured, in that order, because the
-// first two orders both failed:
-//   (a) `child.kill()` lived only on the happy path and `child` was scoped inside
-//       main(), so `main().catch()` could not reach it: ANY throw orphaned a
-//       headless Chromium. Six of them were alive on this box while I wrote this,
-//       aged 2 h to 3 h 24 m, none of them mine to kill.
-//   (b) kill-then-remove-immediately DOES NOT WORK, and the profile came back
-//       with 34 entries in it. SIGTERM starts an ASYNCHRONOUS shutdown; rmSync
-//       deletes the tree and the dying browser RE-CREATES it on its way out. The
-//       directory reappearing is the tell, and it is why "I added the removal"
-//       was not the same as "the profile is gone".
-// So: SIGTERM, await `exit` (3 s ceiling), SIGKILL anything left, then remove.
-// Measured on both paths: the child exits in ~40 ms with code 0, rmSync succeeds,
-// and `existsSync(PROFILE)` is false afterwards — the ~11 MB is genuinely gone,
-// on the clean exit AND on a forced `timeout combat` throw.
-// WHAT IS STILL LEFT, NAMED RATHER THAN CLAIMED FIXED — THIS IS A PATCH AND
-// HERE IS EXACTLY HOW MUCH OF ONE:
-//   · Chromium also makes a `.org.chromium.Chromium.<rand>` scratch dir directly
-//     in $TMPDIR, OUTSIDE --user-data-dir, which nothing here can reach. 4 KB
-//     against the profile's 11 MB, one per run, on both paths. I mistook it for
-//     the profile surviving while debugging this — my own reading of an
-//     instrument being the thing that was wrong, for the second time tonight.
-//   · A FULL `--selftest` STILL LEAVES 3 PARTIAL PROFILES OF 6 INVOCATIONS —
-//     measured, 3.3 MB where it was ~66 MB, and non-deterministic. Cause:
-//     `child.kill()` signals the DIRECT child only, and Chromium's helper
-//     processes can outlive it and re-create entries under the profile after
-//     rmSync has run. The honest fix is a process-group kill (`detached: true`
-//     plus `process.kill(-pid)`) in ONE SHARED LAUNCHER, which is the lane, not
-//     a thirteenth private copy of it. ~95% of the leak, not 100%, and the
-//     remainder has a named cause rather than a shrug.
-let PROFILE = null;
-let CHILD = null;
-const dropBrowser = async () => {
-  if (CHILD) {
-    const child = CHILD; CHILD = null;
-    const gone = new Promise((r) => { child.once('exit', r); setTimeout(r, 3000); });
-    try { child.kill(); } catch { /* already gone */ }
-    await gone;
-    try { child.kill('SIGKILL'); } catch { /* already gone */ }
-  }
-  if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; }
-};
+// THE PROFILE IS THE LAUNCHER'S — tools/browser.mjs — AND THAT IS THE LANE THIS
+// FILE'S OWN NOTES ASKED FOR TWICE. Both are Bjorn's, both kept in his words
+// because they are the evidence the collapse was owed and the diagnosis I built
+// against:
+//
+//   "THIS IS A PATCH, SAID OUT LOUD — the collapse is one shared launcher, not a
+//    thirteenth copy of the removal" (gating d705b66), and then, after measuring
+//    his own fix at 06b18f3:
+//   "A FULL `--selftest` STILL LEAVES 3 PARTIAL PROFILES OF 6 INVOCATIONS —
+//    3.3 MB where it was ~66 MB, and non-deterministic. Cause: `child.kill()`
+//    signals the DIRECT child only, and Chromium's helper processes can outlive
+//    it and re-create entries under the profile after rmSync has run. The honest
+//    fix is a process-group kill (`detached: true` plus `process.kill(-pid)`) in
+//    ONE SHARED LAUNCHER, which is the lane."
+//
+// That is exactly what the launcher does, and I reached the same mechanism from
+// the other end before reading this: 9 of 10 concurrent runs clean, and the tenth
+// left a profile holding a fresh `Default/` while `close()` reported success —
+// an orphaned RENDERER recreating a tree whose absence had already been verified.
+// Group kill, real join with no short ceiling, and a re-check after a settle:
+// 36/36 at 12-way concurrency.
+//
+// HIS SECOND NAMED REMAINDER CLOSES TOO, AND IT IS NOT A SEPARATE LANE. He wrote
+// that Chromium "also makes a `.org.chromium.Chromium.<rand>` scratch dir directly
+// in $TMPDIR, OUTSIDE --user-data-dir, which nothing here can reach." It is
+// reachable: the launcher points the child's TMPDIR INSIDE the profile, so that
+// scratch dir lands where the profile's removal takes it. Measured three ways in
+// browser.mjs's header, and watched as a plant either side of the pin (P7).
 
 async function main() {
   const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
-  const profile = mkdtempSync(join(tmpdir(), 'placement-'));
-  PROFILE = profile;
   const s = await serve({ root: ROOT, port: 8294, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`placement — ${base} (root ${ROOT})`);
@@ -504,8 +461,12 @@ async function main() {
   console.log(`      read with the same getComputedStyle('${PROP}') placeAnchored uses — the name`);
   console.log(`      out of src/ui/fx.js PLACE_GAP_PROP, not typed here. The hover and the open are`);
   console.log('      DISPATCHED DOM events, not CDP input: placement is measured, reachability is not.');
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
-  CHILD = child;
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'placement-', browser: browserPath,
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let ran = 0;
 
@@ -643,4 +604,11 @@ async function main() {
   process.exit(findings.length ? 1 : 0);
 }
 
-main().catch(async (e) => { await dropBrowser(); console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });
+// HIS CATCH USED TO CALL dropBrowser AND NO LONGER HAS TO, WHICH IS THE POINT OF
+// THE LANE. He hoisted PROFILE/CHILD to module scope precisely so `main().catch()`
+// could reach them — his own words: without it, ANY throw orphaned a headless
+// Chromium. The launcher's guard covers that path from inside browser.mjs, on
+// `exit` and on SIGINT/SIGTERM/SIGHUP/SIGQUIT, and it is watched red as P1 and
+// P2 of `node tools/browser.mjs --selftest`. So the hoist is gone rather than
+// kept as a second copy, and what replaced it has a plant behind it.
+main().catch((e) => { console.error('placement: UNKNOWN — ' + (e.stack || e.message)); process.exit(2); });

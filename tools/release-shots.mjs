@@ -76,6 +76,7 @@
 // each with what was and was not photographed.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -735,39 +736,26 @@ const BASE = `http://localhost:${port}/dist/AshenSpire.html`;
 // `9222 + (pid % 400)` = 9222…9621, a range that CONTAINS 9431, so it would
 // silently take this tool's browser about one run in four hundred.
 // ---------------------------------------------------------------------------
-const browser = spawn(process.env.CHROME || '/opt/pw-browsers/chromium', [
-  '--headless=new', '--disable-gpu', '--no-sandbox',
-  '--remote-debugging-port=0', 'about:blank',
-], { stdio: ['ignore', 'pipe', 'pipe'] });
+// AND THE PROFILE IS THE LAUNCHER'S. This tool passed NO `--user-data-dir` at
+// all, so Chrome made its own throwaway profile in /tmp and left it: measured at
+// this ref, one unpinned run strands a `/tmp/.org.chromium.Chromium.*` every
+// time, and 2208 of them (933 MB) were standing on this box when the disk hit
+// 89%. This tool fires every four hours. tools/browser.mjs gives Chrome a
+// private profile and points its TMPDIR inside it, so the scoped temp dies with
+// the profile — and the reaper below, which this file already had and which was
+// right, is now that launcher's exit guard rather than a ninth copy of it.
+const { child: browser, wsUrl: BROWSER_WS, close: dropBrowser } = await launchBrowser({
+  prefix: 'release-shots-', browser: process.env.CHROME || '/opt/pw-browsers/chromium',
+  headless: '--headless=new', timeoutMs: 20000,
+}).catch((err) => { console.error(`\nrelease-shots: ${err.message}`); process.exit(2); });
 
-// One reaper, on every path out — normal exit, refusal, throw, Ctrl-C. A tool
-// that leaks a browser per run is how the pile above gets built.
-let reaped = false;
-const reap = () => {
-  if (reaped) return;
-  reaped = true;
-  try { browser.kill('SIGKILL'); } catch { /* already gone */ }
-};
-process.on('exit', reap);
-// SIGHUP too (Vira's word): a closed terminal is the commonest way a long run
-// ends, and it was the one signal that still leaked. SIGKILL cannot be caught
-// and that browser survives — an honest limit, not an oversight.
-for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { reap(); process.exit(130); });
+// One reaper, on every path out — normal exit, refusal, throw, Ctrl-C. Kept as
+// this file's own name for the act; the launcher is what makes it whole (it also
+// removes the profile, and it signals the whole process GROUP, so Chrome's
+// renderers go with it). SIGKILL of THIS process still cannot be caught and that
+// browser survives — an honest limit, not an oversight.
+const reap = () => { dropBrowser(); };
 process.on('uncaughtException', (err) => { reap(); console.error(err); process.exit(2); });
-
-const BROWSER_WS = await new Promise((ok, no) => {
-  let buf = '';
-  const read = (d) => {
-    buf += d;
-    const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf);
-    if (m) ok(m[1]);
-  };
-  browser.stderr.on('data', read);
-  browser.stdout.on('data', read);
-  browser.on('error', no);
-  browser.on('exit', (code) => no(new Error(`chromium exited (${code}) before naming an endpoint:\n${buf.slice(-400)}`)));
-  setTimeout(() => no(new Error(`chromium never printed a DevTools endpoint:\n${buf.slice(-400)}`)), 20000);
-}).catch((err) => { reap(); console.error(`\nrelease-shots: ${err.message}`); process.exit(2); });
 
 // The port is this child's and no one else's — derived from what it printed,
 // never typed here.

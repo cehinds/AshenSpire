@@ -54,6 +54,7 @@
 // three files do not exist yet, so every shot below is of the placeholder wash.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -515,15 +516,12 @@ async function runRendered() {
   }
   if (shotsDir) mkdirSync(resolve(ROOT, shotsDir), { recursive: true });
 
-  const dir = mkdtempSync(join(tmpdir(), 'mapfog-'));
-  const { child, wsUrl } = await new Promise((res, rej) => {
-    const c = spawn(browserPath, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--no-first-run', '--hide-scrollbars', 'about:blank'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
-    let buf = '';
-    const on = (x) => { buf += x; const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf); if (m) res({ child: c, wsUrl: m[1] }); };
-    c.stderr.on('data', on); c.stdout.on('data', on); c.on('error', rej);
-    setTimeout(() => rej(new Error('mapfog: chromium never printed an endpoint')), 20000);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'mapfog-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--hide-scrollbars'],
+    timeoutMs: 20000,
   });
   const cdp = cdpConnect(wsUrl);
   await cdp.ready;
@@ -630,7 +628,7 @@ async function runRendered() {
   }
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   stop();
 
   if (shots.length) console.log(`\n  ${shots.length} shot(s) written to ${shotsDir}`);

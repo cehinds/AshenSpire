@@ -92,6 +92,7 @@
 // the climb.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { createConnection } from 'node:net';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -232,13 +233,18 @@ async function cdp(shape, seed, plant = null) {
   const q = new URLSearchParams({ shot: 'map', shotSeed: seed });
   if (MODE) q.set('shotSettings', JSON.stringify({ mapMode: MODE }));
   const url = `${pageBase}?${q}`;
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens. This tool
+  // launches ONE BROWSER PER SHAPE PER SEED with no `--user-data-dir`, so every
+  // one of those left a `/tmp/.org.chromium.Chromium.*` behind — measured at this
+  // ref. `awaitEndpoint` is off because this tool polls `/json/list` on a port it
+  // picks rather than reading the endpoint off stderr.
   const dp = 9333 + Math.floor(Math.random() * 400);
-  const child = spawn(browser, [
-    '--headless=new', '--disable-gpu', '--no-sandbox',
-    `--remote-debugging-port=${dp}`,
-    `--window-size=${shape.w},${shape.h}`,
-    'about:blank',
-  ], { stdio: 'ignore' });
+  const { child, close: dropBrowser } = await launchBrowser({
+    prefix: 'actends-', browser, headless: '--headless=new', awaitEndpoint: false,
+    args: [`--remote-debugging-port=${dp}`, `--window-size=${shape.w},${shape.h}`],
+    stdio: 'ignore',
+  });
   const base = `http://127.0.0.1:${dp}`;
   let ws = null;
   for (let i = 0; i < 120 && !ws; i++) {
@@ -249,7 +255,7 @@ async function cdp(shape, seed, plant = null) {
       if (t) ws = t.webSocketDebuggerUrl;
     } catch { /* not up yet */ }
   }
-  if (!ws) { child.kill(); return { error: 'browser never answered on the debugging port' }; }
+  if (!ws) { await dropBrowser(); return { error: 'browser never answered on the debugging port' }; }
   const sock = await openWs(ws);
   const send = mkSend(sock);
   await send('Page.enable', {});
@@ -263,7 +269,7 @@ async function cdp(shape, seed, plant = null) {
     // the real thing.
     const planted = await send('Runtime.evaluate', { expression: MUTATIONS[plant], returnByValue: true });
     const n = planted && planted.result && planted.result.value;
-    if (!n) { sock.destroy(); child.kill(); return { error: `--mutate=${plant}: the plant found nothing to break — the page may not have mounted` }; }
+    if (!n) { sock.destroy(); await dropBrowser(); return { error: `--mutate=${plant}: the plant found nothing to break — the page may not have mounted` }; }
     await new Promise((r) => setTimeout(r, 200));
   }
   const res = await send('Runtime.evaluate', { expression: PROBE, returnByValue: true });
@@ -273,7 +279,7 @@ async function cdp(shape, seed, plant = null) {
     png = cap && cap.data ? Buffer.from(cap.data, 'base64') : null;
   }
   sock.destroy();
-  child.kill();
+  await dropBrowser();
   return { value: res && res.result && res.result.value, png };
 }
 

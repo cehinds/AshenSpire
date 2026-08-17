@@ -38,6 +38,7 @@
 //        node tools/bjclauses.mjs --selftest        the two floors, observed
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
@@ -75,26 +76,6 @@ const SHAPES = argOf('--shapes')
   })
   : ALL_SHAPES;
 
-function launchChrome(userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(CHROME, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 // PROBE — evaluated in the page after the map settles.
 const PROBE = `(() => {
@@ -171,8 +152,13 @@ async function main() {
   const s = await serve({ root: REPO, port: PORT, open: false });
   const base = `http://localhost:${s.port}/`;
 
-  const profile = mkdtempSync(join(tmpdir(), 'bjclauses-'));
-  const { child, wsUrl } = await launchChrome(profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'bjclauses-', browser: CHROME,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
 
   // minimal CDP client over the ws shim
   const ws = new WebSocket(wsUrl);
@@ -263,7 +249,7 @@ async function main() {
     console.error('An empty measurement is unknown, and unknown is never a pass (SOP 2\'s silence guard).');
     console.error('This tool exiting 0 on a map that never mounted is the instrument running dead and');
     console.error('printing a plausible number — the shape eleven instruments took on 2026-08-08.');
-    ws.close(); child.kill(); s.server.close();
+    ws.close(); await dropBrowser(); s.server.close();
     process.exit(2);
   }
 
@@ -275,7 +261,7 @@ async function main() {
   writeFileSync(join(process.cwd(), 'clauses-raw.json'), JSON.stringify({ rows, fit: { walk: strip(fitR), entrance: strip(fitE) }, path: strip(pathR) }, null, 1));
   report(rows, fitR, fitE, pathR);
 
-  ws.close(); child.kill(); s.server.close();
+  ws.close(); await dropBrowser(); s.server.close();
 
   // A cell that threw used to live only in the JSON nobody opens. My own
   // failure mode #2: a check nobody reads is not a check — make it fail, not

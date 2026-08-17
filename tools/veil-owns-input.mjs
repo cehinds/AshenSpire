@@ -50,6 +50,7 @@
 // REMOVAL: deleted the day no screen guards a key on whether a veil is standing.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -81,16 +82,6 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--no-first-run', 'about:blank'],
-      { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 // The ROUTES table is the whole tool. A new veil over the board is a row here,
 // never a new function — an entry describes, the loop below derives (Law 0).
@@ -108,7 +99,6 @@ const ROUTES = [
 
 async function main() {
   if (!browserPath) { console.error('veil-owns-input: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'veilinput-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -117,7 +107,13 @@ async function main() {
   } else { const s = await serve({ root: ROOT, port: 8477, open: false }); server = s.server; base = `http://localhost:${s.port}/`; }
   console.log(`veil-owns-input — ${base}${useDist ? ' (shipped bundle)' : ' (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'veilinput-', browser: browserPath,
+    args: ['--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0, checks = 0;
 
@@ -301,7 +297,7 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
-  cdp.close(); child.kill();
+  cdp.close(); await dropBrowser();
   if (server) server.close();
   if (!ran) { console.error('veil-owns-input: NOTHING RAN — --only matched no shape'); process.exit(2); }
   console.log(`\nBOUNDARY: one key (End Turn), Linux headless Chromium, ?shot=combat, no pad.

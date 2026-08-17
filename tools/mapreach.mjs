@@ -144,6 +144,7 @@
 //      tripped / --mutate not caught  — never a pass
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -489,17 +490,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 // The offsets at which a node can be seen whole, solved rather than sampled.
 // A node spanning [cx0,cx1] is wholly inside the visible slice at scroll S iff
@@ -529,7 +519,6 @@ function feasible(rec, port, travel, slack) {
 
 async function main() {
   if (!browserPath) { console.error('mapreach: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'mapreach-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -542,7 +531,13 @@ async function main() {
   console.log(`mapreach — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
   console.log(`  seeds ${seeds.join(', ')} · text ${texts.join(',')} · map-zoom clicks ${zooms.join(', ')} · ${steps}x${steps} pan offsets + solved reach offsets${mutate ? `  ·  --MUTATE=${mutate}: a known-bad is armed and MUST be caught` : ''}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'mapreach-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -615,7 +610,7 @@ async function main() {
     if (notSeeds.length) {
       console.error(`\nmapreach: ${notSeeds.length} of ${seeds.length} seed value(s) do not seed anything. Refusing to sweep — an unrepeatable population is unknown, not a pass.`);
       for (const n of notSeeds) console.error(`    - ${n}`);
-      cdp.close(); child.kill(); if (server) server.close();
+      cdp.close(); await dropBrowser(); if (server) server.close();
       process.exit(2);
     }
   }
@@ -887,20 +882,20 @@ async function main() {
   if (mutate) {
     console.log(`\n  --MUTATE=${mutate}: ${caught ? `CAUGHT — ${fails.length} finding(s), ${unknowns.length} unknown(s). The check can go red.` : 'NOT CAUGHT. The known-bad was armed and this tool reported clean, so it is decoration, not evidence.'}`);
     for (const f of [...unknowns, ...fails].slice(0, 8)) console.log(`    - ${f}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(caught ? 0 : 2);
   }
 
   if (unknowns.length) {
     console.error(`\n  UNKNOWN — ${unknowns.length} population guard(s) tripped. This run did not test what it says it tested, so it is not a pass and it is not a red.`);
     for (const u of unknowns) console.error(`    - ${u}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : `PASS — ${readings} readings, ${structureChecks} structure checks, ${restChecks} at-rest checks, ${reachChecks} reach checks, nothing trapped and nothing unreachable`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

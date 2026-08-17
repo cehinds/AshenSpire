@@ -83,6 +83,7 @@
 // that no longer exists.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -136,16 +137,6 @@ function connectCdp(wsUrl) {
     close: () => ws.close(),
   };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', '--disable-renderer-backgrounding',
-      '--disable-background-timer-throttling', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 // Seeded before ANY app code runs, in both tabs:
 //   1. the stored display setting — the app's own meta blob, the door a
@@ -182,13 +173,18 @@ async function main() {
     process.exit(2);
   }
 
-  const profile = mkdtempSync(join(tmpdir(), 'coophand-'));
   console.log(`\ncoop-hand-parity — root ${ROOT}`);
   console.log(`  MODE AXIS — balance.ui.handLayoutModes, DERIVED: ${modes.join(', ')}${only ? `  (running ${swept.join(', ')})` : ''}`);
   console.log('  Every run below is a REAL LAN game: two browser clients, one in-process server,');
   console.log('  the app\'s own lobby/vote/combat flow. The mode enters by the stored-settings door.');
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'coophand-', browser: browserPath,
+    args: ['--disable-renderer-backgrounding', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
   const newTab = async (mode) => {
@@ -385,8 +381,7 @@ async function main() {
     s.server.close();
   }
 
-  cdp.close(); child.kill();
-  try { rmSync(profile, { recursive: true, force: true }); } catch (e) { /* a janitor may not hold verdict power */ }
+  cdp.close(); await dropBrowser();
   if (!ran) { console.error('coop-hand-parity: NOTHING RAN — unknown, not a pass'); process.exit(2); }
   console.log(`\n  BOUNDARY — one shape (${W}x${H}), shipping text size, headless Chromium on one box; the hold is`);
   console.log('  proven ARMED, not readable; the first fight of a seeded run, not a late-run hand; nothing here');

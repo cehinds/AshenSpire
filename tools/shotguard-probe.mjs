@@ -58,6 +58,7 @@
 // learned it.
 
 import { spawn, spawnSync } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
@@ -304,7 +305,6 @@ function check(name, ok, detail) {
 }
 
 const { server, port } = await serve({ root: ROOT, port: 8127, open: false, lan: false });
-const profile = mkdtempSync(join(tmpdir(), 'shotguard-'));
 
 // Port 0, not a hard-coded 9333. Two reasons, and the first is a flake I had not
 // noticed until the port timing made me look: a fixed port collides with anything
@@ -313,12 +313,29 @@ const profile = mkdtempSync(join(tmpdir(), 'shotguard-'));
 // writes the real port into DevToolsActivePort in the profile directory — which is
 // the race-free signal, because the file is created AFTER the port is listening.
 let chromeExited = null;
-const chromeArgv = SIMULATE
+// ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+// Chrome's own TMPDIR inside it, and removes it whatever happens. `awaitEndpoint`
+// is off because this probe reads DevToolsActivePort out of the profile itself
+// rather than off stderr.
+//
+// SIMULATE IS NOT ROUTED THROUGH THE LAUNCHER, DELIBERATELY. `--simulate` runs a
+// bare node process that is alive and never ready — it is a stand-in for a
+// browser, not a browser, it takes no `--user-data-dir`, and it has no profile to
+// leak. Sending it through the launcher would mean handing node Chrome's flags.
+let chrome; let dropBrowser = () => {};
+// A path that is never created, so `DevToolsActivePort` never appears under it —
+// which is exactly what the old SIMULATE run measured, with a real empty dir.
+let profile = join(tmpdir(), 'shotguard-simulate-has-no-profile');
+if (SIMULATE) {
   // Alive, quiet, and it will never write DevToolsActivePort nor announce a port.
-  ? ['-e', 'setInterval(() => {}, 1000)']
-  : ['--headless=new', '--disable-gpu', '--no-sandbox',
-     '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'];
-const chrome = spawn(browser, chromeArgv, { stdio: ['ignore', 'pipe', 'pipe'] });
+  chrome = spawn(browser, ['-e', 'setInterval(() => {}, 1000)'], { stdio: ['ignore', 'pipe', 'pipe'] });
+} else {
+  const b = await launchBrowser({
+    prefix: 'shotguard-', browser, headless: '--headless=new', awaitEndpoint: false,
+    args: ['--remote-debugging-port=0'],
+  });
+  chrome = b.child; profile = b.profile; dropBrowser = b.close;
+}
 let chromeErr = '';
 chrome.stderr.on('data', (d) => { chromeErr += d; });
 chrome.on('exit', (code, sig) => { chromeExited = { code, sig }; });
@@ -330,9 +347,8 @@ chrome.on('error', (e) => { chromeExited = { code: null, sig: null, spawnError: 
 // dishonesty about what the run did.
 function cleanup() {
   try { ws && ws.close(); } catch { /* already gone */ }
-  try { chrome.kill(); } catch { /* already gone */ }
+  dropBrowser();
   try { server.close(); } catch { /* already closed */ }
-  try { rmSync(profile, { recursive: true, force: true }); } catch { /* best effort */ }
 }
 
 let ws;

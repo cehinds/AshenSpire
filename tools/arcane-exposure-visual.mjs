@@ -4,6 +4,7 @@
 // not fabricate client DOM or mutate state after mount.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -51,21 +52,12 @@ async function browser() {
   const exe = [CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', '/usr/bin/chromium', '/usr/bin/google-chrome']
     .filter(Boolean).find(existsSync);
   if (!exe) throw new Error('Chrome/Chromium absent; set CHROME to its exact path');
-  const profile = mkdtempSync(join(tmpdir(), 'arcane-exposure-visual-'));
-  const child = spawn(exe, ['--headless=new', '--disable-gpu', '--no-sandbox', '--remote-debugging-port=0',
-    `--user-data-dir=${profile}`, '--allow-file-access-from-files', '--no-first-run', 'about:blank'],
-  { stdio: ['ignore', 'pipe', 'pipe'] });
-  let log = '';
-  const wsUrl = await new Promise((ok, no) => {
-    const read = (chunk) => {
-      log += chunk;
-      const match = /DevTools listening on (ws:\/\/\S+)/.exec(log);
-      if (match) ok(match[1]);
-    };
-    child.stdout.on('data', read);
-    child.stderr.on('data', read);
-    child.on('error', no);
-    setTimeout(() => no(new Error(`Chrome did not expose CDP: ${log.slice(-300)}`)), 15000);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { wsUrl, close: dropBrowser } = await launchBrowser({
+    prefix: 'arcane-exposure-visual-', browser: exe, headless: '--headless=new',
+    args: ['--allow-file-access-from-files'],
+    timeoutMs: 15000,
   });
   const cdp = connect(wsUrl);
   await cdp.ready;
@@ -86,10 +78,7 @@ async function browser() {
     }
     throw new Error(`timed out waiting for ${label}`);
   };
-  return { cdp, sessionId, evaluate, until, close() {
-    cdp.close(); child.kill();
-    try { rmSync(profile, { recursive: true, force: true }); } catch { /* best effort */ }
-  } };
+  return { cdp, sessionId, evaluate, until, close() { cdp.close(); return dropBrowser(); } };
 }
 
 const READER = `(() => {

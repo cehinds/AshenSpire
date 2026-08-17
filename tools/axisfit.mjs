@@ -232,6 +232,7 @@
 // counts containers, and a container count is a proxy for coverage, not coverage.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -530,27 +531,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // ------------------------------------------------------------ the law, applied
 //
@@ -709,8 +689,13 @@ async function main() {
   }
   console.log(`\naxisfit — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}${textSize ? `  ·  Text size ${textSize}` : '  ·  Text size: the shipping default'}`);
 
-  const profile = mkdtempSync(join(tmpdir(), 'axisfit-'));
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'axisfit-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -722,7 +707,7 @@ async function main() {
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw');
     return r.result.value;
   };
-  const done = (code) => { cdp.close(); child.kill(); if (server) server.close(); process.exit(code); };
+  const done = (code) => { cdp.close(); dropBrowser(); if (server) server.close(); process.exit(code); };
 
   // `?shotSettings` keys are the app's own. textSize is looked up CASE-SENSITIVE
   // in balance.ui.textSize (S/M/L/XL) while uiScale is lowercased first — so a

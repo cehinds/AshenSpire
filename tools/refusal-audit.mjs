@@ -37,6 +37,7 @@
 // number and is never restated here.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -213,25 +214,19 @@ function connectCdp(wsUrl) {
 // `--remote-debugging-port=0` and the endpoint read from this child's own
 // stderr: the port is whatever the OS handed THIS process, so no fixed port is
 // bound and no other seat's browser can be attached to by accident.
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', '--disable-background-timer-throttling', 'about:blank'],
-    { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-400)}`)), 15000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('refusal-audit: no chromium found — pass --browser PATH or set $CHROME'); process.exit(2); }
   if (!SHAPES.length) { console.error(`refusal-audit: --shape ${ONLY_SHAPE} matched no shape of ${[[390, 844], [1200, 730]].map((s) => s.join('x')).join(', ')}`); process.exit(2); }
 
-  const profile = mkdtempSync(join(tmpdir(), 'refusal-audit-'));
   const s = await serve({ root: ROOT, port: PORT, open: false, lan: false });
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'refusal-audit-', browser: browserPath,
+    args: ['--disable-background-timer-throttling'],
+    timeoutMs: 15000,
+  });
   console.log(`refusal-audit — http://localhost:${s.port}  ·  browser pid ${child.pid}, ${wsUrl}`);
 
   const cdp = connectCdp(wsUrl); await cdp.ready;
@@ -290,7 +285,7 @@ async function main() {
     }
   }
 
-  cdp.close(); child.kill(); s.server.close();
+  cdp.close(); await dropBrowser(); s.server.close();
 
   // The denominator, floored. A run that examined nothing has not passed.
   if (examined === 0) {

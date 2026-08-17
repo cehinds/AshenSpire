@@ -34,6 +34,7 @@
 // about how any of it FEELS — that is Sunna's read, not a number.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -187,34 +188,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(
-      browser,
-      [
-        '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-        '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-        '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        // The dist build is one file://; without this its own assets are same-origin
-        // anyway, but a file:// page may not fetch siblings by default on some builds.
-        '--allow-file-access-from-files',
-        '--no-first-run', 'about:blank',
-      ],
-      { stdio: ['ignore', 'pipe', 'pipe'] }
-    );
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint. Output:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // ---------------------------------------------------------------- page probes
 //
@@ -294,7 +267,6 @@ async function main() {
     console.error('zoomplace: no Chrome/Edge found — pass --browser PATH or set $CHROME');
     process.exit(2);
   }
-  const profile = mkdtempSync(join(tmpdir(), 'zoomplace-'));
   let server = null;
   let base;
   if (useDist) {
@@ -311,7 +283,13 @@ async function main() {
   }
   console.log(`zoomplace — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'zoomplace-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -701,7 +679,7 @@ async function main() {
   if (viewportsMeasured === 0) {
     console.error(`\nzoomplace: NOTHING WAS MEASURED${only ? ` — --only ${only} matched no viewport` : ''}. That is unknown, not a pass.`);
     console.error(`  viewports: ${VIEWPORTS.map((v) => `${v.w}x${v.h}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
   console.log(`\nRESULT: ${fails.length ? `${fails.length} FAILED` : `all cases within tolerance`} — over ${viewportsMeasured} of ${VIEWPORTS.length} viewport(s)`);
@@ -710,7 +688,7 @@ async function main() {
   console.log('      plants the pre-fix conversion into src/ui/fx.js in a copy of the tree.');
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }

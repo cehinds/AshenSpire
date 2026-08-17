@@ -256,6 +256,7 @@
 // this file has no subject without it, and clause K is what will tell you.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -689,16 +690,6 @@ function connectCdp(wsUrl) {
       return new Promise((res, rej) => { pending.set(id, { res, rej });
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
-}
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1226,7 +1217,6 @@ async function main() {
   if (!browserPath) { console.error('uprightgate: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
   if (!TEXT[textKey]) { console.error(`uprightgate: --text ${textKey} is not one of ${Object.keys(TEXT).join('/')}`); process.exit(2); }
   printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
-  const profile = mkdtempSync(join(tmpdir(), 'uprightgate-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -1243,7 +1233,13 @@ async function main() {
   console.log(`      programmatically and never by hand, so a probe that positions its own target`);
   console.log(`      has already left the door (Bjorn, 2026-08-15).`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'uprightgate-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -1268,13 +1264,13 @@ async function main() {
 
   if (args.includes('--ladder')) {
     const code = await runLadder(read);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(code);
   }
 
   if (args.includes('--predicates')) {
     const code = await runPredicates(read);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(code);
   }
 
@@ -1456,7 +1452,7 @@ async function main() {
   if (cells === 0) {
     console.error(`\nuprightgate: nothing was measured${only ? ` (--only ${only} matched no shape)` : ''}. That is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map(([w, h]) => `${w}x${h}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close(); process.exit(2);
+    cdp.close(); await dropBrowser(); if (server) server.close(); process.exit(2);
   }
 
   console.log(`\n  BOUNDARY — Linux headless Chromium, device-metric emulation, one box. What this
@@ -1482,7 +1478,7 @@ async function main() {
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes: every walled shape refuses legibly with true advice, and no fitting shape refuses at all`}`);
   for (const f of fails) console.log(`    - ${f}`);
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }
 

@@ -53,6 +53,7 @@
 // contrast-sensitive default. A hand-run check nobody runs is decoration.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -689,37 +690,32 @@ const { server, port } = await serve({ root: ROOT, port: 8137, open: false });
 // This is the one-line half of the port work. The HARNESS half — release-shots
 // pinning 9431 while serve() bumps its HTTP port, so a second run drives the
 // first run's browser — is Bjorn's, in his file, and is not touched here.
-const child = spawn(browser, [
-  '--headless=new', '--disable-gpu', '--no-sandbox', '--hide-scrollbars',
-  // Both flags are load-bearing, not tidiness. Without --disable-lcd-text,
-  // subpixel antialiasing paints COLOURED fringes around every glyph: a solid
-  // `--panel` box that computes to rgb(36,29,21) captured pixels as far off as
-  // #2e3635, which fed a teal "backdrop" into the ratio and moved answers by
-  // ~0.9. Greyscale AA also makes the small-type story a pure-luminance one,
-  // which is the claim being made. --force-color-profile=srgb stops the capture
-  // being colour-managed on the way out, so a captured pixel equals the
-  // computed pixel — verified: #241d15 in, #241d15 out.
-  '--disable-lcd-text', '--force-color-profile=srgb',
-  `--window-size=${width},${height}`,
-  '--remote-debugging-port=0',
-  '--user-data-dir=' + resolve('/tmp', `ca-profile-${process.pid}`),
-  'about:blank',
-], { stdio: ['ignore', 'ignore', 'pipe'] });
-// The port this child actually got, read off the line it prints itself.
-const dbg = await new Promise((res, rej) => {
-  let buf = '';
-  const onData = (d) => {
-    buf += d;
-    const m = /DevTools listening on ws:\/\/[^:/]+:(\d+)\//.exec(buf);
-    if (m) { child.stderr.off('data', onData); child.stderr.on('data', () => {}); res(+m[1]); }
-  };
-  child.stderr.on('data', onData);
-  child.on('error', rej);
-  setTimeout(() => rej(new Error(`the browser announced no DevTools endpoint in 15s:\n${buf.slice(-400)}`)), 15000);
+// ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+// Chrome's own TMPDIR inside it, and removes it whatever happens. This tool used
+// `/tmp/ca-profile-<pid>` — deterministic, never removed, one directory per run
+// forever — which is the same leak the mkdtemp tools had without even a random
+// suffix to make it look accidental.
+//
+// Both flags below are load-bearing, not tidiness. Without --disable-lcd-text,
+// subpixel antialiasing paints COLOURED fringes around every glyph: a solid
+// `--panel` box that computes to rgb(36,29,21) captured pixels as far off as
+// #2e3635, which fed a teal "backdrop" into the ratio and moved answers by
+// ~0.9. Greyscale AA also makes the small-type story a pure-luminance one,
+// which is the claim being made. --force-color-profile=srgb stops the capture
+// being colour-managed on the way out, so a captured pixel equals the computed
+// pixel — verified: #241d15 in, #241d15 out.
+const { child, wsUrl, close: dropBrowser } = await launchBrowser({
+  prefix: 'ca-profile-', browser, headless: '--headless=new',
+  args: ['--hide-scrollbars', '--disable-lcd-text', '--force-color-profile=srgb',
+    `--window-size=${width},${height}`],
+  stdio: ['ignore', 'ignore', 'pipe'],
+  timeoutMs: 15000,
 }).catch((e) => {
   console.error(`contrast-audit: ${e.message}`);
-  server.close(); child.kill(); process.exit(2);
+  server.close(); process.exit(2);
 });
+// The port this child actually got, read off the endpoint the launcher captured.
+const dbg = Number(/ws:\/\/[^:/]+:(\d+)\//.exec(wsUrl)[1]);
 
 // --gated-only renders exactly the profiles `--gate` judges and nothing else.
 // This is NOT the partial run the gate refuses below: that refusal exists because
@@ -740,7 +736,7 @@ if (gatedOnly) {
 }
 if (onlyProfile && !PROFILES[onlyProfile]) {
   console.error(`contrast-audit: unknown profile '${onlyProfile}'. Have: ${Object.keys(PROFILES).join(', ')}`);
-  server.close(); child.kill(); process.exit(2);
+  server.close(); await dropBrowser(); process.exit(2);
 }
 
 const rows = [];
@@ -800,7 +796,7 @@ try {
   }
   cdp.close();
 } finally {
-  child.kill();
+  await dropBrowser();
   server.close();
 }
 

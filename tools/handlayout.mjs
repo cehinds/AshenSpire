@@ -90,6 +90,7 @@
 // browser-level layout harness supersedes CDP measurement.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -129,15 +130,6 @@ function connectCdp(wsUrl) {
       return new Promise((res, rej) => { pending.set(id, { res, rej });
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
-}
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
 }
 
 // ---- the re-runnable known-bad ---------------------------------------------
@@ -278,13 +270,17 @@ async function selftest() {
 async function main() {
   if (!browserPath) { console.error('handlayout: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   if (args.includes('--selftest')) return selftest();
-  const profile = mkdtempSync(join(tmpdir(), 'handlayout-'));
   const s = await serve({ root: ROOT, port: 8281, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`handlayout — ${base} (root ${ROOT})`);
   if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'handlayout-', browser: browserPath,
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -370,7 +366,7 @@ async function main() {
     }
   }
 
-  cdp.close(); child.kill(); s.server.close();
+  cdp.close(); await dropBrowser(); s.server.close();
   if (!ran) { console.error('handlayout: NOTHING RAN'); process.exit(2); }
   console.log(fails ? `\nhandlayout: ${fails} FAIL` : '\nhandlayout: all green');
   process.exit(fails ? 1 : 0);

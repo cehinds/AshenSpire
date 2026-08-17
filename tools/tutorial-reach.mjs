@@ -21,6 +21,7 @@
 //   node tools/tutorial-reach.mjs --browser /path/to/chrome --only 1920x1080
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -184,27 +185,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint. Output:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // Page-side probe: where are the tutorial's two exits, and can they be hit?
 // `inside` = every corner within the viewport; `hit` = elementFromPoint at the
@@ -262,9 +242,14 @@ const SPOT_ON_TARGET = `(() => {
 
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
-  const profile = mkdtempSync(join(tmpdir(), 'tutreach-'));
   const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'tutreach-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
 
@@ -499,7 +484,7 @@ async function main() {
   }
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   server.close();
 
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);

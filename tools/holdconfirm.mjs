@@ -123,6 +123,7 @@
 // duration is reasoned from Android's long-press threshold, not observed.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -194,13 +195,12 @@ async function main() {
   if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
   else { const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8288), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
 
-  const dir = mkdtempSync(join(tmpdir(), 'holdc-'));
-  const { child, wsUrl } = await new Promise((res, rej) => {
-    const c = spawn(browserPath, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--no-first-run', '--hide-scrollbars', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let buf = ''; const on = (x) => { buf += x; const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf); if (m) res({ child: c, wsUrl: m[1] }); };
-    c.stderr.on('data', on); c.stdout.on('data', on); c.on('error', rej);
-    setTimeout(() => rej(new Error('holdconfirm: chromium never printed an endpoint')), 20000);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'holdc-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--hide-scrollbars'],
+    timeoutMs: 20000,
   });
   const cdp = cdpConnect(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -427,7 +427,7 @@ async function main() {
         console.error(`\nholdconfirm --mutate: '${EVENT}' has no binding bar at dial '${dial}', so the mutation `
           + `rewired NOTHING and every check below would pass by having nothing to break. `
           + `That is unknown, not a caught mutation — pick an event with a binding choice (--event <id>).`);
-        cdp.close(); child.kill(); stop(); process.exit(2);
+        cdp.close(); await dropBrowser(); stop(); process.exit(2);
       }
       if (dial !== 'off') console.log(`    (mutation rewired ${rewired} binding bar(s))`);
     }
@@ -444,7 +444,7 @@ async function main() {
       if (!p) {
         console.error(`\nholdconfirm: '${EVENT}' has no binding choice, so nothing on this run measures the feature. `
           + `That is unknown, not a pass — pick an event with one (--event <id>).`);
-        cdp.close(); child.kill(); stop(); process.exit(2);
+        cdp.close(); await dropBrowser(); stop(); process.exit(2);
       }
       await touch('touchStart', p); await wait(40); await touch('touchEnd', p);
       await wait(220);
@@ -815,7 +815,7 @@ async function main() {
         c.addEventListener('click', () => { window.__combat.turn++; });
         return 1;
       })()`);
-      if (!rewired) { console.error('\nholdconfirm --mutate: no End Turn button to rewire. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+      if (!rewired) { console.error('\nholdconfirm --mutate: no End Turn button to rewire. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
       console.log(`    (mutation rewired End Turn to commit on a pointer click)`);
     }
     const st = () => ev(`(() => {
@@ -908,7 +908,7 @@ async function main() {
         c.addEventListener('click', () => { c.remove(); });
         return 1;
       })()`);
-      if (!rewired) { console.error('\nholdconfirm --mutate: no #rest-opt to rewire. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+      if (!rewired) { console.error('\nholdconfirm --mutate: no #rest-opt to rewire. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
       console.log(`    (mutation rewired Rest to commit on a pointer click)`);
     }
     const onShrine = () => ev(`!!document.querySelector('#rest-opt')`);
@@ -1084,7 +1084,7 @@ async function main() {
         c.addEventListener('click', () => { c.closest('.slot').remove(); });
         return 1;
       })()`);
-      if (!rewired) { console.error('\nholdconfirm --mutate: no .slot-delete to rewire at ?shot=title. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+      if (!rewired) { console.error('\nholdconfirm --mutate: no .slot-delete to rewire at ?shot=title. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
       console.log(`    (mutation rewired the slot's ✕ to delete on ONE pointer click)`);
     }
     const tState = () => ev(`(() => {
@@ -1176,7 +1176,7 @@ async function main() {
           c.addEventListener('click', () => { const r = document.querySelector('.prof-result'); if (r) r.textContent = 'Restored.'; });
           return 1;
         })()`);
-        if (!rewired) { console.error('\nholdconfirm --mutate: no .prof-restore to rewire at ?shot=profile. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+        if (!rewired) { console.error('\nholdconfirm --mutate: no .prof-restore to rewire at ?shot=profile. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
         console.log(`    (mutation rewired Restore to look committed on ONE pointer click)`);
       }
       const pState = () => ev(`(() => ({
@@ -1263,7 +1263,7 @@ async function main() {
           c.addEventListener('click', () => { const n = document.querySelector('.profile-notice'); if (n) n.remove(); });
           return 1;
         })()`);
-        if (!rewired) { console.error('\nholdconfirm --mutate: no .fresh to rewire at ?shot=crisis. unknown, not caught.'); cdp.close(); child.kill(); stop(); process.exit(2); }
+        if (!rewired) { console.error('\nholdconfirm --mutate: no .fresh to rewire at ?shot=crisis. unknown, not caught.'); cdp.close(); await dropBrowser(); stop(); process.exit(2); }
         console.log(`    (mutation rewired "Start a new profile" to commit on ONE pointer click)`);
       }
       const fp = await pointOf('.fresh');
@@ -1303,7 +1303,7 @@ async function main() {
     }
   }
 
-  cdp.close(); child.kill(); stop();
+  cdp.close(); await dropBrowser(); stop();
 
   if (!checks) { console.error(`\nholdconfirm: nothing was measured. That is unknown, not a pass.`); process.exit(2); }
 

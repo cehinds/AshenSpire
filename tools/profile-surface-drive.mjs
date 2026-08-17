@@ -43,9 +43,17 @@ if (process.argv.includes('--selftest')) {
 }
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8193, open: false });
-spawn('/opt/pw-browsers/chromium', ['--headless=new','--disable-gpu','--remote-debugging-port=9393','--no-sandbox','about:blank'], { stdio: 'ignore' });
+// ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+// Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
+// passed no `--user-data-dir` and never killed the browser at all, so every run
+// stranded both. `awaitEndpoint` is off: it polls /json/list on a fixed port.
+await launchBrowser({
+  prefix: 'profile-surface-', browser: '/opt/pw-browsers/chromium', headless: '--headless=new',
+  awaitEndpoint: false, args: ['--remote-debugging-port=9393'], stdio: 'ignore',
+});
 async function cdp(p){let l;for(let i=0;i<100;i++){try{l=await(await fetch(`http://127.0.0.1:${p}/json/list`)).json();if(l.length)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  const ws=new WebSocket(l.find(t=>t.type==='page').webSocketDebuggerUrl);await new Promise((ok,no)=>{ws.onopen=ok;ws.onerror=no;});
  let id=0;const w=new Map();ws.onmessage=(m)=>{const g=JSON.parse(m.data);if(g.id!=null&&w.has(g.id)){const{ok,no}=w.get(g.id);w.delete(g.id);g.error?no(new Error(g.error.message)):ok(g.result);}};

@@ -73,6 +73,7 @@
 //   It hit-tests reachability only; it never judges legibility.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -233,27 +234,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, userDataDir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, [
-      '--headless', '--no-sandbox', '--disable-gpu', '--window-size=1440,860',
-      '--remote-debugging-port=0', `--user-data-dir=${userDataDir}`,
-      '--disable-renderer-backgrounding', '--disable-background-timer-throttling',
-      '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files',
-      '--no-first-run', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const onData = (d) => {
-      err += d;
-      const m = /DevTools listening on (ws:\/\/\S+)/.exec(err);
-      if (m) res({ child, wsUrl: m[1] });
-    };
-    child.stderr.on('data', onData);
-    child.stdout.on('data', onData);
-    child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-500)}`)), 12000);
-  });
-}
 
 // ------------------------------------------------------------- page probes
 //
@@ -422,7 +402,6 @@ const TURN = `(() => { const c = window.__combat; return c ? { turn: c.turn, ene
 // ---------------------------------------------------------------------- main
 async function main() {
   if (!browserPath) { console.error('mobilefit: no Chrome/Edge found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'mobilefit-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -435,7 +414,13 @@ async function main() {
   if (shotsDir) mkdirSync(resolve(shotsDir), { recursive: true });
   console.log(`mobilefit — ${base}${useDist ? '  (the shipped single-file bundle)' : '  (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'mobilefit-', browser: browserPath,
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl);
   await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -598,7 +583,7 @@ async function main() {
   if (only && !matchedOnly) {
     console.error(`\nmobilefit: --only ${only} matched no shape. Nothing was tested, so this is unknown, not a pass.`);
     console.error(`  shapes: ${SHAPES.map((v) => `${v.w}x${v.h}${v.settings ? '-' + Object.values(v.settings).join('-') : ''}`).join(', ')}`);
-    cdp.close(); child.kill(); if (server) server.close();
+    cdp.close(); await dropBrowser(); if (server) server.close();
     process.exit(2);
   }
   // EldenSpire#26's removal condition is a COUNT, so the tool prints the count
@@ -633,7 +618,7 @@ async function main() {
   for (const f of fails) console.log(`    - ${f}`);
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   if (server) server.close();
   process.exit(fails.length ? 1 : 0);
 }

@@ -36,6 +36,7 @@
 // read 759.59 headless, so every below-the-fold number UNDER-states the truth.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { mkdtempSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -155,25 +156,20 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('settingsreach: no Chrome found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'setreach-'));
   const s = await serve({ root: ROOT, port: 8503, open: false });
   const BASE = useSrc ? `http://localhost:${s.port}/` : `http://localhost:${s.port}/dist/AshenSpire.html`;
   console.log(`settingsreach — ${BASE}${useSrc ? '  (source tree)' : '  (the shipped single-file bundle)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'setreach-', browser: browserPath,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -420,7 +416,7 @@ async function main() {
   console.log('  no gamepad attached (the ring is driven by [ and ], which is the same code path input.js runs for LB/RB);');
   console.log('  dvh/svh/lvh all read 759.59 headless, so every below-the-fold number here UNDER-states the truth.');
 
-  cdp.close(); child.kill(); s.server.close();
+  cdp.close(); await dropBrowser(); s.server.close();
   process.exit(fails.length ? 1 : 0);
 }
 main().catch((e) => { console.error(e); process.exit(2); });

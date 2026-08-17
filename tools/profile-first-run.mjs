@@ -34,6 +34,7 @@
 // and on every screen it does not open.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
@@ -43,7 +44,14 @@ const { port } = await serve({ root: ROOT, port: 8196, open: false });
 const PAGE = `http://localhost:${port}/${DIST ? 'dist/AshenSpire.html' : ''}`;
 
 const CHROME = process.env.CHROME || '/opt/pw-browsers/chromium';
-spawn(CHROME, ['--headless=new', '--disable-gpu', '--remote-debugging-port=9396', '--no-sandbox', 'about:blank'], { stdio: 'ignore' });
+// ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+// Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
+// passed no `--user-data-dir` and never killed the browser at all, so every run
+// stranded both. `awaitEndpoint` is off: it polls /json/list on a fixed port.
+await launchBrowser({
+  prefix: 'profile-first-run-', browser: CHROME, headless: '--headless=new',
+  awaitEndpoint: false, args: ['--remote-debugging-port=9396'], stdio: 'ignore',
+});
 async function cdp(p) {
   let l;
   for (let i = 0; i < 100; i++) {

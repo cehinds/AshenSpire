@@ -57,6 +57,7 @@
 // synthesis, or the gesture helper (src/ui/gesture.js) grows its own suite.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -130,20 +131,9 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--no-first-run', 'about:blank'],
-      { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('gesture-cancel: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
-  const profile = mkdtempSync(join(tmpdir(), 'gcancel-'));
   let server = null, base;
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
@@ -152,7 +142,13 @@ async function main() {
   } else { const s = await serve({ root: ROOT, port: 8270, open: false }); server = s.server; base = `http://localhost:${s.port}/`; }
   console.log(`gesture-cancel — ${base}${useDist ? ' (shipped bundle)' : ' (source tree)'}`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'gcancel-', browser: browserPath,
+    args: ['--allow-file-access-from-files'],
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0;
 
@@ -282,7 +278,7 @@ async function main() {
   console.log('        watches is WINDOW\'s. src/ui/gesture.js scopes its listeners to the ELEMENT, so');
   console.log('        dropping its removeEventListener leaks an element listener and every count here');
   console.log('        stays flat. A real hole, named rather than papered over.');
-  cdp.close(); child.kill(); if (server) server.close();
+  cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails ? 1 : 0);
 }
 main().catch((e) => { console.error(`gesture-cancel: ${e.message}`); process.exit(2); });

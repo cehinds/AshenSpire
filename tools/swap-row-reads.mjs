@@ -104,6 +104,7 @@
 // person's ruling and is in my log, not in this exit code.
 
 import { spawn, spawnSync } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
@@ -451,21 +452,19 @@ async function main() {
   const { server, port } = await serve({ root: ROOT, port: 8137, open: false });
   const BASE = `http://127.0.0.1:${port}/`;
 
-  const browser = spawn(process.env.CHROME || '/usr/bin/chromium', [
-    '--headless=new', '--disable-gpu', '--no-sandbox', '--remote-debugging-port=0', 'about:blank',
-  ], { stdio: ['ignore', 'pipe', 'pipe'] });
-  let reaped = false;
-  const reap = () => { if (reaped) return; reaped = true; try { browser.kill('SIGKILL'); } catch {} try { server.close(); } catch {} };
+  // AND THE PROFILE IS THE LAUNCHER'S. This tool passed no `--user-data-dir`, so
+  // Chrome made its own throwaway profile in /tmp and left it — measured at this
+  // ref, one unpinned run strands a `/tmp/.org.chromium.Chromium.*` every time.
+  // tools/browser.mjs gives it a private profile and points its TMPDIR inside it.
+  const { child: browser, wsUrl: ws, close: dropBrowser } = await launchBrowser({
+    prefix: 'swaprow-cam-', browser: process.env.CHROME || '/usr/bin/chromium',
+    headless: '--headless=new', timeoutMs: 20000,
+  }).catch((e) => { restore(); console.error(`swap-row-reads: ${e.message}`); process.exit(2); });
+  // The launcher's own exit guard removes the profile and kills the browser
+  // GROUP; this reaper keeps only the half that is this file's — the http server.
+  const reap = () => { dropBrowser(); try { server.close(); } catch { /* already closed */ } };
   process.on('exit', reap);
   for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(sig, () => { reap(); restore(); process.exit(130); });
-
-  const ws = await new Promise((ok, no) => {
-    let buf = '';
-    const read = (d) => { buf += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(buf); if (m) ok(m[1]); };
-    browser.stderr.on('data', read); browser.stdout.on('data', read);
-    browser.on('exit', (c) => no(new Error(`chromium exited (${c}) before naming an endpoint:\n${buf.slice(-400)}`)));
-    setTimeout(() => no(new Error('chromium never printed a DevTools endpoint')), 20000);
-  }).catch((e) => { reap(); restore(); console.error(`swap-row-reads: ${e.message}`); process.exit(2); });
 
   const CDP_PORT = Number(new URL(ws.replace(/^ws:/, 'http:')).port);
   console.log(`RUN    browser pid ${browser.pid} · CDP port ${CDP_PORT} · HTTP port ${port} — this run's own.`);

@@ -105,6 +105,7 @@ if (process.argv.includes('--selftest')) {
 
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -146,20 +147,11 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`Chrome gave no DevTools endpoint:\n${err.slice(-400)}`)), 15000);
-  });
-}
-
 let chrome;
 try {
-  chrome = await launchChrome(BROWSER, mkdtempSync(join(tmpdir(), 'qnreach-')));
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  chrome = await launchBrowser({ prefix: 'qnreach-', browser: BROWSER, timeoutMs: 15000 });
 } catch (e) {
   console.error('quicknav-reach: UNKNOWN — no browser. ' + e.message);
   process.exit(2);
@@ -417,13 +409,13 @@ try {
   console.error('quicknav-reach: UNKNOWN — ' + (e.stack || e.message));
   srv.server.close();
   cdp.close();
-  chrome.child.kill();
+  await chrome.close();
   process.exit(2);
 }
 
 srv.server.close();
 cdp.close();
-chrome.child.kill();
+await chrome.close();
 
 const red = findings.length;
 console.log(`\n${checks.filter(Boolean).length}/${checks.length} checks green, ${red} finding(s)`);

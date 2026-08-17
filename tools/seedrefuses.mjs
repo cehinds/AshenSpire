@@ -59,6 +59,7 @@
 // tested here — it is a node-side path and has no pixels.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -106,23 +107,12 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 async function main() {
   if (!browserPath) { console.error('seedrefuses: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   if (MUTATE && !MUTATIONS.includes(MUTATE)) {
     console.error(`seedrefuses: --mutate ${MUTATE} is not one of ${MUTATIONS.join(', ')}`); process.exit(2);
   }
-  const profile = mkdtempSync(join(tmpdir(), 'seedref-'));
   // `lan: true` so the co-op lobby is reachable — it is the third seed field
   // and the only one whose value crosses a wire.
   const s = await serve({ root: ROOT, port: 8641, open: false, lan: true });
@@ -130,7 +120,12 @@ async function main() {
   console.log(`seedrefuses — ${base}${MUTATE ? `  [KNOWN-BAD ARMED: ${MUTATE}]` : ''}`);
   console.log(`  one home: SEED_MAX_LEN = ${SEED_MAX_LEN} (src/engine/rng.js)`);
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'seedref-', browser: browserPath,
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0; let ran = 0; let checks = 0;
 
@@ -307,7 +302,7 @@ async function main() {
   console.log(`  ${fails ? `FAIL — ${fails} finding(s)` : 'PASS — every seed field refuses what it cannot reproduce, says why where it was typed, and lets go'}`);
   console.log('  boundary: three screens, this machine, headless Linux. Silent on every other screen,'
     + '\n            on Windows, on a real two-machine wire, and on tools/lan.mjs (no pixels).');
-  cdp.close(); child.kill(); s.server.close();
+  cdp.close(); await dropBrowser(); s.server.close();
   process.exit(fails ? 1 : 0);
 }
 

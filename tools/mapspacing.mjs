@@ -21,6 +21,7 @@
 // phone shapes × fog/path × 115/Fit) and carries an observed-red compression.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -138,22 +139,12 @@ async function main() {
   const base = useDist
     ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href
     : `http://127.0.0.1:${served.port}/index.html`;
-  const profile = mkdtempSync(join(tmpdir(), 'mapspacing-'));
-  const { child, wsUrl } = await new Promise((done, reject) => {
-    const proc = spawn(browser, [
-      '--headless=new', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${profile}`, '--no-first-run', '--hide-scrollbars', 'about:blank',
-    ], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let output = '';
-    const inspect = (chunk) => {
-      output += chunk;
-      const match = /DevTools listening on (ws:\/\/\S+)/.exec(output);
-      if (match) done({ child: proc, wsUrl: match[1] });
-    };
-    proc.stdout.on('data', inspect);
-    proc.stderr.on('data', inspect);
-    proc.on('error', reject);
-    setTimeout(() => reject(new Error('Chromium never printed a DevTools endpoint')), 20000);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, close: dropBrowser } = await launchBrowser({
+    prefix: 'mapspacing-', browser, headless: '--headless=new',
+    args: ['--hide-scrollbars'],
+    timeoutMs: 20000,
   });
   const cdp = cdpConnect(wsUrl);
   await cdp.ready;
@@ -231,7 +222,7 @@ async function main() {
   }
 
   cdp.close();
-  child.kill();
+  await dropBrowser();
   if (served) served.server.close();
   process.exit(mutate ? (caught ? 0 : 2) : (findings.length ? 1 : 0));
 }

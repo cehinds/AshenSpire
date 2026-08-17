@@ -88,6 +88,7 @@
 // tooltip stops being one shared element.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -118,15 +119,6 @@ function connectCdp(wsUrl) {
       return new Promise((res, rej) => { pending.set(id, { res, rej });
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
-}
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
 }
 
 // ---- the re-runnable known-bad ---------------------------------------------
@@ -297,13 +289,17 @@ async function selftest() {
 async function main() {
   if (!browserPath) { console.error('tooltippersist: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   if (args.includes('--selftest')) return selftest();
-  const profile = mkdtempSync(join(tmpdir(), 'ttpersist-'));
   const s = await serve({ root: ROOT, port: 8291, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`tooltippersist — ${base} (root ${ROOT})`);
 
   if (shotsDir) mkdirSync(shotsDir, { recursive: true });
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'ttpersist-', browser: browserPath,
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0;
 
@@ -553,20 +549,11 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
-  cdp.close(); child.kill(); s.server.close();
-  // THE PROFILE DIRECTORY IS THIS RUN'S, SO THIS RUN TAKES IT WITH IT — the
-  // pattern `063ccdd` established for creationbrief.mjs, applied here because
-  // this tool leaked an ~11 MB Chrome profile per invocation and --selftest is
-  // one invocation per plant plus the control: five, ~34 MB, measured.
-  // AND IT IS A PATCH, NOT A COLLAPSE, SAID PLAINLY: 36 tools in this directory
-  // launch Chrome on a mkdtemp'd --user-data-dir and 8 of them remove it. This
-  // makes 9. The removal discipline is a fact written nine times with nothing
-  // checking the other twenty-seven agree, which is the shape that keeps
-  // producing this bug — measured on this box 2026-08-17: /tmp at 22 GB over
-  // 2583 directories, disk 87%, including 167 creationbrief-* from before that
-  // fix and 23 ttpersist-*. The real answer is one shared launcher; it is a
-  // finding filed at the gate, not this act. — Bjorn
-  try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
+  cdp.close(); await dropBrowser(); s.server.close();
+  // THE PROFILE IS THE LAUNCHER'S. Bjorn's note here said this removal was a
+  // patch and not a collapse, and named the collapse: "the real answer is one
+  // shared launcher." It exists — tools/browser.mjs — and this tool calls it,
+  // so the ninth copy of the removal is gone rather than kept beside it.
   if (!ran) { console.error('tooltippersist: NOTHING RAN'); process.exit(2); }
   console.log('\n  BOUNDARY (measured by --selftest P3, not reasoned): check 5 is the ONLY line on the');
   console.log('  new DOM watch. Checks 6 and 7 are carried by hideTooltip() calls already in');

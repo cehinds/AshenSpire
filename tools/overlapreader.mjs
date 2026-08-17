@@ -63,6 +63,7 @@
 // either row (handLayoutModes, inspectHold) leaves balance.ui.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -125,15 +126,6 @@ function connectCdp(wsUrl) {
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); }); },
     close: () => ws.close() };
 }
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 const CASES = [
   {
@@ -175,9 +167,13 @@ async function main() {
     console.log(`\n  ${c.name}: ${c.row}`);
     const dir = sandbox();
     mutate(dir, c.edits);
-    const profile = mkdtempSync(join(tmpdir(), 'overlapreader-prof-'));
     const s = await serve({ root: dir, port: port++, open: false });
-    const { child, wsUrl } = await launchChrome(browserPath, profile);
+    // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+    // Chrome's own TMPDIR inside it, and removes it whatever happens.
+    const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+      prefix: 'overlapreader-prof-', browser: browserPath,
+      timeoutMs: 12000,
+    });
     const cdp = connectCdp(wsUrl); await cdp.ready;
     try {
       const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -220,14 +216,13 @@ async function main() {
         ok(facts.n === 10, `the pose is real: ${facts.n} of 10 cards (a clean boot that renders nothing would be a wrong-place clean)`);
       }
     } finally {
-      cdp.close(); child.kill(); s.server.close();
+      cdp.close(); await dropBrowser(); s.server.close();
       // Wait for Chromium to actually exit before sweeping its profile — the
       // first run of this tool died to that race (ENOTEMPTY mid-shutdown) and
       // took case 3 with it. A janitor must not be able to fail the corpus:
       // the sweep is best-effort, the checks above are the only verdict.
       await new Promise((r) => { child.once('exit', r); setTimeout(r, 3000); });
       try { rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp, best-effort */ }
-      try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp, best-effort */ }
     }
   }
 

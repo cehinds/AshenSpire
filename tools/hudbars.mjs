@@ -199,6 +199,7 @@
 // LINEAR scale is the one he meant, or about any screen that is not combat.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -246,23 +247,17 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--allow-file-access-from-files', '--disable-background-timer-throttling',
-      '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-400)}`)), 20000);
-  });
-}
 
 async function open() {
   const browser = BROWSERS.find((p) => existsSync(p));
   if (!browser) throw new Error('no Chromium/Chrome found — set CHROME=<path>');
-  const profile = mkdtempSync(join(tmpdir(), 'hudbars-'));
-  const { child, wsUrl } = await launchChrome(browser, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'hudbars-', browser: browser,
+    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+    timeoutMs: 20000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -279,7 +274,7 @@ async function open() {
   };
   // The profile is removed on close: four instruments filled this box in one
   // session by leaving theirs behind.
-  return { cdp, S, ev, until, close: () => { cdp.close(); child.kill(); try { rmSync(profile, { recursive: true, force: true }); } catch { /* best effort */ } } };
+  return { cdp, S, ev, until, close: () => { cdp.close(); dropBrowser(); } };
 }
 
 // THE READ. Every number is rendered — getBoundingClientRect for device px,

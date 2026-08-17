@@ -141,6 +141,7 @@
 // stops having two tiers of disclosure.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -529,16 +530,6 @@ function connectCdp(wsUrl) {
   };
 }
 
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = '';
-    const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
-}
 
 // ---------------------------------------------------------------------------
 // THE KNOWN-BAD CORPUS. Every plant is a REAL DEFECT of the class this check
@@ -1198,8 +1189,12 @@ async function main() {
   const { serve } = await import(join(TOOLS, 'serve.mjs'));
   const s = await serve({ root: ROOT, port: 8291, open: false });
   const base = `http://localhost:${s.port}/`;
-  const profile = mkdtempSync(join(tmpdir(), 'creationbrief-'));
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
+    prefix: 'creationbrief-', browser: browserPath,
+    timeoutMs: 12000,
+  });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
   let fails = 0; let ran = 0; let measured = 0;
@@ -1548,78 +1543,25 @@ async function main() {
   }
 
   try { cdp.close(); } catch { /* closing */ }
-  try { child.kill(); } catch { /* closing */ }
   try { s.server.close(); } catch { /* closing */ }
-  // THE PROFILE DIRECTORY IS THE RUN'S, AND A RUN THAT REACHES THIS LINE TAKES
-  // IT WITH IT — which is the whole extent of it. The boundary below says what
-  // that leaves out; it is measured, not reasoned. Every
-  // invocation mkdtemp'd a ~10 MB Chrome profile above and left it in /tmp,
-  // and --selftest invokes this whole tool once per plant: one selftest is
-  // seventeen of them. Measured 2026-08-16, mid-merge, with the disk at 87%:
-  // 216 abandoned `creationbrief-*` directories, 2.0 GB. The sandbox trees
-  // were always cleaned and the profile never was — the same defect this file
-  // is full of, one home tidied and its twelve-lines-away twin missed.
-  // `kill()` is a signal, not a join, so the run waits for the process to go
-  // before deleting the directory it is using. THIS WAIT WAS NOT OBSERVED TO
-  // BE NECESSARY — instrumented at this ref, the child had already exited with
-  // code 0 by the time this line ran — and it is kept as a bounded guard, not
-  // as a fix for anything watched. Said plainly because the first version of
-  // this comment claimed a race I had not seen: see below.
-  await new Promise((res) => {
-    if (child.exitCode !== null || child.signalCode !== null) { res(); return; }
-    child.once('exit', res);
-    setTimeout(res, 3000);
-  });
-  try { rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }); } catch { /* tmp */ }
-  // HOW THIS WAS MEASURED, AND WHY IT IS NOT A COUNT. I first checked the fix
-  // by counting `/tmp/creationbrief-*` before and after: 216, then 217, and I
-  // wrote down that the removal had raced Chrome and lost. It had not. ANOTHER
-  // SEAT WAS RUNNING THIS SAME TOOL AT THE SAME TIME on the same machine, and
-  // a count over a directory a second writer is using is not a measurement of
-  // your own run. The honest form is a SET DIFFERENCE — list the directories,
-  // run, list them again, and name the ones that appeared — which reports this
-  // run leaving nothing behind and is re-runnable by anyone, concurrently.
-  //
-  // WHAT THIS REMOVAL COVERS, MEASURED AT THE GATE (Bjorn, 2026-08-17). The
-  // heading above read `so the run takes it with it`, unqualified. Narrowed to
-  // the predicate, which is A RUN THAT REACHES THIS LINE:
-  //   · one clean run, five times: before this commit, one FULL ~11 MB profile
-  //     every time. After: nothing on two runs and a 1.1 MB PARTIAL on three.
-  //     IT IS NOT DETERMINISTIC ON THE PATH IT COVERS — see the guard, below.
-  //   · `--selftest`: 17 dirs / 157 MB before, 6 dirs / 6.4 MB after, and
-  //     52 PASS / 0 FAIL either side — it changes no assertion, as claimed.
-  //   · Chrome hands over no DevTools endpoint (`CHROME=/bin/true`): the launch
-  //     above throws, nothing below runs, THE PROFILE STAYS.
-  //   · SIGINT mid-run: an 8.8 MB profile stays.
-  // There is no try/finally and no exit handler here, so EVERY early exit after
-  // the mkdtemp leaks — and an interrupted or crashed run is the ordinary shape
-  // of the ones that made the pile. Adding one is a PREDICATE change and is not
-  // this gate's to write.
-  //
-  // AND THE 3000 ms GUARD IS NOT A JOIN. The paragraph above says the wait was
-  // never observed to be necessary; on an idle machine, one invocation, that is
-  // true. On a box with other seats live it is not, and it is not rare — three
-  // of five clean runs. Every leftover is the same 1.1 MB PARTIAL,
-  // still holding `SingletonLock` and `Default/.org.chromium.Chromium.*`:
-  // rmSync walked a tree a browser had not finished with, the top-level rmdir
-  // failed, and `catch { /* tmp */ }` swallowed it. Necessary AND insufficient
-  // — and A PARTIAL REMOVAL REPORTS NOTHING.
-  //
-  // NOTHING GOES RED IF THIS REMOVAL IS DELETED. No assertion in this file, in
-  // `--selftest`, or anywhere in tools/ or tests/ reads a leftover directory —
-  // grepped at this ref. The evidence for the fix is a hand measurement, which
-  // is `unknown` the day after it was taken (*The instrument rule*). A check
-  // belongs here and would be RED TODAY on the six partials, so it waits on the
-  // removal being made whole — a separate act, and this file's owner's.
-  //
-  // AND A SET DIFFERENCE OVER SHARED /tmp IS APPEARANCE, NOT ATTRIBUTION. Run
-  // here 2026-08-17 it reported TWO new directories for ONE invocation, because
-  // a second seat was running this tool in the same second — the exact
-  // confounder it was written to defeat. The door that does defeat it is a
-  // private tmpdir: `TMPDIR=<empty dir> CHROME=… node tools/creationbrief.mjs`,
-  // where the mkdtemp above lands where no other writer can reach, so what is
-  // left over is this run's BY CONSTRUCTION. Every number here came through it.
-
+  // THE PROFILE IS THE LAUNCHER'S, AND THE LAUNCHER IS tools/browser.mjs.
+  // Everything this block used to argue with itself about now lives in one home
+  // and is watched there. The three things it could not do, and the launcher
+  // can, measured at this commit and not reasoned:
+  //   * `kill()` was a signal, not a join, and the 3000 ms bound was not one
+  //     either — three of five clean runs left a 1.1 MB PARTIAL. The launcher
+  //     signals the whole PROCESS GROUP (Chrome's renderers are not `child`),
+  //     joins for real, and re-checks after a settle: 8/8 sequential and 36/36
+  //     at 12-way concurrency, against 0/8 clean for the shape this replaces.
+  //   * `catch { /* tmp */ }` swallowed a partial removal. The launcher's
+  //     verdict is the POSTCONDITION and a failure prints BY NAME.
+  //   * Every early exit after the mkdtemp leaked the whole profile — no
+  //     try/finally, no exit handler. The launcher registers the profile before
+  //     it spawns and sweeps it on exit, SIGINT, SIGTERM, SIGHUP and SIGQUIT,
+  //     each watched red in `node tools/browser.mjs --selftest`.
+  // And the check this block said was owed — "NOTHING GOES RED IF THIS REMOVAL
+  // IS DELETED" — is that selftest. It is no longer this file's to carry.
+  await dropBrowser();
   // AN EMPTY RESULT IS NEVER A PASS. The floor is on the denominator: a run
   // that measured no shape, or a shape that found no face, is exit 2 — not a
   // clean sweep with nothing in it.

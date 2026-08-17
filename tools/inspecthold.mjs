@@ -185,6 +185,7 @@
 // input harness supersedes CDP touch synthesis.
 
 import { spawn } from 'node:child_process';
+import { launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -218,15 +219,6 @@ function connectCdp(wsUrl) {
     on(method, fn) { handlers.set(method, fn); },
     off(method) { handlers.delete(method); },
     close: () => ws.close() };
-}
-function launchChrome(browser, dir) {
-  return new Promise((res, rej) => {
-    const child = spawn(browser, ['--headless', '--no-sandbox', '--disable-gpu', '--remote-debugging-port=0',
-      `--user-data-dir=${dir}`, '--no-first-run', 'about:blank'], { stdio: ['ignore', 'pipe', 'pipe'] });
-    let err = ''; const on = (d) => { err += d; const m = /DevTools listening on (ws:\/\/\S+)/.exec(err); if (m) res({ child, wsUrl: m[1] }); };
-    child.stderr.on('data', on); child.stdout.on('data', on); child.on('error', rej);
-    setTimeout(() => rej(new Error(`no DevTools endpoint:\n${err.slice(-300)}`)), 12000);
-  });
 }
 
 // ---- the re-runnable known-bad ---------------------------------------------
@@ -331,18 +323,15 @@ const PAD_SHIM = `(() => {
 // direct child only, so Chromium helpers can outlive it and re-create entries
 // after rmSync. The fix is a process-group kill in ONE SHARED LAUNCHER — the
 // lane, not a fourteenth private copy of it.
-let PROFILE = null;
-let CHILD = null;
-const dropBrowser = async () => {
-  if (CHILD) {
-    const child = CHILD; CHILD = null;
-    const gone = new Promise((r) => { child.once('exit', r); setTimeout(r, 3000); });
-    try { child.kill(); } catch { /* already gone */ }
-    await gone;
-    try { child.kill('SIGKILL'); } catch { /* already gone */ }
-  }
-  if (PROFILE) { try { rmSync(PROFILE, { recursive: true, force: true }); } catch { /* a profile we cannot remove is not a finding */ } PROFILE = null; }
-};
+// THE PATCH ABOVE IS NOW THE LANE IT ASKED FOR. Sten's note named the fix — "a
+// process-group kill in ONE SHARED LAUNCHER … not a fourteenth private copy" —
+// and that launcher is tools/browser.mjs. It does the group kill (measured: with
+// only `child.kill()`, an orphaned RENDERER recreated the profile after a removal
+// that had already verified it gone, and reported success), joins for real with
+// no short ceiling, re-checks after a settle, and sweeps on exit and on signal.
+// His `dropBrowser` name is kept below because his call sites read well; it is
+// the launcher's `close` now, not a local copy of it.
+let dropBrowser = async () => {};
 
 function sandbox() {
   const dir = mkdtempSync(join(tmpdir(), 'inspecthold-kb-'));
@@ -433,15 +422,18 @@ async function selftest() {
 async function main() {
   if (!browserPath) { console.error('inspecthold: no Chrome found — pass --browser or set $CHROME'); process.exit(2); }
   if (args.includes('--selftest')) return selftest();
-  const profile = mkdtempSync(join(tmpdir(), 'inspect-'));
-  PROFILE = profile;
   const s = await serve({ root: ROOT, port: 8272, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`inspecthold — ${base} (root ${ROOT})`);
   if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 
-  const { child, wsUrl } = await launchChrome(browserPath, profile);
-  CHILD = child;
+  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
+  // Chrome's own TMPDIR inside it, and removes it whatever happens.
+  const { child, wsUrl, profile, close } = await launchBrowser({
+    prefix: 'inspect-', browser: browserPath,
+    timeoutMs: 12000,
+  });
+  dropBrowser = close;
   const cdp = connectCdp(wsUrl); await cdp.ready;
   let fails = 0, ran = 0;
 
