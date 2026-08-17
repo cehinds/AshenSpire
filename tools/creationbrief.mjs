@@ -278,6 +278,25 @@ const ON_GLASS = `const onGlass = (el) => !!el
 //                     REMOVES is skipped, not failed: that is the expander
 //                     doing its job.
 //
+// NARROWED 2026-08-17 by Bjorn, gating MR-303. THE TWO TRANSITIONS ASK FOR A
+// STATE AND NEVER CHECK THEY GOT IT. \`across\` calls \`setMore\` twice per
+// reading and reads neither return, so the name on the row is an intention,
+// not an observation. The standing pair has a floor for exactly this
+// (\`expanderOk\`, below); \`across\` has none. Measured, same door, one file
+// edit to the shipped renderer: guard the expander's own click with
+// \`if (openKey) return\` — the plausible mis-fix for the re-wrap the comment
+// three lines up names — and every toggle inside a transition is refused.
+// \`after expanding\` then reads a COLLAPSED screen and \`after collapsing\` an
+// EXPANDED one, both correctly anchored, and the run prints
+//   PASS ... 48/48 anchored in 4 state(s): collapsed 14/14 · expanded 15/15
+//        · after expanding 9/9 · after collapsing 10/10          EXIT 0
+// on a build whose expander is dead whenever a panel is open. NOTE THE 48. The
+// two transitions contribute 18 readings whose count is read off the DOM with
+// no door behind it, so the denominator moved by one and no sentence said so —
+// which is \`14\` meaning two screens, at the new size, in the two states this
+// commit added. NAMED, NOT CLOSED: the floor is a predicate change and it is
+// Vira's file.
+//
 // AND THE COMPOSITION IS CHECKED AGAINST THE CONTENT DOOR, NOT COUNTED (the
 // second assertion below). Every key the tables name must appear in the state
 // that holds it. That is what kills the two 14s — a missing entry is named
@@ -286,6 +305,11 @@ const ON_GLASS = `const onGlass = (el) => !!el
 // at 5597166 and this tool printed PASS, 10/10 across 2 hosts, exit 0, with
 // four faces of a host Sunna fixed gone in silence. A count cannot see that; a
 // named key set can, and it costs no new door.
+// SCOPED 2026-08-17 by Bjorn: the key floor runs over \`collapsed\` and
+// \`expanded\` ONLY — its own output says so, and this comment did not. THE TWO
+// TRANSITIONS HAVE NO KEY FLOOR, so their 18 readings keep the property the
+// standing pair just lost: a reading that vanishes shrinks a denominator
+// instead of printing a name.
 const ANCHOR_STATES = ['collapsed', 'expanded', 'after expanding', 'after collapsing'];
 const ANCHOR_READ = `(() => {
     // THE HOST LABEL IS CARRIED SINCE MR-301, because the gate covers every
@@ -1656,10 +1680,47 @@ async function main() {
   console.log('  Bjorn, gating MR-301). Now every expander is DRIVEN, by clicking the control a');
   console.log('  player clicks, and each composition is reported BY NAME: collapsed 14/14, expanded');
   console.log('  15/15, after expanding 9/9, after collapsing 9/9 — 47 readings, the same at both');
-  console.log('  shapes. The two transitions open the panel FIRST and move the expander UNDER IT,');
-  console.log('  which is the player\'s own path and the only one that exercises the renderer\'s');
-  console.log('  `if (openKey) open(openKey)` re-place. A face the transition removes is skipped,');
-  console.log('  not failed — that is the expander doing its job.');
+  console.log('  shapes. The two transitions open the panel FIRST and ASK the expander to move');
+  console.log('  UNDER IT. A face the transition removes is skipped, not failed — that is the');
+  console.log('  expander doing its job.');
+  // -------------------------------------------------------------------
+  // NARROWED 2026-08-17 by Bjorn, gating MR-303. What stood here said the two
+  // transitions "MOVE the expander under it, which is the player's own path
+  // and the only one that exercises the renderer's `if (openKey) open(openKey)`
+  // re-place." Two measurements, both same door, both on the fixed tree:
+  //   1. Nothing checks the move happened. `across` calls `setMore` twice per
+  //      reading and reads neither return.
+  //   2. `if (openKey) open(openKey)` can be DELETED and this tool prints
+  //      47/47 anchored, exit 0 — which is Vira's own finding in the commit
+  //      that added these states, re-derived here. So "the only one that
+  //      exercises it" is true and buys nothing.
+  // The claim is narrowed to what the predicate does — ASK, not MOVE — and
+  // what the asking is worth is measured in the paragraph below.
+  // -------------------------------------------------------------------
+  console.log('  AND THE TRANSITIONS DO NOT CHECK THAT THE TRANSITION HAPPENED. The standing pair');
+  console.log('  has a floor for a refused expander — `NO REFERENT: n/m expander(s) opened`. The');
+  console.log('  two transitions have none, and their 18 readings have no key floor either, so a');
+  console.log('  reading that vanishes shrinks a denominator instead of printing a name. WATCHED');
+  console.log('  2026-08-17 (Bjorn), same door, one file edit to the shipped renderer: guard the');
+  console.log('  expander click with `if (openKey) return` — the plausible mis-fix for the re-wrap');
+  console.log('  this file names — and every toggle inside a transition is refused. `after');
+  console.log('  expanding` then reads a COLLAPSED screen, `after collapsing` an EXPANDED one, both');
+  console.log('  correctly anchored, and this tool prints EXIT 0 with every sentence green — on a');
+  console.log('  build whose expander is dead whenever a panel is open. The four states read 14 of');
+  console.log('  14, 15 of 15, 9 of 9 and TEN of ten, so the total went to FORTY-EIGHT and no');
+  console.log('  sentence said so: `14` meaning two screens again, in the two states MR-303 added.');
+  console.log('  UNTIL THAT FLOOR EXISTS THE TWO TRANSITIONS ARE `unknown`, NOT GREEN.');
+  console.log('  AND NO PLANT IN THIS CORPUS REDDENS A TRANSITION ALONE — counted, not judged,');
+  console.log('  over all 19: P4, P5, P15 and P16 redden all four states, as does P17; P18\'s four');
+  console.log('  adrift in `after expanding` are a strict subset of its own five in `expanded`; P1');
+  console.log('  reddens two in `after collapsing` only while `expanded` is already red. 18 of the');
+  console.log('  47 readings, 38%, have produced no red this corpus did not already have.');
+  console.log('  A NOTE ON WHY THE NUMBERS ABOVE ARE SPELLED OUT. Every plant\'s mustRed and');
+  console.log('  mustStay reads this whole stream, boundary prose included, so a paragraph that');
+  console.log('  quotes an assertion verbatim becomes a second referent for it. P18\'s mustStay');
+  console.log('  wants a per-state count followed by a space; the sentence four paragraphs up');
+  console.log('  carries the same count followed by a comma, and one character is the whole');
+  console.log('  distance between a watched green and a green the boundary granted itself.');
   // -------------------------------------------------------------------
   // CLOSED 2026-08-17 by Vira (MR-303). What stood here was Bjorn's measured
   // correction — "a host that leaves the set is a quietly smaller green, and
