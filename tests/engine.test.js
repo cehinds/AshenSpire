@@ -4602,7 +4602,27 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'at the shipping value the dial adds NO override layer at all');
     eq(resolveStatTierSize({}), 5, 'and the resolver reads the shipping tier size from its one home');
     eq(resolveLevelUpValue({}), 1, "and the level value's default is his own number");
-    eq(resolveStatTierSize({ statTierSize: 99 }), 5, 'a value the row does not offer is the default, never 99');
+    // ⚠ THIS CELL CHANGED WHEN THE CONTROL DID, and the old expectation is the
+    // record of it: while the tier size was a 1-2-3-5 LADDER, 99 was "a value
+    // the row does not offer" and resolved to the DEFAULT. It is a typed field
+    // now, so 99 is in the wrong PLACE rather than off the list, and the honest
+    // answer is the domain's ceiling. Constantine's purpose clause is why the
+    // control moved: a ladder cannot express 4 or 7.
+    // THE CONTROL ITSELF, ASSERTED — and this line exists because a plant found
+    // it missing. `resolveNumberRow` is TYPE-BLIND: it reads min/max off the row
+    // and clamps, so reverting this row to a chip ladder left every value cell
+    // below GREEN while the screen went back to four buttons. The resolver is not
+    // the control, and only one of them is what he asked to change.
+    const tierRow = settingsRow('statTierSize');
+    eq(tierRow.type, 'number', 'the tier size is a TYPED FIELD — a ladder cannot express 4 or 7');
+    eq(tierRow.min, REG.balance.levelUp.tierSizeMin, 'its floor is authored');
+    eq(tierRow.max, REG.balance.levelUp.tierSizeMax, 'and so is its ceiling');
+    assert(!tierRow.choices, 'and it offers no chip list at all — the domain replaced the ladder');
+    eq(resolveStatTierSize({ statTierSize: 99 }), 20, 'a value past the ceiling CLAMPS to it — it is a field, not a list');
+    eq(resolveStatTierSize({ statTierSize: 4 }), 4, 'and 4 — which no ladder here ever offered — is simply legal');
+    eq(resolveStatTierSize({ statTierSize: 7 }), 7, 'as is 7, which is the pair his sentence needed');
+    eq(resolveStatTierSize({ statTierSize: 0 }), 1, 'ZERO CLAMPS UP: floor(points / 0) is not a tier, it is a division by zero');
+    eq(resolveStatTierSize({ statTierSize: 'lots' }), 5, 'unreadable is unset — the shipping default');
     eq(resolveLevelUpValue({ levelUpValue: 'lots' }), 1, 'and so is a value that is not a number at all');
     const dialled = derivedStatDialOptions({ statTierSize: 1 });
     const born = (opts) => createRunState({ seed: 0xd1a2, classId: 'reaver', registries: REG, derivedStatOptions: opts });
@@ -4735,6 +4755,65 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // for it. Watched red (see the commit message).
     const zero = resolveLevelUpValue({ levelUpValue: 0 });
     assert(zero >= 1, 'the floor is what stops a paid level from granting nothing');
+  });
+
+  // ---- 60e. the affordability predicate the fold reads ---------------------
+  test('60e. one derivation answers "can he afford a level", with a reason', () => {
+    // Constantine: "make the flask and the level up collapsible (with level up
+    // being grayed out or not visible when there isn't enough cinders)". The
+    // fold and the grey-out belong to the player-experience seat; THE PREDICATE
+    // is this, and it is asserted here so she can consume it without inventing
+    // an affordability rule of her own.
+    const run = createRunState({ seed: 0xa77, classId: 'reaver', registries: REG });
+    const first = REG.balance.levelUp.firstCost;
+
+    run.cinders = 0;
+    let p = levelUpPlan(REG, run);
+    eq(p.affordable, false, 'an empty purse cannot afford a level');
+    eq(p.short, first, 'and `short` is the whole price, not a difference the caller computes');
+    eq(p.blockedBy, 'cinders', 'the reason is a TOKEN, so a label switches on a word and never on two numbers');
+    eq(p.offerable, false, 'so it is not offerable');
+
+    // THE THRESHOLD'S OWN NEIGHBOURHOOD: one cinder either side of the price,
+    // adjacent, so moving the boundary one unit of its own flips a verdict.
+    run.cinders = first - 1;
+    p = levelUpPlan(REG, run);
+    eq(p.affordable, false, `one cinder short of ${first} is short`);
+    eq(p.short, 1, 'and short says exactly one');
+    run.cinders = first;
+    p = levelUpPlan(REG, run);
+    eq(p.affordable, true, 'the exact price is affordable — the boundary is inclusive');
+    eq(p.short, 0, 'nothing is missing');
+    eq(p.blockedBy, null, 'and there is no reason, because there is no block');
+
+    // IT MOVES WITH THE RAMP, WHICH IS WHY A FOLD MUST RE-READ IT AND NOT CACHE
+    // IT: the same purse that afforded level 1 may not afford level 2.
+    run.cinders = 5000;
+    applyLevelUp(REG, run, 'constitution');
+    const after = levelUpPlan(REG, run);
+    assert(after.cost > first, 'the next level costs more than the first');
+
+    // ⚠ AND IT IS INDIFFERENT TO THE TYPED LEVEL VALUE. The dispatch that asked
+    // for this predicate said the price now depends on the dial. IT DOES NOT:
+    // `levelCost` is firstCost + costStep × levelsTaken and takes no third
+    // argument. The dial decides what a level GRANTS, never what it COSTS.
+    const poor = createRunState({ seed: 0xa78, classId: 'reaver', registries: REG });
+    poor.cinders = first - 1;
+    for (const value of [1, 2, 7, 20]) {
+      const q = levelUpPlan(REG, poor, { pointsPerLevel: value });
+      eq(q.cost, first, `at a typed ${value} the price is unchanged`);
+      eq(q.short, 1, `and so is how short he is`);
+      eq(q.blockedBy, 'cinders', 'affordability does not move with the dial');
+    }
+
+    // A CAP IS A DIFFERENT SENTENCE TO A PLAYER, so it is a different token —
+    // and it outranks the purse, because being told to earn cinders you cannot
+    // spend is worse than being told nothing.
+    const capped = { ...REG, balance: { ...REG.balance, levelUp: { ...REG.balance.levelUp, maxLevels: 0 } } };
+    const c = levelUpPlan(capped, poor);
+    eq(c.capped, true, 'a cap of zero caps a fresh run');
+    eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
+    eq(c.offerable, false, 'either block closes the offer');
   });
 
   const passed = results.filter((r) => r.ok).length;

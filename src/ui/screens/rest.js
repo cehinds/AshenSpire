@@ -169,7 +169,31 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
         </div>
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
+        <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
+             Constantine: "make the flask and the level up collapsible (with
+             level up being grayed out or not visible when there isn't enough
+             cinders)". The fold and the grey-out are the player-experience
+             seat's; the PREDICATE is model/levelup.js's, and these attributes
+             are the seam between them. A styling seat reads data-affordable,
+             data-blocked-by and data-short and never subtracts a cost from a
+             purse - the day it did there would be two answers to "can he afford
+             this" and the screen would eventually disagree with the commit path
+             below.
+             THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
+             come off ONE level plan, computed once per mount, so a disabled card
+             and a refused purchase cannot diverge. An instrument reads them too,
+             which is why they are on the element and not in a closure.
+             NO BACKTICKS IN THIS BLOCK. It sits inside a template literal. I
+             closed the string with a pair of them THREE TIMES tonight, in three
+             files, every time inside a comment explaining myself - and
+             node --check exits 0 on the result because it parses the file as a
+             SCRIPT, so my own "parses" check was silent on all three. The gate
+             that caught this one is tools/linkcheck.mjs. -->
+        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+             data-affordable="${level.affordable ? '1' : '0'}"
+             data-blocked-by="${level.blockedBy || ''}"
+             data-cost="${level.cost}"
+             data-short="${level.short}">
           <div class="glyph">✦</div>
           <h3>Level up</h3>
           <p>${level.capped

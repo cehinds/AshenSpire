@@ -96,13 +96,24 @@ export function levelsAffordable(registries, cinders) {
 /**
  * levelUpPlan(registries, run, { pointsPerLevel }) → what the shrine may offer.
  *
- *   { levelsTaken, cost, cinders, affordable, capped, offerable,
- *     pointsPerLevel, attributes }
+ *   { levelsTaken, cost, cinders, affordable, capped, short, blockedBy,
+ *     offerable, pointsPerLevel, attributes }
  *
  * `attributes` is READ OFF THE CONTENT TABLE, in its authored order, and is
  * this feature's Law 0 falsifier: a sixth attribute is one row in
  * `content/attributes.js` and it appears at the shrine with zero UI edits. The
  * shrine screen never names a stat.
+ *
+ * ⚠ AFFORDABILITY DOES NOT DEPEND ON `pointsPerLevel`, AND THE DISPATCH THAT
+ * ASKED FOR THIS PREDICATE ASSUMED IT DID. Measured rather than relayed:
+ * `levelCost` is `firstCost + costStep × levelsTaken` and takes no third
+ * argument. The typed value decides what a level GRANTS, never what it COSTS —
+ * which is asserted in `tests/engine.test.js` 60c, in those words, one act
+ * before the question was asked. So the predicate moves with `run.cinders` and
+ * with `levelsTaken`, and is INDIFFERENT to the dial.
+ *
+ * It is still not a constant, and the fold must re-read it rather than cache it:
+ * every purchase raises the next price, and every fight changes the purse.
  *
  * `pointsPerLevel` IS AN ARGUMENT, NOT A LOOKUP — Constantine, 2026-08-17:
  * "leave the level up value configurable". The caller resolves the player's
@@ -125,6 +136,30 @@ export function levelUpPlan(registries, run, { pointsPerLevel = null } = {}) {
     cinders,
     affordable,
     capped,
+    // ---- THE AFFORDABILITY PREDICATE, for the fold ------------------------
+    //
+    // Constantine: "make the flask and the level up collapsible (with level up
+    // being grayed out or not visible when there isn't enough cinders)".
+    //
+    // ONE DERIVATION, ONE HOME, AND NO SECOND COPY OF THE PRICE. The seat that
+    // authors the fold and the grey-out reads these three fields; it never
+    // subtracts cinders from a cost, because the day it did there would be two
+    // answers to "can he afford this" and the screen would eventually disagree
+    // with the purchase. `#level-opt` publishes them as data attributes
+    // (ui/screens/rest.js) so a component and an instrument read the SAME
+    // derivation the commit path used, rather than re-deriving it.
+    //
+    // `short` — how many cinders are missing, 0 when none are. It is here and
+    // not computed by the caller for exactly the reason above: it is the one
+    // number a disabled label wants, and a caller computing `cost - cinders`
+    // would be the second copy in its cheapest disguise.
+    short: Math.max(0, cost - cinders),
+    // `blockedBy` — WHY it is not offerable, as a token and never as prose. A
+    // closed set of three, so a presentation seat switches on a word instead of
+    // inferring the reason from two numbers: 'cinders' and 'cap' are different
+    // sentences to a player, and only one of them is fixed by fighting a
+    // monster. `null` means it IS offerable.
+    blockedBy: capped ? 'cap' : (affordable ? null : 'cinders'),
     // A cap of `null` is "no ceiling but the cinders themselves" — his range is
     // an economy, not a limit, so the shipped table refuses on price alone.
     offerable: affordable && !capped,

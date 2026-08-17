@@ -339,17 +339,18 @@ const ROWS = [
   // cannot drift from the rule it turns.
   { cat: 'Advanced', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
-    label: 'Level-up value', applied: levelValueAppliedHtml,
+    label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
-  { cat: 'Advanced', key: 'statTierSize', type: 'choice', def: String(DERIVED_DEFAULTS.pointsPerTier),
-    choices: (LEVEL_DEFAULTS.tierSizeChoices || []).map(String), label: 'Stat points per tier',
+  { cat: 'Advanced', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
+    label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
     // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
     // progress — which is correct, and which means turning this dial and loading
     // an existing save shows NOTHING. It is written on the row because the
     // alternative is him concluding the dial is broken. The middle sentence is
     // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
+    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -762,14 +763,6 @@ export function resolveNumberRow(settings, row) {
   return Math.min(row.max, Math.max(row.min, Math.floor(n)));
 }
 
-function resolveChoiceNumber(settings, key) {
-  const row = ROWS.find((r) => r.key === key);
-  if (!row) throw new Error(`resolveChoiceNumber: no settings row named '${key}'`);
-  const stored = (settings || {})[key];
-  const s = stored === undefined || stored === null ? '' : String(stored);
-  return row.choices.includes(s) ? Number(s) : Number(row.def);
-}
-
 /**
  * settingsRow(key) → the declared row, for anything that needs its DOMAIN rather
  * than its value. Exported so a test asserts against the row the screen actually
@@ -786,7 +779,7 @@ export function resolveLevelUpValue(settings) {
 }
 
 /**
- * The `applied` line for the level-value row — SILENT WHEN THE PROMISE IS KEPT,
+ * The `applied` line for ANY `number` row — SILENT WHEN THE PROMISE IS KEPT,
  * which is Sunna's rule and is why this is not just a readout: "a line that says
  * the same thing every time you open the screen is not a warning, it is
  * decoration with a worried face."
@@ -794,7 +787,7 @@ export function resolveLevelUpValue(settings) {
  * It speaks only when what he typed is NOT what the game will use, which is the
  * one case a typed field creates and a ladder never could.
  */
-function levelValueAppliedHtml(settings, row) {
+function numberAppliedHtml(settings, row) {
   const stored = (settings || {})[row.key];
   if (stored === undefined || stored === null || stored === '') return '';
   const used = resolveNumberRow(settings, row);
@@ -803,7 +796,7 @@ function levelValueAppliedHtml(settings, row) {
 }
 
 export function resolveStatTierSize(settings) {
-  return resolveChoiceNumber(settings, 'statTierSize');
+  return resolveNumberRow(settings, settingsRow('statTierSize'));
 }
 
 /**

@@ -149,16 +149,20 @@ export const balance = {
     // 5: the silent plausible answer is the dangerous one).
     pointsPerLevelMin: 1,
     pointsPerLevelMax: 20,
-    // How many points buy one tier of a derived stat. 5 is what ships and is
-    // the reason one level currently moves no number at all; 1 makes every
-    // point visible, and the span between the two is the experiment.
+    // How many points buy one tier of a derived stat — the DOMAIN, not a ladder,
+    // for the same reason the level value stopped being one. His purpose clause
+    // was "that way I can test each", and a 1-2-3-5 ladder cannot express 4 or
+    // 7. (The four-chip shape a previous seat measured — 92.1 px at 390x844
+    // against 301.2 for a seven-chip row — is why a LADDER could never have been
+    // widened to cover the domain instead: a typed field has no chip count.)
     //
-    // FOUR, NOT FIVE, and the fourth is 5 rather than 10. A previous seat
-    // MEASURED this row shape: four chips renders 92.1 px at 390x844 and a
-    // seven-chip row runs to 301.2 px with its last chip off the viewport
-    // (settings.js, the Hold-to-confirm note). His sentence names 5 as the
-    // number to test against, so 5 stays and the extreme goes.
-    tierSizeChoices: [1, 2, 3, 5],
+    // MIN IS 1 AND IT IS ARITHMETIC, NOT TASTE. The tier is `floor(points /
+    // pointsPerTier)`, so 0 divides by zero, and the content door already
+    // refuses a non-positive value by name (model/validate.js). 20 is the
+    // ceiling for the same reason as the level value's: an experimental bound,
+    // one number here, no code.
+    tierSizeMin: 1,
+    tierSizeMax: 20,
   },
 
   // ---- what a grace hands back ----------------------------------------------
