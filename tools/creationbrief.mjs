@@ -1239,7 +1239,9 @@ async function main() {
   try { cdp.close(); } catch { /* closing */ }
   try { child.kill(); } catch { /* closing */ }
   try { s.server.close(); } catch { /* closing */ }
-  // THE PROFILE DIRECTORY IS THE RUN'S, SO THE RUN TAKES IT WITH IT. Every
+  // THE PROFILE DIRECTORY IS THE RUN'S, AND A RUN THAT REACHES THIS LINE TAKES
+  // IT WITH IT — which is the whole extent of it. The boundary below says what
+  // that leaves out; it is measured, not reasoned. Every
   // invocation mkdtemp'd a ~10 MB Chrome profile above and left it in /tmp,
   // and --selftest invokes this whole tool once per plant: one selftest is
   // seventeen of them. Measured 2026-08-16, mid-merge, with the disk at 87%:
@@ -1266,6 +1268,46 @@ async function main() {
   // your own run. The honest form is a SET DIFFERENCE — list the directories,
   // run, list them again, and name the ones that appeared — which reports this
   // run leaving nothing behind and is re-runnable by anyone, concurrently.
+  //
+  // WHAT THIS REMOVAL COVERS, MEASURED AT THE GATE (Bjorn, 2026-08-17). The
+  // heading above read `so the run takes it with it`, unqualified. Narrowed to
+  // the predicate, which is A RUN THAT REACHES THIS LINE:
+  //   · one clean run, five times: before this commit, one FULL ~11 MB profile
+  //     every time. After: nothing on two runs and a 1.1 MB PARTIAL on three.
+  //     IT IS NOT DETERMINISTIC ON THE PATH IT COVERS — see the guard, below.
+  //   · `--selftest`: 17 dirs / 157 MB before, 6 dirs / 6.4 MB after, and
+  //     52 PASS / 0 FAIL either side — it changes no assertion, as claimed.
+  //   · Chrome hands over no DevTools endpoint (`CHROME=/bin/true`): the launch
+  //     above throws, nothing below runs, THE PROFILE STAYS.
+  //   · SIGINT mid-run: an 8.8 MB profile stays.
+  // There is no try/finally and no exit handler here, so EVERY early exit after
+  // the mkdtemp leaks — and an interrupted or crashed run is the ordinary shape
+  // of the ones that made the pile. Adding one is a PREDICATE change and is not
+  // this gate's to write.
+  //
+  // AND THE 3000 ms GUARD IS NOT A JOIN. The paragraph above says the wait was
+  // never observed to be necessary; on an idle machine, one invocation, that is
+  // true. On a box with other seats live it is not, and it is not rare — three
+  // of five clean runs. Every leftover is the same 1.1 MB PARTIAL,
+  // still holding `SingletonLock` and `Default/.org.chromium.Chromium.*`:
+  // rmSync walked a tree a browser had not finished with, the top-level rmdir
+  // failed, and `catch { /* tmp */ }` swallowed it. Necessary AND insufficient
+  // — and A PARTIAL REMOVAL REPORTS NOTHING.
+  //
+  // NOTHING GOES RED IF THIS REMOVAL IS DELETED. No assertion in this file, in
+  // `--selftest`, or anywhere in tools/ or tests/ reads a leftover directory —
+  // grepped at this ref. The evidence for the fix is a hand measurement, which
+  // is `unknown` the day after it was taken (*The instrument rule*). A check
+  // belongs here and would be RED TODAY on the six partials, so it waits on the
+  // removal being made whole — a separate act, and this file's owner's.
+  //
+  // AND A SET DIFFERENCE OVER SHARED /tmp IS APPEARANCE, NOT ATTRIBUTION. Run
+  // here 2026-08-17 it reported TWO new directories for ONE invocation, because
+  // a second seat was running this tool in the same second — the exact
+  // confounder it was written to defeat. The door that does defeat it is a
+  // private tmpdir: `TMPDIR=<empty dir> CHROME=… node tools/creationbrief.mjs`,
+  // where the mkdtemp above lands where no other writer can reach, so what is
+  // left over is this run's BY CONSTRUCTION. Every number here came through it.
 
   // AN EMPTY RESULT IS NEVER A PASS. The floor is on the denominator: a run
   // that measured no shape, or a shape that found no face, is exit 2 — not a
