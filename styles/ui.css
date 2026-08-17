@@ -609,6 +609,79 @@ button.rs-reset {
   display: inline-flex; align-items: center; justify-content: center;
 }
 
+/* ---------- E10: the flask assignment is an increment, not a menu ---------- */
+/* HIS WORDS: "I don't like how the flask assignments are separate buttons
+   instead of just increment button for each that automatically adjusts the
+   other flask to keep to the total available."
+
+   WHAT WAS THERE, PHOTOGRAPHED AT dc9f65a BEFORE A LINE CHANGED: `capacity + 1`
+   buttons labelled `0/3` `1/2` `2/1` `3/0`, a column at 390x844. Nothing said
+   which side of the slash was which flask, and NOTHING MARKED THE ONE YOU WERE
+   ALREADY ON — four identical chips, one of them your current allocation, and
+   the screen silent about which. That is the half of the defect beyond his
+   sentence, and it is why the count now sits IN the row it belongs to.
+
+   A SEPARATE CLASS FROM `.flask-allocation-controls` ON PURPOSE. That class is
+   shared with the Level-up panel's attribute buttons (rest.js, Vira's e05be89),
+   so restyling it would have silently redressed her surface from inside my act.
+   One class, one subject.
+
+   Law 4 clause 3/4 — a NEW write, so every box value here is text-independent
+   with a floor and intrinsic growth, and `--tap-floor` is the same answer the
+   line above already gives. Only `font-size` is `rem`. */
+.flask-increment {
+  display: flex; flex-direction: column; align-items: stretch; gap: 6px;
+  margin-top: 8px;
+}
+/* THE ROW WRAPS; THE STEPPER DOES NOT. Measured at 390x844 with the buttons as
+   loose children of this row: the flask name held it open and pushed the count
+   and the `+` clean off the right edge — presentation-matrix went red on
+   "relevant controls remain inside the viewport" (controlsOutside: 2), which is
+   how this was found rather than by looking. The first attempt at a fix was
+   `overflow-wrap: anywhere` on the name, and it was WORSE: the name broke one
+   letter per line and the buttons stayed off-screen. A name that can shrink to
+   nothing does not make room for a button that cannot.
+   So the stepper is its own element and the row wraps AROUND it — Law 5 clause
+   3, a narrow shape is a different composition, spending height where a wide
+   one spends width. Nothing here is a media query: the wrap happens exactly
+   when the content needs it, at any width, including ones nobody measured. */
+.flask-increment-row {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 6px 10px;
+  min-height: var(--tap-floor); height: auto;
+}
+.flask-increment-id { flex: 1 1 auto; min-width: 0; justify-content: flex-start; }
+.flask-increment-steps {
+  display: flex; align-items: center; gap: 10px; margin-left: auto; flex: 0 0 auto;
+}
+/* The count is the thing the buttons move, so it gets its own reserved width —
+   without one, `3` -> `10` shoves both buttons sideways under the finger that
+   is pressing them. `ch` is a TEXT unit for a TEXT element, which is clause 1,
+   not clause 3: this box is glyphs and nothing else. */
+.flask-increment-count {
+  min-width: 2ch; text-align: center;
+  font-size: 1.6rem; color: var(--parchment); font-variant-numeric: tabular-nums;
+}
+.flask-increment .flask-step {
+  min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0 10px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; line-height: 1;
+}
+/* `aria-disabled`, never `disabled`: a disabled button fires no pointer events,
+   so its tooltip never opens and the player is told nothing about WHY it will
+   not move. Same idiom, same reason, as `.flask-action` further down this file. */
+.flask-increment .flask-step[aria-disabled='true'] {
+  color: var(--muted); border-color: var(--line); cursor: default;
+}
+.flask-increment .flask-step[aria-disabled='true']:hover {
+  background: var(--panel); transform: none;
+}
+.flask-increment-total {
+  margin-top: 2px; text-align: center;
+  font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
+}
+
 .stats-table { border-collapse: collapse; font-size: 1.3rem; }
 .stats-table td { padding: 0.4rem 1.4rem; }
 .stats-table td:first-child { color: var(--muted); text-align: right; }

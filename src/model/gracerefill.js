@@ -65,6 +65,108 @@ export function reallocateFlaskCharges(charges, { hp, mana }) {
   return charges;
 }
 
+/**
+ * E10 — "just increment button for each that automatically adjusts the other
+ * flask to keep to the total available." (Constantine, 2026-08-15.)
+ *
+ * THE SCREEN ASKS THIS WHAT IT MAY OFFER AND PRICES NOTHING ITSELF. One row per
+ * charge kind, DERIVED from CHARGE_FLASK_KINDS and the authored definitions —
+ * Law 0 clause 1. A third charge kind gets a row, a name, art and both buttons
+ * with no edit to any screen.
+ *
+ * WHAT "THE OTHER FLASK" MEANS WHEN THERE IS MORE THAN ONE OTHER. His sentence
+ * is written for exactly two, and the vocabulary is a closed SET, not a pair
+ * (Law 1 clause 3: new combinations of existing vocabulary must just work). The
+ * rule is derived from the counts and stated HERE rather than guessed at a call
+ * site:
+ *   · `+` on kind K takes one from the kind holding the MOST, ties broken by
+ *     declared order. Taking from the richest is the only choice that cannot
+ *     empty a pool the player is still spending while another sits full.
+ *   · `-` on kind K gives one to the kind holding the FEWEST, same tiebreak.
+ *     It IS `+` on that kind said from the other end — which is why both
+ *     buttons sit on every row and neither is decoration: at two kinds they are
+ *     the same two moves twice, and EACH ROW STILL READS ON ITS OWN.
+ * At exactly two kinds this collapses to his sentence with nothing left over.
+ *
+ * BOTH EDGES ARE STATES, NOT GUARDS. A kind at 0 cannot give; a kind holding
+ * every charge cannot take. `capacity` never moves — the total is the invariant
+ * he asked for, and `assigned` is reported so a screen can SHOW it holding
+ * rather than promise that it does.
+ */
+export function flaskChargePlan(registries, charges) {
+  if (!charges || !Number.isInteger(charges.capacity) || charges.capacity <= 0) {
+    throw new Error('flaskChargePlan needs a run flask-charge pool with a positive capacity');
+  }
+  const kinds = CHARGE_FLASK_KINDS;
+  const count = (kind) => {
+    const value = charges[kind];
+    if (!Number.isInteger(value) || value < 0) throw new Error(`flaskChargePlan: charges.${kind} is not a count`);
+    return value;
+  };
+  // Ranked once, not per row: the donor is the richest OTHER kind, the receiver
+  // the poorest OTHER kind, and both come off this one ordering.
+  const pick = (self, better) => {
+    let best = null;
+    for (const kind of kinds) {
+      if (kind === self) continue;
+      if (best === null || better(count(kind), count(best))) best = kind;
+    }
+    return best;
+  };
+  const assigned = kinds.reduce((sum, kind) => sum + count(kind), 0);
+  const rows = kinds.map((kind) => {
+    const def = chargeFlaskDefinition(registries, kind);
+    const name = (def && def.name) || kind;
+    const donor = pick(kind, (a, b) => a > b);
+    const receiver = pick(kind, (a, b) => a < b);
+    const held = count(kind);
+    const canAdd = donor !== null && count(donor) > 0;
+    const canSub = receiver !== null && held > 0;
+    return {
+      kind,
+      def,
+      count: held,
+      donor,
+      receiver,
+      canAdd,
+      canSub,
+      // The reasons belong to the model because the CONDITIONS do. A screen
+      // writing its own sentence here would be the second copy of a rule.
+      addReason: canAdd ? null : `Every charge is already ${name}`,
+      subReason: canSub ? null : `No ${name} charge to move`,
+    };
+  });
+  return { capacity: charges.capacity, assigned, kinds: kinds.slice(), rows };
+}
+
+/**
+ * THE ONE MOVE, and the ONLY way the increment control changes anything.
+ * It does not write the pool itself: it composes the WHOLE allocation and hands
+ * it to reallocateFlaskCharges, so `sum === capacity` keeps ONE home and a `+`
+ * can never become the door that breaks it.
+ *
+ * BOUNDARY, STATED RATHER THAN DESIGNED AROUND: reallocateFlaskCharges takes
+ * `{ hp, mana }` and validateRunShape enforces `hp + mana === capacity`, so the
+ * SAVE SCHEMA is two-kind today even though the plan above is not. A third
+ * charge kind fails LOUD and by name here (Law 1 clause 5) rather than dropping
+ * charges into a field nothing reads. Widening it is a save-shape act — the
+ * seam Vira named at e05be89, where save.js ARCHIVES a run that fails to
+ * validate — and it is not this one.
+ */
+export function moveFlaskCharge(registries, charges, { from, to }) {
+  const plan = flaskChargePlan(registries, charges);
+  if (from === to) throw new Error('moveFlaskCharge: from and to are the same kind');
+  for (const kind of [from, to]) {
+    if (!plan.kinds.includes(kind)) throw new Error(`moveFlaskCharge: '${kind}' is not a charge flask kind`);
+  }
+  if (charges[from] <= 0) throw new Error(`moveFlaskCharge: no '${from}' charge to move`);
+  const next = {};
+  for (const kind of plan.kinds) next[kind] = charges[kind];
+  next[from] -= 1;
+  next[to] += 1;
+  return reallocateFlaskCharges(charges, next);
+}
+
 export function refillFlaskCharges(charges) {
   if (!charges) return null;
   charges.hpCurrent = charges.hp;

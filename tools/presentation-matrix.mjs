@@ -111,8 +111,18 @@ function contract(surface, reading) {
   if (surface === 'grace') {
     need(reading.title === 'Reallocate Flask Charges', 'grace: exact feature name');
     need(reading.capacity === 3, 'grace: fixed capacity 3 is visible');
-    need(JSON.stringify(reading.allocations) === JSON.stringify(['0/3', '1/2', '2/1', '3/0']),
-      'grace: every fixed-capacity allocation is visible in order');
+    // E10 (2026-08-17). This used to freeze the OLD surface —
+    // `['0/3','1/2','2/1','3/0']`, the `capacity + 1` split buttons he asked us
+    // to remove — so it was an instrument asserting the defect. It now asserts
+    // the shape he asked for: ONE step pair per charge kind, the counts summing
+    // to capacity, and the total said ON THE SCREEN rather than promised.
+    need(reading.steps.length === reading.counts.length * 2,
+      'grace: exactly one minus and one plus per charge kind');
+    need(reading.counts.length >= 2, 'grace: every charge kind has a row of its own');
+    need(reading.counts.reduce((a, b) => a + b, 0) === reading.capacity,
+      'grace: the counts on screen sum to the fixed capacity');
+    need(reading.totalLine === `${reading.capacity} of ${reading.capacity} assigned`,
+      'grace: the screen SAYS the total holds, it does not merely keep it');
     need(reading.fullMana === true, 'grace: baseline Mana is visibly full at 2/2');
   } else if (surface === 'creation') {
     need(reading.kitCount >= 2, 'creation: baseline and discovered alternate are visible');
@@ -148,7 +158,8 @@ function contract(surface, reading) {
 
 function proveMutants() {
   const grace = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
-    title: 'Reallocate Flask Charges', capacity: 3, allocations: ['0/3', '1/2', '2/1', '3/0'], fullMana: true };
+    title: 'Reallocate Flask Charges', capacity: 3,
+    steps: ['hp-o', 'hp+o', 'mana-o', 'mana+o'], counts: [2, 1], totalLine: '3 of 3 assigned', fullMana: true };
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
     derived: ['HP', 'Mana', 'Stamina', 'Actions / turn', 'Draw / turn and opening hand'], roleRows: 4,
@@ -160,7 +171,10 @@ function proveMutants() {
     candidateProofVisible: true, primaryProofVisible: true };
   const plants = [
     ['missing landmark', 'grace', grace, (x) => { x.mounted = false; }],
-    ['allocation drift', 'grace', grace, (x) => { x.allocations[2] = '2/2'; }],
+    ['the counts stop summing to capacity', 'grace', grace, (x) => { x.counts[1] = 2; }],
+    ['a charge kind loses one of its two steps', 'grace', grace, (x) => { x.steps.pop(); }],
+    ['the total line stops matching the total', 'grace', grace, (x) => { x.totalLine = '2 of 3 assigned'; }],
+    ['a charge kind loses its row entirely', 'grace', grace, (x) => { x.counts = [3]; x.steps = ['hp-o', 'hp+o']; }],
     ['Mana baseline drift', 'grace', grace, (x) => { x.fullMana = false; }],
     ['missing alternate', 'creation', creation, (x) => { x.kitCount = 1; }],
     ['missing role receipt', 'creation', creation, (x) => { x.roleRows = 3; }],
@@ -180,8 +194,8 @@ function proveMutants() {
     mutate(copy);
     if (!contract(surface, copy).length) throw new Error(`dead contract mutant: ${name}`);
   }
-  const a = JSON.stringify({ surface: 'grace', title: grace.title, capacity: grace.capacity, allocations: grace.allocations });
-  const b = JSON.stringify({ surface: 'grace', title: grace.title, capacity: 4, allocations: grace.allocations });
+  const a = JSON.stringify({ surface: 'grace', title: grace.title, capacity: grace.capacity, counts: grace.counts });
+  const b = JSON.stringify({ surface: 'grace', title: grace.title, capacity: 4, counts: grace.counts });
   if (a === b) throw new Error('dead source/dist parity mutant');
   console.log(`contract mutants: ${plants.length + 1}/${plants.length + 1} caught`);
 }
@@ -190,14 +204,17 @@ const READERS = {
   grace: `(() => {
     const n=(value)=>Math.round(value*100)/100;
     const root = document.querySelector('#flask-reallocate');
-    const buttons = [...document.querySelectorAll('#flask-reallocate [data-hp]')];
+    const buttons = [...document.querySelectorAll('#flask-reallocate .flask-step')];
     const boxes = buttons.map((x) => x.getBoundingClientRect());
     const text = document.querySelector('#rest-opt p')?.textContent || '';
     return { mounted: !!root, horizontalOverflow: Math.max(0, document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length ? n(Math.min(...boxes.map((x) => Math.min(x.width,x.height)))) : 0,
       controlsOutside: boxes.filter((x) => x.left < 0 || x.right > innerWidth || x.top < 0 || x.bottom > innerHeight).length,
       title: root?.querySelector('h3')?.textContent.trim() || '', capacity: Number(/capacity\\D*(\\d+)/i.exec(root?.querySelector('p')?.textContent||'')?.[1]),
-      allocations: buttons.map((x) => x.textContent.trim()), fullMana: /Mana\\D*2\\D+2/.test(text) };
+      steps: buttons.map((x) => x.dataset.kind + (Number(x.dataset.step) > 0 ? '+' : '-') + (x.getAttribute('aria-disabled') === 'true' ? 'x' : 'o')),
+      counts: [...document.querySelectorAll('#flask-reallocate .flask-increment-count')].map((x) => Number(x.textContent.trim())),
+      totalLine: (root?.querySelector('.flask-increment-total')?.textContent || '').trim(),
+      fullMana: /Mana\\D*2\\D+2/.test(text) };
   })()`,
   creation: `(() => {
     const n=(value)=>Math.round(value*100)/100;

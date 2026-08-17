@@ -1650,7 +1650,7 @@
   {
    "id": "K7",
    "by": "Bjorn",
-   "read": "src/ui/screens/rest.js:90-95 (#flask-reallocate — 'Fixed capacity N', one [data-hp] button per split) · src/model/flaskgrowth.js:71 (flaskGrowthTable, one truth function) · src/content/balance.js:29 (flaskGrowth rows)",
+   "read": "src/ui/screens/rest.js (#flask-reallocate — 'Fixed capacity N', and since E10 one .flask-increment-row per CHARGE KIND with a .flask-step pair, NOT the old [data-hp] split buttons) · src/model/gracerefill.js (flaskChargePlan/moveFlaskCharge, the one home for what the panel may offer) · src/model/flaskgrowth.js:71 (flaskGrowthTable, one truth function) · src/content/balance.js:29 (flaskGrowth rows)",
    "screen": "the Shrine › the pool's capacity line and its reallocation — the derived number the growth rows feed",
    "reach": [
     {
@@ -1663,11 +1663,13 @@
    "expect": {
     "present": {
      "the reallocation block": "#flask-reallocate",
-     "its split choices": "#flask-reallocate [data-hp]"
+     "its increment steps": "#flask-reallocate .flask-step"
     },
     "measure": {
      "capacityLine": "(()=>{const p=document.querySelector('#flask-reallocate p');return p?p.innerText.replace(/\\s+/g,' ').slice(0,90):'none';})()",
-     "splitChoices": "document.querySelectorAll('#flask-reallocate [data-hp]').length"
+     "incrementSteps": "document.querySelectorAll('#flask-reallocate .flask-step').length",
+     "kindRows": "document.querySelectorAll('#flask-reallocate .flask-increment-row').length",
+     "totalLine": "(()=>{const t=document.querySelector('#flask-reallocate .flask-increment-total');return t?t.textContent.trim():'none';})()"
     },
     "source": [
      {

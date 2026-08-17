@@ -132,6 +132,58 @@ if (process.argv.includes('--selftest')) {
         }],
         expectRed: /BAD\s+B3 .*different heights/,
       },
+      {
+        // E10's whole sentence in one plant: the partner does NOT move, so the
+        // player has to make the second half of the change themselves — which
+        // is the "separate buttons" complaint wearing a plus sign.
+        name: 'the step moves one kind and leaves the other alone, so the total drifts',
+        edits: [{
+          file: 'src/model/gracerefill.js',
+          find: '  next[from] -= 1;\n  next[to] += 1;',
+          replace: '  next[to] += 1; // planted: the partner never gives the charge up',
+        }],
+        // The observed red is `moved 0 row(s), not 2`, and the zero is the
+        // interesting part: the planted move composes an allocation that does
+        // not sum to capacity, so reallocateFlaskCharges REFUSES it and the
+        // click changes nothing. The one-home invariant caught the plant before
+        // the screen could show it — which is what that one home is for.
+        expectRed: /BAD\s+B4 .*(changed the TOTAL|moved \d+ row)/,
+      },
+      {
+        // THE EDGE STOPS BEING A STATE. `canAdd` is always true, so a full kind
+        // still offers `+` and a player presses past the top into a refusal.
+        name: 'the max edge stops being a legible state — a full kind still offers +',
+        edits: [{
+          file: 'src/model/gracerefill.js',
+          find: '    const canAdd = donor !== null && count(donor) > 0;',
+          replace: '    const canAdd = donor !== null; // planted: the edge is no longer a state',
+        }],
+        expectRed: /BAD\s+B4 .*max edge .*is still offered/,
+      },
+      {
+        // THE OLD SURFACE COMES BACK ALONGSIDE THE NEW ONE. Two answers to one
+        // question on one screen — which is Law 0 clause 4, and it is exactly
+        // how a "keep the old one for now" edit would ship.
+        name: 'the capacity+1 split buttons come back beside the increment rows',
+        edits: [{
+          file: 'src/ui/screens/rest.js',
+          find: '            <p class="flask-increment-total">',
+          replace: '            <div class="flask-allocation-controls">${Array.from({ length: charge.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${charge.capacity - hp}</button>`).join(\'\')}</div>\n            <p class="flask-increment-total">',
+        }],
+        expectRed: /BAD\s+B4 .*old capacity\+1 split buttons/,
+      },
+      {
+        // THE HOLE I SHIPPED AND NAMED IN MY OWN REPORT, now watched. A surface
+        // silently drops out of the loop; B3 used to compare the survivors and
+        // print a confident green over a smaller population.
+        name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
+        edits: [{
+          file: 'src/ui/screens/map.js',
+          find: "    el.className = 'mh-flask';",
+          replace: "    el.className = 'mh-flask-planted-away';",
+        }],
+        expectRed: /BAD\s+B3 .*of 3 declared surfaces were reached/,
+      },
     ],
   }));
 }
@@ -275,11 +327,117 @@ async function main() {
     }
 
     // B3 — one box. No threshold: three surfaces, one answer.
+    //
+    // THE DENOMINATOR IS ASSERTED, and this closes a hole I shipped in the first
+    // version of this file eight hours ago and named in my own report: it went
+    // red only at FEWER THAN TWO surfaces, so a surface dropping out of the loop
+    // left B3 comparing the survivors and printing a confident green over a
+    // smaller population. That is the partial-blindness shape release-shots.mjs
+    // already names in its own header, reproduced by me in a new tool the same
+    // night I read it. The count SURFACES declares is the count that must be
+    // reached; anything less is red, whatever the survivors agreed about.
     const seen = [...heights.entries()];
     const all = [...new Set(seen.flatMap(([, hs]) => hs))];
-    if (seen.length < 2) bad('B3', shape, `only ${seen.length} surface(s) were reached — one box across surfaces cannot be checked against one surface`);
-    else if (all.length === 1) ok('B3', shape, `the flask control is ${all[0]} px on all ${seen.length} surfaces (${seen.map(([n]) => n).join(', ')})`);
+    if (seen.length !== SURFACES.length) bad('B3', shape, `${seen.length} of ${SURFACES.length} declared surfaces were reached (${seen.map(([n]) => n).join(', ') || 'none'}) — a smaller confident number is the worse failure. Missing: ${SURFACES.map((x) => x.name).filter((n) => !heights.has(n)).join(', ')}`);
+    else if (all.length === 1) ok('B3', shape, `the flask control is ${all[0]} px on all ${seen.length} of ${SURFACES.length} declared surfaces (${seen.map(([n]) => n).join(', ')})`);
     else bad('B3', shape, `the same flask is ${all.length} different heights: ${seen.map(([n, hs]) => `${n} ${[...new Set(hs)].join('/')}`).join(', ')}. One item, one box — a flask that changes size when the screen changes is the defect this tool exists for`);
+
+    // ---- B4 — E10: THE ASSIGNMENT IS AN INCREMENT, AND THE TOTAL HOLDS ------
+    // His words: "I don't like how the flask assignments are separate buttons
+    // instead of just increment button for each that automatically adjusts the
+    // other flask to keep to the total available."
+    //
+    // Driven, not read: the real Shrine at `?shot=rest`, the real `+` pressed by
+    // a real click, and the counts re-read off the screen afterwards. The
+    // arithmetic lives in tools/flask-reallocation.mjs and is NOT restated here
+    // — what this owns is that a thumb can reach the control, that pressing it
+    // moves the other row, and that BOTH EDGES are reachable by pressing.
+    await cdp.send('Page.navigate', { url: `${base}?shot=rest` }, S);
+    await until(`!!document.querySelector('#flask-reallocate .flask-step')`, 'shrine');
+    await wait(600);
+    const READ_INC = `(() => {
+      const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+      const steps = [...document.querySelectorAll('#flask-reallocate .flask-step')];
+      const L = (el) => { const r = el.getBoundingClientRect();
+        return { left: r.left/z, top: r.top/z, right: r.right/z, bottom: r.bottom/z, w: r.width/z, h: r.height/z }; };
+      return {
+        rows: document.querySelectorAll('#flask-reallocate .flask-increment-row').length,
+        counts: [...document.querySelectorAll('#flask-reallocate .flask-increment-count')].map((e) => Number(e.textContent.trim())),
+        total: (document.querySelector('#flask-reallocate .flask-increment-total') || {}).textContent || '',
+        legacySplits: document.querySelectorAll('#flask-reallocate [data-hp]').length,
+        steps: steps.map((e) => ({ kind: e.dataset.kind, step: Number(e.dataset.step),
+          off: e.getAttribute('aria-disabled') === 'true', box: L(e) })),
+      };
+    })()`;
+    const probe = await ev(READ_INC);
+    const floorNow = await ev(FLOOR);
+    // A REGEX LITERAL, NOT AN INJECTED STRING — and I got that wrong once, in
+    // this exact line, and the tool said the panel carried no total while the
+    // panel plainly read "3 of 3 assigned". Over-escaping is invisible until
+    // something disagrees with a screen; the check was wrong, not the screen.
+    const capText = /(\d+)\s+of\s+(\d+)\s+assigned/.exec(probe.total);
+
+    if (!probe.rows) { bad('B4', shape, 'the Shrine drew no increment row — nothing measured, and an empty population is not a pass'); }
+    else if (probe.legacySplits) { bad('B4', shape, `${probe.legacySplits} of the old capacity+1 split buttons are still on the screen — E10 asked for those to GO, and a screen carrying both is two answers to one question`); }
+    else if (!capText) { bad('B4', shape, `the panel does not SAY its total (read "${probe.total.trim()}") — "keep to the total available" is a promise a player has to be able to check`); }
+    else {
+      // One step pair per row, both at the floor a thumb was promised.
+      const pairs = probe.rows * 2;
+      if (probe.steps.length !== pairs) bad('B4', shape, `${probe.steps.length} step button(s) for ${probe.rows} row(s) — his sentence is "increment button for EACH", which is one minus and one plus per kind`);
+      else ok('B4', shape, `one minus and one plus on each of ${probe.rows} charge-kind row(s)`);
+      const small = probe.steps.filter((x) => x.box.h < floorNow - 0.5 || x.box.w < floorNow - 0.5);
+      if (small.length) bad('B4', shape, `${small.length} step button(s) under the ${floorNow} px floor — smallest ${Math.min(...probe.steps.map((x) => Math.min(x.box.w, x.box.h))).toFixed(1)}`);
+      else ok('B4', shape, `every step button at or above the ${floorNow} px floor`);
+      const sum = probe.counts.reduce((a, b) => a + b, 0);
+      if (sum !== Number(capText[2]) || Number(capText[1]) !== sum) bad('B4', shape, `the counts on screen sum to ${sum} but the panel says "${probe.total.trim()}" — the number a player reads is a copy of one nothing syncs (Law 1 clause 2)`);
+      else ok('B4', shape, `the counts on screen sum to the stated total (${probe.total.trim()})`);
+
+      // PRESS IT. The other row must move, and the total must not.
+      const live = probe.steps.find((x) => x.step > 0 && !x.off);
+      if (!live) bad('B4', shape, 'no pressable `+` on the opening allocation — the control cannot be exercised, so nothing below is a measurement of it');
+      else {
+        const before = probe.counts.slice();
+        await ev(`document.querySelector('#flask-reallocate .flask-step[data-kind="${live.kind}"][data-step="1"]').click(); true`);
+        await wait(400);
+        const after = await ev(READ_INC);
+        const sumAfter = after.counts.reduce((a, b) => a + b, 0);
+        const changed = after.counts.filter((n, i) => n !== before[i]).length;
+        if (sumAfter !== sum) bad('B4', shape, `one press changed the TOTAL: ${sum} -> ${sumAfter}. "keep to the total available" is the whole ask`);
+        else if (changed !== 2) bad('B4', shape, `one press moved ${changed} row(s), not 2 — "automatically adjusts the OTHER flask" means the partner moves in the same act, never in a second one the player has to make`);
+        else ok('B4', shape, `pressing + on ${live.kind} moved both rows (${before.join('/')} -> ${after.counts.join('/')}) and held the total at ${sum}`);
+
+        // BOTH EDGES BY PRESSING, not by posing: walk one kind to the top and
+        // check the edge is a legible STATE, then walk it back to zero.
+        for (let i = 0; i < 12; i++) {
+          const got = await ev(`(() => { const b = document.querySelector('#flask-reallocate .flask-step[data-kind="${live.kind}"][data-step="1"]');
+            if (!b || b.getAttribute('aria-disabled') === 'true') return false; b.click(); return true; })()`);
+          if (!got) break;
+          await wait(220);
+        }
+        const atMax = await ev(READ_INC);
+        const maxStep = atMax.steps.find((x) => x.kind === live.kind && x.step > 0);
+        const maxSum = atMax.counts.reduce((a, b) => a + b, 0);
+        const others = atMax.steps.filter((x) => x.kind !== live.kind && x.step < 0);
+        if (maxSum !== sum) bad('B4', shape, `walking to the max edge changed the total: ${sum} -> ${maxSum}`);
+        else if (!maxStep || !maxStep.off) bad('B4', shape, `at the max edge ${live.kind}'s + is still offered — an edge a player can press past is not an edge`);
+        else if (others.some((x) => !x.off)) bad('B4', shape, `at the max edge an empty kind still offers a minus — a control that cannot act may not look like one`);
+        else ok('B4', shape, `MAX EDGE reached by pressing (${atMax.counts.join('/')}): + is refused on the full kind, - is refused on every empty one, total held at ${sum}`);
+
+        // and back down — the return path is the one a player uses to undo.
+        for (let i = 0; i < 12; i++) {
+          const got = await ev(`(() => { const b = document.querySelector('#flask-reallocate .flask-step[data-kind="${live.kind}"][data-step="-1"]');
+            if (!b || b.getAttribute('aria-disabled') === 'true') return false; b.click(); return true; })()`);
+          if (!got) break;
+          await wait(220);
+        }
+        const atZero = await ev(READ_INC);
+        const zeroStep = atZero.steps.find((x) => x.kind === live.kind && x.step < 0);
+        const zeroSum = atZero.counts.reduce((a, b) => a + b, 0);
+        if (zeroSum !== sum) bad('B4', shape, `walking to the zero edge changed the total: ${sum} -> ${zeroSum}`);
+        else if (!zeroStep || !zeroStep.off) bad('B4', shape, `at zero ${live.kind}'s - is still offered — an edge a player can press past is not an edge`);
+        else ok('B4', shape, `ZERO EDGE reached by pressing (${atZero.counts.join('/')}): - is refused at zero, total held at ${sum}`);
+      }
+    }
 
     await cdp.send('Target.closeTarget', { targetId });
   }

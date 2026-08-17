@@ -23,11 +23,11 @@ import { shrineHealAmount } from '../../engine/encounters.js';
 import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
 import { passiveFlag, resolveCard } from '../../model/registries.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
-import { esc } from '../components/tooltip.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
-import { chargeFlaskDefinition, reallocateFlaskCharges } from '../../model/gracerefill.js';
+import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -87,13 +87,27 @@ function levelDetailHtml(registries, run, attr) {
     ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
 }
 
+/** The partner kind's authored NAME, never its id — a player has never heard of `mana`. */
+function partnerName(registries, kind) {
+  if (!kind) return 'nothing';
+  const def = chargeFlaskDefinition(registries, kind);
+  return (def && def.name) || kind;
+}
+
 export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
   const arm = beatArmer(meta, registries);
-  const hpCharge = chargeFlaskDefinition(registries, 'hp');
-  const manaCharge = chargeFlaskDefinition(registries, 'mana');
+  // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
+  // screen no longer names a charge kind at all. It used to reach for exactly
+  // two by id to build a caption; the plan below hands it however many the
+  // closed set holds, each already carrying its own authored flask.
+  // E10 — "just increment button for each that automatically adjusts the other
+  // flask to keep to the total available." The screen asks the model what it may
+  // offer; every row, every disabled state and every reason below is read off
+  // this plan, and none of them is decided here (model/gracerefill.js).
+  const charge = flaskChargePlan(registries, run.flaskCharges);
   // "also at graces, players should have the option to level up their character
   // (per run) by trading cinders to level up." The screen asks the model what
   // it may offer and prices nothing itself.
@@ -118,9 +132,38 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         <div class="class-pick" id="flask-reallocate">
           <div class="glyph">⚗</div>
           <h3>Reallocate Flask Charges</h3>
-          <p>Fixed capacity ${run.flaskCharges.capacity}: ${flaskIdentityHtml(hpCharge)} ${run.flaskCharges.hp} · ${flaskIdentityHtml(manaCharge)} ${run.flaskCharges.mana}</p>
-          <div class="flask-allocation-controls">
-            ${Array.from({ length: run.flaskCharges.capacity + 1 }, (_, hp) => `<button type="button" data-hp="${hp}">${hp}/${run.flaskCharges.capacity - hp}</button>`).join('')}
+          <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
+               It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
+               two numbers the increment rows below now carry, which is Law 1
+               clause 2 (a number a player reads is a copy nothing syncs) and,
+               measured at 390x844, the thing that pushed the `+` button and the
+               count clean off the right edge of the phone. presentation-matrix
+               went red on "relevant controls remain inside the viewport" and
+               that is how I found it, not by looking. The capacity stays,
+               because it is the one number the rows do NOT say. -->
+          <p>Fixed capacity ${charge.capacity}</p>
+          <div class="flask-increment">
+            ${charge.rows.map((row) => `
+              <div class="flask-increment-row" data-kind="${esc(row.kind)}">
+                <span class="flask-increment-id">${flaskIdentityHtml(row.def)}</span>
+                <!-- THE STEPPER IS ONE UNIT AND WRAPS AS ONE. Read order is the
+                     reading order — "Crimson Flask: − 2 +" — and on a narrow
+                     shape the whole group drops to its own line under the name
+                     instead of the `+` walking off the right edge, which is
+                     what it did when the buttons were loose children of the row
+                     (measured 390x844: 2 controls outside the viewport). Law 5
+                     clause 3: a narrow shape is a different composition. -->
+                <span class="flask-increment-steps">
+                  <button type="button" class="flask-step" data-step="-1" data-kind="${esc(row.kind)}"
+                          data-focusable="true" aria-disabled="${String(!row.canSub)}"
+                          aria-label="One fewer ${esc((row.def && row.def.name) || row.kind)}">−</button>
+                  <b class="flask-increment-count" data-kind="${esc(row.kind)}">${row.count}</b>
+                  <button type="button" class="flask-step" data-step="1" data-kind="${esc(row.kind)}"
+                          data-focusable="true" aria-disabled="${String(!row.canAdd)}"
+                          aria-label="One more ${esc((row.def && row.def.name) || row.kind)}">+</button>
+                </span>
+              </div>`).join('')}
+            <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
         </div>
         <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt">
@@ -147,12 +190,46 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       },
     });
   }
-  app.querySelectorAll('#flask-reallocate [data-hp]').forEach((button) => button.addEventListener('click', () => {
-    const hp = Number(button.dataset.hp);
-    reallocateFlaskCharges(run.flaskCharges, { hp, mana: run.flaskCharges.capacity - hp });
-    if (onReallocate) onReallocate({ ...run.flaskCharges });
-    mountRest(app, { registries, run, meta, onDone, onReallocate, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
-  }));
+  // E10, THE WIRING. Every button is `aria-disabled`, never `disabled`, and the
+  // reason is why: a `disabled` button fires no pointer events in Chrome, so a
+  // tooltip on it never opens and a player is told nothing about why the control
+  // will not move. That is the same trap the flask action menu carried until
+  // 2026-08-17, found by photographing it. The guard is in the handler.
+  //
+  // ONE MOVE, AND THE MODEL PICKS THE PARTNER. The screen never names hp or mana
+  // and never computes a complement — it hands the model a kind and a direction,
+  // and moveFlaskCharge composes the whole allocation through the one validator.
+  // That is what makes "automatically adjusts the other flask" true for a third
+  // charge kind that does not exist yet.
+  for (const button of app.querySelectorAll('#flask-reallocate .flask-step')) {
+    const kind = button.dataset.kind;
+    const step = Number(button.dataset.step);
+    const row = charge.rows.find((r) => r.kind === kind);
+    if (!row) continue;
+    const allowed = step > 0 ? row.canAdd : row.canSub;
+    const partner = step > 0 ? row.donor : row.receiver;
+    const reason = step > 0 ? row.addReason : row.subReason;
+    // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
+    // cursor — the native `title=` a mouse gets is not the whole audience.
+    // The ENABLED tooltip names the partner, because "the other flask" is the
+    // half of his sentence a player cannot see until it moves.
+    attachTooltip(button, () => (allowed
+      ? `<div class="tt-title">${esc(step > 0 ? 'One more' : 'One fewer')} ${esc((row.def && row.def.name) || kind)}</div>`
+        + esc(`Takes the charge ${step > 0 ? 'from' : 'to'} ${partnerName(registries, partner)}. The total stays ${charge.capacity}.`)
+      : `<div class="tt-title">Cannot move</div>${esc(reason || '')}`));
+    if (!allowed) continue;
+    button.addEventListener('click', () => {
+      moveFlaskCharge(registries, run.flaskCharges,
+        step > 0 ? { from: partner, to: kind } : { from: kind, to: partner });
+      sfx.play('shrine');
+      if (onReallocate) onReallocate({ ...run.flaskCharges });
+      // RE-MOUNT, the shape this panel already used and the shape Vira's level
+      // panel adopted from it: the counts moved, and so did which buttons are
+      // legal. A control that redrew only its own number would leave the OTHER
+      // row's `+` looking pressable at the moment it stopped being.
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+    });
+  }
   // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
   // model/secondbeat.js and the machinery picks the form from its
   // characteristics. This screen names the action and hands over the commit,
