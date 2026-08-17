@@ -88,6 +88,25 @@
 //      layout's own row-gap, read per host. The plant is P17 (Bjorn's revert)
 //      and it is red at both shapes; P15 and P16 carry the two edges of the
 //      set, first row and last, on both arms of the predicate.
+//      WIDENED AGAIN 2026-08-17 (MR-303) FROM ONE COMPOSITION TO FOUR, and
+//      the finding behind it is Bjorn's, not mine: gating MR-301 he measured
+//      that this pass read whatever state the run left it in, that the state
+//      it left was ALWAYS the arrival composition — section 6's pick calls
+//      renderPortrait(), which remounts both brief hosts and shuts the
+//      expander — and that the count `14` therefore meant 9+4+1 on a clean run
+//      and 10+4+0 under P8. TWO DIFFERENT SCREENS READING AS ONE NUMBER, and
+//      the expanded one — the state the renderer's own comment says RE-WRAPS
+//      THE HOST, which is the state a placement regression shows in worst —
+//      was never measured at all. The pass now DRIVES every expander by
+//      CLICKING it and measures four compositions: collapsed, expanded, and
+//      the two transitions where the panel is already open while the expander
+//      moves under it. AND THE COMPOSITION IS CHECKED AGAINST THE CONTENT
+//      DOOR — every key the tables name must be measured in the state that
+//      holds it — which is what makes a count unambiguous and is also the
+//      floor the PARTIAL HOST LOSS never had (Bjorn's second finding at
+//      5597166: four faces of a host Sunna fixed left the gate at exit 0).
+//      P18 is the expanded state's own plant, red ONLY there; P19 is the
+//      partial loss, red only on the key floor.
 //
 // DOOR — stated here and printed in the run's own output (the instrument
 // rule's same-door clause, commons/development.md). THE EXPECTATION and THE
@@ -223,50 +242,157 @@ const ON_GLASS = `const onGlass = (el) => !!el
 // viewport, and nothing about scroll — a panel correctly anchored to a face
 // 900 px down the page is still a panel a player must scroll to find, and that
 // is MR-172's debt, not this measure's claim.
+//
+// FOUR STATES, NOT ONE (MR-303, 2026-08-17) — AND THE PASS NOW SETS THE STATE
+// RATHER THAN INHERITING IT. Until this commit the anchor read "the screen as
+// this run left it", which is two defects wearing one number:
+//
+//   1. THE EXPANDED COMPOSITION WAS NEVER MEASURED. Section 3 opens the
+//      expander; section 6 PICKS a tint; a pick calls renderPortrait(), which
+//      re-runs mountDisclosure() on both brief hosts (customize.js:145-146) —
+//      a full remount that shuts it again. So \`derived:stamina\`, a face a
+//      player reaches in one tap, was never anchor-measured on a clean run
+//      (Bjorn, gating MR-301). And the expanded composition is the one the
+//      renderer's own comment says RE-WRAPS THE HOST, which is the state a
+//      placement regression shows in worst: measured here, at 390x844,
+//      expanding moves \`.disc-more\` off the derived row ONTO A LINE OF ITS
+//      OWN — a line that exists in no other state.
+//   2. THE NUMBER WAS AMBIGUOUS. A clean run read \`14\` as 9 + 4 + 1; under
+//      P8 there is no fold, so no pick, so no remount, and the SAME LINE read
+//      \`14\` as 10 + 4 + 0. Two different screens, one number, and nobody
+//      could tell them apart from the output. A count that reads the same for
+//      two compositions is a green that cannot be trusted.
+//
+// So the pass DRIVES the expander instead of reading whatever earlier sections
+// left, and it does it by CLICKING the control a player clicks. Four states:
+//
+//   collapsed         every expander shut  — the arrival composition
+//   expanded          every expander open  — the composition a tap reaches
+//   after expanding   the panel is opened FIRST and the expander opened UNDER
+//                     IT. This is the player's own path and the only one that
+//                     exercises \`if (openKey) open(openKey)\` — the line the
+//                     renderer added because "the expander re-wraps the host,
+//                     so an open panel's line is no longer the line it was
+//                     placed for".
+//   after collapsing  the same, in the other direction. A face the collapse
+//                     REMOVES is skipped, not failed: that is the expander
+//                     doing its job.
+//
+// AND THE COMPOSITION IS CHECKED AGAINST THE CONTENT DOOR, NOT COUNTED (the
+// second assertion below). Every key the tables name must appear in the state
+// that holds it. That is what kills the two 14s — a missing entry is named
+// instead of shrinking a denominator — and it is also the floor the PARTIAL
+// HOST LOSS never had: Bjorn reclassed \`#cz-brief-armaments\` off \`.cz-disc\`
+// at 5597166 and this tool printed PASS, 10/10 across 2 hosts, exit 0, with
+// four faces of a host Sunna fixed gone in silence. A count cannot see that; a
+// named key set can, and it costs no new door.
+const ANCHOR_STATES = ['collapsed', 'expanded', 'after expanding', 'after collapsing'];
 const ANCHOR_READ = `(() => {
-    const out = [];
-    for (const host of document.querySelectorAll('.cz-disc')) {
-      const box = host.querySelector('.disc-faces');
-      const panel = host.querySelector('.disc-reveal');
-      if (!box || !panel) continue;
-      // \`.disc-more\` is excluded and it is not a convenience: it is not an
-      // entry, it has no panel, and clicking it toggles the expander — which
-      // would leave the screen in a different state than the run measured.
-      const faces = [...box.children].filter((el) => el.classList.contains('disc-face')
-        && !el.classList.contains('disc-more'));
-      const tol = parseFloat(getComputedStyle(box).rowGap) || 0;
-      for (const face of faces) {
-        face.click();
-        const open = !panel.hidden && panel.getClientRects().length > 0;
-        const f = face.getBoundingClientRect();
-        const p = panel.getBoundingClientRect();
-        const gap = p.top - f.bottom;
-        const between = open ? faces.filter((el) => el !== face).filter((el) => {
-          const r = el.getBoundingClientRect();
-          return r.bottom > f.bottom + 0.5 && r.top < p.top - 0.5;
-        }).map((el) => el.dataset.face) : [];
-        out.push({
-          // THE HOST IS CARRIED SINCE MR-301, because the gate now covers every
-          // host on this screen and a bare key does not say which one it came
-          // from. \`#cz-brief-stats\` and \`#cz-brief-armaments\` are the two
-          // Sunna fixed; \`.cz-fields\` is the fold's. A host with no id reports
-          // its class rather than going anonymous — an unnamed row in a red is
-          // a row nobody can find.
-          host: host.id ? '#' + host.id
-            : ((host.parentElement && host.parentElement.className
-              ? '.' + host.parentElement.className.trim().split(/\\s+/).join('.') + ' > ' : '')
-              + '.' + (host.className || 'cz-disc').trim().split(/\\s+/).join('.')),
-          key: face.dataset.face || '(unkeyed)',
-          open,
-          gap: Math.round(gap * 100) / 100,
-          tol,
-          anchored: open && gap >= -0.5 && gap <= tol + 1,
-          between,
-        });
-        face.click(); // put the screen back the way this pass found it
+    // THE HOST LABEL IS CARRIED SINCE MR-301, because the gate covers every
+    // host on this screen and a bare key does not say which one it came from.
+    // \`#cz-brief-stats\` and \`#cz-brief-armaments\` are the two Sunna fixed;
+    // \`.cz-fields\` is the fold's. A host with no id reports its class rather
+    // than going anonymous — an unnamed row in a red is a row nobody can find.
+    const label = (host) => (host.id ? '#' + host.id
+      : ((host.parentElement && host.parentElement.className
+        ? '.' + host.parentElement.className.trim().split(/\\s+/).join('.') + ' > ' : '')
+        + '.' + (host.className || 'cz-disc').trim().split(/\\s+/).join('.')));
+    const hosts = () => [...document.querySelectorAll('.cz-disc')]
+      .filter((host) => host.querySelector('.disc-faces') && host.querySelector('.disc-reveal'));
+    // \`.disc-more\` is excluded from the FACES and it is not a convenience: it
+    // is not an entry and it has no panel. It is emphatically NOT excluded
+    // from the layout — it is a line-mate like any other, and the plant below
+    // that forgets so is red only in the state where it sits on its own line.
+    const facesOf = (box) => [...box.children].filter((el) => el.classList.contains('disc-face')
+      && !el.classList.contains('disc-more'));
+    const moreOf = (host) => host.querySelector('.disc-more');
+    // THE STATE IS SET BY CLICKING THE CONTROL, never by writing an attribute:
+    // an expander driven by \`setAttribute\` would leave the faces undrawn and
+    // measure a composition no player can reach.
+    const setMore = (host, want) => {
+      const more = moreOf(host);
+      if (!more) return null;
+      if ((more.getAttribute('aria-expanded') === 'true') !== want) more.click();
+      return more.getAttribute('aria-expanded') === 'true';
+    };
+    const setAll = (want) => hosts().map((host) => setMore(host, want)).filter((v) => v !== null);
+    const reading = (state, host, box, panel, face, tol) => {
+      const open = !panel.hidden && panel.getClientRects().length > 0;
+      const f = face.getBoundingClientRect();
+      const p = panel.getBoundingClientRect();
+      const gap = p.top - f.bottom;
+      const between = open ? facesOf(box).filter((el) => el !== face).filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.bottom > f.bottom + 0.5 && r.top < p.top - 0.5;
+      }).map((el) => el.dataset.face) : [];
+      return {
+        state,
+        host: label(host),
+        key: face.dataset.face || '(unkeyed)',
+        open,
+        gap: Math.round(gap * 100) / 100,
+        tol,
+        anchored: open && gap >= -0.5 && gap <= tol + 1,
+        between,
+      };
+    };
+    // A STANDING COMPOSITION: put the whole screen into the state, then tap
+    // every face that composition holds.
+    const standing = (state) => {
+      const out = [];
+      for (const host of hosts()) {
+        const box = host.querySelector('.disc-faces');
+        const panel = host.querySelector('.disc-reveal');
+        const tol = parseFloat(getComputedStyle(box).rowGap) || 0;
+        for (const face of facesOf(box)) {
+          face.click();
+          out.push(reading(state, host, box, panel, face, tol));
+          face.click(); // put the host back the way this pass found it
+        }
       }
-    }
-    return out;
+      return out;
+    };
+    // A TRANSITION: open the panel FIRST, then move the expander under it, and
+    // read where the panel ended up. Only hosts that HAVE an expander can make
+    // this move, so hosts without one contribute nothing rather than a
+    // duplicate of \`standing\`.
+    const across = (state, want) => {
+      const out = [];
+      for (const host of hosts()) {
+        if (!moreOf(host)) continue;
+        const box = host.querySelector('.disc-faces');
+        const panel = host.querySelector('.disc-reveal');
+        setMore(host, !want);
+        const tol = parseFloat(getComputedStyle(box).rowGap) || 0;
+        for (const key of facesOf(box).map((el) => el.dataset.face)) {
+          const sel = '[data-face=' + JSON.stringify(key) + ']';
+          const before = box.querySelector(sel);
+          if (before) before.click();
+          setMore(host, want);
+          const after = box.querySelector(sel);
+          // A face the transition REMOVES is not a finding — it is the
+          // expander doing its job, and \`derived:stamina\` leaves with it.
+          if (after) { out.push(reading(state, host, box, panel, after, tol)); after.click(); }
+          setMore(host, !want);
+        }
+        setMore(host, false);
+      }
+      return out;
+    };
+    const expanders = hosts().filter(moreOf).length;
+    setAll(false);
+    const collapsed = standing('collapsed');
+    const opened = setAll(true).filter(Boolean).length;
+    const expanded = standing('expanded');
+    setAll(false);
+    const afterExpanding = across('after expanding', true);
+    const afterCollapsing = across('after collapsing', false);
+    setAll(false);
+    return {
+      expanders,
+      opened,
+      rows: [...collapsed, ...expanded, ...afterExpanding, ...afterCollapsing],
+    };
   })()`;
 
 // THE ARRIVAL READ for that row. It is a constant so it can be run
@@ -483,8 +609,15 @@ const PLANTS = [
       value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },`,
     to: '    // planted: the extension missed the only one',
     what: 'TINT keeps its old open row — five untitled colour blobs and no name on the glass',
-    expect: 'the roster MR-189 named is not the roster on the glass, BY NAME',
-    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:tint/.test(out),
+    expect: 'the roster MR-189 named is not the roster on the glass, BY NAME — and the anchor\'s content-door floor names the same missing key in both compositions',
+    // THE SECOND CLAUSE IS THE FOLD-ROSTER FLOOR, KEPT WATCHED ACROSS A
+    // REWRITE (MR-303). Until today that floor printed `NO REFERENT: 0/1 named
+    // fold row(s) measured` and Bjorn found it already red here with nobody
+    // saying so. The floor is now one case of the content-door key set, so the
+    // same plant reddens it BY NAME instead of by a ratio — asserted here so
+    // the coverage is not silently lost in the move.
+    mustRed: (out) => /FAIL every picker MR-151 named is folded.*pick:tint/.test(out)
+      && /FAIL every entry the tables name is anchor-measured in the composition that holds it — 2 never measured: collapsed pick:tint · expanded pick:tint/.test(out),
     mustStay: (out) => /PASS no other row of \.cz-fields is folded/.test(out),
   },
   {
@@ -620,7 +753,7 @@ const PLANTS = [
     from: '  flex: 1 1 100%; width: 100%; padding: 0.8rem 1rem;',
     to: '  flex: 1 1 100%; width: 100%; margin-top: 12rem; padding: 0.8rem 1rem; /* planted: the panel opens a long way under the face that was tapped */',
     what: 'the panel keeps its place in the flow and opens 113.39 px below its face instead of 5.39 — THE SAME ARM AS THE DEFECT CONSTANTINE FOUND, whose wrapped-row gaps read 55, 104 and 154 px against a 6 px row-gap',
-    expect: "EVERY panel on the screen is measured against the layout's OWN row-gap and found adrift below its face — 14 of 14, THE FIRST ROW AND THE LAST",
+    expect: "EVERY panel on the screen is measured against the layout's OWN row-gap and found adrift below its face — 47 of 47, THE FIRST ROW AND THE LAST, in all four compositions",
     // RE-AIMED 2026-08-17 (MR-301) with the widening. The sentence this plant
     // reddens changed name, so the regex had to move or it would have matched
     // nothing and called it a pass — the corpus's own version of a plant with
@@ -629,7 +762,11 @@ const PLANTS = [
     // FIRST row of the screen (`pick:tint`, the fold) and the LAST
     // (`relic:forsakenMedallion`) in the same run, by name. P17 below cannot
     // redden either of those, by construction, and says so.
-    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 14\/14 adrift:/.test(out)
+    // RE-AIMED 2026-08-17 (MR-303) — SAME SITE, SAME NUMBER, NEW DENOMINATOR.
+    // The gate now measures four compositions instead of the one the run
+    // happened to leave, so 14/14 became 47/47. The per-row assertions are
+    // untouched and still carry the two edges of the set.
+    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 47\/47 adrift/.test(out)
       && /pick:tint: panel opens 113\.39 px below its face/.test(out)
       && /relic:forsakenMedallion: panel opens 113\.39 px below its face/.test(out),
     // The fold's own sentences must survive: a plant that also blanked the
@@ -646,7 +783,7 @@ const PLANTS = [
     from: '.disc-more { border-style: dashed; }',
     to: '.disc-more { border-style: dashed; }\n.disc-reveal { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; } /* planted: the bottom sheet — his words, as a stylesheet */',
     what: "the panel leaves the flow and sits at the bottom of the viewport — literally 'it shows up at hte bottom', as a plausible mis-fix rather than as prose",
-    expect: 'every panel is measured ABOVE its own face (a negative gap) and goes red — the other arm of the predicate, at both edges of the set',
+    expect: 'every panel is measured ABOVE its own face (a negative gap) and goes red — the other arm of the predicate, 47 of 47, at both edges of the set and in all four compositions',
     // RE-AIMED 2026-08-17 (MR-301), same reason as P15, and it carries the two
     // edges of the set on the OTHER arm of the predicate.
     //
@@ -658,7 +795,8 @@ const PLANTS = [
     // face of a taller viewport, adrift by distance rather than by sign. Named
     // rather than generalised: this plant's arm at the last row is the
     // negative one at 390x844 and the far-below one at 1200x730.
-    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 14\/14 adrift:/.test(out)
+    // RE-AIMED 2026-08-17 (MR-303) — same site, same arm, new denominator.
+    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 47\/47 adrift/.test(out)
       && /pick:tint: panel opens -\d+(\.\d+)? px below its face/.test(out)
       && /relic:forsakenMedallion: panel opens -\d+(\.\d+)? px below its face/.test(out),
     // AND THE PART THIS PLANT IS EVIDENCE OF: a bottom-sheet panel passes
@@ -708,10 +846,18 @@ const PLANTS = [
     from: '    faceBox.insertBefore(panel, next || null);',
     to: '    faceBox.appendChild(panel); // planted: the pre-fix placement — the panel goes last, under the whole wrapped row',
     what: "the one-line revert of Sunna's fix at 50ebb39 — the panel is appended after every face instead of after the tapped face's line, which is the defect Constantine reported on the build",
-    expect: '8 of 14 faces at 390x844 are measured adrift, naming the wrapped rows they opened past — the exact pre-fix reading',
-    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 8\/14 adrift:/.test(out)
-      && /#cz-brief-stats attribute:strength: panel opens 54\.78 px below its face/.test(out)
-      && /#cz-brief-armaments armament:rightHand:straightSword: panel opens 153\.56 px below its face/.test(out),
+    expect: '35 of 47 readings at 390x844 are measured adrift — 8 of 14 in the ARRIVAL composition, the exact pre-fix reading, and the rest in the three states MR-303 added',
+    // RE-AIMED 2026-08-17 (MR-303). The count moved 8/14 -> 35/47 because the
+    // pass now measures four compositions; the arrival arm is unchanged and is
+    // pinned by the `collapsed 8/14` sub-count below, which is the number
+    // Bjorn measured on the glass. THIS PLANT REDDENS ALL FOUR STATES, which
+    // is what makes the three new ones instruments rather than decoration.
+    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 35\/47 adrift/.test(out)
+      && /collapsed 6\/14 /.test(out) && /expanded 2\/15 /.test(out)
+      && /after expanding 0\/9 /.test(out) && /after collapsing 4\/9 /.test(out)
+      && /collapsed #cz-brief-stats attribute:strength: panel opens 54\.78 px below its face/.test(out)
+      && /collapsed #cz-brief-armaments armament:rightHand:straightSword: panel opens 153\.56 px below its face/.test(out)
+      && /expanded #cz-brief-stats derived:stamina: panel opens 54\.78 px below its face/.test(out),
     // THE WHOLE POINT OF THIS PLANT IS WHAT STAYS GREEN. Every other sentence
     // in this tool passes on a screen whose panels open under the wrong face —
     // that is why the anchor had to be added, and why widening it was not
@@ -736,6 +882,90 @@ const PLANTS = [
       && /PASS every face and armament tile clears the/.test(out)
       && /PASS horizontal travel is ZERO/.test(out)
       && !/pick:tint: panel opens/.test(out),
+  },
+  // --- MR-303, added 2026-08-17 with the four states above. THIS IS THE PLANT
+  // FOR THE STATE THE OLD GATE COULD NOT REACH, and it is chosen so that the
+  // ENTIRE OLD GATE STAYS GREEN under it: `collapsed 14/14`, every host, both
+  // arms, exit-0 by every measure this tool carried until today.
+  //
+  // WHY THIS EDIT. `placeUnderRow` asks which sibling starts a LATER LINE, and
+  // `.disc-more` is one of the siblings it asks about. This tool excludes the
+  // expander from the FACES — it is not an entry and has no panel — and the
+  // exclusion is one line above the one that must NOT copy it. A hand tidying
+  // this file mirrors the filter into `kin` in good faith, and the screen goes
+  // on looking right everywhere except in the one composition where the
+  // expander sits on a line of its own.
+  //
+  // AND THAT COMPOSITION EXISTS ONLY WHEN EXPANDED, AND ONLY ON A PHONE.
+  // Measured here, 390x844: collapsed, `.disc-more` shares the derived row
+  // (`derived:hp, mana, energy, draw, +1 more`), so it is never the sibling
+  // that starts a later line and dropping it changes nothing. Expanded,
+  // `derived:stamina` takes the fifth slot and `+1 more` wraps ALONE onto a
+  // third line — so for every face of the derived row the expander IS the
+  // answer, and without it the panel is appended past that line: 54.78 px
+  // adrift against a 6 px row-gap, the same distance as the defect
+  // Constantine reported on the build.
+  //
+  // IT IS GREEN AT 1200x730 AND THAT IS THE EVIDENCE, NOT A GAP. Watched by
+  // hand at this ref, same door: 47/47 anchored, exit 0. At the wide shape
+  // `+1 more` still shares the derived row when expanded, so the third line
+  // never forms. A defect that exists on one shape and not the other is what
+  // the file's own comment on placeUnderRow warns about — "will be wrong on
+  // the shape nobody photographed" — and here the phone is the shape the
+  // corpus runs. Do not read this plant's green at 1200 as a weaker red.
+  {
+    name: 'P18 the expander stops counting as a line-mate',
+    file: 'src/ui/components/disclosure.js',
+    from: '    const kin = [...faceBox.children].filter((el) => el !== panel);',
+    to: "    const kin = [...faceBox.children].filter((el) => el !== panel && !el.classList.contains('disc-more')); // planted: the expander is not an entry, so it is not a line-mate either",
+    what: 'placeUnderRow stops treating `.disc-more` as a sibling that can start a later line — the same exclusion this tool makes one line above, copied into the one place it must not go',
+    expect: 'the EXPANDED composition goes red where the expander wrapped onto its own line, and the arrival composition stays 14/14 — the state MR-301 could not see, and only that state',
+    mustRed: (out) => /FAIL every panel on this screen opens UNDER ITS OWN FACE — 9\/47 adrift/.test(out)
+      && /expanded #cz-brief-stats derived:stamina: panel opens 54\.78 px below its face/.test(out)
+      && /after expanding #cz-brief-stats derived:hp: panel opens 54\.78 px below its face/.test(out),
+    // THE WHOLE POINT OF THIS PLANT IS THE FIRST TWO OF THESE. The arrival
+    // composition — every face of every host, the entire gate as it stood at
+    // 5597166 — is untouched, and so is the content-door floor. If a future
+    // edit reddens `collapsed` under this plant, this plant has stopped being
+    // an expanded-state defect and the sentence it is cited under is wrong.
+    mustStay: (out) => /collapsed 14\/14 /.test(out)
+      && /PASS every entry the tables name is anchor-measured/.test(out)
+      && /PASS every face and armament tile clears the/.test(out)
+      && /PASS horizontal travel is ZERO/.test(out)
+      && /PASS the expander reveals exactly the table's reveal-tier entries/.test(out),
+  },
+  // --- MR-303's second, and it is BJORN'S FINDING made re-runnable. He
+  // measured it by hand while gating MR-301 and correctly did not patch what
+  // he was gating: `.cz-disc` is a SELECTOR, so a host that stops matching it
+  // is skipped in ANCHOR_READ and never reaches the denominator. Four faces of
+  // a host Sunna fixed left the gate in silence at `PASS ... 10/10 anchored
+  // across 2 host(s)`, exit 0.
+  //
+  // THE INLINE `width:100%` IS THE PLANT KEEPING ITS OWN PROMISE. `.cz-disc`
+  // has exactly one rule in the stylesheet (`styles/ui.css:937`), and a plant
+  // may edit ONE file. Carrying that one declaration inline keeps the layout
+  // where it was, so this goes red for the set the gate measured and NOT for a
+  // geometry change — which is the difference between a known-bad and a
+  // crater. Watched: every other sentence in the tool stays green.
+  {
+    name: 'P19 a host quietly leaves the gated set',
+    file: 'src/ui/screens/customize.js',
+    from: '              <div id="cz-brief-armaments" class="cz-disc"></div>',
+    to: '              <div id="cz-brief-armaments" class="cz-group" style="width:100%"></div><!-- planted: the host stops matching the gate\'s selector; the one .cz-disc rule is carried inline so the layout does not move -->',
+    what: 'the armaments host is reclassed off `.cz-disc` with its one CSS rule carried inline — the screen is unchanged on the glass and four faces leave the measured set',
+    expect: 'the content-door floor names the four armament keys as never measured, in both compositions, while the anchor predicate itself stays true of what remained',
+    mustRed: (out) => /FAIL every entry the tables name is anchor-measured in the composition that holds it — 8 never measured/.test(out)
+      && /collapsed armament:rightHand:straightSword/.test(out)
+      && /collapsed relic:forsakenMedallion/.test(out)
+      && /expanded relic:forsakenMedallion/.test(out),
+    // AND THE PART THIS PLANT IS EVIDENCE OF: the anchor sentence stays PASS,
+    // at a quietly smaller 39/39. That green is honest — every panel that was
+    // measured did open under its face — and it is exactly why a COUNT could
+    // never have caught this and a NAMED KEY SET does.
+    mustStay: (out) => /PASS every panel on this screen opens UNDER ITS OWN FACE — 39\/39 anchored/.test(out)
+      && /PASS every face and armament tile clears the/.test(out)
+      && /PASS the starting relic is named on the screen/.test(out)
+      && /PASS horizontal travel is ZERO/.test(out),
   },
 ];
 
@@ -866,6 +1096,10 @@ async function selftest() {
   console.log('  THE TWO EDGES OF THE GATED SET by name — the first row of the screen (pick:tint)');
   console.log('  and the last (relic:forsakenMedallion) — because they sit on `.disc-reveal`, which');
   console.log('  every host has, and take all 14 faces down together.');
+  console.log('  RE-AIMED ONCE MORE AT MR-303 (same day): the denominator moved 14 -> 47 when the');
+  console.log('  pass began measuring four compositions instead of the one the run left. Only the');
+  console.log('  COUNT moved — both plants\' sites, arms and per-row numbers are untouched, and the');
+  console.log('  two edges of the set are still asserted by name in each.');
   console.log('  P17 IS THE PLANT THE WIDENING WAS FOR, and it is Bjorn\'s revert, not a fixture:');
   console.log('  one line of src/ui/components/disclosure.js, insertBefore -> appendChild, the');
   console.log('  literal pre-fix placement and exactly the edit a future hand makes while tidying.');
@@ -880,15 +1114,32 @@ async function selftest() {
   console.log('  onto the entry key. A negation that stops matching does not go red — it goes green');
   console.log('  and stays green. One extra class on `.cz-fields` deleted its referent entirely,');
   console.log('  measured through the same door. Read every `!` in this corpus that way.');
-  console.log('  THE TWO DENOMINATOR FLOORS ADDED AT MR-301, and what has actually been watched:');
-  console.log('  the FOLD-ROSTER floor goes red in this corpus already — P8 removes the fold and the');
-  console.log('  anchor sentence prints `NO REFERENT: 0/1 named fold row(s) measured`. The');
-  console.log('  NO-FACE-AT-ALL floor carries NO corpus row; watched red by hand 2026-08-17 (Bjorn),');
-  console.log('  same door, file bytes in a disposable copy — `.disc-reveal` renamed so no host');
-  console.log('  carries a panel: `0/0 anchored across 0 host(s): nothing · NO REFERENT: no face on');
-  console.log('  this screen was measured`, exit 1. It is not a corpus row because that edit craters');
-  console.log('  six sentences at once, which is the shape this corpus refuses. NEITHER FLOOR SEES A');
-  console.log('  PARTIAL LOSS — one host leaving the set is exit 0; see the boundary of a full run.');
+  console.log('  THE DENOMINATOR FLOORS, REPLACED AT MR-303 BY ONE DERIVED FROM THE CONTENT DOOR,');
+  console.log('  and what has actually been watched. The old pair — a FOLD-ROSTER ratio and a');
+  console.log('  NO-FACE-AT-ALL guard — could not see a PARTIAL loss, which Bjorn measured at');
+  console.log('  5597166 going green at exit 0. Both are now one requirement: every key the tables');
+  console.log('  name is measured in the composition that holds it. WATCHED: P8 (the fold never');
+  console.log('  folds) prints `2 never measured: collapsed pick:tint · expanded pick:tint` — the');
+  console.log('  fold-roster floor, kept red across the rewrite and asserted in P8 itself so the');
+  console.log('  coverage cannot be lost in a move. P19 (the armaments host reclassed off `.cz-disc`,');
+  console.log('  its one layout rule carried inline) prints 8 keys and exit 1 while the anchor');
+  console.log('  sentence stays PASS at 39/39 — the partial loss, closed. AND THE EXPANDER FLOOR,');
+  console.log('  watched by hand 2026-08-17 (Vira), same door, not a corpus row because it craters');
+  console.log('  section 6: an expander drawn with its count right and no body prints `46/46');
+  console.log('  anchored ... NO REFERENT: 0/1 expander(s) opened` beside `1 never measured: expanded');
+  console.log('  derived:stamina`, exit 1 — WITHOUT those two floors that screen reads 46/46 anchored');
+  console.log('  and green. The `no face on this screen was measured` clause is `unknown`, not green:');
+  console.log('  every road to it dies earlier (exit 2 NOTHING RAN, or section 6 throwing on a null');
+  console.log('  host). Full numbers in the boundary of a clean run.');
+  console.log('  P18 AND P19 (MR-303) ARE THE TWO THE WIDENING WAS FOR, and each is chosen so the');
+  console.log('  OTHER sentence survives it. P18 drops `.disc-more` from placeUnderRow\'s line-mates');
+  console.log('  — the same exclusion this tool makes for FACES one line above, copied into the one');
+  console.log('  place it must not go — and reddens the EXPANDED and AFTER EXPANDING states only,');
+  console.log('  9/47 at 54.78 px, with `collapsed 14/14` green: the entire gate as it stood at');
+  console.log('  5597166 cannot see it. It is GREEN at 1200x730, watched by hand, because `+1 more`');
+  console.log('  only wraps onto a line of its own at 390 — a shape-dependent defect, and the corpus');
+  console.log('  runs the shape that catches this one. P19 goes red on the KEY FLOOR alone while the');
+  console.log('  anchor prints a smaller, honest green, which is the difference a count cannot make.');
   console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
   console.log('  watched to fail — it carries no plant here.');
   process.exit(fails ? 1 : 0);
@@ -1177,61 +1428,97 @@ async function main() {
       + `${axis.scrollers.length ? axis.scrollers.map((row) => `${row.sel} ${row.travel}px`).join(' · ') : 'none scroll sideways'}`
       + ` (document ${axis.doc} px)`);
 
-    // ---- 7. the anchor (MR-287) -------------------------------------------
-    // LAST ON PURPOSE. This pass CLICKS every face on the screen and clicks it
-    // shut again; running it earlier would hand sections 1-6 a screen this
-    // pass had touched. It therefore reads the screen AS THIS RUN LEFT IT.
+    // ---- 7. the anchor (MR-287, four states since MR-303) -----------------
+    // LAST ON PURPOSE. This pass CLICKS every face on the screen, in four
+    // compositions, and puts each host back; running it earlier would hand
+    // sections 1-6 a screen this pass had touched.
     //
-    // CORRECTED 2026-08-17 (Bjorn, gating MR-301). This comment claimed the
-    // brief hosts carry the expander's extra face here and that the face is
-    // therefore inside the gate. MEASURED AND FALSE: section 3 opens the
-    // expander, section 6 PICKS a tint, and a pick calls renderPortrait(),
-    // which re-runs mountDisclosure() on both brief hosts — a remount that
-    // shuts the expander. At this line aria-expanded is FALSE, the stats host
-    // holds its 9 face-tier faces, and `derived:stamina` is not measured by
-    // this pass at all. 14 is the ARRIVAL composition, 9 + 4 + 1. Under P8 —
-    // no fold, so no pick, so no remount — the same line reads 10 + 4 + 0,
-    // which is also 14, which is why two different screens have been reading
-    // as one number. THE EXPANDED STATE IS UNGATED; see the boundary.
-    // `.cz-fields` is untouched by the expander either way.
-    const anchors = await ev(ANCHOR_READ);
-    const foldKeys = new Set(FOLDED.map((row) => row.key));
-    const foldAnchors = anchors.filter((row) => foldKeys.has(row.key));
-    // WIDENED 2026-08-17 (MR-301) — EVERY face on this screen, not one row.
-    // The set is `anchors`, which is every `.disc-face` of every `.cz-disc`:
-    // `.cz-fields` (the fold), `#cz-brief-stats` and `#cz-brief-armaments`.
-    // It is deliberately NOT a list of hosts — a fourth `.cz-disc` appearing
-    // on this screen is gated the day it is mounted, with nothing to edit
-    // here.
-    //
-    // CORRECTED 2026-08-17 (Bjorn, gating MR-301). This comment claimed a host
-    // that DISAPPEARS shows up in the denominator floor below rather than as a
-    // quietly smaller green. MEASURED AND FALSE: `.cz-disc` is a selector, and
-    // a host that stops matching it — or loses its `.disc-reveal` — is
-    // `continue`d in ANCHOR_READ and never reaches the denominator.
-    // `#cz-brief-armaments` reclassed to `.cz-group`, one CSS rule followed,
-    // layout unchanged: PASS, 10/10 across 2 hosts, exit 0. The floors below
-    // are TOTAL loss and the FOLD ROSTER. The PARTIAL loss has no floor, and
-    // giving it one means deriving the denominator from the content door
-    // (`want`), which is a predicate change and is not made here.
+    // IT SETS THE STATE, IT DOES NOT INHERIT ONE (MR-303, 2026-08-17). Until
+    // this commit the comment here said the brief hosts carry the expander's
+    // extra face by this line. Bjorn measured that FALSE while gating MR-301:
+    // section 6's pick calls renderPortrait(), which remounts both hosts and
+    // shuts the expander, so `derived:stamina` was never measured — and the
+    // `14` this line printed meant 9 + 4 + 1 on a clean run and 10 + 4 + 0
+    // under P8. The fix is not a better comment: the pass now drives every
+    // expander itself, by clicking it, and reports each composition by name.
+    // See ANCHOR_STATES above for what the four are and why the transitions
+    // are separate from the standing states.
+    const anchor = await ev(ANCHOR_READ);
+    const anchors = anchor.rows;
+    // The set is every `.disc-face` of every `.cz-disc` — `.cz-fields` (the
+    // fold), `#cz-brief-stats` and `#cz-brief-armaments` today. It is
+    // deliberately NOT a list of hosts: a fourth `.cz-disc` is measured the
+    // day it mounts, with nothing to edit here. What the door-derived floor
+    // below adds is the other direction — a host that LEAVES the set.
     const adrift = anchors.filter((row) => !row.anchored);
-    const hosts = [...new Set(anchors.map((row) => row.host))];
-    const perHost = hosts.map((h) => {
-      const rows = anchors.filter((row) => row.host === h);
-      return `${h} ${rows.filter((row) => row.anchored).length}/${rows.length}`;
-    }).join(' · ');
-    const say = (row) => `${row.host} ${row.key}: ${row.open ? `panel opens ${row.gap} px below its face (one row-gap is ${row.tol} px)` : 'the panel did not open at all'}`
+    // The reference length is printed ONCE PER HOST rather than on all 47
+    // rows: it is the same number every time and a failure that repeats it is
+    // a wall a tired reader skips. It is still per host, because that is what
+    // the predicate reads.
+    const tolsText = [...new Set(anchors.map((row) => `${row.host} ${row.tol} px`))].join(' · ');
+    const say = (row) => `${row.state} ${row.host} ${row.key}: ${row.open ? `panel opens ${row.gap} px below its face` : 'the panel did not open at all'}`
       + (row.between.length ? `, past ${row.between.length} other face(s): ${row.between.join(', ')}` : '');
-    // THREE THINGS, AND THE LAST TWO ARE DENOMINATOR FLOORS. An empty result
-    // is never a zero (my own failure mode 5, identity card): a screen that
-    // mounted no disclosure at all, or a roster row that stopped being drawn,
-    // would otherwise satisfy `no face is adrift` by having no faces.
-    ok(adrift.length === 0 && anchors.length > 0 && foldAnchors.length === FOLDED.length,
+    // PRINTED ON BOTH BRANCHES, and that is the point of splitting by state:
+    // `9/47 adrift` does not say WHICH composition broke, and the answer is
+    // the finding. Under P18 this line reads `collapsed 14/14` beside
+    // `expanded 10/15` — the whole of the old gate green, and the state it
+    // could not see, red.
+    const perState = ANCHOR_STATES.map((state) => {
+      const rows = anchors.filter((row) => row.state === state);
+      const hosts = [...new Set(rows.map((row) => row.host))];
+      return `${state} ${rows.filter((row) => row.anchored).length}/${rows.length}`
+        + (rows.length ? ` [${hosts.map((h) => {
+          const kin = rows.filter((row) => row.host === h);
+          return `${h} ${kin.filter((row) => row.anchored).length}/${kin.length}`;
+        }).join(' · ')}]` : '');
+    }).join(' · ');
+    // THE FLOORS, AND AN EMPTY RESULT IS NEVER A ZERO (my failure mode 5,
+    // identity card). `no face is adrift` is satisfied by a screen with no
+    // faces, by a state nothing was measured in, and by an expander that never
+    // opened. The transitions only exist where the tables put something behind
+    // an expander, so their floor is READ off `want`, never assumed.
+    const wantMore = want.behind.length > 0;
+    const emptyStates = ANCHOR_STATES
+      .filter((state) => !anchors.some((row) => row.state === state))
+      .filter((state) => wantMore || !state.startsWith('after '));
+    const expanderOk = !wantMore || (anchor.expanders > 0 && anchor.opened === anchor.expanders);
+    ok(adrift.length === 0 && anchors.length > 0 && emptyStates.length === 0 && expanderOk,
       `every panel on this screen opens UNDER ITS OWN FACE — `
-      + `${adrift.length ? `${adrift.length}/${anchors.length} adrift: ${adrift.map(say).join(' · ')}`
-        : `${anchors.length}/${anchors.length} anchored across ${hosts.length} host(s): ${perHost || 'nothing'}`}`
+      + `${adrift.length ? `${adrift.length}/${anchors.length} adrift in ${ANCHOR_STATES.length} state(s): ${perState}`
+        + ` · one row-gap per host: ${tolsText} · ${adrift.map(say).join(' · ')}`
+        : `${anchors.length}/${anchors.length} anchored in ${ANCHOR_STATES.length} state(s): ${perState}`}`
       + `${anchors.length ? '' : ' · NO REFERENT: no face on this screen was measured'}`
-      + `${foldAnchors.length === FOLDED.length ? '' : ` · NO REFERENT: ${foldAnchors.length}/${FOLDED.length} named fold row(s) measured`}`);
+      + `${emptyStates.length ? ` · NO REFERENT: nothing was measured ${emptyStates.join(' or ')}` : ''}`
+      + `${expanderOk ? '' : ` · NO REFERENT: ${anchor.opened}/${anchor.expanders} expander(s) opened while the tables put ${want.behind.length} entr(ies) behind one`}`);
+    // THE COMPOSITION, DERIVED FROM THE CONTENT DOOR RATHER THAN COUNTED.
+    // Bjorn's finding at 5597166: `.cz-disc` is a SELECTOR, so a host that
+    // stops matching it — or loses its `.disc-reveal` — is skipped in
+    // ANCHOR_READ and never reaches the denominator. He reclassed
+    // `#cz-brief-armaments` to `.cz-group` with the one CSS rule followed and
+    // this tool printed PASS, 10/10 across 2 host(s), EXIT 0, with four faces
+    // of a host Sunna fixed gone in silence. A COUNT CANNOT SEE THAT AND A
+    // NAMED SET CAN, so the requirement is by KEY: every entry the tables name
+    // must be measured in the composition that holds it, and a key that is
+    // missing is printed rather than quietly subtracted. It is a FLOOR, not a
+    // census — an extra host adds keys and stays green — which is what keeps
+    // "a fourth `.cz-disc` is gated the day it mounts" true in both
+    // directions. This also retires the old fold-roster NO REFERENT clause:
+    // `pick:tint` is one of the keys, so P8 names it instead of printing 0/1.
+    const doorKeys = (state) => [
+      ...FOLDED.map((row) => row.key),
+      ...want.faces.map((row) => row.key),
+      ...want.armaments.map((row) => row.key),
+      ...(state === 'expanded' ? want.behind.map((row) => row.key) : []),
+    ];
+    const unmeasured = [];
+    for (const state of ['collapsed', 'expanded']) {
+      const seen = new Set(anchors.filter((row) => row.state === state).map((row) => row.key));
+      for (const key of doorKeys(state)) if (!seen.has(key)) unmeasured.push(`${state} ${key}`);
+    }
+    ok(unmeasured.length === 0,
+      `every entry the tables name is anchor-measured in the composition that holds it — `
+      + `${unmeasured.length ? `${unmeasured.length} never measured: ${unmeasured.join(' · ')}`
+        : `${doorKeys('collapsed').length} collapsed, ${doorKeys('expanded').length} expanded, none missing`}`);
 
     await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
   }
@@ -1351,32 +1638,64 @@ async function main() {
   console.log('  relic sentence prints PASS while the relic name is nowhere on the screen. Those');
   console.log('  sentences are named here because a boundary owes the reader the gaps it knows,');
   console.log('  and they are not repaired here because they are not this lane\'s to write.');
-  console.log('  THE ANCHOR (MR-287) IS ONE MEASUREMENT OVER THE WHOLE SCREEN. A panel is UNDER ITS');
-  console.log('  OWN FACE when the space between them is no more than ONE ROW-GAP of that host\'s own');
-  console.log('  `.disc-faces` — the reference length is READ off the layout (6 px here), never');
-  console.log('  typed, plus 1 px for subpixel rounding, and read PER HOST rather than once.');
-  console.log('  Anchored measures 5.39 px at 390x844 and 6 px at 1200x730; adrift measures 55, 104');
-  console.log('  and 154. IT GOES RED FOR EVERY FACE OF EVERY `.cz-disc` — today the fold row in');
-  console.log('  `.cz-fields` plus `#cz-brief-stats` and `#cz-brief-armaments`, 14 faces at both');
-  console.log('  shapes. The set is read off the screen, not listed, so a fourth host is gated the');
-  console.log('  day it mounts.');
+  console.log('  THE ANCHOR (MR-287) IS ONE MEASUREMENT OVER THE WHOLE SCREEN, IN FOUR STATES');
+  console.log('  (MR-303). A panel is UNDER ITS OWN FACE when the space between them is no more');
+  console.log('  than ONE ROW-GAP of that host\'s own `.disc-faces` — the reference length is READ');
+  console.log('  off the layout (6 px here), never typed, plus 1 px for subpixel rounding, and read');
+  console.log('  PER HOST rather than once. Anchored measures 5.39 px at 390x844 and 6 px at');
+  console.log('  1200x730; adrift measures 55, 104 and 154. IT GOES RED FOR EVERY FACE OF EVERY');
+  console.log('  `.cz-disc` — today the fold row in `.cz-fields` plus `#cz-brief-stats` and');
+  console.log('  `#cz-brief-armaments`. The set is read off the screen, not listed, so a fourth host');
+  console.log('  is measured the day it mounts.');
+  console.log('  THE PASS SETS THE STATE; IT NO LONGER INHERITS ONE. Until 2026-08-17 it read "the');
+  console.log('  screen as this run left it", and that was two defects in one number. The EXPANDED');
+  console.log('  composition was never measured at all — section 6\'s pick calls renderPortrait(),');
+  console.log('  which remounts both brief hosts and shuts the expander, so `derived:stamina` was');
+  console.log('  never anchored. And the number was AMBIGUOUS: a clean run\'s `14` meant 9+4+1 while');
+  console.log('  P8\'s `14` meant 10+4+0 — two different screens reading as one count (both found by');
+  console.log('  Bjorn, gating MR-301). Now every expander is DRIVEN, by clicking the control a');
+  console.log('  player clicks, and each composition is reported BY NAME: collapsed 14/14, expanded');
+  console.log('  15/15, after expanding 9/9, after collapsing 9/9 — 47 readings, the same at both');
+  console.log('  shapes. The two transitions open the panel FIRST and move the expander UNDER IT,');
+  console.log('  which is the player\'s own path and the only one that exercises the renderer\'s');
+  console.log('  `if (openKey) open(openKey)` re-place. A face the transition removes is skipped,');
+  console.log('  not failed — that is the expander doing its job.');
   // -------------------------------------------------------------------
-  // CORRECTED 2026-08-17 by Bjorn, gating MR-301. What stood here said: "a
-  // host that VANISHES is caught by the denominator floor beside the
-  // predicate, never by a quietly smaller green." MEASURED, and it is false.
-  // The claim is deleted rather than softened.
+  // CLOSED 2026-08-17 by Vira (MR-303). What stood here was Bjorn's measured
+  // correction — "a host that leaves the set is a quietly smaller green, and
+  // the floors below do not catch it." It was true when he wrote it. It is not
+  // softened and not kept as a warning: the gap is shut, and what replaces it
+  // is the measurement of the shut gap plus what the new floor still cannot see.
   // -------------------------------------------------------------------
-  console.log('  A HOST THAT LEAVES THE SET IS A QUIETLY SMALLER GREEN, AND THE FLOORS BELOW DO NOT');
-  console.log('  CATCH IT. `.cz-disc` is a SELECTOR: a host that stops matching it, or that loses');
-  console.log('  its `.disc-reveal`, is skipped and never reaches the denominator. Measured');
-  console.log('  2026-08-17 (Bjorn), same door, file bytes in a disposable copy: `#cz-brief-armaments`');
-  console.log('  reclassed `.cz-disc` -> `.cz-group` with the one CSS rule followed so the layout is');
-  console.log('  unchanged — this sentence printed PASS, 10/10 anchored across 2 host(s), EXIT 0,');
-  console.log('  every other sentence green, and four faces of a host Sunna fixed left the gate in');
-  console.log('  silence. The two floors below are the TOTAL loss and the FOLD ROSTER; the PARTIAL');
-  console.log('  loss has no floor. Closing it needs a denominator derived from the content door');
-  console.log('  (want.faces + want.behind + want.armaments + FOLDED) rather than a typed count, and');
-  console.log('  that is a predicate change, not a boundary — it is not made here.');
+  console.log('  A HOST THAT LEAVES THE SET IS NOW A NAMED RED, AND THE FLOOR IS THE CONTENT DOOR,');
+  console.log('  NOT A COUNT. `.cz-disc` is a SELECTOR: a host that stops matching it, or that loses');
+  console.log('  its `.disc-reveal`, is skipped in the walk. Bjorn measured that at 5597166 — same');
+  console.log('  door, file bytes in a disposable copy, `#cz-brief-armaments` reclassed to');
+  console.log('  `.cz-group` with the one CSS rule followed — and this tool printed PASS, 10/10');
+  console.log('  anchored across 2 host(s), EXIT 0, four faces of a host Sunna fixed gone in');
+  console.log('  silence. The SECOND sentence above now requires EVERY KEY THE TABLES NAME to be');
+  console.log('  measured in the composition that holds it: want.faces + want.armaments + FOLDED,');
+  console.log('  plus want.behind when expanded. A key that goes missing is PRINTED, never');
+  console.log('  subtracted from a denominator. It is a FLOOR, not a census — extra keys are');
+  console.log('  measured and never required — so "a fourth `.cz-disc` is gated the day it mounts"');
+  console.log('  still holds. P19 is that plant, in the corpus: 8 keys named, exit 1, while the');
+  console.log('  anchor sentence itself stays PASS at a quietly smaller 39/39 — which is exactly');
+  console.log('  why a count could never have caught it and a named key set does.');
+  console.log('  WHAT THE KEY FLOOR STILL CANNOT SEE, said because it is a floor and not a census: a');
+  console.log('  host that gains faces nobody authored, and an entry that MOVES from one host to');
+  console.log('  another — the key is present either way. It is a claim about the SET, never about');
+  console.log('  where in the screen a key was found.');
+  console.log('  AND `no face on this screen was measured` IS `unknown`, NOT GREEN. It is subsumed');
+  console.log('  by the key floor — an empty walk misses every key and goes red by name — and it has');
+  console.log('  NOT been observed red at this ref, because every road to it dies earlier. Watched');
+  console.log('  by hand 2026-08-17 (Vira), same door: `.disc-reveal` renamed so no host carries a');
+  console.log('  panel throws at mount and the run is EXIT 2, `NOTHING RAN (1 shape(s), 0 face(s)');
+  console.log('  measured)`; and stripping `.cz-disc` from all three hosts (customize.js, the one');
+  console.log('  layout rule carried inline) CRASHES SECTION 6 first — `face.closest(\'.cz-disc\')`');
+  console.log('  is null and the post-pick probe calls querySelectorAll on it. That guard was');
+  console.log('  written for a missing FACE and not for a missing HOST; it is section 6\'s and is');
+  console.log('  named here rather than repaired. Both roads are reds; neither is THIS clause\'s');
+  console.log('  red, so the clause is kept as belt-and-braces and is cited as coverage by nothing.');
   // ---------------------------------------------------------------------
   // WIDENED 2026-08-17 by Vira (MR-301). What stood here until this commit was
   // Marina's conditional — RED ONLY FOR THE ROWS IN `FOLDED` — and, below it,
@@ -1395,38 +1714,46 @@ async function main() {
   console.log('  on the glass, and this tool printed PASS AT EXIT 0. The whole pre-fix tree at');
   console.log('  a05d071 did the same. The gated row survived both because `.cz-fields` holds ONE');
   console.log('  face and one face cannot wrap.');
-  console.log('  WATCHED RED at this ref, three roads and both arms: margin-top:12rem on .disc-reveal');
-  console.log('  (P15, in flow, EVERY host, first row and last), position:fixed;bottom:0 (P16, the');
-  console.log('  panel above its face, EVERY host, first row and last), and Bjorn\'s one-line revert');
-  console.log('  (P17, src/ui/components/disclosure.js) — 8/14 adrift at 390x844 and 11/14 at');
-  console.log('  1200x730, exit 1, the exact pre-fix reading. A fourth road, watched by hand and not');
-  console.log('  in the corpus: .cz-disc{flex-direction:column-reverse}, the same arm as P16.');
+  console.log('  WATCHED RED at this ref, five roads and both arms: margin-top:12rem on .disc-reveal');
+  console.log('  (P15, in flow, EVERY host, first row and last, all four states, 47/47),');
+  console.log('  position:fixed;bottom:0 (P16, the panel above its face, same reach, 47/47), Bjorn\'s');
+  console.log('  one-line revert (P17, src/ui/components/disclosure.js) — 35/47 at 390x844, of which');
+  console.log('  8/14 is the ARRIVAL arm, the exact pre-fix reading, and it reddens ALL FOUR states —');
+  console.log('  the expander dropped from placeUnderRow\'s line-mates (P18, 9/47, EXPANDED ONLY), and');
+  console.log('  the armaments host reclassed off `.cz-disc` (P19, the key floor, 8 keys named).');
+  console.log('  A sixth road, watched by hand and not in the corpus:');
+  console.log('  .cz-disc{flex-direction:column-reverse}, the same arm as P16.');
   console.log('  P17 CANNOT REDDEN THE FIRST ROW OR THE LAST, and that is arithmetic, not a gap:');
   console.log('  appending puts the panel directly after the last face, which IS under it, and the');
   console.log('  one-face fold host makes appendChild and insertBefore the same call. Those two');
   console.log('  edges are carried by P15 and P16, which reach every host.');
   console.log('  IT IS SILENT on the panel\'s HEIGHT, on whether either is in the viewport, and on');
   console.log('  SCROLL: a panel correctly anchored to a face 900 px down the page is still a panel a');
-  console.log('  player has to scroll to find. It is measured LAST, on the screen this run left.');
+  console.log('  player has to scroll to find. It is measured LAST, on a screen it puts into each');
+  console.log('  state itself and leaves collapsed.');
   // -------------------------------------------------------------------
-  // CORRECTED 2026-08-17 by Bjorn, gating MR-301. What stood here said the
-  // brief hosts carry the expander's extra face by section 7 and that the
-  // face is therefore inside the gate. MEASURED, and it is false: the
-  // expander is SHUT again by then. The claim is deleted, and the gap it was
-  // hiding is named instead.
+  // CLOSED 2026-08-17 by Vira (MR-303). What stood here was Bjorn's measured
+  // gap — "AND THE EXPANDED STATE IS NOT IN THE GATE" — with the mechanism and
+  // the two 14s. It is not amended: the state is in the gate, so the paragraph
+  // that said it was not is deleted and replaced by what closing it measured,
+  // including the one thing the closing does NOT reach.
   // -------------------------------------------------------------------
-  console.log('  AND THE EXPANDED STATE IS NOT IN THE GATE. Section 3 opens the expander, but');
-  console.log('  section 6 PICKS a tint, and a pick calls renderPortrait(), which re-runs');
-  console.log('  mountDisclosure() on both brief hosts (customize.js) — a full remount that shuts');
-  console.log('  the expander. Measured 2026-08-17 (Bjorn): at section 7 aria-expanded is FALSE and');
-  console.log('  `#cz-brief-stats` holds its 9 face-tier faces, so `derived:stamina` — a face a');
-  console.log('  player reaches — is NEVER anchor-measured on a clean run. 14 is the ARRIVAL');
-  console.log('  composition (9 + 4 + 1), not the screen this run left. The corpus already says so');
-  console.log('  and nobody read it: under P8 the fold is gone, so no pick lands, so no remount, and');
-  console.log('  the same line reads `#cz-brief-stats 10/10` — a DIFFERENT 14. The expander is also');
-  console.log('  the state that RE-WRAPS the host, which is the state a placement regression shows');
-  console.log('  in worst. UNGATED, and named rather than assumed. `.cz-fields` is untouched by the');
-  console.log('  expander either way.');
+  console.log('  THE EXPANDED STATE IS IN THE GATE, AND WHAT IT COST TO PUT IT THERE. The mechanism');
+  console.log('  Bjorn traced is real and unchanged: section 6\'s pick remounts both brief hosts and');
+  console.log('  shuts the expander, so nothing that merely READS the screen at the end of a run can');
+  console.log('  see the expanded composition. The answer is not to reorder the sections — it is to');
+  console.log('  stop inheriting a state. `derived:stamina` is now measured, at 5.39 px, in the');
+  console.log('  composition a player reaches in one tap, and P18 is the plant that proves the reach:');
+  console.log('  drop `.disc-more` from placeUnderRow\'s line-mates and the EXPANDED and AFTER');
+  console.log('  EXPANDING states go 9/47 adrift at 54.78 px while `collapsed 14/14` — the whole of');
+  console.log('  the gate as it stood at 5597166 — stays green, every other sentence green, exit 1.');
+  console.log('  P18 IS GREEN AT 1200x730 AND THAT IS THE EVIDENCE, NOT A HOLE. Watched by hand at');
+  console.log('  this ref, same door: 47/47 anchored, exit 0. At 390 the expanded row pushes `+1');
+  console.log('  more` onto a THIRD LINE OF ITS OWN, so the expander is the sibling that starts the');
+  console.log('  next line and dropping it moves the panel past that line; at 1200 `+1 more` still');
+  console.log('  shares the derived row and the third line never forms. The defect exists on the');
+  console.log('  phone and not on the desktop — which is the shape --selftest runs, and it is luck');
+  console.log('  that they agree. A wide-only defect of this class would still be a hand observation.');
   console.log('  AND `UNDER` IS ONE AXIS. The predicate is `panel.top - face.bottom`; it never');
   console.log('  reads x. Planted at 50ebb39 and watched GREEN at exit 0 (Bjorn):');
   console.log('  `.disc-reveal { position: relative; left: 320px }` — a full-width panel shoved');
