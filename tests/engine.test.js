@@ -39,6 +39,7 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
+import { deriveStat } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
 import { TAGS, tagsFor, tagIdsFor, cardsWithTag } from '../src/content/tags.js';
@@ -194,7 +195,7 @@ function logOf(combat, type) {
 // Runner
 // ---------------------------------------------------------------------------
 
-export async function runTests({ artManifest = null, assetExists = null, legacyRunSave = null } = {}) {
+export async function runTests({ artManifest = null, assetExists = null, legacyRunSave = null, preE6RunSave = null } = {}) {
   const results = [];
   const test = (name, fn) => {
     try {
@@ -1411,20 +1412,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const c = createCombat({
         registries: REG,
         rng: createRng(0xabc0 + classId.length),
-        // fresh.maxHp, NOT cls.maxHp. HP is DERIVED (class base + vigour per
-        // point, D17); the class field is only the base half. This fixture took
-        // energyMax and drawPerTurn from `fresh` on this same line and then
-        // fought at 72/78 instead of 82/90 — a bot fixture entering below the
-        // derivation it was meant to exercise. Found by Sunna's sweep,
-        // 2026-08-15. The assertion below (concludes, does not stall) could
-        // never have caught it, which is why the eq() above it now exists.
+        // fresh.maxHp, NOT cls.maxHp. HP is DERIVED (E6: 50 + floor(CON/5) +
+        // every tagged bonus); `cls.maxHp` is a class field the HP rule no
+        // longer reads at all. This fixture took energyMax and drawPerTurn from
+        // `fresh` on this same line and then fought at 72/78 instead of 82/90 —
+        // a bot fixture entering below the derivation it was meant to exercise.
+        // Found by Sunna's sweep, 2026-08-15. The assertion below (concludes,
+        // does not stall) could never have caught it, which is why the eq()
+        // above it now exists.
         player: { classId, attributes: fresh.attributes, maxHp: fresh.maxHp, hp: fresh.maxHp, mana: 2, maxMana: 2, energyMax: fresh.energyMax, drawPerTurn: fresh.drawPerTurn, deck, loadout: fresh.loadout, relicIds: [cls.startingRelic] },
         enemyIds: ['wyrmAspirant'],
       });
       // THE FALSIFIER, and it fails for the right reason: the entity fights at
       // the DERIVED total, not the class base. Re-hardcode cls.maxHp here and
       // this goes red by name; the "fight concluded" assertion below would not.
-      assert(c.player.maxHp === fresh.maxHp && c.player.maxHp > cls.maxHp,
+      // `!==`, NOT `>`: the old comparison read `> cls.maxHp` and was true only
+      // because the class base happened to be the smaller half. E6 makes the
+      // derived total SMALLER than the class field (50-based vs 72/78), so the
+      // direction was never the property — being a different number from the
+      // field is. Same falsifier, same red, one fewer accident.
+      assert(c.player.maxHp === fresh.maxHp && c.player.maxHp !== cls.maxHp,
         `${classId} bot fights at its derived maxHp (${fresh.maxHp}), not the class base (${cls.maxHp})`);
       let guard = 0;
       while (!c.result) {
@@ -4112,8 +4119,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(rules.stamina.sourceStat, 'constitution', "the snapshot's stamina rule now sources constitution");
     // Healing must not move a number: same points, same seat, same outputs.
     const old = JSON.parse(legacyVigourSave);
-    eq(run.maxHp, 96, 'legacy maxHp is re-derived through the current CON/class/relic authority');
-    eq(run.hp, 96, 'a legacy full-HP save remains full after current-rule migration');
+    // 56, not 96, since E6 (2026-08-16). THIS SAVE CARRIES rulesetVersion 2 —
+    // it has NO current-ruleset snapshot, so the load door resolves the CURRENT
+    // host rules for it, by the design this test's own name calls migration.
+    // That door already re-derived it (86 → 96) before E6 and now re-derives it
+    // to 50 + 2 relic flat + 2 tiers × (1 + 1 relic per-tier). A run carrying a
+    // CURRENT snapshot is NOT touched — test 50e is that edge, and the pair is
+    // the whole save story of the formula change.
+    eq(run.maxHp, 56, 'legacy maxHp is re-derived through the current CON/class/relic authority');
+    eq(run.hp, 56, 'a legacy full-HP save remains full after current-rule migration');
     eq(run.energyMax, old.energyMax, 'energyMax is untouched by the rename');
     eq(run.drawPerTurn, old.drawPerTurn, 'drawPerTurn is untouched by the rename');
     // Forward hygiene: the next save writes zero dead bytes.
@@ -4127,32 +4141,109 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test("50d. the sheet's printed HP uses class hpPerConTier × floor(CON/5) — D22", () => {
-    // This is the screen's own read model, so it checks the printed receipt and
-    // the run pool through the same host-stamped rules rather than duplicating
-    // a UI-only formula.
+  test('50d. HP is 50 + floor(CON/5) + every tagged bonus, and the tier flips one CON either side of 15 — E6', () => {
+    // E6, his words, 2026-08-16: "50 + (con/5) + other bonuses". The screen's
+    // own read model is the door here — the printed receipt and the run pool
+    // come through the same host-stamped rules rather than a UI-only formula.
+    //
+    // THE 50 IS ONE NUMBER FOR EVERY CLASS. `classes.js` still authors `maxHp`
+    // and `hpPerConTier`; the HP rule reads NEITHER, and this loop is what goes
+    // red if either creeps back into the base or the coefficient.
     for (const [classId, con] of [['reaver', 12], ['starseer', 10], ['herald', 12]]) {
+      const cls = REG.classes.get(classId);
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       eq(run.attributes.constitution, con, `${classId} preset CON`);
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(hp.tier, Math.floor(con / 5), `${classId}: printed HP uses floor(CON/5)`);
+      assert(hp.base !== cls.maxHp,
+        `${classId}: the HP base is E6's 50 (+ tagged flat), not the class field ${cls.maxHp} — got ${hp.base}`);
+      assert(hp.gainPerTier !== cls.hpPerConTier,
+        `${classId}: the CON tier is worth 1 (+ tagged per-tier), not the class coefficient ${cls.hpPerConTier} — got ${hp.gainPerTier}`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`),
         `${classId}: the printed formula lands on the run's real pool — got '${hp.formula}'`);
       eq(run.maxHp, hp.base + hp.tier * hp.gainPerTier + hp.equipmentBonus + hp.adjustment,
         `${classId}: max HP derives from stamped base + CON tiers + gear + permanent adjustment`);
     }
-    // The max creation edge proves the class coefficient is data, while the
-    // Forsaken Medallion contributes through the same attribute-tier DSL.
-    const maxed = createRunState({
+    // A class with NO tagged HP bonus is the bare formula with nothing else in
+    // it — 50 exactly, and one HP per five CON.
+    const bare = createRunState({ seed: 0xf3, classId: 'herald', registries: REG });
+    const bareHp = statProjection(REG, bare).derived.find((row) => row.id === 'hp');
+    eq(bareHp.base, 50, 'a class whose starting relic tags no HP shows E6\'s bare 50');
+    eq(bareHp.gainPerTier, 1, 'and one HP per completed five-point CON tier');
+    eq(bare.maxHp, 52, 'herald CON 12 = 50 + floor(12/5)');
+
+    // ---- BOTH EDGES OF THE DOMAIN, through the real creation door ----------
+    // `standard` allows CON 10–15 (attributes.js creationModes), and the door
+    // itself refuses either side. Total is fixed at 55, so the spare points sit
+    // on Strength.
+    const at = (con) => createRunState({
       seed: 0xf2, classId: 'reaver', registries: REG,
-      attributes: { strength: 10, dexterity: 10, constitution: 15, wisdom: 10, intelligence: 10 },
+      attributes: { strength: 25 - con, dexterity: 10, constitution: con, wisdom: 10, intelligence: 10 },
     });
-    const hp15 = statProjection(REG, maxed).derived.find((row) => row.id === 'hp');
-    eq(hp15.tier, 3, 'CON 15 resolves to three tiers');
-    eq(hp15.gainPerTier, 5, 'Reaver HP gain includes class 4 plus starting-relic CON-tier 1');
-    eq(maxed.maxHp, 101, 'Reaver CON 15 = stamped base 86 + 3 × 5');
-    const st15 = statProjection(REG, maxed).derived.find((row) => row.id === 'stamina');
+    eq(at(10).maxHp, 56, 'CON floor 10: 52 + 2 tiers × 2');
+    eq(at(15).maxHp, 58, 'CON ceiling 15: 52 + 3 tiers × 2');
+    for (const outside of [9, 16]) {
+      let refused = false;
+      try { at(outside); } catch (e) { refused = /between 10 and 15/.test(e.message); }
+      assert(refused, `CON ${outside} is refused BY NAME at the creation door, so 10–15 really is the domain`);
+    }
+
+    // ---- THE ROUNDING BOUNDARY'S OWN NEIGHBOURHOOD (Charter gate 2b) -------
+    // Domain edges are not threshold edges. `floor` only earns its name where a
+    // multiple of five actually falls, so these are ADJACENT cells one CON
+    // apart, and moving the threshold one point of its own unit flips them.
+    // HIS WORKED EXAMPLE IS THE CELL BELOW: "CON 14 gives +2, not +3".
+    eq(statProjection(REG, at(14)).derived.find((r) => r.id === 'hp').tier, 2,
+      'CON 14 floors to 2 tiers — his own example, not 3');
+    eq(statProjection(REG, at(15)).derived.find((r) => r.id === 'hp').tier, 3,
+      'CON 15 is the first cell above the boundary and pays the third tier');
+    eq(at(15).maxHp - at(14).maxHp, 2,
+      'one CON across the boundary is worth exactly one tier of gain, and nothing else moves');
+    // THE SECOND BOUNDARY, AND ITS LOWER CELL CANNOT USE THE SAME DOOR — the
+    // creation door refuses CON 9 (asserted above), so the pair either side of
+    // 10 enters one stage lower, at the run's OWN stamped snapshot. Stated
+    // rather than blurred: this cell's green covers the rule, not the door.
+    const snapshotRules = at(10).derivedStatRuleSnapshot.rules;
+    const tierAt = (con) => deriveStat(snapshotRules, 'hp', {
+      attributes: { constitution: con }, classDef: REG.classes.get('reaver'),
+    }).tier;
+    eq(tierAt(9), 1, 'CON 9 floors to 1 tier (below the creation door)');
+    eq(tierAt(10), 2, 'CON 10 is the first cell above the second boundary');
+    eq(tierAt(0), 0, 'the empty edge of the rule: no CON, no tiers, base only');
+
+    const st15 = statProjection(REG, at(15)).derived.find((row) => row.id === 'stamina');
     eq(st15.tier, 3, 'stamina uses the same CON tiers with its own gain');
+  });
+
+  // ---- 50e. an existing climb keeps the HP it was written with -------------
+  test('50e. a run saved before E6 loads with its own HP, unchanged and unhealed', () => {
+    // THE SAVE-VISIBLE HALF OF E6. The fixture is NOT hand-typed: it is the
+    // exact bytes createSaveManager.saveRun wrote at dev = 5597166 — reaver,
+    // seed 7, maxHp 96 under the OLD class-based formula — frozen at
+    // tests/fixtures/run-save-hp-5597166.json. Same door as the game:
+    // storage → loadRun → deserializeRun → initializeRunDerivedStats.
+    if (!preE6RunSave) {
+      assert(true, 'SKIPPED (no fixture handed in): the browser harness has no fs; run tests/run-node.mjs');
+      return;
+    }
+    const before = JSON.parse(preE6RunSave);
+    eq(before.maxHp, 96, 'the fixture really carries the old number (probe has a referent)');
+    eq(before.derivedStatRuleSnapshot.rulesetVersion, REG.derivedStatRules.rulesetVersion,
+      'and it carries the CURRENT ruleset — this test is about a content edit, not a schema change');
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, preE6RunSave);
+    const run = createSaveManager(storage).loadRun(REG);
+    assert(run !== null, 'the pre-E6 climb loads — a formula change does not archive a run');
+    eq(run.maxHp, 96, 'its max HP is the one it was written with: NOBODY RE-STATTED THIS RUN');
+    eq(run.hp, 96, 'and its current HP is untouched');
+    eq(run.derivedStatRuleSnapshot.rules.rules.hp.base, before.derivedStatRuleSnapshot.rules.rules.hp.base,
+      'the snapshot the run owns is the authority, not the authored table');
+    // THE FALSIFIER FOR THIS CELL, and it is the whole reason the pair exists:
+    // a run created NOW, from the same class and the same CON, gets the new
+    // number. If both came out 96 this test would be measuring nothing.
+    const fresh = createRunState({ seed: 7, classId: before.class, registries: REG });
+    eq(fresh.attributes.constitution, before.attributes.constitution, 'same class, same CON');
+    eq(fresh.maxHp, 56, 'a NEW run of the same class gets E6, so 96 above is preservation and not a coincidence');
   });
 
   const passed = results.filter((r) => r.ok).length;

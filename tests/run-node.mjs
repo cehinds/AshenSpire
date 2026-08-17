@@ -47,7 +47,21 @@ try {
   console.warn('  (no legacy run-save fixture — test 50c will skip)');
 }
 
-const { passed, failed, results } = await runTests({ artManifest, assetExists, legacyRunSave });
+// The pre-E6 run-save fixture (test 50e): real bytes saveRun wrote at
+// dev = 5597166, the commit before HP became 50 + floor(CON/5) + tagged
+// bonuses. Handed in like the two above so the browser harness stays fs-free.
+let preE6RunSave = null;
+try {
+  const { readFileSync } = await import('node:fs');
+  const { resolve, dirname } = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  preE6RunSave = readFileSync(resolve(root, 'tests/fixtures/run-save-hp-5597166.json'), 'utf8');
+} catch {
+  console.warn('  (no pre-E6 run-save fixture — test 50e will skip)');
+}
+
+const { passed, failed, results } = await runTests({ artManifest, assetExists, legacyRunSave, preE6RunSave });
 for (const r of results) {
   const tag = r.skipped ? 'SKIP' : r.ok ? 'PASS' : 'FAIL';
   console.log(`${tag}  ${r.name}${r.detail ? ` — ${r.detail}` : ''}`);
