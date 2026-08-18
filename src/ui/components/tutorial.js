@@ -134,14 +134,16 @@ export function mountTutorial(root, { onDone }) {
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
     if (veilIsOpen()) return;
-    // Step 3 explicitly teaches the player to arm an attack target. In that
-    // state Escape belongs to combat's existing cancel handler, which runs
-    // after this capture listener. Yield the SAME event without preventing or
-    // stopping it: combat clears the selected card and targetable enemies,
-    // while this tutorial remains mounted and onDone stays untouched. Both DOM
-    // facts are required so a selected self-card cannot accidentally turn the
-    // tutorial's ordinary Escape exit into a two-press path.
-    if (root.querySelector('.hand .card.selected') && root.querySelector('.enemy-row .enemy.targetable')) return;
+    // Step 3 teaches the player to arm a target, and combat can reach that state
+    // through either a hand card or a targeted flask. The enemy's `targetable`
+    // class is the shared, rendered truth; a flask deliberately has no selected
+    // card. While that state stands, Escape belongs to combat's existing cancel
+    // handler, which runs after this capture listener. Yield the SAME event
+    // without preventing or stopping it: combat clears its card/flask selection
+    // and targetable enemies, while this tutorial remains mounted and onDone
+    // stays untouched. A selected self-card has no targetable enemy, so it still
+    // follows the tutorial's ordinary one-press exit.
+    if (root.querySelector('.enemy-row .enemy.targetable')) return;
     ev.preventDefault();
     ev.stopPropagation();
     finish();

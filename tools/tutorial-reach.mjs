@@ -77,13 +77,14 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 900000,
     plants: [
       {
-        // The exact #17 defect: the capture listener finishes the tutorial
-        // before combat can consume Escape as cancel-targeting.
-        name: 'tutorial capture steals armed Escape and permanently finishes the coach marks',
+        // The discriminating #17 regression: restoring the old selected-card
+        // conjunct leaves attack targeting green but makes targeted flasks lose
+        // their first Escape to the tutorial capture listener.
+        name: 'tutorial target guard narrows to selected cards and misses targeted flasks',
         file: 'src/ui/components/tutorial.js',
-        find: "    if (root.querySelector('.hand .card.selected') && root.querySelector('.enemy-row .enemy.targetable')) return;",
-        replace: "    /* planted: capture steals armed Escape instead of yielding to combat */",
-        expectRed: /✗ .*armed Escape cancels targeting and leaves the tutorial standing/,
+        find: "    if (root.querySelector('.enemy-row .enemy.targetable')) return;",
+        replace: "    if (root.querySelector('.hand .card.selected') && root.querySelector('.enemy-row .enemy.targetable')) return;",
+        expectRed: /✗ .*targeted-flask Escape cancels targeting and leaves the tutorial standing/,
       },
       {
         // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
@@ -295,6 +296,12 @@ async function main() {
     // before it lands reads the slide, not the placement. Settle past it.
     await wait(340);
   };
+  const holdAt = async (x, y, ms = 750) => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x, y, button: 'left', clickCount: 1 }, S);
+    await wait(ms);
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x, y, button: 'left', clickCount: 1 }, S);
+    await wait(340);
+  };
   const pressKey = async (key, code, keyCode) => {
     for (const type of ['keyDown', 'keyUp']) {
       await cdp.send('Input.dispatchKeyEvent', { type, key, code, windowsVirtualKeyCode: keyCode, nativeVirtualKeyCode: keyCode }, S);
@@ -341,6 +348,24 @@ async function main() {
       if (state.armed) return state;
     }
     return { armed: false, card: null };
+  };
+  const armTargetedFlask = async () => {
+    await clickSel('.flask-slot[data-flask-slot="1"]', 'Blight Coating flask');
+    await until(`!!document.querySelector('.flask-action-menu [data-flask-action="use"]')`, 'Blight Coating Use action');
+    const pt = await evalIn(`(() => {
+      const b = document.querySelector('.flask-action-menu [data-flask-action="use"]');
+      if (!b) return null;
+      const r = b.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, beat: b.dataset.beat };
+    })()`);
+    if (!pt) return { armed: false, selectedCard: false, beat: null };
+    if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
+    else await clickAt(pt.x, pt.y);
+    const state = await evalIn(`({
+      armed: !!document.querySelector('.enemy-row .enemy.targetable'),
+      selectedCard: !!document.querySelector('.hand .card.selected'),
+    })`);
+    return { ...state, beat: pt.beat };
   };
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
@@ -421,6 +446,32 @@ async function main() {
     await pressKey('Escape', 'Escape', 27);
     const later = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
     ok(later.done === 1 && !later.veil, `${name}: a later unarmed Escape finishes the tutorial exactly once`);
+
+    // A targeted flask arms the same enemy-targeting state without selecting a
+    // hand card. This is the discriminating sibling of the attack-card case:
+    // Escape must yield because the enemy is targetable, not because a selected
+    // card happens to be present.
+    await boardWithTutorial(vp);
+    ok(await advanceToPlayCards(), `${name}: reached tutorial step 3 for targeted flask`);
+    const armedFlask = await armTargetedFlask();
+    ok(
+      armedFlask.armed && !armedFlask.selectedCard,
+      `${name}: armed Blight Coating with targetable enemy and no selected card — ${JSON.stringify(armedFlask)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const flaskCancelled = await evalIn(`({
+      done: window.__tutDone,
+      veil: !!document.querySelector('.tut-veil'),
+      selected: !!document.querySelector('.hand .card.selected'),
+      targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+    })`);
+    ok(
+      flaskCancelled.done === 0 && flaskCancelled.veil && !flaskCancelled.selected && !flaskCancelled.targetable,
+      `${name}: targeted-flask Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(flaskCancelled)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const afterFlask = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+    ok(afterFlask.done === 1 && !afterFlask.veil, `${name}: later unarmed Escape after flask cancel finishes exactly once`);
 
     // 3) The full walk, step by step, with real clicks at real coordinates.
     await boardWithTutorial(vp);
