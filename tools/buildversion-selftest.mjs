@@ -67,7 +67,8 @@ const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.js
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
 // when maxRetries is non-zero. Keep the wait bounded and keep the final error:
-// cleanup that is still impossible after 500 ms remains a real selftest red.
+// cleanup that is still impossible after five linearly delayed retries
+// (about 1.5 seconds of total backoff) remains a real selftest red.
 const removeTempTree = (dir) => rmSync(dir, {
   recursive: true,
   force: true,
