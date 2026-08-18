@@ -259,7 +259,7 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         const rect = port.getBoundingClientRect();
         const ref = document.createElement('div');
         ref.id = 'map-pan-native-referent';
-        ref.style.cssText = 'position:fixed;z-index:2147483647;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;'
+        ref.style.cssText = 'position:fixed;z-index:2147483647;overflow-y:auto;overflow-x:hidden;touch-action:pan-y pinch-zoom;'
           + 'left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;height:' + rect.height + 'px;'
           + 'opacity:0.01;background:#000;';
         const fill = document.createElement('div');
@@ -319,9 +319,11 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
       const windowListenerCountsFlat = ['pointermove', 'pointerup', 'keydown'].every((type) =>
         windowListenerSeries.every((counts) => counts[type] === windowListenerSeries[0][type]));
 
+      const touchActionTokens = synthetic.touchAction.split(/\s+/).filter(Boolean);
       const checks = {
         overflow: synthetic.max > 120,
-        cssNativeAxis: synthetic.touchAction === 'pan-y',
+        cssNativePan: touchActionTokens.includes('pan-y'),
+        cssNativePinchZoom: touchActionTokens.includes('pinch-zoom'),
         touchIgnoredByJs: Math.abs(synthetic.touch.delta) < 0.5 && synthetic.touch.captures === 0 && !synthetic.touch.grabbed,
         penIgnoredByJs: Math.abs(synthetic.pen.delta) < 0.5 && synthetic.pen.captures === 0 && !synthetic.pen.grabbed,
         secondPointerIgnored: Math.abs(synthetic.mouse.secondDelta) < 0.5,
@@ -368,17 +370,43 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
 }
 
 async function selftest() {
-  const tree = mkdtempSync(join(tmpdir(), 'ashenspire-map-pan-'));
-  try {
+  const copyTree = (prefix) => {
+    const tree = mkdtempSync(join(tmpdir(), prefix));
     cpSync(ROOT, tree, {
       recursive: true,
       filter: (source) => !['.git', 'build', 'dist', 'node_modules'].includes(source.split(/[\\/]/).pop()),
     });
+    return tree;
+  };
+  const trees = [];
+  try {
+    const pinchTree = copyTree('ashenspire-map-pan-pinch-');
+    trees.push(pinchTree);
+    const pinchCssPath = resolve(pinchTree, 'styles/map.css');
+    const pinchCss = readFileSync(pinchCssPath, 'utf8');
+    const cssSeam = '  touch-action: pan-y pinch-zoom;\n';
+    if (!pinchCss.replace(/\r\n/g, '\n').includes(cssSeam)) {
+      throw new Error('selftest plant refused: pinch ownership seam is absent');
+    }
+    writeFileSync(pinchCssPath, pinchCss.replace(/\r\n/g, '\n').replace(cssSeam, '  touch-action: pan-y;\n'));
+    const pinchRows = await run(pinchTree, { screenshots: false });
+    for (const row of pinchRows) {
+      const red = Object.entries(row.checks).filter(([, pass]) => !pass).map(([name]) => name);
+      console.log(`  ${row.viewport}: missing-pinch plant touch-action=${row.synthetic.touchAction}; red=${red.join(',')}`);
+    }
+    const pinchCaught = pinchRows.every((row) => row.checks.cssNativePan
+      && !row.checks.cssNativePinchZoom
+      && Object.entries(row.checks).every(([name, pass]) => name === 'cssNativePinchZoom' ? !pass : pass));
+    console.log(`map-pan pinch selftest: ${pinchCaught ? 'GREEN' : 'RED'} - `
+      + `${pinchRows.filter((row) => !row.pass).length}/${pinchRows.length} missing-pinch viewports rejected only by pinch ownership`);
+    if (!pinchCaught) process.exitCode = 1;
+
+    const tree = copyTree('ashenspire-map-pan-');
+    trees.push(tree);
     const cssPath = resolve(tree, 'styles/map.css');
     const boardPath = resolve(tree, 'src/ui/components/mapboard.js');
     const css = readFileSync(cssPath, 'utf8');
     const board = readFileSync(boardPath, 'utf8');
-    const cssSeam = '  touch-action: pan-y;\n';
     const guardSeam = "    if (ev.pointerType !== 'mouse' || ev.button !== 0 || activeMousePointerId !== null) return;\n";
     const listenerSeam = '  // Wheel/scrollbar panning has no pointer-end callback. Debounce the real\n';
     if (!css.replace(/\r\n/g, '\n').includes(cssSeam)
@@ -402,7 +430,8 @@ async function selftest() {
         + `map=${row.native.mapDelta}px ref=${row.native.referentDelta}px; `
         + `window keydown=${row.windowListenerSeries.map((entry) => entry.keydown).join('→')}`);
     }
-    const caught = rows.every((row) => !row.checks.cssNativeAxis
+    const caught = rows.every((row) => !row.checks.cssNativePan
+      && !row.checks.cssNativePinchZoom
       && !row.checks.touchIgnoredByJs
       && !row.checks.penIgnoredByJs
       && !row.checks.secondPointerIgnored
@@ -412,7 +441,9 @@ async function selftest() {
       + `${rows.filter((row) => !row.pass).length}/${rows.length} planted viewports rejected`);
     if (!caught) process.exitCode = 1;
   } finally {
-    rmSync(tree, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    for (const tree of trees) {
+      rmSync(tree, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+    }
   }
 }
 
