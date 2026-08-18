@@ -78,7 +78,7 @@ jobs:
                 bundle=true ;;
             esac
             case "$path" in
-              .github/workflows/ci.yml|tools/tutorial-reach.mjs|tools/zoomplace.mjs|tools/doorplant.mjs|tools/browser.mjs|tools/bundle.mjs|tools/launch.mjs|src/ui/components/tutorial.js|styles/ui.css|src/ui/fx.js)
+              .github/workflows/ci.yml|tools/tutorial-reach.mjs|tools/zoomplace.mjs|tools/placement.mjs|tools/doorplant.mjs|tools/browser.mjs|tools/bundle.mjs|tools/launch.mjs|src/ui/components/tutorial.js|src/ui/components/quicknav.js|src/ui/components/flask.js|styles/ui.css|src/ui/fx.js)
                 known_bad=true ;;
             esac
           done
@@ -170,6 +170,8 @@ jobs:
         run: node tools/buildstamp-shot.mjs --selftest
       - name: Tutorial source route
         run: node tools/tutorial-reach.mjs
+      - name: Existing anchored-placement contract
+        run: node tools/placement.mjs
       - name: Zoom placement source route
         run: node tools/zoomplace.mjs
 
@@ -214,6 +216,8 @@ jobs:
         run: node tools/tutorial-reach.mjs --selftest
       - name: Tutorial bundle known-bads
         run: node tools/tutorial-reach.mjs --selftest --dist
+      - name: Existing anchored-placement known-bads
+        run: node tools/placement.mjs --selftest
       - name: Zoom source known-bad
         run: node tools/zoomplace.mjs --selftest
       - name: Zoom bundle known-bad
