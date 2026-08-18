@@ -32,10 +32,10 @@
 import { cpSync, mkdtempSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { run } from './buildstamp-shot.mjs';
 
-const HERE = resolve(new URL('.', import.meta.url).pathname);
+const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const REPO_ROOT = resolve(HERE, '..');
 const COPY = ['index.html', 'styles', 'src', 'assets', 'buildordinal.json'];
 
