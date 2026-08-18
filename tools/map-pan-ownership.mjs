@@ -83,7 +83,20 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
       window.__mapPanCaptures = [];
       window.__mapPanListenerIds = 0;
       window.__mapPanListeners = {};
+      window.__mapPanWindowListenerIds = 0;
       const listenerId = new WeakMap();
+      const windowListenerId = new WeakMap();
+      const windowListeners = new Set();
+      const windowTypes = new Set(['pointermove', 'pointerup', 'keydown']);
+      const captureOf = (options) => typeof options === 'boolean' ? options : !!options?.capture;
+      const windowListenerKey = (type, listener, options) => {
+        if (!listener || (typeof listener !== 'function' && typeof listener !== 'object')) return null;
+        if (!windowListenerId.has(listener)) windowListenerId.set(listener, ++window.__mapPanWindowListenerIds);
+        return type + ':' + windowListenerId.get(listener) + ':' + Number(captureOf(options));
+      };
+      window.__mapPanWindowListenerCounts = () => Object.fromEntries(
+        [...windowTypes].map((type) => [type, [...windowListeners].filter((key) => key.startsWith(type + ':')).length]),
+      );
       const listenerKey = (target) => {
         if (!(target instanceof Element) || !target.classList.contains('map-scroll')) return null;
         if (!listenerId.has(target)) listenerId.set(target, ++window.__mapPanListenerIds);
@@ -92,6 +105,10 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
       const add = EventTarget.prototype.addEventListener;
       const remove = EventTarget.prototype.removeEventListener;
       EventTarget.prototype.addEventListener = function (type, listener, options) {
+        if (this === window && windowTypes.has(type)) {
+          const key = windowListenerKey(type, listener, options);
+          if (key) windowListeners.add(key);
+        }
         const id = listenerKey(this);
         if (id && /^pointer(move|up|cancel|down)$/.test(type)) {
           const key = id + ':' + type;
@@ -100,6 +117,10 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         return add.call(this, type, listener, options);
       };
       EventTarget.prototype.removeEventListener = function (type, listener, options) {
+        if (this === window && windowTypes.has(type)) {
+          const key = windowListenerKey(type, listener, options);
+          if (key) windowListeners.delete(key);
+        }
         const id = listenerKey(this);
         if (id && /^pointer(move|up|cancel|down)$/.test(type)) {
           const key = id + ':' + type;
@@ -143,6 +164,19 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
       await cdp.send('Input.dispatchKeyEvent', {
         type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
       }, sessionId);
+    };
+    const nativeSwipe = async (point) => {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 41 }],
+      }, sessionId);
+      for (let step = 1; step <= 5; step++) {
+        await cdp.send('Input.dispatchTouchEvent', {
+          type: 'touchMove', touchPoints: [{ x: point.x, y: point.y - step * 24, id: 41 }],
+        }, sessionId);
+        await wait(20);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, sessionId);
+      await wait(180);
     };
 
     for (const viewport of VIEWPORTS) {
@@ -217,35 +251,57 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
         };
       })()`);
 
-      // A real finger must move the browser-owned scrollport. Synthetic pointer
-      // events above deliberately cannot perform a browser default action.
+      // A real finger must move the browser-owned scrollport by the same amount
+      // as an in-page native overflow referent. A bare positive delta is too
+      // weak: a map that moves twice as far as the finger still moves.
+      const referentPoint = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const rect = port.getBoundingClientRect();
+        const ref = document.createElement('div');
+        ref.id = 'map-pan-native-referent';
+        ref.style.cssText = 'position:fixed;z-index:2147483647;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;'
+          + 'left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;height:' + rect.height + 'px;'
+          + 'opacity:0.01;background:#000;';
+        const fill = document.createElement('div');
+        fill.style.height = Math.max(port.scrollHeight, port.clientHeight * 4) + 'px';
+        fill.style.width = '1px';
+        ref.appendChild(fill);
+        document.body.appendChild(ref);
+        ref.scrollTop = Math.min(80, Math.max(20, (ref.scrollHeight - ref.clientHeight) / 4));
+        const r = ref.getBoundingClientRect();
+        return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.72, before: ref.scrollTop };
+      })()`);
+      await nativeSwipe(referentPoint);
+      const referentAfter = await evaluate(`document.querySelector('#map-pan-native-referent').scrollTop`);
+      await evaluate(`document.querySelector('#map-pan-native-referent').remove()`);
+
       const point = await evaluate(`(() => {
         const port = document.querySelector('.map-scroll');
         port.scrollTop = Math.min(80, Math.max(20, (port.scrollHeight - port.clientHeight) / 4));
         const r = port.getBoundingClientRect();
         return { x: r.left + r.width * 0.5, y: r.top + r.height * 0.72, before: port.scrollTop };
       })()`);
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 41 }],
-      }, sessionId);
-      for (let step = 1; step <= 5; step++) {
-        await cdp.send('Input.dispatchTouchEvent', {
-          type: 'touchMove', touchPoints: [{ x: point.x, y: point.y - step * 24, id: 41 }],
-        }, sessionId);
-        await wait(20);
-      }
-      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, sessionId);
-      await wait(180);
+      await nativeSwipe(point);
       const nativeAfter = await evaluate(`document.querySelector('.map-scroll').scrollTop`);
+      const nativeDelta = nativeAfter - point.before;
+      const referentDelta = referentAfter - referentPoint.before;
+      const nativeRatio = referentDelta ? nativeDelta / referentDelta : null;
 
-      // Remount after the debounced native scroll. The restored camera proves
-      // this ownership change preserves PR #200's persistence contract.
+      // Remount ten times. The restored camera proves PR #200 persistence and
+      // the instrumented window series proves no global gesture/key listener
+      // accumulates behind otherwise-clean per-element listeners.
       const persistedBefore = nativeAfter;
-      await evaluate(`document.querySelector('#open-armoury').click()`);
-      await until('Armaments overlay', `!!document.querySelector('.armoury-overlay')`);
-      await keyEscape();
-      await until('remounted map', `!document.querySelector('.armoury-overlay') && !!document.querySelector('.map-scroll')`);
-      await wait(180);
+      const windowListenerSeries = [await evaluate(`window.__mapPanWindowListenerCounts()`)];
+      const remountCameraSeries = [];
+      for (let remountIndex = 0; remountIndex < 10; remountIndex++) {
+        await evaluate(`document.querySelector('#open-armoury').click()`);
+        await until('Armaments overlay', `!!document.querySelector('.armoury-overlay')`);
+        await keyEscape();
+        await until('remounted map', `!document.querySelector('.armoury-overlay') && !!document.querySelector('.map-scroll')`);
+        await wait(180);
+        remountCameraSeries.push(await evaluate(`document.querySelector('.map-scroll').scrollTop`));
+        windowListenerSeries.push(await evaluate(`window.__mapPanWindowListenerCounts()`));
+      }
       const remount = await evaluate(`(() => {
         const port = document.querySelector('.map-scroll');
         const before = port.scrollTop;
@@ -260,6 +316,8 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
           .map((type) => [type, window.__mapPanListeners[listenerId + ':' + type] || 0]));
         return { before, after, grabbing: port.classList.contains('grabbing'), listeners };
       })()`);
+      const windowListenerCountsFlat = ['pointermove', 'pointerup', 'keydown'].every((type) =>
+        windowListenerSeries.every((counts) => counts[type] === windowListenerSeries[0][type]));
 
       const checks = {
         overflow: synthetic.max > 120,
@@ -273,8 +331,11 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
           && synthetic.listeners.pointermove === 0
           && synthetic.listeners.pointerup === 0
           && synthetic.listeners.pointercancel === 0,
-        nativeTouchMoves: nativeAfter - point.before > 5,
-        cameraPersists: Math.abs(remount.before - persistedBefore) < 2,
+        nativeTouchMatchesReferent: referentDelta > 5 && nativeDelta > 5
+          && nativeRatio >= 0.95 && nativeRatio <= 1.05,
+        windowListenerCountsFlat,
+        cameraPersists: remountCameraSeries.every((position) => Math.abs(position - persistedBefore) < 2)
+          && Math.abs(remount.before - persistedBefore) < 2,
         remountMouseMovesOnce: Math.abs((remount.after - remount.before) - 30) < 1.5 && !remount.grabbing,
         remountListenerIsSingle: remount.listeners.pointerdown === 1
           && remount.listeners.pointermove === 0
@@ -282,7 +343,14 @@ async function run(tree = ROOT, { screenshots = WRITE_SHOTS } = {}) {
           && remount.listeners.pointercancel === 0,
       };
       const pass = Object.values(checks).every(Boolean);
-      rows.push({ viewport: viewport.name, pass, checks, synthetic, native: { before: point.before, after: nativeAfter }, remount });
+      rows.push({
+        viewport: viewport.name, pass, checks, synthetic,
+        native: {
+          mapBefore: point.before, mapAfter: nativeAfter, mapDelta: nativeDelta,
+          referentBefore: referentPoint.before, referentAfter, referentDelta, ratio: nativeRatio,
+        },
+        windowListenerSeries, remountCameraSeries, remount,
+      });
 
       if (screenshots) {
         const out = resolve(tree, 'docs', 'preview', `${SHOT_PREFIX}-${viewport.name}.png`);
@@ -312,20 +380,34 @@ async function selftest() {
     const board = readFileSync(boardPath, 'utf8');
     const cssSeam = '  touch-action: pan-y;\n';
     const guardSeam = "    if (ev.pointerType !== 'mouse' || ev.button !== 0 || activeMousePointerId !== null) return;\n";
+    const listenerSeam = '  // Wheel/scrollbar panning has no pointer-end callback. Debounce the real\n';
     if (!css.replace(/\r\n/g, '\n').includes(cssSeam)
-      || !board.replace(/\r\n/g, '\n').includes(guardSeam)) {
+      || !board.replace(/\r\n/g, '\n').includes(guardSeam)
+      || !board.replace(/\r\n/g, '\n').includes(listenerSeam)) {
       throw new Error('selftest plant refused: CSS or pointer ownership seam is absent');
     }
     writeFileSync(cssPath, css.replace(/\r\n/g, '\n').replace(cssSeam, ''));
     writeFileSync(boardPath, board.replace(/\r\n/g, '\n').replace(
       guardSeam,
       "    if (ev.button !== 0) return; // planted: every pointer and second pointer enter the mouse owner\n",
+    ).replace(
+      listenerSeam,
+      "  scroll.addEventListener('touchmove', () => { scroll.scrollTop += 24; }, { passive: true }); // planted: map over-travels the native referent\n"
+        + "  window.addEventListener('keydown', () => {}); // planted: one stale listener per remount\n"
+        + listenerSeam,
     ));
     const rows = await run(tree, { screenshots: false });
+    for (const row of rows) {
+      console.log(`  ${row.viewport}: planted ratio=${row.native.ratio?.toFixed(3) ?? 'n/a'} `
+        + `map=${row.native.mapDelta}px ref=${row.native.referentDelta}px; `
+        + `window keydown=${row.windowListenerSeries.map((entry) => entry.keydown).join('→')}`);
+    }
     const caught = rows.every((row) => !row.checks.cssNativeAxis
       && !row.checks.touchIgnoredByJs
       && !row.checks.penIgnoredByJs
-      && !row.checks.secondPointerIgnored);
+      && !row.checks.secondPointerIgnored
+      && !row.checks.nativeTouchMatchesReferent
+      && !row.checks.windowListenerCountsFlat);
     console.log(`map-pan ownership selftest: ${caught ? 'GREEN' : 'RED'} - `
       + `${rows.filter((row) => !row.pass).length}/${rows.length} planted viewports rejected`);
     if (!caught) process.exitCode = 1;
@@ -344,6 +426,8 @@ let failures = 0;
 for (const row of rows) {
   console.log(`${row.pass ? 'PASS' : 'FAIL'} ${row.viewport}`);
   for (const [name, pass] of Object.entries(row.checks)) console.log(`  ${pass ? 'PASS' : 'FAIL'} ${name}`);
+  console.log(`  native map=${row.native.mapDelta}px referent=${row.native.referentDelta}px ratio=${row.native.ratio?.toFixed(3) ?? 'n/a'}`);
+  console.log(`  window series ${JSON.stringify(row.windowListenerSeries)}`);
   if (!row.pass) console.log(`  evidence ${JSON.stringify({ synthetic: row.synthetic, native: row.native, remount: row.remount })}`);
   if (!row.pass) failures++;
 }
