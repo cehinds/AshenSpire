@@ -112,10 +112,11 @@ body.hi-contrast {
 }
 body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
 
-/* Accessibility: text size is set on the root element (main.js applyDisplaySettings
-   → html font-size %). Because all type + component dimensions are rem, one root
-   value rescales the whole UI proportionally — S/M/L/XL. Compounds with --ui-zoom
-   (which additionally scales the px-kept hairlines/radii). */
+/* Accessibility: Text size is set on the root element (main.js
+   applyDisplaySettings → html font-size %) and owns readable text metrics only.
+   Non-text geometry uses px or a UI-size-owned token; a box that contains text
+   gets a fixed floor and grows intrinsically. Text size and --ui-zoom are two
+   independent controls. */
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
@@ -145,9 +146,9 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
-   maps to px÷10 at rest. The text-size setting overrides this % on <html> to
-   grow/shrink all rem-based type + dimensions at once (main.js). */
+/* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
+   overrides this value for type and line metrics; component geometry must not
+   derive from this calibration. */
 html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
 /* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
    both edges x3. The straight line from the leftmost card to the far-right
