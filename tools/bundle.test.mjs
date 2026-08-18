@@ -14,7 +14,7 @@
 // Exit 0 = every case behaved. Exit 1 = at least one did not, and it says which.
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -34,15 +34,161 @@ function sandbox() {
   for (const d of ['src', 'styles', 'tools', 'assets', 'content']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
-  for (const f of ['index.html']) {
+  // buildordinal.json became authored build input after this sandbox was first
+  // written. Omitting it makes every real-bundler fixture refuse before it can
+  // reach the property the fixture is meant to exercise.
+  for (const f of ['index.html', 'buildordinal.json']) {
     if (existsSync(resolve(ROOT, f))) cpSync(resolve(ROOT, f), resolve(dir, f));
   }
+  // Source-changing plants must pass through the production ordinal door, and
+  // production correctly refuses to invent an ordinal without Git. Give each
+  // disposable real-tree sandbox one deterministic commit so a plant can move
+  // the digest and let bumpOrdinal derive its next value. This is test history,
+  // not a production fallback: remove Git here and the refusal remains red.
+  execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir });
+  execFileSync('git', ['config', 'core.autocrlf', 'false'], { cwd: dir });
+  execFileSync('git', ['config', 'user.email', 'bundle-selftest@family.local'], { cwd: dir });
+  execFileSync('git', ['config', 'user.name', 'bundle-selftest'], { cwd: dir });
+  execFileSync('git', ['add', '-A'], { cwd: dir });
+  execFileSync('git', ['commit', '-q', '-m', 'bundle selftest control'], { cwd: dir });
   return dir;
 }
 
 function build(dir) {
   const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], { cwd: dir, encoding: 'utf8' });
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
+}
+
+function assetMapPayload(bundleBytes, rel, mime) {
+  const text = bundleBytes.toString('utf8');
+  const prefix = `${JSON.stringify(rel)}: "data:${mime};base64,`;
+  const start = text.indexOf(prefix);
+  if (start < 0) return null;
+  const payloadStart = start + prefix.length;
+  const end = text.indexOf('"', payloadStart);
+  return end < 0 ? null : Buffer.from(text.slice(payloadStart, end), 'base64');
+}
+
+function cssPayload(bundleBytes, selector, mime) {
+  const text = bundleBytes.toString('utf8');
+  const line = text.split('\n').find((s) => s.includes(selector) && s.includes(`data:${mime};base64,`));
+  if (!line) return null;
+  const match = new RegExp(`data:${mime.replace('/', '\\/')};base64,([^"')]+)`).exec(line);
+  return match ? Buffer.from(match[1], 'base64') : null;
+}
+
+function forceEol(dir, relPaths, eol) {
+  for (const rel of relPaths) {
+    const p = resolve(dir, rel);
+    const lf = readFileSync(p, 'utf8').replace(/\r\n?/g, '\n');
+    writeFileSync(p, eol === 'crlf' ? lf.replace(/\n/g, '\r\n') : lf, 'utf8');
+  }
+}
+
+function forceTreeEol(dir, eol) {
+  const textExts = new Set(['.js', '.css', '.html', '.svg']);
+  const paths = [];
+  const walk = (rel) => {
+    const abs = resolve(dir, rel);
+    for (const entry of readdirSync(abs, { withFileTypes: true })) {
+      const child = `${rel}/${entry.name}`;
+      if (entry.isDirectory()) walk(child);
+      else if (textExts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase())) paths.push(child);
+    }
+  };
+  for (const rel of ['src', 'styles', 'assets']) walk(rel);
+  paths.push('index.html');
+  forceEol(dir, paths, eol);
+}
+
+function runEolSelftest() {
+  const lfDir = sandbox();
+  const crlfDir = sandbox();
+  forceTreeEol(lfDir, 'lf');
+  forceTreeEol(crlfDir, 'crlf');
+  const lfRun = build(lfDir);
+  const crlfRun = build(crlfDir);
+  const lfOut = lfRun.status === 0 ? readFileSync(resolve(lfDir, 'build/AshenSpire.html')) : null;
+  const crlfOut = crlfRun.status === 0 ? readFileSync(resolve(crlfDir, 'build/AshenSpire.html')) : null;
+  check('text-asset EOL: LF and CRLF sandboxes both build',
+    lfRun.status === 0 && crlfRun.status === 0,
+    `LF exit ${lfRun.status}; CRLF exit ${crlfRun.status}`);
+  check('text-asset EOL: LF and CRLF builds are byte-identical',
+    !!lfOut && !!crlfOut && lfOut.equals(crlfOut),
+    `LF ${lfOut?.length ?? 0} bytes; CRLF ${crlfOut?.length ?? 0} bytes`);
+
+  const binaryRel = 'assets/bg/bg_act1.webp';
+  const lfBinary = readFileSync(resolve(lfDir, binaryRel));
+  const crlfBinary = readFileSync(resolve(crlfDir, binaryRel));
+  const binaryMapExact = !!lfOut && !!crlfOut && [
+    assetMapPayload(lfOut, binaryRel, 'image/webp'),
+    assetMapPayload(crlfOut, binaryRel, 'image/webp'),
+  ].every((payload) => payload?.equals(lfBinary)) && lfBinary.equals(crlfBinary);
+  const binaryCssExact = !!lfOut && !!crlfOut && [
+    cssPayload(lfOut, '.backdrop.act-1', 'image/webp'),
+    cssPayload(crlfOut, '.backdrop.act-1', 'image/webp'),
+  ].every((payload) => payload?.equals(lfBinary));
+  check('binary preservation: asset-map payload equals source bytes in LF and CRLF builds', binaryMapExact);
+  check('binary preservation: CSS url payload equals source bytes in LF and CRLF builds', binaryCssExact);
+
+  const plantedDir = sandbox();
+  forceTreeEol(plantedDir, 'crlf');
+  const planted = patchTool(plantedDir,
+    '    const buf = readAssetBytes(abs);',
+    '    const buf = readFileSync(abs);');
+  const plantedRun = build(plantedDir);
+  const plantedOut = plantedRun.status === 0
+    ? readFileSync(resolve(plantedDir, 'build/AshenSpire.html'))
+    : null;
+  check('text-asset EOL known-bad: raw-byte asset-map read was planted', planted);
+  check('text-asset EOL known-bad: raw CRLF payload is caught by output identity',
+    plantedRun.status === 0 && !!lfOut && !!plantedOut && !lfOut.equals(plantedOut),
+    `plant exit ${plantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${plantedOut?.length ?? 0}`);
+
+  const cssPlantedDir = sandbox();
+  forceTreeEol(cssPlantedDir, 'crlf');
+  const cssPlanted = patchTool(cssPlantedDir,
+    "  const css = inlineCssUrls(readText(cssAbs), cssAbs);",
+    "  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);");
+  const cssPlantedRun = build(cssPlantedDir);
+  const cssPlantedOut = cssPlantedRun.status === 0
+    ? readFileSync(resolve(cssPlantedDir, 'build/AshenSpire.html'))
+    : null;
+  check('text-source EOL known-bad: raw CSS read was planted', cssPlanted);
+  check('text-source EOL known-bad: raw CRLF CSS is caught by output identity',
+    cssPlantedRun.status === 0 && !!lfOut && !!cssPlantedOut && !lfOut.equals(cssPlantedOut),
+    `plant exit ${cssPlantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${cssPlantedOut?.length ?? 0}`);
+
+  const binaryPlantedDir = sandbox();
+  const binaryPlanted = patchTool(binaryPlantedDir,
+    "const TEXT_ASSET_EXTS = new Set(['.svg']);",
+    "const TEXT_ASSET_EXTS = new Set(['.svg', '.webp']);");
+  const binaryPlantedRun = build(binaryPlantedDir);
+  const binaryPlantedOut = binaryPlantedRun.status === 0
+    ? readFileSync(resolve(binaryPlantedDir, 'build/AshenSpire.html'))
+    : null;
+  const binarySource = readFileSync(resolve(binaryPlantedDir, binaryRel));
+  const badMap = binaryPlantedOut && assetMapPayload(binaryPlantedOut, binaryRel, 'image/webp');
+  const badCss = binaryPlantedOut && cssPayload(binaryPlantedOut, '.backdrop.act-1', 'image/webp');
+  check('binary preservation known-bad: a binary extension was planted as text', binaryPlanted);
+  check('binary preservation known-bad: both shared embedding paths catch corrupted binary bytes',
+    binaryPlantedRun.status === 0
+      && !!badMap && !badMap.equals(binarySource)
+      && !!badCss && !badCss.equals(binarySource),
+    `plant exit ${binaryPlantedRun.status}; source ${binarySource.length}; map ${badMap?.length ?? 0}; CSS ${badCss?.length ?? 0}`);
+
+  rmSync(lfDir, { recursive: true, force: true });
+  rmSync(crlfDir, { recursive: true, force: true });
+  rmSync(plantedDir, { recursive: true, force: true });
+  rmSync(cssPlantedDir, { recursive: true, force: true });
+  rmSync(binaryPlantedDir, { recursive: true, force: true });
+}
+
+if (process.argv.includes('--eol-selftest')) {
+  console.log('bundle.test --eol-selftest — text assets through the real bundler, both checkout EOLs.\n');
+  runEolSelftest();
+  console.log('\nBOUNDARY: text inputs consumed by bundle.mjs only; binary assets remain byte-for-byte untouched.');
+  process.exit(fails ? 1 : 0);
 }
 
 // ---- 1. The control: an untouched tree still builds -------------------------
@@ -54,6 +200,29 @@ function build(dir) {
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
   rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 1a. The test history is not a production fallback --------------------
+{
+  const dir = sandbox();
+  rmSync(resolve(dir, '.git'), { recursive: true, force: true });
+  appendFileSync(resolve(dir, 'src/content/balance.js'), '\n// move the canonical digest\n');
+  const r = build(dir);
+  check('ordinal derivation: a changed source tree without Git is refused', r.status === 1, `exit ${r.status}`);
+  check('ordinal derivation: the refusal names Git and never invents a number',
+    /git could not count commits|Refusing to invent one/.test(r.out), r.out.slice(-400));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 1b. Text assets are content, not checkout-EOL receipts ---------------
+// PR #201 exposed the platform seam: Windows materialised the parchment SVGs
+// with CRLF and bundle.mjs base64-encoded those raw bytes. The three shipped
+// artifacts agreed with one another on Windows, but a fresh Linux rebuild read
+// the LF Git blobs and changed only the embedded payloads. Run the REAL bundler
+// in two real sandboxes and require exact output identity. Then put the raw read
+// back into the CRLF sandbox and require this same comparison to catch it.
+{
+  runEolSelftest();
 }
 
 // ---- 2. Bjorn's defect: a dropped brace in a content file -------------------
