@@ -1019,12 +1019,9 @@ button.rs-reset {
   padding: 1rem 2.4rem;
   background: var(--panel); border-top: 1px solid var(--line);
 }
-/* 4.4rem = 44 LOCAL px, the house tap-target unit (see .qn-panel .qn-row).
-   Not px: a control holding text must grow with the text-size setting (Law 2).
-   Said plainly because it is a gap and not a win — at --ui-zoom 0.9 that is
-   39.6 DEVICE px against the 44 a finger wants, and closing THAT gap is Sunna's
-   open card from 2026-07-31, which this rule does not close. */
-.cz-actions button { min-height: 4.4rem; }
+/* The tap floor answers Minimum tap size and UI size, not Text size. Text may
+   still grow this control intrinsically when its content needs more room. */
+.cz-actions button { min-height: var(--tap-floor); height: auto; }
 /* The cue that says "there is more above me." The bar is opaque, so without
    this the content just ends at a hard edge — which reads as finished, the
    exact failure this block exists to remove. Bounded by .cz-actions (position:
@@ -2383,12 +2380,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 0.7rem 1.6rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line);
   color: var(--muted); font-size: 1rem; line-height: 1.4; letter-spacing: 0.04em;
 }
-/* 4.4rem, which is 44 LOCAL px — the house unit for a tap target, and bigger
-   than the 27 px the topbar buttons measure on a phone today. Not `px`: a row
-   holding text must grow with the text-size setting (Law 2). */
+/* Navigation rows use the same text-independent ergonomic floor, then grow
+   intrinsically when their content needs more room. */
 .qn-panel .qn-row {
   display: flex; align-items: center; gap: 1.2rem; width: 100%;
-  min-height: 4.4rem; padding: 0.6rem 1.6rem; text-align: left;
+  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;
   background: transparent; border: 0; border-radius: 0; color: inherit;
   font-family: inherit; font-size: 1.4rem; cursor: pointer;
 }
@@ -2505,7 +2501,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Variant B: the whole tab strip, folded into one control that names where you
    are. Same set, same order, same bumpers (Law 3 clause 1a). */
 .ov-switch {
-  min-height: 4.4rem; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
   font-size: 1.3rem; letter-spacing: 0.05em;
 }
@@ -2517,7 +2513,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    control in this comparison is a real control. */
 :root[data-quicknav='mirror'] .topbar .topbar-btn,
 :root[data-quicknav='switcher'] .topbar .topbar-btn {
-  width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;
 }
 
 /* ---- profile notice (#67): the worst morning a person has with this game ----
@@ -2756,13 +2753,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    so this box answers HIS Minimum-tap-size setting and the UI-size dial —
    Law 4 clause 3, and Law 0 clause 1: the number is data, not mine. A player
    who picks 24 gets 24. `min-height` + `height: auto` is clause 4 verbatim:
-   an ergonomic floor, growth granted by the content. `min-height: 4.4rem` is
-   the breach that clause names BY EXAMPLE, and four sites in this file still
-   carry it (:864, :2195, :2312, :2324) citing Law 2's struck "or touches"
-   clause. THAT IS A REAL DEFECT AND IT IS NOT THIS ACT — none of the four is a
-   flask surface, and `4.4rem` and `--tap-floor` answer two DIFFERENT settings,
-   so converting them is a behaviour change on four screens that needs its own
-   measurement at both settings. Named here so it cannot go quiet; mine to fix.
+   an ergonomic floor, growth granted by the content. Issue #37 moved every
+   remaining interactive floor in this file onto this same token, with
+   real-browser measurements at Text M and XL.
 
    WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
    flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads

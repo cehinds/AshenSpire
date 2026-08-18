@@ -259,7 +259,7 @@ const ROWS = [
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
-    note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
+    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
