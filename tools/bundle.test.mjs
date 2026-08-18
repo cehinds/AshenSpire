@@ -14,7 +14,7 @@
 // Exit 0 = every case behaved. Exit 1 = at least one did not, and it says which.
 
 import { execFileSync, spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, appendFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
@@ -34,7 +34,10 @@ function sandbox() {
   for (const d of ['src', 'styles', 'tools', 'assets', 'content']) {
     if (existsSync(resolve(ROOT, d))) cpSync(resolve(ROOT, d), resolve(dir, d), { recursive: true });
   }
-  for (const f of ['index.html']) {
+  // buildordinal.json became authored build input after this sandbox was first
+  // written. Omitting it makes every real-bundler fixture refuse before it can
+  // reach the property the fixture is meant to exercise.
+  for (const f of ['index.html', 'buildordinal.json']) {
     if (existsSync(resolve(ROOT, f))) cpSync(resolve(ROOT, f), resolve(dir, f));
   }
   return dir;
@@ -43,6 +46,87 @@ function sandbox() {
 function build(dir) {
   const r = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs')], { cwd: dir, encoding: 'utf8' });
   return { status: r.status, out: (r.stdout || '') + (r.stderr || '') };
+}
+
+function forceEol(dir, relPaths, eol) {
+  for (const rel of relPaths) {
+    const p = resolve(dir, rel);
+    const lf = readFileSync(p, 'utf8').replace(/\r\n?/g, '\n');
+    writeFileSync(p, eol === 'crlf' ? lf.replace(/\n/g, '\r\n') : lf, 'utf8');
+  }
+}
+
+function forceTreeEol(dir, eol) {
+  const textExts = new Set(['.js', '.css', '.html', '.svg']);
+  const paths = [];
+  const walk = (rel) => {
+    const abs = resolve(dir, rel);
+    for (const entry of readdirSync(abs, { withFileTypes: true })) {
+      const child = `${rel}/${entry.name}`;
+      if (entry.isDirectory()) walk(child);
+      else if (textExts.has(entry.name.slice(entry.name.lastIndexOf('.')).toLowerCase())) paths.push(child);
+    }
+  };
+  for (const rel of ['src', 'styles', 'assets']) walk(rel);
+  paths.push('index.html');
+  forceEol(dir, paths, eol);
+}
+
+function runEolSelftest() {
+  const lfDir = sandbox();
+  const crlfDir = sandbox();
+  forceTreeEol(lfDir, 'lf');
+  forceTreeEol(crlfDir, 'crlf');
+  const lfRun = build(lfDir);
+  const crlfRun = build(crlfDir);
+  const lfOut = lfRun.status === 0 ? readFileSync(resolve(lfDir, 'build/AshenSpire.html')) : null;
+  const crlfOut = crlfRun.status === 0 ? readFileSync(resolve(crlfDir, 'build/AshenSpire.html')) : null;
+  check('text-asset EOL: LF and CRLF sandboxes both build',
+    lfRun.status === 0 && crlfRun.status === 0,
+    `LF exit ${lfRun.status}; CRLF exit ${crlfRun.status}`);
+  check('text-asset EOL: LF and CRLF builds are byte-identical',
+    !!lfOut && !!crlfOut && lfOut.equals(crlfOut),
+    `LF ${lfOut?.length ?? 0} bytes; CRLF ${crlfOut?.length ?? 0} bytes`);
+
+  const plantedDir = sandbox();
+  forceTreeEol(plantedDir, 'crlf');
+  const planted = patchTool(plantedDir,
+    '    const buf = readAssetBytes(abs);',
+    '    const buf = readFileSync(abs);');
+  const plantedRun = build(plantedDir);
+  const plantedOut = plantedRun.status === 0
+    ? readFileSync(resolve(plantedDir, 'build/AshenSpire.html'))
+    : null;
+  check('text-asset EOL known-bad: raw-byte asset-map read was planted', planted);
+  check('text-asset EOL known-bad: raw CRLF payload is caught by output identity',
+    plantedRun.status === 0 && !!lfOut && !!plantedOut && !lfOut.equals(plantedOut),
+    `plant exit ${plantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${plantedOut?.length ?? 0}`);
+
+  const cssPlantedDir = sandbox();
+  forceTreeEol(cssPlantedDir, 'crlf');
+  const cssPlanted = patchTool(cssPlantedDir,
+    "  const css = inlineCssUrls(readText(cssAbs), cssAbs);",
+    "  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);");
+  const cssPlantedRun = build(cssPlantedDir);
+  const cssPlantedOut = cssPlantedRun.status === 0
+    ? readFileSync(resolve(cssPlantedDir, 'build/AshenSpire.html'))
+    : null;
+  check('text-source EOL known-bad: raw CSS read was planted', cssPlanted);
+  check('text-source EOL known-bad: raw CRLF CSS is caught by output identity',
+    cssPlantedRun.status === 0 && !!lfOut && !!cssPlantedOut && !lfOut.equals(cssPlantedOut),
+    `plant exit ${cssPlantedRun.status}; canonical ${lfOut?.length ?? 0}; planted ${cssPlantedOut?.length ?? 0}`);
+
+  rmSync(lfDir, { recursive: true, force: true });
+  rmSync(crlfDir, { recursive: true, force: true });
+  rmSync(plantedDir, { recursive: true, force: true });
+  rmSync(cssPlantedDir, { recursive: true, force: true });
+}
+
+if (process.argv.includes('--eol-selftest')) {
+  console.log('bundle.test --eol-selftest — text assets through the real bundler, both checkout EOLs.\n');
+  runEolSelftest();
+  console.log('\nBOUNDARY: text inputs consumed by bundle.mjs only; binary assets remain byte-for-byte untouched.');
+  process.exit(fails ? 1 : 0);
 }
 
 // ---- 1. The control: an untouched tree still builds -------------------------
@@ -54,6 +138,17 @@ function build(dir) {
   check('control: it wrote a real bundle, not a stub',
     existsSync(outPath) && readFileSync(outPath, 'utf8').length > 500000);
   rmSync(dir, { recursive: true, force: true });
+}
+
+// ---- 1b. Text assets are content, not checkout-EOL receipts ---------------
+// PR #201 exposed the platform seam: Windows materialised the parchment SVGs
+// with CRLF and bundle.mjs base64-encoded those raw bytes. The three shipped
+// artifacts agreed with one another on Windows, but a fresh Linux rebuild read
+// the LF Git blobs and changed only the embedded payloads. Run the REAL bundler
+// in two real sandboxes and require exact output identity. Then put the raw read
+// back into the CRLF sandbox and require this same comparison to catch it.
+{
+  runEolSelftest();
 }
 
 // ---- 2. Bjorn's defect: a dropped brace in a content file -------------------

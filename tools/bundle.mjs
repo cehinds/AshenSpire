@@ -35,6 +35,27 @@ const MIME = {
   '.m4a': 'audio/mp4', '.woff2': 'font/woff2',
 };
 
+function canonicalText(text) {
+  return text.replace(/\r\n?/g, '\n');
+}
+
+function readText(absPath) {
+  return canonicalText(readFileSync(absPath, 'utf8'));
+}
+
+// A text asset is repository content, not a record of the checkout policy that
+// materialised it. Windows may write an SVG with CRLF while Linux writes the
+// same Git blob with LF; base64 preserves that irrelevant difference and used
+// to make otherwise identical builds disagree. Keep this at the one byte-read
+// seam used by BOTH the asset-map sweep and CSS url() inlining. Binary assets
+// remain byte-for-byte untouched.
+const TEXT_ASSET_EXTS = new Set(['.svg']);
+function readAssetBytes(absPath) {
+  const bytes = readFileSync(absPath);
+  if (!TEXT_ASSET_EXTS.has(extname(absPath).toLowerCase())) return bytes;
+  return Buffer.from(canonicalText(bytes.toString('utf8')), 'utf8');
+}
+
 // Repo-relative POSIX id for a file (e.g. "src/main.js"), used as module key.
 function idOf(absPath) {
   return relative(ROOT, absPath).split(/[\\/]/).join('/');
@@ -129,7 +150,7 @@ function fail(msg, items) {
 // ---------------------------------------------------------------------------
 const indexPath = resolve(ROOT, 'index.html');
 if (!existsSync(indexPath)) fail('index.html not found at ' + indexPath);
-const indexHtml = readFileSync(indexPath, 'utf8');
+const indexHtml = readText(indexPath);
 
 const cssHrefs = [];
 {
@@ -209,7 +230,7 @@ function visit(absPath) {
   if (sources.has(id)) return;
   // Normalize CRLF -> LF at read time so all anchored regexes (import & export
   // matching) behave identically regardless of the file's line endings.
-  const src = readFileSync(absPath, 'utf8').replace(/\r\n?/g, '\n');
+  const src = readText(absPath);
   sources.set(id, src);
   const specs = findImportSpecifiers(src, absPath);
   const deps = specs.map((s) => resolveSpecifier(absPath, s));
@@ -263,7 +284,7 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
       skipped.push(idOf(abs));
       continue;
     }
-    const buf = readFileSync(abs);
+    const buf = readAssetBytes(abs);
     const key = posix.join('assets', relative(ASSET_DIR, abs).split(/[\\/]/g).join('/'));
     pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
     mapEntries += 1;
@@ -492,7 +513,7 @@ function inlineCssUrls(css, cssAbs) {
     const ext = extname(assetAbs).toLowerCase();
     const mime = MIME[ext];
     if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
-    const buf = readFileSync(assetAbs);
+    const buf = readAssetBytes(assetAbs);
     inlinedAssets += 1;
     inlinedAssetBytes += buf.length;
     return `url("data:${mime};base64,${buf.toString('base64')}")`;
@@ -503,7 +524,7 @@ function inlineCssUrls(css, cssAbs) {
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);
+  const css = inlineCssUrls(readText(cssAbs), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
