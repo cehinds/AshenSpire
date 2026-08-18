@@ -119,10 +119,11 @@ body.hi-contrast {
 }
 body.hi-contrast .set-note, body.hi-contrast .card .ctext, body.hi-contrast .cz-keepsake p { color: #cdbf9e; }
 
-/* Accessibility: text size is set on the root element (main.js applyDisplaySettings
-   → html font-size %). Because all type + component dimensions are rem, one root
-   value rescales the whole UI proportionally — S/M/L/XL. Compounds with --ui-zoom
-   (which additionally scales the px-kept hairlines/radii). */
+/* Accessibility: Text size is set on the root element (main.js
+   applyDisplaySettings → html font-size %) and owns readable text metrics only.
+   Non-text geometry uses px or a UI-size-owned token; a box that contains text
+   gets a fixed floor and grows intrinsically. Text size and --ui-zoom are two
+   independent controls. */
 
 /* Accessibility: colorblind-friendly semantic remap (Okabe-Ito hues chosen to
    stay distinguishable under deuteranopia/protanopia — danger→vermillion,
@@ -152,9 +153,9 @@ body.readable-ui { --font-display: var(--font-body); }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* Root sizing anchor: 62.5% makes 1rem = 10px, so every rem in the stylesheets
-   maps to px÷10 at rest. The text-size setting overrides this % on <html> to
-   grow/shrink all rem-based type + dimensions at once (main.js). */
+/* Root text anchor: 62.5% makes 1rem = 10px at Text M. The Text-size setting
+   overrides this value for type and line metrics; component geometry must not
+   derive from this calibration. */
 html { height: 100dvh; overflow: hidden; font-size: 62.5%; }
 /* AIM AT THE FAR ENEMY, LEAVE THE GAME — Sunna's gate finding on #22, measured
    both edges x3. The straight line from the leftmost card to the far-right
@@ -1321,12 +1322,9 @@ button.rs-reset {
   padding: 1rem 2.4rem;
   background: var(--panel); border-top: 1px solid var(--line);
 }
-/* 4.4rem = 44 LOCAL px, the house tap-target unit (see .qn-panel .qn-row).
-   Not px: a control holding text must grow with the text-size setting (Law 2).
-   Said plainly because it is a gap and not a win — at --ui-zoom 0.9 that is
-   39.6 DEVICE px against the 44 a finger wants, and closing THAT gap is Sunna's
-   open card from 2026-07-31, which this rule does not close. */
-.cz-actions button { min-height: 4.4rem; }
+/* The tap floor answers Minimum tap size and UI size, not Text size. Text may
+   still grow this control intrinsically when its content needs more room. */
+.cz-actions button { min-height: var(--tap-floor); height: auto; }
 /* The cue that says "there is more above me." The bar is opaque, so without
    this the content just ends at a hard edge — which reads as finished, the
    exact failure this block exists to remove. Bounded by .cz-actions (position:
@@ -2685,12 +2683,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 0.7rem 1.6rem; margin-bottom: 0.2rem; border-bottom: 1px solid var(--line);
   color: var(--muted); font-size: 1rem; line-height: 1.4; letter-spacing: 0.04em;
 }
-/* 4.4rem, which is 44 LOCAL px — the house unit for a tap target, and bigger
-   than the 27 px the topbar buttons measure on a phone today. Not `px`: a row
-   holding text must grow with the text-size setting (Law 2). */
+/* Navigation rows use the same text-independent ergonomic floor, then grow
+   intrinsically when their content needs more room. */
 .qn-panel .qn-row {
   display: flex; align-items: center; gap: 1.2rem; width: 100%;
-  min-height: 4.4rem; padding: 0.6rem 1.6rem; text-align: left;
+  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;
   background: transparent; border: 0; border-radius: 0; color: inherit;
   font-family: inherit; font-size: 1.4rem; cursor: pointer;
 }
@@ -2807,7 +2804,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Variant B: the whole tab strip, folded into one control that names where you
    are. Same set, same order, same bumpers (Law 3 clause 1a). */
 .ov-switch {
-  min-height: 4.4rem; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
+  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;
   background: var(--bg-raise); border: 1px solid var(--line); color: var(--gold);
   font-size: 1.3rem; letter-spacing: 0.05em;
 }
@@ -2819,7 +2816,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    control in this comparison is a real control. */
 :root[data-quicknav='mirror'] .topbar .topbar-btn,
 :root[data-quicknav='switcher'] .topbar .topbar-btn {
-  width: 4.4rem; height: 4.4rem; font-size: 1.8rem;
+  width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;
 }
 
 /* ---- profile notice (#67): the worst morning a person has with this game ----
@@ -3058,13 +3055,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    so this box answers HIS Minimum-tap-size setting and the UI-size dial —
    Law 4 clause 3, and Law 0 clause 1: the number is data, not mine. A player
    who picks 24 gets 24. `min-height` + `height: auto` is clause 4 verbatim:
-   an ergonomic floor, growth granted by the content. `min-height: 4.4rem` is
-   the breach that clause names BY EXAMPLE, and four sites in this file still
-   carry it (:864, :2195, :2312, :2324) citing Law 2's struck "or touches"
-   clause. THAT IS A REAL DEFECT AND IT IS NOT THIS ACT — none of the four is a
-   flask surface, and `4.4rem` and `--tap-floor` answer two DIFFERENT settings,
-   so converting them is a behaviour change on four screens that needs its own
-   measurement at both settings. Named here so it cannot go quiet; mine to fix.
+   an ergonomic floor, growth granted by the content. Issue #37 moved every
+   remaining interactive floor in this file onto this same token, with
+   real-browser measurements at Text M and XL.
 
    WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
    flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads
@@ -7285,8 +7278,8 @@ const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. Because type + dimensions are rem, one
-    // value rescales the whole UI (styles/base.css).
+    // Text size → root font-size %. It scales readable type and line metrics;
+    // component and sprite geometry is owned separately (styles/base.css).
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //
@@ -34190,7 +34183,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '30e959b6e0';
+const SOURCE = 'ba5bf97c6c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34224,7 +34217,7 @@ const SOURCE = '30e959b6e0';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0807';
+const ORDINAL = '0819';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35021,10 +35014,10 @@ const { assetUrl } = require("src/ui/assetmap.js");
 // data — content/balance.js → ui.spriteTiers. Sizes are generous on purpose: the
 // board reads best when sprites fill it, and the whole UI is zoomed to fit the
 // window (main.js applyUiScale), so larger base sizes mean a bolder board rather
-// than overflow. Values are px-magnitude; emitted as rem (÷10, since :root is
-// 62.5% → 1rem = 10px) so sprites track the text-size setting. Shadows stay px.
+// than overflow. These are non-text geometry and remain px when Text size
+// changes; UI size still scales the containing application.
 const SIZE_TIERS = balance.ui.spriteTiers;
-const rem = (px) => `${px / 10}rem`;
+const px = (value) => `${value}px`;
 
 /**
  * Enemy sprite: the Blender-rendered PNG when it exists
@@ -35039,13 +35032,13 @@ function enemySprite(enemyDef) {
   const el = document.createElement('div');
   const placeholder = () => {
     el.innerHTML = '';
-    el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};border-radius:10px;` +
+    el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};border-radius:10px;` +
       `background:var(--panel);border:2px solid ${tint};display:flex;align-items:center;` +
-      `justify-content:center;font-size:${rem(tier.font)};position:relative;` +
+      `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
   };
-  el.style.cssText = `width:${rem(tier.w)};height:${rem(tier.h)};position:relative;` +
+  el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;` +
     'display:flex;align-items:flex-end;justify-content:center;';
   const img = document.createElement('img');
   img.src = assetUrl(`assets/sprites/enemy_${enemyDef.id}.webp`);
@@ -35170,15 +35163,14 @@ function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:15rem;height:19rem;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
     const svg = el.querySelector('svg');
     if (svg) {
-      // The class SVGs hardcode a 110×140 viewBox; fill the rem-sized container
-      // (viewBox keeps ratio) so the figure reads as boldly as the enemies and
-      // tracks the text-size setting.
+      // The class SVGs hardcode a 110×140 viewBox; fill the fixed-geometry
+      // container (viewBox keeps ratio) so Text size cannot resize the figure.
       svg.setAttribute('width', '100%');
       svg.setAttribute('height', '100%');
     }
@@ -35201,8 +35193,8 @@ function classSprite(classId, tint, sigil, tintId, style) {
     med.textContent = sigil;
     med.style.cssText =
       `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
-      `width:2.2rem;height:2.2rem;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
-      'display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#e8dcc0;';
+      `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
+      'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
   }
   return el;
@@ -35257,7 +35249,7 @@ function playerSprite(customization = {}, classId, equip = null) {
   if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
     const el = document.createElement('div');
     el.className = 'class-sprite';
-    el.style.cssText = 'width:15rem;height:19rem;position:relative;';
+    el.style.cssText = 'width:150px;height:190px;position:relative;';
     el.appendChild(equippedFigure({ classId, ...equip }));
     return el;
   }
@@ -35266,8 +35258,8 @@ function playerSprite(customization = {}, classId, equip = null) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:15rem;height:19rem;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
-    'display:flex;align-items:center;justify-content:center;font-size:7rem;position:relative;' +
+    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
   return el;
@@ -44896,7 +44888,7 @@ const ROWS = [
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
     choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
-    note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
+    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and

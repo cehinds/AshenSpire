@@ -425,8 +425,8 @@ export const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. Because type + dimensions are rem, one
-    // value rescales the whole UI (styles/base.css).
+    // Text size → root font-size %. It scales readable type and line metrics;
+    // component and sprite geometry is owned separately (styles/base.css).
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //
