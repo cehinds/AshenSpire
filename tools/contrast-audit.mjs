@@ -13,6 +13,9 @@
 //                                                   name it, revert, re-prove clean
 //   node tools/contrast-audit.mjs --gated-only    → render only the profiles the
 //                                                   gate judges (used by --selftest)
+//   node tools/contrast-audit.mjs --artifact FILE → measure a built standalone
+//                                                   HTML artifact through the
+//                                                   same browser/pixel door
 //
 // ── THIS TOOL GATES, AND UNTIL 2026-08-15 NOBODY HAD WATCHED ITS GATE GO RED ──
 // Vira's doors audit (docs/TOOL-DOORS-AUDIT.md, 2026-08-14) filed this file under
@@ -55,7 +58,7 @@
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { existsSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
@@ -587,12 +590,36 @@ if (args.includes('--selftest')) {
   const ARMS = [
     {
       name: 'subfloor',
-      find: '  --muted: #a89571;\n  --line: #6a5b43;',
-      replace: '  --muted: #5f5748;\n  --line: #6a5b43;',
+      find: '  --muted: #a89571;',
+      replace: '  --muted: #5f5748;',
       why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
-      expectRows: ['Act/Floor', 'SEED', 'keyboard hint'],
+      expectRows: [
+        { label: 'Act/Floor', profile: 'default' },
+        { label: 'SEED', profile: 'default' },
+        { label: 'keyboard hint', profile: 'default' },
+      ],
+    },
+    {
+      name: 'atmospheric map structure',
+      find: '  --map-structure: #7a6b54;',
+      replace: '  --map-structure: #4a4034;',
+      why: 'the atmospheric map-structure token restored to the old subfloor #4a4034',
+      expectRows: [
+        { label: 'map edge (untraveled road)', profile: 'hi-contrast-off' },
+        { label: 'map node ring (plain)', profile: 'hi-contrast-off' },
+      ],
+    },
+    {
+      name: 'high-contrast map structure',
+      find: '  --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */',
+      replace: '  --map-structure: #4a4034; /* planted: subfloor high-contrast map structure */',
+      why: 'the high-contrast map-structure token dimmed to the same subfloor #4a4034',
+      expectRows: [
+        { label: 'map edge (untraveled road)', profile: 'default' },
+        { label: 'map node ring (plain)', profile: 'default' },
+      ],
     },
   ];
   const runChild = () => new Promise((res) => {
@@ -620,10 +647,12 @@ if (args.includes('--selftest')) {
     } finally { writeFileSync(BASE, before); }
     // The gate must NAME the rows, at the gated profile, as NEW failures.
     const newBlock = /--gate: \d+ NEW failure\(s\)[\s\S]*?(?=\n\ncontrast-audit --gate:|$)/.exec(got.out);
-    const named = arm.expectRows.filter((r) => newBlock && newBlock[0].includes(`${r} [default]`));
+    const named = arm.expectRows.filter(({ label, profile }) =>
+      newBlock && newBlock[0].includes(`${label} [${profile}]`));
     console.log(`  ${arm.name}: ${arm.why}`);
     if (named.length === arm.expectRows.length && got.code === 1) {
-      for (const line of (newBlock[0].split('\n').filter((l) => arm.expectRows.some((r) => l.includes(`${r} [default]`))))) {
+      for (const line of (newBlock[0].split('\n').filter((l) =>
+        arm.expectRows.some(({ label, profile }) => l.includes(`${label} [${profile}]`))))) {
         console.log(`    RED  ${line.trim()}`);
       }
       console.log(`    exit ${got.code}; all ${named.length} expected rows named as NEW failures at the gated profile.`);
@@ -637,24 +666,23 @@ if (args.includes('--selftest')) {
   // tree is not evidence. This asserts the planted rows are NOT named — never
   // that the gate exits 0, because it does not: see the standing red below.
   const clean = await runChild();
-  const stillNamed = ARMS.flatMap((a) => a.expectRows).filter((r) => new RegExp(`${r} \\[default\\] — `).test(clean.out));
-  console.log(`\n  control: restored tree — ${stillNamed.length ? `STILL RED: ${stillNamed.join(', ')}` : 'none of the planted rows is named; the plant is gone'}`);
+  const stillNamed = ARMS.flatMap((a) => a.expectRows).filter(({ label, profile }) =>
+    new RegExp(`${label} \\[${profile}\\] — `).test(clean.out));
+  console.log(`\n  control: restored tree — ${stillNamed.length
+    ? `STILL RED: ${stillNamed.map(({ label, profile }) => `${label} [${profile}]`).join(', ')}`
+    : 'none of the planted rows is named; the plants are gone'}`);
   console.log(`
 DOOR: the known-bad is an edit to styles/base.css, a real shipped stylesheet, served by the real
       serve() and rendered by the real browser. It travels the cascade, the ?shotSettings profile,
       the captured pixels, the luminance maths, the KNOWN_BELOW ledger and the gate's own verdict.
       No ratio in this block is computed by the selftest; every number above came from a pixel.
 NOT PASSED: only the NEW-failure class is planted. REGRESSED (a KNOWN_BELOW row worsening past its
-      0.15 slack) has no plant here. BLIND needs none right now and that is not good news — see below.
-STANDING RED, on real code, at dev = 5244543 and unplanted: all three #45 map rows are BLIND in BOTH
-      gated profiles. \`?shot=map\` draws 2 nodes and 0 edges (fog), and both survivors carry an
-      excluded class (reachable, boss), so \`.map-edge:not(.traveled)\` and the plain-node selector
-      match nothing. The gate has been reporting six BLIND rows rather than measuring the map
-      structure it was extended to protect (#45). BLIND fired correctly — the instrument said it had
-      lost sight instead of going quiet, which is the one thing that went right here. Re-pointing the
-      probe at a state where the graph is drawn is a separate act; this line is the record, not the fix.
-BOUNDARY: one plant, one token, one profile family, one viewport, one font stack. Proof this gate CAN
-      go red on a real palette change — not proof it catches a palette change shaped differently.`);
+      0.15 slack) still has no plant here.
+MAP DOOR: the map arms enter through the shipped --map-structure tokens, then \`?shotSettings=\`
+      selects the real full path-map mode. Both default/high-contrast and explicit atmospheric
+      profiles must name edge and ring failures independently; one palette cannot excuse the other.
+BOUNDARY: three plants, two token families, two map palettes, one viewport, one font stack. Proof this
+      gate CAN go red on these real palette changes — not proof it catches a differently shaped defect.`);
   console.log(bad ? `\nSELFTEST: ${bad} arm(s) did not fire` : `\nSELFTEST: ${ARMS.length}/${ARMS.length} arms observed RED by the palette door, plant reverted`);
   process.exit(bad || stillNamed.length ? 1 : 0);
 }
@@ -663,11 +691,19 @@ const gate = args.includes('--gate');
 const shotDir = arg('--shots', null);
 const width = +arg('--width', 1920);
 const height = +arg('--height', 1080);
+const artifactArg = arg('--artifact', null);
+const artifact = artifactArg ? resolve(ROOT, artifactArg) : null;
+if (artifact && !existsSync(artifact)) {
+  console.error(`contrast-audit: artifact not found: ${artifact}`);
+  process.exit(2);
+}
 
 const browser = BROWSERS.find((p) => existsSync(p));
 if (!browser) { console.error('contrast-audit: no Chrome/Chromium found (set CHROME_PATH).'); process.exit(1); }
 
-const { server, port } = await serve({ root: ROOT, port: 8137, open: false });
+const servedRoot = artifact ? dirname(artifact) : ROOT;
+const servedPage = artifact ? basename(artifact) : '';
+const { server, port } = await serve({ root: servedRoot, port: 8137, open: false });
 // THE DEBUGGING PORT IS NOT GUESSED, AND THIS IS A CORRECTNESS FIX, NOT TIDINESS.
 //
 // This line was `const dbg = 9222 + (process.pid % 400)` — the range 9222..9621,
@@ -746,7 +782,13 @@ try {
     for (const screen of ['', 'map', 'combat', 'death']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
-      await gotoScreen(cdp, `http://localhost:${port}/${screen ? `?shot=${screen}` : ''}`, settings);
+      // The fog-first map boot deliberately exposes only the entrance choice:
+      // two stateful nodes and no ordinary road. That is a valid gameplay state,
+      // but it gives the structural contrast probes nothing to see. Pose the
+      // player's full path-map setting through the same public settings door so
+      // ordinary roads and rings exist without reaching into render internals.
+      const screenSettings = screen === 'map' ? { ...settings, mapMode: 'path' } : settings;
+      await gotoScreen(cdp, `http://localhost:${port}/${servedPage}${screen ? `?shot=${screen}` : ''}`, screenSettings);
       const shot = async () => `data:image/png;base64,${(await cdp.send('Page.captureScreenshot', { format: 'png' })).data}`;
       const dataUrlA = await shot();
       if (shotDir) {
