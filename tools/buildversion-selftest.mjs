@@ -57,12 +57,12 @@
 import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEILING } from './buildversion.mjs';
+import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEILING, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json'];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 const editJson = (root, fn) => {
   const p = resolve(root, ORDINAL_HOME);
@@ -142,6 +142,14 @@ const PLANTS = [
     plant: (root) => editJson(root, (j) => ({ ...j, digest: 'deadbeef01' })),
   },
   {
+    // PR #201 changed bundle bytes without changing authored game content. If
+    // generator bytes fall out of identity, bumpOrdinal sees no move and two
+    // different artifacts inherit one ordinal.
+    name: 'the bundler changes while the recorded build identity stays old',
+    row: 'G ORDINAL BELONGS TO THIS TREE',
+    plant: (root) => edit(root, 'tools/bundle.mjs', (t) => `${t}\n// planted bundler semantic change\n`),
+  },
+  {
     name: 'a named consumer stops deriving (combat prints no stamp)',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/screens/combat.js',
@@ -197,7 +205,11 @@ const PLANTS = [
 
 function fresh() {
   const dir = mkdtempSync(join(tmpdir(), 'buildversion-known-bad-'));
-  for (const c of COPY) cpSync(resolve(REPO_ROOT, c), resolve(dir, c), { recursive: true });
+  for (const c of COPY) {
+    const dest = resolve(dir, c);
+    mkdirSync(dirname(dest), { recursive: true });
+    cpSync(resolve(REPO_ROOT, c), dest, { recursive: true });
+  }
   return dir;
 }
 

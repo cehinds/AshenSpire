@@ -24,12 +24,13 @@
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
 //     index.html · styles/** · src/** · assets/**
+//     tools/bundle.mjs · tools/buildversion.mjs · tools/dirorder.mjs
 //
 // `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
 // the fixpoint that forces it, and rows F and G for the lock that makes it
 // safe.
 //
-// FOUR SWEEPS, NOT AN IMPORT WALK, AND THAT IS DELIBERATE. tools/bundle.mjs
+// FOUR CONTENT SWEEPS, NOT AN IMPORT WALK, AND THAT IS DELIBERATE. tools/bundle.mjs
 // discovers its modules by walking `import` from src/main.js. Re-implementing
 // that walk here would be a second copy of the one thing this file exists to
 // forbid, and it would fail in the silent direction: a module the bundler reads
@@ -38,11 +39,10 @@
 // file moves the string without moving the game — and over-inclusive is the
 // side to be wrong on. src/buildversion.js states that trade in its own words.
 //
-// THE CONTAINMENT CLAIM IS CHECKED, NOT ASSUMED. `--check` proves the bundler
-// reads nothing outside those four roots: every stylesheet href in index.html,
-// every `url()` inside those stylesheets, and every module id recorded in the
-// committed bundle must resolve inside the set. If the bundler ever grows a
-// fifth input, this goes red rather than quiet.
+// THE CONTAINMENT CLAIM IS CHECKED, NOT ASSUMED. `--check` proves player-content
+// reads stay inside those four roots. The three small files that decide HOW those
+// bytes become an artifact are identity inputs too, without widening the player-
+// content/version-site scans into tools/ and their known false positives.
 //
 // CRLF: canonicalized to LF before hashing, for text files only, decided by
 // round-trip rather than by an extension table (a second MIME table is a second
@@ -116,9 +116,10 @@ export const ORDINAL_CEILING = 10 ** (ORDINAL_PAD + 1);
 export const DIGEST_CHARS = 10;
 
 /**
- * The closed set of digest inputs. One home; --check proves it is a superset.
+ * The closed set of player-content inputs. BUILD_IDENTITY_FILES beside it owns
+ * the small executable seam that turns those inputs into an artifact.
  *
- * `buildordinal.json` IS DELIBERATELY NOT IN THIS SET, and the reason is a
+ * `buildordinal.json` IS DELIBERATELY NOT IN EITHER SET, and the reason is a
  * fixpoint, not an oversight: the ordinal is bumped WHEN THE DIGEST MOVES, so
  * covering it would make every bump move the digest, which would demand another
  * bump, forever. It sits at the repo root — outside all four roots — so nothing
@@ -132,6 +133,18 @@ export const DIGEST_CHARS = 10;
  * lock. They are not a follow-up; they are why this is allowed to exist.
  */
 export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets']);
+
+/**
+ * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
+ * These files are hashed but are deliberately not scanned as player content:
+ * changing EOL normalization, stamp injection, or directory ordering must move
+ * build identity even when the authored game bytes do not.
+ */
+export const BUILD_IDENTITY_FILES = Object.freeze([
+  'tools/bundle.mjs',
+  'tools/buildversion.mjs',
+  'tools/dirorder.mjs',
+]);
 
 /**
  * Row B arm 2: a SITE that declares a version — an identifier or object key
@@ -249,6 +262,18 @@ export function inputFiles(root = REPO_ROOT) {
   return out;
 }
 
+/** Content plus the exact generator closure, in one stable order. */
+export function identityFiles(root = REPO_ROOT) {
+  const files = [...inputFiles(root)];
+  for (const rel of BUILD_IDENTITY_FILES) {
+    if (!existsSync(resolve(root, rel))) {
+      throw new Error(`build identity input is missing: ${rel}`);
+    }
+    files.push(rel);
+  }
+  return [...new Set(files)].sort();
+}
+
 /**
  * Canonical bytes for hashing. Text files lose CRLF; anything that does not
  * survive a utf8 round-trip is hashed raw, so a .webp is never mangled into an
@@ -262,7 +287,7 @@ export function canonicalBytes(buf) {
 
 /** sourceDigest(root) → { digest, files, bytes, manifest } — pure, no writes. */
 export function sourceDigest(root = REPO_ROOT) {
-  const files = inputFiles(root);
+  const files = identityFiles(root);
   const h = createHash('sha256');
   let bytes = 0;
   const manifest = [];
@@ -968,7 +993,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   const d = sourceDigest();
   console.log(`buildversion: ${stampText()}`);
   console.log(`  the ORDERING half   ${buildVersion()}   — numeric, last component sorts; a higher one is newer`);
-  console.log(`  the IDENTIFYING half ${d.digest}   — over ${d.files} files, ${d.bytes} canonical bytes, under ${INPUT_ROOTS.join(' · ')}`);
+  console.log(`  the IDENTIFYING half ${d.digest}   — over ${d.files} canonical files: ${INPUT_ROOTS.join(' · ')} plus ${BUILD_IDENTITY_FILES.join(' · ')}`);
   console.log(`  which commit shipped it: node tools/buildversion.mjs --which ${d.digest}`);
   process.exit(0);
 }
