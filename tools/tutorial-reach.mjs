@@ -350,7 +350,11 @@ async function main() {
     return { armed: false, card: null };
   };
   const armTargetedFlask = async () => {
-    await clickSel('.flask-slot[data-flask-slot="1"]', 'Blight Coating flask');
+    // Select by the product-owned identity rather than an inventory position:
+    // the shot fixture carries Crimson then Blight, while the durable standalone
+    // cell intentionally seeds only Blight. Slot 1 would test one and miss the
+    // other even though both render the same authored flask.
+    await clickSel('.flask-identity[aria-label="Blight Coating"]', 'Blight Coating flask');
     await until(`!!document.querySelector('.flask-action-menu [data-flask-action="use"]')`, 'Blight Coating Use action');
     const pt = await evalIn(`(() => {
       const b = document.querySelector('.flask-action-menu [data-flask-action="use"]');
@@ -527,7 +531,7 @@ async function main() {
   // save), so there is nothing to read back afterwards. That gate is correct and
   // this check goes the long way round instead of weakening it.
   if (!only) {
-    console.log(`\n  first-run ${rootArtifact ? 'root artifact' : 'source'} path at 1920x1080: title → BEGIN → first fight → armed Escape → menu Escape → unarmed Escape → RELOAD`);
+    console.log(`\n  first-run ${rootArtifact ? 'root artifact' : 'source'} path at 1920x1080: title → BEGIN → first fight → attack Escape → targeted-flask Escape → menu Escape → unarmed Escape → RELOAD`);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
     await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen');
@@ -567,6 +571,26 @@ async function main() {
     await wait(500);
     const haveFight = await evalIn(`!!document.querySelector('.map-node.monster.reachable')`);
     ok(haveFight, 'first-run: the first floor offers a fight to walk into');
+
+    // A brand-new run intentionally carries no utility flask. Seed one valid
+    // saved-run row, then reload through CONTINUE so the standalone cell reaches
+    // Blight Coating through the real save loader and combat constructor rather
+    // than mutating the rendered combat object. The profile stays first-run:
+    // seenTutorial is still absent/false and the coach marks must mount itself.
+    const seededFlask = await evalIn(`(() => {
+      const key = 'sote_run_v1';
+      const raw = localStorage.getItem(key);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      saved.flasks = [{ flaskId: 'blightCoating' }];
+      localStorage.setItem(key, JSON.stringify(saved));
+      return JSON.parse(localStorage.getItem(key)).flasks?.[0]?.flaskId === 'blightCoating';
+    })()`);
+    ok(seededFlask, 'first-run: valid Blight Coating row entered through the durable run save');
+    await cdp.send('Page.navigate', { url: base }, S);
+    await until(`!!document.querySelector('.slot-continue')`, 'the title screen with the flask-seeded run');
+    await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
+    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
     await clickSel('.map-node.monster.reachable', 'a monster node');
     let mounted = true;
     try {
@@ -593,6 +617,31 @@ async function main() {
       ok(
         !afterCancel.meta || JSON.parse(afterCancel.meta).settings.seenTutorial !== true,
         'first-run: armed Escape leaves durable seenTutorial false'
+      );
+
+      // Exercise the targeted-flask sibling through the first-run path too.
+      // This block runs against both source and --root, so a regenerated
+      // standalone cannot silently retain the old selected-card conjunct while
+      // the source-only viewport matrix stays green.
+      const armedFlask = await armTargetedFlask();
+      ok(
+        armedFlask.armed && !armedFlask.selectedCard,
+        `first-run: armed Blight Coating with a targetable enemy and no selected card — ${JSON.stringify(armedFlask)}`
+      );
+      await pressKey('Escape', 'Escape', 27);
+      const afterFlaskCancel = await evalIn(`({
+        veil: !!document.querySelector('.tut-veil'),
+        selected: !!document.querySelector('.hand .card.selected'),
+        targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(
+        afterFlaskCancel.veil && !afterFlaskCancel.selected && !afterFlaskCancel.targetable,
+        `first-run: targeted-flask Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(afterFlaskCancel)}`
+      );
+      ok(
+        !afterFlaskCancel.meta || JSON.parse(afterFlaskCancel.meta).settings.seenTutorial !== true,
+        'first-run: targeted-flask Escape leaves durable seenTutorial false'
       );
 
       if (screenshotPath) {
