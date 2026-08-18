@@ -146,6 +146,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       meta, reachable, mode, reveal,
       current: run.mapNodeId || null,
       path: run.path || [],
+      viewState: run.mapView,
+      onViewStateChange: (viewState, { commit } = {}) => {
+        run.mapView = viewState;
+        if (commit && onSave) onSave();
+      },
       onPick,
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },

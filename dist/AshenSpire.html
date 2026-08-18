@@ -3528,9 +3528,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    flex min-height is its combatants' min-content height. At 320x640 and
    1200x730 with Text XL that prevented it from yielding a single pixel and
    pushed the hand/card band below the viewport. Let this one flexible row
-   yield; combatants stay bottom-aligned and keep their authored sizes, while
-   the fixed player controls remain on glass. */
-.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }
+   yield only when main.js's existing fit decider says the viewport is not
+   short. The short-screen branch keeps the min-content premise measured by the
+   upright refusal; this selector reads that answer and defines no breakpoint. */
+.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+:root[data-short='false'] .field { min-height: 0; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding-bottom: 2.6rem; gap: 0.6rem;
@@ -5059,6 +5061,12 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
+  // Publish the THIRD value from that same decider for layout consumers too.
+  // This is not another short-screen predicate: CSS reads the answer computed
+  // above, just as it reads `data-layout`. In particular, combat may let its
+  // field yield to the hand at Text XL on a fitting viewport without silently
+  // making the established upright refusal outlive (or lose) its premise.
+  document.documentElement.setAttribute('data-short', short ? 'true' : 'false');
   // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
   // header, not here). Written by the SAME call that chose the zoom and the
   // layout, from the same decider, so there is no second opinion about whether
@@ -25162,6 +25170,10 @@ const RUN_SHAPE = [
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
+  // Optional, backward-compatible presentation state. It is owned by the run
+  // rather than Settings because the ladder and pan are live choices for this
+  // climb; Settings only supplies the default when this field is absent.
+  { key: 'mapView', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
@@ -25196,6 +25208,23 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
+    }
+  }
+  if (run.mapView !== undefined && run.mapView !== null && typeOk(run.mapView, 'object')) {
+    const v = run.mapView;
+    if (!Number.isInteger(v.actNumber) || v.actNumber < 1) problems.push('mapView.actNumber must be a positive integer');
+    if (v.nodeId !== null && (typeof v.nodeId !== 'string' || !v.nodeId)) problems.push('mapView.nodeId must be null or a non-empty string');
+    if (typeof v.setting !== 'string' || !v.setting) problems.push('mapView.setting must be a non-empty string');
+    if (!Number.isFinite(v.zoom) || v.zoom <= 0) problems.push('mapView.zoom must be a positive finite number');
+    if (!['fit', 'saved', 'manual'].includes(v.framing)) problems.push("mapView.framing must be 'fit', 'saved', or 'manual'");
+    for (const key of ['scrollLeft', 'scrollTop']) {
+      if (!Number.isFinite(v[key]) || v[key] < 0) problems.push(`mapView.${key} must be a non-negative finite number`);
+    }
+    if (!Number.isFinite(v.aimX)) problems.push('mapView.aimX must be a finite number');
+    for (const key of ['viewportWidth', 'viewportHeight']) {
+      if (v[key] !== undefined && (!Number.isFinite(v[key]) || v[key] < 0)) {
+        problems.push(`mapView.${key} must be a non-negative finite number when present`);
+      }
     }
   }
   // A level count is a whole number of purchases and can never be negative. The
@@ -34161,7 +34190,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dac0f12a6f';
+const SOURCE = '30e959b6e0';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34195,7 +34224,7 @@ const SOURCE = 'dac0f12a6f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0797';
+const ORDINAL = '0807';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -37464,6 +37493,11 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
       meta, reachable, mode, reveal,
       current: run.mapNodeId || null,
       path: run.path || [],
+      viewState: run.mapView,
+      onViewStateChange: (viewState, { commit } = {}) => {
+        run.mapView = viewState;
+        if (commit && onSave) onSave();
+      },
       onPick,
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
@@ -38494,8 +38528,32 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // NOT published: it names nodes the player has not earned.
   scroll.dataset.shrineLane = [...laneNodes].join(',');
 
-  const saved = savedZoom(viewer.meta);
-  let framing = saved == null ? 'fit' : 'saved';
+  // Settings owns the DEFAULT. The run owns what the player subsequently did
+  // with the on-map ladder and camera. A changed Settings value invalidates the
+  // old live view explicitly, so the Settings control never looks dead.
+  const setting = String((((viewer.meta || {}).settings || {}).mapZoom) ?? MAP_ZOOM_DEFAULT);
+  const candidate = viewer.viewState;
+  // Fit is a viewport promise, not a portable camera coordinate. A fit solved
+  // on desktop must be recomputed when that run opens on a phone; manual and
+  // saved views remain exact because they are deliberate player choices.
+  const fitViewportMatches = candidate && candidate.framing === 'fit'
+    ? Number.isFinite(candidate.viewportWidth)
+      && Number.isFinite(candidate.viewportHeight)
+      && Math.abs(candidate.viewportWidth - scroll.clientWidth) <= 1
+      && Math.abs(candidate.viewportHeight - scroll.clientHeight) <= 1
+    : true;
+  const restored = candidate && candidate.actNumber === act.actNumber
+    && candidate.nodeId === (run.mapNodeId || null)
+    && candidate.setting === setting
+    && Number.isFinite(candidate.zoom) && candidate.zoom > 0
+    && ['fit', 'saved', 'manual'].includes(candidate.framing)
+    && Number.isFinite(candidate.scrollLeft) && candidate.scrollLeft >= 0
+    && Number.isFinite(candidate.scrollTop) && candidate.scrollTop >= 0
+    && Number.isFinite(candidate.aimX)
+    && fitViewportMatches
+    ? candidate : null;
+  const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
+  let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
   let zoom = saved == null ? ZOOM_MIN : saved;
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
@@ -38591,7 +38649,31 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // read by `apply`, which centres the viewBox on it. Before the first
   // centring it is the ink's own centre, the honest place to stand when
   // nothing has been aimed at yet.
-  let aimX = (inkBox.x0 + inkBox.x1) / 2;
+  let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
+  let restorePending = !!restored;
+  let viewCommitTimer = null;
+  let pendingViewCommit = null;
+
+  scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
+
+  function viewSnapshot() {
+    return {
+      actNumber: act.actNumber,
+      nodeId: run.mapNodeId || null,
+      setting,
+      zoom,
+      framing,
+      scrollLeft: scroll.scrollLeft,
+      scrollTop: scroll.scrollTop,
+      aimX,
+      viewportWidth: scroll.clientWidth,
+      viewportHeight: scroll.clientHeight,
+    };
+  }
+
+  function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
+  }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
   // Applying a content box can add or remove a CLASSIC scrollbar (this
   // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
@@ -39046,12 +39128,14 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     framing = 'manual';
     zoom = clampZoom(next);
     applyZoom(keepCenter);
+    emitViewState(true);
   }
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
   // wherever the ladder, the wheel or the saved setting left us.
   function resetFraming() {
     framing = 'fit';
     centerOnCurrent();
+    emitViewState(true);
   }
   const stepZoom = (dir) => {
     const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
@@ -39112,31 +39196,80 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       onEnd: () => {
         panning = false;
         scroll.classList.remove('grabbing');
+        emitViewState(true);
       },
     });
   });
+
+  // Wheel/scrollbar panning has no pointer-end callback. Debounce the real
+  // scroller's event so a gesture becomes one durable run write, not one write
+  // per pixel. Programmatic centring may also emit; that simply records the
+  // exact view the player is looking at.
+  scroll.addEventListener('scroll', () => {
+    if (viewCommitTimer) clearTimeout(viewCommitTimer);
+    // Freeze both the camera and its node identity NOW. The live run may enter
+    // a reachable node before this debounce fires; reading it in the callback
+    // would mislabel the detached board's old camera as belonging to that node.
+    pendingViewCommit = viewSnapshot();
+    viewCommitTimer = setTimeout(() => {
+      viewCommitTimer = null;
+      const snapshot = pendingViewCommit;
+      pendingViewCommit = null;
+      if (snapshot) {
+        scroll.dataset.committedViewNode = snapshot.nodeId || 'entrance';
+        emitViewState(true, snapshot);
+      }
+    }, 80);
+  }, { passive: true });
 
   // The flex container may report height 0 until layout settles, so centre on
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
   function recenter(onSettled) {
-    const run = () => { centerOnCurrent(); if (onSettled) onSettled(); };
+    let settled = false;
+    const settle = () => {
+      // A timeout is only a request to settle. A zero-height scrollport has no
+      // real camera geometry yet, so it must not consume the one settled pass;
+      // keep the observer alive until layout supplies a usable viewport.
+      if (settled || scroll.clientHeight <= 0) return false;
+      settled = true;
+      if (restorePending) {
+        restorePending = false;
+        sizeSvg();
+        scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+        scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+        if (titleEl) titleEl.setAttribute('x', String(aimX));
+        const fs = framingNodes();
+        const box = fs.length ? framingBox(fs, height) : null;
+        report(box, fs.length);
+        const currentNode = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
+        reportEntrance(currentNode || !box ? null : entranceFrame(fs, box));
+        reportTapSize();
+      } else {
+        centerOnCurrent();
+      }
+      emitViewState(false);
+      if (onSettled) onSettled();
+      return true;
+    };
     applyZoom(false);
-    if (scroll.clientHeight > 0) run();
+    if (scroll.clientHeight > 0) settle();
     else if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        if (scroll.clientHeight > 0) { run(); ro.disconnect(); ro = null; }
+        if (settle()) { ro.disconnect(); ro = null; }
       });
       ro.observe(scroll);
     }
     // Backstop in case the observer never fires. Cheap and idempotent.
-    backstop = setTimeout(run, 120);
+    backstop = setTimeout(settle, 120);
   }
 
   function teardown() {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
+    if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
+    pendingViewCommit = null;
   }
 
   return {

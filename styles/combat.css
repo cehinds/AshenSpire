@@ -297,9 +297,11 @@
    flex min-height is its combatants' min-content height. At 320x640 and
    1200x730 with Text XL that prevented it from yielding a single pixel and
    pushed the hand/card band below the viewport. Let this one flexible row
-   yield; combatants stay bottom-aligned and keep their authored sizes, while
-   the fixed player controls remain on glass. */
-.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }
+   yield only when main.js's existing fit decider says the viewport is not
+   short. The short-screen branch keeps the min-content premise measured by the
+   upright refusal; this selector reads that answer and defines no breakpoint. */
+.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+:root[data-short='false'] .field { min-height: 0; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding-bottom: 2.6rem; gap: 0.6rem;
