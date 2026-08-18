@@ -630,6 +630,10 @@ if (args.includes('--selftest')) {
     c.stderr.on('data', (d) => { out += d; });
     c.on('exit', (code) => res({ code, out }));
   });
+  // The gate prints labels verbatim. Match the complete literal label/profile
+  // prefix too: parentheses and brackets are product copy here, not regex.
+  const namesRow = (out, { label, profile }) =>
+    out.includes(`${label} [${profile}] — `);
 
   console.log('contrast-audit --selftest — the gate\'s own known-bad, by the palette door.\n');
   const before = readFileSync(BASE, 'utf8');
@@ -647,12 +651,11 @@ if (args.includes('--selftest')) {
     } finally { writeFileSync(BASE, before); }
     // The gate must NAME the rows, at the gated profile, as NEW failures.
     const newBlock = /--gate: \d+ NEW failure\(s\)[\s\S]*?(?=\n\ncontrast-audit --gate:|$)/.exec(got.out);
-    const named = arm.expectRows.filter(({ label, profile }) =>
-      newBlock && newBlock[0].includes(`${label} [${profile}]`));
+    const named = arm.expectRows.filter((row) => newBlock && namesRow(newBlock[0], row));
     console.log(`  ${arm.name}: ${arm.why}`);
     if (named.length === arm.expectRows.length && got.code === 1) {
       for (const line of (newBlock[0].split('\n').filter((l) =>
-        arm.expectRows.some(({ label, profile }) => l.includes(`${label} [${profile}]`))))) {
+        arm.expectRows.some((row) => namesRow(l, row))))) {
         console.log(`    RED  ${line.trim()}`);
       }
       console.log(`    exit ${got.code}; all ${named.length} expected rows named as NEW failures at the gated profile.`);
@@ -666,11 +669,20 @@ if (args.includes('--selftest')) {
   // tree is not evidence. This asserts the planted rows are NOT named — never
   // that the gate exits 0, because it does not: see the standing red below.
   const clean = await runChild();
-  const stillNamed = ARMS.flatMap((a) => a.expectRows).filter(({ label, profile }) =>
-    new RegExp(`${label} \\[${profile}\\] — `).test(clean.out));
+  const expectedRows = ARMS.flatMap((a) => a.expectRows);
+  const stillNamed = expectedRows.filter((row) => namesRow(clean.out, row));
+  // Discriminating plant for this control itself: leave one exact
+  // parenthesized map failure in the post-restore transcript. If literal
+  // matching ever regresses back to an unescaped regex, this goes red even
+  // when every browser/palette arm still behaves correctly.
+  const lingering = expectedRows.find(({ label }) => label.includes('('));
+  const lingeringOutput = `${clean.out}\n  ${lingering.label} [${lingering.profile}] — 1:1 planted cleanup-control failure`;
+  const lingeringCaught = namesRow(lingeringOutput, lingering);
+  if (!lingeringCaught) bad++;
   console.log(`\n  control: restored tree — ${stillNamed.length
     ? `STILL RED: ${stillNamed.map(({ label, profile }) => `${label} [${profile}]`).join(', ')}`
     : 'none of the planted rows is named; the plants are gone'}`);
+  console.log(`  cleanup-control plant: ${lingeringCaught ? 'RED caught' : 'MISSED'} — ${lingering.label} [${lingering.profile}]`);
   console.log(`
 DOOR: the known-bad is an edit to styles/base.css, a real shipped stylesheet, served by the real
       serve() and rendered by the real browser. It travels the cascade, the ?shotSettings profile,
