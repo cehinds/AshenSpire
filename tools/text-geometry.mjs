@@ -27,7 +27,7 @@ import { balance } from '../src/content/balance.js';
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  const sourceCode = await doorSelftest({
     tool: 'text-geometry.mjs',
     timeoutMs: 240000,
     plants: [
@@ -79,6 +79,40 @@ if (process.argv.includes('--selftest')) {
         find: '--tap-floor: calc(var(--tap-target) / var(--ui-zoom, 1));',
         replace: '--tap-floor: calc(36px / var(--ui-zoom, 1));',
         expectRed: /tap floor below 44px on glass/,
+      },
+    ],
+  });
+  if (sourceCode) process.exit(sourceCode);
+
+  // Source plants prove the authored files are owned. These separate plants
+  // modify only a copied shipped bundle, so artifact mode cannot borrow clean
+  // ownership evidence from the checkout while the selected artifact is stale.
+  process.exit(await doorSelftest({
+    tool: 'text-geometry.mjs',
+    args: ['--artifact', 'AshenSpire.html'],
+    timeoutMs: 240000,
+    extraCopy: ['AshenSpire.html'],
+    plants: [
+      {
+        name: 'the shipped quick-nav row restores its rem-owned floor',
+        file: 'AshenSpire.html',
+        find: '  min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
+        replace: '  min-height: 4.4rem; height: auto; padding: 0.6rem 1.6rem; text-align: left;',
+        expectRed: /artifact ownership seam missing: min-height: var\(--tap-floor\); height: auto; padding: 0\.6rem 1\.6rem; text-align: left;/,
+      },
+      {
+        name: 'the shipped overview switcher restores its rem-owned floor',
+        file: 'AshenSpire.html',
+        find: '  min-height: var(--tap-floor); height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;',
+        replace: '  min-height: 4.4rem; height: auto; padding: 0 1.6rem; border-radius: 8px; cursor: pointer;',
+        expectRed: /artifact ownership seam missing: min-height: var\(--tap-floor\); height: auto; padding: 0 1\.6rem;/,
+      },
+      {
+        name: 'the shipped Settings copy restores the broad non-text promise',
+        file: 'AshenSpire.html',
+        find: "    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },",
+        replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
+        expectRed: /text size setting overclaims non-text stability/,
       },
     ],
   }));
@@ -273,20 +307,22 @@ async function main() {
     // checkout's newline convention. The browser still renders the untouched
     // file bytes above, so this cannot make a bad product state look green.
     const normalizeLines = (text) => text.replace(/\r\n?/g, '\n');
-    const ui = normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
-    const assets = readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
-    const settings = readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
+    const selectedArtifact = artifact ? normalizeLines(readFileSync(artifact, 'utf8')) : null;
+    const ownershipKind = selectedArtifact ? 'artifact' : 'source';
+    const ui = selectedArtifact ?? normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
+    const assets = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
+    const settings = selectedArtifact ?? readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
     for (const seam of [
       '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
       'min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
       'width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
     ]) {
-      if (!ui.includes(seam)) failures.push(`source ownership seam missing: ${seam}`);
+      if (!ui.includes(seam)) failures.push(`${ownershipKind} ownership seam missing: ${seam}`);
     }
-    if (!assets.includes('const px = (value) => `${value}px`;')) failures.push('source ownership seam missing: sprite px emitter');
-    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push('source ownership seam missing: class sprite fixed px geometry');
-    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push('source ownership seam missing: equipped player sprite fixed px geometry');
+    if (!assets.includes('const px = (value) => `${value}px`;')) failures.push(`${ownershipKind} ownership seam missing: sprite px emitter`);
+    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: class sprite fixed px geometry`);
+    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push(`${ownershipKind} ownership seam missing: equipped player sprite fixed px geometry`);
     const honestTextSizeNote = "note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.'";
     if (!settings.includes(honestTextSizeNote)
       || /Scale interface text without resizing controls or artwork/.test(settings)) {
