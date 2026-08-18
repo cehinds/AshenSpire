@@ -497,12 +497,59 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
    shapes. */
 .hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
-.hand .card { margin: 0 -1.4rem; transform-origin: bottom center; }
+.hand .card { margin: 0 -1.8rem; transform-origin: bottom center; }
 .hand .card:hover, .hand .card.selected {
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8);
 }
-.hand .card.selected { border-color: var(--parchment); }
+.hand .card.selected {
+  border-color: var(--gold);
+  outline: 2px solid var(--parchment); outline-offset: 2px;
+}
+
+/* F1 hand paging. These move focus onto a real card; the existing Confirm path
+   remains the one door that selects or plays it. */
+.hand-page {
+  position: absolute; bottom: 8.2rem; z-index: 70;
+  width: var(--tap-floor); min-width: var(--tap-floor);
+  height: var(--tap-floor); min-height: var(--tap-floor);
+  display: grid; place-items: center; padding: 0;
+  background: #120f0c; color: var(--parchment);
+  border: 1px solid var(--gold); border-radius: 8px;
+  font: 700 2.4rem/1 var(--font-display); cursor: pointer;
+}
+.hand-page:hover, .hand-page.gp-focus, .hand-page:focus-visible {
+  color: var(--gold); outline: 2px solid var(--parchment); outline-offset: 2px;
+}
+.hand-prev { left: calc(50% - 36rem); }
+.hand-next { right: calc(50% - 34rem); }
+
+/* #198: the legal set remains visible while the ghost says DROP or NO TARGET
+   for its current point. Words plus solid/dashed lines keep hue from carrying
+   the state alone. */
+.combat.drag-targeting .enemy[data-drop-state='legal'] { position: relative; }
+.combat.drag-targeting .enemy[data-drop-state='legal'] .sprite {
+  outline: 3px double var(--gold); outline-offset: 7px;
+}
+.combat.drag-targeting .enemy[data-drop-state='legal']::after {
+  content: 'DROP'; position: absolute; left: 50%; top: -1.4rem; z-index: 8;
+  transform: translateX(-50%); padding: 0.2rem 0.6rem;
+  color: #120f0c; background: var(--gold); border-radius: 4px;
+  font-weight: 800; font-size: 0.9rem; letter-spacing: 0.08em;
+}
+.card-drag-ghost { border: 3px solid var(--gold) !important; }
+.card-drag-ghost[data-drop-state='illegal'] {
+  border-style: dashed !important; filter: grayscale(0.75) brightness(0.7);
+}
+.card-drag-ghost .drop-verdict {
+  position: absolute; left: 50%; top: -2.4rem; transform: translateX(-50%);
+  min-width: max-content; padding: 0.25rem 0.65rem; border-radius: 4px;
+  color: #120f0c; background: var(--gold); border: 1px solid #120f0c;
+  font-size: 0.9rem; font-weight: 900; letter-spacing: 0.08em;
+}
+.card-drag-ghost[data-drop-state='illegal'] .drop-verdict {
+  color: var(--parchment); background: var(--blood); border-style: dashed;
+}
 
 /* The hold-to-inspect copy (armInspect, components/holdconfirm.js). It lives
    on <body>, not in the hand — geometry (position, size, scale) is written
@@ -523,7 +570,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   display: flex; align-items: center; justify-content: center;
   font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
-.end-turn { position: absolute; right: 3.4rem; bottom: 7.6rem; }
+.end-turn {
+  position: absolute; right: 3.4rem; bottom: 7.6rem;
+  min-height: var(--tap-floor); background: #120f0c;
+  border: 1px solid var(--gold); border-radius: 8px;
+}
 .end-turn .et-key {
   font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
@@ -862,9 +913,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      `--fan-lift` of height, which Law 5 clause 4 spends on purpose. */
   :root[data-layout='narrow'] .hand {
     grid-area: hand; height: auto; padding: calc(1.2rem + var(--fan-lift, 0px)) 0 1.6rem;
+    margin-inline: calc(var(--tap-floor) + 1.8rem);
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
   }
+  :root[data-layout='narrow'] .hand-prev { left: calc(50% - 20rem); }
+  :root[data-layout='narrow'] .hand-next { right: calc(50% - 20rem); }
   /* No negative margin: cards in a scroller must not overlap, or the one on
      top eats the taps meant for the one beneath — the same mechanism as #21,
      one level down. */
