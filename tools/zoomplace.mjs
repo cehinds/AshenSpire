@@ -63,9 +63,18 @@ import { serve } from './serve.mjs';
 // above proves anything, and saying so is the point of checking both edges.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  const selftestDist = process.argv.includes('--dist');
+  const bundlePrep = selftestDist ? [
+    ['node', '-e', "require('node:fs').cpSync(process.argv[1], 'assets', { recursive: true, force: true })", resolve(fileURLToPath(new URL('.', import.meta.url)), '..', 'assets')],
+    ['git', 'init'],
+    ['git', 'add', '.'],
+    ['git', '-c', 'user.name=doorplant', '-c', 'user.email=doorplant@invalid', 'commit', '--allow-empty', '-m', 'doorplant fixture'],
+    ['node', 'tools/launch.mjs', '--build-only'],
+  ] : [];
   process.exit(await doorSelftest({
     tool: 'zoomplace.mjs',
-    args: ['--only', '2560x1440'],
+    extraCopy: selftestDist ? ['buildordinal.json'] : [],
+    args: [...(selftestDist ? ['--dist'] : []), '--only', '2560x1440'],
     timeoutMs: 900000,
     plants: [
       {
@@ -76,6 +85,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/fx.js',
         find: "  const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;\n  return {\n    left: (ar.left - lr.left) / z,",
         replace: "  const z = 1; // planted: the pre-fix conversion, visual px pretending to be local\n  return {\n    left: (ar.left - lr.left) / z,",
+        prep: bundlePrep,
         // AT THE MAX CLAMP, 2560x1440 (--ui-zoom 1.70), NOT at a phone shape.
         // I aimed this at 390x844 first and it went GREEN: zoom there is ~0.9,
         // so the conversion error is ~10% and lands inside tolerance. The

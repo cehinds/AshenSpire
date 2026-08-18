@@ -1,439 +1,254 @@
-# .github/workflows/ci.yml — the first workflow this repository has ever had.
-#
-# Before this file, `git ls-tree <ref> -- .github` was empty at every ref. SOP 3
-# has required CI all along, so the rule was not met here — it was UNREAD. Under
-# SOP 2's silence guard a run that is absent is `unknown`, and unknown blocks; a
-# repo with no workflow has been sitting in `unknown` and reading as green.
-#
-# SOP 3's four requirements, and where each is honestly met or not:
-#
-#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`. The `on:` block
-#     below is `workflow_dispatch:` alone: exactly the "workflow_dispatch-only"
-#     shape the old text here ruled out while still reading "→ MET". The edit
-#     that turned automatic runs off changed `on:` and said so; this header sits
-#     fifty lines above it and nobody edited it. That is how a second copy is
-#     born — one fact, two homes, nothing checking they agree. EldenSpire#35.
-#     Under SOP 2's silence guard a workflow that never fires is `unknown`, and
-#     unknown blocks. Every gate in this repo is now a seat's hand-run.
-#
-#     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
-#     in this repo is `verified-at` a CI ref while this holds. The permanent
-#     loss is requirement 2's four platform claims below: no seat hand-runs
-#     `windows-latest` or `macos-latest`, so those four are `unknown` and stay
-#     `unknown` — not green, and not red either. Aging is not a fix.
-#
-#  2. EVERY RUNNER THE CODE MAKES A PLATFORM-SPECIFIC CLAIM ON — this repo makes
-#     four, and they are not hypothetical:
-#       · run.sh (POSIX, mode 100755) vs run.bat (Windows) — README.md offers both
-#       · tools/bundle.mjs splits paths on /[\\/]/ and rebuilds keys with
-#         posix.join: an explicit claim about backslash-separated paths
-#       · tools/dirorder.mjs claims byte order is identical on every filesystem.
-#         This is THE claim that failed: build/AshenSpire.html at 40c5b21 was
-#         built on a case-insensitive filesystem (its ASSET_MAP order is
-#         case-insensitive collation), so a Linux rebuild differed. windows-latest
-#         and macos-latest are literally the runners that produced the defect.
-#       · tools/screenshot.mjs carries Windows, macOS and Linux browser paths
-#     → the matrix below DECLARES all three runners, and declaring is not
-#       running. Gated on requirement 1: while that is NOT MET this reads
-#       `unknown`, not MET. The boundary is stated once, under requirement 1 —
-#       do not restate it here. See also the honest warning on `reproducible`.
-#
-#  3. A MACHINE CHECK FOR EACH RULE WE ENFORCE BY HAND — PARTIALLY MET, and I am
-#     not going to dress that up. Newly machine-checked here: the shipped artifact
-#     root + dist carry their art, both ARE the build, no version-stamped twin is tracked,
-#     ?shot= cannot reach a player's save, and — since Vira's sign-off — the
-#     dirorder comparator itself, which was a FIFTH hand-enforced rule that I had
-#     protected with a comment and left off this list. Still enforced by hand, listed by the
-#     `boundary` job so the gap is in the run's own output rather than in a doc:
-#     SOP 3's review-lens sign-offs, and SOP 2's ref/domain
-#
-#     SOP 5's one-version-derived check WAS on that hand-enforced list, in these
-#     words: "this repo satisfies SOP 5 by construction — src/content/index.js is
-#     the only home and tools/launch.mjs derives it — but NOTHING STOPS a second
-#     copy being born, and I did not build that detector." Built 2026-08-15
-#     (Sten, with Constantine's ask for a build version on three screens):
-#     `tools/buildversion.mjs --check` runs in the `test` job on all three
-#     runners, `--selftest` proves it can fail on six known-bads including the
-#     re-typed-version fixture SOP 5 names, and `tools/buildstamp-shot.mjs` in
-#     `browser-guard` asks the other half — whether the string is INK on the
-#     three screens rather than merely in the DOM. The sentence is EDITED rather
-#     than left standing beside its own fix: a boundary that overstates the gap
-#     goes false exactly the way one that understates it does.
-#
-#     (…continuing the still-hand-enforced list interrupted above: and SOP 2's
-#     ref/domain resolution guard.)
-#
-#  4. A NAMED BOUNDARY IN THE RUN'S OWN OUTPUT — the `boundary` job always runs,
-#     including on failure, and tools/verify-shipped.mjs and
-#     tools/shotguard-probe.mjs each print their own boundary block. A suite that
-#     prints only PASS is "green wasn't clearance" shipped as infrastructure.
-#
-# REMOVAL CONDITION (SOP 1's corollary). This workflow is deleted, not amended,
-# when EITHER holds:
-#   · the standalone stops being a tracked artifact — when a release workflow
-#     attaches it and README.md links the release, the `reproducible` job's
-#     player-facing-alias freshness gate is verifying files that no longer exist, and the
-#     remaining test legs belong in a smaller workflow;
-#   · the repo stops shipping a single-file build at all, which is the premise of
-#     every check here.
-# It is NOT removed for being red. A red here means a claim in this repo is false
-# on some platform, which is the entire reason it exists. See the warning below.
-
+# Cost-bounded CI for untrusted pull requests, merge queue candidates, and
+# explicit operator runs. Feature-branch pushes are covered through their PR;
+# there is deliberately no duplicate push trigger.
 name: ci
 
 on:
-  # AUTOMATIC CI DISABLED 2026-08-01, at the repo owner's request — GitHub Actions
-  # minutes cost money on private repos, and this workflow is the most expensive
-  # one here: a 3-OS matrix on every push to every branch, where Windows bills at
-  # 2x and macOS at 10x the Linux rate.
-  #
-  # It now runs ONLY when started by hand: Actions tab -> "Run workflow".
-  # Nothing below this block changed; every job, guard and boundary is intact.
-  #
-  # DO NOT RE-ENABLE BY RESTORING WHAT WAS HERE. The old text told you to put
-  # back `push: branches: ['**']` + `pull_request:`. That pair is a measured
-  # defect, not last-known-good: it ran EVERY COMMIT TWICE. The `concurrency`
-  # block below does not dedupe them, because `github.ref` is `refs/heads/x` on
-  # the push event and `refs/pull/N/merge` on the pull_request event — two
-  # groups, two runs, same sha. Measured over 30 runs before the shutoff: 18
-  # distinct shas, 12 of which fired both events. EldenSpire#35.
-  #
-  # WHEN RE-ENABLING IS A DECISION SOMEONE MAKES (it is Constantine's — Tier 2,
-  # and nothing here takes it), take these three first. They remove no check and
-  # no runner. Each cost is stated because a CI cut with an unstated coverage
-  # loss is the receipt problem at the level of the whole gate.
-  #
-  #   (a) ONE RUN PER COMMIT. `push: branches: [dev, main, release]` +
-  #       `pull_request:`. A feature branch is covered by its PR.
-  #       COST, and it is not zero: a feature branch with NO PR OPEN gets no CI
-  #       at all, and SOP 3 wants CI on every push. The mitigation is SOP 3's own
-  #       path — open the draft PR early — which this makes load-bearing rather
-  #       than advisory.
-  #       ALTERNATIVE, cheaper to write and racier to reason about: leave
-  #       `branches: ['**']` and key concurrency to
-  #       `${{ github.event.pull_request.number || github.ref }}` so both events
-  #       share a group. But `cancel-in-progress: true` then has the two events
-  #       cancel each other, and a CANCELLED run is `unknown`, not a result —
-  #       you keep one run and cannot say which. Prefer (a).
-  #
-  #   (b) ONE JOB PER OS, NOT TWO. `test` and `reproducible` are the same 3-OS
-  #       matrix with a byte-identical prologue (autocrlf / checkout
-  #       fetch-depth:0 / setup-node 22). Merge them: 6 jobs -> 3. Nothing about
-  #       WHAT runs changes — only how many times per-job minute-rounding is
-  #       applied, and GitHub rounds each job up to a whole minute BEFORE the
-  #       runner multiplier (Linux x1, Windows x2, macOS x10). Three fewer jobs
-  #       is three fewer roundings, and one of them is a x10.
-  #       COST: the `reproducible` steps must then carry `if: always()`, or a
-  #       failing engine suite skips the artifact check that used to run in an
-  #       independent job. State it in the file or it is a silent loss.
-  #
-  #   (c) `boundary` IS A WHOLE JOB FOR ONE `echo`. Its own runner, one billable
-  #       minute, a few seconds of work.
-  #       COST, and it is the reason this is listed LAST rather than as free
-  #       money: the block's first line is `upstream results: test=...
-  #       reproducible=... browser-guard=...`, and that line exists ONLY because
-  #       this is a separate job with `needs:`. A step cannot read its own job's
-  #       result, so folding it deletes the one line that is most useful when a
-  #       run is red — and it survives a step failure but not a job cancellation.
-  #       Cheapest saving, highest information cost. Fold it or keep it on
-  #       purpose; do not fold it by reflex.
-  #
-  # The arithmetic above was measured at `8dfab2c` (run 30348520673, all eight
-  # jobs, from the API's own started_at/completed_at). Under SOP 2's drift clause
-  # that reading is `unknown (drifted)` against any newer tree — re-measure
-  # before anyone commits to a number. Every RATIO here is independent of the
-  # allowance; the allowance itself has never been read off this account's
-  # billing page by anyone.
+  pull_request:
+    branches: [dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+  merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 
-# One in-flight run per ref; a superseded run's result is not evidence about HEAD.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.event.merge_group.head_sha || github.ref }}
   cancel-in-progress: true
 
+# Untrusted PR code gets no write token, secrets, environments, OIDC, cache, or
+# artifact publication. Never replace pull_request with pull_request_target.
 permissions:
   contents: read
 
-# KNOWN WARNING, deliberately not chased: the runner reports that
-# actions/checkout@v4 and actions/setup-node@v4 execute on Node 20, which is
-# deprecated and is being forced onto Node 24. Nothing is broken today. I am not
-# bumping the tags in the same commit that fixes a CI failure, because I cannot
-# test the bump from here and a wrong tag turns a now-green workflow red for a
-# reason unrelated to this repo. Act on it when a run FAILS or prints a
-# hard-deprecation date, not when it warns — and bump both actions in one commit
-# that does nothing else, so the diff is legible if it breaks.
+env:
+  NODE_VERSION: '22'
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # The engine suite and the guards' own self-tests, on all three platforms.
-  # These assert nothing about byte-identity, so they are the legs least likely
-  # to be red for a reason that is really about the runner.
-  # ---------------------------------------------------------------------------
-  test:
-    name: tests (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false # a Windows-only failure is a FINDING; do not hide it
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+  classify:
+    name: classify trusted paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      full: ${{ steps.paths.outputs.full }}
+      bundle: ${{ steps.paths.outputs.bundle }}
+      known_bad: ${{ steps.paths.outputs.known_bad }}
     steps:
-      # Before checkout, deliberately: with autocrlf on (the Windows default) the
-      # working tree gets CRLF bytes that were stored as LF, and the bundler reads
-      # index.html and the stylesheets verbatim. That would make the build differ
-      # on Windows for a reason that has nothing to do with the code. Fixed here
-      # rather than with a .gitattributes because I cannot test a .gitattributes
-      # on Windows from where I am, and an untested repo-wide line-ending rule is
-      # a bigger claim than a runner setting.
-      - name: Keep checked-out bytes identical to stored bytes
-        run: git config --global core.autocrlf false
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+          fetch-depth: 0
+          persist-credentials: false
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - name: Classify repository-owned paths
+        id: paths
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_DRAFT: ${{ github.event.pull_request.draft || false }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "pull_request" && "$PR_DRAFT" == "true" ]]; then
+            printf 'full=false\nbundle=false\nknown_bad=false\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            printf 'full=true\nbundle=true\nknown_bad=true\n' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-      - name: Engine suite
-        run: node tests/run-node.mjs
+          if [[ "$EVENT_NAME" == "merge_group" ]]; then
+            base="$GROUP_BASE"
+            head="$GROUP_HEAD"
+          else
+            base="$PR_BASE"
+            head="$PR_HEAD"
+          fi
+          git cat-file -e "${base}^{commit}"
+          git cat-file -e "${head}^{commit}"
+          mapfile -t changed < <(git diff --name-only "$base" "$head")
 
-      - name: Shipped-artifact guard — self-test against the known-bad corpus
-        # Proves the guard can fail. A guard that has never failed proves nothing,
-        # which is exactly what bundle.mjs:435's WARNING was.
-        run: node tools/verify-shipped.mjs --selftest
+          bundle=false
+          known_bad=false
+          for path in "${changed[@]}"; do
+            case "$path" in
+              index.html|AshenSpire.html|.gitattributes|.github/workflows/ci.yml|src/*|styles/*|content/*|tools/*|build/*|dist/*)
+                bundle=true ;;
+            esac
+            case "$path" in
+              .github/workflows/ci.yml|tools/tutorial-reach.mjs|tools/zoomplace.mjs|tools/doorplant.mjs|tools/browser.mjs|tools/bundle.mjs|tools/launch.mjs|src/ui/components/tutorial.js|styles/ui.css|src/ui/fx.js)
+                known_bad=true ;;
+            esac
+          done
+          # A merge queue candidate must validate its final combined artifact.
+          [[ "$EVENT_NAME" == "merge_group" ]] && bundle=true
+          printf 'full=true\nbundle=%s\nknown_bad=%s\n' "$bundle" "$known_bad" >> "$GITHUB_OUTPUT"
 
-      - name: Directory order — the corpus history already wrote
-        # HERE, in the matrix job, and not in `reproducible`: the claim under test is
-        # that the comparator produces the SAME order on every runner, so it belongs
-        # on every runner. It also measures the divergence itself — that collation
-        # and byte order disagree about the blightHound pair on THIS filesystem's
-        # Node — which was reasoned and never run until this step existed.
-        run: node tools/dirorder.mjs --selftest
-
-      - name: Directory order — reinstate the defect five ways, catch each
-        # Inverted expectation, the same idiom as shotguard-probe --mutate. Without
-        # this the step above is a corpus nobody has watched go red. Case 1 is Vira's
-        # exact mutation — the one that put the 40c5b21 key order back with every
-        # other leg of this gate green.
-        run: node tools/dirorder.mjs --mutate
-
-      - name: One version, derived — SOP 5's detector, which this file said was missing
-        # Requirement 3's named gap, closed. The header above used to say "SOP 5's
-        # one-version-derived check … NOTHING STOPS a second copy being born, and I
-        # did not build that detector"; that sentence is now edited rather than left
-        # standing, because a boundary that overstates the gap rots the same way one
-        # that understates it does.
-        #
-        # ON EVERY RUNNER, and that is requirement 2 rather than thoroughness: the
-        # digest canonicalizes CRLF, so a Windows checkout and a Linux checkout of one
-        # commit must derive the SAME string or the shipped stamp is a fact about a
-        # filesystem. This repo has already paid once for that (tools/dirorder.mjs).
-        run: node tools/buildversion.mjs --check
-
-      - name: …and it can fail — six known-bads, each caught by the row that owns it
-        # Inverted expectation, the idiom already in this job twice. Includes the
-        # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
-        run: node tools/buildversion.mjs --selftest
-
-  # ---------------------------------------------------------------------------
-  # Is the artifact we ship the artifact this source builds — on every platform?
-  #
-  # READ THIS BEFORE LOOSENING ANYTHING HERE. If this job is red on
-  # windows-latest or macos-latest while green on ubuntu-latest, that is a REAL
-  # FINDING: the build is not reproducible across filesystems, which is the
-  # defect tools/dirorder.mjs was written to close and which shipped undetected
-  # for months. The fix belongs in bundle.mjs or dirorder.mjs. It does NOT belong
-  # in this job's expectations, and it is not a reason to drop a runner.
-  #
-  # Named honestly by its author: I wrote the windows and macos legs and have
-  # never watched them run. Until they do, requirement 2 is `unknown` here, not
-  # green — and `unknown` blocks.
-  # ---------------------------------------------------------------------------
-  reproducible:
-    name: shipped artifact is this source (${{ matrix.os }})
+  test:
+    name: tests and artifact (${{ matrix.os }})
+    needs: classify
+    if: ${{ needs.classify.outputs.full == 'true' }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: Keep checked-out bytes identical to stored bytes
+      - name: Keep checked-out bytes identical
         run: git config --global core.autocrlf false
-
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
-
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: '22'
-
-      - name: Rebuild the standalone and refresh root + dist/
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: false
+          package-manager-cache: false
+      - name: Engine suite
+        run: node tests/run-node.mjs
+      - name: Shipped-artifact known-bad corpus
+        run: node tools/verify-shipped.mjs --selftest
+      - name: Directory-order corpus
+        run: node tools/dirorder.mjs --selftest
+      - name: Directory-order mutations
+        run: node tools/dirorder.mjs --mutate
+      - name: Single derived version
+        run: node tools/buildversion.mjs --check
+      - name: Version known-bads
+        run: node tools/buildversion.mjs --selftest
+      # These stay visible even if an earlier engine/guard step is red; merging
+      # the former two matrices must not silently lose artifact evidence.
+      - name: Rebuild standalone and aliases
+        if: always()
         run: node tools/launch.mjs --build-only
-
-      - name: Root + dist carry their art, and ARE the build
+      - name: Root and dist are the build
+        if: always()
         run: node tools/verify-shipped.mjs
-
-      - name: The committed artifact equals a fresh build on THIS runner
-        # The check that catches both staleness and cross-platform build drift.
-        # Building twice in one tree cannot catch the latter: readdir order is
-        # stable per filesystem, so a same-machine double-build was always
-        # identical and always would have been. This is the only place the
-        # platform claim is actually tested.
+      - name: Committed artifact equals this runner's build
+        if: always()
+        shell: bash
         run: |
           git --no-pager diff --stat -- AshenSpire.html build dist
           git diff --exit-code -- AshenSpire.html build dist
 
-  # ---------------------------------------------------------------------------
-  # The save-overwrite guard needs a real browser: the defect was a URL reaching
-  # localStorage, which is unreachable from Node. Ubuntu only — Chrome is
-  # preinstalled on that image. The probe exits 2 when the instrument is
-  # unavailable, which is red on purpose: `unknown` blocks, and it must never read
-  # as a pass. It exits 1 only when a check actually RAN and failed. Those two were
-  # the same exit code until run 1 of this workflow taught me otherwise.
-  # ---------------------------------------------------------------------------
-  browser-guard:
-    name: ?shot= cannot touch a player's save
+  source-browser:
+    name: source browser gates
+    needs: classify
+    if: ${{ needs.classify.outputs.full == 'true' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          node-version: '22'
-
-      - name: Which browser will be used
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: false
+          package-manager-cache: false
+      - name: Browser inventory
+        shell: bash
         run: |
+          found=false
           for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
-            [ -x "$p" ] && echo "found: $p" && "$p" --version
+            if [[ -x "$p" ]]; then found=true; echo "found: $p"; "$p" --version; fi
           done
-          echo "(probe exits 2 if none of these exist — unknown, which blocks)"
-
-      - name: Unavailable instrument resolves to 2, not to a verdict
-        # THIS STEP EXISTS BECAUSE OF RUN 1 OF THIS WORKFLOW. The probe timed out
-        # acquiring CDP on a cold runner (15.06s) and exited 1 — reporting "the
-        # guard failed" when the truth was "the instrument was not ready"; the
-        # identical job passed 66 seconds later on the pull_request event. Three
-        # unavailability branches now each resolve to exit 2 (`unknown`, which
-        # blocks), and this step triggers all three on purpose in ~3 seconds.
-        # Raising a timeout until it stops firing would be the author grading his
-        # own guard, which is what this whole branch exists to delete.
+          [[ "$found" == true ]]
+      - name: Unavailable browser is unknown and blocks
         run: node tools/shotguard-probe.mjs --selftest-unavailable
-
-      - name: Storage gate holds, and a normal boot still saves
+      - name: Storage gate
         run: node tools/shotguard-probe.mjs
-
-      - name: The probe can fail — gate defeated on the wire, failures required
-        # Inverted expectation. Without this step the step above is a guard that
-        # has never failed. (`--defeat-gate` is the same defeat WITHOUT the
-        # inversion and exits 1; it is for a human at a terminal, not for here.)
+      - name: Storage known-bad
         run: node tools/shotguard-probe.mjs --mutate
-
-      - name: The build version is INK on the three screens he named
-        # Constantine asked for the build version on the main menu, the map and in
-        # combat. `buildversion --check` in the `test` job proves the STRING is
-        # derived and singly-homed; that is a fact about source and it is silent
-        # about whether anything is drawn. This is the other half, and it needs a
-        # browser for the same reason the save guard does: the failure modes are
-        # `opacity: 0` and a narrow-layout `display: none`, neither of which is
-        # visible from Node.
+      - name: Build version is ink
         run: node tools/buildstamp-shot.mjs
-
-      - name: …and that gate can fail — six ways to lose the ink, each caught
-        # Inverted expectation. Seven whole-program runs — a control and six
-        # plants, each with its own served tree and its own browser — measured at
-        # 64s on the machine it was written on. Stated rather than guessed,
-        # because this workflow bills by the minute and runs by hand; a runner
-        # will be slower and that number is not a promise about one.
+      - name: Build-version ink known-bads
         run: node tools/buildstamp-shot.mjs --selftest
+      - name: Tutorial source route
+        run: node tools/tutorial-reach.mjs
+      - name: Zoom placement source route
+        run: node tools/zoomplace.mjs
 
-  # ---------------------------------------------------------------------------
-  # SOP 3 requirement 4. Always runs, including when everything above is red, so
-  # the boundary is never the thing that got cut when the run went bad.
-  # ---------------------------------------------------------------------------
-  boundary:
-    name: what this green does NOT cover
+  bundle-browser:
+    name: shipped bundle browser gates
+    needs: classify
+    if: ${{ needs.classify.outputs.full == 'true' && needs.classify.outputs.bundle == 'true' }}
     runs-on: ubuntu-latest
-    needs: [test, reproducible, browser-guard]
-    if: always()
+    timeout-minutes: 20
     steps:
-      - name: Named boundary
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: false
+          package-manager-cache: false
+      - name: Build the exact bundle under test
+        run: node tools/launch.mjs --build-only
+      - name: Tutorial shipped-bundle route
+        run: node tools/tutorial-reach.mjs --dist
+      - name: Zoom placement shipped-bundle route
+        run: node tools/zoomplace.mjs --dist
+
+  known-bads:
+    name: browser probes observe known-bad red
+    needs: classify
+    if: ${{ needs.classify.outputs.full == 'true' && needs.classify.outputs.known_bad == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: false
+          package-manager-cache: false
+      - name: Tutorial source known-bads
+        run: node tools/tutorial-reach.mjs --selftest
+      - name: Tutorial bundle known-bads
+        run: node tools/tutorial-reach.mjs --selftest --dist
+      - name: Zoom source known-bad
+        run: node tools/zoomplace.mjs --selftest
+      - name: Zoom bundle known-bad
+        run: node tools/zoomplace.mjs --selftest --dist
+
+  boundary:
+    name: required CI result
+    needs: [classify, test, source-browser, bundle-browser, known-bads]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Enforce required results and print boundary
+        shell: bash
+        env:
+          CLASSIFY_RESULT: ${{ needs.classify.result }}
+          FULL: ${{ needs.classify.outputs.full }}
+          BUNDLE: ${{ needs.classify.outputs.bundle }}
+          KNOWN_BAD: ${{ needs.classify.outputs.known_bad }}
+          TEST_RESULT: ${{ needs.test.result }}
+          SOURCE_RESULT: ${{ needs.source-browser.result }}
+          BUNDLE_RESULT: ${{ needs.bundle-browser.result }}
+          KNOWN_BAD_RESULT: ${{ needs.known-bads.result }}
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }}"
-          echo ""
-          echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
-          # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
-          # this branch existed. Not corrected to 35: this job has no checkout and no
-          # node, so it cannot count, and a hardcoded total in a BOUNDARY block goes
-          # quietly false every time the suite grows — which is the exact failure this
-          # block exists to prevent. The `test` job prints the real count.
-          # — Sunna, 2026-07-28, one line in Rune's file, said out loud rather than silently.
-          echo "  · the whole engine suite passes on Linux, Windows and macOS"
-          echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
-          echo "  · the standalone rebuilds byte-identically to what is committed, on each runner"
-          echo "  · root AshenSpire.html and dist/AshenSpire.html carry their inlined art and ARE that build"
-          echo "  · no version-stamped build artifact is tracked in dist/"
-          echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
-          echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"
-          echo "  · the directory-order comparator sorts the real 40c5b21 sprites listing"
-          echo "    into byte order on all three runners, and five reinstatements of the"
-          echo "    collation defect were each caught by that corpus"
-          echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
-          echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
-          echo "  · the build version has ONE home, is derived at build time rather than typed,"
-          echo "    and derives the same string on all three runners — with six known-bads,"
-          echo "    including a tree that re-types it, each observed red by its own row"
-          echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
-          echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
-          echo ""
-          echo "IT DOES NOT MEAN:"
-          echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"
-          echo "    pixels differ from their ground inside one box in one browser at two shapes;"
-          echo "    legibility is tools/contrast-audit.mjs and Sunna, placement is Viki, and the"
-          echo "    stamp on the RELEASE artifact is tools/release-shots.mjs, not any job here."
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
-          echo "    opens a browser on the game itself, so every claim below is a claim"
-          echo "    about files, never about a fight."
-          # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
-          # this branch." True when Sunna wrote it, false the moment #7 merges — a
-          # boundary block that names a branch dates itself. Replaced with the thing that
-          # stays true either way: nothing here runs the probe that would catch it.
-          # — Rune, 2026-07-28, at the #7 merge.
-          echo "  · that a new player can reach the end of the first-run tutorial. That is"
-          echo "    geometry at a real --ui-zoom, and only a browser can see it:"
-          echo "    tools/tutorial-reach.mjs drives 8 viewports (zoom 0.62–1.70) and NO job"
-          echo "    here runs it. The lockout it exists to prevent was invisible to a green"
-          echo "    suite for this defect's entire lifetime."
-          # Was: "#9's palette-check.sh / palette-probe.html are not in this tree at all."
-          # True at 5315249, false the moment #9 merged — both files are here now. And the
-          # enumeration was a second copy of Freja's own header, which is the one place
-          # that has to change the day a job IS added. So this points at hers instead of
-          # restating it: one fact, one home. Second time tonight I wrote a boundary line
-          # that dated itself, having just cut one for the same reason.
-          # — Rune, 2026-07-28, at the 8e11c5a merge.
-          echo "  · anything about COLOUR. Contrast, hue, gamma, colourblind-safe mode and"
-          echo "    the High-contrast default (#10) are ALL unverified here: no job in this"
-          echo "    file runs a colour check of any kind. Every future PR touching colour"
-          echo "    gets a green that says nothing about what it changed — structurally,"
-          echo "    until a job is added. WHICH checks are unrun, and why no step was added"
-          echo "    to this workflow, is stated once in tools/palette-check.sh's header"
-          echo "    (\`CI DOES NOT RUN THIS\`); read that, not a copy of it kept here."
-          echo "  · that anything RENDERED. Art present in the file is not art on screen;"
-          echo "    no screenshot is compared, and screenshot bytes are not even"
-          echo "    deterministic on this app (two runs of identical code differ)."
-          echo "  · that content is correct or balanced. README.md:55's counts disagree"
-          echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
-          echo "    that row is Bjorn's with Vira verifying and nothing here checks it."
-          echo "  · that the co-op/LAN code works. SPEC.md:643 lists it as a non-goal and"
-          echo "    it shipped anyway; no test here touches tools/lan.mjs or serve.mjs."
-          echo "  · anything about TIMING on a machine other than this one. Acquiring CDP"
-          echo "    takes ~272ms on a warm local browser and timed out at 15060ms on a"
-          echo "    cold runner during run 1 of this workflow. A green here is not a"
-          echo "    statement about how slow some other runner's cold start can be."
-          echo ""
-          echo "RULES THIS REPO STILL ENFORCES BY HAND (SOP 3 requirement 3, not met):"
-          echo "  · SOP 3 review-lens sign-offs — a human gate, no machine check"
-          echo "  · SOP 5 one-version-derived — satisfied by construction today"
-          echo "    (src/content/index.js:32 is the only home; tools/launch.mjs:17-25"
-          echo "    derives it) but NO detector stops a second copy being born"
-          echo "  · SOP 2 ref/domain resolution before reading an empty result as clean"
+          set -euo pipefail
+          printf 'results: classify=%s test=%s source=%s bundle=%s known-bad=%s\n' \
+            "$CLASSIFY_RESULT" "$TEST_RESULT" "$SOURCE_RESULT" "$BUNDLE_RESULT" "$KNOWN_BAD_RESULT"
+          [[ "$CLASSIFY_RESULT" == success ]]
+          if [[ "$FULL" == true ]]; then
+            [[ "$TEST_RESULT" == success && "$SOURCE_RESULT" == success ]]
+            [[ "$BUNDLE" != true || "$BUNDLE_RESULT" == success ]]
+            [[ "$KNOWN_BAD" != true || "$KNOWN_BAD_RESULT" == success ]]
+          fi
+          echo 'GREEN means engine + artifact checks passed on Linux, Windows, and macOS;'
+          echo 'source browser gates passed; relevant shipped-bundle gates passed; and changed'
+          echo 'probe doors observed their known-bads red. Draft PRs intentionally classify only.'
+          echo 'It does not approve merge or release, judge UX/legibility/balance/content, test'
+          echo 'non-Chromium browsers, touch/gamepad/co-op, or replace human review lenses.'

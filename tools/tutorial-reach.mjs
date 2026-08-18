@@ -25,7 +25,7 @@ import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
 // The orientation gate's one number, read from its single home. See THE FIRST
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
@@ -59,8 +59,17 @@ const SMALLEST_VP_NAME = `${SMALLEST_VP.w}x${SMALLEST_VP.h}`;
 // tool against it — same serve.mjs, same browser, same real clicks.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  const selftestDist = process.argv.includes('--dist');
+  const bundlePrep = selftestDist ? [
+    ['node', '-e', "require('node:fs').cpSync(process.argv[1], 'assets', { recursive: true, force: true })", resolve(fileURLToPath(new URL('.', import.meta.url)), '..', 'assets')],
+    ['git', 'init'],
+    ['git', 'add', '.'],
+    ['git', '-c', 'user.name=doorplant', '-c', 'user.email=doorplant@invalid', 'commit', '--allow-empty', '-m', 'doorplant fixture'],
+    ['node', 'tools/launch.mjs', '--build-only'],
+  ] : [];
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
+    extraCopy: selftestDist ? ['buildordinal.json'] : [],
     // DERIVED, not typed — this named the viewport as a literal '800x450' until
     // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
     // it and this string did not, so `--only` would have matched NO viewport and
@@ -69,7 +78,7 @@ if (process.argv.includes('--selftest')) {
     // AND a matching line), so it fails loudly — but a known-bad harness aimed at
     // a viewport that no longer exists is checking nothing, and "it fails loudly"
     // is not the same as "it is checking the thing". One home, both readers.
-    args: ['--only', SMALLEST_VP_NAME],
+    args: [...(selftestDist ? ['--dist'] : []), '--only', SMALLEST_VP_NAME],
     timeoutMs: 900000,
     plants: [
       {
@@ -79,6 +88,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the coach mark buttons are pushed off the bottom of the viewport (the un-dismissable veil)',
         file: 'styles/ui.css',
         append: '.tut-bubble .tut-row { position: relative; top: 4000px; }',
+        prep: bundlePrep,
         expectRed: /(FAIL|off-screen|not hit-testable|unreachable|✗)/i,
       },
       {
@@ -88,6 +98,7 @@ if (process.argv.includes('--selftest')) {
         name: 'a transparent layer covers the buttons — a real click lands on the veil',
         file: 'styles/ui.css',
         append: '.tut-veil::after, .tut-bubble::after { content: ""; position: fixed; inset: 0; z-index: 99999; }',
+        prep: bundlePrep,
         expectRed: /(FAIL|not hit-testable|covered|unreachable|✗)/i,
       },
     ],
@@ -153,6 +164,7 @@ const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
+const useDist = args.includes('--dist');
 
 const fails = [];
 const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
@@ -242,12 +254,23 @@ const SPOT_ON_TARGET = `(() => {
 
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
-  const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
+  let server = null;
+  let base;
+  if (useDist) {
+    const artifact = resolve(ROOT, 'dist/AshenSpire.html');
+    if (!existsSync(artifact)) throw new Error(`${artifact} does not exist - run the build first`);
+    base = pathToFileURL(artifact).href;
+  } else {
+    const served = await serve({ root: ROOT, port: 8240, open: false });
+    server = served.server;
+    base = `http://localhost:${served.port}/`;
+  }
+  console.log(`tutorial-reach - ${base}${useDist ? ' (shipped bundle)' : ' (source tree)'}`);
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
   const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
     prefix: 'tutreach-', browser: browserPath,
-    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'],
+    args: ['--window-size=1440,860', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--allow-file-access-from-files'],
     timeoutMs: 12000,
   });
   const cdp = connectCdp(wsUrl);
@@ -285,21 +308,54 @@ async function main() {
     }
     await wait(150);
   };
+  const doneExpr = useDist
+    ? `(() => { try { return JSON.parse(localStorage.getItem('sote_meta_v1') || '{}').settings?.seenTutorial ? 1 : 0; } catch { return 0; } })()`
+    : 'window.__tutDone';
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
   // ?shot=combat suppresses the first-run flag, so we mount the real module by
   // hand — same entry point combat.js uses, no stubbing of the thing under test.
   async function boardWithTutorial(vp) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/?shot=combat` }, S);
-    await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
-    await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
-    return evalIn(`(async () => {
-      const m = await import('/src/ui/components/tutorial.js');
-      window.__tutDone = 0;
-      m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
-      return !!document.querySelector('.tut-veil');
-    })()`);
+    if (!useDist) {
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
+      await wait(700);
+      return evalIn(`(async () => {
+        const m = await import('/src/ui/components/tutorial.js');
+        window.__tutDone = 0;
+        m.mountTutorial(document.getElementById('app'), { onDone: () => { window.__tutDone++; } });
+        return !!document.querySelector('.tut-veil');
+      })()`);
+    }
+
+    // A file:// bundle has no importable /src module. Enter through the real
+    // first-run door so this measures the shipped module rather than a stub.
+    const clickSel = async (sel, label) => {
+      const pt = await evalIn(`(() => {
+        const e = document.querySelector(${JSON.stringify(sel)});
+        if (!e) return null;
+        e.scrollIntoView({ block: 'center' });
+        const r = e.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      if (!pt) throw new Error(`no element for ${label} (${sel})`);
+      await clickAt(pt.x, pt.y);
+    };
+    await cdp.send('Page.navigate', { url: base }, S);
+    await until(`!!document.querySelector('.slot-new')`, 'bundle title screen');
+    await evalIn(`(() => { localStorage.clear(); return true; })()`);
+    await cdp.send('Page.navigate', { url: base }, S);
+    await until(`!!document.querySelector('.slot-new')`, 'bundle title screen, storage cleared');
+    await clickSel('.slot-new', 'BEGIN A CLIMB');
+    await until(`!!document.querySelector('#cz-start')`, 'bundle customize screen');
+    await evalIn(`(() => { const s = document.querySelector('#seed-input'); s.value = 'SHOWCASE'; s.dispatchEvent(new Event('input', { bubbles: true })); return true; })()`);
+    await clickSel('#cz-start', 'BEGIN THE CLIMB');
+    await until(`!!document.querySelector('.map-node.monster.reachable')`, 'bundle first fight');
+    await clickSel('.map-node.monster.reachable', 'bundle monster node');
+    await until(`!!document.querySelector('.tut-veil')`, 'bundle tutorial');
+    await evalIn(`window.__tutDone = 0`);
+    return true;
   }
 
   for (const vp of VIEWPORTS) {
@@ -340,7 +396,7 @@ async function main() {
 
     // 2) Escape is an exit that does not depend on geometry.
     await pressKey('Escape', 'Escape', 27);
-    const escaped = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+    const escaped = await evalIn(`({ done: ${doneExpr}, veil: !!document.querySelector('.tut-veil') })`);
     ok(escaped.done === 1 && !escaped.veil, `${name}: Escape finishes the tutorial (onDone fired, veil removed)`);
 
     // 3) The full walk, step by step, with real clicks at real coordinates.
@@ -358,12 +414,12 @@ async function main() {
       ok(spotOn.cover > 0.5, `${name}: step "${p.label}" — spotlight lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
       if (!reachable) { walked = false; break; }
       await clickAt(p.next.cx, p.next.cy);
-      const after = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil'), label: (document.querySelector('.tut-next')||{}).textContent })`);
+      const after = await evalIn(`({ done: ${doneExpr}, veil: !!document.querySelector('.tut-veil'), label: (document.querySelector('.tut-next')||{}).textContent })`);
       if (!after.veil) break;
       if (after.label === p.label) { ok(false, `${name}: click on "${p.label}" advanced the tutorial`); walked = false; break; }
     }
     if (walked) {
-      const end = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+      const end = await evalIn(`({ done: ${doneExpr}, veil: !!document.querySelector('.tut-veil') })`);
       ok(end.done === 1 && !end.veil, `${name}: clicking through every step finishes the tutorial exactly once`);
     }
   }
@@ -399,10 +455,10 @@ async function main() {
   if (!only) {
     console.log('\n  first-run path at 1920x1080: title → BEGIN → first fight → Escape → RELOAD');
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen');
     await evalIn(`(() => { localStorage.clear(); return 1; })()`);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen, storage cleared');
     ok(
       await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
@@ -471,7 +527,7 @@ async function main() {
         'first-run: …and wrote seenTutorial to DURABLE storage (the write the buttons used to be the only source of)'
       );
       // The claim Sunna's repro actually turns on: "Reload does not clear it."
-      await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+      await cdp.send('Page.navigate', { url: base }, S);
       await until(`!!document.querySelector('.slot-continue')`, 'the title screen with a saved run');
       await clickSel('.slot-continue', 'CONTINUE');
       await until(`!!document.querySelector('.combat')`, 'the fight, resumed');
@@ -485,7 +541,7 @@ async function main() {
 
   cdp.close();
   await dropBrowser();
-  server.close();
+  server?.close();
 
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);
   console.log('  boundary: real Chromium headless at deviceScaleFactor 1, UI size = Auto, text size M,');
