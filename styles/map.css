@@ -48,6 +48,9 @@
 }
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
+  /* The browser owns a finger or pen on the one axis the map can scroll.
+     Mouse drag remains an explicit camera gesture in mapboard.js. */
+  touch-action: pan-y pinch-zoom;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
 }
 /* THE UNLIT GROUND IS A LANTERN, NOT A FIELD. Fog-only, decorative, and inert:
