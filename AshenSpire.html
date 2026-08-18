@@ -2816,7 +2816,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    control in this comparison is a real control. */
 :root[data-quicknav='mirror'] .topbar .topbar-btn,
 :root[data-quicknav='switcher'] .topbar .topbar-btn {
-  width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;
 }
 
 /* ---- profile notice (#67): the worst morning a person has with this game ----
@@ -34186,7 +34187,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '090423f6d9';
+const SOURCE = '66e611d154';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34220,7 +34221,7 @@ const SOURCE = '090423f6d9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0831';
+const ORDINAL = '0834';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35166,7 +35167,7 @@ function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
@@ -35252,7 +35253,7 @@ function playerSprite(customization = {}, classId, equip = null) {
   if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
     const el = document.createElement('div');
     el.className = 'class-sprite';
-    el.style.cssText = 'width:150px;height:190px;position:relative;';
+    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
     el.appendChild(equippedFigure({ classId, ...equip }));
     return el;
   }
@@ -35261,7 +35262,7 @@ function playerSprite(customization = {}, classId, equip = null) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    `width:150px;height:190px;flex:0 0 auto;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
     'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';

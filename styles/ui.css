@@ -2513,7 +2513,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    control in this comparison is a real control. */
 :root[data-quicknav='mirror'] .topbar .topbar-btn,
 :root[data-quicknav='switcher'] .topbar .topbar-btn {
-  width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;
+  width: auto; height: auto;
+  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;
 }
 
 /* ---- profile notice (#67): the worst morning a person has with this game ----

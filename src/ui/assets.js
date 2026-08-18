@@ -161,7 +161,7 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (!build) return null;
   const el = document.createElement('div');
   el.className = 'class-sprite';
-  el.style.cssText = 'width:150px;height:190px;display:flex;align-items:flex-end;justify-content:center;position:relative;';
+  el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';
 
   const fallbackToSvg = () => {
     el.innerHTML = build(tint, sigil);
@@ -247,7 +247,7 @@ export function playerSprite(customization = {}, classId, equip = null) {
   if (equip && spritesEnabled && style === 'rendered' && SPRITE_CLASSES.includes(classId)) {
     const el = document.createElement('div');
     el.className = 'class-sprite';
-    el.style.cssText = 'width:150px;height:190px;position:relative;';
+    el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';
     el.appendChild(equippedFigure({ classId, ...equip }));
     return el;
   }
@@ -256,7 +256,7 @@ export function playerSprite(customization = {}, classId, equip = null) {
   }
   const el = document.createElement('div');
   el.style.cssText =
-    `width:150px;height:190px;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
+    `width:150px;height:190px;flex:0 0 auto;border-radius:10px;background:#2a2418;border:2px solid ${tint};` +
     'display:flex;align-items:center;justify-content:center;font-size:70px;position:relative;' +
     `box-shadow:0 10px 12px rgba(0,0,0,.5), inset 0 0 24px rgba(0,0,0,.4);`;
   el.textContent = customization.glyph || '🛡';
