@@ -10,19 +10,23 @@
 // over a real combat board, and, per step, checks the buttons are on-screen and
 // actually hit-testable, then advances with REAL mouse clicks at their screen
 // coordinates (never el.click(), which would bypass the geometry under test).
-// It also checks the two escapes that must not depend on geometry at all:
-// Escape ends the tutorial, and the veil does not swallow board input.
+// It also checks the ordered Escape contract that must not depend on geometry:
+// an armed attack owns the first Escape (targeting cancels while the tutorial
+// stands), an adjacent menu owns its Escape, and only a later unarmed Escape
+// finishes and persists the tutorial.
 //
 // Zero dependencies: CDP over Node's built-in WebSocket, tools/serve.mjs
 // in-process (same pattern as tools/coop-shoot.mjs).
 //
 //   node tools/tutorial-reach.mjs
+//   node tools/tutorial-reach.mjs --root
+//   node tools/tutorial-reach.mjs --screenshot docs/preview/tutorial-escape-target-cancel.png
 //   CHROME=/path/to/chrome node tools/tutorial-reach.mjs
 //   node tools/tutorial-reach.mjs --browser /path/to/chrome --only 1920x1080
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -72,6 +76,15 @@ if (process.argv.includes('--selftest')) {
     args: ['--only', SMALLEST_VP_NAME],
     timeoutMs: 900000,
     plants: [
+      {
+        // The exact #17 defect: the capture listener finishes the tutorial
+        // before combat can consume Escape as cancel-targeting.
+        name: 'tutorial capture steals armed Escape and permanently finishes the coach marks',
+        file: 'src/ui/components/tutorial.js',
+        find: "    if (root.querySelector('.hand .card.selected') && root.querySelector('.enemy-row .enemy.targetable')) return;",
+        replace: "    /* planted: capture steals armed Escape instead of yielding to combat */",
+        expectRed: /✗ .*armed Escape cancels targeting and leaves the tutorial standing/,
+      },
       {
         // THE LOCKOUT ITSELF: the button row pushed off the bottom of the
         // viewport, which is the state the header says makes the veil
@@ -153,6 +166,8 @@ const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const only = argOf('--only');
+const rootArtifact = args.includes('--root');
+const screenshotPath = argOf('--screenshot');
 
 const fails = [];
 const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
@@ -243,6 +258,7 @@ const SPOT_ON_TARGET = `(() => {
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
   const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
+  const base = `http://localhost:${port}/${rootArtifact ? 'AshenSpire.html' : ''}`;
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
   const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
@@ -285,13 +301,54 @@ async function main() {
     }
     await wait(150);
   };
+  const clickSel = async (sel, label) => {
+    const pt = await evalIn(`(() => {
+      const e = document.querySelector(${JSON.stringify(sel)});
+      if (!e) return null;
+      const before = e.getBoundingClientRect();
+      const off = before.bottom > innerHeight || before.top < 0;
+      if (off) e.scrollIntoView({ block: 'center' });
+      const r = e.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2, scrolled: off, top: Math.round(before.top) };
+    })()`);
+    if (!pt) throw new Error(`no element for ${label} (${sel})`);
+    if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} — scrolled into view to click it`);
+    await clickAt(pt.x, pt.y);
+  };
+  const advanceToPlayCards = async () => {
+    for (let guard = 0; guard < 4; guard++) {
+      const title = await evalIn(`(document.querySelector('.tut-title') || {}).textContent || ''`);
+      if (title === 'Play cards') return true;
+      if (!title) return false;
+      await clickSel('.tut-next', `tutorial Next from ${title}`);
+    }
+    return false;
+  };
+  const armAttackTarget = async () => {
+    for (let guard = 0; guard < 8; guard++) {
+      const pt = await evalIn(`(() => {
+        const c = document.querySelector('.hand .card.type-attack:not(.unaffordable)');
+        if (!c) return null;
+        const r = c.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2, id: c.dataset.cardId };
+      })()`);
+      if (!pt) return { armed: false, card: null };
+      await clickAt(pt.x, pt.y);
+      const state = await evalIn(`({
+        armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
+        card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
+      })`);
+      if (state.armed) return state;
+    }
+    return { armed: false, card: null };
+  };
 
   // A fresh combat board at this viewport, with the tutorial mounted over it.
   // ?shot=combat suppresses the first-run flag, so we mount the real module by
   // hand — same entry point combat.js uses, no stubbing of the thing under test.
   async function boardWithTutorial(vp) {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/?shot=combat` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
     await until(`!!document.querySelector('.combat .hand .card')`, 'combat board');
     await wait(700); // auto-zoom re-flexes on a 150ms debounce, plus a boot re-apply
     return evalIn(`(async () => {
@@ -302,7 +359,7 @@ async function main() {
     })()`);
   }
 
-  for (const vp of VIEWPORTS) {
+  if (!rootArtifact) for (const vp of VIEWPORTS) {
     const name = `${vp.w}x${vp.h}`;
     if (only && only !== name) continue;
     console.log(`\n  ${name}`);
@@ -343,6 +400,28 @@ async function main() {
     const escaped = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
     ok(escaped.done === 1 && !escaped.veil, `${name}: Escape finishes the tutorial (onDone fired, veil removed)`);
 
+    // #17: step 3 tells the player to arm an attack. In that state Escape is
+    // cancel-targeting first, never "finish tutorial". The capture listener
+    // must yield the event so combat's existing handler owns that one press.
+    await boardWithTutorial(vp);
+    ok(await advanceToPlayCards(), `${name}: reached tutorial step 3 (Play cards)`);
+    const armed = await armAttackTarget();
+    ok(armed.armed, `${name}: armed a real attack target (${armed.card || 'none'})`);
+    await pressKey('Escape', 'Escape', 27);
+    const cancelled = await evalIn(`({
+      done: window.__tutDone,
+      veil: !!document.querySelector('.tut-veil'),
+      selected: !!document.querySelector('.hand .card.selected'),
+      targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+    })`);
+    ok(
+      cancelled.done === 0 && cancelled.veil && !cancelled.selected && !cancelled.targetable,
+      `${name}: armed Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(cancelled)}`
+    );
+    await pressKey('Escape', 'Escape', 27);
+    const later = await evalIn(`({ done: window.__tutDone, veil: !!document.querySelector('.tut-veil') })`);
+    ok(later.done === 1 && !later.veil, `${name}: a later unarmed Escape finishes the tutorial exactly once`);
+
     // 3) The full walk, step by step, with real clicks at real coordinates.
     await boardWithTutorial(vp);
     let guard = 0;
@@ -372,7 +451,7 @@ async function main() {
   // others: delete the save, change UI size before continuing). It has to stop
   // being an escape and start being ordinary: --ui-zoom re-flexes on resize, so
   // every callout's coordinate space changes underneath it.
-  if (!only) {
+  if (!only && !rootArtifact) {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
@@ -397,12 +476,12 @@ async function main() {
   // save), so there is nothing to read back afterwards. That gate is correct and
   // this check goes the long way round instead of weakening it.
   if (!only) {
-    console.log('\n  first-run path at 1920x1080: title → BEGIN → first fight → Escape → RELOAD');
+    console.log(`\n  first-run ${rootArtifact ? 'root artifact' : 'source'} path at 1920x1080: title → BEGIN → first fight → armed Escape → menu Escape → unarmed Escape → RELOAD`);
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen');
     await evalIn(`(() => { localStorage.clear(); return 1; })()`);
-    await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+    await cdp.send('Page.navigate', { url: base }, S);
     await until(`!!document.querySelector('.slot-new')`, 'the title screen, storage cleared');
     ok(
       await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
@@ -426,20 +505,6 @@ async function main() {
     // guarded by tools/actionreach.mjs, which exists because this workaround was
     // the wrong response to a measurement. clickSel stays general: map nodes
     // live on a pannable canvas and legitimately need it.
-    const clickSel = async (sel, label) => {
-      const pt = await evalIn(`(() => {
-        const e = document.querySelector(${JSON.stringify(sel)});
-        if (!e) return null;
-        const before = e.getBoundingClientRect();
-        const off = before.bottom > innerHeight || before.top < 0;
-        if (off) e.scrollIntoView({ block: 'center' });
-        const r = e.getBoundingClientRect();
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2, scrolled: off, top: Math.round(before.top) };
-      })()`);
-      if (!pt) throw new Error(`no element for ${label} (${sel})`);
-      if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} in a ${1080}px viewport — scrolled into view to click it`);
-      await clickAt(pt.x, pt.y);
-    };
     await clickSel('.slot-new', 'BEGIN A CLIMB');
     await until(`!!document.querySelector('#cz-start')`, 'the customize screen');
     // Fix the seed so the first floor reliably offers a fight (the same seed the
@@ -460,18 +525,61 @@ async function main() {
     if (mounted) {
       const p = await evalIn(PROBE);
       ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, `first-run: both buttons reachable at ui-zoom ${p.zoom} on the shipped defaults`);
+      ok(await advanceToPlayCards(), 'first-run: reached tutorial step 3 (Play cards)');
+      const armed = await armAttackTarget();
+      ok(armed.armed, `first-run: armed a real attack target (${armed.card || 'none'})`);
       await pressKey('Escape', 'Escape', 27);
-      const after = await evalIn(`({
+      const afterCancel = await evalIn(`({
+        veil: !!document.querySelector('.tut-veil'),
+        selected: !!document.querySelector('.hand .card.selected'),
+        targetable: !!document.querySelector('.enemy-row .enemy.targetable'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(
+        afterCancel.veil && !afterCancel.selected && !afterCancel.targetable,
+        `first-run: armed Escape cancels targeting and leaves the tutorial standing — ${JSON.stringify(afterCancel)}`
+      );
+      ok(
+        !afterCancel.meta || JSON.parse(afterCancel.meta).settings.seenTutorial !== true,
+        'first-run: armed Escape leaves durable seenTutorial false'
+      );
+
+      if (screenshotPath) {
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 5 }, S);
+        await wait(220);
+        const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, S);
+        writeFileSync(resolve(screenshotPath), Buffer.from(shot.data, 'base64'));
+        console.log(`    screenshot ${resolve(screenshotPath)}`);
+      }
+
+      // Adjacent ownership remains ordered: the menu veil owns its Escape, the
+      // tutorial remains, and only the following unarmed Escape may finish it.
+      await clickSel('#combat-menu', 'combat menu');
+      await until(`!!document.querySelector('.modal-veil')`, 'the adjacent menu overlay');
+      await pressKey('Escape', 'Escape', 27);
+      const afterMenu = await evalIn(`({
+        menu: !!document.querySelector('.modal-veil'),
+        tutorial: !!document.querySelector('.tut-veil'),
+        meta: localStorage.getItem('sote_meta_v1'),
+      })`);
+      ok(!afterMenu.menu && afterMenu.tutorial, 'first-run: menu Escape closes only the adjacent overlay and leaves the tutorial standing');
+      ok(
+        !afterMenu.meta || JSON.parse(afterMenu.meta).settings.seenTutorial !== true,
+        'first-run: menu Escape leaves durable seenTutorial false'
+      );
+
+      await pressKey('Escape', 'Escape', 27);
+      const finished = await evalIn(`({
         veil: !!document.querySelector('.tut-veil'),
         meta: localStorage.getItem('sote_meta_v1'),
       })`);
-      ok(!after.veil, 'first-run: Escape removed the tutorial');
+      ok(!finished.veil, 'first-run: a later unarmed Escape removes the tutorial');
       ok(
-        !!after.meta && JSON.parse(after.meta).settings.seenTutorial === true,
-        'first-run: …and wrote seenTutorial to DURABLE storage (the write the buttons used to be the only source of)'
+        !!finished.meta && JSON.parse(finished.meta).settings.seenTutorial === true,
+        'first-run: the later unarmed Escape writes seenTutorial to durable storage'
       );
       // The claim Sunna's repro actually turns on: "Reload does not clear it."
-      await cdp.send('Page.navigate', { url: `http://localhost:${port}/` }, S);
+      await cdp.send('Page.navigate', { url: base }, S);
       await until(`!!document.querySelector('.slot-continue')`, 'the title screen with a saved run');
       await clickSel('.slot-continue', 'CONTINUE');
       await until(`!!document.querySelector('.combat')`, 'the fight, resumed');
@@ -488,7 +596,7 @@ async function main() {
   server.close();
 
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);
-  console.log('  boundary: real Chromium headless at deviceScaleFactor 1, UI size = Auto, text size M,');
+  console.log(`  boundary: real Chromium headless against the ${rootArtifact ? 'root standalone artifact' : 'source server'} at deviceScaleFactor 1, UI size = Auto, text size M,`);
   console.log('  English strings, one class (reaver/SHOWCASE), solo play. Not checked: text size');
   console.log('  L/XL, the fixed UI-size overrides S..XL, touch or gamepad input, co-op boards,');
   console.log('  or any browser but Chromium. Silence from this tool is not coverage of those.');
