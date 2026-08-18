@@ -118,19 +118,32 @@ async function browserProbe() {
       return out.result.value;
     };
 
+    const waitForPage = async (label, expression, timeoutMs = 6000) => {
+      const deadline = Date.now() + timeoutMs;
+      let last = null;
+      while (Date.now() < deadline) {
+        last = await evaluate(expression);
+        if (last) return last;
+        await wait(80);
+      }
+      throw new Error(`about-changelog: timed out waiting for ${label}${last ? ` (${JSON.stringify(last)})` : ''}`);
+    };
+
+    const openAbout = async () => {
+      await waitForPage('the title Settings button', `!!document.querySelector('#settings')`);
+      await evaluate(`document.querySelector('#settings').click()`);
+      await waitForPage('the Settings About tab', `!!document.querySelector('.set-tab[data-member="About"]')`);
+      await evaluate(`document.querySelector('.set-tab[data-member="About"]').click()`);
+      return waitForPage('the selected About tab and mounted changelog', `(() => {
+        const tab = document.querySelector('.set-tab[data-member="About"]');
+        return !!(tab && tab.getAttribute('aria-selected') === 'true'
+          && document.querySelector('[data-settings-host]')
+          && document.querySelector('.about-ai .about-changelog'));
+      })()`);
+    };
+
     await cdp.send('Page.navigate', { url: served.url }, sessionId);
-    await wait(1600);
-    const opened = await evaluate(`(() => {
-      const settings = document.querySelector('#settings');
-      if (!settings) return 'Settings button missing';
-      settings.click();
-      const about = document.querySelector('.set-tab[data-member="About"]');
-      if (!about) return 'About tab missing';
-      about.click();
-      return true;
-    })()`);
-    if (opened !== true) throw new Error(opened);
-    await wait(400);
+    await openAbout();
 
     const arrival = await evaluate(`(() => {
       const root = document.querySelector('.about-ai');
@@ -194,13 +207,7 @@ async function browserProbe() {
       width: 390, height: 844, deviceScaleFactor: 2, mobile: true,
     }, sessionId);
     await cdp.send('Page.navigate', { url: served.url }, sessionId);
-    await wait(1300);
-    await evaluate(`(() => {
-      document.querySelector('#settings')?.click();
-      document.querySelector('.set-tab[data-member="About"]')?.click();
-      return true;
-    })()`);
-    await wait(250);
+    await openAbout();
     const mobile = await evaluate(`(() => {
       const changelog = document.querySelector('.about-changelog');
       const summaries = [...document.querySelectorAll('.about-change summary')];
@@ -218,22 +225,35 @@ async function browserProbe() {
       width: 1200, height: 900, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
     await cdp.send('Page.navigate', { url: served.url }, sessionId);
-    await wait(1300);
-    await evaluate(`(() => {
-      document.querySelector('#settings')?.click();
-      document.querySelector('.set-tab[data-member="About"]')?.click();
-      document.querySelector('.about-change summary')?.click();
-      return true;
-    })()`);
-    await wait(200);
+    const plantBlankCapture = process.argv.includes('--plant-blank-capture');
+    if (!plantBlankCapture) {
+      await openAbout();
+      await evaluate(`(() => {
+        const summary = document.querySelector('.about-change summary');
+        summary.click();
+        summary.closest('details').scrollIntoView({ block: 'center' });
+        return true;
+      })()`);
+    }
 
-    await evaluate(`(() => {
-      const changelog = document.querySelector('.about-changelog');
-      changelog?.scrollIntoView({ block: 'start' });
-      return true;
-    })()`);
+    const expectedDetail = JSON.stringify(CHANGELOG[0].changes[0].detail);
+    const captureReady = `(() => {
+      const host = document.querySelector('[data-settings-host]');
+      const tab = document.querySelector('.set-tab[data-member="About"]');
+      const changelog = document.querySelector('.about-ai .about-changelog');
+      const details = changelog?.querySelector('.about-change');
+      const detail = details?.querySelector('p');
+      if (!(host && tab?.getAttribute('aria-selected') === 'true' && changelog
+        && details?.open && detail?.textContent.trim() === ${expectedDetail})) return false;
+      const rect = detail.getBoundingClientRect();
+      const port = detail.closest('.modal, .overlay-body')?.getBoundingClientRect();
+      return !!(port && rect.top >= Math.max(0, port.top) - 1
+        && rect.bottom <= Math.min(innerHeight, port.bottom) + 1);
+    })()`;
+    await waitForPage('the photographed About changelog with its expected expanded detail visible', captureReady, 3500);
     await wait(120);
     const png = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+    await waitForPage('the About changelog state to remain present through capture', captureReady, 1000);
     mkdirSync(resolve(SHOT, '..'), { recursive: true });
     writeFileSync(SHOT, Buffer.from(png.data, 'base64'));
 
