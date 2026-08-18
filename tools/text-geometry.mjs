@@ -62,9 +62,16 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the quick-nav tap floor becomes a hard ceiling around Text XL',
         file: 'styles/ui.css',
-        find: "  width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;",
-        replace: '  width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;',
+        find: '  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
+        replace: '  width: var(--tap-floor); height: var(--tap-floor); min-width: 0; min-height: 0; font-size: 1.8rem;',
         expectRed: /quick-nav button clips its Text XL glyph/,
+      },
+      {
+        name: 'the Text size help copy promises a completed non-text sweep',
+        file: 'src/ui/screens/settings.js',
+        find: "    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },",
+        replace: "    note: 'Scale interface text without resizing controls or artwork. M is default; L/XL aid readability. Stacks with UI size.' },",
+        expectRed: /text size setting overclaims non-text stability/,
       },
       {
         name: 'the ergonomic floor falls below 44 px on glass',
@@ -261,8 +268,14 @@ async function main() {
 
     const close = (a, b) => Math.abs(a - b) <= 0.5;
     const failures = [];
-    const ui = readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8');
+    // Normalize only for source-ownership comparisons. Git may materialize the
+    // same tracked text as LF or CRLF; ownership must follow tokens, not the
+    // checkout's newline convention. The browser still renders the untouched
+    // file bytes above, so this cannot make a bad product state look green.
+    const normalizeLines = (text) => text.replace(/\r\n?/g, '\n');
+    const ui = normalizeLines(readFileSync(resolve(ROOT, 'styles/ui.css'), 'utf8'));
     const assets = readFileSync(resolve(ROOT, 'src/ui/assets.js'), 'utf8');
+    const settings = readFileSync(resolve(ROOT, 'src/ui/screens/settings.js'), 'utf8');
     for (const seam of [
       '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
@@ -274,6 +287,11 @@ async function main() {
     if (!assets.includes('const px = (value) => `${value}px`;')) failures.push('source ownership seam missing: sprite px emitter');
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push('source ownership seam missing: class sprite fixed px geometry');
     if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push('source ownership seam missing: equipped player sprite fixed px geometry');
+    const honestTextSizeNote = "note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.'";
+    if (!settings.includes(honestTextSizeNote)
+      || /Scale interface text without resizing controls or artwork/.test(settings)) {
+      failures.push('text size setting overclaims non-text stability: name only the migrated art and action floors, and keep legacy spacing explicit');
+    }
 
     for (const [viewport, profile] of Object.entries(rows)) {
       const { M, XL } = profile;
