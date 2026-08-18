@@ -103,9 +103,20 @@ if (args.includes('--selftest')) {
       expectRed: /FAIL trusted outside click closes the flask menu without stealing focus/,
     }, {
       name: 'competing menu surface opens over a stale flask menu',
-      file: 'src/ui/components/overlay.js',
-      find: '  closeFlaskActionMenu({ cancelled: true });',
-      replace: '  /* planted: competing menu leaves flask menu standing */',
+      edits: [{
+        file: 'src/ui/components/overlay.js',
+        find: '  closeFlaskActionMenu({ cancelled: true });',
+        replace: '  /* planted: competing menu leaves flask menu standing */',
+      }, {
+        file: 'src/ui/components/flask.js',
+        find: lines('src/ui/components/flask.js', '  const onDocumentClick = (ev) => {',
+          '    const target = ev.target;',
+          '    if (root.contains(target) || anchor === target || anchor.contains(target)) return;'),
+        replace: lines('src/ui/components/flask.js', '  const onDocumentClick = (ev) => {',
+          '    const target = ev.target;',
+          "    if (target.closest?.('#combat-menu')) return; // planted: competing control is exempt from click-away",
+          '    if (root.contains(target) || anchor === target || anchor.contains(target)) return;'),
+      }],
       expectRed: /FAIL competing Menu surface closes the flask menu before it opens/,
     }, {
       name: 'playCard commit door records a duplicate cardPlayed event',
