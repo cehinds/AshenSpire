@@ -238,6 +238,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   function refreshAim() {
+    // Drag targeting owns the same red silhouettes while a pointer is down.
+    // The class observer below also sees those class changes; yielding here
+    // prevents click/focus targeting from erasing a proximity highlight on the
+    // next task turn. One visual, two mutually exclusive input owners.
+    if (combatEl.classList.contains('drag-targeting')) return;
     const want = currentAim();
     const cur = $('.combatant.aiming');
     if ((want && cur === want.el && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
@@ -809,29 +814,54 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     let suppressClick = false; // a finished drag must not double-fire as a click
     let startX = 0;
     let startY = 0;
+    const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
+      ? 'all' : pv.needsTarget ? 'single' : 'none';
+
+    const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
+
+    const nearestEnemy = (x, y) => livingEnemyEls().reduce((best, enemy) => {
+      const r = enemy.getBoundingClientRect();
+      const distance = Math.hypot(x - (r.left + r.width / 2), y - (r.top + r.height / 2));
+      return !best || distance < best.distance ? { enemy, distance } : best;
+    }, null)?.enemy || null;
+
+    const showDragAims = (enemies) => {
+      const wanted = new Set(enemies);
+      const current = [...app.querySelectorAll('.enemy.aiming.aim-enemy')];
+      if (current.length === wanted.size
+          && current.every((enemy) => wanted.has(enemy) && enemy.querySelector('.aim-silho'))) return;
+      clearAim();
+      enemies.forEach((enemy) => setAim(enemy, 'enemy'));
+    };
 
     const clearDragTargeting = () => {
       combatEl.classList.remove('drag-targeting');
       combatEl.removeAttribute('data-drop-state');
       app.querySelectorAll('[data-drop-state]').forEach((node) => node.removeAttribute('data-drop-state'));
+      clearAim();
     };
 
     const beginDragTargeting = () => {
       clearDragTargeting();
       combatEl.classList.add('drag-targeting');
-      if (pv.needsTarget) {
-        app.querySelectorAll('.enemy:not(.dead)').forEach((enemy) => enemy.dataset.dropState = 'legal');
-      } else {
-        $('.field').dataset.dropState = 'legal';
-      }
     };
 
     const updateDropTarget = (x, y) => {
       if (!dragGhost) return;
       const under = document.elementFromPoint(x, y);
-      const legal = pv.needsTarget
-        ? !!(under && under.closest && under.closest('.enemy:not(.dead)'))
-        : !!(under && under.closest && under.closest('.field'));
+      const inField = !!(under && under.closest && under.closest('.field'));
+      let legal = inField;
+      if (dragTargetMode === 'single') {
+        const nearest = inField ? nearestEnemy(x, y) : null;
+        showDragAims(nearest ? [nearest] : []);
+        legal = !!nearest;
+      } else if (dragTargetMode === 'all') {
+        const enemies = inField ? livingEnemyEls() : [];
+        showDragAims(enemies);
+        legal = enemies.length > 0;
+      } else {
+        showDragAims([]);
+      }
       const state = legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
@@ -912,10 +942,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           if (cancelled) return;
           suppressClick = true; // whatever happens next, this drag is not a click
           const under = document.elementFromPoint(up.clientX, up.clientY);
-          const enemyBox = under && under.closest ? under.closest('.enemy:not(.dead)') : null;
-          if (pv.needsTarget) {
+          const inField = !!(under && under.closest && under.closest('.field'));
+          if (dragTargetMode === 'single') {
+            const enemyBox = inField ? nearestEnemy(up.clientX, up.clientY) : null;
             if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);
-          } else if (under && under.closest && under.closest('.field')) {
+          } else if (inField) {
             playCard(inst.instanceId, null);
           }
         },

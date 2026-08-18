@@ -1,9 +1,10 @@
 // tools/card-drag-targeting.mjs — browser acceptance for #150 + #198.
 //
 // The same real page and pointer door checks the approved hand paging controls,
-// drag start, legal and illegal target feedback, one legal commit, zero illegal
-// commits, and cleanup on both endings.  `--selftest` plants the cleanup defect
-// back into combat.js and requires this door to go red.
+// drag start, nearest-only single target switching, all-target multi aim,
+// non-targeting silence, one legal commit, zero illegal commits, cleanup on
+// both endings, and Text XL pager geometry. `--selftest` plants each accepted
+// defect back through this same browser door.
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -15,7 +16,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'card-drag-targeting.mjs',
-    args: ['--only', '390x844'],
+    args: ['--text', 'XL'],
     timeoutMs: 600000,
     plants: [{
       name: 'illegal-drop cleanup is removed, leaving the targeting state armed',
@@ -23,6 +24,36 @@ if (process.argv.includes('--selftest')) {
       find: '          clearDragTargeting();\n          if (dragGhost)',
       replace: '          /* planted: #198 cleanup omitted */\n          if (dragGhost)',
       expectRed: /FAIL illegal drop clears every drag marker/,
+    }, {
+      name: 'single-target drag lights every enemy instead of only the nearest',
+      file: 'src/ui/screens/combat.js',
+      find: "        const nearest = inField ? nearestEnemy(x, y) : null;\n        showDragAims(nearest ? [nearest] : []);\n        legal = !!nearest;",
+      replace: "        const nearest = inField ? nearestEnemy(x, y) : null;\n        showDragAims(inField ? livingEnemyEls() : []);\n        legal = !!nearest;",
+      expectRed: /FAIL single-target sweep keeps exactly one nearest red aim and switches across enemies/,
+    }, {
+      name: 'multi-target drag lights only one enemy instead of every legal enemy',
+      file: 'src/ui/screens/combat.js',
+      find: "        showDragAims(enemies);\n        legal = enemies.length > 0;",
+      replace: "        showDragAims(enemies.slice(0, 1));\n        legal = enemies.length > 0;",
+      expectRed: /FAIL multi-target drag reuses red aim on every living enemy/,
+    }, {
+      name: 'non-targeting drag incorrectly paints enemy aim silhouettes',
+      file: 'src/ui/screens/combat.js',
+      find: "      } else {\n        showDragAims([]);\n      }\n      const state = legal ? 'legal' : 'illegal';",
+      replace: "      } else {\n        showDragAims(inField ? livingEnemyEls() : []);\n      }\n      const state = legal ? 'legal' : 'illegal';",
+      expectRed: /FAIL non-targeting drag produces no enemy aim/,
+    }, {
+      name: 'narrow pager is restored to rem-sized offsets that clip at Text XL',
+      file: 'styles/combat.css',
+      find: "  :root[data-layout='narrow'] .hand-prev {\n    grid-area: prev; position: static; align-self: center;\n  }\n  :root[data-layout='narrow'] .hand-next {\n    grid-area: next; position: static; align-self: center;\n  }",
+      replace: "  :root[data-layout='narrow'] .hand-prev { left: calc(50% - 20rem); }\n  :root[data-layout='narrow'] .hand-next { right: calc(50% - 20rem); }",
+      expectRed: /FAIL hand paging controls stay inside the viewport/,
+    }, {
+      name: 'wide pager lift is removed so Next collides with Text XL End Turn',
+      file: 'styles/combat.css',
+      find: ":root:not([data-layout='narrow']) .hand-page {\n  bottom: calc(8.2rem + var(--tap-floor));\n}",
+      replace: ":root:not([data-layout='narrow']) .hand-page {\n  /* planted: Text XL lift omitted */\n}",
+      expectRed: /FAIL paging controls overlap neither cards nor combat controls/,
     }],
   }));
 }
@@ -44,6 +75,8 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const only = argOf('--only');
 const screenshots = args.includes('--screenshots');
 const useDist = args.includes('--dist');
+const textSize = argOf('--text') || 'M';
+if (!['S', 'M', 'L', 'XL'].includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -110,15 +143,19 @@ async function main() {
         discard:+document.querySelector('.pile.discard .n').textContent,
         energy:document.querySelector('.energy-orb').textContent.trim(),
         mode:document.querySelector('.combat').classList.contains('drag-targeting'),
-        legal:document.querySelectorAll('[data-drop-state="legal"]').length,
-        illegal:document.querySelectorAll('[data-drop-state="illegal"]').length,
+        drop:document.querySelector('.combat').dataset.dropState || null,
+        dropAttrs:document.querySelectorAll('[data-drop-state]').length,
+        aimed:[...document.querySelectorAll('.enemy.aiming.aim-enemy')].map(x=>x.dataset.eid),
+        silhouettes:document.querySelectorAll('.enemy.aiming.aim-enemy .aim-silho').length,
+        labeledEnemies:document.querySelectorAll('.enemy[data-drop-state],.enemy .drop-verdict').length,
         ghosts:document.querySelectorAll('.card-drag-ghost').length
       }))()`);
 
-      await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
+      const shotSettings = encodeURIComponent(JSON.stringify({ textSize }));
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat'); await wait(350);
-      console.log(`\n  ${shape}`);
-      const controls = await ev(`(() => { const hs=[...document.querySelectorAll('.hand-page')]; return {n:hs.length, labels:hs.map(x=>x.getAttribute('aria-label')), on:hs.every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})}; })()`);
+      console.log(`\n  ${shape} · Text ${textSize}`);
+      const controls = await ev(`(() => { const hs=[...document.querySelectorAll('.hand-page')]; return {n:hs.length, labels:hs.map(x=>x.getAttribute('aria-label')), rects:hs.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}), on:hs.every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})}; })()`);
       ok(controls.n === 2 && controls.labels.every(Boolean), 'approved previous/next controls exist and are named', JSON.stringify(controls));
       ok(controls.on, 'hand paging controls stay inside the viewport');
       const overlap = await ev(`(() => {
@@ -126,6 +163,7 @@ async function main() {
         const box=x=>{const r=x.getBoundingClientRect();return {name:x.className,left:r.left,top:r.top,right:r.right,bottom:r.bottom}};
         const pages=[...document.querySelectorAll('.hand-page')].map(box);
         const fixed=[...document.querySelectorAll('.end-turn,.energy-orb,.pile')].filter(x=>getComputedStyle(x).display!=='none').map(box);
+        const handArea=document.querySelector('.hand-area').getBoundingClientRect();
         const hand=document.querySelector('.hand').getBoundingClientRect();
         const cards=[...document.querySelectorAll('.hand .card')].map(box).map(r=>({...r,
           left:Math.max(r.left,hand.left),right:Math.min(r.right,hand.right),
@@ -133,7 +171,13 @@ async function main() {
           .filter(r=>r.right>Math.max(0,r.left)&&r.bottom>r.top&&r.left<innerWidth);
         const pairs=(bs)=>pages.flatMap(a=>bs.filter(b=>hit(a,b)).map(b=>[a,b]));
         const chromePairs=pairs(fixed), cardPairs=pairs(cards);
-        return { chrome:chromePairs.length>0, cards:cardPairs.length>0, chromePairs, cardPairs };
+        return {
+          chrome:chromePairs.length>0, cards:cardPairs.length>0,
+          chromePairs, cardPairs,
+          handArea:{left:handArea.left,top:handArea.top,right:handArea.right,bottom:handArea.bottom},
+          hand:{left:hand.left,top:hand.top,right:hand.right,bottom:hand.bottom},
+          fixed
+        };
       })()`);
       ok(!overlap.chrome && !overlap.cards, 'paging controls overlap neither cards nor combat controls', JSON.stringify(overlap));
       if (controls.n === 2) {
@@ -141,38 +185,118 @@ async function main() {
         ok(await ev(`!!document.querySelector('.hand .card.gp-focus')`), 'paging moves focus through the real hand');
       }
 
-      const card = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Strike/.test(x.textContent)); if(!c)return null; c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
-      const enemy = await point('.enemy:not(.dead)');
-      if (!card || !enemy) throw new Error(`${shape}: missing targetable card/enemy`);
+      const card = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Slashing Strike/.test(x.textContent)); if(!c)return null; c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const enemies = await ev(`[...document.querySelectorAll('.enemy:not(.dead)')].map(e=>{const r=e.getBoundingClientRect();return {id:e.dataset.eid,x:r.left+r.width/2,y:r.top+r.height/2}})`);
+      if (!card || enemies.length < 2) throw new Error(`${shape}: nearest-target proof needs one targetable card and at least two enemies`);
       const before = await state();
       await mouse('mousePressed', card.x, card.y, true);
       await mouse('mouseMoved', card.x, card.y - 30, true);
-      await mouse('mouseMoved', enemy.x, enemy.y, true); await wait(120);
+      const sweep = [];
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        const at = {
+          x: enemies[0].x + (enemies.at(-1).x - enemies[0].x) * t,
+          y: enemies[0].y + (enemies.at(-1).y - enemies[0].y) * t,
+        };
+        await mouse('mouseMoved', at.x, at.y, true); await wait(70);
+        const observed = await state();
+        const expected = enemies.reduce((best, enemy) => {
+          const distance = Math.hypot(at.x - enemy.x, at.y - enemy.y);
+          return !best || distance < best.distance ? { id: enemy.id, distance } : best;
+        }, null).id;
+        sweep.push({ t, expected, aimed: observed.aimed, silhouettes: observed.silhouettes });
+      }
+      const exactNearest = sweep.every((row) => row.aimed.length === 1
+        && row.aimed[0] === row.expected && row.silhouettes === 1);
+      ok(exactNearest && new Set(sweep.map((row) => row.aimed[0])).size >= 2,
+        'single-target sweep keeps exactly one nearest red aim and switches across enemies', JSON.stringify(sweep));
       const armed = await state();
-      ok(armed.mode && armed.legal > 0 && armed.ghosts === 1, 'drag start exposes one ghost and explicit legal targets', JSON.stringify(armed));
+      ok(armed.mode && armed.drop === 'legal' && armed.aimed.length === 1
+        && armed.silhouettes === 1 && armed.labeledEnemies === 0 && armed.ghosts === 1,
+      'single-target drag reuses the click-selected red silhouette without enemy drop labels', JSON.stringify(armed));
       if (screenshots) {
         const dir = join(ROOT, 'docs', 'preview'); mkdirSync(dir, { recursive: true });
         const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, S);
-        writeFileSync(join(dir, `combat-ui-drag-${shape}.png`), Buffer.from(shot.data, 'base64'));
+        const textSuffix = textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`;
+        writeFileSync(join(dir, `combat-ui-drag-${shape}${textSuffix}.png`), Buffer.from(shot.data, 'base64'));
       }
-      await mouse('mouseReleased', enemy.x, enemy.y, false); await wait(700);
+      await mouse('mouseReleased', enemies.at(-1).x, enemies.at(-1).y, false); await wait(700);
       const legalEnd = await state();
       ok(legalEnd.discard === before.discard + 1, 'legal drop plays exactly once', `${before.discard} -> ${legalEnd.discard}`);
-      ok(!legalEnd.mode && legalEnd.legal === 0 && legalEnd.illegal === 0 && legalEnd.ghosts === 0, 'legal drop clears every drag marker', JSON.stringify(legalEnd));
+      ok(!legalEnd.mode && legalEnd.dropAttrs === 0 && legalEnd.aimed.length === 0
+        && legalEnd.silhouettes === 0 && legalEnd.ghosts === 0,
+      'legal drop clears every drag marker', JSON.stringify(legalEnd));
 
-      await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat reset'); await wait(350);
-      const card2 = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Strike/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const card2 = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Shield Defend/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const enemy2 = await point('.enemy:not(.dead)');
       const bad = await point('.topbar'); const beforeBad = await state();
       await mouse('mousePressed', card2.x, card2.y, true);
       await mouse('mouseMoved', card2.x, card2.y - 30, true);
+      await mouse('mouseMoved', enemy2.x, enemy2.y, true); await wait(120);
+      const noTargetAim = await state();
+      ok(noTargetAim.aimed.length === 0 && noTargetAim.silhouettes === 0 && noTargetAim.labeledEnemies === 0,
+        'non-targeting drag produces no enemy aim', JSON.stringify(noTargetAim));
       await mouse('mouseMoved', bad.x, bad.y, true); await wait(120);
       const rejected = await state();
-      ok(rejected.mode && rejected.illegal > 0 && rejected.legal > 0, 'illegal hover is distinct while legal targets remain visible', JSON.stringify(rejected));
+      ok(rejected.mode && rejected.drop === 'illegal' && rejected.aimed.length === 0
+        && rejected.silhouettes === 0 && rejected.ghosts === 1,
+      'invalid point has no persisted enemy aim', JSON.stringify(rejected));
       await mouse('mouseReleased', bad.x, bad.y, false); await wait(350);
       const illegalEnd = await state();
       ok(illegalEnd.discard === beforeBad.discard && illegalEnd.energy === beforeBad.energy, 'illegal drop spends and plays nothing');
-      ok(!illegalEnd.mode && illegalEnd.legal === 0 && illegalEnd.illegal === 0 && illegalEnd.ghosts === 0, 'illegal drop clears every drag marker', JSON.stringify(illegalEnd));
+      ok(!illegalEnd.mode && illegalEnd.dropAttrs === 0 && illegalEnd.aimed.length === 0
+        && illegalEnd.silhouettes === 0 && illegalEnd.ghosts === 0,
+      'illegal drop clears every drag marker', JSON.stringify(illegalEnd));
+
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'combat multi-target reset'); await wait(350);
+      const multiPose = await ev(`(() => {
+        const donor=window.__combat.piles.hand[0];
+        const trigger=[...document.querySelectorAll('.hand .card')].find(x=>/Slashing Strike/.test(x.textContent));
+        if(!donor||!trigger)return {id:null,reason:'missing donor or render trigger'};
+        donor.cardId='crimsonCleave'; donor.upgraded=false;
+        delete donor.profileId; delete donor.mods;
+        delete donor.damageSchool; delete donor.exposureBuildupPerHit;
+        trigger.click();
+        const deselect=[...document.querySelectorAll('.hand .card')].find(x=>/Slashing Strike/.test(x.textContent));
+        if(deselect)deselect.click();
+        return {id:donor.instanceId,cardId:donor.cardId,trigger:trigger.textContent.trim()};
+      })()`);
+      await wait(150);
+      const multiNames = await ev(`[...document.querySelectorAll('.hand .card')].map(x=>x.textContent.trim())`);
+      if (!multiPose.id || !multiNames.some((name) => /Crimson Cleave/.test(name))) {
+        throw new Error(`${shape}: real multi-target pose failed ${JSON.stringify({ multiPose, multiNames })}`);
+      }
+      const multiCard = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Crimson Cleave/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const multiEnemies = await ev(`[...document.querySelectorAll('.enemy:not(.dead)')].map(e=>{const r=e.getBoundingClientRect();return {id:e.dataset.eid,x:r.left+r.width/2,y:r.top+r.height/2}})`);
+      if (!multiCard || multiEnemies.length < 2) throw new Error(`${shape}: could not pose the real Crimson Cleave multi-target state`);
+      const multiAt = {
+        x: (multiEnemies[0].x + multiEnemies.at(-1).x) / 2,
+        y: (multiEnemies[0].y + multiEnemies.at(-1).y) / 2,
+      };
+      const beforeMulti = await state();
+      await mouse('mousePressed', multiCard.x, multiCard.y, true);
+      await mouse('mouseMoved', multiCard.x, multiCard.y - 30, true);
+      await mouse('mouseMoved', multiAt.x, multiAt.y, true); await wait(120);
+      const multiArmed = await state();
+      const wantMulti = multiEnemies.map((enemy) => enemy.id).sort();
+      ok(multiArmed.drop === 'legal' && multiArmed.silhouettes === wantMulti.length
+        && JSON.stringify([...multiArmed.aimed].sort()) === JSON.stringify(wantMulti)
+        && multiArmed.labeledEnemies === 0,
+      'multi-target drag reuses red aim on every living enemy', JSON.stringify(multiArmed));
+      if (screenshots) {
+        const dir = join(ROOT, 'docs', 'preview'); mkdirSync(dir, { recursive: true });
+        const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, S);
+        const textSuffix = textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`;
+        writeFileSync(join(dir, `combat-ui-drag-multi-${shape}${textSuffix}.png`), Buffer.from(shot.data, 'base64'));
+      }
+      await mouse('mouseReleased', multiAt.x, multiAt.y, false); await wait(700);
+      const multiEnd = await state();
+      ok(multiEnd.discard === beforeMulti.discard + 1, 'multi-target legal drop plays exactly once', `${beforeMulti.discard} -> ${multiEnd.discard}`);
+      ok(!multiEnd.mode && multiEnd.dropAttrs === 0 && multiEnd.aimed.length === 0
+        && multiEnd.silhouettes === 0 && multiEnd.ghosts === 0,
+      'multi-target drop clears every drag marker', JSON.stringify(multiEnd));
       await cdp.send('Target.closeTarget', { targetId });
     }
     if (!ran) throw new Error(`--only ${only} matched no shape`);
