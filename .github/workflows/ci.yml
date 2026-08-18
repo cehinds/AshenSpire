@@ -40,7 +40,7 @@
 #
 #  3. A MACHINE CHECK FOR EACH RULE WE ENFORCE BY HAND — PARTIALLY MET, and I am
 #     not going to dress that up. Newly machine-checked here: the shipped artifact
-#     carries its art, dist/ IS the build, no version-stamped twin is tracked,
+#     root + dist carry their art, both ARE the build, no version-stamped twin is tracked,
 #     ?shot= cannot reach a player's save, and — since Vira's sign-off — the
 #     dirorder comparator itself, which was a FIFTH hand-enforced rule that I had
 #     protected with a comment and left off this list. Still enforced by hand, listed by the
@@ -72,7 +72,7 @@
 # when EITHER holds:
 #   · the standalone stops being a tracked artifact — when a release workflow
 #     attaches it and README.md links the release, the `reproducible` job's
-#     dist/-freshness gate is verifying a file that no longer exists, and the
+#     player-facing-alias freshness gate is verifying files that no longer exist, and the
 #     remaining test legs belong in a smaller workflow;
 #   · the repo stops shipping a single-file build at all, which is the premise of
 #     every check here.
@@ -269,10 +269,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Rebuild the standalone and refresh dist/
+      - name: Rebuild the standalone and refresh root + dist/
         run: node tools/launch.mjs --build-only
 
-      - name: dist/ carries its art, and IS the build
+      - name: Root + dist carry their art, and ARE the build
         run: node tools/verify-shipped.mjs
 
       - name: The committed artifact equals a fresh build on THIS runner
@@ -282,8 +282,8 @@ jobs:
         # identical and always would have been. This is the only place the
         # platform claim is actually tested.
         run: |
-          git --no-pager diff --stat -- build dist
-          git diff --exit-code -- build dist
+          git --no-pager diff --stat -- AshenSpire.html build dist
+          git diff --exit-code -- AshenSpire.html build dist
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching
@@ -371,7 +371,7 @@ jobs:
           echo "  · the whole engine suite passes on Linux, Windows and macOS"
           echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
           echo "  · the standalone rebuilds byte-identically to what is committed, on each runner"
-          echo "  · dist/AshenSpire.html carries its inlined art and IS that build"
+          echo "  · root AshenSpire.html and dist/AshenSpire.html carry their inlined art and ARE that build"
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"
           echo "  · both shipped-artifact guards were shown to FAIL on a known-bad input"

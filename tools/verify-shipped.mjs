@@ -11,7 +11,7 @@
 //
 // Two defects in one line. It reads `mapEntries`, a variable in its own process,
 // about the build it is in the middle of writing — so it is structurally
-// incapable of seeing dist/, which is what README.md:25 hands to a player. And it
+// incapable of seeing the player-facing copies, which the README hands to a player. And it
 // is a console.log: bundle.mjs exits 0 either way, so nothing is gated on it.
 // At 40c5b21 the guard was green on every run while dist/AshenSpire.html had
 // `indexOf('ASSET_MAP')` === -1 — it had never run that bundler at all.
@@ -26,16 +26,16 @@
 //   node tools/verify-shipped.mjs --selftest  run the known-bad corpus
 //
 // WHAT IT DOES NOT CHECK, and this is the point of the chain:
-//   dist carries art  +  dist === build  →  the player's file is this source.
+//   root + dist carry art  +  both === build  →  the player's files are this source.
 // Check B alone would pass on two identically art-less files, so A is what makes
 // the chain terminate in a true claim rather than in agreement. Agreement is not
 // synchronization (SOP 5).
 //
-// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day dist/
-// holds no tracked artifact, i.e. when the standalone ships as a release asset
-// and README.md links the release (see dist/README.md, *Why this is tracked*).
-// With nothing tracked in dist/ there is nothing for this to verify and the
-// checks become theatre. Also deleted if bundle.mjs stops inlining art into a
+// REMOVAL CONDITION (SOP 1's corollary): deleted — not amended — the day neither
+// player-facing alias is tracked, i.e. when the standalone ships as a release
+// asset and README.md links the release (see dist/README.md, *Why this is
+// tracked*). With no tracked player-facing alias there is nothing for this to
+// verify and the checks become theatre. Also deleted if bundle.mjs stops inlining art into a
 // single file, because then check A is asserting a property the build no longer
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
@@ -51,12 +51,14 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
 const BUILD = 'build/AshenSpire.html';
 const DIST_DIR = 'dist';
-const SHIPPED = 'dist/AshenSpire.html'; // the path README.md:25 gives a player
+const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
+const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
 // three inlined images instead of 101. Kept as a corpus entry by blob id rather
@@ -335,11 +337,20 @@ record(checkCarriesArt(BUILD, buildBytes));
 
 const shippedPath = resolve(ROOT, SHIPPED);
 if (!existsSync(shippedPath)) {
-  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md:25 links it.` });
+  record({ ok: false, code: 'MISSING', detail: `${SHIPPED} does not exist, but README.md links it as the canonical dist twin.` });
 } else {
   const shippedBytes = readFileSync(shippedPath);
   record(checkCarriesArt(SHIPPED, shippedBytes));
   record(checkShippedIsBuilt(SHIPPED, shippedBytes, buildBytes));
+}
+
+const rootCurrentPath = resolve(ROOT, ROOT_CURRENT);
+if (!existsSync(rootCurrentPath)) {
+  record({ ok: false, code: 'MISSING', detail: `${ROOT_CURRENT} does not exist, but README.md links it as the current build.` });
+} else {
+  const rootCurrentBytes = readFileSync(rootCurrentPath);
+  record(checkCarriesArt(ROOT_CURRENT, rootCurrentBytes));
+  record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
 }
 
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
@@ -378,7 +389,7 @@ boundary([
 const failed = results.filter((r) => !r.ok);
 if (failed.length) {
   console.error(`\nverify-shipped: FAILED ${failed.length} of ${results.length}.`);
-  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ AND refreshes dist/)');
+  console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ and refreshes the root + dist current-build aliases)');
   process.exit(1);
 }
 console.log(`\nverify-shipped: OK — ${results.length} checks passed.`);

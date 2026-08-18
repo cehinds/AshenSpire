@@ -1,7 +1,8 @@
 // tools/launch.mjs — the one-click launcher.
 //
 // 1. Builds the standalone single-file HTML (tools/bundle.mjs → build/).
-// 2. Copies it into dist/ (a stable AshenSpire.html + a version-stamped copy).
+// 2. Copies it to the root and into dist/ (stable current-build aliases plus a
+//    version-stamped dist copy).
 // 3. Serves the live app on http://localhost and opens it in the browser.
 //
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
@@ -86,14 +87,15 @@ if (build.status !== 0) {
   process.exit(build.status || 1);
 }
 
-// 2. Refresh dist/ from the fresh build.
+// 2. Refresh the player-facing current-build aliases from the fresh build.
 const src = resolve(ROOT, 'build', 'AshenSpire.html');
 const distDir = resolve(ROOT, 'dist');
 mkdirSync(distDir, { recursive: true });
 const ver = version();
+copyFileSync(src, resolve(ROOT, 'AshenSpire.html'));
 copyFileSync(src, resolve(distDir, 'AshenSpire.html'));
 copyFileSync(src, resolve(distDir, `AshenSpire-${ver}.html`));
-console.log(`launch: dist refreshed → dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
+console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 
 if (args.includes('--build-only')) {
   console.log('launch: --build-only set, skipping server.');

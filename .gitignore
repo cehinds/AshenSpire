@@ -15,8 +15,8 @@ npm-debug.log*
 scratch/
 *.local.*
 
-# dist: keep the stable standalone (dist/AshenSpire.html — README.md:25 hands it
-# to a player); the version-stamped copies the launcher emits are build
+# dist: keep the stable standalone (dist/AshenSpire.html — the root README links
+# it as the canonical twin of the root current-build alias); the version-stamped copies the launcher emits are build
 # artifacts. The name here MUST match what tools/launch.mjs:53 writes: this rule
 # read `EldenSpire-*` after the rename, matched nothing, and one build artifact
 # was committed for it. Verify with:
