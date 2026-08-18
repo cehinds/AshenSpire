@@ -580,11 +580,17 @@ const EVIDENCE_READING = `(() => {
       tap44: Math.min(rect.width, rect.height) >= 44,
     };
   };
-  const interactive = [...document.querySelectorAll([
+  const modal = document.querySelector('.modal-veil');
+  const interactionSelector = [
     '.hand-prev', '.hand-next', '.end-turn', '.hand .card.gp-focus', '.hand .card.selected',
     '.combatant.enemy.targetable', '.combatant.player.armed',
     '.flask-slot', '[role="menuitem"]', '.flask-action-menu button',
-  ].join(','))].filter(visible).map(describe);
+  ].join(',');
+  // Once a modal owns the interaction surface, obscured combat controls are
+  // correctly non-hittable. Measure the active modal controls instead of
+  // falsely treating intentional modality as an obstruction regression.
+  const interactionScope = modal && visible(modal) ? modal : document;
+  const interactive = [...interactionScope.querySelectorAll(interactionSelector)].filter(visible).map(describe);
   return {
     viewport: { width: innerWidth, height: innerHeight },
     focus: describe(document.querySelector('.gp-focus')),
