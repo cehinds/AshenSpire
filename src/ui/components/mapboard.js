@@ -1054,13 +1054,20 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   let sy = 0;
   let sl = 0;
   let st = 0;
+  let activeMousePointerId = null;
   scroll.addEventListener('pointerdown', (ev) => {
+    // Touch and pen belong to the browser's native vertical scroll path. If
+    // this handler captures either one, native pan and our scrollTop writes
+    // race each other. A second mouse pointer also cannot replace the origin
+    // of the gesture already in flight.
+    if (ev.pointerType !== 'mouse' || ev.button !== 0 || activeMousePointerId !== null) return;
     // The `.map-zoom` half of this guard went with the overlay (EldenSpire#28).
     // This listener is on .map-scroll and the buttons are no longer inside it,
     // so a press on one cannot reach here to be excluded. Left in, it would be
     // a line that reads like protection and can never run — and the next reader
     // would take it as evidence the buttons are still in the scrollport.
     if (ev.target.closest('.map-node.reachable')) return;
+    activeMousePointerId = ev.pointerId;
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
@@ -1075,7 +1082,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     // the pan exactly as release does — a pan has nothing to abandon.
     trackGesture(ev, {
       onMove: (mv) => {
-        if (!panning) return;
+        if (!panning || mv.pointerId !== activeMousePointerId) return;
         // The horizontal write is INERT BY CONSTRUCTION, kept for the day a
         // wide layout earns a horizontal extent back: scrollWidth equals
         // clientWidth on every shape now (see apply), so the browser clamps
@@ -1084,7 +1091,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
         scroll.scrollLeft = sl - (mv.clientX - sx);
         scroll.scrollTop = st - (mv.clientY - sy);
       },
-      onEnd: () => {
+      onEnd: (end) => {
+        if (end.pointerId !== activeMousePointerId) return;
+        activeMousePointerId = null;
         panning = false;
         scroll.classList.remove('grabbing');
         emitViewState(true);
