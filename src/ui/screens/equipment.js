@@ -30,6 +30,7 @@ import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
+import { closeFlaskActionMenu } from '../components/flask.js';
 
 const CFG = () => balance.equipment;
 
@@ -345,6 +346,7 @@ function pieceChip(registries, piece, { selected }) {
 export function mountEquipment(host, {
   registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
+  closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
   // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
   // — and left the screen holding the one value that gate is asked about, with a

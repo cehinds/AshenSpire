@@ -38,6 +38,38 @@ const standalone = args.includes('--standalone');
 const artifactParity = args.includes('--artifact-parity');
 const evidenceDoor = standalone ? 'root standalone' : 'source';
 const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const canonicalLfBytes = (bytes) => {
+  const text = Buffer.isBuffer(bytes) ? bytes.toString('utf8') : String(bytes);
+  return Buffer.from(text.replace(/\r\n?/g, '\n'), 'utf8');
+};
+const gitBlobOid = (bytes) => {
+  const canonical = canonicalLfBytes(bytes);
+  return createHash('sha1')
+    .update(Buffer.from(`blob ${canonical.length}\0`, 'utf8'))
+    .update(canonical)
+    .digest('hex');
+};
+const canonicalIdentity = (bytes) => {
+  const canonical = canonicalLfBytes(bytes);
+  return {
+    canonicalLfSha256: sha256(canonical),
+    gitBlobOidSha1: gitBlobOid(canonical),
+  };
+};
+// Every authored product path whose bytes can change the outcomes/geometry in
+// this evidence. Keep the list in the manifest itself as well as the hashes:
+// a patch identity that omits a decisive stylesheet can make a bad layout and
+// its correction look like the same reviewed product.
+const PRODUCT_PATHS = [
+  'src/ui/components/flask.js',
+  'src/ui/components/overlay.js',
+  'src/ui/components/quicknav.js',
+  'src/ui/input.js',
+  'src/ui/screens/combat.js',
+  'src/ui/screens/equipment.js',
+  'styles/ui.css',
+];
+const TOOL_PATH = 'tools/hybrid-input-parity.mjs';
 const lines = (file, ...rows) => {
   const bytes = readFileSync(join(ROOT, file), 'utf8');
   for (const eol of ['\r\n', '\n']) {
@@ -56,6 +88,25 @@ if (args.includes('--selftest')) {
       find: '  width: 100%; min-height: var(--tap-floor); height: auto;',
       replace: '  width: 100%; min-height: 44px; height: auto; /* planted: local rather than device-pixel floor */',
       expectRed: /FAIL keyboard Crimson menu rows retain the 44 device-pixel floor/,
+    }, {
+      name: 'same-flask activation closes and immediately reopens its menu',
+      file: 'src/ui/components/flask.js',
+      find: lines('src/ui/components/flask.js', '  if (activeFlaskActionMenu?.anchor === anchor) {',
+        '    closeFlaskActionMenu({ cancelled: true, restoreFocus: true });', '    return null;', '  }'),
+      replace: '  /* planted: same-flask activation falls through and reopens */',
+      expectRed: /FAIL same-flask re-click toggles off and restores its exact anchor/,
+    }, {
+      name: 'trusted outside click leaves the contextual flask menu standing',
+      file: 'src/ui/components/flask.js',
+      find: "  document.addEventListener('click', onDocumentClick, true);",
+      replace: '  /* planted: no trusted click-away listener */',
+      expectRed: /FAIL trusted outside click closes the flask menu without stealing focus/,
+    }, {
+      name: 'competing menu surface opens over a stale flask menu',
+      file: 'src/ui/components/overlay.js',
+      find: '  closeFlaskActionMenu({ cancelled: true });',
+      replace: '  /* planted: competing menu leaves flask menu standing */',
+      expectRed: /FAIL competing Menu surface closes the flask menu before it opens/,
     }, {
       name: 'playCard commit door records a duplicate cardPlayed event',
       file: 'src/ui/screens/combat.js',
@@ -111,6 +162,16 @@ if (args.includes('--selftest')) {
       replace: '    /* planted: menu DOM focus is not synchronized */',
       expectRed: /FAIL controller Azure menu opens on Use and D-pad moves to Inspect/,
     }, {
+      name: 'Home and End leave the unified cursor on the old flask row',
+      file: 'src/ui/components/flask.js',
+      find: lines('src/ui/components/flask.js', "    else if (ev.key === 'Home') {", '      ev.preventDefault();',
+        '      const first = buttons[0];', '      first?.focus();', '      focusElement(first);',
+        "    } else if (ev.key === 'End') {", '      ev.preventDefault();', '      const last = buttons.at(-1);',
+        '      last?.focus();', '      focusElement(last);', '    }'),
+      replace: lines('src/ui/components/flask.js', "    else if (ev.key === 'Home') { ev.preventDefault(); buttons[0]?.focus(); }",
+        "    else if (ev.key === 'End') { ev.preventDefault(); buttons.at(-1)?.focus(); }"),
+      expectRed: /FAIL keyboard Home\/End keep DOM focus and the unified cursor aligned/,
+    }, {
       name: 'targeted flask use no longer moves the cursor to a legal enemy',
       file: 'src/ui/screens/combat.js',
       find: '          if (selectedFlask != null) focusTargeting();',
@@ -144,8 +205,20 @@ if (args.includes('--selftest')) {
     replace: '      } else if (ev.isTrusted) { /* planted only in selected standalone artifact */',
     expectRed: /FAIL controller multi-target Confirm commits once without a false self target/,
   }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
+  const provenancePlants = [{
+    name: 'manifest verifier is blind to stale exact-head product bytes',
+    file: 'styles/ui.css',
+    append: '/* planted: reviewed HEAD has product bytes absent from both manifests */',
+    expectRed: /manifest canonical identity mismatch for styles\/ui\.css/,
+  }, {
+    name: 'manifest verifier hashes checkout-specific raw EOL bytes',
+    file: TOOL_PATH,
+    find: "  return Buffer.from(text.replace(/\\r\\n?/g, '\\n'), 'utf8');",
+    replace: "  return Buffer.from(text, 'utf8'); // planted: checkout EOL leaks into identity",
+    expectRed: /canonical LF normalization is checkout-EOL invariant/,
+  }].filter((plant) => !wantedPlant || plant.name.includes(wantedPlant));
   if (wantedPlant && sourcePlants.length === 0 && geometryPlants.length === 0
-    && packagingPlants.length === 0 && artifactPlants.length === 0) {
+    && packagingPlants.length === 0 && artifactPlants.length === 0 && provenancePlants.length === 0) {
     console.error(`unknown --plant filter: ${wantedPlant}`);
     process.exit(2);
   }
@@ -189,19 +262,152 @@ if (args.includes('--selftest')) {
     });
     if (artifactStatus) process.exit(artifactStatus);
   }
+  if (provenancePlants.length) {
+    const provenanceStatus = await doorSelftest({
+      tool: 'hybrid-input-parity.mjs',
+      args: ['--verify-manifests'],
+      timeoutMs: 30000,
+      extraCopy: ['docs'],
+      plants: provenancePlants,
+    });
+    if (provenanceStatus) process.exit(provenanceStatus);
+  }
   process.exit(0);
 }
+function gitText(argv) {
+  const result = spawnSync('git', argv, { cwd: ROOT, encoding: 'utf8', windowsHide: true });
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function manifestPatchBasis() {
+  const inGit = gitText(['rev-parse', '--is-inside-work-tree']) === 'true';
+  if (!inGit) {
+    return { patchBaseRef: 'COPY_DOOR_NO_GIT_BASE', productPatchSha256: null };
+  }
+  const base = spawnSync('git', ['merge-base', 'origin/dev', 'HEAD'], {
+    cwd: ROOT, encoding: 'utf8', windowsHide: true,
+  });
+  if (base.status !== 0 || !/^[0-9a-f]{40}$/i.test((base.stdout || '').trim())) {
+    throw new Error(`manifest basis refused: cannot resolve merge-base origin/dev HEAD (exit ${base.status})`);
+  }
+  const patchBaseRef = base.stdout.trim();
+  const patch = spawnSync('git', ['diff', '--binary', patchBaseRef, '--', ...PRODUCT_PATHS], {
+    cwd: ROOT, encoding: null, windowsHide: true,
+  });
+  if (patch.status !== 0 || !Buffer.isBuffer(patch.stdout)) {
+    throw new Error(`manifest basis refused: git diff from ${patchBaseRef} failed (exit ${patch.status})`);
+  }
+  return { patchBaseRef, productPatchSha256: sha256(patch.stdout) };
+}
+
+function verifyManifestIdentity() {
+  let failed = 0;
+  const verify = (ok, label, detail = '') => {
+    console.log(`${ok ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
+    if (!ok) failed++;
+  };
+  const lfProbe = canonicalIdentity(Buffer.from('alpha\nbeta\n', 'utf8'));
+  const crlfProbe = canonicalIdentity(Buffer.from('alpha\r\nbeta\r\n', 'utf8'));
+  verify(JSON.stringify(lfProbe) === JSON.stringify(crlfProbe),
+    'canonical LF normalization is checkout-EOL invariant', JSON.stringify({ lfProbe, crlfProbe }));
+
+  const names = ['hybrid-input-parity-manifest.json', 'hybrid-input-parity-root-manifest.json'];
+  const manifests = [];
+  for (const name of names) {
+    const path = join(ROOT, 'docs', 'preview', name);
+    if (!existsSync(path)) {
+      verify(false, `${name} exists`);
+      continue;
+    }
+    const manifest = JSON.parse(readFileSync(path, 'utf8'));
+    manifests.push({ name, manifest });
+    verify(manifest.schemaVersion === 2, `${name} uses canonical identity schema 2`);
+    verify(JSON.stringify(manifest.productPaths) === JSON.stringify(PRODUCT_PATHS),
+      `${name} declares the complete authored product path set`);
+    for (const file of PRODUCT_PATHS) {
+      const actual = canonicalIdentity(readFileSync(join(ROOT, file)));
+      const recorded = manifest.sourceFiles?.[file];
+      verify(JSON.stringify(recorded) === JSON.stringify(actual),
+        `manifest canonical identity mismatch for ${file}`,
+        JSON.stringify({ recorded, actual, manifest: name }));
+    }
+    const actualTool = canonicalIdentity(readFileSync(join(ROOT, TOOL_PATH)));
+    verify(manifest.toolFile?.path === TOOL_PATH
+      && JSON.stringify(manifest.toolFile?.identity) === JSON.stringify(actualTool),
+    `manifest canonical identity mismatch for ${TOOL_PATH}`,
+    JSON.stringify({ recorded: manifest.toolFile, actual: actualTool, manifest: name }));
+    const imageRows = [...(manifest.contactSheets || []), ...(manifest.evidence || [])]
+      .filter((row) => row.filename && row.sha256);
+    for (const row of imageRows) {
+      const imagePath = join(ROOT, 'docs', 'preview', row.filename);
+      const bytes = existsSync(imagePath) ? readFileSync(imagePath) : null;
+      verify(Boolean(bytes) && bytes.length === row.bytes && sha256(bytes) === row.sha256,
+        `${name} binds image ${row.filename}`);
+    }
+    if (manifest.standaloneArtifact) {
+      const artifactPath = join(ROOT, manifest.standaloneArtifact.path);
+      const bytes = existsSync(artifactPath) ? readFileSync(artifactPath) : null;
+      verify(Boolean(bytes) && bytes.length === manifest.standaloneArtifact.bytes
+        && sha256(bytes) === manifest.standaloneArtifact.sha256,
+      `${name} binds exact standalone artifact ${manifest.standaloneArtifact.path}`);
+      const ordinalPath = join(ROOT, manifest.standaloneArtifact.buildOrdinalPath);
+      verify(existsSync(ordinalPath)
+        && JSON.stringify(canonicalIdentity(readFileSync(ordinalPath)))
+          === JSON.stringify(manifest.standaloneArtifact.buildOrdinalIdentity),
+      `${name} binds exact build ordinal metadata`);
+    }
+  }
+
+  if (manifests.length === 2) {
+    const [source, root] = manifests.map(({ manifest }) => manifest);
+    verify(source.patchBaseRef === root.patchBaseRef && source.productPatchSha256 === root.productPatchSha256,
+      'source and root manifests bind the same patch base and product patch');
+    verify(JSON.stringify(source.sourceFiles) === JSON.stringify(root.sourceFiles)
+      && JSON.stringify(source.toolFile) === JSON.stringify(root.toolFile),
+    'source and root manifests bind identical canonical product/tool identities');
+  }
+
+  const head = gitText(['rev-parse', 'HEAD']);
+  const tree = gitText(['rev-parse', 'HEAD^{tree}']);
+  if (head && tree) {
+    const dirty = spawnSync('git', ['diff', '--quiet', 'HEAD', '--', ...PRODUCT_PATHS, TOOL_PATH], {
+      cwd: ROOT, windowsHide: true,
+    });
+    verify(dirty.status === 0, 'exact-head product/tool paths match the checked-out Git commit');
+    for (const file of [...PRODUCT_PATHS, TOOL_PATH]) {
+      const blob = spawnSync('git', ['show', `HEAD:${file}`], { cwd: ROOT, windowsHide: true, encoding: null });
+      verify(blob.status === 0 && JSON.stringify(canonicalIdentity(blob.stdout))
+        === JSON.stringify(canonicalIdentity(readFileSync(join(ROOT, file)))),
+      `exact HEAD canonical Git blob matches ${file}`);
+    }
+    const expectedBase = gitText(['merge-base', 'origin/dev', 'HEAD']);
+    verify(Boolean(expectedBase) && manifests.length === 2
+      && manifests.every(({ manifest }) => manifest.patchBaseRef === expectedBase),
+    'manifests bind the verified origin/dev merge-base', JSON.stringify({ expectedBase }));
+    if (expectedBase && manifests.length === 2) {
+      const patch = spawnSync('git', ['diff', '--binary', expectedBase, 'HEAD', '--', ...PRODUCT_PATHS], {
+        cwd: ROOT, encoding: null, windowsHide: true,
+      });
+      const expectedPatch = patch.status === 0 && Buffer.isBuffer(patch.stdout) ? sha256(patch.stdout) : null;
+      verify(Boolean(expectedPatch)
+        && manifests.every(({ manifest }) => manifest.productPatchSha256 === expectedPatch),
+      'manifests bind the verified product diff from their recorded base',
+      JSON.stringify({ expectedPatch, diffExit: patch.status }));
+    }
+    console.log(`EXACT HEAD ${head}`);
+    console.log(`EXACT TREE ${tree}`);
+  } else {
+    console.log('COPY DOOR — Git HEAD/tree receipt unavailable; canonical file/manifests were still verified');
+  }
+  console.log(failed ? `MANIFEST VERIFY RED — ${failed} finding(s)` : 'MANIFEST VERIFY GREEN');
+  return failed ? 1 : 0;
+}
+
+if (args.includes('--verify-manifests')) {
+  process.exit(verifyManifestIdentity());
+}
+
 const SHAPES = [[320, 640], [390, 844], [1200, 730]];
-// Every authored product path whose bytes can change the outcomes/geometry in
-// this evidence. Keep the list in the manifest itself as well as the hashes:
-// a patch identity that omits a decisive stylesheet can make a bad layout and
-// its correction look like the same reviewed product.
-const PRODUCT_PATHS = [
-  'src/ui/components/flask.js',
-  'src/ui/input.js',
-  'src/ui/screens/combat.js',
-  'styles/ui.css',
-];
 const REQUIRED_SOURCE_STATES = [
   'ready',
   'mouse-armed', 'mouse-confirm',
@@ -211,6 +417,8 @@ const REQUIRED_SOURCE_STATES = [
   'controller-multi', 'controller-self', 'controller-self-cancel-restored',
   'keyboard-crimson-charge-menu', 'controller-azure-charge-menu',
   'keyboard-blight-target', 'controller-blight-target',
+  'flask-menu-open', 'flask-menu-toggle-closed', 'flask-menu-outside-closed',
+  'flask-menu-competing-closed', 'flask-menu-switched',
 ];
 const BROWSERS = [
   argOf('--browser'), process.env.CHROME,
@@ -295,6 +503,7 @@ const STATE = `(() => {
       tag: focus.tagName, id: focus.id || null, classes: focus.className,
       instanceId: focus.dataset.instanceId || null, eid: focus.dataset.eid || null,
       parityAnchor: focus.dataset.parityAnchor || null,
+      flaskAction: focus.dataset.flaskAction || null,
       text: cardText(focus).slice(0, 80),
     } : null,
     active: active ? {
@@ -930,7 +1139,13 @@ async function main() {
           if (mode === 'keyboard') await key('Enter'); else await pad(0);
         }
         const opened = await state();
-        if (mode === 'keyboard') await key('ArrowDown'); else await pad(13);
+        let ended = null;
+        let homed = null;
+        if (mode === 'keyboard') {
+          await key('End'); ended = await state();
+          await key('Home'); homed = await state();
+          await key('ArrowDown');
+        } else await pad(13);
         const navigated = await state();
         const menuGeometry = await ev(`(() => [...document.querySelectorAll('.flask-action')].map((node) => {
           const rect=node.getBoundingClientRect();
@@ -939,7 +1154,7 @@ async function main() {
         await screenshot(`${mode}-${marker}-menu`);
         if (mode === 'keyboard') await key('Escape'); else await pad(1);
         const cancelled = await state();
-        return { anchors, prior, reachedAnchor, opened, navigated, menuGeometry, cancelled };
+        return { anchors, prior, reachedAnchor, opened, ended, homed, navigated, menuGeometry, cancelled };
       };
       const crimsonMenu = await cancelChargeMenu('keyboard', 'crimson-charge');
       check(crimsonMenu.reachedAnchor && crimsonMenu.opened.menu
@@ -947,6 +1162,11 @@ async function main() {
         && crimsonMenu.opened.active?.flaskAction === 'use'
         && crimsonMenu.navigated.active?.flaskAction === 'inspect',
       'keyboard Crimson menu opens on Use and arrows to Inspect', JSON.stringify(crimsonMenu));
+      check(crimsonMenu.ended?.active?.flaskAction === 'inspect'
+        && crimsonMenu.ended?.focus?.flaskAction === 'inspect'
+        && crimsonMenu.homed?.active?.flaskAction === 'use'
+        && crimsonMenu.homed?.focus?.flaskAction === 'use',
+      'keyboard Home/End keep DOM focus and the unified cursor aligned', JSON.stringify(crimsonMenu));
       check(crimsonMenu.menuGeometry.length === 2
         && crimsonMenu.menuGeometry.every((row) => Math.min(row.width, row.height) >= 44),
       'keyboard Crimson menu rows retain the 44 device-pixel floor', JSON.stringify(crimsonMenu.menuGeometry));
@@ -968,6 +1188,54 @@ async function main() {
       check(!azureMenu.cancelled.menu && azureMenu.cancelled.active?.parityAnchor === 'azure-charge'
         && gameplay(azureMenu.cancelled) === gameplay(azureMenu.prior),
       'controller Azure cancel returns the exact anchor and spends no charge', JSON.stringify(azureMenu));
+
+      // Contextual-menu lifecycle: a second activation is a real toggle;
+      // click-away and competing surfaces dismiss without hijacking the new
+      // focus; another flask replaces rather than coexists. These are trusted
+      // page clicks, not direct component calls.
+      await openCombat(); await markFlaskAnchors();
+      const dismissalPrior = await state();
+      const crimsonSelector = '[data-parity-anchor="crimson-charge"]';
+      const azureSelector = '[data-parity-anchor="azure-charge"]';
+      await tap(crimsonSelector); const dismissalOpened = await state();
+      await screenshot('flask-menu-open');
+      await tap(crimsonSelector); const dismissalToggled = await state();
+      await screenshot('flask-menu-toggle-closed');
+      check(!!dismissalOpened.menu && !dismissalToggled.menu
+        && dismissalToggled.active?.parityAnchor === 'crimson-charge'
+        && gameplay(dismissalToggled) === gameplay(dismissalPrior),
+      'same-flask re-click toggles off and restores its exact anchor',
+      JSON.stringify({ prior: dismissalPrior, opened: dismissalOpened, toggled: dismissalToggled }));
+
+      await tap(crimsonSelector);
+      const outsideTargeted = await tap('.combatant.enemy');
+      const dismissalOutside = await state();
+      await screenshot('flask-menu-outside-closed');
+      check(outsideTargeted && !dismissalOutside.menu && !dismissalOutside.active?.flaskAction
+        && dismissalOutside.active?.parityAnchor !== 'crimson-charge'
+        && gameplay(dismissalOutside) === gameplay(dismissalPrior),
+      'trusted outside click closes the flask menu without stealing focus', JSON.stringify(dismissalOutside));
+
+      await tap(crimsonSelector);
+      const competingClicked = await tap('#combat-menu');
+      const dismissalCompeting = await state();
+      const competingSurface = await ev(`!!document.querySelector('.modal-veil')`);
+      await screenshot('flask-menu-competing-closed');
+      check(competingClicked && competingSurface && !dismissalCompeting.menu
+        && gameplay(dismissalCompeting) === gameplay(dismissalPrior),
+      'competing Menu surface closes the flask menu before it opens',
+      JSON.stringify({ competingSurface, state: dismissalCompeting }));
+
+      await openCombat(); await markFlaskAnchors();
+      const switchingPrior = await state();
+      await tap(crimsonSelector); await tap(azureSelector);
+      const dismissalSwitched = await state();
+      const menuCount = await ev(`document.querySelectorAll('.flask-action-menu').length`);
+      await screenshot('flask-menu-switched');
+      check(menuCount === 1 && /Azure Flask actions/.test(dismissalSwitched.menu?.label || '')
+        && gameplay(dismissalSwitched) === gameplay(switchingPrior),
+      'another flask switches cleanly with exactly one live menu', JSON.stringify({ menuCount, state: dismissalSwitched }));
+      await key('Escape');
 
       // Blight Coating uses the same menu but its enabled Use row enters enemy
       // targeting. Cancel at that second stage must preserve the flask and all
@@ -1049,20 +1317,32 @@ async function main() {
           `${shape} captured the complete raw source-state matrix`,
           JSON.stringify(REQUIRED_SOURCE_STATES.filter((stateName) => !states.has(stateName))));
       }
-      const baseRef = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8', windowsHide: true }).stdout.trim();
-      const productPatch = spawnSync('git', ['diff', '--binary', 'origin/dev', '--', ...PRODUCT_PATHS], {
-        cwd: ROOT, encoding: 'utf8', windowsHide: true,
-      }).stdout;
-      const sourceFiles = Object.fromEntries(PRODUCT_PATHS.map((file) => [file, sha256(readFileSync(join(ROOT, file)))]));
+      const { patchBaseRef, productPatchSha256 } = manifestPatchBasis();
+      const sourceFiles = Object.fromEntries(PRODUCT_PATHS
+        .map((file) => [file, canonicalIdentity(readFileSync(join(ROOT, file)))]));
+      const toolFile = { path: TOOL_PATH, identity: canonicalIdentity(readFileSync(join(ROOT, TOOL_PATH))) };
+      const standaloneArtifact = standalone ? (() => {
+        const artifact = readFileSync(join(ROOT, 'AshenSpire.html'));
+        return {
+          path: 'AshenSpire.html',
+          sha256: sha256(artifact),
+          bytes: artifact.length,
+          buildOrdinalPath: 'buildordinal.json',
+          buildOrdinalIdentity: canonicalIdentity(readFileSync(join(ROOT, 'buildordinal.json'))),
+        };
+      })() : null;
       const manifest = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         issue: 'https://github.com/cehinds/AshenSpire/issues/204',
         evidenceKind: standalone ? 'exact root standalone behavioral checkpoint' : 'source behavioral checkpoint',
-        baseRef,
+        patchBaseRef,
+        identityRule: 'canonical UTF-8 text with CRLF/CR normalized to LF; SHA-256 plus Git SHA-1 blob OID',
+        exactHeadVerification: 'node tools/hybrid-input-parity.mjs --verify-manifests (run after checkout of the published head)',
         productPaths: PRODUCT_PATHS,
-        productPatchSha256: sha256(productPatch),
-        toolSha256: sha256(readFileSync(join(ROOT, 'tools', 'hybrid-input-parity.mjs'))),
+        productPatchSha256,
+        toolFile,
         sourceFiles,
+        ...(standaloneArtifact ? { standaloneArtifact } : {}),
         viewports: evidence.map((entry) => entry.viewport).filter((value, index, all) => all.indexOf(value) === index),
         requiredSourceStates: REQUIRED_SOURCE_STATES,
         exactArtifactParity: standalone
