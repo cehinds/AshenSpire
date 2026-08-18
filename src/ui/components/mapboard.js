@@ -1120,7 +1120,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   function recenter(onSettled) {
     let settled = false;
     const settle = () => {
-      if (settled) return;
+      // A timeout is only a request to settle. A zero-height scrollport has no
+      // real camera geometry yet, so it must not consume the one settled pass;
+      // keep the observer alive until layout supplies a usable viewport.
+      if (settled || scroll.clientHeight <= 0) return false;
       settled = true;
       if (restorePending) {
         restorePending = false;
@@ -1139,12 +1142,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       }
       emitViewState(false);
       if (onSettled) onSettled();
+      return true;
     };
     applyZoom(false);
     if (scroll.clientHeight > 0) settle();
     else if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        if (scroll.clientHeight > 0) { settle(); ro.disconnect(); ro = null; }
+        if (settle()) { ro.disconnect(); ro = null; }
       });
       ro.observe(scroll);
     }

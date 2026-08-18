@@ -116,6 +116,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         viewportWidth: port.clientWidth,
         viewportHeight: port.clientHeight,
         framing: port.dataset.framing,
+        framingMiss: Number(port.dataset.framingMiss),
         cameraRestore: port.dataset.cameraRestore,
       };
     })()`);
@@ -253,6 +254,51 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       race,
       committedViewNode,
     };
+
+    // Hold the real map scrollport at zero height beyond the 120 ms backstop,
+    // then release it through an actual viewport resize. The timeout must stay
+    // provisional; the later ResizeObserver pass owns the first real fit.
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `(() => {
+        const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'clientHeight');
+        window.__releaseMapHeight = false;
+        Object.defineProperty(Element.prototype, 'clientHeight', {
+          ...descriptor,
+          get() {
+            if (!window.__releaseMapHeight && this.classList?.contains('map-scroll')) return 0;
+            return descriptor.get.call(this);
+          },
+        });
+      })();`,
+    }, sessionId);
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+    }, sessionId);
+    await cdp.send('Page.navigate', {
+      url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE&zeroHeightSettle=1`,
+    }, sessionId);
+    await waitFor('zero-height map scrollport mount', `!!document.querySelector('.map-scroll')`);
+    await wait(170); // outlast the 120 ms backstop while clientHeight is held at zero
+    const zeroBefore = await readState();
+    await evaluate(`window.__releaseMapHeight = true`);
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390, height: 846, deviceScaleFactor: 3, mobile: true,
+    }, sessionId);
+    // A bad plant may have disconnected the observer already, so this arm must
+    // return a RED outcome rather than time out before the selftest can name it.
+    await wait(220);
+    const zeroAfter = await readState();
+    results.zeroHeightSettle = {
+      pass: zeroBefore.viewportHeight === 0
+        && !zeroBefore.framing
+        && zeroAfter.viewportHeight > 0
+        && zeroAfter.framing === 'fit'
+        && zeroAfter.framingMiss <= 0.5
+        && zeroAfter.maxScrollTop > 0
+        && zeroAfter.scrollTop > 0,
+      before: zeroBefore,
+      after: zeroAfter,
+    };
   } finally {
     cdp.close();
     await launched.close();
@@ -289,20 +335,25 @@ async function selftest() {
     // not a checkout's newline bytes.
     const fitSeam = '    && fitViewportMatches\n';
     const raceSeam = '      const snapshot = pendingViewCommit;\n';
+    const settleSeam = '      if (settled || scroll.clientHeight <= 0) return false;\n';
     const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
-    if (!board.includes(fitSeam) || !board.includes(raceSeam) || !board.includes(nodeSeam)) {
-      throw new Error('selftest plant refused: viewport or debounce ownership seam is absent');
+    if (!board.includes(fitSeam) || !board.includes(raceSeam)
+      || !board.includes(settleSeam) || !board.includes(nodeSeam)) {
+      throw new Error('selftest plant refused: viewport, debounce, or settlement ownership seam is absent');
     }
     writeFileSync(boardPath, board
       .replace(fitSeam, '')
       .replace(raceSeam, '      const snapshot = viewSnapshot();\n')
+      .replace(settleSeam, '      if (settled) return false;\n')
       .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id); });"));
     const ownership = await runProbe(tempRoot, { screenshots: false });
     const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;
     const raceCaught = ownership.debounceRace && !ownership.debounceRace.pass;
-    console.log(`map-camera ownership selftest: ${fitCaught && raceCaught ? 'GREEN' : 'RED'} - `
-      + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}`);
-    if (!fitCaught || !raceCaught) process.exitCode = 1;
+    const settleCaught = ownership.zeroHeightSettle && !ownership.zeroHeightSettle.pass;
+    console.log(`map-camera ownership selftest: ${fitCaught && raceCaught && settleCaught ? 'GREEN' : 'RED'} - `
+      + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}, `
+      + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}`);
+    if (!fitCaught || !raceCaught || !settleCaught) process.exitCode = 1;
   } finally {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
@@ -330,7 +381,12 @@ if (SELFTEST) {
     + `${race ? race.race?.from : '?'} -> ${race ? race.race?.to : '?'}; `
     + `committed view=${race ? race.committedViewNode : '?'}`);
   if (!race || !race.pass) failures++;
-  const total = results.length + 2;
+  const settle = results.zeroHeightSettle;
+  console.log(`${settle && settle.pass ? 'PASS' : 'FAIL'} zero-height settlement: `
+    + `${settle ? settle.before.viewportHeight : '?'} -> ${settle ? settle.after.viewportHeight : '?'}; `
+    + `framing=${settle ? settle.after.framing : '?'}, miss=${settle ? settle.after.framingMiss : '?'}`);
+  if (!settle || !settle.pass) failures++;
+  const total = results.length + 3;
   console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }

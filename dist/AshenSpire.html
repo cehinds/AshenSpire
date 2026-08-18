@@ -34119,7 +34119,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2326d37bc0';
+const SOURCE = 'cf1273993e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34153,7 +34153,7 @@ const SOURCE = '2326d37bc0';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0797';
+const ORDINAL = '0799';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39158,7 +39158,10 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   function recenter(onSettled) {
     let settled = false;
     const settle = () => {
-      if (settled) return;
+      // A timeout is only a request to settle. A zero-height scrollport has no
+      // real camera geometry yet, so it must not consume the one settled pass;
+      // keep the observer alive until layout supplies a usable viewport.
+      if (settled || scroll.clientHeight <= 0) return false;
       settled = true;
       if (restorePending) {
         restorePending = false;
@@ -39177,12 +39180,13 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       }
       emitViewState(false);
       if (onSettled) onSettled();
+      return true;
     };
     applyZoom(false);
     if (scroll.clientHeight > 0) settle();
     else if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        if (scroll.clientHeight > 0) { settle(); ro.disconnect(); ro = null; }
+        if (settle()) { ro.disconnect(); ro = null; }
       });
       ro.observe(scroll);
     }
