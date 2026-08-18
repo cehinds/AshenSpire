@@ -3528,9 +3528,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    flex min-height is its combatants' min-content height. At 320x640 and
    1200x730 with Text XL that prevented it from yielding a single pixel and
    pushed the hand/card band below the viewport. Let this one flexible row
-   yield; combatants stay bottom-aligned and keep their authored sizes, while
-   the fixed player controls remain on glass. */
-.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }
+   yield only when main.js's existing fit decider says the viewport is not
+   short. The short-screen branch keeps the min-content premise measured by the
+   upright refusal; this selector reads that answer and defines no breakpoint. */
+.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+:root[data-short='false'] .field { min-height: 0; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding-bottom: 2.6rem; gap: 0.6rem;
@@ -5059,6 +5061,12 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
+  // Publish the THIRD value from that same decider for layout consumers too.
+  // This is not another short-screen predicate: CSS reads the answer computed
+  // above, just as it reads `data-layout`. In particular, combat may let its
+  // field yield to the hand at Text XL on a fitting viewport without silently
+  // making the established upright refusal outlive (or lose) its premise.
+  document.documentElement.setAttribute('data-short', short ? 'true' : 'false');
   // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
   // header, not here). Written by the SAME call that chose the zoom and the
   // layout, from the same decider, so there is no second opinion about whether
@@ -34161,7 +34169,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dac0f12a6f';
+const SOURCE = 'c3734a35ec';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34195,7 +34203,7 @@ const SOURCE = 'dac0f12a6f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0797';
+const ORDINAL = '0798';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

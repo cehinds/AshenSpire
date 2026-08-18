@@ -74,8 +74,8 @@ if (process.argv.includes('--selftest')) {
     }, {
       name: 'narrow combat chrome is pushed below the viewport',
       file: 'styles/combat.css',
-      find: '.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }',
-      replace: '.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }',
+      find: ":root[data-short='false'] .field { min-height: 0; }",
+      replace: ":root[data-short='false'] .field { /* planted: fitting field cannot yield */ }",
       expectRed: /FAIL combat chrome stays inside the viewport/,
     }],
   }));
