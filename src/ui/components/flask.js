@@ -1,6 +1,7 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
+import { focusElement } from '../input.js';
 
 let activeFlaskActionMenu = null;
 
@@ -85,7 +86,10 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     root.remove();
     if (activeFlaskActionMenu?.root === root) activeFlaskActionMenu = null;
     if (cancelled && onCancel) onCancel();
-    if (anchor.isConnected && typeof anchor.focus === 'function') anchor.focus();
+    if (anchor.isConnected && typeof anchor.focus === 'function') {
+      anchor.focus();
+      focusElement(anchor);
+    }
   };
   // Gamepad Cancel is a synthesized Escape dispatched on window by input.js,
   // not on the focused button. Root bubbling covers physical keyboard Escape;
@@ -129,7 +133,9 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   }
   const move = (delta) => {
     const at = Math.max(0, buttons.indexOf(document.activeElement));
-    buttons[(at + delta + buttons.length) % buttons.length].focus();
+    const next = buttons[(at + delta + buttons.length) % buttons.length];
+    next.focus();
+    focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true }); }
@@ -141,7 +147,9 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   window.addEventListener('keydown', onGlobalCancel);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
   place();
-  (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
+  const first = buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0];
+  first?.focus();
+  focusElement(first);
   activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
   return activeFlaskActionMenu;
 }

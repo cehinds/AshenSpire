@@ -2482,7 +2482,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    stacked call-to-actions. 44 px is the house tap floor and it is a FLOOR. */
 .flask-action {
   display: flex; align-items: center;
-  width: 100%; min-height: 44px; height: auto;
+  width: 100%; min-height: var(--tap-floor); height: auto;
   padding: 8px 14px; text-align: left;
   background: transparent; border: 0; border-radius: 0;
   color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
@@ -2782,6 +2782,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      the flask action menu — the one hint a mouse player gets, saying the
      opposite of the truth. */
   cursor: pointer;
+}
+
+/* A FLEX CHILD CAN STILL PAINT INTO THE HUD. 320x640 at Text XL proved the
+   battlefield's first intent badge crossing the HUD boundary: both 44x44
+   charge flasks stayed visible, but elementFromPoint at either control's
+   centre returned the enemy intent instead. The HUD is the earlier, fixed
+   interaction band; keep it above the flexible battlefield layer (z-index 1
+   in combat.css) so visible flask controls remain the actual hit targets.
+   Scoped to the combat HUD: the map header shares `.topbar` but has no field. */
+.combat .topbar.combat-hud {
+  position: relative;
+  z-index: 2;
 }
 /* The relic beside it stays small ON PURPOSE and the line is principled, not a
    leftover: a relic chip is READ (tooltip only, map.js:152 / combat.js:444), a

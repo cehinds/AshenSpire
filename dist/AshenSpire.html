@@ -2785,7 +2785,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    stacked call-to-actions. 44 px is the house tap floor and it is a FLOOR. */
 .flask-action {
   display: flex; align-items: center;
-  width: 100%; min-height: 44px; height: auto;
+  width: 100%; min-height: var(--tap-floor); height: auto;
   padding: 8px 14px; text-align: left;
   background: transparent; border: 0; border-radius: 0;
   color: inherit; font-family: inherit; font-size: 1.4rem; letter-spacing: normal;
@@ -3085,6 +3085,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
      the flask action menu — the one hint a mouse player gets, saying the
      opposite of the truth. */
   cursor: pointer;
+}
+
+/* A FLEX CHILD CAN STILL PAINT INTO THE HUD. 320x640 at Text XL proved the
+   battlefield's first intent badge crossing the HUD boundary: both 44x44
+   charge flasks stayed visible, but elementFromPoint at either control's
+   centre returned the enemy intent instead. The HUD is the earlier, fixed
+   interaction band; keep it above the flexible battlefield layer (z-index 1
+   in combat.css) so visible flask controls remain the actual hit targets.
+   Scoped to the combat HUD: the map header shares `.topbar` but has no field. */
+.combat .topbar.combat-hud {
+  position: relative;
+  z-index: 2;
 }
 /* The relic beside it stays small ON PURPOSE and the line is principled, not a
    leftover: a relic chip is READ (tooltip only, map.js:152 / combat.js:444), a
@@ -32683,7 +32695,7 @@ function focusables() {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
-    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+    (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -32734,6 +32746,11 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
+    // A real menu owns both the visual gamepad cursor and DOM focus. Keyboard
+    // arrows already move the latter through the menu's key handler; keeping
+    // it aligned here gives D-pad navigation the same accessible focus state.
+    if (el.closest && el.closest('[role="menu"]') && document.activeElement !== el
+      && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
@@ -32749,11 +32766,25 @@ function focusFirst(selector) {
   return !!el;
 }
 
+/** Publish one already-known control through the unified keyboard/pad cursor. */
+function focusElement(el) {
+  // Some contract probes intentionally mount the component against a minimal
+  // DOM stub with no document-wide selector engine. DOM focus still exercises
+  // their component boundary; the unified cursor exists only in a real page.
+  if (!el || typeof document === 'undefined' || typeof document.querySelectorAll !== 'function'
+    || !focusables().includes(el)) return false;
+  setFocus(el);
+  return true;
+}
+
 function ensureFocus() {
   let el = current();
   if (el && visible(el)) return el;
   const list = focusables();
-  el = list[0] || null;
+  // Preserve the established playfield-first entry point. Flask slots are a
+  // deliberate chrome exception reached by moving upward, not the first stop
+  // merely because the top bar appears first in DOM order.
+  el = list.find((item) => !(item.closest && item.closest(CHROME))) || list[0] || null;
   setFocus(el);
   return el;
 }
@@ -33080,6 +33111,15 @@ function onKeydown(ev) {
     else tabRing.prev();
     return;
   }
+  // A mounted ARIA menu owns its arrow keys. Let its bubbling handler move DOM
+  // focus once; the unified cursor is synchronized by focusElement/setFocus.
+  // Without this boundary the capture handler and the menu each step, so a
+  // two-row menu wraps straight back to where it started.
+  if (!typing && document.activeElement?.closest?.('[role="menu"]')
+    && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+    engaged = true;
+    return;
+  }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
     // On a focused slider, horizontal arrows tune it rather than navigate.
     if (cur && cur.matches('input[type="range"]') && (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
@@ -33313,7 +33353,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -34187,7 +34227,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b0fa39382f';
+const SOURCE = 'd976c47739';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34221,7 +34261,7 @@ const SOURCE = 'b0fa39382f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0835';
+const ORDINAL = '0840';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39800,6 +39840,7 @@ Object.assign(module.exports, { flaskActionPlan });
 const { esc } = require("src/ui/components/tooltip.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { placeAnchored, viewportLocalBox } = require("src/ui/fx.js");
+const { focusElement } = require("src/ui/input.js");
 
 let activeFlaskActionMenu = null;
 
@@ -39884,7 +39925,10 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
     root.remove();
     if (activeFlaskActionMenu?.root === root) activeFlaskActionMenu = null;
     if (cancelled && onCancel) onCancel();
-    if (anchor.isConnected && typeof anchor.focus === 'function') anchor.focus();
+    if (anchor.isConnected && typeof anchor.focus === 'function') {
+      anchor.focus();
+      focusElement(anchor);
+    }
   };
   // Gamepad Cancel is a synthesized Escape dispatched on window by input.js,
   // not on the focused button. Root bubbling covers physical keyboard Escape;
@@ -39928,7 +39972,9 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
   }
   const move = (delta) => {
     const at = Math.max(0, buttons.indexOf(document.activeElement));
-    buttons[(at + delta + buttons.length) % buttons.length].focus();
+    const next = buttons[(at + delta + buttons.length) % buttons.length];
+    next.focus();
+    focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true }); }
@@ -39940,7 +39986,9 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
   window.addEventListener('keydown', onGlobalCancel);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
   place();
-  (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
+  const first = buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0];
+  first?.focus();
+  focusElement(first);
   activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
   return activeFlaskActionMenu;
 }
@@ -39968,7 +40016,7 @@ const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/qu
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
-const { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
+const { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -40075,6 +40123,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
+  let handPageCursor = null; // survives focus moving onto Previous/Next itself
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -40105,6 +40154,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           selected = null;
           selfArm = null;
           render();
+          if (selectedFlask != null) focusTargeting();
         } else {
           useFlask(slot, null, chargeKind);
         }
@@ -40718,7 +40768,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (!cards.length) return;
     let at = cards.findIndex((card) => card.classList.contains('gp-focus'));
     if (at < 0) at = cards.findIndex((card) => card.classList.contains('selected'));
+    if (at < 0 && handPageCursor) at = cards.findIndex((card) => card.dataset.instanceId === handPageCursor);
     const next = at < 0 ? (delta > 0 ? 0 : cards.length - 1) : (at + delta + cards.length) % cards.length;
+    handPageCursor = cards[next].dataset.instanceId || null;
     cards[next].dataset.pageTarget = '';
     focusFirst('.hand .card[data-page-target]');
     delete cards[next].dataset.pageTarget;
@@ -40916,7 +40968,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         selfArm = null;
         render();
         if (selected) focusTargeting();
-      } else if (ev.isTrusted) {
+      } else if (ev.isTrusted || dragTargetMode === 'all') {
+        // Controller Confirm is a synthetic click, but an all-enemy attack has
+        // no second target to confirm. Do not misclassify it as a self/buff
+        // card; self/buff controller clicks still take the blue path below.
         // Real mouse click on a self/buff card → play immediately.
         playCard(inst.instanceId, null);
       } else {
@@ -40966,12 +41021,17 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
     if (ev.key === 'Escape') {
       if (selected || selectedFlask != null || selfArm) {
+        const cancelledSelf = selfArm;
         selected = null;
         selectedFlask = null;
         selfArm = null;
         hideTooltip();
         render();
-        focusHandDefault();
+        const cancelledCard = cancelledSelf
+          ? combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(cancelledSelf)}"]`)
+          : null;
+        if (cancelledCard) focusElement(cancelledCard);
+        else focusHandDefault();
       }
       return;
     }

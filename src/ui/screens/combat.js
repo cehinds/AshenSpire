@@ -16,7 +16,7 @@ import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.j
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
-import { focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
+import { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -123,6 +123,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
+  let handPageCursor = null; // survives focus moving onto Previous/Next itself
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -153,6 +154,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           selected = null;
           selfArm = null;
           render();
+          if (selectedFlask != null) focusTargeting();
         } else {
           useFlask(slot, null, chargeKind);
         }
@@ -766,7 +768,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (!cards.length) return;
     let at = cards.findIndex((card) => card.classList.contains('gp-focus'));
     if (at < 0) at = cards.findIndex((card) => card.classList.contains('selected'));
+    if (at < 0 && handPageCursor) at = cards.findIndex((card) => card.dataset.instanceId === handPageCursor);
     const next = at < 0 ? (delta > 0 ? 0 : cards.length - 1) : (at + delta + cards.length) % cards.length;
+    handPageCursor = cards[next].dataset.instanceId || null;
     cards[next].dataset.pageTarget = '';
     focusFirst('.hand .card[data-page-target]');
     delete cards[next].dataset.pageTarget;
@@ -964,7 +968,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         selfArm = null;
         render();
         if (selected) focusTargeting();
-      } else if (ev.isTrusted) {
+      } else if (ev.isTrusted || dragTargetMode === 'all') {
+        // Controller Confirm is a synthetic click, but an all-enemy attack has
+        // no second target to confirm. Do not misclassify it as a self/buff
+        // card; self/buff controller clicks still take the blue path below.
         // Real mouse click on a self/buff card → play immediately.
         playCard(inst.instanceId, null);
       } else {
@@ -1014,12 +1021,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
     if (ev.key === 'Escape') {
       if (selected || selectedFlask != null || selfArm) {
+        const cancelledSelf = selfArm;
         selected = null;
         selectedFlask = null;
         selfArm = null;
         hideTooltip();
         render();
-        focusHandDefault();
+        const cancelledCard = cancelledSelf
+          ? combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(cancelledSelf)}"]`)
+          : null;
+        if (cancelledCard) focusElement(cancelledCard);
+        else focusHandDefault();
       }
       return;
     }
