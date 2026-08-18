@@ -427,6 +427,12 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
+  // Publish the THIRD value from that same decider for layout consumers too.
+  // This is not another short-screen predicate: CSS reads the answer computed
+  // above, just as it reads `data-layout`. In particular, combat may let its
+  // field yield to the hand at Text XL on a fitting viewport without silently
+  // making the established upright refusal outlive (or lose) its premise.
+  document.documentElement.setAttribute('data-short', short ? 'true' : 'false');
   // THE ORIENTATION GATE (ui/components/upright.js — the decision lives in its
   // header, not here). Written by the SAME call that chose the zoom and the
   // layout, from the same decider, so there is no second opinion about whether

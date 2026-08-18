@@ -13,6 +13,9 @@
 //                                                   name it, revert, re-prove clean
 //   node tools/contrast-audit.mjs --gated-only    → render only the profiles the
 //                                                   gate judges (used by --selftest)
+//   node tools/contrast-audit.mjs --artifact FILE → measure a built standalone
+//                                                   HTML artifact through the
+//                                                   same browser/pixel door
 //
 // ── THIS TOOL GATES, AND UNTIL 2026-08-15 NOBODY HAD WATCHED ITS GATE GO RED ──
 // Vira's doors audit (docs/TOOL-DOORS-AUDIT.md, 2026-08-14) filed this file under
@@ -54,9 +57,10 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -344,6 +348,28 @@ async function gotoScreen(cdp, url, settings) {
     })()`,
     awaitPromise: true,
   });
+  // REQUESTED IS NOT RESOLVED. In artifact mode especially, an old standalone
+  // can ignore `shotSettings` and render its defaults while the harness labels
+  // those pixels with the requested profile. Read product-owned state back from
+  // the rendered document before a pixel is allowed to count.
+  const observed = await evalIn(cdp, `() => ({
+    highContrast: document.body.classList.contains('hi-contrast'),
+    mapMode: document.querySelector('.map-scroll')?.dataset.mapMode || null,
+  })`, []);
+  const expected = {
+    // High contrast is the product default when the profile leaves the key
+    // absent; explicit false is the atmospheric profile.
+    highContrast: settings.highContrast !== false,
+    mapMode: url.includes('?shot=map') ? settings.mapMode : null,
+  };
+  const mismatches = [];
+  if (observed.highContrast !== expected.highContrast) {
+    mismatches.push(`highContrast=${expected.highContrast} requested, observed ${observed.highContrast}`);
+  }
+  if (expected.mapMode && observed.mapMode !== expected.mapMode) {
+    mismatches.push(`mapMode=${expected.mapMode} requested, observed ${observed.mapMode || 'absent'}`);
+  }
+  return { expected, observed, mismatches };
 }
 
 // In-page: resolve a target to a rect + its computed colour + font px.
@@ -582,27 +608,54 @@ const onlyProfile = arg('--profile', null);
 // witness-sharing-plumbing failure I hit on 2026-08-14. The child runs the real
 // CLI, the real gate, and its exit code and stdout are the evidence.
 if (args.includes('--selftest')) {
-  const { readFileSync, writeFileSync } = await import('node:fs');
   const BASE = resolve(ROOT, 'styles/base.css');
   const ARMS = [
     {
       name: 'subfloor',
-      find: '  --muted: #a89571;\n  --line: #6a5b43;',
-      replace: '  --muted: #5f5748;\n  --line: #6a5b43;',
+      find: '  --muted: #a89571;',
+      replace: '  --muted: #5f5748;',
       why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
-      expectRows: ['Act/Floor', 'SEED', 'keyboard hint'],
+      expectRows: [
+        { label: 'Act/Floor', profile: 'default' },
+        { label: 'SEED', profile: 'default' },
+        { label: 'keyboard hint', profile: 'default' },
+      ],
+    },
+    {
+      name: 'atmospheric map structure',
+      find: '  --map-structure: #7a6b54;',
+      replace: '  --map-structure: #4a4034;',
+      why: 'the atmospheric map-structure token restored to the old subfloor #4a4034',
+      expectRows: [
+        { label: 'map edge (untraveled road)', profile: 'hi-contrast-off' },
+        { label: 'map node ring (plain)', profile: 'hi-contrast-off' },
+      ],
+    },
+    {
+      name: 'high-contrast map structure',
+      find: '  --map-structure: #85714f; /* unchanged shipped value — hi-contrast map keeps its exact look */',
+      replace: '  --map-structure: #4a4034; /* planted: subfloor high-contrast map structure */',
+      why: 'the high-contrast map-structure token dimmed to the same subfloor #4a4034',
+      expectRows: [
+        { label: 'map edge (untraveled road)', profile: 'default' },
+        { label: 'map node ring (plain)', profile: 'default' },
+      ],
     },
   ];
-  const runChild = () => new Promise((res) => {
-    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), '--gate', '--gated-only'],
+  const runChild = (extra = []) => new Promise((res) => {
+    const c = spawn(process.execPath, [fileURLToPath(import.meta.url), '--gate', '--gated-only', ...extra],
       { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '';
     c.stdout.on('data', (d) => { out += d; });
     c.stderr.on('data', (d) => { out += d; });
     c.on('exit', (code) => res({ code, out }));
   });
+  // The gate prints labels verbatim. Match the complete literal label/profile
+  // prefix too: parentheses and brackets are product copy here, not regex.
+  const namesRow = (out, { label, profile }) =>
+    out.includes(`${label} [${profile}] — `);
 
   console.log('contrast-audit --selftest — the gate\'s own known-bad, by the palette door.\n');
   const before = readFileSync(BASE, 'utf8');
@@ -620,10 +673,11 @@ if (args.includes('--selftest')) {
     } finally { writeFileSync(BASE, before); }
     // The gate must NAME the rows, at the gated profile, as NEW failures.
     const newBlock = /--gate: \d+ NEW failure\(s\)[\s\S]*?(?=\n\ncontrast-audit --gate:|$)/.exec(got.out);
-    const named = arm.expectRows.filter((r) => newBlock && newBlock[0].includes(`${r} [default]`));
+    const named = arm.expectRows.filter((row) => newBlock && namesRow(newBlock[0], row));
     console.log(`  ${arm.name}: ${arm.why}`);
     if (named.length === arm.expectRows.length && got.code === 1) {
-      for (const line of (newBlock[0].split('\n').filter((l) => arm.expectRows.some((r) => l.includes(`${r} [default]`))))) {
+      for (const line of (newBlock[0].split('\n').filter((l) =>
+        arm.expectRows.some((row) => namesRow(l, row))))) {
         console.log(`    RED  ${line.trim()}`);
       }
       console.log(`    exit ${got.code}; all ${named.length} expected rows named as NEW failures at the gated profile.`);
@@ -637,24 +691,66 @@ if (args.includes('--selftest')) {
   // tree is not evidence. This asserts the planted rows are NOT named — never
   // that the gate exits 0, because it does not: see the standing red below.
   const clean = await runChild();
-  const stillNamed = ARMS.flatMap((a) => a.expectRows).filter((r) => new RegExp(`${r} \\[default\\] — `).test(clean.out));
-  console.log(`\n  control: restored tree — ${stillNamed.length ? `STILL RED: ${stillNamed.join(', ')}` : 'none of the planted rows is named; the plant is gone'}`);
+  const expectedRows = ARMS.flatMap((a) => a.expectRows);
+  const stillNamed = expectedRows.filter((row) => namesRow(clean.out, row));
+  // Discriminating plant for this control itself: leave one exact
+  // parenthesized map failure in the post-restore transcript. If literal
+  // matching ever regresses back to an unescaped regex, this goes red even
+  // when every browser/palette arm still behaves correctly.
+  const lingering = expectedRows.find(({ label }) => label.includes('('));
+  const lingeringOutput = `${clean.out}\n  ${lingering.label} [${lingering.profile}] — 1:1 planted cleanup-control failure`;
+  const lingeringCaught = namesRow(lingeringOutput, lingering);
+  if (!lingeringCaught) bad++;
+  // ARTIFACT PROFILE CONTROL. Copy a real standalone and disable its public
+  // shotSettings reader. It still renders, but its defaults must not be counted
+  // under the requested atmospheric/path label.
+  const artifactSource = resolve(ROOT, 'AshenSpire.html');
+  const artifactBytes = readFileSync(artifactSource, 'utf8');
+  const artifactAnchor = "const raw = shotParams.get('shotSettings');";
+  let artifactDetail;
+  if (!artifactBytes.includes(artifactAnchor)) {
+    bad++;
+    artifactDetail = 'PLANT DID NOT APPLY — root artifact no longer contains the shotSettings reader';
+  } else {
+    const artifactDir = mkdtempSync(join(tmpdir(), 'contrast-stale-artifact-'));
+    const staleArtifact = resolve(artifactDir, 'AshenSpire-stale.html');
+    try {
+      writeFileSync(staleArtifact, artifactBytes.replace(
+        artifactAnchor,
+        "const raw = shotParams.get('shotSettings-disabled-by-selftest');"
+      ));
+      const stale = await runChild(['--artifact', staleArtifact]);
+      const artifactBlind = stale.code === 1
+        && /map edge \(untraveled road\) \[hi-contrast-off\] is BLIND — requested profile unresolved:/.test(stale.out);
+      artifactDetail = artifactBlind
+        ? 'RED caught — stale standalone ignored shotSettings and the atmospheric path-map row went BLIND'
+        : `MISSED — exit ${stale.code}; requested-profile BLIND row absent`;
+      if (!artifactBlind) bad++;
+    } finally {
+      rmSync(artifactDir, { recursive: true, force: true });
+    }
+  }
+  console.log(`\n  control: restored tree — ${stillNamed.length
+    ? `STILL RED: ${stillNamed.map(({ label, profile }) => `${label} [${profile}]`).join(', ')}`
+    : 'none of the planted rows is named; the plants are gone'}`);
+  console.log(`  cleanup-control plant: ${lingeringCaught ? 'RED caught' : 'MISSED'} — ${lingering.label} [${lingering.profile}]`);
+  console.log(`  stale-artifact profile plant: ${artifactDetail}`);
   console.log(`
 DOOR: the known-bad is an edit to styles/base.css, a real shipped stylesheet, served by the real
       serve() and rendered by the real browser. It travels the cascade, the ?shotSettings profile,
       the captured pixels, the luminance maths, the KNOWN_BELOW ledger and the gate's own verdict.
       No ratio in this block is computed by the selftest; every number above came from a pixel.
 NOT PASSED: only the NEW-failure class is planted. REGRESSED (a KNOWN_BELOW row worsening past its
-      0.15 slack) has no plant here. BLIND needs none right now and that is not good news — see below.
-STANDING RED, on real code, at dev = 5244543 and unplanted: all three #45 map rows are BLIND in BOTH
-      gated profiles. \`?shot=map\` draws 2 nodes and 0 edges (fog), and both survivors carry an
-      excluded class (reachable, boss), so \`.map-edge:not(.traveled)\` and the plain-node selector
-      match nothing. The gate has been reporting six BLIND rows rather than measuring the map
-      structure it was extended to protect (#45). BLIND fired correctly — the instrument said it had
-      lost sight instead of going quiet, which is the one thing that went right here. Re-pointing the
-      probe at a state where the graph is drawn is a separate act; this line is the record, not the fix.
-BOUNDARY: one plant, one token, one profile family, one viewport, one font stack. Proof this gate CAN
-      go red on a real palette change — not proof it catches a palette change shaped differently.`);
+      0.15 slack) still has no plant here.
+ MAP DOOR: the map arms enter through the shipped --map-structure tokens, then \`?shotSettings=\`
+       selects the real full path-map mode. Both default/high-contrast and explicit atmospheric
+       profiles must name edge and ring failures independently; one palette cannot excuse the other.
+ ARTIFACT DOOR: the stale-artifact plant edits the public shotSettings reader in a copied real root
+       standalone, then enters through --artifact. Requested body palette and map mode are observed
+       from the rendered product before any of its pixels may count.
+ BOUNDARY: three palette plants plus one stale-artifact profile plant, two token families, two map
+       palettes, one viewport, one font stack. Proof this gate CAN go red on these named defects — not
+       proof it catches a differently shaped defect.`);
   console.log(bad ? `\nSELFTEST: ${bad} arm(s) did not fire` : `\nSELFTEST: ${ARMS.length}/${ARMS.length} arms observed RED by the palette door, plant reverted`);
   process.exit(bad || stillNamed.length ? 1 : 0);
 }
@@ -663,11 +759,19 @@ const gate = args.includes('--gate');
 const shotDir = arg('--shots', null);
 const width = +arg('--width', 1920);
 const height = +arg('--height', 1080);
+const artifactArg = arg('--artifact', null);
+const artifact = artifactArg ? resolve(ROOT, artifactArg) : null;
+if (artifact && !existsSync(artifact)) {
+  console.error(`contrast-audit: artifact not found: ${artifact}`);
+  process.exit(2);
+}
 
 const browser = BROWSERS.find((p) => existsSync(p));
 if (!browser) { console.error('contrast-audit: no Chrome/Chromium found (set CHROME_PATH).'); process.exit(1); }
 
-const { server, port } = await serve({ root: ROOT, port: 8137, open: false });
+const servedRoot = artifact ? dirname(artifact) : ROOT;
+const servedPage = artifact ? basename(artifact) : '';
+const { server, port } = await serve({ root: servedRoot, port: 8137, open: false });
 // THE DEBUGGING PORT IS NOT GUESSED, AND THIS IS A CORRECTNESS FIX, NOT TIDINESS.
 //
 // This line was `const dbg = 9222 + (process.pid % 400)` — the range 9222..9621,
@@ -746,7 +850,22 @@ try {
     for (const screen of ['', 'map', 'combat', 'death']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
-      await gotoScreen(cdp, `http://localhost:${port}/${screen ? `?shot=${screen}` : ''}`, settings);
+      // The fog-first map boot deliberately exposes only the entrance choice:
+      // two stateful nodes and no ordinary road. That is a valid gameplay state,
+      // but it gives the structural contrast probes nothing to see. Pose the
+      // player's full path-map setting through the same public settings door so
+      // ordinary roads and rings exist without reaching into render internals.
+      const screenSettings = screen === 'map' ? { ...settings, mapMode: 'path' } : settings;
+      const profileState = await gotoScreen(
+        cdp,
+        `http://localhost:${port}/${servedPage}${screen ? `?shot=${screen}` : ''}`,
+        screenSettings
+      );
+      if (profileState.mismatches.length) {
+        const profileBlind = profileState.mismatches.join('; ');
+        for (const t of targets) rows.push({ profile: pname, ...t, profileBlind });
+        continue;
+      }
       const shot = async () => `data:image/png;base64,${(await cdp.send('Page.captureScreenshot', { format: 'png' })).data}`;
       const dataUrlA = await shot();
       if (shotDir) {
@@ -810,6 +929,7 @@ if (asJson) {
       console.log(`\n── profile: ${r.profile} ${JSON.stringify(PROFILES[r.profile])}`);
       console.log('     spec  render    p50  floor    px  target        (px = rendered, authored x zoom)');
     }
+    if (r.profileBlind) { console.log(`  ?      —      —      —      —     —  ${r.label} (requested profile unresolved: ${r.profileBlind})`); continue; }
     if (r.missing) { console.log(`  ?      —      —      —      —     —  ${r.label} (selector not found: ${r.sel})`); continue; }
     if (!r.inkPixels) { console.log(`  ?      —      —      —      —     —  ${r.label} (no ink pixels — invisible or clipped)`); continue; }
     const mark = r.pass ? '✓' : '✗';
@@ -829,7 +949,7 @@ if (asJson) {
       + ` ${String(r.floor).padStart(6)} ${String(r.fontPx).padStart(5)}  ${r.label}${drift}${adjNote}`
     );
   }
-  const measured = rows.filter((r) => !r.missing && r.inkPixels);
+  const measured = rows.filter((r) => !r.profileBlind && !r.missing && r.inkPixels);
   const fails = measured.filter((r) => !r.pass);
   console.log(`\n${measured.length} measured · ${fails.length} below the WCAG AA floor (best rendered pixel).`);
   // Named boundary, in the run's own output (SOP 3, CI expectation 4).
@@ -878,8 +998,8 @@ if (gate) {
   // A gated row with no pixels does not drop out silently: a selector that
   // stops matching, or ink that stops rendering, is the gate going BLIND — the
   // target did not go green, the instrument lost sight of it.
-  const blind = gated.filter((r) => r.missing || !r.inkPixels);
-  const measured = gated.filter((r) => !r.missing && r.inkPixels);
+  const blind = gated.filter((r) => r.profileBlind || r.missing || !r.inkPixels);
+  const measured = gated.filter((r) => !r.profileBlind && !r.missing && r.inkPixels);
   // The ledger is keyed per profile: an excused number in one palette must not
   // silence the same target in another.
   const known = new Map(KNOWN_BELOW.map((k) => [`${k.profile} :: ${k.label}`, k]));
@@ -902,7 +1022,10 @@ if (gate) {
     console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] REGRESSED — ${r.judged ?? r.render}:1, was ${k.render}:1`);
   }
   for (const r of blind) {
-    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] is BLIND — ${r.missing ? `selector not found: ${r.sel}` : 'no ink pixels (invisible or clipped)'}`);
+    const why = r.profileBlind
+      ? `requested profile unresolved: ${r.profileBlind}`
+      : r.missing ? `selector not found: ${r.sel}` : 'no ink pixels (invisible or clipped)';
+    console.error(`\ncontrast-audit --gate: ${r.label} [${r.profile}] is BLIND — ${why}`);
   }
   for (const { r, k } of stale) {
     console.log(`\ncontrast-audit --gate: ${r.label} [${r.profile}] now PASSES at ${r.judged ?? r.render}:1 (recorded ${k.render}).`);

@@ -435,6 +435,10 @@ export const RUN_SHAPE = [
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'mapNodeId', type: 'string', nullable: true },
   { key: 'mapGraph', type: 'object', nullable: true },
+  // Optional, backward-compatible presentation state. It is owned by the run
+  // rather than Settings because the ladder and pan are live choices for this
+  // climb; Settings only supplies the default when this field is absent.
+  { key: 'mapView', type: 'object', optional: true, nullable: true },
   { key: 'combatEntered', type: 'object', nullable: true },
 ];
 
@@ -469,6 +473,23 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
+    }
+  }
+  if (run.mapView !== undefined && run.mapView !== null && typeOk(run.mapView, 'object')) {
+    const v = run.mapView;
+    if (!Number.isInteger(v.actNumber) || v.actNumber < 1) problems.push('mapView.actNumber must be a positive integer');
+    if (v.nodeId !== null && (typeof v.nodeId !== 'string' || !v.nodeId)) problems.push('mapView.nodeId must be null or a non-empty string');
+    if (typeof v.setting !== 'string' || !v.setting) problems.push('mapView.setting must be a non-empty string');
+    if (!Number.isFinite(v.zoom) || v.zoom <= 0) problems.push('mapView.zoom must be a positive finite number');
+    if (!['fit', 'saved', 'manual'].includes(v.framing)) problems.push("mapView.framing must be 'fit', 'saved', or 'manual'");
+    for (const key of ['scrollLeft', 'scrollTop']) {
+      if (!Number.isFinite(v[key]) || v[key] < 0) problems.push(`mapView.${key} must be a non-negative finite number`);
+    }
+    if (!Number.isFinite(v.aimX)) problems.push('mapView.aimX must be a finite number');
+    for (const key of ['viewportWidth', 'viewportHeight']) {
+      if (v[key] !== undefined && (!Number.isFinite(v[key]) || v[key] < 0)) {
+        problems.push(`mapView.${key} must be a non-negative finite number when present`);
+      }
     }
   }
   // A level count is a whole number of purchases and can never be negative. The
