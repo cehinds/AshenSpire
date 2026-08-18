@@ -419,8 +419,32 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // NOT published: it names nodes the player has not earned.
   scroll.dataset.shrineLane = [...laneNodes].join(',');
 
-  const saved = savedZoom(viewer.meta);
-  let framing = saved == null ? 'fit' : 'saved';
+  // Settings owns the DEFAULT. The run owns what the player subsequently did
+  // with the on-map ladder and camera. A changed Settings value invalidates the
+  // old live view explicitly, so the Settings control never looks dead.
+  const setting = String((((viewer.meta || {}).settings || {}).mapZoom) ?? MAP_ZOOM_DEFAULT);
+  const candidate = viewer.viewState;
+  // Fit is a viewport promise, not a portable camera coordinate. A fit solved
+  // on desktop must be recomputed when that run opens on a phone; manual and
+  // saved views remain exact because they are deliberate player choices.
+  const fitViewportMatches = candidate && candidate.framing === 'fit'
+    ? Number.isFinite(candidate.viewportWidth)
+      && Number.isFinite(candidate.viewportHeight)
+      && Math.abs(candidate.viewportWidth - scroll.clientWidth) <= 1
+      && Math.abs(candidate.viewportHeight - scroll.clientHeight) <= 1
+    : true;
+  const restored = candidate && candidate.actNumber === act.actNumber
+    && candidate.nodeId === (run.mapNodeId || null)
+    && candidate.setting === setting
+    && Number.isFinite(candidate.zoom) && candidate.zoom > 0
+    && ['fit', 'saved', 'manual'].includes(candidate.framing)
+    && Number.isFinite(candidate.scrollLeft) && candidate.scrollLeft >= 0
+    && Number.isFinite(candidate.scrollTop) && candidate.scrollTop >= 0
+    && Number.isFinite(candidate.aimX)
+    && fitViewportMatches
+    ? candidate : null;
+  const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
+  let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
   let zoom = saved == null ? ZOOM_MIN : saved;
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
@@ -516,7 +540,31 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // read by `apply`, which centres the viewBox on it. Before the first
   // centring it is the ink's own centre, the honest place to stand when
   // nothing has been aimed at yet.
-  let aimX = (inkBox.x0 + inkBox.x1) / 2;
+  let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
+  let restorePending = !!restored;
+  let viewCommitTimer = null;
+  let pendingViewCommit = null;
+
+  scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
+
+  function viewSnapshot() {
+    return {
+      actNumber: act.actNumber,
+      nodeId: run.mapNodeId || null,
+      setting,
+      zoom,
+      framing,
+      scrollLeft: scroll.scrollLeft,
+      scrollTop: scroll.scrollTop,
+      aimX,
+      viewportWidth: scroll.clientWidth,
+      viewportHeight: scroll.clientHeight,
+    };
+  }
+
+  function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
+  }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
   // Applying a content box can add or remove a CLASSIC scrollbar (this
   // scrollport asks for `scrollbar-width: thin`, not overlay), and a scrollbar
@@ -971,12 +1019,14 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     framing = 'manual';
     zoom = clampZoom(next);
     applyZoom(keepCenter);
+    emitViewState(true);
   }
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
   // wherever the ladder, the wheel or the saved setting left us.
   function resetFraming() {
     framing = 'fit';
     centerOnCurrent();
+    emitViewState(true);
   }
   const stepZoom = (dir) => {
     const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
@@ -1037,31 +1087,80 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       onEnd: () => {
         panning = false;
         scroll.classList.remove('grabbing');
+        emitViewState(true);
       },
     });
   });
+
+  // Wheel/scrollbar panning has no pointer-end callback. Debounce the real
+  // scroller's event so a gesture becomes one durable run write, not one write
+  // per pixel. Programmatic centring may also emit; that simply records the
+  // exact view the player is looking at.
+  scroll.addEventListener('scroll', () => {
+    if (viewCommitTimer) clearTimeout(viewCommitTimer);
+    // Freeze both the camera and its node identity NOW. The live run may enter
+    // a reachable node before this debounce fires; reading it in the callback
+    // would mislabel the detached board's old camera as belonging to that node.
+    pendingViewCommit = viewSnapshot();
+    viewCommitTimer = setTimeout(() => {
+      viewCommitTimer = null;
+      const snapshot = pendingViewCommit;
+      pendingViewCommit = null;
+      if (snapshot) {
+        scroll.dataset.committedViewNode = snapshot.nodeId || 'entrance';
+        emitViewState(true, snapshot);
+      }
+    }, 80);
+  }, { passive: true });
 
   // The flex container may report height 0 until layout settles, so centre on
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
   function recenter(onSettled) {
-    const run = () => { centerOnCurrent(); if (onSettled) onSettled(); };
+    let settled = false;
+    const settle = () => {
+      // A timeout is only a request to settle. A zero-height scrollport has no
+      // real camera geometry yet, so it must not consume the one settled pass;
+      // keep the observer alive until layout supplies a usable viewport.
+      if (settled || scroll.clientHeight <= 0) return false;
+      settled = true;
+      if (restorePending) {
+        restorePending = false;
+        sizeSvg();
+        scroll.scrollLeft = Math.min(Math.max(0, scroll.scrollWidth - scroll.clientWidth), restored.scrollLeft);
+        scroll.scrollTop = Math.min(Math.max(0, scroll.scrollHeight - scroll.clientHeight), restored.scrollTop);
+        if (titleEl) titleEl.setAttribute('x', String(aimX));
+        const fs = framingNodes();
+        const box = fs.length ? framingBox(fs, height) : null;
+        report(box, fs.length);
+        const currentNode = run.mapNodeId && map.nodes[run.mapNodeId] ? map.nodes[run.mapNodeId] : null;
+        reportEntrance(currentNode || !box ? null : entranceFrame(fs, box));
+        reportTapSize();
+      } else {
+        centerOnCurrent();
+      }
+      emitViewState(false);
+      if (onSettled) onSettled();
+      return true;
+    };
     applyZoom(false);
-    if (scroll.clientHeight > 0) run();
+    if (scroll.clientHeight > 0) settle();
     else if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
-        if (scroll.clientHeight > 0) { run(); ro.disconnect(); ro = null; }
+        if (settle()) { ro.disconnect(); ro = null; }
       });
       ro.observe(scroll);
     }
     // Backstop in case the observer never fires. Cheap and idempotent.
-    backstop = setTimeout(run, 120);
+    backstop = setTimeout(settle, 120);
   }
 
   function teardown() {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
+    if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
+    pendingViewCommit = null;
   }
 
   return {
