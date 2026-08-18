@@ -293,485 +293,8 @@ export function initializeRunDerivedStats(run, registries, {
   // current/max ratio can be migrated, but it is never retained as authority.
   // THE HOST'S RESOLVED TIER SIZE, HANDED TO THE RECEIPT THAT HAS TO FOLD INTO
   // IT. A relic `resource.attributeTier` row that states no `pointsPerTier`
-  // inherits the rule it folds into, and this is where "the rule" is known: the
-  // authored table plus whatever override layer this run is being born with
-  // (Constantine's Settings â†’ Advanced tier dial). Resolved twice â€” once here
-  // for the granularity, once inside the snapshot for the numbers â€” because a
-  // receipt computed at one granularity and folded at another is the silent
-  // wrong answer Law 0 clause 5 is about.
-  const hostRules = resolveDerivedStatRules(
-    registries.derivedStatRules,
-    derivedOptions(registries, derivedStatOptions),
-  );
-  const tierSizes = Object.fromEntries(
-    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
-  );
-  const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
-    attributes: run.attributes,
-    tierSizes,
-  });
-  const receipt = existingIsCurrent
-    ? restoredExisting
-    : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
-      ...derivedOptions(registries, derivedStatOptions),
-      classDef,
-      relicModifierReceipt,
-    });
-  const rules = receipt.rules;
-  const hp = deriveStat(rules, 'hp', { attributes: run.attributes, classDef });
-  const mana = deriveStat(rules, 'mana', { attributes: run.attributes, classDef });
-  const stamina = deriveStat(rules, 'stamina', { attributes: run.attributes, classDef });
-  const energy = deriveStat(rules, 'energy', { attributes: run.attributes, classDef });
-  const draw = deriveStat(rules, 'draw', { attributes: run.attributes, classDef });
-
-  const oldHpMax = run.maxHp;
-  const oldHp = run.hp;
-  const oldManaMax = run.maxMana;
-  const oldMana = run.mana;
-  run.derivedStatRuleSnapshot = structuredClone(receipt);
-  // MAX-HP HOME 2 of 3 (the deriving one), and the SECOND writer at run
-  // creation â€” it replaces the classDef+equipment value createRunState set two
-  // dozen lines up, with nothing but call order deciding which wins.
-  const derivedMaxHp = Math.max(1, hp.value + hpEquipmentBonus + run.maxHpAdjustment);
-  note(run, {
-    kind: 'overwrite',
-    site: 'state.js:initializeRunDerivedStats(derive)',
-    field: 'maxHp',
-    was: oldHpMax,
-    now: derivedMaxHp,
-    why: 'max-HP home 2 of 3 â€” the host derived-stat rules replace whatever was in the field, at birth and at the load door alike',
-  });
-  run.maxHp = derivedMaxHp;
-  run.maxMana = mana.value;
-  run.maxStamina = stamina.value;
-  run.energyMax = energy.value;
-  run.drawPerTurn = draw.value;
-  run.damageBySchoolAdd = structuredClone(
-    receipt.relicModifiers && receipt.relicModifiers.damageBySchoolAdd
-      || Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
-  );
-  if (preserveDeficits && Number.isFinite(oldHpMax) && Number.isFinite(oldHp)) {
-    run.hp = Math.max(0, run.maxHp - Math.max(0, oldHpMax - oldHp));
-    note(run, {
-      kind: 'overwrite',
-      site: 'state.js:initializeRunDerivedStats(pools)',
-      field: 'hp',
-      was: oldHp,
-      now: run.hp,
-      why: `the vessel moved ${oldHpMax} -> ${run.maxHp}; the ABSOLUTE deficit (${Math.max(0, oldHpMax - oldHp)}) is the player's and was carried`,
-    });
-  } else {
-    note(run, {
-      kind: preserveDeficits ? 'write' : 'overwrite',
-      site: 'state.js:initializeRunDerivedStats(pools)',
-      field: 'hp',
-      was: oldHp,
-      now: run.maxHp,
-      why: preserveDeficits
-        ? 'no prior pool to carry a deficit from â€” filled to the new maximum'
-        : 'preserveDeficits=false (a run being BORN, not restored): filled to the maximum. On a restore this would be healing a wound away, which is the friendliest way to lose a climb',
-    });
-    run.hp = run.maxHp;
-  }
-  if (preserveDeficits && Number.isFinite(oldManaMax) && oldManaMax > 0 && Number.isFinite(oldMana)) {
-    const legacyRatio = Math.max(0, Math.min(1, oldMana / oldManaMax));
-    run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
-  } else run.mana = run.maxMana;
-  run.stamina = run.maxStamina;
-  return run;
-}
-
-/**
- * The persisted run shape, declared once (SPEC Â§3.12). Keeps the save contract
- * data-driven instead of implied by whatever createRunState happens to set, and
- * gives deserializeRun something to check so a parseable-but-malformed save is
- * refused at load (â†’ save.js archives it) rather than crashing mid-run.
- *
- * `nullable` fields are legitimately null before their first use. Unlisted keys
- * are allowed through untouched â€” this is a floor, not a whitelist.
- */
-export const RUN_SHAPE = [
-  { key: 'contentVersion', type: 'string' },
-  { key: 'seed', type: 'number' },
-  { key: 'streamCounters', type: 'object' },
-  { key: 'class', type: 'string' },
-  { key: 'startingKitId', type: 'string' },
-  { key: 'startingKitSnapshot', type: 'object' },
-  // Optional as a pair only so pre-attribute saves can migrate as one block.
-  { key: 'attributeMode', type: 'string', optional: true },
-  { key: 'attributes', type: 'object', optional: true },
-  // Optional so a run saved before shrine levelling existed still loads: absent
-  // reads as zero levels bought, which is what such a run is. `levelPoints` is
-  // additionally absent from e05be89's saves, where it is exactly `levelUps` â€”
-  // that build had one possible level value (attributes.js).
-  { key: 'levelUps', type: 'number', optional: true },
-  { key: 'levelPoints', type: 'number', optional: true },
-  // Optional only for the one pre-derived migration at the load door.
-  { key: 'derivedStatRuleSnapshot', type: 'object', optional: true },
-  { key: 'equipmentProfileRuleSnapshot', type: 'object', optional: true },
-  { key: 'floor', type: 'number' },
-  { key: 'actNumber', type: 'number' },
-  { key: 'hp', type: 'number' },
-  { key: 'maxHp', type: 'number' },
-  { key: 'maxHpAdjustment', type: 'number' },
-  // Optional only for save compatibility. save.js migrates a pre-mana run to
-  // its class-authored full pool before handing it to the game.
-  { key: 'mana', type: 'number', optional: true },
-  { key: 'maxMana', type: 'number', optional: true },
-  { key: 'stamina', type: 'number', optional: true },
-  { key: 'maxStamina', type: 'number', optional: true },
-  { key: 'energyMax', type: 'number', optional: true },
-  { key: 'drawPerTurn', type: 'number', optional: true },
-  { key: 'cinders', type: 'number' },
-  { key: 'deck', type: 'array' },
-  { key: 'relics', type: 'array' },
-  { key: 'damageBySchoolAdd', type: 'object' },
-  { key: 'flasks', type: 'array' },
-  { key: 'history', type: 'array' },
-  { key: 'modifiers', type: 'array' },
-  // Optional so a run saved before equipment existed still loads; save.js
-  // heals it with a fresh loadout rather than refusing the save.
-  { key: 'loadout', type: 'object', optional: true },
-  { key: 'seedString', type: 'string', nullable: true },
-  { key: 'mapNodeId', type: 'string', nullable: true },
-  { key: 'mapGraph', type: 'object', nullable: true },
-  { key: 'combatEntered', type: 'object', nullable: true },
-];
-
-function typeOk(value, type) {
-  if (type === 'array') return Array.isArray(value);
-  if (type === 'object') return value !== null && typeof value === 'object' && !Array.isArray(value);
-  return typeof value === type; // 'string' | 'number'
-}
-
-/** validateRunShape(run) â†’ [] when sound, else a list of human-readable problems.
- *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
- *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger } = {}) {
-  const problems = [];
-  for (const f of RUN_SHAPE) {
-    if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
-    if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
-    const v = run[f.key];
-    if (v === undefined) {
-      if (!f.optional) problems.push(`missing '${f.key}'`);
-      continue;
-    }
-    if (v === null) {
-      if (!f.nullable) problems.push(`'${f.key}' is null`);
-      continue;
-    }
-    if (!typeOk(v, f.type)) problems.push(`'${f.key}' should be ${f.type}`);
-  }
-  const modeAbsent = run.attributeMode === undefined;
-  const attributesAbsent = run.attributes === undefined;
-  if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
-  if (!attributesAbsent && typeOk(run.attributes, 'object')) {
-    for (const [id, value] of Object.entries(run.attributes)) {
-      if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
-    }
-  }
-  // A level count is a whole number of purchases and can never be negative. The
-  // ALLOCATION check that reads it lives at the load door
-  // (attributes.js:grantedAttributePoints); this is the shape check, and a
-  // fractional or negative value would silently shift the expected total there.
-  for (const key of ['levelUps', 'levelPoints']) {
-    if (run[key] !== undefined && (!Number.isInteger(run[key]) || run[key] < 0)) {
-      problems.push(`${key} must be a non-negative integer`);
-    }
-  }
-  // Deck entries are the ids the run is rebuilt from â€” the one nested shape
-  // worth checking, since a bad entry breaks combat rather than the load.
-  if (Array.isArray(run.deck)) {
-    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
-    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
-    for (let i = 0; i < run.deck.length; i++) {
-      const card = run.deck[i];
-      if (!card) continue;
-      const schoolAbsent = card.damageSchool === undefined;
-      const buildupAbsent = card.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
-      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
-    }
-  }
-  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
-    problems.push('maxHp must be > 0');
-  }
-  if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && (run.hp < 0 || run.hp > run.maxHp)) {
-    problems.push('hp must be between 0 and maxHp');
-  }
-  if (run.maxHpAdjustment !== undefined && !Number.isInteger(run.maxHpAdjustment)) {
-    problems.push('maxHpAdjustment must be an integer');
-  }
-  if (run.damageBySchoolAdd !== undefined) {
-    for (const school of DAMAGE_SCHOOLS) {
-      if (!Number.isInteger(run.damageBySchoolAdd[school]) || run.damageBySchoolAdd[school] < 0) {
-        problems.push(`damageBySchoolAdd.${school} must be a non-negative integer`);
-      }
-    }
-    for (const school of Object.keys(run.damageBySchoolAdd)) {
-      if (!DAMAGE_SCHOOLS.includes(school)) problems.push(`damageBySchoolAdd.${school} is not a legal damage school`);
-    }
-  }
-  if (run.maxMana !== undefined && (!Number.isFinite(run.maxMana) || run.maxMana <= 0)) {
-    problems.push('maxMana must be > 0');
-  }
-  if (Number.isFinite(run.mana) && Number.isFinite(run.maxMana) && (run.mana < 0 || run.mana > run.maxMana)) {
-    problems.push('mana must be between 0 and maxMana');
-  }
-  const staminaAbsent = run.stamina === undefined;
-  const maxStaminaAbsent = run.maxStamina === undefined;
-  if (staminaAbsent !== maxStaminaAbsent) problems.push('stamina and maxStamina must both be present or both be absent');
-  if (run.maxStamina !== undefined && (!Number.isFinite(run.maxStamina) || run.maxStamina < 0)) problems.push('maxStamina must be >= 0');
-  if (Number.isFinite(run.stamina) && Number.isFinite(run.maxStamina) && (run.stamina < 0 || run.stamina > run.maxStamina)) {
-    problems.push('stamina must be between 0 and maxStamina');
-  }
-  if (run.flaskCharges !== undefined) {
-    const f = run.flaskCharges;
-    if (!f || !Number.isInteger(f.capacity) || f.capacity <= 0
-      || !Number.isInteger(f.hp) || f.hp < 0 || !Number.isInteger(f.mana) || f.mana < 0
-      || f.hp + f.mana !== f.capacity
-      || !Number.isInteger(f.hpCurrent) || f.hpCurrent < 0 || f.hpCurrent > f.hp
-      || !Number.isInteger(f.manaCurrent) || f.manaCurrent < 0 || f.manaCurrent > f.mana) {
-      problems.push('flaskCharges must satisfy hp + mana = capacity with bounded current counts');
-    }
-    // `grown` â€” what the growth chain currently contributes (model/flaskgrowth.js).
-    // Optional on pre-ledger saves only; syncFlaskGrowth treats absent as zero.
-    const grownSound = f && f.grown && typeof f.grown === 'object'
-      && Number.isInteger(f.grown.hp) && f.grown.hp >= 0
-      && Number.isInteger(f.grown.mana) && f.grown.mana >= 0;
-    if (f && f.grown !== undefined && !grownSound) {
-      problems.push('flaskCharges.grown must be { hp, mana } non-negative integers when present');
-    }
-    // THE CAPACITY LEDGER â€” capacity is one stored number fed by two doors
-    // (model/flaskgrowth.js, THE DOORS), and this is the check that it stays
-    // accountable: base (born, createFlaskCharges) + grown (possession door)
-    // + granted (moment door) must equal what is stored. A capacity no ledger
-    // can explain is refused BY NAME â€” that red is the machine form of the
-    // two-doors warning that used to live only in prose (SPEC Â§5.5.2): a
-    // "cleanup" that re-derives capacity from the chain alone now fails the
-    // first save it touches instead of silently deleting every keepsake charge.
-    // Pre-ledger saves (v1/v2) carry no base/granted; they are admitted only
-    // through the migration door (preLedger), where initializeRunFlaskCharges
-    // attributes them once, by the stated rule, before the run is ever re-saved.
-    if (f && f.base === undefined && f.granted === undefined) {
-      if (!preLedger) problems.push('flaskCharges is missing its capacity ledger (base, granted) â€” required at this schema version');
-    } else if (f) {
-      const baseSound = Number.isInteger(f.base) && f.base > 0;
-      const grantedSound = Number.isInteger(f.granted) && f.granted >= 0;
-      if (!baseSound) problems.push('flaskCharges.base must be a positive integer');
-      if (!grantedSound) problems.push('flaskCharges.granted must be a non-negative integer');
-      if (!grownSound) {
-        problems.push('flaskCharges.grown must be present beside the capacity ledger');
-      } else if (baseSound && grantedSound && Number.isInteger(f.capacity)
-        && f.capacity !== f.base + f.grown.hp + f.grown.mana + f.granted) {
-        problems.push(`flaskCharges.capacity ${f.capacity} is not accounted for by its parts â€” `
-          + `base ${f.base} + grown ${f.grown.hp + f.grown.mana} + granted ${f.granted} `
-          + `= ${f.base + f.grown.hp + f.grown.mana + f.granted}`);
-      }
-    }
-  }
-  if (run.energyMax !== undefined && (!Number.isInteger(run.energyMax) || run.energyMax < 0)) problems.push('energyMax must be a non-negative integer');
-  if (run.drawPerTurn !== undefined && (!Number.isInteger(run.drawPerTurn) || run.drawPerTurn < 0)) problems.push('drawPerTurn must be a non-negative integer');
-  return problems;
-}
-
-export function serializeRun(run) {
-  return JSON.stringify(run);
-}
-
-export function initializeRunFlaskCharges(run, registries) {
-  if (!run.flaskCharges) {
-    const wasFlasks = structuredClone(run.flasks || []);
-    const allocation = registries.classes.get(run.class).startingFlaskAllocation;
-    run.flaskCharges = createFlaskCharges(registries.balance, allocation);
-    const legacy = run.flasks || [];
-    run.flaskCharges.hpCurrent = Math.min(run.flaskCharges.hp, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'hp').length);
-    run.flaskCharges.manaCurrent = Math.min(run.flaskCharges.mana, legacy.filter((f) => f && chargeKindForFlask(registries, f.flaskId) === 'mana').length);
-    run.flasks = (run.flasks || []).filter((f) => f && chargeKindForFlask(registries, f.flaskId) == null);
-    // ONE OF THE THREE UNGATED HEALS. `flaskCharges` is optional in RUN_SHAPE
-    // with no schemaVersion gate, so this fires on a CURRENT-schema save that
-    // has lost the field, not only on the pre-ledger save it was written for â€”
-    // and every spent charge comes back. It is allowed to; it may not be quiet
-    // about it.
-    note(run, {
-      kind: 'heal',
-      site: 'state.js:initializeRunFlaskCharges',
-      field: 'flaskCharges',
-      was: undefined,
-      now: { hp: run.flaskCharges.hp, mana: run.flaskCharges.mana, hpCurrent: run.flaskCharges.hpCurrent, manaCurrent: run.flaskCharges.manaCurrent },
-      why: `absent in the save: rebuilt from the class allocation, currents reconstructed from ${wasFlasks.length} legacy run.flasks entr(ies)`,
-    });
-  }
-  // â•â•â• THE ONE-TIME ATTRIBUTION â€” pre-ledger saves (v1/v2), stated, not
-  // silent. A v2 save stores capacity with no ledger: chain growth always
-  // wrote `grown`, but the moment door (op addFlaskCapacity â€” keepsakes,
-  // event effects) recorded nothing. The rule, in full:
-  //   base    = the current authored balance.flaskCapacity, clamped to
-  //             capacity âˆ’ grownTotal â€” the best witness available for what
-  //             the vessel was born holding, never allowed to invent charges.
-  //   granted = capacity âˆ’ grownTotal âˆ’ base â€” every charge that base and the
-  //             chain's own ledger cannot account for is attributed to the
-  //             moment door, because the moment door was the untracked one.
-  // Honest defaults of the clamp: a balance retuned UP since the save yields
-  // base = capacity âˆ’ grownTotal and granted 0 (the save keeps its capacity,
-  // nothing is invented); a keepsake surplus lands in granted, which is where
-  // it came from. Runs once per save, before the run can be re-serialized;
-  // from then on validateRunShape enforces capacity === base + grown + granted.
-  {
-    const f = run.flaskCharges;
-    if (f.base === undefined && f.granted === undefined) {
-      const grownTotal = f.grown && Number.isInteger(f.grown.hp) && Number.isInteger(f.grown.mana)
-        ? f.grown.hp + f.grown.mana
-        : 0;
-      if (grownTotal >= f.capacity) {
-        // The chain's own ledger cannot fit under the stored capacity â€” that is
-        // corruption of exactly the class this ledger polices, not a migration.
-        throw new Error(`flaskCharges.grown total ${grownTotal} meets or exceeds capacity ${f.capacity} â€” pre-ledger save is unaccountable`);
-      }
-      f.base = Math.min(flaskCapacity(registries.balance), f.capacity - grownTotal);
-      f.granted = f.capacity - grownTotal - f.base;
-      note(run, {
-        kind: 'heal',
-        site: 'state.js:initializeRunFlaskCharges(attribution)',
-        field: 'flaskCharges.base/granted',
-        was: undefined,
-        now: { base: f.base, granted: f.granted, grownTotal, capacity: f.capacity },
-        why: 'pre-ledger save: capacity was attributed once â€” base from the current authored balance, the unaccounted remainder to the moment door',
-      });
-    }
-  }
-  // Loaded runs re-derive the chain here â€” the load door. A save carrying a
-  // relic whose growth row was authored after it was written grows on load;
-  // a save whose growth source no longer exists shrinks back, currents bounded.
-  syncFlaskGrowth(registries, run);
-  return run.flaskCharges;
-}
-
-/**
- * deserializeRun(json) â†’ run object. Throws on parse failure, unknown
- * schemaVersion, or a run that doesn't match RUN_SHAPE (save.js turns any
- * throw here into an archive-and-refuse, so a bad save is never silently lost).
- */
-export function migrateRunSchema(run) {
-  if (!run || typeof run !== 'object') throw new Error('Corrupt run save');
-  const originalVersion = run.schemaVersion;
-  const legacy = run.schemaVersion === 1;
-  const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
-  const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
-  if (![1, 2, 3, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, ${RUN_SCHEMA_VERSION})`);
-  }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger });
-  if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
-  if (originalVersion !== RUN_SCHEMA_VERSION) {
-    run.migratedFromRunSchemaVersion = originalVersion;
-    run.schemaVersion = RUN_SCHEMA_VERSION;
-  }
-  return run;
-}
-
-export function deserializeRun(json) {
-  return migrateRunSchema(JSON.parse(json));
-}
-
-// ---------------------------------------------------------------------------
-// Combat entities (instances reference defs by id â€” SPEC Â§3.3)
-// ---------------------------------------------------------------------------
-
-/**
- * Player combat entity. statuses: { [statusId]: { stacks, duration?, meter? } }.
- *
- * `poiseMax` (optional) stamps the player's Poise vessel â€” the REAL-BUT-EMPTY
- * seat: max is the equipment/relic stagger threshold (createCombat derives it
- * from playerPoiseThresholdReceipt), value is 0 and HAS NO WRITER â€” the engine
- * deals Poise damage to enemies only (actions.js dealPoiseDamage gates on
- * kind). The vessel exists so the HUD can tell the truth he asked to see
- * ("poise (very skinny bar) under the health bar", D10.4; "should also effect
- * player too", D17 q5); the mechanics that will one day move the value â€”
- * stagger, resistance, poise damage against players â€” are combat design dealt
- * elsewhere and deliberately NOT introduced by this seat. 0 stamps NO meter:
- * a zero-threshold player has no vessel, and the HUD's refusal path renders
- * it ABSENT rather than as an empty trough.
- */
-export function createPlayerCombatEntity({ classId, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {} }) {
-  if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
-  if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
-  const entity = {
-    id: 'player',
-    kind: 'player',
-    classId,
-    hp: hp != null ? hp : maxHp,
-    maxHp,
-    mana: mana != null ? mana : maxMana,
-    maxMana,
-    stamina: stamina != null ? stamina : maxStamina,
-    maxStamina,
-    block: 0,
-    energy: 0,
-    energyMax,
-    drawPerTurn,
-    statuses: {},
-    stanceId: null,
-    relicIds: [...relicIds],
-    damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, damageBySchoolAdd[school] || 0])),
-    flasks: flasks.map((f) => ({ ...f })),
-    flaskCharges: flaskCharges ? { ...flaskCharges } : null,
-    counters: {
-      cardsPlayedThisTurn: 0,
-      cardsPlayedThisCombat: 0,
-      attacksPlayedThisCombat: 0,
-    },
-    alive: true,
-  };
-  stampPlayerPoiseMax(entity, poiseMax);
-  return entity;
-}
-
-/**
- * stampPlayerPoiseMax(entity, max) â€” the ONE way the player's Poise vessel is
- * (re)sized, at entity creation and at the single mid-fight door equipment
- * moves through (doSwapArmament). Max only: the accumulated value rides â€”
- * today it is always 0 because nothing writes it, and this helper must keep
- * being value-preserving so the future writer's build-up survives a swap.
- * A non-positive max REMOVES the meter: no vessel, the HUD refusal renders
- * ABSENT (never an empty trough).
- */
-export function stampPlayerPoiseMax(entity, max) {
-  if (Number.isInteger(max) && max > 0) {
-    const value = entity.poiseMeter ? Math.max(0, Math.min(entity.poiseMeter.value, max)) : 0;
-    entity.poiseMeter = { value, max };
-  } else {
-    delete entity.poiseMeter;
-  }
-}
-
-/**
- * Enemy combat entity. `poiseMeter` is the engine-level build-up meter fed by
- * the poiseDamage opcode (SPEC Â§3.7, Â§4.4); everything else about Stagger is
- * content data.
- */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool }) {
-  const entity = {
-    id: instanceId,
-    kind: 'enemy',
-    enemyId,
-    hp,
-    maxHp: hp,
-    block: 0,
-    statuses: {},
-    poiseMeter: { value: 0, max: poiseMax },
-    movesHistory: [],
-    intent: null,
-    pendingMove: null, // delayed-move commitment: { moveId, resolveOnTurn }
-    skipNextTurn: false, // set by a poise-meter fill; consumed by the enemy turn
-    unlockedMoves: [],
-    alive: true,
-  };
-  if (arcaneExposure) entity.arcaneExposure = arcaneExposure.mode === 'configured'
-    ? { ...structuredClone(arcaneExposure), value: 0 }
-    : { mode: 'immune' };
-  if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
-  return entity;
-}
+  // inherits ßİ9¶‰ËkºwµçM¥¹¥Ñ”¡ÉÕ¸¹µ…á!À¤€˜˜ÉÕ¸¹µ…á!À€ğô€À¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  µ…á!ÀµÕÍĞ‰”€ø€Àœ¤ì4(€ô4(€¥˜€¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹¡À¤€˜˜9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…á!À¤€˜˜€¡ÉÕ¸¹¡À€ğ€ÀñğÉÕ¸¹¡À€øÉÕ¸¹µ…á!À¤¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  ¡ÀµÕÍĞ‰”‰•Ñİ••¸€À…¹µ…á!Àœ¤ì4(€ô4(€¥˜€¡ÉÕ¸¹µ…á!Á‘©ÕÍÑµ•¹Ğ€„ôôÕ¹‘•™¥¹•€˜˜€…9Õµ‰•È¹¥Í%¹Ñ••È¡ÉÕ¸¹µ…á!Á‘©ÕÍÑµ•¹Ğ¤¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  µ…á!Á‘©ÕÍÑµ•¹ĞµÕÍĞ‰”…¸¥¹Ñ••Èœ¤ì4(€ô4(€¥˜€¡ÉÕ¸¹‘…µ…•	åM¡½½±‘€„ôôÕ¹‘•™¥¹•¤ì4(€€€™½È€¡½¹ÍĞÍ¡½½°½˜5}M!==1L¤ì4(€€€€€¥˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡ÉÕ¸¹‘…µ…•	åM¡½½±‘‘mÍ¡½½±t¤ñğÉÕ¸¹‘…µ…•	åM¡½½±‘‘mÍ¡½½±t€ğ€À¤ì4(€€€€€€€ÁÉ½‰±•µÌ¹ÁÕÍ ¡‘…µ…•	åM¡½½±‘¸‘íÍ¡½½±ôµÕÍĞ‰”„¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••É€¤ì4(€€€€€ô4(€€€ô4(€€€™½È€¡½¹ÍĞÍ¡½½°½˜=‰©•Ğ¹­•åÌ¡ÉÕ¸¹‘…µ…•	åM¡½½±‘¤¤ì4(€€€€€¥˜€ …5}M!==1L¹¥¹±Õ‘•Ì¡Í¡½½°¤¤ÁÉ½‰±•µÌ¹ÁÕÍ ¡‘…µ…•	åM¡½½±‘¸‘íÍ¡½½±ô¥Ì¹½Ğ„±•…°‘…µ…”Í¡½½±€¤ì4(€€€ô4(€ô4(€¥˜€¡ÉÕ¸¹µ…á5…¹„€„ôôÕ¹‘•™¥¹•€˜˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…á5…¹„¤ñğÉÕ¸¹µ…á5…¹„€ğô€À¤¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  µ…á5…¹„µÕÍĞ‰”€ø€Àœ¤ì4(€ô4(€¥˜€¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…¹„¤€˜˜9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…á5…¹„¤€˜˜€¡ÉÕ¸¹µ…¹„€ğ€ÀñğÉÕ¸¹µ…¹„€øÉÕ¸¹µ…á5…¹„¤¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  µ…¹„µÕÍĞ‰”‰•Ñİ••¸€À…¹µ…á5…¹„œ¤ì4(€ô4(€½¹ÍĞÍÑ…µ¥¹…‰Í•¹Ğ€ôÉÕ¸¹ÍÑ…µ¥¹„€ôôôÕ¹‘•™¥¹•ì4(€½¹ÍĞµ…áMÑ…µ¥¹…‰Í•¹Ğ€ôÉÕ¸¹µ…áMÑ…µ¥¹„€ôôôÕ¹‘•™¥¹•ì4(€¥˜€¡ÍÑ…µ¥¹…‰Í•¹Ğ€„ôôµ…áMÑ…µ¥¹…‰Í•¹Ğ¤ÁÉ½‰±•µÌ¹ÁÕÍ  ÍÑ…µ¥¹„…¹µ…áMÑ…µ¥¹„µÕÍĞ‰½Ñ ‰”ÁÉ•Í•¹Ğ½È‰½Ñ ‰”…‰Í•¹Ğœ¤ì4(€¥˜€¡ÉÕ¸¹µ…áMÑ…µ¥¹„€„ôôÕ¹‘•™¥¹•€˜˜€ …9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…áMÑ…µ¥¹„¤ñğÉÕ¸¹µ…áMÑ…µ¥¹„€ğ€À¤¤ÁÉ½‰±•µÌ¹ÁÕÍ  µ…áMÑ…µ¥¹„µÕÍĞ‰”€øô€Àœ¤ì4(€¥˜€¡9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹ÍÑ…µ¥¹„¤€˜˜9Õµ‰•È¹¥Í¥¹¥Ñ”¡ÉÕ¸¹µ…áMÑ…µ¥¹„¤€˜˜€¡ÉÕ¸¹ÍÑ…µ¥¹„€ğ€ÀñğÉÕ¸¹ÍÑ…µ¥¹„€øÉÕ¸¹µ…áMÑ…µ¥¹„¤¤ì4(€€€ÁÉ½‰±•µÌ¹ÁÕÍ  ÍÑ…µ¥¹„µÕÍĞ‰”‰•Ñİ••¸€À…¹µ…áMÑ…µ¥¹„œ¤ì4(€ô4(€¥˜€¡ÉÕ¸¹™±…Í­¡…É•Ì€„ôôÕ¹‘•™¥¹•¤ì4(€€€½¹ÍĞ˜€ôÉÕ¸¹™±…Í­¡…É•Ìì4(€€€¥˜€ …˜ñğ€…9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹…Á…¥Ñä¤ñğ˜¹…Á…¥Ñä€ğô€À4(€€€€€ñğ€…9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹¡À¤ñğ˜¹¡À€ğ€Àñğ€…9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹µ…¹„¤ñğ˜¹µ…¹„€ğ€À4(€€€€€ñğ˜¹¡À€¬˜¹µ…¹„€„ôô˜¹…Á…¥Ñä4(€€€€€ñğ€…9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹¡ÁÕÉÉ•¹Ğ¤ñğ˜¹¡ÁÕÉÉ•¹Ğ€ğ€Àñğ˜¹¡ÁÕÉÉ•¹Ğ€ø˜¹¡À4(€€€€€ñğ€…9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹µ…¹…ÕÉÉ•¹Ğ¤ñğ˜¹µ…¹…ÕÉÉ•¹Ğ€ğ€Àñğ˜¹µ…¹…ÕÉÉ•¹Ğ€ø˜¹µ…¹„¤ì4(€€€€€ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•ÌµÕÍĞÍ…Ñ¥Í™ä¡À€¬µ…¹„€ô…Á…¥Ñäİ¥Ñ ‰½Õ¹‘•ÕÉÉ•¹Ğ½Õ¹ÑÌœ¤ì4(€€€ô4(€€€€¼¼É½İ¹€ƒŠPİ¡…ĞÑ¡”É½İÑ ¡…¥¸ÕÉÉ•¹Ñ±ä½¹ÑÉ¥‰ÕÑ•Ì€¡µ½‘•°½™±…Í­É½İÑ ¹©Ì¤¸4(€€€€¼¼=ÁÑ¥½¹…°½¸ÁÉ”µ±•‘•ÈÍ…Ù•Ì½¹±äìÍå¹±…Í­É½İÑ ÑÉ•…ÑÌ…‰Í•¹Ğ…Ìé•É¼¸4(€€€½¹ÍĞÉ½İ¹M½Õ¹€ô˜€˜˜˜¹É½İ¸€˜˜ÑåÁ•½˜˜¹É½İ¸€ôôô€½‰©•Ğœ4(€€€€€€˜˜9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹É½İ¸¹¡À¤€˜˜˜¹É½İ¸¹¡À€øô€À4(€€€€€€˜˜9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹É½İ¸¹µ…¹„¤€˜˜˜¹É½İ¸¹µ…¹„€øô€Àì4(€€€¥˜€¡˜€˜˜˜¹É½İ¸€„ôôÕ¹‘•™¥¹•€˜˜€…É½İ¹M½Õ¹¤ì4(€€€€€ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•Ì¹É½İ¸µÕÍĞ‰”ì¡À°µ…¹„ô¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••ÉÌİ¡•¸ÁÉ•Í•¹Ğœ¤ì4(€€€ô4(€€€€¼¼Q!A%Qd1HƒŠP…Á…¥Ñä¥Ì½¹”ÍÑ½É•¹Õµ‰•È™•‰äÑİ¼‘½½ÉÌ4(€€€€¼¼€¡µ½‘•°½™±…Í­É½İÑ ¹©Ì°Q!==IL¤°…¹Ñ¡¥Ì¥ÌÑ¡”¡•¬Ñ¡…Ğ¥ĞÍÑ…åÌ4(€€€€¼¼…½Õ¹Ñ…‰±”è‰…Í”€¡‰½É¸°É•…Ñ•±…Í­¡…É•Ì¤€¬É½İ¸€¡Á½ÍÍ•ÍÍ¥½¸‘½½È¤4(€€€€¼¼€¬É…¹Ñ•€¡µ½µ•¹Ğ‘½½È¤µÕÍĞ•ÅÕ…°İ¡…Ğ¥ÌÍÑ½É•¸…Á…¥Ñä¹¼±•‘•È4(€€€€¼¼…¸•áÁ±…¥¸¥ÌÉ•™ÕÍ•	d95ƒŠPÑ¡…ĞÉ•¥ÌÑ¡”µ…¡¥¹”™½É´½˜Ñ¡”4(€€€€¼¼Ñİ¼µ‘½½ÉÌİ…É¹¥¹œÑ¡…ĞÕÍ•Ñ¼±¥Ù”½¹±ä¥¸ÁÉ½Í”€¡MAƒ
+œÔ¸Ô¸È¤è„4(€€€€¼¼€‰±•…¹ÕÀˆÑ¡…ĞÉ”µ‘•É¥Ù•Ì…Á…¥Ñä™É½´Ñ¡”¡…¥¸…±½¹”¹½Ü™…¥±ÌÑ¡”4(€€€€¼¼™¥ÉÍĞÍ…Ù”¥ĞÑ½Õ¡•Ì¥¹ÍÑ•…½˜Í¥±•¹Ñ±ä‘•±•Ñ¥¹œ•Ù•Éä­••ÁÍ…­”¡…É”¸4(€€€€¼¼AÉ”µ±•‘•ÈÍ…Ù•Ì€¡ØÄ½ØÈ¤…ÉÉä¹¼‰…Í”½É…¹Ñ•ìÑ¡•ä…É”…‘µ¥ÑÑ•½¹±ä4(€€€€¼¼Ñ¡É½Õ Ñ¡”µ¥É…Ñ¥½¸‘½½È€¡ÁÉ•1•‘•È¤°İ¡•É”¥¹¥Ñ¥…±¥é•IÕ¹±…Í­¡…É•Ì4(€€€€¼¼…ÑÑÉ¥‰ÕÑ•ÌÑ¡•´½¹”°‰äÑ¡”ÍÑ…Ñ•ÉÕ±”°‰•™½É”Ñ¡”ÉÕ¸¥Ì•Ù•ÈÉ”µÍ…Ù•¸4(€€€¥˜€¡˜€˜˜˜¹‰…Í”€ôôôÕ¹‘•™¥¹•€˜˜˜¹É…¹Ñ•€ôôôÕ¹‘•™¥¹•¤ì4(€€€€€¥˜€ …ÁÉ•1•‘•È¤ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•Ì¥Ìµ¥ÍÍ¥¹œ¥ÑÌ…Á…¥Ñä±•‘•È€¡‰…Í”°É…¹Ñ•¤ƒŠPÉ•ÅÕ¥É•…ĞÑ¡¥ÌÍ¡•µ„Ù•ÉÍ¥½¸œ¤ì4(€€€ô•±Í”¥˜€¡˜¤ì4(€€€€€½¹ÍĞ‰…Í•M½Õ¹€ô9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹‰…Í”¤€˜˜˜¹‰…Í”€ø€Àì4(€€€€€½¹ÍĞÉ…¹Ñ•‘M½Õ¹€ô9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹É…¹Ñ•¤€˜˜˜¹É…¹Ñ•€øô€Àì4(€€€€€¥˜€ …‰…Í•M½Õ¹¤ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•Ì¹‰…Í”µÕÍĞ‰”„Á½Í¥Ñ¥Ù”¥¹Ñ••Èœ¤ì4(€€€€€¥˜€ …É…¹Ñ•‘M½Õ¹¤ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•Ì¹É…¹Ñ•µÕÍĞ‰”„¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••Èœ¤ì4(€€€€€¥˜€ …É½İ¹M½Õ¹¤ì4(€€€€€€€ÁÉ½‰±•µÌ¹ÁÕÍ  ™±…Í­¡…É•Ì¹É½İ¸µÕÍĞ‰”ÁÉ•Í•¹Ğ‰•Í¥‘”Ñ¡”…Á…¥Ñä±•‘•Èœ¤ì4(€€€€€ô•±Í”¥˜€¡‰…Í•M½Õ¹€˜˜É…¹Ñ•‘M½Õ¹€˜˜9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹…Á…¥Ñä¤4(€€€€€€€€˜˜˜¹…Á…¥Ñä€„ôô˜¹‰…Í”€¬˜¹É½İ¸¹¡À€¬˜¹É½İ¸¹µ…¹„€¬˜¹É…¹Ñ•¤ì4(€€€€€€€ÁÉ½‰±•µÌ¹ÁÕÍ ¡™±…Í­¡…É•Ì¹…Á…¥Ñä€‘í˜¹…Á…¥Ñåô¥Ì¹½Ğ…½Õ¹Ñ•™½È‰ä¥ÑÌÁ…ÉÑÌƒŠP€4(€€€€€€€€€€¬‰…Í”€‘í˜¹‰…Í•ô€¬É½İ¸€‘í˜¹É½İ¸¹¡À€¬˜¹É½İ¸¹µ…¹…ô€¬É…¹Ñ•€‘í˜¹É…¹Ñ•‘ô€4(€€€€€€€€€€¬€ô€‘í˜¹‰…Í”€¬˜¹É½İ¸¹¡À€¬˜¹É½İ¸¹µ…¹„€¬˜¹É…¹Ñ•‘õ€¤ì4(€€€€€ô4(€€€ô4(€ô4(€¥˜€¡ÉÕ¸¹•¹•Éå5…à€„ôôÕ¹‘•™¥¹•€˜˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡ÉÕ¸¹•¹•Éå5…à¤ñğÉÕ¸¹•¹•Éå5…à€ğ€À¤¤ÁÉ½‰±•µÌ¹ÁÕÍ  •¹•Éå5…àµÕÍĞ‰”„¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••Èœ¤ì4(€¥˜€¡ÉÕ¸¹‘É…İA•ÉQÕÉ¸€„ôôÕ¹‘•™¥¹•€˜˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡ÉÕ¸¹‘É…İA•ÉQÕÉ¸¤ñğÉÕ¸¹‘É…İA•ÉQÕÉ¸€ğ€À¤¤ÁÉ½‰±•µÌ¹ÁÕÍ  ‘É…İA•ÉQÕÉ¸µÕÍĞ‰”„¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••Èœ¤ì4(€É•ÑÕÉ¸ÁÉ½‰±•µÌì4)ô4(4)•áÁ½ÉĞ™Õ¹Ñ¥½¸Í•É¥…±¥é•IÕ¸¡ÉÕ¸¤ì4(€É•ÑÕÉ¸)M=8¹ÍÑÉ¥¹¥™ä¡ÉÕ¸¤ì4)ô4(4)•áÁ½ÉĞ™Õ¹Ñ¥½¸¥¹¥Ñ¥…±¥é•IÕ¹±…Í­¡…É•Ì¡ÉÕ¸°É•¥ÍÑÉ¥•Ì¤ì4(€¥˜€ …ÉÕ¸¹™±…Í­¡…É•Ì¤ì4(€€€½¹ÍĞİ…Í±…Í­Ì€ôÍÑÉÕÑÕÉ•‘±½¹”¡ÉÕ¸¹™±…Í­Ìñğmt¤ì4(€€€½¹ÍĞ…±±½…Ñ¥½¸€ôÉ•¥ÍÑÉ¥•Ì¹±…ÍÍ•Ì¹•Ğ¡ÉÕ¸¹±…ÍÌ¤¹ÍÑ…ÉÑ¥¹±…Í­±±½…Ñ¥½¸ì4(€€€ÉÕ¸¹™±…Í­¡…É•Ì€ôÉ•…Ñ•±…Í­¡…É•Ì¡É•¥ÍÑÉ¥•Ì¹‰…±…¹”°…±±½…Ñ¥½¸¤ì4(€€€½¹ÍĞ±•…ä€ôÉÕ¸¹™±…Í­Ìñğmtì4(€€€ÉÕ¸¹™±…Í­¡…É•Ì¹¡ÁÕÉÉ•¹Ğ€ô5…Ñ ¹µ¥¸¡ÉÕ¸¹™±…Í­¡…É•Ì¹¡À°±•…ä¹™¥±Ñ•È ¡˜¤€ôø˜€˜˜¡…É•-¥¹‘½É±…Í¬¡É•¥ÍÑÉ¥•Ì°˜¹™±…Í­%¤€ôôô€¡Àœ¤¹±•¹Ñ ¤ì4(€€€ÉÕ¸¹™±…Í­¡…É•Ì¹µ…¹…ÕÉÉ•¹Ğ€ô5…Ñ ¹µ¥¸¡ÉÕ¸¹™±…Í­¡…É•Ì¹µ…¹„°±•…ä¹™¥±Ñ•È ¡˜¤€ôø˜€˜˜¡…É•-¥¹‘½É±…Í¬¡É•¥ÍÑÉ¥•Ì°˜¹™±…Í­%¤€ôôô€µ…¹„œ¤¹±•¹Ñ ¤ì4(€€€ÉÕ¸¹™±…Í­Ì€ô€¡ÉÕ¸¹™±…Í­Ìñğmt¤¹™¥±Ñ•È ¡˜¤€ôø˜€˜˜¡…É•-¥¹‘½É±…Í¬¡É•¥ÍÑÉ¥•Ì°˜¹™±…Í­%¤€ôô¹Õ±°¤ì4(€€€€¼¼=9=Q!Q!IU9Q!1L¸™±…Í­¡…É•Í€¥Ì½ÁÑ¥½¹…°¥¸IU9}M!A4(€€€€¼¼İ¥Ñ ¹¼Í¡•µ…Y•ÉÍ¥½¸…Ñ”°Í¼Ñ¡¥Ì™¥É•Ì½¸„UII9PµÍ¡•µ„Í…Ù”Ñ¡…Ğ4(€€€€¼¼¡…Ì±½ÍĞÑ¡”™¥•±°¹½Ğ½¹±ä½¸Ñ¡”ÁÉ”µ±•‘•ÈÍ…Ù”¥Ğİ…ÌİÉ¥ÑÑ•¸™½ÈƒŠP4(€€€€¼¼…¹•Ù•ÉäÍÁ•¹Ğ¡…É”½µ•Ì‰…¬¸%Ğ¥Ì…±±½İ•Ñ¼ì¥Ğµ…ä¹½Ğ‰”ÅÕ¥•Ğ4(€€€€¼¼…‰½ÕĞ¥Ğ¸4(€€€¹½Ñ”¡ÉÕ¸°ì4(€€€€€­¥¹è€¡•…°œ°4(€€€€€Í¥Ñ”è€ÍÑ…Ñ”¹©Ìé¥¹¥Ñ¥…±¥é•IÕ¹±…Í­¡…É•Ìœ°4(€€€€€™¥•±è€™±…Í­¡…É•Ìœ°4(€€€€€İ…ÌèÕ¹‘•™¥¹•°4(€€€€€¹½Üèì¡ÀèÉÕ¸¹™±…Í­¡…É•Ì¹¡À°µ…¹„èÉÕ¸¹™±…Í­¡…É•Ì¹µ…¹„°¡ÁÕÉÉ•¹ĞèÉÕ¸¹™±…Í­¡…É•Ì¹¡ÁÕÉÉ•¹Ğ°µ…¹…ÕÉÉ•¹ĞèÉÕ¸¹™±…Í­¡…É•Ì¹µ…¹…ÕÉÉ•¹Ğô°4(€€€€€İ¡äè…‰Í•¹Ğ¥¸Ñ¡”Í…Ù”èÉ•‰Õ¥±Ğ™É½´Ñ¡”±…ÍÌ…±±½…Ñ¥½¸°ÕÉÉ•¹ÑÌÉ•½¹ÍÑÉÕÑ•™É½´€‘íİ…Í±…Í­Ì¹±•¹Ñ¡ô±•…äÉÕ¸¹™±…Í­Ì•¹ÑÈ¡¥•Ì¥€°4(€€€ô¤ì4(€ô4(€€¼¼ƒŠVCŠVCŠV@Q!=9µQ%5QQI%	UQ%=8ƒŠPÁÉ”µ±•‘•ÈÍ…Ù•Ì€¡ØÄ½ØÈ¤°ÍÑ…Ñ•°¹½Ğ4(€€¼¼Í¥±•¹Ğ¸ØÈÍ…Ù”ÍÑ½É•Ì…Á…¥Ñäİ¥Ñ ¹¼±•‘•Èè¡…¥¸É½İÑ …±İ…åÌ4(€€¼¼İÉ½Ñ”É½İ¹€°‰ÕĞÑ¡”µ½µ•¹Ğ‘½½È€¡½À…‘‘±…Í­…Á…¥ÑäƒŠP­••ÁÍ…­•Ì°4(€€¼¼•Ù•¹Ğ•™™•ÑÌ¤É•½É‘•¹½Ñ¡¥¹œ¸Q¡”ÉÕ±”°¥¸™Õ±°è4(€€¼¼€€‰…Í”€€€€ôÑ¡”ÕÉÉ•¹Ğ…ÕÑ¡½É•‰…±…¹”¹™±…Í­…Á…¥Ñä°±…µÁ•Ñ¼4(€€¼¼€€€€€€€€€€€€…Á…¥ÑäƒŠ"HÉ½İ¹Q½Ñ…°ƒŠPÑ¡”‰•ÍĞİ¥Ñ¹•ÍÌ…Ù…¥±…‰±”™½Èİ¡…Ğ4(€€¼¼€€€€€€€€€€€€Ñ¡”Ù•ÍÍ•°İ…Ì‰½É¸¡½±‘¥¹œ°¹•Ù•È…±±½İ•Ñ¼¥¹Ù•¹Ğ¡…É•Ì¸4(€€¼¼€€É…¹Ñ•€ô…Á…¥ÑäƒŠ"HÉ½İ¹Q½Ñ…°ƒŠ"H‰…Í”ƒŠP•Ù•Éä¡…É”Ñ¡…Ğ‰…Í”…¹Ñ¡”4(€€¼¼€€€€€€€€€€€€¡…¥¸Ì½İ¸±•‘•È…¹¹½Ğ…½Õ¹Ğ™½È¥Ì…ÑÑÉ¥‰ÕÑ•Ñ¼Ñ¡”4(€€¼¼€€€€€€€€€€€€µ½µ•¹Ğ‘½½È°‰•…ÕÍ”Ñ¡”µ½µ•¹Ğ‘½½Èİ…ÌÑ¡”Õ¹ÑÉ…­•½¹”¸4(€€¼¼!½¹•ÍĞ‘•™…Õ±ÑÌ½˜Ñ¡”±…µÀè„‰…±…¹”É•ÑÕ¹•U@Í¥¹”Ñ¡”Í…Ù”å¥•±‘Ì4(€€¼¼‰…Í”€ô…Á…¥ÑäƒŠ"HÉ½İ¹Q½Ñ…°…¹É…¹Ñ•€À€¡Ñ¡”Í…Ù”­••ÁÌ¥ÑÌ…Á…¥Ñä°4(€€¼¼¹½Ñ¡¥¹œ¥Ì¥¹Ù•¹Ñ•¤ì„­••ÁÍ…­”ÍÕÉÁ±ÕÌ±…¹‘Ì¥¸É…¹Ñ•°İ¡¥ ¥Ìİ¡•É”4(€€¼¼¥Ğ…µ”™É½´¸IÕ¹Ì½¹”Á•ÈÍ…Ù”°‰•™½É”Ñ¡”ÉÕ¸…¸‰”É”µÍ•É¥…±¥é•ì4(€€¼¼™É½´Ñ¡•¸½¸Ù…±¥‘…Ñ•IÕ¹M¡…Á”•¹™½É•Ì…Á…¥Ñä€ôôô‰…Í”€¬É½İ¸€¬É…¹Ñ•¸4(€ì4(€€€½¹ÍĞ˜€ôÉÕ¸¹™±…Í­¡…É•Ìì4(€€€¥˜€¡˜¹‰…Í”€ôôôÕ¹‘•™¥¹•€˜˜˜¹É…¹Ñ•€ôôôÕ¹‘•™¥¹•¤ì4(€€€€€½¹ÍĞÉ½İ¹Q½Ñ…°€ô˜¹É½İ¸€˜˜9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹É½İ¸¹¡À¤€˜˜9Õµ‰•È¹¥Í%¹Ñ••È¡˜¹É½İ¸¹µ…¹„¤4(€€€€€€€€ü˜¹É½İ¸¹¡À€¬˜¹É½İ¸¹µ…¹„4(€€€€€€€€è€Àì4(€€€€€¥˜€¡É½İ¹Q½Ñ…°€øô˜¹…Á…¥Ñä¤ì4(€€€€€€€€¼¼Q¡”¡…¥¸Ì½İ¸±•‘•È…¹¹½Ğ™¥ĞÕ¹‘•ÈÑ¡”ÍÑ½É•…Á…¥ÑäƒŠPÑ¡…Ğ¥Ì4(€€€€€€€€¼¼½ÉÉÕÁÑ¥½¸½˜•á…Ñ±äÑ¡”±…ÍÌÑ¡¥Ì±•‘•ÈÁ½±¥•Ì°¹½Ğ„µ¥É…Ñ¥½¸¸4(€€€€€€€Ñ¡É½Ü¹•ÜÉÉ½È¡™±…Í­¡…É•Ì¹É½İ¸Ñ½Ñ…°€‘íÉ½İ¹Q½Ñ…±ôµ••ÑÌ½È•á••‘Ì…Á…¥Ñä€‘í˜¹…Á…¥ÑåôƒŠPÁÉ”µ±•‘•ÈÍ…Ù”¥ÌÕ¹…½Õ¹Ñ…‰±•€¤ì4(€€€€€ô4(€€€€€˜¹‰…Í”€ô5…Ñ ¹µ¥¸¡™±…Í­…Á…¥Ñä¡É•¥ÍÑÉ¥•Ì¹‰…±…¹”¤°˜¹…Á…¥Ñä€´É½İ¹Q½Ñ…°¤ì4(€€€€€˜¹É…¹Ñ•€ô˜¹…Á…¥Ñä€´É½İ¹Q½Ñ…°€´˜¹‰…Í”ì4(€€€€€¹½Ñ”¡ÉÕ¸°ì4(€€€€€€€­¥¹è€¡•…°œ°4(€€€€€€€Í¥Ñ”è€ÍÑ…Ñ”¹©Ìé¥¹¥Ñ¥…±¥é•IÕ¹±…Í­¡…É•Ì¡…ÑÑÉ¥‰ÕÑ¥½¸¤œ°4(€€€€€€€™¥•±è€™±…Í­¡…É•Ì¹‰…Í”½É…¹Ñ•œ°4(€€€€€€€İ…ÌèÕ¹‘•™¥¹•°4(€€€€€€€¹½Üèì‰…Í”è˜¹‰…Í”°É…¹Ñ•è˜¹É…¹Ñ•°É½İ¹Q½Ñ…°°…Á…¥Ñäè˜¹…Á…¥Ñäô°4(€€€€€€€İ¡äè€ÁÉ”µ±•‘•ÈÍ…Ù”è…Á…¥Ñäİ…Ì…ÑÑÉ¥‰ÕÑ•½¹”ƒŠP‰…Í”™É½´Ñ¡”ÕÉÉ•¹Ğ…ÕÑ¡½É•‰…±…¹”°Ñ¡”Õ¹…½Õ¹Ñ•É•µ…¥¹‘•ÈÑ¼Ñ¡”µ½µ•¹Ğ‘½½Èœ°4(€€€€€ô¤ì4(€€€ô4(€ô4(€€¼¼1½…‘•ÉÕ¹ÌÉ”µ‘•É¥Ù”Ñ¡”¡…¥¸¡•É”ƒŠPÑ¡”±½…‘½½È¸Í…Ù”…ÉÉå¥¹œ„4(€€¼¼É•±¥Œİ¡½Í”É½İÑ É½Üİ…Ì…ÕÑ¡½É•…™Ñ•È¥Ğİ…ÌİÉ¥ÑÑ•¸É½İÌ½¸±½…ì4(€€¼¼„Í…Ù”İ¡½Í”É½İÑ Í½ÕÉ”¹¼±½¹•È•á¥ÍÑÌÍ¡É¥¹­Ì‰…¬°ÕÉÉ•¹ÑÌ‰½Õ¹‘•¸4(€Íå¹±…Í­É½İÑ ¡É•¥ÍÑÉ¥•Ì°ÉÕ¸¤ì4(€É•ÑÕÉ¸ÉÕ¸¹™±…Í­¡…É•Ìì4)ô4(4(¼¨¨4(€¨‘•Í•É¥…±¥é•IÕ¸¡©Í½¸¤ƒŠHÉÕ¸½‰©•Ğ¸Q¡É½İÌ½¸Á…ÉÍ”™…¥±ÕÉ”°Õ¹­¹½İ¸4(€¨Í¡•µ…Y•ÉÍ¥½¸°½È„ÉÕ¸Ñ¡…Ğ‘½•Í¸Ğµ…Ñ IU9}M!A€¡Í…Ù”¹©ÌÑÕÉ¹Ì…¹ä4(€¨Ñ¡É½Ü¡•É”¥¹Ñ¼…¸…É¡¥Ù”µ…¹µÉ•™ÕÍ”°Í¼„‰…Í…Ù”¥Ì¹•Ù•ÈÍ¥±•¹Ñ±ä±½ÍĞ¤¸4(€¨¼4)•áÁ½ÉĞ™Õ¹Ñ¥½¸µ¥É…Ñ•IÕ¹M¡•µ„¡ÉÕ¸¤ì4(€¥˜€ …ÉÕ¸ñğÑåÁ•½˜ÉÕ¸€„ôô€½‰©•Ğœ¤Ñ¡É½Ü¹•ÜÉÉ½È ½ÉÉÕÁĞÉÕ¸Í…Ù”œ¤ì4(€½¹ÍĞ½É¥¥¹…±Y•ÉÍ¥½¸€ôÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸ì4(€½¹ÍĞ±•…ä€ôÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸€ôôô€Äì4(€½¹ÍĞÁÉ•1•‘•È€ô±•…äñğÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸€ôôô€Èì€¼¼ØÈè¹¼™±…Í­¡…É•Ì…Á…¥Ñä±•‘•Èå•Ğ4(€½¹ÍĞÁÉ•!Á1•‘•È€ôlÄ°€È°€Ít¹¥¹±Õ‘•Ì¡ÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸¤ì4(€¥˜€ …lÄ°€È°€Ì°IU9}M!5}YIM%=9t¹¥¹±Õ‘•Ì¡ÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸¤¤ì4(€€€Ñ¡É½Ü¹•ÜÉÉ½È¡U¹­¹½İ¸ÉÕ¸Í¡•µ…Y•ÉÍ¥½¸€‘íÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¹ô€¡ÍÕÁÁ½ÉÑ•è€Ä°€È°€Ì°€‘íIU9}M!5}YIM%=9ô¥€¤ì4(€ô4(€½¹ÍĞÁÉ½‰±•µÌ€ôÙ…±¥‘…Ñ•IÕ¹M¡…Á”¡ÉÕ¸°ì±•…ä°ÁÉ•1•‘•È°ÁÉ•!Á1•‘•Èô¤ì4(€¥˜€¡ÁÉ½‰±•µÌ¹±•¹Ñ ¤Ñ¡É½Ü¹•ÜÉÉ½È¡5…±™½Éµ•ÉÕ¸Í…Ù”è€‘íÁÉ½‰±•µÌ¹©½¥¸ œì€œ¥õ€¤ì4(€¥˜€¡½É¥¥¹…±Y•ÉÍ¥½¸€„ôôIU9}M!5}YIM%=8¤ì4(€€€ÉÕ¸¹µ¥É…Ñ•‘É½µIÕ¹M¡•µ…Y•ÉÍ¥½¸€ô½É¥¥¹…±Y•ÉÍ¥½¸ì4(€€€ÉÕ¸¹Í¡•µ…Y•ÉÍ¥½¸€ôIU9}M!5}YIM%=8ì4(€ô4(€É•ÑÕÉ¸ÉÕ¸ì4)ô4(4)•áÁ½ÉĞ™Õ¹Ñ¥½¸‘•Í•É¥…±¥é•IÕ¸¡©Í½¸¤ì4(€É•ÑÕÉ¸µ¥É…Ñ•IÕ¹M¡•µ„¡)M=8¹Á…ÉÍ”¡©Í½¸¤¤ì4)ô4(4(¼¼€´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´4(¼¼½µ‰…Ğ•¹Ñ¥Ñ¥•Ì€¡¥¹ÍÑ…¹•ÌÉ•™•É•¹”‘•™Ì‰ä¥ƒŠPMAƒ
+œÌ¸Ì¤4(¼¼€´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´´4(4(¼¨¨4(€¨A±…å•È½µ‰…Ğ•¹Ñ¥Ñä¸ÍÑ…ÑÕÍ•ÌèìmÍÑ…ÑÕÍ%‘tèìÍÑ…­Ì°‘ÕÉ…Ñ¥½¸ü°µ•Ñ•Èüôô¸4(€¨4(€¨Á½¥Í•5…á€€¡½ÁÑ¥½¹…°¤ÍÑ…µÁÌÑ¡”Á±…å•ÈÌA½¥Í”Ù•ÍÍ•°ƒŠPÑ¡”I0µ	UPµ5AQd4(€¨Í•…Ğèµ…à¥ÌÑ¡”•ÅÕ¥Áµ•¹Ğ½É•±¥ŒÍÑ…•ÈÑ¡É•Í¡½±€¡É•…Ñ•½µ‰…Ğ‘•É¥Ù•Ì¥Ğ4(€¨™É½´Á±…å•ÉA½¥Í•Q¡É•Í¡½±‘I••¥ÁĞ¤°Ù…±Õ”¥Ì€À…¹!L9<]I%QHƒŠPÑ¡”•¹¥¹”4(€¨‘•…±ÌA½¥Í”‘…µ…”Ñ¼•¹•µ¥•Ì½¹±ä€¡…Ñ¥½¹Ì¹©Ì‘•…±A½¥Í•…µ…”…Ñ•Ì½¸4(€¨­¥¹¤¸Q¡”Ù•ÍÍ•°•á¥ÍÑÌÍ¼Ñ¡”!U…¸Ñ•±°Ñ¡”ÑÉÕÑ ¡”…Í­•Ñ¼Í•”4(€¨€ ‰Á½¥Í”€¡Ù•ÉäÍ­¥¹¹ä‰…È¤Õ¹‘•ÈÑ¡”¡•…±Ñ ‰…Èˆ°ÄÀ¸Ğì€‰Í¡½Õ±…±Í¼•™™•Ğ4(€¨Á±…å•ÈÑ½¼ˆ°ÄÜÄÔ¤ìÑ¡”µ•¡…¹¥ÌÑ¡…Ğİ¥±°½¹”‘…äµ½Ù”Ñ¡”Ù…±Õ”ƒŠP4(€¨ÍÑ…•È°É•Í¥ÍÑ…¹”°Á½¥Í”‘…µ…”……¥¹ÍĞÁ±…å•ÉÌƒŠP…É”½µ‰…Ğ‘•Í¥¸‘•…±Ğ4(€¨•±Í•İ¡•É”…¹‘•±¥‰•É…Ñ•±ä9=P¥¹ÑÉ½‘Õ•‰äÑ¡¥ÌÍ•…Ğ¸€ÀÍÑ…µÁÌ9<µ•Ñ•Èè4(€¨„é•É¼µÑ¡É•Í¡½±Á±…å•È¡…Ì¹¼Ù•ÍÍ•°°…¹Ñ¡”!UÌÉ•™ÕÍ…°Á…Ñ É•¹‘•ÉÌ4(€¨¥Ğ	M9PÉ…Ñ¡•ÈÑ¡…¸…Ì…¸•µÁÑäÑÉ½Õ ¸4(€¨¼4)•áÁ½ÉĞ™Õ¹Ñ¥½¸É•…Ñ•A±…å•É½µ‰…Ñ¹Ñ¥Ñä¡ì±…ÍÍ%°µ…á!À°¡À°µ…á5…¹„°µ…¹„°µ…áMÑ…µ¥¹„€ô€À°ÍÑ…µ¥¹„°É•±¥%‘Ì€ômt°™±…Í­Ì€ômt°™±…Í­¡…É•Ì€ô¹Õ±°°•¹•Éå5…à°‘É…İA•ÉQÕÉ¸°Á½¥Í•5…à€ô€À°‘…µ…•	åM¡½½±‘€ôíôô¤ì4(€¥˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡•¹•Éå5…à¤ñğ•¹•Éå5…à€ğ€À¤Ñ¡É½Ü¹•ÜÉÉ½È A±…å•È½µ‰…Ğ•¹Ñ¥ÑäÉ•ÅÕ¥É•ÌÍÑ…µÁ•¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••È•¹•Éå5…àœ¤ì4(€¥˜€ …9Õµ‰•È¹¥Í%¹Ñ••È¡‘É…İA•ÉQÕÉ¸¤ñğ‘É…İA•ÉQÕÉ¸€ğ€À¤Ñ¡É½Ü¹•ÜÉÉ½È A±…å•È½µ‰…Ğ•¹Ñ¥ÑäÉ•ÅÕ¥É•ÌÍÑ…µÁ•¹½¸µ¹•…Ñ¥Ù”¥¹Ñ••È‘É…İA•ÉQÕÉ¸œ¤ì4(€½¹ÍĞ•¹Ñ¥Ñä€ôì4(€€€¥è€Á±…å•Èœ°4(€€€­¥¹è€Á±…å•Èœ°4(€€€±…ÍÍ%°4(€€€¡Àè¡À€„ô¹Õ±°€ü¡À€èµ…á!À°4(€€€µ…á!À°4(€€€µ…¹„èµ…¹„€„ô¹Õ±°€üµ…¹„€èµ…á5…¹„°4(€€€µ…á5…¹„°4(€€€ÍÑ…µ¥¹„èÍÑ…µ¥¹„€„ô¹Õ±°€üÍÑ…µ¥¹„€èµ…áMÑ…µ¥¹„°4(€€€µ…áMÑ…µ¥¹„°4(€€€‰±½¬è€À°4(€€€•¹•Éäè€À°4(€€€•¹•Éå5…à°4(€€€‘É…İA•ÉQÕÉ¸°4(€€€ÍÑ…ÑÕÍ•Ìèíô°4(€€€ÍÑ…¹•%è¹Õ±°°4(€€€É•±¥%‘Ìèl¸¸¹É•±¥%‘Ít°4(€€€‘…µ…•	åM¡½½±‘è=‰©•Ğ¹™É½µ¹ÑÉ¥•Ì¡5}M!==1L¹µ…À ¡Í¡½½°¤€ôømÍ¡½½°°‘…µ…•	åM¡½½±‘‘mÍ¡½½±tñğ€Át¤¤°4(€€€™±…Í­Ìè™±…Í­Ì¹µ…À ¡˜¤€ôø€¡ì€¸¸¹˜ô¤¤°4(€€€™±…Í­¡…É•Ìè™±…Í­¡…É•Ì€üì€¸¸¹™±…Í­¡…É•Ìô€è¹Õ±°°4(€€€½Õ¹Ñ•ÉÌèì4(€€€€€…É‘ÍA±…å•‘Q¡¥ÍQÕÉ¸è€À°4(€€€€€…É‘ÍA±…å•‘Q¡¥Í½µ‰…Ğè€À°4(€€€€€…ÑÑ…­ÍA±…å•‘Q¡¥Í½µ‰…Ğè€À°4(€€€ô°4(€€€…±¥Ù”èÑÉÕ”°4(€ôì4(€ÍÑ…µÁA±…å•ÉA½¥Í•5…à¡•¹Ñ¥Ñä°Á½¥Í•5…à¤ì4(€É•ÑÕÉ¸•¹Ñ¥Ñäì4)ô4(4(¼¨¨4(€¨ÍÑ…µÁA±…å•ÉA½¥Í•5…à¡•¹Ñ¥Ñä°µ…à¤ƒŠPÑ¡”=9İ…äÑ¡”Á±…å•ÈÌA½¥Í”Ù•ÍÍ•°¥Ì4(€¨€¡É”¥Í¥é•°…Ğ•¹Ñ¥ÑäÉ•…Ñ¥½¸…¹…ĞÑ¡”Í¥¹±”µ¥µ™¥¡Ğ‘½½È•ÅÕ¥Áµ•¹Ğ4(€¨µ½Ù•ÌÑ¡É½Õ €¡‘½Mİ…ÁÉµ…µ•¹Ğ¤¸5…à½¹±äèÑ¡”…ÕµÕ±…Ñ•Ù…±Õ”É¥‘•ÌƒŠP4(€¨Ñ½‘…ä¥Ğ¥Ì…±İ…åÌ€À‰•…ÕÍ”¹½Ñ¡¥¹œİÉ¥Ñ•Ì¥Ğ°…¹Ñ¡¥Ì¡•±Á•ÈµÕÍĞ­••À4(€¨‰•¥¹œÙ…±Õ”µÁÉ•Í•ÉÙ¥¹œÍ¼Ñ¡”™ÕÑÕÉ”İÉ¥Ñ•ÈÌ‰Õ¥±µÕÀÍÕÉÙ¥Ù•Ì„Íİ…À¸4(€¨¹½¸µÁ½Í¥Ñ¥Ù”µ…àI5=YLÑ¡”µ•Ñ•Èè¹¼Ù•ÍÍ•°°Ñ¡”!UÉ•™ÕÍ…°É•¹‘•ÉÌ4(€¨	M9P€¡¹•Ù•È…¸•µÁÑäÑÉ½Õ ¤¸4(€¨¼4)•áÁ½ÉĞ™Õ¹Ñ¥½¸ÍÑ…µÁA±…å•ÉA½¥Í•5…à¡•¹Ñ¥Ñä°µ…à¤ì4(€¥˜€¡9Õµ‰•È¹¥Í%¹Ñ••È¡µ…à¤€˜˜µ…à€ø€À¤ì4(€€€½¹ÍĞÙ…±Õ”€ô•¹Ñ¥Ñä¹Á½¥Í•5•Ñ•È€ü5…Ñ ¹µ…à À°5…Ñ ¹µ¥¸¡•¹Ñ¥Ñä¹Á½¥Í•5•Ñ•È¹Ù…±Õ”°µ…à¤¤€è€Àì4(€€€•¹Ñ¥Ñä¹Á½¥Í•5•Ñ•È€ôìÙ…±Õ”°µ…àôì4(€ô•±Í”ì4(€€€‘•±•Ñ”•¹Ñ¥Ñä¹Á½¥Í•5•Ñ•Èì4(€ô4)ô4(4(¼¨¨4(€¨¹•µä½µ‰…Ğ•¹Ñ¥Ñä¸Á½¥Í•5•Ñ•É€¥ÌÑ¡”•¹¥¹”µ±•Ù•°‰Õ¥±µÕÀµ•Ñ•È™•‰ä4(€¨Ñ¡”Á½¥Í•…µ…”½Á½‘”€¡MAƒ
+œÌ¸Ü°ƒ
+œĞ¸Ğ¤ì•Ù•ÉåÑ¡¥¹œ•±Í”…‰½ÕĞMÑ…•È¥Ì4(€¨½¹Ñ•¹Ğ‘…Ñ„¸4(€¨¼4)•áÁ½ÉĞ™Õ¹Ñ¥½¸É•…Ñ•¹•µå½µ‰…Ñ¹Ñ¥Ñä¡ì¥¹ÍÑ…¹•%°•¹•µå%°¡À°Á½¥Í•5…à°…É…¹•áÁ½ÍÕÉ”°‘…µ…•I•Í¥ÍÑ…¹•	åM¡½½°ô¤ì4(€½¹ÍĞ•¹Ñ¥Ñä€ôì4(€€€¥è¥¹ÍÑ…¹•%°4(€€€­¥¹è€•¹•µäœ°4(€€€•¹•µå%°4(€€€¡À°4(€€€µ…á!Àè¡À°4(€€€‰±½¬è€À°4(€€€ÍÑ…ÑÕÍ•Ìèíô°4(€€€Á½¥Í•5•Ñ•ÈèìÙ…±Õ”è€À°µ…àèÁ½¥Í•5…àô°4(€€€µ½Ù•Í!¥ÍÑ½Éäèmt°4(€€€¥¹Ñ•¹Ğè¹Õ±°°4(€€€Á•¹‘¥¹5½Ù”è¹Õ±°°€¼¼‘•±…å•µµ½Ù”½µµ¥Ñµ•¹Ğèìµ½Ù•%°É•Í½±Ù•=¹QÕÉ¸ô4(€€€Í­¥Á9•áÑQÕÉ¸è™…±Í”°€¼¼Í•Ğ‰ä„Á½¥Í”µµ•Ñ•È™¥±°ì½¹ÍÕµ•‰äÑ¡”•¹•µäÑÕÉ¸4(€€€Õ¹±½­•‘5½Ù•Ìèmt°4(€€€…±¥Ù”èÑÉÕ”°4(€ôì4(€¥˜€¡…É…¹•áÁ½ÍÕÉ”¤•¹Ñ¥Ñä¹…É…¹•áÁ½ÍÕÉ”€ô…É…¹•áÁ½ÍÕÉ”¹µ½‘”€ôôô€½¹™¥ÕÉ•œ4(€€€€üì€¸¸¹ÍÑÉÕÑÕÉ•‘±½¹”¡…É…¹•áÁ½ÍÕÉ”¤°Ù…±Õ”è€Àô4(€€€€èìµ½‘”è€¥µµÕ¹”œôì4(€¥˜€¡‘…µ…•I•Í¥ÍÑ…¹•	åM¡½½°¤•¹Ñ¥Ñä¹‘…µ…•I•Í¥ÍÑ…¹•	åM¡½½°€ôì€¸¸¹‘…µ…•I•Í¥ÍÑ…¹•	åM¡½½°ôì4(€É•ÑÕÉ¸•¹Ñ¥Ñäì4)ô4(
