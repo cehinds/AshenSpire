@@ -424,6 +424,15 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // old live view explicitly, so the Settings control never looks dead.
   const setting = String((((viewer.meta || {}).settings || {}).mapZoom) ?? MAP_ZOOM_DEFAULT);
   const candidate = viewer.viewState;
+  // Fit is a viewport promise, not a portable camera coordinate. A fit solved
+  // on desktop must be recomputed when that run opens on a phone; manual and
+  // saved views remain exact because they are deliberate player choices.
+  const fitViewportMatches = candidate && candidate.framing === 'fit'
+    ? Number.isFinite(candidate.viewportWidth)
+      && Number.isFinite(candidate.viewportHeight)
+      && Math.abs(candidate.viewportWidth - scroll.clientWidth) <= 1
+      && Math.abs(candidate.viewportHeight - scroll.clientHeight) <= 1
+    : true;
   const restored = candidate && candidate.actNumber === act.actNumber
     && candidate.nodeId === (run.mapNodeId || null)
     && candidate.setting === setting
@@ -432,6 +441,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     && Number.isFinite(candidate.scrollLeft) && candidate.scrollLeft >= 0
     && Number.isFinite(candidate.scrollTop) && candidate.scrollTop >= 0
     && Number.isFinite(candidate.aimX)
+    && fitViewportMatches
     ? candidate : null;
   const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
   let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
@@ -533,6 +543,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
   let restorePending = !!restored;
   let viewCommitTimer = null;
+  let pendingViewCommit = null;
+
+  scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
 
   function viewSnapshot() {
     return {
@@ -544,11 +557,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       scrollLeft: scroll.scrollLeft,
       scrollTop: scroll.scrollTop,
       aimX,
+      viewportWidth: scroll.clientWidth,
+      viewportHeight: scroll.clientHeight,
     };
   }
 
-  function emitViewState(commit = false) {
-    if (viewer.onViewStateChange) viewer.onViewStateChange(viewSnapshot(), { commit });
+  function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
   // Applying a content box can add or remove a CLASSIC scrollbar (this
@@ -1083,9 +1098,18 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // exact view the player is looking at.
   scroll.addEventListener('scroll', () => {
     if (viewCommitTimer) clearTimeout(viewCommitTimer);
+    // Freeze both the camera and its node identity NOW. The live run may enter
+    // a reachable node before this debounce fires; reading it in the callback
+    // would mislabel the detached board's old camera as belonging to that node.
+    pendingViewCommit = viewSnapshot();
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
-      emitViewState(true);
+      const snapshot = pendingViewCommit;
+      pendingViewCommit = null;
+      if (snapshot) {
+        scroll.dataset.committedViewNode = snapshot.nodeId || 'entrance';
+        emitViewState(true, snapshot);
+      }
     }, 80);
   }, { passive: true });
 
@@ -1132,6 +1156,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
+    pendingViewCommit = null;
   }
 
   return {

@@ -486,6 +486,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!Number.isFinite(v[key]) || v[key] < 0) problems.push(`mapView.${key} must be a non-negative finite number`);
     }
     if (!Number.isFinite(v.aimX)) problems.push('mapView.aimX must be a finite number');
+    for (const key of ['viewportWidth', 'viewportHeight']) {
+      if (v[key] !== undefined && (!Number.isFinite(v[key]) || v[key] < 0)) {
+        problems.push(`mapView.${key} must be a non-negative finite number when present`);
+      }
+    }
   }
   // A level count is a whole number of purchases and can never be negative. The
   // ALLOCATION check that reads it lives at the load door

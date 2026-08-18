@@ -25150,6 +25150,11 @@ function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger
       if (!Number.isFinite(v[key]) || v[key] < 0) problems.push(`mapView.${key} must be a non-negative finite number`);
     }
     if (!Number.isFinite(v.aimX)) problems.push('mapView.aimX must be a finite number');
+    for (const key of ['viewportWidth', 'viewportHeight']) {
+      if (v[key] !== undefined && (!Number.isFinite(v[key]) || v[key] < 0)) {
+        problems.push(`mapView.${key} must be a non-negative finite number when present`);
+      }
+    }
   }
   // A level count is a whole number of purchases and can never be negative. The
   // ALLOCATION check that reads it lives at the load door
@@ -34114,7 +34119,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '50f870f346';
+const SOURCE = '2326d37bc0';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34148,7 +34153,7 @@ const SOURCE = '50f870f346';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0796';
+const ORDINAL = '0797';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38457,6 +38462,15 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // old live view explicitly, so the Settings control never looks dead.
   const setting = String((((viewer.meta || {}).settings || {}).mapZoom) ?? MAP_ZOOM_DEFAULT);
   const candidate = viewer.viewState;
+  // Fit is a viewport promise, not a portable camera coordinate. A fit solved
+  // on desktop must be recomputed when that run opens on a phone; manual and
+  // saved views remain exact because they are deliberate player choices.
+  const fitViewportMatches = candidate && candidate.framing === 'fit'
+    ? Number.isFinite(candidate.viewportWidth)
+      && Number.isFinite(candidate.viewportHeight)
+      && Math.abs(candidate.viewportWidth - scroll.clientWidth) <= 1
+      && Math.abs(candidate.viewportHeight - scroll.clientHeight) <= 1
+    : true;
   const restored = candidate && candidate.actNumber === act.actNumber
     && candidate.nodeId === (run.mapNodeId || null)
     && candidate.setting === setting
@@ -38465,6 +38479,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     && Number.isFinite(candidate.scrollLeft) && candidate.scrollLeft >= 0
     && Number.isFinite(candidate.scrollTop) && candidate.scrollTop >= 0
     && Number.isFinite(candidate.aimX)
+    && fitViewportMatches
     ? candidate : null;
   const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
   let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
@@ -38566,6 +38581,9 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   let aimX = restored ? restored.aimX : (inkBox.x0 + inkBox.x1) / 2;
   let restorePending = !!restored;
   let viewCommitTimer = null;
+  let pendingViewCommit = null;
+
+  scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
 
   function viewSnapshot() {
     return {
@@ -38577,11 +38595,13 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       scrollLeft: scroll.scrollLeft,
       scrollTop: scroll.scrollTop,
       aimX,
+      viewportWidth: scroll.clientWidth,
+      viewportHeight: scroll.clientHeight,
     };
   }
 
-  function emitViewState(commit = false) {
-    if (viewer.onViewStateChange) viewer.onViewStateChange(viewSnapshot(), { commit });
+  function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
   // Applying a content box can add or remove a CLASSIC scrollbar (this
@@ -39116,9 +39136,18 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   // exact view the player is looking at.
   scroll.addEventListener('scroll', () => {
     if (viewCommitTimer) clearTimeout(viewCommitTimer);
+    // Freeze both the camera and its node identity NOW. The live run may enter
+    // a reachable node before this debounce fires; reading it in the callback
+    // would mislabel the detached board's old camera as belonging to that node.
+    pendingViewCommit = viewSnapshot();
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
-      emitViewState(true);
+      const snapshot = pendingViewCommit;
+      pendingViewCommit = null;
+      if (snapshot) {
+        scroll.dataset.committedViewNode = snapshot.nodeId || 'entrance';
+        emitViewState(true, snapshot);
+      }
     }, 80);
   }, { passive: true });
 
@@ -39165,6 +39194,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
+    pendingViewCommit = null;
   }
 
   return {

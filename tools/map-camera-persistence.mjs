@@ -113,6 +113,10 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         maxScrollTop: Math.max(0, port.scrollHeight - port.clientHeight),
         viewBox: svg.getAttribute('viewBox'),
         width: svg.style.width,
+        viewportWidth: port.clientWidth,
+        viewportHeight: port.clientHeight,
+        framing: port.dataset.framing,
+        cameraRestore: port.dataset.cameraRestore,
       };
     })()`);
 
@@ -188,6 +192,67 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         writeFileSync(out, Buffer.from(png.data, 'base64'));
       }
     }
+
+    // Fit is computed from viewport geometry. Prove that a desktop Fit is not
+    // treated as a portable camera when the same run remounts on a phone.
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1200, height: 730, deviceScaleFactor: 1, mobile: false,
+    }, sessionId);
+    await cdp.send('Page.navigate', {
+      url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
+    }, sessionId);
+    await waitFor('desktop fit camera', `(() => {
+      const port = document.querySelector('.map-scroll');
+      return !!(port && port.dataset.framing && port.dataset.cameraRestore);
+    })()`);
+    await wait(220);
+    const desktopFit = await readState();
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+    }, sessionId);
+    await evaluate(`document.querySelector('#open-armoury').click()`);
+    await waitFor('cross-viewport Armaments overlay', `!!document.querySelector('.armoury-overlay')`);
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
+    }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', {
+      type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
+    }, sessionId);
+    await waitFor('phone map after cross-viewport remount', `(() => {
+      const port = document.querySelector('.map-scroll');
+      return !document.querySelector('.armoury-overlay') && !!(port && port.dataset.cameraRestore);
+    })()`);
+    await wait(220);
+    const phoneFit = await readState();
+    results.fitViewport = {
+      pass: desktopFit.viewportWidth > phoneFit.viewportWidth
+        && phoneFit.cameraRestore === 'recomputed'
+        && phoneFit.framing === 'fit',
+      before: desktopFit,
+      after: phoneFit,
+    };
+
+    // Race the scroll debounce against a real reachable-node transition. The
+    // delayed old-board save must retain the node identity it was scheduled on.
+    const race = await evaluate(`(() => {
+      const port = document.querySelector('.map-scroll');
+      const from = (document.querySelector('.map-node.current') || {}).dataset?.node || null;
+      const target = document.querySelector('.map-node.reachable');
+      if (!port || !target) return null;
+      window.__mapRacePort = port;
+      port.scrollTop = Math.min(Math.max(0, port.scrollHeight - port.clientHeight), port.scrollTop + 12);
+      port.dispatchEvent(new Event('scroll'));
+      const to = target.dataset.node;
+      target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return { from, to };
+    })()`);
+    await wait(180);
+    const committedViewNode = await evaluate(`window.__mapRacePort?.dataset.committedViewNode || null`);
+    results.debounceRace = {
+      pass: !!(race && committedViewNode === (race.from || 'entrance')),
+      race,
+      committedViewNode,
+    };
   } finally {
     cdp.close();
     await launched.close();
@@ -212,6 +277,28 @@ async function selftest() {
     const caught = planted.every((row) => !row.pass && (!row.zoomHeld || !row.panHeld));
     console.log(`map-camera selftest: ${caught ? 'GREEN' : 'RED'} - dropped run view state caught at ${planted.filter((r) => !r.pass).length}/${planted.length} viewports`);
     if (!caught) process.exitCode = 1;
+
+    // Two review-found ownership seams, planted together so one browser run
+    // proves both outcome arms can go red without tripling the gate's runtime.
+    writeFileSync(screenPath, clean);
+    const boardPath = resolve(tempRoot, 'src/ui/components/mapboard.js');
+    const board = readFileSync(boardPath, 'utf8');
+    const fitSeam = '    && fitViewportMatches\n';
+    const raceSeam = '      const snapshot = pendingViewCommit;\n';
+    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
+    if (!board.includes(fitSeam) || !board.includes(raceSeam) || !board.includes(nodeSeam)) {
+      throw new Error('selftest plant refused: viewport or debounce ownership seam is absent');
+    }
+    writeFileSync(boardPath, board
+      .replace(fitSeam, '')
+      .replace(raceSeam, '      const snapshot = viewSnapshot();\n')
+      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id); });"));
+    const ownership = await runProbe(tempRoot, { screenshots: false });
+    const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;
+    const raceCaught = ownership.debounceRace && !ownership.debounceRace.pass;
+    console.log(`map-camera ownership selftest: ${fitCaught && raceCaught ? 'GREEN' : 'RED'} - `
+      + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}`);
+    if (!fitCaught || !raceCaught) process.exitCode = 1;
   } finally {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
@@ -229,6 +316,17 @@ if (SELFTEST) {
       + `[${row.after.scrollLeft.toFixed(1)},${row.after.scrollTop.toFixed(1)}]`);
     if (!row.pass) failures++;
   }
-  console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${results.length - failures}/${results.length})`);
+  const fit = results.fitViewport;
+  console.log(`${fit && fit.pass ? 'PASS' : 'FAIL'} fit viewport ownership: `
+    + `${fit ? fit.before.viewportWidth : '?'} -> ${fit ? fit.after.viewportWidth : '?'}; `
+    + `restore=${fit ? fit.after.cameraRestore : '?'}`);
+  if (!fit || !fit.pass) failures++;
+  const race = results.debounceRace;
+  console.log(`${race && race.pass ? 'PASS' : 'FAIL'} debounced node ownership: `
+    + `${race ? race.race?.from : '?'} -> ${race ? race.race?.to : '?'}; `
+    + `committed view=${race ? race.committedViewNode : '?'}`);
+  if (!race || !race.pass) failures++;
+  const total = results.length + 2;
+  console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }
