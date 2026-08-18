@@ -639,6 +639,15 @@ button.rs-reset {
   justify-content: center;
   justify-content: safe center;
   gap: 1.8rem; padding: 2.4rem;
+  /* #29: when this container really travels, the edge says so in product
+     colours rather than inheriting an OS-dependent thumb. `auto` still means
+     no track at zero travel; the focused camera proves both endpoints. */
+  scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.screen::-webkit-scrollbar { width: 1.2rem; height: 1.2rem; }
+.screen::-webkit-scrollbar-thumb {
+  background: var(--line); border-radius: 6px; border: 3px solid transparent;
+  background-clip: padding-box;
 }
 .screen .title-big { font-size: 4.4rem; color: var(--gold); text-align: center; text-shadow: 0 0 40px rgba(201, 162, 39, 0.35); }
 .screen .subtitle { color: var(--muted); letter-spacing: 0.3em; font-size: 1.2rem; }
@@ -848,14 +857,13 @@ button.rs-reset {
    shrinks: `.card` keeps `flex-shrink: 0`, so clause 4's "fits by squeezing"
    trap cannot fire — measured, cards 126x176.4 local px before and after.
 
-   `#shop-cards` IS CARVED OUT AND KEEPS THE OLD RULE VERBATIM, and the carve
-   is a boundary, not a fork: the shop's 397-403px red is Sten's act, dated on
-   Bjorn's axisfit board, and a wrap landing on his container from my commit
-   would half-recompose a screen he owns. Same declarations, same computed
-   style, shop pixels untouched by construction. REMOVAL: fold these two rules
-   back into one the day Sten's shop composition lands — a carve-out that
-   outlives its reason is a second copy wearing a boundary's name. */
-  :root[data-layout='narrow'] #shop-cards.reward-row { overflow-x: auto; max-width: 100%; }
+   `#shop-cards` USED TO KEEP THE OLD HORIZONTAL SCROLLPORT here while its
+   composition was owned elsewhere. That dependency is resolved and the shelf
+   wraps below. Keeping `overflow-x:auto` after the wrap made overflow-y compute
+   to auto too and trapped the scaled cost tag 2px past that inner port's final
+   endpoint at 360x640. The remaining `max-width` is the bound the wrap needs;
+   the generic `.screen` above owns any honest vertical travel and its cue. */
+  :root[data-layout='narrow'] #shop-cards.reward-row { max-width: 100%; }
   :root[data-layout='narrow'] .reward-row:not(#shop-cards) { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
