@@ -6,11 +6,28 @@
 // both endings, and Text XL pager geometry. `--selftest` plants each accepted
 // defect back through this same browser door.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// A Windows checkout may materialize source files as CRLF while this tool's JS
+// string literals use LF. Derive each multiline plant's separator from the file
+// it will edit, so the same known-bad corpus remains armed in both checkout
+// forms instead of reporting PLANT SITE DRIFTED before the browser ever runs.
+const lines = (file, ...rows) => {
+  const bytes = readFileSync(join(ROOT, file), 'utf8');
+  // Some long-lived Windows worktrees are mixed-EOL after generated-file
+  // normalization. Match the actual block first; only use the file-wide style
+  // as the fallback for replacement text that does not yet exist.
+  for (const eol of ['\r\n', '\n']) {
+    const candidate = rows.join(eol);
+    if (bytes.includes(candidate)) return candidate;
+  }
+  return rows.join(bytes.includes('\r\n') ? '\r\n' : '\n');
+};
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -21,44 +38,49 @@ if (process.argv.includes('--selftest')) {
     plants: [{
       name: 'illegal-drop cleanup is removed, leaving the targeting state armed',
       file: 'src/ui/screens/combat.js',
-      find: '          clearDragTargeting();\n          if (dragGhost)',
-      replace: '          /* planted: #198 cleanup omitted */\n          if (dragGhost)',
+      find: lines('src/ui/screens/combat.js', '          clearDragTargeting();', '          if (dragGhost)'),
+      replace: lines('src/ui/screens/combat.js', '          /* planted: #198 cleanup omitted */', '          if (dragGhost)'),
       expectRed: /FAIL illegal drop clears every drag marker/,
     }, {
       name: 'single-target drag lights every enemy instead of only the nearest',
       file: 'src/ui/screens/combat.js',
-      find: "        const nearest = inField ? nearestEnemy(x, y) : null;\n        showDragAims(nearest ? [nearest] : []);\n        legal = !!nearest;",
-      replace: "        const nearest = inField ? nearestEnemy(x, y) : null;\n        showDragAims(inField ? livingEnemyEls() : []);\n        legal = !!nearest;",
+      find: lines('src/ui/screens/combat.js', '        const nearest = inField ? nearestEnemy(x, y) : null;', '        showDragAims(nearest ? [nearest] : []);', '        legal = !!nearest;'),
+      replace: lines('src/ui/screens/combat.js', '        const nearest = inField ? nearestEnemy(x, y) : null;', '        showDragAims(inField ? livingEnemyEls() : []);', '        legal = !!nearest;'),
       expectRed: /FAIL single-target sweep keeps exactly one nearest red aim and switches across enemies/,
     }, {
       name: 'multi-target drag lights only one enemy instead of every legal enemy',
       file: 'src/ui/screens/combat.js',
-      find: "        showDragAims(enemies);\n        legal = enemies.length > 0;",
-      replace: "        showDragAims(enemies.slice(0, 1));\n        legal = enemies.length > 0;",
+      find: lines('src/ui/screens/combat.js', '        showDragAims(enemies);', '        legal = enemies.length > 0;'),
+      replace: lines('src/ui/screens/combat.js', '        showDragAims(enemies.slice(0, 1));', '        legal = enemies.length > 0;'),
       expectRed: /FAIL multi-target drag reuses red aim on every living enemy/,
     }, {
       name: 'non-targeting drag incorrectly paints enemy aim silhouettes',
       file: 'src/ui/screens/combat.js',
-      find: "      } else {\n        showDragAims([]);\n      }\n      const state = legal ? 'legal' : 'illegal';",
-      replace: "      } else {\n        showDragAims(inField ? livingEnemyEls() : []);\n      }\n      const state = legal ? 'legal' : 'illegal';",
+      find: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims([]);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
+      replace: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims(inField ? livingEnemyEls() : []);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
       expectRed: /FAIL non-targeting drag produces no enemy aim/,
     }, {
       name: 'narrow pager is restored to rem-sized offsets that clip at Text XL',
       file: 'styles/combat.css',
-      find: "  :root[data-layout='narrow'] .hand-prev {\n    grid-area: prev; position: static; align-self: center;\n  }\n  :root[data-layout='narrow'] .hand-next {\n    grid-area: next; position: static; align-self: center;\n  }",
-      replace: "  :root[data-layout='narrow'] .hand-prev { left: calc(50% - 20rem); }\n  :root[data-layout='narrow'] .hand-next { right: calc(50% - 20rem); }",
+      find: lines('styles/combat.css', "  :root[data-layout='narrow'] .hand-prev {", '    grid-area: prev; position: static; align-self: center;', '  }', "  :root[data-layout='narrow'] .hand-next {", '    grid-area: next; position: static; align-self: center;', '  }'),
+      replace: lines('styles/combat.css', "  :root[data-layout='narrow'] .hand-prev { left: calc(50% - 20rem); }", "  :root[data-layout='narrow'] .hand-next { right: calc(50% - 20rem); }"),
       expectRed: /FAIL hand paging controls stay inside the viewport/,
     }, {
       name: 'wide pager lift is removed so Next collides with Text XL End Turn',
       file: 'styles/combat.css',
-      find: ":root:not([data-layout='narrow']) .hand-page {\n  bottom: calc(8.2rem + var(--tap-floor));\n}",
-      replace: ":root:not([data-layout='narrow']) .hand-page {\n  /* planted: Text XL lift omitted */\n}",
+      find: lines('styles/combat.css', ":root:not([data-layout='narrow']) .hand-page {", '  bottom: calc(8.2rem + var(--tap-floor));', '}'),
+      replace: lines('styles/combat.css', ":root:not([data-layout='narrow']) .hand-page {", '  /* planted: Text XL lift omitted */', '}'),
       expectRed: /FAIL paging controls overlap neither cards nor combat controls/,
+    }, {
+      name: 'narrow combat chrome is pushed below the viewport',
+      file: 'styles/combat.css',
+      find: '.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }',
+      replace: '.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }',
+      expectRed: /FAIL combat chrome stays inside the viewport/,
     }],
   }));
 }
 
-const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [
   process.env.CHROME,
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
@@ -158,6 +180,21 @@ async function main() {
       const controls = await ev(`(() => { const hs=[...document.querySelectorAll('.hand-page')]; return {n:hs.length, labels:hs.map(x=>x.getAttribute('aria-label')), rects:hs.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}), on:hs.every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})}; })()`);
       ok(controls.n === 2 && controls.labels.every(Boolean), 'approved previous/next controls exist and are named', JSON.stringify(controls));
       ok(controls.on, 'hand paging controls stay inside the viewport');
+      const containment = await ev(`(() => {
+        const box=x=>{const r=x.getBoundingClientRect();return {name:x.className,left:r.left,top:r.top,right:r.right,bottom:r.bottom}};
+        const named=[...document.querySelectorAll('.hand-page,.energy-orb,.end-turn,.pile')]
+          .filter(x=>getComputedStyle(x).display!=='none').map(box);
+        const handArea=box(document.querySelector('.hand-area'));
+        const hand=box(document.querySelector('.hand'));
+        const cards=[...document.querySelectorAll('.hand .card')].map(box);
+        const inside=r=>r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;
+        const verticallyInside=r=>r.top>=0&&r.bottom<=innerHeight;
+        const failures=[...named.filter(r=>!inside(r)),
+          ...[handArea,hand].filter(r=>!inside(r)), ...cards.filter(r=>!verticallyInside(r))];
+        return {ok:failures.length===0, viewport:{width:innerWidth,height:innerHeight}, failures, named, handArea, hand,
+          cards:cards.map(({name,top,bottom})=>({name,top,bottom}))};
+      })()`);
+      ok(containment.ok, 'combat chrome stays inside the viewport', JSON.stringify(containment));
       const overlap = await ev(`(() => {
         const hit=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
         const box=x=>{const r=x.getBoundingClientRect();return {name:x.className,left:r.left,top:r.top,right:r.right,bottom:r.bottom}};
@@ -230,7 +267,12 @@ async function main() {
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat reset'); await wait(350);
       const card2 = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Shield Defend/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
       const enemy2 = await point('.enemy:not(.dead)');
-      const bad = await point('.topbar'); const beforeBad = await state();
+      // The invalid edge is defined against the drop surface itself, not another
+      // component's centre. The final viewport pixel is always in the reserved
+      // hand/footer band and therefore outside `.field`, at every measured
+      // composition; that remains true even when the battlefield yields height.
+      const bad = await ev(`({x:Math.max(1,innerWidth/2),y:Math.max(1,innerHeight-2)})`);
+      const beforeBad = await state();
       await mouse('mousePressed', card2.x, card2.y, true);
       await mouse('mouseMoved', card2.x, card2.y - 30, true);
       await mouse('mouseMoved', enemy2.x, enemy2.y, true); await wait(120);
