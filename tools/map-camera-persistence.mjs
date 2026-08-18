@@ -282,7 +282,11 @@ async function selftest() {
     // proves both outcome arms can go red without tripling the gate's runtime.
     writeFileSync(screenPath, clean);
     const boardPath = resolve(tempRoot, 'src/ui/components/mapboard.js');
-    const board = readFileSync(boardPath, 'utf8');
+    const board = readFileSync(boardPath, 'utf8').replace(/\r\n/g, '\n');
+    // A normal Windows checkout may materialize authored JS as CRLF, and an
+    // interrupted edit can even leave mixed endings. The disposable mutation
+    // copy is normalized before matching so plants describe source meaning,
+    // not a checkout's newline bytes.
     const fitSeam = '    && fitViewportMatches\n';
     const raceSeam = '      const snapshot = pendingViewCommit;\n';
     const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
