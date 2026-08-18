@@ -3524,7 +3524,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* ---------- battlefield ---------- */
 /* The combatants sit ON the backdrop, so the field is a positioned layer above
    it and the rows are pulled up out of the old dead space at the top. */
-.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+/* The battlefield is the flexible row between two intrinsic bands. Its default
+   flex min-height is its combatants' min-content height. At 320x640 and
+   1200x730 with Text XL that prevented it from yielding a single pixel and
+   pushed the hand/card band below the viewport. Let this one flexible row
+   yield; combatants stay bottom-aligned and keep their authored sizes, while
+   the fixed player controls remain on glass. */
+.field { flex: 1; min-height: 0; display: flex; align-items: stretch; position: relative; z-index: 1; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
   padding-bottom: 2.6rem; gap: 0.6rem;
@@ -34155,7 +34161,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9a1637a511';
+const SOURCE = 'dac0f12a6f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34189,7 +34195,7 @@ const SOURCE = '9a1637a511';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0796';
+const ORDINAL = '0797';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
