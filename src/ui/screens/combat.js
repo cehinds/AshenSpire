@@ -76,13 +76,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       </div>
       <div class="hand-area">
         <div class="energy-orb"></div>
+        <button class="hand-page hand-prev" type="button" data-focusable
+          aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
         <!-- The strip itself — cards, fan, key hints, the inspect hold, the
              overlap arm and the Law 5 exemption — is components/hand.js, THE
              one hand renderer (both surfaces; the exemption's home is
              src/ui/handAxis.js). This screen supplies only the viewer half:
              live previewCard entries off the paced snapshot, and the local
              dispatch wiring (wireCardInput). -->
-        <div class="hand"></div>
+        <div class="hand" id="combat-hand"></div>
+        <button class="hand-page hand-next" type="button" data-focusable
+          aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         <button class="end-turn">END TURN</button>
       </div>
       <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -749,6 +753,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     });
   }
 
+  // F1's previous/next controls move the real focus cursor through the real
+  // hand. They do not select or play a card; every input reaches this click and
+  // the card keeps its existing Confirm semantics.
+  function stepHand(delta) {
+    const cards = [...app.querySelectorAll('.hand .card')];
+    if (!cards.length) return;
+    let at = cards.findIndex((card) => card.classList.contains('gp-focus'));
+    if (at < 0) at = cards.findIndex((card) => card.classList.contains('selected'));
+    const next = at < 0 ? (delta > 0 ? 0 : cards.length - 1) : (at + delta + cards.length) % cards.length;
+    cards[next].dataset.pageTarget = '';
+    focusFirst('.hand .card[data-page-target]');
+    delete cards[next].dataset.pageTarget;
+    cards[next].scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  }
+
   function isUnplayable(inst) {
     return (resolveCard(registries, inst).keywords || []).includes('unplayable');
   }
@@ -791,6 +810,35 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     let startX = 0;
     let startY = 0;
 
+    const clearDragTargeting = () => {
+      combatEl.classList.remove('drag-targeting');
+      combatEl.removeAttribute('data-drop-state');
+      app.querySelectorAll('[data-drop-state]').forEach((node) => node.removeAttribute('data-drop-state'));
+    };
+
+    const beginDragTargeting = () => {
+      clearDragTargeting();
+      combatEl.classList.add('drag-targeting');
+      if (pv.needsTarget) {
+        app.querySelectorAll('.enemy:not(.dead)').forEach((enemy) => enemy.dataset.dropState = 'legal');
+      } else {
+        $('.field').dataset.dropState = 'legal';
+      }
+    };
+
+    const updateDropTarget = (x, y) => {
+      if (!dragGhost) return;
+      const under = document.elementFromPoint(x, y);
+      const legal = pv.needsTarget
+        ? !!(under && under.closest && under.closest('.enemy:not(.dead)'))
+        : !!(under && under.closest && under.closest('.field'));
+      const state = legal ? 'legal' : 'illegal';
+      combatEl.dataset.dropState = state;
+      dragGhost.dataset.dropState = state;
+      const verdict = dragGhost.querySelector('.drop-verdict');
+      if (verdict) verdict.textContent = legal ? 'DROP' : 'NO TARGET';
+    };
+
     el.addEventListener('pointerdown', (ev) => {
       if (busy || !affordable || ev.button !== 0) return;
       startX = ev.clientX;
@@ -812,8 +860,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           dragging = true;
           hideTooltip();
           dragGhost = el.cloneNode(true);
-          dragGhost.style.cssText += 'position:fixed;z-index:600;pointer-events:none;opacity:.9;transform:scale(1.1);';
+          dragGhost.classList.add('card-drag-ghost');
+          dragGhost.setAttribute('aria-hidden', 'true');
+          const verdict = document.createElement('span');
+          verdict.className = 'drop-verdict';
+          verdict.textContent = 'NO TARGET';
+          dragGhost.appendChild(verdict);
+          // The pointer still owns the established 70x100 grip, but the card is
+          // translucent enough that the target beneath it remains readable.
+          dragGhost.style.cssText += 'position:fixed;z-index:600;pointer-events:none;opacity:.58;transform:scale(1.1);';
           document.body.appendChild(dragGhost);
+          beginDragTargeting();
         }
         if (dragging && dragGhost) {
           // Container: THE VIEWPORT. The ghost is `position: fixed` and tracks the
@@ -832,11 +889,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           const p = clampBox({ left: at.left - 70, top: at.top - 100, width: g.width, height: g.height }, view, { keep: 40 });
           dragGhost.style.left = `${p.left}px`;
           dragGhost.style.top = `${p.top}px`;
+          updateDropTarget(mv.clientX, mv.clientY);
         }
       };
       trackGesture(ev, {
         onMove,
         onEnd: (up, { cancelled }) => {
+          clearDragTargeting();
           if (dragGhost) { dragGhost.remove(); dragGhost = null; }
           const wasDragging = dragging;
           dragging = false;
@@ -1188,6 +1247,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   $('.pile.draw').addEventListener('click', showDraw);
   $('.pile.discard').addEventListener('click', showDiscard);
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
+  $('.hand-prev').addEventListener('click', () => stepHand(-1));
+  $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   //
   // Under the quick-nav experiment ☰ opens the list instead. Combat is the
