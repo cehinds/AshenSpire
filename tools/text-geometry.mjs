@@ -39,11 +39,32 @@ if (process.argv.includes('--selftest')) {
         expectRed: /action floor changed with Text size/,
       },
       {
-        name: 'sprite dimensions are emitted as rem again',
+        name: 'enemy sprite dimensions are emitted as rem again',
         file: 'src/ui/assets.js',
         find: 'const px = (value) => `${value}px`;',
         replace: 'const px = (value) => `${value / 10}rem`;',
-        expectRed: /sprite geometry changed with Text size/,
+        expectRed: /enemy sprite geometry changed with Text size/,
+      },
+      {
+        name: 'the customization class sprite returns to rem geometry',
+        file: 'src/ui/assets.js',
+        find: "el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
+        replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;';",
+        expectRed: /class sprite geometry changed with Text size/,
+      },
+      {
+        name: 'the equipped combat player sprite returns to rem geometry',
+        file: 'src/ui/assets.js',
+        find: "el.style.cssText = 'width:150px;height:190px;flex:0 0 auto;position:relative;';",
+        replace: "el.style.cssText = 'width:15rem;height:19rem;flex:0 0 auto;position:relative;';",
+        expectRed: /player sprite geometry changed with Text size/,
+      },
+      {
+        name: 'the quick-nav tap floor becomes a hard ceiling around Text XL',
+        file: 'styles/ui.css',
+        find: "  width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;",
+        replace: '  width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;',
+        expectRed: /quick-nav button clips its Text XL glyph/,
       },
       {
         name: 'the ergonomic floor falls below 44 px on glass',
@@ -157,6 +178,7 @@ async function main() {
     const values = { M: balance.ui.textSize.M, XL: balance.ui.textSize.XL };
     const viewports = [[390, 844], [412, 915]];
     const rows = {};
+    let quickExtreme;
     for (const [width, height] of viewports) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
         width, height, deviceScaleFactor: 1, mobile: true,
@@ -174,10 +196,15 @@ async function main() {
           const n = (v) => +Number(v).toFixed(2);
           const action = document.querySelector('#cz-start');
           const ar = action.getBoundingClientRect();
+          const classSprite = document.querySelector('.class-sprite');
+          const cr = classSprite.getBoundingClientRect();
+          const classCss = getComputedStyle(classSprite);
           return {
             font: n(parseFloat(getComputedStyle(action).fontSize)),
             actionMinH: n(parseFloat(getComputedStyle(action).minHeight)),
             actionW: n(ar.width), actionH: n(ar.height),
+            classW: n(cr.width), classH: n(cr.height),
+            classCssW: n(parseFloat(classCss.width)), classCssH: n(parseFloat(classCss.height)),
             layout: document.documentElement.dataset.layout || '',
           };
         })()`);
@@ -188,22 +215,49 @@ async function main() {
           writeFileSync(path, Buffer.from(shot.data, 'base64'));
         }
         await cdp.send('Page.navigate', { url: pageUrl({ shot: 'combat' }) }, sessionId);
-        await until(`!!document.querySelector('.combatant.enemy .sprite > :first-child')`, `${viewport} Text ${key} combat sprite`);
+        await until(`!!document.querySelector('.combatant.enemy .sprite > :first-child') && !!document.querySelector('.combatant.player .sprite .class-sprite')`, `${viewport} Text ${key} combat sprites`);
         await evalIn(`document.documentElement.style.fontSize=${JSON.stringify(value)}; true`);
         await wait(300);
         const sprite = await evalIn(`(() => {
           const n = (v) => +Number(v).toFixed(2);
-          const el = document.querySelector('.combatant.enemy .sprite > :first-child');
-          const rect = el.getBoundingClientRect();
-          const css = getComputedStyle(el);
+          const read = (selector, prefix) => {
+            const el = document.querySelector(selector);
+            const rect = el.getBoundingClientRect();
+            const css = getComputedStyle(el);
+            return {
+              [prefix + 'W']: n(rect.width), [prefix + 'H']: n(rect.height),
+              [prefix + 'CssW']: n(parseFloat(css.width)), [prefix + 'CssH']: n(parseFloat(css.height)),
+            };
+          };
           return {
-            spriteW: n(rect.width), spriteH: n(rect.height),
-            spriteCssW: n(parseFloat(css.width)), spriteCssH: n(parseFloat(css.height)),
+            ...read('.combatant.enemy .sprite > :first-child', 'enemy'),
+            ...read('.combatant.player .sprite .class-sprite', 'player'),
           };
         })()`);
         rows[viewport][key] = { ...action, ...sprite };
       }
     }
+
+    await cdp.send('Emulation.setDeviceMetricsOverride', {
+      width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false,
+    }, sessionId);
+    const quickSettings = JSON.stringify({ textSize: 'XL', uiScale: 'XL', tapFloor: '24', quickNav: 'mirror' });
+    await cdp.send('Page.navigate', { url: pageUrl({ shot: 'map', shotSettings: quickSettings }) }, sessionId);
+    await until(`!!document.querySelector('.topbar .topbar-btn')`, '1920x1080 tap 24 + Text XL + UI XL quick-nav button');
+    await wait(300);
+    quickExtreme = await evalIn(`(() => {
+      const n = (v) => +Number(v).toFixed(2);
+      const el = document.querySelector('.topbar .topbar-btn');
+      const rect = el.getBoundingClientRect();
+      const css = getComputedStyle(el);
+      const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+      return {
+        quickW: n(rect.width), quickH: n(rect.height),
+        quickClientW: n(el.clientWidth * zoom), quickClientH: n(el.clientHeight * zoom),
+        quickScrollW: n(el.scrollWidth * zoom), quickScrollH: n(el.scrollHeight * zoom),
+        quickFont: n(parseFloat(css.fontSize) * zoom), quickZoom: n(zoom),
+      };
+    })()`);
 
     const close = (a, b) => Math.abs(a - b) <= 0.5;
     const failures = [];
@@ -213,11 +267,13 @@ async function main() {
       '.cz-actions button { min-height: var(--tap-floor); height: auto; }',
       'min-height: var(--tap-floor); height: auto; padding: 0 1.6rem;',
       'min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;',
-      'width: var(--tap-floor); height: var(--tap-floor); font-size: 1.8rem;',
+      'width: auto; height: auto;\n  min-width: var(--tap-floor); min-height: var(--tap-floor); font-size: 1.8rem;',
     ]) {
       if (!ui.includes(seam)) failures.push(`source ownership seam missing: ${seam}`);
     }
     if (!assets.includes('const px = (value) => `${value}px`;')) failures.push('source ownership seam missing: sprite px emitter');
+    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;display:flex;align-items:flex-end;justify-content:center;position:relative;")) failures.push('source ownership seam missing: class sprite fixed px geometry');
+    if (!assets.includes("width:150px;height:190px;flex:0 0 auto;position:relative;")) failures.push('source ownership seam missing: equipped player sprite fixed px geometry');
 
     for (const [viewport, profile] of Object.entries(rows)) {
       const { M, XL } = profile;
@@ -228,19 +284,28 @@ async function main() {
       if (!close(M.actionMinH, XL.actionMinH)) {
         failures.push(`${viewport}: action floor changed with Text size: M ${M.actionMinH}px, XL ${XL.actionMinH}px`);
       }
-      if (!close(M.spriteW, XL.spriteW) || !close(M.spriteH, XL.spriteH)
-        || !close(M.spriteCssW, XL.spriteCssW) || !close(M.spriteCssH, XL.spriteCssH)) {
-        failures.push(`${viewport}: sprite geometry changed with Text size: M rendered ${M.spriteW}×${M.spriteH}px / CSS ${M.spriteCssW}×${M.spriteCssH}px, XL rendered ${XL.spriteW}×${XL.spriteH}px / CSS ${XL.spriteCssW}×${XL.spriteCssH}px`);
+      for (const [name, prefix] of [['class', 'class'], ['player', 'player'], ['enemy', 'enemy']]) {
+        if (!close(M[`${prefix}W`], XL[`${prefix}W`]) || !close(M[`${prefix}H`], XL[`${prefix}H`])
+          || !close(M[`${prefix}CssW`], XL[`${prefix}CssW`]) || !close(M[`${prefix}CssH`], XL[`${prefix}CssH`])) {
+          failures.push(`${viewport}: ${name} sprite geometry changed with Text size: M rendered ${M[`${prefix}W`]}×${M[`${prefix}H`]}px / CSS ${M[`${prefix}CssW`]}×${M[`${prefix}CssH`]}px, XL rendered ${XL[`${prefix}W`]}×${XL[`${prefix}H`]}px / CSS ${XL[`${prefix}CssW`]}×${XL[`${prefix}CssH`]}px`);
+        }
       }
+    }
+    if (quickExtreme.quickW + 0.5 < quickExtreme.quickFont || quickExtreme.quickH + 0.5 < quickExtreme.quickFont) {
+      failures.push(`1920x1080: quick-nav button clips its Text XL glyph: ${quickExtreme.quickW}×${quickExtreme.quickH}px button around ${quickExtreme.quickFont}px glyph at UI zoom ${quickExtreme.quickZoom}`);
+    }
+    if (quickExtreme.quickScrollW > quickExtreme.quickClientW + 0.5 || quickExtreme.quickScrollH > quickExtreme.quickClientH + 0.5) {
+      failures.push(`1920x1080: quick-nav button clips its Text XL glyph: scroll ${quickExtreme.quickScrollW}×${quickExtreme.quickScrollH}px exceeds client ${quickExtreme.quickClientW}×${quickExtreme.quickClientH}px at UI zoom ${quickExtreme.quickZoom}`);
     }
 
     console.log(`text-geometry — ${artifact ? `artifact ${artifact}` : 'source'}`);
     for (const [viewport, profile] of Object.entries(rows)) {
       console.log(`  ${viewport}`);
       for (const [key, r] of Object.entries(profile)) {
-        console.log(`    Text ${key}: font ${r.font}px · action ${r.actionW}×${r.actionH}px (floor ${r.actionMinH}px) · sprite rendered ${r.spriteW}×${r.spriteH}px · sprite CSS ${r.spriteCssW}×${r.spriteCssH}px · ${r.layout}`);
+        console.log(`    Text ${key}: font ${r.font}px · action ${r.actionW}×${r.actionH}px (floor ${r.actionMinH}px) · class ${r.classW}×${r.classH}px · player ${r.playerW}×${r.playerH}px · enemy ${r.enemyW}×${r.enemyH}px · ${r.layout}`);
       }
     }
+    console.log(`  1920x1080 · tap 24 + Text XL + UI XL: quick-nav ${quickExtreme.quickW}×${quickExtreme.quickH}px around ${quickExtreme.quickFont}px glyph · client ${quickExtreme.quickClientW}×${quickExtreme.quickClientH}px · scroll ${quickExtreme.quickScrollW}×${quickExtreme.quickScrollH}px · ui zoom ${quickExtreme.quickZoom}`);
     if (shotBase) console.log(`  screenshots: ${shotBase}-{m,xl}-{390x844,412x915}.png`);
     if (failures.length) {
       for (const failure of failures) console.error(`  RED — ${failure}`);
