@@ -258,7 +258,7 @@ if (args.includes('--selftest')) {
       tool: 'hybrid-input-parity.mjs',
       args: ['--standalone', '--only', '320x640', '--screenshots'],
       timeoutMs: 240000,
-      extraCopy: ['AshenSpire.html', 'dist'],
+      extraCopy: ['AshenSpire.html', 'dist', 'buildordinal.json'],
       plants: packagingPlants,
     });
     if (packagingStatus) process.exit(packagingStatus);
@@ -278,7 +278,8 @@ if (args.includes('--selftest')) {
       tool: 'hybrid-input-parity.mjs',
       args: ['--verify-manifests'],
       timeoutMs: 30000,
-      extraCopy: ['docs'],
+      extraCopy: ['docs', 'AshenSpire.html', 'buildordinal.json'],
+      includePng: true,
       plants: provenancePlants,
     });
     if (provenanceStatus) process.exit(provenanceStatus);
