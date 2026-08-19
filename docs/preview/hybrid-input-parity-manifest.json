@@ -18,8 +18,8 @@
   "toolFile": {
     "path": "tools/hybrid-input-parity.mjs",
     "identity": {
-      "canonicalLfSha256": "2ace463d4c702ec55596dd3f0e63f5b959bc3f342e0919c908b4a9e4c9868193",
-      "gitBlobOidSha1": "060890cedf3df6f0395795c259c6f9bd32ec9f65"
+      "canonicalLfSha256": "a81a1d3fffc0577b6e0af7cc45fb904067c31f6c2b5ddf6b7da9bef8f1b52f7b",
+      "gitBlobOidSha1": "730e7ad74337da95aeed517b85361610b280da14"
     }
   },
   "sourceFiles": {
@@ -88,8 +88,8 @@
     {
       "viewport": "320x640",
       "filename": "hybrid-input-parity-320x640-contact-sheet.png",
-      "sha256": "a4c5667b70e7db0fe4f0db8cc5f1b2713e5f2c9da41c2e373a09ea08116907cc",
-      "bytes": 1194197,
+      "sha256": "80122d837fd3bfa4bfa64a6b5fddf8f61bb1333627299b90fb27099313acdc55",
+      "bytes": 1203178,
       "states": [
         "ready",
         "mouse-armed",
@@ -121,8 +121,8 @@
     {
       "viewport": "390x844",
       "filename": "hybrid-input-parity-390x844-contact-sheet.png",
-      "sha256": "2652f8fa7e82a4006192d3c34a909a43d7c8e9a2ca6c7ac23e61f693d4d843cf",
-      "bytes": 1281988,
+      "sha256": "d1f21ad821022246184c9b1d037a28aa105819c4def97dfa5cbc5c47ed34507d",
+      "bytes": 1280532,
       "states": [
         "ready",
         "mouse-armed",
@@ -153,8 +153,8 @@
     {
       "viewport": "1200x730",
       "filename": "hybrid-input-parity-1200x730-contact-sheet.png",
-      "sha256": "f2e20e3053100993a6846e2513a7531ad7129c149570bf5c94ae03a2ae904e91",
-      "bytes": 1463704,
+      "sha256": "3bdf4df4bc58969a072b3bd46bc13d653511d89defbb8375bcd684f9944714e1",
+      "bytes": 1460385,
       "states": [
         "ready",
         "mouse-armed",
@@ -188,8 +188,8 @@
       "viewport": "320x640",
       "state": "ready",
       "filename": "hybrid-input-parity-320x640-ready.png",
-      "sha256": "c72f22f641eb5d76d044303e72c5f8ade66cc5dbae9c13380a59f3c45b8b80ae",
-      "bytes": 106644,
+      "sha256": "00ff1ec2e0976fdb5d8569fba52fac464e3efc52e103e55f9510349e750c7c39",
+      "bytes": 106643,
       "gameplay": {
         "cards": [
           {
@@ -298,7 +298,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 56,
+          "reads": 57,
           "mapping": "standard"
         }
       },
@@ -534,8 +534,8 @@
       "viewport": "320x640",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-320x640-mouse-armed.png",
-      "sha256": "a8a324d31523ab312733a3469caac23856f40764737bf6465e5702d8eaa3a624",
-      "bytes": 108609,
+      "sha256": "8f3c6b4cf5fabf2215f20de9c63e6e20ebe60063a67ad1b83ffee51577056bc7",
+      "bytes": 108555,
       "gameplay": {
         "cards": [
           {
@@ -660,7 +660,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 86,
+          "reads": 89,
           "mapping": "standard"
         }
       },
@@ -983,8 +983,8 @@
       "viewport": "320x640",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-320x640-mouse-confirm.png",
-      "sha256": "52cb1b8507124b211b6f3be517e6d68833e5191ba5b7ac5a1e7fa727fbca2c74",
-      "bytes": 107158,
+      "sha256": "8f6b5841112040af5f6d5f5858132f7501f42a20f39d8ba8551428eccfd21a80",
+      "bytes": 107420,
       "gameplay": {
         "cards": [
           {
@@ -1095,7 +1095,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 173,
+          "reads": 175,
           "mapping": "standard"
         }
       },
@@ -1331,8 +1331,8 @@
       "viewport": "320x640",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-320x640-keyboard-confirm.png",
-      "sha256": "fb203f8c8e83cc50ab0e040132dab24564de864ac40029b2cfff45bff7ad35a8",
-      "bytes": 104143,
+      "sha256": "29fba64c85d0b580ed8757b1ad58acb57fc8cb4616787dbc1977f542715f0725",
+      "bytes": 104183,
       "gameplay": {
         "cards": [
           {
@@ -1443,7 +1443,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 160,
+          "reads": 163,
           "mapping": "standard"
         }
       },
@@ -1679,8 +1679,8 @@
       "viewport": "320x640",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-320x640-keyboard-armed.png",
-      "sha256": "f521b3c123e241694cf878b5e1574040d6edc9e917269a3e2ad4de32b8bb5ba6",
-      "bytes": 110207,
+      "sha256": "999130a7919a55d88dcb640c929197198ddbbbf14d5a151becfd1b73779eea88",
+      "bytes": 110238,
       "gameplay": {
         "cards": [
           {
@@ -1805,7 +1805,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 180,
+          "reads": 181,
           "mapping": "standard"
         }
       },
@@ -2128,8 +2128,8 @@
       "viewport": "320x640",
       "state": "keyboard-cancel-restored",
       "filename": "hybrid-input-parity-320x640-keyboard-cancel-restored.png",
-      "sha256": "b68738c6ceb6d48ba790fc39bf33ba006486098b0b1e2978098742da27eb6c65",
-      "bytes": 105545,
+      "sha256": "f9554eb2e27cafe7aba5fdcf5e161feaf5007a4beb8361018a8ea9757cf618b1",
+      "bytes": 105497,
       "gameplay": {
         "cards": [
           {
@@ -2238,7 +2238,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 116,
+          "reads": 115,
           "mapping": "standard"
         }
       },
@@ -2474,8 +2474,8 @@
       "viewport": "320x640",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-320x640-controller-armed.png",
-      "sha256": "29d6c5e1938cb43154eea0024426a9b61c1690dc2c0da0cac6605b062bf169af",
-      "bytes": 108548,
+      "sha256": "8778020f0ff3728c52623ea64cbe81e4b032a26e8b05fb4d1db48f61bc64f4e5",
+      "bytes": 108845,
       "gameplay": {
         "cards": [
           {
@@ -2600,7 +2600,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 209,
+          "reads": 206,
           "mapping": "standard"
         }
       },
@@ -2923,8 +2923,8 @@
       "viewport": "320x640",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-320x640-controller-confirm.png",
-      "sha256": "dc3d3fc7190938b6c5105891db4487d7fde034542d20466ce99a097a32e86d56",
-      "bytes": 108120,
+      "sha256": "d0d3bd4934d95ecac741b7eefde90b2d5a8894d492c72937b5acc36cec23f15e",
+      "bytes": 107887,
       "gameplay": {
         "cards": [
           {
@@ -3035,7 +3035,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 295,
+          "reads": 292,
           "mapping": "standard"
         }
       },
@@ -3390,7 +3390,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 243,
+          "reads": 241,
           "mapping": "standard"
         }
       },
@@ -3788,7 +3788,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 75,
+          "reads": 76,
           "mapping": "standard"
         }
       },
@@ -4045,8 +4045,8 @@
       "viewport": "320x640",
       "state": "paging-next",
       "filename": "hybrid-input-parity-320x640-paging-next.png",
-      "sha256": "0de3e12dbf5663e94016ee3070128cc7746d51ee03e9d3d5377a8fe2bb1314bb",
-      "bytes": 108160,
+      "sha256": "18febbd9225b780b5705ebf301398d8194c9aa6cc41321dce4a52bb3b7836497",
+      "bytes": 108183,
       "gameplay": {
         "cards": [
           {
@@ -4164,7 +4164,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 97,
+          "reads": 99,
           "mapping": "standard"
         }
       },
@@ -4443,8 +4443,8 @@
       "viewport": "320x640",
       "state": "paging-return",
       "filename": "hybrid-input-parity-320x640-paging-return.png",
-      "sha256": "83ad80c438a5a54d9bb2f696f49a577fe2a3eed721f49fc51f5abca33813b650",
-      "bytes": 108435,
+      "sha256": "0226e76371018a4c1aab85f4b63f912f7c8940a409b33c7d7951a271a8bbd3cb",
+      "bytes": 108439,
       "gameplay": {
         "cards": [
           {
@@ -4562,7 +4562,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 118,
+          "reads": 120,
           "mapping": "standard"
         }
       },
@@ -4841,8 +4841,8 @@
       "viewport": "320x640",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-320x640-controller-multi.png",
-      "sha256": "23644c5ecead410be8e0c3d6ec3d269f98148cdd84d5e18432a55b81835a4687",
-      "bytes": 113487,
+      "sha256": "c14a6313a5c3f1f7b5453abe3720f992b7119c943e943ef66cc71b7718dce41f",
+      "bytes": 110130,
       "gameplay": {
         "cards": [
           {
@@ -4986,7 +4986,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 195,
+          "reads": 193,
           "mapping": "standard"
         }
       },
@@ -5265,8 +5265,8 @@
       "viewport": "320x640",
       "state": "controller-self",
       "filename": "hybrid-input-parity-320x640-controller-self.png",
-      "sha256": "541b35fd07d8299b04c82a18a8dbc1717ea8694535d40914f85840ab424b3848",
-      "bytes": 108765,
+      "sha256": "ca81f1968eacc6d5c04e0c72453af3c5ed196c7e892d2891082201ed6c44c1c6",
+      "bytes": 108818,
       "gameplay": {
         "cards": [
           {
@@ -5386,7 +5386,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 126,
+          "reads": 127,
           "mapping": "standard"
         }
       },
@@ -5806,7 +5806,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 166,
+          "reads": 167,
           "mapping": "standard"
         }
       },
@@ -6218,7 +6218,7 @@
           ]
         },
         "pad": {
-          "reads": 115,
+          "reads": 113,
           "mapping": "standard"
         }
       },
@@ -6531,8 +6531,8 @@
       "viewport": "320x640",
       "state": "controller-azure-charge-menu",
       "filename": "hybrid-input-parity-320x640-controller-azure-charge-menu.png",
-      "sha256": "0c3303382c5c8b5f5b409136ca9743856f858945a371dbad89f55e4387914a02",
-      "bytes": 99973,
+      "sha256": "512d560afe9df830e322fe2ba0b90f13c690c8bee4b28e856ee35ec13737c96b",
+      "bytes": 99917,
       "gameplay": {
         "cards": [
           {
@@ -6664,7 +6664,7 @@
           ]
         },
         "pad": {
-          "reads": 115,
+          "reads": 114,
           "mapping": "standard"
         }
       },
@@ -7909,7 +7909,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 130,
+          "reads": 131,
           "mapping": "standard"
         }
       },
@@ -8145,8 +8145,8 @@
       "viewport": "320x640",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-320x640-flask-menu-competing-closed.png",
-      "sha256": "5e2df39c6855301c3e730823fecb7d807980b120f4fd06e5de48bfa51b818fa2",
-      "bytes": 35307,
+      "sha256": "74f4de3cd50b53881da161f1e6eb9cb287013ae7bd4a08a3f562692d27adc176",
+      "bytes": 35239,
       "gameplay": {
         "cards": [
           {
@@ -8255,7 +8255,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 164,
+          "reads": 167,
           "mapping": "standard"
         }
       },
@@ -8364,8 +8364,8 @@
       "viewport": "320x640",
       "state": "flask-menu-switched",
       "filename": "hybrid-input-parity-320x640-flask-menu-switched.png",
-      "sha256": "24f9dc2cb197ee5d5490c2dfcf1c610f491f1cac9364101f521d7a0f49aea92a",
-      "bytes": 104158,
+      "sha256": "8741cfc4a0891a02cee59876ea05328d2eed230b3e9b2ab381cb608d2395695e",
+      "bytes": 104144,
       "gameplay": {
         "cards": [
           {
@@ -8810,8 +8810,8 @@
       "viewport": "320x640",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-320x640-keyboard-blight-target.png",
-      "sha256": "48e7954f34dbb283deca1d5003d91c89ba3691393b61d2d24407c4c4681da9e2",
-      "bytes": 113582,
+      "sha256": "4c00ded6dc0d254babb10deb79ff21bd1bed6743e428663ab34437662a3250b3",
+      "bytes": 113646,
       "gameplay": {
         "cards": [
           {
@@ -8934,7 +8934,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 136,
+          "reads": 138,
           "mapping": "standard"
         }
       },
@@ -9235,8 +9235,8 @@
       "viewport": "320x640",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-320x640-controller-blight-target.png",
-      "sha256": "4c7dbbd6a97f50498fa513c76a463e60cdcd89ca1beb75e085f38e36a51c04c0",
-      "bytes": 115308,
+      "sha256": "08cc9f7952b4ee3fb506a1245bebcf3103c5289d488b7fa781a38198433c60fd",
+      "bytes": 115107,
       "gameplay": {
         "cards": [
           {
@@ -9660,8 +9660,8 @@
       "viewport": "320x640",
       "state": "text-xl",
       "filename": "hybrid-input-parity-320x640-text-xl.png",
-      "sha256": "aab3be13c58f04891bc7d45ff59bc0b9dd3326f1e724d443ff0c293f35c448c8",
-      "bytes": 101997,
+      "sha256": "f717e609ce990c0ca8b8b6709b0790a87c92eabdc1f3f812e91722e17d3fdd3c",
+      "bytes": 102127,
       "gameplay": {
         "cards": [
           {
@@ -9770,7 +9770,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 59,
+          "reads": 60,
           "mapping": "standard"
         }
       },
@@ -10006,8 +10006,8 @@
       "viewport": "390x844",
       "state": "ready",
       "filename": "hybrid-input-parity-390x844-ready.png",
-      "sha256": "b09a7704e299a2075032d1bf61a72b8122fcfd017f742762babeedd857236f47",
-      "bytes": 159026,
+      "sha256": "09de5af489f4b8d8f6d2781c22b59d6753d27aead237d9b9263fbe13cd03e431",
+      "bytes": 159177,
       "gameplay": {
         "cards": [
           {
@@ -10116,7 +10116,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 59,
+          "reads": 61,
           "mapping": "standard"
         }
       },
@@ -10352,8 +10352,8 @@
       "viewport": "390x844",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-390x844-mouse-armed.png",
-      "sha256": "5dc0d1492df31f19961f0b2d868c1d9d198b329299b21df1aef354b82b0bd796",
-      "bytes": 165250,
+      "sha256": "b0c93a80b1dd6a4ef05fea032d678552beacf75708acd09bb21d8afe03f3126f",
+      "bytes": 165326,
       "gameplay": {
         "cards": [
           {
@@ -10478,7 +10478,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 92,
+          "reads": 94,
           "mapping": "standard"
         }
       },
@@ -10801,8 +10801,8 @@
       "viewport": "390x844",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-390x844-mouse-confirm.png",
-      "sha256": "8d001cf7acb6cad28151e62ac8004c60f66290f5e28df70ca3692fb3ec39d0bc",
-      "bytes": 159451,
+      "sha256": "c357f8d659883a9f79e40685280db47677b0b75f2a67f05f35ab7b3ee57db871",
+      "bytes": 159370,
       "gameplay": {
         "cards": [
           {
@@ -10913,7 +10913,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 179,
+          "reads": 185,
           "mapping": "standard"
         }
       },
@@ -11149,8 +11149,8 @@
       "viewport": "390x844",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-390x844-keyboard-confirm.png",
-      "sha256": "87a455d8514108c347827b59f7ad1630f3f1c11863d8651ca2bd8fc956e39088",
-      "bytes": 155941,
+      "sha256": "64b1677c787cfe85a05ccb41574a16bbbf57ad67ba3d220ce861a74a63686063",
+      "bytes": 155920,
       "gameplay": {
         "cards": [
           {
@@ -11261,7 +11261,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 161,
+          "reads": 162,
           "mapping": "standard"
         }
       },
@@ -11497,8 +11497,8 @@
       "viewport": "390x844",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-390x844-keyboard-armed.png",
-      "sha256": "a5a17993216c1cf3a4f05354addc79a014f4237bd04734598b951aa76dc7904c",
-      "bytes": 166431,
+      "sha256": "185d86e6cebceb2553b2aba781b5ae23b0b91f16422dab6416200a81a13a5319",
+      "bytes": 166711,
       "gameplay": {
         "cards": [
           {
@@ -11623,7 +11623,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 179,
+          "reads": 181,
           "mapping": "standard"
         }
       },
@@ -12056,7 +12056,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 114,
+          "reads": 118,
           "mapping": "standard"
         }
       },
@@ -12292,8 +12292,8 @@
       "viewport": "390x844",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-390x844-controller-armed.png",
-      "sha256": "e19eda472a8f4d4f02ef2ae7af2a0494445ef3ce00802767fa5a231329e622c4",
-      "bytes": 164421,
+      "sha256": "8e0548d038d369675730bd7e2bba1a84260181bdd969e1ad20d4629143f9cefa",
+      "bytes": 164483,
       "gameplay": {
         "cards": [
           {
@@ -12418,7 +12418,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 209,
+          "reads": 211,
           "mapping": "standard"
         }
       },
@@ -12741,8 +12741,8 @@
       "viewport": "390x844",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-390x844-controller-confirm.png",
-      "sha256": "5d38e99bbc5750aa8e4c94496f87c29b83013a26a64e8359033de694870b45a5",
-      "bytes": 159886,
+      "sha256": "7f9da72356073095df5fc4b508c3fe2aea783ef3d2890f1e91c2db217fed0309",
+      "bytes": 159865,
       "gameplay": {
         "cards": [
           {
@@ -12853,7 +12853,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 297,
+          "reads": 299,
           "mapping": "standard"
         }
       },
@@ -13089,8 +13089,8 @@
       "viewport": "390x844",
       "state": "controller-cancel-restored",
       "filename": "hybrid-input-parity-390x844-controller-cancel-restored.png",
-      "sha256": "eb05be2491dbb264b19b1804b6f82109c947e3f2b5ecff23b2409dad6a8ed9e6",
-      "bytes": 157940,
+      "sha256": "69f59e260cb63940142821a990df8172765330a6ef734c813a6202a8f02e395f",
+      "bytes": 157753,
       "gameplay": {
         "cards": [
           {
@@ -13208,7 +13208,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 242,
+          "reads": 239,
           "mapping": "standard"
         }
       },
@@ -13606,7 +13606,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 75,
+          "reads": 76,
           "mapping": "standard"
         }
       },
@@ -13863,8 +13863,8 @@
       "viewport": "390x844",
       "state": "paging-next",
       "filename": "hybrid-input-parity-390x844-paging-next.png",
-      "sha256": "fa3b25114d2a381e4f2f339e8c15e9e678e13ad59297a70487101b192d907dd1",
-      "bytes": 161701,
+      "sha256": "eebffa83e2f58ec8ac78e7bd629da97da47e7586fb47eccd5f1536234a8223f4",
+      "bytes": 161578,
       "gameplay": {
         "cards": [
           {
@@ -13982,7 +13982,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 96,
+          "reads": 99,
           "mapping": "standard"
         }
       },
@@ -14261,8 +14261,8 @@
       "viewport": "390x844",
       "state": "paging-return",
       "filename": "hybrid-input-parity-390x844-paging-return.png",
-      "sha256": "6e184f6471315f3b8ca250331a55056a00d9c50f0caf15cd4c5ae50717a88fcb",
-      "bytes": 160803,
+      "sha256": "0f0c25d243ad2046f311b8b88a9e56b0359a7612d70c1ec7bc5c846cae334b4e",
+      "bytes": 160648,
       "gameplay": {
         "cards": [
           {
@@ -14380,7 +14380,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 117,
+          "reads": 120,
           "mapping": "standard"
         }
       },
@@ -14659,8 +14659,8 @@
       "viewport": "390x844",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-390x844-controller-multi.png",
-      "sha256": "e47110611092e80510b8148ad99d61fe66b48a41a351d1d5b8d12e7dd9ac3003",
-      "bytes": 168316,
+      "sha256": "7cf3c010c99c2c00d0d28494ae14c267abc7bc8f9ca77ea39c74ed27d257d418",
+      "bytes": 169360,
       "gameplay": {
         "cards": [
           {
@@ -14804,7 +14804,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 194,
+          "reads": 195,
           "mapping": "standard"
         }
       },
@@ -15083,8 +15083,8 @@
       "viewport": "390x844",
       "state": "controller-self",
       "filename": "hybrid-input-parity-390x844-controller-self.png",
-      "sha256": "2412bd4557e71a83f9451ad6b59d1a63db9898ab34111eb4dd07d6bfa1fdb794",
-      "bytes": 163222,
+      "sha256": "155ac76e988a64f28a71ddd11e0ed2a7d210bd921adc38489137ff6bf7799aa1",
+      "bytes": 163121,
       "gameplay": {
         "cards": [
           {
@@ -15204,7 +15204,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 128,
+          "reads": 130,
           "mapping": "standard"
         }
       },
@@ -15624,7 +15624,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 168,
+          "reads": 169,
           "mapping": "standard"
         }
       },
@@ -15903,8 +15903,8 @@
       "viewport": "390x844",
       "state": "keyboard-crimson-charge-menu",
       "filename": "hybrid-input-parity-390x844-keyboard-crimson-charge-menu.png",
-      "sha256": "40b0fddfc3592279a95602c078823c12a05c92e5d2c1e4027b83d3d98f65de45",
-      "bytes": 153860,
+      "sha256": "33a9498c21a688a5836314764b418462369fd581d288cebf41c49f6cab5912dc",
+      "bytes": 153896,
       "gameplay": {
         "cards": [
           {
@@ -16928,7 +16928,7 @@
           ]
         },
         "pad": {
-          "reads": 76,
+          "reads": 77,
           "mapping": "standard"
         }
       },
@@ -17241,8 +17241,8 @@
       "viewport": "390x844",
       "state": "flask-menu-toggle-closed",
       "filename": "hybrid-input-parity-390x844-flask-menu-toggle-closed.png",
-      "sha256": "5a04a3ba177f3cc52ba96dd860ddb93c3f64d826fe07c3bf339a848f5e535241",
-      "bytes": 159442,
+      "sha256": "29d85c356fc7f732ba7c286073ed517022a8cbdf7adfabc74b21551e5f478506",
+      "bytes": 159398,
       "gameplay": {
         "cards": [
           {
@@ -17360,7 +17360,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 96,
+          "reads": 99,
           "mapping": "standard"
         }
       },
@@ -17617,8 +17617,8 @@
       "viewport": "390x844",
       "state": "flask-menu-outside-closed",
       "filename": "hybrid-input-parity-390x844-flask-menu-outside-closed.png",
-      "sha256": "553c5dbacb3993dfa78a5130e1d1fb4e5d4168aea2e90b48f1ca48d3cb042947",
-      "bytes": 157997,
+      "sha256": "cdeb73e04eb4204e87adf647de3b908a8dc7d7741fd2151644b3866a0bd41200",
+      "bytes": 158171,
       "gameplay": {
         "cards": [
           {
@@ -17727,7 +17727,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 132,
+          "reads": 135,
           "mapping": "standard"
         }
       },
@@ -17963,8 +17963,8 @@
       "viewport": "390x844",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-390x844-flask-menu-competing-closed.png",
-      "sha256": "7a0edc98258a762cd4a970f1f185072db37379de082e565973027d004842f25f",
-      "bytes": 50375,
+      "sha256": "58bff2862626c13e03e9843d9a292e13f4b00ff397ef360b055e4260c47195ae",
+      "bytes": 50369,
       "gameplay": {
         "cards": [
           {
@@ -18073,7 +18073,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 167,
+          "reads": 170,
           "mapping": "standard"
         }
       },
@@ -18628,8 +18628,8 @@
       "viewport": "390x844",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-390x844-keyboard-blight-target.png",
-      "sha256": "d7ba198266fc14de8d2cd0201143827592b8d1f3ea8d058a4add813b3c0bdcea",
-      "bytes": 171236,
+      "sha256": "1fa34da33bcdff1c5c18e85c077e620fdfb24339ffd46c23fe452e32e366379e",
+      "bytes": 171493,
       "gameplay": {
         "cards": [
           {
@@ -18752,7 +18752,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 137,
+          "reads": 141,
           "mapping": "standard"
         }
       },
@@ -19053,8 +19053,8 @@
       "viewport": "390x844",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-390x844-controller-blight-target.png",
-      "sha256": "7922de1edeb366dcd4bd23969eec50713650b279ab50e92663567b8951f030cc",
-      "bytes": 173411,
+      "sha256": "1d31e0e6e836cabb9cd12958e453e4c5ff4136c783f433fb357a28dae17ae341",
+      "bytes": 173399,
       "gameplay": {
         "cards": [
           {
@@ -19177,7 +19177,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 155,
+          "reads": 154,
           "mapping": "standard"
         }
       },
@@ -19588,7 +19588,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 61,
+          "reads": 63,
           "mapping": "standard"
         }
       },
@@ -19844,8 +19844,8 @@
       "viewport": "1200x730",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-1200x730-mouse-armed.png",
-      "sha256": "d0dc1c105bfa084422a1c97555a89c7d573f66b8423e51d7cea78d4390354234",
-      "bytes": 310113,
+      "sha256": "12809a5ea0dba52d527f5e110f193f7fab1dcb6598bef7a526b4208b2c3bed6e",
+      "bytes": 310222,
       "gameplay": {
         "cards": [
           {
@@ -19970,7 +19970,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 96,
+          "reads": 99,
           "mapping": "standard"
         }
       },
@@ -20301,8 +20301,8 @@
       "viewport": "1200x730",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-1200x730-mouse-confirm.png",
-      "sha256": "3140f24cfdddde1703365cd4a14b05e56e40a031a45a879efb1fdccf580ce269",
-      "bytes": 301942,
+      "sha256": "eeb3cf4cc5bc1027223c86ee752d31d443e818c2d400be94e19dbdef8a03245c",
+      "bytes": 303452,
       "gameplay": {
         "cards": [
           {
@@ -20413,7 +20413,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 187,
+          "reads": 190,
           "mapping": "standard"
         }
       },
@@ -20669,8 +20669,8 @@
       "viewport": "1200x730",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-1200x730-keyboard-confirm.png",
-      "sha256": "c1ea73e4c59c000325e8efb6eb9f89a3074e8227889ba471af0633ee60433472",
-      "bytes": 287292,
+      "sha256": "598767b7d2f35c70be3947ba3ac69e1834e8fdf8dfe954f858eb888a5eb3a465",
+      "bytes": 287932,
       "gameplay": {
         "cards": [
           {
@@ -20781,7 +20781,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 162,
+          "reads": 164,
           "mapping": "standard"
         }
       },
@@ -21037,8 +21037,8 @@
       "viewport": "1200x730",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-1200x730-keyboard-armed.png",
-      "sha256": "5e79f3573c5c2415f71c685b6a65547c7ac77f138ee8f8f715198cb07c1d51cd",
-      "bytes": 314490,
+      "sha256": "21918006cbd578773505ec84c3cb74f670d26e64cc9e7e01c4f30caa1275a0ce",
+      "bytes": 314880,
       "gameplay": {
         "cards": [
           {
@@ -21163,7 +21163,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 162,
+          "reads": 163,
           "mapping": "standard"
         }
       },
@@ -21494,8 +21494,8 @@
       "viewport": "1200x730",
       "state": "keyboard-cancel-restored",
       "filename": "hybrid-input-parity-1200x730-keyboard-cancel-restored.png",
-      "sha256": "552c6b374b477fd2f4b1457cf7ed0958d5072e1e91a7b92ef2274b9cdf624f80",
-      "bytes": 296968,
+      "sha256": "64da6c35124fbbe0ee41fe7b7b5d3946b9c3b801c09c30af66f686c28fb49452",
+      "bytes": 296944,
       "gameplay": {
         "cards": [
           {
@@ -21604,7 +21604,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 118,
+          "reads": 117,
           "mapping": "standard"
         }
       },
@@ -21860,8 +21860,8 @@
       "viewport": "1200x730",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-1200x730-controller-armed.png",
-      "sha256": "9549371170a9b9f8e27ab0cedef3fb26d2886c7c3d1fb8451a338bcab77c201a",
-      "bytes": 315121,
+      "sha256": "0d741edda3940c99264dc475744ac5d91dda87768951a50b25c1ed11ab83f1d6",
+      "bytes": 315161,
       "gameplay": {
         "cards": [
           {
@@ -21986,7 +21986,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 187,
+          "reads": 186,
           "mapping": "standard"
         }
       },
@@ -22317,8 +22317,8 @@
       "viewport": "1200x730",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-1200x730-controller-confirm.png",
-      "sha256": "d8ecd7da77e68d68331b3840e1043fa2e111db1244f65ecd26157958ab9586cb",
-      "bytes": 293208,
+      "sha256": "79f34e43eb770dc4ec1449b3a529c09fecfebd1d9b2a1e0ba6bd7ebda57670db",
+      "bytes": 293768,
       "gameplay": {
         "cards": [
           {
@@ -22429,7 +22429,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 278,
+          "reads": 275,
           "mapping": "standard"
         }
       },
@@ -22685,8 +22685,8 @@
       "viewport": "1200x730",
       "state": "controller-cancel-restored",
       "filename": "hybrid-input-parity-1200x730-controller-cancel-restored.png",
-      "sha256": "e83a0480ebebb8a76838a1352222782ce278ef2503f0e16b7c8862b06831a6d8",
-      "bytes": 307562,
+      "sha256": "886c0f6a5bb93172beb67ec13b03b44aa1395998b25366b1c0e881bf939fe27b",
+      "bytes": 306998,
       "gameplay": {
         "cards": [
           {
@@ -22804,7 +22804,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 219,
+          "reads": 221,
           "mapping": "standard"
         }
       },
@@ -23222,7 +23222,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 78,
+          "reads": 80,
           "mapping": "standard"
         }
       },
@@ -23499,8 +23499,8 @@
       "viewport": "1200x730",
       "state": "paging-next",
       "filename": "hybrid-input-parity-1200x730-paging-next.png",
-      "sha256": "12cfad5651f4a657caf3b75bdfea9fe8fc5090ba8390db7d2c042719747d3844",
-      "bytes": 312043,
+      "sha256": "cc1b861ee3508d923b8305af7f00a6a9a5c49389b042a313ad1e1dda29dd975e",
+      "bytes": 311837,
       "gameplay": {
         "cards": [
           {
@@ -23618,7 +23618,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 103,
+          "reads": 104,
           "mapping": "standard"
         }
       },
@@ -23917,8 +23917,8 @@
       "viewport": "1200x730",
       "state": "paging-return",
       "filename": "hybrid-input-parity-1200x730-paging-return.png",
-      "sha256": "7bee9cd486d6429e3f3496d11e460be86ac5bd0ee14fb3fcbb966ba1f3238611",
-      "bytes": 313482,
+      "sha256": "9a970473463e8de6e005b58355e71aa15e5f38ad5ba2a25b4eb122ac11543dd0",
+      "bytes": 313853,
       "gameplay": {
         "cards": [
           {
@@ -24036,7 +24036,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 129,
+          "reads": 130,
           "mapping": "standard"
         }
       },
@@ -24335,38 +24335,46 @@
       "viewport": "1200x730",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-1200x730-controller-multi.png",
-      "sha256": "ccc2c0cfabef13ec820fac3a1b4d5d66f0fa5939b8223625785cfd0bf064e352",
-      "bytes": 316374,
+      "sha256": "e9166e1bc66dd63c0620911413d210e4844e278942ef0bbcbdcc6d7725390303",
+      "bytes": 315577,
       "gameplay": {
         "cards": [
           {
             "index": 0,
-            "id": "rc8",
-            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.1",
+            "id": "rc6",
+            "text": "2Crimson Cleave🪓ATTACK⚔ Blade🩸 BloodDeal 8 damage to ALL enemies. Apply 2 Bleed to ALL.1",
             "selected": false,
-            "focus": false,
-            "unaffordable": false
+            "focus": true,
+            "unaffordable": true
           },
           {
             "index": 1,
-            "id": "rc10",
-            "text": "1◆ 1Gorefire Slash🗡ATTACK⚔ Blade🩸 Blood🔥 GorefireDeal 5 damage. Apply 3 Bleed.2",
+            "id": "rc8",
+            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.2",
             "selected": false,
             "focus": false,
             "unaffordable": false
           },
           {
             "index": 2,
-            "id": "rc7",
-            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.3",
+            "id": "rc10",
+            "text": "1◆ 1Gorefire Slash🗡ATTACK⚔ Blade🩸 Blood🔥 GorefireDeal 5 damage. Apply 3 Bleed.3",
             "selected": false,
             "focus": false,
             "unaffordable": false
           },
           {
             "index": 3,
+            "id": "rc7",
+            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.4",
+            "selected": false,
+            "focus": false,
+            "unaffordable": false
+          },
+          {
+            "index": 4,
             "id": "rc1",
-            "text": "1Slashing Strike⚔ATTACK⚔ BladeDeal 7 damage.4",
+            "text": "1Slashing Strike⚔ATTACK⚔ BladeDeal 7 damage.5",
             "selected": false,
             "focus": false,
             "unaffordable": false
@@ -24452,7 +24460,16 @@
         "playerArmed": false,
         "aimEnemy": [],
         "aimPlayer": false,
-        "focus": null,
+        "focus": {
+          "tag": "DIV",
+          "id": null,
+          "classes": "card rarity-common cls-reaver type-attack unaffordable gp-focus",
+          "instanceId": "rc6",
+          "eid": null,
+          "parityAnchor": null,
+          "flaskAction": null,
+          "text": "2Crimson Cleave🪓ATTACK⚔ Blade🩸 BloodDeal 8 damage to ALL enemies. Apply 2 Blee"
+        },
         "active": {
           "tag": "BODY",
           "classes": "hi-contrast pad-mode",
@@ -24463,7 +24480,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 204,
+          "reads": 200,
           "mapping": "standard"
         }
       },
@@ -24762,8 +24779,8 @@
       "viewport": "1200x730",
       "state": "controller-self",
       "filename": "hybrid-input-parity-1200x730-controller-self.png",
-      "sha256": "7eb6a79eda3a33b8d36cbf4904a55b84a9f26da4fa0ad648bdb7494afa2fe150",
-      "bytes": 313451,
+      "sha256": "7c07b690de512e187116772e1a95e5aa89c0f9d277116906984336c147c03617",
+      "bytes": 313375,
       "gameplay": {
         "cards": [
           {
@@ -25311,7 +25328,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 175,
+          "reads": 176,
           "mapping": "standard"
         }
       },
@@ -25743,7 +25760,7 @@
           ]
         },
         "pad": {
-          "reads": 120,
+          "reads": 121,
           "mapping": "standard"
         }
       },
@@ -26076,8 +26093,8 @@
       "viewport": "1200x730",
       "state": "controller-azure-charge-menu",
       "filename": "hybrid-input-parity-1200x730-controller-azure-charge-menu.png",
-      "sha256": "5f64ab337077d8c18241746da8c1fb4e81c1d752fa81a9032e214efa7c3dd24f",
-      "bytes": 294903,
+      "sha256": "d8458da490e07963e0af9be9945db5483618cb3946d30fd81d6c0e18a23a570b",
+      "bytes": 295307,
       "gameplay": {
         "cards": [
           {
@@ -26209,7 +26226,7 @@
           ]
         },
         "pad": {
-          "reads": 120,
+          "reads": 118,
           "mapping": "standard"
         }
       },
@@ -26675,7 +26692,7 @@
           ]
         },
         "pad": {
-          "reads": 80,
+          "reads": 78,
           "mapping": "standard"
         }
       },
@@ -27008,8 +27025,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-toggle-closed",
       "filename": "hybrid-input-parity-1200x730-flask-menu-toggle-closed.png",
-      "sha256": "64f4ca3baa1f40845be00f38405a416b03262c58a41b95fb8e7ba77a13f4d9ed",
-      "bytes": 310147,
+      "sha256": "6b6545ae7d867f89ccd5a7860331a105139ec786c01050fbf4bce63d9171306f",
+      "bytes": 310389,
       "gameplay": {
         "cards": [
           {
@@ -27127,7 +27144,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 105,
+          "reads": 103,
           "mapping": "standard"
         }
       },
@@ -27404,8 +27421,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-outside-closed",
       "filename": "hybrid-input-parity-1200x730-flask-menu-outside-closed.png",
-      "sha256": "206e6a99b872bce0df83b01474233fda8591430b18f79c18aa70a2695922b6ca",
-      "bytes": 300770,
+      "sha256": "532da95c93b134807e1cde7c79fa3931657631b747af120f5a868c0ea6648254",
+      "bytes": 300768,
       "gameplay": {
         "cards": [
           {
@@ -27514,7 +27531,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 144,
+          "reads": 142,
           "mapping": "standard"
         }
       },
@@ -27770,8 +27787,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-1200x730-flask-menu-competing-closed.png",
-      "sha256": "755dda220b36ed1203a7597c4720125b55fe2beeb27cbaebf22467a5f6167550",
-      "bytes": 99470,
+      "sha256": "24f501ebbf7517a85ec5e292bd5662f00a80c774cab5175741fc082232a607fc",
+      "bytes": 99654,
       "gameplay": {
         "cards": [
           {
@@ -27880,7 +27897,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 180,
+          "reads": 178,
           "mapping": "standard"
         }
       },
@@ -28142,7 +28159,7 @@
           ]
         },
         "pad": {
-          "reads": 99,
+          "reads": 94,
           "mapping": "standard"
         }
       },
@@ -28475,8 +28492,8 @@
       "viewport": "1200x730",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-1200x730-keyboard-blight-target.png",
-      "sha256": "ace0972a61955e1e0dba7b6c6fe235e0489d5c6c6e5b8db48b3a6cf3920e1456",
-      "bytes": 302730,
+      "sha256": "5936860eb9d8305309a74e1d4f9344acdcb35ec13a492238085a238f3deae229",
+      "bytes": 302582,
       "gameplay": {
         "cards": [
           {
@@ -28599,7 +28616,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 141,
+          "reads": 139,
           "mapping": "standard"
         }
       },
@@ -28908,8 +28925,8 @@
       "viewport": "1200x730",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-1200x730-controller-blight-target.png",
-      "sha256": "d0cbc2a16b56e93af237618940c02b37b6d8492e6574c3ce81eb32e0903df5e3",
-      "bytes": 305569,
+      "sha256": "06476b9d41521fc80bab21e230d74d715769cf150717663eb5e51c6a6cb2aca0",
+      "bytes": 306592,
       "gameplay": {
         "cards": [
           {
@@ -29032,7 +29049,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 153,
+          "reads": 160,
           "mapping": "standard"
         }
       },
