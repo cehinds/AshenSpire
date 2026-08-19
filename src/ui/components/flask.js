@@ -1,8 +1,19 @@
 import { esc } from './tooltip.js';
 import { assetUrl } from '../assetmap.js';
 import { placeAnchored, viewportLocalBox } from '../fx.js';
+import { focusElement } from '../input.js';
 
 let activeFlaskActionMenu = null;
+
+/**
+ * The one lifecycle owner for the contextual flask menu. Competing surfaces
+ * call this before they mount; repeated calls are deliberately harmless.
+ */
+export function closeFlaskActionMenu({ cancelled = true, restoreFocus = false } = {}) {
+  if (!activeFlaskActionMenu) return false;
+  activeFlaskActionMenu.close({ cancelled, restoreFocus });
+  return true;
+}
 
 /** One data-owned identity fragment; every surface may add its own surrounding copy. */
 export function flaskIdentityHtml(def, { showName = true, className = '' } = {}) {
@@ -47,9 +58,14 @@ export function flaskPresentation(def, options = {}) {
  */
 export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireAction } = {}) {
   if (!anchor || !def || !plan) throw new Error('mountFlaskActionMenu requires anchor, def, and plan');
+  // The same flask is a toggle, not a close-then-immediately-reopen sequence.
+  if (activeFlaskActionMenu?.anchor === anchor) {
+    closeFlaskActionMenu({ cancelled: true, restoreFocus: true });
+    return null;
+  }
   // One menu at a time, and close through its lifecycle so its window-level
   // controller Cancel listener cannot survive after the DOM has gone.
-  if (activeFlaskActionMenu) activeFlaskActionMenu.close({ cancelled: true });
+  closeFlaskActionMenu({ cancelled: true, restoreFocus: false });
   const root = document.createElement('div');
   root.className = 'flask-action-menu';
   root.setAttribute('role', 'menu');
@@ -58,6 +74,7 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     + `<div class="flask-action-detail" hidden>${esc(def.textTemplate || '')}</div>`;
   const buttons = [];
   let closed = false;
+  let disconnectObserver = null;
   // THE SCREEN MARGIN HAS ONE HOME IN THIS FILE AND IT IS PASSED, NOT ASSUMED.
   // placeAnchored uses `pad` for the fit test AND for the bound; the cap below
   // needs the same number for the room under the slot, so it is handed over
@@ -78,14 +95,25 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
     // scrolls inside the panel instead of hanging its last row off the screen.
     root.style.maxHeight = `${Math.max(0, view.height - at.top - PAD * 2)}px`;
   };
-  const close = ({ cancelled = false } = {}) => {
+  const close = ({ cancelled = false, restoreFocus = false } = {}) => {
     if (closed) return;
     closed = true;
     window.removeEventListener('keydown', onGlobalCancel);
+    document.removeEventListener('click', onDocumentClick, true);
+    disconnectObserver?.disconnect();
+    disconnectObserver = null;
     root.remove();
     if (activeFlaskActionMenu?.root === root) activeFlaskActionMenu = null;
     if (cancelled && onCancel) onCancel();
-    if (anchor.isConnected && typeof anchor.focus === 'function') anchor.focus();
+    if (restoreFocus && anchor.isConnected && typeof anchor.focus === 'function') {
+      anchor.focus();
+      focusElement(anchor);
+    }
+  };
+  const onDocumentClick = (ev) => {
+    const target = ev.target;
+    if (root.contains(target) || anchor === target || anchor.contains(target)) return;
+    close({ cancelled: true, restoreFocus: false });
   };
   // Gamepad Cancel is a synthesized Escape dispatched on window by input.js,
   // not on the focused button. Root bubbling covers physical keyboard Escape;
@@ -93,7 +121,7 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   const onGlobalCancel = (ev) => {
     if (ev.key !== 'Escape' && ev.key !== 'Backspace') return;
     ev.preventDefault();
-    close({ cancelled: true });
+    close({ cancelled: true, restoreFocus: true });
   };
   for (const row of plan.actions) {
     const button = document.createElement('button');
@@ -129,19 +157,39 @@ export function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wi
   }
   const move = (delta) => {
     const at = Math.max(0, buttons.indexOf(document.activeElement));
-    buttons[(at + delta + buttons.length) % buttons.length].focus();
+    const next = buttons[(at + delta + buttons.length) % buttons.length];
+    next.focus();
+    focusElement(next);
   };
   root.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true }); }
+    if (ev.key === 'Escape' || ev.key === 'Backspace') { ev.preventDefault(); close({ cancelled: true, restoreFocus: true }); }
     else if (ev.key === 'ArrowDown' || ev.key === 'ArrowRight') { ev.preventDefault(); move(1); }
     else if (ev.key === 'ArrowUp' || ev.key === 'ArrowLeft') { ev.preventDefault(); move(-1); }
-    else if (ev.key === 'Home') { ev.preventDefault(); buttons[0]?.focus(); }
-    else if (ev.key === 'End') { ev.preventDefault(); buttons.at(-1)?.focus(); }
+    else if (ev.key === 'Home') {
+      ev.preventDefault();
+      const first = buttons[0];
+      first?.focus();
+      focusElement(first);
+    } else if (ev.key === 'End') {
+      ev.preventDefault();
+      const last = buttons.at(-1);
+      last?.focus();
+      focusElement(last);
+    }
   });
   window.addEventListener('keydown', onGlobalCancel);
+  document.addEventListener('click', onDocumentClick, true);
   (anchor.closest('.combat,.mapscreen') || document.body).appendChild(root);
+  if (typeof MutationObserver !== 'undefined') {
+    disconnectObserver = new MutationObserver(() => {
+      if (!root.isConnected || !anchor.isConnected) close();
+    });
+    disconnectObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
   place();
-  (buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0])?.focus();
-  activeFlaskActionMenu = Object.freeze({ root, buttons: Object.freeze(buttons), close });
+  const first = buttons.find((button) => button.getAttribute('aria-disabled') === 'false') || buttons[0];
+  first?.focus();
+  focusElement(first);
+  activeFlaskActionMenu = Object.freeze({ anchor, root, buttons: Object.freeze(buttons), close });
   return activeFlaskActionMenu;
 }

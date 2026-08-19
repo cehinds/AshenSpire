@@ -40,6 +40,7 @@ import { viewportLocalBox, placeAnchored } from '../fx.js';
 import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { menuRows } from '../uiContent.js';
 import { isEngaged, focusFirst } from '../input.js';
+import { closeFlaskActionMenu } from './flask.js';
 
 // The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -120,6 +121,7 @@ export function saveAction(onSave) {
  */
 export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
   if (mode === 'off' || !anchorEl) return null;
+  closeFlaskActionMenu({ cancelled: true });
   closeQuickNav();
 
   const rows = menuRows(context, { fixedEnds, hasSave, counts, current })

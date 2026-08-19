@@ -353,7 +353,7 @@ function focusables() {
   const root = scopeRoot();
   const inModal = root.classList && root.classList.contains('modal-veil');
   return Array.from(root.querySelectorAll(FOCUS_SELECTOR)).filter(
-    (el) => visible(el) && (inModal || !(el.closest && el.closest(CHROME)))
+    (el) => visible(el) && (inModal || el.matches('.flask-slot') || !(el.closest && el.closest(CHROME)))
   );
 }
 
@@ -404,6 +404,11 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
+    // A real menu owns both the visual gamepad cursor and DOM focus. Keyboard
+    // arrows already move the latter through the menu's key handler; keeping
+    // it aligned here gives D-pad navigation the same accessible focus state.
+    if (el.closest && el.closest('[role="menu"]') && document.activeElement !== el
+      && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
     if (remember) focusKey = keyOf(el);
@@ -419,11 +424,25 @@ export function focusFirst(selector) {
   return !!el;
 }
 
+/** Publish one already-known control through the unified keyboard/pad cursor. */
+export function focusElement(el) {
+  // Some contract probes intentionally mount the component against a minimal
+  // DOM stub with no document-wide selector engine. DOM focus still exercises
+  // their component boundary; the unified cursor exists only in a real page.
+  if (!el || typeof document === 'undefined' || typeof document.querySelectorAll !== 'function'
+    || !focusables().includes(el)) return false;
+  setFocus(el);
+  return true;
+}
+
 function ensureFocus() {
   let el = current();
   if (el && visible(el)) return el;
   const list = focusables();
-  el = list[0] || null;
+  // Preserve the established playfield-first entry point. Flask slots are a
+  // deliberate chrome exception reached by moving upward, not the first stop
+  // merely because the top bar appears first in DOM order.
+  el = list.find((item) => !(item.closest && item.closest(CHROME))) || list[0] || null;
   setFocus(el);
   return el;
 }
@@ -748,6 +767,15 @@ function onKeydown(ev) {
     ev.preventDefault();
     if (ev.key === TAB_NEXT_KEY) tabRing.next();
     else tabRing.prev();
+    return;
+  }
+  // A mounted ARIA menu owns its arrow keys. Let its bubbling handler move DOM
+  // focus once; the unified cursor is synchronized by focusElement/setFocus.
+  // Without this boundary the capture handler and the menu each step, so a
+  // two-row menu wraps straight back to where it started.
+  if (!typing && document.activeElement?.closest?.('[role="menu"]')
+    && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {
+    engaged = true;
     return;
   }
   if (!typing && (ev.key === 'ArrowUp' || ev.key === 'ArrowDown' || ev.key === 'ArrowLeft' || ev.key === 'ArrowRight')) {

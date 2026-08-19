@@ -46,7 +46,7 @@ import { fileURLToPath } from 'node:url';
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
 
-function copyTree(extra = []) {
+function copyTree(extra = [], { includePng = false } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'doorplant-'));
   // `extra` is for tools whose real door is an artifact outside the source
   // set — tapsize measures dist/AshenSpire.html, so for that tool the SHIPPED
@@ -57,7 +57,8 @@ function copyTree(extra = []) {
     if (!existsSync(from)) continue;
     cpSync(from, join(dir, entry), {
       recursive: true,
-      filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.(png|py)$/.test(src)
+      filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src)
+        && !/\.py$/.test(src) && (includePng || !/\.png$/.test(src))
         && !/dist[\\/](?!AshenSpire\.html$)[^\\/]+$/.test(src),
     });
   }
@@ -110,7 +111,7 @@ function runTool(root, tool, args, timeoutMs, env) {
  * corollary, counted not judged): cut them if no plant ever needs a second file
  * or a compile — then they are decoration.
  */
-export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000, env = {}, extraCopy = [] }) {
+export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000, env = {}, extraCopy = [], includePng = false }) {
   console.log(`${tool} --selftest — same-door known-bad corpus (${plants.length} plant(s))`);
   console.log(`DOOR: each plant enters as FILE BYTES in a copied real tree at the file(s) named below —`);
   console.log(`      the same file the real defect would ship in. The tool then runs WHOLE from that`);
@@ -119,7 +120,7 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
   console.log(`      A plant carrying \`prep\` runs that command in the copy first, so a two-stage`);
   console.log(`      content door (spreadsheet -> content-build -> generated module) is travelled whole.`);
   console.log(`      Revert = the copy is discarded; the real tree is never edited.`);
-  const root = copyTree(extraCopy);
+  const root = copyTree(extraCopy, { includePng });
   let failed = 0;
   try {
     for (const p of plants) {

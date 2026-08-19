@@ -142,7 +142,8 @@ import { join, resolve } from 'node:path';
 // its author set it and named rather than moved.
 export const PATH_BUDGET = 90;
 
-const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--remote-debugging-port=0', '--no-first-run'];
+// Automated browsers are invisible; their audio should be invisible too.
+const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--mute-audio', '--remote-debugging-port=0', '--no-first-run'];
 const ENDPOINT = /DevTools listening on (ws:\/\/\S+)/;
 
 // Every live profile this process owns. The sweep at exit reads this set, so a

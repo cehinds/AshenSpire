@@ -14,7 +14,7 @@ import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
-import { flaskIdentityHtml } from './flask.js';
+import { closeFlaskActionMenu, flaskIdentityHtml } from './flask.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -204,6 +204,7 @@ export function closeOverlay() {
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
 export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
+  closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
