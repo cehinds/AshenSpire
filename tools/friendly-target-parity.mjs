@@ -10,7 +10,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createCoopCombat, leaveCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRegistries } from '../src/model/registries.js';
-import { friendlyTargetPlan } from '../src/ui/components/friendlyTargets.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../src/ui/components/friendlyTargets.js';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { setCombatStartStateForTools } from './session.mjs';
@@ -23,6 +23,7 @@ const files = {
   combat: 'src/ui/screens/combat.js',
   coop: 'src/ui/screens/coop.js',
   engine: 'src/engine/coopCombat.js',
+  session: 'tools/session.mjs',
 };
 
 const source = Object.fromEntries(Object.entries(files).map(([key, rel]) => [key, fs.existsSync(path.join(ROOT, rel)) ? read(rel) : '']));
@@ -33,10 +34,14 @@ function evaluateSource(candidate) {
     ['solo and co-op share the renderer', /from ['"]\.\.\/components\/friendlyTargets\.js['"]/.test(candidate.combat) && /from ['"]\.\.\/components\/friendlyTargets\.js['"]/.test(candidate.coop)],
     ['down and disconnected seats are excluded', /!player\.alive \|\| !player\.connected/.test(candidate.shared)],
     ['co-op has relationship-specific targets', /data-friendly-target/.test(candidate.coop) && !/arming && p\.alive && p\.connected \? ' throw-target'/.test(candidate.coop)],
-    ['co-op target cancel restores focus', /cancelFriendlyTargeting/.test(candidate.coop) && /ev\.key === 'Escape'/.test(candidate.coop) && /focusElement\(card\)/.test(candidate.coop)],
+    ['co-op target cancel restores focus', /function cancelFriendlyTargeting[\s\S]{0,500}if \(card\) focusElement\(card\);/.test(candidate.coop) && /ev\.key === 'Escape'/.test(candidate.coop)],
     ['co-op legal targets enter the shared focus system', /decorateFriendlyTarget/.test(candidate.coop) && /dataset\.focusable/.test(candidate.shared) && /aria-label/.test(candidate.shared)],
     ['confirm disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(candidate.coop)],
     ['server validates the same friendly target model before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);/.test(candidate.engine) && candidate.engine.indexOf('targetId = assertFriendlyTarget') < candidate.engine.indexOf('p.energy -= cost')],
+    ['all hostile target families outrank source-side friendly effects', /HOSTILE_TARGETS = new Set\(\['enemy', 'allEnemies', 'randomEnemy'\]\)/.test(candidate.shared) && /HOSTILE_TARGETS\.has\(effect\.target\)/.test(candidate.shared)],
+    ['target invalidation cancels and restores the origin after rebuild', /focusedFriendlyInvalid/.test(candidate.coop) && /restoreFriendlyCardFocus = armedFriendlyCard;/.test(candidate.coop) && /CSS\.escape\(restoreFriendlyCardFocus\)/.test(candidate.coop)],
+    ['keyboard uses the same affordability predicate as pointer and pad', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(candidate.coop) && (candidate.coop.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
+    ['real-session down fixture seeds the ally through the validated tool-only seam', /state\.ally\.extraHand\.some/.test(candidate.session) && /allyPlayer\.piles\.hand\.push/.test(candidate.session) && /tool-ally-extra-/.test(candidate.session)],
   ];
 }
 const checks = evaluateSource(source);
@@ -48,21 +53,25 @@ for (const [label, ok] of checks) {
 }
 console.log(`friendly target source parity: ${pass}/${checks.length}`);
 
-function evaluateArtifact(html, serverEngine) {
+function evaluateArtifact(html, serverEngine, sessionSource) {
   return [
     ['artifact carries blue self and green ally', /self: '#4d94e0'/.test(html) && /ally: '#49b675'/.test(html)],
     ['artifact carries shared semantic renderer', /function friendlyTargetPlan/.test(html) && /function renderTargetSilhouette/.test(html)],
     ['artifact excludes down and disconnected seats', /!player\.alive \|\| !player\.connected/.test(html)],
     ['artifact carries relationship target and AX focus state', /function decorateFriendlyTarget[\s\S]{0,500}dataset\.friendlyTarget[\s\S]{0,160}dataset\.focusable[\s\S]{0,240}Target \$\{label\} \(\$\{relationship\}\)/.test(html)],
-    ['artifact carries Escape cancellation and focus restore', /ev\.key === 'Escape'/.test(html) && /focusElement\(card\)/.test(html)],
+    ['artifact carries Escape cancellation and focus restore', /ev\.key === 'Escape'/.test(html) && /function cancelFriendlyTargeting[\s\S]{0,500}if \(card\) focusElement\(card\);/.test(html)],
     ['artifact disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(html)],
     ['selected-root server enforces friendly legality before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);[\s\S]{0,1800}p\.energy -= cost;/.test(serverEngine)],
+    ['artifact keeps hostile families out of friendly confirmation', /HOSTILE_TARGETS = new Set\(\['enemy', 'allEnemies', 'randomEnemy'\]\)/.test(html) && /HOSTILE_TARGETS\.has\(effect\.target\)/.test(html)],
+    ['artifact restores origin focus when an armed target invalidates', /focusedFriendlyInvalid/.test(html) && /restoreFriendlyCardFocus = armedFriendlyCard;/.test(html) && /CSS\.escape\(restoreFriendlyCardFocus\)/.test(html)],
+    ['artifact keyboard shares pointer and pad affordability', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(html) && (html.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
+    ['selected-root session carries validated ally fixture seeding', /state\.ally\.extraHand\.some/.test(sessionSource) && /allyPlayer\.piles\.hand\.push/.test(sessionSource) && /tool-ally-extra-/.test(sessionSource)],
   ];
 }
 
 if (process.argv.includes('--artifact-check')) {
   const artifact = read('AshenSpire.html');
-  const artifactChecks = evaluateArtifact(artifact, read('src/engine/coopCombat.js'));
+  const artifactChecks = evaluateArtifact(artifact, read('src/engine/coopCombat.js'), read('tools/session.mjs'));
   for (const [label, ok] of artifactChecks) console.log(`${ok ? 'PASS' : 'FAIL'} ${label}`);
   const artifactGreen = artifactChecks.every(([, ok]) => ok);
   console.log(`friendly target artifact parity: ${artifactGreen ? 'OK' : 'RED'} (${artifactChecks.filter(([, ok]) => ok).length}/${artifactChecks.length})`);
@@ -101,6 +110,17 @@ check('mixed plan exposes blue self and green living ally', () => {
 });
 
 const REG = createRegistries(contentBundle);
+const hostileSelfCards = [
+  'meteorSwarm', 'gravityWell', 'radiantSpray', 'supernova', 'starfallBeam',
+  'graveOffering', 'butterflyPlague', 'bloodHarvest',
+];
+check('all hostile target shapes and the eight hostile+self cards bypass friendly confirmation', () => {
+  for (const target of ['enemy', 'allEnemies', 'randomEnemy']) {
+    assert(friendlyTargetMode({ effects: [{ op: 'damage', target }, { op: 'block', target: 'self' }] }) === 'none', `${target} became friendly`);
+  }
+  const wrong = hostileSelfCards.filter((id) => friendlyTargetMode(REG.cards.get(id)) !== 'none');
+  assert(wrong.length === 0, `hostile cards became friendly: ${wrong.join(', ')}`);
+});
 const player = (id, cardId) => ({
   id, name: id, classId: 'starseer', maxHp: 72, hp: 60,
   energyMax: 3, drawPerTurn: 5, relicIds: [], flasks: [],
@@ -144,6 +164,12 @@ check('authoritative mixed Oath accepts self and ally choices', () => {
     assert(Object.keys(C.players.get('caster').entity.statuses).length > 0, `caster status missing for ${targetId}`);
   }
 });
+check('authoritative unaffordable friendly play is rejected before spend', () => {
+  const C = fight(); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.energy = 0;
+  assert(throws(() => playCard(C, 'caster', card.instanceId, 'ally')), 'unaffordable play accepted');
+  assert(P.entity.energy === 0 && P.piles.hand.includes(card), 'unaffordable play spent resources');
+});
 
 if (process.argv.includes('--selftest-source')) {
   const plants = [
@@ -154,6 +180,10 @@ if (process.argv.includes('--selftest-source')) {
     ['cancel focus restoration removed', 'coop', (text) => text.replace('if (card) focusElement(card);', '')],
     ['confirm can replay before disarm', 'coop', (text) => text.replace('armedFriendlyCard = null;\n          hideTooltip();\n          render();\n          send(', 'send(')],
     ['server legality bypassed', 'engine', (text) => text.replace('targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);', 'targetId = targetId;')],
+    ['hostile AoE+self arms a false friendly prompt', 'shared', (text) => text.replace("['enemy', 'allEnemies', 'randomEnemy']", "['enemy']")],
+    ['target invalidation loses origin focus', 'coop', (text) => text.replace('restoreFriendlyCardFocus = armedFriendlyCard;', 'restoreFriendlyCardFocus = null;')],
+    ['number key bypasses affordability', 'coop', (text) => text.replace('if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;')],
+    ['ally fixture bypasses validated test-only hand seam', 'session', (text) => text.replace('allyPlayer.piles.hand.push', 'player.piles.hand.push')],
   ];
   let caught = 0;
   for (const [label, key, mutate] of plants) {
@@ -176,17 +206,21 @@ if (process.argv.includes('--selftest-artifact')) {
   const artifactPlants = [
     ['selected artifact generic gold ally', 'AshenSpire.html', "ally: '#49b675'", "ally: '#d5ad57'"],
     ['selected artifact swapped self color', 'AshenSpire.html', "self: '#4d94e0'", "self: '#49b675'"],
-    ['selected artifact allows down or away', 'AshenSpire.html', '!player.alive || !player.connected', '!player.alive && !player.connected'],
+    ['selected artifact allows down or away', 'AshenSpire.html', '!player.alive || !player.connected', '!player.alive && !player.connected', true],
     ['selected artifact drops controller focus', 'AshenSpire.html', "combatantEl.dataset.focusable = '';", ''],
     ['selected artifact drops cancel focus restore', 'AshenSpire.html', 'if (card) focusElement(card);', ''],
     ['selected artifact can replay before disarm', 'AshenSpire.html', 'armedFriendlyCard = null;\n          hideTooltip();\n          render();\n          send(', 'send('],
     ['selected-root server bypasses legality', 'src/engine/coopCombat.js', 'targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);', 'targetId = targetId;'],
+    ['selected artifact arms hostile AoE+self', 'AshenSpire.html', "['enemy', 'allEnemies', 'randomEnemy']", "['enemy']"],
+    ['selected artifact loses invalidated origin focus', 'AshenSpire.html', 'restoreFriendlyCardFocus = armedFriendlyCard;', 'restoreFriendlyCardFocus = null;'],
+    ['selected artifact number key bypasses affordability', 'AshenSpire.html', 'if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;'],
+    ['selected-root ally fixture seeds the wrong hand', 'tools/session.mjs', 'allyPlayer.piles.hand.push', 'player.piles.hand.push'],
   ];
   const status = await doorSelftest({
     tool: 'friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
-    plants: artifactPlants.map(([name, file, find, replace]) => ({
-      name, file, find, replace, expectRed: /friendly target artifact parity: RED/,
+    plants: artifactPlants.map(([name, file, find, replace, all = false]) => ({
+      name, file, find, replace, all, expectRed: /friendly target artifact parity: RED/,
     })),
   });
   process.exit(status);
@@ -292,7 +326,7 @@ async function browserDoor() {
   };
   const click = (selector) => `(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return false;e.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true}));return true})()`;
   const activate = async (tab, selector, touch = false) => {
-    const point = await evaluate(tab, `(async()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;e.scrollIntoView({block:'center',inline:'center'});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const b=e.getBoundingClientRect(),x=Math.max(1,Math.min(innerWidth-1,(b.left+b.right)/2)),y=Math.max(1,Math.min(innerHeight-1,(b.top+b.bottom)/2)),h=document.elementFromPoint(x,y);return{x,y,hit:h?.className||h?.tagName,text:h?.textContent?.trim().slice(0,40)}})()`);
+    const point = await evaluate(tab, `(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;e.scrollIntoView({block:'center',inline:'center'});const b=e.getBoundingClientRect(),x=Math.max(1,Math.min(innerWidth-1,(b.left+b.right)/2)),y=Math.max(1,Math.min(innerHeight-1,(b.top+b.bottom)/2)),h=document.elementFromPoint(x,y);return{x,y,hit:h?.className||h?.tagName,text:h?.textContent?.trim().slice(0,40)}})()`);
     if (!point) return false;
     if (touch) {
       const touchPoint = [{ x: point.x, y: point.y, radiusX: 12, radiusY: 12, force: 1 }];
@@ -321,13 +355,14 @@ async function browserDoor() {
       setCombatStartStateForTools({
         name: 'Fenn', hp: 60, block: 0,
         extraHand: ['ironSkin', 'rallyingBanner', 'rallyingBanner', 'ashOath'],
-        ally: { name: 'Wren', hp: 60, block: 0 },
+        ally: { name: 'Wren', hp: 1, block: 0, extraHand: ['bloodPact'] },
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
       const settings = encodeURIComponent(JSON.stringify({ textSize }));
       const base = `http://localhost:${server.port}/${captureBefore || standalone ? 'AshenSpire.html' : 'index.html'}?shotSettings=${settings}`;
       const host = await makeTab(shape);
       const guest = await makeTab(shape);
+      const support = await makeTab(shape);
       console.log(`\n${shape.tag} Text ${textSize} real two-client friendly targeting`);
       const evidenceCell = shotsDir && ((shape.tag === '390x844' && textSize === 'XL') || (shape.tag === '1200x730' && textSize === 'M'));
       const evidenceCapture = async (state, label) => {
@@ -337,13 +372,17 @@ async function browserDoor() {
         await capture(guest, `friendly-target-after-${standalone ? 'root' : 'source'}-${state}-${shape.tag}${textSuffix}.png`);
       };
       try {
+        console.log('  SETUP host navigate');
         await cdp.send('Page.navigate', { url: base }, host.sessionId);
+        console.log('  SETUP host LAN');
         await until(host, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'host LAN door');
         await evaluate(host, click('#lan-play'));
+        console.log('  SETUP host room');
         await until(host, `!!document.querySelector('#lb-name')`, 'host lobby');
         await evaluate(host, `(()=>{const n=document.querySelector('#lb-name');n.value='Wren';n.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('#lb-host').click();return true})()`);
         await until(host, `document.querySelector('h2')?.textContent==='AT THE FIRE'`, 'host fire');
 
+        console.log('  SETUP guest join');
         await cdp.send('Page.navigate', { url: base }, guest.sessionId);
         await until(guest, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest LAN door');
         await evaluate(guest, click('#lan-play'));
@@ -354,21 +393,41 @@ async function browserDoor() {
         await until(guest, `!!document.querySelector('#lb-ready')`, 'guest room');
         await evaluate(guest, `(()=>{const p=[...document.querySelectorAll('#lb-classes .class-pick')].find(x=>x.querySelector('h3')?.textContent==='Reaver');p?.click();return !!p})()`);
         await until(host, `document.querySelector('#lb-roster')?.textContent.includes('Reaver')`, 'host sees guest class');
+
+        console.log('  SETUP support join');
+        await cdp.send('Page.navigate', { url: base }, support.sessionId);
+        await until(support, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'support LAN door');
+        await evaluate(support, click('#lan-play'));
+        await until(support, `!!document.querySelector('#lb-name')`, 'support lobby');
+        await evaluate(support, `(()=>{const n=document.querySelector('#lb-name');n.value='Vale';n.dispatchEvent(new Event('input',{bubbles:true}));return true})()`);
+        await until(support, `!!document.querySelector('.lb-join')`, 'support sees host');
+        await evaluate(support, click('.lb-join'));
+        await until(support, `!!document.querySelector('#lb-ready')`, 'support room');
+        await evaluate(support, `(()=>{const p=[...document.querySelectorAll('#lb-classes .class-pick')].find(x=>x.querySelector('h3')?.textContent==='Starseer');p?.click();return !!p})()`);
+        await until(host, `document.querySelector('#lb-roster')?.textContent.includes('Starseer')`, 'host sees support class');
+        await evaluate(support, click('#lb-ready'));
         await evaluate(guest, click('#lb-ready'));
+        console.log('  SETUP start');
         await until(host, `!document.querySelector('#lb-start')?.disabled`, 'host sees ready');
         await evaluate(host, `(()=>{const n=document.querySelector('#lb-seed');n.value='FRIEND209';n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('#lb-start').click();return true})()`);
         await until(host, `!!document.querySelector('.mapscreen')`, 'host map');
         await until(guest, `!!document.querySelector('.mapscreen')`, 'guest map');
+        await until(support, `!!document.querySelector('.mapscreen')`, 'support map');
+        console.log('  SETUP map votes');
         await evaluate(host, click('.map-node.reachable'));
         await evaluate(guest, click('.map-node.reachable'));
+        await evaluate(support, click('.map-node.reachable'));
         await until(guest, `!!document.querySelector('.combat.coop')`, 'guest combat');
+        await until(support, `!!document.querySelector('.combat.coop')`, 'support combat');
         await until(guest, `[...document.querySelectorAll('.hand .card')].some(c=>c.textContent.includes('Oath of Ash'))`, 'friendly fixture cards');
+        if (shape.dpr > 1) await cdp.send('Target.activateTarget', { targetId: guest.targetId });
+        console.log('  SETUP combat ready');
 
         if (captureBefore) {
           await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));c?.click();return !!c})()`);
-          await until(guest, `document.querySelectorAll('.coop-seat.throw-target').length===2`, 'pre-change generic target seats');
+          await until(guest, `document.querySelectorAll('.coop-seat.throw-target').length===3`, 'pre-change generic target seats');
           const before = await evaluate(guest, `(()=>[...document.querySelectorAll('.coop-seat')].map(e=>({seat:e.dataset.seat,generic:e.classList.contains('throw-target'),friendly:e.dataset.friendlyTarget||null,focus:e.hasAttribute('data-focusable')})))()`);
-          observed(before.length === 2 && before.every((entry) => entry.generic && !entry.friendly && !entry.focus), 'pre-change selected standalone reproduces generic all-seat targeting RED', JSON.stringify(before));
+          observed(before.length === 3 && before.every((entry) => entry.generic && !entry.friendly && !entry.focus), 'pre-change selected standalone reproduces generic all-seat targeting RED', JSON.stringify(before));
           if (shotsDir) {
             await evaluate(guest, `(()=>{const n=document.createElement('div');n.className='evidence-caption';n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';n.textContent='SELECTED ROOT BEFORE · #209 RED · Rallying Banner · generic gold on self + ally · no AX target state · ${shape.tag} · Text ${textSize}';document.body.appendChild(n);return true})()`);
             await capture(guest, `friendly-target-before-root-${shape.tag}${textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`}.png`);
@@ -389,19 +448,21 @@ async function browserDoor() {
         await evidenceCapture('cancel', 'Cancel · no target markers · exact card focus restored');
 
         // A living, connected teammate who already ended remains a legal ally.
-        await evaluate(host, click('#coop-endturn'));
-        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===s.party.find(m=>m.name==='Wren')?.id);return p?.ended===true})()`, 'ended teammate snapshot');
+        // Vale ends here so Wren remains able to drive the later real-engine
+        // self-down snapshot while Fenn's targeting transaction stays armed.
+        await evaluate(support, click('#coop-endturn'));
+        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===s.party.find(m=>m.name==='Vale')?.id);return p?.ended===true})()`, 'ended teammate snapshot');
 
         // Mouse/touch ally arm/confirm: no self highlight.
         const bannerSelector = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));if(!c)return null;c.dataset.friendlyProbe='banner';return '[data-friendly-probe="banner"]'})()`);
         await activate(guest, bannerSelector, shape.dpr > 1);
-        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'ally-only targeting appears');
-        const ids = await evaluate(guest, `(()=>{const s=window.__coopSnapshot;return{actor:s.party.find(p=>p.name==='Fenn')?.id,ally:s.party.find(p=>p.name==='Wren')?.id}})()`);
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===2`, 'ally-only targeting appears');
+        const ids = await evaluate(guest, `(()=>{const s=window.__coopSnapshot;return{actor:s.party.find(p=>p.name==='Fenn')?.id,ally:s.party.find(p=>p.name==='Wren')?.id,support:s.party.find(p=>p.name==='Vale')?.id}})()`);
         const allyOnly = await evaluate(guest, `(()=>[...document.querySelectorAll('[data-friendly-target]')].map(e=>({seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color')})))()`);
-        observed(allyOnly.length === 1 && allyOnly[0].seat === ids.ally && allyOnly[0].rel === 'ally' && allyOnly[0].color === '#49b675', 'ally-only green legal ally excludes self', JSON.stringify(allyOnly));
+        observed(allyOnly.length === 2 && allyOnly.every((entry) => entry.seat !== ids.actor && entry.rel === 'ally' && entry.color === '#49b675') && allyOnly.some((entry) => entry.seat === ids.ally) && allyOnly.some((entry) => entry.seat === ids.support), 'ally-only green legal allies exclude self', JSON.stringify(allyOnly));
         await evidenceCapture('ally', 'Rallying Banner ally-only · green ally · self excluded');
-        await activate(guest, `[data-seat="${ids.ally}"]`, shape.dpr > 1);
-        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return p?.block===10})()`, 'Rallying Banner server result');
+        await activate(guest, `[data-seat="${ids.support}"]`, shape.dpr > 1);
+        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.support)});return p?.block===10})()`, 'Rallying Banner server result');
         const banner = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,cards:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Rallying Banner')).length})`);
         observed(banner.targets === 0 && banner.cards === 1, `${shape.dpr > 1 ? 'touch' : 'mouse'} confirm commits and spends exactly once`, JSON.stringify(banner));
 
@@ -409,9 +470,9 @@ async function browserDoor() {
         const oathIndex = await evaluate(guest, `[...document.querySelectorAll('.hand .card')].findIndex(x=>x.textContent.includes('Oath of Ash'))`);
         const oathKey = oathIndex === 9 ? 'q' : String(oathIndex + 1);
         await key(guest, oathKey);
-        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===2`, 'keyboard mixed targeting');
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===3`, 'keyboard mixed targeting');
         const mixed = await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer')?.getBoundingClientRect(),targets=[...document.querySelectorAll('[data-friendly-target]')].map(e=>{const r=e.getBoundingClientRect();return{seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color'),aria:e.getAttribute('aria-label'),onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight}});return{targets,layer:!!layer}})()`);
-        observed(mixed.targets.length === 2 && mixed.targets.some((t) => t.rel === 'self' && t.color === '#4d94e0') && mixed.targets.some((t) => t.rel === 'ally' && t.color === '#49b675') && mixed.targets.every((t) => t.aria && t.onGlass), 'keyboard mixed target relationship/AX/on-glass parity', JSON.stringify(mixed));
+        observed(mixed.targets.length === 3 && mixed.targets.filter((t) => t.rel === 'self' && t.color === '#4d94e0').length === 1 && mixed.targets.filter((t) => t.rel === 'ally' && t.color === '#49b675').length === 2 && mixed.targets.every((t) => t.aria), 'keyboard mixed target relationship/AX parity', JSON.stringify(mixed));
         await evidenceCapture('mixed', 'Oath of Ash mixed · self blue · ally green');
         // Standard-mapping gamepad shim: product poller receives B Cancel and
         // A Confirm through its public navigator.getGamepads door.
@@ -423,7 +484,7 @@ async function browserDoor() {
         const focusBeforeMove = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
         await padTap(15);
         const focusAfterMove = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
-        observed(!!focusBeforeMove && !!focusAfterMove && focusBeforeMove !== focusAfterMove, 'controller traverses the mixed legal target set', `${focusBeforeMove}→${focusAfterMove}`);
+        observed(!!focusBeforeMove && !!focusAfterMove && focusBeforeMove !== focusAfterMove, 'controller traverses within the mixed legal target set', `${focusBeforeMove}→${focusAfterMove}`);
         await padTap(1);
         const padCancel = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focused:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Oath of Ash'))?.classList.contains('gp-focus'),lastKey:window.__friendlyPad.lastKey})`);
         observed(padCancel.targets === 0 && padCancel.focused === true, 'controller Cancel clears and restores card focus', JSON.stringify(padCancel));
@@ -442,20 +503,69 @@ async function browserDoor() {
         const padCommit = await evaluate(guest, `(()=>{const s=window.__coopSnapshot.scene,actor=s.players.find(p=>p.id===${JSON.stringify(ids.actor)});return{targets:document.querySelectorAll('[data-friendly-target]').length,cards:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Iron Skin')).length,energy:actor?.energy,block:actor?.block}})()`);
         observed(padCommit.targets === 0 && padCommit.cards === 0 && padCommit.energy === 1 && padCommit.block === 8, 'controller Confirm commits exactly once and clears markers', JSON.stringify(padCommit));
 
-        // A real disconnect invalidates the remaining ally-only card and the
-        // screen cannot leave a stale highlight, click target, or focus target.
+        // At one energy Oath costs two. Number key, real pointer/touch and the
+        // standard pad must all refuse to arm it, exactly as the server does.
+        const unaffordableOathIndex = await evaluate(guest, `[...document.querySelectorAll('.hand .card')].findIndex(x=>x.textContent.includes('Oath of Ash'))`);
+        const unaffordableOathKey = unaffordableOathIndex === 9 ? 'q' : String(unaffordableOathIndex + 1);
+        await key(guest, unaffordableOathKey);
+        await wait(250);
+        const keyUnaffordable = await evaluate(guest, `(()=>{const s=window.__coopSnapshot.scene,actor=s.players.find(p=>p.id===${JSON.stringify(ids.actor)});return{targets:document.querySelectorAll('[data-friendly-target]').length,energy:actor?.energy,cards:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Oath of Ash')).length}})()`);
+        observed(keyUnaffordable.targets === 0 && keyUnaffordable.energy === 1 && keyUnaffordable.cards === 1, 'number key refuses unaffordable friendly card without send/spend', JSON.stringify(keyUnaffordable));
+        const oathSelector = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Oath of Ash'));if(!c)return null;c.dataset.friendlyProbe='unaffordable-oath';return '[data-friendly-probe="unaffordable-oath"]'})()`);
+        await activate(guest, oathSelector, shape.dpr > 1);
+        await wait(250);
+        observed((await evaluate(guest, `document.querySelectorAll('[data-friendly-target]').length`)) === 0, `${shape.dpr > 1 ? 'touch' : 'mouse'} refuses the same unaffordable friendly card`);
+        let oathPadFocused = false;
+        for (let move = 0; move < 24; move++) {
+          oathPadFocused = await evaluate(guest, `document.querySelector('.hand .card.gp-focus')?.textContent.includes('Oath of Ash')===true`);
+          if (oathPadFocused) break;
+          await padTap(15);
+        }
+        observed(oathPadFocused, 'controller can focus the unaffordable Oath card');
+        if (oathPadFocused) await padTap(0);
+        const padUnaffordable = await evaluate(guest, `(()=>{const s=window.__coopSnapshot.scene,actor=s.players.find(p=>p.id===${JSON.stringify(ids.actor)});return{targets:document.querySelectorAll('[data-friendly-target]').length,energy:actor?.energy,focused:document.querySelector('.hand .card.gp-focus')?.textContent.includes('Oath of Ash')===true}})()`);
+        observed(oathPadFocused && padUnaffordable.targets === 0 && padUnaffordable.energy === 1 && padUnaffordable.focused, 'controller refuses unaffordable friendly card without send/spend', JSON.stringify(padUnaffordable));
+        await evidenceCapture('unaffordable', 'Unaffordable Oath · no prompt or spend · exact card focus');
+
+        // Three real seats: Wren has one HP, Vale remains legal. Arm the spare
+        // ally card on focused Wren, then play Wren's tool-seeded Blood Pact
+        // through the real server/engine path so Wren downs in its own live
+        // snapshot while Fenn's origin card is still mounted. Losing the
+        // focused target cancels instead of silently rehoming to Vale and
+        // restores that exact originating card after the DOM rebuild.
         const spareSelector = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));if(!c)return null;c.dataset.friendlyProbe='spare-banner';return '[data-friendly-probe="spare-banner"]'})()`);
         await activate(guest, spareSelector, shape.dpr > 1);
-        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'spare ally card arms before disconnect');
-        await cdp.send('Target.closeTarget', { targetId: host.targetId });
-        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return !p?.connected})()`, 'away teammate snapshot');
-        const away = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focusable:document.querySelectorAll('.coop-seat[data-focusable]').length,selected:[...document.querySelectorAll('.hand .card')].some(x=>x.textContent.includes('Rallying Banner')&&x.classList.contains('selected'))})`);
-        observed(away.targets === 0 && away.focusable === 0 && away.selected === false, 'away teammate clears highlight/focus/click target and spends nothing', JSON.stringify(away));
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===2`, 'spare ally card arms across two legal allies');
+        for (let move = 0; move < 4 && await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat!==${JSON.stringify(ids.ally)}`); move++) await padTap(14);
+        observed((await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`)) === ids.ally, 'three-seat control focuses the ally that will become down');
+        await until(host, `[...document.querySelectorAll('.hand .card')].some(x=>x.textContent.includes('Blood Pact'))`, 'ally self-down fixture card');
+        await evaluate(host, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Blood Pact'));c?.click();return !!c})()`);
+        await until(host, `document.querySelectorAll('[data-friendly-target]').length===1`, 'ally self-down target confirmation');
+        await evaluate(host, click('[data-friendly-target]'));
+        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return p?.alive===false})()`, 'focused ally becomes down through real engine play');
+        const down = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focusable:document.querySelectorAll('.coop-seat[data-focusable]').length,selected:[...document.querySelectorAll('.hand .card')].some(x=>x.textContent.includes('Rallying Banner')&&x.classList.contains('selected')),card:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'))?.classList.contains('gp-focus'),supportAlive:window.__coopSnapshot.scene.players.find(x=>x.id===${JSON.stringify(ids.support)})?.alive})`);
+        observed(down.targets === 0 && down.focusable === 0 && down.selected === false && down.card === true && down.supportAlive === true, 'focused ally down cancels three-seat targeting and restores exact card focus while another ally remains', JSON.stringify(down));
+        await evidenceCapture('down-cancel', 'Focused ally down · targeting canceled · origin focus restored');
+
+        // Re-arm against the one remaining legal ally, then disconnect that
+        // real client. Last-target invalidation owns the same exact focus return.
+        const spareRearmSelector = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));if(!c)return null;c.dataset.friendlyProbe='spare-rearm';return '[data-friendly-probe="spare-rearm"]'})()`);
+        await activate(guest, spareRearmSelector, shape.dpr > 1);
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'spare ally card re-arms on last legal ally');
+        await cdp.send('Target.closeTarget', { targetId: support.targetId });
+        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.support)});return !p?.connected})()`, 'away teammate snapshot');
+        const away = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focusable:document.querySelectorAll('.coop-seat[data-focusable]').length,selected:[...document.querySelectorAll('.hand .card')].some(x=>x.textContent.includes('Rallying Banner')&&x.classList.contains('selected')),card:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'))?.classList.contains('gp-focus')})`);
+        observed(away.targets === 0 && away.focusable === 0 && away.selected === false && away.card === true, 'last legal ally away clears target/AX/click state and restores exact card focus without spend', JSON.stringify(away));
+        await evidenceCapture('away-cancel', 'Last ally away · target and AX cleared · origin focus restored');
       } finally {
         await cdp.send('Target.closeTarget', { targetId: host.targetId }).catch(() => {});
         await cdp.send('Target.closeTarget', { targetId: guest.targetId }).catch(() => {});
+        await cdp.send('Target.closeTarget', { targetId: support.targetId }).catch(() => {});
         server.server.closeAllConnections?.();
-        await new Promise((resolve) => server.server.close(resolve));
+        await Promise.race([
+          new Promise((resolve) => server.server.close(resolve)),
+          wait(2000),
+        ]);
       }
     }
   } finally {

@@ -139,6 +139,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     return true;
   }
 
+  function cardAffordableFromSnapshot(def, player) {
+    if (!def || !player || player.ended || !player.alive || !player.connected) return false;
+    const energyCost = def.cost === 'X' ? 1 : def.cost;
+    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+  }
+
   function armFriendlyTargeting(cardInstanceId) {
     if (armedFriendlyCard === cardInstanceId) {
       cancelFriendlyTargeting();
@@ -206,9 +212,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       return;
     }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (idx >= 0 && !meP.ended && meP.hand[idx]) {
+    if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
       const def = cardDef(c);
+      if (!cardAffordableFromSnapshot(def, meP)) return;
       if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
       const needs = (def.effects || []).some((e) => e.target === 'enemy');
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
@@ -371,13 +378,18 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
     const sc = snap.scene;
+    const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
+      || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
+    let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
     let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
     if (armedFriendlyCard && !armedCardDef) armedFriendlyCard = null; // card left the hand
     let targetPlan = armedCardDef ? friendlyTargetPlan(armedCardDef, me, sc.players) : null;
-    if (armedFriendlyCard && targetPlan && targetPlan.targets.length === 0) {
+    const focusedFriendlyInvalid = focusedFriendlySeat && targetPlan && !targetPlan.legalIds.includes(focusedFriendlySeat);
+    if (armedFriendlyCard && targetPlan && (targetPlan.targets.length === 0 || focusedFriendlyInvalid)) {
+      restoreFriendlyCardFocus = armedFriendlyCard;
       armedFriendlyCard = null;
       armedCardDef = null;
       targetPlan = null;
@@ -517,7 +529,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
           const def = cardDef(c);
           const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
           const manaAffordable = meP.mana >= (def.manaCost || 0);
-          const affordable = !meP.ended && energyAffordable && manaAffordable;
+          const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
@@ -576,7 +588,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     endTurnBeat.refresh();
     const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedFriendlyCard = null; render(); });
     const ct = app.querySelector('#coop-cancel-target'); if (ct) ct.addEventListener('click', () => cancelFriendlyTargeting());
-    if (armedFriendlyCard && isEngaged()) focusFirst('.coop-seat[data-friendly-target]');
+    if (restoreFriendlyCardFocus) {
+      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
+      if (card) focusElement(card);
+    } else if (armedFriendlyCard && isEngaged()) focusFirst('.coop-seat[data-friendly-target]');
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();

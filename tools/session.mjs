@@ -45,14 +45,16 @@ export function setCombatStartStateForTools(state = null) {
   const badPlayerStatuses = state?.playerStatuses != null
     && (!Array.isArray(state.playerStatuses) || state.playerStatuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)));
   const badAlly = state?.ally != null && (typeof state.ally !== 'object'
-    || typeof state.ally.name !== 'string' || !Number.isFinite(state.ally.hp) || !Number.isFinite(state.ally.block));
+    || typeof state.ally.name !== 'string' || !Number.isFinite(state.ally.hp) || !Number.isFinite(state.ally.block)
+    || (state.ally.extraHand != null && (!Array.isArray(state.ally.extraHand)
+      || state.ally.extraHand.some((id) => typeof id !== 'string'))));
   const badEnemy = state?.enemy != null && (typeof state.enemy !== 'object'
     || (state.enemy.hp != null && !Number.isFinite(state.enemy.hp))
     || (state.enemy.statuses != null && (!Array.isArray(state.enemy.statuses)
       || state.enemy.statuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)))));
   if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
       || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badPlayerStatuses || badAlly || badEnemy)) {
-    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], playerStatuses?: { id, stacks }[], ally?: { name, hp, block }, enemy?: { hp?, statuses? } }');
+    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], playerStatuses?: { id, stacks }[], ally?: { name, hp, block, extraHand?: string[] }, enemy?: { hp?, statuses? } }');
   }
   combatStartStateForTools = state ? structuredClone(state) : null;
 }
@@ -375,10 +377,18 @@ export function createSession({ registries, seedString, endless = false, restore
       entity.block = combatStartStateForTools.block;
       if (combatStartStateForTools.ally) {
         const allyMember = connectedMembers().find((entry) => entry.name === combatStartStateForTools.ally.name);
-        const ally = allyMember ? combat.players.get(allyMember.id)?.entity : null;
+        const allyPlayer = allyMember ? combat.players.get(allyMember.id) : null;
+        const ally = allyPlayer?.entity;
         if (!ally) throw new Error(`Tool combat start state cannot find ally '${combatStartStateForTools.ally.name}'`);
         ally.hp = combatStartStateForTools.ally.hp;
         ally.block = combatStartStateForTools.ally.block;
+        if (combatStartStateForTools.ally.extraHand) {
+          allyPlayer.piles.hand.push(...combatStartStateForTools.ally.extraHand.map((cardId, index) => ({
+            instanceId: `tool-ally-extra-${index + 1}`,
+            cardId,
+            upgraded: false,
+          })));
+        }
       }
       for (const row of combatStartStateForTools.playerStatuses || []) {
         applyStatus(combat, entity, row.id, row.stacks, entity);

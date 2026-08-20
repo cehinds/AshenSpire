@@ -8,9 +8,15 @@ export const TARGET_COLORS = Object.freeze({
   ally: '#49b675',
 });
 
+// Every hostile member of the effect target vocabulary owns card resolution
+// before source-side self effects are considered. An AoE/random strike may
+// heal, block, exhaust, or otherwise affect its source without becoming a
+// friendly-target transaction.
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
+
 export function friendlyTargetMode(def) {
   const effects = def && Array.isArray(def.effects) ? def.effects : [];
-  const hasEnemy = effects.some((effect) => effect.target === 'enemy');
+  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
   const hasAlly = effects.some((effect) => effect.target === 'ally');
   const hasSelf = effects.some((effect) => effect.target === 'self');
   // Enemy cards continue through enemy aiming even when they also have a
