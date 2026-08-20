@@ -263,8 +263,10 @@ function memberPathnameAt(tokens, start) {
   if (tokens[i]?.value === '.' && tokens[i + 1]?.type === 'identifier' && tokens[i + 1].value === 'pathname') {
     return { end: i + 2 };
   }
-  if (tokens[i]?.value === '[' && tokens[i + 1]?.type === 'string' &&
-      tokens[i + 1].value === 'pathname' && tokens[i + 2]?.value === ']') return { end: i + 3 };
+  const key = tokens[i + 1];
+  const staticPathname = key?.value === 'pathname' &&
+    (key.type === 'string' || (key.type === 'template' && !key.hasInterpolation && !key.tagged));
+  if (tokens[i]?.value === '[' && staticPathname && tokens[i + 2]?.value === ']') return { end: i + 3 };
   return null;
 }
 
@@ -284,11 +286,25 @@ function destructureBefore(tokens, assignment) {
   for (let i = assignment - 1; i >= 0; i--) {
     if (tokens[i].value === '}') depth++;
     else if (tokens[i].value === '{' && --depth === 0) {
-      const body = tokens.slice(i + 1, assignment - 1);
-      return {
-        pathname: body.some((token) => (token.type === 'identifier' || token.type === 'string') && token.value === 'pathname'),
-        dynamic: body.some((token) => token.value === '['),
-      };
+      const separators = [i, ...topLevelIndexes(tokens, i + 1, assignment - 1, ','), assignment - 1];
+      let pathname = false;
+      let dynamic = false;
+      for (let entry = 0; entry + 1 < separators.length; entry++) {
+        let start = separators[entry] + 1;
+        const end = separators[entry + 1];
+        if (tokens[start]?.value === '...') { dynamic = true; continue; }
+        const colon = topLevelIndexes(tokens, start, end, ':')[0];
+        const defaultAt = topLevelIndexes(tokens, start, colon ?? end, '=')[0];
+        const keyEnd = colon ?? defaultAt ?? end;
+        if (tokens[start]?.value === '[') {
+          if (tokens[start + 1]?.type === 'string' && tokens[start + 1].value === 'pathname' &&
+              tokens[start + 2]?.value === ']' && start + 3 === keyEnd) pathname = true;
+          else dynamic = true;
+        } else if (start + 1 === keyEnd &&
+                   (tokens[start]?.type === 'identifier' || tokens[start]?.type === 'string') &&
+                   tokens[start].value === 'pathname') pathname = true;
+      }
+      return { pathname, dynamic };
     }
   }
   return { pathname: false, dynamic: false };
@@ -353,18 +369,19 @@ function expressionEnd(tokens, start) {
     const value = tokens[i].value;
     if (closing[value]) stack.push(closing[value]);
     else if (value === stack.at(-1)) stack.pop();
-    else if (stack.length === 0 && [',', ';', ')', ']', '}$'].includes(value)) return i;
+    else if (stack.length === 0 && [',', ';', ')', ']', '}', '}$'].includes(value)) return i;
   }
   return tokens.length;
 }
 
 function parameterScopes(tokens) {
   const atBrace = new Map();
+  const functionBraces = new Set();
   const parameterIndexes = new Set();
   const keyIndexes = new Set();
   const assignmentIndexes = new Set();
   const expressionRanges = [];
-  const register = (open, close, brace = -1, expressionStart = -1) => {
+  const register = (open, close, brace = -1, expressionStart = -1, functionScope = false) => {
     if (open < 0 || close < open) return;
     const binding = bindingIndexes(tokens, open + (tokens[open]?.value === '(' ? 1 : 0), close);
     const names = new Set([...binding.indexes].map((index) => tokens[index].value));
@@ -373,14 +390,19 @@ function parameterScopes(tokens) {
     for (let i = open + (tokens[open]?.value === '(' ? 1 : 0); i < close; i++) {
       if (tokens[i].value === '=' && binding.indexes.has(i - 1)) assignmentIndexes.add(i);
     }
-    if (brace >= 0) atBrace.set(brace, names);
+    if (brace >= 0) {
+      atBrace.set(brace, names);
+      if (functionScope) functionBraces.add(brace);
+    }
     else if (expressionStart >= 0) expressionRanges.push({ start: expressionStart, end: expressionEnd(tokens, expressionStart), names });
   };
   for (let brace = 0; brace < tokens.length; brace++) {
     if (tokens[brace].value !== '{') continue;
     let open = -1;
     let close = -1;
+    let functionScope = false;
     if (tokens[brace - 1]?.value === '=>') {
+      functionScope = true;
       close = brace - 2;
       if (tokens[close]?.value === ')') open = findOpenBackward(tokens, close);
       else if (tokens[close]?.type === 'identifier') open = close;
@@ -390,10 +412,11 @@ function parameterScopes(tokens) {
       const before = tokens[open - 1];
       const functionKeyword = before?.value === 'function' || tokens[open - 2]?.value === 'function';
       const catchKeyword = before?.value === 'catch';
-      const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch'].includes(before.value);
+      const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before.value);
+      functionScope = functionKeyword || methodShape;
       if (!functionKeyword && !catchKeyword && !methodShape) open = -1;
     }
-    register(open, close + (open === close && tokens[open]?.value !== '(' ? 1 : 0), brace);
+    register(open, close + (open === close && tokens[open]?.value !== '(' ? 1 : 0), brace, -1, functionScope);
   }
   for (let arrow = 0; arrow < tokens.length; arrow++) {
     if (tokens[arrow].value !== '=>' || tokens[arrow + 1]?.value === '{') continue;
@@ -401,7 +424,7 @@ function parameterScopes(tokens) {
     const open = tokens[close]?.value === ')' ? findOpenBackward(tokens, close) : close;
     register(open, close + (open === close ? 1 : 0), -1, arrow + 1);
   }
-  return { atBrace, parameterIndexes, keyIndexes, assignmentIndexes, expressionRanges };
+  return { atBrace, functionBraces, parameterIndexes, keyIndexes, assignmentIndexes, expressionRanges };
 }
 
 function findUrlExpressions(tokens, errors) {
@@ -484,20 +507,27 @@ function findPathnameMisuses(tokens, errors) {
   const urls = findUrlExpressions(tokens, errors);
   const findings = [];
   const seen = new Set();
-  const scopes = [new Map()];
+  const scopes = [{ aliases: new Map(), functionScope: true }];
   const parameters = parameterScopes(tokens);
   let aliasSteps = 0;
   const isAlias = (name, index = -1) => {
     if (parameters.expressionRanges.some((range) => index >= range.start && index < range.end && range.names.has(name))) return false;
-    for (let i = scopes.length - 1; i >= 0; i--) if (scopes[i].has(name)) return scopes[i].get(name);
+    for (let i = scopes.length - 1; i >= 0; i--) if (scopes[i].aliases.has(name)) return scopes[i].aliases.get(name);
     return false;
   };
-  const setAlias = (name, value, declaration = false) => {
-    if (declaration) { scopes.at(-1).set(name, value); return; }
-    for (let i = scopes.length - 1; i >= 0; i--) {
-      if (scopes[i].has(name)) { scopes[i].set(name, value); return; }
+  const setAlias = (name, value, declaration = null) => {
+    if (declaration) {
+      let target = scopes.length - 1;
+      if (declaration === 'var') {
+        while (target > 0 && !scopes[target].functionScope) target--;
+      }
+      scopes[target].aliases.set(name, value);
+      return;
     }
-    scopes.at(-1).set(name, value);
+    for (let i = scopes.length - 1; i >= 0; i--) {
+      if (scopes[i].aliases.has(name)) { scopes[i].aliases.set(name, value); return; }
+    }
+    scopes.at(-1).aliases.set(name, value);
   };
   const add = (index, kind = 'URL pathname used as a filesystem path') => {
     const offset = tokens[index]?.start ?? 0;
@@ -516,15 +546,15 @@ function findPathnameMisuses(tokens, errors) {
     }
     const token = tokens[i];
     if (token.value === '{') {
-      const scope = new Map();
-      for (const name of parameters.atBrace.get(i) || []) scope.set(name, false);
+      const scope = { aliases: new Map(), functionScope: parameters.functionBraces.has(i) };
+      for (const name of parameters.atBrace.get(i) || []) scope.aliases.set(name, false);
       scopes.push(scope);
     }
     if (token.value === '}') { if (scopes.length > 1) scopes.pop(); continue; }
 
     if (ASSIGNMENTS.has(token.value)) {
       if (parameters.assignmentIndexes.has(i)) continue;
-      const declaration = ['const', 'let', 'var'].includes(tokens[i - 2]?.value);
+      const declaration = ['const', 'let', 'var'].includes(tokens[i - 2]?.value) ? tokens[i - 2].value : null;
       const lhs = tokens[i - 1];
       const assigned = token.value === '=' ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
       const destructure = destructureBefore(tokens, i);
@@ -536,11 +566,11 @@ function findPathnameMisuses(tokens, errors) {
 
     if (token.type !== 'identifier') continue;
     if (['function', 'class'].includes(tokens[i - 1]?.value)) {
-      setAlias(token.value, false, true);
+      setAlias(token.value, false, 'lexical');
       continue;
     }
     if (['const', 'let', 'var'].includes(tokens[i - 1]?.value)) {
-      setAlias(token.value, false, true);
+      setAlias(token.value, false, tokens[i - 1].value);
       continue;
     }
     if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) || !isAlias(token.value, i)) continue;
@@ -573,7 +603,7 @@ function findHandRolledFileUrls(tokens) {
   const findings = [];
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
-    if (token.type === 'template' && !isTaggedTemplate(tokens, i) &&
+    if (token.type === 'template' && !token.tagged &&
         token.hasInterpolation && /^file:\/{2,}/.test(token.value)) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
@@ -768,11 +798,29 @@ function selftest() {
     ['destructured arrow parameter shadow', "const u=new URL('./x',import.meta.url);items.map(({u})=>u.pathname);fileURLToPath(u)", 0, 0, 0],
     ['post-block regex delimiter plant', "new URL((()=>{function f(){} /[)]/.test('x');return './x'})(),import.meta.url).pathname", 1, 0, 0],
     ['post-block innocent regex control', "function f(){} /new URL('x',import.meta.url).pathname/.test(s)", 0, 0, 0],
+    ['break ASI regex delimiter plant', "new URL((()=>{while(ok){break\n/[)]/.test(x)}return './x'})(),import.meta.url).pathname", 1, 0, 0],
+    ['break ASI innocent regex control', "function f(){while(ok){break\n/new URL('x',import.meta.url).pathname/.test(s)}}", 0, 0, 0],
+    ['continue ASI regex delimiter plant', "new URL((()=>{while(ok){continue\n/[)]/.test(x)}return './x'})(),import.meta.url).pathname", 1, 0, 0],
+    ['continue ASI innocent regex control', "function f(){while(ok){continue\n/new URL('x',import.meta.url).pathname/.test(s)}}", 0, 0, 0],
+    ['debugger ASI regex delimiter plant', "new URL((()=>{debugger\n/[)]/.test(x);return './x'})(),import.meta.url).pathname", 1, 0, 0],
+    ['debugger ASI innocent regex control', "function f(){debugger\n/new URL('x',import.meta.url).pathname/.test(s)}", 0, 0, 0],
     ['grouped platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath((u))", 0, 0, 0],
     ['option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:true})", 0, 0, 0],
     ['grouped option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(((u)),{windows:true})", 0, 0, 0],
     ['platform options alias escape fails closed', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:u})", 0, 0, 1],
     ['direct URL call consumer control', "const data=readFileSync(new URL('./x',import.meta.url),'utf8')", 0, 0, 0],
+    ['var alias survives nested block', "function f(ok){if(ok){var u=new URL('./x',import.meta.url)}return u.pathname}", 1, 0, 0],
+    ['var alias survives catch block', "function f(){try{work()}catch(err){var u=new URL('./x',import.meta.url)}return u.pathname}", 1, 0, 0],
+    ['nested function owns its var alias', "function outer(){const u=platformValue;function inner(){if(ok){var u=new URL('./x',import.meta.url)}return u.pathname}return u.pathname}", 1, 0, 0],
+    ['block let does not taint outer binding', "const u=platformValue;function f(ok){if(ok){let u=new URL('./x',import.meta.url)}return u.pathname}", 0, 0, 0],
+    ['destructure non-path rename control', "const {origin:pathname}=new URL('./x',import.meta.url)", 0, 0, 0],
+    ['destructure pathname rename', "const {pathname:local}=new URL('./x',import.meta.url)", 1, 0, 0],
+    ['destructure static bracket pathname rename', "const {['pathname']:local}=new URL('./x',import.meta.url)", 1, 0, 0],
+    ['direct static template bracket pathname', "new URL('./x',import.meta.url)[`pathname`]", 1, 0, 0],
+    ['alias static template bracket pathname', "const u=new URL('./x',import.meta.url);u[`pathname`]", 1, 0, 0],
+    ['static template bracket non-path control', "new URL('./x',import.meta.url)[`origin`]", 0, 0, 0],
+    ['tagged template later segment control', 'const s=String.raw`${prefix}file://${path}`', 0, 0, 0],
+    ['untagged template later segment', 'const s=`${prefix}file://${path}`', 0, 1, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
