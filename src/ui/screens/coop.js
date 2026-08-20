@@ -38,7 +38,7 @@
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { anchorLocalBox, guardHitFloatParts } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -737,7 +737,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35, dx = 0) => {
+    const put = (sel, cls, text, dy = 0.35, dx = 0, stackY = 0) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -747,9 +747,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      el.style.left = `${b.left + b.width / 2 + dx}px`;
-      el.style.top = `${b.top + b.height * dy}px`;
+      const centre = b.left + b.width / 2 + dx;
+      const top = b.top + b.height * dy + stackY;
+      el.style.left = `${centre}px`;
+      el.style.top = `${top}px`;
       layer.appendChild(el);
+      const half = el.offsetWidth / 2;
+      const at = clampBox(
+        { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
+        anchorLocalBox(layer, layer),
+        { pad: 6 },
+      );
+      el.style.left = `${at.left + half}px`;
+      el.style.top = `${at.top}px`;
       setTimeout(() => el.remove(), 1100);
     };
     const recoil = (sel, heavy) => {
@@ -758,23 +768,42 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     };
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.
-    const receiptTargets = new Set();
+    const receiptLossByTarget = new Map();
     // A snapshot object is rendered more than once when selection, targeting,
     // or responsive state changes. Receipts belong to the transition into a
     // new authoritative snapshot and must never replay on those local renders.
-    for (const ev of now !== prev ? (now.events || []) : []) {
-      if (ev.type !== 'damageDealt') continue;
+    const receipts = (now !== prev ? (now.events || []) : [])
+      .filter((ev) => ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
+      .map((ev) => {
+        const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
+        const enemy = now.enemies.find((entry) => entry.id === ev.targetId);
+        const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
+        const targetKey = enemy ? `enemy:${enemy.id}` : playerId ? `player:${playerId}` : null;
+        return { ev, sel, targetKey };
+      })
+      .filter((row) => row.sel && row.targetKey);
+    const receiptCounts = new Map();
+    for (const row of receipts) receiptCounts.set(row.targetKey, (receiptCounts.get(row.targetKey) || 0) + 1);
+    const receiptIndex = new Map();
+    for (const { ev, sel, targetKey } of receipts) {
+      const index = receiptIndex.get(targetKey) || 0;
+      receiptIndex.set(targetKey, index + 1);
+      const stackY = (index - ((receiptCounts.get(targetKey) || 1) - 1) / 2) * 18;
+      if (ev.type === 'hpLost') {
+        const amount = Math.max(0, Number(ev.amount) || 0);
+        if (!amount) continue;
+        const part = guardHitFloatParts({ amount, blocked: 0 }).damage;
+        receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + amount);
+        put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, stackY);
+        recoil(`${sel} .sprite`, amount >= 12);
+        continue;
+      }
       const parts = guardHitFloatParts(ev);
-      const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
-      const enemy = now.enemies.find((e) => e.id === ev.targetId);
-      const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
-      if (!sel) continue;
-      const targetKey = enemy ? `enemy:${enemy.id}` : `player:${playerId}`;
-      receiptTargets.add(targetKey);
+      receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
       const paired = !!(parts.guard && parts.damage);
-      if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0);
+      if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, stackY);
       if (parts.damage) {
-        put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0);
+        put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, stackY);
         recoil(`${sel} .sprite`, parts.residual >= 12);
       }
     }
@@ -782,9 +811,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const pe = prev.enemies.find((x) => x.id === e.id);
       if (!pe) continue;
       const dmg = Math.max(0, pe.hp - e.hp);
-      if (dmg > 0 && !receiptTargets.has(`enemy:${e.id}`)) {
-        put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
-        recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
+      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0));
+      if (unreceipted > 0) {
+        put(`[data-eid="${e.id}"]`, unreceipted >= 12 ? 'float-num crit' : 'float-num dmg', `-${unreceipted}`);
+        recoil(`[data-eid="${e.id}"] .sprite`, unreceipted >= 12);
       }
       if ((e.block || 0) > (pe.block || 0)) put(`[data-eid="${e.id}"]`, 'float-num blk small', `+${e.block - (pe.block || 0)}`);
       if (pe.hp > 0 && e.hp <= 0) {
@@ -796,9 +826,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const pp = prev.players.find((x) => x.id === p.id);
       if (!pp) continue;
       const dmg = Math.max(0, pp.hp - p.hp);
-      if (dmg > 0 && !receiptTargets.has(`player:${p.id}`)) {
-        put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
-        recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
+      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`player:${p.id}`) || 0));
+      if (unreceipted > 0) {
+        put(`[data-seat="${p.id}"]`, unreceipted >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${unreceipted}`);
+        recoil(`[data-seat="${p.id}"] .sprite`, unreceipted >= 12);
       }
       if (p.hp > pp.hp) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${p.hp - pp.hp}`);
       if ((p.block || 0) > (pp.block || 0)) put(`[data-seat="${p.id}"]`, 'float-num blk small', `+${p.block - (pp.block || 0)}`);

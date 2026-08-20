@@ -1,7 +1,7 @@
 // Focused guard-hit parity gate (#207).
 //
 // The fast door proves the semantic split, the authoritative co-op session
-// receipts, and five named source mutations. `--browser` adds both real product
+// receipts, and nine named source mutations. `--browser` adds both real product
 // paths: seeded solo combat through its real engine/event/FX pipeline, then two
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
 // real End Turn controls. `--standalone` selects the root artifact instead of
@@ -23,16 +23,25 @@ const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i +
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const standalone = args.includes('--standalone');
 const evidenceDoor = standalone ? 'root' : 'source';
+const reviewMoment = args.includes('--review-before') ? 'before' : 'after';
+const coopOnly = args.includes('--coop-only');
+const requestedCase = argOf('--case');
 
 function sourceContract(tree) {
   return [
     /const residual = amount - blocked;/.test(tree.fx),
     /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
     /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
-    /type === 'damageDealt' && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
+    /\(type === 'damageDealt' \|\| type === 'hpLost'\) && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
     /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
-    /for \(const ev of now !== prev \? \(now\.events \|\| \[\]\) : \[\]\)[\s\S]{0,900}receiptTargets\.add/.test(tree.coop),
-    /!receiptTargets\.has\(`player:\$\{p\.id\}`\)/.test(tree.coop),
+    /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
+    /cause: e\.cause/.test(tree.session),
+    /ev\.type === 'damageDealt' \|\| \(ev\.type === 'hpLost' && ev\.cause !== 'attack'\)/.test(tree.coop),
+    /receiptCounts\.set\(row\.targetKey,[\s\S]{0,500}const stackY = [^;]+ \* 18;/.test(tree.coop),
+    /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ amount\)/.test(tree.coop),
+    /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ parts\.residual\)/.test(tree.coop),
+    /const unreceipted = Math\.max\(0, dmg - \(receiptLossByTarget\.get\(`enemy:\$\{e\.id\}`\) \|\| 0\)\)/.test(tree.coop),
+    /const unreceipted = Math\.max\(0, dmg - \(receiptLossByTarget\.get\(`player:\$\{p\.id\}`\) \|\| 0\)\)/.test(tree.coop),
   ].every(Boolean);
 }
 
@@ -53,14 +62,18 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['absorbed-channel-omitted', 'src/ui/fx.js', "guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null", 'guard: null'],
     ['absorbed-mislabeled-as-gain', 'src/ui/fx.js', 'text: String(blocked)', 'text: `+${blocked}`'],
     ['coop-drops-damage-receipt', 'tools/session.mjs', "'enemyMoveStarted', 'damageDealt',", "'enemyMoveStarted',"],
-    ['coop-guesses-from-block-delta', 'src/ui/screens/coop.js', 'for (const ev of now !== prev ? (now.events || []) : [])', 'for (const ev of [])'],
+    ['coop-drops-nonattack-hp-loss', 'tools/session.mjs', "|| (e.type === 'hpLost' && e.cause !== 'attack')", ''],
+    ['coop-loses-hp-loss-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
+    ['coop-drops-receipt-processing', 'src/ui/screens/coop.js', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
+    ['coop-suppresses-unreceipted-remainder', 'src/ui/screens/coop.js', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
+    ['coop-collapses-same-target-stack', 'src/ui/screens/coop.js', '* 18;', '* 0;'],
   ];
   const sourceStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', timeoutMs: 300000,
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
-  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'AshenSpire.html'];
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html'];
   const artifactStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
@@ -113,10 +126,11 @@ async function browserDoor() {
   if (!shapes.length) throw new Error(`unknown --shape ${requestedShape}; use 390x844 or 1200x730`);
   const shots = argOf('--shots');
   const cases = [
-    { name: 'full', className: 'Reaver', defend: true, before: { hp: 30, block: 10 }, after: { hp: 30, block: 3 }, blocked: 7, soloTexts: ['7'], coopTexts: ['-7', '7'] },
-    { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['-3', '-7', '4'] },
+    { name: 'full', className: 'Reaver', defend: true, before: { hp: 30, block: 10 }, after: { hp: 30, block: 3 }, blocked: 7, soloTexts: ['7'], coopTexts: ['-7', '7'], review: { cardId: 'gorefireSlash', cardName: 'Gorefire Slash', hp: 2, texts: ['-5', '-8'], cause: 'proc:bleed' } },
+    { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['-3', '-7', '4'], review: { cardId: 'twinbladeFlurry', cardName: 'Twinblade Flurry', hp: 21, texts: ['-3', '-3', '-3'] } },
     { name: 'unguarded', className: 'Reaver', defend: false, before: { hp: 30, block: 0 }, after: { hp: 23, block: 0 }, blocked: 0, soloTexts: ['-7'], coopTexts: ['-7', '-7'] },
-  ];
+  ].filter((row) => !requestedCase || row.name === requestedCase);
+  if (!cases.length) throw new Error(`unknown --case ${requestedCase}; use full, partial or unguarded`);
   const findings = [];
   const check = (condition, label, detail = '') => {
     console.log(`    ${condition ? '✓' : '✗'} ${label}${detail ? ` — ${detail}` : ''}`);
@@ -211,6 +225,42 @@ async function browserDoor() {
       await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
     }
   };
+  const writeReviewContactSheet = async (shape) => {
+    if (!shots) return;
+    const reviewCases = cases.filter((row) => row.review);
+    const entries = reviewCases.flatMap((row) => ['before', 'after'].map((moment) => {
+      const filename = `guard-float-review-${moment}-${evidenceDoor}-${shape.tag}-${row.review.cardId}.png`;
+      const path = join(resolve(shots), filename);
+      if (!existsSync(path)) return null;
+      return { name: row.review.cardName, moment, src: `data:image/png;base64,${readFileSync(path).toString('base64')}` };
+    })).filter(Boolean);
+    if (entries.length !== reviewCases.length * 2) return;
+    const cards = entries.map((entry) => `<figure><figcaption><b>${entry.name}</b> · ${entry.moment.toUpperCase()}</figcaption><img src="${entry.src}" alt="${entry.name} ${entry.moment} receipt evidence"></figure>`).join('');
+    const imageHeight = shape.tag === '390x844' ? 760 : 430;
+    const html = `<!doctype html><meta charset="utf-8"><title>#207 blocker correction ${shape.tag} ${evidenceDoor}</title><style>
+      *{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0a08;color:#f4e6bd;font:18px/1.3 system-ui,sans-serif}
+      h1{margin:0 0 20px;color:#f2c85b;font:800 30px/1.2 system-ui,sans-serif}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+      figure{margin:0;padding:10px;border:1px solid #8d7747;background:#15120d;border-radius:8px}figcaption{padding:0 2px 8px;color:#ddd4c2}b{color:#f3c86d}
+      img{display:block;width:100%;height:${imageHeight}px;object-fit:contain;object-position:top center;background:#070604;border:1px solid #353029}
+    </style><h1>CO-OP DAMAGE RECEIPTS · ${evidenceDoor.toUpperCase()} · ${shape.tag} · BEFORE → AFTER</h1><main class="grid">${cards}</main>`;
+    const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
+    try {
+      await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
+      await until(tab, `[...document.images].length===4&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'review contact-sheet images', 30000);
+      await wait(120);
+      const metrics = await cdp.send('Page.getLayoutMetrics', {}, tab.sessionId);
+      const size = metrics.cssContentSize || metrics.contentSize;
+      const { data } = await cdp.send('Page.captureScreenshot', {
+        format: 'png', fromSurface: true, captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
+      }, tab.sessionId);
+      const name = `guard-float-review-${evidenceDoor}-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
+      writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
+      console.log(`\n    review contact sheet ${name}`);
+    } finally {
+      await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
+    }
+  };
   const closeServer = async (server) => {
     // The inlined standalone may retain an HTTP keep-alive connection after
     // its tab closes; drain it so a completed product cell cannot hang the gate.
@@ -220,7 +270,7 @@ async function browserDoor() {
 
   try {
     let port = 8527;
-    for (const shape of shapes) {
+    if (!coopOnly) for (const shape of shapes) {
       const server = await serve({ root: ROOT, port: port++, open: false, lan: false });
       const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}`;
       const solo = await makeTab(shape);
@@ -295,6 +345,10 @@ async function browserDoor() {
       setCombatStartStateForTools({
         name: 'Fenn', hp: row.before.hp,
         block: row.before.block - (row.defend ? row.blocked : 0),
+        extraHand: row.review ? [row.review.cardId] : [],
+        enemy: row.review?.cause
+          ? { hp: 15, statuses: [{ id: 'bleed', stacks: Number(contentBundle.statuses.find((entry) => entry.id === 'bleed')?.proc?.threshold) - 3 }] }
+          : row.review ? { hp: 30 } : undefined,
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
       const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}`;
@@ -334,11 +388,42 @@ async function browserDoor() {
           const play = await evaluate(guest, `(()=>{const all=[...document.querySelectorAll('.hand .card')],c=all.find(x=>/defend/i.test(x.textContent));if(c)c.click();return{played:!!c,cards:all.map(x=>({text:x.textContent.trim().replace(/\\s+/g,' '),aria:x.getAttribute('aria-label'),id:x.dataset.instanceId||x.dataset.cardId||null}))}})()`);
           check(play.played, `${row.name}: Fenn plays a real Defend card`, play.played ? '' : JSON.stringify(play.cards));
           if (!play.played) throw new Error(`Defend card not found in guest hand: ${JSON.stringify(play.cards)}`);
-          await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.block===${row.before.block}})()`, `Fenn block ${row.before.block}`);
+          await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.block===${row.before.block}})()`, `Fenn block ${row.before.block}`).catch(async (error) => {
+            const debug = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{player:p,cards:[...document.querySelectorAll('.hand .card')].map(x=>x.textContent.trim().replace(/\\s+/g,' ')),body:document.body.innerText.slice(-1200)}})()`);
+            throw new Error(`${error.message}; snapshot=${JSON.stringify(debug)}`);
+          });
           await until(guest, `[...document.querySelectorAll('.fx-layer .float-num.blk')].some(n=>n.textContent===${JSON.stringify(`+${row.blocked}`)})`, 'real guard-gain float');
           const gain = await evaluate(guest, `(()=>{const n=[...document.querySelectorAll('.fx-layer .float-num.blk')].find(x=>x.textContent===${JSON.stringify(`+${row.blocked}`)});return n?{text:n.textContent,color:getComputedStyle(n).color}:null})()`);
           check(gain?.text === `+${row.blocked}`, `${row.name}: guard gain keeps separate +N vocabulary`, JSON.stringify(gain));
           await until(guest, `document.querySelectorAll('.fx-layer .float-num').length===0`, 'guard-gain float expires', 4000);
+        }
+        if (row.review) {
+          console.log(`\n    ${row.review.cardName} review regression — authoritative same-snapshot receipts`);
+          const played = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes(${JSON.stringify(row.review.cardName)}));if(c)c.click();return !!c})()`);
+          check(played, `${row.review.cardName}: real card is present and played`);
+          await until(guest, `(()=>{const s=window.__coopSnapshot;return s.scene.enemies[0]?.hp===${row.review.hp}})()`, `${row.review.cardName} authoritative enemy HP ${row.review.hp}`);
+          const minimumVisible = reviewMoment === 'before' ? 1 : row.review.texts.length;
+          await until(guest, `document.querySelectorAll('.fx-layer .float-num.dmg').length>=${minimumVisible}`, `${row.review.cardName} visible damage channels`, 4000);
+          const review = await evaluate(guest, `(()=>{const s=window.__coopSnapshot.scene,e=s.enemies[0],seat=document.querySelector('[data-eid="'+CSS.escape(e.id)+'"]'),sr=seat.getBoundingClientRect(),layer=document.querySelector('.fx-layer'),lr=layer.getBoundingClientRect(),all=[...layer.querySelectorAll('.float-num.dmg')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom}}}),target=all.filter(x=>x.rect.left<sr.right&&x.rect.right>sr.left&&x.rect.top<sr.bottom&&x.rect.bottom>sr.top);return{hp:e.hp,events:s.events,target,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
+          check(review.hp === row.review.hp, `${row.review.cardName}: authoritative HP reaches ${row.review.hp}`, `HP${review.hp}`);
+          check(JSON.stringify(review.target.map((entry) => entry.text).sort()) === JSON.stringify([...row.review.texts].sort()),
+            `${row.review.cardName}: exact visible channels ${row.review.texts.join(' + ')}`, review.target.map((entry) => entry.text).join(' + ') || 'none');
+          if (row.review.cause) {
+            check(review.events.some((event) => event.type === 'damageDealt' && event.amount === 5)
+                && review.events.some((event) => event.type === 'hpLost' && event.amount === 8 && event.cause === row.review.cause),
+              `${row.review.cardName}: wire preserves attack 5 and separate ${row.review.cause} HP loss 8`, JSON.stringify(review.events));
+          }
+          check(review.target.every(({ rect }) => rect.left >= review.layer.left && rect.right <= review.layer.right
+              && rect.top >= review.layer.top && rect.bottom <= review.layer.bottom),
+            `${row.review.cardName}: every result stays on-glass`);
+          check(review.target.length < 2 || review.target.every((a, i) => review.target.every((b, j) => i >= j
+              || a.rect.right <= b.rect.left || b.rect.right <= a.rect.left || a.rect.bottom <= b.rect.top || b.rect.bottom <= a.rect.top)),
+            `${row.review.cardName}: ordered same-target results never overlap`, JSON.stringify(review.target.map((entry) => entry.rect)));
+          if (shots) {
+            await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · ${reviewMoment.toUpperCase()} · two-client ${row.review.cardName} · enemy HP ${row.review.cardName === 'Gorefire Slash' ? '15→2' : '30→21'} · expected ${row.review.texts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
+            await writeShot(guest, `guard-float-review-${reviewMoment}-${evidenceDoor}-${shape.tag}-${row.review.cardId}.png`);
+          }
+          await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num,.evidence-caption').forEach(n=>n.remove());return true})()`);
         }
         const before = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{hp:p?.hp,block:p?.block}})()`);
         await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
@@ -387,7 +472,10 @@ async function browserDoor() {
         rmSync(join(ROOT, '.coop-session.json'), { force: true });
       }
     }
-    for (const shape of shapes) await writeContactSheet(shape);
+    if (!coopOnly) for (const shape of shapes) {
+      await writeContactSheet(shape);
+      await writeReviewContactSheet(shape);
+    }
   } finally {
     cdp.close(); await dropBrowser();
   }
@@ -489,7 +577,11 @@ const plants = [
   ['absorbed-channel-omitted', 'fx', 'guard: blocked > 0 ? { text: String(blocked), cls: \'blk small\' }', 'guard: null'],
   ['absorbed-mislabeled-as-gain', 'fx', 'text: String(blocked)', 'text: `+${blocked}`'],
   ['coop-drops-damage-receipt', 'session', "'enemyMoveStarted', 'damageDealt',", "'enemyMoveStarted',"],
-  ['coop-guesses-from-block-delta', 'coop', 'for (const ev of now !== prev ? (now.events || []) : [])', 'for (const ev of [])'],
+  ['coop-drops-nonattack-hp-loss', 'session', "|| (e.type === 'hpLost' && e.cause !== 'attack')", ''],
+  ['coop-loses-hp-loss-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
+  ['coop-drops-receipt-processing', 'coop', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
+  ['coop-suppresses-unreceipted-remainder', 'coop', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
+  ['coop-collapses-same-target-stack', 'coop', '* 18;', '* 0;'],
 ];
 for (const [name, file, find, replacement] of plants) {
   const planted = { ...source, [file]: source[file].replace(find, replacement) };
