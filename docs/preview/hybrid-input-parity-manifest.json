@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "issue": "https://github.com/cehinds/AshenSpire/issues/204",
   "evidenceKind": "source behavioral checkpoint",
-  "patchBaseRef": "ec4933ae12e373352cf880fd5e810a4f248fe6c4",
+  "patchBaseRef": "e0856d4cdacad0c94659e5957a8df7cf6c98081c",
   "identityRule": "canonical UTF-8 text with CRLF/CR normalized to LF; SHA-256 plus Git SHA-1 blob OID",
   "exactHeadVerification": "node tools/hybrid-input-parity.mjs --verify-manifests (run after checkout of the published head)",
   "productPaths": [

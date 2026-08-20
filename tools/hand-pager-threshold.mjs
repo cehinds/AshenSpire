@@ -63,24 +63,11 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
     }, {
       name: 'combat exit leaves the captured pager observer alive for the next fight',
       file: 'src/ui/screens/combat.js',
-      find: `      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
-        pagerVeilObserver.disconnect();
-        delete combatEl.dataset.handPagerOwner;
-        return;
-      }
-      syncHandPager([...app.querySelectorAll('.hand .card')]);
-    });
-    combatEl.dataset.handPagerOwner = 'active';
-    pagerVeilObserver.observe(document.body, { childList: true, subtree: true });`,
-      replace: `      if (!app.querySelector('.combat')) { // planted: any later fight is mistaken for this mount
-        pagerVeilObserver.disconnect();
-        delete combatEl.dataset.handPagerOwner;
-        return;
-      }
-      syncHandPager([...app.querySelectorAll('.hand .card')]);
-    });
-    combatEl.dataset.handPagerOwner = 'active';
-    pagerVeilObserver.observe(document.body, { childList: true });`,
+      // Keep this anchor semantic and single-line. A multiline template literal
+      // silently becomes LF-only, so it drifts in a normal Windows CRLF checkout
+      // before the lifecycle defect can enter the real source door.
+      find: "      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {",
+      replace: "      if (!app.querySelector('.combat')) { // planted: any later fight is mistaken for this mount",
       expectRed: /FAIL combat exit disconnects the originating pager owner/,
     }],
   });
