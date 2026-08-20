@@ -3,7 +3,7 @@
 ## Provenance and boundary
 
 - Exact game-source base: `ec4933ae12e373352cf880fd5e810a4f248fe6c4` (tree `feff2203ac3bbad58d624595407fa682d1506721`, live `dev` after PR #217).
-- Exact measurement-tree basis: `95541237e7efab57cd42c8146add3ac8ff51633f` (tree `9122128ef5fdd0af754701a67e8aa6614dcb25e3`). Its only paths beyond `dev` are `tools/measure-classes.mjs` and this eight-file `tools/results/starseerkit-*` packet; product source is byte-identical to `dev`.
+- Exact measurement-tree basis: `fc656314938957706c21a6def136857d7efa5c91` (tree `4e16990f24bf0bee9a40b78273a29f003069b569`). Its only path beyond `dev` at measurement time is `tools/measure-classes.mjs`; the seven-file `tools/results/starseerkit-*` packet records that exact tool against product source byte-identical to `dev`.
 - Carried standalone receipt: `0.4.0.0850`, source identity `133f36b5af` (`buildordinal.json`). It is deliberately not regenerated or used by this headless measurement; the simulator imports source modules, and #205 owns no root/build/dist/buildordinal artifacts.
 - Runtime: Node `v24.16.0`.
 - Runs: `n=1000` per class and policy, deterministic seeds `(i*2654435761)>>>0`, `i=1..1000`.
@@ -12,35 +12,35 @@
 ## Controls
 
 - `node tools/measure-classes.mjs 30 --check`: live `runsim.mjs` agreement, seed-for-seed, Reaver `11/30`, Starseer `3/30`, Herald `12/30`.
-- `node tools/measure-classes.mjs --selftest`: clean baseline plus all 17 plants caught (four copied-bot drift plants, eight counter plants, exact-branch lethal/control receipts, delayed-intent timing, exact multi-enemy targeting, and charged-follow-up priority).
-- Removing only charged-follow-up priority reduced the 30-seed registered conversion from `77.4%` to `35.3%` and charged priority changes from `1846` to `0`.
-- Real-dispatch plants prove a lethal one-HP Pebble cannot let its unconditional hit impersonate the skipped conditional hit, charged Frost/Vulnerable branches do convert, Held Blade defense is selected only when the pending hit is due, and a later low-HP enemy cannot force a false lethal pick against the first living dispatch target.
+- `node tools/measure-classes.mjs --selftest`: clean baseline plus all 20 plants caught (four copied-bot drift plants, eight counter plants, exact-branch lethal/control receipts, delayed-intent timing, exact multi-enemy targeting, full stamped-instance tracing, positive/negative live-lethal scoring, and charged-follow-up priority).
+- Removing only charged-follow-up priority reduced the 30-seed registered conversion from `94.0%` to `42.9%` and charged priority changes from `1812` to `0`.
+- Real-dispatch plants prove a lethal one-HP Pebble cannot let its unconditional hit impersonate the skipped conditional hit; charged Frost/Vulnerable branches do convert; Held Blade defense is selected only when its pending hit is due; and a later low-HP enemy cannot force a false lethal pick against the first living dispatch target. Additional plants prove the exact stamped Pebble effect owns its trace receipt, stamped card plus player magic and target Vulnerable can turn an authored nonlethal sum into a live lethal hit, and target magic resistance plus Block can turn an authored lethal sum into live nonlethal HP loss.
 - Under `starseerkit`, complete Reaver and Herald result rows were byte-identical to greedy for all `1000/1000` seeds per class. The Starseer-only policy did not leak.
-- Starseer charge conversion rose from `37.2%` (`28555/76728`) under greedy to `75.9%` (`57049/75187`) under Starseer-kit: `+38.7` percentage points. Rule 1's `+10` point qualification threshold passed.
+- Starseer charge conversion rose from `44.3%` (`34015/76728`) under greedy to `93.6%` (`69199/73901`) under Starseer-kit: `+49.3` percentage points. Rule 1's `+10` point qualification threshold passed.
 
 ## Win-rate matrix
 
 | Policy | Reaver | Starseer | Herald |
 |---|---:|---:|---:|
 | greedy | 29.3% `[26.6, 32.2]` | 9.3% `[7.7, 11.3]` | 56.8% `[53.7, 59.8]` |
-| Starseer-kit | 29.3% `[26.6, 32.2]` | 21.6% `[19.2, 24.3]` | 56.8% `[53.7, 59.8]` |
+| Starseer-kit | 29.3% `[26.6, 32.2]` | 21.1% `[18.7, 23.7]` | 56.8% `[53.7, 59.8]` |
 | skill-first | 17.6% `[15.4, 20.1]` | 2.5% `[1.7, 3.7]` | 65.2% `[62.2, 68.1]` |
 | random | 28.7% `[26.0, 31.6]` | 9.0% `[7.4, 10.9]` | 58.2% `[55.1, 61.2]` |
 | Reaver-kit continuity | 31.1% `[28.3, 34.0]` | 6.5% `[5.1, 8.2]` | 57.3% `[54.2, 60.3]` |
 
-Wilson 95% intervals are shown in brackets. For paired Starseer greedy to kit seeds: `154` improved, `31` regressed, `62` stayed wins, and `753` stayed losses; exact McNemar `p=8.2526e-21`. Greedy Reaver versus Starseer-kit was `293/1000` versus `216/1000`, two-proportion `p=0.0000773`.
+Wilson 95% intervals are shown in brackets. For paired Starseer greedy to kit seeds: `150` improved, `32` regressed, `61` stayed wins, and `757` stayed losses; exact McNemar `p=1.8176e-19`. Greedy Reaver versus Starseer-kit was `293/1000` versus `211/1000`, two-proportion `p=0.0000241`.
 
 ## Mutually exclusive decision
 
 The clarified residual-first precedence applies:
 
-1. Rule 1 passed: all required controls passed, `n=1000/class` completed, and exact conditional-effect conversion increased by `38.7` points.
-2. Rule 3 takes precedence: Starseer-kit's Wilson upper bound `24.3%` remains below greedy Reaver's lower bound `26.6%`.
-3. The policy effect is still real: Starseer-kit's lower bound `19.2%` is above greedy Starseer's upper bound `11.3%`, but that second Rule 2 clause cannot mask the residual gap.
+1. Rule 1 passed: all required controls passed, `n=1000/class` completed, and exact conditional-effect conversion increased by `49.3` points.
+2. Rule 3 takes precedence: Starseer-kit's Wilson upper bound `23.7%` remains below greedy Reaver's lower bound `26.6%`.
+3. The policy effect is still real: Starseer-kit's lower bound `18.7%` is above greedy Starseer's upper bound `11.3%`, but that second Rule 2 clause cannot mask the residual gap.
 
 Classification: **Starseer residual gameplay diagnosis required**, with a separately linked follow-on and no tuning on #205.
 
-The mechanism to name in that follow-on is late-run attrition after the policy fixes most of the early combo floor. Greedy to kit reduced Act 1 deaths from `338` to `112` and net attrition from `26.07` to `19.59` per combat, but the kit arm still recorded `494` Act 2 and `178` Act 3 deaths. Bosses led the remaining deaths (`381`), especially Stitched King (`248`) and Rot Valkyrie (`119`), while healing remained `4.87/combat`. This is a diagnosis target, not a balance conclusion.
+The mechanism to name in that follow-on is late-run attrition after the policy fixes most of the early combo floor. Greedy to kit reduced Act 1 deaths from `338` to `108` and net attrition from `26.07` to `19.52` per combat, but the kit arm still recorded `509` Act 2 and `172` Act 3 deaths. Bosses led the remaining deaths (`378`), especially Stitched King (`252`) and Rot Valkyrie (`114`), while healing remained `4.83/combat`. This is a diagnosis target, not a balance conclusion.
 
 Herald meets the preregistered **policy-insensitive simulator ceiling** rule. Its lower Wilson bound stayed above 50% under greedy (`53.7`), skill-first (`62.2`), and random (`55.1`), and the point-estimate spread was `8.4` points (`56.8` to `65.2`). Required follow-on: human-play/balance measurement, not a Herald nerf.
 

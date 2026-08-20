@@ -22,8 +22,8 @@ Starseer  wins  65/1000 = 6.5%  Wilson95 [5.1%, 8.2%]
   hp economy/combat: self-tax 1.83 · healed 5.03 · net attrition 28.44
   action economy/turn: cards 3.17 · unspent Energy 0.03 (60875 playerTurnStart / 49822 playerTurnEnd receipts)
   Starstone decisions: charges gained 6.68/combat · opportunity turns 28954 · eligible decision points 68934
-  charge conversion: 24547/68934 = 35.6% · stranded at turn end 38489 · charged priority changed 0 selections
-  charged outcome receipts: damage 11337 · block/Weak 4546 · Frost/Vulnerable 2464 · draw/Energy 6408
+  charge conversion: 29506/68934 = 42.8% · stranded at turn end 38489 · charged priority changed 0 selections
+  charged outcome receipts: damage 16296 · block/Weak 4546 · Frost/Vulnerable 2464 · draw/Energy 6408
   act1 deaths 410/1000: by floor f2×7 f3×6 f4×11 f5×66 f6×81 f8×41 f9×44 f10×29 f11×48 f13×77 — mean hp entering the fatal fight 41.9%
   act1 killers: elite:eliteWyrm×192  boss:bossOmen×77  normal:patrol×35  normal:twinPatrol×34
   act1 mean hp%% after each fight floor: f1 81% · f2 70% · f3 66% · f4 60% · f5 52% · f6 52% · f8 53% · f9 56% · f10 55% · f11 54% · f13 45%
