@@ -231,6 +231,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
       return { cardId: card.cardId, receiptSeq: sc.receiptSeq };
     },
+    playCardOnAllyFromLatest: (cardId, allyId) => {
+      const sc = latestWireSnap?.scene;
+      const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
+      const card = player?.hand.find((entry) => entry.cardId === cardId);
+      const ally = sc?.players.find((entry) => entry.id === allyId && entry.alive && entry.connected);
+      if (!card || !ally) return null;
+      send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: ally.id });
+      return { cardId: card.cardId, allyId: ally.id, receiptSeq: sc.receiptSeq };
+    },
     state: () => ({
       pacing, receivedSnapshots, lastReceiptSeq,
       latestReceiptSeq: latestWireSnap?.scene?.receiptSeq || 0,

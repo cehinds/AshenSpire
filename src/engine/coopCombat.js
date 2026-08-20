@@ -79,6 +79,14 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
   C.emit = (type, payload) => emitEvent(C, type, payload);
   C.enqueue = (action) => C.queue.push(action);
   C.nextInstanceId = () => `gen${++C._idCounter}`;
+  // Player combat entities intentionally share the engine id `player`. Events
+  // that resolve against an ally still need the authoritative member id, so
+  // expose the identity of the actual resolved entity rather than whichever
+  // seat happens to be active for source-card bookkeeping.
+  C.playerIdForEntity = (entity) => {
+    for (const [id, P] of C.players) if (P.entity === entity) return id;
+    return null;
+  };
 
   const headcount = players.length;
   C.hpFactor = (registries.balance.coop && registries.balance.coop.headcountHpFactor) || 0.6;

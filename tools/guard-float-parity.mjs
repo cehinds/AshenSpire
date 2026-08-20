@@ -1,7 +1,7 @@
 // Focused guard-hit parity gate (#207).
 //
 // The fast door proves the semantic split, the authoritative co-op session
-// receipts, and fifteen named source mutations. `--browser` adds both real product
+// receipts, and eighteen named source mutations. `--browser` adds both real product
 // paths: seeded solo combat through its real engine/event/FX pipeline, then two
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
 // real End Turn controls. `--standalone` selects the root artifact instead of
@@ -32,7 +32,9 @@ function sourceContract(tree) {
     /const residual = amount - blocked;/.test(tree.fx),
     /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
     /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
-    /\(type === 'damageDealt' \|\| type === 'hpLost' \|\| type === 'healed'\) && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
+    /\(type === 'damageDealt' \|\| type === 'hpLost' \|\| type === 'healed'\) && payload\.targetId === 'player'[\s\S]{0,160}playerId: payload\.playerId \?\? combat\.playerKey/.test(tree.session),
+    /ctx\.playerIdForEntity\(target\)/.test(tree.actions),
+    /for \(const \[id, P\] of C\.players\) if \(P\.entity === entity\) return id;/.test(tree.engineCoop),
     /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
     /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
     /'damageDealt', 'healed'/.test(tree.session),
@@ -59,7 +61,7 @@ if (args.includes('--artifact-check')) {
   // The selected standalone carries the UI seams; its real LAN server still
   // executes tools/session.mjs, so the artifact door binds both exact inputs.
   const session = readFileSync(resolve(ROOT, 'tools/session.mjs'), 'utf8');
-  const ok = sourceContract({ fx: html, coop: html, session });
+  const ok = sourceContract({ fx: html, coop: html, session, actions: html, engineCoop: html });
   console.log(`guard-float-parity artifact contract: ${ok ? 'OK' : 'RED'}`);
   process.exit(ok ? 0 : 1);
 }
@@ -82,13 +84,16 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['coop-drops-healed-receipt', 'tools/session.mjs', "'damageDealt', 'healed',", "'damageDealt',"],
     ['coop-loses-healed-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
     ['coop-duplicates-heal-remainder', 'src/ui/screens/coop.js', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
+    ['coop-heal-overwrites-resolved-recipient', 'tools/session.mjs', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
+    ['coop-heal-drops-recipient-resolution', 'src/engine/actions.js', 'ctx.playerIdForEntity(target)', 'null'],
+    ['coop-heal-maps-active-instead-of-target', 'src/engine/coopCombat.js', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
   ];
   const sourceStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', timeoutMs: 300000,
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
-  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html'];
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html'];
   const artifactStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
@@ -145,7 +150,9 @@ async function browserDoor() {
     { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, coopAfter: { hp: 29, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['+2', '-3', '-7', '4'], coopTargetTexts: ['+2', '-3', '4'], coopTargetOrder: ['4', '-3', '+2'], stigmata: true, review: { cardId: 'twinbladeFlurry', cardName: 'Twinblade Flurry', hp: 21, texts: ['-3', '-3', '-3'] } },
     { name: 'unguarded', className: 'Reaver', defend: false, before: { hp: 30, block: 0 }, after: { hp: 23, block: 0 }, coopAfter: { hp: 25, block: 0 }, blocked: 0, soloTexts: ['-7'], coopTexts: ['+2', '-7', '-7'], coopTargetTexts: ['+2', '-7'], coopTargetOrder: ['-7', '+2'], stigmata: true },
   ].filter((row) => !requestedCase || row.name === requestedCase);
-  if (!cases.length) throw new Error(`unknown --case ${requestedCase}; use full, partial or unguarded`);
+  const sharedFlameCase = { name: 'shared-flame', className: 'Reaver', before: { hp: 30, block: 0 }, blocked: 0, soloTexts: [], sharedFlame: true };
+  const coopCases = [...cases, ...(!requestedCase || requestedCase === sharedFlameCase.name ? [sharedFlameCase] : [])];
+  if (!cases.length && !coopCases.length) throw new Error(`unknown --case ${requestedCase}; use full, partial, unguarded or shared-flame`);
   const fixedHealing = reviewMoment !== 'before';
   const coopTextsFor = (row) => fixedHealing || !row.stigmata ? row.coopTexts : row.coopTexts.filter((text) => text !== '+2');
   const targetTextsFor = (row) => fixedHealing || !row.stigmata ? (row.coopTargetTexts || row.soloTexts) : row.soloTexts;
@@ -392,16 +399,17 @@ async function browserDoor() {
         await closeServer(server);
       }
     }
-    for (const shape of shapes) for (const row of cases) {
+    for (const shape of shapes) for (const row of coopCases) {
       // A real Defend proves +N guard gain separately; establish only the
       // remainder here so the authoritative hit begins at the story's exact
       // HP/Block state (10, 4 or 0).
       setCombatStartStateForTools({
         name: 'Fenn', hp: row.before.hp,
         block: row.before.block - (row.defend ? row.blocked : 0),
-        extraHand: row.review ? [row.review.cardId] : [],
-        nextDraw: row.name === 'partial' ? ['strike'] : [],
+        extraHand: [...(row.review ? [row.review.cardId] : []), ...(row.sharedFlame ? ['sharedFlame'] : [])],
+        nextDraw: row.name === 'partial' ? ['strike'] : row.sharedFlame ? ['sharedFlame'] : [],
         playerStatuses: row.stigmata ? [{ id: 'stigmata', stacks: 1 }] : [],
+        ally: row.sharedFlame ? { name: 'Wren', hp: 30, block: 0 } : undefined,
         enemy: row.review?.cause
           ? { hp: 15, statuses: [{ id: 'bleed', stacks: Number(contentBundle.statuses.find((entry) => entry.id === 'bleed')?.proc?.threshold) - 3 }] }
           : row.review ? { hp: 30 } : undefined,
@@ -441,6 +449,55 @@ async function browserDoor() {
         await until(guest, `!!window.__coopSnapshot?.scene?.players?.length`, 'guest snapshot');
         await until(guest, `!!window.__guardCoopTool`, 'real co-op wire control');
         await until(guest, `document.querySelectorAll('.combat.coop .hand .card').length>0`, 'guest hand');
+        if (row.sharedFlame) {
+          console.log('\n    Shared Flame review regression — actual ally owns the heal receipt');
+          const armed = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Shared Flame'));if(c)c.click();return !!c})()`);
+          check(armed, 'Shared Flame: real card is present and armed for an ally');
+          const ids = await evaluate(guest, `(()=>{const s=window.__coopSnapshot;return{actor:s.party.find(p=>p.name==='Fenn')?.id,ally:s.party.find(p=>p.name==='Wren')?.id}})()`);
+          const sent = await evaluate(guest, click(`[data-seat="${ids.ally}"]`));
+          check(sent, 'Shared Flame: authoritative ally seat is present and selected');
+          await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return p?.hp===37})()`, 'Shared Flame ally HP30→37');
+          await until(guest, `[...document.querySelectorAll('.fx-layer .float-num.heal')].some(n=>n.textContent==='+7')`, 'Shared Flame +7 float');
+          const flame = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,layer=document.querySelector('.fx-layer'),floats=[...layer.querySelectorAll('.float-num.heal')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom}}}),seat=(id)=>{const n=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),r=n.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom}},owns=(f,r)=>f.cx>=r.left&&f.cx<=r.right&&f.cy>=r.top&&f.cy<=r.bottom;const actor=${JSON.stringify(ids.actor)},ally=${JSON.stringify(ids.ally)},ar=seat(actor),br=seat(ally);return{events:s.scene.events.filter(e=>e.type==='healed'),actorHp:s.scene.players.find(p=>p.id===actor)?.hp,allyHp:s.scene.players.find(p=>p.id===ally)?.hp,actorFloats:floats.filter(f=>owns(f,ar)),allyFloats:floats.filter(f=>owns(f,br)),floats}})()`);
+          check(flame.events.length === 1 && flame.events[0]?.playerId === ids.ally && flame.events[0]?.amount === 7,
+            'Shared Flame: wire carries one +7 receipt for ally B', JSON.stringify(flame.events));
+          check(flame.actorHp === 30 && flame.allyHp === 37,
+            'Shared Flame: actor A stays HP30 and ally B reaches HP37', `actor HP${flame.actorHp}; ally HP${flame.allyHp}`);
+          check(flame.actorFloats.length === 0 && flame.allyFloats.length === 1 && flame.allyFloats[0].text === '+7',
+            'Shared Flame: +7 renders exactly once on ally B and never on actor A', JSON.stringify(flame));
+          if (shots) {
+            await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · ${reviewMoment.toUpperCase()} · real two-client Shared Flame · actor A HP30 unchanged · ally B HP30→37 · expected one +7 on B, none on A`)};document.body.appendChild(note);return true})()`);
+            await writeShot(guest, `guard-float-shared-flame-${reviewMoment}-${evidenceDoor}-${shape.tag}.png`);
+            await evaluate(guest, `document.querySelectorAll('.evidence-caption').forEach(n=>n.remove())`);
+          }
+          await evaluate(guest, `document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.remove())`);
+          const beforeResync = await evaluate(guest, `window.__guardCoopTool.state()`);
+          await evaluate(guest, `window.__guardCoopTool.resync()`);
+          await until(guest, `window.__guardCoopTool.state().receivedSnapshots>${beforeResync.receivedSnapshots}`, 'Shared Flame unchanged resync arrives');
+          await wait(180);
+          const afterResync = await evaluate(guest, `({state:window.__guardCoopTool.state(),floats:[...document.querySelectorAll('.fx-layer .float-num')].map(n=>n.textContent)})`);
+          check(afterResync.state.latestReceiptSeq === beforeResync.latestReceiptSeq && afterResync.floats.length === 0,
+            'Shared Flame: unchanged resync replays no heal', JSON.stringify(afterResync));
+          await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
+          await until(guest, `window.__guardCoopTool.state().pacing===true`, 'Shared Flame paced enemy phase begins');
+          const pacingStart = await evaluate(guest, `window.__guardCoopTool.state()`);
+          const pacedPlay = await evaluate(guest, `window.__guardCoopTool.playCardOnAllyFromLatest('sharedFlame',${JSON.stringify(ids.ally)})`);
+          check(pacedPlay?.cardId === 'sharedFlame' && pacedPlay?.allyId === ids.ally,
+            'Shared Flame: second ally heal travels through the real wire while pacing', JSON.stringify(pacedPlay));
+          await until(guest, `window.__guardCoopTool.state().latestReceiptSeq>${pacingStart.latestReceiptSeq}`, 'paced Shared Flame receipt arrives');
+          const beforeDuplicates = await evaluate(guest, `window.__guardCoopTool.state()`);
+          await evaluate(guest, `(()=>{window.__guardCoopTool.resync();window.__guardCoopTool.resync();return true})()`);
+          await until(guest, `window.__guardCoopTool.state().receivedSnapshots>=${beforeDuplicates.receivedSnapshots + 2}`, 'paced Shared Flame duplicate resync frames arrive');
+          await until(guest, `(()=>{const s=window.__guardCoopTool.state();return !s.pacing&&s.lastReceiptSeq===s.latestReceiptSeq})()`, 'paced Shared Flame queue drains in receipt order', 12000);
+          const paced = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actor=${JSON.stringify(ids.actor)},ally=${JSON.stringify(ids.ally)},heals=s.scene.events.filter(e=>e.type==='healed'&&e.amount===7),floats=[...document.querySelectorAll('.fx-layer .float-num.heal')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),seat=(id)=>{const r=document.querySelector('[data-seat="'+CSS.escape(id)+'"]').getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom}},owns=(f,r)=>f.cx>=r.left&&f.cx<=r.right&&f.cy>=r.top&&f.cy<=r.bottom,ar=seat(actor),br=seat(ally);return{heals,actor:floats.filter(f=>owns(f,ar)),ally:floats.filter(f=>owns(f,br)),state:window.__guardCoopTool.state()}})()`);
+          check(paced.heals.length === 1 && paced.heals[0]?.playerId === ids.ally,
+            'Shared Flame: paced batch preserves one ordered ally receipt', JSON.stringify(paced.heals));
+          check(paced.actor.length === 0 && paced.ally.length === 1 && paced.ally[0].text === '+7',
+            'Shared Flame: paced batch renders +7 once on ally and never actor', JSON.stringify(paced));
+          check(paced.state.pendingReceiptSeqs.length === 0,
+            'Shared Flame: paced receipt queue drains completely', JSON.stringify(paced.state));
+          continue;
+        }
         if (row.defend) {
           const play = await evaluate(guest, `(()=>{const all=[...document.querySelectorAll('.hand .card')],c=all.find(x=>/defend/i.test(x.textContent));if(c)c.click();return{played:!!c,cards:all.map(x=>({text:x.textContent.trim().replace(/\\s+/g,' '),aria:x.getAttribute('aria-label'),id:x.dataset.instanceId||x.dataset.cardId||null}))}})()`);
           check(play.played, `${row.name}: Fenn plays a real Defend card`, play.played ? '' : JSON.stringify(play.cards));
@@ -663,6 +720,25 @@ function coopReceiptMatrix() {
   return { before, after, hitStates };
 }
 
+function sharedFlameReceiptControl() {
+  const game = createSession({ registries: REG, seedString: 'GUARD2' });
+  game.addMember({ id: 'actor', name: 'Actor', classId: 'reaver' });
+  game.addMember({ id: 'ally', name: 'Ally', classId: 'reaver' });
+  game.start();
+  const nodeId = game.session.mapGraph.startIds[0];
+  game.chooseNode('actor', nodeId);
+  game.chooseNode('ally', nodeId);
+  const combat = game.live.combat;
+  const actor = combat.players.get('actor');
+  const ally = combat.players.get('ally');
+  actor.entity.hp = 72;
+  ally.entity.hp = 30;
+  actor.piles.hand.push({ instanceId: 'tool-shared-flame', cardId: 'sharedFlame', upgraded: false });
+  const result = game.combatPlay('actor', 'tool-shared-flame', 'ally');
+  const scene = structuredClone(game.snapshot().scene);
+  return { result, scene };
+}
+
 const coop = coopReceiptMatrix();
 const receipts = coop.after.events.filter((event) => event.type === 'damageDealt');
 pass(receipts.length === 3, 'co-op transports one damageDealt receipt per real hit', `${receipts.length}/3`);
@@ -678,10 +754,23 @@ for (const [index, [id, blocked, hp, block]] of [['p1', 7, 30, 3], ['p2', 4, 27,
     `co-op ${id} next-turn reset emits no extra hit receipt`, `HP${player?.hp}/B${player?.block}`);
 }
 
+const sharedFlame = sharedFlameReceiptControl();
+const sharedFlameHeals = sharedFlame.scene.events.filter((event) => event.type === 'healed');
+const sharedFlameActor = sharedFlame.scene.players.find((entry) => entry.id === 'actor');
+const sharedFlameAlly = sharedFlame.scene.players.find((entry) => entry.id === 'ally');
+pass(sharedFlame.result.ok && sharedFlameHeals.length === 1
+    && sharedFlameHeals[0]?.playerId === 'ally' && sharedFlameHeals[0]?.amount === 7,
+  'Shared Flame transports one authoritative +7 receipt for the resolved ally', JSON.stringify(sharedFlameHeals));
+pass(sharedFlameActor?.hp === 72 && sharedFlameAlly?.hp === 37,
+  'Shared Flame changes ally HP30→37 and leaves actor HP72 unchanged',
+  `actor HP${sharedFlameActor?.hp}; ally HP${sharedFlameAlly?.hp}`);
+
 const paths = {
   fx: resolve(ROOT, 'src/ui/fx.js'),
   coop: resolve(ROOT, 'src/ui/screens/coop.js'),
   session: resolve(ROOT, 'tools/session.mjs'),
+  actions: resolve(ROOT, 'src/engine/actions.js'),
+  engineCoop: resolve(ROOT, 'src/engine/coopCombat.js'),
 };
 const source = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, readFileSync(path, 'utf8')]));
 
@@ -702,6 +791,9 @@ const plants = [
   ['coop-drops-healed-receipt', 'session', "'damageDealt', 'healed',", "'damageDealt',"],
   ['coop-loses-healed-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
   ['coop-duplicates-heal-remainder', 'coop', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
+  ['coop-heal-overwrites-resolved-recipient', 'session', 'playerId: payload.playerId ?? combat.playerKey', 'playerId: combat.playerKey'],
+  ['coop-heal-drops-recipient-resolution', 'actions', 'ctx.playerIdForEntity(target)', 'null'],
+  ['coop-heal-maps-active-instead-of-target', 'engineCoop', 'if (P.entity === entity) return id;', 'if (id === C.playerKey) return id;'],
 ];
 for (const [name, file, find, replacement] of plants) {
   const planted = { ...source, [file]: source[file].replace(find, replacement) };
