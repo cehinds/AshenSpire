@@ -30,7 +30,7 @@ const REGEX_PREFIX_WORDS = new Set([
   'of', 'return', 'throw', 'typeof', 'void', 'yield',
 ]);
 const REGEX_PREFIX_PUNCT = new Set([
-  '(', '[', '{', ',', ':', ';', '=', '=>', '!', '?', '?.', '&&', '||',
+  '(', '[', '{', '${', ',', ':', ';', '=', '=>', '!', '?', '?.', '&&', '||',
   '??', '+', '-', '*', '**', '%', '^', '~', '<', '>', '<=', '>=', '&', '|',
 ]);
 const ASSIGNMENTS = new Set(['=', '+=', '-=', '*=', '/=', '%=', '&&=', '||=', '??=', '&=', '|=', '^=']);
@@ -47,6 +47,8 @@ const regexMayStart = (previous) =>
 function regexMayStartAfterTokens(tokens) {
   const previous = tokens.at(-1);
   if (regexMayStart(previous)) return true;
+  if (previous?.blockClose === 'statement') return true;
+  if (previous?.type === 'identifier' && ['break', 'continue', 'debugger'].includes(previous.value)) return true;
   if (previous?.value !== ')') return false;
   let depth = 0;
   for (let i = tokens.length - 1; i >= 0; i--) {
@@ -96,15 +98,6 @@ function decodeEscapedBody(raw, start, end) {
 
 const decodeString = (raw) => decodeEscapedBody(raw, 1, raw.length - 1);
 
-function templateStaticPrefix(raw) {
-  let end = raw.length - 1;
-  for (let i = 1; i < raw.length - 1; i++) {
-    if (raw[i] === '\\') { i++; continue; }
-    if (raw[i] === '$' && raw[i + 1] === '{') { end = i; break; }
-  }
-  return decodeEscapedBody(raw, 1, end);
-}
-
 function scanQuoted(source, start, quote, errors) {
   for (let i = start + 1; i < source.length; i++) {
     if (source[i] === '\\') { i++; continue; }
@@ -132,62 +125,60 @@ function scanRegex(source, start, errors) {
   return source.length;
 }
 
-function scanTemplate(source, start, errors) {
-  let interpolationDepth = 0;
-  let previous = null;
-  for (let i = start + 1; i < source.length;) {
-    if (!interpolationDepth) {
-      if (source[i] === '\\') { i += 2; continue; }
-      if (source[i] === '`') return i + 1;
-      if (source[i] === '$' && source[i + 1] === '{') { interpolationDepth = 1; previous = null; i += 2; continue; }
-      i++; continue;
-    }
-    if (/\s/.test(source[i])) { i++; continue; }
-    if (source[i] === '/' && source[i + 1] === '/') {
-      i += 2; while (i < source.length && source[i] !== '\n') i++; continue;
-    }
-    if (source[i] === '/' && source[i + 1] === '*') {
-      const close = source.indexOf('*/', i + 2);
-      if (close < 0) { errors.push({ index: i, reason: 'unterminated block comment in template expression' }); return source.length; }
-      i = close + 2; continue;
-    }
-    if (source[i] === '"' || source[i] === "'") {
-      const end = scanQuoted(source, i, source[i], errors);
-      previous = { type: 'string', value: source.slice(i, end) }; i = end; continue;
-    }
+function blockKind(tokens) {
+  const previous = tokens.at(-1);
+  if (!previous || previous.value === ';' || previous.blockClose === 'statement') return 'statement';
+  if (['else', 'try', 'finally', 'do'].includes(previous.value)) return 'statement';
+  if (tokens.at(-2)?.value === 'class' || tokens.at(-3)?.value === 'class') return 'statement';
+  if (previous.value === '=>') return 'expression';
+  if (previous.value !== ')') return 'expression';
+  const open = findOpenBackward(tokens, tokens.length - 1);
+  const before = tokens[open - 1];
+  if (['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before?.value)) return 'statement';
+  let functionIndex = open - 1;
+  if (tokens[functionIndex]?.type === 'identifier') functionIndex--;
+  if (tokens[functionIndex]?.value === '*') functionIndex--;
+  if (tokens[functionIndex]?.value === 'function') {
+    const context = tokens[functionIndex - 1];
+    return !context || context.value === ';' || context.value === '{' || context.blockClose === 'statement' ||
+      ['export', 'default'].includes(context.value) ? 'statement' : 'expression';
+  }
+  return 'statement';
+}
+
+function lexTemplate(source, start, tokens, errors) {
+  const tagged = isTaggedTemplate(tokens, tokens.length);
+  let segment = start + 1;
+  for (let i = segment; i < source.length;) {
+    if (source[i] === '\\') { i += 2; continue; }
     if (source[i] === '`') {
-      const end = scanTemplate(source, i, errors);
-      previous = { type: 'template', value: source.slice(i, end) }; i = end; continue;
+      const raw = source.slice(segment, i);
+      tokens.push({ type: 'template', value: decodeEscapedBody(source, segment, i), raw, start: segment, end: i, tagged, hasInterpolation: false });
+      return i + 1;
     }
-    if (source[i] === '/' && regexMayStart(previous)) {
-      const end = scanRegex(source, i, errors);
-      previous = { type: 'regex', value: source.slice(i, end) }; i = end; continue;
+    if (source[i] === '$' && source[i + 1] === '{') {
+      const raw = source.slice(segment, i);
+      tokens.push({ type: 'template', value: decodeEscapedBody(source, segment, i), raw, start: segment, end: i, tagged, hasInterpolation: true });
+      tokens.push({ type: 'punct', value: '${', start: i, end: i + 2 });
+      const close = lexRange(source, i + 2, source.length, tokens, errors, true);
+      if (source[close] !== '}') {
+        errors.push({ index: start, reason: 'unterminated template interpolation' });
+        return source.length;
+      }
+      tokens.push({ type: 'punct', value: '}$', start: close, end: close + 1 });
+      i = close + 1;
+      segment = i;
+      continue;
     }
-    if (/[A-Za-z_$]/.test(source[i])) {
-      const tokenStart = i++; while (/[A-Za-z0-9_$]/.test(source[i] || '')) i++;
-      previous = { type: 'identifier', value: source.slice(tokenStart, i) }; continue;
-    }
-    if (/[0-9]/.test(source[i])) {
-      const tokenStart = i++; while (/[A-Za-z0-9_.]/.test(source[i] || '')) i++;
-      previous = { type: 'number', value: source.slice(tokenStart, i) }; continue;
-    }
-    const punct = PUNCTUATORS.find((value) => source.startsWith(value, i)) || source[i];
-    i += punct.length;
-    if (punct === '{') interpolationDepth++;
-    else if (punct === '}' && --interpolationDepth === 0) { previous = null; continue; }
-    previous = { type: 'punct', value: punct };
+    i++;
   }
   errors.push({ index: start, reason: 'unterminated template literal' });
   return source.length;
 }
 
-function lexJavaScript(source) {
-  const tokens = [];
-  const errors = [];
-  if (Buffer.byteLength(source, 'utf8') > MAX_SOURCE_BYTES) {
-    return { tokens, errors: [{ index: 0, reason: `source exceeds ${MAX_SOURCE_BYTES} byte scanner cap` }] };
-  }
-  for (let i = 0; i < source.length;) {
+function lexRange(source, from, to, tokens, errors, stopAtTemplateBrace = false) {
+  const braces = [];
+  for (let i = from; i < to;) {
     if (/\s/.test(source[i])) { i++; continue; }
     if (source[i] === '/' && source[i + 1] === '/') {
       i += 2; while (i < source.length && source[i] !== '\n') i++; continue;
@@ -203,9 +194,7 @@ function lexJavaScript(source) {
       const raw = source.slice(start, i);
       tokens.push({ type: 'string', value: decodeString(raw), raw, start, end: i });
     } else if (source[i] === '`') {
-      i = scanTemplate(source, i, errors);
-      const raw = source.slice(start, i);
-      tokens.push({ type: 'template', value: raw.slice(1, -1), raw, start, end: i });
+      i = lexTemplate(source, i, tokens, errors);
     } else if (/[A-Za-z_$]/.test(source[i])) {
       i++; while (/[A-Za-z0-9_$]/.test(source[i] || '')) i++;
       tokens.push({ type: 'identifier', value: source.slice(start, i), start, end: i });
@@ -217,14 +206,28 @@ function lexJavaScript(source) {
       tokens.push({ type: 'regex', value: source.slice(start, i), start, end: i });
     } else {
       const punct = PUNCTUATORS.find((value) => source.startsWith(value, i)) || source[i];
+      if (punct === '}' && stopAtTemplateBrace && braces.length === 0) return i;
       i += punct.length;
-      tokens.push({ type: 'punct', value: punct, start, end: i });
+      const token = { type: 'punct', value: punct, start, end: i };
+      if (punct === '{') { token.blockOpen = blockKind(tokens); braces.push(token.blockOpen); }
+      else if (punct === '}') token.blockClose = braces.pop() || 'expression';
+      tokens.push(token);
     }
     if (tokens.length > MAX_TOKENS) {
       errors.push({ index: start, reason: `token count exceeds ${MAX_TOKENS} scanner cap` });
       break;
     }
   }
+  return to;
+}
+
+function lexJavaScript(source) {
+  const tokens = [];
+  const errors = [];
+  if (Buffer.byteLength(source, 'utf8') > MAX_SOURCE_BYTES) {
+    return { tokens, errors: [{ index: 0, reason: `source exceeds ${MAX_SOURCE_BYTES} byte scanner cap` }] };
+  }
+  lexRange(source, 0, source.length, tokens, errors);
   return { tokens, errors };
 }
 
@@ -300,9 +303,79 @@ function findOpenBackward(tokens, close, left = '(', right = ')') {
   return -1;
 }
 
+function topLevelIndexes(tokens, start, end, value) {
+  const out = [];
+  const stack = [];
+  const closing = { '(': ')', '[': ']', '{': '}' };
+  for (let i = start; i < end; i++) {
+    if (closing[tokens[i].value]) stack.push(closing[tokens[i].value]);
+    else if (tokens[i].value === stack.at(-1)) stack.pop();
+    else if (stack.length === 0 && tokens[i].value === value) out.push(i);
+  }
+  return out;
+}
+
+function bindingIndexes(tokens, start, end) {
+  const indexes = new Set();
+  const keys = new Set();
+  const visit = (from, to) => {
+    while (tokens[from]?.value === '...') from++;
+    while (tokens[from]?.value === '(' && tokens[to - 1]?.value === ')') { from++; to--; }
+    const defaultAt = topLevelIndexes(tokens, from, to, '=')[0];
+    if (defaultAt !== undefined) to = defaultAt;
+    if (tokens[from]?.type === 'identifier') { indexes.add(from); return; }
+    const left = tokens[from]?.value;
+    const right = left === '{' ? '}' : left === '[' ? ']' : null;
+    if (!right || tokens[to - 1]?.value !== right) return;
+    const separators = [from, ...topLevelIndexes(tokens, from + 1, to - 1, ','), to - 1];
+    for (let s = 0; s + 1 < separators.length; s++) {
+      let entryStart = separators[s] + 1;
+      const entryEnd = separators[s + 1];
+      if (entryStart >= entryEnd) continue;
+      while (tokens[entryStart]?.value === '...') entryStart++;
+      const colon = topLevelIndexes(tokens, entryStart, entryEnd, ':')[0];
+      if (colon !== undefined) {
+        if (tokens[entryStart]?.type === 'identifier') keys.add(entryStart);
+        visit(colon + 1, entryEnd);
+      }
+      else visit(entryStart, entryEnd);
+    }
+  };
+  const separators = [start - 1, ...topLevelIndexes(tokens, start, end, ','), end];
+  for (let s = 0; s + 1 < separators.length; s++) visit(separators[s] + 1, separators[s + 1]);
+  return { indexes, keys };
+}
+
+function expressionEnd(tokens, start) {
+  const stack = [];
+  const closing = { '(': ')', '[': ']', '{': '}' };
+  for (let i = start; i < tokens.length; i++) {
+    const value = tokens[i].value;
+    if (closing[value]) stack.push(closing[value]);
+    else if (value === stack.at(-1)) stack.pop();
+    else if (stack.length === 0 && [',', ';', ')', ']', '}$'].includes(value)) return i;
+  }
+  return tokens.length;
+}
+
 function parameterScopes(tokens) {
   const atBrace = new Map();
   const parameterIndexes = new Set();
+  const keyIndexes = new Set();
+  const assignmentIndexes = new Set();
+  const expressionRanges = [];
+  const register = (open, close, brace = -1, expressionStart = -1) => {
+    if (open < 0 || close < open) return;
+    const binding = bindingIndexes(tokens, open + (tokens[open]?.value === '(' ? 1 : 0), close);
+    const names = new Set([...binding.indexes].map((index) => tokens[index].value));
+    for (const index of binding.indexes) parameterIndexes.add(index);
+    for (const index of binding.keys) keyIndexes.add(index);
+    for (let i = open + (tokens[open]?.value === '(' ? 1 : 0); i < close; i++) {
+      if (tokens[i].value === '=' && binding.indexes.has(i - 1)) assignmentIndexes.add(i);
+    }
+    if (brace >= 0) atBrace.set(brace, names);
+    else if (expressionStart >= 0) expressionRanges.push({ start: expressionStart, end: expressionEnd(tokens, expressionStart), names });
+  };
   for (let brace = 0; brace < tokens.length; brace++) {
     if (tokens[brace].value !== '{') continue;
     let open = -1;
@@ -320,17 +393,15 @@ function parameterScopes(tokens) {
       const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch'].includes(before.value);
       if (!functionKeyword && !catchKeyword && !methodShape) open = -1;
     }
-    if (open < 0 || close < open) continue;
-    const names = new Set();
-    for (let i = open; i <= close; i++) {
-      if (tokens[i].type !== 'identifier') continue;
-      if (['function', 'const', 'let', 'var'].includes(tokens[i - 1]?.value)) continue;
-      names.add(tokens[i].value);
-      parameterIndexes.add(i);
-    }
-    atBrace.set(brace, names);
+    register(open, close + (open === close && tokens[open]?.value !== '(' ? 1 : 0), brace);
   }
-  return { atBrace, parameterIndexes };
+  for (let arrow = 0; arrow < tokens.length; arrow++) {
+    if (tokens[arrow].value !== '=>' || tokens[arrow + 1]?.value === '{') continue;
+    const close = arrow - 1;
+    const open = tokens[close]?.value === ')' ? findOpenBackward(tokens, close) : close;
+    register(open, close + (open === close ? 1 : 0), -1, arrow + 1);
+  }
+  return { atBrace, parameterIndexes, keyIndexes, assignmentIndexes, expressionRanges };
 }
 
 function findUrlExpressions(tokens, errors) {
@@ -344,15 +415,68 @@ function findUrlExpressions(tokens, errors) {
   return urls;
 }
 
-function unwrapAssigned(tokens, start, urls, isAlias) {
+function unwrapAssigned(tokens, start, end, urls, isAlias) {
   let cursor = start;
-  while (tokens[cursor]?.value === '(') cursor++;
+  let groups = 0;
+  while (tokens[cursor]?.value === '(') { groups++; cursor++; }
+  let after = cursor;
+  let result = null;
   if (urls.has(cursor)) {
     const url = urls.get(cursor);
-    if (!accessAfterExpression(tokens, url.start, url.close)) return { kind: 'url', index: cursor };
-    return null;
+    if (!accessAfterExpression(tokens, url.start, url.close)) { result = { kind: 'url', index: cursor }; after = url.close + 1; }
+  } else if (tokens[cursor]?.type === 'identifier' && isAlias(tokens[cursor].value, cursor)) {
+    result = { kind: 'alias', index: cursor };
+    after = cursor + 1;
   }
-  if (tokens[cursor]?.type === 'identifier' && isAlias(tokens[cursor].value)) return { kind: 'alias', index: cursor };
+  if (!result) return null;
+  for (let i = 0; i < groups; i++) {
+    if (tokens[after]?.value !== ')') return null;
+    after++;
+  }
+  return after === end ? result : null;
+}
+
+function containingPlatformCall(tokens, index) {
+  for (let open = index - 1; open >= 0; open--) {
+    if (tokens[open].value !== '(' || tokens[open - 1]?.value !== 'fileURLToPath') continue;
+    const close = findClose(tokens, open);
+    if (close >= index) return { open, close };
+  }
+  return null;
+}
+
+function consumedByCall(tokens, index, ownOpen) {
+  for (let open = index - 1; open >= 0; open--) {
+    if (tokens[open].value !== '(' || open === ownOpen) continue;
+    const close = findClose(tokens, open);
+    if (close < index) continue;
+    const callee = tokens[open - 1];
+    if (callee?.type === 'identifier' || [')', ']'].includes(callee?.value)) return true;
+  }
+  return false;
+}
+
+function isPlatformConsumerAt(tokens, index) {
+  const call = containingPlatformCall(tokens, index);
+  if (!call) return false;
+  const comma = topLevelIndexes(tokens, call.open + 1, call.close, ',')[0] ?? call.close;
+  let start = call.open + 1;
+  let end = comma;
+  while (tokens[start]?.value === '(' && tokens[end - 1]?.value === ')') { start++; end--; }
+  return start === index && end === index + 1;
+}
+
+function analyzeAssigned(tokens, start, urls, isAlias) {
+  const end = expressionEnd(tokens, start);
+  const exact = unwrapAssigned(tokens, start, end, urls, isAlias);
+  if (exact) return exact;
+  for (const url of urls.values()) {
+    if (url.start < start || url.close >= end) continue;
+    if (!accessAfterExpression(tokens, url.start, url.close) &&
+        !containingPlatformCall(tokens, url.start) && !consumedByCall(tokens, url.start, url.start + 2)) {
+      return { kind: 'ambiguous', index: url.start };
+    }
+  }
   return null;
 }
 
@@ -363,7 +487,8 @@ function findPathnameMisuses(tokens, errors) {
   const scopes = [new Map()];
   const parameters = parameterScopes(tokens);
   let aliasSteps = 0;
-  const isAlias = (name) => {
+  const isAlias = (name, index = -1) => {
+    if (parameters.expressionRanges.some((range) => index >= range.start && index < range.end && range.names.has(name))) return false;
     for (let i = scopes.length - 1; i >= 0; i--) if (scopes[i].has(name)) return scopes[i].get(name);
     return false;
   };
@@ -398,22 +523,27 @@ function findPathnameMisuses(tokens, errors) {
     if (token.value === '}') { if (scopes.length > 1) scopes.pop(); continue; }
 
     if (ASSIGNMENTS.has(token.value)) {
+      if (parameters.assignmentIndexes.has(i)) continue;
       const declaration = ['const', 'let', 'var'].includes(tokens[i - 2]?.value);
       const lhs = tokens[i - 1];
-      const assigned = token.value === '=' ? unwrapAssigned(tokens, i + 1, urls, isAlias) : null;
+      const assigned = token.value === '=' ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
       const destructure = destructureBefore(tokens, i);
       if (destructure.pathname && assigned) add(assigned.index);
-      else if (destructure.dynamic && assigned) add(assigned.index, 'ambiguous module URL alias flow');
-      if (lhs?.type === 'identifier') setAlias(lhs.value, Boolean(assigned), declaration);
+      else if ((destructure.dynamic && assigned) || assigned?.kind === 'ambiguous') add(assigned.index, 'ambiguous module URL alias flow');
+      if (lhs?.type === 'identifier') setAlias(lhs.value, Boolean(assigned && assigned.kind !== 'ambiguous'), declaration);
       continue;
     }
 
     if (token.type !== 'identifier') continue;
+    if (['function', 'class'].includes(tokens[i - 1]?.value)) {
+      setAlias(token.value, false, true);
+      continue;
+    }
     if (['const', 'let', 'var'].includes(tokens[i - 1]?.value)) {
       setAlias(token.value, false, true);
       continue;
     }
-    if (parameters.parameterIndexes.has(i) || !isAlias(token.value)) continue;
+    if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) || !isAlias(token.value, i)) continue;
     const access = accessAfterExpression(tokens, i, i);
     if (access) {
       if (!ASSIGNMENTS.has(tokens[access.end]?.value)) add(i);
@@ -424,7 +554,7 @@ function findPathnameMisuses(tokens, errors) {
     const isAssignmentRhs = previous?.value === '=' && tokens[i - 2]?.type === 'identifier' &&
       !['.', '?.', ']'].includes(tokens[i - 3]?.value);
     const isStaticNonPathMember = next?.value === '.' && tokens[i + 2]?.type === 'identifier';
-    const isPlatformConsumer = previous?.value === '(' && tokens[i - 2]?.value === 'fileURLToPath' && next?.value === ')';
+    const isPlatformConsumer = isPlatformConsumerAt(tokens, i);
     if (!isAssignmentRhs && !isStaticNonPathMember && !isPlatformConsumer && !ASSIGNMENTS.has(next?.value)) {
       add(i, 'ambiguous module URL alias flow');
     }
@@ -444,7 +574,7 @@ function findHandRolledFileUrls(tokens) {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.type === 'template' && !isTaggedTemplate(tokens, i) &&
-        /^file:\/{2,}/.test(templateStaticPrefix(token.raw)) && /(^|[^\\])\$\{/.test(token.value)) {
+        token.hasInterpolation && /^file:\/{2,}/.test(token.value)) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
     if (token.type === 'string' && /^file:\/{2,}/.test(token.value) && tokens[i + 1]?.value === '+') {
@@ -619,6 +749,45 @@ function selftest() {
   say(ambiguityResults.every((result) => result.count >= 1 && result.total === result.count),
     'bounded alias analysis fails closed on dynamic or escaping flows in LF and CRLF',
     ambiguityResults.map((result) => `${result.eol}:${result.label}=${result.count}`).join(', '));
+
+  const blockerCases = [
+    ['template interpolation pathname', 'const s=`cat ${new URL("./x",import.meta.url).pathname}`', 1, 0, 0],
+    ['template interpolation file concat', 'const s=`cat ${"file://"+path}`', 0, 1, 0],
+    ['nested template interpolation pathname', 'const s=`outer ${`inner ${new URL("./x",import.meta.url).pathname}`}`', 1, 0, 0],
+    ['template interpolation outer alias', 'const u=new URL("./x",import.meta.url);const s=`${u.pathname}`', 1, 0, 0],
+    ['template text spelling control', 'const s=`text: new URL("./x",import.meta.url).pathname and "file://"+path`', 0, 0, 0],
+    ['conditional URL initializer fail closed', "const u=enabled&&new URL('./x',import.meta.url);u.pathname", 0, 0, 1],
+    ['logical URL initializer fail closed', "const u=left||new URL('./x',import.meta.url);u.pathname", 0, 0, 1],
+    ['ternary URL initializer fail closed', "const u=enabled?new URL('./x',import.meta.url):other;u.pathname", 0, 0, 1],
+    ['nested alias initializer fail closed', "const base=new URL('./x',import.meta.url);const u=enabled&&base;u.pathname", 0, 0, 1],
+    ['default parameter outer alias', "const u=new URL('./x',import.meta.url);function f(x=u.pathname){};fileURLToPath(u)", 1, 0, 0],
+    ['destructured default outer alias', "const u=new URL('./x',import.meta.url);function f({x=u.pathname}={}){};fileURLToPath(u)", 1, 0, 0],
+    ['destructured same-name binding preserves outer alias', "const u=new URL('./x',import.meta.url);function f({u=other}={}){};u.pathname", 1, 0, 0],
+    ['destructured static key is not an outer use', "const u=new URL('./x',import.meta.url);function f({u:x}){};fileURLToPath(u)", 0, 0, 0],
+    ['expression arrow parameter shadow', "const u=new URL('./x',import.meta.url);items.map(u=>u.pathname);fileURLToPath(u)", 0, 0, 0],
+    ['destructured arrow parameter shadow', "const u=new URL('./x',import.meta.url);items.map(({u})=>u.pathname);fileURLToPath(u)", 0, 0, 0],
+    ['post-block regex delimiter plant', "new URL((()=>{function f(){} /[)]/.test('x');return './x'})(),import.meta.url).pathname", 1, 0, 0],
+    ['post-block innocent regex control', "function f(){} /new URL('x',import.meta.url).pathname/.test(s)", 0, 0, 0],
+    ['grouped platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath((u))", 0, 0, 0],
+    ['option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:true})", 0, 0, 0],
+    ['grouped option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(((u)),{windows:true})", 0, 0, 0],
+    ['platform options alias escape fails closed', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:u})", 0, 0, 1],
+    ['direct URL call consumer control', "const data=readFileSync(new URL('./x',import.meta.url),'utf8')", 0, 0, 0],
+  ];
+  const blockerResults = [];
+  for (const eol of ['\n', '\r\n']) {
+    for (const [label, source, expectedPath, expectedFile, expectedAmbiguous] of blockerCases) {
+      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const actualPath = findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
+      const actualFile = findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
+      const actualAmbiguous = findings.filter((finding) => finding.kind === 'ambiguous module URL alias flow').length;
+      const other = findings.length - actualPath - actualFile - actualAmbiguous;
+      blockerResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', ok: actualPath === expectedPath && actualFile === expectedFile && actualAmbiguous === expectedAmbiguous && other === 0, actualPath, actualFile, actualAmbiguous, other });
+    }
+  }
+  const blockerFailures = blockerResults.filter((result) => !result.ok);
+  say(blockerFailures.length === 0, 'exact-head blocker matrix passes through the shared LF/CRLF scanner',
+    blockerFailures.length ? blockerFailures.map((result) => `${result.eol}:${result.label}=path${result.actualPath}/file${result.actualFile}/amb${result.actualAmbiguous}/other${result.other}`).join(', ') : `${blockerResults.length}/${blockerResults.length}`);
 
   const lexicalAmbiguities = [
     "const x='unterminated",
