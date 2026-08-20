@@ -33049,6 +33049,16 @@ let pressEl = null;
 // again at keyup would then match nothing, and the press would be left filling
 // forever on a control whose key no longer exists.
 let keyPressAction = null;
+// A mounted screen may own a rebound key before the global press/hold layer.
+// The claim is intentionally a predicate over the real KeyboardEvent: input
+// does not consume it, because the later screen handler still has to answer;
+// it only refuses to arm an earlier, colliding action such as End Turn.
+let screenKeyClaim = null;
+function setScreenKeyClaim(claim = null) {
+  screenKeyClaim = typeof claim === 'function' ? claim : null;
+  const owned = screenKeyClaim;
+  return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
+}
 
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
@@ -33309,6 +33319,17 @@ function onKeydown(ev) {
     }
   }
 
+  // A screen-owned rebound wins before this layer can arm a colliding live
+  // beat. Do not prevent/stop: the mounted screen's later capture handler owns
+  // the event and will consume it after performing its one action.
+  if (!typing && screenKeyClaim?.(ev)) {
+    if (keyPressAction) {
+      keyPressAction = null;
+      pressEnd(true);
+    }
+    return;
+  }
+
   // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----
   //
   // Last, deliberately: navigation, the tab ring and Confirm all get the key
@@ -33508,7 +33529,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -34382,7 +34403,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5e2a6a6e9b';
+const SOURCE = 'd639103595';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34416,7 +34437,7 @@ const SOURCE = '5e2a6a6e9b';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0869';
+const ORDINAL = '0878';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40214,6 +40235,7 @@ const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
 const { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
+const { clearTargetSilhouettes, renderTargetSilhouette } = require("src/ui/components/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -40386,45 +40408,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // behind it, so the target you're about to hit glows red (an enemy) or blue
   // (self/buff). Follows mouse hover and keyboard/pad focus. Works for the SVG
   // player figure (recolor fills) and emoji-box enemies (solid colored box).
-  const AIM_RED = '#e0463c';
-  const AIM_BLUE = '#4d94e0';
-
-  function tintClone(spriteWrap, color) {
-    const src = spriteWrap.firstElementChild;
-    if (!src) return null;
-    const clone = src.cloneNode(true);
-    const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
-    if (svg) {
-      svg.querySelectorAll('*').forEach((n) => {
-        const f = n.getAttribute && n.getAttribute('fill');
-        const s = n.getAttribute && n.getAttribute('stroke');
-        if (f && f !== 'none') n.setAttribute('fill', color);
-        if (s && s !== 'none') n.setAttribute('stroke', color);
-      });
-    } else if (clone.style) {
-      clone.style.background = color;
-      clone.style.borderColor = color;
-      clone.style.color = 'transparent';
-      clone.style.boxShadow = 'none';
-    }
-    return clone;
-  }
-
   function clearAim() {
-    app.querySelectorAll('.aim-silho').forEach((n) => n.remove());
-    app.querySelectorAll('.combatant.aiming').forEach((n) => n.classList.remove('aiming', 'aim-enemy', 'aim-self'));
+    clearTargetSilhouettes(app);
   }
 
   function setAim(combatantEl, kind) {
-    const spriteWrap = combatantEl.querySelector('.sprite');
-    if (!spriteWrap) return;
-    const clone = tintClone(spriteWrap, kind === 'self' ? AIM_BLUE : AIM_RED);
-    if (!clone) return;
-    const holder = document.createElement('div');
-    holder.className = 'aim-silho';
-    holder.appendChild(clone);
-    spriteWrap.insertBefore(holder, spriteWrap.firstChild);
-    combatantEl.classList.add('aiming', kind === 'self' ? 'aim-self' : 'aim-enemy');
+    renderTargetSilhouette(combatantEl, kind);
   }
 
   // The single prospective target right now: an armed self-card → the player
@@ -41857,6 +41846,84 @@ function mountTutorial(root, { onDone }) {
 
 
 Object.assign(module.exports, { mountTutorial });
+
+},
+"src/ui/components/friendlyTargets.js": function (module, exports, require) {
+// Relationship-aware silhouette rendering for friendly card targets. The
+// headless target rules live below UI in model/friendlyTargets.js so the
+// authoritative engine never depends on DOM-facing modules.
+
+const TARGET_COLORS = Object.freeze({
+  enemy: '#e0463c',
+  self: '#4d94e0',
+  ally: '#49b675',
+});
+
+function tintedClone(spriteWrap, color) {
+  const src = spriteWrap && spriteWrap.firstElementChild;
+  if (!src) return null;
+  const clone = src.cloneNode(true);
+  const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
+  if (svg) {
+    svg.querySelectorAll('*').forEach((node) => {
+      const fill = node.getAttribute && node.getAttribute('fill');
+      const stroke = node.getAttribute && node.getAttribute('stroke');
+      if (fill && fill !== 'none') node.setAttribute('fill', color);
+      if (stroke && stroke !== 'none') node.setAttribute('stroke', color);
+    });
+  } else if (clone.style) {
+    clone.style.background = color;
+    clone.style.borderColor = color;
+    clone.style.color = 'transparent';
+    clone.style.boxShadow = 'none';
+    // Rendered class art is an <img> inside a wrapper. Recolor the wrapper's
+    // full composited pixels so this remains a silhouette rather than a tinted
+    // rectangle hidden behind the opaque original.
+    const filter = color === TARGET_COLORS.self
+      ? 'brightness(0) saturate(100%) invert(55%) sepia(44%) saturate(1273%) hue-rotate(177deg) brightness(91%) contrast(89%)'
+      : color === TARGET_COLORS.ally
+        ? 'brightness(0) saturate(100%) invert(62%) sepia(44%) saturate(721%) hue-rotate(95deg) brightness(91%) contrast(86%)'
+        : 'brightness(0) saturate(100%) invert(35%) sepia(77%) saturate(1314%) hue-rotate(330deg) brightness(94%) contrast(89%)';
+    clone.style.filter = filter;
+  }
+  return clone;
+}
+
+function clearTargetSilhouettes(root) {
+  if (!root) return;
+  root.querySelectorAll('.aim-silho').forEach((node) => node.remove());
+  root.querySelectorAll('.combatant.aiming').forEach((node) => {
+    node.classList.remove('aiming', 'aim-enemy', 'aim-self', 'aim-ally');
+  });
+}
+
+function renderTargetSilhouette(combatantEl, relationship) {
+  const color = TARGET_COLORS[relationship];
+  const spriteWrap = combatantEl && combatantEl.querySelector('.sprite');
+  if (!color || !spriteWrap) return false;
+  const clone = tintedClone(spriteWrap, color);
+  if (!clone) return false;
+  const holder = document.createElement('div');
+  holder.className = 'aim-silho';
+  holder.dataset.targetRelationship = relationship;
+  holder.style.setProperty('--target-color', color);
+  holder.appendChild(clone);
+  spriteWrap.insertBefore(holder, spriteWrap.firstChild);
+  combatantEl.classList.add('aiming', `aim-${relationship}`);
+  return true;
+}
+
+function decorateFriendlyTarget(combatantEl, { relationship, label }) {
+  combatantEl.dataset.friendlyTarget = relationship;
+  combatantEl.dataset.focusable = '';
+  combatantEl.tabIndex = -1;
+  combatantEl.setAttribute('role', 'button');
+  combatantEl.setAttribute('aria-label', `Target ${label} (${relationship})`);
+  renderTargetSilhouette(combatantEl, relationship);
+}
+
+
+Object.assign(module.exports, { TARGET_COLORS, clearTargetSilhouettes, renderTargetSilhouette, decorateFriendlyTarget });
 
 },
 "src/ui/screens/equipment.js": function (module, exports, require) {
@@ -48390,10 +48457,10 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
-const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox, clampBox, guardHitFloatParts } = require("src/ui/fx.js");
 const { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
-const { resolveCard } = require("src/model/registries.js");
+const { resolveCard, passiveSum } = require("src/model/registries.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
@@ -48403,6 +48470,9 @@ const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/f
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
+const { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } = require("src/ui/input.js");
+const { decorateFriendlyTarget } = require("src/ui/components/friendlyTargets.js");
+const { friendlyTargetPlan } = require("src/model/friendlyTargets.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -48414,7 +48484,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   let me = seats[0];
   let selectedEnemy = null;
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
-  let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
+  let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
@@ -48463,7 +48533,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         if (actionId !== 'use') return;
         if (chargeKind) sendFlaskUse({ chargeKind });
         else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
-        else { armedFlask = armedFlask === slot ? null : slot; armedAllyCard = null; render(); }
+        else { armedFlask = armedFlask === slot ? null : slot; armedFriendlyCard = null; render(); }
       },
     });
   }
@@ -48473,8 +48543,42 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     seatIdx = i;
     me = seats[i];
     armedFlask = null;
-    armedAllyCard = null;
+    armedFriendlyCard = null;
     render();
+  }
+
+  function cancelFriendlyTargeting({ restoreFocus = true } = {}) {
+    const cardId = armedFriendlyCard;
+    if (!cardId) return false;
+    armedFriendlyCard = null;
+    hideTooltip();
+    render();
+    if (restoreFocus) {
+      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(cardId)}"]`);
+      if (card) focusElement(card);
+    }
+    return true;
+  }
+
+  function cardAffordableFromSnapshot(def, player) {
+    if (!def || !player || player.ended || !player.alive || !player.connected) return false;
+    let energyCost = def.cost === 'X' ? 1 : def.cost;
+    if (def.type === 'power') {
+      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
+    }
+    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+  }
+
+  function armFriendlyTargeting(cardInstanceId) {
+    if (armedFriendlyCard === cardInstanceId) {
+      cancelFriendlyTargeting();
+      return;
+    }
+    armedFriendlyCard = cardInstanceId;
+    armedFlask = null;
+    hideTooltip();
+    render();
+    focusFirst('.coop-seat[data-friendly-target]');
   }
 
   // A seat has something to do in the current scene (drives the tab pips).
@@ -48513,29 +48617,55 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const matchedFlaskSlot = (ev) => {
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) return slot;
+    }
+    return -1;
+  };
+  const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
+  const flaskKeyHandler = (ev) => {
+    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (!snap || snap.scene.kind !== 'combat') return;
+    const meP = snap.scene.players.find((p) => p.id === me);
+    if (!meP || !meP.alive || !meP.connected) return;
+    const slot = matchedFlaskSlot(ev);
+    if (slot >= 0) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
+      return;
+    }
+  };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
+    if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
+      ev.preventDefault();
+      if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
+      return;
+    }
     if (!snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
-    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) {
-      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
-      return;
-    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (idx >= 0 && !meP.ended && meP.hand[idx]) {
+    if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
       const def = cardDef(c);
-      if ((def.effects || []).some((e) => e.target === 'ally')) { armedAllyCard = c.instanceId; render(); return; }
+      if (!cardAffordableFromSnapshot(def, meP)) return;
+      if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
       const needs = (def.effects || []).some((e) => e.target === 'enemy');
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
-  document.addEventListener('keydown', keyHandler);
+  // input.js owns a capture listener and may stop a configured action before
+  // it bubbles. Co-op flasks therefore listen at that same capture boundary;
+  // controller-synthesized and rebound keyboard keys traverse one door. The
+  // remaining screen keys stay on the ordinary bubble path.
+  addEventListener('keydown', flaskKeyHandler, true);
+  addEventListener('keydown', keyHandler);
   // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
   // A pad's first button press pulls the active seat to its own; navigation
   // then flows through the global focus system like solo play.
@@ -48557,7 +48687,9 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }, 120);
 
   function teardown() {
-    document.removeEventListener('keydown', keyHandler);
+    releaseFlaskKeyClaim();
+    removeEventListener('keydown', flaskKeyHandler, true);
+    removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -48689,12 +48821,23 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
     const sc = snap.scene;
+    const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
+      || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
+    let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
-    const arming = armedFlask != null || armedAllyCard != null;
-    const armedCardDef = armedAllyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedAllyCard); return c ? cardDef(c) : null; })() : null;
-    if (armedAllyCard && !armedCardDef) armedAllyCard = null; // card left the hand
+    let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
+    if (armedFriendlyCard && !armedCardDef) armedFriendlyCard = null; // card left the hand
+    let targetPlan = armedCardDef ? friendlyTargetPlan(armedCardDef, me, sc.players) : null;
+    const focusedFriendlyInvalid = focusedFriendlySeat && targetPlan && !targetPlan.legalIds.includes(focusedFriendlySeat);
+    if (armedFriendlyCard && targetPlan && (targetPlan.targets.length === 0 || focusedFriendlyInvalid)) {
+      restoreFriendlyCardFocus = armedFriendlyCard;
+      armedFriendlyCard = null;
+      armedCardDef = null;
+      targetPlan = null;
+    }
+    const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
       <div class="combat coop">
@@ -48712,7 +48855,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         </div>
         ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
-        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
+        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — choose a highlighted hero. <button class="subtle" id="coop-cancel-target">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
@@ -48743,7 +48886,8 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     for (const p of sc.players) {
       const m = snap.party.find((x) => x.id === p.id) || {};
       const box = document.createElement('div');
-      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${arming && p.alive && p.connected ? ' throw-target' : ''}`;
+      const friendly = targetPlan && targetPlan.targets.find((target) => target.id === p.id);
+      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
@@ -48758,10 +48902,22 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
-      if (arming && p.alive && p.connected) box.addEventListener('click', () => {
-        if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
-        else { sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
-      });
+      if (friendly) {
+        decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
+        box.addEventListener('click', () => {
+          const cardInstanceId = armedFriendlyCard;
+          if (!cardInstanceId) return;
+          armedFriendlyCard = null;
+          hideTooltip();
+          render();
+          send({ t: 'playCard', cardInstanceId, targetId: p.id });
+        });
+      } else if (armedFlask != null && p.alive && p.connected) {
+        box.addEventListener('click', () => {
+          sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
+          armedFlask = null;
+        });
+      }
       zone.appendChild(box);
     }
 
@@ -48801,10 +48957,8 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         el.addEventListener('click', () => {
           if (!entry.affordable) return;
           const effects = entry.def.effects || [];
-          if (effects.some((ef) => ef.target === 'ally')) {
-            armedAllyCard = armedAllyCard === entry.inst.instanceId ? null : entry.inst.instanceId;
-            armedFlask = null;
-            render();
+          if (friendlyTargetPlan(entry.def, me, sc.players).active) {
+            armFriendlyTargeting(entry.inst.instanceId);
             return;
           }
           const needs = effects.some((ef) => ef.target === 'enemy');
@@ -48818,7 +48972,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
           const def = cardDef(c);
           const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
           const manaAffordable = meP.mana >= (def.manaCost || 0);
-          const affordable = !meP.ended && energyAffordable && manaAffordable;
+          const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
@@ -48827,7 +48981,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
-            selected: c.instanceId === armedAllyCard,
+            selected: c.instanceId === armedFriendlyCard,
           };
         }),
       });
@@ -48875,7 +49029,17 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       },
     });
     endTurnBeat.refresh();
-    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
+    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedFriendlyCard = null; render(); });
+    const ct = app.querySelector('#coop-cancel-target'); if (ct) ct.addEventListener('click', () => cancelFriendlyTargeting());
+    if (restoreFriendlyCardFocus) {
+      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
+      if (card) focusElement(card);
+    } else if (armedFriendlyCard && isEngaged()) {
+      const preservedTarget = focusedFriendlySeat && targetPlan?.legalIds.includes(focusedFriendlySeat)
+        ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
+        : null;
+      if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
+    }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
@@ -49307,6 +49471,58 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
 
 
 Object.assign(module.exports, { mountCoop });
+
+},
+"src/model/friendlyTargets.js": function (module, exports, require) {
+// Headless friendly-target semantics shared by the authoritative engine and
+// browser clients. This layer deliberately owns no DOM, colours, or rendering.
+
+// Every hostile member of the effect target vocabulary owns card resolution
+// before source-side self effects are considered. An AoE/random strike may
+// heal, block, exhaust, or otherwise affect its source without becoming a
+// friendly-target transaction.
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
+
+function friendlyTargetMode(def) {
+  const effects = def && Array.isArray(def.effects) ? def.effects : [];
+  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
+  const hasAlly = effects.some((effect) => effect.target === 'ally');
+  const hasSelf = effects.some((effect) => effect.target === 'self');
+  // Enemy cards continue through enemy aiming even when they also have a
+  // source-side self effect. Friendly aiming owns ally cards and pure self
+  // cards only.
+  if (hasEnemy || (!hasAlly && !hasSelf)) return 'none';
+  if (hasAlly && hasSelf) return 'mixed';
+  return hasAlly ? 'ally' : 'self';
+}
+
+function friendlyTargetPlan(def, actorId, players = []) {
+  const mode = friendlyTargetMode(def);
+  if (mode === 'none') return { mode, active: false, targets: [], legalIds: [] };
+  const targets = [];
+  for (const player of players) {
+    if (!player || !player.alive || !player.connected) continue;
+    const relationship = player.id === actorId ? 'self' : 'ally';
+    if (mode === 'self' && relationship !== 'self') continue;
+    if (mode === 'ally' && relationship !== 'ally') continue;
+    targets.push({ id: player.id, relationship });
+  }
+  return { mode, active: true, targets, legalIds: targets.map((target) => target.id) };
+}
+
+function assertFriendlyTarget(plan, requestedId, actorId) {
+  if (!plan || !plan.active) return requestedId;
+  // A self-only card historically omitted targetId. Preserve that network
+  // compatibility while the new clients always send their explicit choice.
+  const targetId = requestedId == null && plan.mode === 'self' ? actorId : requestedId;
+  if (!plan.legalIds.includes(targetId)) {
+    throw new Error(`Invalid ${plan.mode} target '${targetId == null ? 'none' : targetId}'`);
+  }
+  return targetId;
+}
+
+
+Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFriendlyTarget });
 
 },
 "src/ui/components/holdbeat.js": function (module, exports, require) {

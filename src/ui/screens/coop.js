@@ -37,10 +37,10 @@
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
-import { attachTooltip, esc } from '../components/tooltip.js';
+import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { resolveCard } from '../../model/registries.js';
+import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -50,6 +50,9 @@ import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js'
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
+import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
+import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
+import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -61,7 +64,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let me = seats[0];
   let selectedEnemy = null;
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
-  let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
+  let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let pacing = false; // an enemy-turn replay is holding the render
   let pendingSnaps = []; // every unrendered authoritative frame, causal order
@@ -110,7 +113,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         if (actionId !== 'use') return;
         if (chargeKind) sendFlaskUse({ chargeKind });
         else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
-        else { armedFlask = armedFlask === slot ? null : slot; armedAllyCard = null; render(); }
+        else { armedFlask = armedFlask === slot ? null : slot; armedFriendlyCard = null; render(); }
       },
     });
   }
@@ -120,8 +123,42 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     seatIdx = i;
     me = seats[i];
     armedFlask = null;
-    armedAllyCard = null;
+    armedFriendlyCard = null;
     render();
+  }
+
+  function cancelFriendlyTargeting({ restoreFocus = true } = {}) {
+    const cardId = armedFriendlyCard;
+    if (!cardId) return false;
+    armedFriendlyCard = null;
+    hideTooltip();
+    render();
+    if (restoreFocus) {
+      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(cardId)}"]`);
+      if (card) focusElement(card);
+    }
+    return true;
+  }
+
+  function cardAffordableFromSnapshot(def, player) {
+    if (!def || !player || player.ended || !player.alive || !player.connected) return false;
+    let energyCost = def.cost === 'X' ? 1 : def.cost;
+    if (def.type === 'power') {
+      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
+    }
+    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
+  }
+
+  function armFriendlyTargeting(cardInstanceId) {
+    if (armedFriendlyCard === cardInstanceId) {
+      cancelFriendlyTargeting();
+      return;
+    }
+    armedFriendlyCard = cardInstanceId;
+    armedFlask = null;
+    hideTooltip();
+    render();
+    focusFirst('.coop-seat[data-friendly-target]');
   }
 
   // A seat has something to do in the current scene (drives the tab pips).
@@ -160,29 +197,55 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const matchedFlaskSlot = (ev) => {
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) return slot;
+    }
+    return -1;
+  };
+  const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
+  const flaskKeyHandler = (ev) => {
+    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (!snap || snap.scene.kind !== 'combat') return;
+    const meP = snap.scene.players.find((p) => p.id === me);
+    if (!meP || !meP.alive || !meP.connected) return;
+    const slot = matchedFlaskSlot(ev);
+    if (slot >= 0) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
+      return;
+    }
+  };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
+    if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
+      ev.preventDefault();
+      if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
+      return;
+    }
     if (!snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
-    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) {
-      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
-      return;
-    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (idx >= 0 && !meP.ended && meP.hand[idx]) {
+    if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
       const def = cardDef(c);
-      if ((def.effects || []).some((e) => e.target === 'ally')) { armedAllyCard = c.instanceId; render(); return; }
+      if (!cardAffordableFromSnapshot(def, meP)) return;
+      if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
       const needs = (def.effects || []).some((e) => e.target === 'enemy');
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
-  document.addEventListener('keydown', keyHandler);
+  // input.js owns a capture listener and may stop a configured action before
+  // it bubbles. Co-op flasks therefore listen at that same capture boundary;
+  // controller-synthesized and rebound keyboard keys traverse one door. The
+  // remaining screen keys stay on the ordinary bubble path.
+  addEventListener('keydown', flaskKeyHandler, true);
+  addEventListener('keydown', keyHandler);
   // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
   // A pad's first button press pulls the active seat to its own; navigation
   // then flows through the global focus system like solo play.
@@ -204,7 +267,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }, 120);
 
   function teardown() {
-    document.removeEventListener('keydown', keyHandler);
+    releaseFlaskKeyClaim();
+    removeEventListener('keydown', flaskKeyHandler, true);
+    removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
@@ -336,12 +401,23 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
     const sc = snap.scene;
+    const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
+      || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
+    let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
-    const arming = armedFlask != null || armedAllyCard != null;
-    const armedCardDef = armedAllyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedAllyCard); return c ? cardDef(c) : null; })() : null;
-    if (armedAllyCard && !armedCardDef) armedAllyCard = null; // card left the hand
+    let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
+    if (armedFriendlyCard && !armedCardDef) armedFriendlyCard = null; // card left the hand
+    let targetPlan = armedCardDef ? friendlyTargetPlan(armedCardDef, me, sc.players) : null;
+    const focusedFriendlyInvalid = focusedFriendlySeat && targetPlan && !targetPlan.legalIds.includes(focusedFriendlySeat);
+    if (armedFriendlyCard && targetPlan && (targetPlan.targets.length === 0 || focusedFriendlyInvalid)) {
+      restoreFriendlyCardFocus = armedFriendlyCard;
+      armedFriendlyCard = null;
+      armedCardDef = null;
+      targetPlan = null;
+    }
+    const arming = armedFlask != null || armedFriendlyCard != null;
 
     app.innerHTML = `
       <div class="combat coop">
@@ -359,7 +435,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         </div>
         ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
-        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
+        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — choose a highlighted hero. <button class="subtle" id="coop-cancel-target">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
@@ -390,7 +466,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     for (const p of sc.players) {
       const m = snap.party.find((x) => x.id === p.id) || {};
       const box = document.createElement('div');
-      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${arming && p.alive && p.connected ? ' throw-target' : ''}`;
+      const friendly = targetPlan && targetPlan.targets.find((target) => target.id === p.id);
+      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
@@ -405,10 +482,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
-      if (arming && p.alive && p.connected) box.addEventListener('click', () => {
-        if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
-        else { sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
-      });
+      if (friendly) {
+        decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
+        box.addEventListener('click', () => {
+          const cardInstanceId = armedFriendlyCard;
+          if (!cardInstanceId) return;
+          armedFriendlyCard = null;
+          hideTooltip();
+          render();
+          send({ t: 'playCard', cardInstanceId, targetId: p.id });
+        });
+      } else if (armedFlask != null && p.alive && p.connected) {
+        box.addEventListener('click', () => {
+          sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
+          armedFlask = null;
+        });
+      }
       zone.appendChild(box);
     }
 
@@ -448,10 +537,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         el.addEventListener('click', () => {
           if (!entry.affordable) return;
           const effects = entry.def.effects || [];
-          if (effects.some((ef) => ef.target === 'ally')) {
-            armedAllyCard = armedAllyCard === entry.inst.instanceId ? null : entry.inst.instanceId;
-            armedFlask = null;
-            render();
+          if (friendlyTargetPlan(entry.def, me, sc.players).active) {
+            armFriendlyTargeting(entry.inst.instanceId);
             return;
           }
           const needs = effects.some((ef) => ef.target === 'enemy');
@@ -465,7 +552,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
           const def = cardDef(c);
           const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
           const manaAffordable = meP.mana >= (def.manaCost || 0);
-          const affordable = !meP.ended && energyAffordable && manaAffordable;
+          const affordable = cardAffordableFromSnapshot(def, meP);
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
@@ -474,7 +561,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
-            selected: c.instanceId === armedAllyCard,
+            selected: c.instanceId === armedFriendlyCard,
           };
         }),
       });
@@ -522,7 +609,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       },
     });
     endTurnBeat.refresh();
-    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
+    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedFriendlyCard = null; render(); });
+    const ct = app.querySelector('#coop-cancel-target'); if (ct) ct.addEventListener('click', () => cancelFriendlyTargeting());
+    if (restoreFriendlyCardFocus) {
+      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
+      if (card) focusElement(card);
+    } else if (armedFriendlyCard && isEngaged()) {
+      const preservedTarget = focusedFriendlySeat && targetPlan?.legalIds.includes(focusedFriendlySeat)
+        ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
+        : null;
+      if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
+    }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
