@@ -281,33 +281,35 @@ function accessAfterExpression(tokens, start, end) {
 }
 
 function destructureBefore(tokens, assignment) {
-  if (tokens[assignment - 1]?.value !== '}') return { pathname: false, dynamic: false };
-  let depth = 0;
-  for (let i = assignment - 1; i >= 0; i--) {
-    if (tokens[i].value === '}') depth++;
-    else if (tokens[i].value === '{' && --depth === 0) {
-      const separators = [i, ...topLevelIndexes(tokens, i + 1, assignment - 1, ','), assignment - 1];
-      let pathname = false;
-      let dynamic = false;
-      for (let entry = 0; entry + 1 < separators.length; entry++) {
-        let start = separators[entry] + 1;
-        const end = separators[entry + 1];
-        if (tokens[start]?.value === '...') { dynamic = true; continue; }
-        const colon = topLevelIndexes(tokens, start, end, ':')[0];
-        const defaultAt = topLevelIndexes(tokens, start, colon ?? end, '=')[0];
-        const keyEnd = colon ?? defaultAt ?? end;
-        if (tokens[start]?.value === '[') {
-          if (tokens[start + 1]?.type === 'string' && tokens[start + 1].value === 'pathname' &&
-              tokens[start + 2]?.value === ']' && start + 3 === keyEnd) pathname = true;
-          else dynamic = true;
-        } else if (start + 1 === keyEnd &&
-                   (tokens[start]?.type === 'identifier' || tokens[start]?.type === 'string') &&
-                   tokens[start].value === 'pathname') pathname = true;
-      }
-      return { pathname, dynamic };
-    }
+  const close = tokens[assignment - 1]?.value;
+  const openValue = close === '}' ? '{' : close === ']' ? '[' : null;
+  if (!openValue) return { pathname: false, dynamic: false, bindings: [], bindingIndexes: [] };
+  const open = findOpenBackward(tokens, assignment - 1, openValue, close);
+  if (open < 0) return { pathname: false, dynamic: true, bindings: [], bindingIndexes: [] };
+  const binding = bindingIndexes(tokens, open, assignment);
+  const indexes = [...binding.indexes];
+  const bindings = indexes.map((index) => tokens[index].value);
+  if (openValue === '[') return { pathname: false, dynamic: false, bindings, bindingIndexes: indexes };
+
+  const separators = [open, ...topLevelIndexes(tokens, open + 1, assignment - 1, ','), assignment - 1];
+  let pathname = false;
+  let dynamic = false;
+  for (let entry = 0; entry + 1 < separators.length; entry++) {
+    let start = separators[entry] + 1;
+    const end = separators[entry + 1];
+    if (tokens[start]?.value === '...') { start++; }
+    const colon = topLevelIndexes(tokens, start, end, ':')[0];
+    const defaultAt = topLevelIndexes(tokens, start, colon ?? end, '=')[0];
+    const keyEnd = colon ?? defaultAt ?? end;
+    if (tokens[start]?.value === '[') {
+      if (tokens[start + 1]?.type === 'string' && tokens[start + 1].value === 'pathname' &&
+          tokens[start + 2]?.value === ']' && start + 3 === keyEnd) pathname = true;
+      else dynamic = true;
+    } else if (start + 1 === keyEnd &&
+               (tokens[start]?.type === 'identifier' || tokens[start]?.type === 'string') &&
+               tokens[start].value === 'pathname') pathname = true;
   }
-  return { pathname: false, dynamic: false };
+  return { pathname, dynamic, bindings, bindingIndexes: indexes };
 }
 
 function findOpenBackward(tokens, close, left = '(', right = ')') {
@@ -329,6 +331,146 @@ function topLevelIndexes(tokens, start, end, value) {
     else if (stack.length === 0 && tokens[i].value === value) out.push(i);
   }
   return out;
+}
+
+function declarationKindAt(tokens, assignment) {
+  const stack = [];
+  const opening = { ')': '(', ']': '[', '}': '{' };
+  for (let i = assignment - 1; i >= 0; i--) {
+    const value = tokens[i].value;
+    if (opening[value]) { stack.push(opening[value]); continue; }
+    if (value === stack.at(-1)) { stack.pop(); continue; }
+    if (stack.length > 0) continue;
+    if (['const', 'let', 'var'].includes(value)) return value;
+    if ([';', '{', '}', '('].includes(value)) return null;
+  }
+  return null;
+}
+
+function collectDeclarationBindings(tokens) {
+  const bindings = new Map();
+  const closing = { '(': ')', '[': ']', '{': '}' };
+  for (let declaration = 0; declaration < tokens.length; declaration++) {
+    const kind = tokens[declaration].type === 'identifier' && ['const', 'let', 'var'].includes(tokens[declaration].value)
+      ? tokens[declaration].value : null;
+    if (!kind) continue;
+    const stack = [];
+    let end = tokens.length;
+    for (let i = declaration + 1; i < tokens.length; i++) {
+      const value = tokens[i].value;
+      if (closing[value]) stack.push(closing[value]);
+      else if (value === stack.at(-1)) stack.pop();
+      else if (stack.length === 0 && [';', '}', ')'].includes(value)) { end = i; break; }
+    }
+    const separators = [declaration, ...topLevelIndexes(tokens, declaration + 1, end, ','), end];
+    for (let entry = 0; entry + 1 < separators.length; entry++) {
+      const start = separators[entry] + 1;
+      const entryEnd = separators[entry + 1];
+      let bindingEnd = entryEnd;
+      const assignment = topLevelIndexes(tokens, start, entryEnd, '=')[0];
+      if (assignment !== undefined) bindingEnd = assignment;
+      for (let i = start; i < bindingEnd; i++) {
+        if (tokens[i].type === 'identifier' && ['of', 'in'].includes(tokens[i].value)) { bindingEnd = i; break; }
+      }
+      for (const index of bindingIndexes(tokens, start, bindingEnd).indexes) bindings.set(index, kind);
+    }
+  }
+  return bindings;
+}
+
+function enclosingForOpen(tokens, index) {
+  let depth = 0;
+  for (let i = index - 1; i >= 0; i--) {
+    if (tokens[i].value === ')') depth++;
+    else if (tokens[i].value === '(') {
+      if (depth > 0) { depth--; continue; }
+      const previous = tokens[i - 1];
+      if (previous?.value === 'for' || (previous?.value === 'await' && tokens[i - 2]?.value === 'for')) return i;
+      return -1;
+    }
+  }
+  return -1;
+}
+
+function loopAliasRanges(tokens, declarations) {
+  const byOpen = new Map();
+  const bindingToRange = new Map();
+  for (const [index, kind] of declarations) {
+    if (!['const', 'let'].includes(kind)) continue;
+    const open = enclosingForOpen(tokens, index);
+    if (open < 0) continue;
+    if (!byOpen.has(open)) {
+      const close = findClose(tokens, open);
+      let end = close + 1;
+      if (tokens[end]?.value === '{') {
+        const bodyClose = findClose(tokens, end, '{', '}');
+        end = bodyClose < 0 ? tokens.length : bodyClose + 1;
+      } else {
+        while (end < tokens.length && tokens[end].value !== ';') end++;
+        if (end < tokens.length) end++;
+      }
+      byOpen.set(open, { start: open + 1, end, aliases: new Map(), bindingIndexes: new Set() });
+    }
+    const range = byOpen.get(open);
+    range.aliases.set(tokens[index].value, false);
+    range.bindingIndexes.add(index);
+    bindingToRange.set(index, range);
+  }
+  return { ranges: [...byOpen.values()], bindingToRange };
+}
+
+function declarationSeeds(tokens, parameters, declarations, loopBindings) {
+  const seeds = new Map([[-1, new Map()]]);
+  const braces = [];
+  const scopeBraces = [];
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i].value === '{') {
+      const scope = tokens[i].blockOpen === 'statement';
+      braces.push(scope ? i : -1);
+      if (scope) scopeBraces.push(i);
+    }
+    const kind = declarations.get(i);
+    if (kind && !loopBindings.has(i)) {
+      let owner = scopeBraces.at(-1) ?? -1;
+      if (kind === 'var') {
+        owner = -1;
+        for (let s = scopeBraces.length - 1; s >= 0; s--) {
+          if (parameters.functionBraces.has(scopeBraces[s])) { owner = scopeBraces[s]; break; }
+        }
+      }
+      if (!seeds.has(owner)) seeds.set(owner, new Map());
+      seeds.get(owner).set(tokens[i].value, false);
+    }
+    if (tokens[i].value === '}') {
+      const scope = braces.pop();
+      if (scope !== -1) scopeBraces.pop();
+    }
+  }
+  return seeds;
+}
+
+const CONDITIONAL_WORDS = new Set(['if', 'else', 'for', 'while', 'switch', 'case', 'catch', 'try', 'finally', 'do', 'with']);
+
+function conditionalBlockAt(tokens, brace) {
+  const previous = tokens[brace - 1];
+  if (previous?.type === 'identifier' && CONDITIONAL_WORDS.has(previous.value)) return true;
+  if (previous?.value !== ')') return false;
+  const open = findOpenBackward(tokens, brace - 1);
+  return CONDITIONAL_WORDS.has(tokens[open - 1]?.value);
+}
+
+function conditionalAssignmentAt(tokens, assignment) {
+  const stack = [];
+  const opening = { ')': '(', ']': '[', '}': '{' };
+  for (let i = assignment - 1; i >= 0; i--) {
+    const value = tokens[i].value;
+    if (opening[value]) { stack.push(opening[value]); continue; }
+    if (value === stack.at(-1)) { stack.pop(); continue; }
+    if (stack.length > 0) continue;
+    if (tokens[i].type === 'identifier' && CONDITIONAL_WORDS.has(value)) return true;
+    if ([';', '{', '}'].includes(value)) return false;
+  }
+  return false;
 }
 
 function bindingIndexes(tokens, start, end) {
@@ -388,7 +530,13 @@ function parameterScopes(tokens) {
     for (const index of binding.indexes) parameterIndexes.add(index);
     for (const index of binding.keys) keyIndexes.add(index);
     for (let i = open + (tokens[open]?.value === '(' ? 1 : 0); i < close; i++) {
-      if (tokens[i].value === '=' && binding.indexes.has(i - 1)) assignmentIndexes.add(i);
+      if (tokens[i].value !== '=') continue;
+      if (binding.indexes.has(i - 1)) { assignmentIndexes.add(i); continue; }
+      const previous = tokens[i - 1]?.value;
+      const left = previous === '}' ? '{' : previous === ']' ? '[' : null;
+      if (!left) continue;
+      const patternOpen = findOpenBackward(tokens, i - 1, left, previous);
+      if ([...binding.indexes].some((index) => index > patternOpen && index < i)) assignmentIndexes.add(i);
     }
     if (brace >= 0) {
       atBrace.set(brace, names);
@@ -507,15 +655,26 @@ function findPathnameMisuses(tokens, errors) {
   const urls = findUrlExpressions(tokens, errors);
   const findings = [];
   const seen = new Set();
-  const scopes = [{ aliases: new Map(), functionScope: true }];
   const parameters = parameterScopes(tokens);
+  const declarations = collectDeclarationBindings(tokens);
+  const loops = loopAliasRanges(tokens, declarations);
+  const seeds = declarationSeeds(tokens, parameters, declarations, loops.bindingToRange);
+  const scopes = [{ aliases: new Map(seeds.get(-1)), functionScope: true, conditional: false }];
+  const scopeBraces = [];
   let aliasSteps = 0;
   const isAlias = (name, index = -1) => {
     if (parameters.expressionRanges.some((range) => index >= range.start && index < range.end && range.names.has(name))) return false;
+    const loop = loops.ranges.filter((range) => index >= range.start && index < range.end && range.aliases.has(name)).at(-1);
+    if (loop) return loop.aliases.get(name);
     for (let i = scopes.length - 1; i >= 0; i--) if (scopes[i].aliases.has(name)) return scopes[i].aliases.get(name);
     return false;
   };
-  const setAlias = (name, value, declaration = null) => {
+  const setAlias = (name, value, declaration = null, conditionalWrite = false, index = -1) => {
+    const loop = loops.ranges.filter((range) => index >= range.start && index < range.end && range.aliases.has(name)).at(-1);
+    if (loop) {
+      loop.aliases.set(name, conditionalWrite ? loop.aliases.get(name) || value : value);
+      return;
+    }
     if (declaration) {
       let target = scopes.length - 1;
       if (declaration === 'var') {
@@ -525,7 +684,11 @@ function findPathnameMisuses(tokens, errors) {
       return;
     }
     for (let i = scopes.length - 1; i >= 0; i--) {
-      if (scopes[i].aliases.has(name)) { scopes[i].aliases.set(name, value); return; }
+      if (scopes[i].aliases.has(name)) {
+        const uncertain = conditionalWrite || scopes.slice(i + 1).some((scope) => scope.conditional);
+        scopes[i].aliases.set(name, uncertain ? scopes[i].aliases.get(name) || value : value);
+        return;
+      }
     }
     scopes.at(-1).aliases.set(name, value);
   };
@@ -546,21 +709,36 @@ function findPathnameMisuses(tokens, errors) {
     }
     const token = tokens[i];
     if (token.value === '{') {
-      const scope = { aliases: new Map(), functionScope: parameters.functionBraces.has(i) };
+      const isScope = token.blockOpen === 'statement';
+      scopeBraces.push(isScope);
+      if (!isScope) continue;
+      const functionScope = parameters.functionBraces.has(i);
+      const scope = { aliases: new Map(seeds.get(i)), functionScope, conditional: functionScope || conditionalBlockAt(tokens, i) };
       for (const name of parameters.atBrace.get(i) || []) scope.aliases.set(name, false);
       scopes.push(scope);
     }
-    if (token.value === '}') { if (scopes.length > 1) scopes.pop(); continue; }
+    if (token.value === '}') {
+      if (scopeBraces.pop() && scopes.length > 1) scopes.pop();
+      continue;
+    }
 
     if (ASSIGNMENTS.has(token.value)) {
       if (parameters.assignmentIndexes.has(i)) continue;
-      const declaration = ['const', 'let', 'var'].includes(tokens[i - 2]?.value) ? tokens[i - 2].value : null;
       const lhs = tokens[i - 1];
-      const assigned = token.value === '=' ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
       const destructure = destructureBefore(tokens, i);
+      const declaration = declarations.get(i - 1) ||
+        destructure.bindingIndexes.map((index) => declarations.get(index)).find(Boolean) ||
+        declarationKindAt(tokens, i);
+      const conditionalWrite = !declaration && conditionalAssignmentAt(tokens, i);
+      const assigned = token.value === '=' ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
       if (destructure.pathname && assigned) add(assigned.index);
       else if ((destructure.dynamic && assigned) || assigned?.kind === 'ambiguous') add(assigned.index, 'ambiguous module URL alias flow');
-      if (lhs?.type === 'identifier') setAlias(lhs.value, Boolean(assigned && assigned.kind !== 'ambiguous'), declaration);
+      for (let binding = 0; binding < destructure.bindings.length; binding++) {
+        setAlias(destructure.bindings[binding], false, declaration, conditionalWrite, destructure.bindingIndexes[binding]);
+      }
+      if (lhs?.type === 'identifier') {
+        setAlias(lhs.value, Boolean(assigned && assigned.kind !== 'ambiguous'), declaration, conditionalWrite, i - 1);
+      }
       continue;
     }
 
@@ -569,11 +747,9 @@ function findPathnameMisuses(tokens, errors) {
       setAlias(token.value, false, 'lexical');
       continue;
     }
-    if (['const', 'let', 'var'].includes(tokens[i - 1]?.value)) {
-      setAlias(token.value, false, tokens[i - 1].value);
-      continue;
-    }
-    if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) || !isAlias(token.value, i)) continue;
+    if (declarations.has(i)) continue;
+    if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) ||
+        !isAlias(token.value, i)) continue;
     const access = accessAfterExpression(tokens, i, i);
     if (access) {
       if (!ASSIGNMENTS.has(tokens[access.end]?.value)) add(i);
@@ -821,6 +997,25 @@ function selftest() {
     ['static template bracket non-path control', "new URL('./x',import.meta.url)[`origin`]", 0, 0, 0],
     ['tagged template later segment control', 'const s=String.raw`${prefix}file://${path}`', 0, 0, 0],
     ['untagged template later segment', 'const s=`${prefix}file://${path}`', 0, 1, 0],
+    ['conditional URL then platform preserves alias', "let u;if(ok)u=new URL('./x',import.meta.url);else u=platformValue;u.pathname", 1, 0, 0],
+    ['conditional platform then URL preserves alias', "let u;if(ok)u=platformValue;else u=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['unconditional platform reassignment clears alias', "let u=new URL('./x',import.meta.url);u=platformValue;u.pathname", 0, 0, 0],
+    ['later comma declarator shadows outer alias', "const u=new URL('./x',import.meta.url);{const x=1,u=platformValue;}u.pathname", 1, 0, 0],
+    ['later comma declarator owns URL alias', "const x=1,u=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['destructured object binding shadows outer alias', "const u=new URL('./x',import.meta.url);{const {u}=obj;u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['destructured array binding shadows outer alias', "const u=new URL('./x',import.meta.url);{const [u]=items;u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['destructured rest binding shadows outer alias', "const u=new URL('./x',import.meta.url);{const {...u}=obj;u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['braced conditional URL then platform preserves alias', "let u;if(ok){u=new URL('./x',import.meta.url)}else{u=platformValue}u.pathname", 1, 0, 0],
+    ['plain block unconditional reassignment clears alias', "let u=new URL('./x',import.meta.url);{u=platformValue}u.pathname", 0, 0, 0],
+    ['later comma uninitialized binding shadows outer alias', "const u=new URL('./x',import.meta.url);{let x=1,u;u?.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['later comma destructure shadows outer alias', "const u=new URL('./x',import.meta.url);{const x=1,{u}=obj;u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['var binding shadows for its whole function scope', "const u=new URL('./x',import.meta.url);function f(){u.pathname;var u=platformValue}fileURLToPath(u)", 0, 0, 0],
+    ['lexical binding shadows for its whole block scope', "const u=new URL('./x',import.meta.url);{u.pathname;let u=platformValue}fileURLToPath(u)", 0, 0, 0],
+    ['nested function URL write preserves possible outer alias', "let u;function f(){u=new URL('./x',import.meta.url)}u.pathname", 1, 0, 0],
+    ['nested function platform write does not clear outer alias', "let u=new URL('./x',import.meta.url);function f(){u=platformValue}u.pathname", 1, 0, 0],
+    ['for lexical binding does not clear outer alias', "const u=new URL('./x',import.meta.url);for(const u of items){u.origin}u.pathname", 1, 0, 0],
+    ['for lexical binding shadows outer alias inside loop', "const u=new URL('./x',import.meta.url);for(const u of items){u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['for lexical URL alias is caught inside loop', "for(let u=new URL('./x',import.meta.url);ok;step()){u.pathname}", 1, 0, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
