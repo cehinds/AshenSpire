@@ -17,6 +17,7 @@ import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
+import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -189,45 +190,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // behind it, so the target you're about to hit glows red (an enemy) or blue
   // (self/buff). Follows mouse hover and keyboard/pad focus. Works for the SVG
   // player figure (recolor fills) and emoji-box enemies (solid colored box).
-  const AIM_RED = '#e0463c';
-  const AIM_BLUE = '#4d94e0';
-
-  function tintClone(spriteWrap, color) {
-    const src = spriteWrap.firstElementChild;
-    if (!src) return null;
-    const clone = src.cloneNode(true);
-    const svg = clone.matches && clone.matches('svg') ? clone : clone.querySelector && clone.querySelector('svg');
-    if (svg) {
-      svg.querySelectorAll('*').forEach((n) => {
-        const f = n.getAttribute && n.getAttribute('fill');
-        const s = n.getAttribute && n.getAttribute('stroke');
-        if (f && f !== 'none') n.setAttribute('fill', color);
-        if (s && s !== 'none') n.setAttribute('stroke', color);
-      });
-    } else if (clone.style) {
-      clone.style.background = color;
-      clone.style.borderColor = color;
-      clone.style.color = 'transparent';
-      clone.style.boxShadow = 'none';
-    }
-    return clone;
-  }
-
   function clearAim() {
-    app.querySelectorAll('.aim-silho').forEach((n) => n.remove());
-    app.querySelectorAll('.combatant.aiming').forEach((n) => n.classList.remove('aiming', 'aim-enemy', 'aim-self'));
+    clearTargetSilhouettes(app);
   }
 
   function setAim(combatantEl, kind) {
-    const spriteWrap = combatantEl.querySelector('.sprite');
-    if (!spriteWrap) return;
-    const clone = tintClone(spriteWrap, kind === 'self' ? AIM_BLUE : AIM_RED);
-    if (!clone) return;
-    const holder = document.createElement('div');
-    holder.className = 'aim-silho';
-    holder.appendChild(clone);
-    spriteWrap.insertBefore(holder, spriteWrap.firstChild);
-    combatantEl.classList.add('aiming', kind === 'self' ? 'aim-self' : 'aim-enemy');
+    renderTargetSilhouette(combatantEl, kind);
   }
 
   // The single prospective target right now: an armed self-card → the player

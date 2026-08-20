@@ -29,6 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { assertFriendlyTarget, friendlyTargetPlan } from '../ui/components/friendlyTargets.js';
 
 import * as A from './actions.js';
 import * as S from './statuses.js';
@@ -329,6 +330,14 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
   const manaCost = def.manaCost || 0;
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
+
+  const friendlyPlan = friendlyTargetPlan(def, C.playerKey, [...C.players.values()].map((entry) => ({
+    id: entry.id,
+    alive: entry.entity.alive,
+    connected: entry.connected,
+    ended: entry.ended,
+  })));
+  if (friendlyPlan.active) targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);
 
   let target = null;
   if (targetId != null) {
