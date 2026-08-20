@@ -22,8 +22,8 @@ Starseer  wins  25/1000 = 2.5%  Wilson95 [1.7%, 3.7%]
   hp economy/combat: self-tax 1.50 · healed 6.13 · net attrition 63.95
   action economy/turn: cards 3.23 · unspent Energy 0.02 (55826 playerTurnStart / 51175 playerTurnEnd receipts)
   Starstone decisions: charges gained 7.77/combat · opportunity turns 15781 · eligible decision points 40379
-  charge conversion: 12498/40379 = 31.0% · stranded at turn end 24989 · charged priority changed 0 selections
-  charged outcome receipts: damage 6981 · block/Weak 2585 · draw/Energy 3002
+  charge conversion: 10840/40379 = 26.8% · stranded at turn end 24989 · charged priority changed 0 selections
+  charged outcome receipts: damage 4418 · block/Weak 2585 · Frost/Vulnerable 905 · draw/Energy 3002
   act1 deaths 820/1000: by floor f1×121 f2×119 f3×147 f4×116 f5×123 f6×66 f8×29 f9×24 f10×23 f11×22 f13×30 — mean hp entering the fatal fight 45.2%
   act1 killers: normal:twinPatrol×222  normal:patrol×192  elite:eliteWyrm×132  normal:packHunt×107
   act1 mean hp%% after each fight floor: f1 65% · f2 49% · f3 45% · f4 40% · f5 39% · f6 47% · f8 50% · f9 50% · f10 52% · f11 52% · f13 52%
@@ -55,6 +55,6 @@ what this run did NOT check (SPEC §8 clause 5):
     players (SPEC.md M3: ~35–50%). Class-agnostic arms support between-class
     comparisons; targeted kit arms support paired policy effects plus their
     explicitly checked non-target identity controls.
-  · the counters above (kit, bleed economy, stagger windows, hp economy) are read
-    from the event log and have no independent oracle — nothing here cross-checks
-    them against the engine's own accounting.
+  · the counters above read the event log; Starseer conversion also attributes
+    receipts to the exact conditional effect executed by the real queue. The
+    named plants prove those doors can red, not an independent accounting oracle.

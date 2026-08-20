@@ -1,4 +1,3 @@
-COMMAND: node tools/measure-classes.mjs 30 --check
 measure-classes — 30 runs/class, policy=greedy, CHECK mode
 seeds: runsim's own formula (i*2654435761)>>>0, i=1..30 — any n nests a smaller n as its prefix
 
@@ -18,8 +17,7 @@ what this check did NOT check (SPEC §8 clause 5):
   · not the counters — the per-class kit/bleed/stagger tallies this tool adds over
     runsim have no runsim counterpart, so agreement here leaves them unverified.
 
-COMMAND: node tools/measure-classes.mjs --selftest
-measure-classes --selftest — 13 planted drifts at n=30, each must be CAUGHT
+measure-classes --selftest — 16 planted drifts at n=30, each must be CAUGHT
 
 derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
 
@@ -39,10 +37,17 @@ derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
   starCards          caught ✔ — source cardPlayed
   starOutcomes       caught ✔ — source damageDealt charged outcome family
 
-  Starseer policy plant (real deterministic 30-seed fleet):
-  starseerFollowup  caught ✔ — conversion 92.9% → 41.9%; charged priority changes 1834 → 0
+  Starseer conditional-effect receipts (real dispatch path):
+  starLethalOutcome caught ✔ — lethal base damage ended combat; skipped charged damage cannot convert
+  starControlOutcome caught ✔ — charged Frost and Vulnerable each confirm a control conversion
 
-SELFTEST PASSED — clean tree agrees, all 13 planted drifts were caught.
+  Starseer delayed-intent policy (real Held Blade intent state):
+  starDelayedIntent caught ✔ — charging turn picks damage; due turn picks defense; old preview picks early defense
+
+  Starseer policy plant (real deterministic 30-seed fleet):
+  starseerFollowup  caught ✔ — conversion 77.6% → 35.3%; charged priority changes 1894 → 0
+
+SELFTEST PASSED — clean tree agrees, all 16 planted drifts were caught.
 
 what this selftest did NOT check (SPEC §8 clause 5):
   · that these plants are the ONLY ways either copied bot or new counter can drift.

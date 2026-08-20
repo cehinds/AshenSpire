@@ -190,9 +190,33 @@ const predContainsCharge = (pred) => {
     ? v.some(predContainsCharge)
     : predContainsCharge(v));
 };
+// Three-valued abstract evaluation with Starstone charge known present and
+// every unrelated predicate left unknown. A `not(hasStatus(charge))` branch is
+// therefore excluded from the charged opportunity set; `all(charge, X)` stays
+// possible because X may hold at the real decision boundary.
+const predWithCharge = (pred) => {
+  if (!pred || typeof pred !== 'object') return null;
+  if (pred.p === 'hasStatus' && pred.status === 'starstoneCharge'
+      && ['self', 'owner', 'player'].includes(pred.of)) return true;
+  if (pred.p === 'not') {
+    const value = predWithCharge(pred.pred);
+    return value === null ? null : !value;
+  }
+  if (pred.p === 'all') {
+    const values = (pred.preds || []).map(predWithCharge);
+    if (values.includes(false)) return false;
+    return values.every((value) => value === true) ? true : null;
+  }
+  if (pred.p === 'any') {
+    const values = (pred.preds || []).map(predWithCharge);
+    if (values.includes(true)) return true;
+    return values.every((value) => value === false) ? false : null;
+  }
+  return null;
+};
 const chargedEffectEntries = (def) => (def.effects || [])
   .map((effect, index) => ({ effect, index }))
-  .filter(({ effect }) => predContainsCharge(effect.if));
+  .filter(({ effect }) => predContainsCharge(effect.if) && predWithCharge(effect.if) !== false);
 const chargedEffects = (def) => chargedEffectEntries(def).map(({ effect }) => effect);
 const establishesCharge = (def) => (def.effects || []).some((e) => e.op === 'applyStatus'
   && e.status === 'starstoneCharge' && !e.if && (e.target === 'self' || e.target === 'owner'));
@@ -215,7 +239,7 @@ const hasDefensiveEffect = (def) => (def.effects || []).some((e) => e.op === 'bl
   || (e.op === 'applyStatus' && e.status === 'weak'));
 const numericDamage = (def) => (def.effects || []).reduce((sum, e) => {
   if (e.op !== 'damage' || typeof e.amount !== 'number') return sum;
-  if (e.if && e.if.p === 'not' && predContainsCharge(e.if.pred)) return sum;
+  if (predContainsCharge(e.if) && predWithCharge(e.if) === false) return sum;
   return sum + e.amount * (typeof e.hits === 'number' ? e.hits : 1);
 }, 0);
 const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
