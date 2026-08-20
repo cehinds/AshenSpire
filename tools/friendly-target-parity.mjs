@@ -48,6 +48,27 @@ for (const [label, ok] of checks) {
 }
 console.log(`friendly target source parity: ${pass}/${checks.length}`);
 
+function evaluateArtifact(html, serverEngine) {
+  return [
+    ['artifact carries blue self and green ally', /self: '#4d94e0'/.test(html) && /ally: '#49b675'/.test(html)],
+    ['artifact carries shared semantic renderer', /function friendlyTargetPlan/.test(html) && /function renderTargetSilhouette/.test(html)],
+    ['artifact excludes down and disconnected seats', /!player\.alive \|\| !player\.connected/.test(html)],
+    ['artifact carries relationship target and AX focus state', /function decorateFriendlyTarget[\s\S]{0,500}dataset\.friendlyTarget[\s\S]{0,160}dataset\.focusable[\s\S]{0,240}Target \$\{label\} \(\$\{relationship\}\)/.test(html)],
+    ['artifact carries Escape cancellation and focus restore', /ev\.key === 'Escape'/.test(html) && /focusElement\(card\)/.test(html)],
+    ['artifact disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(html)],
+    ['selected-root server enforces friendly legality before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);[\s\S]{0,1800}p\.energy -= cost;/.test(serverEngine)],
+  ];
+}
+
+if (process.argv.includes('--artifact-check')) {
+  const artifact = read('AshenSpire.html');
+  const artifactChecks = evaluateArtifact(artifact, read('src/engine/coopCombat.js'));
+  for (const [label, ok] of artifactChecks) console.log(`${ok ? 'PASS' : 'FAIL'} ${label}`);
+  const artifactGreen = artifactChecks.every(([, ok]) => ok);
+  console.log(`friendly target artifact parity: ${artifactGreen ? 'OK' : 'RED'} (${artifactChecks.filter(([, ok]) => ok).length}/${artifactChecks.length})`);
+  process.exit(artifactGreen ? 0 : 1);
+}
+
 let dynamicPass = 0;
 let dynamicTotal = 0;
 const check = (label, fn) => {
@@ -150,6 +171,27 @@ if (process.argv.includes('--selftest-source')) {
   if (!crlfGreen) process.exitCode = 1;
 }
 
+if (process.argv.includes('--selftest-artifact')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const artifactPlants = [
+    ['selected artifact generic gold ally', 'AshenSpire.html', "ally: '#49b675'", "ally: '#d5ad57'"],
+    ['selected artifact swapped self color', 'AshenSpire.html', "self: '#4d94e0'", "self: '#49b675'"],
+    ['selected artifact allows down or away', 'AshenSpire.html', '!player.alive || !player.connected', '!player.alive && !player.connected'],
+    ['selected artifact drops controller focus', 'AshenSpire.html', "combatantEl.dataset.focusable = '';", ''],
+    ['selected artifact drops cancel focus restore', 'AshenSpire.html', 'if (card) focusElement(card);', ''],
+    ['selected artifact can replay before disarm', 'AshenSpire.html', 'armedFriendlyCard = null;\n          hideTooltip();\n          render();\n          send(', 'send('],
+    ['selected-root server bypasses legality', 'src/engine/coopCombat.js', 'targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);', 'targetId = targetId;'],
+  ];
+  const status = await doorSelftest({
+    tool: 'friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
+    extraCopy: ['AshenSpire.html'],
+    plants: artifactPlants.map(([name, file, find, replace]) => ({
+      name, file, find, replace, expectRed: /friendly target artifact parity: RED/,
+    })),
+  });
+  process.exit(status);
+}
+
 console.log(`friendly target dynamic parity: ${dynamicPass}/${dynamicTotal}`);
 if (pass !== checks.length || dynamicPass !== dynamicTotal) process.exitCode = 1;
 
@@ -189,6 +231,7 @@ function connectCdp(wsUrl) {
 
 async function browserDoor() {
   const captureBefore = process.argv.includes('--capture-before');
+  const standalone = process.argv.includes('--standalone');
   const browserFlag = argOf('--browser');
   const candidates = [
     browserFlag && !browserFlag.startsWith('--') ? browserFlag : null,
@@ -200,7 +243,10 @@ async function browserDoor() {
   const browserPath = candidates.find((candidate) => fs.existsSync(candidate));
   if (!browserPath) throw new Error('Chrome or Edge is required for --browser');
   const only = argOf('--shape');
+  const textSize = argOf('--text') || 'M';
+  if (!['M', 'XL'].includes(textSize)) throw new Error(`--text must be M or XL (got ${textSize})`);
   const shapes = [
+    { tag: '320x640', width: 320, height: 640, dpr: 3 },
     { tag: '390x844', width: 390, height: 844, dpr: 3 },
     { tag: '1200x730', width: 1200, height: 730, dpr: 1 },
   ].filter((shape) => !only || shape.tag === only);
@@ -278,10 +324,18 @@ async function browserDoor() {
         ally: { name: 'Wren', hp: 60, block: 0 },
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
-      const base = `http://localhost:${server.port}/${captureBefore ? 'AshenSpire.html' : 'index.html'}`;
+      const settings = encodeURIComponent(JSON.stringify({ textSize }));
+      const base = `http://localhost:${server.port}/${captureBefore || standalone ? 'AshenSpire.html' : 'index.html'}?shotSettings=${settings}`;
       const host = await makeTab(shape);
       const guest = await makeTab(shape);
-      console.log(`\n${shape.tag} real two-client friendly targeting`);
+      console.log(`\n${shape.tag} Text ${textSize} real two-client friendly targeting`);
+      const evidenceCell = shotsDir && ((shape.tag === '390x844' && textSize === 'XL') || (shape.tag === '1200x730' && textSize === 'M'));
+      const evidenceCapture = async (state, label) => {
+        if (!evidenceCell) return;
+        await evaluate(guest, `(()=>{document.querySelector('.evidence-caption')?.remove();const n=document.createElement('div');n.className='evidence-caption';n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';n.textContent=${JSON.stringify(`${standalone ? 'SELECTED ROOT' : 'SOURCE'} · #209 · ${label} · ${shape.tag} · Text ${textSize}`)};document.body.appendChild(n);return true})()`);
+        const textSuffix = textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`;
+        await capture(guest, `friendly-target-after-${standalone ? 'root' : 'source'}-${state}-${shape.tag}${textSuffix}.png`);
+      };
       try {
         await cdp.send('Page.navigate', { url: base }, host.sessionId);
         await until(host, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'host LAN door');
@@ -316,8 +370,8 @@ async function browserDoor() {
           const before = await evaluate(guest, `(()=>[...document.querySelectorAll('.coop-seat')].map(e=>({seat:e.dataset.seat,generic:e.classList.contains('throw-target'),friendly:e.dataset.friendlyTarget||null,focus:e.hasAttribute('data-focusable')})))()`);
           observed(before.length === 2 && before.every((entry) => entry.generic && !entry.friendly && !entry.focus), 'pre-change selected standalone reproduces generic all-seat targeting RED', JSON.stringify(before));
           if (shotsDir) {
-            await evaluate(guest, `(()=>{const n=document.createElement('div');n.className='evidence-caption';n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';n.textContent='SELECTED ROOT BEFORE · #209 RED · Rallying Banner · generic gold on self + ally · no AX target state · ${shape.tag}';document.body.appendChild(n);return true})()`);
-            await capture(guest, `friendly-target-before-root-${shape.tag}.png`);
+            await evaluate(guest, `(()=>{const n=document.createElement('div');n.className='evidence-caption';n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';n.textContent='SELECTED ROOT BEFORE · #209 RED · Rallying Banner · generic gold on self + ally · no AX target state · ${shape.tag} · Text ${textSize}';document.body.appendChild(n);return true})()`);
+            await capture(guest, `friendly-target-before-root-${shape.tag}${textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`}.png`);
           }
           continue;
         }
@@ -328,9 +382,11 @@ async function browserDoor() {
         await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'self-only targeting appears');
         const selfOnly = await evaluate(guest, `(()=>[...document.querySelectorAll('[data-friendly-target]')].map(e=>({seat:e.dataset.seat,rel:e.dataset.friendlyTarget,aria:e.getAttribute('aria-label'),focus:e.hasAttribute('data-focusable'),color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color')})))()`);
         observed(selfOnly.length === 1 && selfOnly[0].rel === 'self' && selfOnly[0].focus && selfOnly[0].color === '#4d94e0', 'self-only blue caster and AX focus', JSON.stringify(selfOnly));
+        await evidenceCapture('self', 'Iron Skin self-only · blue caster · AX target');
         await key(guest, 'Escape');
         const selfCancel = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,card:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Iron Skin'))?.classList.contains('gp-focus')})`);
         observed(selfCancel.targets === 0 && selfCancel.card === true, 'Escape cancels without spend and restores exact card focus', JSON.stringify(selfCancel));
+        await evidenceCapture('cancel', 'Cancel · no target markers · exact card focus restored');
 
         // A living, connected teammate who already ended remains a legal ally.
         await evaluate(host, click('#coop-endturn'));
@@ -343,6 +399,7 @@ async function browserDoor() {
         const ids = await evaluate(guest, `(()=>{const s=window.__coopSnapshot;return{actor:s.party.find(p=>p.name==='Fenn')?.id,ally:s.party.find(p=>p.name==='Wren')?.id}})()`);
         const allyOnly = await evaluate(guest, `(()=>[...document.querySelectorAll('[data-friendly-target]')].map(e=>({seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color')})))()`);
         observed(allyOnly.length === 1 && allyOnly[0].seat === ids.ally && allyOnly[0].rel === 'ally' && allyOnly[0].color === '#49b675', 'ally-only green legal ally excludes self', JSON.stringify(allyOnly));
+        await evidenceCapture('ally', 'Rallying Banner ally-only · green ally · self excluded');
         await activate(guest, `[data-seat="${ids.ally}"]`, shape.dpr > 1);
         await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return p?.block===10})()`, 'Rallying Banner server result');
         const banner = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,cards:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Rallying Banner')).length})`);
@@ -355,10 +412,7 @@ async function browserDoor() {
         await until(guest, `document.querySelectorAll('[data-friendly-target]').length===2`, 'keyboard mixed targeting');
         const mixed = await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer')?.getBoundingClientRect(),targets=[...document.querySelectorAll('[data-friendly-target]')].map(e=>{const r=e.getBoundingClientRect();return{seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color'),aria:e.getAttribute('aria-label'),onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight}});return{targets,layer:!!layer}})()`);
         observed(mixed.targets.length === 2 && mixed.targets.some((t) => t.rel === 'self' && t.color === '#4d94e0') && mixed.targets.some((t) => t.rel === 'ally' && t.color === '#49b675') && mixed.targets.every((t) => t.aria && t.onGlass), 'keyboard mixed target relationship/AX/on-glass parity', JSON.stringify(mixed));
-        if (shotsDir) {
-          await evaluate(guest, `(()=>{const n=document.createElement('div');n.className='evidence-caption';n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';n.textContent='SOURCE · #209 · Oath of Ash mixed targeting · self blue · ally green · ${shape.tag}';document.body.appendChild(n);return true})()`);
-          await capture(guest, `friendly-target-after-source-${shape.tag}.png`);
-        }
+        await evidenceCapture('mixed', 'Oath of Ash mixed · self blue · ally green');
         // Standard-mapping gamepad shim: product poller receives B Cancel and
         // A Confirm through its public navigator.getGamepads door.
         await evaluate(guest, `(()=>{const pad={index:0,connected:true,mapping:'standard',id:'friendly-target parity pad',buttons:Array.from({length:17},()=>({pressed:false,value:0})),axes:[0,0,0,0]};Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad,null,null,null]});window.__friendlyPad={lastKey:null,press(i){pad.buttons[i]={pressed:true,value:1}},release(i){pad.buttons[i]={pressed:false,value:0}}};addEventListener('keydown',e=>window.__friendlyPad.lastKey=e.key);dispatchEvent(new Event('gamepadconnected'));return true})()`);
