@@ -22,6 +22,7 @@ const SELF = 'tools/urlpath-conversions.mjs';
 const KNOWN_BAD = 'tests/fixtures/urlpath/';
 
 const slash = (path) => path.split(/[\\/]/).join('/');
+const regexMayStartAfter = (char) => !char || /[([{,:;=!?&|+*%^~<>-]/.test(char);
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -39,6 +40,8 @@ function stripComments(source) {
   let out = '';
   let mode = 'code';
   let quote = '';
+  let regexClass = false;
+  let previous = '';
   for (let i = 0; i < source.length; i++) {
     const char = source[i];
     const next = source[i + 1];
@@ -57,10 +60,20 @@ function stripComments(source) {
       if (char === quote) mode = 'code';
       continue;
     }
+    if (mode === 'regex') {
+      out += char;
+      if (char === '\\') { if (i + 1 < source.length) out += source[++i]; continue; }
+      if (char === '[' && !regexClass) regexClass = true;
+      else if (char === ']' && regexClass) regexClass = false;
+      else if (char === '/' && !regexClass) { mode = 'code'; previous = '/'; }
+      continue;
+    }
     if (char === '/' && next === '/') { out += '  '; i++; mode = 'line'; continue; }
     if (char === '/' && next === '*') { out += '  '; i++; mode = 'block'; continue; }
     if (char === '"' || char === "'" || char === '`') { quote = char; mode = 'string'; out += char; continue; }
+    if (char === '/' && regexMayStartAfter(previous)) { mode = 'regex'; regexClass = false; out += char; continue; }
     out += char;
+    if (!/\s/.test(char)) previous = char;
   }
   return out;
 }
@@ -70,9 +83,12 @@ const lineAt = (source, index) => source.slice(0, index).split('\n').length;
 // Preserve source offsets while removing delimiters that only look structural
 // inside strings. This lets the URL call scanner distinguish a statement
 // terminator from a legal semicolon in a URL argument.
-function maskStringContents(source) {
+function maskStructuralLiterals(source) {
   let out = '';
   let quote = '';
+  let regex = false;
+  let regexClass = false;
+  let previous = '';
   for (let i = 0; i < source.length; i++) {
     const char = source[i];
     if (quote) {
@@ -85,18 +101,37 @@ function maskStringContents(source) {
       if (char === quote) quote = '';
       continue;
     }
+    if (regex) {
+      if (char === '\\') {
+        out += ' ';
+        if (i + 1 < source.length) out += source[++i] === '\n' ? '\n' : ' ';
+        continue;
+      }
+      out += char === '\n' ? '\n' : ' ';
+      if (char === '[' && !regexClass) regexClass = true;
+      else if (char === ']' && regexClass) regexClass = false;
+      else if (char === '/' && !regexClass) { regex = false; previous = '/'; }
+      continue;
+    }
     if (char === '"' || char === "'" || char === '`') {
       quote = char;
       out += ' ';
       continue;
     }
+    if (char === '/' && regexMayStartAfter(previous)) {
+      regex = true;
+      regexClass = false;
+      out += ' ';
+      continue;
+    }
     out += char;
+    if (!/\s/.test(char)) previous = char;
   }
   return out;
 }
 
 function findUrlPathnameMisuses(code) {
-  const structural = maskStringContents(code);
+  const structural = maskStructuralLiterals(code);
   const starts = /\bnew\s+URL\s*\(/g;
   const findings = [];
   for (const match of structural.matchAll(starts)) {
@@ -116,6 +151,12 @@ function findUrlPathnameMisuses(code) {
   return findings;
 }
 
+const HAND_ROLLED_FILE_URL = /`file:\/{2,}\$\{|(["'])file:\/{2,}\1\s*\+/g;
+
+function findHandRolledFileUrls(code) {
+  return [...code.matchAll(HAND_ROLLED_FILE_URL)].map((match) => ({ index: match.index }));
+}
+
 export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true } = {}) {
   const files = dirs.flatMap((dir) => walk(resolve(root, dir)));
   const findings = [];
@@ -123,16 +164,8 @@ export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true 
     const rel = slash(relative(root, file));
     if (rel === SELF || (excludeKnownBad && rel.startsWith(KNOWN_BAD))) continue;
     const code = stripComments(readFileSync(file, 'utf8'));
-    const rules = [
-      {
-        kind: 'hand-rolled file URL',
-        pattern: /`file:\/\/\$\{|(["'])file:\/\/\1\s*\+/g,
-      },
-    ];
-    for (const rule of rules) {
-      for (const match of code.matchAll(rule.pattern)) {
-        findings.push({ path: rel, line: lineAt(code, match.index), kind: rule.kind });
-      }
+    for (const match of findHandRolledFileUrls(code)) {
+      findings.push({ path: rel, line: lineAt(code, match.index), kind: 'hand-rolled file URL' });
     }
     for (const match of findUrlPathnameMisuses(code)) {
       findings.push({ path: rel, line: lineAt(code, match.index), kind: 'URL pathname used as a filesystem path' });
@@ -180,9 +213,20 @@ function selftest() {
   say(fixtureKinds.get('handrolled_path.mjs') === 'URL pathname used as a filesystem path', 'handrolled_path fixture is caught by the real scanner');
   say(/new\s+URL\s*\(\r?\n/.test(pathFixtureSource) && /\r?\n\)\.pathname/.test(pathFixtureSource),
     'handrolled_path fixture keeps the discriminating multiline conversion shape');
+  say(/replace\s*\(\s*\/\\\)\/g/.test(pathFixtureSource),
+    'handrolled_path fixture keeps a regex parenthesis inside the balanced call');
   const retiredStatementMatcher = /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g;
   say(!retiredStatementMatcher.test(pathFixtureSource) && findUrlPathnameMisuses(stripComments(pathFixtureSource)).length === 1,
     'semicolon-in-string fixture defeats the retired matcher and is caught structurally');
+  const fileUrlCases = [
+    ['two-slash template control', '`file://${process.argv[1]}`'],
+    ['additional-slash template plant', '`file:///${process.argv[1]}`'],
+    ['two-slash concatenation control', "'file://' + process.argv[1]"],
+    ['additional-slash concatenation plant', "'file:///' + process.argv[1]"],
+  ];
+  say(fileUrlCases.every(([, source]) => findHandRolledFileUrls(source).length === 1),
+    'file URL scanner catches two-or-more-slash interpolation and concatenation',
+    fileUrlCases.map(([label, source]) => `${label}=${findHandRolledFileUrls(source).length}`).join(', '));
 
   const temp = mkdtempSync(join(tmpdir(), 'urlpath working dir '));
   const spaced = join(temp, 'repo with spaces');
