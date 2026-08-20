@@ -284,33 +284,66 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         exceptionsSeen.push(d.exception?.description?.split('\n')[0] || d.text || 'unknown exception');
       }
     });
-    await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=title` }, sessionId);
-    await waitFor('the title slots and their Continue door', `(() => {
-      return document.querySelectorAll('.slot.occupied').length > 0
-        && [...document.querySelectorAll('button')].some((b) => /continue/i.test(b.textContent));
-    })()`);
-    await evaluate(`[...document.querySelectorAll('button')].find((b) => /continue/i.test(b.textContent)).click()`);
-    await waitFor('the map after Continue', `!!document.querySelector('.map-scroll')`);
-    exceptionsSeen.length = 0; // the ?shot=title boot is its own observation; only the exit is on trial
-    const exitDrive = await evaluate(`(async () => {
-      const rest = (ms) => new Promise((done) => setTimeout(done, ms));
-      const port = document.querySelector('.map-scroll');
-      port.scrollTop += 60;                    // a real pan on the real scrollport arms the debounce
-      await rest(55);                          // inside the 80 ms window — the timer outlives the screen
-      document.querySelector('#open-menu').click(); await rest(5);
-      const tab = [...document.querySelectorAll('button,[role=tab]')].find((b) => b.textContent.trim() === 'Save');
-      if (tab) tab.click(); await rest(5);
-      const quit = document.querySelector('#ovs-quit'); // "Save & Quit to Title"
-      if (!quit) return { reached: false };
-      quit.click();
-      await rest(400);                         // outlast the debounce and the save
-      return { reached: true, onTitle: !!document.querySelector('.slot') };
-    })()`);
-    await wait(120); // let any exceptionThrown event cross the wire before the verdict
+    // The seeded slot restores at MAXIMUM scroll, where `scrollTop += 60` moves
+    // nothing and the pan precondition is a belief (review finding at 675be08).
+    // So the drive first walks to mid-extent and lets THAT commit clear the
+    // window, then pans and MEASURES the delta — the case refuses to reach a
+    // verdict on a pan that did not move. Both shipped shapes, phone and
+    // desktop; the verdict stays narrow: reached, returned to title, zero
+    // uncaught. Camera final-vs-resumed identity is #245's, not this case's.
+    const exitShapeRows = [];
+    for (const exitShape of [
+      { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
+      { name: '1200x730', width: 1200, height: 730, deviceScaleFactor: 1, mobile: false },
+    ]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: exitShape.width, height: exitShape.height,
+        deviceScaleFactor: exitShape.deviceScaleFactor, mobile: exitShape.mobile,
+      }, sessionId);
+      await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=title` }, sessionId);
+      await waitFor('the title slots and their Continue door', `(() => {
+        return document.querySelectorAll('.slot.occupied').length > 0
+          && [...document.querySelectorAll('button')].some((b) => /continue/i.test(b.textContent));
+      })()`);
+      await evaluate(`[...document.querySelectorAll('button')].find((b) => /continue/i.test(b.textContent)).click()`);
+      await waitFor('the map after Continue', `!!document.querySelector('.map-scroll')`);
+      await wait(300); // outlast the camera backstop so the restore cannot race the walk below
+      exceptionsSeen.length = 0; // the ?shot=title boot is its own observation; only the exit is on trial
+      const exitDrive = await evaluate(`(async () => {
+        const rest = (ms) => new Promise((done) => setTimeout(done, ms));
+        const port = document.querySelector('.map-scroll');
+        const max = Math.max(0, port.scrollHeight - port.clientHeight);
+        port.scrollTop = Math.round(max * 0.5); // away from max: the pan below has headroom
+        port.dispatchEvent(new Event('scroll'));
+        await rest(250);                         // > 80 ms: the positioning commit clears the window
+        const before = port.scrollTop;
+        port.scrollTop = before + 60;            // THE pan — #243's precondition, now with room to move
+        port.dispatchEvent(new Event('scroll'));
+        const panDelta = port.scrollTop - before; // measured, not assumed
+        await rest(55);                          // inside the 80 ms window — the timer outlives the screen
+        document.querySelector('#open-menu').click(); await rest(5);
+        const tab = [...document.querySelectorAll('button,[role=tab]')].find((b) => b.textContent.trim() === 'Save');
+        if (tab) tab.click(); await rest(5);
+        const quit = document.querySelector('#ovs-quit'); // "Save & Quit to Title"
+        if (!quit) return { reached: false, panDelta };
+        quit.click();
+        await rest(400);                         // outlast the debounce and the save
+        return { reached: true, panDelta, onTitle: !!document.querySelector('.slot') };
+      })()`);
+      await wait(120); // let any exceptionThrown event cross the wire before the verdict
+      exitShapeRows.push({
+        shape: exitShape.name,
+        pass: !!(exitDrive && exitDrive.reached && exitDrive.onTitle
+          && exitDrive.panDelta > 0 && exceptionsSeen.length === 0),
+        exit: exitDrive,
+        uncaught: [...exceptionsSeen],
+      });
+    }
     results.mapExitDuringDebounce = {
-      pass: !!(exitDrive && exitDrive.reached && exitDrive.onTitle && exceptionsSeen.length === 0),
-      exit: exitDrive,
-      uncaught: [...exceptionsSeen],
+      pass: exitShapeRows.length === 2 && exitShapeRows.every((row) => row.pass),
+      shapes: exitShapeRows,
+      exit: exitShapeRows[0]?.exit,
+      uncaught: exitShapeRows.flatMap((row) => row.uncaught),
     };
 
     // Hold the real map scrollport at zero height beyond the 120 ms backstop,
@@ -453,8 +486,8 @@ if (SELFTEST) {
   if (!settle || !settle.pass) failures++;
   const exit = results.mapExitDuringDebounce;
   console.log(`${exit && exit.pass ? 'PASS' : 'FAIL'} map exit during debounce: `
-    + `reached=${exit ? !!exit.exit?.reached : '?'}, onTitle=${exit ? !!exit.exit?.onTitle : '?'}, `
-    + `uncaught=${exit ? exit.uncaught.length : '?'}`
+    + (exit && exit.shapes ? exit.shapes.map((row) => `${row.shape}: reached=${!!row.exit?.reached}, `
+      + `panDelta=${row.exit?.panDelta}, onTitle=${!!row.exit?.onTitle}, uncaught=${row.uncaught.length}`).join(' · ') : '?')
     + `${exit && exit.uncaught.length ? ` [${exit.uncaught[0]}]` : ''}`);
   if (!exit || !exit.pass) failures++;
   const total = results.length + 4;
