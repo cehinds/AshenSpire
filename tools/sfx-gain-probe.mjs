@@ -135,13 +135,27 @@ if (selftest) {
 
   // ---- class 3: the recipe door ------------------------------------------
   const { spawnSync } = await import('node:child_process');
-  const { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } = await import('node:fs');
+  const { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync } = await import('node:fs');
   const { resolve, join, dirname } = await import('node:path');
   const { tmpdir } = await import('node:os');
   const { fileURLToPath } = await import('node:url');
 
   const HERE = dirname(fileURLToPath(import.meta.url));
   const TREE = resolve(HERE, '..');
+  const forceCrLfTree = (path) => {
+    const textExtensions = new Set(['.js', '.mjs']);
+    const visit = (entry) => {
+      for (const item of readdirSync(entry, { withFileTypes: true })) {
+        const absolute = resolve(entry, item.name);
+        if (item.isDirectory()) visit(absolute);
+        else if (textExtensions.has(item.name.slice(item.name.lastIndexOf('.')))) {
+          const text = readFileSync(absolute, 'utf8').replace(/\r?\n/g, '\n');
+          writeFileSync(absolute, text.replace(/\n/g, '\r\n'), 'utf8');
+        }
+      }
+    };
+    visit(path);
+  };
   // A clamp between the recipe's number and the gain node. This is the whole
   // defect class: a value that gets QUIETLY BOUNDED on its way to the node
   // still ships a table nobody can tune. 0.4 is chosen to catch the loud end
@@ -191,8 +205,8 @@ if (selftest) {
   // Optional sample warming is allowed to stall forever; procedural feedback
   // is not. Move synth scheduling behind a timer in a disposable copy and
   // require the synchronous gain inspection to go red.
-  const SYNC_FROM = '    synthSfx(id);\n    warmSample(sample);';
-  const SYNC_TO = '    setTimeout(() => synthSfx(id), 0);\n    warmSample(sample);';
+  const SYNC_FROM = '    synthSfx(id);';
+  const SYNC_TO = '    setTimeout(() => synthSfx(id), 0);';
   const syncDir = mkdtempSync(join(tmpdir(), 'sfx-gain-sync-kb-'));
   for (const d of ['src', 'tools']) {
     if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(syncDir, d), { recursive: true });
@@ -216,6 +230,45 @@ if (selftest) {
   }
   console.log('\n  class 4 — THE TRIGGERING-EVENT DOOR: delaying synth while sample warming stalls');
   console.log(`    exited ${syncRun.status} with ${syncMisses.length} MISS line(s).`);
+
+  if (!process.argv.includes('--skip-eol-selftest')) {
+    const crlfDir = mkdtempSync(join(tmpdir(), 'sfx-gain-crlf-'));
+    try {
+      for (const d of ['src', 'tools']) {
+        if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(crlfDir, d), { recursive: true });
+      }
+      forceCrLfTree(crlfDir);
+      const crlfTool = resolve(crlfDir, 'tools/sfx-gain-probe.mjs');
+      const control = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      });
+      if (control.status !== 0 || !/RESULT: selftest held/.test(control.stdout || '')) {
+        console.error(`RESULT: selftest FAILED — forced-CRLF source control exited ${control.status}.`);
+        process.exit(1);
+      }
+      console.log('\n  EOL control — forced-CRLF source copy keeps all gain plants green.');
+
+      const toolText = readFileSync(crlfTool, 'utf8');
+      const currentAnchor = "  const SYNC_FROM = '    synth" + "Sfx(id);';";
+      const staleAnchor = "  const SYNC_FROM = '    synthSfx(id);\\n    warmSample(sample);';";
+      const anchorAt = toolText.indexOf(currentAnchor);
+      if (anchorAt < 0 || toolText.indexOf(currentAnchor, anchorAt + 1) >= 0) {
+        console.error('RESULT: selftest FAILED — stale-LF-only anchor plant has no exact tool home.');
+        process.exit(1);
+      }
+      writeFileSync(crlfTool,
+        toolText.slice(0, anchorAt) + staleAnchor + toolText.slice(anchorAt + currentAnchor.length), 'utf8');
+      const stale = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      });
+      const staleOut = `${stale.stdout || ''}\n${stale.stderr || ''}`;
+      if (stale.status !== 1 || !/class 4's triggering-event plant found NO home/.test(staleOut)) {
+        console.error(`RESULT: selftest FAILED — stale LF-only anchor was not killed under forced CRLF (exit ${stale.status}).`);
+        process.exit(1);
+      }
+      console.log('  EOL plant — stale LF-only multiline class-4 anchor goes red under forced CRLF.');
+    } finally { rmSync(crlfDir, { recursive: true, force: true }); }
+  }
 
   console.log('\nRESULT: selftest held — comparator plants red (classes 1+2, downstream and SAID SO),');
   console.log('  a clamp planted in the real engine goes red through the real door (class 3),');

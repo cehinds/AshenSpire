@@ -1,5 +1,5 @@
 {
-  "head": "69437409499d6f6af1beb2186350436ddb1dce6c",
+  "head": "76523d123733c460918e885fc62d2db0d583b195",
   "artifact": null,
   "report": {
     "rows": [
@@ -409,12 +409,22 @@
     {
       "ok": true,
       "label": "selected-artifact control carries convention, resolver and fixture",
-      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-rMjTb3\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
+      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-JN2WwW\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
     },
     {
       "ok": true,
       "label": "selected-artifact plant killed: embedded convention key renamed",
       "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "forced-CRLF source and selected-standalone controls stay green",
+      "detail": "exit 0"
+    },
+    {
+      "ok": true,
+      "label": "stale LF-only multiline anchor plant is killed under forced CRLF",
+      "detail": "exit 1"
     }
   ],
   "failures": [],

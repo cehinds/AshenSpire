@@ -15,7 +15,7 @@
 // output. Selftest plants the source seams and that selected artifact.
 
 import {
-  cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync,
+  cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
@@ -201,6 +201,21 @@ function copyBundleInputs(to) {
   }
 }
 
+function forceCrLfTree(path) {
+  const textExtensions = new Set(['.css', '.csv', '.html', '.js', '.json', '.md', '.mjs']);
+  const visit = (entry) => {
+    for (const item of readdirSync(entry, { withFileTypes: true })) {
+      const absolute = resolve(entry, item.name);
+      if (item.isDirectory()) visit(absolute);
+      else if (textExtensions.has(item.name.slice(item.name.lastIndexOf('.')))) {
+        const text = readFileSync(absolute, 'utf8').replace(/\r?\n/g, '\n');
+        writeFileSync(absolute, text.replace(/\n/g, '\r\n'), 'utf8');
+      }
+    }
+  };
+  visit(path);
+}
+
 function selftest() {
   console.log('\nSFX FILENAME CONVENTION — selftest plants');
   const audioPath = resolve(ROOT, 'src/ui/audio.js');
@@ -212,8 +227,8 @@ function selftest() {
     },
     {
       name: 'stalled warm delays the procedural cue',
-      from: '    synthSfx(id);\n    warmSample(sample);',
-      to: '    warmSample(sample);',
+      from: '    synthSfx(id);',
+      to: '    // PLANT: triggering synth removed.',
     },
     {
       name: 'known-good sample no longer suppresses later synth',
@@ -298,6 +313,42 @@ function selftest() {
       if (row.embeddedFixture) bad++;
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
+
+  if (!args.includes('--skip-eol-selftest')) {
+    const crlfDir = mkdtempSync(join(tmpdir(), 'sfx-convention-crlf-'));
+    try {
+      copyBundleInputs(crlfDir);
+      forceCrLfTree(crlfDir);
+      const crlfTool = resolve(crlfDir, 'tools/sfx-filename-convention.mjs');
+      const control = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      });
+      const controlHeld = control.status === 0 && /SFX FILENAME CONVENTION OK/.test(control.stdout || '');
+      check(controlHeld, 'forced-CRLF source and selected-standalone controls stay green',
+        `exit ${control.status}`);
+      if (!controlHeld) bad++;
+
+      const toolText = readFileSync(crlfTool, 'utf8');
+      const currentAnchor = "      from: '    synth" + "Sfx(id);',";
+      const staleAnchor = "      from: '    synthSfx(id);\\n    warmSample(sample);',";
+      const anchorAt = toolText.indexOf(currentAnchor);
+      if (anchorAt < 0 || toolText.indexOf(currentAnchor, anchorAt + 1) >= 0) {
+        check(false, 'stale-LF-only anchor plant has one tool home'); bad++;
+      } else {
+        writeFileSync(crlfTool,
+          toolText.slice(0, anchorAt) + staleAnchor + toolText.slice(anchorAt + currentAnchor.length), 'utf8');
+        const stale = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+          cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+        });
+        const staleOut = `${stale.stdout || ''}\n${stale.stderr || ''}`;
+        const staleHeld = stale.status === 1
+          && /plant aim is exact: stalled warm delays the procedural cue/.test(staleOut);
+        check(staleHeld, 'stale LF-only multiline anchor plant is killed under forced CRLF',
+          `exit ${stale.status}`);
+        if (!staleHeld) bad++;
+      }
+    } finally { rmSync(crlfDir, { recursive: true, force: true }); }
+  }
   return bad;
 }
 
