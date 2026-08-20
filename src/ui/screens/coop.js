@@ -40,7 +40,7 @@ import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { resolveCard } from '../../model/registries.js';
+import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -50,7 +50,7 @@ import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js'
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
-import { focusElement, focusFirst, isEngaged, matchAction } from '../input.js';
+import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
 import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
 import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
 
@@ -142,7 +142,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    const energyCost = def.cost === 'X' ? 1 : def.cost;
+    let energyCost = def.cost === 'X' ? 1 : def.cost;
+    if (def.type === 'power') {
+      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
+    }
     return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
   }
 
@@ -194,13 +197,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const matchedFlaskSlot = (ev) => {
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) return slot;
+    }
+    return -1;
+  };
+  const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
   const flaskKeyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (!snap || snap.scene.kind !== 'combat') return;
     const meP = snap.scene.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
-    for (let slot = 0; slot < 3; slot++) {
-      if (!matchAction(ev, `flask${slot + 1}`)) continue;
+    const slot = matchedFlaskSlot(ev);
+    if (slot >= 0) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
       if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
       return;
     }
@@ -255,6 +267,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }, 120);
 
   function teardown() {
+    releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);

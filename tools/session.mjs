@@ -44,6 +44,8 @@ export function setCombatStartStateForTools(state = null) {
     && (!Array.isArray(state.nextDraw) || state.nextDraw.some((id) => typeof id !== 'string'));
   const badFlasks = state?.flasks != null
     && (!Array.isArray(state.flasks) || state.flasks.some((id) => typeof id !== 'string'));
+  const badRelicIds = state?.relicIds != null
+    && (!Array.isArray(state.relicIds) || state.relicIds.some((id) => typeof id !== 'string'));
   const badPlayerStatuses = state?.playerStatuses != null
     && (!Array.isArray(state.playerStatuses) || state.playerStatuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)));
   const badAlly = state?.ally != null && (typeof state.ally !== 'object'
@@ -55,8 +57,8 @@ export function setCombatStartStateForTools(state = null) {
     || (state.enemy.statuses != null && (!Array.isArray(state.enemy.statuses)
       || state.enemy.statuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)))));
   if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
-      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badFlasks || badPlayerStatuses || badAlly || badEnemy)) {
-    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], flasks?: string[], playerStatuses?: { id, stacks }[], ally?: { name, hp, block, extraHand?: string[] }, enemy?: { hp?, statuses? } }');
+      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badFlasks || badRelicIds || badPlayerStatuses || badAlly || badEnemy)) {
+    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], flasks?: string[], relicIds?: string[], playerStatuses?: { id, stacks }[], ally?: { name, hp, block, extraHand?: string[] }, enemy?: { hp?, statuses? } }');
   }
   combatStartStateForTools = state ? structuredClone(state) : null;
 }
@@ -380,6 +382,9 @@ export function createSession({ registries, seedString, endless = false, restore
       if (combatStartStateForTools.flasks) {
         entity.flasks = combatStartStateForTools.flasks.map((flaskId) => ({ flaskId }));
       }
+      if (combatStartStateForTools.relicIds) {
+        entity.relicIds = [...combatStartStateForTools.relicIds];
+      }
       if (combatStartStateForTools.ally) {
         const allyMember = connectedMembers().find((entry) => entry.name === combatStartStateForTools.ally.name);
         const allyPlayer = allyMember ? combat.players.get(allyMember.id) : null;
@@ -469,6 +474,7 @@ export function createSession({ registries, seedString, endless = false, restore
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
+        relicIds: [...P.entity.relicIds],
       })),
     };
   }

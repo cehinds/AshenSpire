@@ -24,6 +24,7 @@ const files = {
   shared: 'src/ui/components/friendlyTargets.js',
   combat: 'src/ui/screens/combat.js',
   coop: 'src/ui/screens/coop.js',
+  input: 'src/ui/input.js',
   engine: 'src/engine/coopCombat.js',
   session: 'tools/session.mjs',
 };
@@ -47,8 +48,13 @@ function evaluateSource(candidate) {
     ['keyboard uses the same affordability predicate as pointer and pad', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(candidate.coop) && (candidate.coop.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
     ['valid focused target survives an unrelated authoritative rebuild', /preservedTarget = focusedFriendlySeat/.test(candidate.coop) && /targetPlan\?\.legalIds\.includes\(focusedFriendlySeat\)/.test(candidate.coop) && /focusElement\(preservedTarget\)/.test(candidate.coop)],
     ['co-op flask shortcuts use configured action bindings', /matchAction/.test(candidate.coop) && /matchAction\(ev, `flask\$\{slot \+ 1\}`\)/.test(candidate.coop) && !/\{ f: 0, g: 1, h: 2 \}/.test(candidate.coop)],
+    ['matched co-op flask shortcut is claimed before global hold input and consumed before gameplay handlers', /setScreenKeyClaim\(\(ev\) => matchedFlaskSlot\(ev\) >= 0\)/.test(candidate.coop) && /screenKeyClaim\?\.\(ev\)/.test(candidate.input) && /const slot = matchedFlaskSlot\(ev\);[\s\S]{0,100}ev\.preventDefault\(\);[\s\S]{0,100}ev\.stopImmediatePropagation\(\);/.test(candidate.coop)],
+    ['client affordability applies authoritative power-cost reduction', /passiveSum\(registries, player\.relicIds, 'powerCostReduction'\)/.test(candidate.coop) && /energyCost = Math\.max\(0, energyCost - passiveSum/.test(candidate.coop)],
+    ['client power reduction is Power-only and cannot fall below zero', /if \(def\.type === 'power'\)/.test(candidate.coop) && /Math\.max\(0, energyCost - passiveSum/.test(candidate.coop)],
     ['real-session down fixture seeds the ally through the validated tool-only seam', /state\.ally\.extraHand\.some/.test(candidate.session) && /allyPlayer\.piles\.hand\.push/.test(candidate.session) && /tool-ally-extra-/.test(candidate.session)],
     ['real-session rebind fixture seeds legacy flasks through the validated tool-only seam', /state\?\.flasks/.test(candidate.session) && /entity\.flasks = combatStartStateForTools\.flasks\.map/.test(candidate.session)],
+    ['real-session discount fixture validates and seeds relic ids', /state\?\.relicIds/.test(candidate.session) && /entity\.relicIds = \[\.\.\.combatStartStateForTools\.relicIds\]/.test(candidate.session)],
+    ['co-op snapshot transports authoritative relic ids for client pricing', /relicIds: \[\.\.\.P\.entity\.relicIds\]/.test(candidate.session)],
   ];
 }
 const checks = evaluateSource(source);
@@ -76,8 +82,13 @@ function evaluateArtifact(html, serverEngine, modelSource, sessionSource) {
     ['artifact keyboard shares pointer and pad affordability', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(html) && (html.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
     ['artifact preserves a still-legal focused target across snapshot rebuild', /preservedTarget = focusedFriendlySeat/.test(html) && /targetPlan\?\.legalIds\.includes\(focusedFriendlySeat\)/.test(html) && /focusElement\(preservedTarget\)/.test(html)],
     ['artifact co-op flask shortcuts use configured bindings', /matchAction\(ev, `flask\$\{slot \+ 1\}`\)/.test(html) && !/\{ f: 0, g: 1, h: 2 \}/.test(html)],
+    ['artifact claims a matched co-op flask shortcut before global hold input and consumes it', /setScreenKeyClaim\(\(ev\) => matchedFlaskSlot\(ev\) >= 0\)/.test(html) && /screenKeyClaim\?\.\(ev\)/.test(html) && /const slot = matchedFlaskSlot\(ev\);[\s\S]{0,100}ev\.preventDefault\(\);[\s\S]{0,100}ev\.stopImmediatePropagation\(\);/.test(html)],
+    ['artifact client applies authoritative power-cost reduction', /passiveSum\(registries, player\.relicIds, 'powerCostReduction'\)/.test(html) && /energyCost = Math\.max\(0, energyCost - passiveSum/.test(html)],
+    ['artifact power reduction is Power-only and cannot fall below zero', /if \(def\.type === 'power'\)/.test(html) && /Math\.max\(0, energyCost - passiveSum/.test(html)],
     ['selected-root session carries validated ally fixture seeding', /state\.ally\.extraHand\.some/.test(sessionSource) && /allyPlayer\.piles\.hand\.push/.test(sessionSource) && /tool-ally-extra-/.test(sessionSource)],
     ['selected-root session carries validated legacy-flask fixture seeding', /state\?\.flasks/.test(sessionSource) && /entity\.flasks = combatStartStateForTools\.flasks\.map/.test(sessionSource)],
+    ['selected-root session carries validated relic fixture seeding', /state\?\.relicIds/.test(sessionSource) && /entity\.relicIds = \[\.\.\.combatStartStateForTools\.relicIds\]/.test(sessionSource)],
+    ['selected-root session transports authoritative relic ids', /relicIds: \[\.\.\.P\.entity\.relicIds\]/.test(sessionSource)],
   ];
 }
 
@@ -182,6 +193,40 @@ check('authoritative unaffordable friendly play is rejected before spend', () =>
   assert(throws(() => playCard(C, 'caster', card.instanceId, 'ally')), 'unaffordable play accepted');
   assert(P.entity.energy === 0 && P.piles.hand.includes(card), 'unaffordable play spent resources');
 });
+check('authoritative Ancestral Horn plays a one-cost Power at zero energy', () => {
+  const C = fight('thornHaloCard'); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.relicIds = ['ancestralHorn'];
+  P.entity.energy = 0;
+  playCard(C, 'caster', card.instanceId, 'caster');
+  assert(P.entity.energy === 0 && !P.piles.hand.includes(card) && P.entity.statuses.thornHalo, 'discounted Power did not resolve at zero energy');
+});
+check('authoritative one-cost Power without Ancestral Horn is refused at zero energy', () => {
+  const C = fight('thornHaloCard'); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.energy = 0;
+  assert(throws(() => playCard(C, 'caster', card.instanceId, 'caster')), 'undiscounted Power played at zero energy');
+  assert(P.entity.energy === 0 && P.piles.hand.includes(card), 'refused Power spent resources');
+});
+check('Ancestral Horn does not discount a non-Power', () => {
+  const C = fight('rallyingBanner'); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.relicIds = ['ancestralHorn'];
+  P.entity.energy = 0;
+  assert(throws(() => playCard(C, 'caster', card.instanceId, 'ally')), 'Horn discounted a non-Power');
+  assert(P.entity.energy === 0 && P.piles.hand.includes(card), 'refused non-Power spent resources');
+});
+check('Ancestral Horn never bypasses an insufficient-mana refusal', () => {
+  const C = fight('urgentHeal'); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.relicIds = ['ancestralHorn'];
+  P.entity.energy = 3;
+  P.entity.mana = 0;
+  assert(throws(() => playCard(C, 'caster', card.instanceId, 'caster')), 'Horn bypassed the mana requirement');
+  assert(P.entity.energy === 3 && P.entity.mana === 0 && P.piles.hand.includes(card), 'mana refusal spent resources');
+});
+check('ordinary paid friendly card still spends its exact cost', () => {
+  const C = fight('rallyingBanner'); const P = C.players.get('caster'); const card = firstCard(C);
+  P.entity.energy = 1;
+  playCard(C, 'caster', card.instanceId, 'ally');
+  assert(P.entity.energy === 0 && !P.piles.hand.includes(card), 'paid card did not spend exactly one energy');
+});
 
 if (process.argv.includes('--selftest-source')) {
   const plants = [
@@ -199,8 +244,14 @@ if (process.argv.includes('--selftest-source')) {
     ['number key bypasses affordability', 'coop', (text) => text.replace('if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;')],
     ['snapshot rebuild resets a valid chosen target', 'coop', (text) => text.replace('if (!preservedTarget || !focusElement(preservedTarget)) focusFirst', 'if (true) focusFirst')],
     ['rebound flask shortcuts return to literals', 'coop', (text) => text.replace('matchAction(ev, `flask${slot + 1}`)', "({ 0: 'f', 1: 'g', 2: 'h' }[slot] === ev.key.toLowerCase())")],
+    ['rebound-flask-prearm: matched shortcut arms the earlier global hold', 'input', (text) => text.replace('if (!typing && screenKeyClaim?.(ev)) {', 'if (false) {')],
+    ['rebound-flask-fallthrough: matched shortcut reaches card/end-turn handler', 'coop', (text) => text.replace('ev.stopImmediatePropagation();', '/* planted: matched Flask event bubbles into gameplay */')],
+    ['effective-cost-base-def: client ignores Ancestral Horn power reduction', 'coop', (text) => text.replace("energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));", 'energyCost = energyCost;')],
+    ['effective-cost-nonpower-leak: Horn discount escapes the Power branch', 'coop', (text) => text.replace("if (def.type === 'power') {", 'if (true) {')],
     ['ally fixture bypasses validated test-only hand seam', 'session', (text) => text.replace('allyPlayer.piles.hand.push', 'player.piles.hand.push')],
     ['flask rebind fixture bypasses the validated test-only seam', 'session', (text) => text.replace('entity.flasks = combatStartStateForTools.flasks.map', 'entity.flasks = [].map')],
+    ['discount fixture bypasses validated relic seam', 'session', (text) => text.replace('entity.relicIds = [...combatStartStateForTools.relicIds]', 'entity.relicIds = []')],
+    ['snapshot drops authoritative relic ids', 'session', (text) => text.replace('relicIds: [...P.entity.relicIds]', 'relicIds: []')],
   ];
   let caught = 0;
   for (const [label, key, mutate] of plants) {
@@ -235,8 +286,14 @@ if (process.argv.includes('--selftest-artifact')) {
     ['selected artifact number key bypasses affordability', 'AshenSpire.html', 'if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;'],
     ['selected artifact resets a valid chosen target', 'AshenSpire.html', 'if (!preservedTarget || !focusElement(preservedTarget)) focusFirst', 'if (true) focusFirst'],
     ['selected artifact returns flask shortcuts to literals', 'AshenSpire.html', 'matchAction(ev, `flask${slot + 1}`)', "({ 0: 'f', 1: 'g', 2: 'h' }[slot] === ev.key.toLowerCase())", true],
+    ['selected artifact rebound-flask-prearm arms the earlier global hold', 'AshenSpire.html', 'if (!typing && screenKeyClaim?.(ev)) {', 'if (false) {'],
+    ['selected artifact rebound-flask-fallthrough reaches gameplay', 'AshenSpire.html', "const slot = matchedFlaskSlot(ev);\n    if (slot >= 0) {\n      ev.preventDefault();\n      ev.stopImmediatePropagation();", "const slot = matchedFlaskSlot(ev);\n    if (slot >= 0) {\n      ev.preventDefault();\n      /* planted: matched Flask event bubbles into gameplay */"],
+    ['selected artifact effective-cost-base-def ignores Ancestral Horn power reduction', 'AshenSpire.html', "energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));", 'energyCost = energyCost;'],
+    ['selected artifact effective-cost-nonpower-leak escapes the Power branch', 'AshenSpire.html', "if (def.type === 'power') {", 'if (true) {', true],
     ['selected-root ally fixture seeds the wrong hand', 'tools/session.mjs', 'allyPlayer.piles.hand.push', 'player.piles.hand.push'],
     ['selected-root flask fixture bypasses validation', 'tools/session.mjs', 'entity.flasks = combatStartStateForTools.flasks.map', 'entity.flasks = [].map'],
+    ['selected-root discount fixture bypasses relic validation', 'tools/session.mjs', 'entity.relicIds = [...combatStartStateForTools.relicIds]', 'entity.relicIds = []'],
+    ['selected-root snapshot drops relic ids', 'tools/session.mjs', 'relicIds: [...P.entity.relicIds]', 'relicIds: []'],
   ];
   const status = await doorSelftest({
     tool: 'friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
@@ -376,14 +433,19 @@ async function browserDoor() {
     for (const shape of shapes) {
       setCombatStartStateForTools({
         name: 'Fenn', hp: 60, block: 0,
-        extraHand: ['ironSkin', 'rallyingBanner', 'rallyingBanner', 'ashOath'],
+        relicIds: ['ancestralHorn'],
+        extraHand: [
+          'ironSkin', 'rallyingBanner', 'rallyingBanner', 'ashOath',
+          'thornHaloCard', 'thornHaloCard', 'thornHaloCard',
+          'thornHaloCard', 'thornHaloCard', 'thornHaloCard',
+        ],
         flasks: ['flaskOfFerocity', 'flaskOfStone', 'blightCoating'],
         ally: { name: 'Wren', hp: 1, block: 0, extraHand: ['bloodPact'] },
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
       const browserSettings = {
         textSize,
-        keyBindings: { flask1: 'z', flask2: 'x', flask3: 'c' },
+        keyBindings: { flask1: '1', flask2: 'q', flask3: 'e' },
         bindings: { flask1: 8 },
       };
       const settingsStore = createMemoryStorage();
@@ -468,20 +530,62 @@ async function browserDoor() {
         console.log('  SETUP combat ready');
 
         const storedBindings = await evaluate(guest, `JSON.parse(localStorage.getItem(${JSON.stringify(META_KEY)}))?.settings`);
-        observed(storedBindings?.keyBindings?.flask1 === 'z' && storedBindings?.bindings?.flask1 === 8, 'real profile stores the rebound keyboard and standard-pad flask bindings', JSON.stringify(storedBindings));
+        observed(storedBindings?.keyBindings?.flask1 === '1' && storedBindings?.keyBindings?.flask2 === 'q' && storedBindings?.keyBindings?.flask3 === 'e' && storedBindings?.bindings?.flask1 === 8, 'real profile stores collision-prone keyboard and standard-pad flask bindings', JSON.stringify(storedBindings));
         if (!standalone) {
           const liveBindings = await evaluate(guest, `import('/src/ui/input.js').then(m=>({keys:m.getKeyBindings(),pad:m.getBindings()}))`);
-          observed(liveBindings?.keys?.flask1 === 'z' && liveBindings?.pad?.flask1 === 8, 'running input module applied the rebound flask bindings', JSON.stringify(liveBindings));
+          observed(liveBindings?.keys?.flask1 === '1' && liveBindings?.keys?.flask2 === 'q' && liveBindings?.keys?.flask3 === 'e' && liveBindings?.pad?.flask1 === 8, 'running input module applied the collision-prone flask bindings', JSON.stringify(liveBindings));
         }
 
-        for (const [slot, reboundKey] of [['1', 'z'], ['2', 'x'], ['3', 'c']]) {
-          await key(guest, reboundKey);
+        // Standard pad button 8 synthesizes the configured Flask 1 key. Set
+        // the public gamepad door up before the collision checks so both the
+        // literal and pad-synthesized `1` must be consumed by flaskKeyHandler.
+        await evaluate(guest, `(()=>{const pad={index:0,connected:true,mapping:'standard',id:'friendly-target parity pad',buttons:Array.from({length:17},()=>({pressed:false,value:0})),axes:[0,0,0,0]};Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad,null,null,null]});window.__friendlyPad={lastKey:null,press(i){pad.buttons[i]={pressed:true,value:1}},release(i){pad.buttons[i]={pressed:false,value:0}}};addEventListener('keydown',e=>window.__friendlyPad.lastKey=e.key);dispatchEvent(new Event('gamepadconnected'));return true})()`);
+        const padTap = async (button) => {
+          await evaluate(guest, `window.__friendlyPad.press(${button})`); await wait(180);
+          await evaluate(guest, `window.__friendlyPad.release(${button})`); await wait(180);
+        };
+
+        for (const [slot, reboundKey] of [['1', '1'], ['2', 'q'], ['3', 'e']]) {
+          const beforeShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
+          if (reboundKey === 'e') {
+            // A real hold with OS-style repeats crosses the 600 ms End Turn
+            // threshold. The configured Flask claim must prevent input.js from
+            // arming that earlier live beat before coop's capture handler runs.
+            await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: reboundKey, code: 'KeyE' }, guest.sessionId);
+            for (let repeat = 0; repeat < 4; repeat++) {
+              await wait(180);
+              await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: reboundKey, code: 'KeyE', autoRepeat: true }, guest.sessionId);
+            }
+            await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: reboundKey, code: 'KeyE' }, guest.sessionId);
+            await wait(180);
+          } else {
+            await key(guest, reboundKey);
+          }
           await until(guest, `!!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu`);
-          observed(true, `configured keyboard binding opens Flask ${slot}`);
-          if (slot === '1') await evidenceCapture('rebound-flask', 'Rebound Flask 1 key · configured action menu opened');
+          const afterShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
+          observed(JSON.stringify(afterShortcut) === JSON.stringify(beforeShortcut), `configured collision binding opens Flask ${slot} only, without card play, targeting, spend, or end turn`, `${JSON.stringify(beforeShortcut)}→${JSON.stringify(afterShortcut)}`);
+          if (reboundKey === 'e') {
+            const latentEnd = await evaluate(guest, `({holding:document.querySelector('#coop-endturn')?.dataset.hold==='holding',armed:document.querySelector('#coop-endturn')?.hasAttribute('data-beat-armed'),ended:window.__coopSnapshot.scene.players.find(p=>p.id===window.__coopSnapshot.party.find(x=>x.name==='Fenn')?.id)?.ended})`);
+            observed(latentEnd.holding === false && latentEnd.armed === false && latentEnd.ended === false, 'held/repeated rebound e never arms or confirms latent End Turn behind the Flask menu', JSON.stringify(latentEnd));
+          }
+          if (slot === '1') await evidenceCapture('rebound-flask', 'Rebound Flask 1 on key 1 · menu only · no card play');
           await key(guest, 'Escape');
           await until(guest, `!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu closes`);
         }
+
+        const beforePadShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
+        await padTap(8);
+        await until(guest, `!!document.querySelector('.flask-action-menu')`, 'collision-bound standard-pad Flask 1 menu');
+        const afterPadShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length,key:window.__friendlyPad.lastKey}})()`);
+        observed(afterPadShortcut.key === 'Escape' && JSON.stringify({ ...afterPadShortcut, key: undefined }) === JSON.stringify({ ...beforePadShortcut, key: undefined }), 'standard-pad synthesized collision key opens Flask 1 only and is consumed before downstream input observers/gameplay', `${JSON.stringify(beforePadShortcut)}→${JSON.stringify(afterPadShortcut)}`);
+        await padTap(1);
+        await until(guest, `!document.querySelector('.flask-action-menu')`, 'collision-bound standard-pad Flask 1 menu closes');
+
+        // The rest of the matrix exercises product number/q card input. Restore
+        // non-colliding flask keys in the running input module after the exact
+        // collision controls above; the persisted collision settings remain
+        // proven by the profile/live-module assertions.
+        await evaluate(guest, `import('/src/ui/input.js').then(m=>m.setKeyBindings({flask1:'z',flask2:'x',flask3:'c'}))`);
 
         if (captureBefore) {
           await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));c?.click();return !!c})()`);
@@ -534,13 +638,8 @@ async function browserDoor() {
         const mixed = await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer')?.getBoundingClientRect(),targets=[...document.querySelectorAll('[data-friendly-target]')].map(e=>{const r=e.getBoundingClientRect();return{seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color'),aria:e.getAttribute('aria-label'),onGlass:r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight}});return{targets,layer:!!layer}})()`);
         observed(mixed.targets.length === 3 && mixed.targets.filter((t) => t.rel === 'self' && t.color === '#4d94e0').length === 1 && mixed.targets.filter((t) => t.rel === 'ally' && t.color === '#49b675').length === 2 && mixed.targets.every((t) => t.aria), 'keyboard mixed target relationship/AX parity', JSON.stringify(mixed));
         await evidenceCapture('mixed', 'Oath of Ash mixed · self blue · ally green');
-        // Standard-mapping gamepad shim: product poller receives B Cancel and
-        // A Confirm through its public navigator.getGamepads door.
-        await evaluate(guest, `(()=>{const pad={index:0,connected:true,mapping:'standard',id:'friendly-target parity pad',buttons:Array.from({length:17},()=>({pressed:false,value:0})),axes:[0,0,0,0]};Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[pad,null,null,null]});window.__friendlyPad={lastKey:null,press(i){pad.buttons[i]={pressed:true,value:1}},release(i){pad.buttons[i]={pressed:false,value:0}}};addEventListener('keydown',e=>window.__friendlyPad.lastKey=e.key);dispatchEvent(new Event('gamepadconnected'));return true})()`);
-        const padTap = async (button) => {
-          await evaluate(guest, `window.__friendlyPad.press(${button})`); await wait(180);
-          await evaluate(guest, `window.__friendlyPad.release(${button})`); await wait(180);
-        };
+        // Standard-mapping gamepad shim above continues through its public
+        // navigator.getGamepads door for B Cancel and A Confirm.
         const focusBeforeMove = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
         let focusAfterMove = focusBeforeMove;
         const targetDirections = [15, 13, 14, 12];
@@ -560,9 +659,11 @@ async function browserDoor() {
         const padCancel = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focused:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Oath of Ash'))?.classList.contains('gp-focus'),lastKey:window.__friendlyPad.lastKey})`);
         observed(padCancel.targets === 0 && padCancel.focused === true, 'controller Cancel clears and restores card focus', JSON.stringify(padCancel));
 
+        const beforeReboundPad = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
         await padTap(8);
         await until(guest, `!!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu');
-        observed(true, 'configured standard-pad binding synthesizes the rebound Flask 1 action');
+        const afterReboundPad = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
+        observed(JSON.stringify(afterReboundPad) === JSON.stringify(beforeReboundPad), 'configured standard-pad binding synthesizes only the rebound Flask 1 action', `${JSON.stringify(beforeReboundPad)}→${JSON.stringify(afterReboundPad)}`);
         await padTap(1);
         await until(guest, `!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu closes');
 
@@ -638,6 +739,46 @@ async function browserDoor() {
         const away = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focusable:document.querySelectorAll('.coop-seat[data-focusable]').length,selected:[...document.querySelectorAll('.hand .card')].some(x=>x.textContent.includes('Rallying Banner')&&x.classList.contains('selected')),card:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'))?.classList.contains('gp-focus')})`);
         observed(away.targets === 0 && away.focusable === 0 && away.selected === false && away.card === true, 'last legal ally away clears target/AX/click state and restores exact card focus without spend', JSON.stringify(away));
         await evidenceCapture('away-cancel', 'Last ally away · target and AX cleared · origin focus restored');
+
+        // Spend the final ordinary energy through a real hostile card. The
+        // Ancestral Horn fixture must then keep a 1-cost Power server-legal at
+        // zero energy through the exact same number/q, pointer/touch, and pad
+        // input doors used above.
+        const strikeBefore = await evaluate(guest, `[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Strike')).length`);
+        observed(strikeBefore > 0, 'fixture retains an ordinary one-energy hostile card for the zero-energy control', String(strikeBefore));
+        if (strikeBefore > 0) {
+          await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Strike'));c?.click();return !!c})()`);
+          await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.actor)});return p?.energy===0&&[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Strike')).length<${Number(strikeBefore)}})()`, 'ordinary card spends final energy');
+        }
+        const hornStart = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.actor)});return{energy:p?.energy,relics:p?.relicIds,thorn:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length}})()`);
+        observed(hornStart.energy === 0 && hornStart.relics?.includes('ancestralHorn') && hornStart.thorn >= 3, 'authoritative snapshot exposes Ancestral Horn with three Power controls at zero energy', JSON.stringify(hornStart));
+
+        const hornIndex = await evaluate(guest, `[...document.querySelectorAll('.hand .card')].findIndex(x=>x.textContent.includes('Thorn Halo'))`);
+        observed(hornIndex >= 0 && hornIndex <= 9, 'discounted Power is reachable by the product number/q shortcut', String(hornIndex));
+        if (hornIndex >= 0 && hornIndex <= 9) {
+          await key(guest, hornIndex === 9 ? 'q' : String(hornIndex + 1));
+          await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'number/q arms Horn-discounted Power at zero energy');
+          await evidenceCapture('discount-power', `Ancestral Horn · Thorn Halo at 0 energy · ${hornIndex === 9 ? 'q' : `number ${hornIndex + 1}`} arms self target`);
+          await activate(guest, '[data-friendly-target]', shape.dpr > 1);
+          await until(guest, `[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length===${Number(hornStart.thorn - 1)}`, 'number/q discounted Power server result');
+        }
+        const hornAfterKey = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.actor)});return{energy:p?.energy,thorn:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
+        observed(hornAfterKey.energy === 0 && hornAfterKey.thorn === hornStart.thorn - 1 && hornAfterKey.targets === 0, 'number/q sends and plays the Horn-discounted Power exactly once without energy spend', JSON.stringify(hornAfterKey));
+
+        const thornPointer = await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Thorn Halo'));if(!c)return null;c.dataset.friendlyProbe='horn-pointer';return '[data-friendly-probe="horn-pointer"]'})()`);
+        observed(await activate(guest, thornPointer, shape.dpr > 1), `${shape.dpr > 1 ? 'touch' : 'mouse'} reaches the same Horn-discounted Power at zero energy`);
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'pointer/touch arms Horn-discounted Power');
+        await activate(guest, '[data-friendly-target]', shape.dpr > 1);
+        await until(guest, `[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length===${Number(hornStart.thorn - 2)}`, 'pointer/touch discounted Power server result');
+
+        const thornPadFocused = await evaluate(guest, `(()=>{const card=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Thorn Halo'));if(!card)return false;document.querySelectorAll('.gp-focus').forEach((node)=>node.classList.remove('gp-focus'));card.classList.add('gp-focus');card.focus();return card.classList.contains('gp-focus')})()`);
+        observed(thornPadFocused, 'controller cursor is on the Horn-discounted Power at zero energy');
+        if (thornPadFocused) await padTap(0);
+        await until(guest, `document.querySelectorAll('[data-friendly-target]').length===1`, 'pad arms Horn-discounted Power');
+        await padTap(0);
+        await until(guest, `[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length===${Number(hornStart.thorn - 3)}`, 'pad discounted Power server result');
+        const hornDone = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.actor)});return{energy:p?.energy,thorn:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Thorn Halo')).length,targets:document.querySelectorAll('[data-friendly-target]').length,ended:p?.ended}})()`);
+        observed(hornDone.energy === 0 && hornDone.thorn === hornStart.thorn - 3 && hornDone.targets === 0 && hornDone.ended === false, 'number/q, pointer/touch, and pad each play one discounted Power with no rejection or double action', JSON.stringify(hornDone));
       } finally {
         await cdp.send('Target.closeTarget', { targetId: host.targetId }).catch(() => {});
         await cdp.send('Target.closeTarget', { targetId: guest.targetId }).catch(() => {});

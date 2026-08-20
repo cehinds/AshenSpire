@@ -89,6 +89,7 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+import { setCombatStartStateForTools } from './session.mjs';
 
 const TOOLS = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const args = process.argv.slice(2);
@@ -245,6 +246,12 @@ async function main() {
   let port = 8291;
   for (const mode of swept) {
     ran++;
+    // Make the #209 confirmation beat deterministic instead of depending on
+    // a seeded starter draw containing a self-only card. This enters through
+    // the validated test-only session fixture used by the focused #209 gate.
+    setCombatStartStateForTools({
+      name: 'Wren', hp: 42, block: 0, extraHand: ['ironSkin'],
+    });
     // ONE SERVER PER MODE, and it is not tidiness. `lan: true` starts the real
     // LAN server beside the file server — it is what the client's own
     // WebSocket connects to and what lights the LAN door. That server keeps

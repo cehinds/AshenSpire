@@ -552,6 +552,16 @@ let pressEl = null;
 // again at keyup would then match nothing, and the press would be left filling
 // forever on a control whose key no longer exists.
 let keyPressAction = null;
+// A mounted screen may own a rebound key before the global press/hold layer.
+// The claim is intentionally a predicate over the real KeyboardEvent: input
+// does not consume it, because the later screen handler still has to answer;
+// it only refuses to arm an earlier, colliding action such as End Turn.
+let screenKeyClaim = null;
+export function setScreenKeyClaim(claim = null) {
+  screenKeyClaim = typeof claim === 'function' ? claim : null;
+  const owned = screenKeyClaim;
+  return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
+}
 
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
@@ -810,6 +820,17 @@ function onKeydown(ev) {
       pressBegin('key');
       return;
     }
+  }
+
+  // A screen-owned rebound wins before this layer can arm a colliding live
+  // beat. Do not prevent/stop: the mounted screen's later capture handler owns
+  // the event and will consume it after performing its one action.
+  if (!typing && screenKeyClaim?.(ev)) {
+    if (keyPressAction) {
+      keyPressAction = null;
+      pressEnd(true);
+    }
+    return;
   }
 
   // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----

@@ -33049,6 +33049,16 @@ let pressEl = null;
 // again at keyup would then match nothing, and the press would be left filling
 // forever on a control whose key no longer exists.
 let keyPressAction = null;
+// A mounted screen may own a rebound key before the global press/hold layer.
+// The claim is intentionally a predicate over the real KeyboardEvent: input
+// does not consume it, because the later screen handler still has to answer;
+// it only refuses to arm an earlier, colliding action such as End Turn.
+let screenKeyClaim = null;
+function setScreenKeyClaim(claim = null) {
+  screenKeyClaim = typeof claim === 'function' ? claim : null;
+  const owned = screenKeyClaim;
+  return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
+}
 
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
@@ -33309,6 +33319,17 @@ function onKeydown(ev) {
     }
   }
 
+  // A screen-owned rebound wins before this layer can arm a colliding live
+  // beat. Do not prevent/stop: the mounted screen's later capture handler owns
+  // the event and will consume it after performing its one action.
+  if (!typing && screenKeyClaim?.(ev)) {
+    if (keyPressAction) {
+      keyPressAction = null;
+      pressEnd(true);
+    }
+    return;
+  }
+
   // ---- a SCREEN HOTKEY that presses a control with a live beat (S7 wide) ----
   //
   // Last, deliberately: navigation, the tab ring and Confirm all get the key
@@ -33508,7 +33529,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -34382,7 +34403,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '60d0bfd1e1';
+const SOURCE = 'd639103595';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34416,7 +34437,7 @@ const SOURCE = '60d0bfd1e1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0876';
+const ORDINAL = '0878';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48439,7 +48460,7 @@ const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
 const { anchorLocalBox, clampBox, guardHitFloatParts } = require("src/ui/fx.js");
 const { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
-const { resolveCard } = require("src/model/registries.js");
+const { resolveCard, passiveSum } = require("src/model/registries.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
@@ -48449,7 +48470,7 @@ const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/f
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
-const { focusElement, focusFirst, isEngaged, matchAction } = require("src/ui/input.js");
+const { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } = require("src/ui/input.js");
 const { decorateFriendlyTarget } = require("src/ui/components/friendlyTargets.js");
 const { friendlyTargetPlan } = require("src/model/friendlyTargets.js");
 
@@ -48541,7 +48562,10 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
 
   function cardAffordableFromSnapshot(def, player) {
     if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    const energyCost = def.cost === 'X' ? 1 : def.cost;
+    let energyCost = def.cost === 'X' ? 1 : def.cost;
+    if (def.type === 'power') {
+      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
+    }
     return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
   }
 
@@ -48593,13 +48617,22 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const matchedFlaskSlot = (ev) => {
+    for (let slot = 0; slot < 3; slot++) {
+      if (matchAction(ev, `flask${slot + 1}`)) return slot;
+    }
+    return -1;
+  };
+  const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
   const flaskKeyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (!snap || snap.scene.kind !== 'combat') return;
     const meP = snap.scene.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
-    for (let slot = 0; slot < 3; slot++) {
-      if (!matchAction(ev, `flask${slot + 1}`)) continue;
+    const slot = matchedFlaskSlot(ev);
+    if (slot >= 0) {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
       if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
       return;
     }
@@ -48654,6 +48687,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }, 120);
 
   function teardown() {
+    releaseFlaskKeyClaim();
     removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
