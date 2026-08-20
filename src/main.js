@@ -339,27 +339,19 @@ const UI_NAMED = UI.uiScale.named;
 // upheld by nothing but its own usefulness, and that is the honest reason to
 // keep it.
 //
-// THE THIRD VALUE — `short` (Sunna, 2026-08-15, R-32). It rides here and not in
+// THE THIRD AND FOURTH VALUES — `compact` and `short`. They ride here and not in
 // a stylesheet for EXACTLY the reason above: a `@media (orientation: landscape)`
 // would be a second decider on a second input, which is #24 rebuilt from
 // scratch. It is also not an orientation at all — a 1024x768 tablet is landscape
 // and fine, and a 400x400 desktop window is not.
 //
-//   SHORT  <=>  h < balance.ui.uiScale.gateBelowH
+//   COMPACT <=> h is in [shortWideMinH, gateBelowH) AND the wide baseline fits
+//   SHORT   <=> h < gateBelowH AND no complete compact/narrow answer fits
 //
-// One number, one home, and it is a MEASUREMENT — the rendered device-px bottom
-// edge of the wide board's last required control, the ladder and its licensed
-// band written where the number lives. Below it, END TURN's bottom is off screen
-// inside a container that is `overflow: hidden`, and `overflow: hidden` scrolls
-// programmatically and never by hand (Bjorn, 2026-08-15), so there is no gesture
-// to reach it.
-//
-// I HAD THIS WRONG FIRST AND THE MEASUREMENT CAUGHT ME. My first predicate was
-// `h < z.min x baselineH` — "the clamp is what is binding" — which is a true
-// statement about the ZOOM and the wrong statement about the PLAYER: it refused
-// 800x450, where END TURN is whole and 100% on screen. A gate that takes away a
-// working screen is worse than no gate, so the number is now pinned to the
-// control the player needs rather than to the baseline the board declares.
+// Both edges are rendered measurements in balance.js. #27 inserts the compact
+// answer where the old code raised the refusal, while preserving the refusal
+// below the compact layout's own first complete frame. CSS reads the published
+// composition and never re-asks either question.
 //
 // `vw`/`vh` are parameters so the SAME decider can be asked about a viewport
 // that does not exist yet — applyUiScale asks it about the TURNED phone before
@@ -367,17 +359,22 @@ const UI_NAMED = UI.uiScale.named;
 // window, byte-for-byte as before.
 function layoutForCap(cap, vw, vh) {
   const given = vw != null && vh != null;
-  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, short: false };
+  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, compact: false, short: false };
   const z = UI.uiScale;
   const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
   const capped = (v) => Math.min(v, cap);
-  // Height only, and the same answer on every return path — the wall does not
-  // care which baseline won, because a short viewport always lands wide.
-  // `gateBelowH` absent (an older content bundle) means NO GATE, never a gate at
-  // a guessed number: a missing threshold must not invent a refusal.
-  const isShort = () => z.gateBelowH != null && h < z.gateBelowH;
+  // One derived band and the same answer on every return path. `gateBelowH`
+  // absent (an older content bundle) means neither a compact band nor a gate;
+  // a missing threshold must never invent either at a guessed number.
+  const shortWide = (zoom) => z.gateBelowH != null && h < z.gateBelowH
+    && w / zoom >= z.designW
+    && h >= (z.shortWideMinH || 0);
+  const answer = (zoom, narrow) => {
+    const compact = !narrow && shortWide(zoom);
+    return { zoom, narrow, compact, short: z.gateBelowH != null && h < z.gateBelowH && !compact };
+  };
 
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
   // `Math.round` byte-for-byte, because every zoom every existing player sees
@@ -387,11 +384,11 @@ function layoutForCap(cap, vw, vh) {
   // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
   // tools/tutorial-reach.mjs red — the guard on #7.
   const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
-  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false, short: isShort() };
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return answer(wideZoom, false);
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true, short: isShort() };
+  if (w / narrowZoom <= z.narrowMax) return answer(narrowZoom, true);
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -401,9 +398,9 @@ function layoutForCap(cap, vw, vh) {
   // for #24's property — see the header — only for the quality of the answer.
   if (w / narrowFit <= z.narrowMax) {
     const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true, short: isShort() };
+    if (w / bandFloor <= z.narrowMax) return answer(bandFloor, true);
   }
-  return { zoom: wideZoom, narrow: false, short: isShort() };
+  return answer(wideZoom, false);
 }
 
 // A named size is a CEILING the player asked for, not a value the app owes them
@@ -419,7 +416,7 @@ function resolveLayout(uiScale, vw, vh) {
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow, short } = resolveLayout(settings.uiScale);
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -427,7 +424,8 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
-  // Publish the THIRD value from that same decider for layout consumers too.
+  document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
+  // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
   // field yield to the hand at Text XL on a fitting viewport without silently

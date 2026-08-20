@@ -2898,6 +2898,20 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   /* Not a phone to turn — a window to grow. Widen the box and hold it still. */
   width: 56px; height: 40px; animation: none;
 }
+/* #27 — below the compact combat composition's rendered floor, the refusal is
+   still the only truthful screen. Its ordinary phone glyph used 94px before a
+   word was drawn (76px row + 18px margin), which made the 844x339 Text XL card
+   itself 26px taller than the viewport. `data-short` is the layout decider's
+   existing answer; this selector measures nothing and creates no breakpoint.
+   Keep every sentence and only compress chrome/spacing, so the fallback remains
+   wholly readable at the first height where the game must refuse again. */
+:root[data-short='true'] .upright-veil { padding: 12px 24px; }
+:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
+:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
+:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
+:root[data-short='true'] .upright-say { margin-bottom: 6px; }
+:root[data-short='true'] .upright-hint { margin-top: 8px; }
 @keyframes upright-turn {
   0%, 18% { transform: rotate(-90deg); }
   55%, 100% { transform: rotate(0deg); }

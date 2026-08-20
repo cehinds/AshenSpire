@@ -113,6 +113,7 @@ const MATRIX_SHAPES = [
   { w: 412, h: 915, d: 2.6, mobile: true, tag: 'portrait' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome' },
 ];
 const MATRIX = MATRIX_SHAPES.flatMap((v) =>
   ['s', 'm', 'l', 'xl'].map((size) => ({ ...v, tag: `${v.tag}-${size}`, cell: true, known: {}, settings: { uiScale: size } })));
@@ -126,12 +127,11 @@ const SHAPES = [
   { w: 915, h: 412, d: 2.6, mobile: true, tag: 'landscape', known: {} },
   // Landscape as a phone actually reports it while the browser chrome is
   // showing. 844x390 is the DEVICE; innerHeight is smaller whenever the address
-  // bar is up, and "landscape already works" is a claim about the shape a player
-  // is actually in. ~46px is Chrome-on-Android's landscape bar; the number is a
-  // stand-in, so this row is a SENSITIVITY reading, not a device.
-  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {},
-    knownOpen: { what: 'landscape degrades as the browser chrome takes height',
-                 why: 'END TURN 43/45 (2 points under .pile.discard), .energy-orb 36/45, .hand-area 17.27px past the bottom edge. Present on dev at bf18a2e and unchanged by the portrait work — this is the WIDE layout, which this branch does not touch. Unfiled: Sunna to confirm, Marina to sequence.' } },
+  // bar is up. ~46px is Chrome-on-Android's landscape bar, so the number is a
+  // sensitivity reading rather than a device claim. #27 closed the old
+  // knownOpen here with the derived short-wide composition; it is now a normal
+  // blocking row and also joins every fixed-size matrix cell above.
+  { w: 844, h: 344, d: 3, mobile: true, tag: 'landscape-chrome', known: {} },
   // TABLET PORTRAIT — Vira's corpus, EldenSpire#24. Every portrait shape above
   // is <=412px wide and there was NO portrait shape between 520 and 1200px, so
   // the whole band where the zoom picks the narrow baseline and the layout

@@ -3,6 +3,12 @@
 // IS A SHAPE THE GAME REFUSES OUT LOUD — AND A SHAPE IT DOES FIT IS A SHAPE IT
 // NEVER REFUSES. Both edges, because only one of them can rot quietly.
 //
+// CURRENT AFTER #27: 844x340..464 are complete short-wide boards and therefore
+// must have no gate; 844x339 is the first still-walled cell and must have a
+// readable one. The historical derivation narrative below describes the former
+// all-below-465 refusal, while the executable clauses and SHAPES table carry the
+// current bounded composition contract.
+//
 // ---------------------------------------------------------------------------
 // THE DEFECT THIS WAS BUILT ON, AND IT WAS OBSERVED BEFORE ANYTHING WAS FIXED
 //
@@ -532,7 +538,9 @@ const BROWSERS = [
 const LADDER_H = [410, 430, 450, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 480, 500];
 const SHAPES = [
   [390, 844], [360, 640], [834, 1194],   // portrait: must never gate
-  [844, 390], [915, 412],                // landscape phone: the subject
+  [844, 390], [844, 344],                // supported landscape and browser-chrome band
+  [844, 340], [844, 339],                // compact lower edge and refusal one pixel below
+  [915, 412],                            // second landscape phone control
   [400, 400],                            // short BOTH ways — the only cell that
                                          // renders the 'resize' wording at all.
                                          // Without it that half of the copy is

@@ -800,6 +800,79 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .reduced-motion .combatant .sprite > img { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
+/* ---------- short-wide combat composition (#27) ---------------------------
+   main.js selects this composition only when the wide board still owns its
+   full 1200 local px and the ordinary vertical composition would raise the
+   upright refusal. The stylesheet follows that derived answer; it does not
+   measure a viewport or restate either threshold.
+
+   The normal board already contains enough flexible height once the refusal's
+   `data-short` answer is false. What it still needs is a shorter hand band so
+   that the battlefield receives a real row rather than collapsing to zero.
+   Card faces keep their complete information hierarchy, while box dimensions
+   shrink only in this wide, height-constrained composition. */
+:root[data-composition='short-wide'] .hand-area { height: 10rem; }
+:root[data-composition='short-wide'] .topbar.combat-hud {
+  gap: calc(2px / var(--ui-zoom, 1));
+  padding-block: calc(3px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .resbars[data-surface='main'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: center; gap: calc(5px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .resbars[data-surface='main'] .resline {
+  width: auto; min-width: 0;
+}
+:root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
+  flex-wrap: nowrap; overflow: hidden;
+}
+:root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
+:root[data-composition='short-wide'] .hand .card {
+  width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
+  transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
+}
+:root[data-composition='short-wide'] .hand .card .cost {
+  top: -0.6rem; left: -0.6rem; width: 2.4rem; height: 2.4rem;
+}
+:root[data-composition='short-wide'] .hand .card .mana-cost {
+  top: -0.4rem; right: -0.4rem; min-width: 2.8rem; height: 2rem;
+}
+:root[data-composition='short-wide'] .hand .card .cname {
+  font-size: 0.75rem; min-height: 1.3rem;
+}
+:root[data-composition='short-wide'] .hand .card .art {
+  width: 6.8rem; height: 2.2rem; margin: 0.1rem 0; font-size: 1.7rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctype {
+  width: 6.8rem; padding: 0.1rem 0; font-size: 0.65rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctext {
+  margin-top: 0.15rem; font-size: 0.68rem; line-height: 1.15;
+}
+:root[data-composition='short-wide'] .hand .card:hover,
+:root[data-composition='short-wide'] .hand .card.selected {
+  transform: translateY(-12px) scale(1.1) !important;
+}
+:root[data-composition='short-wide'] .energy-orb { bottom: 2.4rem; }
+:root[data-composition='short-wide'] .end-turn { bottom: 2.4rem; }
+:root[data-composition='short-wide'] .player-zone,
+:root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
+:root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
+:root[data-composition='short-wide'] .combatant .intent {
+  margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
+}
+:root[data-composition='short-wide'] .combatant .intent .ic { font-size: 1rem; }
+:root[data-composition='short-wide'] .combatant .nm { font-size: 0.95rem; }
+:root[data-composition='short-wide'] .player .sprite > :first-child {
+  width: 5rem !important; height: 7rem !important;
+}
+:root[data-composition='short-wide'] .enemy .sprite > :first-child {
+  width: 4rem !important; height: 5rem !important;
+}
+:root[data-composition='short-wide'] .combatant .meters { width: 8rem; }
+:root[data-composition='short-wide'] .statuses { min-height: 0; gap: 0.15rem; }
+
 /* ==========================================================================
    PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
    ==========================================================================
