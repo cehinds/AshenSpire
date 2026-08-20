@@ -588,22 +588,27 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 .combat-action-row > * { pointer-events: auto; }
 .energy-orb {
-  grid-area: energy; position: relative; isolation: isolate;
-  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
-  background: transparent; border: 0;
+  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
+  background: #1c1610; border: 3px solid var(--gold);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.9rem; font-weight: 800;
+  font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
-.energy-orb::before {
+.combat-action-row > .energy-orb {
+  grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;
+  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+}
+.combat-action-row > .energy-orb::before {
   content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);
   box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn {
-  grid-area: end; position: static;
+  position: absolute; right: 3.4rem; bottom: 7.6rem;
   min-height: var(--tap-floor); background: #120f0c;
   border: 1px solid var(--gold); border-radius: 8px;
 }
+.combat-action-row > .end-turn { grid-area: end; position: static; right: auto; bottom: auto; }
 .end-turn .et-key {
   font-family: var(--font-body); font-size: 1rem; margin-left: 0.7rem; vertical-align: 1px;
   padding: 0.1rem 0.6rem; border-radius: 4px; color: var(--parchment);
@@ -612,15 +617,21 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {
-  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor); border-radius: 8px;
+  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: 8px;
   background: var(--panel); border: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 1.3rem; cursor: pointer; z-index: 20;
 }
 .pile small { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em; }
-.pile.draw { grid-area: draw; }
-.pile.discard { grid-area: discard; }
-.pile.exhaust { grid-area: exhaust; opacity: 0.85; }
+.pile.draw { left: 1.6rem; }
+.pile.discard { right: 1.6rem; }
+.pile.exhaust { right: 8.2rem; opacity: 0.85; }
+.combat-action-row > .pile {
+  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+.combat-action-row > .pile.draw { grid-area: draw; }
+.combat-action-row > .pile.discard { grid-area: discard; }
+.combat-action-row > .pile.exhaust { grid-area: exhaust; }
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -1045,14 +1056,31 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     grid-template-areas: "energy end draw exhaust discard";
     align-items: center; gap: 0.4rem;
   }
-  :root[data-layout='narrow'] .energy-orb {
+  :root[data-layout='narrow'] .combat-action-row > .energy-orb {
     width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
   }
-  :root[data-layout='narrow'] .end-turn {
+  :root[data-layout='narrow'] .combat-action-row > .end-turn {
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin: 0; min-width: 0;
   }
 
-  :root[data-layout='narrow'] .pile {
+  :root[data-layout='narrow'] .combat-action-row > .pile {
     width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+  }
+
+  /* Co-op still renders Energy, the shared hand, and End Turn as direct
+     children. Keep that pre-action-row contract explicit so the solo grid can
+     never create implicit co-op tracks or spend the hand's width. */
+  :root[data-layout='narrow'] .combat.coop .hand-area {
+    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr);
+    grid-template-areas: "hand hand" "orb end";
+  }
+  :root[data-layout='narrow'] .combat.coop .hand-area > .energy-orb {
+    grid-area: orb; position: static; left: auto; bottom: auto;
+    width: 5.6rem; height: 5.6rem; font-size: 1.7rem;
+  }
+  :root[data-layout='narrow'] .combat.coop .hand-area > .end-turn {
+    grid-area: end; position: static; right: auto; bottom: auto;
+    min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
+    margin-right: 13.8rem;
   }

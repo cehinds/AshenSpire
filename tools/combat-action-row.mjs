@@ -11,6 +11,7 @@
 //   node tools/combat-action-row.mjs
 //   node tools/combat-action-row.mjs --only 884x1326 --text XL --hand 8
 //   node tools/combat-action-row.mjs --standalone
+//   node tools/combat-action-row.mjs --coop-only
 //   node tools/combat-action-row.mjs --shots docs/preview --label before
 //   node tools/combat-action-row.mjs --selftest
 //
@@ -31,6 +32,9 @@ const onlyText = argOf('--text');
 const onlyHand = argOf('--hand');
 const shots = argOf('--shots');
 const evidenceLabel = argOf('--label') || 'evidence';
+const coopOnly = args.includes('--coop-only');
+const soloOnly = args.includes('--solo-only');
+if (coopOnly && soloOnly) throw new Error('--coop-only and --solo-only are mutually exclusive');
 
 if (args.includes('--selftest') || args.includes('--selftest-source')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -45,8 +49,8 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     {
       name: 'the Energy hit target becomes a rounded visual instead of its full cell',
       file: 'styles/combat.css',
-      find: 'grid-area: energy; position: relative; isolation: isolate;',
-      replace: 'grid-area: energy; position: static; isolation: isolate;',
+      find: 'grid-area: energy; position: relative; left: auto; bottom: auto; isolation: isolate;',
+      replace: 'grid-area: energy; position: static; left: auto; bottom: auto; isolation: isolate;',
       expectRed: /combat-action-row: RED/,
     },
     {
@@ -70,27 +74,58 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
       replace: '.combat-action-row > * { pointer-events: none; }',
       expectRed: /combat-action-row: RED/,
     },
+    {
+      name: 'Energy placement leaks out of the solo action-row owner into co-op',
+      file: 'styles/combat.css',
+      find: '.combat-action-row > .energy-orb {',
+      replace: '.energy-orb {',
+      expectRed: /combat-action-row: RED/,
+    },
+    {
+      name: 'the co-op narrow hand loses its explicit hand/orb/end rows',
+      file: 'styles/combat.css',
+      find: ':root[data-layout=\'narrow\'] .combat.coop .hand-area {',
+      replace: ':root[data-layout=\'narrow\'] .combat.coop .hand-area-plant {',
+      expectRed: /combat-action-row: RED/,
+    },
   ];
-  const code = await doorSelftest({
+  const coopPlants = sourcePlants.splice(5);
+  let code = await doorSelftest({
     tool: 'combat-action-row.mjs',
-    args: ['--only', '390x844', '--text', 'XL', '--hand', '8'],
+    args: ['--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
     timeoutMs: 600000,
     plants: sourcePlants,
   });
   if (code) process.exit(code);
-  if (args.includes('--selftest-source')) process.exit(0);
-  process.exit(await doorSelftest({
+  code = await doorSelftest({
     tool: 'combat-action-row.mjs',
-    args: ['--standalone', '--only', '390x844', '--text', 'XL', '--hand', '8'],
+    args: ['--coop-only'],
+    timeoutMs: 600000,
+    plants: coopPlants,
+  });
+  if (code) process.exit(code);
+  if (args.includes('--selftest-source')) process.exit(0);
+  const artifactPlants = (plants) => plants.map((plant, index) => ({
+    ...plant,
+    name: index === 0
+      ? `standalone root is stale: ${plant.name}`
+      : `selected-root twin: ${plant.name}`,
+    file: 'AshenSpire.html',
+  }));
+  code = await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--standalone', '--solo-only', '--only', '390x844', '--text', 'XL', '--hand', '8'],
     timeoutMs: 600000,
     extraCopy: ['AshenSpire.html'],
-    plants: sourcePlants.map((plant, index) => ({
-      ...plant,
-      name: index === 0
-        ? 'standalone root is stale before the one-grid action owner'
-        : `selected-root twin: ${plant.name}`,
-      file: 'AshenSpire.html',
-    })),
+    plants: artifactPlants(sourcePlants),
+  });
+  if (code) process.exit(code);
+  process.exit(await doorSelftest({
+    tool: 'combat-action-row.mjs',
+    args: ['--standalone', '--coop-only'],
+    timeoutMs: 600000,
+    extraCopy: ['AshenSpire.html'],
+    plants: artifactPlants(coopPlants),
   }));
 }
 
@@ -171,7 +206,8 @@ async function main() {
 
   let sessionId;
   let failures = 0;
-  let ran = 0;
+  let soloRan = 0;
+  let coopRan = 0;
   const check = (value, label, detail = '') => {
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) failures++;
@@ -267,6 +303,7 @@ async function main() {
         mobile: false,
       }, sessionId);
       for (const text of texts) {
+        if (!coopOnly) {
         for (const hand of hands) {
           const settings = encodeURIComponent(JSON.stringify({ textSize: text, holdConfirm: 'off' }));
           const url = `${base}?shot=combat&shotHand=${hand}&shotSettings=${settings}`;
@@ -311,7 +348,7 @@ async function main() {
             }
             await new Promise((pass) => setTimeout(pass, 120));
             const now = await reading();
-            ran++;
+            soloRan++;
             const tag = `${shape.width}x${shape.height} Text ${text}, hand ${hand}, ${state}, ${standalone ? 'root' : 'source'}`;
             console.log(`\n  ${tag}`);
             check(now.owner.exists && now.owner.display === 'grid' && now.owned,
@@ -350,6 +387,72 @@ async function main() {
             }
           }
         }
+        }
+
+        const representativeCoop = (shape.width === 390 && shape.height === 844 && text === 'XL')
+          || (shape.width === 1200 && shape.height === 730 && text === 'M');
+        if (!soloOnly && representativeCoop) {
+          const settings = encodeURIComponent(JSON.stringify({ textSize: text, holdConfirm: 'off' }));
+          await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSettings=${settings}` }, sessionId);
+          await waitFor(`document.querySelectorAll('.combat.coop .hand .card').length===5`, 'five-card co-op combat');
+          await new Promise((pass) => setTimeout(pass, 240));
+          const coop = await evaluate(`(() => {
+            const area=document.querySelector('.combat.coop .hand-area');
+            const hand=area?.querySelector(':scope > .hand');
+            const energy=area?.querySelector(':scope > .energy-orb');
+            const end=area?.querySelector(':scope > .end-turn');
+            const rect=(node)=>{const r=node.getBoundingClientRect();return{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
+            const intersects=(a,b)=>a.left<b.right-0.25&&a.right>b.left+0.25&&a.top<b.bottom-0.25&&a.bottom>b.top+0.25;
+            const hit=(node)=>{const r=rect(node),hits=[];for(let row=0;row<9;row++)for(let col=0;col<5;col++){const x=r.left+r.width*((col+.5)/5),y=r.top+r.height*((row+.5)/9),n=document.elementFromPoint(x,y);hits.push(!!(n&&(n===node||node.contains(n))))}return hits.filter(Boolean).length};
+            const cards=[...hand.querySelectorAll('.card')].map(rect);
+            const ar=rect(area),hr=rect(hand),er=rect(energy),tr=rect(end);
+            const acs=getComputedStyle(area),es=getComputedStyle(energy),ts=getComputedStyle(end);
+            const pad=parseFloat(acs.paddingLeft)+parseFloat(acs.paddingRight);
+            return {
+              layout:document.documentElement.dataset.layout||null,
+              direct:energy.parentElement===area&&hand.parentElement===area&&end.parentElement===area,
+              ownerAbsent:!document.querySelector('.combat.coop .combat-action-row'),
+              areas:acs.gridTemplateAreas,
+              columns:acs.gridTemplateColumns,
+              area:ar,hand:hr,energy:er,end:tr,
+              energyPosition:es.position,endPosition:ts.position,
+              energyArea:es.gridArea,endArea:ts.gridArea,
+              fullHand:(document.documentElement.dataset.layout==='narrow')
+                ? hr.width>=ar.width-pad-1
+                : hr.width>=500&&Math.abs(((hr.left+hr.right)/2)-((ar.left+ar.right)/2))<=1,
+              pairClear:!intersects(er,tr),
+              cardsClear:cards.every((card)=>!intersects(card,er)&&!intersects(card,tr)),
+              onGlass:[er,tr].every((r)=>r.left>=-.25&&r.top>=-.25&&r.right<=innerWidth+.25&&r.bottom<=innerHeight+.25),
+              hitCounts:[hit(energy),hit(end)],
+            };
+          })()`);
+          coopRan++;
+          const narrow = coop.layout === 'narrow';
+          const tag = `${shape.width}x${shape.height} Text ${text}, co-op, ${standalone ? 'root' : 'source'}`;
+          console.log(`\n  ${tag}`);
+          check(coop.direct && coop.ownerAbsent, 'co-op controls remain direct children outside the solo owner', JSON.stringify({direct:coop.direct,ownerAbsent:coop.ownerAbsent}));
+          check(coop.fullHand, 'co-op hand keeps the full available row width', JSON.stringify({area:coop.area.width,hand:coop.hand.width}));
+          check(coop.pairClear && coop.cardsClear, 'co-op controls neither overlap each other nor cover cards', JSON.stringify({pairClear:coop.pairClear,cardsClear:coop.cardsClear}));
+          check(coop.onGlass && coop.hitCounts[0]>=37 && coop.hitCounts[1]===45,
+            'co-op Energy keeps its circular hit area and End Turn is 45/45 hittable', JSON.stringify({onGlass:coop.onGlass,hits:coop.hitCounts}));
+          check(narrow
+            ? coop.areas.includes('"hand hand"') && coop.areas.includes('"orb end"') && coop.energyPosition==='static' && coop.endPosition==='static' && coop.energyArea==='orb' && coop.endArea==='end'
+            : coop.energyPosition==='absolute' && coop.endPosition==='absolute',
+          'co-op placement follows its own wide/narrow contract', JSON.stringify({layout:coop.layout,areas:coop.areas,columns:coop.columns,energyPosition:coop.energyPosition,endPosition:coop.endPosition,energyArea:coop.energyArea,endArea:coop.endArea}));
+
+          if (shots) {
+            await evaluate(`(() => {
+              document.querySelector('.evidence-caption')?.remove();
+              const n=document.createElement('div'); n.className='evidence-caption';
+              n.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';
+              n.textContent=${JSON.stringify(`#21 ${evidenceLabel.toUpperCase()} · ${standalone ? 'SELECTED ROOT' : 'SOURCE'} · CO-OP · ${shape.width}x${shape.height} · Text ${text}`)};
+              document.body.appendChild(n); return true;
+            })()`);
+            const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+            const file = `action-row-${evidenceLabel}-${standalone?'root':'source'}-coop-${shape.width}x${shape.height}-text-${text.toLowerCase()}.png`;
+            writeFileSync(resolve(ROOT, shots, file), Buffer.from(data, 'base64'));
+          }
+        }
       }
     }
   } finally {
@@ -358,11 +461,11 @@ async function main() {
     if (served) await new Promise((pass) => served.server.close(pass));
   }
 
-  if (!ran) {
+  if (!soloRan && !coopRan) {
     console.error('combat-action-row: no acceptance cell ran');
     return 2;
   }
-  console.log(`\ncombat-action-row: ${failures ? `RED — ${failures} finding(s)` : `GREEN — ${ran} state cells`}`);
+  console.log(`\ncombat-action-row: ${failures ? `RED — ${failures} finding(s)` : `GREEN — solo ${soloRan}, co-op ${coopRan}`}`);
   return failures ? 1 : 0;
 }
 
