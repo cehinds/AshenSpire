@@ -35,7 +35,7 @@ function evaluateSource(candidate) {
     ['co-op has relationship-specific targets', /data-friendly-target/.test(candidate.coop) && !/arming && p\.alive && p\.connected \? ' throw-target'/.test(candidate.coop)],
     ['co-op target cancel restores focus', /cancelFriendlyTargeting/.test(candidate.coop) && /ev\.key === 'Escape'/.test(candidate.coop) && /focusElement\(card\)/.test(candidate.coop)],
     ['co-op legal targets enter the shared focus system', /decorateFriendlyTarget/.test(candidate.coop) && /dataset\.focusable/.test(candidate.shared) && /aria-label/.test(candidate.shared)],
-    ['confirm disarms before its one network intent', /armedFriendlyCard = null;\n\s+hideTooltip\(\);\n\s+render\(\);\n\s+send\(\{ t: 'playCard'/.test(candidate.coop)],
+    ['confirm disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(candidate.coop)],
     ['server validates the same friendly target model before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);/.test(candidate.engine) && candidate.engine.indexOf('targetId = assertFriendlyTarget') < candidate.engine.indexOf('p.energy -= cost')],
   ];
 }
@@ -144,8 +144,9 @@ if (process.argv.includes('--selftest-source')) {
   console.log(`source plants: ${caught}/${plants.length}`);
   if (caught !== plants.length) process.exitCode = 1;
   const crlfSource = Object.fromEntries(Object.entries(source).map(([key, text]) => [key, text.replace(/\n/g, '\r\n')]));
-  const crlfGreen = evaluateSource(crlfSource).every(([, ok]) => ok);
-  console.log(`${crlfGreen ? 'PASS' : 'FAIL'} forced-CRLF source contract`);
+  const crlfChecks = evaluateSource(crlfSource);
+  const crlfGreen = crlfChecks.every(([, ok]) => ok);
+  console.log(`${crlfGreen ? 'PASS' : 'FAIL'} forced-CRLF source contract${crlfGreen ? '' : ` — ${crlfChecks.filter(([, ok]) => !ok).map(([label]) => label).join('; ')}`}`);
   if (!crlfGreen) process.exitCode = 1;
 }
 
