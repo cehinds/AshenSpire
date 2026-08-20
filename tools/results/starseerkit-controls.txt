@@ -16,7 +16,7 @@ what this check did NOT check (SPEC §8 clause 5):
   · not the game: no balance claim, no spec band, no statement about a human pilot.
   · not the counters — the per-class kit/bleed/stagger tallies this tool adds over
     runsim have no runsim counterpart, so agreement here leaves them unverified.
-measure-classes --selftest — 20 planted drifts at n=30, each must be CAUGHT
+measure-classes --selftest — 21 planted drifts at n=30, each must be CAUGHT
 
 derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
 
@@ -51,10 +51,13 @@ derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
   starLethalUnderestimate caught ✔ — stamped Pebble + player magic + target Vulnerable is lethal at 18 HP; authored sum misses it
   starLethalOverestimate caught ✔ — target magic resistance + Block keeps authored 22 nonlethal; raw sum falsely picks Lance
 
-  Starseer policy plant (real deterministic 30-seed fleet):
-  starseerFollowup  caught ✔ — conversion 94.0% → 42.9%; charged priority changes 1812 → 0
+  Starseer ordered dispatch lethal scoring (in-card target state changes):
+  starOrderedDispatch caught ✔ — Radiant Spray kills 12 HP only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched
 
-SELFTEST PASSED — clean tree agrees, all 20 planted drifts were caught.
+  Starseer policy plant (real deterministic 30-seed fleet):
+  starseerFollowup  caught ✔ — conversion 93.9% → 42.9%; charged priority changes 1813 → 0
+
+SELFTEST PASSED — clean tree agrees, all 21 planted drifts were caught.
 
 what this selftest did NOT check (SPEC §8 clause 5):
   · that these plants are the ONLY ways either copied bot or new counter can drift.

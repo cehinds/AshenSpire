@@ -12,18 +12,18 @@ Reaver    wins 293/1000 = 29.3%  Wilson95 [26.6%, 32.2%]
   act1 mean hp%% after each fight floor: f1 94% · f2 87% · f3 82% · f4 78% · f5 73% · f6 70% · f8 70% · f9 69% · f10 68% · f11 68% · f13 66%
 
 Starseer  wins 211/1000 = 21.1%  Wilson95 [18.7%, 23.7%]
-  deaths by act: act1×108 act2×509 act3×172  by pool: boss×378 normal×221 elite×180 ambush×10
-  top killers: boss:a2_bossStitchedKing×252  boss:a3_bossRotValkyrie×114  elite:a2_eliteDuelist×104  elite:eliteWyrm×62  normal:a2_procession×49
-  dmg/combat dealt 68.1 taken 22.0  kit: starstoneCharge 7.39/combat
-  bleed economy: applied 2.29 pts/combat → fills 0.204/combat, effect dmg 4.43/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded 0.93 pts/combat = 40.6% of all applied bleed never burst
-  stagger windows: 0.66/run — converted 0/657 (0.0%), expired unused 22, enemy died mid-window 634
-  hp economy/combat: self-tax 2.32 · healed 4.83 · net attrition 19.52
-  action economy/turn: cards 3.05 · unspent Energy 0.03 (66951 playerTurnStart / 49853 playerTurnEnd receipts)
-  Starstone decisions: charges gained 7.39/combat · opportunity turns 44891 · eligible decision points 73901
-  charge conversion: 69199/73901 = 93.6% · stranded at turn end 46107 · charged priority changed 55069 selections
-  charged outcome receipts: damage 44962 · block/Weak 9100 · Frost/Vulnerable 5871 · draw/Energy 9929
-  act1 deaths 108/1000: by floor f2×1 f3×1 f4×2 f5×12 f6×16 f8×16 f9×17 f10×15 f11×16 f13×12 — mean hp entering the fatal fight 32.1%
-  act1 killers: elite:eliteWyrm×62  boss:bossOmen×12  normal:packHunt×10  normal:patrol×8
+  deaths by act: act1×107 act2×509 act3×173  by pool: boss×387 normal×215 elite×177 ambush×10
+  top killers: boss:a2_bossStitchedKing×257  boss:a3_bossRotValkyrie×118  elite:a2_eliteDuelist×104  elite:eliteWyrm×61  normal:a2_procession×50
+  dmg/combat dealt 68.0 taken 22.0  kit: starstoneCharge 7.38/combat
+  bleed economy: applied 2.35 pts/combat → fills 0.213/combat, effect dmg 4.55/combat (≈bursts for Reaver, ≈DoT ticks for Herald) — stranded 0.92 pts/combat = 39.3% of all applied bleed never burst
+  stagger windows: 0.66/run — converted 0/657 (0.0%), expired unused 23, enemy died mid-window 633
+  hp economy/combat: self-tax 2.32 · healed 4.83 · net attrition 19.51
+  action economy/turn: cards 3.04 · unspent Energy 0.03 (67031 playerTurnStart / 49888 playerTurnEnd receipts)
+  Starstone decisions: charges gained 7.38/combat · opportunity turns 44975 · eligible decision points 73975
+  charge conversion: 69319/73975 = 93.7% · stranded at turn end 46147 · charged priority changed 55126 selections
+  charged outcome receipts: damage 45017 · block/Weak 9074 · Frost/Vulnerable 5937 · draw/Energy 9950
+  act1 deaths 107/1000: by floor f2×1 f3×1 f4×2 f5×12 f6×16 f8×16 f9×17 f10×15 f11×15 f13×12 — mean hp entering the fatal fight 32.1%
+  act1 killers: elite:eliteWyrm×61  boss:bossOmen×12  normal:packHunt×10  normal:patrol×8
   act1 mean hp%% after each fight floor: f1 84% · f2 73% · f3 70% · f4 66% · f5 60% · f6 58% · f8 59% · f9 59% · f10 59% · f11 59% · f13 52%
 
 Herald    wins 568/1000 = 56.8%  Wilson95 [53.7%, 59.8%]
@@ -45,9 +45,9 @@ pairwise two-proportion tests (pooled z, two-sided):
 
 starseerkit scope + paired-seed control:
   Reaver + Herald complete rows: IDENTICAL 1000/1000 seeds each
-  Starseer greedy → kit: improved 150 · regressed 32 · unchanged win 61 · unchanged loss 757
-  charge conversion greedy 44.3% → kit 93.6% = +49.3 percentage points
-  exact McNemar p = 1.8176e-19 (182 discordant paired seeds)
+  Starseer greedy → kit: improved 149 · regressed 31 · unchanged win 62 · unchanged loss 758
+  charge conversion greedy 44.3% → kit 93.7% = +49.4 percentage points
+  exact McNemar p = 1.0525e-19 (180 discordant paired seeds)
   qualification: QUALIFIED — n=1000, scope identity, and +10 point conversion threshold all pass.
 
 what this run did NOT check (SPEC §8 clause 5):
