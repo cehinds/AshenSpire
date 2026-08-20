@@ -65,7 +65,7 @@ import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
@@ -113,6 +113,9 @@ const STAR_MUTATIONS = {
   starOutcomes: 'charged outcome-family receipts are ignored',
   starLethalOutcome: 'a lethal unconditional hit is allowed to impersonate a skipped charged branch',
   starLethalTarget: 'a later low-HP enemy is allowed to force a lethal pick against the wrong target',
+  starStampedTrace: 'the selected hand instance is stripped before its charged effect is traced',
+  starLethalUnderestimate: 'authored damage ignores stamped card and player modifiers that make the live hit lethal',
+  starLethalOverestimate: 'authored damage ignores target modifiers and Block that keep the live target alive',
   starControlOutcome: 'charged Frost/Vulnerable outcomes are omitted from conversion receipts',
   starDelayedIntent: 'a delayed attack is treated as incoming on its charging turn',
 };
@@ -243,6 +246,35 @@ const numericDamage = (def) => (def.effects || []).reduce((sum, e) => {
   if (predContainsCharge(e.if) && predWithCharge(e.if) === false) return sum;
   return sum + e.amount * (typeof e.hits === 'number' ? e.hits : 1);
 }, 0);
+const resolvedHandDef = (hand) => resolveCard(REG, MUTATE === 'starStampedTrace'
+  ? { cardId: hand.cardId, upgraded: hand.upgraded }
+  : hand);
+
+// Lethal means HP actually removed from the exact entity botFight will aim at,
+// not authored numbers on the card row. previewCard is the engine's shared
+// damage authority: it resolves this stamped hand instance (mods/profile and
+// damage carrier), player adds/multipliers, target multipliers/resistance and
+// per-target AoE values. Block is then consumed across the same ordered hits.
+// Starseer damage predicates are charge gates; this picker reaches the helper
+// only while charge is live, so the false branch is excluded exactly.
+function resolvedLiveHpLoss(combat, hand, def, target) {
+  if (!hand || !target || !target.alive) return 0;
+  const preview = previewCard(combat, hand.instanceId, target.id);
+  let resolvedDamage = 0;
+  for (let index = 0; index < (def.effects || []).length; index++) {
+    const effect = def.effects[index];
+    if (effect.op !== 'damage' || !['enemy', 'allEnemies'].includes(effect.target)) continue;
+    if (predContainsCharge(effect.if) && predWithCharge(effect.if) === false) continue;
+    const row = preview.values[index];
+    if (!row) continue;
+    const perHit = row.perTarget && Number.isFinite(row.perTarget[target.id])
+      ? row.perTarget[target.id]
+      : row.value;
+    if (!Number.isFinite(perHit)) continue;
+    resolvedDamage += perHit * (Number.isFinite(row.hits) ? row.hits : 1);
+  }
+  return Math.min(target.hp, Math.max(0, resolvedDamage - Math.max(0, target.block || 0)));
+}
 const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
 const incomingDamage = (combat) => combat.enemies.reduce((sum, enemy) => {
   if (!enemy.alive) return sum;
@@ -279,7 +311,7 @@ const persistentStarstonePower = (def) => {
 
 function starseerkitPick(combat, affordable, dispatchTarget = combat.enemies.find((enemy) => enemy.alive)) {
   if (combat.player.classId !== 'starseer') return affordable[0];
-  const defs = affordable.map((h) => ({ h, def: resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }) }));
+  const defs = affordable.map((h) => ({ h, def: resolvedHandDef(h) }));
   const incoming = incomingDamage(combat);
   const protectedNow = combat.player.block >= incoming;
   const stableCheapest = (rows) => rows.slice().sort((a, b) => cardCost(a.def) - cardCost(b.def))[0];
@@ -300,9 +332,18 @@ function starseerkitPick(combat, affordable, dispatchTarget = combat.enemies.fin
       // Lethality is about the exact entity botFight will dispatch to. A later
       // low-HP enemy must not force an early return for a card that is nonlethal
       // against the first living (authoritative) target.
-      const lethal = followups.find(({ def }) => def.type === 'attack' && (MUTATE === 'starLethalTarget'
-        ? combat.enemies.some((enemy) => enemy.alive && numericDamage(def) >= enemy.hp)
-        : dispatchTarget && numericDamage(def) >= dispatchTarget.hp));
+      const lethal = followups.find(({ h, def }) => {
+        if (def.type !== 'attack') return false;
+        if (MUTATE === 'starLethalTarget') {
+          return combat.enemies.some((enemy) => enemy.alive
+            && resolvedLiveHpLoss(combat, h, def, enemy) >= enemy.hp);
+        }
+        if (!dispatchTarget) return false;
+        if (['starLethalUnderestimate', 'starLethalOverestimate'].includes(MUTATE)) {
+          return numericDamage(def) >= dispatchTarget.hp;
+        }
+        return resolvedLiveHpLoss(combat, h, def, dispatchTarget) >= dispatchTarget.hp;
+      });
       if (lethal) return lethal.h;
       if (!protectedNow) {
         const defense = stableCheapest(followups.filter(({ def }) => conditionalFamilies(def).has('defense')));
@@ -502,13 +543,13 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
       }
     }
     const affordable = combat.piles.hand.filter((h) => {
-      const def = resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded });
+      const def = resolvedHandDef(h);
       if ((def.keywords || []).includes('unplayable')) return false;
       return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
     });
     const chargedAtDecision = run.class === 'starseer' && hasStatus(combat.player, 'starstoneCharge');
     const eligible = chargedAtDecision
-      ? affordable.filter((h) => chargedEffects(resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded })).length > 0)
+      ? affordable.filter((h) => chargedEffects(resolvedHandDef(h)).length > 0)
       : [];
     // One authoritative target feeds both policy scoring and dispatch. Keeping
     // these as the same object prevents a multi-enemy lethal check from naming
@@ -523,7 +564,7 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     } else { // random
       card = affordable.length ? affordable[Math.floor(pickRandom() * affordable.length)] : undefined;
     }
-    const selectedDef = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
+    const selectedDef = card ? resolvedHandDef(card) : null;
     if (policy === 'starseerkit' && chargedAtDecision && card && affordable[0]
         && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges++;
     const eventStart = combat.eventLog.length;
@@ -897,7 +938,9 @@ function fixtureCombat(cardIds, { charge = true, enemyIds = ['fellWarden'] } = {
   const seed = 0x205;
   const run = createRunState({ seed, classId: 'starseer', registries: REG });
   run._id = createIdGen('fixture');
-  run.deck = cardIds.map((cardId, index) => ({ instanceId: `fixture${index + 1}`, cardId, upgraded: false }));
+  run.deck = cardIds.map((card, index) => (typeof card === 'string'
+    ? { instanceId: `fixture${index + 1}`, cardId: card, upgraded: false }
+    : { instanceId: `fixture${index + 1}`, upgraded: false, ...card }));
   return createCombat({
     registries: REG,
     rng: createRng(seed),
@@ -915,13 +958,15 @@ function fixtureCombat(cardIds, { charge = true, enemyIds = ['fellWarden'] } = {
   });
 }
 
-function realStarOutcomeFixture(cardId, { enemyHp = 120, mutation = null } = {}) {
+function realStarOutcomeFixture(cardId, { enemyHp = 120, mutation = null, stamped = false } = {}) {
   MUTATE = mutation;
-  const combat = fixtureCombat([cardId]);
+  const combat = fixtureCombat([stamped
+    ? { cardId, mods: ['potency=+1'], damageSchool: 'magic', exposureBuildupPerHit: 1 }
+    : cardId]);
   const card = combat.piles.hand.find((entry) => entry.cardId === cardId);
   const enemy = combat.enemies.find((entry) => entry.alive);
   enemy.hp = enemyHp;
-  const def = resolveCard(REG, { cardId, upgraded: false });
+  const def = resolvedHandDef(card);
   const start = combat.eventLog.length;
   const trace = traceCardDispatch(combat, def, card.instanceId,
     () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id }));
@@ -963,6 +1008,33 @@ function multiEnemyLethalFixture(mutation = null, hp = [120, 20]) {
     firstEnemyId: combat.enemies[0].id,
     targetHp: target.hp,
     laterHp: combat.enemies[1].hp,
+  };
+}
+
+function liveLethalFixture(kind, mutation = null) {
+  MUTATE = mutation;
+  const positive = kind === 'positive';
+  const cards = positive
+    ? [
+        'shootingShard',
+        { cardId: 'starstonePebble', mods: ['potency=+1'], damageSchool: 'magic', exposureBuildupPerHit: 1 },
+      ]
+    : ['celestialLance', 'shootingShard'];
+  const combat = fixtureCombat(cards);
+  const enemy = combat.enemies[0];
+  enemy.hp = positive ? 12 : 20;
+  enemy.block = positive ? 0 : 5;
+  const ordered = positive
+    ? ['shootingShard', 'starstonePebble']
+    : ['celestialLance', 'shootingShard'];
+  const affordable = ordered.map((cardId) => combat.piles.hand.find((card) => card.cardId === cardId));
+  const chosen = starseerkitPick(combat, affordable, enemy);
+  const chosenDef = resolvedHandDef(chosen);
+  return {
+    chosen: chosen.cardId,
+    hpLoss: resolvedLiveHpLoss(combat, chosen, chosenDef, enemy),
+    targetHp: enemy.hp,
+    targetBlock: enemy.block,
   };
 }
 
@@ -1043,6 +1115,15 @@ if (SELFTEST) {
     console.log(`  starControlOutcome NOT CAUGHT ✘ — clean frost/arc ${frostClean.stats.starFollowups}/${arcClean.stats.starFollowups}, plant ${frostPlant.stats.starFollowups}/${arcPlant.stats.starFollowups}`);
     failures++;
   }
+  const stampedClean = realStarOutcomeFixture('starstonePebble', { stamped: true });
+  const stampedPlant = realStarOutcomeFixture('starstonePebble', { stamped: true, mutation: 'starStampedTrace' });
+  if (stampedClean.stats.starFollowups === 1 && stampedClean.stats.starOutcomes.damage === 1
+      && stampedPlant.stats.starFollowups === 0) {
+    console.log('  starStampedTrace caught ✔ — the full stamped Pebble effect owns its charged execution receipt');
+  } else {
+    console.log(`  starStampedTrace NOT CAUGHT ✘ — clean/plant ${stampedClean.stats.starFollowups}/${stampedPlant.stats.starFollowups}`);
+    failures++;
+  }
 
   console.log('\n  Starseer delayed-intent policy (real Held Blade intent state):');
   const delayedClean = delayedIntentFixture(null);
@@ -1064,6 +1145,26 @@ if (SELFTEST) {
     console.log('  starLethalTarget caught ✔ — later low HP cannot force lethal; changing the dispatched target changes the pick');
   } else {
     console.log(`  starLethalTarget NOT CAUGHT ✘ — clean/plant/retarget ${targetClean.chosen}/${targetPlant.chosen}/${targetChanged.chosen}`);
+    failures++;
+  }
+
+  console.log('\n  Starseer resolved live lethal scoring (stamped card/player/target/Block state):');
+  const livePositive = liveLethalFixture('positive');
+  const rawUnder = liveLethalFixture('positive', 'starLethalUnderestimate');
+  if (livePositive.chosen === 'starstonePebble' && livePositive.hpLoss === 12
+      && rawUnder.chosen === 'shootingShard') {
+    console.log('  starLethalUnderestimate caught ✔ — stamped Pebble + player magic is lethal at 12 HP; authored sum misses it');
+  } else {
+    console.log(`  starLethalUnderestimate NOT CAUGHT ✘ — clean/plant ${livePositive.chosen}/${rawUnder.chosen}, live loss ${livePositive.hpLoss}`);
+    failures++;
+  }
+  const liveNegative = liveLethalFixture('negative');
+  const rawOver = liveLethalFixture('negative', 'starLethalOverestimate');
+  if (liveNegative.chosen === 'shootingShard' && liveNegative.hpLoss < liveNegative.targetHp
+      && rawOver.chosen === 'celestialLance') {
+    console.log('  starLethalOverestimate caught ✔ — target Block keeps the authored 22 nonlethal; raw sum falsely picks Lance');
+  } else {
+    console.log(`  starLethalOverestimate NOT CAUGHT ✘ — clean/plant ${liveNegative.chosen}/${rawOver.chosen}, live loss ${liveNegative.hpLoss}/${liveNegative.targetHp}`);
     failures++;
   }
 
