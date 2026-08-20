@@ -60,6 +60,28 @@ function regexMayStartAfterTokens(tokens) {
   return false;
 }
 
+function declarationContextAt(tokens, keywordIndex) {
+  let contextIndex = keywordIndex - 1;
+  if (tokens[keywordIndex]?.value === 'function' && tokens[contextIndex]?.value === 'async') contextIndex--;
+  const context = tokens[contextIndex];
+  return !context || context.value === ';' || context.value === '{' || context.blockClose === 'statement' ||
+    ['export', 'default'].includes(context.value);
+}
+
+function headerKeywordBefore(tokens, keyword, before = tokens.length) {
+  const stack = [];
+  const opening = { ')': '(', ']': '[', '}': '{' };
+  for (let i = before - 1; i >= 0; i--) {
+    const value = tokens[i].value;
+    if (opening[value]) { stack.push(opening[value]); continue; }
+    if (value === stack.at(-1)) { stack.pop(); continue; }
+    if (stack.length > 0) continue;
+    if (value === keyword) return i;
+    if ([';', '{', '}'].includes(value)) return -1;
+  }
+  return -1;
+}
+
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -167,7 +189,8 @@ function blockKind(tokens) {
   const previous = tokens.at(-1);
   if (!previous || previous.value === ';' || previous.blockClose === 'statement') return 'statement';
   if (['else', 'try', 'finally', 'do'].includes(previous.value)) return 'statement';
-  if (tokens.at(-2)?.value === 'class' || tokens.at(-3)?.value === 'class') return 'statement';
+  const classIndex = headerKeywordBefore(tokens, 'class');
+  if (classIndex >= 0) return declarationContextAt(tokens, classIndex) ? 'statement' : 'expression';
   if (previous.value === '=>') return 'expression';
   if (previous.value !== ')') return 'expression';
   const open = findOpenBackward(tokens, tokens.length - 1);
@@ -177,10 +200,7 @@ function blockKind(tokens) {
   if (tokens[functionIndex]?.type === 'identifier') functionIndex--;
   if (tokens[functionIndex]?.value === '*') functionIndex--;
   if (tokens[functionIndex]?.value === 'function') {
-    const contextIndex = tokens[functionIndex - 1]?.value === 'async' ? functionIndex - 2 : functionIndex - 1;
-    const context = tokens[contextIndex];
-    return !context || context.value === ';' || context.value === '{' || context.blockClose === 'statement' ||
-      ['export', 'default'].includes(context.value) ? 'statement' : 'expression';
+    return declarationContextAt(tokens, functionIndex) ? 'statement' : 'expression';
   }
   return 'statement';
 }
@@ -583,10 +603,18 @@ function parameterScopes(tokens) {
   const keyIndexes = new Set();
   const assignmentIndexes = new Set();
   const expressionRanges = [];
-  const register = (open, close, brace = -1, expressionStart = -1, functionScope = false) => {
+  const privateNameIndexes = new Set();
+  const declarationNameIndexes = new Set();
+  const register = (open, close, brace = -1, expressionStart = -1, functionScope = false, privateNameIndex = -1) => {
     if (open < 0 || close < open) return;
     const binding = bindingIndexes(tokens, open + (tokens[open]?.value === '(' ? 1 : 0), close);
     const names = new Set([...binding.indexes].map((index) => tokens[index].value));
+    if (privateNameIndex >= 0) {
+      const privateName = tokens[privateNameIndex].value;
+      names.add(privateName);
+      privateNameIndexes.add(privateNameIndex);
+      if (brace >= 0 && open !== brace) expressionRanges.push({ start: open + 1, end: brace, names: new Set([privateName]) });
+    }
     for (const index of binding.indexes) parameterIndexes.add(index);
     for (const index of binding.keys) keyIndexes.add(index);
     for (let i = open + (tokens[open]?.value === '(' ? 1 : 0); i < close; i++) {
@@ -609,6 +637,17 @@ function parameterScopes(tokens) {
     let open = -1;
     let close = -1;
     let functionScope = false;
+    let privateNameIndex = -1;
+    const classIndex = headerKeywordBefore(tokens, 'class', brace);
+    if (classIndex >= 0) {
+      const nameIndex = tokens[classIndex + 1]?.type === 'identifier' ? classIndex + 1 : -1;
+      if (nameIndex >= 0) {
+        if (declarationContextAt(tokens, classIndex)) declarationNameIndexes.add(nameIndex);
+        else privateNameIndex = nameIndex;
+      }
+      register(brace, brace, brace, -1, false, privateNameIndex);
+      continue;
+    }
     if (tokens[brace - 1]?.value === '=>') {
       functionScope = true;
       close = brace - 2;
@@ -625,9 +664,13 @@ function parameterScopes(tokens) {
       const catchKeyword = before?.value === 'catch';
       const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before.value);
       functionScope = functionKeyword || methodShape;
+      if (functionKeyword && tokens[open - 1]?.type === 'identifier') {
+        if (declarationContextAt(tokens, functionIndex)) declarationNameIndexes.add(open - 1);
+        else privateNameIndex = open - 1;
+      }
       if (!functionKeyword && !catchKeyword && !methodShape) open = -1;
     }
-    register(open, close + (open === close && tokens[open]?.value !== '(' ? 1 : 0), brace, -1, functionScope);
+    register(open, close + (open === close && tokens[open]?.value !== '(' ? 1 : 0), brace, -1, functionScope, privateNameIndex);
   }
   for (let arrow = 0; arrow < tokens.length; arrow++) {
     if (tokens[arrow].value !== '=>' || tokens[arrow + 1]?.value === '{') continue;
@@ -635,7 +678,7 @@ function parameterScopes(tokens) {
     const open = tokens[close]?.value === ')' ? findOpenBackward(tokens, close) : close;
     register(open, close + (open === close ? 1 : 0), -1, arrow + 1);
   }
-  return { atBrace, functionBraces, parameterIndexes, keyIndexes, assignmentIndexes, expressionRanges };
+  return { atBrace, functionBraces, parameterIndexes, keyIndexes, assignmentIndexes, expressionRanges, privateNameIndexes, declarationNameIndexes };
 }
 
 function findUrlExpressions(tokens, errors) {
@@ -903,6 +946,11 @@ function findPathnameMisuses(tokens, errors) {
     if (token.type !== 'identifier') continue;
     if (loopIterableAliases.has(i) || assignmentRhsAliases.has(i) ||
         loops.ranges.some((range) => range.bindingIndexes.has(i))) continue;
+    if (parameters.privateNameIndexes.has(i)) continue;
+    if (parameters.declarationNameIndexes.has(i)) {
+      setAlias(token.value, false, 'lexical');
+      continue;
+    }
     if (['function', 'class'].includes(tokens[i - 1]?.value)) {
       setAlias(token.value, false, 'lexical');
       continue;
@@ -1181,6 +1229,18 @@ function selftest() {
     ['async function expression parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const f=async function(u){return u.pathname};fileURLToPath(u)", 0, 0, 0],
     ['async arrow parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const f=async(u)=>u.pathname;fileURLToPath(u)", 0, 0, 0],
     ['object async method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const obj={async f(u){return u.pathname}};fileURLToPath(u)", 0, 0, 0],
+    ['named function expression preserves outer alias', "const u=new URL('./x',import.meta.url);const f=function u(){};u.pathname", 1, 0, 0],
+    ['named class expression preserves outer alias', "const u=new URL('./x',import.meta.url);const C=class u{};u.pathname", 1, 0, 0],
+    ['named function expression private body is clean', "const f=function u(){return u.pathname}", 0, 0, 0],
+    ['named function expression private default is clean', "const f=function u(x=u.pathname){}", 0, 0, 0],
+    ['named class expression private body is clean', "const C=class u{static x=u.pathname}", 0, 0, 0],
+    ['named async function expression preserves outer alias', "const u=new URL('./x',import.meta.url);const f=async function u(){};u.pathname", 1, 0, 0],
+    ['named generator expression preserves outer alias', "const u=new URL('./x',import.meta.url);const f=function* u(){};u.pathname", 1, 0, 0],
+    ['named async generator expression preserves outer alias', "const u=new URL('./x',import.meta.url);const f=async function* u(){};u.pathname", 1, 0, 0],
+    ['anonymous function expression creates no synthetic name', "const u=new URL('./x',import.meta.url);const f=function(){return u.origin};u.pathname", 1, 0, 0],
+    ['anonymous class expression creates no synthetic name', "const u=new URL('./x',import.meta.url);const C=class{static x=u.origin};u.pathname", 1, 0, 0],
+    ['function declaration binds its block scope', "const u=new URL('./x',import.meta.url);{function u(){}u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['class declaration binds its block scope', "const u=new URL('./x',import.meta.url);{class u{}u.pathname}fileURLToPath(u)", 0, 0, 0],
     ['conditional URL then platform preserves alias', "let u;if(ok)u=new URL('./x',import.meta.url);else u=platformValue;u.pathname", 1, 0, 0],
     ['conditional platform then URL preserves alias', "let u;if(ok)u=platformValue;else u=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
     ['unconditional platform reassignment clears alias', "let u=new URL('./x',import.meta.url);u=platformValue;u.pathname", 0, 0, 0],
