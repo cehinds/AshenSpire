@@ -77,7 +77,7 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -105,8 +105,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the strip is pinned back over the topbar, where he found it',
         edits: [{
           file: 'styles/ui.css',
-          find: '.hint-bar.hint-combat {\n  position: static; top: auto; bottom: auto; transform: none;',
-          replace: '.hint-bar.hint-combat {\n  position: fixed; top: 5.8rem; bottom: auto; transform: translateX(-50%);',
+          find: '  position: static; top: auto; bottom: auto; transform: none;',
+          replace: '  position: fixed; top: 5.8rem; bottom: auto; transform: translateX(-50%);',
         }],
         expectRed: /BAD\s+H2 /,
       },
@@ -117,8 +117,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the strip is at the bottom but pinned, so it reserves nothing and the cards lie on it',
         edits: [{
           file: 'styles/ui.css',
-          find: '.hint-bar.hint-combat {\n  position: static; top: auto; bottom: auto; transform: none;',
-          replace: '.hint-bar.hint-combat {\n  position: fixed; top: auto; bottom: 0.6rem; transform: translateX(-50%);',
+          find: '  position: static; top: auto; bottom: auto; transform: none;',
+          replace: '  position: fixed; top: auto; bottom: 0.6rem; transform: translateX(-50%);',
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -140,8 +140,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the strip clips instead of wrapping, so a wide rebound label disappears',
         edits: [{
           file: 'styles/ui.css',
-          find: '  flex-wrap: wrap; justify-content: center; row-gap: 0.4rem;\n  white-space: normal; overflow: visible;',
-          replace: '  justify-content: center;\n  white-space: nowrap; overflow: hidden;',
+          find: '  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;',
+          replace: '  align-self: center; margin: 0 auto 0.6rem; max-width: 20rem; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -365,7 +365,7 @@ function judge(r, cell, wide) {
 }
 
 async function main() {
-  const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
+  const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')));
   const s = await serve({ root: ROOT, port: 8352, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`hintstrip — ${base} (root ${ROOT})`);
