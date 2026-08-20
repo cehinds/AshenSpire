@@ -2,8 +2,9 @@
 
 ## Provenance and boundary
 
-- Exact source ref: `6730e61b67c2dd80ad7685e57d1f78b4e5641017` (`dev` at the start of the run).
-- Repository build receipt: `0.4.0.0850`, source identity `133f36b5af` (`buildordinal.json`). The simulator imports source modules at the exact ref; it does not execute the shipped HTML.
+- Exact game-source base: `ec4933ae12e373352cf880fd5e810a4f248fe6c4` (tree `feff2203ac3bbad58d624595407fa682d1506721`, live `dev` after PR #217).
+- Exact measurement-tree basis: `94526c2c6a18c15d71e95658a845b73cad9fa3ad` (tree `64b64f98617de317d3f5b4ebb7c49033c96b0e05`). Its only paths beyond `dev` are `tools/measure-classes.mjs` and this eight-file `tools/results/starseerkit-*` packet; product source is byte-identical to `dev`.
+- Carried standalone receipt: `0.4.0.0850`, source identity `133f36b5af` (`buildordinal.json`). It is deliberately not regenerated or used by this headless measurement; the simulator imports source modules, and #205 owns no root/build/dist/buildordinal artifacts.
 - Runtime: Node `v24.16.0`.
 - Runs: `n=1000` per class and policy, deterministic seeds `(i*2654435761)>>>0`, `i=1..1000`.
 - Boundary: these are naive-bot floor measurements. They do not measure experienced-player win rate and authorize no class, card, encounter, or balance-value change.

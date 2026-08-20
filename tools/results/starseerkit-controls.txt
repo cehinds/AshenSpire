@@ -16,7 +16,6 @@ what this check did NOT check (SPEC §8 clause 5):
   · not the game: no balance claim, no spec band, no statement about a human pilot.
   · not the counters — the per-class kit/bleed/stagger tallies this tool adds over
     runsim have no runsim counterpart, so agreement here leaves them unverified.
-
 measure-classes --selftest — 16 planted drifts at n=30, each must be CAUGHT
 
 derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
