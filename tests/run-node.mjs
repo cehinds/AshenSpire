@@ -664,9 +664,10 @@ console.log('          reaches max HP by one road with one answer at creation an
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
-console.log('          58–59 guard two direct URL/path conversion shapes in tools/ and tests/:');
-console.log('          interpolated/concatenated file:// strings and direct .pathname reads');
-console.log('          from a URL based on import.meta.url. They prove both required fixtures');
-console.log('          fail from a spaced working directory; they do not prove every use of');
-console.log('          pathToFileURL/fileURLToPath chooses the semantically correct path.');
+console.log('          58–59 guard module URL/path conversion shapes in tools/ and tests/:');
+console.log('          actual dynamic file:// templates/concats and same-file static URL');
+console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
+console.log('          or bounded local-alias forms. Ambiguous lexical/alias flow fails closed.');
+console.log('          They prove both fixtures fail from a spaced working directory; they do');
+console.log('          not cover cross-module flow or platform-API semantic correctness.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
