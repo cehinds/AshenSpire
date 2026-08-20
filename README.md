@@ -4,11 +4,19 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 > **Status: feature-complete core loop.** Three classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
-## Current build
+## Play the current development build
 
-**Play the current reviewed development build:** download or open
-**[`AshenSpire.html`](AshenSpire.html)** from the repository root. It is a
-self-contained file: double-click it to play without installing dependencies.
+**[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
+
+That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
+from the default `dev` branch and follows the newest reviewed development build
+after GitHub Pages finishes deploying it. This is a **development preview**, not
+a release, tag, or production approval. Release status remains governed
+separately and is currently **RED**.
+
+For offline play, download [`AshenSpire.html`](AshenSpire.html) from the
+repository root and double-click it. It is a self-contained file and requires
+no installation.
 
 The root file is a discoverability alias for [`dist/AshenSpire.html`](dist/AshenSpire.html).
 Both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by
@@ -16,15 +24,17 @@ Both are generated from [`build/AshenSpire.html`](build/AshenSpire.html) by
 either copy differs from that build. The file is development evidence, not a
 release declaration; release status remains governed separately.
 
-## Preview
+## Current development screenshots
 
-![Combat](docs/preview/combat.png)
+These canonical images are captured from the exact `dev` tree by
+`node tools/screenshot.mjs`. Regenerate and review them whenever the development
+build changes; the visible build stamp ties each image to the tree that drew it.
 
-![Act map](docs/preview/map.png)
+| Title | Act map | Combat |
+|---|---|---|
+| [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
-More: the [title screen](docs/preview/title.png) and the three
-[class sprites](docs/preview/class-sprites.svg). Regenerate the screenshots any
-time with `node tools/screenshot.mjs` (uses your local Chrome/Edge headlessly).
+More: the three [class sprites](docs/preview/class-sprites.svg).
 
 ## Playing
 
