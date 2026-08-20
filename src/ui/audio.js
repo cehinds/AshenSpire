@@ -1,9 +1,10 @@
 // src/ui/audio.js — procedural WebAudio engine (SPEC §7.4 audio).
 //
-// Hybrid design (per product decision): every sound and music bed is SYNTHESIZED
-// in code today (zero assets, zero licensing), but each id also has a slot in a
-// manifest so a real .ogg/.mp3 can replace it later with no call-site change —
-// if `MANIFEST[id]` names a URL that loads, the sample plays instead of the synth.
+// Hybrid design (per product decision): every sound and music bed has a
+// synthesized fallback (zero required assets, zero licensing). SFX ids first
+// try assets/sfx/<id>.ogg, with SFX_MANIFEST reserved for explicit path/format
+// overrides. The triggering cue is always immediate: synth plays while an
+// unknown sample warms, and only a known-good cached sample replaces later cues.
 //
 // Wiring: `initAudio()` returns an engine; main.js sets `sfx.sink = engine.sfx`
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
@@ -13,6 +14,7 @@ import { balance } from '../content/balance.js';
 import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
+import { assetUrl } from './assetmap.js';
 
 // Default levels for a profile that has never touched the sliders — one source,
 // shared with ui/screens/settings.js.
@@ -126,12 +128,10 @@ export function initAudio(settings = {}) {
     // MUSIC IS DELIBERATELY NOT DROPPED — a bed that starts a beat late is a
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
-    const sample = own(SFX_MANIFEST, id);
-    if (sample) {
-      playSample(sample, sfxBus);
-      return;
-    }
+    const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
+    if (playCachedSample(sample, sfxBus)) return;
     synthSfx(id);
+    warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
@@ -447,27 +447,43 @@ export function initAudio(settings = {}) {
     }
   }
 
-  // ---- samples (manifest override path) ------------------------------------
-  async function loadSample(url) {
-    if (state.sampleCache.has(url)) return state.sampleCache.get(url);
-    try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('missing');
-      const buf = await ctx.decodeAudioData(await res.arrayBuffer());
-      state.sampleCache.set(url, buf);
-      return buf;
-    } catch (e) {
-      state.sampleCache.set(url, null); // remember the miss; fall back to synth
-      return null;
-    }
+  // ---- samples (filename convention + manifest overrides) -----------------
+  function warmSample(url) {
+    if (state.sampleCache.has(url)) return;
+    // A cache entry exists before fetch begins, so repeated cues share the warm
+    // without waiting for it. Their synth remains synchronous; this work never
+    // replays the event that started it.
+    const entry = { status: 'loading', buffer: null };
+    state.sampleCache.set(url, entry);
+    (async () => {
+      let res;
+      try {
+        res = await fetch(url);
+      } catch (error) {
+        entry.status = 'unavailable';
+        return;
+      }
+      if (!res.ok) {
+        entry.status = 'unavailable';
+        return;
+      }
+      try {
+        entry.buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+        entry.status = 'ready';
+      } catch (error) {
+        console.warn(`[audio] SFX sample '${url}' failed to decode — using synth fallback.`, error);
+        entry.status = 'unavailable';
+      }
+    })();
   }
-  async function playSample(url, bus) {
-    const buf = await loadSample(url);
-    if (!buf) return;
+  function playCachedSample(url, bus) {
+    const entry = state.sampleCache.get(url);
+    if (!entry || entry.status !== 'ready') return false;
     const src = ctx.createBufferSource();
-    src.buffer = buf;
+    src.buffer = entry.buffer;
     src.connect(bus);
     src.start();
+    return true;
   }
 
   // ---- settings applied live ----------------------------------------------

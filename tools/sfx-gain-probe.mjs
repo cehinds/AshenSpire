@@ -15,7 +15,7 @@
 //            probe goes red when a table value and the engine disagree (the
 //            instrument rule: a check nobody has watched fail is not green).
 //
-// THE DOORS, THREE OF THEM, AND TWO ARE DOWNSTREAM ON PURPOSE. Vira's doors
+// THE DOORS, FOUR OF THEM, AND TWO ARE DOWNSTREAM ON PURPOSE. Vira's doors
 // audit (2026-08-14) called this probe "DOWNSTREAM by declared choice, honestly
 // scoped": classes 1 and 2 below enter at the COMPARATOR — the expectation and
 // the measured pool — never at the recipe. For the defect they were written
@@ -38,6 +38,10 @@
 //                                about — "no copy, no clamp, no code in
 //                                between" — and until now nothing had ever
 //                                watched it fail.
+//   class 4  delayed procedural cue   a disposable copy moves synth scheduling
+//                                to a timer while the optional sample stalls.
+//                                Door: the triggering event. Every empty gain
+//                                pool must go red, never pass as a quiet recipe.
 //
 // Exit 0 = every recipe's peaks reached the gain nodes; 1 = any miss.
 // REMOVAL CONDITION: delete this probe when the synth SFX layer is removed in
@@ -49,6 +53,10 @@
 // record, why frequency params record nothing): tools/webaudio-stub.mjs.
 const { installWebAudioStub } = await import('./webaudio-stub.mjs');
 const gainTargets = installWebAudioStub();
+
+// Optional samples may never answer. A permanently stalled warm is the strict
+// control: every recipe peak still has to reach a gain node synchronously.
+globalThis.fetch = () => new Promise(() => {});
 
 const { initAudio } = await import('../src/ui/audio.js');
 const { SFX_RECIPES } = await import('../src/content/sfx.js');
@@ -127,13 +135,27 @@ if (selftest) {
 
   // ---- class 3: the recipe door ------------------------------------------
   const { spawnSync } = await import('node:child_process');
-  const { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync, existsSync } = await import('node:fs');
+  const { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, existsSync } = await import('node:fs');
   const { resolve, join, dirname } = await import('node:path');
   const { tmpdir } = await import('node:os');
   const { fileURLToPath } = await import('node:url');
 
   const HERE = dirname(fileURLToPath(import.meta.url));
   const TREE = resolve(HERE, '..');
+  const forceCrLfTree = (path) => {
+    const textExtensions = new Set(['.js', '.mjs']);
+    const visit = (entry) => {
+      for (const item of readdirSync(entry, { withFileTypes: true })) {
+        const absolute = resolve(entry, item.name);
+        if (item.isDirectory()) visit(absolute);
+        else if (textExtensions.has(item.name.slice(item.name.lastIndexOf('.')))) {
+          const text = readFileSync(absolute, 'utf8').replace(/\r?\n/g, '\n');
+          writeFileSync(absolute, text.replace(/\n/g, '\r\n'), 'utf8');
+        }
+      }
+    };
+    visit(path);
+  };
   // A clamp between the recipe's number and the gain node. This is the whole
   // defect class: a value that gets QUIETLY BOUNDED on its way to the node
   // still ships a table nobody can tune. 0.4 is chosen to catch the loud end
@@ -179,8 +201,78 @@ if (selftest) {
     console.error('  and it did not catch it. Treat every green from this tool as unknown.');
     process.exit(1);
   }
+  // ---- class 4: the triggering-event door --------------------------------
+  // Optional sample warming is allowed to stall forever; procedural feedback
+  // is not. Move synth scheduling behind a timer in a disposable copy and
+  // require the synchronous gain inspection to go red.
+  const SYNC_FROM = '    synthSfx(id);';
+  const SYNC_TO = '    setTimeout(() => synthSfx(id), 0);';
+  const syncDir = mkdtempSync(join(tmpdir(), 'sfx-gain-sync-kb-'));
+  for (const d of ['src', 'tools']) {
+    if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(syncDir, d), { recursive: true });
+  }
+  const syncEngine = resolve(syncDir, 'src/ui/audio.js');
+  const syncSrc = readFileSync(syncEngine, 'utf8');
+  const syncAt = syncSrc.indexOf(SYNC_FROM);
+  if (syncAt < 0 || syncSrc.indexOf(SYNC_FROM, syncAt + 1) >= 0) {
+    console.error(`RESULT: selftest FAILED — class 4's triggering-event plant found ${syncAt < 0 ? 'NO' : 'MORE THAN ONE'} home.`);
+    try { rmSync(syncDir, { recursive: true, force: true }); } catch { /* tmp */ }
+    process.exit(1);
+  }
+  writeFileSync(syncEngine, syncSrc.slice(0, syncAt) + SYNC_TO + syncSrc.slice(syncAt + SYNC_FROM.length), 'utf8');
+  const syncRun = spawnSync(process.execPath, [resolve(syncDir, 'tools/sfx-gain-probe.mjs')], { encoding: 'utf8' });
+  const syncOut = (syncRun.stdout || '') + (syncRun.stderr || '');
+  const syncMisses = syncOut.split('\n').filter((line) => /^MISS /.test(line));
+  try { rmSync(syncDir, { recursive: true, force: true }); } catch { /* tmp */ }
+  if (syncRun.status !== 1 || syncMisses.length === 0) {
+    console.error('RESULT: selftest FAILED — class 4 did not catch a delayed procedural cue.');
+    process.exit(1);
+  }
+  console.log('\n  class 4 — THE TRIGGERING-EVENT DOOR: delaying synth while sample warming stalls');
+  console.log(`    exited ${syncRun.status} with ${syncMisses.length} MISS line(s).`);
+
+  if (!process.argv.includes('--skip-eol-selftest')) {
+    const crlfDir = mkdtempSync(join(tmpdir(), 'sfx-gain-crlf-'));
+    try {
+      for (const d of ['src', 'tools']) {
+        if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(crlfDir, d), { recursive: true });
+      }
+      forceCrLfTree(crlfDir);
+      const crlfTool = resolve(crlfDir, 'tools/sfx-gain-probe.mjs');
+      const control = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      });
+      if (control.status !== 0 || !/RESULT: selftest held/.test(control.stdout || '')) {
+        console.error(`RESULT: selftest FAILED — forced-CRLF source control exited ${control.status}.`);
+        process.exit(1);
+      }
+      console.log('\n  EOL control — forced-CRLF source copy keeps all gain plants green.');
+
+      const toolText = readFileSync(crlfTool, 'utf8');
+      const currentAnchor = "  const SYNC_FROM = '    synth" + "Sfx(id);';";
+      const staleAnchor = "  const SYNC_FROM = '    synthSfx(id);\\n    warmSample(sample);';";
+      const anchorAt = toolText.indexOf(currentAnchor);
+      if (anchorAt < 0 || toolText.indexOf(currentAnchor, anchorAt + 1) >= 0) {
+        console.error('RESULT: selftest FAILED — stale-LF-only anchor plant has no exact tool home.');
+        process.exit(1);
+      }
+      writeFileSync(crlfTool,
+        toolText.slice(0, anchorAt) + staleAnchor + toolText.slice(anchorAt + currentAnchor.length), 'utf8');
+      const stale = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      });
+      const staleOut = `${stale.stdout || ''}\n${stale.stderr || ''}`;
+      if (stale.status !== 1 || !/class 4's triggering-event plant found NO home/.test(staleOut)) {
+        console.error(`RESULT: selftest FAILED — stale LF-only anchor was not killed under forced CRLF (exit ${stale.status}).`);
+        process.exit(1);
+      }
+      console.log('  EOL plant — stale LF-only multiline class-4 anchor goes red under forced CRLF.');
+    } finally { rmSync(crlfDir, { recursive: true, force: true }); }
+  }
+
   console.log('\nRESULT: selftest held — comparator plants red (classes 1+2, downstream and SAID SO),');
-  console.log('  and a clamp planted in the real engine goes red through the real door (class 3).');
+  console.log('  a clamp planted in the real engine goes red through the real door (class 3),');
+  console.log('  and a delayed procedural cue goes red while the optional sample stalls (class 4).');
   console.log('  Boundary: the noise() path carries no plant of its own — class 3 clamps tone() only.');
   process.exit(0);
 }
