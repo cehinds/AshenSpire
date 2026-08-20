@@ -29,15 +29,16 @@
 //
 // Usage:  node tools/buildstamp-shot.mjs --selftest
 
-import { cpSync, mkdtempSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { resolve, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { resolve, join, dirname, win32 } from 'node:path';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { run } from './buildstamp-shot.mjs';
+import { INPUT_ROOTS, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
-const HERE = resolve(new URL('.', import.meta.url).pathname);
+const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
-const COPY = ['index.html', 'styles', 'src', 'assets', 'buildordinal.json'];
+const COPY = [...INPUT_ROOTS, 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 const css = (root, text) => appendFileSync(resolve(root, 'styles/ui.css'), `\n${text}\n`, 'utf8');
 const edit = (root, rel, fn) => {
@@ -88,9 +89,14 @@ const PLANTS = [
   },
 ];
 
-function fresh() {
+function fresh({ omit = new Set() } = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'buildstamp-known-bad-'));
-  for (const c of COPY) cpSync(resolve(REPO_ROOT, c), resolve(dir, c), { recursive: true });
+  for (const c of COPY) {
+    if (omit.has(c)) continue;
+    const dest = resolve(dir, c);
+    mkdirSync(dirname(dest), { recursive: true });
+    cpSync(resolve(REPO_ROOT, c), dest, { recursive: true });
+  }
   return dir;
 }
 
@@ -99,6 +105,46 @@ export async function selftest() {
   console.log('');
   let failures = 0;
   const outDir = mkdtempSync(join(tmpdir(), 'buildstamp-shots-'));
+
+  // The retired conversion fails two ways on Windows: it prefixes the drive
+  // with the current drive and leaves URL escapes encoded. Prove the platform
+  // API resolves both before relying on REPO_ROOT for any fixture copy.
+  {
+    const samplePath = 'C:\\repo with space\\tools\\fixture.mjs';
+    const sampleUrl = pathToFileURL(samplePath, { windows: true });
+    const expected = win32.dirname(samplePath);
+    const canonical = win32.dirname(fileURLToPath(sampleUrl, { windows: true }));
+    const handRolled = win32.resolve(new URL('.', sampleUrl).pathname);
+    if (canonical !== expected || handRolled === expected) {
+      console.log(`  FAIL  [Windows path] canonical=${canonical} retired=${handRolled} expected=${expected}`);
+      return 1;
+    }
+    console.log(`  RED   [Windows path] caught — retired conversion resolves ${handRolled}; platform API resolves ${canonical}`);
+  }
+
+  // The fixture list must remain joined to the production identity authority.
+  // Omitting one of those inputs must fail through run(), before a browser can
+  // paint a plausible stamp from an incomplete source identity.
+  {
+    const missing = BUILD_IDENTITY_FILES[0];
+    const root = fresh({ omit: new Set([missing]) });
+    try {
+      let caught = null;
+      try {
+        await run({ root, out: outDir, quiet: true });
+      } catch (error) {
+        caught = error;
+      }
+      const detail = String(caught?.message || caught || 'no error');
+      if (!caught || !detail.includes(`build identity input is missing: ${missing}`)) {
+        console.log(`  FAIL  [fixture omission] missing ${missing} did not fail by name — ${detail}`);
+        return 1;
+      }
+      console.log(`  RED   [fixture omission] caught — missing ${missing} fails by name`);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
 
   // The negative control. A gate that is red anyway catches everything below
   // and means nothing.
@@ -130,6 +176,24 @@ export async function selftest() {
       } else {
         console.log(`  RED   caught — ${p.name}`);
         console.log(`          ${hit.slice(0, 150)}`);
+      }
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+
+  // A final clean copy proves the omission control and six plants never leak a
+  // mutation into the fixture source or leave the instrument permanently red.
+  {
+    const root = fresh();
+    try {
+      const { misses, rows } = await run({ root, out: outDir, quiet: true });
+      if (misses.length) {
+        failures += 1;
+        console.log('  FAIL  [final clean] the untouched copy is RED after the plants:');
+        for (const m of misses) console.log(`          ${m}`);
+      } else {
+        console.log(`  ok    [final clean] the untouched copy photographs ${rows.length}/${rows.length} placements with ink`);
       }
     } finally {
       rmSync(root, { recursive: true, force: true });
