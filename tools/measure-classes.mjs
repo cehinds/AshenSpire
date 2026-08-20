@@ -112,6 +112,7 @@ const STAR_MUTATIONS = {
   starCards: 'cardPlayed receipts are ignored for cards-per-turn',
   starOutcomes: 'charged outcome-family receipts are ignored',
   starLethalOutcome: 'a lethal unconditional hit is allowed to impersonate a skipped charged branch',
+  starLethalTarget: 'a later low-HP enemy is allowed to force a lethal pick against the wrong target',
   starControlOutcome: 'charged Frost/Vulnerable outcomes are omitted from conversion receipts',
   starDelayedIntent: 'a delayed attack is treated as incoming on its charging turn',
 };
@@ -276,7 +277,7 @@ const persistentStarstonePower = (def) => {
   });
 };
 
-function starseerkitPick(combat, affordable) {
+function starseerkitPick(combat, affordable, dispatchTarget = combat.enemies.find((enemy) => enemy.alive)) {
   if (combat.player.classId !== 'starseer') return affordable[0];
   const defs = affordable.map((h) => ({ h, def: resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }) }));
   const incoming = incomingDamage(combat);
@@ -296,8 +297,12 @@ function starseerkitPick(combat, affordable) {
     // policy still exists, still establishes charge, and still falls back.
     if (MUTATE !== 'starseerFollowup') {
       const followups = defs.filter(({ def }) => chargedEffects(def).length > 0);
-      const lethal = followups.find(({ def }) => def.type === 'attack'
-        && combat.enemies.some((e) => e.alive && numericDamage(def) >= e.hp));
+      // Lethality is about the exact entity botFight will dispatch to. A later
+      // low-HP enemy must not force an early return for a card that is nonlethal
+      // against the first living (authoritative) target.
+      const lethal = followups.find(({ def }) => def.type === 'attack' && (MUTATE === 'starLethalTarget'
+        ? combat.enemies.some((enemy) => enemy.alive && numericDamage(def) >= enemy.hp)
+        : dispatchTarget && numericDamage(def) >= dispatchTarget.hp));
       if (lethal) return lethal.h;
       if (!protectedNow) {
         const defense = stableCheapest(followups.filter(({ def }) => conditionalFamilies(def).has('defense')));
@@ -505,16 +510,19 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     const eligible = chargedAtDecision
       ? affordable.filter((h) => chargedEffects(resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded })).length > 0)
       : [];
+    // One authoritative target feeds both policy scoring and dispatch. Keeping
+    // these as the same object prevents a multi-enemy lethal check from naming
+    // one enemy while the action lands on another.
+    const tgt = combat.enemies.find((e) => e.alive);
     let card;
     if (policy === 'greedy') card = affordable[0];
     else if (policy === 'reaverkit') card = affordable.length ? reaverkitPick(combat, affordable) : undefined;
-    else if (policy === 'starseerkit') card = affordable.length ? starseerkitPick(combat, affordable) : undefined;
+    else if (policy === 'starseerkit') card = affordable.length ? starseerkitPick(combat, affordable, tgt) : undefined;
     else if (policy === 'skillfirst') {
       card = affordable.find((h) => resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }).type !== 'attack') || affordable[0];
     } else { // random
       card = affordable.length ? affordable[Math.floor(pickRandom() * affordable.length)] : undefined;
     }
-    const tgt = combat.enemies.find((e) => e.alive);
     const selectedDef = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
     if (policy === 'starseerkit' && chargedAtDecision && card && affordable[0]
         && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges++;
@@ -885,7 +893,7 @@ function starCounterFixture(mutation = null) {
   return stats;
 }
 
-function fixtureCombat(cardIds, { charge = true } = {}) {
+function fixtureCombat(cardIds, { charge = true, enemyIds = ['fellWarden'] } = {}) {
   const seed = 0x205;
   const run = createRunState({ seed, classId: 'starseer', registries: REG });
   run._id = createIdGen('fixture');
@@ -902,7 +910,7 @@ function fixtureCombat(cardIds, { charge = true } = {}) {
       deck: run.deck, relicIds: run.relics, flasks: [], flaskCharges: run.flaskCharges,
       damageBySchoolAdd: run.damageBySchoolAdd,
     },
-    enemyIds: ['fellWarden'],
+    enemyIds,
     playerStatuses: charge ? [{ status: 'starstoneCharge', stacks: 1 }] : [],
   });
 }
@@ -938,6 +946,24 @@ function delayedIntentFixture(mutation = null) {
   enemy.intent = { ...enemy.intent, pending: true };
   const due = starseerkitPick(combat, combat.piles.hand).cardId;
   return { charging, due };
+}
+
+function multiEnemyLethalFixture(mutation = null, hp = [120, 20]) {
+  MUTATE = mutation;
+  const combat = fixtureCombat(['shootingShard', 'celestialLance'], {
+    enemyIds: ['fellWarden', 'fellWarden'],
+  });
+  combat.enemies[0].hp = hp[0];
+  combat.enemies[1].hp = hp[1];
+  const target = combat.enemies.find((enemy) => enemy.alive);
+  const chosen = starseerkitPick(combat, combat.piles.hand, target);
+  return {
+    chosen: chosen.cardId,
+    targetId: target.id,
+    firstEnemyId: combat.enemies[0].id,
+    targetHp: target.hp,
+    laterHp: combat.enemies[1].hp,
+  };
 }
 
 function checkBoundary(n) {
@@ -1026,6 +1052,18 @@ if (SELFTEST) {
     console.log('  starDelayedIntent caught ✔ — charging turn picks damage; due turn picks defense; old preview picks early defense');
   } else {
     console.log(`  starDelayedIntent NOT CAUGHT ✘ — clean ${delayedClean.charging}/${delayedClean.due}, plant ${delayedPlant.charging}/${delayedPlant.due}`);
+    failures++;
+  }
+
+  console.log('\n  Starseer multi-enemy lethal target (real ordered enemy state):');
+  const targetClean = multiEnemyLethalFixture(null);
+  const targetPlant = multiEnemyLethalFixture('starLethalTarget');
+  const targetChanged = multiEnemyLethalFixture(null, [20, 120]);
+  if (targetClean.targetId === targetClean.firstEnemyId && targetClean.chosen === 'shootingShard'
+      && targetPlant.chosen === 'celestialLance' && targetChanged.chosen === 'celestialLance') {
+    console.log('  starLethalTarget caught ✔ — later low HP cannot force lethal; changing the dispatched target changes the pick');
+  } else {
+    console.log(`  starLethalTarget NOT CAUGHT ✘ — clean/plant/retarget ${targetClean.chosen}/${targetPlant.chosen}/${targetChanged.chosen}`);
     failures++;
   }
 
