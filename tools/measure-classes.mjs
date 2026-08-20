@@ -66,6 +66,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
+import { emitEvent } from '../src/engine/triggers.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
@@ -116,6 +117,7 @@ const STAR_MUTATIONS = {
   starStampedTrace: 'the selected hand instance is stripped before its charged effect is traced',
   starLethalUnderestimate: 'authored damage ignores stamped card and player modifiers that make the live hit lethal',
   starLethalOverestimate: 'authored damage ignores target modifiers and Block that keep the live target alive',
+  starOrderedDispatch: 'static effect-row previews miss status amplification created earlier in the same card',
   starControlOutcome: 'charged Frost/Vulnerable outcomes are omitted from conversion receipts',
   starDelayedIntent: 'a delayed attack is treated as incoming on its charging turn',
 };
@@ -275,6 +277,38 @@ function resolvedLiveHpLoss(combat, hand, def, target) {
   }
   return Math.min(target.hp, Math.max(0, resolvedDamage - Math.max(0, target.block || 0)));
 }
+
+// A lethal decision must answer the same ordered question as playCard. A
+// static preview resolves every row from pre-play state, so it cannot see an
+// earlier effect applying Vulnerable before a later hit. Clone only mutable
+// combat state, give it an independent RNG at the exact same counters, rebind
+// the event/queue doors to the clone, and dispatch the exact hand instance at
+// the exact authoritative target. No product state, RNG counter, pile, log,
+// target or trace object is touched by this probe.
+function cloneCombatForOrderedProbe(combat) {
+  if (combat.queue.length || combat._buffer) throw new Error('ordered lethal probe requires a settled dispatch boundary');
+  const state = {};
+  for (const [key, value] of Object.entries(combat)) {
+    if (['registries', 'rng', 'emit', 'enqueue', 'nextInstanceId'].includes(key)) continue;
+    state[key] = key === 'eventLog' ? [] : value;
+  }
+  const probe = structuredClone(state);
+  probe.registries = combat.registries;
+  probe.rng = createRng(combat.rng.seed, combat.rng.getCounters());
+  probe.emit = (type, payload) => emitEvent(probe, type, payload);
+  probe.enqueue = (action) => probe.queue.push(action);
+  probe.nextInstanceId = () => `gen${++probe._idCounter}`;
+  return probe;
+}
+
+function orderedDispatchHpLoss(combat, hand, target) {
+  if (!hand || !target || !target.alive) return 0;
+  const probe = cloneCombatForOrderedProbe(combat);
+  const probeTarget = probe.enemies.find((enemy) => enemy.id === target.id);
+  const hpBefore = probeTarget.hp;
+  dispatch(probe, { type: 'playCard', cardInstanceId: hand.instanceId, targetId: probeTarget.id });
+  return Math.min(hpBefore, Math.max(0, hpBefore - probeTarget.hp));
+}
 const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
 const incomingDamage = (combat) => combat.enemies.reduce((sum, enemy) => {
   if (!enemy.alive) return sum;
@@ -336,13 +370,16 @@ function starseerkitPick(combat, affordable, dispatchTarget = combat.enemies.fin
         if (def.type !== 'attack') return false;
         if (MUTATE === 'starLethalTarget') {
           return combat.enemies.some((enemy) => enemy.alive
-            && resolvedLiveHpLoss(combat, h, def, enemy) >= enemy.hp);
+            && orderedDispatchHpLoss(combat, h, enemy) >= enemy.hp);
         }
         if (!dispatchTarget) return false;
         if (['starLethalUnderestimate', 'starLethalOverestimate'].includes(MUTATE)) {
           return numericDamage(def) >= dispatchTarget.hp;
         }
-        return resolvedLiveHpLoss(combat, h, def, dispatchTarget) >= dispatchTarget.hp;
+        const hpLoss = MUTATE === 'starOrderedDispatch'
+          ? resolvedLiveHpLoss(combat, h, def, dispatchTarget)
+          : orderedDispatchHpLoss(combat, h, dispatchTarget);
+        return hpLoss >= dispatchTarget.hp;
       });
       if (lethal) return lethal.h;
       if (!protectedNow) {
@@ -1034,13 +1071,37 @@ function liveLethalFixture(kind, mutation = null) {
     : ['celestialLance', 'shootingShard'];
   const affordable = ordered.map((cardId) => combat.piles.hand.find((card) => card.cardId === cardId));
   const chosen = starseerkitPick(combat, affordable, enemy);
-  const chosenDef = resolvedHandDef(chosen);
   return {
     chosen: chosen.cardId,
-    hpLoss: resolvedLiveHpLoss(combat, chosen, chosenDef, enemy),
+    hpLoss: orderedDispatchHpLoss(combat, chosen, enemy),
     targetHp: enemy.hp,
     targetBlock: enemy.block,
   };
+}
+
+function orderedLethalFixture(kind, mutation = null) {
+  MUTATE = mutation;
+  const radiant = { cardId: 'radiantSpray', damageSchool: 'magic', exposureBuildupPerHit: 1 };
+  const cards = kind === 'noAmplification'
+    ? ['shootingShard', 'crystalBarrier']
+    : [radiant, 'crystalBarrier'];
+  const combat = fixtureCombat(cards);
+  const enemy = combat.enemies[0];
+  enemy.hp = kind === 'noAmplification' ? 7 : 12;
+  enemy.block = kind === 'blocked' ? 1 : 0;
+  const ordered = cards.map((spec) => combat.piles.hand.find((card) => card.cardId === (typeof spec === 'string' ? spec : spec.cardId)));
+  const before = JSON.stringify({
+    player: combat.player, enemies: combat.enemies, piles: combat.piles,
+    triggerState: [...combat.triggerState], rng: combat.rng.getCounters(),
+    events: combat.eventLog.length, idCounter: combat._idCounter,
+  });
+  const chosen = starseerkitPick(combat, ordered, enemy);
+  const after = JSON.stringify({
+    player: combat.player, enemies: combat.enemies, piles: combat.piles,
+    triggerState: [...combat.triggerState], rng: combat.rng.getCounters(),
+    events: combat.eventLog.length, idCounter: combat._idCounter,
+  });
+  return { chosen: chosen.cardId, unchanged: before === after, targetHp: enemy.hp, targetBlock: enemy.block };
 }
 
 function checkBoundary(n) {
@@ -1170,6 +1231,23 @@ if (SELFTEST) {
     console.log('  starLethalOverestimate caught ✔ — target magic resistance + Block keeps authored 22 nonlethal; raw sum falsely picks Lance');
   } else {
     console.log(`  starLethalOverestimate NOT CAUGHT ✘ — clean/plant ${liveNegative.chosen}/${rawOver.chosen}, live loss ${liveNegative.hpLoss}/${liveNegative.targetHp}`);
+    failures++;
+  }
+
+  console.log('\n  Starseer ordered dispatch lethal scoring (in-card target state changes):');
+  const orderedClean = orderedLethalFixture('radiant');
+  const orderedPlant = orderedLethalFixture('radiant', 'starOrderedDispatch');
+  const noAmplification = orderedLethalFixture('noAmplification');
+  const noAmplificationPlant = orderedLethalFixture('noAmplification', 'starOrderedDispatch');
+  const blocked = orderedLethalFixture('blocked');
+  const blockedPlant = orderedLethalFixture('blocked', 'starOrderedDispatch');
+  if (orderedClean.chosen === 'radiantSpray' && orderedPlant.chosen === 'crystalBarrier'
+      && noAmplification.chosen === 'shootingShard' && noAmplificationPlant.chosen === 'shootingShard'
+      && blocked.chosen === 'crystalBarrier' && blockedPlant.chosen === 'crystalBarrier'
+      && [orderedClean, orderedPlant, noAmplification, noAmplificationPlant, blocked, blockedPlant].every((row) => row.unchanged)) {
+    console.log('  starOrderedDispatch caught ✔ — Radiant Spray kills 12 HP only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched');
+  } else {
+    console.log(`  starOrderedDispatch NOT CAUGHT ✘ — radiant ${orderedClean.chosen}/${orderedPlant.chosen}, plain ${noAmplification.chosen}/${noAmplificationPlant.chosen}, blocked ${blocked.chosen}/${blockedPlant.chosen}`);
     failures++;
   }
 
