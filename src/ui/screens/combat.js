@@ -76,7 +76,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
-        <div class="energy-orb"></div>
         <div class="hand-overlay" data-paging="false">
           <button class="hand-page hand-prev" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
@@ -90,11 +89,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <button class="hand-page hand-next" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
         </div>
-        <button class="end-turn">END TURN</button>
+        <!-- One grid owns every persistent combat action destination. Keeping
+             the optional Exhaust cell in that same grid means revealing it
+             cannot shift, cover, or steal a standing control's hit box. -->
+        <div class="combat-action-row" role="group" aria-label="Combat actions">
+          <div class="energy-orb"></div>
+          <button class="end-turn">END TURN</button>
+          <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
+          <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
+          <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
+        </div>
       </div>
-      <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
-      <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
-      <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
