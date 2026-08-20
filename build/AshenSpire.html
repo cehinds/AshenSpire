@@ -34241,7 +34241,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b65b1638b9';
+const SOURCE = '2ba7244188';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34275,7 +34275,7 @@ const SOURCE = 'b65b1638b9';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0851';
+const ORDINAL = '0852';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40827,18 +40827,25 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // hit testing, the AX tree, and every focus ring at 0-7 cards. The overlay's
   // state is also the one CSS door that reserves their two columns at 8+.
   function syncHandPager(handList) {
-    const paging = handList.length > HAND_PAGE_THRESHOLD;
+    const obscured = veilIsOpen();
+    const paging = handList.length > HAND_PAGE_THRESHOLD && !obscured;
     const focusedPage = handPages.find((page) => page.classList.contains('gp-focus') || document.activeElement === page);
     if (!paging && focusedPage) {
-      const cards = [...app.querySelectorAll('.hand .card')];
-      const surviving = cards.find((card) => card.dataset.instanceId === handPageCursor)
-        || cards.find((card) => card.classList.contains('selected'))
-        || cards[0]
-        || null;
-      if (surviving) {
-        surviving.dataset.pageTarget = '';
-        focusFirst('.hand .card[data-page-target]');
-        delete surviving.dataset.pageTarget;
+      if (obscured) {
+        // A standing veil owns input. Do not move its focus behind the modal;
+        // only retire the pager cursor that the covered combat no longer owns.
+        focusedPage.classList.remove('gp-focus');
+      } else {
+        const cards = [...app.querySelectorAll('.hand .card')];
+        const surviving = cards.find((card) => card.dataset.instanceId === handPageCursor)
+          || cards.find((card) => card.classList.contains('selected'))
+          || cards[0]
+          || null;
+        if (surviving) {
+          surviving.dataset.pageTarget = '';
+          focusFirst('.hand .card[data-page-target]');
+          delete surviving.dataset.pageTarget;
+        }
       }
       if (document.activeElement === focusedPage) focusedPage.blur();
     }
@@ -41445,6 +41452,20 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   });
 
   render();
+
+  // Veils mount beside #app, not inside it. Watch that one ownership boundary
+  // so a long-hand pager becomes inert as soon as any modal/menu takes input,
+  // then returns when the veil leaves and combat still owns the screen.
+  if (document.body && typeof MutationObserver !== 'undefined') {
+    const pagerVeilObserver = new MutationObserver(() => {
+      if (!app.querySelector('.combat')) {
+        pagerVeilObserver.disconnect();
+        return;
+      }
+      syncHandPager([...app.querySelectorAll('.hand .card')]);
+    });
+    pagerVeilObserver.observe(document.body, { childList: true });
+  }
 
   // Keep the target glow in sync with focus/hover: the field's class attributes
   // change as the cursor (gp-focus) or pointer (hover-target) moves; a full

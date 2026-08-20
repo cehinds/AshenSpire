@@ -33,14 +33,14 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
     plants: [{
       name: 'short hand keeps the pager visible',
       file: 'src/ui/screens/combat.js',
-      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD;',
-      replace: 'const paging = handList.length >= HAND_PAGE_THRESHOLD;',
+      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD && !obscured;',
+      replace: 'const paging = handList.length >= HAND_PAGE_THRESHOLD && !obscured;',
       expectRed: /FAIL 0-7 cards expose no visible pager/,
     }, {
       name: 'long hand hides the pager',
       file: 'src/ui/screens/combat.js',
-      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD;',
-      replace: 'const paging = handList.length > HAND_PAGE_THRESHOLD + 1;',
+      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD && !obscured;',
+      replace: 'const paging = handList.length > HAND_PAGE_THRESHOLD + 1 && !obscured;',
       expectRed: /FAIL 8\+ cards expose exactly two named pager controls/,
     }, {
       name: 'pager escapes the hand overlay boundary',
@@ -54,6 +54,12 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
       find: '    handPages.forEach((page) => { page.hidden = !paging; });',
       replace: "    handPages.forEach((page) => { page.hidden = !paging; });\n    if (!paging) handPages[0].classList.add('gp-focus');",
       expectRed: /FAIL dynamic 8-to-7 returns pager focus to the remembered surviving card/,
+    }, {
+      name: 'standing veil leaves the long-hand pager active',
+      file: 'src/ui/screens/combat.js',
+      find: '    const obscured = veilIsOpen();',
+      replace: '    const obscured = false; // planted: covered combat still owns its pager',
+      expectRed: /FAIL standing veil hides pager paint and AX/,
     }],
   });
   if (sourceStatus) process.exit(sourceStatus);
@@ -70,8 +76,8 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
     plants: [{
       name: 'standalone root is stale at the seven-card threshold',
       file: 'AshenSpire.html',
-      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD;',
-      replace: 'const paging = handList.length >= HAND_PAGE_THRESHOLD;',
+      find: 'const paging = handList.length > HAND_PAGE_THRESHOLD && !obscured;',
+      replace: 'const paging = handList.length >= HAND_PAGE_THRESHOLD && !obscured;',
       expectRed: /FAIL 0-7 cards expose no visible pager/,
     }],
   }));
@@ -306,6 +312,49 @@ async function main() {
             'pager stays contained by the hand overlay boundary', JSON.stringify(reading));
           check(reading.chromeClear && reading.centersClear,
             'pager intersects no combat chrome or card center', JSON.stringify(reading));
+
+          if (hand === 8) {
+            await tap('#combat-menu');
+            await waitFor(`!!document.querySelector('.modal-veil')`, 'standing combat Menu veil');
+            await new Promise((pass) => setTimeout(pass, 250));
+            const covered = await evaluate(`(() => ({
+              veil: !!document.querySelector('.modal-veil'),
+              visible: [...document.querySelectorAll('.hand-page')].filter((page) => {
+                const rect=page.getBoundingClientRect(), style=getComputedStyle(page);
+                return !page.hidden && style.display!=='none' && rect.width>0 && rect.height>0;
+              }).map((page)=>page.getAttribute('aria-label')),
+              focused: !!document.querySelector('.hand-page.gp-focus'),
+              state: document.querySelector('.hand-overlay')?.dataset.paging || null,
+            }))()`);
+            const coveredAxTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
+            const coveredAx = coveredAxTree.nodes.filter((node) => node.role?.value === 'button'
+              && ['Previous card', 'Next card'].includes(node.name?.value)).map((node) => node.name.value);
+            if (shots) {
+              const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+              const file = `combat-${cell.width}x${cell.height}-text-${cell.text.toLowerCase()}-hand-8-menu-open.png`;
+              writeFileSync(resolve(ROOT, shots, file), Buffer.from(data, 'base64'));
+            }
+            check(covered.veil && covered.visible.length === 0 && coveredAx.length === 0
+              && !covered.focused && covered.state === 'false',
+            'standing veil hides pager paint and AX', JSON.stringify({ covered, coveredAx }));
+
+            await tap('#ov-close');
+            await waitFor(`!document.querySelector('.modal-veil')`, 'closed combat Menu veil');
+            await new Promise((pass) => setTimeout(pass, 250));
+            const restored = await evaluate(`(() => ({
+              visible: [...document.querySelectorAll('.hand-page')].filter((page) => !page.hidden)
+                .map((page)=>page.getAttribute('aria-label')).sort(),
+              focused: !!document.querySelector('.hand-page.gp-focus'),
+              state: document.querySelector('.hand-overlay')?.dataset.paging || null,
+            }))()`);
+            const restoredAxTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
+            const restoredAx = restoredAxTree.nodes.filter((node) => node.role?.value === 'button'
+              && ['Previous card', 'Next card'].includes(node.name?.value)).map((node) => node.name.value).sort();
+            check(JSON.stringify(restored.visible) === JSON.stringify(['Next card', 'Previous card'])
+              && JSON.stringify(restoredAx) === JSON.stringify(['Next card', 'Previous card'])
+              && !restored.focused && restored.state === 'true',
+            'closing veil restores the long-hand pager without stale focus', JSON.stringify({ restored, restoredAx }));
+          }
         }
       }
 
