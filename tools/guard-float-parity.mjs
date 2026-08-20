@@ -1,7 +1,7 @@
 // Focused guard-hit parity gate (#207).
 //
 // The fast door proves the semantic split, the authoritative co-op session
-// receipts, and twelve named source mutations. `--browser` adds both real product
+// receipts, and fifteen named source mutations. `--browser` adds both real product
 // paths: seeded solo combat through its real engine/event/FX pipeline, then two
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
 // real End Turn controls. `--standalone` selects the root artifact instead of
@@ -32,11 +32,12 @@ function sourceContract(tree) {
     /const residual = amount - blocked;/.test(tree.fx),
     /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
     /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
-    /\(type === 'damageDealt' \|\| type === 'hpLost'\) && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
+    /\(type === 'damageDealt' \|\| type === 'hpLost' \|\| type === 'healed'\) && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
     /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
     /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
+    /'damageDealt', 'healed'/.test(tree.session),
     /cause: e\.cause/.test(tree.session),
-    /ev\.type === 'damageDealt' \|\| \(ev\.type === 'hpLost' && ev\.cause !== 'attack'\)/.test(tree.coop),
+    /ev\.type === 'damageDealt' \|\| ev\.type === 'healed' \|\| \(ev\.type === 'hpLost' && ev\.cause !== 'attack'\)/.test(tree.coop),
     /receiptSeq: \+\+combatReceiptSeq/.test(tree.session),
     /const hasNewReceipts = receiptSeq > lastReceiptSeq;/.test(tree.coop),
     /if \(!duplicate\) pendingSnaps\.push\(s\);/.test(tree.coop),
@@ -46,8 +47,10 @@ function sourceContract(tree) {
     /getKeyframes/.test(tree.coop),
     /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ amount\)/.test(tree.coop),
     /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ parts\.residual\)/.test(tree.coop),
+    /receiptHealByTarget\.set\(targetKey,[\s\S]{0,120}\+ amount\)/.test(tree.coop),
     /const unreceipted = Math\.max\(0, dmg - \(receiptLossByTarget\.get\(`enemy:\$\{e\.id\}`\) \|\| 0\)\)/.test(tree.coop),
     /const unreceipted = Math\.max\(0, dmg - \(receiptLossByTarget\.get\(`player:\$\{p\.id\}`\) \|\| 0\)\)/.test(tree.coop),
+    /const unreceiptedHeal = Math\.max\(0, heal - \(receiptHealByTarget\.get\(`player:\$\{p\.id\}`\) \|\| 0\)\)/.test(tree.coop),
   ].every(Boolean);
 }
 
@@ -69,20 +72,23 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['absorbed-mislabeled-as-gain', 'src/ui/fx.js', 'text: String(blocked)', 'text: `+${blocked}`'],
     ['coop-drops-damage-receipt', 'tools/session.mjs', "'enemyMoveStarted', 'damageDealt',", "'enemyMoveStarted',"],
     ['coop-drops-nonattack-hp-loss', 'tools/session.mjs', "|| (e.type === 'hpLost' && e.cause !== 'attack')", ''],
-    ['coop-loses-hp-loss-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
-    ['coop-drops-receipt-processing', 'src/ui/screens/coop.js', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
+    ['coop-loses-hp-loss-player-owner', 'tools/session.mjs', " || type === 'hpLost'", ''],
+    ['coop-drops-receipt-processing', 'src/ui/screens/coop.js', "ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt' || ev.type === 'healed'"],
     ['coop-suppresses-unreceipted-remainder', 'src/ui/screens/coop.js', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
     ['coop-hardcodes-receipt-spacing', 'src/ui/screens/coop.js', 'row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));', 'row.height = 18;'],
     ['coop-resync-uses-object-identity', 'src/ui/screens/coop.js', 'const hasNewReceipts = receiptSeq > lastReceiptSeq;', 'const hasNewReceipts = now !== prev;'],
     ['coop-overwrites-paced-frame', 'src/ui/screens/coop.js', 'if (!duplicate) pendingSnaps.push(s);', 'pendingSnaps = [s];'],
     ['coop-drops-ordered-paced-events', 'src/ui/screens/coop.js', 'events: combatFrames.flatMap((frame) => frame.scene.events || []),', 'events: latest.scene.events || [],'],
+    ['coop-drops-healed-receipt', 'tools/session.mjs', "'damageDealt', 'healed',", "'damageDealt',"],
+    ['coop-loses-healed-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
+    ['coop-duplicates-heal-remainder', 'src/ui/screens/coop.js', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
   ];
   const sourceStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', timeoutMs: 300000,
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
-  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html'];
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html'];
   const artifactStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
@@ -136,10 +142,14 @@ async function browserDoor() {
   const shots = argOf('--shots');
   const cases = [
     { name: 'full', className: 'Reaver', defend: true, before: { hp: 30, block: 10 }, after: { hp: 30, block: 3 }, blocked: 7, soloTexts: ['7'], coopTexts: ['-7', '7'], review: { cardId: 'gorefireSlash', cardName: 'Gorefire Slash', hp: 2, texts: ['-5', '-8'], cause: 'proc:bleed' } },
-    { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['-3', '-7', '4'], review: { cardId: 'twinbladeFlurry', cardName: 'Twinblade Flurry', hp: 21, texts: ['-3', '-3', '-3'] } },
-    { name: 'unguarded', className: 'Reaver', defend: false, before: { hp: 30, block: 0 }, after: { hp: 23, block: 0 }, blocked: 0, soloTexts: ['-7'], coopTexts: ['-7', '-7'] },
+    { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, coopAfter: { hp: 29, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['+2', '-3', '-7', '4'], coopTargetTexts: ['+2', '-3', '4'], coopTargetOrder: ['4', '-3', '+2'], stigmata: true, review: { cardId: 'twinbladeFlurry', cardName: 'Twinblade Flurry', hp: 21, texts: ['-3', '-3', '-3'] } },
+    { name: 'unguarded', className: 'Reaver', defend: false, before: { hp: 30, block: 0 }, after: { hp: 23, block: 0 }, coopAfter: { hp: 25, block: 0 }, blocked: 0, soloTexts: ['-7'], coopTexts: ['+2', '-7', '-7'], coopTargetTexts: ['+2', '-7'], coopTargetOrder: ['-7', '+2'], stigmata: true },
   ].filter((row) => !requestedCase || row.name === requestedCase);
   if (!cases.length) throw new Error(`unknown --case ${requestedCase}; use full, partial or unguarded`);
+  const fixedHealing = reviewMoment !== 'before';
+  const coopTextsFor = (row) => fixedHealing || !row.stigmata ? row.coopTexts : row.coopTexts.filter((text) => text !== '+2');
+  const targetTextsFor = (row) => fixedHealing || !row.stigmata ? (row.coopTargetTexts || row.soloTexts) : row.soloTexts;
+  const targetOrderFor = (row) => fixedHealing || !row.stigmata ? (row.coopTargetOrder || row.soloTexts) : row.soloTexts;
   const findings = [];
   const check = (condition, label, detail = '') => {
     console.log(`    ${condition ? '✓' : '✗'} ${label}${detail ? ` — ${detail}` : ''}`);
@@ -270,6 +280,41 @@ async function browserDoor() {
       await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
     }
   };
+  const writeStigmataContactSheet = async (shape) => {
+    if (!shots) return;
+    const entries = ['before', 'after'].map((moment) => {
+      const filename = `guard-float-stigmata-${moment}-${evidenceDoor}-${shape.tag}.png`;
+      const path = join(resolve(shots), filename);
+      if (!existsSync(path)) return null;
+      return { moment, src: `data:image/png;base64,${readFileSync(path).toString('base64')}` };
+    }).filter(Boolean);
+    if (entries.length !== 2) return;
+    const cards = entries.map((entry) => `<figure><figcaption><b>STIGMATA</b> · ${entry.moment.toUpperCase()}</figcaption><img src="${entry.src}" alt="Stigmata hit then heal ${entry.moment}"></figure>`).join('');
+    const imageHeight = shape.tag === '390x844' ? 760 : 430;
+    const html = `<!doctype html><meta charset="utf-8"><title>#207 Stigmata ${shape.tag} ${evidenceDoor}</title><style>
+      *{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0a08;color:#f4e6bd;font:18px/1.3 system-ui,sans-serif}
+      h1{margin:0 0 20px;color:#f2c85b;font:800 30px/1.2 system-ui,sans-serif}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+      figure{margin:0;padding:10px;border:1px solid #8d7747;background:#15120d;border-radius:8px}figcaption{padding:0 2px 8px;color:#ddd4c2}b{color:#f3c86d}
+      img{display:block;width:100%;height:${imageHeight}px;object-fit:contain;object-position:top center;background:#070604;border:1px solid #353029}
+    </style><h1>STIGMATA · REAL TWO-CLIENT · ${evidenceDoor.toUpperCase()} · ${shape.tag} · HP30→25 · ATTACK 7 THEN HEAL 2</h1><main class="grid">${cards}</main>`;
+    const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
+    try {
+      await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
+      await until(tab, `[...document.images].length===2&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'Stigmata contact-sheet images', 30000);
+      await wait(120);
+      const metrics = await cdp.send('Page.getLayoutMetrics', {}, tab.sessionId);
+      const size = metrics.cssContentSize || metrics.contentSize;
+      const { data } = await cdp.send('Page.captureScreenshot', {
+        format: 'png', fromSurface: true, captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
+      }, tab.sessionId);
+      const name = `guard-float-stigmata-${evidenceDoor}-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
+      writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
+      console.log(`\n    Stigmata contact sheet ${name}`);
+    } finally {
+      await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
+    }
+  };
   const closeServer = async (server) => {
     // The inlined standalone may retain an HTTP keep-alive connection after
     // its tab closes; drain it so a completed product cell cannot hang the gate.
@@ -356,6 +401,7 @@ async function browserDoor() {
         block: row.before.block - (row.defend ? row.blocked : 0),
         extraHand: row.review ? [row.review.cardId] : [],
         nextDraw: row.name === 'partial' ? ['strike'] : [],
+        playerStatuses: row.stigmata ? [{ id: 'stigmata', stacks: 1 }] : [],
         enemy: row.review?.cause
           ? { hp: 15, statuses: [{ id: 'bleed', stacks: Number(contentBundle.statuses.find((entry) => entry.id === 'bleed')?.proc?.threshold) - 3 }] }
           : row.review ? { hp: 30 } : undefined,
@@ -464,18 +510,19 @@ async function browserDoor() {
           pacedControl = await evaluate(guest, `window.__guardCoopTool.state()`);
         }
         await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.events?.some(e=>e.type==='damageDealt'&&e.playerId===id)})()`, 'authoritative Fenn damage receipt');
-        await until(guest, `document.querySelectorAll('.fx-layer .float-num').length>=${row.coopTexts.length}`, 'visible float channels', 12000);
-        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id),layer=document.querySelector('.fx-layer'),seat=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),lr=layer.getBoundingClientRect(),sr=seat.getBoundingClientRect(),floats=[...layer.querySelectorAll('.float-num')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),target=floats.filter(x=>x.cx>=sr.left&&x.cx<=sr.right&&x.cy>=sr.top&&x.cy<=sr.bottom);const probe=document.createElement('span');probe.className='float-num blk';probe.style.display='none';layer.appendChild(probe);const guardColor=getComputedStyle(probe).color;probe.remove();return{hp:p.hp,block:p.block,receipt:e,events:s.events,texts:floats.map(x=>x.text).sort(),targetTexts:target.map(x=>x.text).sort(),target,guard:target.filter(x=>x.cls.includes('blk')).map(x=>x.text),guardColors:target.filter(x=>x.cls.includes('blk')).map(x=>x.color),guardColor,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
+        await until(guest, `document.querySelectorAll('.fx-layer .float-num').length>=${coopTextsFor(row).length}`, 'visible float channels', 12000);
+        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id),layer=document.querySelector('.fx-layer'),seat=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),lr=layer.getBoundingClientRect(),sr=seat.getBoundingClientRect(),floats=[...layer.querySelectorAll('.float-num')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),target=floats.filter(x=>x.cx>=sr.left&&x.cx<=sr.right&&x.cy>=sr.top&&x.cy<=sr.bottom);const probe=document.createElement('span');probe.className='float-num blk';probe.style.display='none';layer.appendChild(probe);const guardColor=getComputedStyle(probe).color;probe.remove();return{playerId:id,hp:p.hp,block:p.block,receipt:e,events:s.events,texts:floats.map(x=>x.text).sort(),targetTexts:target.map(x=>x.text).sort(),targetDomTexts:target.map(x=>x.text),target,guard:target.filter(x=>x.cls.includes('blk')).map(x=>x.text),guardColors:target.filter(x=>x.cls.includes('blk')).map(x=>x.color),guardColor,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
         check(reading.receipt?.amount === 7 && reading.receipt?.blocked === row.blocked,
           `${row.name}: wire receipt is amount 7 / blocked ${row.blocked}`, JSON.stringify(reading.receipt));
         const residual = 7 - row.blocked;
         check(before.hp === row.before.hp && before.block === row.before.block,
           `${row.name}: co-op begins exact HP${row.before.hp}/B${row.before.block}`,
           `HP${before.hp}/B${before.block}`);
-        check(reading.hp === row.after.hp && reading.block === 0,
-          `${row.name}: authoritative Fenn hit reaches HP${row.after.hp} and next-turn guard clears`, `HP${before.hp}→${reading.hp}/B${reading.block}`);
+        const coopAfter = row.coopAfter || row.after;
+        check(reading.hp === coopAfter.hp && reading.block === 0,
+          `${row.name}: authoritative Fenn hit reaches HP${coopAfter.hp} and next-turn guard clears`, `HP${before.hp}→${reading.hp}/B${reading.block}`);
         const pacedHit = pacedControl ? reading.events.find((event) => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId !== 'player') : null;
-        const expectedTexts = [...row.coopTexts, ...(pacedHit ? [`-${Math.max(0, pacedHit.amount - (pacedHit.blocked || 0))}`] : [])].sort();
+        const expectedTexts = [...coopTextsFor(row), ...(pacedHit ? [`-${Math.max(0, pacedHit.amount - (pacedHit.blocked || 0))}`] : [])].sort();
         check(JSON.stringify(reading.texts) === JSON.stringify(expectedTexts),
           `${row.name}: exact visible channels ${expectedTexts.join(' + ')}`, reading.texts.join(' + '));
         if (pacedControl) {
@@ -484,8 +531,16 @@ async function browserDoor() {
           check(pacedControl.pendingReceiptSeqs.length === 0,
             'paced receipt queue drains completely in authoritative order', JSON.stringify(pacedControl));
         }
-        check(JSON.stringify(reading.targetTexts) === JSON.stringify(row.soloTexts),
-          `${row.name}: Fenn target owns exactly ${row.soloTexts.join(' + ')}`, reading.targetTexts.join(' + '));
+        if (row.stigmata) {
+          const hitIndex = reading.events.findIndex((event) => event.type === 'damageDealt' && event.playerId === reading.playerId);
+          const healIndex = reading.events.findIndex((event) => event.type === 'healed' && event.playerId === reading.playerId);
+          check(fixedHealing ? healIndex === hitIndex + 1 && reading.events[healIndex]?.amount === 2 : healIndex < 0,
+            `${row.name}: Stigmata heal follows its authoritative hit${fixedHealing ? ' by exact seat' : ' (before: receipt missing)'}`, JSON.stringify(reading.events));
+          check(JSON.stringify(reading.targetDomTexts) === JSON.stringify(targetOrderFor(row)),
+            `${row.name}: Stigmata channels preserve causal DOM order ${targetOrderFor(row).join(' then ')}`, reading.targetDomTexts.join(' then '));
+        }
+        check(JSON.stringify(reading.targetTexts) === JSON.stringify([...targetTextsFor(row)].sort()),
+          `${row.name}: Fenn target owns exactly ${targetTextsFor(row).join(' + ')}`, reading.targetTexts.join(' + '));
         check(!reading.guard.some((text) => text.startsWith('+')),
           `${row.name}: absorbed guard is never mislabeled as gain`, reading.guard.join(', ') || 'no guard channel');
         check(!reading.guardColors.length || reading.guardColors.every((color) => color === reading.guardColor),
@@ -498,6 +553,11 @@ async function browserDoor() {
           `${row.name}: paired Fenn results do not overlap`);
 
         if (shots) {
+          if (row.name === 'unguarded') {
+            await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · ${reviewMoment.toUpperCase()} · real two-client Stigmata · HP30→25 · authoritative attack 7 then heal 2 · observed ${targetTextsFor(row).join(' + ')} · expected -7 + +2`)};document.body.appendChild(note);return true})()`);
+            await writeShot(guest, `guard-float-stigmata-${reviewMoment}-${evidenceDoor}-${shape.tag}.png`);
+            await evaluate(guest, `document.querySelectorAll('.evidence-caption').forEach(n=>n.remove())`);
+          }
           mkdirSync(resolve(shots), { recursive: true });
           const afterHit = { hp: before.hp - residual, block: before.block - row.blocked };
           await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer');for(const n of [...layer.querySelectorAll('.float-num')]){const c=n.cloneNode(true);c.style.animation='none';c.dataset.evidenceClone='true';layer.appendChild(c);n.remove()}const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · two-client GUARD2 · ${row.name} · Fenn before HP${before.hp}/B${before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${afterHit.hp}/B${afterHit.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
@@ -508,6 +568,15 @@ async function browserDoor() {
         await wait(180);
         const replay = await evaluate(guest, `[...document.querySelectorAll('.fx-layer .float-num')].map(x=>x.textContent)`);
         check(replay.length === 0, `${row.name}: local rerender replays zero authoritative receipts`, JSON.stringify(replay));
+        if (row.stigmata) {
+          const beforeResync = await evaluate(guest, `window.__guardCoopTool.state()`);
+          await evaluate(guest, `window.__guardCoopTool.resync()`);
+          await until(guest, `window.__guardCoopTool.state().receivedSnapshots>${beforeResync.receivedSnapshots}`, 'Stigmata unchanged resync arrives');
+          await wait(180);
+          const afterResync = await evaluate(guest, `({state:window.__guardCoopTool.state(),floats:[...document.querySelectorAll('.fx-layer .float-num')].map(n=>n.textContent)})`);
+          check(afterResync.state.latestReceiptSeq === beforeResync.latestReceiptSeq && afterResync.floats.length === 0,
+            `${row.name}: Stigmata unchanged resync replays neither hit nor heal`, JSON.stringify(afterResync));
+        }
       } finally {
         setCombatStartStateForTools(null);
         await cdp.send('Target.closeTarget', { targetId: host.targetId }).catch(() => {});
@@ -519,6 +588,7 @@ async function browserDoor() {
     if (!coopOnly) for (const shape of shapes) {
       await writeContactSheet(shape);
       await writeReviewContactSheet(shape);
+      await writeStigmataContactSheet(shape);
     }
   } finally {
     cdp.close(); await dropBrowser();
@@ -622,13 +692,16 @@ const plants = [
   ['absorbed-mislabeled-as-gain', 'fx', 'text: String(blocked)', 'text: `+${blocked}`'],
   ['coop-drops-damage-receipt', 'session', "'enemyMoveStarted', 'damageDealt',", "'enemyMoveStarted',"],
   ['coop-drops-nonattack-hp-loss', 'session', "|| (e.type === 'hpLost' && e.cause !== 'attack')", ''],
-  ['coop-loses-hp-loss-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
-  ['coop-drops-receipt-processing', 'coop', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
+  ['coop-loses-hp-loss-player-owner', 'session', " || type === 'hpLost'", ''],
+  ['coop-drops-receipt-processing', 'coop', "ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt' || ev.type === 'healed'"],
   ['coop-suppresses-unreceipted-remainder', 'coop', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
   ['coop-hardcodes-receipt-spacing', 'coop', 'row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));', 'row.height = 18;'],
   ['coop-resync-uses-object-identity', 'coop', 'const hasNewReceipts = receiptSeq > lastReceiptSeq;', 'const hasNewReceipts = now !== prev;'],
   ['coop-overwrites-paced-frame', 'coop', 'if (!duplicate) pendingSnaps.push(s);', 'pendingSnaps = [s];'],
   ['coop-drops-ordered-paced-events', 'coop', 'events: combatFrames.flatMap((frame) => frame.scene.events || []),', 'events: latest.scene.events || [],'],
+  ['coop-drops-healed-receipt', 'session', "'damageDealt', 'healed',", "'damageDealt',"],
+  ['coop-loses-healed-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost' || type === 'healed')", "(type === 'damageDealt' || type === 'hpLost')"],
+  ['coop-duplicates-heal-remainder', 'coop', 'heal - (receiptHealByTarget.get(`player:${p.id}`) || 0)', 'heal'],
 ];
 for (const [name, file, find, replacement] of plants) {
   const planted = { ...source, [file]: source[file].replace(find, replacement) };

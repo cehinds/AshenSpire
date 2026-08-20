@@ -862,12 +862,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     // Authoritative receipts own hit floats. Snapshot deltas remain the home
     // for healing, guard gain and legacy non-attack HP changes only.
     const receiptLossByTarget = new Map();
+    const receiptHealByTarget = new Map();
     // JSON resync creates a new object for an unchanged scene. The host's
     // receiptSeq, not local object identity, owns whether these receipts are new.
     const receiptSeq = Number(now.receiptSeq) || 0;
     const hasNewReceipts = receiptSeq > lastReceiptSeq;
     const receipts = (hasNewReceipts ? (now.events || []) : [])
-      .filter((ev) => ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
+      .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
       .map((ev) => {
         const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
         const enemy = now.enemies.find((entry) => entry.id === ev.targetId);
@@ -879,7 +880,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     const receiptRowsByTarget = new Map();
     for (const { ev, sel, targetKey } of receipts) {
       const receiptRow = { baseTop: 0, items: [], height: 0 };
-      if (ev.type === 'hpLost') {
+      if (ev.type === 'healed') {
+        const amount = Math.max(0, Number(ev.amount) || 0);
+        if (!amount) continue;
+        receiptHealByTarget.set(targetKey, (receiptHealByTarget.get(targetKey) || 0) + amount);
+        put(sel, 'float-num heal', `+${amount}`, 0.35, 0, receiptRow);
+      } else if (ev.type === 'hpLost') {
         const amount = Math.max(0, Number(ev.amount) || 0);
         if (!amount) continue;
         const part = guardHitFloatParts({ amount, blocked: 0 }).damage;
@@ -927,7 +933,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
         put(`[data-seat="${p.id}"]`, unreceipted >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${unreceipted}`);
         recoil(`[data-seat="${p.id}"] .sprite`, unreceipted >= 12);
       }
-      if (p.hp > pp.hp) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${p.hp - pp.hp}`);
+      const heal = Math.max(0, p.hp - pp.hp);
+      const unreceiptedHeal = Math.max(0, heal - (receiptHealByTarget.get(`player:${p.id}`) || 0));
+      if (unreceiptedHeal > 0) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${unreceiptedHeal}`);
       if ((p.block || 0) > (pp.block || 0)) put(`[data-seat="${p.id}"]`, 'float-num blk small', `+${p.block - (pp.block || 0)}`);
     }
   }

@@ -42,13 +42,15 @@ export function setCombatStartStateForTools(state = null) {
     && (!Array.isArray(state.extraHand) || state.extraHand.some((id) => typeof id !== 'string'));
   const badNextDraw = state?.nextDraw != null
     && (!Array.isArray(state.nextDraw) || state.nextDraw.some((id) => typeof id !== 'string'));
+  const badPlayerStatuses = state?.playerStatuses != null
+    && (!Array.isArray(state.playerStatuses) || state.playerStatuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)));
   const badEnemy = state?.enemy != null && (typeof state.enemy !== 'object'
     || (state.enemy.hp != null && !Number.isFinite(state.enemy.hp))
     || (state.enemy.statuses != null && (!Array.isArray(state.enemy.statuses)
       || state.enemy.statuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)))));
   if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
-      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badEnemy)) {
-    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], enemy?: { hp?, statuses? } }');
+      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badPlayerStatuses || badEnemy)) {
+    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], playerStatuses?: { id, stacks }[], enemy?: { hp?, statuses? } }');
   }
   combatStartStateForTools = state ? structuredClone(state) : null;
 }
@@ -359,7 +361,7 @@ export function createSession({ registries, seedString, endless = false, restore
     // to infer a target later from HP or block deltas.
     const emit = combat.emit;
     combat.emit = (type, payload = {}) => emit(type,
-      (type === 'damageDealt' || type === 'hpLost') && payload.targetId === 'player'
+      (type === 'damageDealt' || type === 'hpLost' || type === 'healed') && payload.targetId === 'player'
         ? { ...payload, playerId: combat.playerKey }
         : payload);
     if (combatStartStateForTools) {
@@ -369,6 +371,9 @@ export function createSession({ registries, seedString, endless = false, restore
       if (!entity) throw new Error(`Tool combat start state cannot find '${combatStartStateForTools.name}'`);
       entity.hp = combatStartStateForTools.hp;
       entity.block = combatStartStateForTools.block;
+      for (const row of combatStartStateForTools.playerStatuses || []) {
+        applyStatus(combat, entity, row.id, row.stacks, entity);
+      }
       if (combatStartStateForTools.extraHand) {
         player.piles.hand.push(...combatStartStateForTools.extraHand.map((cardId, index) => ({
           instanceId: `tool-extra-${index + 1}`,
@@ -402,14 +407,14 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
         blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
-        attempted: e.attempted,
+        requested: e.requested, attempted: e.attempted,
         threshold: e.threshold, status: e.status, duration: e.duration,
       }));
     live.evCursor = c.eventLog.length;
