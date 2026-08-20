@@ -3201,6 +3201,20 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   /* Not a phone to turn — a window to grow. Widen the box and hold it still. */
   width: 56px; height: 40px; animation: none;
 }
+/* #27 — below the compact combat composition's rendered floor, the refusal is
+   still the only truthful screen. Its ordinary phone glyph used 94px before a
+   word was drawn (76px row + 18px margin), which made the 844x339 Text XL card
+   itself 26px taller than the viewport. `data-short` is the layout decider's
+   existing answer; this selector measures nothing and creates no breakpoint.
+   Keep every sentence and only compress chrome/spacing, so the fallback remains
+   wholly readable at the first height where the game must refuse again. */
+:root[data-short='true'] .upright-veil { padding: 12px 24px; }
+:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
+:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
+:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
+:root[data-short='true'] .upright-say { margin-bottom: 6px; }
+:root[data-short='true'] .upright-hint { margin-top: 8px; }
 @keyframes upright-turn {
   0%, 18% { transform: rotate(-90deg); }
   55%, 100% { transform: rotate(0deg); }
@@ -4044,6 +4058,79 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
 .reduced-motion .combatant .sprite > img { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
+
+/* ---------- short-wide combat composition (#27) ---------------------------
+   main.js selects this composition only when the wide board still owns its
+   full 1200 local px and the ordinary vertical composition would raise the
+   upright refusal. The stylesheet follows that derived answer; it does not
+   measure a viewport or restate either threshold.
+
+   The normal board already contains enough flexible height once the refusal's
+   `data-short` answer is false. What it still needs is a shorter hand band so
+   that the battlefield receives a real row rather than collapsing to zero.
+   Card faces keep their complete information hierarchy, while box dimensions
+   shrink only in this wide, height-constrained composition. */
+:root[data-composition='short-wide'] .hand-area { height: 10rem; }
+:root[data-composition='short-wide'] .topbar.combat-hud {
+  gap: calc(2px / var(--ui-zoom, 1));
+  padding-block: calc(3px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .resbars[data-surface='main'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.7fr) minmax(0, 1fr);
+  align-items: center; gap: calc(5px / var(--ui-zoom, 1));
+}
+:root[data-composition='short-wide'] .resbars[data-surface='main'] .resline {
+  width: auto; min-width: 0;
+}
+:root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
+  flex-wrap: nowrap; overflow: hidden;
+}
+:root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
+:root[data-composition='short-wide'] .hand .card {
+  width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
+  transform: translateY(calc(-1 * var(--fan-lift, 0px))) !important;
+}
+:root[data-composition='short-wide'] .hand .card .cost {
+  top: -0.6rem; left: -0.6rem; width: 2.4rem; height: 2.4rem;
+}
+:root[data-composition='short-wide'] .hand .card .mana-cost {
+  top: -0.4rem; right: -0.4rem; min-width: 2.8rem; height: 2rem;
+}
+:root[data-composition='short-wide'] .hand .card .cname {
+  font-size: 0.75rem; min-height: 1.3rem;
+}
+:root[data-composition='short-wide'] .hand .card .art {
+  width: 6.8rem; height: 2.2rem; margin: 0.1rem 0; font-size: 1.7rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctype {
+  width: 6.8rem; padding: 0.1rem 0; font-size: 0.65rem;
+}
+:root[data-composition='short-wide'] .hand .card .ctext {
+  margin-top: 0.15rem; font-size: 0.68rem; line-height: 1.15;
+}
+:root[data-composition='short-wide'] .hand .card:hover,
+:root[data-composition='short-wide'] .hand .card.selected {
+  transform: translateY(-12px) scale(1.1) !important;
+}
+:root[data-composition='short-wide'] .energy-orb { bottom: 2.4rem; }
+:root[data-composition='short-wide'] .end-turn { bottom: 2.4rem; }
+:root[data-composition='short-wide'] .player-zone,
+:root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
+:root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
+:root[data-composition='short-wide'] .combatant .intent {
+  margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
+}
+:root[data-composition='short-wide'] .combatant .intent .ic { font-size: 1rem; }
+:root[data-composition='short-wide'] .combatant .nm { font-size: 0.95rem; }
+:root[data-composition='short-wide'] .player .sprite > :first-child {
+  width: 5rem !important; height: 7rem !important;
+}
+:root[data-composition='short-wide'] .enemy .sprite > :first-child {
+  width: 4rem !important; height: 5rem !important;
+}
+:root[data-composition='short-wide'] .combatant .meters { width: 8rem; }
+:root[data-composition='short-wide'] .statuses { min-height: 0; gap: 0.15rem; }
 
 /* ==========================================================================
    PROTOTYPE (EldenSpire#23, track B) — the narrow combat board.
@@ -4996,27 +5083,19 @@ const UI_NAMED = UI.uiScale.named;
 // upheld by nothing but its own usefulness, and that is the honest reason to
 // keep it.
 //
-// THE THIRD VALUE — `short` (Sunna, 2026-08-15, R-32). It rides here and not in
+// THE THIRD AND FOURTH VALUES — `compact` and `short`. They ride here and not in
 // a stylesheet for EXACTLY the reason above: a `@media (orientation: landscape)`
 // would be a second decider on a second input, which is #24 rebuilt from
 // scratch. It is also not an orientation at all — a 1024x768 tablet is landscape
 // and fine, and a 400x400 desktop window is not.
 //
-//   SHORT  <=>  h < balance.ui.uiScale.gateBelowH
+//   COMPACT <=> h is in [shortWideMinH, gateBelowH) AND the wide baseline fits
+//   SHORT   <=> h < gateBelowH AND no complete compact/narrow answer fits
 //
-// One number, one home, and it is a MEASUREMENT — the rendered device-px bottom
-// edge of the wide board's last required control, the ladder and its licensed
-// band written where the number lives. Below it, END TURN's bottom is off screen
-// inside a container that is `overflow: hidden`, and `overflow: hidden` scrolls
-// programmatically and never by hand (Bjorn, 2026-08-15), so there is no gesture
-// to reach it.
-//
-// I HAD THIS WRONG FIRST AND THE MEASUREMENT CAUGHT ME. My first predicate was
-// `h < z.min x baselineH` — "the clamp is what is binding" — which is a true
-// statement about the ZOOM and the wrong statement about the PLAYER: it refused
-// 800x450, where END TURN is whole and 100% on screen. A gate that takes away a
-// working screen is worse than no gate, so the number is now pinned to the
-// control the player needs rather than to the baseline the board declares.
+// Both edges are rendered measurements in balance.js. #27 inserts the compact
+// answer where the old code raised the refusal, while preserving the refusal
+// below the compact layout's own first complete frame. CSS reads the published
+// composition and never re-asks either question.
 //
 // `vw`/`vh` are parameters so the SAME decider can be asked about a viewport
 // that does not exist yet — applyUiScale asks it about the TURNED phone before
@@ -5024,17 +5103,22 @@ const UI_NAMED = UI.uiScale.named;
 // window, byte-for-byte as before.
 function layoutForCap(cap, vw, vh) {
   const given = vw != null && vh != null;
-  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, short: false };
+  if (!given && typeof window === 'undefined') return { zoom: 1, narrow: false, compact: false, short: false };
   const z = UI.uiScale;
   const w = given ? vw : window.innerWidth, h = given ? vh : window.innerHeight;
   const clamp = (v) => Math.max(z.min, Math.min(z.max, v));
   const fitFor = (dw, dh) => Math.min(w / dw, h / dh);
   const capped = (v) => Math.min(v, cap);
-  // Height only, and the same answer on every return path — the wall does not
-  // care which baseline won, because a short viewport always lands wide.
-  // `gateBelowH` absent (an older content bundle) means NO GATE, never a gate at
-  // a guessed number: a missing threshold must not invent a refusal.
-  const isShort = () => z.gateBelowH != null && h < z.gateBelowH;
+  // One derived band and the same answer on every return path. `gateBelowH`
+  // absent (an older content bundle) means neither a compact band nor a gate;
+  // a missing threshold must never invent either at a guessed number.
+  const shortWide = (zoom) => z.gateBelowH != null && h < z.gateBelowH
+    && w / zoom >= z.designW
+    && h >= (z.shortWideMinH || 0);
+  const answer = (zoom, narrow) => {
+    const compact = !narrow && shortWide(zoom);
+    return { zoom, narrow, compact, short: z.gateBelowH != null && h < z.gateBelowH && !compact };
+  };
 
   // THE TWO PATHS ROUND DIFFERENTLY, ON PURPOSE. The wide path keeps
   // `Math.round` byte-for-byte, because every zoom every existing player sees
@@ -5044,11 +5128,11 @@ function layoutForCap(cap, vw, vh) {
   // Flooring BOTH moved 1280x800 from 1.07 to 1.06 and turned
   // tools/tutorial-reach.mjs red — the guard on #7.
   const wideZoom = clamp(capped(Math.round(fitFor(z.designW, z.designH) * 100) / 100));
-  if (!(z.narrowW && z.narrowH && z.narrowMax)) return { zoom: wideZoom, narrow: false, short: isShort() };
+  if (!(z.narrowW && z.narrowH && z.narrowMax)) return answer(wideZoom, false);
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return { zoom: narrowZoom, narrow: true, short: isShort() };
+  if (w / narrowZoom <= z.narrowMax) return answer(narrowZoom, true);
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -5058,9 +5142,9 @@ function layoutForCap(cap, vw, vh) {
   // for #24's property — see the header — only for the quality of the answer.
   if (w / narrowFit <= z.narrowMax) {
     const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return { zoom: bandFloor, narrow: true, short: isShort() };
+    if (w / bandFloor <= z.narrowMax) return answer(bandFloor, true);
   }
-  return { zoom: wideZoom, narrow: false, short: isShort() };
+  return answer(wideZoom, false);
 }
 
 // A named size is a CEILING the player asked for, not a value the app owes them
@@ -5076,7 +5160,7 @@ function resolveLayout(uiScale, vw, vh) {
 }
 
 function applyUiScale(settings) {
-  const { zoom, narrow, short } = resolveLayout(settings.uiScale);
+  const { zoom, narrow, compact, short } = resolveLayout(settings.uiScale);
   // Set as a CSS var so base.css can compensate the body's width/height for the
   // zoom (avoids the zoom×100vh overflow). Any leftover inline zoom is cleared.
   document.body.style.zoom = '';
@@ -5084,7 +5168,8 @@ function applyUiScale(settings) {
   // The layout mode, written by the same call that chose the zoom, so the two
   // cannot disagree. The stylesheets key off this and measure nothing (#24).
   document.documentElement.setAttribute('data-layout', narrow ? 'narrow' : 'wide');
-  // Publish the THIRD value from that same decider for layout consumers too.
+  document.documentElement.setAttribute('data-composition', compact ? 'short-wide' : 'standard');
+  // Publish the short/refusal value from that same decider for layout consumers too.
   // This is not another short-screen predicate: CSS reads the answer computed
   // above, just as it reads `data-layout`. In particular, combat may let its
   // field yield to the hand at Text XL on a fitting viewport without silently
@@ -7167,12 +7252,30 @@ const balance = {
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
-      // THE ORIENTATION GATE'S ONE NUMBER (src/ui/components/upright.js, R-32).
-      // Below this viewport HEIGHT in device px, the game refuses the shape and
-      // says so, instead of drawing a board whose END TURN no gesture reaches.
+      // The compact wide composition's rendered lower edge. Text XL is the
+      // tallest cell: at 844x340 its complete HUD, combatants, cards, hint row
+      // and action controls are on glass; at 844x339 at least one required
+      // region crosses its owning row. Derived at one-pixel resolution by
+      // tools/short-landscape-support.mjs before this value is consulted, so
+      // moving the number without moving the rendered premise goes red.
+      shortWideMinH: 340,
+      // THE SHORT-WIDE BAND'S UPPER EDGE (src/main.js, #27). At or above this
+      // viewport height, the established wide composition remains. Below it,
+      // main.js selects the compact composition down through shortWideMinH;
+      // only heights below that rendered floor are refused. Thus the complete
+      // current answer is:
+      //
+      //   h >= 465                 standard wide composition
+      //   340 <= h < 465           compact wide composition (when width fits)
+      //   h < 340                  truthful upright/resize refusal
       //
       // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
       // layout fact that will move when the board does.
+      //
+      // HISTORICAL PRE-#27 RECORD BELOW. It explains why 465 was originally
+      // derived as the refusal threshold. #27 keeps that exact measured upper
+      // edge but inserts a supported composition below it; statements below
+      // about 368..464 being refused describe the former runtime, not today.
       //
       // THE MEASUREMENT IS A DERIVATION OVER AN ENUMERATED SET, AND SAYING THAT
       // OUT LOUD IS WHY THIS NUMBER SURVIVED HAVING ITS QUESTION CHANGED. It was
@@ -34279,7 +34382,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3a88b457ba';
+const SOURCE = '5e2a6a6e9b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34313,7 +34416,7 @@ const SOURCE = '3a88b457ba';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0867';
+const ORDINAL = '0869';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -49365,7 +49468,20 @@ Object.assign(module.exports, { installHoldBeat });
 
 },
 "src/ui/components/upright.js": function (module, exports, require) {
-// src/ui/components/upright.js — THE ORIENTATION GATE.
+// src/ui/components/upright.js — THE LAST-RESORT SHORT-SCREEN GATE.
+//
+// CURRENT AFTER #27 (2026-08-20). Landscape is supported wherever the rendered
+// short-wide composition is complete: 340..464 device px high at a fitting wide
+// width. This component no longer stands at 844x390 or at the browser-chrome
+// sensitivity cell 844x344. It remains only below the compact composition's
+// measured lower floor (844x339 is the one-pixel control), where drawing the
+// ordinary board would strand END TURN. styles/ui.css compresses only the gate's
+// decorative spacing there so every sentence remains readable at Text XL.
+//
+// The long decision record below is PRE-#27 history. It is retained because it
+// explains the refusal's ownership, input semantics and player-controlled switch;
+// claims in it that 844x390 is refused or landscape support is owed describe the
+// former runtime and are superseded by the current contract above.
 //
 // ============================================================================
 // ⚠ AMENDED BY THE OWNER, 2026-08-17. READ THIS BEFORE THE RULING BELOW.
@@ -49390,7 +49506,7 @@ Object.assign(module.exports, { installHoldBeat });
 // being no door at all. Two different defects, one root — a refusal we knew could
 // misfire and gave nobody a switch for.
 //
-// WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
+// HISTORICAL — WHAT THE AMENDMENT DID NOT CHANGE, said plainly because the row's default turns
 // on it: **the wall is still there.** At 844x390 on this tree, measured, not
 // argued (`node tools/uprightgate.mjs`):
 //
@@ -49405,7 +49521,7 @@ Object.assign(module.exports, { installHoldBeat });
 // of this held for his word.
 //
 // ============================================================================
-// THE DECISION, AND IT CAME BEFORE ANY LAYOUT: GATE, NOT SUPPORT.
+// THE HISTORICAL DECISION, BEFORE #27'S LAYOUT: GATE, NOT SUPPORT.
 // ============================================================================
 //
 // Sunna, 2026-08-15, on Marina's ruling that this act opens with a decision and
@@ -49584,8 +49700,8 @@ const SAY = {
 /**
  * updateUprightGate({ short, offerRotate, enabled })
  *
- *   short        the viewport is shorter than `uiScale.gateBelowH` — the only
- *                GEOMETRIC thing that decides whether this shape is refused
+ *   short        no complete narrow or short-wide composition fits this
+ *                viewport — the only geometric thing that decides refusal
  *   offerRotate  main.js asked the same decider about the SWAPPED viewport and
  *                it is not short, AND the primary pointer is coarse — so
  *                "turn it" is a true and doable instruction. WORDING ONLY.

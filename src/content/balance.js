@@ -284,12 +284,30 @@ export const balance = {
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
-      // THE ORIENTATION GATE'S ONE NUMBER (src/ui/components/upright.js, R-32).
-      // Below this viewport HEIGHT in device px, the game refuses the shape and
-      // says so, instead of drawing a board whose END TURN no gesture reaches.
+      // The compact wide composition's rendered lower edge. Text XL is the
+      // tallest cell: at 844x340 its complete HUD, combatants, cards, hint row
+      // and action controls are on glass; at 844x339 at least one required
+      // region crosses its owning row. Derived at one-pixel resolution by
+      // tools/short-landscape-support.mjs before this value is consulted, so
+      // moving the number without moving the rendered premise goes red.
+      shortWideMinH: 340,
+      // THE SHORT-WIDE BAND'S UPPER EDGE (src/main.js, #27). At or above this
+      // viewport height, the established wide composition remains. Below it,
+      // main.js selects the compact composition down through shortWideMinH;
+      // only heights below that rendered floor are refused. Thus the complete
+      // current answer is:
+      //
+      //   h >= 465                 standard wide composition
+      //   340 <= h < 465           compact wide composition (when width fits)
+      //   h < 340                  truthful upright/resize refusal
       //
       // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
       // layout fact that will move when the board does.
+      //
+      // HISTORICAL PRE-#27 RECORD BELOW. It explains why 465 was originally
+      // derived as the refusal threshold. #27 keeps that exact measured upper
+      // edge but inserts a supported composition below it; statements below
+      // about 368..464 being refused describe the former runtime, not today.
       //
       // THE MEASUREMENT IS A DERIVATION OVER AN ENUMERATED SET, AND SAYING THAT
       // OUT LOUD IS WHY THIS NUMBER SURVIVED HAVING ITS QUESTION CHANGED. It was
