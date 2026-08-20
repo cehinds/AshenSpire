@@ -98,6 +98,44 @@ function decodeEscapedBody(raw, start, end) {
 
 const decodeString = (raw) => decodeEscapedBody(raw, 1, raw.length - 1);
 
+const IDENTIFIER_START = /^[$_\p{ID_Start}]$/u;
+const IDENTIFIER_PART = /^[$_\u200c\u200d\p{ID_Continue}]$/u;
+
+function identifierEscapeAt(source, index) {
+  if (source[index] !== '\\' || source[index + 1] !== 'u') return null;
+  let digits = '';
+  let end = index + 2;
+  if (source[end] === '{') {
+    const close = source.indexOf('}', end + 1);
+    if (close < 0) return null;
+    digits = source.slice(end + 1, close);
+    end = close + 1;
+  } else {
+    digits = source.slice(end, end + 4);
+    end += 4;
+  }
+  if (!/^[0-9a-fA-F]+$/.test(digits) || digits.length > 6) return null;
+  const point = Number.parseInt(digits, 16);
+  if (point > 0x10ffff || (point >= 0xd800 && point <= 0xdfff)) return null;
+  return { value: String.fromCodePoint(point), end };
+}
+
+function scanIdentifier(source, start) {
+  let value = '';
+  let index = start;
+  let first = true;
+  while (index < source.length) {
+    const escaped = identifierEscapeAt(source, index);
+    const direct = escaped ? null : String.fromCodePoint(source.codePointAt(index));
+    const character = escaped?.value ?? direct;
+    if (!(first ? IDENTIFIER_START : IDENTIFIER_PART).test(character)) break;
+    value += character;
+    index = escaped?.end ?? index + direct.length;
+    first = false;
+  }
+  return first ? null : { value, end: index };
+}
+
 function scanQuoted(source, start, quote, errors) {
   for (let i = start + 1; i < source.length; i++) {
     if (source[i] === '\\') { i++; continue; }
@@ -139,7 +177,8 @@ function blockKind(tokens) {
   if (tokens[functionIndex]?.type === 'identifier') functionIndex--;
   if (tokens[functionIndex]?.value === '*') functionIndex--;
   if (tokens[functionIndex]?.value === 'function') {
-    const context = tokens[functionIndex - 1];
+    const contextIndex = tokens[functionIndex - 1]?.value === 'async' ? functionIndex - 2 : functionIndex - 1;
+    const context = tokens[contextIndex];
     return !context || context.value === ';' || context.value === '{' || context.blockClose === 'statement' ||
       ['export', 'default'].includes(context.value) ? 'statement' : 'expression';
   }
@@ -189,15 +228,19 @@ function lexRange(source, from, to, tokens, errors, stopAtTemplateBrace = false)
       i = close + 2; continue;
     }
     const start = i;
+    const identifier = scanIdentifier(source, start);
     if (source[i] === '"' || source[i] === "'") {
       i = scanQuoted(source, i, source[i], errors);
       const raw = source.slice(start, i);
       tokens.push({ type: 'string', value: decodeString(raw), raw, start, end: i });
     } else if (source[i] === '`') {
       i = lexTemplate(source, i, tokens, errors);
-    } else if (/[A-Za-z_$]/.test(source[i])) {
-      i++; while (/[A-Za-z0-9_$]/.test(source[i] || '')) i++;
-      tokens.push({ type: 'identifier', value: source.slice(start, i), start, end: i });
+    } else if (identifier) {
+      i = identifier.end;
+      tokens.push({ type: 'identifier', value: identifier.value, start, end: i });
+    } else if (source[i] === '\\' && source[i + 1] === 'u') {
+      errors.push({ index: start, reason: 'invalid Unicode escape in identifier' });
+      i += 2;
     } else if (/[0-9]/.test(source[i])) {
       i++; while (/[A-Za-z0-9_.]/.test(source[i] || '')) i++;
       tokens.push({ type: 'number', value: source.slice(start, i), start, end: i });
@@ -575,7 +618,10 @@ function parameterScopes(tokens) {
       close = brace - 1;
       open = findOpenBackward(tokens, close);
       const before = tokens[open - 1];
-      const functionKeyword = before?.value === 'function' || tokens[open - 2]?.value === 'function';
+      let functionIndex = open - 1;
+      if (tokens[functionIndex]?.type === 'identifier') functionIndex--;
+      if (tokens[functionIndex]?.value === '*') functionIndex--;
+      const functionKeyword = tokens[functionIndex]?.value === 'function';
       const catchKeyword = before?.value === 'catch';
       const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before.value);
       functionScope = functionKeyword || methodShape;
@@ -799,7 +845,7 @@ function findPathnameMisuses(tokens, errors) {
     }
     const token = tokens[i];
     if (token.value === '{') {
-      const isScope = token.blockOpen === 'statement';
+      const isScope = token.blockOpen === 'statement' || parameters.atBrace.has(i);
       scopeBraces.push(isScope);
       if (!isScope) continue;
       const functionScope = parameters.functionBraces.has(i);
@@ -897,7 +943,11 @@ function findHandRolledFileUrls(tokens) {
         token.hasInterpolation && /^file:\/{2,}/.test(token.value)) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
-    if (token.type === 'string' && /^file:\/{2,}/.test(token.value) && tokens[i + 1]?.value === '+') {
+    let afterLiteral = i + 1;
+    for (let groups = groupDepthBefore(tokens, i); groups > 0 && tokens[afterLiteral]?.value === ')'; groups--) {
+      afterLiteral++;
+    }
+    if (token.type === 'string' && /^file:\/{2,}/.test(token.value) && tokens[afterLiteral]?.value === '+') {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
   }
@@ -1111,6 +1161,26 @@ function selftest() {
     ['static template bracket non-path control', "new URL('./x',import.meta.url)[`origin`]", 0, 0, 0],
     ['tagged template later segment control', 'const s=String.raw`${prefix}file://${path}`', 0, 0, 0],
     ['untagged template later segment', 'const s=`${prefix}file://${path}`', 0, 1, 0],
+    ['grouped file URL concatenation', "const href=('file://')+path", 0, 1, 0],
+    ['double-grouped file URL concatenation', 'const href=(("file:///"))+path', 0, 1, 0],
+    ['grouped file URL concatenation inside call', "const href=String((('file:////'))+path)", 0, 1, 0],
+    ['grouped static file URL control', "const href=('file:///tmp/x')", 0, 0, 0],
+    ['grouped file URL property control', "const length=('file://').length", 0, 0, 0],
+    ['quoted grouped concatenation spelling control', 'const text="(\'file://\') + path"', 0, 0, 0],
+    ['escaped pathname identifier', "new URL('./x',import.meta.url).\\u0070athname", 1, 0, 0],
+    ['escaped optional pathname identifier', "new URL('./x',import.meta.url)?.\\u{70}athname", 1, 0, 0],
+    ['escaped alias binding flows to pathname', "const \\u0075=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['escaped non-path identifier control', "new URL('./x',import.meta.url).\\u006Frigin", 0, 0, 0],
+    ['quoted escaped pathname spelling control', 'const text="new URL(\'./x\',import.meta.url).\\\\u0070athname"', 0, 0, 0],
+    ['async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['exported async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);export async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['default-exported async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);export default async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['nested async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);function outer(){async function f(u){return u.pathname}}fileURLToPath(u)", 0, 0, 0],
+    ['async generator parameter shadows outer alias', "const u=new URL('./x',import.meta.url);async function* f(u){yield u.pathname}fileURLToPath(u)", 0, 0, 0],
+    ['async declaration default still reads outer alias', "const u=new URL('./x',import.meta.url);async function f(x=u.pathname){}fileURLToPath(u)", 1, 0, 0],
+    ['async function expression parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const f=async function(u){return u.pathname};fileURLToPath(u)", 0, 0, 0],
+    ['async arrow parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const f=async(u)=>u.pathname;fileURLToPath(u)", 0, 0, 0],
+    ['object async method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const obj={async f(u){return u.pathname}};fileURLToPath(u)", 0, 0, 0],
     ['conditional URL then platform preserves alias', "let u;if(ok)u=new URL('./x',import.meta.url);else u=platformValue;u.pathname", 1, 0, 0],
     ['conditional platform then URL preserves alias', "let u;if(ok)u=platformValue;else u=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
     ['unconditional platform reassignment clears alias', "let u=new URL('./x',import.meta.url);u=platformValue;u.pathname", 0, 0, 0],
@@ -1243,6 +1313,7 @@ function selftest() {
     'const x=`unterminated ${value}',
     'const x=/unterminated',
     '/* unterminated',
+    'const \\u00ZZ = 1',
   ];
   say(lexicalAmbiguities.every((source) => scanSource(source).findings.some((finding) => finding.kind.startsWith('URL/path scanner ambiguity:'))),
     'unterminated lexical forms fail closed through the shared scanner');
