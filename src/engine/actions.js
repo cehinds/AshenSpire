@@ -191,7 +191,15 @@ export function applyHeal(ctx, target, amount) {
   const n = Math.max(0, Math.floor(amount));
   const gained = Math.min(n, target.maxHp - target.hp);
   target.hp += gained;
-  ctx.emit('healed', { targetId: target.id, amount: gained, requested: n });
+  const playerId = target.kind === 'player' && typeof ctx.playerIdForEntity === 'function'
+    ? ctx.playerIdForEntity(target)
+    : null;
+  ctx.emit('healed', {
+    targetId: target.id,
+    ...(playerId ? { playerId } : {}),
+    amount: gained,
+    requested: n,
+  });
   afterHpChange(ctx, target);
   return gained;
 }

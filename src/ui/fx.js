@@ -288,8 +288,11 @@ export function placeAnchored(el, anchor, {
  * strings that were measured clipping, rather than a copy of it that would
  * agree with itself (#69).
  */
-export function floatNum(layer, anchor, text, cls, tint) {
+export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
+  const x = Number.isFinite(placement.x) ? placement.x : 0;
+  const y = Number.isFinite(placement.y) ? placement.y : 0;
+  const jitter = placement.jitter !== false;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
@@ -307,8 +310,8 @@ export function floatNum(layer, anchor, text, cls, tint) {
   // `translate` is the standalone property on purpose: num-pop animates
   // `transform`, and a `transform: translateX(-50%)` here would be overwritten
   // by the first keyframe. The two compose.
-  const centre = b.left + b.width / 2 + (Math.random() * 26 - 13);
-  const top = b.top + b.height * 0.25;
+  const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
+  const top = b.top + b.height * 0.25 + y;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
   layer.appendChild(el);
@@ -326,6 +329,25 @@ export function floatNum(layer, anchor, text, cls, tint) {
   );
   el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
+  return el;
+}
+
+/**
+ * One semantic split for every attack hit, shared by solo and co-op.
+ * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
+ * Guard consumption is unsigned. Guard gain remains the separate +N channel.
+ */
+export function guardHitFloatParts(event) {
+  const amount = Math.max(0, Number(event && event.amount) || 0);
+  const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
+  const residual = amount - blocked;
+  return {
+    amount,
+    blocked,
+    residual,
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+  };
 }
 
 // Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
@@ -602,21 +624,24 @@ export function playTimeline(events, ctx, done) {
 function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
-      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
-      // no flinch, no shake, no slash.
-      if (e.amount === 0 && e.blocked > 0) {
-        return (ctx) => {
-          sfx.play('block');
-          const anchor = ctx.anchorFor(e.targetId);
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
-        };
-      }
+      // One event owns both visible channels: unsigned guard consumed, then
+      // only the HP residual as damage. Paired results sit side-by-side without
+      // relying on random jitter, so phone and desktop read the same grammar.
       return (ctx) => {
-        sfx.play('hit');
+        const parts = guardHitFloatParts(e);
         const anchor = ctx.anchorFor(e.targetId);
-        const heavy = e.amount >= 15;
-        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
+        const paired = !!(parts.guard && parts.damage);
+        if (parts.guard) {
+          sfx.play('block');
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
+            { x: paired ? -26 : 0, jitter: false });
+        }
+        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+        sfx.play('hit');
+        const heavy = parts.residual >= 15;
+        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
+          { x: paired ? 26 : 0, jitter: !paired });
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);

@@ -38,7 +38,7 @@
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { anchorLocalBox } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -64,7 +64,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let pacing = false; // an enemy-turn replay is holding the render
-  let pendingSnap = null; // newest snapshot that arrived while pacing
+  let pendingSnaps = []; // every unrendered authoritative frame, causal order
+  let latestWireSnap = null; // newest wire state, even while the old board paces
+  let receivedSnapshots = 0;
+  let lastReceiptSeq = 0; // rendered authoritative combat receipt identity
+  let guardCoopTool = null; // query-gated real-wire browser control
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
@@ -207,13 +211,47 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
+    if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
+  guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
+    resync: () => send({ t: 'resync' }),
+    playFirstFromLatest: () => {
+      const sc = latestWireSnap?.scene;
+      const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
+      const card = player?.hand.find((entry) => {
+        const def = cardDef(entry);
+        return (def.effects || []).some((effect) => effect.target === 'enemy')
+          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
+          && player.mana >= (def.manaCost || 0);
+      });
+      const enemy = sc?.enemies.find((entry) => entry.alive);
+      if (!card || !enemy) return null;
+      send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
+      return { cardId: card.cardId, receiptSeq: sc.receiptSeq };
+    },
+    playCardOnAllyFromLatest: (cardId, allyId) => {
+      const sc = latestWireSnap?.scene;
+      const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
+      const card = player?.hand.find((entry) => entry.cardId === cardId);
+      const ally = sc?.players.find((entry) => entry.id === allyId && entry.alive && entry.connected);
+      if (!card || !ally) return null;
+      send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: ally.id });
+      return { cardId: card.cardId, allyId: ally.id, receiptSeq: sc.receiptSeq };
+    },
+    state: () => ({
+      pacing, receivedSnapshots, lastReceiptSeq,
+      latestReceiptSeq: latestWireSnap?.scene?.receiptSeq || 0,
+      pendingReceiptSeqs: pendingSnaps.map((entry) => entry.scene?.receiptSeq || 0),
+    }),
+  } : null;
+  if (guardCoopTool) window.__guardCoopTool = guardCoopTool;
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
     if (!snap) return;
+    if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     const mm = myMember();
@@ -686,7 +724,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function receiveSnapshot(s) {
-    if (pacing) { pendingSnap = s; return; }
+    latestWireSnap = s;
+    receivedSnapshots += 1;
+    if (pacing) {
+      const seq = s.scene?.kind === 'combat' ? Number(s.scene.receiptSeq) || 0 : 0;
+      const duplicate = seq > 0 && pendingSnaps.some((entry) => entry.scene?.receiptSeq === seq);
+      if (!duplicate) pendingSnaps.push(s);
+      return;
+    }
     const sc = s.scene;
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
     if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
@@ -712,9 +757,28 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       }
       await sleep(160);
     } finally {
+      const frames = [s, ...pendingSnaps];
+      pendingSnaps = [];
+      const unique = [];
+      const seenReceiptSeqs = new Set();
+      for (const frame of frames) {
+        const seq = frame.scene?.kind === 'combat' ? Number(frame.scene.receiptSeq) || 0 : 0;
+        if (seq > 0 && seenReceiptSeqs.has(seq)) continue;
+        if (seq > 0) seenReceiptSeqs.add(seq);
+        unique.push(frame);
+      }
+      const latest = unique[unique.length - 1] || s;
+      const combatFrames = unique.filter((frame) => frame.scene?.kind === 'combat');
+      snap = combatFrames.length === unique.length && combatFrames.length > 1
+        ? {
+            ...latest,
+            scene: {
+              ...latest.scene,
+              events: combatFrames.flatMap((frame) => frame.scene.events || []),
+            },
+          }
+        : latest;
       pacing = false;
-      snap = pendingSnap || s;
-      pendingSnap = null;
       render();
       if (snap.scene.kind === 'combat') banner(`TURN ${snap.scene.turn}`, true);
     }
@@ -736,7 +800,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35) => {
+    const put = (sel, cls, text, dy = 0.35, dx = 0, receiptRow = null) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -746,22 +810,122 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      el.style.left = `${b.left + b.width / 2}px`;
-      el.style.top = `${b.top + b.height * dy}px`;
+      const centre = b.left + b.width / 2 + dx;
+      const top = b.top + b.height * dy;
+      el.style.left = `${centre}px`;
+      el.style.top = `${top}px`;
       layer.appendChild(el);
+      const half = el.offsetWidth / 2;
+      const at = clampBox(
+        { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
+        anchorLocalBox(layer, layer),
+        { pad: 6 },
+      );
+      el.style.left = `${at.left + half}px`;
+      if (receiptRow) {
+        receiptRow.baseTop = top;
+        receiptRow.items.push(el);
+      } else {
+        el.style.top = `${at.top}px`;
+      }
       setTimeout(() => el.remove(), 1100);
+      return el;
+    };
+    const maxAnimationScale = (el) => {
+      let scale = 1;
+      for (const animation of el.getAnimations()) {
+        for (const frame of animation.effect?.getKeyframes?.() || []) {
+          if (!frame.transform || frame.transform === 'none') continue;
+          try {
+            const matrix = new DOMMatrixReadOnly(frame.transform);
+            scale = Math.max(scale, Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
+          } catch { /* an unparseable transform cannot reduce the measured box */ }
+        }
+      }
+      return scale;
+    };
+    const layoutReceiptRows = (rowsByTarget) => {
+      const view = anchorLocalBox(layer, layer);
+      for (const rows of rowsByTarget.values()) {
+        const all = rows.flatMap((row) => row.items);
+        const gap = Math.max(2, ...all.map((el) => (parseFloat(getComputedStyle(el).fontSize) || 0) * 0.12));
+        for (const row of rows) {
+          row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));
+        }
+        const height = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
+        let cursor = clampBox(
+          { left: 0, top: rows[0].baseTop - height / 2, width: 0, height },
+          view,
+          { pad: 6 },
+        ).top;
+        for (const row of rows) {
+          for (const el of row.items) el.style.top = `${cursor + row.height - el.offsetHeight}px`;
+          cursor += row.height + gap;
+        }
+      }
     };
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
       if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
     };
+    // Authoritative receipts own hit floats. Snapshot deltas remain the home
+    // for healing, guard gain and legacy non-attack HP changes only.
+    const receiptLossByTarget = new Map();
+    const receiptHealByTarget = new Map();
+    // JSON resync creates a new object for an unchanged scene. The host's
+    // receiptSeq, not local object identity, owns whether these receipts are new.
+    const receiptSeq = Number(now.receiptSeq) || 0;
+    const hasNewReceipts = receiptSeq > lastReceiptSeq;
+    const receipts = (hasNewReceipts ? (now.events || []) : [])
+      .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
+      .map((ev) => {
+        const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
+        const enemy = now.enemies.find((entry) => entry.id === ev.targetId);
+        const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
+        const targetKey = enemy ? `enemy:${enemy.id}` : playerId ? `player:${playerId}` : null;
+        return { ev, sel, targetKey };
+      })
+      .filter((row) => row.sel && row.targetKey);
+    const receiptRowsByTarget = new Map();
+    for (const { ev, sel, targetKey } of receipts) {
+      const receiptRow = { baseTop: 0, items: [], height: 0 };
+      if (ev.type === 'healed') {
+        const amount = Math.max(0, Number(ev.amount) || 0);
+        if (!amount) continue;
+        receiptHealByTarget.set(targetKey, (receiptHealByTarget.get(targetKey) || 0) + amount);
+        put(sel, 'float-num heal', `+${amount}`, 0.35, 0, receiptRow);
+      } else if (ev.type === 'hpLost') {
+        const amount = Math.max(0, Number(ev.amount) || 0);
+        if (!amount) continue;
+        const part = guardHitFloatParts({ amount, blocked: 0 }).damage;
+        receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + amount);
+        put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow);
+        recoil(`${sel} .sprite`, amount >= 12);
+      } else {
+        const parts = guardHitFloatParts(ev);
+        receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
+        const paired = !!(parts.guard && parts.damage);
+        if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, receiptRow);
+        if (parts.damage) {
+          put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, receiptRow);
+          recoil(`${sel} .sprite`, parts.residual >= 12);
+        }
+      }
+      if (receiptRow.items.length) {
+        if (!receiptRowsByTarget.has(targetKey)) receiptRowsByTarget.set(targetKey, []);
+        receiptRowsByTarget.get(targetKey).push(receiptRow);
+      }
+    }
+    layoutReceiptRows(receiptRowsByTarget);
+    if (hasNewReceipts) lastReceiptSeq = receiptSeq;
     for (const e of now.enemies) {
       const pe = prev.enemies.find((x) => x.id === e.id);
       if (!pe) continue;
       const dmg = Math.max(0, pe.hp - e.hp);
-      if (dmg > 0) {
-        put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
-        recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
+      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0));
+      if (unreceipted > 0) {
+        put(`[data-eid="${e.id}"]`, unreceipted >= 12 ? 'float-num crit' : 'float-num dmg', `-${unreceipted}`);
+        recoil(`[data-eid="${e.id}"] .sprite`, unreceipted >= 12);
       }
       if ((e.block || 0) > (pe.block || 0)) put(`[data-eid="${e.id}"]`, 'float-num blk small', `+${e.block - (pe.block || 0)}`);
       if (pe.hp > 0 && e.hp <= 0) {
@@ -773,11 +937,14 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const pp = prev.players.find((x) => x.id === p.id);
       if (!pp) continue;
       const dmg = Math.max(0, pp.hp - p.hp);
-      if (dmg > 0) {
-        put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
-        recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
+      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`player:${p.id}`) || 0));
+      if (unreceipted > 0) {
+        put(`[data-seat="${p.id}"]`, unreceipted >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${unreceipted}`);
+        recoil(`[data-seat="${p.id}"] .sprite`, unreceipted >= 12);
       }
-      if (p.hp > pp.hp) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${p.hp - pp.hp}`);
+      const heal = Math.max(0, p.hp - pp.hp);
+      const unreceiptedHeal = Math.max(0, heal - (receiptHealByTarget.get(`player:${p.id}`) || 0));
+      if (unreceiptedHeal > 0) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${unreceiptedHeal}`);
       if ((p.block || 0) > (pp.block || 0)) put(`[data-seat="${p.id}"]`, 'float-num blk small', `+${p.block - (pp.block || 0)}`);
     }
   }
