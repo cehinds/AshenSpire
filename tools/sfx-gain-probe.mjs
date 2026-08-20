@@ -15,7 +15,7 @@
 //            probe goes red when a table value and the engine disagree (the
 //            instrument rule: a check nobody has watched fail is not green).
 //
-// THE DOORS, THREE OF THEM, AND TWO ARE DOWNSTREAM ON PURPOSE. Vira's doors
+// THE DOORS, FOUR OF THEM, AND TWO ARE DOWNSTREAM ON PURPOSE. Vira's doors
 // audit (2026-08-14) called this probe "DOWNSTREAM by declared choice, honestly
 // scoped": classes 1 and 2 below enter at the COMPARATOR — the expectation and
 // the measured pool — never at the recipe. For the defect they were written
@@ -38,6 +38,11 @@
 //                                about — "no copy, no clamp, no code in
 //                                between" — and until now nothing had ever
 //                                watched it fail.
+//   class 4  synchronous inspection   a disposable copy replaces the real
+//                                async settle with an already-resolved promise.
+//                                Door: the sample-or-synth decision introduced
+//                                by the filename convention. Every empty gain
+//                                pool must go red, never pass as a quiet recipe.
 //
 // Exit 0 = every recipe's peaks reached the gain nodes; 1 = any miss.
 // REMOVAL CONDITION: delete this probe when the synth SFX layer is removed in
@@ -49,6 +54,13 @@
 // record, why frequency params record nothing): tools/webaudio-stub.mjs.
 const { installWebAudioStub } = await import('./webaudio-stub.mjs');
 const gainTargets = installWebAudioStub();
+
+// The filename convention deliberately decides between a sample and its synth
+// fallback asynchronously. Make the miss deterministic, then wait until that
+// decision settles before inspecting the scheduled gains. The fetch timer is
+// registered first; the settle timer runs after its callback and microtasks.
+globalThis.fetch = () => new Promise((done) => setTimeout(() => done({ ok: false, status: 404 }), 0));
+const settleAudioDecision = () => new Promise((done) => setTimeout(done, 0));
 
 const { initAudio } = await import('../src/ui/audio.js');
 const { SFX_RECIPES } = await import('../src/content/sfx.js');
@@ -69,6 +81,7 @@ let layersChecked = 0;
 for (const id of Object.keys(SFX_RECIPES)) {
   gainTargets.length = 0;
   engine.sfx(id);
+  await settleAudioDecision();
   // MULTISET, not membership: each expected peak CONSUMES one occurrence from
   // the pool. Vira's gate finding on #46: with `includes`, victory's four
   // identical 0.32 peaks were alibied by any one of them — she planted a
@@ -103,6 +116,7 @@ for (const probe of ['noSuchSound', 'toString']) {
   gainTargets.length = 0;
   try {
     engine.sfx(probe);
+    await settleAudioDecision();
   } catch (e) {
     misses++;
     console.error(`MISS  sfx('${probe}') threw instead of playing default: ${e.message}`);
@@ -179,8 +193,39 @@ if (selftest) {
     console.error('  and it did not catch it. Treat every green from this tool as unknown.');
     process.exit(1);
   }
+  // ---- class 4: the async-decision door ---------------------------------
+  // If this probe stops waiting for the convention fetch/decode decision, it
+  // races every fallback and prints a clean-looking empty gain pool. Plant the
+  // old synchronous assumption in a disposable copy and require that red.
+  const SETTLE_FROM = 'const settleAudio' + 'Decision = () => new Promise((done) => setTimeout(done, 0));';
+  const SETTLE_TO = 'const settleAudioDecision = () => Promise.resolve();';
+  const syncDir = mkdtempSync(join(tmpdir(), 'sfx-gain-sync-kb-'));
+  for (const d of ['src', 'tools']) {
+    if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(syncDir, d), { recursive: true });
+  }
+  const syncTool = resolve(syncDir, 'tools/sfx-gain-probe.mjs');
+  const syncSrc = readFileSync(syncTool, 'utf8');
+  const syncAt = syncSrc.indexOf(SETTLE_FROM);
+  if (syncAt < 0 || syncSrc.indexOf(SETTLE_FROM, syncAt + 1) >= 0) {
+    console.error(`RESULT: selftest FAILED — class 4's async-decision plant found ${syncAt < 0 ? 'NO' : 'MORE THAN ONE'} home.`);
+    try { rmSync(syncDir, { recursive: true, force: true }); } catch { /* tmp */ }
+    process.exit(1);
+  }
+  writeFileSync(syncTool, syncSrc.slice(0, syncAt) + SETTLE_TO + syncSrc.slice(syncAt + SETTLE_FROM.length), 'utf8');
+  const syncRun = spawnSync(process.execPath, [syncTool], { encoding: 'utf8' });
+  const syncOut = (syncRun.stdout || '') + (syncRun.stderr || '');
+  const syncMisses = syncOut.split('\n').filter((line) => /^MISS /.test(line));
+  try { rmSync(syncDir, { recursive: true, force: true }); } catch { /* tmp */ }
+  if (syncRun.status !== 1 || syncMisses.length === 0) {
+    console.error('RESULT: selftest FAILED — class 4 did not catch the old synchronous inspection race.');
+    process.exit(1);
+  }
+  console.log('\n  class 4 — THE ASYNC-DECISION DOOR: replacing the real settle with an already-resolved');
+  console.log(`    promise exited ${syncRun.status} with ${syncMisses.length} MISS line(s).`);
+
   console.log('\nRESULT: selftest held — comparator plants red (classes 1+2, downstream and SAID SO),');
-  console.log('  and a clamp planted in the real engine goes red through the real door (class 3).');
+  console.log('  a clamp planted in the real engine goes red through the real door (class 3),');
+  console.log('  and the old synchronous inspection race goes red (class 4).');
   console.log('  Boundary: the noise() path carries no plant of its own — class 3 clamps tone() only.');
   process.exit(0);
 }

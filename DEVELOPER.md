@@ -160,6 +160,19 @@ Escape hatch: `src/content/scripts.js` (named functions callable as
 a comment. Current usage: **one** (Wondrous Draught — dynamic meta-selection
 of other flasks' effect lists, which the DSL cannot reference).
 
+## Add an SFX file (one file: `assets/sfx/<id>.ogg`)
+
+Sound-effect ids automatically look for `assets/sfx/<encoded-id>.ogg`; for
+example, the `cardPlay` cue looks for `assets/sfx/cardPlay.ogg`. The source app
+loads that path directly, while the standalone bundler carries it through the
+same `assetUrl()` seam used by art. No registration row is needed.
+
+Use `SFX_MANIFEST` in `src/content/sfx.js` only when a cue needs a different
+path or format. A missing file keeps the existing synth recipe. An unreadable
+audio file also keeps the synth and logs the exact resolved URL, so a bad asset
+is diagnosable without making player feedback silent. Run
+`node tools/sfx-filename-convention.mjs` after changing this contract.
+
 ## Performance (SPEC §9 M4)
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
