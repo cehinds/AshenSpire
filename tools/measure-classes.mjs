@@ -1019,11 +1019,16 @@ function liveLethalFixture(kind, mutation = null) {
         'shootingShard',
         { cardId: 'starstonePebble', mods: ['potency=+1'], damageSchool: 'magic', exposureBuildupPerHit: 1 },
       ]
-    : ['celestialLance', 'shootingShard'];
+    : [
+        { cardId: 'celestialLance', damageSchool: 'magic', exposureBuildupPerHit: 1 },
+        'shootingShard',
+      ];
   const combat = fixtureCombat(cards);
   const enemy = combat.enemies[0];
-  enemy.hp = positive ? 12 : 20;
+  enemy.hp = positive ? 18 : 20;
   enemy.block = positive ? 0 : 5;
+  if (positive) enemy.statuses.vulnerable = { stacks: 1 };
+  else enemy.damageResistanceBySchool = { magic: 50 };
   const ordered = positive
     ? ['shootingShard', 'starstonePebble']
     : ['celestialLance', 'shootingShard'];
@@ -1151,9 +1156,9 @@ if (SELFTEST) {
   console.log('\n  Starseer resolved live lethal scoring (stamped card/player/target/Block state):');
   const livePositive = liveLethalFixture('positive');
   const rawUnder = liveLethalFixture('positive', 'starLethalUnderestimate');
-  if (livePositive.chosen === 'starstonePebble' && livePositive.hpLoss === 12
+  if (livePositive.chosen === 'starstonePebble' && livePositive.hpLoss === 18
       && rawUnder.chosen === 'shootingShard') {
-    console.log('  starLethalUnderestimate caught ✔ — stamped Pebble + player magic is lethal at 12 HP; authored sum misses it');
+    console.log('  starLethalUnderestimate caught ✔ — stamped Pebble + player magic + target Vulnerable is lethal at 18 HP; authored sum misses it');
   } else {
     console.log(`  starLethalUnderestimate NOT CAUGHT ✘ — clean/plant ${livePositive.chosen}/${rawUnder.chosen}, live loss ${livePositive.hpLoss}`);
     failures++;
@@ -1162,7 +1167,7 @@ if (SELFTEST) {
   const rawOver = liveLethalFixture('negative', 'starLethalOverestimate');
   if (liveNegative.chosen === 'shootingShard' && liveNegative.hpLoss < liveNegative.targetHp
       && rawOver.chosen === 'celestialLance') {
-    console.log('  starLethalOverestimate caught ✔ — target Block keeps the authored 22 nonlethal; raw sum falsely picks Lance');
+    console.log('  starLethalOverestimate caught ✔ — target magic resistance + Block keeps authored 22 nonlethal; raw sum falsely picks Lance');
   } else {
     console.log(`  starLethalOverestimate NOT CAUGHT ✘ — clean/plant ${liveNegative.chosen}/${rawOver.chosen}, live loss ${liveNegative.hpLoss}/${liveNegative.targetHp}`);
     failures++;
