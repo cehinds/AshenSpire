@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 
 const root = new URL(
-  '.',
+  './data;v=1',
   import.meta.url,
 ).pathname;
 const exists = existsSync(root);

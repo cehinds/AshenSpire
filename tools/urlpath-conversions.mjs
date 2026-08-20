@@ -67,6 +67,55 @@ function stripComments(source) {
 
 const lineAt = (source, index) => source.slice(0, index).split('\n').length;
 
+// Preserve source offsets while removing delimiters that only look structural
+// inside strings. This lets the URL call scanner distinguish a statement
+// terminator from a legal semicolon in a URL argument.
+function maskStringContents(source) {
+  let out = '';
+  let quote = '';
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    if (quote) {
+      if (char === '\\') {
+        out += ' ';
+        if (i + 1 < source.length) out += source[++i] === '\n' ? '\n' : ' ';
+        continue;
+      }
+      out += char === '\n' ? '\n' : ' ';
+      if (char === quote) quote = '';
+      continue;
+    }
+    if (char === '"' || char === "'" || char === '`') {
+      quote = char;
+      out += ' ';
+      continue;
+    }
+    out += char;
+  }
+  return out;
+}
+
+function findUrlPathnameMisuses(code) {
+  const structural = maskStringContents(code);
+  const starts = /\bnew\s+URL\s*\(/g;
+  const findings = [];
+  for (const match of structural.matchAll(starts)) {
+    const opening = structural.indexOf('(', match.index);
+    let depth = 1;
+    let closing = -1;
+    for (let i = opening + 1; i < structural.length; i++) {
+      if (structural[i] === '(') depth++;
+      else if (structural[i] === ')' && --depth === 0) { closing = i; break; }
+    }
+    if (closing < 0) continue;
+    const args = structural.slice(opening + 1, closing);
+    if (!/\bimport\s*\.\s*meta\s*\.\s*url\b/.test(args)) continue;
+    if (!/^\s*\.\s*pathname\b/.test(structural.slice(closing + 1))) continue;
+    findings.push({ index: match.index });
+  }
+  return findings;
+}
+
 export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true } = {}) {
   const files = dirs.flatMap((dir) => walk(resolve(root, dir)));
   const findings = [];
@@ -79,15 +128,14 @@ export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true 
         kind: 'hand-rolled file URL',
         pattern: /`file:\/\/\$\{|(["'])file:\/\/\1\s*\+/g,
       },
-      {
-        kind: 'URL pathname used as a filesystem path',
-        pattern: /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g,
-      },
     ];
     for (const rule of rules) {
       for (const match of code.matchAll(rule.pattern)) {
         findings.push({ path: rel, line: lineAt(code, match.index), kind: rule.kind });
       }
+    }
+    for (const match of findUrlPathnameMisuses(code)) {
+      findings.push({ path: rel, line: lineAt(code, match.index), kind: 'URL pathname used as a filesystem path' });
     }
   }
   return { files: files.length, findings };
@@ -132,6 +180,9 @@ function selftest() {
   say(fixtureKinds.get('handrolled_path.mjs') === 'URL pathname used as a filesystem path', 'handrolled_path fixture is caught by the real scanner');
   say(/new\s+URL\s*\(\r?\n/.test(pathFixtureSource) && /\r?\n\)\.pathname/.test(pathFixtureSource),
     'handrolled_path fixture keeps the discriminating multiline conversion shape');
+  const retiredStatementMatcher = /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g;
+  say(!retiredStatementMatcher.test(pathFixtureSource) && findUrlPathnameMisuses(stripComments(pathFixtureSource)).length === 1,
+    'semicolon-in-string fixture defeats the retired matcher and is caught structurally');
 
   const temp = mkdtempSync(join(tmpdir(), 'urlpath working dir '));
   const spaced = join(temp, 'repo with spaces');
