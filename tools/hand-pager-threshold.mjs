@@ -60,6 +60,28 @@ if (process.argv.includes('--selftest') || process.argv.includes('--selftest-sou
       find: '    const obscured = veilIsOpen();',
       replace: '    const obscured = false; // planted: covered combat still owns its pager',
       expectRed: /FAIL standing veil hides pager paint and AX/,
+    }, {
+      name: 'combat exit leaves the captured pager observer alive for the next fight',
+      file: 'src/ui/screens/combat.js',
+      find: `      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+        pagerVeilObserver.disconnect();
+        delete combatEl.dataset.handPagerOwner;
+        return;
+      }
+      syncHandPager([...app.querySelectorAll('.hand .card')]);
+    });
+    combatEl.dataset.handPagerOwner = 'active';
+    pagerVeilObserver.observe(document.body, { childList: true, subtree: true });`,
+      replace: `      if (!app.querySelector('.combat')) { // planted: any later fight is mistaken for this mount
+        pagerVeilObserver.disconnect();
+        delete combatEl.dataset.handPagerOwner;
+        return;
+      }
+      syncHandPager([...app.querySelectorAll('.hand .card')]);
+    });
+    combatEl.dataset.handPagerOwner = 'active';
+    pagerVeilObserver.observe(document.body, { childList: true });`,
+      expectRed: /FAIL combat exit disconnects the originating pager owner/,
     }],
   });
   if (sourceStatus) process.exit(sourceStatus);
@@ -354,6 +376,113 @@ async function main() {
               && JSON.stringify(restoredAx) === JSON.stringify(['Next card', 'Previous card'])
               && !restored.focused && restored.state === 'true',
             'closing veil restores the long-hand pager without stale focus', JSON.stringify({ restored, restoredAx }));
+
+            // The app node survives screen changes. Leave this real fight via
+            // Save & Quit, resume it into a fresh combat mount, then stand a
+            // veil there. The old observer must have retired its exact owner
+            // and must not mutate its captured, now-detached pager nodes.
+            if (cell.width === 390 && cell.height === 844 && cell.text === 'XL') {
+              await evaluate(`(() => {
+                const oldCombat = document.querySelector('.combat');
+                window.__handPagerLifecycle = {
+                  oldCombat,
+                  oldPages: [...document.querySelectorAll('.hand-page')],
+                };
+                return true;
+              })()`);
+              await tap('#combat-menu');
+              await waitFor(`!!document.querySelector('.modal-veil')`, 'combat Menu before exit');
+              await tap('.ov-tab[data-member="save"]');
+              await waitFor(`!!document.querySelector('#ovs-quit')`, 'Save & Quit action');
+              await tap('#ovs-quit');
+              await waitFor(`!!document.querySelector('.title-screen') && !document.querySelector('.combat')`, 'title after combat exit');
+              await new Promise((pass) => setTimeout(pass, 250));
+
+              const exited = await evaluate(`(() => {
+                const probe = window.__handPagerLifecycle;
+                return {
+                  oldConnected: probe.oldCombat.isConnected,
+                  oldOwner: probe.oldCombat.dataset.handPagerOwner || null,
+                };
+              })()`);
+              check(!exited.oldConnected && exited.oldOwner === null,
+                'combat exit disconnects the originating pager owner', JSON.stringify(exited));
+
+              await tap('.slot-continue');
+              await waitFor(`document.querySelectorAll('.combat .hand .card').length === 8`, 'resumed eight-card combat');
+              await new Promise((pass) => setTimeout(pass, 250));
+              await evaluate(`(() => {
+                const probe = window.__handPagerLifecycle;
+                probe.oldPages.forEach((page) => { page.hidden = false; page.dataset.lifecycleSentinel = 'unchanged'; });
+                return true;
+              })()`);
+              await tap('#combat-menu');
+              await waitFor(`!!document.querySelector('.modal-veil')`, 'standing veil in fresh combat');
+              await new Promise((pass) => setTimeout(pass, 250));
+              const remounted = await evaluate(`(() => {
+                const probe = window.__handPagerLifecycle;
+                const current = document.querySelector('.combat');
+                return {
+                  activeOwners: document.querySelectorAll('.combat[data-hand-pager-owner="active"]').length,
+                  currentIsFresh: current !== probe.oldCombat,
+                  currentPagerVisible: [...document.querySelectorAll('.hand-page')].filter((page) => !page.hidden).length,
+                  currentPagerFocused: !!document.querySelector('.hand-page.gp-focus'),
+                  detachedPagerMutated: probe.oldPages.some((page) => page.hidden || page.dataset.lifecycleSentinel !== 'unchanged'),
+                };
+              })()`);
+              const remountedAxTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
+              const remountedAx = remountedAxTree.nodes.filter((node) => node.role?.value === 'button'
+                && ['Previous card', 'Next card'].includes(node.name?.value));
+              check(remounted.activeOwners === 1 && remounted.currentIsFresh
+                && remounted.currentPagerVisible === 0 && !remounted.currentPagerFocused
+                && remountedAx.length === 0 && !remounted.detachedPagerMutated,
+              'new combat owns one veil observer without detached pager, AX, or focus', JSON.stringify({ remounted, remountedAx: remountedAx.length }));
+
+              await tap('#ov-close');
+              await waitFor(`!document.querySelector('.modal-veil')`, 'closed fresh-combat Menu veil');
+              await new Promise((pass) => setTimeout(pass, 250));
+              const resumedRestored = await evaluate(`(() => ({
+                visible: [...document.querySelectorAll('.hand-page')].filter((page) => !page.hidden).length,
+                state: document.querySelector('.hand-overlay')?.dataset.paging || null,
+                detachedPagerMutated: window.__handPagerLifecycle.oldPages.some((page) => page.hidden),
+              }))()`);
+              check(resumedRestored.visible === 2 && resumedRestored.state === 'true'
+                && !resumedRestored.detachedPagerMutated,
+              'fresh combat restores its pager while the retired owner stays inert', JSON.stringify(resumedRestored));
+
+              // Exercise the batching edge that exposed the review finding:
+              // replace combat inside #app and stand the next fight's veil in
+              // one task. A body-only observer sees only the veil mutation and
+              // mistakes the replacement `.combat` for its captured mount.
+              await evaluate(`(() => {
+                const app = document.querySelector('#app');
+                const oldCombat = app.querySelector('.combat');
+                const oldPages = [...oldCombat.querySelectorAll('.hand-page')];
+                const replacement = oldCombat.cloneNode(true);
+                delete replacement.dataset.handPagerOwner;
+                oldPages.forEach((page) => { page.hidden = false; page.dataset.lifecycleSentinel = 'unchanged'; });
+                app.replaceChildren(replacement);
+                const veil = document.createElement('div');
+                veil.className = 'modal-veil lifecycle-probe-veil';
+                document.body.appendChild(veil);
+                window.__handPagerRapidLifecycle = { oldCombat, oldPages };
+                return true;
+              })()`);
+              await new Promise((pass) => setTimeout(pass, 250));
+              const rapid = await evaluate(`(() => {
+                const probe = window.__handPagerRapidLifecycle;
+                return {
+                  oldConnected: probe.oldCombat.isConnected,
+                  oldOwner: probe.oldCombat.dataset.handPagerOwner || null,
+                  detachedPagerMutated: probe.oldPages.some((page) => page.hidden || page.dataset.lifecycleSentinel !== 'unchanged'),
+                  replacementConnected: !!document.querySelector('#app > .combat'),
+                };
+              })()`);
+              check(!rapid.oldConnected && rapid.oldOwner === null && !rapid.detachedPagerMutated
+                && rapid.replacementConnected,
+              'combat exit disconnects the originating pager owner', JSON.stringify(rapid));
+              await evaluate(`document.querySelector('.lifecycle-probe-veil')?.remove(); true`);
+            }
           }
         }
       }

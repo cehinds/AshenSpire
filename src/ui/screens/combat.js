@@ -1397,18 +1397,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
 
   render();
 
-  // Veils mount beside #app, not inside it. Watch that one ownership boundary
-  // so a long-hand pager becomes inert as soon as any modal/menu takes input,
-  // then returns when the veil leaves and combat still owns the screen.
+  // Veils mount beside #app, not inside it. Watch that ownership boundary plus
+  // the originating combat mount itself: #app is reused across screens and
+  // fights, so finding *a* later `.combat` must never keep this mount's captured
+  // pager nodes alive. The marker is a focused lifecycle probe, not a styling
+  // hook; teardown removes it before a fresh combat creates its own owner.
   if (document.body && typeof MutationObserver !== 'undefined') {
     const pagerVeilObserver = new MutationObserver(() => {
-      if (!app.querySelector('.combat')) {
+      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
         pagerVeilObserver.disconnect();
+        delete combatEl.dataset.handPagerOwner;
         return;
       }
       syncHandPager([...app.querySelectorAll('.hand .card')]);
     });
-    pagerVeilObserver.observe(document.body, { childList: true });
+    combatEl.dataset.handPagerOwner = 'active';
+    pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
   }
 
   // Keep the target glow in sync with focus/hover: the field's class attributes

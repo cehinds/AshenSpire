@@ -15,7 +15,7 @@
     "styles/combat.css",
     "styles/ui.css"
   ],
-  "productPatchSha256": "87b8dd068514a07bff3a48d2f67611b074061401c0ac814b1e07c3ac34d778a3",
+  "productPatchSha256": "7feefbaccf45663b466f1b715df643b2d22b0d23ac941eebd20772a6904abd41",
   "toolFile": {
     "path": "tools/hybrid-input-parity.mjs",
     "identity": {
@@ -41,8 +41,8 @@
       "gitBlobOidSha1": "6dd0029d373893e4a43376877682056b23190646"
     },
     "src/ui/screens/combat.js": {
-      "canonicalLfSha256": "7542decb1633bf35d9e8b55e15125621bc85a9fe1d31184cdc23a0ec74412d91",
-      "gitBlobOidSha1": "3c5f4f27cf92e9cb2565f268aa1b2f87a0151b10"
+      "canonicalLfSha256": "624d4e465ed54c566436bcb36b6ca9cc9ba29868a0361e9f522ac121b94b4c9b",
+      "gitBlobOidSha1": "b0c6e8ab9420e969fb3ab2c696c51cb7c3a395d2"
     },
     "src/ui/screens/equipment.js": {
       "canonicalLfSha256": "80320a75cf49a07380f9588a2b0fe87e7f955e19568d32fc04c96c1064ffd7f6",
@@ -59,12 +59,12 @@
   },
   "standaloneArtifact": {
     "path": "AshenSpire.html",
-    "sha256": "a24a5a2ee22906f6258a1313d777b4dc0e1b5256260bce37c46164ab3d6dfd0f",
-    "bytes": 3295650,
+    "sha256": "c9c164e70ac05c46a5c9a57127c617efdd25b58d06f28244ca87e2c393df23b2",
+    "bytes": 3295960,
     "buildOrdinalPath": "buildordinal.json",
     "buildOrdinalIdentity": {
-      "canonicalLfSha256": "bde0371256293549214691f6520610d7d944b24bb13e3b9f38acebc049930917",
-      "gitBlobOidSha1": "4b32001ef0c16ffd5dafd6c0db0e9d31f182b609"
+      "canonicalLfSha256": "92cbb8f6ee773e1847fb8d7f0d6e2a70f2ad59e31de9fa6acdba893dfca36e28",
+      "gitBlobOidSha1": "02c61351a90be11213f8d6286b132092a7f65fb1"
     }
   },
   "viewports": [
@@ -103,8 +103,8 @@
     {
       "viewport": "320x640",
       "filename": "hybrid-input-parity-root-320x640-contact-sheet.png",
-      "sha256": "6d41bdd56b2300716cc99dac39c66d456090e1cabe7c0df6bb5bcc8b9cae8e79",
-      "bytes": 1258529,
+      "sha256": "c5197d61d12293e207c11bf30639f5d19b000316157862eba7076768463cc5f3",
+      "bytes": 1257877,
       "states": [
         "ready",
         "mouse-armed",
@@ -136,8 +136,8 @@
     {
       "viewport": "390x844",
       "filename": "hybrid-input-parity-root-390x844-contact-sheet.png",
-      "sha256": "090e7334bd6a968555fe9c4bd712cb9047e35f0029616daa1c1049eac01b140f",
-      "bytes": 1323396,
+      "sha256": "ad0ae12f10d8e73e064c65b9341795961ee33bc5bb7d77f40cf8861a02dba318",
+      "bytes": 1322830,
       "states": [
         "ready",
         "mouse-armed",
@@ -168,8 +168,8 @@
     {
       "viewport": "1200x730",
       "filename": "hybrid-input-parity-root-1200x730-contact-sheet.png",
-      "sha256": "890d7d5cd25ab7bfa8553ecf217f494d097d082715de19bc5821c78e81e33e57",
-      "bytes": 1475480,
+      "sha256": "89fdd18445048cb74b248386db40a73435c2e1a8336109f68389696751b18255",
+      "bytes": 1475918,
       "states": [
         "ready",
         "mouse-armed",
@@ -203,8 +203,8 @@
       "viewport": "320x640",
       "state": "ready",
       "filename": "hybrid-input-parity-root-320x640-ready.png",
-      "sha256": "46dd4749c041c41c6d2d9e6e37344e69b73b0527e6744969263007385fb62629",
-      "bytes": 113855,
+      "sha256": "7ec8b84ea3693a548d6ebf782f4267f3bec4845766ecfe9fedc4f7a513093d13",
+      "bytes": 113919,
       "gameplay": {
         "cards": [
           {
@@ -313,7 +313,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 58,
+          "reads": 59,
           "mapping": "standard"
         }
       },
@@ -326,7 +326,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -497,8 +497,8 @@
       "viewport": "320x640",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-root-320x640-mouse-armed.png",
-      "sha256": "15d2465bcd0c8d64207b04dee653836c9fb8055b3a82b3b4077134b4a2d5bd3c",
-      "bytes": 114475,
+      "sha256": "4f5a562c2c20581d97a0d55330abc4b89f93296b1ef9df633fa4f1775f1bdcf7",
+      "bytes": 114399,
       "gameplay": {
         "cards": [
           {
@@ -623,7 +623,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 94,
+          "reads": 97,
           "mapping": "standard"
         }
       },
@@ -657,7 +657,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -894,8 +894,8 @@
       "viewport": "320x640",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-root-320x640-mouse-confirm.png",
-      "sha256": "6d545a3392ecfbbf5c9cf849b00bcda7cbb45d7732ea8c984bcc4e16bf420e05",
-      "bytes": 113919,
+      "sha256": "855aed24efb8da6b3c58c2803c3b02e6ebe0ec4e3021029670a48d74c6216127",
+      "bytes": 113857,
       "gameplay": {
         "cards": [
           {
@@ -1006,7 +1006,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 186,
+          "reads": 189,
           "mapping": "standard"
         }
       },
@@ -1019,7 +1019,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -1190,8 +1190,8 @@
       "viewport": "320x640",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-root-320x640-keyboard-confirm.png",
-      "sha256": "724f9b27c23cedb1b60a487503d0d2de45d95f8119548d8b2f29899cef2995e9",
-      "bytes": 112943,
+      "sha256": "73e802011600a8fa3f91128929a276a027efe008a9c98bff817d749c86c77e78",
+      "bytes": 112465,
       "gameplay": {
         "cards": [
           {
@@ -1302,7 +1302,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 162,
+          "reads": 165,
           "mapping": "standard"
         }
       },
@@ -1315,7 +1315,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -1486,8 +1486,8 @@
       "viewport": "320x640",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-root-320x640-keyboard-armed.png",
-      "sha256": "5b51725e66be79189cb574de6a0ab70c892143cfaaaf2a84f82dca07a5459c7a",
-      "bytes": 115804,
+      "sha256": "ac6a0be2e5d954d4aec2074ed5dd3b082afaa196c27e517f52fcdf31f8d50b4a",
+      "bytes": 115757,
       "gameplay": {
         "cards": [
           {
@@ -1612,7 +1612,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 155,
+          "reads": 158,
           "mapping": "standard"
         }
       },
@@ -1646,7 +1646,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -1883,8 +1883,8 @@
       "viewport": "320x640",
       "state": "keyboard-cancel-restored",
       "filename": "hybrid-input-parity-root-320x640-keyboard-cancel-restored.png",
-      "sha256": "4c1a9037afe48e860997cb1f59c20e304c0e5440a6f9f7800d5155ef2e367fbc",
-      "bytes": 111945,
+      "sha256": "b428bf040efd025c4a4526c59b8caaea83d4fa35594ef88132437d57baabc5c2",
+      "bytes": 111882,
       "gameplay": {
         "cards": [
           {
@@ -2006,7 +2006,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -2177,8 +2177,8 @@
       "viewport": "320x640",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-root-320x640-controller-armed.png",
-      "sha256": "a1299f46a0b2e44d97482e5757a335622668253c55f9f3df5b4a132c50b15672",
-      "bytes": 115720,
+      "sha256": "adc35350e96618d59390267d77058ad918137295472780dbbc4a2a457f7ccbd2",
+      "bytes": 115670,
       "gameplay": {
         "cards": [
           {
@@ -2337,7 +2337,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -2574,8 +2574,8 @@
       "viewport": "320x640",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-root-320x640-controller-confirm.png",
-      "sha256": "663d8edd76ceb1e1c5a16a5f4a6a8e194cb1b6ad1c13b3608b43b2e338044f5b",
-      "bytes": 113744,
+      "sha256": "799fffc4c73632f27a2e65ebfe3dd73921cccdf13cd59c8b8dd8088a430e25d4",
+      "bytes": 113864,
       "gameplay": {
         "cards": [
           {
@@ -2686,7 +2686,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 268,
+          "reads": 267,
           "mapping": "standard"
         }
       },
@@ -2699,7 +2699,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -2870,8 +2870,8 @@
       "viewport": "320x640",
       "state": "controller-cancel-restored",
       "filename": "hybrid-input-parity-root-320x640-controller-cancel-restored.png",
-      "sha256": "9143e604a8727118975790b3557bf6238016fb99eefe09eab6b229733526a92f",
-      "bytes": 111864,
+      "sha256": "2054df8f0ba2045a5643cdc948e6be99bcdda02d23104b7f9517451be33c63d5",
+      "bytes": 111766,
       "gameplay": {
         "cards": [
           {
@@ -2989,7 +2989,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 213,
+          "reads": 212,
           "mapping": "standard"
         }
       },
@@ -3023,7 +3023,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -3216,8 +3216,8 @@
       "viewport": "320x640",
       "state": "paging-before",
       "filename": "hybrid-input-parity-root-320x640-paging-before.png",
-      "sha256": "5455f1eb632475098e17b1f09c6bbf492f6c16d895f0f04b38f92a448376d455",
-      "bytes": 109369,
+      "sha256": "217b6dd1e26275a175308cdee25eb4ea62b2b1ebd59af3a46cd11ad94860f441",
+      "bytes": 109380,
       "gameplay": {
         "cards": [
           {
@@ -3393,7 +3393,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -3616,8 +3616,8 @@
       "viewport": "320x640",
       "state": "paging-next",
       "filename": "hybrid-input-parity-root-320x640-paging-next.png",
-      "sha256": "7a2946239e43ec17ebf1a0707aed2039c108692c71531a89dbeaa406712197e9",
-      "bytes": 110889,
+      "sha256": "b236f988694bec1025efdaf3f83905fab7ba20b23c8e5d9ef971df1047b6e562",
+      "bytes": 110703,
       "gameplay": {
         "cards": [
           {
@@ -3759,7 +3759,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 97,
+          "reads": 98,
           "mapping": "standard"
         }
       },
@@ -4038,8 +4038,8 @@
       "viewport": "320x640",
       "state": "paging-return",
       "filename": "hybrid-input-parity-root-320x640-paging-return.png",
-      "sha256": "2437051fb2d55c5beedaac61ac56f9ec48ceacb0977cd5e9c2bfa8bc885492a2",
-      "bytes": 110073,
+      "sha256": "09fa21a5e156f6c94f3a8f79f2e3d209a0cb8ed5b017c737b509aa8b821f1123",
+      "bytes": 110101,
       "gameplay": {
         "cards": [
           {
@@ -4460,8 +4460,8 @@
       "viewport": "320x640",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-root-320x640-controller-multi.png",
-      "sha256": "6e5dae1f6ecf75f01d60b1722f20d2a01ebe4f0a9a6c09f011695f0783b2820e",
-      "bytes": 118787,
+      "sha256": "839d341d7830e29e99e4806fd5ff360dabdea92e2f872bc403ee22ed8ea0e090",
+      "bytes": 118930,
       "gameplay": {
         "cards": [
           {
@@ -4639,7 +4639,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -4832,8 +4832,8 @@
       "viewport": "320x640",
       "state": "controller-self",
       "filename": "hybrid-input-parity-root-320x640-controller-self.png",
-      "sha256": "b3c6a031588a3e4d3400d36f9a7e86062e538890979183c3b364906518e1bc5f",
-      "bytes": 115634,
+      "sha256": "de400171a0e461b0d08c99c3adc114af689c24653df2511c64abcf81054e6837",
+      "bytes": 115371,
       "gameplay": {
         "cards": [
           {
@@ -4953,7 +4953,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 119,
+          "reads": 120,
           "mapping": "standard"
         }
       },
@@ -4987,7 +4987,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -5202,8 +5202,8 @@
       "viewport": "320x640",
       "state": "controller-self-cancel-restored",
       "filename": "hybrid-input-parity-root-320x640-controller-self-cancel-restored.png",
-      "sha256": "c195dca259c012bf8058593c69ddf61c480af88b40d27e9e9a451cc4fcef1fcf",
-      "bytes": 111271,
+      "sha256": "1fdb21d5ff68ad4e38fbf708d763640b85c29c0f1d7d46d7d5c98a37ae43dc71",
+      "bytes": 111366,
       "gameplay": {
         "cards": [
           {
@@ -5355,7 +5355,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -5548,8 +5548,8 @@
       "viewport": "320x640",
       "state": "keyboard-crimson-charge-menu",
       "filename": "hybrid-input-parity-root-320x640-keyboard-crimson-charge-menu.png",
-      "sha256": "18221bd42afa7dcd35094f5195ee67602084a8bed6fb33e3c7e16e4fefb676e8",
-      "bytes": 109101,
+      "sha256": "0dc1583f944dff8b267f449a4cb11a3fb672d467308be3bc92f69025492bffb4",
+      "bytes": 109186,
       "gameplay": {
         "cards": [
           {
@@ -5681,7 +5681,7 @@
           ]
         },
         "pad": {
-          "reads": 117,
+          "reads": 119,
           "mapping": "standard"
         }
       },
@@ -5942,8 +5942,8 @@
       "viewport": "320x640",
       "state": "controller-azure-charge-menu",
       "filename": "hybrid-input-parity-root-320x640-controller-azure-charge-menu.png",
-      "sha256": "2154e1b2e8509ee369a303237e1a440811620074fa43295d5971a6259fef8047",
-      "bytes": 107321,
+      "sha256": "65f78d21214725e223c48c5500c3e9cbc48dbab5e391dc43e8e856ff1ebfcb40",
+      "bytes": 107372,
       "gameplay": {
         "cards": [
           {
@@ -6336,8 +6336,8 @@
       "viewport": "320x640",
       "state": "flask-menu-open",
       "filename": "hybrid-input-parity-root-320x640-flask-menu-open.png",
-      "sha256": "00053779c24d21c4978472442eafcaaf7bb3c49adb8dea7943bf5568edbb78ce",
-      "bytes": 112045,
+      "sha256": "629e2483162bb5b53d89b0b1b89bd00a18b864d5dc28ddef2fa88b90fb48906e",
+      "bytes": 112073,
       "gameplay": {
         "cards": [
           {
@@ -6469,7 +6469,7 @@
           ]
         },
         "pad": {
-          "reads": 75,
+          "reads": 77,
           "mapping": "standard"
         }
       },
@@ -6730,8 +6730,8 @@
       "viewport": "320x640",
       "state": "flask-menu-toggle-closed",
       "filename": "hybrid-input-parity-root-320x640-flask-menu-toggle-closed.png",
-      "sha256": "0478acb7489433b73939531e18339b66b1001d7721ae1c744cbcc9acdbf8a97f",
-      "bytes": 114938,
+      "sha256": "924f380dea6e47318620ffb2eaa62a5252816ed2a02e362c4d8afe196c9807f5",
+      "bytes": 114878,
       "gameplay": {
         "cards": [
           {
@@ -6849,7 +6849,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 95,
+          "reads": 98,
           "mapping": "standard"
         }
       },
@@ -7054,8 +7054,8 @@
       "viewport": "320x640",
       "state": "flask-menu-outside-closed",
       "filename": "hybrid-input-parity-root-320x640-flask-menu-outside-closed.png",
-      "sha256": "75a34cddeeb59589d70faa65463f210e6ed5edf6c85749a20a7290ea927b7278",
-      "bytes": 113129,
+      "sha256": "a905321281c96cefbe21d73667f8c6a32d4605baed63587c81e9daf9b532f997",
+      "bytes": 113092,
       "gameplay": {
         "cards": [
           {
@@ -7164,7 +7164,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 132,
+          "reads": 134,
           "mapping": "standard"
         }
       },
@@ -7177,7 +7177,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -7348,8 +7348,8 @@
       "viewport": "320x640",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-root-320x640-flask-menu-competing-closed.png",
-      "sha256": "3769ea3c27a0cbf3fca3b889545a57254e00cc403e2ce0600746cc412d176e6d",
-      "bytes": 35464,
+      "sha256": "4b01b38af41a50876812b0bea41a8751f7bdbc9d6b8999edd0fec8c85b8684c6",
+      "bytes": 35490,
       "gameplay": {
         "cards": [
           {
@@ -7458,7 +7458,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 169,
+          "reads": 170,
           "mapping": "standard"
         }
       },
@@ -7559,8 +7559,8 @@
       "viewport": "320x640",
       "state": "flask-menu-switched",
       "filename": "hybrid-input-parity-root-320x640-flask-menu-switched.png",
-      "sha256": "0500d46b864501bf7a13066d07ca31ee11af77cfcee02a2b118cbeeb0b28e803",
-      "bytes": 111512,
+      "sha256": "ca41c45ce41ae5241405e0b301af328d9f55ec24008853656cbf7f1bc8cde23b",
+      "bytes": 111501,
       "gameplay": {
         "cards": [
           {
@@ -7692,7 +7692,7 @@
           ]
         },
         "pad": {
-          "reads": 93,
+          "reads": 91,
           "mapping": "standard"
         }
       },
@@ -7953,8 +7953,8 @@
       "viewport": "320x640",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-root-320x640-keyboard-blight-target.png",
-      "sha256": "e2ee6db5b6b663899237f412228f4207a7a76c9aeafda8f365c75e3c77271f35",
-      "bytes": 120998,
+      "sha256": "f9be6777c78d7971661fbdd9c1f582c3e0853bee08c4924b7ac49585d4fe447b",
+      "bytes": 121036,
       "gameplay": {
         "cards": [
           {
@@ -8077,7 +8077,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 142,
+          "reads": 143,
           "mapping": "standard"
         }
       },
@@ -8111,7 +8111,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -8326,8 +8326,8 @@
       "viewport": "320x640",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-root-320x640-controller-blight-target.png",
-      "sha256": "e834efcdc8169a8600bf9d8be136f5553d3ee816b70474aa85522cc2d917c152",
-      "bytes": 121880,
+      "sha256": "8a05f5627638839bcf2169dafbf22c08d6ffc53125f00431b5f1eaecc5f7d75d",
+      "bytes": 121625,
       "gameplay": {
         "cards": [
           {
@@ -8450,7 +8450,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 162,
+          "reads": 161,
           "mapping": "standard"
         }
       },
@@ -8484,7 +8484,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -8699,8 +8699,8 @@
       "viewport": "320x640",
       "state": "text-xl",
       "filename": "hybrid-input-parity-root-320x640-text-xl.png",
-      "sha256": "ee70dfe27138f3ecfd7a972633d37167a99433abfc48c82a50a6e36b7f76b35e",
-      "bytes": 109124,
+      "sha256": "a58fdae2cd1966551d906d391e9535a6e27f79fa17b738965f1f32b11e674fd0",
+      "bytes": 108812,
       "gameplay": {
         "cards": [
           {
@@ -8822,7 +8822,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -8993,8 +8993,8 @@
       "viewport": "390x844",
       "state": "ready",
       "filename": "hybrid-input-parity-root-390x844-ready.png",
-      "sha256": "dc7630d74228ae61b725f0d09eb9ce9adc5580981beac2f1234aebe880b80a3c",
-      "bytes": 166521,
+      "sha256": "31be59b881679cf5f280dae1edb00ff367648d6f49a0ee7d243c219b40751d0c",
+      "bytes": 166438,
       "gameplay": {
         "cards": [
           {
@@ -9103,7 +9103,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 59,
+          "reads": 60,
           "mapping": "standard"
         }
       },
@@ -9116,7 +9116,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -9287,8 +9287,8 @@
       "viewport": "390x844",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-root-390x844-mouse-armed.png",
-      "sha256": "0726a4f106ac01528e8af747d0a35caa288ebaf84d78aaff3d31fb1157e65caf",
-      "bytes": 171496,
+      "sha256": "19b095a5ad4b5f8c382212830089702ba2f73cf7e29c89e6741c795c0bc2d003",
+      "bytes": 171182,
       "gameplay": {
         "cards": [
           {
@@ -9413,7 +9413,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 95,
+          "reads": 98,
           "mapping": "standard"
         }
       },
@@ -9447,7 +9447,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -9684,8 +9684,8 @@
       "viewport": "390x844",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-root-390x844-mouse-confirm.png",
-      "sha256": "d13141f7aaf9e1231a71155fb51faaf08696224161ff497b53ebb875c7c17cc3",
-      "bytes": 167029,
+      "sha256": "01522fe31a06f5bbe5f5260475705616150d61462e0b3bb8c90d80df43a5f6df",
+      "bytes": 166900,
       "gameplay": {
         "cards": [
           {
@@ -9796,7 +9796,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 185,
+          "reads": 190,
           "mapping": "standard"
         }
       },
@@ -9809,7 +9809,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -9980,8 +9980,8 @@
       "viewport": "390x844",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-root-390x844-keyboard-confirm.png",
-      "sha256": "8be68b43692719c8e46e07ed73d40bb79ce62a2808ebbc31d234f5a11ca56a5d",
-      "bytes": 165207,
+      "sha256": "a73032f1a122beb536b8651a12b12de5bdca53de7fe5e21f5e2f9928befadac5",
+      "bytes": 165037,
       "gameplay": {
         "cards": [
           {
@@ -10092,7 +10092,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 167,
+          "reads": 164,
           "mapping": "standard"
         }
       },
@@ -10105,7 +10105,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -10276,8 +10276,8 @@
       "viewport": "390x844",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-root-390x844-keyboard-armed.png",
-      "sha256": "f41a5fcb3a9eaec95f97feb3ecf3202fc6a0bee84079f71c832560f2107c131c",
-      "bytes": 172911,
+      "sha256": "40597be9f05edbe17c3151190a1b579114063ec1b3206a4d83135e11460ed32f",
+      "bytes": 172737,
       "gameplay": {
         "cards": [
           {
@@ -10402,7 +10402,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 159,
+          "reads": 157,
           "mapping": "standard"
         }
       },
@@ -10436,7 +10436,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -10673,8 +10673,8 @@
       "viewport": "390x844",
       "state": "keyboard-cancel-restored",
       "filename": "hybrid-input-parity-root-390x844-keyboard-cancel-restored.png",
-      "sha256": "f0c0f2bd9f98eb4853999d5ed1c319eee41fac27c420d85ce20744a733dfc4f6",
-      "bytes": 164810,
+      "sha256": "1487aa9e38623e16f6d47014147326306c97f148ca235a166179e8c4b4dc7251",
+      "bytes": 164656,
       "gameplay": {
         "cards": [
           {
@@ -10783,7 +10783,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 118,
+          "reads": 116,
           "mapping": "standard"
         }
       },
@@ -10796,7 +10796,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -10967,8 +10967,8 @@
       "viewport": "390x844",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-root-390x844-controller-armed.png",
-      "sha256": "6b1a2debbf53d8e9c51f8011c1d6a470ba74b100b56a0233ad16c2ff744cb797",
-      "bytes": 172895,
+      "sha256": "4ee557728c41eef0abf9bea965fd85f375879e494472de3b0e6fa4cf270bce1a",
+      "bytes": 172659,
       "gameplay": {
         "cards": [
           {
@@ -11093,7 +11093,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 179,
+          "reads": 180,
           "mapping": "standard"
         }
       },
@@ -11127,7 +11127,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -11364,8 +11364,8 @@
       "viewport": "390x844",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-root-390x844-controller-confirm.png",
-      "sha256": "7436f9cbb6c1e2a93356b81e6ac38c0254414c05b7ffac3eb209fada75caa818",
-      "bytes": 166636,
+      "sha256": "d49a1f9c1fd136c020c6e0c9ff3582ac1e3cd0276f98ebf066c18de57339f677",
+      "bytes": 166417,
       "gameplay": {
         "cards": [
           {
@@ -11476,7 +11476,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 270,
+          "reads": 269,
           "mapping": "standard"
         }
       },
@@ -11489,7 +11489,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -11660,8 +11660,8 @@
       "viewport": "390x844",
       "state": "controller-cancel-restored",
       "filename": "hybrid-input-parity-root-390x844-controller-cancel-restored.png",
-      "sha256": "e8218fe965ebda1cbdbecab06138a5d6c2a14d53b909b5c30772dc3bd9c21352",
-      "bytes": 166145,
+      "sha256": "cf00f4eaececcc57196750615a555dde69a3b42ec445d32342b616fc1f892680",
+      "bytes": 165927,
       "gameplay": {
         "cards": [
           {
@@ -11779,7 +11779,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 212,
+          "reads": 210,
           "mapping": "standard"
         }
       },
@@ -11813,7 +11813,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -12006,8 +12006,8 @@
       "viewport": "390x844",
       "state": "paging-before",
       "filename": "hybrid-input-parity-root-390x844-paging-before.png",
-      "sha256": "51343c05347b9387cbd28048211a28cc367bcbc95f13255032915c6ca5afbbf6",
-      "bytes": 163227,
+      "sha256": "00f66d7ab02aeebb15f78f3ffd1d0bf1fc3130ef18d51be6cbaa3c4fba5806fe",
+      "bytes": 163189,
       "gameplay": {
         "cards": [
           {
@@ -12183,7 +12183,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -12406,8 +12406,8 @@
       "viewport": "390x844",
       "state": "paging-next",
       "filename": "hybrid-input-parity-root-390x844-paging-next.png",
-      "sha256": "034b05ef4b01203d6aefdad2a741c0899d3b4ecca11681942f0e06266882454c",
-      "bytes": 167017,
+      "sha256": "6b1c0033272d458cb7a8e3f4f5344d0f2e113f7747e37cdd020b75c46fece204",
+      "bytes": 166514,
       "gameplay": {
         "cards": [
           {
@@ -12549,7 +12549,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 97,
+          "reads": 98,
           "mapping": "standard"
         }
       },
@@ -12828,8 +12828,8 @@
       "viewport": "390x844",
       "state": "paging-return",
       "filename": "hybrid-input-parity-root-390x844-paging-return.png",
-      "sha256": "c4cbd9528886292dba0f0a096f09011efd00b8f393808cd95e1228efc01fddb2",
-      "bytes": 163830,
+      "sha256": "8f4b7bc36a7f770b8ddd3f34f3f7165655a6c7e60845c2275186fcfeceeb78db",
+      "bytes": 163582,
       "gameplay": {
         "cards": [
           {
@@ -12971,7 +12971,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 118,
+          "reads": 120,
           "mapping": "standard"
         }
       },
@@ -13250,8 +13250,8 @@
       "viewport": "390x844",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-root-390x844-controller-multi.png",
-      "sha256": "aec37bbf66e7158d2e46da40396d9d22343d5a64c2f4b33f164381498eb5b7c3",
-      "bytes": 174326,
+      "sha256": "12589995f0c0bd19f8f2e328bd972f65d282e295147c7bfe7fd73c8865855e68",
+      "bytes": 173694,
       "gameplay": {
         "cards": [
           {
@@ -13395,7 +13395,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 188,
+          "reads": 191,
           "mapping": "standard"
         }
       },
@@ -13429,7 +13429,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -13622,8 +13622,8 @@
       "viewport": "390x844",
       "state": "controller-self",
       "filename": "hybrid-input-parity-root-390x844-controller-self.png",
-      "sha256": "30af8c341f8a0587f6eb0665d1fce29c62fa3668511172556adb92c8266ad05a",
-      "bytes": 170868,
+      "sha256": "257edcb2046287027bc4ed959f76f2ee1bde93a8677cfb73f723d121f40ea1a0",
+      "bytes": 170423,
       "gameplay": {
         "cards": [
           {
@@ -13743,7 +13743,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 121,
+          "reads": 122,
           "mapping": "standard"
         }
       },
@@ -13777,7 +13777,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -13992,8 +13992,8 @@
       "viewport": "390x844",
       "state": "controller-self-cancel-restored",
       "filename": "hybrid-input-parity-root-390x844-controller-self-cancel-restored.png",
-      "sha256": "3f01882e9e4702dbf4109c6704933c341e714db95b94dffdd88086ca130f5a99",
-      "bytes": 165609,
+      "sha256": "8464af010756dfef1b2e555485c2710eba7848026683f1d2dca3ada5995c212c",
+      "bytes": 165237,
       "gameplay": {
         "cards": [
           {
@@ -14111,7 +14111,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 164,
+          "reads": 166,
           "mapping": "standard"
         }
       },
@@ -14145,7 +14145,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -14338,8 +14338,8 @@
       "viewport": "390x844",
       "state": "keyboard-crimson-charge-menu",
       "filename": "hybrid-input-parity-root-390x844-keyboard-crimson-charge-menu.png",
-      "sha256": "717274d7fc1bcd7f3b2196945535b007959feb0f95d7c783ccaa65fcf25f0c4a",
-      "bytes": 161115,
+      "sha256": "0f236a692eff0974a72597e160617a9d2e81552f25ed3494108aeb53ce379e7d",
+      "bytes": 161060,
       "gameplay": {
         "cards": [
           {
@@ -14471,7 +14471,7 @@
           ]
         },
         "pad": {
-          "reads": 118,
+          "reads": 119,
           "mapping": "standard"
         }
       },
@@ -14732,8 +14732,8 @@
       "viewport": "390x844",
       "state": "controller-azure-charge-menu",
       "filename": "hybrid-input-parity-root-390x844-controller-azure-charge-menu.png",
-      "sha256": "c9fb4e52968cd680ffd212f16c83c23dc71af34dc0c00e823cad60cd240563eb",
-      "bytes": 157851,
+      "sha256": "abaee3e6a08d29c38a317b39780df8012aceb70558d5462ebe5534e5df296bca",
+      "bytes": 157647,
       "gameplay": {
         "cards": [
           {
@@ -15126,8 +15126,8 @@
       "viewport": "390x844",
       "state": "flask-menu-open",
       "filename": "hybrid-input-parity-root-390x844-flask-menu-open.png",
-      "sha256": "fc3addd9665d954b948cc662374800fbfdba05a559345f185f36915e3614a9a1",
-      "bytes": 164825,
+      "sha256": "e7ba52d0c7e0b5ea30a5b0eee339820395409c07d35eb4e1c260c0c2cfd2b575",
+      "bytes": 164806,
       "gameplay": {
         "cards": [
           {
@@ -15259,7 +15259,7 @@
           ]
         },
         "pad": {
-          "reads": 77,
+          "reads": 76,
           "mapping": "standard"
         }
       },
@@ -15520,8 +15520,8 @@
       "viewport": "390x844",
       "state": "flask-menu-toggle-closed",
       "filename": "hybrid-input-parity-root-390x844-flask-menu-toggle-closed.png",
-      "sha256": "4585b8cfc8f01abf3f501fee1de26bb8bbff2c917dc4c1f87c3eeb1835545165",
-      "bytes": 166753,
+      "sha256": "c848c13e1e2542ef678763b50c8e084f3dc212712114f89762576961b6ce54a7",
+      "bytes": 166684,
       "gameplay": {
         "cards": [
           {
@@ -15639,7 +15639,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 98,
+          "reads": 97,
           "mapping": "standard"
         }
       },
@@ -15844,8 +15844,8 @@
       "viewport": "390x844",
       "state": "flask-menu-outside-closed",
       "filename": "hybrid-input-parity-root-390x844-flask-menu-outside-closed.png",
-      "sha256": "a4e33a565dfb39a7b6a3ca56561af9db5640db556e7be9bd797bc260f26941cc",
-      "bytes": 165736,
+      "sha256": "b04c0d4fed8990bab2884267272be1266c7e2ac5e21a462b3258b74e535f4d0c",
+      "bytes": 165515,
       "gameplay": {
         "cards": [
           {
@@ -15954,7 +15954,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 136,
+          "reads": 135,
           "mapping": "standard"
         }
       },
@@ -15967,7 +15967,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -16138,8 +16138,8 @@
       "viewport": "390x844",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-root-390x844-flask-menu-competing-closed.png",
-      "sha256": "3e31a600fa92399e7bec5ed4c17a5be5cbf9a13d1487633c46dd8f4a4c68a158",
-      "bytes": 51123,
+      "sha256": "9723cc1ed80cb54d61a24864cf2dcd9bdf3c466519b7a6b0beaa24470cf3fd6b",
+      "bytes": 51089,
       "gameplay": {
         "cards": [
           {
@@ -16248,7 +16248,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 172,
+          "reads": 170,
           "mapping": "standard"
         }
       },
@@ -16349,8 +16349,8 @@
       "viewport": "390x844",
       "state": "flask-menu-switched",
       "filename": "hybrid-input-parity-root-390x844-flask-menu-switched.png",
-      "sha256": "ac6dc00986c306892c1950d80e28218bb03611542bdb9b60303cd670429465ec",
-      "bytes": 163051,
+      "sha256": "46b2d0e53a7491dbde24d7b9becd57fd5363797ae8cd296046a0028686da05ac",
+      "bytes": 163001,
       "gameplay": {
         "cards": [
           {
@@ -16482,7 +16482,7 @@
           ]
         },
         "pad": {
-          "reads": 91,
+          "reads": 93,
           "mapping": "standard"
         }
       },
@@ -16743,8 +16743,8 @@
       "viewport": "390x844",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-root-390x844-keyboard-blight-target.png",
-      "sha256": "c13f0b096d8e3000e3168b475522233f8de4c5119af53541caea4cac0c6bc2c5",
-      "bytes": 179602,
+      "sha256": "b7bbf57749cb2f47adce4a7b8d3a793ee46b53a46d62b94e82c92b0937d7f9fe",
+      "bytes": 179351,
       "gameplay": {
         "cards": [
           {
@@ -16901,7 +16901,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -17116,8 +17116,8 @@
       "viewport": "390x844",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-root-390x844-controller-blight-target.png",
-      "sha256": "d6f1f1992cdb4eaf58ddaab7ce5ed1739e4bab0338594bdb4f86e21e176c7fd1",
-      "bytes": 180874,
+      "sha256": "c6d3c2bf03c1ec8df017c353bb895d4fbb12fd91f11631dc919ff60af1eeb638",
+      "bytes": 180631,
       "gameplay": {
         "cards": [
           {
@@ -17240,7 +17240,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 161,
+          "reads": 163,
           "mapping": "standard"
         }
       },
@@ -17274,7 +17274,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -17489,8 +17489,8 @@
       "viewport": "1200x730",
       "state": "ready",
       "filename": "hybrid-input-parity-root-1200x730-ready.png",
-      "sha256": "0bd286dfd6cf0d3325634fb483daefcce7b8f7defb6252e134e743e78a31dbe9",
-      "bytes": 301769,
+      "sha256": "1816045097d93e8b7a9b77f3a547379554f72dab8d3370d425c35a7b51344ba8",
+      "bytes": 301718,
       "gameplay": {
         "cards": [
           {
@@ -17612,7 +17612,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -17803,8 +17803,8 @@
       "viewport": "1200x730",
       "state": "mouse-armed",
       "filename": "hybrid-input-parity-root-1200x730-mouse-armed.png",
-      "sha256": "641dd1d96ebcff1bc36cc5f703aed96729dcca8d8c9774bf95c4cf5916fd4e18",
-      "bytes": 310743,
+      "sha256": "06b38d60af2ecee5cf4827cf13643a02617c831ecbe4ea4dfdebdfa5df8a02ea",
+      "bytes": 310482,
       "gameplay": {
         "cards": [
           {
@@ -17963,7 +17963,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -18208,8 +18208,8 @@
       "viewport": "1200x730",
       "state": "mouse-confirm",
       "filename": "hybrid-input-parity-root-1200x730-mouse-confirm.png",
-      "sha256": "6960ffd9c979a0ba13b57902df91d4eda55eb49e78c569a118a837d069b52008",
-      "bytes": 292062,
+      "sha256": "d40b3dd715d5d43944d9d1730a56356d623f1479ae2a3e180839ff4d6377a60b",
+      "bytes": 292179,
       "gameplay": {
         "cards": [
           {
@@ -18320,7 +18320,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 193,
+          "reads": 191,
           "mapping": "standard"
         }
       },
@@ -18333,7 +18333,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -18524,8 +18524,8 @@
       "viewport": "1200x730",
       "state": "keyboard-confirm",
       "filename": "hybrid-input-parity-root-1200x730-keyboard-confirm.png",
-      "sha256": "6d3785bcbcb93a2c2d76703a6c542728072944a2448fac88582f04c0beb80c12",
-      "bytes": 288489,
+      "sha256": "b0bd0225cc73626ec24d1f87a3935d198966bc8ddc99a5cd3a7ceba26da680c0",
+      "bytes": 288633,
       "gameplay": {
         "cards": [
           {
@@ -18636,7 +18636,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 168,
+          "reads": 169,
           "mapping": "standard"
         }
       },
@@ -18649,7 +18649,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -18840,8 +18840,8 @@
       "viewport": "1200x730",
       "state": "keyboard-armed",
       "filename": "hybrid-input-parity-root-1200x730-keyboard-armed.png",
-      "sha256": "a64f7a7d89a0e836c26e036011b9efaa40103dd4e2fa5044f7df92b6e56b8e47",
-      "bytes": 312061,
+      "sha256": "fe3545a6e8e17ed5cec4e869429c8e383cabc5fdf5e27e258c66bde6407dd839",
+      "bytes": 312145,
       "gameplay": {
         "cards": [
           {
@@ -18966,7 +18966,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 160,
+          "reads": 162,
           "mapping": "standard"
         }
       },
@@ -19000,7 +19000,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -19245,8 +19245,8 @@
       "viewport": "1200x730",
       "state": "keyboard-cancel-restored",
       "filename": "hybrid-input-parity-root-1200x730-keyboard-cancel-restored.png",
-      "sha256": "4a14e441548ee35407f5b8a1b5f93015e5a19e044d52cbddf474ddf56ac446c6",
-      "bytes": 297679,
+      "sha256": "421ec96dbd5c218249967c63c016fbf9e2c01ae754af1e8e740c72b5cf130a98",
+      "bytes": 297625,
       "gameplay": {
         "cards": [
           {
@@ -19355,7 +19355,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 118,
+          "reads": 122,
           "mapping": "standard"
         }
       },
@@ -19368,7 +19368,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -19559,8 +19559,8 @@
       "viewport": "1200x730",
       "state": "controller-armed",
       "filename": "hybrid-input-parity-root-1200x730-controller-armed.png",
-      "sha256": "4142eb043451f550b47824c6237a92897f29cb325c7b54656160e7828ff82228",
-      "bytes": 312332,
+      "sha256": "29f34be69c78c0d0267d81ae0fe6d3860ed7fd5598f82adce7dc971da1f3c9a6",
+      "bytes": 312373,
       "gameplay": {
         "cards": [
           {
@@ -19685,7 +19685,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 182,
+          "reads": 184,
           "mapping": "standard"
         }
       },
@@ -19719,7 +19719,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -19964,8 +19964,8 @@
       "viewport": "1200x730",
       "state": "controller-confirm",
       "filename": "hybrid-input-parity-root-1200x730-controller-confirm.png",
-      "sha256": "34189b38088217456768ff78be633fd164e177ea00c4b40e885b0f646f7b6572",
-      "bytes": 292378,
+      "sha256": "71b7552613fe99e199676ec3182d82a7d962900e1c5891d7c9bac8b8fe3d5b2f",
+      "bytes": 293037,
       "gameplay": {
         "cards": [
           {
@@ -20076,7 +20076,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 274,
+          "reads": 277,
           "mapping": "standard"
         }
       },
@@ -20089,7 +20089,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 15/22❤ 15/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -20280,8 +20280,8 @@
       "viewport": "1200x730",
       "state": "controller-cancel-restored",
       "filename": "hybrid-input-parity-root-1200x730-controller-cancel-restored.png",
-      "sha256": "65d0d0c8bba4214033a5561604020a812b6f45f6df714ea6d26bcfd456b15576",
-      "bytes": 309947,
+      "sha256": "dc40450ccb6b9c40752389347fb670abd00776ea2d8eb8ae24259681a5c5b0dc",
+      "bytes": 309954,
       "gameplay": {
         "cards": [
           {
@@ -20399,7 +20399,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 213,
+          "reads": 214,
           "mapping": "standard"
         }
       },
@@ -20433,7 +20433,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -20646,8 +20646,8 @@
       "viewport": "1200x730",
       "state": "paging-before",
       "filename": "hybrid-input-parity-root-1200x730-paging-before.png",
-      "sha256": "8b5229d24179e1fabbc39432f0dc22a8e0395d6cd0e713dc310a51f89a806935",
-      "bytes": 344809,
+      "sha256": "6c8a7b64efbd9b3d0b2aa7bcdb8d76e4fc5de3135ff50596d00420cfcdfb4f94",
+      "bytes": 344799,
       "gameplay": {
         "cards": [
           {
@@ -20789,7 +20789,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 78,
+          "reads": 76,
           "mapping": "standard"
         }
       },
@@ -20823,7 +20823,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -21066,8 +21066,8 @@
       "viewport": "1200x730",
       "state": "paging-next",
       "filename": "hybrid-input-parity-root-1200x730-paging-next.png",
-      "sha256": "109e6bb47e447560c0bfb5d37657e35d4c9e3abf18e4093309866e787c31115a",
-      "bytes": 348769,
+      "sha256": "f6518f8460eec0adfca435662ac0a281049c07dc86d756b3fdc89d9b021fe4f4",
+      "bytes": 348697,
       "gameplay": {
         "cards": [
           {
@@ -21209,7 +21209,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 102,
+          "reads": 101,
           "mapping": "standard"
         }
       },
@@ -21508,8 +21508,8 @@
       "viewport": "1200x730",
       "state": "paging-return",
       "filename": "hybrid-input-parity-root-1200x730-paging-return.png",
-      "sha256": "c464ff6b2a8dff400974dce43868ce291900c1b83484d66caf690ce7559d3e1d",
-      "bytes": 347877,
+      "sha256": "7d80f39a2bc863d3f19b6d25699c2593a8d6da079a4afcf00efbcccf42a570db",
+      "bytes": 347831,
       "gameplay": {
         "cards": [
           {
@@ -21651,7 +21651,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 125,
+          "reads": 124,
           "mapping": "standard"
         }
       },
@@ -21950,38 +21950,46 @@
       "viewport": "1200x730",
       "state": "controller-multi",
       "filename": "hybrid-input-parity-root-1200x730-controller-multi.png",
-      "sha256": "019acea1879bd243ccde2dffc8bdc43d7b18ae4f5e645decc6fd4f1a96dccf99",
-      "bytes": 315569,
+      "sha256": "f581a0ef989921e24cd37435b4a7d9fb1049f5bbaadcda81fba279f8bcdac494",
+      "bytes": 315741,
       "gameplay": {
         "cards": [
           {
             "index": 0,
-            "id": "rc8",
-            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.1",
+            "id": "rc6",
+            "text": "2Crimson Cleave🪓ATTACK⚔ Blade🩸 BloodDeal 8 damage to ALL enemies. Apply 2 Bleed to ALL.1",
             "selected": false,
-            "focus": false,
-            "unaffordable": false
+            "focus": true,
+            "unaffordable": true
           },
           {
             "index": 1,
-            "id": "rc10",
-            "text": "1◆ 1Gorefire Slash🗡ATTACK⚔ Blade🩸 Blood🔥 GorefireDeal 5 damage. Apply 3 Bleed.2",
+            "id": "rc8",
+            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.2",
             "selected": false,
             "focus": false,
             "unaffordable": false
           },
           {
             "index": 2,
-            "id": "rc7",
-            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.3",
+            "id": "rc10",
+            "text": "1◆ 1Gorefire Slash🗡ATTACK⚔ Blade🩸 Blood🔥 GorefireDeal 5 damage. Apply 3 Bleed.3",
             "selected": false,
             "focus": false,
             "unaffordable": false
           },
           {
             "index": 3,
+            "id": "rc7",
+            "text": "1Shield Defend🛡SKILL🛡 GuardGain 7 Block.4",
+            "selected": false,
+            "focus": false,
+            "unaffordable": false
+          },
+          {
+            "index": 4,
             "id": "rc1",
-            "text": "1Slashing Strike⚔ATTACK⚔ BladeDeal 7 damage.4",
+            "text": "1Slashing Strike⚔ATTACK⚔ BladeDeal 7 damage.5",
             "selected": false,
             "focus": false,
             "unaffordable": false
@@ -22067,7 +22075,16 @@
         "playerArmed": false,
         "aimEnemy": [],
         "aimPlayer": false,
-        "focus": null,
+        "focus": {
+          "tag": "DIV",
+          "id": null,
+          "classes": "card rarity-common cls-reaver type-attack unaffordable gp-focus",
+          "instanceId": "rc6",
+          "eid": null,
+          "parityAnchor": null,
+          "flaskAction": null,
+          "text": "2Crimson Cleave🪓ATTACK⚔ Blade🩸 BloodDeal 8 damage to ALL enemies. Apply 2 Blee"
+        },
         "active": {
           "tag": "BODY",
           "classes": "hi-contrast pad-mode",
@@ -22078,7 +22095,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 198,
+          "reads": 193,
           "mapping": "standard"
         }
       },
@@ -22112,7 +22129,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -22325,8 +22342,8 @@
       "viewport": "1200x730",
       "state": "controller-self",
       "filename": "hybrid-input-parity-root-1200x730-controller-self.png",
-      "sha256": "23deaae4a2203a87585ac7af173a03d5c9bb489b8691387d64f7da1c0e0dcdfd",
-      "bytes": 314979,
+      "sha256": "15aa88b462376d7d95e1be4d8b9135bf70c1b5d1631f289328729b5116845731",
+      "bytes": 315311,
       "gameplay": {
         "cards": [
           {
@@ -22480,7 +22497,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -22703,8 +22720,8 @@
       "viewport": "1200x730",
       "state": "controller-self-cancel-restored",
       "filename": "hybrid-input-parity-root-1200x730-controller-self-cancel-restored.png",
-      "sha256": "ee0744862a5ecd3ce6be4ecdc5a4eb550c24f255ffcedf6187d5847e4ab0f46f",
-      "bytes": 308884,
+      "sha256": "67c597c1983e8d4a14022ded934f1a917ed1aa69b0d3576bc25a911763efdf35",
+      "bytes": 308492,
       "gameplay": {
         "cards": [
           {
@@ -22822,7 +22839,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 171,
+          "reads": 168,
           "mapping": "standard"
         }
       },
@@ -22856,7 +22873,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -23069,8 +23086,8 @@
       "viewport": "1200x730",
       "state": "keyboard-crimson-charge-menu",
       "filename": "hybrid-input-parity-root-1200x730-keyboard-crimson-charge-menu.png",
-      "sha256": "e3fc47ea7fdc5edb76c732afb5c90e2f2c2b7bff9f372e78d5f9311dacf87392",
-      "bytes": 299254,
+      "sha256": "00eeb3be17ef2b6eb981eb13b81f2e42cf8b952de0cbf71c9b447c96950c007a",
+      "bytes": 299257,
       "gameplay": {
         "cards": [
           {
@@ -23202,7 +23219,7 @@
           ]
         },
         "pad": {
-          "reads": 122,
+          "reads": 120,
           "mapping": "standard"
         }
       },
@@ -23483,8 +23500,8 @@
       "viewport": "1200x730",
       "state": "controller-azure-charge-menu",
       "filename": "hybrid-input-parity-root-1200x730-controller-azure-charge-menu.png",
-      "sha256": "1f17a46164081a940996f48ed74b089edc42567febf2688dbd658bb158cd50e3",
-      "bytes": 295456,
+      "sha256": "16d7e6102747fbf33c2d6d4c1c9348eb5540d77a0f2a3823ba4fbf217b59e7d3",
+      "bytes": 295571,
       "gameplay": {
         "cards": [
           {
@@ -23616,7 +23633,7 @@
           ]
         },
         "pad": {
-          "reads": 124,
+          "reads": 123,
           "mapping": "standard"
         }
       },
@@ -23897,8 +23914,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-open",
       "filename": "hybrid-input-parity-root-1200x730-flask-menu-open.png",
-      "sha256": "6698a53977b02ac341130939a36462fb4817bf8a7000bbfd15624c93cc887dc4",
-      "bytes": 310453,
+      "sha256": "1d10cbff0c0186303b457aa71cc7b268df6051c3d6abbbc74008cc37fd84d4f7",
+      "bytes": 310464,
       "gameplay": {
         "cards": [
           {
@@ -24030,7 +24047,7 @@
           ]
         },
         "pad": {
-          "reads": 81,
+          "reads": 82,
           "mapping": "standard"
         }
       },
@@ -24311,8 +24328,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-toggle-closed",
       "filename": "hybrid-input-parity-root-1200x730-flask-menu-toggle-closed.png",
-      "sha256": "8f22d8ca3d054c13944f061b14cad52bac3092a2c67270fa224a0dee0c1fe769",
-      "bytes": 310648,
+      "sha256": "c28462cc79d7fabcde305a21283ac6231df544ebe9d2a9940fd4bcf1d39677af",
+      "bytes": 310166,
       "gameplay": {
         "cards": [
           {
@@ -24655,8 +24672,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-outside-closed",
       "filename": "hybrid-input-parity-root-1200x730-flask-menu-outside-closed.png",
-      "sha256": "cec19982b86f2c5ab8427fe241586bdef8d23a7f410167b915e3d7eea065e12b",
-      "bytes": 301741,
+      "sha256": "a04e1e7d1e06ecdc0a2ccdf3676662bfa70569131c732b08aeba2e1d8d9c0a65",
+      "bytes": 301683,
       "gameplay": {
         "cards": [
           {
@@ -24765,7 +24782,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 147,
+          "reads": 143,
           "mapping": "standard"
         }
       },
@@ -24778,7 +24795,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔7Wandering Soldier❤ HP 22/22❤ 22/22❤◈…",
           "classes": "hi-contrast",
           "rect": {
             "left": 0,
@@ -24969,8 +24986,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-competing-closed",
       "filename": "hybrid-input-parity-root-1200x730-flask-menu-competing-closed.png",
-      "sha256": "5dc3a346e40c84dccf4adbea0fe0f8e9b99f45535e3e890b075674de1a4c4022",
-      "bytes": 99539,
+      "sha256": "a8950133418b4a5bc93fc4dd913a4e9b0b4403c7d8e106a255209c63daa0e1d1",
+      "bytes": 99489,
       "gameplay": {
         "cards": [
           {
@@ -25079,7 +25096,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 186,
+          "reads": 180,
           "mapping": "standard"
         }
       },
@@ -25200,8 +25217,8 @@
       "viewport": "1200x730",
       "state": "flask-menu-switched",
       "filename": "hybrid-input-parity-root-1200x730-flask-menu-switched.png",
-      "sha256": "71e1bbc4372627472ae483cd135369d760d0abc9af02edc95e9303c3df2dde84",
-      "bytes": 304145,
+      "sha256": "8c36b8afcfca3de059da7783c02d450de5b9752d626371609b46dc88e13ac3fc",
+      "bytes": 304616,
       "gameplay": {
         "cards": [
           {
@@ -25614,8 +25631,8 @@
       "viewport": "1200x730",
       "state": "keyboard-blight-target",
       "filename": "hybrid-input-parity-root-1200x730-keyboard-blight-target.png",
-      "sha256": "7457243825898d92b70b0b967df6d7f6f81bbd5896e6d623f066f12622fc9a15",
-      "bytes": 305343,
+      "sha256": "9baacedbd10bfef3be7f33045189aebeee2d5c0b000a57eb1314fc4dbfe71cfa",
+      "bytes": 305413,
       "gameplay": {
         "cards": [
           {
@@ -25738,7 +25755,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 145,
+          "reads": 143,
           "mapping": "standard"
         }
       },
@@ -25772,7 +25789,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
@@ -25995,8 +26012,8 @@
       "viewport": "1200x730",
       "state": "controller-blight-target",
       "filename": "hybrid-input-parity-root-1200x730-controller-blight-target.png",
-      "sha256": "90582b920ff558337dbba5f1144efd114cf4ac9d1ba63c1e242372ec0c30dc1e",
-      "bytes": 307862,
+      "sha256": "260f20ce4b2f03fc589b31cd14f77c51fe2592d1af7aaccc7ad8e36aaeceefe0",
+      "bytes": 307710,
       "gameplay": {
         "cards": [
           {
@@ -26119,7 +26136,7 @@
         },
         "menu": null,
         "pad": {
-          "reads": 164,
+          "reads": 165,
           "mapping": "standard"
         }
       },
@@ -26153,7 +26170,7 @@
         "active": {
           "tag": "body",
           "role": null,
-          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0860 · src 27327e9916 ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
+          "name": "HP 90/90❤ 90/90❤MP 2/2◆ 2/2◆SP 2/2▲ 2/2▲POISE 0/20◈ 0/20◈ ⚒ ☰ ⚔ FORSAKEN · REAVER ⛁ 0 21LT🦠RT 🏅 ACT 1 · FLOOR 1 · SEED 1RFFRS8 BUILD 0.4.0.0861 · src 80b67f8a6e ❤ HP 90/90❤ 90/90❤◈ POISE 0/20◈ 0/20◈ ⚔71Wandering Soldier❤ HP 22/22❤ 22/22❤…",
           "classes": "hi-contrast pad-mode",
           "rect": {
             "left": 0,
