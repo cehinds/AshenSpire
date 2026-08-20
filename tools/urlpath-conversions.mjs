@@ -81,7 +81,7 @@ export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true 
       },
       {
         kind: 'URL pathname used as a filesystem path',
-        pattern: /new\s+URL\s*\([^;\n]*import\.meta\.url[^;\n]*\)\s*\.pathname/g,
+        pattern: /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g,
       },
     ];
     for (const rule of rules) {
@@ -126,9 +126,12 @@ function selftest() {
   const fixtureRoot = resolve(ROOT, 'tests/fixtures/urlpath');
   const fixtureScan = collect(fixtureRoot, { dirs: ['.'], excludeKnownBad: false });
   const fixtureKinds = new Map(fixtureScan.findings.map((finding) => [finding.path, finding.kind]));
+  const pathFixtureSource = readFileSync(join(fixtureRoot, 'handrolled_path.mjs'), 'utf8');
   say(fixtureScan.findings.length === 2, 'fixture corpus has exactly the two required findings', `${fixtureScan.findings.length}/2`);
   say(fixtureKinds.get('handrolled_url.mjs') === 'hand-rolled file URL', 'handrolled_url fixture is caught by the real scanner');
   say(fixtureKinds.get('handrolled_path.mjs') === 'URL pathname used as a filesystem path', 'handrolled_path fixture is caught by the real scanner');
+  say(/new\s+URL\s*\(\r?\n/.test(pathFixtureSource) && /\r?\n\)\.pathname/.test(pathFixtureSource),
+    'handrolled_path fixture keeps the discriminating multiline conversion shape');
 
   const temp = mkdtempSync(join(tmpdir(), 'urlpath working dir '));
   const spaced = join(temp, 'repo with spaces');
