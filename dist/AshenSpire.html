@@ -34382,7 +34382,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b6776037f6';
+const SOURCE = '60d0bfd1e1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34416,7 +34416,7 @@ const SOURCE = 'b6776037f6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0874';
+const ORDINAL = '0876';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41828,59 +41828,15 @@ Object.assign(module.exports, { mountTutorial });
 
 },
 "src/ui/components/friendlyTargets.js": function (module, exports, require) {
-// One relationship model and one silhouette renderer for every friendly card
-// target. The model is deliberately DOM-free until the rendering helpers so
-// the authoritative co-op engine can enforce the exact set the clients show.
+// Relationship-aware silhouette rendering for friendly card targets. The
+// headless target rules live below UI in model/friendlyTargets.js so the
+// authoritative engine never depends on DOM-facing modules.
 
 const TARGET_COLORS = Object.freeze({
   enemy: '#e0463c',
   self: '#4d94e0',
   ally: '#49b675',
 });
-
-// Every hostile member of the effect target vocabulary owns card resolution
-// before source-side self effects are considered. An AoE/random strike may
-// heal, block, exhaust, or otherwise affect its source without becoming a
-// friendly-target transaction.
-const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
-
-function friendlyTargetMode(def) {
-  const effects = def && Array.isArray(def.effects) ? def.effects : [];
-  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
-  const hasAlly = effects.some((effect) => effect.target === 'ally');
-  const hasSelf = effects.some((effect) => effect.target === 'self');
-  // Enemy cards continue through enemy aiming even when they also have a
-  // source-side self effect. Friendly aiming owns ally cards and pure self
-  // cards only.
-  if (hasEnemy || (!hasAlly && !hasSelf)) return 'none';
-  if (hasAlly && hasSelf) return 'mixed';
-  return hasAlly ? 'ally' : 'self';
-}
-
-function friendlyTargetPlan(def, actorId, players = []) {
-  const mode = friendlyTargetMode(def);
-  if (mode === 'none') return { mode, active: false, targets: [], legalIds: [] };
-  const targets = [];
-  for (const player of players) {
-    if (!player || !player.alive || !player.connected) continue;
-    const relationship = player.id === actorId ? 'self' : 'ally';
-    if (mode === 'self' && relationship !== 'self') continue;
-    if (mode === 'ally' && relationship !== 'ally') continue;
-    targets.push({ id: player.id, relationship });
-  }
-  return { mode, active: true, targets, legalIds: targets.map((target) => target.id) };
-}
-
-function assertFriendlyTarget(plan, requestedId, actorId) {
-  if (!plan || !plan.active) return requestedId;
-  // A self-only card historically omitted targetId. Preserve that network
-  // compatibility while the new clients always send their explicit choice.
-  const targetId = requestedId == null && plan.mode === 'self' ? actorId : requestedId;
-  if (!plan.legalIds.includes(targetId)) {
-    throw new Error(`Invalid ${plan.mode} target '${targetId == null ? 'none' : targetId}'`);
-  }
-  return targetId;
-}
 
 function tintedClone(spriteWrap, color) {
   const src = spriteWrap && spriteWrap.firstElementChild;
@@ -41946,7 +41902,7 @@ function decorateFriendlyTarget(combatantEl, { relationship, label }) {
 }
 
 
-Object.assign(module.exports, { TARGET_COLORS, friendlyTargetMode, friendlyTargetPlan, assertFriendlyTarget, clearTargetSilhouettes, renderTargetSilhouette, decorateFriendlyTarget });
+Object.assign(module.exports, { TARGET_COLORS, clearTargetSilhouettes, renderTargetSilhouette, decorateFriendlyTarget });
 
 },
 "src/ui/screens/equipment.js": function (module, exports, require) {
@@ -48493,8 +48449,9 @@ const { flaskIdentityHtml, mountFlaskActionMenu } = require("src/ui/components/f
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
-const { focusElement, focusFirst, isEngaged } = require("src/ui/input.js");
-const { decorateFriendlyTarget, friendlyTargetPlan } = require("src/ui/components/friendlyTargets.js");
+const { focusElement, focusFirst, isEngaged, matchAction } = require("src/ui/input.js");
+const { decorateFriendlyTarget } = require("src/ui/components/friendlyTargets.js");
+const { friendlyTargetPlan } = require("src/model/friendlyTargets.js");
 
 function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -48636,6 +48593,17 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const flaskKeyHandler = (ev) => {
+    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (!snap || snap.scene.kind !== 'combat') return;
+    const meP = snap.scene.players.find((p) => p.id === me);
+    if (!meP || !meP.alive || !meP.connected) return;
+    for (let slot = 0; slot < 3; slot++) {
+      if (!matchAction(ev, `flask${slot + 1}`)) continue;
+      if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
+      return;
+    }
+  };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
@@ -48649,11 +48617,6 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
-    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) {
-      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
-      return;
-    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
     if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
@@ -48664,9 +48627,11 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
-  // input.js synthesizes controller-backed key actions on window, while real
-  // keyboard events bubble there too. One listener gives Escape/end-turn/card
-  // shortcuts identical keyboard and controller reach.
+  // input.js owns a capture listener and may stop a configured action before
+  // it bubbles. Co-op flasks therefore listen at that same capture boundary;
+  // controller-synthesized and rebound keyboard keys traverse one door. The
+  // remaining screen keys stay on the ordinary bubble path.
+  addEventListener('keydown', flaskKeyHandler, true);
   addEventListener('keydown', keyHandler);
   // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
   // A pad's first button press pulls the active seat to its own; navigation
@@ -48689,6 +48654,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   }, 120);
 
   function teardown() {
+    removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     if (endTurnBeat) endTurnBeat();
@@ -49034,7 +49000,12 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     if (restoreFriendlyCardFocus) {
       const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
       if (card) focusElement(card);
-    } else if (armedFriendlyCard && isEngaged()) focusFirst('.coop-seat[data-friendly-target]');
+    } else if (armedFriendlyCard && isEngaged()) {
+      const preservedTarget = focusedFriendlySeat && targetPlan?.legalIds.includes(focusedFriendlySeat)
+        ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
+        : null;
+      if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
+    }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
@@ -49466,6 +49437,58 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
 
 
 Object.assign(module.exports, { mountCoop });
+
+},
+"src/model/friendlyTargets.js": function (module, exports, require) {
+// Headless friendly-target semantics shared by the authoritative engine and
+// browser clients. This layer deliberately owns no DOM, colours, or rendering.
+
+// Every hostile member of the effect target vocabulary owns card resolution
+// before source-side self effects are considered. An AoE/random strike may
+// heal, block, exhaust, or otherwise affect its source without becoming a
+// friendly-target transaction.
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
+
+function friendlyTargetMode(def) {
+  const effects = def && Array.isArray(def.effects) ? def.effects : [];
+  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
+  const hasAlly = effects.some((effect) => effect.target === 'ally');
+  const hasSelf = effects.some((effect) => effect.target === 'self');
+  // Enemy cards continue through enemy aiming even when they also have a
+  // source-side self effect. Friendly aiming owns ally cards and pure self
+  // cards only.
+  if (hasEnemy || (!hasAlly && !hasSelf)) return 'none';
+  if (hasAlly && hasSelf) return 'mixed';
+  return hasAlly ? 'ally' : 'self';
+}
+
+function friendlyTargetPlan(def, actorId, players = []) {
+  const mode = friendlyTargetMode(def);
+  if (mode === 'none') return { mode, active: false, targets: [], legalIds: [] };
+  const targets = [];
+  for (const player of players) {
+    if (!player || !player.alive || !player.connected) continue;
+    const relationship = player.id === actorId ? 'self' : 'ally';
+    if (mode === 'self' && relationship !== 'self') continue;
+    if (mode === 'ally' && relationship !== 'ally') continue;
+    targets.push({ id: player.id, relationship });
+  }
+  return { mode, active: true, targets, legalIds: targets.map((target) => target.id) };
+}
+
+function assertFriendlyTarget(plan, requestedId, actorId) {
+  if (!plan || !plan.active) return requestedId;
+  // A self-only card historically omitted targetId. Preserve that network
+  // compatibility while the new clients always send their explicit choice.
+  const targetId = requestedId == null && plan.mode === 'self' ? actorId : requestedId;
+  if (!plan.legalIds.includes(targetId)) {
+    throw new Error(`Invalid ${plan.mode} target '${targetId == null ? 'none' : targetId}'`);
+  }
+  return targetId;
+}
+
+
+Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFriendlyTarget });
 
 },
 "src/ui/components/holdbeat.js": function (module, exports, require) {

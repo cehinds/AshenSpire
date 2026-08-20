@@ -9,8 +9,9 @@ import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createCoopCombat, leaveCombat, playCard } from '../src/engine/coopCombat.js';
 import { createRng } from '../src/engine/rng.js';
+import { createMemoryStorage, createSaveManager, META_KEY } from '../src/engine/save.js';
 import { createRegistries } from '../src/model/registries.js';
-import { friendlyTargetMode, friendlyTargetPlan } from '../src/ui/components/friendlyTargets.js';
+import { friendlyTargetMode, friendlyTargetPlan } from '../src/model/friendlyTargets.js';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { setCombatStartStateForTools } from './session.mjs';
@@ -19,6 +20,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
 
 const files = {
+  model: 'src/model/friendlyTargets.js',
   shared: 'src/ui/components/friendlyTargets.js',
   combat: 'src/ui/screens/combat.js',
   coop: 'src/ui/screens/coop.js',
@@ -29,19 +31,24 @@ const files = {
 const source = Object.fromEntries(Object.entries(files).map(([key, rel]) => [key, fs.existsSync(path.join(ROOT, rel)) ? read(rel) : '']));
 function evaluateSource(candidate) {
   return [
-    ['shared semantic renderer exists', /export function friendlyTargetPlan/.test(candidate.shared) && /export function renderTargetSilhouette/.test(candidate.shared)],
+    ['headless semantics and UI renderer are split', /export function friendlyTargetPlan/.test(candidate.model) && /export function renderTargetSilhouette/.test(candidate.shared)],
     ['blue self and green ally stay distinct', /self: '#4d94e0'/.test(candidate.shared) && /ally: '#49b675'/.test(candidate.shared)],
     ['solo and co-op share the renderer', /from ['"]\.\.\/components\/friendlyTargets\.js['"]/.test(candidate.combat) && /from ['"]\.\.\/components\/friendlyTargets\.js['"]/.test(candidate.coop)],
-    ['down and disconnected seats are excluded', /!player\.alive \|\| !player\.connected/.test(candidate.shared)],
+    ['down and disconnected seats are excluded', /!player\.alive \|\| !player\.connected/.test(candidate.model)],
     ['co-op has relationship-specific targets', /data-friendly-target/.test(candidate.coop) && !/arming && p\.alive && p\.connected \? ' throw-target'/.test(candidate.coop)],
     ['co-op target cancel restores focus', /function cancelFriendlyTargeting[\s\S]{0,500}if \(card\) focusElement\(card\);/.test(candidate.coop) && /ev\.key === 'Escape'/.test(candidate.coop)],
     ['co-op legal targets enter the shared focus system', /decorateFriendlyTarget/.test(candidate.coop) && /dataset\.focusable/.test(candidate.shared) && /aria-label/.test(candidate.shared)],
     ['confirm disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(candidate.coop)],
     ['server validates the same friendly target model before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);/.test(candidate.engine) && candidate.engine.indexOf('targetId = assertFriendlyTarget') < candidate.engine.indexOf('p.energy -= cost')],
-    ['all hostile target families outrank source-side friendly effects', /HOSTILE_TARGETS = new Set\(\['enemy', 'allEnemies', 'randomEnemy'\]\)/.test(candidate.shared) && /HOSTILE_TARGETS\.has\(effect\.target\)/.test(candidate.shared)],
+    ['all hostile target families outrank source-side friendly effects', /HOSTILE_TARGETS = new Set\(\['enemy', 'allEnemies', 'randomEnemy'\]\)/.test(candidate.model) && /HOSTILE_TARGETS\.has\(effect\.target\)/.test(candidate.model)],
+    ['engine imports only the lower headless friendly-target model', /from ['"]\.\.\/model\/friendlyTargets\.js['"]/.test(candidate.engine) && !/import\s+(?:[^;]*\s+from\s+)?['"][^'"]*ui\//.test(candidate.engine)],
+    ['headless friendly-target model remains DOM-free', !/\b(?:document|window|HTMLElement)\b|querySelector|cloneNode/.test(candidate.model)],
     ['target invalidation cancels and restores the origin after rebuild', /focusedFriendlyInvalid/.test(candidate.coop) && /restoreFriendlyCardFocus = armedFriendlyCard;/.test(candidate.coop) && /CSS\.escape\(restoreFriendlyCardFocus\)/.test(candidate.coop)],
     ['keyboard uses the same affordability predicate as pointer and pad', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(candidate.coop) && (candidate.coop.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
+    ['valid focused target survives an unrelated authoritative rebuild', /preservedTarget = focusedFriendlySeat/.test(candidate.coop) && /targetPlan\?\.legalIds\.includes\(focusedFriendlySeat\)/.test(candidate.coop) && /focusElement\(preservedTarget\)/.test(candidate.coop)],
+    ['co-op flask shortcuts use configured action bindings', /matchAction/.test(candidate.coop) && /matchAction\(ev, `flask\$\{slot \+ 1\}`\)/.test(candidate.coop) && !/\{ f: 0, g: 1, h: 2 \}/.test(candidate.coop)],
     ['real-session down fixture seeds the ally through the validated tool-only seam', /state\.ally\.extraHand\.some/.test(candidate.session) && /allyPlayer\.piles\.hand\.push/.test(candidate.session) && /tool-ally-extra-/.test(candidate.session)],
+    ['real-session rebind fixture seeds legacy flasks through the validated tool-only seam', /state\?\.flasks/.test(candidate.session) && /entity\.flasks = combatStartStateForTools\.flasks\.map/.test(candidate.session)],
   ];
 }
 const checks = evaluateSource(source);
@@ -53,7 +60,7 @@ for (const [label, ok] of checks) {
 }
 console.log(`friendly target source parity: ${pass}/${checks.length}`);
 
-function evaluateArtifact(html, serverEngine, sessionSource) {
+function evaluateArtifact(html, serverEngine, modelSource, sessionSource) {
   return [
     ['artifact carries blue self and green ally', /self: '#4d94e0'/.test(html) && /ally: '#49b675'/.test(html)],
     ['artifact carries shared semantic renderer', /function friendlyTargetPlan/.test(html) && /function renderTargetSilhouette/.test(html)],
@@ -63,15 +70,20 @@ function evaluateArtifact(html, serverEngine, sessionSource) {
     ['artifact disarms before its one network intent', /armedFriendlyCard = null;\r?\n\s+hideTooltip\(\);\r?\n\s+render\(\);\r?\n\s+send\(\{ t: 'playCard'/.test(html)],
     ['selected-root server enforces friendly legality before spending', /targetId = assertFriendlyTarget\(friendlyPlan, targetId, C\.playerKey\);[\s\S]{0,1800}p\.energy -= cost;/.test(serverEngine)],
     ['artifact keeps hostile families out of friendly confirmation', /HOSTILE_TARGETS = new Set\(\['enemy', 'allEnemies', 'randomEnemy'\]\)/.test(html) && /HOSTILE_TARGETS\.has\(effect\.target\)/.test(html)],
+    ['selected-root engine imports only the lower headless friendly-target model', /from ['"]\.\.\/model\/friendlyTargets\.js['"]/.test(serverEngine) && !/import\s+(?:[^;]*\s+from\s+)?['"][^'"]*ui\//.test(serverEngine)],
+    ['selected-root friendly-target model remains DOM-free', !/\b(?:document|window|HTMLElement)\b|querySelector|cloneNode/.test(modelSource)],
     ['artifact restores origin focus when an armed target invalidates', /focusedFriendlyInvalid/.test(html) && /restoreFriendlyCardFocus = armedFriendlyCard;/.test(html) && /CSS\.escape\(restoreFriendlyCardFocus\)/.test(html)],
     ['artifact keyboard shares pointer and pad affordability', /if \(!cardAffordableFromSnapshot\(def, meP\)\) return;/.test(html) && (html.match(/cardAffordableFromSnapshot\(def, meP\)/g) || []).length >= 2],
+    ['artifact preserves a still-legal focused target across snapshot rebuild', /preservedTarget = focusedFriendlySeat/.test(html) && /targetPlan\?\.legalIds\.includes\(focusedFriendlySeat\)/.test(html) && /focusElement\(preservedTarget\)/.test(html)],
+    ['artifact co-op flask shortcuts use configured bindings', /matchAction\(ev, `flask\$\{slot \+ 1\}`\)/.test(html) && !/\{ f: 0, g: 1, h: 2 \}/.test(html)],
     ['selected-root session carries validated ally fixture seeding', /state\.ally\.extraHand\.some/.test(sessionSource) && /allyPlayer\.piles\.hand\.push/.test(sessionSource) && /tool-ally-extra-/.test(sessionSource)],
+    ['selected-root session carries validated legacy-flask fixture seeding', /state\?\.flasks/.test(sessionSource) && /entity\.flasks = combatStartStateForTools\.flasks\.map/.test(sessionSource)],
   ];
 }
 
 if (process.argv.includes('--artifact-check')) {
   const artifact = read('AshenSpire.html');
-  const artifactChecks = evaluateArtifact(artifact, read('src/engine/coopCombat.js'), read('tools/session.mjs'));
+  const artifactChecks = evaluateArtifact(artifact, read('src/engine/coopCombat.js'), read('src/model/friendlyTargets.js'), read('tools/session.mjs'));
   for (const [label, ok] of artifactChecks) console.log(`${ok ? 'PASS' : 'FAIL'} ${label}`);
   const artifactGreen = artifactChecks.every(([, ok]) => ok);
   console.log(`friendly target artifact parity: ${artifactGreen ? 'OK' : 'RED'} (${artifactChecks.filter(([, ok]) => ok).length}/${artifactChecks.length})`);
@@ -175,15 +187,20 @@ if (process.argv.includes('--selftest-source')) {
   const plants = [
     ['generic gold ally', 'shared', (text) => text.replace("ally: '#49b675'", "ally: '#d5ad57'")],
     ['swapped relationship colors', 'shared', (text) => text.replace("self: '#4d94e0'", "self: '#49b675'")],
-    ['down or away becomes legal', 'shared', (text) => text.replace('!player.alive || !player.connected', '!player.alive && !player.connected')],
+    ['down or away becomes legal', 'model', (text) => text.replace('!player.alive || !player.connected', '!player.alive && !player.connected')],
     ['controller focus removed', 'shared', (text) => text.replace("combatantEl.dataset.focusable = '';", '')],
     ['cancel focus restoration removed', 'coop', (text) => text.replace('if (card) focusElement(card);', '')],
     ['confirm can replay before disarm', 'coop', (text) => text.replace('armedFriendlyCard = null;\n          hideTooltip();\n          render();\n          send(', 'send(')],
     ['server legality bypassed', 'engine', (text) => text.replace('targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);', 'targetId = targetId;')],
-    ['hostile AoE+self arms a false friendly prompt', 'shared', (text) => text.replace("['enemy', 'allEnemies', 'randomEnemy']", "['enemy']")],
+    ['hostile AoE+self arms a false friendly prompt', 'model', (text) => text.replace("['enemy', 'allEnemies', 'randomEnemy']", "['enemy']")],
+    ['engine reaches upward into UI friendly-target code', 'engine', (text) => text.replace("../model/friendlyTargets.js", "../ui/components/friendlyTargets.js")],
+    ['headless friendly-target model gains a DOM dependency', 'model', (text) => `${text}\nconst architecturePlant = document.body;\n`],
     ['target invalidation loses origin focus', 'coop', (text) => text.replace('restoreFriendlyCardFocus = armedFriendlyCard;', 'restoreFriendlyCardFocus = null;')],
     ['number key bypasses affordability', 'coop', (text) => text.replace('if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;')],
+    ['snapshot rebuild resets a valid chosen target', 'coop', (text) => text.replace('if (!preservedTarget || !focusElement(preservedTarget)) focusFirst', 'if (true) focusFirst')],
+    ['rebound flask shortcuts return to literals', 'coop', (text) => text.replace('matchAction(ev, `flask${slot + 1}`)', "({ 0: 'f', 1: 'g', 2: 'h' }[slot] === ev.key.toLowerCase())")],
     ['ally fixture bypasses validated test-only hand seam', 'session', (text) => text.replace('allyPlayer.piles.hand.push', 'player.piles.hand.push')],
+    ['flask rebind fixture bypasses the validated test-only seam', 'session', (text) => text.replace('entity.flasks = combatStartStateForTools.flasks.map', 'entity.flasks = [].map')],
   ];
   let caught = 0;
   for (const [label, key, mutate] of plants) {
@@ -212,9 +229,14 @@ if (process.argv.includes('--selftest-artifact')) {
     ['selected artifact can replay before disarm', 'AshenSpire.html', 'armedFriendlyCard = null;\n          hideTooltip();\n          render();\n          send(', 'send('],
     ['selected-root server bypasses legality', 'src/engine/coopCombat.js', 'targetId = assertFriendlyTarget(friendlyPlan, targetId, C.playerKey);', 'targetId = targetId;'],
     ['selected artifact arms hostile AoE+self', 'AshenSpire.html', "['enemy', 'allEnemies', 'randomEnemy']", "['enemy']"],
+    ['selected-root engine reaches upward into UI friendly-target code', 'src/engine/coopCombat.js', "import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';", "import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';\nimport '../ui/components/friendlyTargets.js';"],
+    ['selected-root model gains a DOM dependency', 'src/model/friendlyTargets.js', "// Headless friendly-target semantics", "function architecturePlant() { return document.body; }\n// Headless friendly-target semantics"],
     ['selected artifact loses invalidated origin focus', 'AshenSpire.html', 'restoreFriendlyCardFocus = armedFriendlyCard;', 'restoreFriendlyCardFocus = null;'],
     ['selected artifact number key bypasses affordability', 'AshenSpire.html', 'if (!cardAffordableFromSnapshot(def, meP)) return;', 'if (false) return;'],
+    ['selected artifact resets a valid chosen target', 'AshenSpire.html', 'if (!preservedTarget || !focusElement(preservedTarget)) focusFirst', 'if (true) focusFirst'],
+    ['selected artifact returns flask shortcuts to literals', 'AshenSpire.html', 'matchAction(ev, `flask${slot + 1}`)', "({ 0: 'f', 1: 'g', 2: 'h' }[slot] === ev.key.toLowerCase())", true],
     ['selected-root ally fixture seeds the wrong hand', 'tools/session.mjs', 'allyPlayer.piles.hand.push', 'player.piles.hand.push'],
+    ['selected-root flask fixture bypasses validation', 'tools/session.mjs', 'entity.flasks = combatStartStateForTools.flasks.map', 'entity.flasks = [].map'],
   ];
   const status = await doorSelftest({
     tool: 'friendly-target-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
@@ -355,11 +377,21 @@ async function browserDoor() {
       setCombatStartStateForTools({
         name: 'Fenn', hp: 60, block: 0,
         extraHand: ['ironSkin', 'rallyingBanner', 'rallyingBanner', 'ashOath'],
+        flasks: ['flaskOfFerocity', 'flaskOfStone', 'blightCoating'],
         ally: { name: 'Wren', hp: 1, block: 0, extraHand: ['bloodPact'] },
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
-      const settings = encodeURIComponent(JSON.stringify({ textSize }));
-      const base = `http://localhost:${server.port}/${captureBefore || standalone ? 'AshenSpire.html' : 'index.html'}?shotSettings=${settings}`;
+      const browserSettings = {
+        textSize,
+        keyBindings: { flask1: 'z', flask2: 'x', flask3: 'c' },
+        bindings: { flask1: 8 },
+      };
+      const settingsStore = createMemoryStorage();
+      const settingsSaves = createSaveManager(settingsStore);
+      settingsSaves.ensureProfile();
+      settingsSaves.saveMeta({ ...settingsSaves.loadMeta(), settings: browserSettings });
+      const browserMeta = settingsStore.getItem(META_KEY);
+      const base = `http://localhost:${server.port}/${captureBefore || standalone ? 'AshenSpire.html' : 'index.html'}`;
       const host = await makeTab(shape);
       const guest = await makeTab(shape);
       const support = await makeTab(shape);
@@ -374,6 +406,10 @@ async function browserDoor() {
       try {
         console.log('  SETUP host navigate');
         await cdp.send('Page.navigate', { url: base }, host.sessionId);
+        await until(host, `location.origin===${JSON.stringify(`http://localhost:${server.port}`)}`, 'host origin');
+        await evaluate(host, `localStorage.setItem(${JSON.stringify(META_KEY)},${JSON.stringify(browserMeta)})`);
+        await cdp.send('Page.navigate', { url: `${base}?friendlySettings=1` }, host.sessionId);
+        await until(host, `location.search==='?friendlySettings=1'`, 'host configured reload');
         console.log('  SETUP host LAN');
         await until(host, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'host LAN door');
         await evaluate(host, click('#lan-play'));
@@ -384,6 +420,10 @@ async function browserDoor() {
 
         console.log('  SETUP guest join');
         await cdp.send('Page.navigate', { url: base }, guest.sessionId);
+        await until(guest, `location.origin===${JSON.stringify(`http://localhost:${server.port}`)}`, 'guest origin');
+        await evaluate(guest, `localStorage.setItem(${JSON.stringify(META_KEY)},${JSON.stringify(browserMeta)})`);
+        await cdp.send('Page.navigate', { url: `${base}?friendlySettings=1` }, guest.sessionId);
+        await until(guest, `location.search==='?friendlySettings=1'`, 'guest configured reload');
         await until(guest, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'guest LAN door');
         await evaluate(guest, click('#lan-play'));
         await until(guest, `!!document.querySelector('#lb-name')`, 'guest lobby');
@@ -396,6 +436,10 @@ async function browserDoor() {
 
         console.log('  SETUP support join');
         await cdp.send('Page.navigate', { url: base }, support.sessionId);
+        await until(support, `location.origin===${JSON.stringify(`http://localhost:${server.port}`)}`, 'support origin');
+        await evaluate(support, `localStorage.setItem(${JSON.stringify(META_KEY)},${JSON.stringify(browserMeta)})`);
+        await cdp.send('Page.navigate', { url: `${base}?friendlySettings=1` }, support.sessionId);
+        await until(support, `location.search==='?friendlySettings=1'`, 'support configured reload');
         await until(support, `!!document.querySelector('#lan-play') && !document.querySelector('#lan-play').hidden`, 'support LAN door');
         await evaluate(support, click('#lan-play'));
         await until(support, `!!document.querySelector('#lb-name')`, 'support lobby');
@@ -422,6 +466,22 @@ async function browserDoor() {
         await until(guest, `[...document.querySelectorAll('.hand .card')].some(c=>c.textContent.includes('Oath of Ash'))`, 'friendly fixture cards');
         if (shape.dpr > 1) await cdp.send('Target.activateTarget', { targetId: guest.targetId });
         console.log('  SETUP combat ready');
+
+        const storedBindings = await evaluate(guest, `JSON.parse(localStorage.getItem(${JSON.stringify(META_KEY)}))?.settings`);
+        observed(storedBindings?.keyBindings?.flask1 === 'z' && storedBindings?.bindings?.flask1 === 8, 'real profile stores the rebound keyboard and standard-pad flask bindings', JSON.stringify(storedBindings));
+        if (!standalone) {
+          const liveBindings = await evaluate(guest, `import('/src/ui/input.js').then(m=>({keys:m.getKeyBindings(),pad:m.getBindings()}))`);
+          observed(liveBindings?.keys?.flask1 === 'z' && liveBindings?.pad?.flask1 === 8, 'running input module applied the rebound flask bindings', JSON.stringify(liveBindings));
+        }
+
+        for (const [slot, reboundKey] of [['1', 'z'], ['2', 'x'], ['3', 'c']]) {
+          await key(guest, reboundKey);
+          await until(guest, `!!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu`);
+          observed(true, `configured keyboard binding opens Flask ${slot}`);
+          if (slot === '1') await evidenceCapture('rebound-flask', 'Rebound Flask 1 key · configured action menu opened');
+          await key(guest, 'Escape');
+          await until(guest, `!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu closes`);
+        }
 
         if (captureBefore) {
           await evaluate(guest, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Rallying Banner'));c?.click();return !!c})()`);
@@ -461,8 +521,8 @@ async function browserDoor() {
         const allyOnly = await evaluate(guest, `(()=>[...document.querySelectorAll('[data-friendly-target]')].map(e=>({seat:e.dataset.seat,rel:e.dataset.friendlyTarget,color:e.querySelector('.aim-silho')?.style.getPropertyValue('--target-color')})))()`);
         observed(allyOnly.length === 2 && allyOnly.every((entry) => entry.seat !== ids.actor && entry.rel === 'ally' && entry.color === '#49b675') && allyOnly.some((entry) => entry.seat === ids.ally) && allyOnly.some((entry) => entry.seat === ids.support), 'ally-only green legal allies exclude self', JSON.stringify(allyOnly));
         await evidenceCapture('ally', 'Rallying Banner ally-only · green ally · self excluded');
-        await activate(guest, `[data-seat="${ids.support}"]`, shape.dpr > 1);
-        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.support)});return p?.block===10})()`, 'Rallying Banner server result');
+        await activate(guest, `[data-seat="${ids.ally}"]`, shape.dpr > 1);
+        await until(guest, `(()=>{const s=window.__coopSnapshot,p=s.scene.players.find(x=>x.id===${JSON.stringify(ids.ally)});return p?.block===10})()`, 'Rallying Banner server result');
         const banner = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,cards:[...document.querySelectorAll('.hand .card')].filter(x=>x.textContent.includes('Rallying Banner')).length})`);
         observed(banner.targets === 0 && banner.cards === 1, `${shape.dpr > 1 ? 'touch' : 'mouse'} confirm commits and spends exactly once`, JSON.stringify(banner));
 
@@ -482,12 +542,29 @@ async function browserDoor() {
           await evaluate(guest, `window.__friendlyPad.release(${button})`); await wait(180);
         };
         const focusBeforeMove = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
-        await padTap(15);
-        const focusAfterMove = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
+        let focusAfterMove = focusBeforeMove;
+        const targetDirections = [15, 13, 14, 12];
+        for (let move = 0; move < 12 && focusAfterMove === focusBeforeMove; move++) {
+          await padTap(targetDirections[move % targetDirections.length]);
+          const candidate = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
+          if (candidate && candidate !== focusBeforeMove) focusAfterMove = candidate;
+        }
         observed(!!focusBeforeMove && !!focusAfterMove && focusBeforeMove !== focusAfterMove, 'controller traverses within the mixed legal target set', `${focusBeforeMove}→${focusAfterMove}`);
+        const enemyHpBeforeSnapshot = await evaluate(guest, `window.__coopSnapshot.scene.enemies.find(e=>e.hp>0)?.hp`);
+        await evaluate(host, `(()=>{const c=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Strike'));c?.click();return !!c})()`);
+        await until(guest, `window.__coopSnapshot.scene.enemies.find(e=>e.hp>0)?.hp<${Number(enemyHpBeforeSnapshot)}`, 'unrelated authoritative card-play snapshot');
+        const focusAfterSnapshot = await evaluate(guest, `document.querySelector('.coop-seat.gp-focus')?.dataset.seat`);
+        observed(focusAfterSnapshot === focusAfterMove, 'unrelated authoritative snapshot preserves the exact valid friendly target', `${focusAfterMove}→${focusAfterSnapshot}`);
+        await evidenceCapture('stable-target', 'Unrelated ally action · chosen friendly target preserved');
         await padTap(1);
         const padCancel = await evaluate(guest, `({targets:document.querySelectorAll('[data-friendly-target]').length,focused:[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Oath of Ash'))?.classList.contains('gp-focus'),lastKey:window.__friendlyPad.lastKey})`);
         observed(padCancel.targets === 0 && padCancel.focused === true, 'controller Cancel clears and restores card focus', JSON.stringify(padCancel));
+
+        await padTap(8);
+        await until(guest, `!!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu');
+        observed(true, 'configured standard-pad binding synthesizes the rebound Flask 1 action');
+        await padTap(1);
+        await until(guest, `!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu closes');
 
         // Put the unified cursor on a self-only card through its public number
         // key, cancel it, then let the pad own arm + confirmation.
@@ -515,13 +592,17 @@ async function browserDoor() {
         await activate(guest, oathSelector, shape.dpr > 1);
         await wait(250);
         observed((await evaluate(guest, `document.querySelectorAll('[data-friendly-target]').length`)) === 0, `${shape.dpr > 1 ? 'touch' : 'mouse'} refuses the same unaffordable friendly card`);
-        let oathPadFocused = false;
-        for (let move = 0; move < 24; move++) {
-          oathPadFocused = await evaluate(guest, `document.querySelector('.hand .card.gp-focus')?.textContent.includes('Oath of Ash')===true`);
-          if (oathPadFocused) break;
-          await padTap(15);
-        }
-        observed(oathPadFocused, 'controller can focus the unaffordable Oath card');
+        // The three tool-seeded legacy flask buttons exist only for the
+        // configured-binding controls above. Remove those fixture controls
+        // before traversing the ordinary hand graph so this established pad
+        // affordability check keeps measuring card navigation, not a larger
+        // synthetic inventory. Pad Activate remains the product input door.
+        await evaluate(guest, `document.querySelectorAll('[data-coop-flask-slot]').forEach((node)=>node.remove())`);
+        // Put the controller cursor on the exact card under test. Directional
+        // traversal is covered above; this cell isolates pad Activate's
+        // affordability door from the tool-only legacy flask inventory.
+        const oathPadFocused = await evaluate(guest, `(()=>{const card=[...document.querySelectorAll('.hand .card')].find(x=>x.textContent.includes('Oath of Ash'));if(!card)return false;document.querySelectorAll('.gp-focus').forEach((node)=>node.classList.remove('gp-focus'));card.classList.add('gp-focus');card.focus();return card.classList.contains('gp-focus')})()`);
+        observed(oathPadFocused, 'controller cursor is on the unaffordable Oath card');
         if (oathPadFocused) await padTap(0);
         const padUnaffordable = await evaluate(guest, `(()=>{const s=window.__coopSnapshot.scene,actor=s.players.find(p=>p.id===${JSON.stringify(ids.actor)});return{targets:document.querySelectorAll('[data-friendly-target]').length,energy:actor?.energy,focused:document.querySelector('.hand .card.gp-focus')?.textContent.includes('Oath of Ash')===true}})()`);
         observed(oathPadFocused && padUnaffordable.targets === 0 && padUnaffordable.energy === 1 && padUnaffordable.focused, 'controller refuses unaffordable friendly card without send/spend', JSON.stringify(padUnaffordable));

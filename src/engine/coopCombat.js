@@ -29,7 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { assertFriendlyTarget, friendlyTargetPlan } from '../ui/components/friendlyTargets.js';
+import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
 import * as S from './statuses.js';

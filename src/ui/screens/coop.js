@@ -50,8 +50,9 @@ import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js'
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
-import { focusElement, focusFirst, isEngaged } from '../input.js';
-import { decorateFriendlyTarget, friendlyTargetPlan } from '../components/friendlyTargets.js';
+import { focusElement, focusFirst, isEngaged, matchAction } from '../input.js';
+import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
+import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
@@ -193,6 +194,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
+  const flaskKeyHandler = (ev) => {
+    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (!snap || snap.scene.kind !== 'combat') return;
+    const meP = snap.scene.players.find((p) => p.id === me);
+    if (!meP || !meP.alive || !meP.connected) return;
+    for (let slot = 0; slot < 3; slot++) {
+      if (!matchAction(ev, `flask${slot + 1}`)) continue;
+      if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
+      return;
+    }
+  };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
@@ -206,11 +218,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
-    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
-    if (fl != null && meP.flasks && meP.flasks[fl]) {
-      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
-      return;
-    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
     if (idx >= 0 && meP.hand[idx]) {
       const c = meP.hand[idx];
@@ -221,9 +228,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
-  // input.js synthesizes controller-backed key actions on window, while real
-  // keyboard events bubble there too. One listener gives Escape/end-turn/card
-  // shortcuts identical keyboard and controller reach.
+  // input.js owns a capture listener and may stop a configured action before
+  // it bubbles. Co-op flasks therefore listen at that same capture boundary;
+  // controller-synthesized and rebound keyboard keys traverse one door. The
+  // remaining screen keys stay on the ordinary bubble path.
+  addEventListener('keydown', flaskKeyHandler, true);
   addEventListener('keydown', keyHandler);
   // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
   // A pad's first button press pulls the active seat to its own; navigation
@@ -246,6 +255,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
   }, 120);
 
   function teardown() {
+    removeEventListener('keydown', flaskKeyHandler, true);
     removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     if (endTurnBeat) endTurnBeat();
@@ -591,7 +601,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (restoreFriendlyCardFocus) {
       const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
       if (card) focusElement(card);
-    } else if (armedFriendlyCard && isEngaged()) focusFirst('.coop-seat[data-friendly-target]');
+    } else if (armedFriendlyCard && isEngaged()) {
+      const preservedTarget = focusedFriendlySeat && targetPlan?.legalIds.includes(focusedFriendlySeat)
+        ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
+        : null;
+      if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
+    }
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
