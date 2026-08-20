@@ -1,7 +1,7 @@
 // Focused guard-hit parity gate (#207).
 //
 // The fast door proves the semantic split, the authoritative co-op session
-// receipts, and nine named source mutations. `--browser` adds both real product
+// receipts, and twelve named source mutations. `--browser` adds both real product
 // paths: seeded solo combat through its real engine/event/FX pipeline, then two
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
 // real End Turn controls. `--standalone` selects the root artifact instead of
@@ -37,7 +37,13 @@ function sourceContract(tree) {
     /e\.type === 'hpLost' && e\.cause !== 'attack'/.test(tree.session),
     /cause: e\.cause/.test(tree.session),
     /ev\.type === 'damageDealt' \|\| \(ev\.type === 'hpLost' && ev\.cause !== 'attack'\)/.test(tree.coop),
-    /receiptCounts\.set\(row\.targetKey,[\s\S]{0,500}const stackY = [^;]+ \* 18;/.test(tree.coop),
+    /receiptSeq: \+\+combatReceiptSeq/.test(tree.session),
+    /const hasNewReceipts = receiptSeq > lastReceiptSeq;/.test(tree.coop),
+    /if \(!duplicate\) pendingSnaps\.push\(s\);/.test(tree.coop),
+    /events: combatFrames\.flatMap\(\(frame\) => frame\.scene\.events \|\| \[\]\)/.test(tree.coop),
+    /row\.height = Math\.max\(\.\.\.row\.items\.map\(\(el\) => el\.offsetHeight \* maxAnimationScale\(el\)\)\);/.test(tree.coop),
+    /function maxAnimationScale|const maxAnimationScale = \(el\)/.test(tree.coop),
+    /getKeyframes/.test(tree.coop),
     /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ amount\)/.test(tree.coop),
     /receiptLossByTarget\.set\(targetKey,[\s\S]{0,120}\+ parts\.residual\)/.test(tree.coop),
     /const unreceipted = Math\.max\(0, dmg - \(receiptLossByTarget\.get\(`enemy:\$\{e\.id\}`\) \|\| 0\)\)/.test(tree.coop),
@@ -66,14 +72,17 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     ['coop-loses-hp-loss-player-owner', 'tools/session.mjs', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
     ['coop-drops-receipt-processing', 'src/ui/screens/coop.js', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
     ['coop-suppresses-unreceipted-remainder', 'src/ui/screens/coop.js', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
-    ['coop-collapses-same-target-stack', 'src/ui/screens/coop.js', '* 18;', '* 0;'],
+    ['coop-hardcodes-receipt-spacing', 'src/ui/screens/coop.js', 'row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));', 'row.height = 18;'],
+    ['coop-resync-uses-object-identity', 'src/ui/screens/coop.js', 'const hasNewReceipts = receiptSeq > lastReceiptSeq;', 'const hasNewReceipts = now !== prev;'],
+    ['coop-overwrites-paced-frame', 'src/ui/screens/coop.js', 'if (!duplicate) pendingSnaps.push(s);', 'pendingSnaps = [s];'],
+    ['coop-drops-ordered-paced-events', 'src/ui/screens/coop.js', 'events: combatFrames.flatMap((frame) => frame.scene.events || []),', 'events: latest.scene.events || [],'],
   ];
   const sourceStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', timeoutMs: 300000,
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
-  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html'];
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html'];
   const artifactStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
@@ -346,12 +355,13 @@ async function browserDoor() {
         name: 'Fenn', hp: row.before.hp,
         block: row.before.block - (row.defend ? row.blocked : 0),
         extraHand: row.review ? [row.review.cardId] : [],
+        nextDraw: row.name === 'partial' ? ['strike'] : [],
         enemy: row.review?.cause
           ? { hp: 15, statuses: [{ id: 'bleed', stacks: Number(contentBundle.statuses.find((entry) => entry.id === 'bleed')?.proc?.threshold) - 3 }] }
           : row.review ? { hp: 30 } : undefined,
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
-      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}`;
+      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}?guardTool=1`;
       const host = await makeTab(shape); const guest = await makeTab(shape);
       console.log(`\n  ${shape.tag} ${row.name} — real two-client GUARD2 fight`);
       try {
@@ -383,6 +393,7 @@ async function browserDoor() {
         await until(host, `!!document.querySelector('.combat.coop')`, 'host combat');
         await until(guest, `!!document.querySelector('.combat.coop')`, 'guest combat');
         await until(guest, `!!window.__coopSnapshot?.scene?.players?.length`, 'guest snapshot');
+        await until(guest, `!!window.__guardCoopTool`, 'real co-op wire control');
         await until(guest, `document.querySelectorAll('.combat.coop .hand .card').length>0`, 'guest hand');
         if (row.defend) {
           const play = await evaluate(guest, `(()=>{const all=[...document.querySelectorAll('.hand .card')],c=all.find(x=>/defend/i.test(x.textContent));if(c)c.click();return{played:!!c,cards:all.map(x=>({text:x.textContent.trim().replace(/\\s+/g,' '),aria:x.getAttribute('aria-label'),id:x.dataset.instanceId||x.dataset.cardId||null}))}})()`);
@@ -424,12 +435,37 @@ async function browserDoor() {
             await writeShot(guest, `guard-float-review-${reviewMoment}-${evidenceDoor}-${shape.tag}-${row.review.cardId}.png`);
           }
           await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num,.evidence-caption').forEach(n=>n.remove());return true})()`);
+          if (row.name === 'full') {
+            const beforeResync = await evaluate(guest, `window.__guardCoopTool.state()`);
+            await evaluate(guest, `window.__guardCoopTool.resync()`);
+            await until(guest, `window.__guardCoopTool.state().receivedSnapshots>${beforeResync.receivedSnapshots}`, 'unchanged authoritative resync arrives');
+            await wait(180);
+            const afterResync = await evaluate(guest, `({state:window.__guardCoopTool.state(),floats:[...document.querySelectorAll('.fx-layer .float-num')].map(n=>n.textContent)})`);
+            check(afterResync.state.latestReceiptSeq === beforeResync.latestReceiptSeq
+                && afterResync.state.lastReceiptSeq === beforeResync.lastReceiptSeq,
+              `${row.review.cardName}: unchanged resync keeps one authoritative receipt identity`, JSON.stringify(afterResync.state));
+            check(afterResync.floats.length === 0,
+              `${row.review.cardName}: unchanged authoritative resync replays zero floats`, JSON.stringify(afterResync.floats));
+          }
         }
         const before = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{hp:p?.hp,block:p?.block}})()`);
         await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
+        let pacedControl = null;
+        if (row.name === 'partial') {
+          await until(guest, `window.__guardCoopTool.state().pacing===true`, 'enemy phase pacing begins');
+          const pacingStart = await evaluate(guest, `window.__guardCoopTool.state()`);
+          const played = await evaluate(guest, `window.__guardCoopTool.playFirstFromLatest()`);
+          check(played?.cardId === 'strike', 'paced control sends the guaranteed next-turn Strike through the real wire', JSON.stringify(played));
+          await until(guest, `window.__guardCoopTool.state().latestReceiptSeq>${pacingStart.latestReceiptSeq}`, 'back-to-back action snapshot arrives while pacing');
+          const beforeDuplicate = await evaluate(guest, `window.__guardCoopTool.state()`);
+          await evaluate(guest, `(()=>{window.__guardCoopTool.resync();window.__guardCoopTool.resync();return true})()`);
+          await until(guest, `window.__guardCoopTool.state().receivedSnapshots>=${beforeDuplicate.receivedSnapshots + 2}`, 'duplicate resync frames arrive while pacing');
+          await until(guest, `(()=>{const s=window.__guardCoopTool.state();return !s.pacing&&s.lastReceiptSeq===s.latestReceiptSeq})()`, 'ordered paced receipt batches render through latest sequence', 12000);
+          pacedControl = await evaluate(guest, `window.__guardCoopTool.state()`);
+        }
         await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.events?.some(e=>e.type==='damageDealt'&&e.playerId===id)})()`, 'authoritative Fenn damage receipt');
         await until(guest, `document.querySelectorAll('.fx-layer .float-num').length>=${row.coopTexts.length}`, 'visible float channels', 12000);
-        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id),layer=document.querySelector('.fx-layer'),seat=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),lr=layer.getBoundingClientRect(),sr=seat.getBoundingClientRect(),floats=[...layer.querySelectorAll('.float-num')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),target=floats.filter(x=>x.cx>=sr.left&&x.cx<=sr.right&&x.cy>=sr.top&&x.cy<=sr.bottom);const probe=document.createElement('span');probe.className='float-num blk';probe.style.display='none';layer.appendChild(probe);const guardColor=getComputedStyle(probe).color;probe.remove();return{hp:p.hp,block:p.block,receipt:e,texts:floats.map(x=>x.text).sort(),targetTexts:target.map(x=>x.text).sort(),target,guard:target.filter(x=>x.cls.includes('blk')).map(x=>x.text),guardColors:target.filter(x=>x.cls.includes('blk')).map(x=>x.color),guardColor,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
+        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id),layer=document.querySelector('.fx-layer'),seat=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),lr=layer.getBoundingClientRect(),sr=seat.getBoundingClientRect(),floats=[...layer.querySelectorAll('.float-num')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),target=floats.filter(x=>x.cx>=sr.left&&x.cx<=sr.right&&x.cy>=sr.top&&x.cy<=sr.bottom);const probe=document.createElement('span');probe.className='float-num blk';probe.style.display='none';layer.appendChild(probe);const guardColor=getComputedStyle(probe).color;probe.remove();return{hp:p.hp,block:p.block,receipt:e,events:s.events,texts:floats.map(x=>x.text).sort(),targetTexts:target.map(x=>x.text).sort(),target,guard:target.filter(x=>x.cls.includes('blk')).map(x=>x.text),guardColors:target.filter(x=>x.cls.includes('blk')).map(x=>x.color),guardColor,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
         check(reading.receipt?.amount === 7 && reading.receipt?.blocked === row.blocked,
           `${row.name}: wire receipt is amount 7 / blocked ${row.blocked}`, JSON.stringify(reading.receipt));
         const residual = 7 - row.blocked;
@@ -438,8 +474,16 @@ async function browserDoor() {
           `HP${before.hp}/B${before.block}`);
         check(reading.hp === row.after.hp && reading.block === 0,
           `${row.name}: authoritative Fenn hit reaches HP${row.after.hp} and next-turn guard clears`, `HP${before.hp}→${reading.hp}/B${reading.block}`);
-        check(JSON.stringify(reading.texts) === JSON.stringify(row.coopTexts),
-          `${row.name}: exact visible channels ${row.coopTexts.join(' + ')}`, reading.texts.join(' + '));
+        const pacedHit = pacedControl ? reading.events.find((event) => event.type === 'damageDealt' && event.sourceId === 'player' && event.targetId !== 'player') : null;
+        const expectedTexts = [...row.coopTexts, ...(pacedHit ? [`-${Math.max(0, pacedHit.amount - (pacedHit.blocked || 0))}`] : [])].sort();
+        check(JSON.stringify(reading.texts) === JSON.stringify(expectedTexts),
+          `${row.name}: exact visible channels ${expectedTexts.join(' + ')}`, reading.texts.join(' + '));
+        if (pacedControl) {
+          check(reading.events.filter((event) => event.type === 'damageDealt').length === 3 && !!pacedHit,
+            'paced coalescing preserves two enemy receipts plus one back-to-back Strike exactly once', JSON.stringify(reading.events));
+          check(pacedControl.pendingReceiptSeqs.length === 0,
+            'paced receipt queue drains completely in authoritative order', JSON.stringify(pacedControl));
+        }
         check(JSON.stringify(reading.targetTexts) === JSON.stringify(row.soloTexts),
           `${row.name}: Fenn target owns exactly ${row.soloTexts.join(' + ')}`, reading.targetTexts.join(' + '));
         check(!reading.guard.some((text) => text.startsWith('+')),
@@ -581,7 +625,10 @@ const plants = [
   ['coop-loses-hp-loss-player-owner', 'session', "(type === 'damageDealt' || type === 'hpLost')", "type === 'damageDealt'"],
   ['coop-drops-receipt-processing', 'coop', "ev.type === 'damageDealt' || (ev.type === 'hpLost' && ev.cause !== 'attack')", "ev.type === 'damageDealt'"],
   ['coop-suppresses-unreceipted-remainder', 'coop', 'dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0)', 'receiptLossByTarget.has(`enemy:${e.id}`) ? 0 : dmg'],
-  ['coop-collapses-same-target-stack', 'coop', '* 18;', '* 0;'],
+  ['coop-hardcodes-receipt-spacing', 'coop', 'row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));', 'row.height = 18;'],
+  ['coop-resync-uses-object-identity', 'coop', 'const hasNewReceipts = receiptSeq > lastReceiptSeq;', 'const hasNewReceipts = now !== prev;'],
+  ['coop-overwrites-paced-frame', 'coop', 'if (!duplicate) pendingSnaps.push(s);', 'pendingSnaps = [s];'],
+  ['coop-drops-ordered-paced-events', 'coop', 'events: combatFrames.flatMap((frame) => frame.scene.events || []),', 'events: latest.scene.events || [],'],
 ];
 for (const [name, file, find, replacement] of plants) {
   const planted = { ...source, [file]: source[file].replace(find, replacement) };

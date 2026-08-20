@@ -40,13 +40,15 @@ let combatStartStateForTools = null;
 export function setCombatStartStateForTools(state = null) {
   const badExtraHand = state?.extraHand != null
     && (!Array.isArray(state.extraHand) || state.extraHand.some((id) => typeof id !== 'string'));
+  const badNextDraw = state?.nextDraw != null
+    && (!Array.isArray(state.nextDraw) || state.nextDraw.some((id) => typeof id !== 'string'));
   const badEnemy = state?.enemy != null && (typeof state.enemy !== 'object'
     || (state.enemy.hp != null && !Number.isFinite(state.enemy.hp))
     || (state.enemy.statuses != null && (!Array.isArray(state.enemy.statuses)
       || state.enemy.statuses.some((row) => typeof row?.id !== 'string' || !Number.isFinite(row?.stacks)))));
   if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
-      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badEnemy)) {
-    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], enemy?: { hp?, statuses? } }');
+      || !Number.isFinite(state.hp) || !Number.isFinite(state.block) || badExtraHand || badNextDraw || badEnemy)) {
+    throw new Error('Tool combat start state requires { name, hp, block, extraHand?: string[], nextDraw?: string[], enemy?: { hp?, statuses? } }');
   }
   combatStartStateForTools = state ? structuredClone(state) : null;
 }
@@ -322,6 +324,7 @@ export function createSession({ registries, seedString, endless = false, restore
 
   // ---- combat (live shared fight via coopCombat) ---------------------------
   let live = null; // { combat, pool } — the running shared fight
+  let combatReceiptSeq = 0; // stable wire identity; resync reuses session.scene
 
   function memberAsPlayer(m) {
     return {
@@ -373,6 +376,13 @@ export function createSession({ registries, seedString, endless = false, restore
           upgraded: false,
         })));
       }
+      if (combatStartStateForTools.nextDraw) {
+        player.piles.draw.unshift(...combatStartStateForTools.nextDraw.map((cardId, index) => ({
+          instanceId: `tool-next-${index + 1}`,
+          cardId,
+          upgraded: false,
+        })));
+      }
       const enemy = combat.enemies.find((entry) => entry.alive);
       if (enemy && combatStartStateForTools.enemy) {
         if (Number.isFinite(combatStartStateForTools.enemy.hp)) enemy.hp = combatStartStateForTools.enemy.hp;
@@ -405,6 +415,7 @@ export function createSession({ registries, seedString, endless = false, restore
     live.evCursor = c.eventLog.length;
     return {
       kind: 'combat',
+      receiptSeq: ++combatReceiptSeq,
       events,
       pool: live.pool,
       phase: c.phase,
