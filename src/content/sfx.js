@@ -34,10 +34,13 @@
 // answered, so bleed, frost AND insanity all played the fallback while the
 // settings screen named sounds the build did not make.
 
-// A real build can point these at files; missing/failed loads fall back to the
-// synth recipes below. (Moved here from music.js so all SFX content has one home.)
+// A recipe id automatically tries assets/sfx/<encoded-id>.ogg before using its
+// synth recipe. Add a row here only to override that path or format; both the
+// convention and overrides pass through assetUrl() so standalone builds can
+// inline them. Missing or undecodable files fall back to the recipes below.
+// (Moved here from music.js so all SFX content has one home.)
 export const SFX_MANIFEST = {
-  // cardPlay: 'assets/sfx/card.ogg',  ← example: drop a file here to override
+  // cardPlay: 'assets/sfx/card.wav',  ← optional path/format override
 };
 
 // Family rows are an explicit content characteristic. Runtime resolution and

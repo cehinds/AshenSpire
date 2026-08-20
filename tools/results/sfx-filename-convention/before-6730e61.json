@@ -1,0 +1,154 @@
+{
+  "head": "6730e61b67c2dd80ad7685e57d1f78b4e5641017",
+  "artifact": null,
+  "report": {
+    "rows": [
+      {
+        "name": "convention-success",
+        "id": "cardPlay",
+        "convention": "assets/sfx/cardPlay.ogg",
+        "manifest": null,
+        "inlined": null,
+        "fetches": [],
+        "decodes": 0,
+        "starts": 0,
+        "synthPeaks": [
+          0.35
+        ],
+        "logs": []
+      },
+      {
+        "name": "missing-falls-back",
+        "id": "hit",
+        "convention": "assets/sfx/hit.ogg",
+        "manifest": null,
+        "inlined": null,
+        "fetches": [],
+        "decodes": 0,
+        "starts": 0,
+        "synthPeaks": [
+          0.5,
+          0.35
+        ],
+        "logs": []
+      },
+      {
+        "name": "decode-falls-back-and-names-url",
+        "id": "block",
+        "convention": "assets/sfx/block.ogg",
+        "manifest": null,
+        "inlined": null,
+        "fetches": [],
+        "decodes": 0,
+        "starts": 0,
+        "synthPeaks": [
+          0.4,
+          0.2
+        ],
+        "logs": []
+      },
+      {
+        "name": "cached-fetch-and-decode",
+        "id": "heal",
+        "convention": "assets/sfx/heal.ogg",
+        "manifest": null,
+        "inlined": null,
+        "fetches": [],
+        "decodes": 0,
+        "starts": 0,
+        "synthPeaks": [
+          0.35,
+          0.2,
+          0.35,
+          0.2
+        ],
+        "logs": []
+      },
+      {
+        "name": "manifest-override",
+        "id": "nodeTravel",
+        "convention": "assets/sfx/nodeTravel.ogg",
+        "manifest": "custom/sfx/travel.wav",
+        "inlined": null,
+        "fetches": [
+          "custom/sfx/travel.wav"
+        ],
+        "decodes": 1,
+        "starts": 1,
+        "synthPeaks": [],
+        "logs": []
+      },
+      {
+        "name": "standalone-inlined-asset",
+        "id": "relic",
+        "convention": "assets/sfx/relic.ogg",
+        "manifest": null,
+        "inlined": "data:audio/ogg;base64,T2dnUw==",
+        "fetches": [],
+        "decodes": 0,
+        "starts": 0,
+        "synthPeaks": [
+          0.3
+        ],
+        "logs": []
+      }
+    ]
+  },
+  "checks": [
+    {
+      "ok": false,
+      "label": "convention tries assets/sfx/<encoded-id>.ogg",
+      "detail": "[]"
+    },
+    {
+      "ok": false,
+      "label": "successful sample decodes/starts once and suppresses synth",
+      "detail": "{\"name\":\"convention-success\",\"id\":\"cardPlay\",\"convention\":\"assets/sfx/cardPlay.ogg\",\"manifest\":null,\"inlined\":null,\"fetches\":[],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35],\"logs\":[]}"
+    },
+    {
+      "ok": false,
+      "label": "missing sample is attempted through the convention",
+      "detail": "[]"
+    },
+    {
+      "ok": true,
+      "label": "missing sample falls back to the existing hit synth",
+      "detail": "[0.5,0.35]"
+    },
+    {
+      "ok": false,
+      "label": "decode failure falls back to the existing block synth",
+      "detail": "[0.4,0.2]"
+    },
+    {
+      "ok": false,
+      "label": "decode failure diagnostic names the exact resolved URL",
+      "detail": "[]"
+    },
+    {
+      "ok": false,
+      "label": "two plays share one cached fetch/decode and start twice",
+      "detail": "{\"name\":\"cached-fetch-and-decode\",\"id\":\"heal\",\"convention\":\"assets/sfx/heal.ogg\",\"manifest\":null,\"inlined\":null,\"fetches\":[],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35,0.2,0.35,0.2],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "manifest row remains an explicit override",
+      "detail": "{\"name\":\"manifest-override\",\"id\":\"nodeTravel\",\"convention\":\"assets/sfx/nodeTravel.ogg\",\"manifest\":\"custom/sfx/travel.wav\",\"inlined\":null,\"fetches\":[\"custom/sfx/travel.wav\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]}"
+    },
+    {
+      "ok": false,
+      "label": "assetUrl selects the standalone inlined data URI",
+      "detail": "[]"
+    }
+  ],
+  "failures": [
+    "convention tries assets/sfx/<encoded-id>.ogg",
+    "successful sample decodes/starts once and suppresses synth",
+    "missing sample is attempted through the convention",
+    "decode failure falls back to the existing block synth",
+    "decode failure diagnostic names the exact resolved URL",
+    "two plays share one cached fetch/decode and start twice",
+    "assetUrl selects the standalone inlined data URI"
+  ],
+  "plantFailures": 0
+}
