@@ -22,7 +22,21 @@ const SELF = 'tools/urlpath-conversions.mjs';
 const KNOWN_BAD = 'tests/fixtures/urlpath/';
 
 const slash = (path) => path.split(/[\\/]/).join('/');
-const regexMayStartAfter = (char) => !char || /[([{,:;=!?&|+*%^~<>-]/.test(char);
+const REGEX_PREFIX_WORDS = new Set([
+  'await', 'case', 'delete', 'do', 'else', 'in', 'instanceof', 'new',
+  'of', 'return', 'throw', 'typeof', 'void', 'yield',
+]);
+
+function wordBefore(source, index) {
+  let end = index;
+  while (end > 0 && /\s/.test(source[end - 1])) end--;
+  let start = end;
+  while (start > 0 && /[A-Za-z0-9_$]/.test(source[start - 1])) start--;
+  return source.slice(start, end);
+}
+
+const expressionMayStartAt = (source, index, previous) =>
+  !previous || /[([{,:;=!?&|+*%^~<>-]/.test(previous) || REGEX_PREFIX_WORDS.has(wordBefore(source, index));
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -71,7 +85,7 @@ function stripComments(source) {
     if (char === '/' && next === '/') { out += '  '; i++; mode = 'line'; continue; }
     if (char === '/' && next === '*') { out += '  '; i++; mode = 'block'; continue; }
     if (char === '"' || char === "'" || char === '`') { quote = char; mode = 'string'; out += char; continue; }
-    if (char === '/' && regexMayStartAfter(previous)) { mode = 'regex'; regexClass = false; out += char; continue; }
+    if (char === '/' && expressionMayStartAt(source, i, previous)) { mode = 'regex'; regexClass = false; out += char; continue; }
     out += char;
     if (!/\s/.test(char)) previous = char;
   }
@@ -118,7 +132,7 @@ function maskStructuralLiterals(source) {
       out += ' ';
       continue;
     }
-    if (char === '/' && regexMayStartAfter(previous)) {
+    if (char === '/' && expressionMayStartAt(source, i, previous)) {
       regex = true;
       regexClass = false;
       out += ' ';
@@ -128,6 +142,23 @@ function maskStructuralLiterals(source) {
     if (!/\s/.test(char)) previous = char;
   }
   return out;
+}
+
+function transparentGroupDepth(source, start) {
+  let depth = 0;
+  let cursor = start;
+  while (cursor > 0) {
+    let opening = cursor - 1;
+    while (opening >= 0 && /\s/.test(source[opening])) opening--;
+    if (source[opening] !== '(') break;
+    let previousIndex = opening - 1;
+    while (previousIndex >= 0 && /\s/.test(source[previousIndex])) previousIndex--;
+    const previous = previousIndex >= 0 ? source[previousIndex] : '';
+    if (!expressionMayStartAt(source, opening, previous)) break;
+    depth++;
+    cursor = opening;
+  }
+  return depth;
 }
 
 function findUrlPathnameMisuses(code) {
@@ -145,7 +176,16 @@ function findUrlPathnameMisuses(code) {
     if (closing < 0) continue;
     const args = structural.slice(opening + 1, closing);
     if (!/\bimport\s*\.\s*meta\s*\.\s*url\b/.test(args)) continue;
-    if (!/^\s*\.\s*pathname\b/.test(structural.slice(closing + 1))) continue;
+    let access = closing + 1;
+    const groups = transparentGroupDepth(structural, match.index);
+    let closedGroups = 0;
+    while (closedGroups < groups) {
+      while (/\s/.test(structural[access])) access++;
+      if (structural[access] !== ')') break;
+      access++;
+      closedGroups++;
+    }
+    if (closedGroups !== groups || !/^\s*(?:\?\s*)?\.\s*pathname\b/.test(structural.slice(access))) continue;
     findings.push({ index: match.index });
   }
   return findings;
@@ -211,10 +251,12 @@ function selftest() {
   say(fixtureScan.findings.length === 2, 'fixture corpus has exactly the two required findings', `${fixtureScan.findings.length}/2`);
   say(fixtureKinds.get('handrolled_url.mjs') === 'hand-rolled file URL', 'handrolled_url fixture is caught by the real scanner');
   say(fixtureKinds.get('handrolled_path.mjs') === 'URL pathname used as a filesystem path', 'handrolled_path fixture is caught by the real scanner');
-  say(/new\s+URL\s*\(\r?\n/.test(pathFixtureSource) && /\r?\n\)\.pathname/.test(pathFixtureSource),
+  say(/new\s+URL\s*\(\r?\n/.test(pathFixtureSource) && /\r?\n\)\??\.pathname/.test(pathFixtureSource),
     'handrolled_path fixture keeps the discriminating multiline conversion shape');
   say(/replace\s*\(\s*\/\\\)\/g/.test(pathFixtureSource),
     'handrolled_path fixture keeps a regex parenthesis inside the balanced call');
+  say(/return\s+\/\\\)\/\.source/.test(pathFixtureSource),
+    'handrolled_path fixture keeps a regex parenthesis after a return keyword');
   const retiredStatementMatcher = /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g;
   say(!retiredStatementMatcher.test(pathFixtureSource) && findUrlPathnameMisuses(stripComments(pathFixtureSource)).length === 1,
     'semicolon-in-string fixture defeats the retired matcher and is caught structurally');
@@ -227,6 +269,14 @@ function selftest() {
   say(fileUrlCases.every(([, source]) => findHandRolledFileUrls(source).length === 1),
     'file URL scanner catches two-or-more-slash interpolation and concatenation',
     fileUrlCases.map(([label, source]) => `${label}=${findHandRolledFileUrls(source).length}`).join(', '));
+  const pathnameAccessCases = [
+    ['grouped pathname plant', "(new URL('./data', import.meta.url)).pathname", 1],
+    ['optional pathname plant', "new URL('./data', import.meta.url)?.pathname", 1],
+    ['outer-call pathname negative control', "wrap(new URL('./data', import.meta.url)).pathname", 0],
+  ];
+  say(pathnameAccessCases.every(([, source, expected]) => findUrlPathnameMisuses(stripComments(source)).length === expected),
+    'pathname scanner covers transparent grouping and optional chaining without claiming an outer call result',
+    pathnameAccessCases.map(([label, source]) => `${label}=${findUrlPathnameMisuses(stripComments(source)).length}`).join(', '));
 
   const temp = mkdtempSync(join(tmpdir(), 'urlpath working dir '));
   const spaced = join(temp, 'repo with spaces');
