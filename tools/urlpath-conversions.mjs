@@ -342,7 +342,7 @@ function declarationKindAt(tokens, assignment) {
     if (value === stack.at(-1)) { stack.pop(); continue; }
     if (stack.length > 0) continue;
     if (['const', 'let', 'var'].includes(value)) return value;
-    if ([';', '{', '}', '('].includes(value)) return null;
+    if ([';', '{', '}', '(', '=>'].includes(value)) return null;
   }
   return null;
 }
@@ -393,30 +393,46 @@ function enclosingForOpen(tokens, index) {
 }
 
 function loopAliasRanges(tokens, declarations) {
-  const byOpen = new Map();
+  const ranges = [];
   const bindingToRange = new Map();
-  for (const [index, kind] of declarations) {
-    if (!['const', 'let'].includes(kind)) continue;
-    const open = enclosingForOpen(tokens, index);
-    if (open < 0) continue;
-    if (!byOpen.has(open)) {
-      const close = findClose(tokens, open);
-      let end = close + 1;
-      if (tokens[end]?.value === '{') {
-        const bodyClose = findClose(tokens, end, '{', '}');
-        end = bodyClose < 0 ? tokens.length : bodyClose + 1;
-      } else {
-        while (end < tokens.length && tokens[end].value !== ';') end++;
-        if (end < tokens.length) end++;
-      }
-      byOpen.set(open, { start: open + 1, end, aliases: new Map(), bindingIndexes: new Set() });
+  for (let keyword = 0; keyword < tokens.length; keyword++) {
+    if (tokens[keyword].value !== 'for') continue;
+    const open = tokens[keyword + 1]?.value === 'await' ? keyword + 2 : keyword + 1;
+    if (tokens[open]?.value !== '(') continue;
+    const close = findClose(tokens, open);
+    if (close < 0) continue;
+    const operator = topLevelIndexes(tokens, open + 1, close, 'of')[0] ??
+      topLevelIndexes(tokens, open + 1, close, 'in')[0] ?? -1;
+    let end = close + 1;
+    if (tokens[end]?.value === '{') {
+      const bodyClose = findClose(tokens, end, '{', '}');
+      end = bodyClose < 0 ? tokens.length : bodyClose + 1;
+    } else {
+      while (end < tokens.length && tokens[end].value !== ';') end++;
+      if (end < tokens.length) end++;
     }
-    const range = byOpen.get(open);
-    range.aliases.set(tokens[index].value, false);
-    range.bindingIndexes.add(index);
-    bindingToRange.set(index, range);
+    const range = { start: open + 1, end, close, operator, aliases: new Map(), bindingIndexes: new Set(), assignmentTarget: false };
+    if (operator >= 0) {
+      const declaration = ['const', 'let', 'var'].includes(tokens[open + 1]?.value) ? tokens[open + 1].value : null;
+      const bindingStart = open + 1 + (declaration ? 1 : 0);
+      const binding = bindingIndexes(tokens, bindingStart, operator);
+      for (const index of binding.indexes) {
+        range.aliases.set(tokens[index].value, false);
+        range.bindingIndexes.add(index);
+        if (declaration && declarations.has(index)) bindingToRange.set(index, range);
+      }
+      range.assignmentTarget = !declaration;
+    } else {
+      for (const [index, kind] of declarations) {
+        if (!['const', 'let'].includes(kind) || enclosingForOpen(tokens, index) !== open) continue;
+        range.aliases.set(tokens[index].value, false);
+        range.bindingIndexes.add(index);
+        bindingToRange.set(index, range);
+      }
+    }
+    if (range.aliases.size > 0) ranges.push(range);
   }
-  return { ranges: [...byOpen.values()], bindingToRange };
+  return { ranges, bindingToRange };
 }
 
 function declarationSeeds(tokens, parameters, declarations, loopBindings) {
@@ -468,6 +484,7 @@ function conditionalAssignmentAt(tokens, assignment) {
     if (value === stack.at(-1)) { stack.pop(); continue; }
     if (stack.length > 0) continue;
     if (tokens[i].type === 'identifier' && CONDITIONAL_WORDS.has(value)) return true;
+    if (['&&', '||', '??', '?'].includes(value)) return true;
     if ([';', '{', '}'].includes(value)) return false;
   }
   return false;
@@ -651,6 +668,71 @@ function analyzeAssigned(tokens, start, urls, isAlias) {
   return null;
 }
 
+function ternaryJoinAt(tokens, assignment, urls, isAlias) {
+  const findMarker = (from, marker) => {
+    const stack = [];
+    const opening = { ')': '(', ']': '[', '}': '{' };
+    for (let i = from; i >= 0; i--) {
+      const value = tokens[i].value;
+      if (opening[value]) { stack.push(opening[value]); continue; }
+      if (value === stack.at(-1)) { stack.pop(); continue; }
+      if (stack.length > 0) continue;
+      if (value === marker) return i;
+      if ([';', '{', '}'].includes(value)) return -1;
+    }
+    return -1;
+  };
+  const colon = findMarker(assignment - 1, ':');
+  if (colon < 0) return null;
+  const question = findMarker(colon - 1, '?');
+  if (question < 0) return null;
+  const end = expressionEnd(tokens, colon + 1);
+  const branchAssignments = (start, stop) => {
+    const out = [];
+    for (let i = start; i < stop; i++) {
+      if (!ASSIGNMENTS.has(tokens[i].value)) continue;
+      const lhs = tokens[i - 1];
+      if (lhs?.type === 'identifier' && !['.', '?.', ']'].includes(tokens[i - 2]?.value)) out.push(i);
+    }
+    return out;
+  };
+  const thenAssignments = branchAssignments(question + 1, colon);
+  const elseAssignments = branchAssignments(colon + 1, end);
+  if (thenAssignments.length !== 1 || elseAssignments.length !== 1 || elseAssignments[0] !== assignment) return null;
+  const thenName = tokens[thenAssignments[0] - 1].value;
+  const elseName = tokens[assignment - 1].value;
+  if (thenName !== elseName) return null;
+  const thenValue = analyzeAssigned(tokens, thenAssignments[0] + 1, urls, isAlias);
+  const elseValue = analyzeAssigned(tokens, assignment + 1, urls, isAlias);
+  return {
+    value: Boolean((thenValue && thenValue.kind !== 'ambiguous') || (elseValue && elseValue.kind !== 'ambiguous')),
+    ambiguity: thenValue?.kind === 'ambiguous' ? thenValue.index : elseValue?.kind === 'ambiguous' ? elseValue.index : -1,
+    conditional: conditionalAssignmentAt(tokens, question),
+  };
+}
+
+function analyzeLoopIterable(tokens, start, end, urls, isAlias) {
+  while (tokens[start]?.value === '(' && findClose(tokens, start) === end - 1) { start++; end--; }
+  if (tokens[start]?.value !== '[' || findClose(tokens, start, '[', ']') !== end - 1) {
+    return unwrapAssigned(tokens, start, end, urls, isAlias);
+  }
+  const separators = [start, ...topLevelIndexes(tokens, start + 1, end - 1, ','), end - 1];
+  for (let entry = 0; entry + 1 < separators.length; entry++) {
+    const elementStart = separators[entry] + 1;
+    const elementEnd = separators[entry + 1];
+    const exact = unwrapAssigned(tokens, elementStart, elementEnd, urls, isAlias);
+    if (exact) return exact;
+    for (const url of urls.values()) {
+      if (url.start < elementStart || url.close >= elementEnd) continue;
+      if (!accessAfterExpression(tokens, url.start, url.close) &&
+          !containingPlatformCall(tokens, url.start)) {
+        return { kind: 'ambiguous', index: url.start };
+      }
+    }
+  }
+  return null;
+}
+
 function findPathnameMisuses(tokens, errors) {
   const urls = findUrlExpressions(tokens, errors);
   const findings = [];
@@ -661,13 +743,21 @@ function findPathnameMisuses(tokens, errors) {
   const seeds = declarationSeeds(tokens, parameters, declarations, loops.bindingToRange);
   const scopes = [{ aliases: new Map(seeds.get(-1)), functionScope: true, conditional: false }];
   const scopeBraces = [];
+  const loopIterableAliases = new Set();
+  const assignmentRhsAliases = new Set();
   let aliasSteps = 0;
-  const isAlias = (name, index = -1) => {
+  const isAlias = (name, index = -1, excludedLoop = null) => {
     if (parameters.expressionRanges.some((range) => index >= range.start && index < range.end && range.names.has(name))) return false;
-    const loop = loops.ranges.filter((range) => index >= range.start && index < range.end && range.aliases.has(name)).at(-1);
+    const loop = loops.ranges.filter((range) => range !== excludedLoop && index >= range.start && index < range.end && range.aliases.has(name)).at(-1);
     if (loop) return loop.aliases.get(name);
     for (let i = scopes.length - 1; i >= 0; i--) if (scopes[i].aliases.has(name)) return scopes[i].aliases.get(name);
     return false;
+  };
+  const mergeOuterAlias = (name, value) => {
+    for (let i = scopes.length - 1; i >= 0; i--) {
+      if (scopes[i].aliases.has(name)) { scopes[i].aliases.set(name, scopes[i].aliases.get(name) || value); return; }
+    }
+    scopes.at(-1).aliases.set(name, value);
   };
   const setAlias = (name, value, declaration = null, conditionalWrite = false, index = -1) => {
     const loop = loops.ranges.filter((range) => index >= range.start && index < range.end && range.aliases.has(name)).at(-1);
@@ -722,6 +812,20 @@ function findPathnameMisuses(tokens, errors) {
       continue;
     }
 
+    const loop = loops.ranges.find((range) => range.operator === i);
+    if (loop && ['of', 'in'].includes(token.value)) {
+      const assigned = token.value === 'of' ? analyzeLoopIterable(tokens, i + 1, loop.close, urls, isAlias) : null;
+      if (assigned?.kind === 'ambiguous') add(assigned.index, 'ambiguous module URL alias flow');
+      if (assigned?.kind === 'alias') loopIterableAliases.add(assigned.index);
+      const sourceMayBeUrl = Boolean(assigned && assigned.kind !== 'ambiguous');
+      for (const name of loop.aliases.keys()) {
+        const value = loop.assignmentTarget ? isAlias(name, i, loop) || sourceMayBeUrl : sourceMayBeUrl;
+        loop.aliases.set(name, value);
+        if (loop.assignmentTarget) mergeOuterAlias(name, value);
+      }
+      continue;
+    }
+
     if (ASSIGNMENTS.has(token.value)) {
       if (parameters.assignmentIndexes.has(i)) continue;
       const lhs = tokens[i - 1];
@@ -729,20 +833,30 @@ function findPathnameMisuses(tokens, errors) {
       const declaration = declarations.get(i - 1) ||
         destructure.bindingIndexes.map((index) => declarations.get(index)).find(Boolean) ||
         declarationKindAt(tokens, i);
-      const conditionalWrite = !declaration && conditionalAssignmentAt(tokens, i);
-      const assigned = token.value === '=' ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
+      const logicalAssignment = ['&&=', '||=', '??='].includes(token.value);
+      const expressionFunctionWrite = parameters.expressionRanges.some((range) => i >= range.start && i < range.end);
+      const assigned = token.value === '=' || logicalAssignment ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
+      const ternaryJoin = token.value === '=' ? ternaryJoinAt(tokens, i, urls, isAlias) : null;
+      const conditionalWrite = ternaryJoin?.conditional ??
+        (logicalAssignment || expressionFunctionWrite || (!declaration && conditionalAssignmentAt(tokens, i)));
+      const bareLhs = lhs?.type === 'identifier' && !['.', '?.', ']'].includes(tokens[i - 2]?.value);
+      if (assigned?.kind === 'alias' && bareLhs) assignmentRhsAliases.add(assigned.index);
       if (destructure.pathname && assigned) add(assigned.index);
       else if ((destructure.dynamic && assigned) || assigned?.kind === 'ambiguous') add(assigned.index, 'ambiguous module URL alias flow');
+      if (ternaryJoin?.ambiguity >= 0) add(ternaryJoin.ambiguity, 'ambiguous module URL alias flow');
       for (let binding = 0; binding < destructure.bindings.length; binding++) {
         setAlias(destructure.bindings[binding], false, declaration, conditionalWrite, destructure.bindingIndexes[binding]);
       }
-      if (lhs?.type === 'identifier') {
-        setAlias(lhs.value, Boolean(assigned && assigned.kind !== 'ambiguous'), declaration, conditionalWrite, i - 1);
+      if (bareLhs) {
+        const value = ternaryJoin ? ternaryJoin.value : Boolean(assigned && assigned.kind !== 'ambiguous');
+        setAlias(lhs.value, value, declaration, conditionalWrite, i - 1);
       }
       continue;
     }
 
     if (token.type !== 'identifier') continue;
+    if (loopIterableAliases.has(i) || assignmentRhsAliases.has(i) ||
+        loops.ranges.some((range) => range.bindingIndexes.has(i))) continue;
     if (['function', 'class'].includes(tokens[i - 1]?.value)) {
       setAlias(token.value, false, 'lexical');
       continue;
@@ -757,7 +871,7 @@ function findPathnameMisuses(tokens, errors) {
     }
     const previous = tokens[i - 1];
     const next = tokens[i + 1];
-    const isAssignmentRhs = previous?.value === '=' && tokens[i - 2]?.type === 'identifier' &&
+    const isAssignmentRhs = ASSIGNMENTS.has(previous?.value) && tokens[i - 2]?.type === 'identifier' &&
       !['.', '?.', ']'].includes(tokens[i - 3]?.value);
     const isStaticNonPathMember = next?.value === '.' && tokens[i + 2]?.type === 'identifier';
     const isPlatformConsumer = isPlatformConsumerAt(tokens, i);
@@ -1016,6 +1130,30 @@ function selftest() {
     ['for lexical binding does not clear outer alias', "const u=new URL('./x',import.meta.url);for(const u of items){u.origin}u.pathname", 1, 0, 0],
     ['for lexical binding shadows outer alias inside loop', "const u=new URL('./x',import.meta.url);for(const u of items){u.pathname}fileURLToPath(u)", 0, 0, 0],
     ['for lexical URL alias is caught inside loop', "for(let u=new URL('./x',import.meta.url);ok;step()){u.pathname}", 1, 0, 0],
+    ['logical-and conditional clear preserves possible alias', "let u=new URL('./x',import.meta.url);ok&&(u=platformValue);u.pathname", 1, 0, 0],
+    ['logical-or conditional clear preserves possible alias', "let u=new URL('./x',import.meta.url);ok||(u=platformValue);u.pathname", 1, 0, 0],
+    ['ternary then-branch clear preserves possible alias', "let u=new URL('./x',import.meta.url);ok?(u=platformValue):noop;u.pathname", 1, 0, 0],
+    ['ternary else-branch clear preserves possible alias', "let u=new URL('./x',import.meta.url);ok?noop:(u=platformValue);u.pathname", 1, 0, 0],
+    ['expression arrow clear preserves possible outer alias', "let u=new URL('./x',import.meta.url);const clear=()=>u=platformValue;u.pathname", 1, 0, 0],
+    ['expression arrow URL write is caught and its initializer fails closed', "let u;const set=()=>u=new URL('./x',import.meta.url);u.pathname", 1, 0, 1],
+    ['logical-and conditional URL write introduces possible alias', "let u;ok&&(u=new URL('./x',import.meta.url));u.pathname", 1, 0, 0],
+    ['ternary conditional URL write introduces possible alias', "let u;ok?(u=new URL('./x',import.meta.url)):noop;u.pathname", 1, 0, 0],
+    ['grouped unconditional clear stays clean', "let u=new URL('./x',import.meta.url);(u=platformValue);u.pathname", 0, 0, 0],
+    ['unconditional logical-expression assignment clears alias', "let u=new URL('./x',import.meta.url);u=ok&&platformValue;u.pathname", 0, 0, 0],
+    ['nullish assignment introduces URL alias', "let u;u??=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['or assignment introduces URL alias', "let u;u||=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['and assignment may introduce URL alias', "let u;u&&=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
+    ['logical assignment cannot clear tracked URL alias', "let u=new URL('./x',import.meta.url);u??=platformValue;u.pathname", 1, 0, 0],
+    ['logical assignment accepts tracked URL alias RHS', "const base=new URL('./x',import.meta.url);let u;u||=base;u.pathname", 1, 0, 0],
+    ['non-URL logical assignment remains clean', "let u;u??=platformValue;u?.pathname", 0, 0, 0],
+    ['platform path logical assignment remains clean', "let u;u??=fileURLToPath(new URL('./x',import.meta.url));u?.pathname", 0, 0, 0],
+    ['for-of direct URL array flows into binding', "for(const u of [new URL('./x',import.meta.url)]){u.pathname}", 1, 0, 0],
+    ['for-of tracked URL alias flows into binding', "const base=new URL('./x',import.meta.url);for(const u of [base]){u.pathname}", 1, 0, 0],
+    ['for-of platform path array stays clean', "for(const u of [fileURLToPath(new URL('./x',import.meta.url))]){u.pathname}", 0, 0, 0],
+    ['for-of tracked platform path alias stays clean', "const base=fileURLToPath(new URL('./x',import.meta.url));for(const u of [base]){u.pathname}", 0, 0, 0],
+    ['for-of conditional URL element fails closed', "for(const u of [ok?new URL('./x',import.meta.url):platformValue]){u.pathname}", 0, 0, 1],
+    ['for-of nested destructure fails closed', "for(const [u] of [[new URL('./x',import.meta.url)]]){u.pathname}", 0, 0, 1],
+    ['for-in binds keys rather than URL values', "for(const u in {x:new URL('./x',import.meta.url)}){u.pathname}", 0, 0, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
@@ -1031,6 +1169,73 @@ function selftest() {
   const blockerFailures = blockerResults.filter((result) => !result.ok);
   say(blockerFailures.length === 0, 'exact-head blocker matrix passes through the shared LF/CRLF scanner',
     blockerFailures.length ? blockerFailures.map((result) => `${result.eol}:${result.label}=path${result.actualPath}/file${result.actualFile}/amb${result.actualAmbiguous}/other${result.other}`).join(', ') : `${blockerResults.length}/${blockerResults.length}`);
+
+  const reviewU = "new URL('./x',import.meta.url)";
+  const reviewP = "'./x'";
+  const reviewCases = [
+    ['E1', `let u=${reviewU};ok&&(u=${reviewP});u.pathname`, 1],
+    ['E2', `let u=${reviewU};ok||(u=${reviewP});u.pathname`, 1],
+    ['E3', `let u=${reviewU};ok?(u=${reviewP}):void 0;u.pathname`, 1],
+    ['E4', `let u=${reviewP};ok&&(u=${reviewU});u.pathname`, 1],
+    ['E5', `let u=${reviewP};ok?(u=${reviewU}):(u=${reviewP});u.pathname`, 1],
+    ['E6', `let u=${reviewU};ok?(u=${reviewP}):(u='./y');u.pathname`, 0],
+    ['E7', `let u=${reviewU};u=${reviewP};u.pathname`, 0],
+    ['E8', `let u=${reviewU};ok&&(u=${reviewP});u='./y';u.pathname`, 0],
+    ['E9', `let u=${reviewU};{let u=${reviewP};ok&&(u='./y');u.pathname}u.pathname`, 1],
+    ['E10', `let u=${reviewU};[1].map(u=>ok&&(u=${reviewP}));u.pathname`, 1],
+    ['E11', `let a=${reviewU},b=a;ok&&(a=${reviewP});b.pathname`, 1],
+    ['E12', 'let a,b;a=b;b=a;a.pathname', 0],
+    ['E13', `let u=${reviewU};ok&&(u=${reviewP});fileURLToPath(u)`, 0],
+    ['E14', `let u=${reviewU};(ok&&(u=${reviewP}),u.pathname)`, 1],
+    ['E15', `let u=${reviewU};ok&&(inner?(u=${reviewP}):(u='./y'));u.pathname`, 1],
+    ['L1', `let u;u??=${reviewU};u.pathname`, 1],
+    ['L2', `let u;u||=${reviewU};u.pathname`, 1],
+    ['L3', `let v=${reviewU},u;u??=v;u.pathname`, 1],
+    ['L4', `let v=${reviewU},u;u||=(v);u.pathname`, 1],
+    ['L5', `let u;u??=${reviewP};u.pathname`, 0],
+    ['L6', `let u;u||=${reviewP};u.pathname`, 0],
+    ['L7', `let u;u??=${reviewU};u=${reviewP};u.pathname`, 0],
+    ['L8', `let u;u??=${reviewU};const v=u;u=${reviewP};v.pathname`, 1],
+    ['L9', `let u;u??=${reviewU};fileURLToPath(u)`, 0],
+    ['L10', "let u;u??=new URL('./x',import.meta.url).pathname", 1],
+    ['L11', `let a=${reviewU},b;b??=a;a??=b;b.pathname`, 1],
+    ['L12', 'let a,b;a??=b;b??=a;a.pathname', 0],
+    ['L13', `let u=${reviewP};{let u;u||=${reviewU};u.pathname}u.pathname`, 1],
+    ['L14', `let u;u??=(ok?${reviewU}:${reviewP});u.pathname`, 1],
+    ['L15', `let u;u||=fileURLToPath(${reviewU});u.pathname`, 0],
+    ['F1', `for(const u of [${reviewU}]){u.pathname}`, 1],
+    ['F2', `const xs=[${reviewU}];for(const u of xs){u.pathname}`, 1],
+    ['F3', `for(const p of [fileURLToPath(${reviewU})]){p.pathname}`, 0],
+    ['F4', `for(const p of [${reviewP}]){p.pathname}`, 0],
+    ['F5', `for(const [u] of [[${reviewU}]]){u.pathname}`, 1],
+    ['F6', `for(const {u} of [{u:${reviewU}}]){u.pathname}`, 1],
+    ['F7', `let u=${reviewU};for(const u of [${reviewP}]){u.pathname}u.pathname`, 1],
+    ['F8', `let u=${reviewU};for(u of [${reviewP}]){}u.pathname`, 1],
+    ['F9', `let u=${reviewP};for(u of [${reviewU}]){}u.pathname`, 1],
+    ['F10', `for(let u of [${reviewU}]){u=${reviewP};u.pathname}`, 0],
+    ['F11', `for(let u of [${reviewU}]){u.pathname;u=${reviewP}}`, 1],
+    ['F12', `for(let u of [${reviewU}]){if(ok)u=${reviewP};u.pathname}`, 1],
+    ['F13', `for(const u of [${reviewU}]){fileURLToPath(u)}`, 0],
+    ['F14', 'for(const k in {a:1}){k.pathname}', 0],
+    ['F15', `let u=${reviewU};for(const u in {a:1}){u.pathname}fileURLToPath(u)`, 0],
+    ['F16', `let u=${reviewU};for(u in obj){}u.pathname`, 1],
+    ['F17', `let u=${reviewP};for(u in obj){}u.pathname`, 0],
+    ['F18', `for(const k in {[${reviewU}.pathname]:1}){k.pathname}`, 1],
+    ['F19', 'let a;a=a;for(const u of [a]){u.pathname}', 0],
+    ['F20', `let a=${reviewU},b=a;a=b;for(const u of [b]){u.pathname}`, 1],
+    ['F21', `async function f(){for await(const u of [${reviewU}]){u.pathname}}`, 1],
+    ['F21-control', `async function f(){for await(const u of [${reviewU}]){fileURLToPath(u)}}`, 0],
+  ];
+  const reviewResults = [];
+  for (const eol of ['\n', '\r\n']) {
+    for (const [label, source, expected] of reviewCases) {
+      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      reviewResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', expected, actual: findings.length });
+    }
+  }
+  const reviewFailures = reviewResults.filter((result) => result.actual !== result.expected);
+  say(reviewFailures.length === 0, 'review P2 control-flow matrix reports each unsafe source site once in LF and CRLF',
+    reviewFailures.length ? reviewFailures.map((result) => `${result.eol}:${result.label}=${result.actual}/${result.expected}`).join(', ') : `${reviewResults.length}/${reviewResults.length}`);
 
   const lexicalAmbiguities = [
     "const x='unterminated",
