@@ -1,5 +1,51 @@
 {
-  "head": "76523d123733c460918e885fc62d2db0d583b195",
+  "sourceBasis": {
+    "schema": "ashen-sfx-tested-source-v2",
+    "normalization": "UTF-8 with CRLF/CR normalized to LF",
+    "patch": {
+      "baseRef": "dev",
+      "baseCommit": "69437409499d6f6af1beb2186350436ddb1dce6c",
+      "baseTree": "9644dd6e0dc687456099501e2e1011aaa67ae96d",
+      "binding": "content identities below; published HEAD/tree are verified and printed externally"
+    },
+    "paths": [
+      {
+        "path": "src/content/sfx.js",
+        "lfSha256": "e08c69aba30da0b8eb659c00eb0c41309a6217f7ad63fcf59cf6e6826ddad3cd",
+        "gitBlobOid": "f82fbf4c031dcc5dba8a01caeed1ab389ba377b4"
+      },
+      {
+        "path": "src/ui/assetmap.js",
+        "lfSha256": "b7fccdc5429bafdec4ad05aa8831417462fcb8052bebff6de1dc62f333a7c3a4",
+        "gitBlobOid": "022f64d32eb1983b8ef82aac5cd37a237ef7e353"
+      },
+      {
+        "path": "src/ui/audio.js",
+        "lfSha256": "16733e6c0b704d9d9cb3ebc3298c0938f6ed6ebbb79861082a69a39e26323bc3",
+        "gitBlobOid": "ca17c356bb6f518a778bb3f5d5da3809bdf7c797"
+      },
+      {
+        "path": "tools/bundle.mjs",
+        "lfSha256": "c58abef2aee42332cf2ef31d44aebf99274e36dfea3bf91f6de87cb6fcc865fc",
+        "gitBlobOid": "6509a90ea49e9a41f2564cd20b7edd633328dfb8"
+      },
+      {
+        "path": "tools/sfx-filename-convention.mjs",
+        "lfSha256": "c171d2df16efc737436e1450e266166259e2261ed1d127300ef9742acb557b91",
+        "gitBlobOid": "11047d21b3c64858586bfb0a89f4259ebafdf3fd"
+      },
+      {
+        "path": "tools/sfx-gain-probe.mjs",
+        "lfSha256": "01059b276f48ea3f76395096972388820e609582e7ef1c57f0b5f7d17ff4953e",
+        "gitBlobOid": "841201e98303ad1a088f3604d18cac904cc82f1c"
+      },
+      {
+        "path": "tools/webaudio-stub.mjs",
+        "lfSha256": "1237a1441849ef43460a0f095958bf7667a8447b03df9a6f0c9c74cbe49652ea",
+        "gitBlobOid": "3059f2fdde3df30c1ba2147c6ac8c6960ccf3928"
+      }
+    ]
+  },
   "artifact": null,
   "report": {
     "rows": [
@@ -409,7 +455,7 @@
     {
       "ok": true,
       "label": "selected-artifact control carries convention, resolver and fixture",
-      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-JN2WwW\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
+      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-vW9zAi\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
     },
     {
       "ok": true,
@@ -425,6 +471,26 @@
       "ok": true,
       "label": "stale LF-only multiline anchor plant is killed under forced CRLF",
       "detail": "exit 1"
+    },
+    {
+      "ok": true,
+      "label": "canonical source basis is identical for LF and forced-CRLF worktrees",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "forced-CRLF receipt verifier accepts the canonical LF basis",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "stale source-basis plant is killed by the receipt verifier",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "raw worktree-EOL identity plant is killed under forced CRLF",
+      "detail": ""
     }
   ],
   "failures": [],

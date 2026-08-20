@@ -18,6 +18,7 @@ import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +27,153 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const argOf = (flag) => { const at = args.indexOf(flag); return at >= 0 ? args[at + 1] : null; };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+const SOURCE_BASIS_PATHS = [
+  'src/content/sfx.js',
+  'src/ui/assetmap.js',
+  'src/ui/audio.js',
+  'tools/bundle.mjs',
+  'tools/sfx-filename-convention.mjs',
+  'tools/sfx-gain-probe.mjs',
+  'tools/webaudio-stub.mjs',
+];
+const RUNTIME_LABELS = [
+  'convention warming starts at assets/sfx/<encoded-id>.ogg',
+  'stalled fetch cannot delay the triggering procedural cue',
+  'pending fetch is cached while every later trigger stays immediate',
+  'first successful warm keeps synth now and never replays the cue later',
+  'known-good cached sample suppresses synth on a later play',
+  'missing sample keeps both triggering cues immediate',
+  'missing sample caches unavailable and is not fetched twice',
+  'decode failure keeps both triggering cues immediate',
+  'decode failure caches unavailable and is not fetched or decoded twice',
+  'decode failure diagnostic names the exact resolved URL',
+  'manifest row remains an explicit override',
+  'assetUrl warms standalone data URI, then cached sample suppresses synth',
+];
+const RUNTIME_ROWS = [
+  'stalled-fetch-stays-immediate', 'known-good-later-play', 'missing-stays-immediate',
+  'decode-falls-back-and-names-url', 'manifest-override', 'standalone-inlined-asset',
+];
+
+function gitText(cwd, gitArgs) {
+  const run = spawnSync('git', gitArgs, { cwd, encoding: 'utf8' });
+  return run.status === 0 ? run.stdout.trim() : '';
+}
+
+function canonicalBytes(path, rawEol = false) {
+  const raw = readFileSync(path);
+  if (rawEol) return raw;
+  return Buffer.from(raw.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8');
+}
+
+function sourceIdentity(root, path, rawEol = false) {
+  const bytes = canonicalBytes(resolve(root, path), rawEol);
+  return {
+    path,
+    lfSha256: createHash('sha256').update(bytes).digest('hex'),
+    gitBlobOid: createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex'),
+  };
+}
+
+function currentPatchBasis() {
+  const commit = gitText(ROOT, ['merge-base', 'HEAD', 'origin/dev'])
+    || gitText(ROOT, ['rev-parse', 'HEAD^']);
+  return {
+    baseRef: 'dev',
+    baseCommit: commit,
+    baseTree: commit ? gitText(ROOT, ['show', '-s', '--format=%T', commit]) : '',
+    binding: 'content identities below; published HEAD/tree are verified and printed externally',
+  };
+}
+
+function buildSourceBasis(root = ROOT, patch = currentPatchBasis(), rawEol = false) {
+  return {
+    schema: 'ashen-sfx-tested-source-v2',
+    normalization: rawEol ? 'raw-worktree-bytes-PLANT' : 'UTF-8 with CRLF/CR normalized to LF',
+    patch,
+    paths: SOURCE_BASIS_PATHS.map((path) => sourceIdentity(root, path, rawEol)),
+  };
+}
+
+function receiptSemanticErrors(receipt) {
+  const errors = [];
+  if (!receipt.report || !Array.isArray(receipt.report.rows)) errors.push('runtime report is missing');
+  else {
+    const names = receipt.report.rows.map((row) => row.name);
+    for (const name of RUNTIME_ROWS) if (!names.includes(name)) errors.push(`runtime row missing: ${name}`);
+  }
+  if (!Array.isArray(receipt.checks)) errors.push('checks are missing');
+  else {
+    for (const label of RUNTIME_LABELS) {
+      const rows = receipt.checks.filter((row) => row.label === label);
+      if (rows.length !== 1 || rows[0].ok !== true) errors.push(`runtime check is not uniquely green: ${label}`);
+    }
+    if (receipt.checks.some((row) => row.ok !== true)) errors.push('receipt contains a red check');
+  }
+  if (!Array.isArray(receipt.failures) || receipt.failures.length !== 0) errors.push('receipt failures are not empty');
+  if (receipt.plantFailures !== undefined && receipt.plantFailures !== 0) errors.push('plantFailures is not zero');
+  return errors;
+}
+
+function verifyReceiptData(receipt, root = ROOT, rawEol = false) {
+  const errors = receiptSemanticErrors(receipt);
+  const basis = receipt.sourceBasis;
+  if (!basis || basis.schema !== 'ashen-sfx-tested-source-v2') {
+    errors.push('canonical sourceBasis v2 is missing');
+    return errors;
+  }
+  const recorded = new Map((basis.paths || []).map((row) => [row.path, row]));
+  if (recorded.size !== SOURCE_BASIS_PATHS.length) errors.push('sourceBasis path count is wrong');
+  for (const path of SOURCE_BASIS_PATHS) {
+    const want = recorded.get(path);
+    if (!want) { errors.push(`sourceBasis path missing: ${path}`); continue; }
+    const got = sourceIdentity(root, path, rawEol);
+    if (want.lfSha256 !== got.lfSha256) errors.push(`LF SHA256 mismatch: ${path}`);
+    if (want.gitBlobOid !== got.gitBlobOid) errors.push(`Git blob OID mismatch: ${path}`);
+  }
+  return errors;
+}
+
+function publishedGitErrors(receipt) {
+  const errors = [];
+  const patch = receipt.sourceBasis?.patch || {};
+  if (!patch.baseCommit || !patch.baseTree) return ['receipt patch basis is incomplete'];
+  const actualBaseTree = gitText(ROOT, ['show', '-s', '--format=%T', patch.baseCommit]);
+  if (actualBaseTree !== patch.baseTree) errors.push('recorded base commit/tree do not agree');
+  const ancestor = spawnSync('git', ['merge-base', '--is-ancestor', patch.baseCommit, 'HEAD'], { cwd: ROOT });
+  if (ancestor.status !== 0) errors.push('recorded base is not an ancestor of published HEAD');
+  for (const row of receipt.sourceBasis?.paths || []) {
+    const publishedOid = gitText(ROOT, ['rev-parse', `HEAD:${row.path}`]);
+    if (publishedOid !== row.gitBlobOid) errors.push(`published HEAD does not contain tested blob: ${row.path}`);
+  }
+  return errors;
+}
+
+function verifyReceiptCli(path) {
+  const absolute = resolve(path);
+  const receipt = JSON.parse(readFileSync(absolute, 'utf8'));
+  const rawPlant = args.includes('--raw-eol-basis-plant');
+  const errors = [
+    ...verifyReceiptData(receipt, ROOT, rawPlant),
+    ...publishedGitErrors(receipt),
+  ];
+  const head = gitText(ROOT, ['rev-parse', 'HEAD']);
+  const tree = gitText(ROOT, ['show', '-s', '--format=%T', 'HEAD']);
+  console.log(`published HEAD ${head}`);
+  console.log(`published tree ${tree}`);
+  console.log(`receipt ${absolute}`);
+  console.log(`canonical source basis ${SOURCE_BASIS_PATHS.length}/${SOURCE_BASIS_PATHS.length} path(s)`);
+  console.log(`runtime semantics ${RUNTIME_LABELS.length}/${RUNTIME_LABELS.length}`);
+  if (errors.length) {
+    for (const error of errors) console.error(`VERIFY FAIL: ${error}`);
+    console.error(`VERIFY RECEIPT FAILED (${errors.length})`);
+    process.exit(1);
+  }
+  console.log('VERIFY RECEIPT OK');
+  process.exit(0);
+}
+
+if (argOf('--verify-receipt')) verifyReceiptCli(argOf('--verify-receipt'));
 
 async function runner() {
   const { installWebAudioStub } = await import('./webaudio-stub.mjs');
@@ -216,6 +364,75 @@ function forceCrLfTree(path) {
   visit(path);
 }
 
+function forceLfTree(path) {
+  const visit = (entry) => {
+    for (const item of readdirSync(entry, { withFileTypes: true })) {
+      const absolute = resolve(entry, item.name);
+      if (item.isDirectory()) visit(absolute);
+      else {
+        const text = readFileSync(absolute, 'utf8').replace(/\r\n?/g, '\n');
+        writeFileSync(absolute, text, 'utf8');
+      }
+    }
+  };
+  visit(path);
+}
+
+function copyBasisInputs(to) {
+  for (const path of SOURCE_BASIS_PATHS) {
+    const target = resolve(to, path);
+    mkdirSync(dirname(target), { recursive: true });
+    cpSync(resolve(ROOT, path), target);
+  }
+}
+
+function sourceBasisSelftest() {
+  let bad = 0;
+  const lfDir = mkdtempSync(join(tmpdir(), 'sfx-basis-lf-'));
+  const crlfDir = mkdtempSync(join(tmpdir(), 'sfx-basis-crlf-'));
+  try {
+    copyBasisInputs(lfDir);
+    copyBasisInputs(crlfDir);
+    forceLfTree(lfDir);
+    forceCrLfTree(crlfDir);
+    const patch = currentPatchBasis();
+    const lfBasis = buildSourceBasis(lfDir, patch);
+    const crlfBasis = buildSourceBasis(crlfDir, patch);
+    const equal = JSON.stringify(lfBasis.paths) === JSON.stringify(crlfBasis.paths);
+    check(equal, 'canonical source basis is identical for LF and forced-CRLF worktrees');
+    if (!equal) bad++;
+
+    const fixture = {
+      sourceBasis: lfBasis,
+      artifact: null,
+      report,
+      checks: checks.filter((row) => RUNTIME_LABELS.includes(row.label)),
+      failures: [],
+      plantFailures: 0,
+    };
+    const cleanErrors = verifyReceiptData(fixture, crlfDir);
+    check(cleanErrors.length === 0, 'forced-CRLF receipt verifier accepts the canonical LF basis',
+      cleanErrors.join('; '));
+    if (cleanErrors.length) bad++;
+
+    const stale = JSON.parse(JSON.stringify(fixture));
+    stale.sourceBasis.paths[0].lfSha256 = '0'.repeat(64);
+    const staleErrors = verifyReceiptData(stale, crlfDir);
+    const staleHeld = staleErrors.some((error) => error.startsWith('LF SHA256 mismatch:'));
+    check(staleHeld, 'stale source-basis plant is killed by the receipt verifier');
+    if (!staleHeld) bad++;
+
+    const rawErrors = verifyReceiptData(fixture, crlfDir, true);
+    const rawHeld = rawErrors.some((error) => /mismatch:/.test(error));
+    check(rawHeld, 'raw worktree-EOL identity plant is killed under forced CRLF');
+    if (!rawHeld) bad++;
+  } finally {
+    rmSync(lfDir, { recursive: true, force: true });
+    rmSync(crlfDir, { recursive: true, force: true });
+  }
+  return bad;
+}
+
 function selftest() {
   console.log('\nSFX FILENAME CONVENTION — selftest plants');
   const audioPath = resolve(ROOT, 'src/ui/audio.js');
@@ -349,6 +566,7 @@ function selftest() {
       }
     } finally { rmSync(crlfDir, { recursive: true, force: true }); }
   }
+  bad += sourceBasisSelftest();
   return bad;
 }
 
@@ -372,7 +590,7 @@ if (receiptPath) {
   const absolute = resolve(receiptPath);
   mkdirSync(dirname(absolute), { recursive: true });
   writeFileSync(absolute, `${JSON.stringify({
-    head: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).stdout.trim(),
+    sourceBasis: buildSourceBasis(),
     artifact, report, checks, failures, plantFailures,
   }, null, 2)}\n`);
   console.log(`  receipt ${absolute}`);
