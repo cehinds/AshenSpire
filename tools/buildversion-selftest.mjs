@@ -64,6 +64,18 @@ import { check, REPO_ROOT, sourceDigest, whichCommits, ORDINAL_HOME, ORDINAL_CEI
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
+// macOS can report ENOTEMPTY for a just-closed Git worktree while directory
+// entries settle. Node retries that class of recursive-removal failure only
+// when maxRetries is non-zero. Keep the wait bounded and keep the final error:
+// cleanup that is still impossible after five linearly delayed retries
+// (about 1.5 seconds of total backoff) remains a real selftest red.
+const removeTempTree = (dir) => rmSync(dir, {
+  recursive: true,
+  force: true,
+  maxRetries: 5,
+  retryDelay: 100,
+});
+
 const editJson = (root, fn) => {
   const p = resolve(root, ORDINAL_HOME);
   writeFileSync(p, `${JSON.stringify(fn(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
@@ -326,7 +338,7 @@ function ordinalHistory() {
         console.log(`          ${detail}`);
       }
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeTempTree(dir);
     }
   }
   return failures;
@@ -364,7 +376,7 @@ function traceability() {
     say(none.length === 0, 'a digest no commit ever shipped returns EMPTY, not a plausible commit',
       `whichCommits → ${JSON.stringify(none)}`);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    removeTempTree(dir);
   }
   return failures;
 }
@@ -382,7 +394,7 @@ export async function selftest() {
   try {
     baseline = new Map(check(control).rows.map((r) => [r.name, r]));
   } finally {
-    rmSync(control, { recursive: true, force: true });
+    removeTempTree(control);
   }
   const dirty = [...baseline.values()].filter((r) => !r.ok);
   if (!dirty.length) {
@@ -435,7 +447,7 @@ export async function selftest() {
         if (strays.length) console.log(`          also non-green: ${strays.join(', ')} (stated, not hidden)`);
       }
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      removeTempTree(root);
     }
   }
 
