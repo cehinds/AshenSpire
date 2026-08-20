@@ -59,9 +59,12 @@ function sourceContract(tree) {
 if (args.includes('--artifact-check')) {
   const html = readFileSync(resolve(ROOT, 'AshenSpire.html'), 'utf8');
   // The selected standalone carries the UI seams; its real LAN server still
-  // executes tools/session.mjs, so the artifact door binds both exact inputs.
+  // executes tools/session.mjs and the shared engine sources, so the artifact
+  // door binds every exact input that serves the selected-root two-client path.
   const session = readFileSync(resolve(ROOT, 'tools/session.mjs'), 'utf8');
-  const ok = sourceContract({ fx: html, coop: html, session, actions: html, engineCoop: html });
+  const actions = readFileSync(resolve(ROOT, 'src/engine/actions.js'), 'utf8');
+  const engineCoop = readFileSync(resolve(ROOT, 'src/engine/coopCombat.js'), 'utf8');
+  const ok = sourceContract({ fx: html, coop: html, session, actions, engineCoop });
   console.log(`guard-float-parity artifact contract: ${ok ? 'OK' : 'RED'}`);
   process.exit(ok ? 0 : 1);
 }
@@ -93,7 +96,7 @@ if (args.includes('--selftest') || args.includes('--selftest-source')) {
     plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
   });
   if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
-  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html'];
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'tools/session.mjs', 'AshenSpire.html', 'tools/session.mjs', 'src/engine/actions.js', 'src/engine/coopCombat.js'];
   const artifactStatus = await doorSelftest({
     tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
     extraCopy: ['AshenSpire.html'],
@@ -318,6 +321,41 @@ async function browserDoor() {
       const name = `guard-float-stigmata-${evidenceDoor}-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
       writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
       console.log(`\n    Stigmata contact sheet ${name}`);
+    } finally {
+      await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
+    }
+  };
+  const writeSharedFlameContactSheet = async (shape) => {
+    if (!shots) return;
+    const entries = ['before', 'after'].map((moment) => {
+      const filename = `guard-float-shared-flame-${moment}-${evidenceDoor}-${shape.tag}.png`;
+      const path = join(resolve(shots), filename);
+      if (!existsSync(path)) return null;
+      return { moment, src: `data:image/png;base64,${readFileSync(path).toString('base64')}` };
+    }).filter(Boolean);
+    if (entries.length !== 2) return;
+    const cards = entries.map((entry) => `<figure><figcaption><b>SHARED FLAME</b> · ${entry.moment.toUpperCase()}</figcaption><img src="${entry.src}" alt="Shared Flame ally heal ${entry.moment}"></figure>`).join('');
+    const imageHeight = shape.tag === '390x844' ? 760 : 430;
+    const html = `<!doctype html><meta charset="utf-8"><title>#207 Shared Flame ${shape.tag} ${evidenceDoor}</title><style>
+      *{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0a08;color:#f4e6bd;font:18px/1.3 system-ui,sans-serif}
+      h1{margin:0 0 20px;color:#f2c85b;font:800 30px/1.2 system-ui,sans-serif}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+      figure{margin:0;padding:10px;border:1px solid #8d7747;background:#15120d;border-radius:8px}figcaption{padding:0 2px 8px;color:#ddd4c2}b{color:#f3c86d}
+      img{display:block;width:100%;height:${imageHeight}px;object-fit:contain;object-position:top center;background:#070604;border:1px solid #353029}
+    </style><h1>SHARED FLAME · REAL TWO-CLIENT · ${evidenceDoor.toUpperCase()} · ${shape.tag} · ACTOR A UNCHANGED · ALLY B HP30→37</h1><main class="grid">${cards}</main>`;
+    const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
+    try {
+      await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
+      await until(tab, `[...document.images].length===2&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'Shared Flame contact-sheet images', 30000);
+      await wait(120);
+      const metrics = await cdp.send('Page.getLayoutMetrics', {}, tab.sessionId);
+      const size = metrics.cssContentSize || metrics.contentSize;
+      const { data } = await cdp.send('Page.captureScreenshot', {
+        format: 'png', fromSurface: true, captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
+      }, tab.sessionId);
+      const name = `guard-float-shared-flame-${evidenceDoor}-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
+      writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
+      console.log(`\n    Shared Flame contact sheet ${name}`);
     } finally {
       await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
     }
@@ -642,10 +680,13 @@ async function browserDoor() {
         rmSync(join(ROOT, '.coop-session.json'), { force: true });
       }
     }
-    if (!coopOnly) for (const shape of shapes) {
-      await writeContactSheet(shape);
-      await writeReviewContactSheet(shape);
-      await writeStigmataContactSheet(shape);
+    for (const shape of shapes) {
+      if (!coopOnly) {
+        await writeContactSheet(shape);
+        await writeReviewContactSheet(shape);
+        await writeStigmataContactSheet(shape);
+      }
+      await writeSharedFlameContactSheet(shape);
     }
   } finally {
     cdp.close(); await dropBrowser();
