@@ -313,6 +313,164 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       uncaught: [...exceptionsSeen],
     };
 
+    // The flush half of #243 (PR #244's corrected-head review, and Aurora's
+    // inline finding r3826021479): the exit guard must not DISCARD the
+    // player's final pan — the pending snapshot rides the Save & Quit
+    // persistence door instead of dying with the timer. Fit framing is the
+    // UNOBSERVABLE control cell (Vira: the fit camera recomputes on every
+    // mount, 0.0 px loss at both timings), so this case buys an observable
+    // camera with a deliberate zoom first, commits a mid-extent anchor while
+    // the board is connected, pans AWAY from it, quits inside the debounce
+    // window at t+55 ms — the same distance from the 80 ms line as the exit
+    // case, and for the same reason — resumes, and demands the RESUMED camera
+    // equal the FINAL pan, not the anchor. The crash guard's own property is
+    // asserted in the same breath: zero uncaught after the exit.
+    results.exitCameraFlush = [];
+    for (const shape of [
+      { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
+      { name: '1200x730', width: 1200, height: 730, deviceScaleFactor: 1, mobile: false },
+    ]) {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: shape.width, height: shape.height, deviceScaleFactor: shape.deviceScaleFactor, mobile: shape.mobile,
+      }, sessionId);
+      // A ?shot= boot swaps in the module's memory-storage stub (main.js
+      // pickStorage), which no page-side instrument can see — so THIS case
+      // alone enters by the REAL front door on REAL localStorage: the title's
+      // own BEGIN THE CLIMB the first time, Continue when the slot is already
+      // occupied. That is what makes "saved" a readable fact and a durable
+      // write a countable one.
+      await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}` }, sessionId);
+      await waitFor('the real title (flush case)', `(() => {
+        const bs = [...document.querySelectorAll('button')];
+        return document.querySelectorAll('.slot').length > 0
+          && bs.some((b) => /continue|begin a climb/i.test(b.textContent));
+      })()`);
+      const door = await evaluate(`(() => {
+        const bs = [...document.querySelectorAll('button')];
+        const cont = bs.find((b) => /continue/i.test(b.textContent));
+        if (cont) { cont.click(); return 'continue'; }
+        bs.find((b) => /begin a climb/i.test(b.textContent)).click(); return 'begin';
+      })()`);
+      if (door === 'begin') {
+        await waitFor('the customize screen (flush case)', `!!document.querySelector('#cz-start')`);
+        await evaluate(`document.querySelector('#cz-start').click()`);
+      }
+      await waitFor('the map by the real door (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
+      await wait(300); // outlast the camera backstop; the mount's own centring settles
+      exceptionsSeen.length = 0; // the boot is its own observation; the drive is on trial
+      // A genuine nonzero manual-framing move: the shipped zoom ladder. NB:
+      // `dataset.framing` is the fit-quality report, NOT the framing mode —
+      // the mode lives in the snapshot; the zoom delta below is the evidence
+      // the move was real, and cameraRestore='restored' on resume is the
+      // evidence the saved camera (not a fit recompute) is what came back.
+      const zoomBefore = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      await evaluate(`document.querySelector('#zoom-in').click()`);
+      await wait(250); // the zoom commits immediately; its programmatic scroll drains through the debounce
+      let zoomAfter = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      if (Math.abs(zoomAfter - zoomBefore) <= 0.0005) {
+        // The default rung had no headroom upward; the ladder's other
+        // direction is the same manual-framing door.
+        await evaluate(`document.querySelector('#zoom-out').click()`);
+        await wait(250);
+        zoomAfter = await evaluate(`Number(document.querySelector('.map-scroll').dataset.framingZoom)`);
+      }
+      // Count DURABLE writes: every setItem landing on the slot-1 run key.
+      // Real localStorage goes through Storage.prototype, so the patch sees
+      // every write the save manager makes.
+      await evaluate(`(() => {
+        window.__runWrites = 0;
+        const put = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          if (key === 'sote_run_v1') window.__runWrites += 1;
+          return put.call(this, key, value);
+        };
+      })()`);
+      const flushSetup = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const max = Math.max(0, port.scrollHeight - port.clientHeight);
+        port.scrollTop = Math.round(max * 0.5); // away from max AND from zero
+        port.dispatchEvent(new Event('scroll'));
+        return { max, anchor: port.scrollTop, framing: port.dataset.framing };
+      })()`);
+      await wait(250); // > 80 ms: the anchor commits while the board is still connected
+      // CONTROL CELL — connected, no exit: one more pan must cost ZERO durable
+      // writes at once (the synchronous hand-over says commit:false) and
+      // EXACTLY ONE once the debounce fires. Read in the same synchronous
+      // breath as the pan, so no timer can fire between the two.
+      const control = await evaluate(`(() => {
+        window.__runWrites = 0;
+        const port = document.querySelector('.map-scroll');
+        port.scrollTop = Math.max(0, port.scrollTop - 40);
+        port.dispatchEvent(new Event('scroll'));
+        return { top: port.scrollTop, immediateWrites: window.__runWrites };
+      })()`);
+      await wait(250);
+      const controlAfter = await evaluate(`window.__runWrites`);
+      // THE DRIVE — final pan, quit inside the window, one save, no echo.
+      const flushDrive = await evaluate(`(async () => {
+        const rest = (ms) => new Promise((done) => setTimeout(done, ms));
+        window.__runWrites = 0;
+        const port = document.querySelector('.map-scroll');
+        port.scrollTop = Math.max(0, port.scrollTop - 200); // the FINAL pan
+        port.dispatchEvent(new Event('scroll'));
+        const finalTop = port.scrollTop;
+        const immediateWrites = window.__runWrites; // still synchronous with the pan
+        await rest(55); // inside the 80 ms window — the durable commit has NOT fired
+        document.querySelector('#open-menu').click(); await rest(5);
+        const tab = [...document.querySelectorAll('button,[role=tab]')].find((b) => b.textContent.trim() === 'Save');
+        if (tab) tab.click(); await rest(5);
+        const quit = document.querySelector('#ovs-quit'); // "Save & Quit to Title"
+        if (!quit) return { reached: false };
+        quit.click();
+        await rest(400); // outlast the armed debounce and the save
+        return {
+          reached: true, finalTop, immediateWrites,
+          onTitle: !!document.querySelector('.slot'),
+          quitWrites: window.__runWrites,
+        };
+      })()`);
+      await wait(200); // a delayed second save would land here
+      const settled = await evaluate(`({
+        writes: window.__runWrites,
+        savedTop: (() => {
+          try { return JSON.parse(localStorage.getItem('sote_run_v1')).mapView.scrollTop; }
+          catch { return null; }
+        })(),
+      })`);
+      await evaluate(`[...document.querySelectorAll('button')].find((b) => /continue/i.test(b.textContent)).click()`);
+      await waitFor('the resumed map (flush case)', `!!document.querySelector('.map-scroll')`);
+      await wait(300); // the restore lands on the settled pass
+      const resumed = await readState();
+      await wait(120); // let any exceptionThrown cross the wire before the verdict
+      const flushUncaught = [...exceptionsSeen];
+      const manualMove = Number.isFinite(zoomBefore) && Number.isFinite(zoomAfter)
+        && Math.abs(zoomAfter - zoomBefore) > 0.0005;
+      const observable = manualMove && (control.top - flushDrive.finalTop) > 20;
+      const savedIdentity = settled.savedTop != null && Math.abs(settled.savedTop - flushDrive.finalTop) < 1.5;
+      const resumedIdentity = Math.abs(resumed.scrollTop - flushDrive.finalTop) < 1.5;
+      results.exitCameraFlush.push({
+        shape: shape.name,
+        pass: !!(flushDrive.reached && flushDrive.onTitle && observable
+          && control.immediateWrites === 0 && controlAfter === 1
+          && flushDrive.immediateWrites === 0
+          && flushDrive.quitWrites === 1 && settled.writes === 1
+          && savedIdentity && resumedIdentity
+          && resumed.cameraRestore === 'restored' && flushUncaught.length === 0),
+        door,
+        zoom: [zoomBefore, zoomAfter],
+        anchor: flushSetup.anchor,
+        controlTop: control.top,
+        finalTop: flushDrive.finalTop,
+        savedTop: settled.savedTop,
+        resumedTop: resumed.scrollTop,
+        controlWrites: [control.immediateWrites, controlAfter],
+        exitWrites: [flushDrive.immediateWrites, flushDrive.quitWrites, settled.writes],
+        framing: flushSetup.framing,
+        cameraRestore: resumed.cameraRestore,
+        uncaught: flushUncaught,
+      });
+    }
+
     // Hold the real map scrollport at zero height beyond the 120 ms backstop,
     // then release it through an actual viewport resize. The timeout must stay
     // provisional; the later ResizeObserver pass owns the first real fit.
@@ -419,6 +577,29 @@ async function selftest() {
       + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}, `
       + `map exit ${exitCaught ? 'caught' : 'MISSED'} (${ownership.mapExitDuringDebounce?.uncaught?.[0] || 'no uncaught error'})`);
     if (!fitCaught || !raceCaught || !settleCaught || !exitCaught) process.exitCode = 1;
+
+    // The flush seam (#243's other half — #245's camera preservation): remove
+    // ONLY the synchronous hand-over — the crash guard stays — and the flush
+    // case must go red BY IDENTITY (the saved and resumed camera are the stale
+    // last commit, with zero uncaught) while the exit case STAYS GREEN. The
+    // two halves of #243 are caught by two different instruments, and this
+    // proves neither can stand in for the other.
+    writeFileSync(boardPath, board);
+    const flushSeam = '    emitViewState(false, pendingViewCommit);\n';
+    if (!board.includes(flushSeam)) throw new Error('selftest plant refused: the synchronous hand-over seam is absent');
+    writeFileSync(boardPath, board.replace(flushSeam, ''));
+    const flushless = await runProbe(tempRoot, { screenshots: false });
+    const flushRows = flushless.exitCameraFlush || [];
+    const flushCaught = flushRows.length === 2 && flushRows.every((row) => !row.pass
+      && (row.uncaught?.length || 0) === 0
+      && Math.abs(row.savedTop - row.finalTop) > 20
+      && Math.abs(row.resumedTop - row.finalTop) > 20);
+    const guardHeld = !!flushless.mapExitDuringDebounce?.pass;
+    console.log(`map-camera flush selftest: ${flushCaught && guardHeld ? 'GREEN' : 'RED'} - `
+      + `hand-over removal ${flushCaught ? 'caught by identity' : 'MISSED'} `
+      + `(${flushRows.map((r) => `${r.shape}: final ${r.finalTop?.toFixed?.(1)} vs saved ${r.savedTop?.toFixed?.(1)} / resumed ${r.resumedTop?.toFixed?.(1)}`).join('; ')}), `
+      + `crash guard ${guardHeld ? 'held green' : 'WENT RED'}`);
+    if (!flushCaught || !guardHeld) process.exitCode = 1;
   } finally {
     rmSync(tempRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   }
@@ -457,7 +638,16 @@ if (SELFTEST) {
     + `uncaught=${exit ? exit.uncaught.length : '?'}`
     + `${exit && exit.uncaught.length ? ` [${exit.uncaught[0]}]` : ''}`);
   if (!exit || !exit.pass) failures++;
-  const total = results.length + 4;
+  for (const row of results.exitCameraFlush || []) {
+    console.log(`${row.pass ? 'PASS' : 'FAIL'} exit camera flush ${row.shape}: `
+      + `zoom ${row.zoom?.[0]} -> ${row.zoom?.[1]}; `
+      + `anchor ${row.anchor?.toFixed?.(1)} -> control ${row.controlTop?.toFixed?.(1)} -> final ${row.finalTop?.toFixed?.(1)}; `
+      + `saved ${row.savedTop?.toFixed?.(1)}, resumed ${row.resumedTop?.toFixed?.(1)} `
+      + `(door=${row.door}, restore=${row.cameraRestore}, writes control=${row.controlWrites?.join('/')}, `
+      + `exit=${row.exitWrites?.join('/')}, uncaught=${row.uncaught?.length})`);
+    if (!row.pass) failures++;
+  }
+  const total = results.length + 4 + (results.exitCameraFlush?.length || 0);
   console.log(`map-camera persistence: ${failures ? 'RED' : 'GREEN'} (${total - failures}/${total})`);
   process.exitCode = failures ? 1 : 0;
 }

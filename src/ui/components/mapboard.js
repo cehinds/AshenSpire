@@ -1112,6 +1112,16 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
     // a reachable node before this debounce fires; reading it in the callback
     // would mislabel the detached board's old camera as belonging to that node.
     pendingViewCommit = viewSnapshot();
+    // And HAND THE FROZEN SNAPSHOT OVER NOW, without the commit flag. The
+    // viewer's callback keeps `run.mapView` current on every call and only
+    // SAVES on commit — so a Save & Quit (or any other save door) that lands
+    // inside this debounce persists the player's final pan instead of the
+    // camera from one gesture ago, at the cost of zero extra durable writes.
+    // The 80 ms timer below stays the only path that says commit:true, and
+    // the detached-port guard in emitViewState stays what keeps that timer
+    // from firing into a run the app has already dropped (#243 — the guard
+    // stops the crash; this line stops the guard from costing the last pan).
+    emitViewState(false, pendingViewCommit);
     viewCommitTimer = setTimeout(() => {
       viewCommitTimer = null;
       const snapshot = pendingViewCommit;
