@@ -578,14 +578,29 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.85);
 }
 
+.combat-action-row {
+  position: absolute; inset-inline: 1.6rem; bottom: -5.2rem; z-index: 30;
+  display: grid;
+  grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
+  grid-template-areas: "energy draw . end exhaust discard";
+  align-items: end; gap: 0.8rem;
+  pointer-events: none;
+}
+.combat-action-row > * { pointer-events: auto; }
 .energy-orb {
-  position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
-  background: #1c1610; border: 3px solid var(--gold);
+  grid-area: energy; position: relative; isolation: isolate;
+  width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor));
+  background: transparent; border: 0;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.9rem; font-weight: 800; box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
+  font-size: 1.9rem; font-weight: 800;
+}
+.energy-orb::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 50%;
+  background: #1c1610; border: 3px solid var(--gold);
+  box-shadow: 0 0 24px rgba(201, 162, 39, 0.25);
 }
 .end-turn {
-  position: absolute; right: 3.4rem; bottom: 7.6rem;
+  grid-area: end; position: static;
   min-height: var(--tap-floor); background: #120f0c;
   border: 1px solid var(--gold); border-radius: 8px;
 }
@@ -597,15 +612,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .end-turn.pulse { animation: pulse-gold 700ms infinite alternate; }
 
 .pile {
-  position: absolute; bottom: 1.2rem; width: 5.2rem; height: 4rem; border-radius: 8px;
+  position: static; width: 100%; height: max(4rem, var(--tap-floor)); min-width: var(--tap-floor); min-height: var(--tap-floor); border-radius: 8px;
   background: var(--panel); border: 1px solid var(--line);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   font-size: 1.3rem; cursor: pointer; z-index: 20;
 }
 .pile small { font-size: 0.85rem; color: var(--muted); letter-spacing: 0.08em; }
-.pile.draw { left: 1.6rem; }
-.pile.discard { right: 1.6rem; }
-.pile.exhaust { right: 8.2rem; opacity: 0.85; }
+.pile.draw { grid-area: draw; }
+.pile.discard { grid-area: discard; }
+.pile.exhaust { grid-area: exhaust; opacity: 0.85; }
 
 /* ---------- targeting arrow ---------- */
 #target-arrow { position: fixed; z-index: 400; pointer-events: none; }
@@ -854,8 +869,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .energy-orb { bottom: 2.4rem; }
-:root[data-composition='short-wide'] .end-turn { bottom: 2.4rem; }
+:root[data-composition='short-wide'] .combat-action-row { bottom: -6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
@@ -981,15 +995,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
 
   /* ---- hand + controls: the actual reflow ----
-     Two rows. The hand is a strip that scrolls sideways; the controls sit in
-     their own row under it. .energy-orb and .end-turn stop being
-     position:absolute — that absolute placement inside a 23rem box is what put
-     the button under the hand at 0/45. */
+     Two rows. The hand is a strip that scrolls sideways; every persistent
+     action destination is a cell in the one row beneath it. */
   :root[data-layout='narrow'] .hand-area {
     height: auto; flex-shrink: 0;
     display: grid;
-    grid-template-columns: var(--tap-floor) minmax(0, 1fr);
-    grid-template-areas: "hand hand" "orb end";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "hand" "actions";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
   }
   :root[data-layout='narrow'] .hand-overlay {
@@ -1027,33 +1039,20 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
   }
 
+  :root[data-layout='narrow'] .combat-action-row {
+    grid-area: actions; position: static; inset: auto; width: 100%;
+    grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
+    grid-template-areas: "energy end draw exhaust discard";
+    align-items: center; gap: 0.4rem;
+  }
   :root[data-layout='narrow'] .energy-orb {
-    grid-area: orb; position: static; left: auto; bottom: auto;
-    width: 5.6rem; height: 5.6rem; font-size: 1.7rem;
+    width: max(5.6rem, var(--tap-floor)); height: max(5.6rem, var(--tap-floor)); font-size: 1.7rem;
   }
   :root[data-layout='narrow'] .end-turn {
-    grid-area: end; position: static; right: auto; bottom: auto;
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
-    /* NOT `width: 100%`: a grid item already stretches to its column, and
-       100% resolves against the column BEFORE the margin, so the button kept
-       its full width and slid left under the piles — 39/45, the same bug in
-       the other direction. Stretch plus a margin is the reservation.
-       Room for draw + discard + exhaust, held whether or not exhaust is
-       showing, so the row does not jump mid-fight. ~190 local px left over. */
-    margin-right: 13.8rem;
+    margin: 0; min-width: 0;
   }
 
-  /* The piles join the control row rather than moving up beside the top bar.
-     THE FIRST VERSION PUT THEM AT `top: 0.6rem` AND THAT WAS #21 AGAIN, BY MY
-     HAND: the piles are z-index 30 and the top bar is not, so .pile.draw
-     landed on top of the #combat-armoury button and hit-testing it returned
-     `div.pile.draw`. A screen sweep caught it — 1 covered control at 390x844
-     where dev has none on that element. Moving a control out from under the
-     hand and putting a different one under a pile is not a fix.
-     Now they sit in the bottom band with the orb and END TURN, and END TURN
-     reserves the width for all three so the row does not jump the first time
-     an exhaust pile appears mid-fight. */
-  :root[data-layout='narrow'] .pile { bottom: 1.6rem; top: auto; width: 4.2rem; height: 3.6rem; font-size: 1.1rem; z-index: 30; }
-  :root[data-layout='narrow'] .pile.draw { left: auto; right: 9.6rem; }
-  :root[data-layout='narrow'] .pile.discard { right: 0.8rem; }
-  :root[data-layout='narrow'] .pile.exhaust { right: 5.2rem; }
+  :root[data-layout='narrow'] .pile {
+    width: 100%; height: max(4.2rem, var(--tap-floor)); font-size: 1.1rem;
+  }
