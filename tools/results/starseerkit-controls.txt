@@ -16,7 +16,7 @@ what this check did NOT check (SPEC §8 clause 5):
   · not the game: no balance claim, no spec band, no statement about a human pilot.
   · not the counters — the per-class kit/bleed/stagger tallies this tool adds over
     runsim have no runsim counterpart, so agreement here leaves them unverified.
-measure-classes --selftest — 16 planted drifts at n=30, each must be CAUGHT
+measure-classes --selftest — 17 planted drifts at n=30, each must be CAUGHT
 
 derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
 
@@ -43,10 +43,13 @@ derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
   Starseer delayed-intent policy (real Held Blade intent state):
   starDelayedIntent caught ✔ — charging turn picks damage; due turn picks defense; old preview picks early defense
 
-  Starseer policy plant (real deterministic 30-seed fleet):
-  starseerFollowup  caught ✔ — conversion 77.6% → 35.3%; charged priority changes 1894 → 0
+  Starseer multi-enemy lethal target (real ordered enemy state):
+  starLethalTarget caught ✔ — later low HP cannot force lethal; changing the dispatched target changes the pick
 
-SELFTEST PASSED — clean tree agrees, all 16 planted drifts were caught.
+  Starseer policy plant (real deterministic 30-seed fleet):
+  starseerFollowup  caught ✔ — conversion 77.4% → 35.3%; charged priority changes 1846 → 0
+
+SELFTEST PASSED — clean tree agrees, all 17 planted drifts were caught.
 
 what this selftest did NOT check (SPEC §8 clause 5):
   · that these plants are the ONLY ways either copied bot or new counter can drift.
