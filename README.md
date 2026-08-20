@@ -8,6 +8,9 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
 
+**[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
+the latest project status appears first, with timestamped updates and Daily Briefs below it.
+
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
 after GitHub Pages finishes deploying it. This is a **development preview**, not
