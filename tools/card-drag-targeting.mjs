@@ -60,16 +60,16 @@ if (process.argv.includes('--selftest')) {
       replace: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims(inField ? livingEnemyEls() : []);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
       expectRed: /FAIL non-targeting drag produces no enemy aim/,
     }, {
-      name: 'narrow pager is restored to rem-sized offsets that clip at Text XL',
+      name: 'pager escapes the hand overlay at Text XL',
       file: 'styles/combat.css',
-      find: lines('styles/combat.css', "  :root[data-layout='narrow'] .hand-prev {", '    grid-area: prev; position: static; align-self: center;', '  }', "  :root[data-layout='narrow'] .hand-next {", '    grid-area: next; position: static; align-self: center;', '  }'),
-      replace: lines('styles/combat.css', "  :root[data-layout='narrow'] .hand-prev { left: calc(50% - 20rem); }", "  :root[data-layout='narrow'] .hand-next { right: calc(50% - 20rem); }"),
+      find: lines('styles/combat.css', ".hand-overlay[data-paging='true'] {", '  grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);', '  grid-template-areas: "prev hand next";', '}'),
+      replace: lines('styles/combat.css', ".hand-overlay[data-paging='true'] {", '  width: calc(100% + 40rem); margin-left: -20rem;', '  grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);', '  grid-template-areas: "prev hand next";', '}'),
       expectRed: /FAIL hand paging controls stay inside the viewport/,
     }, {
-      name: 'wide pager lift is removed so Next collides with Text XL End Turn',
+      name: 'pager is dropped onto the combat footer',
       file: 'styles/combat.css',
-      find: lines('styles/combat.css', ":root:not([data-layout='narrow']) .hand-page {", '  bottom: calc(8.2rem + var(--tap-floor));', '}'),
-      replace: lines('styles/combat.css', ":root:not([data-layout='narrow']) .hand-page {", '  /* planted: Text XL lift omitted */', '}'),
+      find: lines('styles/combat.css', '.hand-page {', '  position: static; align-self: center; z-index: 70;'),
+      replace: lines('styles/combat.css', '.hand-page {', '  position: relative; top: 20rem; align-self: center; z-index: 70;'),
       expectRed: /FAIL paging controls overlap neither cards nor combat controls/,
     }, {
       name: 'narrow combat chrome is pushed below the viewport',
@@ -174,7 +174,7 @@ async function main() {
       }))()`);
 
       const shotSettings = encodeURIComponent(JSON.stringify({ textSize }));
-      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotHand=8&shotSettings=${shotSettings}` }, S);
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat'); await wait(350);
       console.log(`\n  ${shape} · Text ${textSize}`);
       const controls = await ev(`(() => { const hs=[...document.querySelectorAll('.hand-page')]; return {n:hs.length, labels:hs.map(x=>x.getAttribute('aria-label')), rects:hs.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}), on:hs.every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})}; })()`);
@@ -221,6 +221,9 @@ async function main() {
         await ev(`document.querySelector('.hand-next').click()`); await wait(100);
         ok(await ev(`!!document.querySelector('.hand .card.gp-focus')`), 'paging moves focus through the real hand');
       }
+
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'five-card combat for drag coverage'); await wait(350);
 
       const card = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Slashing Strike/.test(x.textContent)); if(!c)return null; c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
       const enemies = await ev(`[...document.querySelectorAll('.enemy:not(.dead)')].map(e=>{const r=e.getBoundingClientRect();return {id:e.dataset.eid,x:r.left+r.width/2,y:r.top+r.height/2}})`);

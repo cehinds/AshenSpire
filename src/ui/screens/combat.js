@@ -76,17 +76,19 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       </div>
       <div class="hand-area">
         <div class="energy-orb"></div>
-        <button class="hand-page hand-prev" type="button" data-focusable
-          aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
-        <!-- The strip itself — cards, fan, key hints, the inspect hold, the
-             overlap arm and the Law 5 exemption — is components/hand.js, THE
-             one hand renderer (both surfaces; the exemption's home is
-             src/ui/handAxis.js). This screen supplies only the viewer half:
-             live previewCard entries off the paced snapshot, and the local
-             dispatch wiring (wireCardInput). -->
-        <div class="hand" id="combat-hand"></div>
-        <button class="hand-page hand-next" type="button" data-focusable
-          aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+        <div class="hand-overlay" data-paging="false">
+          <button class="hand-page hand-prev" type="button" data-focusable hidden
+            aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
+          <!-- The strip itself — cards, fan, key hints, the inspect hold, the
+               overlap arm and the Law 5 exemption — is components/hand.js, THE
+               one hand renderer (both surfaces; the exemption's home is
+               src/ui/handAxis.js). This screen supplies only the viewer half:
+               live previewCard entries off the paced snapshot, and the local
+               dispatch wiring (wireCardInput). -->
+          <div class="hand" id="combat-hand"></div>
+          <button class="hand-page hand-next" type="button" data-focusable hidden
+            aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+        </div>
         <button class="end-turn">END TURN</button>
       </div>
       <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -124,6 +126,9 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
   let handPageCursor = null; // survives focus moving onto Previous/Next itself
+  const HAND_PAGE_THRESHOLD = 7;
+  const handOverlay = $('.hand-overlay');
+  const handPages = [$('.hand-prev'), $('.hand-next')];
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -758,12 +763,46 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
       }),
     });
+    syncHandPager(handList);
+  }
+
+  // Paging exists only when it adds reach. The controls stay mounted so their
+  // listeners and identity are stable, but `hidden` removes them from paint,
+  // hit testing, the AX tree, and every focus ring at 0-7 cards. The overlay's
+  // state is also the one CSS door that reserves their two columns at 8+.
+  function syncHandPager(handList) {
+    const obscured = veilIsOpen();
+    const paging = handList.length > HAND_PAGE_THRESHOLD && !obscured;
+    const focusedPage = handPages.find((page) => page.classList.contains('gp-focus') || document.activeElement === page);
+    if (!paging && focusedPage) {
+      if (obscured) {
+        // A standing veil owns input. Do not move its focus behind the modal;
+        // only retire the pager cursor that the covered combat no longer owns.
+        focusedPage.classList.remove('gp-focus');
+      } else {
+        const cards = [...app.querySelectorAll('.hand .card')];
+        const surviving = cards.find((card) => card.dataset.instanceId === handPageCursor)
+          || cards.find((card) => card.classList.contains('selected'))
+          || cards[0]
+          || null;
+        if (surviving) {
+          surviving.dataset.pageTarget = '';
+          focusFirst('.hand .card[data-page-target]');
+          delete surviving.dataset.pageTarget;
+        }
+      }
+      if (document.activeElement === focusedPage) focusedPage.blur();
+    }
+    handPageCursor = paging ? handPageCursor : null;
+    handOverlay.dataset.paging = String(paging);
+    handPages.forEach((page) => { page.hidden = !paging; });
   }
 
   // F1's previous/next controls move the real focus cursor through the real
   // hand. They do not select or play a card; every input reaches this click and
   // the card keeps its existing Confirm semantics.
   function stepHand(delta) {
+    if (handOverlay.dataset.paging !== 'true') return;
     const cards = [...app.querySelectorAll('.hand .card')];
     if (!cards.length) return;
     let at = cards.findIndex((card) => card.classList.contains('gp-focus'));
@@ -1357,6 +1396,24 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   });
 
   render();
+
+  // Veils mount beside #app, not inside it. Watch that ownership boundary plus
+  // the originating combat mount itself: #app is reused across screens and
+  // fights, so finding *a* later `.combat` must never keep this mount's captured
+  // pager nodes alive. The marker is a focused lifecycle probe, not a styling
+  // hook; teardown removes it before a fresh combat creates its own owner.
+  if (document.body && typeof MutationObserver !== 'undefined') {
+    const pagerVeilObserver = new MutationObserver(() => {
+      if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+        pagerVeilObserver.disconnect();
+        delete combatEl.dataset.handPagerOwner;
+        return;
+      }
+      syncHandPager([...app.querySelectorAll('.hand .card')]);
+    });
+    combatEl.dataset.handPagerOwner = 'active';
+    pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
+  }
 
   // Keep the target glow in sync with focus/hover: the field's class attributes
   // change as the cursor (gp-focus) or pointer (hover-target) moves; a full
