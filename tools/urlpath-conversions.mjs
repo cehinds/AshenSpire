@@ -304,9 +304,10 @@ function findClose(tokens, opening, left = '(', right = ')') {
 }
 
 function hasImportMetaUrl(tokens, start, end) {
-  for (let i = start; i + 4 < end; i++) {
-    if (tokens[i].value === 'import' && tokens[i + 1].value === '.' &&
-        tokens[i + 2].value === 'meta' && tokens[i + 3].value === '.' && tokens[i + 4].value === 'url') return true;
+  for (let i = start; i + 3 < end; i++) {
+    if (tokens[i].value !== 'import' || tokens[i + 1].value !== '.' || tokens[i + 2].value !== 'meta') continue;
+    const access = staticMemberAt(tokens, i + 3, 'url');
+    if (access && access.end <= end) return true;
   }
   return false;
 }
@@ -318,20 +319,22 @@ function groupDepthBefore(tokens, start) {
   return depth;
 }
 
-function memberPathnameAt(tokens, start) {
+function staticMemberAt(tokens, start, name) {
   let i = start;
   const optional = tokens[i]?.value === '?.';
   if (optional) i++;
-  if (optional && tokens[i]?.type === 'identifier' && tokens[i].value === 'pathname') return { end: i + 1 };
-  if (tokens[i]?.value === '.' && tokens[i + 1]?.type === 'identifier' && tokens[i + 1].value === 'pathname') {
+  if (optional && tokens[i]?.type === 'identifier' && tokens[i].value === name) return { end: i + 1 };
+  if (tokens[i]?.value === '.' && tokens[i + 1]?.type === 'identifier' && tokens[i + 1].value === name) {
     return { end: i + 2 };
   }
   const key = tokens[i + 1];
-  const staticPathname = key?.value === 'pathname' &&
+  const staticName = key?.value === name &&
     (key.type === 'string' || (key.type === 'template' && !key.hasInterpolation && !key.tagged));
-  if (tokens[i]?.value === '[' && staticPathname && tokens[i + 2]?.value === ']') return { end: i + 3 };
+  if (tokens[i]?.value === '[' && staticName && tokens[i + 2]?.value === ']') return { end: i + 3 };
   return null;
 }
+
+const memberPathnameAt = (tokens, start) => staticMemberAt(tokens, start, 'pathname');
 
 function accessAfterExpression(tokens, start, end) {
   const groups = groupDepthBefore(tokens, start);
@@ -615,6 +618,10 @@ function parameterScopes(tokens) {
       privateNameIndexes.add(privateNameIndex);
       if (brace >= 0 && open !== brace) expressionRanges.push({ start: open + 1, end: brace, names: new Set([privateName]) });
     }
+    const parameterStart = open + (tokens[open]?.value === '(' ? 1 : 0);
+    if (close > parameterStart && names.size > 0 && open !== brace) {
+      expressionRanges.push({ start: parameterStart, end: close, names: new Set(names) });
+    }
     for (const index of binding.indexes) parameterIndexes.add(index);
     for (const index of binding.keys) keyIndexes.add(index);
     for (let i = open + (tokens[open]?.value === '(' ? 1 : 0); i < close; i++) {
@@ -643,7 +650,10 @@ function parameterScopes(tokens) {
       const nameIndex = tokens[classIndex + 1]?.type === 'identifier' ? classIndex + 1 : -1;
       if (nameIndex >= 0) {
         if (declarationContextAt(tokens, classIndex)) declarationNameIndexes.add(nameIndex);
-        else privateNameIndex = nameIndex;
+        else {
+          privateNameIndex = nameIndex;
+          expressionRanges.push({ start: nameIndex, end: brace, names: new Set([tokens[nameIndex].value]) });
+        }
       }
       register(brace, brace, brace, -1, false, privateNameIndex);
       continue;
@@ -662,7 +672,8 @@ function parameterScopes(tokens) {
       if (tokens[functionIndex]?.value === '*') functionIndex--;
       const functionKeyword = tokens[functionIndex]?.value === 'function';
       const catchKeyword = before?.value === 'catch';
-      const methodShape = before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before.value);
+      const methodShape = (before?.type === 'identifier' && !['if', 'while', 'for', 'with', 'switch', 'catch'].includes(before.value)) ||
+        ['string', 'number'].includes(before?.type) || before?.value === ']';
       functionScope = functionKeyword || methodShape;
       if (functionKeyword && tokens[open - 1]?.type === 'identifier') {
         if (declarationContextAt(tokens, functionIndex)) declarationNameIndexes.add(open - 1);
@@ -715,7 +726,9 @@ function unwrapAssigned(tokens, start, end, urls, isAlias) {
 
 function containingPlatformCall(tokens, index) {
   for (let open = index - 1; open >= 0; open--) {
-    if (tokens[open].value !== '(' || tokens[open - 1]?.value !== 'fileURLToPath') continue;
+    if (tokens[open].value !== '(') continue;
+    const callee = tokens[open - 1]?.value === '?.' ? tokens[open - 2] : tokens[open - 1];
+    if (callee?.value !== 'fileURLToPath') continue;
     const close = findClose(tokens, open);
     if (close >= index) return { open, close };
   }
@@ -1220,6 +1233,23 @@ function selftest() {
     ['escaped alias binding flows to pathname', "const \\u0075=new URL('./x',import.meta.url);u.pathname", 1, 0, 0],
     ['escaped non-path identifier control', "new URL('./x',import.meta.url).\\u006Frigin", 0, 0, 0],
     ['quoted escaped pathname spelling control', 'const text="new URL(\'./x\',import.meta.url).\\\\u0070athname"', 0, 0, 0],
+    ['static string import-meta URL base', "new URL('./x',import.meta['url']).pathname", 1, 0, 0],
+    ['static template import-meta URL base', "new URL('./x',import.meta[`url`]).pathname", 1, 0, 0],
+    ['optional import-meta URL base', "new URL('./x',import.meta?.url).pathname", 1, 0, 0],
+    ['optional static-bracket import-meta URL base', "new URL('./x',import.meta?.['url']).pathname", 1, 0, 0],
+    ['non-url import-meta static member control', "new URL('./x',import.meta['origin']).pathname", 0, 0, 0],
+    ['computed object method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const o={[key](u){return u.pathname}};fileURLToPath(u)", 0, 0, 0],
+    ['computed class method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);class C{[key](u){return u.pathname}}fileURLToPath(u)", 0, 0, 0],
+    ['computed setter parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const o={set [key](u){void u.pathname}};fileURLToPath(u)", 0, 0, 0],
+    ['computed method key still reads outer alias', "const u=new URL('./x',import.meta.url);const o={[u.pathname](u){return u.origin}};fileURLToPath(u)", 1, 0, 0],
+    ['computed method default still reads a differently named outer alias', "const u=new URL('./x',import.meta.url);const o={[key](x=u.pathname){}};fileURLToPath(u)", 1, 0, 0],
+    ['computed method same-name default is private', "const u=new URL('./x',import.meta.url);const o={[key](u=u.pathname){}};fileURLToPath(u)", 0, 0, 0],
+    ['quoted method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const o={'m'(u){return u.pathname}};fileURLToPath(u)", 0, 0, 0],
+    ['numeric method parameter shadows outer alias', "const u=new URL('./x',import.meta.url);const o={1(u){return u.pathname}};fileURLToPath(u)", 0, 0, 0],
+    ['same-name function parameter default is private', "const u=new URL('./x',import.meta.url);function f(u=u.pathname){}fileURLToPath(u)", 0, 0, 0],
+    ['same-name arrow parameter default is private', "const u=new URL('./x',import.meta.url);const f=(u=u.pathname)=>0;fileURLToPath(u)", 0, 0, 0],
+    ['named class expression extends clause is private', "const u=new URL('./x',import.meta.url);const C=class u extends mix(u.pathname){};fileURLToPath(u)", 0, 0, 0],
+    ['optional platform consumer control', "const u=new URL('./x',import.meta.url);fileURLToPath?.(u)", 0, 0, 0],
     ['async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
     ['exported async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);export async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
     ['default-exported async declaration parameter shadows outer alias', "const u=new URL('./x',import.meta.url);export default async function f(u){return u.pathname}fileURLToPath(u)", 0, 0, 0],
