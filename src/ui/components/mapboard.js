@@ -563,6 +563,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   }
 
   function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
