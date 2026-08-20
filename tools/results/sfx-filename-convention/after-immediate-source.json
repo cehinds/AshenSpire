@@ -31,8 +31,8 @@
       },
       {
         "path": "tools/sfx-filename-convention.mjs",
-        "lfSha256": "c171d2df16efc737436e1450e266166259e2261ed1d127300ef9742acb557b91",
-        "gitBlobOid": "11047d21b3c64858586bfb0a89f4259ebafdf3fd"
+        "lfSha256": "93a0a3a20ff6a52a7c9ec58093fd5be541b8805c3f55104ea704e5ba07ee7039",
+        "gitBlobOid": "040117735dd08aea568a5d2b88735ffca7dbcb37"
       },
       {
         "path": "tools/sfx-gain-probe.mjs",

@@ -31,8 +31,8 @@
       },
       {
         "path": "tools/sfx-filename-convention.mjs",
-        "lfSha256": "c171d2df16efc737436e1450e266166259e2261ed1d127300ef9742acb557b91",
-        "gitBlobOid": "11047d21b3c64858586bfb0a89f4259ebafdf3fd"
+        "lfSha256": "93a0a3a20ff6a52a7c9ec58093fd5be541b8805c3f55104ea704e5ba07ee7039",
+        "gitBlobOid": "040117735dd08aea568a5d2b88735ffca7dbcb37"
       },
       {
         "path": "tools/sfx-gain-probe.mjs",
@@ -455,7 +455,7 @@
     {
       "ok": true,
       "label": "selected-artifact control carries convention, resolver and fixture",
-      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-vW9zAi\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
+      "detail": "{\"path\":\"C:\\\\Users\\\\const\\\\AppData\\\\Local\\\\Temp\\\\sfx-convention-artifact-Eoohkm\\\\build\\\\AshenSpire.html\",\"convention\":true,\"resolver\":true,\"embeddedFixture\":true}"
     },
     {
       "ok": true,
@@ -490,6 +490,46 @@
     {
       "ok": true,
       "label": "raw worktree-EOL identity plant is killed under forced CRLF",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: stalled immediate synth removed from report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: successful warm replays the triggering cue in report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: known-good later sample start removed from report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: missing-file immediate synth removed from report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: decode fallback and exact diagnostic removed from report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: unavailable cache fetch duplicated in report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: manifest override resolution changed in report",
+      "detail": ""
+    },
+    {
+      "ok": true,
+      "label": "report-tamper plant killed: standalone later sample start removed from report",
       "detail": ""
     }
   ],

@@ -97,19 +97,20 @@ function buildSourceBasis(root = ROOT, patch = currentPatchBasis(), rawEol = fal
 
 function receiptSemanticErrors(receipt) {
   const errors = [];
-  if (!receipt.report || !Array.isArray(receipt.report.rows)) errors.push('runtime report is missing');
-  else {
+  if (!receipt.report || !Array.isArray(receipt.report.rows)) {
+    errors.push('runtime report is missing');
+  } else {
     const names = receipt.report.rows.map((row) => row.name);
     for (const name of RUNTIME_ROWS) if (!names.includes(name)) errors.push(`runtime row missing: ${name}`);
-  }
-  if (!Array.isArray(receipt.checks)) errors.push('checks are missing');
-  else {
-    for (const label of RUNTIME_LABELS) {
-      const rows = receipt.checks.filter((row) => row.label === label);
-      if (rows.length !== 1 || rows[0].ok !== true) errors.push(`runtime check is not uniquely green: ${label}`);
+    try {
+      const derived = evaluateRuntime(receipt.report);
+      if (derived.length !== RUNTIME_LABELS.length) errors.push('runtime evaluator assertion count is wrong');
+      for (const row of derived) if (!row.ok) errors.push(`derived runtime semantic failed: ${row.label}`);
+    } catch (error) {
+      errors.push(`runtime report cannot be evaluated: ${error.message}`);
     }
-    if (receipt.checks.some((row) => row.ok !== true)) errors.push('receipt contains a red check');
   }
+  // checks[] is display-only. Verification derives every verdict from report.
   if (!Array.isArray(receipt.failures) || receipt.failures.length !== 0) errors.push('receipt failures are not empty');
   if (receipt.plantFailures !== undefined && receipt.plantFailures !== 0) errors.push('plantFailures is not zero');
   return errors;
@@ -292,7 +293,9 @@ function check(ok, label, detail = '') {
   if (!ok) failures.push(label);
 }
 
-function scoreRuntime(report) {
+function evaluateRuntime(report) {
+  const evaluated = [];
+  const check = (ok, label, detail = '') => evaluated.push({ ok: !!ok, label, detail });
   const by = Object.fromEntries(report.rows.map((row) => [row.name, row]));
   const stalled = by['stalled-fetch-stays-immediate'];
   check(stalled.firstImmediate.fetches.length === 1
@@ -340,6 +343,11 @@ function scoreRuntime(report) {
       && inline.firstImmediate.synthPeaks.includes(0.3)
       && inline.secondImmediate.starts === 1 && inline.secondImmediate.synthPeaks.length === 0,
     'assetUrl warms standalone data URI, then cached sample suppresses synth', JSON.stringify(inline));
+  return evaluated;
+}
+
+function scoreRuntime(report) {
+  for (const row of evaluateRuntime(report)) check(row.ok, row.label, row.detail);
 }
 
 function copyBundleInputs(to) {
@@ -426,6 +434,56 @@ function sourceBasisSelftest() {
     const rawHeld = rawErrors.some((error) => /mismatch:/.test(error));
     check(rawHeld, 'raw worktree-EOL identity plant is killed under forced CRLF');
     if (!rawHeld) bad++;
+
+    const reportRow = (receipt, name) => receipt.report.rows.find((row) => row.name === name);
+    const reportPlants = [
+      {
+        name: 'stalled immediate synth removed from report',
+        mutate: (receipt) => { reportRow(receipt, 'stalled-fetch-stays-immediate').firstImmediate.synthPeaks = []; },
+      },
+      {
+        name: 'successful warm replays the triggering cue in report',
+        mutate: (receipt) => { reportRow(receipt, 'known-good-later-play').afterWarm.starts = 1; },
+      },
+      {
+        name: 'known-good later sample start removed from report',
+        mutate: (receipt) => { reportRow(receipt, 'known-good-later-play').secondImmediate.starts = 0; },
+      },
+      {
+        name: 'missing-file immediate synth removed from report',
+        mutate: (receipt) => { reportRow(receipt, 'missing-stays-immediate').secondImmediate.synthPeaks = []; },
+      },
+      {
+        name: 'decode fallback and exact diagnostic removed from report',
+        mutate: (receipt) => {
+          reportRow(receipt, 'decode-falls-back-and-names-url').secondImmediate.synthPeaks = [];
+          reportRow(receipt, 'decode-falls-back-and-names-url').afterWarm.logs = [];
+        },
+      },
+      {
+        name: 'unavailable cache fetch duplicated in report',
+        mutate: (receipt) => { reportRow(receipt, 'missing-stays-immediate').secondImmediate.fetches.push('assets/sfx/hit.ogg'); },
+      },
+      {
+        name: 'manifest override resolution changed in report',
+        mutate: (receipt) => {
+          const row = reportRow(receipt, 'manifest-override');
+          row.firstImmediate.fetches[0] = row.convention;
+        },
+      },
+      {
+        name: 'standalone later sample start removed from report',
+        mutate: (receipt) => { reportRow(receipt, 'standalone-inlined-asset').secondImmediate.starts = 0; },
+      },
+    ];
+    for (const plant of reportPlants) {
+      const tampered = JSON.parse(JSON.stringify(fixture));
+      plant.mutate(tampered);
+      const tamperErrors = verifyReceiptData(tampered, crlfDir);
+      const held = tamperErrors.some((error) => error.startsWith('derived runtime semantic failed:'));
+      check(held, `report-tamper plant killed: ${plant.name}`);
+      if (!held) bad++;
+    }
   } finally {
     rmSync(lfDir, { recursive: true, force: true });
     rmSync(crlfDir, { recursive: true, force: true });
