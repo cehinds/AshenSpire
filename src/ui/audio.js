@@ -3,7 +3,8 @@
 // Hybrid design (per product decision): every sound and music bed has a
 // synthesized fallback (zero required assets, zero licensing). SFX ids first
 // try assets/sfx/<id>.ogg, with SFX_MANIFEST reserved for explicit path/format
-// overrides; a missing or undecodable sample keeps the procedural sound.
+// overrides. The triggering cue is always immediate: synth plays while an
+// unknown sample warms, and only a known-good cached sample replaces later cues.
 //
 // Wiring: `initAudio()` returns an engine; main.js sets `sfx.sink = engine.sfx`
 // and calls `engine.music(context)` as screens mount. The AudioContext starts
@@ -128,7 +129,9 @@ export function initAudio(settings = {}) {
     // bed, not a report about an event, and music() keeps its own path.
     if (ctx.state !== 'running') return;
     const sample = assetUrl(own(SFX_MANIFEST, id) || `assets/sfx/${encodeURIComponent(id)}.ogg`);
-    playSample(sample, sfxBus, () => synthSfx(id));
+    if (playCachedSample(sample, sfxBus)) return;
+    synthSfx(id);
+    warmSample(sample);
   }
 
   const now = () => ctx.currentTime;
@@ -445,38 +448,42 @@ export function initAudio(settings = {}) {
   }
 
   // ---- samples (filename convention + manifest overrides) -----------------
-  async function loadSample(url) {
-    if (state.sampleCache.has(url)) return state.sampleCache.get(url);
-    // Cache the in-flight work, not only the decoded buffer: two feedback hooks
-    // in the same frame must share one fetch/decode instead of racing it twice.
-    const pending = (async () => {
+  function warmSample(url) {
+    if (state.sampleCache.has(url)) return;
+    // A cache entry exists before fetch begins, so repeated cues share the warm
+    // without waiting for it. Their synth remains synchronous; this work never
+    // replays the event that started it.
+    const entry = { status: 'loading', buffer: null };
+    state.sampleCache.set(url, entry);
+    (async () => {
       let res;
       try {
         res = await fetch(url);
       } catch (error) {
-        return null;
+        entry.status = 'unavailable';
+        return;
       }
-      if (!res.ok) return null;
+      if (!res.ok) {
+        entry.status = 'unavailable';
+        return;
+      }
       try {
-        return await ctx.decodeAudioData(await res.arrayBuffer());
+        entry.buffer = await ctx.decodeAudioData(await res.arrayBuffer());
+        entry.status = 'ready';
       } catch (error) {
         console.warn(`[audio] SFX sample '${url}' failed to decode — using synth fallback.`, error);
-        return null;
+        entry.status = 'unavailable';
       }
     })();
-    state.sampleCache.set(url, pending);
-    return pending;
   }
-  async function playSample(url, bus, onMiss) {
-    const buf = await loadSample(url);
-    if (!buf) {
-      onMiss();
-      return;
-    }
+  function playCachedSample(url, bus) {
+    const entry = state.sampleCache.get(url);
+    if (!entry || entry.status !== 'ready') return false;
     const src = ctx.createBufferSource();
-    src.buffer = buf;
+    src.buffer = entry.buffer;
     src.connect(bus);
     src.start();
+    return true;
   }
 
   // ---- settings applied live ----------------------------------------------
