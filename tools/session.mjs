@@ -30,6 +30,20 @@ import {
 } from '../src/engine/coopCombat.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
 
+// Focused browser gates may establish only the starting HP/Block named by the
+// story before driving the real LAN intent/event/render path. Keep that setup
+// out of the socket protocol and out of the product snapshot: the tool that
+// owns the gate opts in inside the same launcher process, and normal launchers
+// never call this setter.
+let combatStartStateForTools = null;
+export function setCombatStartStateForTools(state = null) {
+  if (state !== null && (typeof state !== 'object' || typeof state.name !== 'string'
+      || !Number.isFinite(state.hp) || !Number.isFinite(state.block))) {
+    throw new Error('Tool combat start state requires { name, hp, block }');
+  }
+  combatStartStateForTools = state ? { name: state.name, hp: state.hp, block: state.block } : null;
+}
+
 // Re-export so tests/other tools share the one definition (no divergent copy).
 export { coopHpMult } from '../src/engine/coopCombat.js';
 
@@ -338,6 +352,13 @@ export function createSession({ registries, seedString, endless = false, restore
       type === 'damageDealt' && payload.targetId === 'player'
         ? { ...payload, playerId: combat.playerKey }
         : payload);
+    if (combatStartStateForTools) {
+      const member = connectedMembers().find((entry) => entry.name === combatStartStateForTools.name);
+      const entity = member ? combat.players.get(member.id)?.entity : null;
+      if (!entity) throw new Error(`Tool combat start state cannot find '${combatStartStateForTools.name}'`);
+      entity.hp = combatStartStateForTools.hp;
+      entity.block = combatStartStateForTools.block;
+    }
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };

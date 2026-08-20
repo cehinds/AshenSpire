@@ -1,9 +1,10 @@
 // Focused guard-hit parity gate (#207).
 //
 // The fast door proves the semantic split, the authoritative co-op session
-// receipts, and five named source mutations. `--browser` adds the real product
-// path: two LAN clients, the lobby, shared map vote, live fight, real Defend
-// cards and real End Turn controls. `--shots DIR` records that measured frame.
+// receipts, and five named source mutations. `--browser` adds both real product
+// paths: seeded solo combat through its real engine/event/FX pipeline, then two
+// LAN clients through lobby, shared map vote, live fight, real Defend cards and
+// real End Turn controls. `--shots DIR` records those measured frames.
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -12,7 +13,7 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createSession } from './session.mjs';
+import { createSession, setCombatStartStateForTools } from './session.mjs';
 import { guardHitFloatParts } from '../src/ui/fx.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -60,9 +61,9 @@ async function browserDoor() {
   if (!shapes.length) throw new Error(`unknown --shape ${requestedShape}; use 390x844 or 1200x730`);
   const shots = argOf('--shots');
   const cases = [
-    { name: 'full', className: 'Reaver', defend: true, blocked: 7, texts: ['-7', '7'] },
-    { name: 'partial', className: 'Herald', defend: true, blocked: 4, texts: ['-3', '-7', '4'] },
-    { name: 'unguarded', className: 'Reaver', defend: false, blocked: 0, texts: ['-7', '-7'] },
+    { name: 'full', className: 'Reaver', defend: true, before: { hp: 30, block: 10 }, after: { hp: 30, block: 3 }, blocked: 7, soloTexts: ['7'], coopTexts: ['-7', '7'] },
+    { name: 'partial', className: 'Herald', defend: true, before: { hp: 30, block: 4 }, after: { hp: 27, block: 0 }, blocked: 4, soloTexts: ['-3', '4'], coopTexts: ['-3', '-7', '4'] },
+    { name: 'unguarded', className: 'Reaver', defend: false, before: { hp: 30, block: 0 }, after: { hp: 23, block: 0 }, blocked: 0, soloTexts: ['-7'], coopTexts: ['-7', '-7'] },
   ];
   const findings = [];
   const check = (condition, label, detail = '') => {
@@ -102,10 +103,141 @@ async function browserDoor() {
   // the product listens for the bubbling click event, so use that one door for
   // HTML buttons, cards and SVG nodes alike.
   const click = (selector) => `(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el)return false; el.dispatchEvent(new MouseEvent('click',{bubbles:true})); return true; })()`;
+  const pointOf = async (tab, selector) => evaluate(tab, `(()=>{const e=document.querySelector(${JSON.stringify(selector)});if(!e)return null;const r=e.getBoundingClientRect();return r.width&&r.height?{x:r.left+r.width/2,y:r.top+r.height/2}:null})()`);
+  const press = async (tab, shape, selector) => {
+    const point = await pointOf(tab, selector);
+    if (!point) throw new Error(`${selector} has no pressable box`);
+    const holdMs = await evaluate(tab, `Number(document.querySelector(${JSON.stringify(selector)})?.dataset.holdMs||0)`);
+    if (shape.dpr > 1) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ ...point, id: 1 }] }, tab.sessionId);
+      await wait(holdMs + 260);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, tab.sessionId);
+    } else {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', ...point, button: 'left', clickCount: 1 }, tab.sessionId);
+      await wait(holdMs + 260);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...point, button: 'left', clickCount: 1 }, tab.sessionId);
+    }
+  };
+  const writeShot = async (tab, name) => {
+    if (!shots) return;
+    mkdirSync(resolve(shots), { recursive: true });
+    await cdp.send('Page.bringToFront', {}, tab.sessionId); await wait(80);
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, tab.sessionId);
+    writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
+    console.log(`    shot ${name}`);
+  };
+  const writeContactSheet = async (shape) => {
+    if (!shots) return;
+    const entries = cases.flatMap((row) => ['solo', 'coop'].map((mode) => {
+      const filename = `guard-float-after-source-${shape.tag}-${mode}-${row.name}.png`;
+      const bytes = readFileSync(join(resolve(shots), filename));
+      return { row: row.name, mode, filename, src: `data:image/png;base64,${bytes.toString('base64')}` };
+    }));
+    const cards = entries.map((entry) => `<figure><figcaption><b>${entry.row.toUpperCase()}</b> · ${entry.mode === 'solo' ? 'SOLO' : 'TWO-CLIENT'}</figcaption><img src="${entry.src}" alt="${entry.row} ${entry.mode} guard-hit evidence"></figure>`).join('');
+    const imageHeight = shape.tag === '390x844' ? 760 : 430;
+    const html = `<!doctype html><meta charset="utf-8"><title>#207 ${shape.tag} source evidence</title><style>
+      *{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0a08;color:#f4e6bd;font:18px/1.3 system-ui,sans-serif}
+      h1{margin:0 0 20px;color:#f2c85b;font:800 30px/1.2 system-ui,sans-serif}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+      figure{margin:0;padding:10px;border:1px solid #8d7747;background:#15120d;border-radius:8px}figcaption{padding:0 2px 8px;color:#ddd4c2}b{color:#f3c86d}
+      img{display:block;width:100%;height:${imageHeight}px;object-fit:contain;object-position:top center;background:#070604;border:1px solid #353029}
+    </style><h1>GUARD HIT FLOATS · SOURCE · ${shape.tag} · AFTER</h1><main class="grid">${cards}</main>`;
+    const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
+    try {
+      await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
+      await until(tab, `[...document.images].length===6&&[...document.images].every(img=>img.complete&&img.naturalWidth>0)`, 'contact-sheet images', 30000);
+      await wait(120);
+      const metrics = await cdp.send('Page.getLayoutMetrics', {}, tab.sessionId);
+      const size = metrics.cssContentSize || metrics.contentSize;
+      const { data } = await cdp.send('Page.captureScreenshot', {
+        format: 'png', fromSurface: true, captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
+      }, tab.sessionId);
+      const name = `guard-float-source-contact-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
+      writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
+      console.log(`\n    contact sheet ${name}`);
+    } finally {
+      await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
+    }
+  };
 
   try {
     let port = 8527;
+    for (const shape of shapes) {
+      const server = await serve({ root: ROOT, port: port++, open: false, lan: false });
+      const base = `http://localhost:${server.port}/`;
+      const solo = await makeTab(shape);
+      try {
+        for (const row of cases) {
+          console.log(`\n  ${shape.tag} ${row.name} — real solo GUARD2 engine/event/FX`);
+          const settings = encodeURIComponent(JSON.stringify({ animSpeed: 'slow' }));
+          await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSeed=GUARD2&shotSettings=${settings}` }, solo.sessionId);
+          await until(solo, `!!window.__combat&&!!document.querySelector('.combat .end-turn')`, 'solo GUARD2 combat');
+          const setup = await evaluate(solo, `(()=>{
+            const c=window.__combat;
+            const intent=c.enemies.find(e=>e.alive)?.intent;
+            c.player.hp=${row.before.hp}; c.player.block=${row.before.block};
+            window.__guardReceipt=null; window.__guardAfter=null;
+            const emit=c.emit.bind(c);
+            c.emit=(type,payload)=>{const event=emit(type,payload);if(type==='damageDealt'&&payload.targetId==='player'){
+              window.__guardReceipt=structuredClone(event);window.__guardAfter={hp:c.player.hp,block:c.player.block};
+            }return event};
+            return{hp:c.player.hp,block:c.player.block,intent};
+          })()`);
+          check(setup.hp === row.before.hp && setup.block === row.before.block,
+            `${row.name}: debug establishes only HP${row.before.hp}/B${row.before.block}`,
+            `HP${setup.hp}/B${setup.block}`);
+          check(setup.intent?.moveId === 'slash' && setup.intent?.damage === 7,
+            `${row.name}: GUARD2 opens one real 7-damage slash`, JSON.stringify(setup.intent));
+          await press(solo, shape, '.end-turn');
+          await until(solo, `!!window.__guardReceipt`, 'solo damageDealt receipt');
+          await until(solo, `document.querySelectorAll('.fx-layer .float-num').length>=${row.soloTexts.length}`, 'solo visible float channels', 12000);
+          // The number spawns before the same paced beat updates the HUD. Read
+          // after that update but before the next beat resets retained Block.
+          await wait(170);
+          const reading = await evaluate(solo, `(()=>{
+            const layer=document.querySelector('.fx-layer'),anchor=document.querySelector('[data-eid="player"] .sprite')||document.querySelector('[data-eid="player"]');
+            const lr=layer.getBoundingClientRect(),ar=anchor.getBoundingClientRect();
+            const nodes=[...layer.querySelectorAll('.float-num')];
+            const floats=nodes.map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}});
+            return{receipt:window.__guardReceipt,eventAfter:window.__guardAfter,texts:floats.map(x=>x.text).sort(),floats,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom},anchor:{left:ar.left,top:ar.top,right:ar.right,bottom:ar.bottom},hud:{hp:document.querySelector('[data-eid="player"] [data-res="hp"]')?.textContent?.trim(),block:document.querySelector('[data-eid="player"] .block-badge')?.textContent?.trim()||'0'}};
+          })()`);
+          check(reading.receipt?.amount === 7 && reading.receipt?.blocked === row.blocked,
+            `${row.name}: real solo receipt is amount 7 / blocked ${row.blocked}`, JSON.stringify(reading.receipt));
+          check(reading.eventAfter?.hp === row.after.hp && reading.eventAfter?.block === row.after.block,
+            `${row.name}: state at authoritative hit is HP${row.after.hp}/B${row.after.block}`, JSON.stringify(reading.eventAfter));
+          check(JSON.stringify(reading.texts) === JSON.stringify(row.soloTexts),
+            `${row.name}: exact solo channels ${row.soloTexts.join(' + ')}`, reading.texts.join(' + '));
+          const guard = reading.floats.find((part) => part.cls.includes('blk'));
+          const damage = reading.floats.find((part) => part.cls.includes('dmg'));
+          check(row.blocked ? !!guard && !guard.text.startsWith('+') : !guard,
+            `${row.name}: guard channel is unsigned block vocabulary`, guard?.text || 'no guard channel');
+          check(row.after.hp < row.before.hp ? !!damage : !damage,
+            `${row.name}: damage channel exists only for HP loss`, damage?.text || 'no damage channel');
+          check(reading.floats.every(({ rect }) => rect.left >= reading.layer.left && rect.right <= reading.layer.right
+              && rect.top >= reading.layer.top && rect.bottom <= reading.layer.bottom),
+            `${row.name}: solo results stay on-glass`);
+          check(reading.floats.length < 2 || reading.floats.every((a, i) => reading.floats.every((b, j) => i >= j
+              || a.rect.right <= b.rect.left || b.rect.right <= a.rect.left || a.rect.bottom <= b.rect.top || b.rect.bottom <= a.rect.top)),
+            `${row.name}: paired solo results do not overlap`);
+
+          if (shots) {
+            await evaluate(solo, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`SOURCE · solo GUARD2 · ${row.name} · before HP${row.before.hp}/B${row.before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${row.after.hp}/B${row.after.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
+            await writeShot(solo, `guard-float-after-source-${shape.tag}-solo-${row.name}.png`);
+          }
+        }
+      } finally {
+        await cdp.send('Target.closeTarget', { targetId: solo.targetId }).catch(() => {});
+        await new Promise((done) => server.server.close(done));
+      }
+    }
     for (const shape of shapes) for (const row of cases) {
+      // A real Defend proves +N guard gain separately; establish only the
+      // remainder here so the authoritative hit begins at the story's exact
+      // HP/Block state (10, 4 or 0).
+      setCombatStartStateForTools({
+        name: 'Fenn', hp: row.before.hp,
+        block: row.before.block - (row.defend ? row.blocked : 0),
+      });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
       const base = `http://localhost:${server.port}/`;
       const host = await makeTab(shape); const guest = await makeTab(shape);
@@ -144,43 +276,60 @@ async function browserDoor() {
           const play = await evaluate(guest, `(()=>{const all=[...document.querySelectorAll('.hand .card')],c=all.find(x=>/defend/i.test(x.textContent));if(c)c.click();return{played:!!c,cards:all.map(x=>({text:x.textContent.trim().replace(/\\s+/g,' '),aria:x.getAttribute('aria-label'),id:x.dataset.instanceId||x.dataset.cardId||null}))}})()`);
           check(play.played, `${row.name}: Fenn plays a real Defend card`, play.played ? '' : JSON.stringify(play.cards));
           if (!play.played) throw new Error(`Defend card not found in guest hand: ${JSON.stringify(play.cards)}`);
-          await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.block===${row.blocked}})()`, `Fenn block ${row.blocked}`);
+          await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.block===${row.before.block}})()`, `Fenn block ${row.before.block}`);
+          await until(guest, `[...document.querySelectorAll('.fx-layer .float-num.blk')].some(n=>n.textContent===${JSON.stringify(`+${row.blocked}`)})`, 'real guard-gain float');
+          const gain = await evaluate(guest, `(()=>{const n=[...document.querySelectorAll('.fx-layer .float-num.blk')].find(x=>x.textContent===${JSON.stringify(`+${row.blocked}`)});return n?{text:n.textContent,color:getComputedStyle(n).color}:null})()`);
+          check(gain?.text === `+${row.blocked}`, `${row.name}: guard gain keeps separate +N vocabulary`, JSON.stringify(gain));
+          await until(guest, `document.querySelectorAll('.fx-layer .float-num').length===0`, 'guard-gain float expires', 4000);
         }
-        const beforeHp = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.players.find(p=>p.id===id)?.hp})()`);
+        const before = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id,p=s.scene.players.find(p=>p.id===id);return{hp:p?.hp,block:p?.block}})()`);
         await evaluate(host, click('#coop-endturn')); await evaluate(guest, click('#coop-endturn'));
         await until(guest, `(()=>{const s=window.__coopSnapshot,id=s.party.find(p=>p.name==='Fenn')?.id;return s.scene.events?.some(e=>e.type==='damageDealt'&&e.playerId===id)})()`, 'authoritative Fenn damage receipt');
-        await until(guest, `document.querySelectorAll('.fx-layer .float-num').length>=${row.texts.length}`, 'visible float channels', 12000);
-        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id);return{hp:p.hp,block:p.block,receipt:e,texts:[...document.querySelectorAll('.fx-layer .float-num')].map(x=>x.textContent).sort(),guard:[...document.querySelectorAll('.fx-layer .float-num.blk')].map(x=>x.textContent)}})()`);
+        await until(guest, `document.querySelectorAll('.fx-layer .float-num').length>=${row.coopTexts.length}`, 'visible float channels', 12000);
+        const reading = await evaluate(guest, `(()=>{const all=window.__coopSnapshot,id=all.party.find(p=>p.name==='Fenn')?.id,s=all.scene,p=s.players.find(x=>x.id===id),e=s.events.find(x=>x.type==='damageDealt'&&x.playerId===id),layer=document.querySelector('.fx-layer'),seat=document.querySelector('[data-seat="'+CSS.escape(id)+'"]'),lr=layer.getBoundingClientRect(),sr=seat.getBoundingClientRect(),floats=[...layer.querySelectorAll('.float-num')].map(n=>{const r=n.getBoundingClientRect();return{text:n.textContent,cls:n.className,color:getComputedStyle(n).color,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom},cx:(r.left+r.right)/2,cy:(r.top+r.bottom)/2}}),target=floats.filter(x=>x.cx>=sr.left&&x.cx<=sr.right&&x.cy>=sr.top&&x.cy<=sr.bottom);const probe=document.createElement('span');probe.className='float-num blk';probe.style.display='none';layer.appendChild(probe);const guardColor=getComputedStyle(probe).color;probe.remove();return{hp:p.hp,block:p.block,receipt:e,texts:floats.map(x=>x.text).sort(),targetTexts:target.map(x=>x.text).sort(),target,guard:target.filter(x=>x.cls.includes('blk')).map(x=>x.text),guardColors:target.filter(x=>x.cls.includes('blk')).map(x=>x.color),guardColor,layer:{left:lr.left,top:lr.top,right:lr.right,bottom:lr.bottom}}})()`);
         check(reading.receipt?.amount === 7 && reading.receipt?.blocked === row.blocked,
           `${row.name}: wire receipt is amount 7 / blocked ${row.blocked}`, JSON.stringify(reading.receipt));
         const residual = 7 - row.blocked;
-        check(reading.hp === beforeHp - residual && reading.block === 0,
-          `${row.name}: authoritative Fenn state loses only ${residual} HP and guard clears`, `HP${beforeHp}→${reading.hp}/B${reading.block}`);
-        check(JSON.stringify(reading.texts) === JSON.stringify(row.texts),
-          `${row.name}: exact visible channels ${row.texts.join(' + ')}`, reading.texts.join(' + '));
+        check(before.hp === row.before.hp && before.block === row.before.block,
+          `${row.name}: co-op begins exact HP${row.before.hp}/B${row.before.block}`,
+          `HP${before.hp}/B${before.block}`);
+        check(reading.hp === row.after.hp && reading.block === 0,
+          `${row.name}: authoritative Fenn hit reaches HP${row.after.hp} and next-turn guard clears`, `HP${before.hp}→${reading.hp}/B${reading.block}`);
+        check(JSON.stringify(reading.texts) === JSON.stringify(row.coopTexts),
+          `${row.name}: exact visible channels ${row.coopTexts.join(' + ')}`, reading.texts.join(' + '));
+        check(JSON.stringify(reading.targetTexts) === JSON.stringify(row.soloTexts),
+          `${row.name}: Fenn target owns exactly ${row.soloTexts.join(' + ')}`, reading.targetTexts.join(' + '));
         check(!reading.guard.some((text) => text.startsWith('+')),
           `${row.name}: absorbed guard is never mislabeled as gain`, reading.guard.join(', ') || 'no guard channel');
+        check(!reading.guardColors.length || reading.guardColors.every((color) => color === reading.guardColor),
+          `${row.name}: absorbed guard uses computed block colour`, `${reading.guardColors.join(', ') || 'no guard channel'} / ${reading.guardColor}`);
+        check(reading.target.every(({ rect }) => rect.left >= reading.layer.left && rect.right <= reading.layer.right
+            && rect.top >= reading.layer.top && rect.bottom <= reading.layer.bottom),
+          `${row.name}: Fenn results stay on-glass`);
+        check(reading.target.length < 2 || reading.target.every((a, i) => reading.target.every((b, j) => i >= j
+            || a.rect.right <= b.rect.left || b.rect.right <= a.rect.left || a.rect.bottom <= b.rect.top || b.rect.bottom <= a.rect.top)),
+          `${row.name}: paired Fenn results do not overlap`);
 
         if (shots) {
           mkdirSync(resolve(shots), { recursive: true });
-          await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer');for(const n of [...layer.querySelectorAll('.float-num')]){const c=n.cloneNode(true);c.style.animation='none';c.dataset.evidenceClone='true';layer.appendChild(c);n.remove()}const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;padding:6px 9px;background:#090806dd;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`SOURCE · two-client GUARD2 · ${row.name}`)};document.body.appendChild(note);return true})()`);
-          await cdp.send('Page.bringToFront', {}, guest.sessionId); await wait(120);
-          const { data } = await cdp.send('Page.captureScreenshot', { format: 'png' }, guest.sessionId);
+          const afterHit = { hp: before.hp - residual, block: before.block - row.blocked };
+          await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer');for(const n of [...layer.querySelectorAll('.float-num')]){const c=n.cloneNode(true);c.style.animation='none';c.dataset.evidenceClone='true';layer.appendChild(c);n.remove()}const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`SOURCE · two-client GUARD2 · ${row.name} · Fenn before HP${before.hp}/B${before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${afterHit.hp}/B${afterHit.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
           const name = `guard-float-after-source-${shape.tag}-coop-${row.name}.png`;
-          writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
-          console.log(`    shot ${name}`);
+          await writeShot(guest, name);
         }
         await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.remove());document.querySelector('.combatant.enemy:not(.dead)')?.click();return true})()`);
         await wait(180);
         const replay = await evaluate(guest, `[...document.querySelectorAll('.fx-layer .float-num')].map(x=>x.textContent)`);
         check(replay.length === 0, `${row.name}: local rerender replays zero authoritative receipts`, JSON.stringify(replay));
       } finally {
+        setCombatStartStateForTools(null);
         await cdp.send('Target.closeTarget', { targetId: host.targetId }).catch(() => {});
         await cdp.send('Target.closeTarget', { targetId: guest.targetId }).catch(() => {});
         await new Promise((done) => server.server.close(done));
         rmSync(join(ROOT, '.coop-session.json'), { force: true });
       }
     }
+    for (const shape of shapes) await writeContactSheet(shape);
   } finally {
     cdp.close(); await dropBrowser();
   }
@@ -231,29 +380,42 @@ function coopReceiptMatrix() {
     || opening.enemies[0].intent?.damage !== 7) {
     throw new Error('GUARD2 no longer opens one authoritative 7-damage slash');
   }
-  for (const [id, block] of [['p1', 7], ['p2', 4], ['p3', 0]]) {
+  for (const [id, block] of [['p1', 10], ['p2', 4], ['p3', 0]]) {
     const entity = combat.players.get(id).entity;
     entity.hp = 30;
     entity.block = block;
   }
+  const hitStates = [];
+  const emit = combat.emit.bind(combat);
+  combat.emit = (type, payload) => {
+    const event = emit(type, payload);
+    if (type === 'damageDealt' && event.playerId) {
+      const entity = combat.players.get(event.playerId)?.entity;
+      hitStates.push({ event: structuredClone(event), hp: entity?.hp, block: entity?.block });
+    }
+    return event;
+  };
   game.combatEndTurn('p1');
   const before = structuredClone(game.snapshot().scene);
   game.combatEndTurn('p2');
   game.combatEndTurn('p3');
   const after = structuredClone(game.snapshot().scene);
-  return { before, after };
+  return { before, after, hitStates };
 }
 
 const coop = coopReceiptMatrix();
 const receipts = coop.after.events.filter((event) => event.type === 'damageDealt');
 pass(receipts.length === 3, 'co-op transports one damageDealt receipt per real hit', `${receipts.length}/3`);
-for (const [index, [id, blocked, hp]] of [['p1', 7, 30], ['p2', 4, 27], ['p3', 0, 23]].entries()) {
+for (const [index, [id, blocked, hp, block]] of [['p1', 7, 30, 3], ['p2', 4, 27, 0], ['p3', 0, 23, 0]].entries()) {
   const event = receipts[index];
   const player = coop.after.players.find((entry) => entry.id === id);
+  const hit = coop.hitStates[index];
   pass(event?.playerId === id && event?.amount === 7 && event?.blocked === blocked,
     `co-op ${id} receipt keeps seat/amount/blocked`, JSON.stringify(event));
+  pass(hit?.hp === hp && hit?.block === block,
+    `co-op ${id} state at real hit remains HP${hp}/B${block}`, `HP${hit?.hp}/B${hit?.block}`);
   pass(player?.hp === hp && player?.block === 0,
-    `co-op ${id} mutation remains HP${hp}/B0`, `HP${player?.hp}/B${player?.block}`);
+    `co-op ${id} next-turn reset emits no extra hit receipt`, `HP${player?.hp}/B${player?.block}`);
 }
 
 const paths = {
