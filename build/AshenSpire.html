@@ -3738,6 +3738,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
 /* ---------- hand + controls ---------- */
 .hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.hand-overlay {
+  width: min(72rem, calc(100% - 2rem)); height: 100%; min-width: 0;
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "hand";
+  align-items: end; column-gap: 0.8rem;
+}
+.hand-overlay[data-paging='true'] {
+  grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);
+  grid-template-areas: "prev hand next";
+}
 /* padding-top RESERVES THE FAN'S LIFT, and the number is not written here.
    components/hand.js anchors the fan on its DEEPEST card and publishes the lift
    it used as `--fan-lift` on this element (FAN_LIFT_PROP — one home, Law 0
@@ -3749,7 +3758,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    so at Text S the slack shrinks with the cards and not with the 6 px step.
    Measured, not assumed: tools/hintstrip.mjs walks Text S and XL at both
    shapes. */
-.hand { display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
+.hand { grid-area: hand; min-width: 0; display: flex; align-items: flex-end; justify-content: center; height: 100%; padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }
 .hand .card { margin: 0 -1.8rem; transform-origin: bottom center; }
 .hand .card:hover, .hand .card.selected {
   transform: translateY(-56px) scale(1.32) !important; z-index: 50 !important;
@@ -3763,7 +3772,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* F1 hand paging. These move focus onto a real card; the existing Confirm path
    remains the one door that selects or plays it. */
 .hand-page {
-  position: absolute; bottom: 8.2rem; z-index: 70;
+  position: static; align-self: center; z-index: 70;
   width: var(--tap-floor); min-width: var(--tap-floor);
   height: var(--tap-floor); min-height: var(--tap-floor);
   display: grid; place-items: center; padding: 0;
@@ -3771,16 +3780,17 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   border: 1px solid var(--gold); border-radius: 8px;
   font: 700 2.4rem/1 var(--font-display); cursor: pointer;
 }
+.hand-page[hidden] { display: none; }
 .hand-page:hover, .hand-page.gp-focus, .hand-page:focus-visible {
   color: var(--gold); outline: 2px solid var(--parchment); outline-offset: 2px;
 }
-.hand-prev { left: calc(50% - 36rem); }
-.hand-next { right: calc(50% - 34rem); }
-/* Wide layouts keep the pager outside the card fan horizontally. Lift it by
-   one ergonomic control so Text XL's wider End Turn label cannot grow beneath
-   the Next button; --tap-floor is already normalized to a 44px device target. */
+.hand-prev { grid-area: prev; }
+.hand-next { grid-area: next; }
+/* Wide End Turn grows left toward the hand at large text sizes. Keep both
+   controls inside the overlay, but lift them by one ergonomic target so the
+   right-hand control never shares its hit surface. */
 :root:not([data-layout='narrow']) .hand-page {
-  bottom: calc(8.2rem + var(--tap-floor));
+  transform: translateY(calc(-1 * var(--tap-floor)));
 }
 
 /* #198: drag aiming deliberately reuses the click-selected `.aim-silho`
@@ -4150,9 +4160,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .hand-area {
     height: auto; flex-shrink: 0;
     display: grid;
-    grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);
-    grid-template-areas: "prev hand next" "orb end end";
+    grid-template-columns: var(--tap-floor) minmax(0, 1fr);
+    grid-template-areas: "hand hand" "orb end";
     align-items: center; gap: 0.8rem; padding: 0 1rem 1rem;
+  }
+  :root[data-layout='narrow'] .hand-overlay {
+    grid-area: hand; width: 100%; height: auto;
   }
   /* Same reservation, and the phone is the shape that PROVED it was needed: the
      fan's lift at the shipped hand of five is 12 px and this rule's own 1.2rem
@@ -4166,15 +4179,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     justify-content: flex-start; overflow-x: auto; gap: 0.6rem;
     scrollbar-width: thin;
   }
-  /* On narrow screens the pager is part of the hand row. Static grid cells keep
-     both 44px controls on glass at Text XL and separate them from the piles and
-     End Turn row below, independent of rem scaling or viewport height. */
-  :root[data-layout='narrow'] .hand-prev {
-    grid-area: prev; position: static; align-self: center;
-  }
-  :root[data-layout='narrow'] .hand-next {
-    grid-area: next; position: static; align-self: center;
-  }
+  /* The overlay owns the pager columns at 8+ and collapses them completely at
+     0-7. The control row below therefore never pays for a pager it does not use. */
   /* No negative margin: cards in a scroller must not overlap, or the one on
      top eats the taps meant for the one beneath — the same mechanism as #21,
      one level down. */
@@ -34235,7 +34241,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '133f36b5af';
+const SOURCE = 'b65b1638b9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34269,7 +34275,7 @@ const SOURCE = '133f36b5af';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0850';
+const ORDINAL = '0851';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40126,17 +40132,19 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       </div>
       <div class="hand-area">
         <div class="energy-orb"></div>
-        <button class="hand-page hand-prev" type="button" data-focusable
-          aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
-        <!-- The strip itself — cards, fan, key hints, the inspect hold, the
-             overlap arm and the Law 5 exemption — is components/hand.js, THE
-             one hand renderer (both surfaces; the exemption's home is
-             src/ui/handAxis.js). This screen supplies only the viewer half:
-             live previewCard entries off the paced snapshot, and the local
-             dispatch wiring (wireCardInput). -->
-        <div class="hand" id="combat-hand"></div>
-        <button class="hand-page hand-next" type="button" data-focusable
-          aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+        <div class="hand-overlay" data-paging="false">
+          <button class="hand-page hand-prev" type="button" data-focusable hidden
+            aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
+          <!-- The strip itself — cards, fan, key hints, the inspect hold, the
+               overlap arm and the Law 5 exemption — is components/hand.js, THE
+               one hand renderer (both surfaces; the exemption's home is
+               src/ui/handAxis.js). This screen supplies only the viewer half:
+               live previewCard entries off the paced snapshot, and the local
+               dispatch wiring (wireCardInput). -->
+          <div class="hand" id="combat-hand"></div>
+          <button class="hand-page hand-next" type="button" data-focusable hidden
+            aria-controls="combat-hand" aria-label="Next card" title="Next card">&#8250;</button>
+        </div>
         <button class="end-turn">END TURN</button>
       </div>
       <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -40174,6 +40182,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
   let handPageCursor = null; // survives focus moving onto Previous/Next itself
+  const HAND_PAGE_THRESHOLD = 7;
+  const handOverlay = $('.hand-overlay');
+  const handPages = [$('.hand-prev'), $('.hand-next')];
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -40808,12 +40819,39 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         return { inst, preview: pv, affordable, selected: inst.instanceId === selected || inst.instanceId === selfArm };
       }),
     });
+    syncHandPager(handList);
+  }
+
+  // Paging exists only when it adds reach. The controls stay mounted so their
+  // listeners and identity are stable, but `hidden` removes them from paint,
+  // hit testing, the AX tree, and every focus ring at 0-7 cards. The overlay's
+  // state is also the one CSS door that reserves their two columns at 8+.
+  function syncHandPager(handList) {
+    const paging = handList.length > HAND_PAGE_THRESHOLD;
+    const focusedPage = handPages.find((page) => page.classList.contains('gp-focus') || document.activeElement === page);
+    if (!paging && focusedPage) {
+      const cards = [...app.querySelectorAll('.hand .card')];
+      const surviving = cards.find((card) => card.dataset.instanceId === handPageCursor)
+        || cards.find((card) => card.classList.contains('selected'))
+        || cards[0]
+        || null;
+      if (surviving) {
+        surviving.dataset.pageTarget = '';
+        focusFirst('.hand .card[data-page-target]');
+        delete surviving.dataset.pageTarget;
+      }
+      if (document.activeElement === focusedPage) focusedPage.blur();
+    }
+    handPageCursor = paging ? handPageCursor : null;
+    handOverlay.dataset.paging = String(paging);
+    handPages.forEach((page) => { page.hidden = !paging; });
   }
 
   // F1's previous/next controls move the real focus cursor through the real
   // hand. They do not select or play a card; every input reaches this click and
   // the card keeps its existing Confirm semantics.
   function stepHand(delta) {
+    if (handOverlay.dataset.paging !== 'true') return;
     const cards = [...app.querySelectorAll('.hand .card')];
     if (!cards.length) return;
     let at = cards.findIndex((card) => card.classList.contains('gp-focus'));
