@@ -4,7 +4,8 @@
 // receipts, and five named source mutations. `--browser` adds both real product
 // paths: seeded solo combat through its real engine/event/FX pipeline, then two
 // LAN clients through lobby, shared map vote, live fight, real Defend cards and
-// real End Turn controls. `--shots DIR` records those measured frames.
+// real End Turn controls. `--standalone` selects the root artifact instead of
+// the source page. `--shots DIR` records those measured frames.
 
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
@@ -20,6 +21,56 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const argOf = (flag) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : null; };
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+const standalone = args.includes('--standalone');
+const evidenceDoor = standalone ? 'root' : 'source';
+
+function sourceContract(tree) {
+  return [
+    /const residual = amount - blocked;/.test(tree.fx),
+    /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
+    /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
+    /type === 'damageDealt' && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
+    /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
+    /for \(const ev of now !== prev \? \(now\.events \|\| \[\]\) : \[\]\)[\s\S]{0,900}receiptTargets\.add/.test(tree.coop),
+    /!receiptTargets\.has\(`player:\$\{p\.id\}`\)/.test(tree.coop),
+  ].every(Boolean);
+}
+
+if (args.includes('--artifact-check')) {
+  const html = readFileSync(resolve(ROOT, 'AshenSpire.html'), 'utf8');
+  // The selected standalone carries the UI seams; its real LAN server still
+  // executes tools/session.mjs, so the artifact door binds both exact inputs.
+  const session = readFileSync(resolve(ROOT, 'tools/session.mjs'), 'utf8');
+  const ok = sourceContract({ fx: html, coop: html, session });
+  console.log(`guard-float-parity artifact contract: ${ok ? 'OK' : 'RED'}`);
+  process.exit(ok ? 0 : 1);
+}
+
+if (args.includes('--selftest') || args.includes('--selftest-source')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  const plants = [
+    ['solo-collapses-to-preblock-total', 'src/ui/fx.js', 'const residual = amount - blocked;', 'const residual = amount;'],
+    ['absorbed-channel-omitted', 'src/ui/fx.js', "guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null", 'guard: null'],
+    ['absorbed-mislabeled-as-gain', 'src/ui/fx.js', 'text: String(blocked)', 'text: `+${blocked}`'],
+    ['coop-drops-damage-receipt', 'tools/session.mjs', "'enemyMoveStarted', 'damageDealt',", "'enemyMoveStarted',"],
+    ['coop-guesses-from-block-delta', 'src/ui/screens/coop.js', 'for (const ev of now !== prev ? (now.events || []) : [])', 'for (const ev of [])'],
+  ];
+  const sourceStatus = await doorSelftest({
+    tool: 'guard-float-parity.mjs', timeoutMs: 300000,
+    plants: plants.map(([name, file, find, replace]) => ({ name, file, find, replace, expectRed: /GUARD FLOAT PARITY FAILED/ })),
+  });
+  if (sourceStatus || args.includes('--selftest-source')) process.exit(sourceStatus);
+  const artifactFiles = ['AshenSpire.html', 'AshenSpire.html', 'AshenSpire.html', 'tools/session.mjs', 'AshenSpire.html'];
+  const artifactStatus = await doorSelftest({
+    tool: 'guard-float-parity.mjs', args: ['--artifact-check'], timeoutMs: 300000,
+    extraCopy: ['AshenSpire.html'],
+    plants: plants.map(([name, , find, replace], index) => ({
+      name: `selected-artifact twin: ${name}`, file: artifactFiles[index], find, replace,
+      expectRed: /artifact contract: RED/,
+    })),
+  });
+  process.exit(artifactStatus);
+}
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
@@ -43,8 +94,9 @@ function connectCdp(wsUrl) {
 }
 
 async function browserDoor() {
+  const browserArg = argOf('--browser');
   const browsers = [
-    argOf('--browser'), process.env.CHROME,
+    browserArg && !browserArg.startsWith('--') ? browserArg : null, process.env.CHROME,
     'C:/Program Files/Google/Chrome/Application/chrome.exe',
     'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
     'C:/Program Files/Microsoft/Edge/Application/msedge.exe',
@@ -129,18 +181,18 @@ async function browserDoor() {
   const writeContactSheet = async (shape) => {
     if (!shots) return;
     const entries = cases.flatMap((row) => ['solo', 'coop'].map((mode) => {
-      const filename = `guard-float-after-source-${shape.tag}-${mode}-${row.name}.png`;
+      const filename = `guard-float-after-${evidenceDoor}-${shape.tag}-${mode}-${row.name}.png`;
       const bytes = readFileSync(join(resolve(shots), filename));
       return { row: row.name, mode, filename, src: `data:image/png;base64,${bytes.toString('base64')}` };
     }));
     const cards = entries.map((entry) => `<figure><figcaption><b>${entry.row.toUpperCase()}</b> · ${entry.mode === 'solo' ? 'SOLO' : 'TWO-CLIENT'}</figcaption><img src="${entry.src}" alt="${entry.row} ${entry.mode} guard-hit evidence"></figure>`).join('');
     const imageHeight = shape.tag === '390x844' ? 760 : 430;
-    const html = `<!doctype html><meta charset="utf-8"><title>#207 ${shape.tag} source evidence</title><style>
+    const html = `<!doctype html><meta charset="utf-8"><title>#207 ${shape.tag} ${evidenceDoor} evidence</title><style>
       *{box-sizing:border-box}body{margin:0;padding:24px;background:#0b0a08;color:#f4e6bd;font:18px/1.3 system-ui,sans-serif}
       h1{margin:0 0 20px;color:#f2c85b;font:800 30px/1.2 system-ui,sans-serif}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
       figure{margin:0;padding:10px;border:1px solid #8d7747;background:#15120d;border-radius:8px}figcaption{padding:0 2px 8px;color:#ddd4c2}b{color:#f3c86d}
       img{display:block;width:100%;height:${imageHeight}px;object-fit:contain;object-position:top center;background:#070604;border:1px solid #353029}
-    </style><h1>GUARD HIT FLOATS · SOURCE · ${shape.tag} · AFTER</h1><main class="grid">${cards}</main>`;
+    </style><h1>GUARD HIT FLOATS · ${evidenceDoor.toUpperCase()} · ${shape.tag} · AFTER</h1><main class="grid">${cards}</main>`;
     const tab = await makeTab({ width: 1400, height: 900, dpr: 1 });
     try {
       await evaluate(tab, `(()=>{document.open();document.write(${JSON.stringify(html)});document.close();return true})()`);
@@ -152,19 +204,25 @@ async function browserDoor() {
         format: 'png', fromSurface: true, captureBeyondViewport: true,
         clip: { x: 0, y: 0, width: Math.ceil(size.width), height: Math.ceil(size.height), scale: 1 },
       }, tab.sessionId);
-      const name = `guard-float-source-contact-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
+      const name = `guard-float-${evidenceDoor}-contact-${shape.tag === '390x844' ? 'phone' : 'desktop'}.png`;
       writeFileSync(join(resolve(shots), name), Buffer.from(data, 'base64'));
       console.log(`\n    contact sheet ${name}`);
     } finally {
       await cdp.send('Target.closeTarget', { targetId: tab.targetId }).catch(() => {});
     }
   };
+  const closeServer = async (server) => {
+    // The inlined standalone may retain an HTTP keep-alive connection after
+    // its tab closes; drain it so a completed product cell cannot hang the gate.
+    server.server.closeAllConnections?.();
+    await new Promise((done) => server.server.close(done));
+  };
 
   try {
     let port = 8527;
     for (const shape of shapes) {
       const server = await serve({ root: ROOT, port: port++, open: false, lan: false });
-      const base = `http://localhost:${server.port}/`;
+      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}`;
       const solo = await makeTab(shape);
       try {
         for (const row of cases) {
@@ -221,13 +279,13 @@ async function browserDoor() {
             `${row.name}: paired solo results do not overlap`);
 
           if (shots) {
-            await evaluate(solo, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`SOURCE · solo GUARD2 · ${row.name} · before HP${row.before.hp}/B${row.before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${row.after.hp}/B${row.after.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
-            await writeShot(solo, `guard-float-after-source-${shape.tag}-solo-${row.name}.png`);
+            await evaluate(solo, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.style.animation='none');const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · solo GUARD2 · ${row.name} · before HP${row.before.hp}/B${row.before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${row.after.hp}/B${row.after.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
+            await writeShot(solo, `guard-float-after-${evidenceDoor}-${shape.tag}-solo-${row.name}.png`);
           }
         }
       } finally {
         await cdp.send('Target.closeTarget', { targetId: solo.targetId }).catch(() => {});
-        await new Promise((done) => server.server.close(done));
+        await closeServer(server);
       }
     }
     for (const shape of shapes) for (const row of cases) {
@@ -239,7 +297,7 @@ async function browserDoor() {
         block: row.before.block - (row.defend ? row.blocked : 0),
       });
       const server = await serve({ root: ROOT, port: port++, open: false, lan: true });
-      const base = `http://localhost:${server.port}/`;
+      const base = `http://localhost:${server.port}/${standalone ? 'AshenSpire.html' : 'index.html'}`;
       const host = await makeTab(shape); const guest = await makeTab(shape);
       console.log(`\n  ${shape.tag} ${row.name} — real two-client GUARD2 fight`);
       try {
@@ -313,8 +371,8 @@ async function browserDoor() {
         if (shots) {
           mkdirSync(resolve(shots), { recursive: true });
           const afterHit = { hp: before.hp - residual, block: before.block - row.blocked };
-          await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer');for(const n of [...layer.querySelectorAll('.float-num')]){const c=n.cloneNode(true);c.style.animation='none';c.dataset.evidenceClone='true';layer.appendChild(c);n.remove()}const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`SOURCE · two-client GUARD2 · ${row.name} · Fenn before HP${before.hp}/B${before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${afterHit.hp}/B${afterHit.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
-          const name = `guard-float-after-source-${shape.tag}-coop-${row.name}.png`;
+          await evaluate(guest, `(()=>{const layer=document.querySelector('.fx-layer');for(const n of [...layer.querySelectorAll('.float-num')]){const c=n.cloneNode(true);c.style.animation='none';c.dataset.evidenceClone='true';layer.appendChild(c);n.remove()}const note=document.createElement('div');note.className='evidence-caption';note.style.cssText='position:fixed;left:8px;top:8px;z-index:99999;max-width:calc(100vw - 32px);padding:6px 9px;background:#090806ee;border:1px solid #c9a85c;color:#f4e6bd;font:12px/1.3 monospace';note.textContent=${JSON.stringify(`${evidenceDoor.toUpperCase()} · two-client GUARD2 · ${row.name} · Fenn before HP${before.hp}/B${before.block} · receipt {amount:7, blocked:${row.blocked}} · after hit HP${afterHit.hp}/B${afterHit.block} · observed ${row.soloTexts.join(' + ')} · expected ${row.soloTexts.join(' + ')}`)};document.body.appendChild(note);return true})()`);
+          const name = `guard-float-after-${evidenceDoor}-${shape.tag}-coop-${row.name}.png`;
           await writeShot(guest, name);
         }
         await evaluate(guest, `(()=>{document.querySelectorAll('.fx-layer .float-num').forEach(n=>n.remove());document.querySelector('.combatant.enemy:not(.dead)')?.click();return true})()`);
@@ -325,7 +383,7 @@ async function browserDoor() {
         setCombatStartStateForTools(null);
         await cdp.send('Target.closeTarget', { targetId: host.targetId }).catch(() => {});
         await cdp.send('Target.closeTarget', { targetId: guest.targetId }).catch(() => {});
-        await new Promise((done) => server.server.close(done));
+        await closeServer(server);
         rmSync(join(ROOT, '.coop-session.json'), { force: true });
       }
     }
@@ -424,18 +482,6 @@ const paths = {
   session: resolve(ROOT, 'tools/session.mjs'),
 };
 const source = Object.fromEntries(Object.entries(paths).map(([key, path]) => [key, readFileSync(path, 'utf8')]));
-
-function sourceContract(tree) {
-  return [
-    /const residual = amount - blocked;/.test(tree.fx),
-    /guard: blocked > 0 \? \{ text: String\(blocked\), cls: 'blk small' \}/.test(tree.fx),
-    /damage: residual > 0 \? \{ text: `-\$\{residual\}`/.test(tree.fx),
-    /type === 'damageDealt' && payload\.targetId === 'player'[\s\S]{0,120}playerId: combat\.playerKey/.test(tree.session),
-    /\.filter\(\(e\) => \[[^\]]*'damageDealt'/.test(tree.session),
-    /for \(const ev of now !== prev \? \(now\.events \|\| \[\]\) : \[\]\)[\s\S]{0,900}receiptTargets\.add/.test(tree.coop),
-    /!receiptTargets\.has\(`player:\$\{p\.id\}`\)/.test(tree.coop),
-  ].every(Boolean);
-}
 
 pass(sourceContract(source), 'source seams form one receipt-driven contract');
 const plants = [

@@ -30663,8 +30663,11 @@ function placeAnchored(el, anchor, {
  * strings that were measured clipping, rather than a copy of it that would
  * agree with itself (#69).
  */
-function floatNum(layer, anchor, text, cls, tint) {
+function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   if (!layer || !anchor) return;
+  const x = Number.isFinite(placement.x) ? placement.x : 0;
+  const y = Number.isFinite(placement.y) ? placement.y : 0;
+  const jitter = placement.jitter !== false;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
@@ -30682,8 +30685,8 @@ function floatNum(layer, anchor, text, cls, tint) {
   // `translate` is the standalone property on purpose: num-pop animates
   // `transform`, and a `transform: translateX(-50%)` here would be overwritten
   // by the first keyframe. The two compose.
-  const centre = b.left + b.width / 2 + (Math.random() * 26 - 13);
-  const top = b.top + b.height * 0.25;
+  const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
+  const top = b.top + b.height * 0.25 + y;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
   layer.appendChild(el);
@@ -30701,6 +30704,25 @@ function floatNum(layer, anchor, text, cls, tint) {
   );
   el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
+  return el;
+}
+
+/**
+ * One semantic split for every attack hit, shared by solo and co-op.
+ * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
+ * Guard consumption is unsigned. Guard gain remains the separate +N channel.
+ */
+function guardHitFloatParts(event) {
+  const amount = Math.max(0, Number(event && event.amount) || 0);
+  const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
+  const residual = amount - blocked;
+  return {
+    amount,
+    blocked,
+    residual,
+    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
+    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
+  };
 }
 
 // Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
@@ -30977,21 +30999,24 @@ function playTimeline(events, ctx, done) {
 function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
-      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
-      // no flinch, no shake, no slash.
-      if (e.amount === 0 && e.blocked > 0) {
-        return (ctx) => {
-          sfx.play('block');
-          const anchor = ctx.anchorFor(e.targetId);
-          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
-        };
-      }
+      // One event owns both visible channels: unsigned guard consumed, then
+      // only the HP residual as damage. Paired results sit side-by-side without
+      // relying on random jitter, so phone and desktop read the same grammar.
       return (ctx) => {
-        sfx.play('hit');
+        const parts = guardHitFloatParts(e);
         const anchor = ctx.anchorFor(e.targetId);
-        const heavy = e.amount >= 15;
-        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
+        const paired = !!(parts.guard && parts.damage);
+        if (parts.guard) {
+          sfx.play('block');
+          spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
+          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
+            { x: paired ? -26 : 0, jitter: false });
+        }
+        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+        sfx.play('hit');
+        const heavy = parts.residual >= 15;
+        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
+          { x: paired ? 26 : 0, jitter: !paired });
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);
@@ -31098,7 +31123,7 @@ function visualFor(e, beatKind) {
 }
 
 
-Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, VIEWPORT_ORIGIN, anchorLocalBox, viewportLocalBox, clampBox, PLACE_GAP_PROP, placeGap, placeAnchored, floatNum, animateEvents, playTimeline });
+Object.assign(module.exports, { ANIM_SPEEDS, setAnimSpeed, getAnimSpeed, VIEWPORT_ORIGIN, anchorLocalBox, viewportLocalBox, clampBox, PLACE_GAP_PROP, placeGap, placeAnchored, floatNum, guardHitFloatParts, animateEvents, playTimeline });
 
 },
 "src/ui/sfx.js": function (module, exports, require) {
@@ -34246,7 +34271,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '80b67f8a6e';
+const SOURCE = '1abd6e2cd9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34280,7 +34305,7 @@ const SOURCE = '80b67f8a6e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0861';
+const ORDINAL = '0862';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48255,7 +48280,7 @@ Object.assign(module.exports, { lanInfo, lanHost, lanUnhost, lanConnect });
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-const { anchorLocalBox } = require("src/ui/fx.js");
+const { anchorLocalBox, guardHitFloatParts } = require("src/ui/fx.js");
 const { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { resolveCard } = require("src/model/registries.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
@@ -48431,6 +48456,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
 
   function render() {
     if (!snap) return;
+    if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     const mm = myMember();
@@ -48953,7 +48979,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35) => {
+    const put = (sel, cls, text, dy = 0.35, dx = 0) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -48963,7 +48989,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      el.style.left = `${b.left + b.width / 2}px`;
+      el.style.left = `${b.left + b.width / 2 + dx}px`;
       el.style.top = `${b.top + b.height * dy}px`;
       layer.appendChild(el);
       setTimeout(() => el.remove(), 1100);
@@ -48972,11 +48998,33 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       const box = app.querySelector(sel);
       if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
     };
+    // Authoritative receipts own hit floats. Snapshot deltas remain the home
+    // for healing, guard gain and legacy non-attack HP changes only.
+    const receiptTargets = new Set();
+    // A snapshot object is rendered more than once when selection, targeting,
+    // or responsive state changes. Receipts belong to the transition into a
+    // new authoritative snapshot and must never replay on those local renders.
+    for (const ev of now !== prev ? (now.events || []) : []) {
+      if (ev.type !== 'damageDealt') continue;
+      const parts = guardHitFloatParts(ev);
+      const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
+      const enemy = now.enemies.find((e) => e.id === ev.targetId);
+      const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
+      if (!sel) continue;
+      const targetKey = enemy ? `enemy:${enemy.id}` : `player:${playerId}`;
+      receiptTargets.add(targetKey);
+      const paired = !!(parts.guard && parts.damage);
+      if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0);
+      if (parts.damage) {
+        put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0);
+        recoil(`${sel} .sprite`, parts.residual >= 12);
+      }
+    }
     for (const e of now.enemies) {
       const pe = prev.enemies.find((x) => x.id === e.id);
       if (!pe) continue;
       const dmg = Math.max(0, pe.hp - e.hp);
-      if (dmg > 0) {
+      if (dmg > 0 && !receiptTargets.has(`enemy:${e.id}`)) {
         put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
         recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
       }
@@ -48990,7 +49038,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
       const pp = prev.players.find((x) => x.id === p.id);
       if (!pp) continue;
       const dmg = Math.max(0, pp.hp - p.hp);
-      if (dmg > 0) {
+      if (dmg > 0 && !receiptTargets.has(`player:${p.id}`)) {
         put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
         recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
       }
