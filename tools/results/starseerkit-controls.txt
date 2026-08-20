@@ -1,0 +1,52 @@
+COMMAND: node tools/measure-classes.mjs 30 --check
+measure-classes — 30 runs/class, policy=greedy, CHECK mode
+seeds: runsim's own formula (i*2654435761)>>>0, i=1..30 — any n nests a smaller n as its prefix
+
+  reaver: 11/30 (runsim, derived just now: 11/30) MATCH
+  starseer: 3/30 (runsim, derived just now: 3/30) MATCH
+  herald: 12/30 (runsim, derived just now: 12/30) MATCH
+
+CHECK PASSED — this tool is runsim, plus counters. (Consistency, not correctness.)
+
+what this check did NOT check (SPEC §8 clause 5):
+  · CONSISTENCY, not correctness — it proves this file agrees with runsim.mjs.
+    It says nothing about whether runsim is right. Both can be wrong together
+    and this check still prints PASSED.
+  · the greedy policy at n=30 only — nothing about skillfirst, random, reaverkit or starseerkit,
+    and nothing about any seed outside i=1..30.
+  · not the game: no balance claim, no spec band, no statement about a human pilot.
+  · not the counters — the per-class kit/bleed/stagger tallies this tool adds over
+    runsim have no runsim counterpart, so agreement here leaves them unverified.
+
+COMMAND: node tools/measure-classes.mjs --selftest
+measure-classes --selftest — 13 planted drifts at n=30, each must be CAUGHT
+
+derived baseline from runsim.mjs: reaver 11/30 · starseer 3/30 · herald 12/30
+
+  CLEAN     unmutated tree — matches runsim  ✔
+  rng       caught ✔ — instrumentation stops being passive — burns one misc draw per combat
+  flask     caught ✔ — flask threshold 0.55 → 0.75 (runsim drinks at 0.55)
+  path      caught ✔ — shrine-preference gate 0.55 → 0.95 (map pathing diverges)
+  shrine    caught ✔ — shrine rest gate 0.60 → 0.20 (rest/smith decision diverges)
+
+  Starseer counter receipts (same live summarizers, synthetic event trace):
+  starChargeGain     caught ✔ — source statusApplied(starstoneCharge)
+  starOpportunity    caught ✔ — source eligible charged decision boundary
+  starTurnReach      caught ✔ — source playerTurnStart + charged decision turn
+  starConversion     caught ✔ — source card outcome receipt after the eligible decision
+  starStranded       caught ✔ — source statusExpired(starstoneCharge)
+  starEnergy         caught ✔ — source playerTurnEnd-confirmed Energy snapshot
+  starCards          caught ✔ — source cardPlayed
+  starOutcomes       caught ✔ — source damageDealt charged outcome family
+
+  Starseer policy plant (real deterministic 30-seed fleet):
+  starseerFollowup  caught ✔ — conversion 92.9% → 41.9%; charged priority changes 1834 → 0
+
+SELFTEST PASSED — clean tree agrees, all 13 planted drifts were caught.
+
+what this selftest did NOT check (SPEC §8 clause 5):
+  · that these plants are the ONLY ways either copied bot or new counter can drift.
+    They cover named doors; another divergence nobody
+    thought to plant is not covered by a green here.
+  · anything about correctness — a caught plant proves the check can go red,
+    not that either implementation plays the game well.

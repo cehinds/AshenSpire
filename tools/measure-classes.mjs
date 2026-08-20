@@ -37,13 +37,17 @@
 //     the kit measures the sim): per-class signature statuses actually applied
 //     (Reaver bleed/staggered, Herald crimsonBlight, Starseer starstoneCharge),
 //     Reaver stance entries, damage dealt/taken per combat
-//   - policy variants (--policy=greedy|skillfirst|random) as the
+//   - class-agnostic policy variants (--policy=greedy|skillfirst|random) as the
 //     policy-sensitivity control: greedy is runsim's leftmost-affordable;
 //     skillfirst plays affordable skills before attacks (class-agnostic);
 //     random picks uniformly among affordable cards using a SEPARATE seeded
 //     LCG so the game's own rng streams are never perturbed by the picker.
 //     If the class ranking holds across policies, the split is not an
 //     artifact of one card ordering.
+//   - targeted falsifiers reaverkit and starseerkit. Each changes only its
+//     named class; complete non-target rows must remain seed-identical to
+//     greedy. Their evidence is paired within the named class, not a claim
+//     that every class was piloted by one identical policy.
 //
 // Run: node tools/measure-classes.mjs [runsPerClass=500] [--policy=greedy]
 //      node tools/measure-classes.mjs [n=30] --check        derive + compare
@@ -61,7 +65,7 @@ import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewIntent } from '../src/engine/combat.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
@@ -77,7 +81,7 @@ const N = Number(argv.find((a) => /^\d+$/.test(a)) || 500);
 const POLICY = (argv.find((a) => a.startsWith('--policy=')) || '--policy=greedy').slice(9);
 const CHECK = argv.includes('--check');
 const SELFTEST = argv.includes('--selftest');
-if (!['greedy', 'skillfirst', 'random', 'reaverkit'].includes(POLICY)) {
+if (!['greedy', 'skillfirst', 'random', 'reaverkit', 'starseerkit'].includes(POLICY)) {
   console.error(`unknown policy '${POLICY}'`); process.exit(2);
 }
 
@@ -97,9 +101,20 @@ const MUTATIONS = {
   path: 'shrine-preference gate 0.55 → 0.95 (map pathing diverges)',
   shrine: 'shrine rest gate 0.60 → 0.20 (rest/smith decision diverges)',
 };
+const STAR_MUTATIONS = {
+  starseerFollowup: 'charged follow-up prioritization is removed while the policy name remains',
+  starChargeGain: 'statusApplied(starstoneCharge) receipts are ignored',
+  starOpportunity: 'eligible charged decision points are not counted',
+  starTurnReach: 'turns containing an eligible charged decision point are not counted',
+  starConversion: 'the charged outcome receipt is ignored',
+  starStranded: 'statusExpired(starstoneCharge) receipts at player turn end are ignored',
+  starEnergy: 'playerTurnEnd receipts do not record the energy being abandoned',
+  starCards: 'cardPlayed receipts are ignored for cards-per-turn',
+  starOutcomes: 'charged outcome-family receipts are ignored',
+};
 let MUTATE = (argv.find((a) => a.startsWith('--mutate=')) || '').slice(9) || null;
-if (MUTATE && !(MUTATE in MUTATIONS)) {
-  console.error(`unknown mutation '${MUTATE}'; known: ${Object.keys(MUTATIONS).join(', ')}`);
+if (MUTATE && !(MUTATE in MUTATIONS) && !(MUTATE in STAR_MUTATIONS)) {
+  console.error(`unknown mutation '${MUTATE}'; known: ${[...Object.keys(MUTATIONS), ...Object.keys(STAR_MUTATIONS)].join(', ')}`);
   process.exit(2);
 }
 
@@ -161,6 +176,146 @@ function reaverkitPick(combat, affordable) {
     || affordable[0];
 }
 
+// ---- starseerkit: #205's effect-shaped policy and decision receipts ---------
+// The policy never names a card. It reads the same declarative effects the
+// engine interprets, and for non-Starseer classes returns the greedy pick
+// immediately. That last boundary is checked seed-for-seed below.
+const predContainsCharge = (pred) => {
+  if (!pred || typeof pred !== 'object') return false;
+  if (pred.p === 'hasStatus' && pred.status === 'starstoneCharge') return true;
+  return Object.values(pred).some((v) => Array.isArray(v)
+    ? v.some(predContainsCharge)
+    : predContainsCharge(v));
+};
+const chargedEffects = (def) => (def.effects || []).filter((e) => predContainsCharge(e.if));
+const establishesCharge = (def) => (def.effects || []).some((e) => e.op === 'applyStatus'
+  && e.status === 'starstoneCharge' && !e.if && (e.target === 'self' || e.target === 'owner'));
+const conditionalFamilies = (def) => {
+  const out = new Set();
+  for (const e of chargedEffects(def)) {
+    if (e.op === 'damage') out.add('damage');
+    if (e.op === 'block' || (e.op === 'applyStatus' && e.status === 'weak')) out.add('defense');
+    if (e.op === 'draw' || e.op === 'gainEnergy') out.add('continuation');
+  }
+  return out;
+};
+const hasDefensiveEffect = (def) => (def.effects || []).some((e) => e.op === 'block'
+  || (e.op === 'applyStatus' && e.status === 'weak'));
+const numericDamage = (def) => (def.effects || []).reduce((sum, e) => {
+  if (e.op !== 'damage' || typeof e.amount !== 'number') return sum;
+  if (e.if && e.if.p === 'not' && predContainsCharge(e.if.pred)) return sum;
+  return sum + e.amount * (typeof e.hits === 'number' ? e.hits : 1);
+}, 0);
+const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
+const incomingDamage = (combat) => combat.enemies.reduce((sum, enemy) => {
+  if (!enemy.alive) return sum;
+  try { return sum + Number(previewIntent(combat, enemy.id).totalDamage || 0); } catch { return sum; }
+}, 0);
+const containsChargeApplication = (node) => {
+  if (!node || typeof node !== 'object') return false;
+  if (node.op === 'applyStatus' && node.status === 'starstoneCharge') return true;
+  return Object.values(node).some((v) => Array.isArray(v)
+    ? v.some(containsChargeApplication)
+    : containsChargeApplication(v));
+};
+const persistentStarstonePower = (def) => {
+  if (def.type !== 'power') return false;
+  return (def.effects || []).some((e) => {
+    if (e.op !== 'applyStatus' || !['self', 'owner'].includes(e.target)) return false;
+    let status;
+    try { status = REG.statuses.get(e.status); } catch { return false; }
+    return containsChargeApplication(status);
+  });
+};
+
+function starseerkitPick(combat, affordable) {
+  if (combat.player.classId !== 'starseer') return affordable[0];
+  const defs = affordable.map((h) => ({ h, def: resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }) }));
+  const incoming = incomingDamage(combat);
+  const protectedNow = combat.player.block >= incoming;
+  const stableCheapest = (rows) => rows.slice().sort((a, b) => cardCost(a.def) - cardCost(b.def))[0];
+
+  // Establish a persistent combo engine early, but never spend the action when
+  // the telegraphed hit already exceeds both current block and current HP.
+  const charged = hasStatus(combat.player, 'starstoneCharge');
+  if (!charged && combat.turn <= 3 && incoming < combat.player.hp + combat.player.block) {
+    const power = stableCheapest(defs.filter(({ def }) => persistentStarstonePower(def)));
+    if (power) return power.h;
+  }
+
+  if (charged) {
+    // The observed-red plant removes only this charged prioritization. The
+    // policy still exists, still establishes charge, and still falls back.
+    if (MUTATE !== 'starseerFollowup') {
+      const followups = defs.filter(({ def }) => chargedEffects(def).length > 0);
+      const lethal = followups.find(({ def }) => def.type === 'attack'
+        && combat.enemies.some((e) => e.alive && numericDamage(def) >= e.hp));
+      if (lethal) return lethal.h;
+      if (!protectedNow) {
+        const defense = stableCheapest(followups.filter(({ def }) => conditionalFamilies(def).has('defense')));
+        if (defense) return defense.h;
+      }
+      const damage = stableCheapest(followups.filter(({ def }) => conditionalFamilies(def).has('damage')));
+      if (damage) return damage.h;
+      const continuation = stableCheapest(followups.filter(({ def }) => conditionalFamilies(def).has('continuation')));
+      if (continuation) return continuation.h;
+      if (followups.length) return stableCheapest(followups).h;
+    }
+    return affordable[0];
+  }
+
+  // Uncharged: a cheap charge-establishing spell, with defense first only
+  // when the current intent penetrates block. Stable sort preserves greedy
+  // order among cards with the same total Energy+Mana cost.
+  const starters = defs.filter(({ def }) => establishesCharge(def));
+  if (!protectedNow) {
+    const defense = stableCheapest(starters.filter(({ def }) => hasDefensiveEffect(def)));
+    if (defense) return defense.h;
+  }
+  return (stableCheapest(starters) || defs[0] || {}).h;
+}
+
+function outcomeReceipts(def, events) {
+  const wanted = conditionalFamilies(def);
+  const got = new Set();
+  if (wanted.has('damage') && events.some((e) => e.type === 'damageDealt' && e.sourceId === 'player')) got.add('damage');
+  if (wanted.has('defense') && events.some((e) => (e.type === 'blockGained' && e.targetId === 'player')
+      || (e.type === 'statusApplied' && e.sourceId === 'player' && e.status === 'weak'))) got.add('defense');
+  if (wanted.has('continuation') && events.some((e) => e.type === 'cardDrawn' || e.type === 'energyGained')) got.add('continuation');
+  return got;
+}
+
+// Decision-point contract from #205's preregistration clarification:
+// one denominator when an already-charged selection boundary has >=1 legal,
+// affordable conditional card; no denominator for the card that first gains
+// charge; a later eligible boundary is another denominator. Selection alone
+// is not a conversion — the post-dispatch event slice must contain a matching
+// damage, block/Weak, or draw/Energy receipt from the conditional family.
+function recordStarDecision(stats, turnSet, { combat, eligible, selectedDef, events }) {
+  if (combat.player.classId !== 'starseer' || !eligible.length) return;
+  if (MUTATE !== 'starOpportunity') stats.starOpportunityDecisions++;
+  if (MUTATE !== 'starTurnReach' && !turnSet.has(combat.turn)) {
+    turnSet.add(combat.turn); stats.starOpportunityTurns++;
+  }
+  if (!selectedDef || chargedEffects(selectedDef).length === 0) return;
+  const receipts = outcomeReceipts(selectedDef, events);
+  if (MUTATE !== 'starConversion' && receipts.size > 0) stats.starFollowups++;
+  if (MUTATE !== 'starOutcomes') for (const family of receipts) stats.starOutcomes[family]++;
+}
+
+function recordStarEvents(stats, events, energyAtEndTurn) {
+  for (const ev of events) {
+    if (ev.type === 'statusApplied' && ev.targetId === 'player' && ev.status === 'starstoneCharge'
+        && MUTATE !== 'starChargeGain') stats.starCharges++;
+    if (ev.type === 'statusExpired' && ev.targetId === 'player' && ev.status === 'starstoneCharge' && ev.reason === 'decayed'
+        && MUTATE !== 'starStranded') stats.starStranded++;
+    if (ev.type === 'playerTurnStart') stats.playerTurns++;
+    if (ev.type === 'playerTurnEnd') stats.endTurns++;
+    if (ev.type === 'cardPlayed' && MUTATE !== 'starCards') stats.cardsPlayed++;
+  }
+  if (MUTATE !== 'starEnergy') stats.unspentEnergy += energyAtEndTurn.reduce((sum, n) => sum + n, 0);
+}
+
 // Separate LCG for the random policy only — never the game's rng.
 function makeLcg(seed) {
   let s = seed >>> 0;
@@ -168,7 +323,7 @@ function makeLcg(seed) {
 }
 
 // ---- the combat bot (runsim.mjs verbatim, except the card picker) -----------
-function botFight(run, rng, encounterId, stats, pickRandom) {
+function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   const enc = REG.encounters.get(encounterId);
   const combat = createCombat({
     registries: REG, rng,
@@ -193,6 +348,8 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
     },
     enemyIds: enc.enemies,
   });
+  const opportunityTurns = new Set();
+  const energyAtEndTurn = [];
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
   let guard = 0;
   while (!combat.result && guard++ < 9000) {
@@ -219,21 +376,34 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
       if ((def.keywords || []).includes('unplayable')) return false;
       return (def.cost === 'X' ? 0 : def.cost) <= combat.player.energy && (def.manaCost || 0) <= combat.player.mana;
     });
+    const chargedAtDecision = run.class === 'starseer' && hasStatus(combat.player, 'starstoneCharge');
+    const eligible = chargedAtDecision
+      ? affordable.filter((h) => chargedEffects(resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded })).length > 0)
+      : [];
     let card;
-    if (POLICY === 'greedy') card = affordable[0];
-    else if (POLICY === 'reaverkit') card = affordable.length ? reaverkitPick(combat, affordable) : undefined;
-    else if (POLICY === 'skillfirst') {
+    if (policy === 'greedy') card = affordable[0];
+    else if (policy === 'reaverkit') card = affordable.length ? reaverkitPick(combat, affordable) : undefined;
+    else if (policy === 'starseerkit') card = affordable.length ? starseerkitPick(combat, affordable) : undefined;
+    else if (policy === 'skillfirst') {
       card = affordable.find((h) => resolveCard(REG, { cardId: h.cardId, upgraded: h.upgraded }).type !== 'attack') || affordable[0];
     } else { // random
       card = affordable.length ? affordable[Math.floor(pickRandom() * affordable.length)] : undefined;
     }
     const tgt = combat.enemies.find((e) => e.alive);
+    const selectedDef = card ? resolveCard(REG, { cardId: card.cardId, upgraded: card.upgraded }) : null;
+    if (policy === 'starseerkit' && chargedAtDecision && card && affordable[0]
+        && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges++;
+    const eventStart = combat.eventLog.length;
+    const endingEnergy = card ? null : combat.player.energy;
     try {
       if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
       dispatch(combat, { type: 'endTurn' });
     }
+    const decisionEvents = combat.eventLog.slice(eventStart);
+    recordStarDecision(stats, opportunityTurns, { combat, eligible, selectedDef, events: decisionEvents });
+    if (endingEnergy != null && decisionEvents.some((e) => e.type === 'playerTurnEnd')) energyAtEndTurn.push(endingEnergy);
   }
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
 
@@ -307,6 +477,7 @@ function botFight(run, rng, encounterId, stats, pickRandom) {
       else if (ev.targetId === 'player') stats.dmgTaken += ev.amount;
     }
   }
+  recordStarEvents(stats, combat.eventLog, energyAtEndTurn);
 
   run.flasks = combat.player.flasks;
   // The write-back src/main.js:1335 performs — without it the vessels are
@@ -329,16 +500,24 @@ function afterVictory(run, rng, pool) {
 }
 
 // ---- one full run (runsim.mjs verbatim, non-endless path) -------------------
-function simulateRun(classId, seed) {
+function emptyStats() {
+  return { combats: 0, statusOut: {}, statusSelf: {}, stanceEnters: 0, staggers: 0, dmgDealt: 0, dmgTaken: 0,
+    bleedApplied: 0, bleedFills: 0, bleedStranded: 0, burstDmg: 0,
+    winTotal: 0, winConverted: 0, winExpired: 0, winDiedOpen: 0,
+    selfTax: 0, healed: 0, act1Curve: [],
+    starCharges: 0, starOpportunityDecisions: 0, starOpportunityTurns: 0,
+    starFollowups: 0, starStranded: 0, starChargedPriorityChanges: 0,
+    starOutcomes: { damage: 0, defense: 0, continuation: 0 },
+    unspentEnergy: 0, cardsPlayed: 0, playerTurns: 0, endTurns: 0 };
+}
+
+function simulateRun(classId, seed, policy = POLICY) {
   const run = createRunState({ seed, classId, registries: REG });
   run._id = createIdGen('sim');
   run.seenEvents = [];
   const rng = createRng(seed);
   const pickRandom = makeLcg(seed ^ 0x9e3779b9);
-  const stats = { combats: 0, statusOut: {}, statusSelf: {}, stanceEnters: 0, staggers: 0, dmgDealt: 0, dmgTaken: 0,
-    bleedApplied: 0, bleedFills: 0, bleedStranded: 0, burstDmg: 0,
-    winTotal: 0, winConverted: 0, winExpired: 0, winDiedOpen: 0,
-    selfTax: 0, healed: 0, act1Curve: [] };
+  const stats = emptyStats();
   const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null, stats };
 
   for (let act = 1; act <= 3; act++) {
@@ -371,7 +550,7 @@ function simulateRun(classId, seed) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
             const hpIn = run.hp;
-            if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') {
+            if (botFight(run, rng, encId, stats, pickRandom, policy) !== 'victory') {
               result.deaths = `ambush:${encId}`;
               result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
               return result;
@@ -387,7 +566,7 @@ function simulateRun(classId, seed) {
         const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
         const encId = rollEncounter(REG, rng, { pool, act });
         const hpIn = run.hp;
-        if (botFight(run, rng, encId, stats, pickRandom) !== 'victory') {
+        if (botFight(run, rng, encId, stats, pickRandom, policy) !== 'victory') {
           result.deaths = `${pool}:${encId}`;
           result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
           return result;
@@ -446,12 +625,52 @@ function twoPropP(w1, n1, w2, n2) {
   return Math.max(0, Math.min(1, 1 - erf));
 }
 
+function exactMcNemarP(improved, regressed) {
+  const discordant = improved + regressed;
+  if (discordant === 0) return 1;
+  const edge = Math.min(improved, regressed);
+  const logFact = [0];
+  for (let i = 1; i <= discordant; i++) logFact[i] = logFact[i - 1] + Math.log(i);
+  const terms = [];
+  for (let k = 0; k <= edge; k++) {
+    terms.push(logFact[discordant] - logFact[k] - logFact[discordant - k] - discordant * Math.log(2));
+  }
+  const max = Math.max(...terms);
+  const tail = Math.exp(max) * terms.reduce((sum, x) => sum + Math.exp(x - max), 0);
+  return Math.min(1, 2 * tail);
+}
+
+function policyControlReceipt(kitFleet, greedyFleet, n) {
+  const mismatches = [];
+  for (const id of ['reaver', 'herald']) {
+    for (let i = 0; i < n; i++) {
+      if (JSON.stringify(kitFleet[id].rows[i]) !== JSON.stringify(greedyFleet[id].rows[i])) mismatches.push(`${id}:seed#${i + 1}`);
+    }
+  }
+  const kit = kitFleet.starseer.rows;
+  const greedy = greedyFleet.starseer.rows;
+  let improved = 0; let regressed = 0; let unchangedWin = 0; let unchangedLoss = 0;
+  for (let i = 0; i < n; i++) {
+    if (!greedy[i].victory && kit[i].victory) improved++;
+    else if (greedy[i].victory && !kit[i].victory) regressed++;
+    else if (kit[i].victory) unchangedWin++;
+    else unchangedLoss++;
+  }
+  const kitStar = starTotals(kitFleet);
+  const greedyStar = starTotals(greedyFleet);
+  const kitConversion = kitStar.opportunities ? kitStar.conversions / kitStar.opportunities : 0;
+  const greedyConversion = greedyStar.opportunities ? greedyStar.conversions / greedyStar.opportunities : 0;
+  return { mismatches, improved, regressed, unchangedWin, unchangedLoss,
+    kitConversion, greedyConversion, conversionLift: kitConversion - greedyConversion,
+    mcnemarP: exactMcNemarP(improved, regressed) };
+}
+
 // ---- fleet ------------------------------------------------------------------
-function runFleet(n) {
+function runFleet(n, policy = POLICY, classIds = REG.classes.all().map((c) => c.id)) {
   const out = {};
-  for (const cls of REG.classes.all()) {
+  for (const cls of REG.classes.all().filter((c) => classIds.includes(c.id))) {
     const rows = [];
-    for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0));
+    for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0, policy));
     out[cls.id] = { name: cls.name, rows };
   }
   return out;
@@ -503,12 +722,42 @@ function runCheck(n, baseline, { quiet = false } = {}) {
   return ok;
 }
 
+function starTotals(fleet) {
+  const rows = fleet.starseer.rows;
+  const sum = (f) => rows.reduce((n, r) => n + f(r.stats), 0);
+  return {
+    opportunities: sum((s) => s.starOpportunityDecisions),
+    conversions: sum((s) => s.starFollowups),
+    priorityChanges: sum((s) => s.starChargedPriorityChanges),
+  };
+}
+
+function starCounterFixture(mutation = null) {
+  MUTATE = mutation;
+  const stats = emptyStats();
+  const chargedDef = { effects: [{ op: 'damage', amount: 3,
+    if: { p: 'hasStatus', of: 'self', status: 'starstoneCharge' } }] };
+  recordStarDecision(stats, new Set(), {
+    combat: { turn: 2, player: { classId: 'starseer' } },
+    eligible: [{}], selectedDef: chargedDef,
+    events: [{ type: 'damageDealt', sourceId: 'player', amount: 3 }],
+  });
+  recordStarEvents(stats, [
+    { type: 'playerTurnStart', turn: 2 },
+    { type: 'statusApplied', targetId: 'player', status: 'starstoneCharge' },
+    { type: 'cardPlayed', cardId: 'fixture' },
+    { type: 'statusExpired', targetId: 'player', status: 'starstoneCharge', reason: 'decayed' },
+    { type: 'playerTurnEnd', turn: 2 },
+  ], [2]);
+  return stats;
+}
+
 function checkBoundary(n) {
   console.log('\nwhat this check did NOT check (SPEC §8 clause 5):');
   console.log('  · CONSISTENCY, not correctness — it proves this file agrees with runsim.mjs.');
   console.log('    It says nothing about whether runsim is right. Both can be wrong together');
   console.log('    and this check still prints PASSED.');
-  console.log(`  · the greedy policy at n=${n} only — nothing about skillfirst, random or reaverkit,`);
+  console.log(`  · the greedy policy at n=${n} only — nothing about skillfirst, random, reaverkit or starseerkit,`);
   console.log('    and nothing about any seed outside i=1..' + n + '.');
   console.log('  · not the game: no balance claim, no spec band, no statement about a human pilot.');
   console.log('  · not the counters — the per-class kit/bleed/stagger tallies this tool adds over');
@@ -521,7 +770,7 @@ if (SELFTEST) {
   // in-process bot, never the runsim subprocess, so re-deriving per mutation
   // would measure the same tree four times for the same answer.
   const n = 30;
-  console.log(`measure-classes --selftest — ${Object.keys(MUTATIONS).length} planted drifts at n=${n}, each must be CAUGHT\n`);
+  console.log(`measure-classes --selftest — ${Object.keys(MUTATIONS).length + Object.keys(STAR_MUTATIONS).length} planted drifts at n=${n}, each must be CAUGHT\n`);
   let baseline;
   try { baseline = deriveRunsimWins(n); } catch (e) {
     console.error(`SELFTEST ERROR — ${e.message}`); process.exit(2);
@@ -541,13 +790,44 @@ if (SELFTEST) {
     if (agreed) { console.log(`  ${name.padEnd(9)} NOT CAUGHT ✘ — ${why}`); failures++; }
     else console.log(`  ${name.padEnd(9)} caught ✔ — ${why}`);
   }
+  console.log('\n  Starseer counter receipts (same live summarizers, synthetic event trace):');
+  const cleanStar = starCounterFixture(null);
+  const counterPlants = {
+    starChargeGain: [(s) => s.starCharges, 'statusApplied(starstoneCharge)'],
+    starOpportunity: [(s) => s.starOpportunityDecisions, 'eligible charged decision boundary'],
+    starTurnReach: [(s) => s.starOpportunityTurns, 'playerTurnStart + charged decision turn'],
+    starConversion: [(s) => s.starFollowups, 'card outcome receipt after the eligible decision'],
+    starStranded: [(s) => s.starStranded, 'statusExpired(starstoneCharge)'],
+    starEnergy: [(s) => s.unspentEnergy, 'playerTurnEnd-confirmed Energy snapshot'],
+    starCards: [(s) => s.cardsPlayed, 'cardPlayed'],
+    starOutcomes: [(s) => s.starOutcomes.damage, 'damageDealt charged outcome family'],
+  };
+  for (const [name, [read, source]] of Object.entries(counterPlants)) {
+    const planted = starCounterFixture(name);
+    if (read(cleanStar) > 0 && read(planted) === 0) console.log(`  ${name.padEnd(18)} caught ✔ — source ${source}`);
+    else { console.log(`  ${name.padEnd(18)} NOT CAUGHT ✘ — source ${source}`); failures++; }
+  }
+
+  console.log('\n  Starseer policy plant (real deterministic 30-seed fleet):');
+  MUTATE = null;
+  const kit = starTotals(runFleet(n, 'starseerkit', ['starseer']));
+  MUTATE = 'starseerFollowup';
+  const noFollow = starTotals(runFleet(n, 'starseerkit', ['starseer']));
+  const kitRate = kit.opportunities ? kit.conversions / kit.opportunities : 0;
+  const plantRate = noFollow.opportunities ? noFollow.conversions / noFollow.opportunities : 0;
+  if (kit.priorityChanges > 0 && noFollow.priorityChanges === 0 && plantRate < kitRate) {
+    console.log(`  starseerFollowup  caught ✔ — conversion ${(kitRate * 100).toFixed(1)}% → ${(plantRate * 100).toFixed(1)}%; charged priority changes ${kit.priorityChanges} → 0`);
+  } else {
+    console.log(`  starseerFollowup  NOT CAUGHT ✘ — conversion ${(kitRate * 100).toFixed(1)}% → ${(plantRate * 100).toFixed(1)}%; charged priority changes ${kit.priorityChanges} → ${noFollow.priorityChanges}`);
+    failures++;
+  }
   MUTATE = null;
   console.log(failures === 0
-    ? `\nSELFTEST PASSED — clean tree agrees, all ${Object.keys(MUTATIONS).length} planted drifts were caught.`
+    ? `\nSELFTEST PASSED — clean tree agrees, all ${Object.keys(MUTATIONS).length + Object.keys(STAR_MUTATIONS).length} planted drifts were caught.`
     : `\nSELFTEST FAILED — ${failures} case(s) went the wrong way. This check cannot be cited as coverage.`);
   console.log('\nwhat this selftest did NOT check (SPEC §8 clause 5):');
-  console.log('  · that the four plants are the ONLY ways this file can drift from runsim.');
-  console.log('    They are the four sites where the copy was made; a fifth divergence nobody');
+  console.log('  · that these plants are the ONLY ways either copied bot or new counter can drift.');
+  console.log('    They cover named doors; another divergence nobody');
   console.log('    thought to plant is not covered by a green here.');
   console.log('  · anything about correctness — a caught plant proves the check can go red,');
   console.log('    not that either implementation plays the game well.');
@@ -556,7 +836,7 @@ if (SELFTEST) {
 
 console.log(`measure-classes — ${N} runs/class, policy=${POLICY}${CHECK ? ', CHECK mode' : ''}${MUTATE ? `, MUTATED (${MUTATE})` : ''}`);
 console.log(`seeds: runsim's own formula (i*2654435761)>>>0, i=1..${N} — any n nests a smaller n as its prefix\n`);
-if (MUTATE) console.log(`!! planted drift active: ${MUTATIONS[MUTATE]} — these numbers are about the plant, not the game\n`);
+if (MUTATE) console.log(`!! planted drift active: ${MUTATIONS[MUTATE] || STAR_MUTATIONS[MUTATE]} — these numbers are about the plant, not the game\n`);
 
 if (CHECK) {
   if (POLICY !== 'greedy') {
@@ -578,6 +858,10 @@ if (CHECK) {
 }
 
 const perClass = runFleet(N);
+// A kit policy may never perturb the two control classes. Re-run the same
+// seeds under greedy and compare the complete result objects, not only wins.
+const greedyControl = POLICY === 'starseerkit' ? runFleet(N, 'greedy') : null;
+const starseerkitControl = greedyControl ? policyControlReceipt(perClass, greedyControl, N) : null;
 
 for (const [id, { name, rows }] of Object.entries(perClass)) {
   const wins = rows.filter((r) => r.victory).length;
@@ -618,6 +902,16 @@ for (const [id, { name, rows }] of Object.entries(perClass)) {
     console.log(`  stagger windows: ${(wTot / N).toFixed(2)}/run — converted ${agg((s) => s.winConverted)}/${wTot} (${((agg((s) => s.winConverted) / wTot) * 100).toFixed(1)}%), expired unused ${agg((s) => s.winExpired)}, enemy died mid-window ${agg((s) => s.winDiedOpen)}`);
   }
   console.log(`  hp economy/combat: self-tax ${(agg((s) => s.selfTax) / combats).toFixed(2)} · healed ${(agg((s) => s.healed) / combats).toFixed(2)} · net attrition ${((agg((s) => s.dmgTaken) + agg((s) => s.selfTax) - agg((s) => s.healed)) / combats).toFixed(2)}`);
+  const turns = agg((s) => s.playerTurns);
+  const endTurns = agg((s) => s.endTurns);
+  console.log(`  action economy/turn: cards ${turns ? (agg((s) => s.cardsPlayed) / turns).toFixed(2) : '0.00'} · unspent Energy ${endTurns ? (agg((s) => s.unspentEnergy) / endTurns).toFixed(2) : '0.00'} (${turns} playerTurnStart / ${endTurns} playerTurnEnd receipts)`);
+  if (id === 'starseer') {
+    const opportunities = agg((s) => s.starOpportunityDecisions);
+    const followups = agg((s) => s.starFollowups);
+    console.log(`  Starstone decisions: charges gained ${(agg((s) => s.starCharges) / combats).toFixed(2)}/combat · opportunity turns ${agg((s) => s.starOpportunityTurns)} · eligible decision points ${opportunities}`);
+    console.log(`  charge conversion: ${followups}/${opportunities} = ${opportunities ? ((followups / opportunities) * 100).toFixed(1) : '0.0'}% · stranded at turn end ${agg((s) => s.starStranded)} · charged priority changed ${agg((s) => s.starChargedPriorityChanges)} selections`);
+    console.log(`  charged outcome receipts: damage ${agg((s) => s.starOutcomes.damage)} · block/Weak ${agg((s) => s.starOutcomes.defense)} · draw/Energy ${agg((s) => s.starOutcomes.continuation)}`);
+  }
   const a1d = rows.filter((r) => !r.victory && r.deathInfo && r.deathInfo.act === 1);
   if (a1d.length) {
     const byFloor = {}; const a1k = {};
@@ -644,8 +938,22 @@ for (let a = 0; a < ids.length; a++) {
   for (let b = a + 1; b < ids.length; b++) {
     const wa = perClass[ids[a]].rows.filter((r) => r.victory).length;
     const wb = perClass[ids[b]].rows.filter((r) => r.victory).length;
-    console.log(`  ${ids[a]} ${wa}/${N} vs ${ids[b]} ${wb}/${N}: p = ${twoPropP(wa, N, wb, N).toPrecision(3)}`);
+    const p = twoPropP(wa, N, wb, N);
+    console.log(`  ${ids[a]} ${wa}/${N} vs ${ids[b]} ${wb}/${N}: p ${p === 0 ? '< 1e-15' : `= ${p.toPrecision(3)}`}`);
   }
+}
+if (starseerkitControl) {
+  const c = starseerkitControl;
+  console.log('\nstarseerkit scope + paired-seed control:');
+  console.log(`  Reaver + Herald complete rows: ${c.mismatches.length ? `MISMATCH (${c.mismatches.slice(0, 5).join(', ')})` : `IDENTICAL ${N}/${N} seeds each`}`);
+  console.log(`  Starseer greedy → kit: improved ${c.improved} · regressed ${c.regressed} · unchanged win ${c.unchangedWin} · unchanged loss ${c.unchangedLoss}`);
+  console.log(`  charge conversion greedy ${(c.greedyConversion * 100).toFixed(1)}% → kit ${(c.kitConversion * 100).toFixed(1)}% = ${c.conversionLift >= 0 ? '+' : ''}${(c.conversionLift * 100).toFixed(1)} percentage points`);
+  console.log(`  exact McNemar p = ${c.mcnemarP.toPrecision(5)} (${c.improved + c.regressed} discordant paired seeds)`);
+  if (N < 1000) console.log('  qualification: PREFLIGHT ONLY — Rule 1 requires n=1000/class.');
+  else if (c.mismatches.length || c.conversionLift < 0.10) {
+    console.log('  qualification: INVALID — Rule 1 control or +10 point conversion threshold failed; draw no class conclusion.');
+    process.exitCode = 1;
+  } else console.log('  qualification: QUALIFIED — n=1000, scope identity, and +10 point conversion threshold all pass.');
 }
 console.log('\nwhat this run did NOT check (SPEC §8 clause 5):');
 console.log('  · this invocation ran NO check against runsim.mjs. These numbers are not');
@@ -654,8 +962,9 @@ console.log('  · and --check would only prove CONSISTENCY with runsim, never co
 console.log('    two copies of one bot can agree and both be wrong about the game.');
 console.log(`  · naive-bot floor only under policy=${POLICY} — no combo piloting, no deck curation,`);
 console.log('    no merchant. Absolute rates say nothing about the spec band for experienced');
-console.log('    players (SPEC.md M3: ~35–50%); only the BETWEEN-CLASS split under an identical');
-console.log('    policy is evidence about classes.');
+console.log('    players (SPEC.md M3: ~35–50%). Class-agnostic arms support between-class');
+console.log('    comparisons; targeted kit arms support paired policy effects plus their');
+console.log('    explicitly checked non-target identity controls.');
 console.log('  · the counters above (kit, bleed economy, stagger windows, hp economy) are read');
 console.log('    from the event log and have no independent oracle — nothing here cross-checks');
 console.log('    them against the engine\'s own accounting.');
