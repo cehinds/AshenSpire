@@ -581,6 +581,36 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 58/59 — module URL/filesystem path conversions use node:url (#13).
+  // 58 proves the two required known-bads through the real scanner and runs
+  // both from a working directory containing spaces. 59 scans tools/ + tests/.
+  const runUrlPath = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+
+  const urlPathSelf = runUrlPath(['--selftest']);
+  const urlPathSelfV = quote(urlPathSelf.out);
+  console.log(
+    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  58. the URL/path check catches both known-bads from a spaced working directory` +
+      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
+  );
+  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const urlPathTree = runUrlPath([]);
+  const urlPathTreeV = quote(urlPathTree.out);
+  console.log(
+    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  59. module URL/filesystem path conversions use the platform API` +
+      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
+      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
+  );
+  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -634,4 +664,9 @@ console.log('          reaches max HP by one road with one answer at creation an
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
+console.log('          58–59 guard two direct URL/path conversion shapes in tools/ and tests/:');
+console.log('          interpolated/concatenated file:// strings and direct .pathname reads');
+console.log('          from a URL based on import.meta.url. They prove both required fixtures');
+console.log('          fail from a spaced working directory; they do not prove every use of');
+console.log('          pathToFileURL/fileURLToPath chooses the semantically correct path.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

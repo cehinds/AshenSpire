@@ -291,7 +291,7 @@ async function loadVariant(tmpDir, label, transforms) {
   }
   const file = join(tmpDir, `dirorder.${label}.mjs`);
   writeFileSync(file, src);
-  return import(`file://${file.replace(/\\/g, '/')}`);
+  return import(pathToFileURL(file).href);
 }
 
 async function mutate() {
