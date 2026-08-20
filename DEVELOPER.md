@@ -168,9 +168,11 @@ loads that path directly, while the standalone bundler carries it through the
 same `assetUrl()` seam used by art. No registration row is needed.
 
 Use `SFX_MANIFEST` in `src/content/sfx.js` only when a cue needs a different
-path or format. A missing file keeps the existing synth recipe. An unreadable
-audio file also keeps the synth and logs the exact resolved URL, so a bad asset
-is diagnosable without making player feedback silent. Run
+path or format. The first cue stays immediate and procedural while an unknown
+file warms asynchronously; once that file is decoded, later cues use the
+cached sample instead. A missing or unreadable file is cached as unavailable,
+so every cue keeps the immediate synth. Decode failure logs the exact resolved
+URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
 ## Performance (SPEC §9 M4)

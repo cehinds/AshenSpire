@@ -9,7 +9,8 @@
 //   node tools/sfx-filename-convention.mjs --selftest
 //
 // The runtime lane drives the real initAudio() over a WebAudio/fetch recorder.
-// It proves fetch, decode, sample start and synth scheduling independently.
+// It proves the triggering cue is synchronous even while a sample warms, then
+// proves fetch, decode, later sample start and synth suppression independently.
 // The artifact lane checks the selected standalone file, never an assumed
 // output. Selftest plants the source seams and that selected artifact.
 
@@ -35,7 +36,7 @@ async function runner() {
   let decodes = 0;
   let starts = 0;
   let fetches = [];
-  let fetchOk = true;
+  let fetchMode = 'ok';
   const logs = [];
 
   proto.decodeAudioData = async () => {
@@ -51,9 +52,13 @@ async function runner() {
     node.start = (...a) => { if (node.buffer?.fixture === true) starts++; return start.apply(node, a); };
     return node;
   };
-  globalThis.fetch = async (url) => {
+  globalThis.fetch = (url) => {
     fetches.push(String(url));
-    return { ok: fetchOk, status: fetchOk ? 200 : 404, arrayBuffer: async () => new ArrayBuffer(16) };
+    if (fetchMode === 'stalled') return new Promise(() => {});
+    return Promise.resolve({
+      ok: fetchMode === 'ok', status: fetchMode === 'ok' ? 200 : 404,
+      arrayBuffer: async () => new ArrayBuffer(16),
+    });
   };
   const realWarn = console.warn;
   const realError = console.error;
@@ -64,29 +69,40 @@ async function runner() {
   const { ASSET_MAP } = await import('../src/ui/assetmap.js');
   const { initAudio } = await import('../src/ui/audio.js');
   const rows = [];
-  const run = async ({ name, id, manifest = null, inlined = null, ok = true, badDecode = false, plays = 1 }) => {
+  const snapshot = () => ({
+    fetches: [...fetches], decodes, starts,
+    synthPeaks: gains.filter((value) => value > 0.01), logs: [...logs],
+  });
+  const run = async ({ name, id, manifest = null, inlined = null, mode = 'ok', badDecode = false }) => {
     delete SFX_MANIFEST[id];
     const convention = `assets/sfx/${encodeURIComponent(id)}.ogg`;
     delete ASSET_MAP[convention];
     if (manifest) SFX_MANIFEST[id] = manifest;
     if (inlined) ASSET_MAP[convention] = inlined;
-    fetchOk = ok; decodeFails = badDecode;
+    fetchMode = mode; decodeFails = badDecode;
     fetches = []; decodes = 0; starts = 0; logs.length = 0;
     const engine = initAudio({ musicVolume: 50, sfxVolume: 50, muteAudio: false });
     gains.length = 0;
-    for (let i = 0; i < plays; i++) engine.sfx(id);
+    engine.sfx(id);
+    const firstImmediate = snapshot();
     await wait(30);
+    const afterWarm = snapshot();
+    gains.length = 0;
+    engine.sfx(id);
+    const secondImmediate = snapshot();
+    await wait(5);
+    const afterSecond = snapshot();
     rows.push({
-      name, id, convention, manifest, inlined, fetches: [...fetches], decodes, starts,
-      synthPeaks: gains.filter((value) => value > 0.01), logs: [...logs],
+      name, id, convention, manifest, inlined,
+      firstImmediate, afterWarm, secondImmediate, afterSecond,
     });
     delete SFX_MANIFEST[id]; delete ASSET_MAP[convention];
   };
 
-  await run({ name: 'convention-success', id: 'cardPlay' });
-  await run({ name: 'missing-falls-back', id: 'hit', ok: false });
+  await run({ name: 'stalled-fetch-stays-immediate', id: 'cardPlay', mode: 'stalled' });
+  await run({ name: 'known-good-later-play', id: 'heal' });
+  await run({ name: 'missing-stays-immediate', id: 'hit', mode: 'missing' });
   await run({ name: 'decode-falls-back-and-names-url', id: 'block', badDecode: true });
-  await run({ name: 'cached-fetch-and-decode', id: 'heal', plays: 2 });
   await run({ name: 'manifest-override', id: 'nodeTravel', manifest: 'custom/sfx/travel.wav' });
   await run({
     name: 'standalone-inlined-asset', id: 'relic',
@@ -130,37 +146,52 @@ function check(ok, label, detail = '') {
 
 function scoreRuntime(report) {
   const by = Object.fromEntries(report.rows.map((row) => [row.name, row]));
-  const success = by['convention-success'];
-  check(success.fetches.length === 1 && success.fetches[0] === success.convention,
-    'convention tries assets/sfx/<encoded-id>.ogg', JSON.stringify(success.fetches));
-  check(success.decodes === 1 && success.starts === 1 && success.synthPeaks.length === 0,
-    'successful sample decodes/starts once and suppresses synth', JSON.stringify(success));
+  const stalled = by['stalled-fetch-stays-immediate'];
+  check(stalled.firstImmediate.fetches.length === 1
+      && stalled.firstImmediate.fetches[0] === stalled.convention,
+    'convention warming starts at assets/sfx/<encoded-id>.ogg', JSON.stringify(stalled.firstImmediate));
+  check(stalled.firstImmediate.synthPeaks.includes(0.35) && stalled.firstImmediate.starts === 0,
+    'stalled fetch cannot delay the triggering procedural cue', JSON.stringify(stalled.firstImmediate));
+  check(stalled.secondImmediate.fetches.length === 1
+      && stalled.secondImmediate.synthPeaks.includes(0.35) && stalled.secondImmediate.starts === 0,
+    'pending fetch is cached while every later trigger stays immediate', JSON.stringify(stalled.secondImmediate));
 
-  const missing = by['missing-falls-back'];
-  check(missing.fetches.length === 1 && missing.fetches[0] === missing.convention,
-    'missing sample is attempted through the convention', JSON.stringify(missing.fetches));
-  check(missing.starts === 0 && missing.synthPeaks.includes(0.5) && missing.synthPeaks.includes(0.35),
-    'missing sample falls back to the existing hit synth', JSON.stringify(missing.synthPeaks));
+  const success = by['known-good-later-play'];
+  check(success.firstImmediate.synthPeaks.includes(0.35) && success.firstImmediate.starts === 0
+      && success.afterWarm.decodes === 1 && success.afterWarm.starts === 0,
+    'first successful warm keeps synth now and never replays the cue later', JSON.stringify(success));
+  check(success.secondImmediate.fetches.length === 1 && success.secondImmediate.decodes === 1
+      && success.secondImmediate.starts === 1 && success.secondImmediate.synthPeaks.length === 0,
+    'known-good cached sample suppresses synth on a later play', JSON.stringify(success.secondImmediate));
+
+  const missing = by['missing-stays-immediate'];
+  check(missing.firstImmediate.synthPeaks.includes(0.5) && missing.firstImmediate.synthPeaks.includes(0.35)
+      && missing.secondImmediate.synthPeaks.includes(0.5) && missing.secondImmediate.synthPeaks.includes(0.35),
+    'missing sample keeps both triggering cues immediate', JSON.stringify(missing));
+  check(missing.secondImmediate.fetches.length === 1 && missing.secondImmediate.decodes === 0
+      && missing.secondImmediate.starts === 0,
+    'missing sample caches unavailable and is not fetched twice', JSON.stringify(missing.secondImmediate));
 
   const decode = by['decode-falls-back-and-names-url'];
-  check(decode.decodes === 1 && decode.starts === 0 && decode.synthPeaks.includes(0.4),
-    'decode failure falls back to the existing block synth', JSON.stringify(decode.synthPeaks));
-  check(decode.logs.some((line) => line.includes(decode.convention)),
-    'decode failure diagnostic names the exact resolved URL', JSON.stringify(decode.logs));
-
-  const cached = by['cached-fetch-and-decode'];
-  check(cached.fetches.length === 1 && cached.decodes === 1 && cached.starts === 2,
-    'two plays share one cached fetch/decode and start twice', JSON.stringify(cached));
+  check(decode.firstImmediate.synthPeaks.includes(0.4)
+      && decode.secondImmediate.synthPeaks.includes(0.4) && decode.secondImmediate.starts === 0,
+    'decode failure keeps both triggering cues immediate', JSON.stringify(decode));
+  check(decode.secondImmediate.fetches.length === 1 && decode.secondImmediate.decodes === 1,
+    'decode failure caches unavailable and is not fetched or decoded twice', JSON.stringify(decode.secondImmediate));
+  check(decode.afterWarm.logs.some((line) => line.includes(decode.convention)),
+    'decode failure diagnostic names the exact resolved URL', JSON.stringify(decode.afterWarm.logs));
 
   const override = by['manifest-override'];
-  check(override.fetches.length === 1 && override.fetches[0] === override.manifest
-      && override.starts === 1 && override.synthPeaks.length === 0,
+  check(override.firstImmediate.fetches.length === 1 && override.firstImmediate.fetches[0] === override.manifest
+      && override.firstImmediate.synthPeaks.includes(0.3)
+      && override.secondImmediate.starts === 1 && override.secondImmediate.synthPeaks.length === 0,
     'manifest row remains an explicit override', JSON.stringify(override));
 
   const inline = by['standalone-inlined-asset'];
-  check(inline.fetches.length === 1 && inline.fetches[0] === inline.inlined
-      && inline.starts === 1 && inline.synthPeaks.length === 0,
-    'assetUrl selects the standalone inlined data URI', JSON.stringify(inline.fetches));
+  check(inline.firstImmediate.fetches.length === 1 && inline.firstImmediate.fetches[0] === inline.inlined
+      && inline.firstImmediate.synthPeaks.includes(0.3)
+      && inline.secondImmediate.starts === 1 && inline.secondImmediate.synthPeaks.length === 0,
+    'assetUrl warms standalone data URI, then cached sample suppresses synth', JSON.stringify(inline));
 }
 
 function copyBundleInputs(to) {
@@ -180,9 +211,24 @@ function selftest() {
       to: '    const sample = assetUrl(own(SFX_MANIFEST, id));',
     },
     {
-      name: 'sample miss no longer invokes synth',
-      from: '    playSample(sample, sfxBus, () => synthSfx(id));',
-      to: '    playSample(sample, sfxBus, () => {});',
+      name: 'stalled warm delays the procedural cue',
+      from: '    synthSfx(id);\n    warmSample(sample);',
+      to: '    warmSample(sample);',
+    },
+    {
+      name: 'known-good sample no longer suppresses later synth',
+      from: '    if (playCachedSample(sample, sfxBus)) return;',
+      to: '    playCachedSample(sample, sfxBus);',
+    },
+    {
+      name: 'pending and unavailable samples are fetched again',
+      from: '    if (state.sampleCache.has(url)) return;',
+      to: '    state.sampleCache.delete(url);',
+    },
+    {
+      name: 'decoded sample never becomes ready',
+      from: "        entry.status = 'ready';",
+      to: "        entry.status = 'unavailable';",
     },
     {
       name: 'decode diagnostic loses exact URL',

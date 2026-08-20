@@ -37,7 +37,9 @@
 // A recipe id automatically tries assets/sfx/<encoded-id>.ogg before using its
 // synth recipe. Add a row here only to override that path or format; both the
 // convention and overrides pass through assetUrl() so standalone builds can
-// inline them. Missing or undecodable files fall back to the recipes below.
+// inline them. A cue synths immediately while an unknown file warms; only a
+// cached known-good file replaces later cues. Missing/undecodable files remain
+// unavailable in that cache, so every cue keeps the immediate recipe below.
 // (Moved here from music.js so all SFX content has one home.)
 export const SFX_MANIFEST = {
   // cardPlay: 'assets/sfx/card.wav',  ← optional path/format override

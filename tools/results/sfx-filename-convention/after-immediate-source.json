@@ -1,0 +1,382 @@
+{
+  "head": "69437409499d6f6af1beb2186350436ddb1dce6c",
+  "artifact": null,
+  "report": {
+    "rows": [
+      {
+        "name": "stalled-fetch-stays-immediate",
+        "id": "cardPlay",
+        "convention": "assets/sfx/cardPlay.ogg",
+        "manifest": null,
+        "inlined": null,
+        "firstImmediate": {
+          "fetches": [
+            "assets/sfx/cardPlay.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.35
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "assets/sfx/cardPlay.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.35
+          ],
+          "logs": []
+        },
+        "secondImmediate": {
+          "fetches": [
+            "assets/sfx/cardPlay.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.35
+          ],
+          "logs": []
+        },
+        "afterSecond": {
+          "fetches": [
+            "assets/sfx/cardPlay.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.35
+          ],
+          "logs": []
+        }
+      },
+      {
+        "name": "known-good-later-play",
+        "id": "heal",
+        "convention": "assets/sfx/heal.ogg",
+        "manifest": null,
+        "inlined": null,
+        "firstImmediate": {
+          "fetches": [
+            "assets/sfx/heal.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.35,
+            0.2
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "assets/sfx/heal.ogg"
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.35,
+            0.2
+          ],
+          "logs": []
+        },
+        "secondImmediate": {
+          "fetches": [
+            "assets/sfx/heal.ogg"
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        },
+        "afterSecond": {
+          "fetches": [
+            "assets/sfx/heal.ogg"
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        }
+      },
+      {
+        "name": "missing-stays-immediate",
+        "id": "hit",
+        "convention": "assets/sfx/hit.ogg",
+        "manifest": null,
+        "inlined": null,
+        "firstImmediate": {
+          "fetches": [
+            "assets/sfx/hit.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.5,
+            0.35
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "assets/sfx/hit.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.5,
+            0.35
+          ],
+          "logs": []
+        },
+        "secondImmediate": {
+          "fetches": [
+            "assets/sfx/hit.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.5,
+            0.35
+          ],
+          "logs": []
+        },
+        "afterSecond": {
+          "fetches": [
+            "assets/sfx/hit.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.5,
+            0.35
+          ],
+          "logs": []
+        }
+      },
+      {
+        "name": "decode-falls-back-and-names-url",
+        "id": "block",
+        "convention": "assets/sfx/block.ogg",
+        "manifest": null,
+        "inlined": null,
+        "firstImmediate": {
+          "fetches": [
+            "assets/sfx/block.ogg"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.4,
+            0.2
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "assets/sfx/block.ogg"
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.4,
+            0.2
+          ],
+          "logs": [
+            "[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure"
+          ]
+        },
+        "secondImmediate": {
+          "fetches": [
+            "assets/sfx/block.ogg"
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.4,
+            0.2
+          ],
+          "logs": [
+            "[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure"
+          ]
+        },
+        "afterSecond": {
+          "fetches": [
+            "assets/sfx/block.ogg"
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.4,
+            0.2
+          ],
+          "logs": [
+            "[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure"
+          ]
+        }
+      },
+      {
+        "name": "manifest-override",
+        "id": "nodeTravel",
+        "convention": "assets/sfx/nodeTravel.ogg",
+        "manifest": "custom/sfx/travel.wav",
+        "inlined": null,
+        "firstImmediate": {
+          "fetches": [
+            "custom/sfx/travel.wav"
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.3
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "custom/sfx/travel.wav"
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.3
+          ],
+          "logs": []
+        },
+        "secondImmediate": {
+          "fetches": [
+            "custom/sfx/travel.wav"
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        },
+        "afterSecond": {
+          "fetches": [
+            "custom/sfx/travel.wav"
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        }
+      },
+      {
+        "name": "standalone-inlined-asset",
+        "id": "relic",
+        "convention": "assets/sfx/relic.ogg",
+        "manifest": null,
+        "inlined": "data:audio/ogg;base64,T2dnUw==",
+        "firstImmediate": {
+          "fetches": [
+            "data:audio/ogg;base64,T2dnUw=="
+          ],
+          "decodes": 0,
+          "starts": 0,
+          "synthPeaks": [
+            0.3
+          ],
+          "logs": []
+        },
+        "afterWarm": {
+          "fetches": [
+            "data:audio/ogg;base64,T2dnUw=="
+          ],
+          "decodes": 1,
+          "starts": 0,
+          "synthPeaks": [
+            0.3
+          ],
+          "logs": []
+        },
+        "secondImmediate": {
+          "fetches": [
+            "data:audio/ogg;base64,T2dnUw=="
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        },
+        "afterSecond": {
+          "fetches": [
+            "data:audio/ogg;base64,T2dnUw=="
+          ],
+          "decodes": 1,
+          "starts": 1,
+          "synthPeaks": [],
+          "logs": []
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "ok": true,
+      "label": "convention warming starts at assets/sfx/<encoded-id>.ogg",
+      "detail": "{\"fetches\":[\"assets/sfx/cardPlay.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "stalled fetch cannot delay the triggering procedural cue",
+      "detail": "{\"fetches\":[\"assets/sfx/cardPlay.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "pending fetch is cached while every later trigger stays immediate",
+      "detail": "{\"fetches\":[\"assets/sfx/cardPlay.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "first successful warm keeps synth now and never replays the cue later",
+      "detail": "{\"name\":\"known-good-later-play\",\"id\":\"heal\",\"convention\":\"assets/sfx/heal.ogg\",\"manifest\":null,\"inlined\":null,\"firstImmediate\":{\"fetches\":[\"assets/sfx/heal.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.35,0.2],\"logs\":[]},\"afterWarm\":{\"fetches\":[\"assets/sfx/heal.ogg\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.35,0.2],\"logs\":[]},\"secondImmediate\":{\"fetches\":[\"assets/sfx/heal.ogg\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]},\"afterSecond\":{\"fetches\":[\"assets/sfx/heal.ogg\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]}}"
+    },
+    {
+      "ok": true,
+      "label": "known-good cached sample suppresses synth on a later play",
+      "detail": "{\"fetches\":[\"assets/sfx/heal.ogg\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "missing sample keeps both triggering cues immediate",
+      "detail": "{\"name\":\"missing-stays-immediate\",\"id\":\"hit\",\"convention\":\"assets/sfx/hit.ogg\",\"manifest\":null,\"inlined\":null,\"firstImmediate\":{\"fetches\":[\"assets/sfx/hit.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.5,0.35],\"logs\":[]},\"afterWarm\":{\"fetches\":[\"assets/sfx/hit.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.5,0.35],\"logs\":[]},\"secondImmediate\":{\"fetches\":[\"assets/sfx/hit.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.5,0.35],\"logs\":[]},\"afterSecond\":{\"fetches\":[\"assets/sfx/hit.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.5,0.35],\"logs\":[]}}"
+    },
+    {
+      "ok": true,
+      "label": "missing sample caches unavailable and is not fetched twice",
+      "detail": "{\"fetches\":[\"assets/sfx/hit.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.5,0.35],\"logs\":[]}"
+    },
+    {
+      "ok": true,
+      "label": "decode failure keeps both triggering cues immediate",
+      "detail": "{\"name\":\"decode-falls-back-and-names-url\",\"id\":\"block\",\"convention\":\"assets/sfx/block.ogg\",\"manifest\":null,\"inlined\":null,\"firstImmediate\":{\"fetches\":[\"assets/sfx/block.ogg\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.4,0.2],\"logs\":[]},\"afterWarm\":{\"fetches\":[\"assets/sfx/block.ogg\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.4,0.2],\"logs\":[\"[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure\"]},\"secondImmediate\":{\"fetches\":[\"assets/sfx/block.ogg\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.4,0.2],\"logs\":[\"[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure\"]},\"afterSecond\":{\"fetches\":[\"assets/sfx/block.ogg\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.4,0.2],\"logs\":[\"[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure\"]}}"
+    },
+    {
+      "ok": true,
+      "label": "decode failure caches unavailable and is not fetched or decoded twice",
+      "detail": "{\"fetches\":[\"assets/sfx/block.ogg\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.4,0.2],\"logs\":[\"[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure\"]}"
+    },
+    {
+      "ok": true,
+      "label": "decode failure diagnostic names the exact resolved URL",
+      "detail": "[\"[audio] SFX sample 'assets/sfx/block.ogg' failed to decode — using synth fallback. Error: fixture decode failure\"]"
+    },
+    {
+      "ok": true,
+      "label": "manifest row remains an explicit override",
+      "detail": "{\"name\":\"manifest-override\",\"id\":\"nodeTravel\",\"convention\":\"assets/sfx/nodeTravel.ogg\",\"manifest\":\"custom/sfx/travel.wav\",\"inlined\":null,\"firstImmediate\":{\"fetches\":[\"custom/sfx/travel.wav\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.3],\"logs\":[]},\"afterWarm\":{\"fetches\":[\"custom/sfx/travel.wav\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.3],\"logs\":[]},\"secondImmediate\":{\"fetches\":[\"custom/sfx/travel.wav\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]},\"afterSecond\":{\"fetches\":[\"custom/sfx/travel.wav\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]}}"
+    },
+    {
+      "ok": true,
+      "label": "assetUrl warms standalone data URI, then cached sample suppresses synth",
+      "detail": "{\"name\":\"standalone-inlined-asset\",\"id\":\"relic\",\"convention\":\"assets/sfx/relic.ogg\",\"manifest\":null,\"inlined\":\"data:audio/ogg;base64,T2dnUw==\",\"firstImmediate\":{\"fetches\":[\"data:audio/ogg;base64,T2dnUw==\"],\"decodes\":0,\"starts\":0,\"synthPeaks\":[0.3],\"logs\":[]},\"afterWarm\":{\"fetches\":[\"data:audio/ogg;base64,T2dnUw==\"],\"decodes\":1,\"starts\":0,\"synthPeaks\":[0.3],\"logs\":[]},\"secondImmediate\":{\"fetches\":[\"data:audio/ogg;base64,T2dnUw==\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]},\"afterSecond\":{\"fetches\":[\"data:audio/ogg;base64,T2dnUw==\"],\"decodes\":1,\"starts\":1,\"synthPeaks\":[],\"logs\":[]}}"
+    }
+  ],
+  "failures": [],
+  "plantFailures": 0
+}
