@@ -111,6 +111,9 @@ const STAR_MUTATIONS = {
   starEnergy: 'playerTurnEnd receipts do not record the energy being abandoned',
   starCards: 'cardPlayed receipts are ignored for cards-per-turn',
   starOutcomes: 'charged outcome-family receipts are ignored',
+  starLethalOutcome: 'a lethal unconditional hit is allowed to impersonate a skipped charged branch',
+  starControlOutcome: 'charged Frost/Vulnerable outcomes are omitted from conversion receipts',
+  starDelayedIntent: 'a delayed attack is treated as incoming on its charging turn',
 };
 let MUTATE = (argv.find((a) => a.startsWith('--mutate=')) || '').slice(9) || null;
 if (MUTATE && !(MUTATE in MUTATIONS) && !(MUTATE in STAR_MUTATIONS)) {
@@ -187,15 +190,24 @@ const predContainsCharge = (pred) => {
     ? v.some(predContainsCharge)
     : predContainsCharge(v));
 };
-const chargedEffects = (def) => (def.effects || []).filter((e) => predContainsCharge(e.if));
+const chargedEffectEntries = (def) => (def.effects || [])
+  .map((effect, index) => ({ effect, index }))
+  .filter(({ effect }) => predContainsCharge(effect.if));
+const chargedEffects = (def) => chargedEffectEntries(def).map(({ effect }) => effect);
 const establishesCharge = (def) => (def.effects || []).some((e) => e.op === 'applyStatus'
   && e.status === 'starstoneCharge' && !e.if && (e.target === 'self' || e.target === 'owner'));
+const conditionalFamily = (effect) => {
+  if (effect.op === 'damage') return 'damage';
+  if (effect.op === 'block' || (effect.op === 'applyStatus' && effect.status === 'weak')) return 'defense';
+  if (effect.op === 'applyStatus' && ['frost', 'vulnerable'].includes(effect.status)) return 'control';
+  if (effect.op === 'draw' || effect.op === 'gainEnergy') return 'continuation';
+  return null;
+};
 const conditionalFamilies = (def) => {
   const out = new Set();
   for (const e of chargedEffects(def)) {
-    if (e.op === 'damage') out.add('damage');
-    if (e.op === 'block' || (e.op === 'applyStatus' && e.status === 'weak')) out.add('defense');
-    if (e.op === 'draw' || e.op === 'gainEnergy') out.add('continuation');
+    const family = conditionalFamily(e);
+    if (family) out.add(family);
   }
   return out;
 };
@@ -209,7 +221,19 @@ const numericDamage = (def) => (def.effects || []).reduce((sum, e) => {
 const cardCost = (def) => (def.cost === 'X' ? 99 : Number(def.cost || 0)) + Number(def.manaCost || 0);
 const incomingDamage = (combat) => combat.enemies.reduce((sum, enemy) => {
   if (!enemy.alive) return sum;
-  try { return sum + Number(previewIntent(combat, enemy.id).totalDamage || 0); } catch { return sum; }
+  try {
+    const preview = previewIntent(combat, enemy.id);
+    if (preview.delayed && MUTATE !== 'starDelayedIntent') {
+      // A delayed intent first COMMITs and performs only whileCharging. Its
+      // payload is incoming only on a later player turn whose next enemy phase
+      // can resolve the committed pending move. Ordinary Block gained on the
+      // commit turn is cleared at that later player-turn start and cannot
+      // protect the hit.
+      const pending = enemy.pendingMove;
+      if (!pending || combat.turn < pending.resolveOnTurn) return sum;
+    }
+    return sum + Number(preview.totalDamage || 0);
+  } catch { return sum; }
 }, 0);
 const containsChargeApplication = (node) => {
   if (!node || typeof node !== 'object') return false;
@@ -275,13 +299,89 @@ function starseerkitPick(combat, affordable) {
   return (stableCheapest(starters) || defs[0] || {}).h;
 }
 
-function outcomeReceipts(def, events) {
+// Trace one selected card without changing its state, RNG, queue order or
+// event log. Every queued action is wrapped so reading `script` marks the start
+// of that action; `op` is not read until AFTER executeAction has accepted the
+// predicate. Events emitted by that exact effect are then kept by effect index.
+// This is the effect-log half of the preregistered conversion definition: an
+// unconditional event elsewhere in the card cannot impersonate the conditional
+// branch, and a branch skipped because an earlier lethal effect ended combat
+// has neither an executed index nor an attributed receipt.
+function traceCardDispatch(combat, def, cardInstanceId, invoke) {
+  const indexByEffect = new Map((def.effects || []).map((effect, index) => [effect, index]));
+  const executed = new Set();
+  const eventsByIndex = new Map();
+  let activeIndex = null;
+  const enqueue = combat.enqueue;
+  const emit = combat.emit;
+  combat.enqueue = (action) => {
+    const raw = action.effect;
+    const ownIndex = action.card && action.card.instanceId === cardInstanceId
+      ? indexByEffect.get(raw) : undefined;
+    const effect = new Proxy(raw, {
+      get(target, prop, receiver) {
+        if (prop === 'script') activeIndex = null;
+        const value = Reflect.get(target, prop, receiver);
+        if (prop === 'op' && ownIndex !== undefined) {
+          activeIndex = ownIndex;
+          executed.add(ownIndex);
+        }
+        return value;
+      },
+    });
+    enqueue({ ...action, effect });
+  };
+  combat.emit = (type, payload) => {
+    const owner = activeIndex;
+    const event = emit(type, payload);
+    if (owner !== null) {
+      if (!eventsByIndex.has(owner)) eventsByIndex.set(owner, []);
+      eventsByIndex.get(owner).push(event);
+    }
+    return event;
+  };
+  try {
+    const result = invoke();
+    return { result, executed, eventsByIndex };
+  } finally {
+    combat.enqueue = enqueue;
+    combat.emit = emit;
+  }
+}
+
+function effectHasReceipt(effect, events) {
+  if (effect.op === 'damage') return events.some((e) => e.type === 'damageDealt' && e.sourceId === 'player');
+  if (effect.op === 'block') return events.some((e) => e.type === 'blockGained' && e.targetId === 'player');
+  if (effect.op === 'applyStatus') return events.some((e) => e.type === 'statusApplied'
+    && e.sourceId === 'player' && e.status === effect.status);
+  if (effect.op === 'draw') return events.some((e) => e.type === 'cardDrawn');
+  if (effect.op === 'gainEnergy') return events.some((e) => e.type === 'energyGained');
+  return false;
+}
+
+// The deliberately bad path reproduces the old broad-family counter for the
+// lethal-Pebble plant. It is never used by a clean run.
+function broadOutcomeReceipts(def, events) {
   const wanted = conditionalFamilies(def);
   const got = new Set();
   if (wanted.has('damage') && events.some((e) => e.type === 'damageDealt' && e.sourceId === 'player')) got.add('damage');
   if (wanted.has('defense') && events.some((e) => (e.type === 'blockGained' && e.targetId === 'player')
       || (e.type === 'statusApplied' && e.sourceId === 'player' && e.status === 'weak'))) got.add('defense');
+  if (wanted.has('control') && events.some((e) => e.type === 'statusApplied' && e.sourceId === 'player'
+      && ['frost', 'vulnerable'].includes(e.status))) got.add('control');
   if (wanted.has('continuation') && events.some((e) => e.type === 'cardDrawn' || e.type === 'energyGained')) got.add('continuation');
+  return got;
+}
+
+function outcomeReceipts(def, trace, decisionEvents) {
+  if (MUTATE === 'starLethalOutcome') return broadOutcomeReceipts(def, decisionEvents);
+  const got = new Set();
+  for (const { effect, index } of chargedEffectEntries(def)) {
+    const family = conditionalFamily(effect);
+    if (!family || (family === 'control' && MUTATE === 'starControlOutcome')) continue;
+    if (!trace.executed.has(index)) continue;
+    if (effectHasReceipt(effect, trace.eventsByIndex.get(index) || [])) got.add(family);
+  }
   return got;
 }
 
@@ -289,16 +389,17 @@ function outcomeReceipts(def, events) {
 // one denominator when an already-charged selection boundary has >=1 legal,
 // affordable conditional card; no denominator for the card that first gains
 // charge; a later eligible boundary is another denominator. Selection alone
-// is not a conversion — the post-dispatch event slice must contain a matching
-// damage, block/Weak, or draw/Energy receipt from the conditional family.
-function recordStarDecision(stats, turnSet, { combat, eligible, selectedDef, events }) {
+// is not a conversion — the effect-index trace must prove the charged branch
+// executed and that exact effect emitted its damage, block/status, draw or
+// Energy receipt. Frost and Vulnerable are first-class control receipts.
+function recordStarDecision(stats, turnSet, { combat, eligible, selectedDef, events, trace }) {
   if (combat.player.classId !== 'starseer' || !eligible.length) return;
   if (MUTATE !== 'starOpportunity') stats.starOpportunityDecisions++;
   if (MUTATE !== 'starTurnReach' && !turnSet.has(combat.turn)) {
     turnSet.add(combat.turn); stats.starOpportunityTurns++;
   }
   if (!selectedDef || chargedEffects(selectedDef).length === 0) return;
-  const receipts = outcomeReceipts(selectedDef, events);
+  const receipts = outcomeReceipts(selectedDef, trace, events);
   if (MUTATE !== 'starConversion' && receipts.size > 0) stats.starFollowups++;
   if (MUTATE !== 'starOutcomes') for (const family of receipts) stats.starOutcomes[family]++;
 }
@@ -395,14 +496,20 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
         && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges++;
     const eventStart = combat.eventLog.length;
     const endingEnergy = card ? null : combat.player.energy;
+    let decisionTrace = { executed: new Set(), eventsByIndex: new Map() };
     try {
-      if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
+      if (card && chargedAtDecision) {
+        decisionTrace = traceCardDispatch(combat, selectedDef, card.instanceId,
+          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id }));
+      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
       dispatch(combat, { type: 'endTurn' });
     }
     const decisionEvents = combat.eventLog.slice(eventStart);
-    recordStarDecision(stats, opportunityTurns, { combat, eligible, selectedDef, events: decisionEvents });
+    recordStarDecision(stats, opportunityTurns, {
+      combat, eligible, selectedDef, events: decisionEvents, trace: decisionTrace,
+    });
     if (endingEnergy != null && decisionEvents.some((e) => e.type === 'playerTurnEnd')) energyAtEndTurn.push(endingEnergy);
   }
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
@@ -507,7 +614,7 @@ function emptyStats() {
     selfTax: 0, healed: 0, act1Curve: [],
     starCharges: 0, starOpportunityDecisions: 0, starOpportunityTurns: 0,
     starFollowups: 0, starStranded: 0, starChargedPriorityChanges: 0,
-    starOutcomes: { damage: 0, defense: 0, continuation: 0 },
+    starOutcomes: { damage: 0, defense: 0, control: 0, continuation: 0 },
     unspentEnergy: 0, cardsPlayed: 0, playerTurns: 0, endTurns: 0 };
 }
 
@@ -737,10 +844,12 @@ function starCounterFixture(mutation = null) {
   const stats = emptyStats();
   const chargedDef = { effects: [{ op: 'damage', amount: 3,
     if: { p: 'hasStatus', of: 'self', status: 'starstoneCharge' } }] };
+  const damageEvent = { type: 'damageDealt', sourceId: 'player', amount: 3 };
   recordStarDecision(stats, new Set(), {
     combat: { turn: 2, player: { classId: 'starseer' } },
     eligible: [{}], selectedDef: chargedDef,
-    events: [{ type: 'damageDealt', sourceId: 'player', amount: 3 }],
+    events: [damageEvent],
+    trace: { executed: new Set([0]), eventsByIndex: new Map([[0, [damageEvent]]]) },
   });
   recordStarEvents(stats, [
     { type: 'playerTurnStart', turn: 2 },
@@ -750,6 +859,61 @@ function starCounterFixture(mutation = null) {
     { type: 'playerTurnEnd', turn: 2 },
   ], [2]);
   return stats;
+}
+
+function fixtureCombat(cardIds, { charge = true } = {}) {
+  const seed = 0x205;
+  const run = createRunState({ seed, classId: 'starseer', registries: REG });
+  run._id = createIdGen('fixture');
+  run.deck = cardIds.map((cardId, index) => ({ instanceId: `fixture${index + 1}`, cardId, upgraded: false }));
+  return createCombat({
+    registries: REG,
+    rng: createRng(seed),
+    player: {
+      classId: run.class, attributes: run.attributes, loadout: run.loadout,
+      maxHp: run.maxHp, hp: run.hp, maxMana: run.maxMana, mana: run.mana,
+      maxStamina: run.maxStamina, stamina: run.stamina,
+      energyMax: run.energyMax, drawPerTurn: run.drawPerTurn,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      deck: run.deck, relicIds: run.relics, flasks: [], flaskCharges: run.flaskCharges,
+      damageBySchoolAdd: run.damageBySchoolAdd,
+    },
+    enemyIds: ['fellWarden'],
+    playerStatuses: charge ? [{ status: 'starstoneCharge', stacks: 1 }] : [],
+  });
+}
+
+function realStarOutcomeFixture(cardId, { enemyHp = 120, mutation = null } = {}) {
+  MUTATE = mutation;
+  const combat = fixtureCombat([cardId]);
+  const card = combat.piles.hand.find((entry) => entry.cardId === cardId);
+  const enemy = combat.enemies.find((entry) => entry.alive);
+  enemy.hp = enemyHp;
+  const def = resolveCard(REG, { cardId, upgraded: false });
+  const start = combat.eventLog.length;
+  const trace = traceCardDispatch(combat, def, card.instanceId,
+    () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id }));
+  const events = combat.eventLog.slice(start);
+  const stats = emptyStats();
+  recordStarDecision(stats, new Set(), {
+    combat, eligible: [card], selectedDef: def, events, trace,
+  });
+  return { stats, events, trace };
+}
+
+function delayedIntentFixture(mutation = null) {
+  MUTATE = mutation;
+  const combat = fixtureCombat(['shootingShard', 'crystalBarrier']);
+  const enemy = combat.enemies[0];
+  enemy.intent = {
+    kind: 'attack', moveId: 'heldBlade', damage: 14, hits: 1, delayed: true, pending: false,
+  };
+  enemy.pendingMove = null;
+  const charging = starseerkitPick(combat, combat.piles.hand).cardId;
+  enemy.pendingMove = { moveId: 'heldBlade', resolveOnTurn: combat.turn };
+  enemy.intent = { ...enemy.intent, pending: true };
+  const due = starseerkitPick(combat, combat.piles.hand).cardId;
+  return { charging, due };
 }
 
 function checkBoundary(n) {
@@ -806,6 +970,39 @@ if (SELFTEST) {
     const planted = starCounterFixture(name);
     if (read(cleanStar) > 0 && read(planted) === 0) console.log(`  ${name.padEnd(18)} caught ✔ — source ${source}`);
     else { console.log(`  ${name.padEnd(18)} NOT CAUGHT ✘ — source ${source}`); failures++; }
+  }
+
+  console.log('\n  Starseer conditional-effect receipts (real dispatch path):');
+  const lethalClean = realStarOutcomeFixture('starstonePebble', { enemyHp: 1 });
+  const lethalPlant = realStarOutcomeFixture('starstonePebble', { enemyHp: 1, mutation: 'starLethalOutcome' });
+  if (lethalClean.stats.starFollowups === 0 && lethalPlant.stats.starFollowups === 1) {
+    console.log('  starLethalOutcome caught ✔ — lethal base damage ended combat; skipped charged damage cannot convert');
+  } else {
+    console.log(`  starLethalOutcome NOT CAUGHT ✘ — clean ${lethalClean.stats.starFollowups}, plant ${lethalPlant.stats.starFollowups}`);
+    failures++;
+  }
+  const frostClean = realStarOutcomeFixture('frostNova');
+  const arcClean = realStarOutcomeFixture('starstoneArc');
+  const frostPlant = realStarOutcomeFixture('frostNova', { mutation: 'starControlOutcome' });
+  const arcPlant = realStarOutcomeFixture('starstoneArc', { mutation: 'starControlOutcome' });
+  if (frostClean.stats.starFollowups === 1 && frostClean.stats.starOutcomes.control === 1
+      && arcClean.stats.starFollowups === 1 && arcClean.stats.starOutcomes.control === 1
+      && frostPlant.stats.starFollowups === 0 && arcPlant.stats.starFollowups === 0) {
+    console.log('  starControlOutcome caught ✔ — charged Frost and Vulnerable each confirm a control conversion');
+  } else {
+    console.log(`  starControlOutcome NOT CAUGHT ✘ — clean frost/arc ${frostClean.stats.starFollowups}/${arcClean.stats.starFollowups}, plant ${frostPlant.stats.starFollowups}/${arcPlant.stats.starFollowups}`);
+    failures++;
+  }
+
+  console.log('\n  Starseer delayed-intent policy (real Held Blade intent state):');
+  const delayedClean = delayedIntentFixture(null);
+  const delayedPlant = delayedIntentFixture('starDelayedIntent');
+  if (delayedClean.charging === 'shootingShard' && delayedClean.due === 'crystalBarrier'
+      && delayedPlant.charging === 'crystalBarrier') {
+    console.log('  starDelayedIntent caught ✔ — charging turn picks damage; due turn picks defense; old preview picks early defense');
+  } else {
+    console.log(`  starDelayedIntent NOT CAUGHT ✘ — clean ${delayedClean.charging}/${delayedClean.due}, plant ${delayedPlant.charging}/${delayedPlant.due}`);
+    failures++;
   }
 
   console.log('\n  Starseer policy plant (real deterministic 30-seed fleet):');
@@ -910,7 +1107,7 @@ for (const [id, { name, rows }] of Object.entries(perClass)) {
     const followups = agg((s) => s.starFollowups);
     console.log(`  Starstone decisions: charges gained ${(agg((s) => s.starCharges) / combats).toFixed(2)}/combat · opportunity turns ${agg((s) => s.starOpportunityTurns)} · eligible decision points ${opportunities}`);
     console.log(`  charge conversion: ${followups}/${opportunities} = ${opportunities ? ((followups / opportunities) * 100).toFixed(1) : '0.0'}% · stranded at turn end ${agg((s) => s.starStranded)} · charged priority changed ${agg((s) => s.starChargedPriorityChanges)} selections`);
-    console.log(`  charged outcome receipts: damage ${agg((s) => s.starOutcomes.damage)} · block/Weak ${agg((s) => s.starOutcomes.defense)} · draw/Energy ${agg((s) => s.starOutcomes.continuation)}`);
+    console.log(`  charged outcome receipts: damage ${agg((s) => s.starOutcomes.damage)} · block/Weak ${agg((s) => s.starOutcomes.defense)} · Frost/Vulnerable ${agg((s) => s.starOutcomes.control)} · draw/Energy ${agg((s) => s.starOutcomes.continuation)}`);
   }
   const a1d = rows.filter((r) => !r.victory && r.deathInfo && r.deathInfo.act === 1);
   if (a1d.length) {
@@ -965,6 +1162,6 @@ console.log('    no merchant. Absolute rates say nothing about the spec band for
 console.log('    players (SPEC.md M3: ~35–50%). Class-agnostic arms support between-class');
 console.log('    comparisons; targeted kit arms support paired policy effects plus their');
 console.log('    explicitly checked non-target identity controls.');
-console.log('  · the counters above (kit, bleed economy, stagger windows, hp economy) are read');
-console.log('    from the event log and have no independent oracle — nothing here cross-checks');
-console.log('    them against the engine\'s own accounting.');
+console.log('  · the counters above read the event log; Starseer conversion also attributes');
+console.log('    receipts to the exact conditional effect executed by the real queue. The');
+console.log('    named plants prove those doors can red, not an independent accounting oracle.');
