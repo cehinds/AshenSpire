@@ -329,6 +329,15 @@ export function createSession({ registries, seedString, endless = false, restore
       extraHpMult,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
+    // Co-op player entities intentionally share the engine id `player`; the
+    // active seat key is the authoritative discriminator. Stamp it at emission
+    // time, while that discriminator is still exact, rather than asking the UI
+    // to infer a target later from HP or block deltas.
+    const emit = combat.emit;
+    combat.emit = (type, payload = {}) => emit(type,
+      type === 'damageDealt' && payload.targetId === 'player'
+        ? { ...payload, playerId: combat.playerKey }
+        : payload);
     live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
@@ -340,11 +349,12 @@ export function createSession({ registries, seedString, endless = false, restore
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
     const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['enemyMoveStarted', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type))
+      .filter((e) => ['enemyMoveStarted', 'damageDealt', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
         kind: e.kind, targetId: e.targetId, playerId: e.playerId,
         reason: e.reason, school: e.school, amount: e.amount, value: e.value,
+        blocked: e.blocked, isAttack: e.isAttack,
         attempted: e.attempted,
         threshold: e.threshold, status: e.status, duration: e.duration,
       }));

@@ -38,7 +38,7 @@
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
-import { anchorLocalBox } from '../fx.js';
+import { anchorLocalBox, guardHitFloatParts } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -214,6 +214,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
 
   function render() {
     if (!snap) return;
+    if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     const mm = myMember();
@@ -736,7 +737,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35) => {
+    const put = (sel, cls, text, dy = 0.35, dx = 0) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -746,7 +747,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      el.style.left = `${b.left + b.width / 2}px`;
+      el.style.left = `${b.left + b.width / 2 + dx}px`;
       el.style.top = `${b.top + b.height * dy}px`;
       layer.appendChild(el);
       setTimeout(() => el.remove(), 1100);
@@ -755,11 +756,33 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const box = app.querySelector(sel);
       if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
     };
+    // Authoritative receipts own hit floats. Snapshot deltas remain the home
+    // for healing, guard gain and legacy non-attack HP changes only.
+    const receiptTargets = new Set();
+    // A snapshot object is rendered more than once when selection, targeting,
+    // or responsive state changes. Receipts belong to the transition into a
+    // new authoritative snapshot and must never replay on those local renders.
+    for (const ev of now !== prev ? (now.events || []) : []) {
+      if (ev.type !== 'damageDealt') continue;
+      const parts = guardHitFloatParts(ev);
+      const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
+      const enemy = now.enemies.find((e) => e.id === ev.targetId);
+      const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
+      if (!sel) continue;
+      const targetKey = enemy ? `enemy:${enemy.id}` : `player:${playerId}`;
+      receiptTargets.add(targetKey);
+      const paired = !!(parts.guard && parts.damage);
+      if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0);
+      if (parts.damage) {
+        put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0);
+        recoil(`${sel} .sprite`, parts.residual >= 12);
+      }
+    }
     for (const e of now.enemies) {
       const pe = prev.enemies.find((x) => x.id === e.id);
       if (!pe) continue;
       const dmg = Math.max(0, pe.hp - e.hp);
-      if (dmg > 0) {
+      if (dmg > 0 && !receiptTargets.has(`enemy:${e.id}`)) {
         put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
         recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
       }
@@ -773,7 +796,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave })
       const pp = prev.players.find((x) => x.id === p.id);
       if (!pp) continue;
       const dmg = Math.max(0, pp.hp - p.hp);
-      if (dmg > 0) {
+      if (dmg > 0 && !receiptTargets.has(`player:${p.id}`)) {
         put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
         recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
       }
