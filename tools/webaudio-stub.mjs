@@ -65,8 +65,17 @@ export function installWebAudioStub() {
     stop() {}
   }
   class FakeAudio {
-    constructor(url) { this.src = url; this.outs = []; elements.push(this); }
-    addEventListener() {}
+    constructor(url) { this.src = url; this.outs = []; this.handlers = new Map(); elements.push(this); }
+    // THE LISTENERS ARE KEPT SO A PROBE CAN FIRE THEM (#296 review). A stub that
+    // swallows addEventListener cannot reach any code path behind an event, and
+    // the playlist advance — a track ending and the next one starting — lives
+    // entirely behind 'ended'. That path leaked a gain node per track and no
+    // instrument could get to it, because the door was welded shut here.
+    addEventListener(type, fn) {
+      if (!this.handlers.has(type)) this.handlers.set(type, []);
+      this.handlers.get(type).push(fn);
+    }
+    fire(type) { for (const fn of this.handlers.get(type) || []) fn(); }
     play() { return Promise.resolve(); }
     pause() {}
   }

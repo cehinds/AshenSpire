@@ -276,17 +276,45 @@ export function initAudio(settings = {}) {
     const retiring = state.bedGains;
     state.bedGains = [];
     if (!retiring.length) return;
-    // The ramp ends at `fade`; the oscillators stop a beat later (`fade + 0.05`
-    // above). The stage outlives BOTH, by the same margin the voices get, so
-    // nothing is cut by arithmetic that is off by one scheduling tick.
-    const ms = Math.max(0, fade * 1000) + 120;
+    const t = now();
     for (const g of retiring) {
+      // THE MARGIN IS A FUNCTION OF WHAT THE STAGE CARRIES, NOT OF `fade`.
+      //
+      // The first version of this computed `fade * 1000 + 120` and its comment
+      // claimed the stage "outlives BOTH, by the same margin the voices get."
+      // That was true of the voices I had enumerated and false of the ones I
+      // had not: `stopMusic` fades only what is in `state.nodes`, which is the
+      // DRONE alone — a melodic note runs 1.9s, its harmony 1.7s, a thump
+      // 0.36s, and none of them is registered anywhere. A context change one
+      // tick after a note began cut that note's tail at 0.72s. Densest in fast
+      // combat and boss beds, which is exactly where it would be heard.
+      //
+      // So every voice now stamps the stage with when it will actually be done
+      // (`keepAlive`), and the stage outlives the LATER of its own fade and
+      // that stamp. `fade` describes the drones; `endsAt` describes everything.
+      const until = Math.max(g.endsAt || 0, t + fade + 0.05);
+      const ms = Math.max(0, (until - t) * 1000) + 120;
       const timer = setTimeout(() => {
         state.retireTimers.delete(timer);
         try { g.disconnect(); } catch (e) { /* already gone */ }
       }, ms);
       state.retireTimers.add(timer);
     }
+  }
+
+  /**
+   * keepAlive(stage, until) — a voice declaring when it is genuinely finished.
+   *
+   * Every source that connects through a stage stamps the latest absolute time
+   * it will still be making sound. This is the ONE number retirement reads, and
+   * it exists because the two #296 review findings were the same defect at two
+   * altitudes: a margin derived from `fade` knows nothing about an envelope
+   * nobody registered, and knows nothing about a stage superseded without a
+   * context change at all. Both fall out of "a stage outlives what it carries."
+   */
+  function keepAlive(stage, until) {
+    if (!stage) return;
+    stage.endsAt = Math.max(stage.endsAt || 0, until);
   }
 
   const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -327,8 +355,17 @@ export function initAudio(settings = {}) {
     // were NOT stopped: `stopMusic` schedules their stop 0.65s out. Kept in the
     // record because a confident sentence standing where a check belongs is the
     // defect that produced this bug.
+    // A NEW STAGE SUPERSEDES THE OLD ONE, AND SUPERSEDING IS A RETIREMENT.
+    // Retirement used to happen only in `stopMusic`, so the path that makes a
+    // stage WITHOUT a context change — an external track ending and the
+    // playlist advancing to the next one — created a stage per track and
+    // released none: an idle title screen, or a manifest of short tracks, grew
+    // the graph without bound. Retiring here (at each stage's own `endsAt`,
+    // never synchronously) closes that without a second mechanism.
+    retireStages(0);
     const g = ctx.createGain();
     g.gain.value = bed && typeof bed.gain === 'number' ? bed.gain : 1;
+    g.endsAt = now();
     g.connect(musicBus);
     state.bedGains.push(g);
     return g;
@@ -356,6 +393,7 @@ export function initAudio(settings = {}) {
     o.connect(lp);
     o2.connect(lp);
     lp.connect(g).connect(out);
+    keepAlive(out, now() + 1.5); // the drone's own ramp-in; stopMusic extends it
     o.start();
     o2.start();
     lfo.start();
@@ -461,6 +499,7 @@ export function initAudio(settings = {}) {
       g.gain.exponentialRampToValueAtTime(0.16, t + 0.08);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
       o.connect(g).connect(out);
+      keepAlive(out, t + 1.9);
       o.start(t);
       o.stop(t + 1.9);
       // Every few notes, lay a soft harmony a perfect fifth above — adds body
@@ -474,6 +513,7 @@ export function initAudio(settings = {}) {
         hg.gain.exponentialRampToValueAtTime(0.07, t + 0.12);
         hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
         h.connect(hg).connect(out);
+        keepAlive(out, t + 1.7);
         h.start(t);
         h.stop(t + 1.7);
       }
@@ -497,6 +537,7 @@ export function initAudio(settings = {}) {
         g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
         o.connect(g).connect(out);
+        keepAlive(out, t + 0.36);
         o.start(t);
         o.stop(t + 0.36);
       };

@@ -321,11 +321,74 @@ async function lifetime() {
 
   // The fade is 0.6s and the release is scheduled a beat past it; wait past both
   // rather than racing the timer this check exists to observe.
-  await new Promise((r) => setTimeout(r, 1000));
+  await new Promise((r) => setTimeout(r, 2600));
   const stillHeld = outgoing.filter((g) => g.outs.some((o) => busSet.has(o))).length;
   const l2 = stillHeld === 0;
-  console.log(`${l2 ? 'OK  ' : 'MISS'} L2 the outgoing stage is released once the fade is over (${stillHeld} still connected)`);
+  console.log(`${l2 ? 'OK  ' : 'MISS'} L2 the outgoing stage is released once everything it carries is over (${stillHeld} still connected)`);
   if (!l2) out.push(`L2: ${stillHeld} outgoing stage(s) never released — every context change leaks a gain node`);
+
+  // L3 — A NOTE'S TAIL SURVIVES A CONTEXT CHANGE.
+  // The margin used to come from `fade` (0.6s), and `stopMusic` fades only the
+  // DRONE: a melodic note runs 1.9s and is registered nowhere. So the stage was
+  // cut at ~0.72s and the note's tail died with it. This samples INSIDE that
+  // gap — at 1.1s, past the old margin and well short of 1.9 — which is the
+  // only place the two answers differ. 1.9 is a number in the engine, not a
+  // number I sampled for; the cell is placed from it.
+  engine.stopMusic(0);
+  await new Promise((r) => setTimeout(r, 200));
+  graph.reset();
+  // `music(c)` answers 'unchanged' and plays NOTHING when c is already live, and
+  // `stopMusic` does not clear the context. Without this flush the line below
+  // measured an empty set and L3 reported "0/0 held" — red, but for the wrong
+  // reason, which is not red at all. Guarded rather than assumed, the way
+  // `measure()` above already guards its own door.
+  engine.music('title');
+  engine.stopMusic(0);
+  graph.reset();
+  const d3 = engine.music('combat');         // a bed with notes AND a pulse
+  if (d3 !== 'bed') {
+    out.push(`L3: setup broken — music('combat') answered '${d3}', wanted 'bed'; nothing was measured`);
+    console.log(`MISS L3 setup — music('combat') answered '${d3}'`);
+    return out;
+  }
+  const live2 = new Set(stagesOn());
+  const voices2 = graph.nodes.filter((n) => n.kind === 'gain' && n.outs.some((o) => live2.has(o)));
+  const stage2 = [...new Set(voices2.flatMap((v) => v.outs.filter((o) => live2.has(o))))];
+  engine.music('rest');                      // switch one tick after the notes began
+  await new Promise((r) => setTimeout(r, 1100));
+  const heldAtTail = stage2.filter((g) => g.outs.some((o) => busSet.has(o))).length;
+  const l3 = stage2.length > 0 && heldAtTail === stage2.length;
+  console.log(`${l3 ? 'OK  ' : 'MISS'} L3 a note's 1.9s tail outlives the switch (${heldAtTail}/${stage2.length} held at 1.1s)`);
+  if (!l3) out.push(`L3: the stage was cut at ~0.72s while a 1.9s note was still sounding (${heldAtTail}/${stage2.length} held)`);
+
+  // L4 — THE PLAYLIST DOES NOT LEAK A STAGE PER TRACK.
+  // A track ending advances to the next one WITHOUT a context change, so
+  // nothing in stopMusic's path ever runs. This is the case L2 structurally
+  // could not see: it only ever looked after a switch, which is why a plant
+  // that "watches for accumulation" watched the wrong door.
+  engine.stopMusic(0);
+  await new Promise((r) => setTimeout(r, 2600));
+  await engine.configureMusic({ folder: FOLDER });
+  engine.music('title');
+  engine.stopMusic(0);
+  await new Promise((r) => setTimeout(r, 300));
+  graph.reset();
+  const d4 = engine.music('rest');            // external track 1
+  if (d4 !== 'external') {
+    out.push(`L4: setup broken — music('rest') answered '${d4}', wanted 'external'; nothing was measured`);
+    console.log(`MISS L4 setup — music('rest') answered '${d4}'`);
+    return out;
+  }
+  const before4 = stagesOn().length;
+  for (let i = 0; i < 4; i++) {
+    const el = graph.elements[graph.elements.length - 1];
+    if (el && el.fire) el.fire('ended');     // the real playlist advance
+  }
+  await new Promise((r) => setTimeout(r, 800));
+  const after4 = stagesOn().length;
+  const l4 = after4 <= before4;
+  console.log(`${l4 ? 'OK  ' : 'MISS'} L4 four playlist advances leak no stage (${before4} -> ${after4} on the bus)`);
+  if (!l4) out.push(`L4: the playlist grew the live graph from ${before4} to ${after4} stage(s) with no context change — a leak per track`);
   return out;
 }
 
@@ -387,6 +450,20 @@ const PLANTS = [
     wanted: 'L1 red — the fade scheduled into a cut wire',
   },
   {
+    name: 'P4 MARGIN from `fade` again — the note tail is cut at 0.72s (the review\'s first P2)',
+    from: '      const until = Math.max(g.endsAt || 0, t + fade + 0.05);',
+    to: '      const until = t + fade + 0.05; // planted: the margin forgets what the stage carries',
+    expect: [/L3 a note's 1\.9s tail outlives the switch/],
+    wanted: 'L3 red — the stage cut while a 1.9s note still sounded',
+  },
+  {
+    name: 'P5 SUPERSEDING is not a retirement — the playlist leaks a stage per track (the second P2)',
+    from: '    retireStages(0);\n    const g = ctx.createGain();',
+    to: '    const g = ctx.createGain(); // planted: a superseded stage is never retired',
+    expect: [/L4 four playlist advances leak no stage/],
+    wanted: 'L4 red — the graph growing with no context change',
+  },
+  {
     name: 'P3 LIFETIME, never released — the stage leaks on every context change',
     from: '      const timer = setTimeout(() => {',
     to: '      const timer = setTimeout(() => { if (1) return; // planted: the release never happens\n        void 0;',
@@ -435,5 +512,5 @@ if (!held) {
   console.error('\nRESULT: selftest FAILED — see the MISSED plant(s) above.');
   process.exit(1);
 }
-console.log('\nRESULT: selftest held — 3/3 plants caught by their named reds, control green.');
+console.log(`\nRESULT: selftest held — ${PLANTS.length}/${PLANTS.length} plants caught by their named reds, control green.`);
 process.exit(0);
