@@ -581,6 +581,78 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 62/63 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
+  //
+  // Same two-line shape as every pair above, and here for a measured reason.
+  //
+  // #295: `tools/hintstrip.mjs` was red for four days while PR #224 passed
+  // exact-head review, because the instrument that contradicted it was in no
+  // list any gate walks. The gate command set in this house is derived BY HAND
+  // (SOP 14 §5a), and on 2026-08-21 two experienced hands derived it wrongly in
+  // opposite directions inside one hour — a grep cannot tell `run:` from `echo`.
+  //
+  // ⚠ AND THE HALF THAT PUT IT IN *THIS* FILE RATHER THAN THE WORKFLOW, WHICH IS
+  // VIRA'S FINDING. Wiring an instrument into `ci.yml` is not enough. I claimed
+  // hintstrip's two steps were a redundant pair, having planted `|| true` on the
+  // first and watched the job stay red. The selftest's clean edge IS the first
+  // step re-run, so the job stayed red because THE SAME CHECK FAILED TWICE — and
+  // the day the tree goes green, `|| true` on that step silences the gate with
+  // no signal at all. The redundancy evaporates at exactly the moment it would
+  // matter, because a green tree is the only state in which a regression can be
+  // introduced. `gatelist --selftest` plants that `|| true` and requires G4 red,
+  // and THIS suite runs on a green tree, at every gate, with no dispatch.
+  //
+  // IT BELONGS HERE AND NOT IN ci.yml: it opens no browser, needs no port and no
+  // build — it reads the declared lists and parses them. This file's BOUNDARY
+  // block below is therefore still true, and 59 is the first check in this suite
+  // that is about the GATE rather than about the game.
+  //
+  // NUMBERED 62/63, AND IT TOOK ME TWO TRIES TO GET THERE, WHICH IS THE POINT.
+  // My first wiring used 58/59 and printed "58." and "59." TWICE in one run —
+  // engine.test.js owns those (nearestShrine, the shrine glow). I moved to 60/61
+  // and COLLIDED AGAIN, because engine.test.js owns those too. That is exactly
+  // the collision the note above 36/37 warns about — "two files, no git conflict,
+  // and a suite that would have printed 35. twice" — and it caught me twice,
+  // one screen below the warning, in the very act of wiring a check whose whole
+  // subject is a number typed beside a list that lives in another file.
+  // 62/63 is DERIVED: engine.test.js's highest literal is 61, read off the file,
+  // not remembered. THE HAZARD IS STRUCTURAL AND STILL OPEN — these numbers are
+  // hand-allocated across two files with nothing checking them, and the next
+  // hand will hit it too. A check for duplicate test numbers is owed and is not
+  // built here; this act was one act.
+  // Two lines for the same reason every pair since 36/37 is two: 62 is the
+  // check's own integrity against its planted corpus — its failure is the
+  // check's fault. 63 is the state of the lists. NO PLANT COUNT AND NO TOOL
+  // COUNT IN THIS COMMENT: both live in gatelist.mjs and its RESULT line carries
+  // them, and a number typed beside the list that owns it is the exact defect
+  // this pair exists to catch.
+  const runGate = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/gatelist.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const gateSelf = runGate(['--selftest']);
+  const gateSelfV = quote(gateSelf.out);
+  console.log(
+    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  62. the gate-list check still catches its own known-bad corpus` +
+      ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
+  );
+  if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const gateTree = runGate([]);
+  const gateTreeV = quote(gateTree.out);
+  console.log(
+    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every instrument a gate list names is run by it or states what goes unwatched, and no invocation is silenced` +
+      ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
+      ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
+  );
+  if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -634,4 +706,11 @@ console.log('          reaches max HP by one road with one answer at creation an
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
+console.log('          62–63 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
+console.log('          prove the declared lists RUN what they name and that no invocation has its');
+console.log('          exit status discarded. They say NOTHING about whether a listed tool passes,');
+console.log('          nothing about instruments a person starts at a terminal, and nothing about a');
+console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
+console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
+console.log('          design call with real costs, and it is not this suite\'s to make.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
