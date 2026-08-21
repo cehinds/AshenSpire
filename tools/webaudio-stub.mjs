@@ -60,9 +60,14 @@ export function installWebAudioStub() {
       nodes.push(this);
     }
     connect(n) { this.outs.push(n); return n; }
-    disconnect() { this.outs.length = 0; }
+    disconnect() { this.outs.length = 0; this.disconnectedAtMs = Date.now(); }
     start() {}
-    stop() {}
+    // THE SCHEDULED STOP IS RECORDED so a probe can derive when a voice is
+    // genuinely finished FROM THE ENGINE'S OWN SCHEDULING, rather than from
+    // whatever bookkeeping the engine keeps about itself. That difference is
+    // the point: a check that reads the engine's own record of when it will
+    // stop can only confirm that record. This is the independent half.
+    stop(when) { if (typeof when === 'number') this.stoppedAt = Math.max(this.stoppedAt || 0, when); }
   }
   class FakeAudio {
     constructor(url) { this.src = url; this.outs = []; this.handlers = new Map(); elements.push(this); }
