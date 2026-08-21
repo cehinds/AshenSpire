@@ -322,37 +322,54 @@ function groupDepthBefore(tokens, start) {
   return depth;
 }
 
-function staticMemberAt(tokens, start, name) {
+function memberAccessAt(tokens, start) {
   let i = start;
   const optional = tokens[i]?.value === '?.';
   if (optional) i++;
-  if (optional && tokens[i]?.type === 'identifier' && tokens[i].value === name) return { end: i + 1 };
-  if (tokens[i]?.value === '.' && tokens[i + 1]?.type === 'identifier' && tokens[i + 1].value === name) {
-    return { end: i + 2 };
+  if (optional && tokens[i]?.type === 'identifier') {
+    return { end: i + 1, name: tokens[i].value, static: true };
+  }
+  if (tokens[i]?.value === '.' && tokens[i + 1]?.type === 'identifier') {
+    return { end: i + 2, name: tokens[i + 1].value, static: true };
   }
   const key = tokens[i + 1];
-  const staticName = key?.value === name &&
-    (key.type === 'string' || (key.type === 'template' && !key.hasInterpolation && !key.tagged));
-  if (tokens[i]?.value === '[' && staticName && tokens[i + 2]?.value === ']') return { end: i + 3 };
+  if (tokens[i]?.value !== '[') return null;
+  const close = findClose(tokens, i, '[', ']');
+  if (close < 0) return { end: i + 1, name: null, static: false };
+  const staticName = close === i + 2 &&
+    (key?.type === 'string' || (key?.type === 'template' && !key.hasInterpolation && !key.tagged));
+  return { end: close + 1, name: staticName ? key.value : null, static: staticName };
+}
+
+function staticMemberAt(tokens, start, name) {
+  const access = memberAccessAt(tokens, start);
+  if (access?.static && access.name === name) return access;
   return null;
 }
 
 const memberPathnameAt = (tokens, start) => staticMemberAt(tokens, start, 'pathname');
 
-function accessAfterExpression(tokens, start, end) {
+function memberAfterExpression(tokens, start, end) {
   let expressionStart = start;
   let cursor = end + 1;
   while (tokens[cursor]?.value === ')') {
     const open = findOpenBackward(tokens, cursor);
     if (open < 0 || tokens[open - 1]?.value === '?.' || !regexMayStart(tokens[open - 1])) break;
+    let operandStart = expressionStart;
+    while (tokens[operandStart - 1]?.value === 'await') operandStart--;
     const commas = topLevelIndexes(tokens, open + 1, cursor, ',');
-    const transparent = open === expressionStart - 1;
-    const finalSequenceOperand = commas.at(-1) === expressionStart - 1;
+    const transparent = open === operandStart - 1;
+    const finalSequenceOperand = commas.at(-1) === operandStart - 1;
     if (!transparent && !finalSequenceOperand) break;
     expressionStart = open;
     cursor++;
   }
-  return memberPathnameAt(tokens, cursor);
+  return memberAccessAt(tokens, cursor);
+}
+
+function accessAfterExpression(tokens, start, end) {
+  const access = memberAfterExpression(tokens, start, end);
+  return access?.static && access.name === 'pathname' ? access : null;
 }
 
 function destructureBefore(tokens, assignment) {
@@ -900,7 +917,9 @@ function findPathnameMisuses(tokens, errors) {
   };
 
   for (const url of urls.values()) {
-    if (accessAfterExpression(tokens, url.start, url.close)) add(url.start);
+    const access = memberAfterExpression(tokens, url.start, url.close);
+    if (access?.static && access.name === 'pathname') add(url.start);
+    else if (access && !access.static) add(url.start, 'ambiguous module URL alias flow');
   }
 
   for (let i = 0; i < tokens.length; i++) {
@@ -989,17 +1008,7 @@ function findPathnameMisuses(tokens, errors) {
     const next = tokens[i + 1];
     const isAssignmentRhs = ASSIGNMENTS.has(previous?.value) && tokens[i - 2]?.type === 'identifier' &&
       !['.', '?.', ']'].includes(tokens[i - 3]?.value);
-    let memberStart = i + 1;
-    const optionalMember = tokens[memberStart]?.value === '?.';
-    if (optionalMember) memberStart++;
-    const memberKey = tokens[memberStart + 1];
-    const staticBracketMember = tokens[memberStart]?.value === '[' &&
-      (memberKey?.type === 'string' || (memberKey?.type === 'template' && !memberKey.hasInterpolation && !memberKey.tagged)) &&
-      tokens[memberStart + 2]?.value === ']';
-    const isStaticNonPathMember =
-      (optionalMember && tokens[memberStart]?.type === 'identifier') ||
-      (tokens[memberStart]?.value === '.' && tokens[memberStart + 1]?.type === 'identifier') ||
-      staticBracketMember;
+    const isStaticNonPathMember = memberAccessAt(tokens, i + 1)?.static;
     const isPlatformConsumer = isPlatformConsumerAt(tokens, i);
     if (!isAssignmentRhs && !isStaticNonPathMember && !isPlatformConsumer && !ASSIGNMENTS.has(next?.value)) {
       add(i, 'ambiguous module URL alias flow');
@@ -1353,6 +1362,22 @@ function selftest() {
     ['nested sequence final URL optional pathname is caught', "((a(),b()),new URL('./x',import.meta.url))?.pathname", 1, 0, 0],
     ['grouped sequence final URL non-path member stays clean', "(sideEffect(),new URL('./x',import.meta.url)).origin", 0, 0, 0],
     ['grouped sequence nonfinal URL operand stays clean', "(new URL('./x',import.meta.url),sideEffect()).pathname", 0, 0, 0],
+    ['computed direct URL member fails closed', "const key='pathname';new URL('./x',import.meta.url)[key]", 0, 0, 1],
+    ['optional computed direct URL member fails closed', "const key='pathname';new URL('./x',import.meta.url)?.[key]", 0, 0, 1],
+    ['static direct URL non-path bracket stays clean', "new URL('./x',import.meta.url)['origin']", 0, 0, 0],
+    ['optional static direct URL non-path bracket stays clean', "new URL('./x',import.meta.url)?.['origin']", 0, 0, 0],
+    ['direct URL platform consumer stays clean', "readFileSync(new URL('./x',import.meta.url))", 0, 0, 0],
+    ['await-wrapped URL pathname is caught', "async function f(){(await new URL('./x',import.meta.url)).pathname}", 1, 0, 0],
+    ['nested await-wrapped URL pathname is caught', "async function f(){((await new URL('./x',import.meta.url))).pathname}", 1, 0, 0],
+    ['await around grouped URL pathname is caught', "async function f(){(await (new URL('./x',import.meta.url))).pathname}", 1, 0, 0],
+    ['double-await URL pathname is caught', "async function f(){(await (await new URL('./x',import.meta.url))).pathname}", 1, 0, 0],
+    ['await around sequence-final URL pathname is caught', "async function f(){(await (sideEffect(),new URL('./x',import.meta.url))).pathname}", 1, 0, 0],
+    ['sequence-final await-wrapped URL pathname is caught', "async function f(){(sideEffect(),await new URL('./x',import.meta.url))?.pathname}", 1, 0, 0],
+    ['await around sequence-nonfinal URL stays clean', "async function f(){(await (new URL('./x',import.meta.url),sideEffect())).pathname}", 0, 0, 0],
+    ['call result around awaited URL stays clean', "async function f(){wrap(await new URL('./x',import.meta.url)).pathname}", 0, 0, 0],
+    ['awaited call result around URL stays clean', "async function f(){(await wrap(new URL('./x',import.meta.url))).pathname}", 0, 0, 0],
+    ['await-wrapped URL non-path member stays clean', "async function f(){(await new URL('./x',import.meta.url)).origin}", 0, 0, 0],
+    ['await over direct URL pathname stays caught', "async function f(){await new URL('./x',import.meta.url).pathname}", 1, 0, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
