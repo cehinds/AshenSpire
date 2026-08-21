@@ -5,7 +5,8 @@
 // ?shot=rest door and checks the player-visible contract rather than source
 // vocabulary: two uniform collapsed faces, one live reveal, fold state retained
 // across flask reallocation, and Level up disabled only after the model reports
-// a cinder shortfall. It also writes the paired review evidence.
+// a cinder shortfall. Evidence is harness-owned and non-serialized: this tool
+// never overwrites the published docs/preview images.
 
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -14,8 +15,57 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'docs', 'preview');
+const args = process.argv.slice(2);
+const outAt = args.indexOf('--out');
+const OUT = outAt >= 0 && args[outAt + 1]
+  ? resolve(args[outAt + 1])
+  : join(ROOT, 'audit-evidence', 'issue-282-shrinefold-harness');
 const USE_DIST = process.argv.includes('--dist');
+const EVIDENCE_KIND = USE_DIST ? 'dist' : 'source';
+
+if (process.argv.includes('--selftest')) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'shrinefold.mjs',
+    timeoutMs: 900000,
+    env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
+    plants: [
+      {
+        name: 'S2: the two collapsed shrine faces stop being uniform',
+        file: 'styles/ui.css',
+        append: '.shrine-screen .shrine-folds [data-face="shrine:level"] { min-height: 80px !important; }',
+        expectRed: /S2 390x844: uniform=false/,
+      },
+      {
+        name: 'S4: opening Flask leaves the Level reveal painted too',
+        file: 'src/ui/components/disclosure.js',
+        find: '    close();\n    openKey = key;',
+        replace: '    // KNOWN BAD: previous reveal is not closed.\n    openKey = key;',
+        expectRed: /S4 390x844:.*levelArea=true.*flaskArea=true/,
+      },
+      {
+        name: 'S6: cinder shortfall no longer disables the Level face',
+        file: 'src/ui/screens/rest.js',
+        find: '    levelFace.disabled = true;',
+        replace: '    levelFace.disabled = false;',
+        expectRed: /S6 390x844:.*disabled=false/,
+      },
+      {
+        name: 'S5: flask reallocation remount forgets the open fold',
+        file: 'src/ui/screens/rest.js',
+        find: "mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] }, openFold: 'shrine:flasks' });",
+        replace: "mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] }, openFold: null });",
+        expectRed: /S5 390x844:.*open=null/,
+      },
+      {
+        name: 'S7: the final desktop title is clipped above the viewport',
+        file: 'styles/ui.css',
+        append: '.shrine-screen h2 { transform: translateY(-100px) !important; }',
+        expectRed: /S7 1200x730: title=/,
+      },
+    ],
+  }));
+}
 const SHAPES = [
   { tag: '390x844', width: 390, height: 844, scale: 2, mobile: true },
   { tag: '1200x730', width: 1200, height: 730, scale: 1, mobile: false },
@@ -55,10 +105,16 @@ const READ = `(() => {
   const rect = (el) => { const r = el && el.getBoundingClientRect(); return r ? { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height } : null; };
   const faces = [...document.querySelectorAll('.shrine-folds .disc-face')];
   const panel = document.querySelector('.shrine-folds .disc-reveal');
+  const screen = document.querySelector('.shrine-screen');
+  const title = document.querySelector('.shrine-screen h2');
   const controls = [...document.querySelectorAll('.shrine-folds button')].map(rect).filter(Boolean);
   return {
+    title: title ? { text:title.textContent.trim(), rect:rect(title) } : null,
+    viewport: { width:innerWidth, height:innerHeight, scrollX, scrollY },
+    screen: screen ? { scrollTop:screen.scrollTop, scrollLeft:screen.scrollLeft, clientWidth:screen.clientWidth, clientHeight:screen.clientHeight, scrollWidth:screen.scrollWidth, scrollHeight:screen.scrollHeight, rect:rect(screen) } : null,
     faces: faces.map((el) => ({ key:el.dataset.face, expanded:el.getAttribute('aria-expanded'), disabled:el.disabled, ariaDisabled:el.getAttribute('aria-disabled'), value:(el.querySelector('.disc-value') || {}).textContent || '', rect:rect(el) })),
     open: panel && !panel.hidden ? panel.dataset.revealFor : null,
+    revealRect: panel && !panel.hidden ? rect(panel) : null,
     flaskArea: area(document.querySelector('#flask-reallocate')),
     levelArea: area(document.querySelector('#level-opt')),
     level: (() => { const el=document.querySelector('#level-opt'); return el ? { affordable:el.dataset.affordable, blockedBy:el.dataset.blockedBy, cost:+el.dataset.cost, short:+el.dataset.short } : null; })(),
@@ -99,6 +155,37 @@ async function main() {
         }
         throw new Error(`timeout waiting for ${label}`);
       };
+      const resetCaptureState = async () => {
+        await ev(`new Promise((done) => {
+          const screen = document.querySelector('.shrine-screen');
+          window.scrollTo(0, 0);
+          if (screen) {
+            screen.scrollTop = 0;
+            screen.scrollLeft = 0;
+          }
+          if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+          requestAnimationFrame(() => requestAnimationFrame(done));
+        })`);
+      };
+      const captureStateProblem = (state) => {
+        const titleRect = state.title?.rect;
+        const revealRect = state.revealRect;
+        const exactViewport = state.viewport?.width === shape.width && state.viewport?.height === shape.height;
+        const atOrigin = Math.abs(state.viewport?.scrollX || 0) < 0.5
+          && Math.abs(state.viewport?.scrollY || 0) < 0.5
+          && Math.abs(state.screen?.scrollTop || 0) < 0.5
+          && Math.abs(state.screen?.scrollLeft || 0) < 0.5;
+        const titleInside = state.title?.text === 'SHRINE OF EMBER' && titleRect
+          && titleRect.top >= -0.5 && titleRect.bottom <= shape.height + 0.5;
+        const revealInside = revealRect && revealRect.left >= -0.5 && revealRect.right <= shape.width + 0.5
+          && revealRect.top >= -0.5 && revealRect.bottom <= shape.height + 0.5;
+        if (!exactViewport) return `viewport=${state.viewport?.width}x${state.viewport?.height}, expected ${shape.width}x${shape.height}`;
+        if (!atOrigin) return `windowScroll=${state.viewport?.scrollX},${state.viewport?.scrollY} screenScroll=${state.screen?.scrollLeft},${state.screen?.scrollTop}`;
+        if (!titleInside) return `title=${JSON.stringify(state.title)}`;
+        if (!revealInside) return `revealRect=${JSON.stringify(revealRect)}`;
+        if (state.overflow !== 0 || state.controlsOutside !== 0) return `overflow=${state.overflow} controlsOutside=${state.controlsOutside}`;
+        return null;
+      };
 
       console.log(`\n  ${shape.tag}`);
       await cdp.send('Page.navigate', { url: `${base}?shot=rest` }, sessionId);
@@ -137,8 +224,15 @@ async function main() {
       else bad('S3b', shape.tag, `open=${levelClosed.open} levelArea=${levelClosed.levelArea}`);
       await ev(`document.querySelector('[data-face="shrine:level"]').click(); true`);
       await wait(150);
-      const affordablePng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-      await writeFile(join(OUT, `shrine-fold-affordable-${shape.tag}.png`), Buffer.from(affordablePng.data, 'base64'));
+      await resetCaptureState();
+      const affordableState = await ev(READ);
+      const affordableProblem = captureStateProblem(affordableState);
+      if (affordableProblem) bad('S3c', shape.tag, `affordable capture refused: ${affordableProblem}`);
+      else {
+        ok('S3c', shape.tag, 'affordable capture is at the exact viewport origin with title and reveal inside');
+        const affordablePng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-affordable-${shape.tag}.png`), Buffer.from(affordablePng.data, 'base64'));
+      }
 
       await ev(`document.querySelector('[data-face="shrine:flasks"]').click(); true`);
       await wait(150);
@@ -148,9 +242,10 @@ async function main() {
       const beforeCounts = flaskOpen.counts.join(',');
       const moved = await ev(`(() => { const b=[...document.querySelectorAll('#flask-reallocate .flask-step')].find((el)=>el.getAttribute('aria-disabled')!=='true'); if(!b)return false; b.click(); return true; })()`);
       if (moved) {
-        await until(`document.querySelector('.shrine-folds .disc-reveal')?.dataset.revealFor === 'shrine:flasks'`, 'flask fold after reallocation');
+        const persisted = await until(`document.querySelector('.shrine-folds .disc-reveal')?.dataset.revealFor === 'shrine:flasks'`, 'flask fold after reallocation', 2000)
+          .then(() => true, () => false);
         const afterMove = await ev(READ);
-        if (afterMove.open === 'shrine:flasks' && afterMove.counts.join(',') !== beforeCounts) ok('S5', shape.tag, `reallocation keeps Flask open (${beforeCounts} → ${afterMove.counts.join(',')})`);
+        if (persisted && afterMove.open === 'shrine:flasks' && afterMove.counts.join(',') !== beforeCounts) ok('S5', shape.tag, `reallocation keeps Flask open (${beforeCounts} → ${afterMove.counts.join(',')})`);
         else bad('S5', shape.tag, `open=${afterMove.open} counts=${beforeCounts} → ${afterMove.counts.join(',')}`);
       } else bad('S5', shape.tag, 'no enabled flask step exists');
 
@@ -178,8 +273,21 @@ async function main() {
       }
       await ev(`document.querySelector('[data-face="shrine:flasks"]').click(); true`);
       await wait(150);
-      const lowPng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-      await writeFile(join(OUT, `shrine-fold-low-cinders-${shape.tag}.png`), Buffer.from(lowPng.data, 'base64'));
+      await resetCaptureState();
+      const finalState = await ev(READ);
+      const finalProblem = captureStateProblem(finalState);
+      const finalFlask = finalState.faces.find((row) => row.key === 'shrine:flasks');
+      const finalLevel = finalState.faces.find((row) => row.key === 'shrine:level');
+      const finalContract = finalState.open === 'shrine:flasks' && finalState.flaskArea && !finalState.levelArea
+        && finalFlask?.expanded === 'true' && finalLevel?.expanded === 'false'
+        && finalLevel?.disabled && finalLevel?.ariaDisabled === 'true';
+      if (finalProblem || !finalContract) {
+        bad('S7', shape.tag, finalProblem || `final open=${finalState.open} flaskExpanded=${finalFlask?.expanded} levelExpanded=${finalLevel?.expanded} levelDisabled=${finalLevel?.disabled}`);
+      } else {
+        ok('S7', shape.tag, `final ${shape.width}x${shape.height}; title and reveal inside; window/screen scroll 0; controls inside`);
+        const lowPng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-low-cinders-${shape.tag}.png`), Buffer.from(lowPng.data, 'base64'));
+      }
       await cdp.send('Target.closeTarget', { targetId });
     }
   } finally {
