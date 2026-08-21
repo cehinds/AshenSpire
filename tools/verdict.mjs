@@ -47,6 +47,9 @@
 //   1  the wrapped tool's verdict counted 0, or it printed two verdicts
 //   3  the wrapped tool exited 0 and printed NO countable verdict — SILENCE
 //   2  usage error in this file, BEFORE any child is spawned
+//   4  the wrapped tool was KILLED BY A SIGNAL before reporting — the
+//      environment stopped it (timeout, OOM, ENOSPC). Not a failure, not a
+//      pass: nothing was measured, so nothing may be concluded.
 //   *  ANY NONZERO CODE A WRAPPED TOOL EXITS WITH IS RETURNED VERBATIM and
 //      takes precedence over every row above. `2` from a browser probe means
 //      THE INSTRUMENT WAS UNAVAILABLE — unknown, which blocks and is not the
@@ -197,8 +200,34 @@ async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
     child.stdout.on('data', (c) => tee(String(c), process.stdout));
     child.stderr.on('data', (c) => tee(String(c), process.stderr));
     child.on('error', (e) => done({ code: 2, out, note: `could not run: ${e.message}` }));
-    child.on('close', (code) => {
+    child.on('close', (code, signal) => {
       const label = [cmd, ...argv].join(' ');
+      // KILLED IS ITS OWN STATE, AND IT WAS READING AS A PASS. Node calls
+      // `close` with code === null and the signal separately when a child is
+      // terminated — SIGTERM from a timeout, SIGKILL from an OOM killer. This
+      // branch returned that null, and `process.exit(null)` coerces to 0: a
+      // checker killed BEFORE it could print anything made the step GREEN.
+      //
+      // NOT THEORETICAL. This box ran out of disk tonight and killed a corpus
+      // mid-run (a sibling's --selftest died of ENOSPC partway through; another
+      // seat's pass ran at 67 MB free). Under the old branch, a runner that
+      // OOM-kills a browser probe does not report a starved instrument — it
+      // reports a pass. That is this card's thesis at its most literal: the
+      // tool said nothing because it was DEAD, and the door called it success.
+      //
+      // It gets its own code (4) rather than being folded into 1, because
+      // "killed by the environment" and "a check ran and failed" send a reader
+      // to different places — and this door has been caught four times merging
+      // states it exists to keep apart.
+      if (signal) {
+        return done({
+          code: 4, out, signal,
+          note: `KILLED: ${label} was terminated by ${signal} before it could report.\n`
+            + '  This is not a failure and it is not a pass — the instrument was stopped by the\n'
+            + '  environment (a timeout, or an OOM/ENOSPC kill). Re-run it on a healthy runner\n'
+            + '  before reading anything into the result.',
+        });
+      }
       // A RED STAYS RED, AND IT IS NOT RE-JUDGED. If the tool already failed,
       // this file adds nothing and must not convert its exit code.
       // THE CHILD'S CODE COMES BACK VERBATIM. Hard-coding 1 here erased a
@@ -300,6 +329,13 @@ const SELFTEST = [
   // EXIT-CODE FIDELITY, BY NAME. 2 is "the instrument was unavailable"
   // (unknown, blocks); 1 is "a check ran and failed". They are different
   // sentences and the door must not merge them.
+  // A CHILD KILLED MID-RUN. `process.exit(null)` used to coerce this to 0.
+  { name: 'a checker KILLED by SIGTERM comes out 4, never 0',
+    file: 'console.log("starting a long check..."); process.kill(process.pid, "SIGTERM");\n', want: 4, mustSay: 'KILLED' },
+  { name: 'a checker KILLED by SIGKILL (the OOM shape) comes out 4',
+    file: 'process.kill(process.pid, "SIGKILL");\n', want: 4, mustSay: 'KILLED' },
+  { name: 'and a killed child that had ALREADY printed a good verdict is still killed',
+    file: 'console.log("tool: OK — 9 checks passed."); process.kill(process.pid, "SIGTERM");\n', want: 4, mustSay: 'KILLED' },
   { name: 'a child exiting 2 (instrument unavailable) comes out 2, not 1',
     file: 'process.exit(2);\n', want: 2 },
   { name: 'a child exiting 1 (a check ran and failed) comes out 1',
@@ -374,7 +410,7 @@ async function selftest() {
       const r = await runOne(process.execPath, [f, ...(p.args || [])], { min: 1, quiet: true });
       let ok = r.code === p.want;
       // `mustSay` proves the CHILD spoke — the argv plant's whole point.
-      if (ok && p.mustSay && !r.out.includes(p.mustSay)) ok = false;
+      if (ok && p.mustSay && !`${r.out}${r.note || ''}`.includes(p.mustSay)) ok = false;
       if (!ok) bad++;
       console.log(`  ${ok ? 'CAUGHT ' : 'MISSED '} exit ${r.code} (want ${p.want})  ${p.name}`);
       if (!ok) console.log(`      note: ${(r.note || '').split('\n')[0] || 'child output did not carry ' + p.mustSay}`);

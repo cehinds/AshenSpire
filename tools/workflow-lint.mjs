@@ -63,6 +63,27 @@ export function stripComment(line) {
   return line;
 }
 
+/**
+ * ONE RECOGNIZER FOR "IS THIS A KEY, AND WHICH ONE" — used at every key match
+ * in this file. Third variation on one axis arrived before this existed: I
+ * generalized over INDENTATION (the matrix axis), then over COMMENTS
+ * (`build: # Linux job`), and a QUOTED key (`"build":`) walked past both. The
+ * shapes were different; the class never was. A YAML key may be quoted or
+ * bare, may carry a trailing comment, and sits at a known indent — so that is
+ * one function, not three patched patterns.
+ *
+ * Returns `{ indent, item, name, rest, keyIndent }` or null. `item` marks a
+ * `- ` list entry; `keyIndent` is where the entry's OWN keys sit.
+ */
+export function readKey(code) {
+  const m = code.match(/^(\s*)(?:(-)\s+)?(?:"([^"]*)"|'([^']*)'|([\w.\-]+))\s*:(.*)$/);
+  if (!m) return null;
+  const name = m[3] !== undefined ? m[3] : (m[4] !== undefined ? m[4] : m[5]);
+  return { indent: m[1].length, item: !!m[2], name, rest: m[6], keyIndent: m[1].length + (m[2] ? 2 : 0) };
+}
+
+const isBlockScalar = (k) => !!k && /^\s*[|>][-+]?\s*$/.test(k.rest);
+
 export function lintWorkflowText(text, file = '<text>') {
   const out = [];
   const lines = String(text).split(/\r?\n/);
@@ -113,22 +134,23 @@ export function lintWorkflowText(text, file = '<text>') {
     const code = stripComment(line);
     if (!code.trim()) continue;
 
-    if (/^\s*jobs:\s*$/.test(code)) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
+    const k = readKey(code);
+    if (k && !k.item && k.name === 'jobs' && !k.rest.trim()) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
 
     // A job header: a bare key one level inside `jobs:`.
-    if (jobsIndent >= 0 && indent > jobsIndent && /^\s*[\w.-]+:\s*$/.test(code)
+    if (jobsIndent >= 0 && indent > jobsIndent && k && !k.item && !k.rest.trim()
         && (jobIndent === -1 || indent === jobIndent) && !inSteps) {
       closeJob();
       jobIndent = indent;
-      jobName = line.trim().replace(/:$/, '');
+      jobName = k.name;
       continue;
     }
     // Leaving a job entirely (back out to `jobs:` level or shallower).
-    if (jobIndent >= 0 && indent <= jobsIndent && /^\s*[\w.-]+:/.test(code)) { closeJob(); jobIndent = -1; jobName = null; continue; }
+    if (jobIndent >= 0 && indent <= jobsIndent && k && !k.item) { closeJob(); jobIndent = -1; jobName = null; continue; }
 
     // A JOB'S OWN KEYS SIT AT ONE INDENT, and the shallowest key under the job
     // header fixes it. Everything deeper is nested data.
-    if (jobIndent >= 0 && !inSteps && indent > jobIndent && /^\s*[\w.-]+:/.test(code)
+    if (jobIndent >= 0 && !inSteps && indent > jobIndent && k && !k.item
         && (jobKeyIndent === -1 || indent < jobKeyIndent)) {
       jobKeyIndent = indent;
     }
@@ -139,7 +161,8 @@ export function lintWorkflowText(text, file = '<text>') {
     // gate reddening a valid workflow. Same class as the heredoc: structure
     // detected without anchoring to its level. Anchor it, do not special-case
     // the word `matrix`.
-    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(code) && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
+    if (k && !k.item && k.name === 'steps' && (!k.rest.trim() || isBlockScalar(k))
+        && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
       closeStep();
       jobStepsSeen += 1;
       // TWO `steps:` IN ONE JOB IS THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP:
@@ -155,29 +178,25 @@ export function lintWorkflowText(text, file = '<text>') {
     if (!inSteps) continue;
 
     // A key at or left of the `steps:` key ends the block.
-    if (indent <= stepsKeyIndent && /^\s*[\w.-]+:/.test(code)) {
+    if (indent <= stepsKeyIndent && k && !k.item) {
       closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1;
       i -= 1; // re-read this line as a job key / job header
       continue;
     }
 
-    const item = code.match(/^(\s*)-\s+([\w.-]+):(.*)$/);
+    const item = k && k.item ? k : null;
     // ONLY AT THE LIST'S OWN INDENT. The first `- ` after `steps:` fixes it;
     // anything deeper is nested data, not a step.
     if (item && (itemIndent === -1 || indent === itemIndent)) {
       closeStep();
       if (itemIndent === -1) itemIndent = indent;
-      const key = item[2];
-      step = { line: i + 1, name: key === 'name' ? item[3].trim() : '(unnamed)', keys: { [key]: 1 }, indent: indent + 2 };
-      if (/:\s*[|>][-+]?\s*$/.test(code)) skipDeeperThan = indent + 2 - 1;
+      step = { line: i + 1, name: item.name === 'name' ? item.rest.trim() : '(unnamed)', keys: { [item.name]: 1 }, indent: item.keyIndent };
+      if (isBlockScalar(item)) skipDeeperThan = item.keyIndent - 1;
       continue;
     }
-    if (step) {
-      const kv = code.match(/^(\s*)([\w.-]+):/);
-      if (kv && kv[1].length === step.indent) {
-        step.keys[kv[2]] = (step.keys[kv[2]] || 0) + 1;
-        if (/:\s*[|>][-+]?\s*$/.test(code)) skipDeeperThan = step.indent;
-      }
+    if (step && k && !k.item && k.indent === step.indent) {
+      step.keys[k.name] = (step.keys[k.name] || 0) + 1;
+      if (isBlockScalar(k)) skipDeeperThan = step.indent;
     }
   }
   closeJob();
@@ -226,6 +245,18 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Hash\n        run: echo "# not a comment"\n' },
   { name: 'a commented duplicate steps: is still a duplicate', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps: # real\n      - name: One\n        run: echo 1\n    steps: # shadow\n      - name: Two\n        run: echo 2\n' },
+  // THE KEY-RECOGNITION CLASS, ALL THREE FORMS, because the general rule has
+  // to prove it swallows each: quoted, commented, and quoted-AND-commented.
+  { name: 'a QUOTED job key is still a job header', want: 1,
+    yml: 'on: push\njobs:\n  "build":\n    steps:\n      - name: Twice\n        run: echo one\n        run: echo two\n' },
+  { name: 'a QUOTED + COMMENTED job key is still a job header', want: 1,
+    yml: 'on: push\njobs:\n  "build": # Linux job\n    steps:\n      - name: Twice\n        run: echo one\n        run: echo two\n' },
+  { name: 'a single-quoted steps: key still opens the list', want: 1,
+    yml: "on: push\njobs:\n  a:\n    'steps':\n      - name: Ghost\n" },
+  { name: 'a quoted step key counts as a command', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Quoted\n        "run": echo ok\n' },
+  { name: 'and a quoted DUPLICATE run: is still caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Twice\n        "run": echo one\n        run: echo two\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,
