@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>AshenSpire — original motif HUD study</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="lab-bar" aria-label="Prototype controls">
+    <div class="lab-brand">
+      <span class="lab-kicker">CURRENT-BUILD MOTIF STUDY</span>
+      <strong>AshenSpire · Original UI, evolved</strong>
+    </div>
+    <div class="lab-controls">
+      <fieldset>
+        <legend>Concept</legend>
+        <button class="lab-choice is-active" data-concept="halo">A · Eldenring Feel</button>
+        <button class="lab-choice" data-concept="split">B · Original+</button>
+        <button class="lab-choice" data-concept="compact">C · Current (Control)</button>
+      </fieldset>
+      <fieldset>
+        <legend>Viewport</legend>
+        <button class="lab-choice is-active" data-viewport="desktop">Desktop</button>
+        <button class="lab-choice" data-viewport="phone">Phone</button>
+      </fieldset>
+      <fieldset>
+        <legend>Meter sample</legend>
+        <button class="lab-choice" data-meter-state="zero">0 · Clean</button>
+        <button class="lab-choice" data-meter-state="one">1 status</button>
+        <button class="lab-choice" data-meter-state="three">3 statuses</button>
+        <button class="lab-choice is-active" data-meter-state="overflow">4+ statuses</button>
+      </fieldset>
+      <fieldset>
+        <legend>Scene</legend>
+        <button class="lab-choice is-active" data-scene-button="splash">Intro</button>
+        <button class="lab-choice" data-scene-button="title">Title menu</button>
+        <button class="lab-choice" data-scene-button="combat">Combat</button>
+      </fieldset>
+    </div>
+  </header>
+
+  <main class="lab-stage">
+    <p class="lab-note">A conservative extension of the current AshenSpire build: original palette, panels, buttons, cards, and typography with the requested hierarchy changes layered in.</p>
+
+    <div class="game-frame is-desktop" id="game-frame" data-concept="halo" tabindex="0" aria-label="Interactive AshenSpire UI concept">
+      <canvas id="ash-canvas" aria-hidden="true"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+
+      <section class="scene splash-scene" data-scene="splash" aria-label="Startup title gate">
+        <div class="logo-lockup">
+          <span class="logo-sigil" aria-hidden="true"><i></i><b></b></span>
+          <h1>ASHEN <em>SPIRE</em></h1>
+          <div class="logo-rule"><span></span><i></i><span></span></div>
+          <p>A ROGUELIKE DECKBUILDER</p>
+        </div>
+        <button class="press-any" id="press-any"><span id="press-any-label">PRESS ANY BUTTON</span></button>
+        <p class="input-hint" id="input-hint">Click · tap · Enter · Space · A / Cross · Start</p>
+      </section>
+
+      <section class="scene title-scene" data-scene="title" hidden aria-label="Current title menu concept">
+        <div class="title-copy">
+          <span>ASHEN</span><strong> SPIRE</strong>
+          <small>A ROGUELIKE DECKBUILDER</small>
+        </div>
+        <div class="title-slots" aria-label="Save slots">
+          <article class="save-slot occupied">
+            <span class="slot-number">SLOT I</span>
+            <strong>Wren · Starseer</strong>
+            <small>Act I · Floor 8 · 61/72 HP</small>
+            <button data-go="combat">CONTINUE</button>
+          </article>
+          <article class="save-slot">
+            <span class="slot-number">SLOT II</span>
+            <strong>Empty</strong>
+            <button data-go="combat">BEGIN A CLIMB</button>
+          </article>
+          <article class="save-slot">
+            <span class="slot-number">SLOT III</span>
+            <strong>Empty</strong>
+            <button data-go="combat">BEGIN A CLIMB</button>
+          </article>
+        </div>
+        <nav class="title-links" aria-label="Title menu">
+          <button data-go="combat">CUSTOM CLIMB</button>
+          <button>ARMAMENTS</button>
+          <button>RUN HISTORY</button>
+          <button data-open-settings>SETTINGS</button>
+          <button>QUIT</button>
+        </nav>
+      </section>
+
+      <section class="scene combat-scene" data-scene="combat" hidden aria-label="Combat HUD concept">
+        <header class="combat-hud">
+          <div class="hud-main">
+            <section class="hud-card identity-card" aria-label="Wren, Starseer resources">
+              <div class="player-id"><strong>WREN</strong><span>STARSEER</span></div>
+              <div class="resource-cluster" aria-label="Player resources">
+                <div class="resource hp" style="--value:.847;--max-scale:.92"><span>HP <b>61 / 72</b></span><i><u></u></i></div>
+                <div class="resource mp" style="--value:.75;--max-scale:.62"><span>MP <b>18 / 24</b></span><i><u></u></i></div>
+                <div class="resource sp" style="--value:.8;--max-scale:.72"><span>STAM <b>32 / 40</b></span><i><u></u></i></div>
+              </div>
+            </section>
+
+            <section class="hud-card floor-card" aria-label="Act 1, Floor 8"><small>ACT I</small><strong>FLOOR 8</strong></section>
+
+            <section class="hud-card utility-card" aria-label="Other potions">
+              <small>OTHER POTIONS</small>
+              <button class="flask utility" aria-label="Physick flask, shortcut H"><span>◈</span><b>PHYSICK</b><kbd>H</kbd></button>
+            </section>
+
+            <section class="hud-card run-card" aria-label="Cinders, level, and primary flasks">
+              <div class="run-id"><span class="cinder-mark" aria-hidden="true">¤</span><strong>1,842</strong><span class="player-level">LV. 3</span></div>
+              <div class="flask-strip primary-flasks" aria-label="Healing and magic flasks">
+                <button class="flask crimson" aria-label="Healing flask, 2 remaining, shortcut F"><span>◆</span><b>HP ×2</b><kbd>F</kbd></button>
+                <button class="flask cerulean" aria-label="Magic flask, 1 remaining, shortcut G"><span>◆</span><b>MP ×1</b><kbd>G</kbd></button>
+              </div>
+            </section>
+
+            <button class="hud-card menu-glyph" id="quick-menu-button" aria-label="Open quick menu" aria-expanded="false"><span>☰</span><small>MENU</small></button>
+          </div>
+
+          <div class="relic-strip hud-card" aria-label="Relics">
+            <span class="relic-label">RELICS</span>
+            <button title="Forsaken Medallion">✥</button>
+            <button title="Golden Sprout">♧</button>
+            <button title="Ashen Needle">⌁</button>
+            <button title="Glass Moon">◒</button>
+            <button title="Grave Bell">♢</button>
+            <button class="relic-more" title="3 more relics">+3</button>
+          </div>
+        </header>
+
+        <div class="battlefield" aria-label="Battlefield preview">
+          <div class="combatant-stack enemy-stack">
+            <div class="enemy-silhouette" aria-hidden="true"><i></i><b></b><span></span></div>
+            <article class="combatant-card enemy-card" tabindex="0" aria-label="Gilded Penitent status">
+              <div class="combatant-title"><strong>GILDED PENITENT</strong><span>ELITE</span></div>
+              <div class="meter-row hp-meter"><span>HP 242 / 310</span><i><u style="--fill:.78"></u></i></div>
+              <div class="meter-row poise-meter" data-poise-damage="1"><span>POISE DMG 46 / 80</span><i><u style="--fill:.575"></u></i></div>
+              <div class="buildup-stack" aria-label="Additional status buildup">
+                <div class="meter-row blood-meter" data-status-index="1"><span>BLEED 38</span><i><u style="--fill:.38"></u></i></div>
+                <div class="meter-row frost-meter" data-status-index="2"><span>FROST 22</span><i><u style="--fill:.22"></u></i></div>
+                <div class="meter-row rot-meter" data-status-index="3"><span>ROT 11</span><i><u style="--fill:.11"></u></i></div>
+                <button class="status-overflow" aria-expanded="false" aria-haspopup="true" aria-controls="status-popover">◉ +2</button>
+                <div class="status-popover" id="status-popover" role="tooltip" hidden>
+                  <strong>More buildup</strong><span>Sleep · 9 / 100</span><span>Madness · 4 / 100</span>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="combatant-stack player-stack">
+            <div class="player-silhouette" aria-hidden="true"><i></i><b></b><span></span></div>
+            <article class="combatant-card player-card" tabindex="0" aria-label="Wren status">
+              <div class="combatant-title"><strong>WREN</strong><span>STARSEER</span></div>
+              <div class="meter-row hp-meter"><span>HP 61 / 72</span><i><u style="--fill:.847"></u></i></div>
+              <div class="meter-row poise-meter player-poise" hidden><span>POISE DMG 0 / 40</span><i><u style="--fill:0"></u></i></div>
+            </article>
+          </div>
+
+          <div class="card-hand" aria-label="Sample hand">
+            <button class="game-card type-attack"><i class="cost">1</i><b class="cname">COMET SHARD</b><span class="art">☄</span><em class="ctype">ATTACK</em><small class="ctext">Deal <strong>7</strong> magic damage.</small></button>
+            <button class="game-card type-skill"><i class="cost">1</i><b class="cname">WARDING ORBIT</b><span class="art">◌</span><em class="ctype">SKILL</em><small class="ctext">Gain <strong>8</strong> Guard.</small></button>
+            <button class="game-card type-attack"><i class="cost">2</i><b class="cname">STARFALL</b><span class="art">✦</span><em class="ctype">ATTACK</em><small class="ctext">Deal <strong>4</strong> to all foes.</small></button>
+          </div>
+        </div>
+
+        <nav class="command-rail" aria-label="Combat commands">
+          <button class="command armament" id="armament-hold" aria-label="Open or close armament shortcuts" aria-expanded="false" aria-controls="armament-radial"><span>⚒</span><small>ARM</small></button>
+          <button class="command actions" aria-label="Actions 2 of 3"><span>2 / 3</span><small>ACTIONS</small></button>
+          <button class="command end-turn"><span>END TURN</span><kbd>E</kbd></button>
+          <button class="command pile draw"><span>⛁</span><b>18</b><small>DRAW</small></button>
+          <button class="command pile discard"><span>✕</span><b>7</b><small>DISCARD</small></button>
+        </nav>
+
+        <div class="armament-radial" id="armament-radial" role="menu" aria-label="Armament shortcuts" hidden>
+          <button class="radial-top" role="menuitem" data-radial-action="flasks"><span>◆ ◆</span><b>HP ×2 · MP ×1</b><small>F / G</small></button>
+          <button class="radial-left" role="menuitem" data-radial-action="left"><span>◖</span><b>Left</b><small>Round Shield</small></button>
+          <button class="radial-center" role="menuitem" data-radial-action="full"><span>⚒</span><b>Full Armaments</b></button>
+          <button class="radial-right" role="menuitem" data-radial-action="right"><span>◗</span><b>Right</b><small>Straight Sword</small></button>
+          <button class="radial-bottom" role="menuitem" data-radial-action="other"><span>◈</span><b>Other potions</b><small>Physick · H</small></button>
+        </div>
+
+        <aside class="quick-menu" id="quick-menu" hidden role="dialog" aria-modal="false" aria-labelledby="quick-menu-title">
+          <div class="quick-title"><span id="quick-menu-title">QUICK MENU</span><small>MIRROR</small></div>
+          <button class="toggle-row" data-toggle="fullscreen"><span>▣</span><b>Fullscreen</b><em>OFF</em></button>
+          <button class="toggle-row" data-toggle="music"><span>♫</span><b>Music</b><em>ON</em></button>
+          <button class="toggle-row" data-theme-toggle><span>✦</span><b>UI version</b><em>A</em></button>
+          <hr>
+          <button><span>⚒</span><b>Armaments</b></button>
+          <button><span>🂠</span><b>Hand / Deck</b><em>12</em></button>
+          <button><span>⛁</span><b>Draw pile</b><em>18</em></button>
+          <button><span>✕</span><b>Discard pile</b><em>7</em></button>
+          <button><span>◆</span><b>Relics & Flasks</b></button>
+          <button><span>♜</span><b>Stats</b></button>
+          <button data-open-settings><span>⚙</span><b>Settings</b></button>
+          <hr>
+          <button data-save><span>▤</span><b>Save</b><em class="save-state"></em></button>
+          <button class="danger" data-save-quit><span>⏻</span><b>Save & Quit to Title</b></button>
+        </aside>
+      </section>
+
+      <div class="settings-veil" id="settings-veil" hidden>
+        <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+          <header><h2 id="settings-title">SETTINGS</h2><button data-close-settings aria-label="Close settings">×</button></header>
+          <p class="settings-group">IMMEDIATE</p>
+          <button class="setting-row" data-toggle="fullscreen"><span><b>Fullscreen</b><small>Fill this display.</small></span><em>OFF</em></button>
+          <button class="setting-row" data-toggle="music"><span><b>Music</b><small>Enable the current music bed.</small></span><em>ON</em></button>
+          <p class="settings-group">DISPLAY</p>
+          <div class="setting-row static"><span><b>Quick menu</b><small>The ☰ launcher mirrors the full menu.</small></span><em>MIRROR</em></div>
+          <button class="setting-row" data-theme-toggle><span><b>UI version</b><small>A Eldenring Feel · B Original+ · C Current control.</small></span><em>A</em></button>
+          <button class="setting-row" data-armament-mode-toggle><span><b>Armament shortcuts</b><small>Use the compact radial menu, or keep potion cards fixed in the HUD.</small></span><em>RADIAL MENU</em></button>
+          <button class="setting-row" data-mobile-armament-position><span><b>Phone radial location</b><small>Community test: lower left, center, or right. Desktop remains compact and bottom-left.</small></span><em>LOWER LEFT</em></button>
+          <div class="setting-row static"><span><b>UI size</b><small>Scale to the available screen.</small></span><em>AUTO</em></div>
+          <div class="setting-row static"><span><b>Text size</b><small>Follow the browser's default text size.</small></span><em>AUTO</em></div>
+          <p class="settings-group">AUDIO</p>
+          <label class="volume-row"><span>Music volume</span><input type="range" min="0" max="100" value="50"><output>50%</output></label>
+        </section>
+      </div>
+
+      <footer class="build-line">DEVELOPMENT BUILD · 0.4.0.0885 · src 1d9dad4ac7</footer>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <section class="concept-notes" aria-label="Concept comparison">
+      <article data-note="halo"><b>A · Eldenring Feel</b><span>The attached Ashen Halo direction: restrained, atmospheric, and procedural, with the new six-card HUD layout.</span></article>
+      <article data-note="split" hidden><b>B · Original+</b><span>The same layout and behavior built from AshenSpire’s shipped warm panels, gold framing, and larger readable controls.</span></article>
+      <article data-note="compact" hidden><b>C · Current AshenSpire (control)</b><span>The current shipped visual language retained as the community-testing control.</span></article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
