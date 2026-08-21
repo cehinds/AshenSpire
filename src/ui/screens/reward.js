@@ -18,7 +18,13 @@
 // The menu rows reuse `.class-pick` (the B9 uniform-card pattern from the
 // shrine fold) — same focus rules (input.js already lists
 // `.class-pick:not(.locked)`), same locked treatment for a blocked row, no
-// second card-button pattern in the tree.
+// second card-button pattern in the tree. AND THE SAME MARKUP GRAMMAR: the
+// narrow layout's shared rule composes glyph + one `.cp-body` text column
+// (ui.css — "the card is auto, the text column is 1fr"), so everything but
+// the glyph rides inside `.cp-body`. The first cut emitted four bare flex
+// children and phone rows squeezed side-by-side — Codex 4989824448's
+// composition finding at b6b7df0, measured by Saga (creation's text column
+// 246.2px vs these rows' none).
 //
 // SEEN ('new' markers): "a 'new' marker on unseen cards/items/relics" — his
 // words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
@@ -56,6 +62,14 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null, onCollectArmament = null }) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+    // The bag's room, read from the same array addToStorage writes — one
+    // home, two questions (the model asks "is there room", the collector's
+    // own gate asks "did THIS store land"). Derived here so the ninth piece
+    // against the cap is BLOCKED before any tap, the flask shape exactly.
+    armamentSlotsFree: Math.max(
+      0,
+      (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
+    ),
   });
   const states = {}; // kind → 'taken' | 'skipped' (absent = pending)
   let chosenCardId = null;
@@ -134,6 +148,9 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
         // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
         const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // A full bag reads its refusal in the flask's own idiom — the copy
+        // switches on the model's token (blockedBy), never a re-derivation.
+        if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };
         return {
           title: 'Armament',
           body: state === 'taken'
@@ -183,12 +200,14 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
                  data-kind="${esc(row.kind)}" data-state="${esc(state)}"
                  data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
               <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
-              <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
-              <p>${body}</p>
-              ${state === 'taken' ? '<span class="chip">Taken</span>'
-                : state === 'blocked' ? '<span class="chip">Full</span>'
-                : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
-                : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+              <div class="cp-body">
+                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+                <p>${body}</p>
+                ${state === 'taken' ? '<span class="chip">Taken</span>'
+                  : state === 'blocked' ? '<span class="chip">Full</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
+                  : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+              </div>
             </div>`;
           }).join('')}
         </div>
@@ -204,7 +223,11 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
       // the label switches on the model's token, never on a re-derivation.
       attachTooltip(el, () => {
-        if (state === 'blocked') return `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
+        if (state === 'blocked') {
+          return row.blockedBy === 'storage'
+            ? `<div class="tt-title">Storage full</div>${esc('Your armament storage is at its cap; this one stays where it fell.')}`
+            : `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
+        }
         if (state === 'taken') return `<div class="tt-title">Taken</div>`;
         if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
         return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;

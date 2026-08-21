@@ -80,6 +80,56 @@ if (process.argv.includes('--selftest')) {
         replace: '        /* planted: the badge is built and never attached — data-new back to inert pixels */',
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },
+      {
+        // The b6b7df0 P1's UI face alone: the full-bag derivation gone — the
+        // ninth piece renders takeable at the cap. The collector's own gate
+        // stays, so the tap stores nothing and writes nothing; what breaks is
+        // the LEGIBILITY (row pending, then reading Taken over a refusal).
+        name: 'the full-bag refusal is not derived — the ninth offer renders takeable',
+        file: 'src/model/rewardplan.js',
+        find: "    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),",
+        replace: '    blocked: () => null, /* planted: the cap has no face — the row renders takeable at the cap */',
+        expectRed: /FAIL\s+S7 at the cap the offer is refused legibly/,
+      },
+      {
+        // The reviewer's first mutation: THE CAPACITY GATE REMOVED. The face
+        // must come off with it — with the derivation intact a blocked row
+        // takes no click, so a gateless collector would be planted where no
+        // door reaches it and the corpus would report an un-armed plant green.
+        name: 'the capacity gate is gone — a refused store no longer stops collection',
+        edits: [
+          {
+            file: 'src/model/rewardplan.js',
+            find: "    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),",
+            replace: '    blocked: () => null, /* planted: face off, so the gateless collector is reachable */',
+          },
+          {
+            file: 'src/main.js',
+            find: '  if (!stored) return; // the bag refused: nothing entered storage, so nothing is found — meta stays clean',
+            replace: '  /* planted: the capacity gate is gone — collection proceeds though the bag refused */',
+          },
+        ],
+        expectRed: /FAIL\s+S7 tapping claims nothing at the cap/,
+      },
+      {
+        // The reviewer's second mutation: META PERSISTENCE AHEAD OF THE
+        // SUCCESSFUL STORE — the store still runs, its verdict no longer
+        // gates the meta write. Face off for the same reachability reason.
+        name: 'meta persists ahead of the successful store',
+        edits: [
+          {
+            file: 'src/model/rewardplan.js',
+            find: "    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),",
+            replace: '    blocked: () => null, /* planted: face off, so the reordered collector is reachable */',
+          },
+          {
+            file: 'src/main.js',
+            find: '  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);',
+            replace: '  const stored = true; addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8); // planted: meta persistence no longer waits on the store landing',
+          },
+        ],
+        expectRed: /FAIL\s+S7 tapping claims nothing at the cap/,
+      },
     ],
   }));
 }
@@ -162,8 +212,9 @@ console.log(`door: treasure ${door.treasure} (floor ${door.floor}) via ${door.pa
 // at the parent, then the REAL click on the REAL treasure node. `settings`
 // seeds meta through ?shotSettings — the same saveMeta door a player's
 // Settings tap writes.
-async function bootTreasure({ settings = null } = {}) {
-  const s = settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '';
+async function bootTreasure({ settings = null, storage = null } = {}) {
+  const s = (settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '')
+    + (storage ? `&shotStorage=${storage}` : '');
   await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${door.parent}${s}`);
   await waitFor(`!!document.querySelector('[data-node="${door.treasure}"]')`, 'the treasure node on the map');
   const clicked = await ev(clickSel(`[data-node="${door.treasure}"]`));
@@ -222,6 +273,41 @@ await sleep(200);
 s = await spoils();
 check('S4 manual Continue leaves an untaken armament unowned (meta.found) — only what the player chose', s.found.length === 0, `meta.found is [${s.found}]`);
 check('S4 manual Continue leaves run storage empty', s.storage.length === 0, `storage is [${s.storage}]`);
+
+// ---- S7: THE CAP — the ninth armament against a full 8-slot bag ------------
+// The exact-head review at b6b7df0 (main.js:1103 thread): collectArmament
+// ignored addToStorage()'s false, so at the cap the ninth piece was
+// claimed-but-not-stored — meta.found poisoned with a piece the bag refused,
+// the row reading Taken, and the piece excluded from every future drop. Every
+// prior scenario here starts with an EMPTY bag, so this file structurally
+// could not catch it — the reviewer said so, and the reviewer is right. The
+// bag fills through ?shotStorage=full, which pushes pieces through
+// addToStorage itself (the real writer); the offer still rolls because the
+// fresh pool (25 base armaments) is far larger than the cap.
+await bootTreasure({ storage: 'full' });
+s = await spoils();
+check('S7 the bag stands at the cap before any interaction (shotStorage guard)', s.storage.length === 8, `storage is ${s.storage.length} pieces`);
+check('S7 the production roll still offered a ninth armament (pool guard)',
+  await ev(`!!document.querySelector('.reward-kind[data-kind="armament"]')`));
+check('S7 at the cap the offer is refused legibly (blocked row, reason storage — the flask precedent)',
+  await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&el.dataset.state==='blocked'&&el.dataset.blockedBy==='storage'})()`),
+  `state '${await ev(`(document.querySelector('.reward-kind[data-kind="armament"]')||{dataset:{}}).dataset.state`)}' blockedBy '${await ev(`(document.querySelector('.reward-kind[data-kind="armament"]')||{dataset:{}}).dataset.blockedBy`)}'`);
+// Drive the corruption the review names: tap the row (a blocked row takes no
+// click; an un-blocked one at the cap is the defect), then Continue.
+await ev(clickSel('.reward-kind[data-kind="armament"]'));
+await sleep(120);
+s = await spoils();
+check('S7 tapping claims nothing at the cap: no ninth piece enters meta.found while storage refuses it',
+  s.found.length === 0, `meta.found is [${s.found}] with storage at ${s.storage.length}`);
+check('S7 the row does not read Taken at the cap',
+  await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&el.dataset.state!=='taken'})()`));
+await ev(clickSel('#reward-continue'));
+await sleep(200);
+s = await spoils();
+check('S7 Continue leaves storage at the cap and meta.found unchanged',
+  s.storage.length === 8 && s.found.length === 0, `storage ${s.storage.length}, meta.found [${s.found}]`);
+check('S7 no discovery receipt was written (count 0 — structurally 0 in showcase mode; found-unchanged above is the real witness, same gated write)',
+  s.receipts === 0, `receipts ${s.receipts}`);
 
 // ---- S5: the card chooser wears a VISIBLE NEW badge (pose door — a renderer
 // fact; the treasure offer carries no cards, so the chooser's one home is the

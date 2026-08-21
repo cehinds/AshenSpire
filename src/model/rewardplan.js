@@ -65,7 +65,14 @@ const KINDS = {
     // `stored: true` because rollDrop persisted at roll time; that flag and
     // the defect it described died together (#290 at f29d468).
     row: (r) => ({ armamentId: r.armamentId }),
-    blocked: () => null,
+    // A full bag is DERIVED here, the flask precedent one descriptor up: the
+    // menu says so before any tap, auto-collect respects the same token, and
+    // Taken is unreachable at the cap. Added at the b6b7df0 review's P1 —
+    // without this derivation the ninth piece against an 8-slot cap rendered
+    // takeable, and a collector that ignored addToStorage's false claimed it
+    // into meta.found while the bag refused it: claimed-but-not-stored, and
+    // excluded from every future drop.
+    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
   },
   relic: {
     present: (r) => !!r.relicId,
@@ -76,10 +83,12 @@ const KINDS = {
 
 /**
  * rewardPlan(rewards, facts) → { rows }
- * `facts` carries the few run-derived numbers a row needs (today just
- * `flaskSlotsFree`); the offer stays pure data.
+ * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`,
+ * `armamentSlotsFree`); the offer stays pure data. Defaults are CONSERVATIVE
+ * — an unstated fact reads as no room, so a caller that forgets to state one
+ * gets a blocked row it can see, never a silent over-grant.
  */
-export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0 }) {
+export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
   const rows = [];
   for (const kind of REWARD_KIND_ORDER) {
     const d = KINDS[kind];

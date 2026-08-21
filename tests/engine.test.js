@@ -4864,7 +4864,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
     };
-    plan = rewardPlan(offer, { flaskSlotsFree: 1 });
+    plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 5, 'five reward kinds derive five rows');
     eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),
       'rows come out in the one declared order');
@@ -4874,9 +4874,25 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE FLASK BLOCK IS DERIVED, NOT DISCOVERED AT APPLY TIME: zero free
     // slots make the row blocked with a TOKEN reason (the levelUpPlan
     // precedent — a label switches on a word, never on two numbers).
-    const full = rewardPlan(offer, { flaskSlotsFree: 0 });
+    const full = rewardPlan(offer, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
     eq(full.rows.find((r) => r.kind === 'flask').blockedBy, 'slots', 'a full belt blocks the flask row by name');
     eq(plan.rows.find((r) => r.kind === 'flask').blockedBy, null, 'a free slot does not');
+
+    // THE BAG'S CAP IS DERIVED THE SAME WAY (the b6b7df0 review's P1: the
+    // ninth piece against an 8-slot cap rendered takeable and poisoned
+    // meta.found). Adjacent cells — one free slot leaves the row takeable,
+    // zero blocks it by name — and auto refuses it the way it refuses a
+    // full belt.
+    const bagFull = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 0 });
+    eq(bagFull.rows.find((r) => r.kind === 'armament').blockedBy, 'storage', 'a full bag blocks the armament row by name');
+    eq(plan.rows.find((r) => r.kind === 'armament').blockedBy, null, 'a free slot does not');
+    res = resolveContinue(bagFull, {}, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'armament'), false, 'auto does not force a piece into a full bag');
+    eq(res.leave.find((l) => l.kind === 'armament').blockedBy, 'storage', 'the leave list carries the reason');
+    // An UNSTATED fact reads as no room — conservative, so a caller that
+    // forgets the fact gets a visible block, never a silent over-grant.
+    eq(rewardPlan(offer, { flaskSlotsFree: 1 }).rows.find((r) => r.kind === 'armament').blockedBy, 'storage',
+      'an unstated bag fact blocks rather than silently over-granting');
 
     // AUTO takes everything not explicitly skipped — and picks the card by the
     // SEEDED rng handed in, never its own randomness.
