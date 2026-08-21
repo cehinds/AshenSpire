@@ -328,7 +328,7 @@ async function lifetime() {
   const heldDuringFade = outgoing.filter((g) => g.outs.some((o) => busSet.has(o))).length;
 
   const l1 = ramps.length > 0 && heldDuringFade === outgoing.length && outgoing.length > 0;
-  console.log(`${l1 ? 'OK  ' : 'MISS'} L1 the outgoing stage stays connected while its fade runs (${heldDuringFade}/${outgoing.length} held, ${ramps.length} ramp(s) pending)`);
+  console.log(`${l1 ? 'OK  ' : 'MISS'} L1 the outgoing stage stays connected while its fade runs — ${outgoing.length} subject(s), ${heldDuringFade} held, ${ramps.length} ramp(s) pending`);
   if (!l1) {
     out.push(ramps.length === 0
       ? 'L1: no fade ramp was scheduled at the switch — nothing to protect, and that is its own defect'
@@ -338,10 +338,16 @@ async function lifetime() {
   // The fade is 0.6s and the release is scheduled a beat past it; wait past both
   // rather than racing the timer this check exists to observe.
   await new Promise((r) => setTimeout(r, 2600));
-  const stillHeld = outgoing.filter((g) => g.outs.some((o) => busSet.has(o))).length;
-  const l2 = stillHeld === 0;
-  console.log(`${l2 ? 'OK  ' : 'MISS'} L2 the outgoing stage is released once everything it carries is over (${stillHeld} still connected)`);
-  if (!l2) out.push(`L2: ${stillHeld} outgoing stage(s) never released — every context change leaks a gain node`);
+  const stillHeld = outgoing.filter(connected).length;
+  // THE NON-EMPTY GUARD, ADDED IN THE SAME SWEEP THAT DELETED L5. Without
+  // `outgoing.length > 0` this reads `0 === 0` on an empty subject set and
+  // passes having measured nothing — the identical zero-work green, in the
+  // check sitting directly above the one it was found in.
+  const l2 = outgoing.length > 0 && stillHeld === 0;
+  console.log(`${l2 ? 'OK  ' : 'MISS'} L2 the outgoing stage is released once everything it carries is over — ${outgoing.length} subject(s), ${stillHeld} still connected`);
+  if (!l2) out.push(outgoing.length === 0
+    ? 'L2: NO APPLICABLE SUBJECT — no outgoing stage was tracked, so nothing was measured. Unknown is not green.'
+    : `L2: ${stillHeld} outgoing stage(s) never released — every context change leaks a gain node`);
 
   // L3 — A NOTE'S TAIL SURVIVES A CONTEXT CHANGE.
   // The margin used to come from `fade` (0.6s), and `stopMusic` fades only the
@@ -375,15 +381,28 @@ async function lifetime() {
   // hand every time a voice's envelope changed. It now comes from the longest
   // stop the ENGINE actually scheduled onto this stage, sampled just inside it.
   const end3 = trueEndOf(stage2[0]);
-  const sampleAt = Math.max(200, end3 * 1000 - 150);
+  // ONE CLOCK, STATED. The stub freezes `ctx.currentTime` at 0, so every
+  // `stop(t + x)` the engine schedules is `x` — seconds AFTER this playback was
+  // scheduled. `tStart` is that same moment in wall time, so `tStart + end*1000`
+  // is the deadline in the only units this probe can actually observe.
+  // The removed L5 compared `Date.now()` against an AudioContext-relative number
+  // through a lifetime-wide epoch — two clocks, one comparison, no meaning.
+  const tStart = Date.now();
   engine.music('rest');                      // switch one tick after the notes began
-  await new Promise((r) => setTimeout(r, sampleAt));
+  const deadline = tStart + end3 * 1000;
+  await new Promise((r) => setTimeout(r, Math.max(200, deadline - 150 - Date.now())));
   const heldAtTail = stage2.filter(connected).length;
-  const l3 = stage2.length > 0 && end3 > 0 && heldAtTail === stage2.length;
-  console.log(`${l3 ? 'OK  ' : 'MISS'} L3 the tail outlives the switch (${heldAtTail}/${stage2.length} held at ${(sampleAt / 1000).toFixed(2)}s, engine-scheduled end ${end3.toFixed(2)}s)`);
-  if (!l3) out.push(end3 === 0
-    ? 'L3: no scheduled stop was found on the outgoing stage — nothing was measured'
-    : `L3: the stage was cut before its own voices finished (${heldAtTail}/${stage2.length} held at ${(sampleAt / 1000).toFixed(2)}s of a ${end3.toFixed(2)}s tail)`);
+  // AND THE SECOND HALF, WHICH IS ALL THAT SURVIVES OF L5: the stage must be
+  // released AFTER its own end, not merely be up shortly before it. Same
+  // subject, same clock, and the subject is procedural — so it exists.
+  await new Promise((r) => setTimeout(r, (deadline + 500) - Date.now()));
+  const releasedAfter = stage2.filter((g) => !connected(g)).length;
+  const l3 = stage2.length > 0 && end3 > 0
+    && heldAtTail === stage2.length && releasedAfter === stage2.length;
+  console.log(`${l3 ? 'OK  ' : 'MISS'} L3 the tail outlives the switch and is then released — ${stage2.length} subject(s), engine-scheduled end ${end3.toFixed(2)}s (${heldAtTail} held at end-150ms, ${releasedAfter} released by end+500ms)`);
+  if (!l3) out.push(stage2.length === 0 || end3 === 0
+    ? 'L3: NO APPLICABLE SUBJECT — no scheduled stop was found on the outgoing stage, so nothing was measured. Unknown is not green.'
+    : `L3: ${heldAtTail}/${stage2.length} held at end-150ms and ${releasedAfter}/${stage2.length} released by end+500ms, against a ${end3.toFixed(2)}s tail`);
 
   // L4 — THE PLAYLIST DOES NOT LEAK A STAGE PER TRACK.
   // A track ending advances to the next one WITHOUT a context change, so
@@ -403,62 +422,75 @@ async function lifetime() {
     console.log(`MISS L4 setup — music('rest') answered '${d4}'`);
     return out;
   }
-  // IDENTITY, NOT A COUNT — and the reason is a defect this check itself had.
+  // EVERY STAGE THE ENGINE CREATED IS EITHER CURRENT OR DISCONNECTED.
   //
-  // L4 used to compare `stagesOn().length` before and after and accept
-  // `after <= before`. A COUNT IS NOT AN IDENTITY: a bounded plant that orphans
-  // EXACTLY ONE superseded stage, while every later stage retires normally,
-  // leaves the total unchanged — the probe printed "OK L4 ... (3 -> 2)" and
-  // exited 0 with a real leak in the tree. Two stages in, two stages out, one
-  // of them the wrong two. The gross plant (every rollover leaks) was caught,
-  // so the corpus looked healthy while the discriminating case walked through.
+  // THIS CHECK HAS NOW BEEN WRONG TWICE, IN OPPOSITE DIRECTIONS, AND BOTH
+  // VERSIONS PASSED WHILE A REAL LEAK SAT ON THE BUS.
+  //   v1 COUNTED  `stagesOn().length` before/after, accepting `after <= before`.
+  //      It saw ALL stages and not WHICH: orphan exactly one while later
+  //      advances retire normally and the total is unchanged — "OK (3 -> 2)".
+  //   v2 IDENTIFIED stages by walking the CURRENT media element's source. It saw
+  //      WHICH and not ALL: a stage no element points at is not in its
+  //      population at all, so its predicate could not be false. Saga planted a
+  //      real GainNode on `musicBus`, never in `state.bedGains`, and every check
+  //      printed OK beside 37 orphans.
   //
-  // This is the same failure I diagnosed in P3 one level up and then committed
-  // again: I MEASURED THE MECHANISM'S SHADOW INSTEAD OF THE INVARIANT. The
-  // invariant is per-stage — every superseded stage disconnects, and the final
-  // current one does not — so the check now follows each stage BY IDENTITY
-  // through the advance that supersedes it.
-  const seen = [];
+  // The diagnosis that produced v2 was right and I applied it by TRADING one
+  // blindness for the other instead of removing it. The population has to come
+  // from what the engine CREATED, not from what this probe can reach:
+  // `everOuts` remembers a connection across `disconnect()`, so any gain ever
+  // put on a bus is a subject forever, and there is no route that evades the
+  // check because there is no route that skips `bedGain()`.
+  const everStages = graph.nodes.filter((n) => n.kind === 'gain' && n.everOuts.some((o) => busSet.has(o)));
   const stageOfCurrentTrack = () => {
     const el = graph.elements[graph.elements.length - 1];
     return el && el.source && el.source.outs.length ? el.source.outs[0] : null;
   };
-  seen.push(stageOfCurrentTrack());
   for (let i = 0; i < 4; i++) {
     const el = graph.elements[graph.elements.length - 1];
     if (el && el.fire) el.fire('ended');     // the real playlist advance
-    seen.push(stageOfCurrentTrack());
   }
-  await new Promise((r) => setTimeout(r, 900));
-  const tracked = seen.filter(Boolean);
-  const current = tracked[tracked.length - 1];
-  const superseded = tracked.slice(0, -1).filter((g) => g !== current);
-  const stillUp = superseded.filter(connected);
-  const l4 = tracked.length >= 2 && stillUp.length === 0 && !!current && connected(current);
-  console.log(`${l4 ? 'OK  ' : 'MISS'} L4 every superseded stage disconnects and the current one stays (${superseded.length} superseded, ${stillUp.length} still connected, current ${current && connected(current) ? 'up' : 'DOWN'})`);
+  // WAIT PAST THE LONGEST RETIREMENT BEFORE JUDGING. A stage that is neither
+  // current nor disconnected is not yet an orphan — it may be mid-fade, holding
+  // a tail it is REQUIRED to hold (L3 asserts exactly that). The census must
+  // therefore sit past the longest scheduled tail plus its margin, or this check
+  // convicts the fix it is meant to protect. Measured: a note tail is 1.9s and
+  // retirement adds 120ms, so 2.6s clears it with room.
+  await new Promise((r) => setTimeout(r, 2600));
+  const current = stageOfCurrentTrack();
+  const created = graph.nodes.filter((n) => n.kind === 'gain' && n.everOuts.some((o) => busSet.has(o)));
+  const orphans = created.filter((g) => g !== current && connected(g));
+  const l4 = created.length > 0 && !!current && connected(current) && orphans.length === 0;
+  console.log(`${l4 ? 'OK  ' : 'MISS'} L4 every stage ever put on the bus is current or disconnected — ${created.length} created, ${orphans.length} orphan(s) still connected, current ${current && connected(current) ? 'up' : 'DOWN'}`);
   if (!l4) {
-    out.push(tracked.length < 2
-      ? 'L4: fewer than two stages were tracked across the advances — nothing was measured'
-      : (stillUp.length
-        ? `L4: ${stillUp.length} of ${superseded.length} superseded stage(s) never disconnected — a leak the bus total cannot see`
-        : 'L4: the CURRENT stage is disconnected — the playlist advanced into silence'));
+    out.push(created.length === 0
+      ? 'L4: NO APPLICABLE SUBJECT — no stage was ever connected to a bus, so nothing was measured. Unknown is not green.'
+      : (!current || !connected(current)
+        ? 'L4: the CURRENT stage is disconnected — the playlist advanced into silence'
+        : `L4: ${orphans.length} stage(s) left connected to the bus while neither current nor retired — a leak no sampled population can see`));
   }
+  void everStages;
 
-  // L5 — A RETIRED STAGE OUTLIVED ITS OWN VOICES, checked against the engine's
-  // scheduling rather than its bookkeeping. This is what makes a missing
-  // `keepAlive` a red instead of a boundary: the stage's disconnect must fall
-  // after the latest stop the engine actually scheduled onto it.
-  const late = [];
-  for (const g of superseded) {
-    const end = trueEndOf(g);
-    if (!end) continue;
-    if (g.disconnectedAtMs && g.disconnectedAtMs < t0 + end * 1000) {
-      late.push(`${((g.disconnectedAtMs - t0) / 1000).toFixed(2)}s < ${end.toFixed(2)}s`);
-    }
-  }
-  const l5 = late.length === 0;
-  console.log(`${l5 ? 'OK  ' : 'MISS'} L5 no stage was released before its own scheduled voices ended (${late.length} early)`);
-  if (!l5) out.push(`L5: a stage was disconnected before the engine's own scheduled stop: ${late.join(', ')}`);
+  // L5 WAS HERE AND IS DELETED, NOT REPAIRED — and the reasoning belongs in the
+  // file because the next hand will be tempted to add it back.
+  //
+  // It claimed "no stage was released before its own scheduled voices ended" and
+  // it MEASURED NOTHING. Its only subjects were the external playlist stages
+  // above, whose sources are media elements with no oscillator -> voice chain,
+  // so `trueEndOf` returned 0 for every one of them, `if (!end) continue` skipped
+  // the lot, and an empty `late` array reported OK. A ZERO-WORK GREEN — the exact
+  // shape I had caught and fixed one check along two heads earlier ("0/0 held is
+  // red for the wrong reason, which is not red") and did not think to sweep for.
+  // Its clock was wrong too: wall-clock `Date.now()` compared against
+  // AudioContext-relative seconds through a lifetime-wide epoch.
+  //
+  // It is DELETED rather than fixed because its one real assertion — released
+  // AFTER its own end, not merely up shortly before it — belongs to a subject
+  // that actually has scheduled stops, and L3 already owns that subject and now
+  // makes that assertion on one common clock. Repairing L5 would have meant
+  // building it a second procedural scenario to have anything to measure: a
+  // check kept alive by giving it work, which is defending a check into
+  // existence. P7 is caught by L3 alone, so nothing is lost.
   return out;
 }
 
@@ -534,7 +566,7 @@ const PLANTS = [
     name: 'P5 SUPERSEDING is not a retirement — the playlist leaks a stage per track (the second P2)',
     from: '    retireStages(0);\n    const g = ctx.createGain();',
     to: '    const g = ctx.createGain(); // planted: a superseded stage is never retired',
-    expect: [/L4 every superseded stage disconnects/],
+    expect: [/L4 every stage ever put on the bus is current or disconnected/],
     wanted: 'L4 red — the graph growing with no context change',
   },
   {
@@ -556,8 +588,8 @@ const PLANTS = [
     // check it is meant to bite.
     from: "      if (state.context === context) playExternal(context, urls, bed);",
     to: "      if (state.context === context) { if (!globalThis.__leakOnce) { globalThis.__leakOnce = 1; state.bedGains = []; } playExternal(context, urls, bed); } // planted: exactly one orphan, at a real advance",
-    expect: [/L4 every superseded stage disconnects/],
-    wanted: 'L4 red — one superseded stage still connected while the total looks fine',
+    expect: [/L4 every stage ever put on the bus is current or disconnected/],
+    wanted: 'L4 red — one orphaned stage still connected while the total looks fine',
   },
   {
     // THE BOUNDARY I NAMED AND COULD NOT ENFORCE, NOW A RED. On this PR I wrote:
@@ -570,8 +602,26 @@ const PLANTS = [
     name: 'P7 a voice with NO keepAlive — the stage is released while that voice still sounds',
     from: '      keepAlive(out, t + 1.9);',
     to: '      // planted: this voice never declares when it is done',
-    expect: [/L3 the tail outlives the switch|L5 no stage was released before/],
-    wanted: 'L3/L5 red — a stage cut before a voice the bookkeeping forgot',
+    // NAMES EXACTLY ONE CHECK. It used to read /L3 …|L5 …/, and a disjunction
+    // lets a plant that claims two checks be satisfied by ONE — which is how L5
+    // sat green and unmeasuring behind a passing plant. A closed set with an
+    // open slot: the same shape as the vacuous pass it was hiding.
+    expect: [/L3 the tail outlives the switch/],
+    wanted: 'L3 red — a stage cut before a voice the bookkeeping forgot',
+  },
+  {
+    // SAGA'S KNOWN-BAD (B1), kept verbatim in intent: a real GainNode connected
+    // to `musicBus`, never entered in `state.bedGains`, never any track's
+    // current stage. It is invisible to any population a probe SAMPLES — no
+    // media element points at it and no voice feeds it — and it was invisible
+    // to the identity check I wrote, which printed OK beside 37 orphans. It is
+    // caught now only because the population is built from what the engine
+    // CREATED (`everOuts`) rather than from what the probe can reach.
+    name: 'P8 an orphan stage on the bus, current to nothing — the leak no SAMPLED population can see',
+    from: '    const g = ctx.createGain();\n    g.gain.value = bed && typeof bed.gain === \'number\' ? bed.gain : 1;',
+    to: '    const orphan = ctx.createGain(); orphan.gain.value = 1; orphan.connect(musicBus); // planted: never retired, never current\n    const g = ctx.createGain();\n    g.gain.value = bed && typeof bed.gain === \'number\' ? bed.gain : 1;',
+    expect: [/L4 every stage ever put on the bus is current or disconnected/],
+    wanted: 'L4 red — orphan stages left connected while neither current nor retired',
   },
   {
     name: 'P3 LIFETIME, never released — the stage leaks on every context change',

@@ -55,11 +55,18 @@ export function installWebAudioStub() {
     constructor(kind = 'node') {
       this.kind = kind;
       this.outs = [];
+      this.everOuts = [];
       this.gain = new FakeParam(true, this);
       this.frequency = new FakeParam(false, this);
       nodes.push(this);
     }
-    connect(n) { this.outs.push(n); return n; }
+    // `outs` is the LIVE wiring and is cleared by disconnect(). `everOuts` is
+    // the HISTORY and is not, because a check that asks "was this ever put on
+    // the bus?" cannot ask the live graph — a node that leaked and a node that
+    // was never created look identical there. This is what lets a population be
+    // built from what the engine CREATED rather than from what a probe happened
+    // to sample (Saga's B1).
+    connect(n) { this.outs.push(n); this.everOuts.push(n); return n; }
     disconnect() { this.outs.length = 0; this.disconnectedAtMs = Date.now(); }
     start() {}
     // THE SCHEDULED STOP IS RECORDED so a probe can derive when a voice is
