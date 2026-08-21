@@ -514,11 +514,49 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   ];
   const fields = app.querySelector('.cz-fields');
   fields.classList.add('cz-disc');
+  // THE ROWS THE MOUNT DOES NOT TAKE ARE STILL THE SCREEN'S, AND THEY GO BACK
+  // (E5 / #250 — the defect this repairs is mine, and it shipped nothing).
+  //
+  // `mountDisclosure` sets `host.innerHTML`, so mounting over `.cz-fields`
+  // DESTROYS every row in it. The six sections survive because SECTIONS holds
+  // their boxes by reference and the mount re-adopts them into its one panel.
+  // STARTING ARMOUR and STAT POINTS are not in SECTIONS — deliberately, below
+  // — so nothing held them and nothing brought them back: two rows this file
+  // writes were absent from the document from 9676d9a to aefc356, on a screen
+  // every gate called green.
+  //
+  // NEITHER ROW BECOMES A FACE. That is the design answer, and it is not the
+  // one-line one:
+  //   · MR-189's rule, still live in the comment beside their markup — a row
+  //     that CHANGES THE RUN never folds, because folding it hides the
+  //     choosing behind a choice. Armour and stat points change the run.
+  //   · Vira's replay item (d): the stat editor is a MULTI-CLICK surface, not
+  //     a pick-once choice. Every face here carries auto-advance — one pick
+  //     inside the open panel opens the next section — so a stepper's first
+  //     `+` would march a player off a row they had not finished. A face gives
+  //     this row that semantics BY CONSTRUCTION; there is no opting out of it.
+  // So both arrive OPEN, as themselves, under the fold row: the six picks read
+  // as one compact chooser, and the two rows you EDIT sit below it.
+  //
+  // DERIVED, NEVER LISTED. The open set is *every row of `.cz-fields` that
+  // does not hold a registered picker* — read off this template and SECTIONS,
+  // so no third hand-written list exists to fall out of step with the other
+  // two (Law 0 clause 4, which is the whole disease here). The derivation also
+  // inverts the failure: a future row added to the markup with no SECTIONS
+  // entry now APPEARS, open, instead of vanishing. Wrong-and-visible beats
+  // absent-and-green.
+  //
+  // READ BEFORE THE MOUNT — after it runs the adopted pickers live in the
+  // panel and no row contains its own box, so the test loses its referent.
+  const openRows = [...fields.children].filter((row) => !SECTIONS.some((s) => row.contains(s.box)));
   const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.box, sense: row.tip },
   })));
+  // ...and back into the host the mount just emptied, in the order the
+  // template wrote them, after the fold row.
+  for (const row of openRows) fields.appendChild(row);
   // One call after any pick — the faces are the screen's answer to "what did I
   // choose?", so they are re-read from `state`, never written twice.
   const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
