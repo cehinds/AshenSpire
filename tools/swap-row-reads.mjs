@@ -133,6 +133,27 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // wrong box crops the wrong pixels and the readings DISAGREE. False red, never
 // false green.
 //
+// THE POPULATION THIS INK CLAIM RESTS ON, STATED AS A BOUNDARY (Vira, #298).
+// The reading is measured on **12 cells**: two rows x three rules x two shapes,
+// one surface, one state, one Chromium on one Linux box. Every band in those
+// crops runs 37-50px — which is exactly the "30-50" the deleted tool declared
+// it kept, so on THIS population the 8px floor is genuinely inert, floored and
+// unfloored identical. That is a fact about the population, not a licence:
+// Vira reproduced a one-scanline, 13-pixel fringe at a crop's top edge on a
+// healthy tree with nothing planted, and this tool is scored BY FINDING, so a
+// false red is its unit of output. The floor stays.
+//
+// THE FADE QUESTION IS DISPOSED, AND THE ANSWER IS THE SURFACE'S, NOT THIS
+// READER'S. Instrumented at the shutter (Vira): `screenIn` ran at 0 of 12
+// captures — the Armoury is an overlay, not an `#app > *` child, so opening it
+// fires no `screenIn` at all, and the first shutter lands ~13,620 ms after the
+// mount, 56x the 240ms window. NOTE FOR ANYONE WRITING A WAIT: `base.css:273`
+// is an ANIMATION, not a transition, so `transitionend` would never fire.
+// **This file contains no `getAnimations`, `animationend` or `transitionend`,
+// and its `sleep(180)` is a geometry settle by its own comment** — the safety
+// is the surface's, and a surface that starts animating would remove it
+// without a word here changing.
+//
 // THE DELETED TOOL'S RECORDED RUNS ARE KEPT, deliberately:
 // `tools/results/linebudget-camera/` holds the crops and the transcript where
 // the crush cell was watched BOTH WAYS (`false-green-red-before-green-dabd7d9.txt`
@@ -190,6 +211,16 @@ function decodePng(buf) {
 // The two literals are this reader's own and are printed on every run.
 const INK_DELTA = 24;      // luminance away from the crop's background to be ink
 const INK_MIN_PIXELS = 2;  // pixels in a scanline before that line counts as inked
+// A RUN SHORTER THAN THIS IS NOT A LINE OF TEXT, and this floor is RESTORED
+// rather than defended (#179 review). I removed it while transcribing this
+// reader and disclosed nothing; my defence was a population — twelve crops
+// whose every band measured 37-50px, 4.6x this floor. THAT IS NOT A DEFENCE.
+// Consequence unobserved is not consequence disproved: twelve cells on one
+// surface in one state cannot show that an antialiasing fringe or a descender
+// bleeding in at a crop edge CAN'T raise a one- or two-pixel run and be counted
+// as a line. The ruling that sent it back is worth keeping in the file: A
+// FILTER'S REMOVAL IS JUSTIFIED BY A PLANT, NEVER BY A POPULATION.
+const INK_BAND_FLOOR_PX = 8;
 function inkBands(buf) {
   const { w, h, ch, px } = decodePng(buf);
   const lum = new Uint8Array(w * h);
@@ -211,10 +242,11 @@ function inkBands(buf) {
     if (!on && start >= 0) { runs.push([start, y - 1]); start = -1; }
   }
   if (start >= 0) runs.push([start, h - 1]);
+  const kept = runs.filter(([a, b]) => (b - a + 1) >= INK_BAND_FLOOR_PX);
   // A tall glyph can bridge two bands in a photograph; say so rather than
   // silently reporting the smaller number as fact.
-  const bridged = runs.some(([a, b]) => (b - a + 1) > Math.max(4, h / 2));
-  return { bands: runs.length, bridged };
+  const bridged = kept.some(([a, b]) => (b - a + 1) > Math.max(4, h / 2));
+  return { bands: kept.length, bridged, thin: runs.length - kept.length };
 }
 
 // THE ROW, SCROLLED TO AND RE-MEASURED AT PHOTOGRAPH TIME (#179).
@@ -239,7 +271,31 @@ const ROW_BOX = (i) => `(() => {
   const r = li.getBoundingClientRect();
   return {
     x: r.left, y: r.top, w: r.width, h: r.height,
-    clipped: r.top < 0 || r.bottom > innerHeight || r.height <= 0,
+    // CLIPPED MEANS CLIPPED BY ANYTHING, NOT JUST BY THE VIEWPORT — RESTORED
+    // (#179 review). My version asked only whether the row was inside the
+    // window, and this surface has real clipping ancestors: .armoury-body is
+    // \`overflow: hidden\` and .armoury-right is \`overflow-y: auto\`
+    // (styles/ui.css). A row scrolled half out of .armoury-right is inside the
+    // viewport, behind a clip, and my check called it photographable — then the
+    // crop would count pixels a player cannot see as ink. That breaks this
+    // tool's own "unknown is not green" promise, in the one place the promise
+    // is load-bearing.
+    //
+    // The code I deleted carried its own sighting, which is what makes losing
+    // it the worst of the six: "Watched: the second row sat under the modal's
+    // clip and the camera read the page footer as text." It has never fired for
+    // me only because scrollIntoView({block:'center'}) happens to centre a row
+    // inside its scroll container — saved by incidental behaviour, not by
+    // construction, which is the shape this whole review kept finding.
+    clipped: (() => {
+      for (let n = li.parentElement; n; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (!/auto|scroll|hidden/.test(cs.overflowY) && !/auto|scroll|hidden/.test(cs.overflowX)) continue;
+        const q = n.getBoundingClientRect();
+        if (r.top < q.top - 0.5 || r.bottom > q.bottom + 0.5 || r.left < q.left - 0.5 || r.right > q.right + 0.5) return true;
+      }
+      return r.top < 0 || r.bottom > innerHeight || r.height <= 0;
+    })(),
   };
 })()`;
 
@@ -1105,6 +1161,64 @@ async function cdp(p) {
 // ---------------------------------------------------------------------------
 const PLANTS = [
   {
+    // THE FLOOR IS LOAD-BEARING, PLANTED RATHER THAN ARGUED (#179 review).
+    // I removed INK_BAND_FLOOR_PX while transcribing this reader and defended
+    // the removal with a population: twelve crops whose every band measured
+    // 37-50px. That is not a defence — consequence unobserved is not
+    // consequence disproved. This is the plant that settles it, and it is TWO
+    // cells, which is the whole point:
+    //   fringe drawn, floor INTACT   -> 12 cells, 0 disagreements (measured)
+    //   fringe drawn, floor REMOVED  -> 8 of 12 cells go red, "4 bands where
+    //                                   bands() reads 3" — eight FALSE reds
+    // Same 2px artifact either way. The floor is what stands between this tool
+    // and inventing a line of text that nobody printed.
+    name: 'a 2px fringe with the ink floor removed invents a line (8 of 12 cells) — the floor is load-bearing',
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change small { display: block; margin-top: 7px; border-top: 2px solid #fff; padding-top: 7px; }',
+    also: {
+      file: 'tools/swap-row-reads.mjs',
+      find: '  const kept = runs.filter(([a, b]) => (b - a + 1) >= INK_BAND_FLOOR_PX);',
+      replace: '  const kept = runs; // planted: the floor removed, exactly as I had shipped it',
+    },
+    expect: /INK — bands\(\) reads 3 line\(s\), 4 band/,
+  },
+  {
+    // A ROW BEHIND A CLIP MUST REPORT UNKNOWN, NEVER A NUMBER (#179 review).
+    // .armoury-right is `overflow-y: auto`; squeezing it puts the rows behind
+    // its clip while they remain inside the viewport — the exact state my
+    // viewport-only check called photographable. With the ancestor walk
+    // restored the tool says so and counts nothing; without it, it crops
+    // pixels a player cannot see and reports them as ink.
+    // MEASURED BOTH WAYS, and the second cell is why this plant exists at all.
+    // Same 32px clip, one difference — the ancestor walk:
+    //   walk RESTORED       -> 4 rows read, 8 REFUSED: "not wholly on screen"
+    //   walk REMOVED (mine) -> 12 rows counted, 0 disagreements: a clean GREEN
+    // built from pixels behind a clip. The removal I shipped does not produce a
+    // false RED like the ink floor did; it produces a false GREEN, which is
+    // worse, because a false red argues with you and a false green agrees.
+    //
+    // 32px is chosen, not sampled: the rows measure ~50px, so the clip has to
+    // be shorter than a row or the row simply fits and nothing is hidden. My
+    // first attempt used 96px and the plant sat silent — the defect was in the
+    // plant, not the tool.
+    //
+    // AIMED AT .armoury-body, NOT .armoury-right, AND THE FIRST AIM WAS WRONG.
+    // I pointed this at `.armoury-right { overflow-y: auto }` — true in the
+    // desktop rule and FALSE at the shapes this tool photographs, because
+    // `:root[data-layout='narrow']` resets that very element to
+    // `overflow-y: visible` and moves the scroll to `.armoury-body`. The plant
+    // ran, the string matched, and nothing clipped: `planted:NO`, a normal
+    // table. A plant can be aimed at a real selector and still be aimed at the
+    // wrong element — the harness's drift check catches a MISSING anchor, never
+    // a WRONG one, and only running it told me which I had.
+    name: 'the rows sit behind .armoury-body\'s clip at phone widths — the reading must be unknown, not a count',
+    file: 'styles/ui.css',
+    find: ":root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }",
+    replace: ":root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; max-height: 32px; }",
+    expect: /INK — the row is not wholly on screen/,
+  },
+  {
     // THE CARD'S OWN CELL (#179, Vira). The note's lines are printed ON TOP OF
     // EACH OTHER: two line boxes, one band of ink, unreadable. This is the
     // plant the INK reading exists for, and `alsoSilent` scores the LINE
@@ -1273,6 +1387,22 @@ async function selftest() {
         continue;
       }
       writeFileSync(p, before.replace(plant.find, plant.replace));
+      // AN OPTIONAL SECOND EDIT, because one plant here has to say "this
+      // protection is load-bearing" and that needs TWO changes in one tree: the
+      // artifact the protection absorbs, plus the protection's own removal.
+      // Without it a filter's value can only be argued, never planted (#179
+      // review: a filter's removal is justified by a plant, never by a
+      // population).
+      if (plant.also) {
+        const p2 = join(dir, plant.also.file);
+        const b2 = readFileSync(p2, 'utf8');
+        if (!b2.includes(plant.also.find)) {
+          console.log(`  PLANT SITE DRIFTED  ${plant.name} (second edit)`);
+          console.log(`      '${plant.also.find.slice(0, 66)}…' is not in ${plant.also.file}. Treat as RED.`);
+          continue;
+        }
+        writeFileSync(p2, b2.replace(plant.also.find, plant.also.replace));
+      }
       const r = runIn(dir);
       let red = false, why = '';
       if (plant.expect) {
