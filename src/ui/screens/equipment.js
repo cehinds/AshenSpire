@@ -396,6 +396,12 @@ export function mountEquipment(host, {
   // below reads `inCombat` — a second name for the same fact is the defect this
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
+  // EVERY ARMED GRIP, SO EVERY ARMED GRIP CAN BE PUT DOWN. `armHold` adds a
+  // window-level keydown listener (its Escape abort) that only `disarm()`
+  // removes, and `draw()` below replaces the whole subtree — so without this
+  // list every equip would leave one live listener per candidate behind,
+  // forever, and nothing on the page would look wrong. A graceful leak.
+  const heldGrips = [];
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -781,31 +787,103 @@ export function mountEquipment(host, {
     // click also commits, that is one line and the reading is stated rather
     // than buried.
     //
-    // ---- THE HOLD IS NOT ARMED, AND THAT IS A FINDING, NOT AN OMISSION ----
+    // ---- HIS RULING: TWO ELEMENTS (Constantine, 2026-08-21) --------------
     //
-    // He asked for BOTH: "press and hold on army card to equip" AND "click
-    // unfolds the card". `armHold` (components/holdconfirm.js) is this tree's
-    // one hold gesture and it cannot serve both on ONE element, by design:
+    // He was given three roads and took the one that costs a control. What was
+    // MEASURED at #304 and put in front of him stands and is not softened here:
     //
-    //   "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the
-    //    early release IS the abort, so the click it generates must die here
-    //    rather than become a second door."
+    //   `armHold` cannot serve both gestures on ONE element, by design —
+    //     "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 —
+    //      the early release IS the abort, so the click it generates must die
+    //      here rather than become a second door."
+    //   Arming the FACE was tried and measured: the card stopped unfolding and
+    //     A5's refold checks went red behind it.
+    //   Arming the in-card EQUIP BUTTON was measured too: its click dies, so
+    //     the hold becomes the ONLY road to equipping, and anyone who cannot
+    //     perform a hold loses the act.
     //
-    // Measured, not read: arming the face made a short click do NOTHING — the
-    // card stopped unfolding, and A5's refold checks went red behind it. Rule 1
-    // is not incidental; it exists so a released-too-early hold can never
-    // become a second way to fire the thing it was guarding.
+    // BOTH OF THOSE ARE "TWO ELEMENTS" AND HIS OWN FOUR RULES EXCLUDE BOTH.
+    // He asked for click-unfolds-the-card AND for the in-card button to stay.
+    // So the second element is a THIRD control that carries neither existing
+    // click: a grip under each card. The card keeps its click, the button keeps
+    // its click, and the grip holds nothing but the hold. That is the only
+    // arrangement his four sentences leave standing, and it is stated here
+    // rather than derived silently, because the cost — one more control per
+    // candidate, in a picker that opens into a ~125 px strip — is his to carry
+    // and he was told the number.
     //
-    // SO THE CONFLICT IS REAL AND IT IS A RULING, NOT A PATCH. Making the early
-    // release unfold a pane is exactly the "second door" rule 1 forbids, and
-    // whether the Armoury card is safe enough to be the exception is not this
-    // file's call — it is the holdconfirm seat's, and Constantine's if they
-    // disagree. `armHold`/`holdMs` stay imported for the moment it is ruled.
+    // WHY `armHold` AND NOT `beatArmer`. The beat table (model/secondbeat.js)
+    // rules on COMMITS — what a mis-press writes that cannot be taken back —
+    // and equipping is reversible by equipping the other thing. `beatOf` would
+    // answer `none` and arm nothing. This hold is not a safety step; it is a
+    // SHORTCUT past the unfold, the same shape as `armInspect`, which is a
+    // neighbour of that table and deliberately not a row in it. Adding an
+    // `equipPiece` row to make this legal would be teaching the table to say
+    // "hold" about something it correctly considers free.
     //
-    // WHAT SHIPS MEANWHILE IS HIS ITEM 3, AND IT IS THE ACCESSIBLE ROAD ANYWAY:
-    // the equip button inside the unfolded pane. A press-and-hold has no
-    // keyboard or pad equivalent at all, so the button was always going to be
-    // the only door for those players — which is why it is not a fallback here.
+    // ONE DIAL, NOT A NUMBER. `holdMs` is the player's own Hold-to-confirm
+    // setting; `off` (0) means the pre-hold behaviour byte for byte, so the
+    // grip becomes a plain one-tap Equip and NOTHING is lost at that setting.
+    const gripMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
+    for (const entry of entries) {
+      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
+      if (!face) continue;
+      const grip = document.createElement('button');
+      grip.type = 'button';
+      // Same two channels as the in-card button: the word and `.danger`.
+      grip.className = entry.equipped ? 'ep-hold danger' : 'ep-hold';
+      grip.dataset.holdFor = entry.key;
+      grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
+      grip.textContent = entry.equipped ? 'Unequip' : 'Equip';
+      // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
+      // Nested inside the face the grip's aborted click would bubble into the
+      // unfold path and only `stopPropagation` would stand between them — which
+      // is keeping two gestures apart by a promise instead of by structure.
+      // Sibling means an aborted hold has no path to the fold at all.
+      face.insertAdjacentElement('afterend', grip);
+      const act = entryAct.get(entry.key);
+      if (!act) { sealChip(grip); continue; }
+      // THE LIFT AFTER A COMMIT, AND IT IS A MEASUREMENT, NOT A PRECAUTION.
+      // Driven with real CDP touch at 1200x730: the hold fires AT FULL (that is
+      // armHold's design — the player feels it land with the thumb still down),
+      // `commit()` redraws this whole subtree, and the finger then lifts over
+      // whatever now occupies that pixel. Chrome dispatches the click to THAT
+      // element. Measured target: `BUTTON.es-cell on` — the release silently
+      // re-opened a slot picker the player never asked for.
+      //
+      // Rule 1's own swallow cannot reach this: it lives on the grip, and the
+      // grip no longer exists by the time the click is dispatched. THAT IS AN
+      // `armHold` FINDING, NOT AN ARMOURY ONE — any caller whose `onConfirm`
+      // rebuilds its own element loses the swallow, and combat's End Turn has
+      // the same shape. Flagged to the holdconfirm seat on the PR; fixed HERE
+      // only because this is the caller that has it today.
+      //
+      // NO TIMER, so there is no stale swallow to eat a later real tap (Vira's
+      // F3, which this tree has already paid for once): the eater is released
+      // by the next `pointerdown`, i.e. by the player starting a NEW press. The
+      // click that belongs to the gesture that just committed has no pointerdown
+      // in front of it, and it is the only click this can ever eat.
+      const eatTheLift = () => {
+        const off = () => {
+          removeEventListener('click', eat, true);
+          removeEventListener('pointerdown', off, true);
+        };
+        const eat = (e) => { e.stopPropagation(); e.preventDefault(); off(); };
+        addEventListener('click', eat, true);
+        addEventListener('pointerdown', off, true);
+      };
+      // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
+      // a second `equipPiece(...)` here is two chances to disagree about what
+      // "equip" means, which is the copy this seat exists to refuse.
+      heldGrips.push(armHold(grip, { ms: gripMs, onConfirm: () => { eatTheLift(); act(); }, id: 'equipPiece' }));
+    }
+    //
+    // THE IN-CARD BUTTON STAYS AND IS NOT A FALLBACK. It is the road for
+    // anyone who cannot perform a hold at all. (#304's body said a hold has no
+    // keyboard or pad equivalent; THAT WAS WRONG and it is corrected here —
+    // `armPress` (ui/gesture.js, S7, 2026-08-17) runs the same timer for a held
+    // Confirm key and a held Confirm pad button. What has no equivalent is a
+    // hold for a hand that cannot hold, on any input.)
     // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
     // Armoury already owns a veil that closes the whole panel on an outside
     // click, and a second document-level listener would race it — press outside
@@ -966,6 +1044,8 @@ export function mountEquipment(host, {
   }
 
   function draw() {
+    // The previous render's grips die BEFORE their elements do — see heldGrips.
+    while (heldGrips.length) heldGrips.pop()();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can

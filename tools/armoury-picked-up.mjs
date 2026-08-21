@@ -25,9 +25,27 @@
 //       reveals one equip control, and that control says Unequip — carrying the
 //       danger class, which is what "in red" is in this stylesheet — when the
 //       piece is the one already in the set. AND THE NEGATIVE, which is his
-//       correction stated as a check: NO pressable control exists in the
-//       candidate list that is not a face or inside the revealed panel. A sub
-//       button relabelled is still a sub button, and this is what catches it.
+//       correction stated as a check: no pressable control exists in the
+//       candidate list that is not a face, inside the revealed panel, OR THE
+//       ONE GRIP A6 RULES ON. A sub button relabelled is still a sub button,
+//       and this is what catches it.
+//
+//       THE EXCEPTION IS HIM OVERRIDING HIMSELF AND IT IS NOT SMOOTHED HERE.
+//       On 2026-08-21 he corrected item 3 to *"the sub button ... should NOT
+//       exist"*; on the same day he ruled TWO ELEMENTS, which puts a control
+//       back outside the card. Both sentences are his, the second is later, and
+//       the check follows the later one — but only for a control that is
+//       exactly `.ep-hold`, exactly one per face, immediately after its own
+//       face. Anything else outside a card is still A3.stray.
+//
+//   A6  TWO ELEMENTS, ONE GESTURE EACH (his ruling, 2026-08-21). The grip holds
+//       the hold and nothing else: a real pointer press, held past the player's
+//       own dial, equips — and an EARLY RELEASE does nothing at all, neither
+//       equipping (rule 1) nor leaking a click into the card's unfold path.
+//       The card keeps its click, the in-card button keeps its click, and
+//       NEITHER of the other two is armed. Driven with REAL CDP INPUT — mouse
+//       and touch — not DOM `.click()`, because a hold is a pointer press by
+//       nature and a wired handler is not a finger.
 //
 // DOOR. The source tree, served by the repo's own tools/serve.mjs, driven in
 // real Chromium through tools/browser.mjs's CDP path — the same road every
@@ -41,7 +59,8 @@
 // Exit:   0 all green · 1 any finding · 2 the harness could not run
 //
 // BOUNDARY, and it is the extent of the green. One Linux container, one
-// headless Chromium, ONE SHAPE (1200x730), and ONE BOARD — `?shot=combat`,
+// headless Chromium, and — for A1/A2/A3 — ONE SHAPE (1200x730) and ONE BOARD:
+// `?shot=combat`,
 // which is the IN-COMBAT mount (inCombat: true). The map's Armoury is a second
 // mount with a different `meta` and a live onChange, and NOTHING HERE SPEAKS
 // FOR IT. A1's model half is shape-free and covers both; A2 and A3 are the
@@ -97,6 +116,21 @@ const CODES = new Set([
   'A5.refold', // clicking again did not refold
   'A5.pose',   // could not pose an open card with somewhere outside it
   'A5.offcard',// clicking off the card left it open
+  // A6 — HIS TWO-ELEMENT RULING (2026-08-21). The grip carries the hold; the
+  // card keeps its click; the in-card button keeps its click. Every code below
+  // names ONE assertion in ONE direction, so a plant bound to one can never be
+  // satisfied by another (the anchor rule, above).
+  'A6.nogrip',      // a card has no grip immediately after it
+  'A6.unreachable', // the grip has no box while the list is folded
+  'A6.unarmed',     // the grip publishes no armed hold while the dial is on
+  'A6.thumb',       // the grip is shorter than the tap floor
+  'A6.face',        // the card face itself carries an armed hold
+  'A6.finger',      // no real pointer press could be landed on the grip
+  'A6.leak',        // an aborted hold unfolded the card
+  'A6.acted',       // an aborted hold equipped or unequipped
+  'A6.equips',      // a completed hold did not equip
+  'A6.tail',        // the lift after a completed hold activated something else
+  'A6.button',      // the in-card equip button no longer equips on a plain click
 ]);
 const known = (code) => { if (!CODES.has(code)) throw new Error(`armoury-picked-up: unknown finding code "${code}" — the codes are a closed set; add it above or fix the caller.`); return code; };
 /** The one emitter: the code and its sentence are born in the same call. */
@@ -195,6 +229,87 @@ if (process.argv.includes('--selftest')) {
         // this plant leaves the word alone on purpose, so binding to A3.word
         // would be the "caught something, measured nothing" failure again.
         expectRed: redRe('A3.danger'),
+      },
+      // ---- A6, HIS TWO-ELEMENT RULING ---------------------------------
+      // ALL SIX BELOW WERE HAND-PLANTED IN THE REAL TREE FIRST and reverted;
+      // this door is the repeatable copy of that, not the evidence for it.
+      {
+        // THE ONE THE RULING WAS BOUGHT WITH. Two elements exist so that no
+        // control carries both gestures — so the aborted hold's click must have
+        // NO path to the fold. This wires one by hand, in front of armHold's
+        // own swallow so it runs first, which is exactly the "second door"
+        // rule 1 forbids. Hand-planted red on BOTH mouse and touch.
+        name: 'the grip also unfolds the card (rule 1 leaks a second door)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: '      heldGrips.push(armHold(grip,',
+          replace: "      grip.addEventListener('click', () => fold.open(entry.key)); // planted: the second door\n"
+            + '      heldGrips.push(armHold(grip,' }],
+        expectRed: redRe('A6.leak'),
+      },
+      {
+        // THE CARD CLAIMS THE HOLD. Bound to the PUBLISHED attribute, and that
+        // is a deliberate narrowing rather than caution. The behavioural
+        // known-bad — actually `armHold(face, …)` — was hand-planted too and it
+        // reds A4.acted + A4.unfold FIRST (a DOM click on an armed control is
+        // `detail === 0`, so it commits instead of folding) and then empties the
+        // shelf, taking the whole A6 stage with it: exit 2, A6.face never
+        // reached. Binding this plant to A6.face would then have been a plant
+        // that catches something and measures nothing — my own named failure.
+        // So the plant states the direction the CHECK can actually own: a face
+        // that publishes an armed hold, which is a lying page whether or not a
+        // hold is behind it (holdbeat.js and main.js both read that attribute).
+        name: 'a card face publishes an armed hold',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: '      heldGrips.push(armHold(grip,',
+          replace: '      face.dataset.holdMs = String(gripMs); // planted: the face claims a hold\n'
+            + '      heldGrips.push(armHold(grip,' }],
+        expectRed: redRe('A6.face'),
+      },
+      {
+        // THE ARRANGEMENT THIS ONE WAS CHOSEN OVER, planted so the choice is
+        // the tool's finding and not this file's prose. A grip inside the
+        // revealed pane is in the DOM and measures 0x0 while the list is
+        // folded: no pointer can reach it, so the hold can only be performed
+        // after the click it exists to save.
+        name: 'the grip moves inside the revealed pane (the arrangement this one was chosen over)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: "      face.insertAdjacentElement('afterend', grip);",
+          replace: '      entry.reveal.node.appendChild(grip); // planted: the grip lives in the pane' }],
+        expectRed: redRe('A6.unreachable'),
+      },
+      {
+        // WHAT A THUMB GETS. This plant caught the CHECK, not the product: the
+        // first draft read the floor off `getComputedStyle('.ep-hold').minHeight`
+        // — the resolved value of the rule it was guarding — so deleting the
+        // rule deleted the check and the tool EXITED 0 on a 19 px hold target.
+        // The floor now comes from `--tap-floor`, the datum balance.ui.tapSize
+        // writes for the whole app, measured through a probe box.
+        name: 'the grip loses its tap floor (what a thumb gets)',
+        edits: [{ file: 'styles/ui.css',
+          find: '  min-height: var(--tap-floor);\n  width: 100%;',
+          replace: '  width: 100%;' }],
+        expectRed: redRe('A6.thumb'),
+      },
+      {
+        // THE LIFT AFTER THE COMMIT, and it is TOUCH-ONLY by nature: a mouse
+        // release over a removed element generates no click at all, a finger
+        // does. Hand-planted red at 1200x730 with the release landing on
+        // `BUTTON.es-cell` — a picker the player never asked for.
+        name: 'the lift after a completed hold is not swallowed (the redraw eats the finger)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: 'onConfirm: () => { eatTheLift(); act(); }',
+          replace: 'onConfirm: act /* planted: no lift swallow */' }],
+        expectRed: redRe('A6.tail'),
+      },
+      {
+        // HIS OWN GUARDRAIL ON HIS OWN RULING: the grip must not become the
+        // only road. Anyone who cannot perform a hold — on any input — still
+        // has the control inside the opened card.
+        name: 'the in-card control stops equipping (the hold becomes the only road)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: "      if (seal.ok) btn.addEventListener('click', act);",
+          replace: "      if (seal.ok && false) btn.addEventListener('click', act); // planted: the hold is the only road" }],
+        expectRed: redRe('A6.button'),
       },
     ],
   }));
@@ -360,12 +475,19 @@ async function main() {
       const strays = JSON.parse(await ev(`JSON.stringify((() => {
         const list = document.querySelector('.equip-picker .ep-list');
         const all = [...list.querySelectorAll('button')];
-        const stray = all.filter((b) => !b.classList.contains('disc-face') && !b.closest('.disc-reveal'));
-        return { total: all.length, stray: stray.length, names: stray.slice(0, 4).map((b) => b.className || b.textContent.trim().slice(0, 20)) };
+        const outside = all.filter((b) => !b.classList.contains('disc-face') && !b.closest('.disc-reveal'));
+        // THE ONE NAMED EXCEPTION, and it is checked rather than waved through:
+        // a control outside the card is legal ONLY if it is the ruled grip AND
+        // it is the immediate next sibling of a face. Anything else is a stray.
+        const grip = (b) => b.classList.contains('ep-hold')
+          && b.previousElementSibling && b.previousElementSibling.classList.contains('disc-face');
+        const stray = outside.filter((b) => !grip(b));
+        return { total: all.length, outside: outside.length, grips: outside.length - stray.length,
+          stray: stray.length, names: stray.slice(0, 4).map((b) => b.className || b.textContent.trim().slice(0, 20)) };
       })())`));
       ok(strays.stray === 0, strays.stray === 0
-        ? `A3 no control outside the card — ${strays.total} button(s), all faces or inside the reveal`
-        : red('A3.stray', `${strays.stray} sub button(s) hang outside the card: ${strays.names.join(' · ')}`));
+        ? `A3 no control outside the card but the ruled grip — ${strays.total} button(s), ${strays.grips} grip(s)`
+        : red('A3.stray', `${strays.stray} sub button(s) hang outside the card and are not the ruled grip: ${strays.names.join(' · ')}`));
 
       // Press the card. One gesture, and it must open THAT card and only it.
       const pressed = JSON.parse(await ev(`JSON.stringify((() => {
@@ -531,6 +653,237 @@ async function main() {
 
     }
 
+    // ---- A6 · TWO ELEMENTS, ONE GESTURE EACH ---------------------------
+    //
+    // REAL POINTER INPUT, and that is the whole reason this stage exists as a
+    // separate one. A4/A5 above are DOM `.click()` calls: they prove handler
+    // wiring and say nothing about a finger. A HOLD IS A PRESS BY NATURE —
+    // there is no `.click()` that can express "down, wait 600 ms, up" — so it
+    // is driven with `Input.dispatchMouseEvent` and `Input.dispatchTouchEvent`
+    // at real coordinates, twice: once as a mouse, once as a THUMB.
+    //
+    // #304 said the conversion was the obstacle: this app scales with a zoom,
+    // so `getBoundingClientRect()` px might not be CDP input px. MEASURED HERE
+    // AND IT IS NOT: at 390x844 `--ui-zoom` is 0.9, a press at the RAW rect
+    // centre lands on the grip and a press at rect x zoom lands on the wrong
+    // control. So no conversion is applied — and the tool does not trust that
+    // sentence either. Every press is preceded by an `elementFromPoint` at the
+    // same coordinates and followed by a recorded `pointerdown`; if the finger
+    // did not land, A6.finger is a red, not a silent pass on a press that
+    // missed. THAT is what #304 actually hit: the picker opens below the fold
+    // in this region, so the press landed on the heading painted over it.
+    for (const touch of [false, true]) {
+      const way = touch ? 'touch' : 'mouse';
+      console.log(`\n  A6 · the grip holds the hold, and only the hold  (map mount, REAL ${way} input)`);
+      await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: touch, maxTouchPoints: 5 }, S);
+      // A FRESH BOARD PER PASS, AND AGAIN BEFORE THE BUTTON. The completed hold
+      // below CHANGES THE LOADOUT, which is the point of it — and unequipping a
+      // kit piece empties the shelf, because `ownership()` is kit-you-are-
+      // WEARING union what you picked up. A second measurement on the same
+      // board would be measuring the wreckage of the first, and it did: the
+      // first draft of this stage reported "no in-card control" as a product
+      // finding when the instrument had eaten its own corpus.
+      const openBoard = async () => {
+        await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+        await until("!!document.querySelector('#open-armoury')", 'map');
+        await wait(700);
+        await ev("document.querySelector('#open-armoury').click()");
+        await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+        await wait(450);
+        await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+          || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+        return until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+          .then(() => true, () => false);
+      };
+      const hasGrip = await openBoard();
+      if (!hasGrip) {
+        console.log(`    ${red('A6.nogrip', `${way}: the folded list draws no grip at all`)}`);
+        fails++; checks++; continue;
+      }
+      await wait(300);
+
+      // THE FOLDED LIST, READ AS THE PLAYER MEETS IT. Every number below is off
+      // the laid-out page, not off the source: the grip's own box, the tap
+      // floor the stylesheet resolved, and whether the CARD is armed too.
+      const shelf = JSON.parse(await ev(`JSON.stringify((() => {
+        const list = document.querySelector('.equip-picker .ep-list');
+        const faces = [...list.querySelectorAll('.disc-face')];
+        const grips = [...list.querySelectorAll('.ep-hold')];
+        // THE FLOOR IS THE HOUSE'S, NOT THE CONTROL'S, and this line is a repair.
+        // It read \`getComputedStyle('.ep-hold').minHeight\` — the resolved value of
+        // the very rule the check exists to guard. Hand-planting the removal of
+        // that rule made the floor 0 and the tool EXITED 0: the check and the
+        // defect were reading one source, so deleting the source deleted the
+        // check. \`--tap-floor\` is the datum \`balance.ui.tapSize\` writes for the
+        // whole app; it is a calc(), so it is resolved by measuring a probe box
+        // rather than parsed out of a string.
+        const probe = document.createElement('div');
+        probe.style.cssText = 'position:absolute;left:-9999px;top:0;width:1px;height:var(--tap-floor)';
+        document.body.appendChild(probe);
+        const floor = probe.getBoundingClientRect().height;
+        probe.remove();
+        const paired = faces.filter((f) => f.nextElementSibling && f.nextElementSibling.classList.contains('ep-hold'));
+        const boxed = grips.filter((g) => { const r = g.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+        const short = boxed.filter((g) => g.getBoundingClientRect().height + 0.5 < floor);
+        const armedFaces = faces.filter((f) => Number(f.dataset.holdMs || 0) > 0);
+        const g0 = grips[0] ? grips[0].getBoundingClientRect() : null;
+        return { faces: faces.length, grips: grips.length, paired: paired.length, boxed: boxed.length,
+          floor, short: short.length, armedFaces: armedFaces.length,
+          holdMs: grips[0] ? Number(grips[0].dataset.holdMs || 0) : 0,
+          g0: g0 ? { w: Math.round(g0.width), h: Math.round(g0.height) } : null,
+          listH: Math.round(list.getBoundingClientRect().height),
+          pickerH: Math.round(document.querySelector('.equip-picker').getBoundingClientRect().height),
+          portH: document.querySelector('.armoury-right').clientHeight,
+          portScroll: document.querySelector('.armoury-right').scrollHeight,
+        }; })())`));
+      console.log(`      ${shelf.faces} card(s) · ${shelf.grips} grip(s) · grip ${shelf.g0 ? shelf.g0.w + 'x' + shelf.g0.h : '(none)'}`
+        + ` · tap floor ${shelf.floor} · data-hold-ms ${shelf.holdMs}`);
+      console.log(`      INK, the cost of his ruling, off the laid-out page: card list ${shelf.listH} px,`
+        + ` picker ${shelf.pickerH} px, and the box it opens in shows ${shelf.portH} of ${shelf.portScroll} px.`);
+
+      ok(shelf.faces > 0 && shelf.paired === shelf.faces,
+        (shelf.faces > 0 && shelf.paired === shelf.faces)
+          ? `A6 every card has its own grip immediately after it (${shelf.paired}/${shelf.faces})`
+          : red('A6.nogrip', `${shelf.faces - shelf.paired} card(s) of ${shelf.faces} have no grip immediately after them`));
+      // THE V2 DIRECTION, AND IT IS THE ARRANGEMENT THIS ONE WAS CHOSEN OVER.
+      // A grip parked inside the revealed pane exists in the DOM and measures
+      // 0x0 while the list is folded — no pointer can reach it, so the hold is
+      // only performable AFTER the click it exists to save. Its own code.
+      ok(shelf.grips > 0 && shelf.boxed === shelf.grips,
+        (shelf.grips > 0 && shelf.boxed === shelf.grips)
+          ? `A6 every grip has a box while the list is folded (${shelf.boxed}/${shelf.grips})`
+          : red('A6.unreachable', `${shelf.grips - shelf.boxed} grip(s) of ${shelf.grips} have no box while folded`
+            + ' — the hold is unreachable until the card is already open'));
+      ok(shelf.holdMs > 0, shelf.holdMs > 0
+        ? `A6 the grip publishes an armed hold (data-hold-ms=${shelf.holdMs}, the player's own dial)`
+        : red('A6.unarmed', `the grip publishes data-hold-ms=${shelf.holdMs} — nothing is armed on it`));
+      ok(shelf.short === 0, shelf.short === 0
+        ? `A6 every grip meets the tap floor (${shelf.floor} px)`
+        : red('A6.thumb', `${shelf.short} grip(s) are shorter than the tap floor (${shelf.floor} px)`
+          + ' — a hold target a thumb misses is a control that does not exist'));
+      // HIS WHOLE RULING IN ONE ASSERTION: the card is NOT the hold element.
+      ok(shelf.armedFaces === 0, shelf.armedFaces === 0
+        ? 'A6 no card face is armed — the two gestures do not share an element'
+        : red('A6.face', `${shelf.armedFaces} card face(s) carry an armed hold — one element, both gestures, which is what rule 1 forbids`));
+
+      // ---- THE FINGER ------------------------------------------------
+      const aim = async () => JSON.parse(await ev(`JSON.stringify((() => {
+        const g = document.querySelector('.equip-picker .ep-list .ep-hold');
+        if (!g) return null;
+        g.scrollIntoView({ block: 'center' });
+        const r = g.getBoundingClientRect();
+        const x = r.x + r.width / 2; const y = r.y + r.height / 2;
+        const e = document.elementFromPoint(x, y);
+        return { x, y, onTop: !!(e && e.closest && e.closest('.ep-hold')),
+          top: e ? e.tagName : null }; })())`));
+      // WHAT IS IN THE SLOT, the product-level signal, read off the page. The
+      // completed hold rebuilds this whole subtree, so a probe that watched a
+      // face's own dataset would be reading a node that no longer exists.
+      const slotSay = async () => ev(`(() => { const c = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+        || document.querySelector('.armoury-overlay .equip-slot .es-cell'); return c ? c.textContent.trim() : '(no slot)'; })()`);
+      const down = async (x, y) => (touch
+        ? cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: Math.round(x), y: Math.round(y) }] }, S)
+        : cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, buttons: 1 }, S));
+      const up = async (x, y) => (touch
+        ? cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S)
+        : cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, buttons: 0 }, S));
+      const watch = async () => ev(`(() => { window.__a6 = [];
+        for (const t of ['pointerdown', 'click']) document.addEventListener(t, (e) => window.__a6.push({ t,
+          grip: !!(e.target.closest && e.target.closest('.ep-hold')),
+          ctrl: !!(e.target.closest && e.target.closest('button')),
+          tag: (e.target.tagName || '') + '.' + (typeof e.target.className === 'string' ? e.target.className.slice(0, 34) : 'svg') }), true);
+        return 'ok'; })()`);
+
+      await wait(250);
+      let a = await aim();
+      await watch();
+      if (!a || !a.onTop) {
+        console.log(`    ${red('A6.finger', `${way}: the grip is not the topmost element at its own centre`
+          + ` (found ${a ? a.top : 'nothing'}) — no press can be aimed at it, so nothing below is measured`)}`);
+        fails++; checks++; continue;
+      }
+
+      // 1 · THE EARLY RELEASE IS THE ABORT. Press, lift well inside the dial.
+      const before = await slotSay();
+      const foldedBefore = await ev(`document.querySelector('.equip-picker .disc-face').getAttribute('aria-expanded')`);
+      await down(a.x, a.y); await wait(150); await up(a.x, a.y); await wait(450);
+      const abort = JSON.parse(await ev(`JSON.stringify({ hits: window.__a6,
+        expanded: (document.querySelector('.equip-picker .disc-face') || {}).getAttribute
+          ? document.querySelector('.equip-picker .disc-face').getAttribute('aria-expanded') : null })`));
+      const landed = abort.hits.some((h) => h.t === 'pointerdown' && h.grip);
+      console.log(`      abort (${way}, 150 ms of a ${shelf.holdMs} ms dial): landed on grip ${landed}`
+        + ` · slot "${before}" → "${await slotSay()}" · card expanded ${foldedBefore} → ${abort.expanded}`);
+      ok(landed, landed ? `A6 the ${way} press landed on the grip (pointerdown recorded on it)`
+        : red('A6.finger', `${way}: the press at the grip's own centre did not reach it`));
+      ok((await slotSay()) === before, (await slotSay()) === before
+        ? `A6 an aborted ${way} hold changed nothing in the slot ("${before}")`
+        : red('A6.acted', `an aborted ${way} hold changed the slot: "${before}" → "${await slotSay()}"`));
+      // RULE 1, MEASURED RATHER THAN CONSTRUCTED. The early release generates a
+      // click; that click must die on the grip and must NOT reach the card's
+      // unfold path. A grip that also unfolds is exactly the second door.
+      ok(abort.expanded === foldedBefore, abort.expanded === foldedBefore
+        ? `A6 an aborted ${way} hold did NOT unfold the card — rule 1's click died on the grip`
+        : red('A6.leak', `an aborted ${way} hold unfolded the card (aria-expanded ${foldedBefore} → ${abort.expanded})`
+          + ' — the abort became a second door'));
+
+      // 2 · THE COMPLETED HOLD EQUIPS, and the lift afterwards does nothing.
+      await ev('window.__a6 = []');
+      a = await aim(); await wait(200);
+      const was = await slotSay();
+      await down(a.x, a.y);
+      await wait(shelf.holdMs + 300);
+      const atFull = await slotSay();
+      await ev('window.__a6 = []');
+      await up(a.x, a.y); await wait(400);
+      const tail = JSON.parse(await ev('JSON.stringify(window.__a6)'));
+      console.log(`      hold (${way}, ${shelf.holdMs + 300} ms): slot "${was}" → "${atFull}" at full · after the lift ${JSON.stringify(tail)}`);
+      ok(atFull !== was, atFull !== was
+        ? `A6 a completed ${way} hold changed the slot at full: "${was}" → "${atFull}"`
+        : red('A6.equips', `a completed ${way} hold left the slot at "${was}" — the hold did not equip`));
+      // THE LIFT AFTER THE COMMIT. armHold fires AT FULL and the screen redraws
+      // under the finger, so the click the lift generates lands on whatever now
+      // occupies that pixel — rule 1's own swallow lives on an element that no
+      // longer exists. Measured at 1200x730 touch before the fix: the release
+      // hit `BUTTON.es-cell` and re-opened a picker nobody asked for.
+      const woke = tail.filter((h) => h.t === 'click' && h.ctrl);
+      ok(woke.length === 0, woke.length === 0
+        ? `A6 the ${way} lift after a completed hold activated nothing else`
+        : red('A6.tail', `the ${way} lift after a completed hold activated ${woke.length} other control(s): `
+          + woke.map((h) => h.tag).join(' · ')));
+
+      // 3 · THE IN-CARD BUTTON IS STILL A DOOR. His ruling must not make the
+      // hold the only road: a plain click on the revealed control still equips.
+      // A DOM click on purpose — this is the keyboard/pad/assistive road, and
+      // the question here is whether the ACT still happens, not whether a
+      // finger can reach it (A2/A3 already own the geometry of the card).
+      if (!await openBoard()) {
+        console.log(`    ${red('A6.button', `${way}: the board would not re-open for the in-card control check`)}`);
+        fails++; checks++; continue;
+      }
+      await wait(300);
+      const btnRow = JSON.parse(await ev(`JSON.stringify((() => {
+        const f = document.querySelector('.equip-picker .ep-list .disc-face');
+        if (!f) return { none: true };
+        if (f.getAttribute('aria-expanded') !== 'true') f.click();
+        const b = document.querySelector('.equip-picker .disc-reveal .ep-equip');
+        return { none: !b, text: b ? b.textContent.trim() : null, locked: b ? b.classList.contains('locked') : null }; })())`));
+      await wait(300);
+      if (btnRow.none) {
+        console.log(`    ${red('A6.button', `${way}: no in-card equip control to press — the grip would be the only road`)}`);
+        fails++; checks++;
+      } else {
+        const b4 = await slotSay();
+        await ev(`document.querySelector('.equip-picker .disc-reveal .ep-equip').click()`);
+        await wait(450);
+        const b5 = await slotSay();
+        console.log(`      in-card control "${btnRow.text}" (locked ${btnRow.locked}): slot "${b4}" → "${b5}"`);
+        ok(b5 !== b4, b5 !== b4
+          ? `A6 the in-card control still equips on a plain click ("${b4}" → "${b5}") — the hold is not the only road`
+          : red('A6.button', `the in-card control "${btnRow.text}" left the slot at "${b4}" — the hold is the ONLY road to equipping`));
+      }
+    }
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false, maxTouchPoints: 1 }, S);
+
   // ONE HARNESS-DEATH HANDLER FOR THE WHOLE DRIVEN RUN, and this catch used to
   // sit two hundred lines up. Saga measured the half I left open (ea2cf89 →
   // 4d18b23): I named the structural cause and closed ONE of three `until`
@@ -551,9 +904,13 @@ async function main() {
   console.log('  BOUNDARY: one container, one headless Chromium, ONE shape (1200x730). A1 is a model-door');
   console.log('  check and is shape- and mount-free. A2/A3 drive ?shot=combat (the IN-COMBAT mount, where');
   console.log('  canEquip seals every act); A4/A5 drive ?shot=map (where it does not). The fold checks are');
-  console.log('  DOM clicks, not synthetic pointer presses: this app scales with body.style.zoom, so they');
-  console.log('  prove the handler wiring and say NOTHING about whether a finger at those pixels hits the');
-  console.log('  card. His press-and-hold is UNBUILT and blocked on a ruling — reported, never asserted.');
+  console.log('  DOM clicks, not synthetic pointer presses, and they prove the handler wiring only. A6 is');
+  console.log('  the opposite road and the reason it exists: REAL CDP input, mouse AND touch, aimed at the');
+  console.log('  grip\'s own centre with an elementFromPoint and a recorded pointerdown either side of it,');
+  console.log('  so a press that misses is A6.finger and never a quiet pass. Still ONE shape (1200x730):');
+  console.log('  the phone shape 390x844 was driven by hand during the build (--ui-zoom 0.9, raw rect px');
+  console.log('  land, rect x zoom do NOT) and is not in this run. Keyboard and pad are NOT driven here —');
+  console.log('  armPress serves them (ui/gesture.js, S7), tools/holdconfirm.mjs is where that is watched.');
   process.exit(fails ? 1 : 0);
 }
 

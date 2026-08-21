@@ -2181,6 +2181,43 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
+/* THE GRIP — the second element of Constantine's two-element ruling
+   (2026-08-21). It carries the hold and nothing else; the card above it keeps
+   its click and the `.ep-equip` inside the opened pane keeps its click.
+
+   IT IS THIN AND IT IS DASHED ON PURPOSE. This picker opens into a strip about
+   125 px tall on the shape this tree photographs (1200x730), so every row this
+   list gains is a row the player has to scroll for. The grip is the least ink
+   that can still be a target: one line, no card art, dashed so it reads as a
+   handle rather than as a second item.
+
+   THE FILL IS NOT DEFINED HERE. `armHold` adds `.beat-hold`, and that rule
+   (further up this file) already owns the progress paint, the `--hold` width
+   and the `.hold-hint` word. A second fill here would be the second copy. */
+.ep-hold {
+  /* A HOLD TARGET BELOW THE TAP FLOOR IS NOT A HOLD TARGET. The grip drew at
+     19 px tall on its own text — 43% of `--tap-floor` — and a press-and-hold is
+     the most thumb-shaped gesture in this game. This is the line that makes the
+     ink cost real (24 px per candidate becomes 49), and it is the right side of
+     that trade: a target a thumb misses is a control that does not exist. */
+  min-height: var(--tap-floor);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px dashed var(--line-soft);
+  background: none;
+  color: var(--muted);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ep-hold:hover { border-color: var(--gold); color: var(--parchment); }
+.ep-hold.danger { border-color: var(--blood); color: var(--ember); }
+.ep-hold.locked { opacity: 0.45; cursor: not-allowed; }
+
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
