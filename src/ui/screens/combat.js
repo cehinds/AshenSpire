@@ -98,13 +98,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
           <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
           <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
+          ${hintBarHtml('combat')}
         </div>
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
-      ${hintBarHtml('combat')}
     </div>`;
 
   const $ = (sel) => app.querySelector(sel);

@@ -582,11 +582,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   position: absolute; inset-inline: 1.6rem; bottom: -5.2rem; z-index: 30;
   display: grid;
   grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw . end exhaust discard";
+  grid-template-areas: "energy draw hints end exhaust discard";
   align-items: end; gap: 0.8rem;
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
+.combat-action-row > .hint-bar.hint-combat {
+  grid-area: hints; margin: 0; max-width: 100%; align-self: end; justify-self: center;
+}
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);
