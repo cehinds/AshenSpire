@@ -79,7 +79,19 @@ export function readKey(code) {
   const m = code.match(/^(\s*)(?:(-)\s+)?(?:"([^"]*)"|'([^']*)'|([\w.\-]+))\s*:(.*)$/);
   if (!m) return null;
   const name = m[3] !== undefined ? m[3] : (m[4] !== undefined ? m[4] : m[5]);
-  return { indent: m[1].length, item: !!m[2], name, rest: m[6], keyIndent: m[1].length + (m[2] ? 2 : 0) };
+  // A DOUBLE-QUOTED KEY IS CAPTURED, NOT DECODED. YAML resolves `"\u0072un"`
+  // to `run`, so it collides with a plain `run:` under last-wins — and this
+  // file compared the RAW characters, saw two different keys, and reported
+  // nothing. Simple quotes (`"run":`) decode to themselves and are fine; an
+  // ESCAPE is the case this cannot do whole.
+  //
+  // So it is refused by name rather than half-decoded — the road already taken
+  // for anchors, aliases, tags and flow sequences. Decoding YAML's escape
+  // vocabulary (\uXXXX, \xXX, \n, \\, \", the lot) correctly is the parser
+  // question that is Constantine's to rule on, not something to approximate
+  // inside a duplicate-key checker.
+  const undecodable = m[3] !== undefined && m[3].includes('\\');
+  return { indent: m[1].length, item: !!m[2], name, rest: m[6], keyIndent: m[1].length + (m[2] ? 2 : 0), undecodable };
 }
 
 /**
@@ -199,6 +211,11 @@ export function lintWorkflowText(text, file = '<text>') {
     for (const pair of splitFlow(body)) {
       const kv = readKey(pair.trim());
       if (!kv) continue;
+      if (kv.undecodable) {
+        checks += 1;
+        findings.push(`${file}:${line}: quoted key ${JSON.stringify(kv.name)} in a flow mapping carries an escape this linter does not decode — refused BY NAME.`);
+        continue;
+      }
       record(kv.name, top().indent, line);
       const nested = flowBody(kv.rest);
       if (nested !== null) {
@@ -335,6 +352,11 @@ export function lintWorkflowText(text, file = '<text>') {
       });
     }
 
+    if (k.undecodable) {
+      checks += 1;
+      findings.push(`${file}:${i + 1}: quoted key ${JSON.stringify(k.name)} carries an escape this linter does not decode — refused BY NAME rather than compared as raw characters, because YAML would resolve it and it could collide with a plain key under last-wins.`);
+      continue;
+    }
     const ctx = record(k.name, indent, i + 1);
     if (ctx.isStep && k.name === 'name' && !ctx.name) ctx.name = k.rest.trim();
 
@@ -489,6 +511,13 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    env: { FOO: one, FOO: two }\n    steps:\n      - name: One\n        run: echo 1\n' },
   { name: 'form: a flow SEQUENCE of mappings is refused by name, not claimed', want: 1,
     yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        include: [{ os: ubuntu, os: windows }]\n    steps:\n      - name: One\n        run: echo 1\n' },
+  // A QUOTED KEY WITH AN ESCAPE IS REFUSED, NOT COMPARED RAW.
+  { name: 'form: a quoted key carrying an escape is refused by name', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Esc\n        "\\u0072un": node real-suite\n        run: echo shadow\n' },
+  { name: 'form: and a plain quoted key still decodes to itself and is compared', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Dup\n        "run": node real-suite\n        run: echo shadow\n' },
+  { name: 'form: an escaped quoted key inside a flow mapping is refused too', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Flow, "\\u0072un": one, run: two }\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

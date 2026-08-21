@@ -85,7 +85,20 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // THE COUNTED-VERDICT GRAMMAR. Each entry: a name a human can grep for, a
 // regex, and which capture group holds the count of things actually checked.
 // ADDING A ROW IS A CONTRACT CHANGE and needs a plant in SELFTEST below.
-const NEGATION = /\b(?:not|never|no|un)\b/i;
+// ONE LIST. There were two readings of "what counts as a negation" in this
+// file — this regex (not|never|no|un) and, 130 lines down, a denegation path
+// that stripped only `not` and `no`. So `NEVER PASS — 1/10` was recognised by
+// neither: not a verdict row (it does not start with PASS), and not a NEGATED
+// verdict shape either, so it never reached `refused` and a later success won
+// the door outright — a checker that reported failure exiting GREEN on retry.
+//
+// The fix is not to add `never` to the second list. It is for there to BE no
+// second list: both regexes are built from these words, so the two readings
+// cannot drift apart again. Same defect as the CLI counting steps with its own
+// regex while the parser used another — a second reader of one question.
+const NEGATION_WORDS = ['not', 'never', 'no', 'un'];
+const NEGATION = new RegExp(`\\b(?:${NEGATION_WORDS.join('|')})\\b`, 'i');
+const LEADING_NEGATION = new RegExp(`^(\\s*)(?:${NEGATION_WORDS.join('|')})\\s+`, 'i');
 
 // THE CLAIM'S OWN NOUN IS A CLOSED SET TOO — because closing the LINE was not
 // enough. `PASS — 9/9 checks failed` and `tool: OK — 9/9 errors occurred` both
@@ -248,7 +261,7 @@ export function readVerdict(text) {
     // and re-testing is deliberately the narrowest form of this — the door
     // judges verdict lines, it does not police prose, and a boundary block
     // reading "NOT A VERDICT AND NOT A FAILURE:" still matches nothing.
-    const denegated = line.replace(/^(\s*)(?:not|no)\s+/i, '$1');
+    const denegated = line.replace(LEADING_NEGATION, '$1');
     if (denegated !== line && VERDICTS.some((v) => v.re.test(denegated))) {
       refused.push({ line: line.trim(), why: 'a negated verdict shape' });
       continue;
@@ -504,6 +517,14 @@ const SELFTEST = [
     file: 'console.log("PASS — 1/2 shapes"); console.log("PASS — 2/2 shapes"); process.exit(0);\n', want: 1 },
   { name: 'and in the other order, which is how a retry would print it',
     file: 'console.log("PASS — 2/2 shapes"); console.log("PASS — 1/2 shapes"); process.exit(0);\n', want: 1 },
+  // THE TWO-LIST DEFECT: `never` was in one reading of "negation" and not the
+  // other, so this line reached neither bucket and the retry below won.
+  { name: 'NEVER is a negation in BOTH readings, so a retry cannot win',
+    file: 'console.log("NEVER PASS — 1/10"); console.log("tool: OK — 9 checks passed"); process.exit(0);\n', want: 1 },
+  { name: 'and a NEVER-negated shape alone is refused, not silent-passed',
+    file: 'console.log("NEVER PASS — 1/10"); process.exit(0);\n', want: 3 },
+  { name: 'UN- form too, from the same one list',
+    file: 'console.log("UN PASS — 1/10"); console.log("tool: OK — 9 checks passed"); process.exit(0);\n', want: 1 },
   { name: 'a negated verdict beside a good one is refused too',
     file: 'console.log("NOT PASS — 1/10"); console.log("tool: OK — 9 checks passed."); process.exit(0);\n', want: 1 },
   { name: 'two DIFFERENT good verdicts are ambiguous, not "the best one"',
