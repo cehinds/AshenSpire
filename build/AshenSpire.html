@@ -34430,7 +34430,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '1d9dad4ac7';
+const SOURCE = '5310106a3e';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34464,7 +34464,7 @@ const SOURCE = '1d9dad4ac7';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0885';
+const ORDINAL = '0893';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39114,6 +39114,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   }
 
   function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
