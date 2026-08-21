@@ -642,6 +642,7 @@ const QUARANTINE_NOTICE =
 let run = null;
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
@@ -682,7 +683,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -733,7 +734,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.seedString = seedToString(seed);
@@ -1070,12 +1072,17 @@ function runResult(victory) {
  * disagree about what counts.
  */
 /**
- * rollDrop(source) → armament id | null, and it is REMEMBERED.
+ * rollDrop(source) → armament id | null — a PURE roll, nothing stored.
  *
- * Finding a piece does two things at once, which is the whole bargain: it goes
- * into this run's storage so you can use it now, and into the profile's found
- * set so it stays available in every run after — a climb that ends badly still
- * widens the wardrobe.
+ * It used to be REMEMBERED: the roll itself pushed the piece into run storage
+ * and meta.found, before the reward menu ever mounted. That made the menu's
+ * armament row a lie three ways at once — Skip could not leave it, manual
+ * Continue could not leave it, and NEW could never show on first discovery,
+ * because the ownership comparison ran against a found set the roll had
+ * already written (Aurora's merge review on #290 at f29d468; Codex
+ * 4989824448). Persistence now lives in collectArmament, reached only through
+ * the reward screen's take/apply path — tap, or auto-collect at Continue.
+ * The exclusion inputs (found, carried) are read-only here.
  */
 function rollDrop(source) {
   const meta = saves.loadMeta();
@@ -1084,18 +1091,43 @@ function rollDrop(source) {
     found: meta.found || [],
     carried: carriedIds(run.loadout),
   });
-  if (!id) return null;
-  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  return id; // the roll is PURE: collection persists (collectArmament), not discovery
+}
+
+/**
+ * collectArmament(id, source) — the one home of the armament bargain, fired
+ * when the player TAKES the row (or auto-collect takes it for them): the piece
+ * goes into this run's storage so you can use it now, and into the profile's
+ * found set so it stays available in every run after — a climb that ends badly
+ * still widens the wardrobe. What was never taken was never found: a skipped
+ * or left-behind piece stays out of meta.found and can drop again.
+ */
+function collectArmament(id, source) {
+  if (!id) return false;
+  // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
+  // addToStorage returns false at the cap and on a duplicate, and a found
+  // entry for a piece the bag refused is a poisoned record — claimed but not
+  // stored, and excluded from every future drop. The menu derives the same
+  // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
+  // the depth behind that face — same array, its own answer.
+  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
-    meta.found = [...(meta.found || []), id];
-    const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
-    const recorded = recordArmamentDiscovery(meta, id, {
-      progressionMode, source, runSeed: run.seedString,
-      receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
-    });
-    saves.saveMeta(recorded.meta);
+    const meta = saves.loadMeta();
+    if (!(meta.found || []).includes(id)) {
+      meta.found = [...(meta.found || []), id];
+      const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
+      const recorded = recordArmamentDiscovery(meta, id, {
+        progressionMode, source, runSeed: run.seedString,
+        receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
+      });
+      saves.saveMeta(recorded.meta);
+    }
   }
-  return id;
+  // The reward row may say Taken only after both ownership homes and the
+  // resumable run agree. This is the production collector's commit boundary.
+  persist();
+  return true;
 }
 
 function finishRun(victory) {
@@ -1240,8 +1272,13 @@ function enterNode(nodeId) {
       return mountRewards(app, {
         registries,
         run,
+        saves,
+        rng,
+        onCollectArmament: (id) => collectArmament(id, 'treasure'),
+        onPersist: persist,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
+          rewardDoneCount++;
           persist();
           showMap();
         },
@@ -1461,8 +1498,12 @@ function onCombatEnd(result, combat, enc) {
     return mountRewards(app, {
       registries,
       run,
+      saves,
+      rng,
+      onCollectArmament: (id) => collectArmament(id, 'boss'),
+      onPersist: persist,
       rewards: bossRewards,
-      onDone: () => advanceAct(),
+      onDone: () => { rewardDoneCount++; advanceAct(); },
     });
   }
 
@@ -1480,8 +1521,13 @@ function onCombatEnd(result, combat, enc) {
   mountRewards(app, {
     registries,
     run,
+    saves,
+    rng,
+    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    onPersist: persist,
     rewards,
     onDone: () => {
+      rewardDoneCount++;
       persist();
       showMap();
     },
@@ -1808,6 +1854,32 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
+  // proves WHEN an armament becomes owned (meta.found) and stored (the run's
+  // loadout) around the reward menu, and a shot boot runs on MEMORY storage
+  // (pickStorage above), so no localStorage read can witness those writes —
+  // holdconfirm's own sentence applies: "it committed" is a claim about
+  // storage state, not about which screen is mounted. This reads the manager's
+  // own loadMeta and the live run, never a copy. The map slice is the drive's
+  // door finder: it needs a real treasure node to click, and the graph is run
+  // state. Read-only, shot boots only; a player never has it.
+  window.__spoils = () => ({
+    found: [...((saves.loadMeta() || {}).found || [])],
+    storage: [...(((run || {}).loadout || {}).storage || [])],
+    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
+    // 'showcase', in which recordArmamentDiscovery deliberately writes no
+    // receipt — so through this door the count is structurally 0 and proves
+    // ordering nothing on its own; found-unchanged is the real witness,
+    // because found and receipts ride the same gated saveMeta.
+    receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
+    liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    done: rewardDoneCount,
+    map: run && run.mapGraph
+      ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
+      : [],
+  });
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -1821,7 +1893,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -1850,6 +1922,27 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // fan-out from one node, not the spread of the doors), and it could not be
   // measured at all. `floor:N` picks a node on that floor rather than naming an
   // id, so a sweep can walk the act without knowing the graph first.
+  //
+  // `?shotStorage=full` — STAND AT THE CAP.
+  //
+  // A REACH STATE, the same shape and reason as `?shotMaxHp`: the full-bag
+  // refusal (the ninth armament against an 8-slot cap) is a claim about how
+  // the reward menu behaves AT the storage boundary, and no instrument could
+  // fill a bag — a fresh shot run always has room, so every capture ever
+  // taken of the armament row was taken with slots free, and "refused
+  // legibly" and "silently claimed-but-not-stored" read identically (#290
+  // review at b6b7df0: collectArmament ignored addToStorage's false and
+  // could poison meta.found with a piece the bag refused). The bag fills
+  // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
+  // enters, its own cap and duplicate rules deciding what fits — never by
+  // assigning the array.
+  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
+    const cap = registries.balance.equipment.storageSlots || 8;
+    for (const piece of registries.equipment.armaments) {
+      if ((run.loadout.storage || []).length >= cap) break;
+      addToStorage(run.loadout, piece.id, cap);
+    }
+  }
   const shotAt = shotState === 'map' ? shotParams.get('shotAt') : null;
   if (shotAt) {
     const g = run.mapGraph;
@@ -1979,6 +2072,41 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildShopStock(registries, rng, run);
     showShop();
+  } else if (shotState === 'reward') {
+    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
+    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
+    // is a screen no instrument owns — release-shots derives its denominator
+    // from the states this file declares and screenreach can only reach a
+    // screen that has one.
+    //
+    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
+    // photographs identically every run, at its max edge (five rows: cinders,
+    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
+    // the other edge (no kinds, bare Continue), because a menu's zero case is
+    // where a derivation quietly draws furniture for absent rewards.
+    // The armament is authored, not rolled: the pose wants the same five rows
+    // in every capture, and a rolled id would vary with the seed. Collection
+    // still runs through the SAME collector the real sites hand in — the roll
+    // is pure now (rollDrop), so what a pose and a real reward share is the
+    // whole take/apply path, and what they differ in is only where the offer's
+    // ids came from. tools/reward-collect-drive.mjs exercises the real
+    // rollDrop → mountRewards door; this pose is for photographs.
+    const pose = shotParams.get('shotReward') || 'full';
+    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
+      title: 'VICTORY',
+      cinders: 32,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    mountRewards(app, {
+      registries, run, saves, rng,
+      onCollectArmament: (id) => collectArmament(id, 'showcase'),
+      onPersist: persist,
+      rewards: shotOffer,
+      onDone: () => { rewardDoneCount++; showMap(); },
+    });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
     //

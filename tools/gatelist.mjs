@@ -756,7 +756,7 @@ if (JS_LISTS.length) {
   console.log(`⚠ G4 IS NOT AUDITED IN JAVASCRIPT GATE LISTS: ${JS_LISTS.join(', ')} — ${jsInvoked} invocation(s) there`);
   console.log('  are marked `listed` and their status propagation is UNCHECKED. An ignored `spawnSync`');
   console.log('  result, or `try { execFileSync(...) } catch {}`, is silent and this tool will not say so.');
-  console.log('  ⚠ AND THIS TOOL RUNS INSIDE ONE OF THEM (tests/run-node.mjs, 62/63), so the check built to');
+  console.log('  ⚠ AND THIS TOOL RUNS INSIDE ONE OF THEM (tests/run-node.mjs, 67/68), so the check built to');
   console.log('  ask "does this list listen?" IS DEAF IN ITS OWN VENUE and would report it clean.');
   console.log('  NOT CLOSED BY A HEURISTIC, DELIBERATELY. Proving it needs real dataflow — the pattern in');
   console.log('  that suite is try/catch -> a `{ code }` object -> an accumulator -> process.exit() — and');

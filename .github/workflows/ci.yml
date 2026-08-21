@@ -400,7 +400,7 @@ jobs:
       # silences this gate completely. The redundancy evaporates at exactly the
       # moment it would matter, because a green tree is the only state in which a
       # regression can be introduced. THE REAL GUARD IS `tools/gatelist.mjs`,
-      # wired into tests/run-node.mjs (62/63): it parses this file, and a
+      # wired into tests/run-node.mjs (67/68): it parses this file, and a
       # swallowed exit status here is red THERE, on a green tree, with no browser
       # and no dispatch.
       #

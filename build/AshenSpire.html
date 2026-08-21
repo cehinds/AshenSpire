@@ -1130,6 +1130,53 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
+   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
+   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
+   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
+   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
+.reward-menu { flex-wrap: wrap; justify-content: center; }
+/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
+   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
+   license. The glyph stays in text units: it is a typographic mark. */
+.reward-menu .reward-kind { width: 256px; padding: 19px; }
+.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
+.chip.reward-new { color: var(--gold); border-color: var(--gold); }
+/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
+   chooser set only `data-new`, which no stylesheet or renderer consumed, so
+   the unseen card looked identical to its neighbours). The chip dress is
+   restated here because `.chip` styling is scoped to `.class-pick` and this
+   badge lives inside `.card` — its named container (position: relative,
+   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
+   box); the label keeps its text unit. pointer-events: none — the badge marks
+   the card, the CARD takes the tap. */
+.card .card-badge-new {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  pointer-events: none; z-index: 2;
+}
+.reward-skip {
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
+}
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
+/* Receive feedback: a taken row settles — border flashes gold and the card
+   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+@keyframes reward-took {
+  0% { border-color: var(--gold); transform: scale(1.04); }
+  100% { border-color: var(--line-soft); transform: scale(1); }
+}
+
 /* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
    portrait player meets after every fight, and it only became reachable at all
    because this branch fixed the fight. At 390x844 three cards need 417.6px in a
@@ -1372,13 +1419,42 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
-#cz-kits button.cz-opt {
-  /* Starting kits carry words and commit a run-defining choice. The generic
+#cz-kits button.cz-opt,
+#cz-armours button.cz-opt {
+  /* Starting kits and starting armour carry words and commit a run-defining choice. The generic
      sigil tile's 4rem square shrinks with body zoom; this specific interactive
      row uses the on-glass floor and grows around its authored label. */
   width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
+
+/* ---- E5 (#250): the stat-point editor -------------------------------------
+   Every NUMBER on this surface is written by customize.js from the creation
+   mode row (pool, floor, ceiling); this block is geometry only. Steppers sit
+   on the tap floor (base.css --tap-floor) because a thumb is the instrument;
+   aria-disabled dims without removing focus — an unfocusable control is
+   unaskable, the same ruling the BEGIN button carries. */
+.cz-statedit { display: flex; flex-direction: column; gap: 0.6rem; max-width: 24rem; }
+.se-modes { display: flex; gap: 0.8rem; }
+.se-modes .cz-opt.se-mode {
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
+.se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
+.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
+.se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-step {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 120ms, border-color 120ms;
+}
+.se-step:hover { transform: translateY(-1px); border-color: var(--parchment); }
+.se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.se-step[aria-disabled='true']:hover { transform: none; border-color: var(--line-soft); }
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
@@ -2378,6 +2454,36 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
 .equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
 
+/* ---- the Armoury item pane: the card IS the control (Constantine, 2026-08-21)
+   The card is mounted as the FACE of Sunna's disclosure, so it is a <span>
+   inside her <button> rather than a button of its own. These rules give the
+   face-shaped card the box the button-shaped one already had, and hand the
+   face's own padding back to the card so the two spellings look identical —
+   they are one markup (pieceChipHtml) and they must not become two looks. */
+.ep-list .disc-faces { flex-direction: column; gap: 0.5rem; }
+.ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
+.ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
+.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face { border-color: var(--gold); }
+.ep-list .disc-reveal { width: 100%; }
+.ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* "un equip in red". `.danger` is this file's existing word for red (see
+   `.subtle.danger` above) and it is reused rather than joined by a second
+   spelling — a second red is a second home for one decision. */
+.ep-equip {
+  align-self: flex-start;
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--line-soft);
+  background: var(--bg);
+  color: var(--parchment);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ep-equip:hover { border-color: var(--gold); }
+.ep-equip.danger { border-color: var(--blood); color: var(--ember); }
+.ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+.ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
+
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
@@ -2402,6 +2508,39 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+
+/* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
+   Both screens that print `model/statProjection` — the Armoury strip and the
+   creation screen's `#cz-stat-projection` — shipped these two blocks with NO
+   RULE AT ALL, so every separator was whatever the markup happened to leave
+   behind: zero. Measured at dev 3bafb25, 1440x860 and 390x844, by reading the
+   rendered text runs rather than the source:
+
+     STR 13DEX 10CON 12WIS 10INT 10
+     Draw / turn and opening hand3 + 2 tier x 1 = 5The current engine uses this…
+
+   Sunna read that off a screenshot she was taking of something else (#305) and
+   handed it over rather than banking it.
+
+   THIS IS MR-76 ONE BLOCK OVER — "printed with 0px between them and read as one
+   word", the same sentence `.equip-resource-change small` above already carries.
+   So nothing is invented here: the derived row copies `.equip-role-receipts >
+   div`, which has the identical <b>/<span>/<small> shape and lives in this same
+   strip, and the attribute row copies `.player-poise-receipt ul` — a wrapping
+   row of chips, which is what a phone needs at 390 where a nowrap row would run
+   off the side. One home, because the two screens print one read model. */
+.statproj-attributes { display: flex; flex-wrap: wrap; gap: 0.2rem 1.1rem; }
+.statproj-derived {
+  display: grid; gap: 0.35rem;
+  /* BOUNDED, and the bound is the point. `.equip-role-receipts` gets its width
+     from `flex: 1 1 28rem`; this block has no flex parent, so an unbounded
+     1fr/2fr split put `Mana` and its formula ~400 px apart across empty panel
+     at 1440 — separated, and still not a pair you can read at a glance. */
+  max-width: 44rem;
+}
+.statproj-derived > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.1rem 0.8rem; }
+.statproj-derived span, .statproj-derived small { color: var(--muted); }
+.statproj-derived small { grid-column: 2; }
 .arcane-exposure-meter, .arcane-exposure-immune {
   min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
   overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;
@@ -3277,6 +3416,55 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    goes, and this is meant to be read. */
 .title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }
 
+/* ---------------------------------------------------------------------------
+   THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
+
+   Constantine, 2026-08-21: "the right hand and left hand weapons are on the
+   wrong side on the character model in all views armory, character creation and
+   combat. the sword shows on my right side of the screen, but on the left side
+   of the character since it's facing the player."
+
+   He is right, and it is measurable: tools/hand-side-probe.mjs reads the
+   alpha-weighted ink centroid of every handed armament against the body's own
+   ink centre and finds 23 of 24 drawn into the model's opposite hand. (The
+   denominator is every hand=left|right row in weapons.csv with its asset derived
+   as artKey || id, the runtime's own rule -- src/model/loadout.js:962.)
+
+   WHY THE CORRECTION IS HERE AND NOT IN THE ART. The side is not decided at
+   runtime by anything — `equippedFigure` stacks full-frame pre-rendered layers,
+   and THREE independent producers all place the main armament at world x=+0.62,
+   which the shared camera (at y=-8, looking toward +Y) puts on the VIEWER'S
+   RIGHT: tools/equipment-blender.py (`RX, LX = 0.62, -0.52`),
+   tools/sprites-blender.py (the same positions, by its own comment), and the
+   inline CLASS_SVG fallbacks (the Starseer staff at x=80 of a 110 viewBox).
+   One convention, backwards, in three places. Correcting it at the source means
+   re-rendering every armament and body in Blender, which is the RIGHT fix and
+   is carded; this rule is what makes the screen true until that runs.
+
+   WHY A MIRROR IS SAFE HERE, MEASURED RATHER THAN ASSUMED. A scaleX flip also
+   flips the art, so it is only honest if the art is symmetric. Measured on the
+   silhouette (alpha, mirrored against itself): body_reaver 0.3%, body_starseer
+   0.2%, body_herald 0.0% mismatched. The bodies are symmetric IN SHAPE. A first
+   pass measured 19-38% and nearly cost this fix — that number was COLOUR, and
+   the scene's three key lights are rotated off-axis (z -28/146/35 degrees), so
+   it was reading the lighting, not the geometry. What flipping actually changes
+   is which side the key light falls on, which no player can name. The one real
+   shape asymmetry is the armament itself (14.9-16.0% on the armed class
+   sprites) — and that is precisely the thing that must move.
+
+   EXACTLY ONE MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
+   and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
+   mirroring both selectors would cancel to identity on the combat board — the
+   screen that started this. The second rule is what keeps the count at one.
+
+   REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
+   and body art is re-rendered from corrected producers. Leaving both in place
+   double-flips and restores the bug wearing a fix's clothes.
+   --------------------------------------------------------------------------- */
+.class-sprite,
+.equipped-figure { transform: scaleX(-1); }
+.class-sprite .equipped-figure { transform: none; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -3773,7 +3961,25 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 /* ---------- hand + controls ---------- */
-.hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+/* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
+   BELOW THE HAND, AND IT HAS TWO CONSUMERS THAT USED TO AGREE BY ACCIDENT.
+   `.combat-action-row` is bottom-anchored to `.hand-area` at a NEGATIVE offset,
+   so it hangs into the band underneath — and nothing in the column reserved that
+   band. It stayed on screen only because the hint strip happened to be the last
+   in-flow row of `.combat` and happened to be about that tall. That is a fact
+   written in two places with nothing checking it: move the strip and the whole
+   action row drops off the bottom of the viewport (measured: 47/52/62 px of new
+   `.combat` overflow, and hintstrip H5 goes from `ok 0 px` to `unknown` at all
+   four wide cells — it does not go RED, which is the second finding).
+   The offset and its reservation are now the same token, so they cannot drift,
+   and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
+   6.4rem hang against a 5.2rem reservation that was never written down. */
+.combat { --action-row-drop: 5.2rem; }
+.hand-area {
+  height: 23rem; flex-shrink: 0; position: relative;
+  display: flex; align-items: flex-end; justify-content: center;
+  margin-bottom: var(--action-row-drop);
+}
 .hand-overlay {
   width: min(72rem, calc(100% - 2rem)); height: 100%; min-width: 0;
   display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "hand";
@@ -3860,14 +4066,42 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 .combat-action-row {
-  position: absolute; inset-inline: 1.6rem; bottom: -5.2rem; z-index: 30;
+  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
   grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw . end exhaust discard";
+  grid-template-areas: "energy draw hints end exhaust discard";
   align-items: end; gap: 0.8rem;
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
+/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
+   is now `hints`, and no track changed width. The overlap it fixes was never a
+   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
+   widens with its own label, while the strip was centred on the VIEWPORT by a
+   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
+   luck at the shipped text size. One home now.
+
+   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
+   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
+   a FLOATING PILL — the thing this element stopped being the moment it became a
+   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
+   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
+   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
+   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
+   strip is its chips' own height, the row's height is unchanged at every text
+   size, and H1's clearance goes back to what it was before this act
+   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
+   shrank. Inline padding is untouched — it is the pill's horizontal breathing
+   room and the grid does not supply it.
+
+   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
+   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
+   grid's areas without a `hints` track, so an unplaced item there would have
+   created an implicit track — it cannot, because it renders no box. */
+.combat-action-row > .hint-bar.hint-combat {
+  grid-area: hints; justify-self: center; align-self: end;
+  margin: 0; max-width: 100%; padding-block: 0;
+}
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);
@@ -4161,7 +4395,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat-action-row { bottom: -6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
@@ -4331,6 +4565,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
   }
 
+  /* Narrow puts the row back in the flow as a grid child of .hand-area, so
+     there is no hang to reserve — the token's consumer is gone and so is the
+     margin. Both halves are dropped together, in one place. */
+  :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
     grid-area: actions; position: static; inset: auto; width: 100%;
     grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));
@@ -5435,6 +5673,7 @@ const QUARANTINE_NOTICE =
 let run = null;
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
@@ -5475,7 +5714,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -5526,7 +5765,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.seedString = seedToString(seed);
@@ -5863,12 +6103,17 @@ function runResult(victory) {
  * disagree about what counts.
  */
 /**
- * rollDrop(source) → armament id | null, and it is REMEMBERED.
+ * rollDrop(source) → armament id | null — a PURE roll, nothing stored.
  *
- * Finding a piece does two things at once, which is the whole bargain: it goes
- * into this run's storage so you can use it now, and into the profile's found
- * set so it stays available in every run after — a climb that ends badly still
- * widens the wardrobe.
+ * It used to be REMEMBERED: the roll itself pushed the piece into run storage
+ * and meta.found, before the reward menu ever mounted. That made the menu's
+ * armament row a lie three ways at once — Skip could not leave it, manual
+ * Continue could not leave it, and NEW could never show on first discovery,
+ * because the ownership comparison ran against a found set the roll had
+ * already written (Aurora's merge review on #290 at f29d468; Codex
+ * 4989824448). Persistence now lives in collectArmament, reached only through
+ * the reward screen's take/apply path — tap, or auto-collect at Continue.
+ * The exclusion inputs (found, carried) are read-only here.
  */
 function rollDrop(source) {
   const meta = saves.loadMeta();
@@ -5877,18 +6122,43 @@ function rollDrop(source) {
     found: meta.found || [],
     carried: carriedIds(run.loadout),
   });
-  if (!id) return null;
-  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  return id; // the roll is PURE: collection persists (collectArmament), not discovery
+}
+
+/**
+ * collectArmament(id, source) — the one home of the armament bargain, fired
+ * when the player TAKES the row (or auto-collect takes it for them): the piece
+ * goes into this run's storage so you can use it now, and into the profile's
+ * found set so it stays available in every run after — a climb that ends badly
+ * still widens the wardrobe. What was never taken was never found: a skipped
+ * or left-behind piece stays out of meta.found and can drop again.
+ */
+function collectArmament(id, source) {
+  if (!id) return false;
+  // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
+  // addToStorage returns false at the cap and on a duplicate, and a found
+  // entry for a piece the bag refused is a poisoned record — claimed but not
+  // stored, and excluded from every future drop. The menu derives the same
+  // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
+  // the depth behind that face — same array, its own answer.
+  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
-    meta.found = [...(meta.found || []), id];
-    const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
-    const recorded = recordArmamentDiscovery(meta, id, {
-      progressionMode, source, runSeed: run.seedString,
-      receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
-    });
-    saves.saveMeta(recorded.meta);
+    const meta = saves.loadMeta();
+    if (!(meta.found || []).includes(id)) {
+      meta.found = [...(meta.found || []), id];
+      const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
+      const recorded = recordArmamentDiscovery(meta, id, {
+        progressionMode, source, runSeed: run.seedString,
+        receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
+      });
+      saves.saveMeta(recorded.meta);
+    }
   }
-  return id;
+  // The reward row may say Taken only after both ownership homes and the
+  // resumable run agree. This is the production collector's commit boundary.
+  persist();
+  return true;
 }
 
 function finishRun(victory) {
@@ -6033,8 +6303,13 @@ function enterNode(nodeId) {
       return mountRewards(app, {
         registries,
         run,
+        saves,
+        rng,
+        onCollectArmament: (id) => collectArmament(id, 'treasure'),
+        onPersist: persist,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
+          rewardDoneCount++;
           persist();
           showMap();
         },
@@ -6254,8 +6529,12 @@ function onCombatEnd(result, combat, enc) {
     return mountRewards(app, {
       registries,
       run,
+      saves,
+      rng,
+      onCollectArmament: (id) => collectArmament(id, 'boss'),
+      onPersist: persist,
       rewards: bossRewards,
-      onDone: () => advanceAct(),
+      onDone: () => { rewardDoneCount++; advanceAct(); },
     });
   }
 
@@ -6273,8 +6552,13 @@ function onCombatEnd(result, combat, enc) {
   mountRewards(app, {
     registries,
     run,
+    saves,
+    rng,
+    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    onPersist: persist,
     rewards,
     onDone: () => {
+      rewardDoneCount++;
       persist();
       showMap();
     },
@@ -6601,6 +6885,32 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
+  // proves WHEN an armament becomes owned (meta.found) and stored (the run's
+  // loadout) around the reward menu, and a shot boot runs on MEMORY storage
+  // (pickStorage above), so no localStorage read can witness those writes —
+  // holdconfirm's own sentence applies: "it committed" is a claim about
+  // storage state, not about which screen is mounted. This reads the manager's
+  // own loadMeta and the live run, never a copy. The map slice is the drive's
+  // door finder: it needs a real treasure node to click, and the graph is run
+  // state. Read-only, shot boots only; a player never has it.
+  window.__spoils = () => ({
+    found: [...((saves.loadMeta() || {}).found || [])],
+    storage: [...(((run || {}).loadout || {}).storage || [])],
+    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
+    // 'showcase', in which recordArmamentDiscovery deliberately writes no
+    // receipt — so through this door the count is structurally 0 and proves
+    // ordering nothing on its own; found-unchanged is the real witness,
+    // because found and receipts ride the same gated saveMeta.
+    receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
+    liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    done: rewardDoneCount,
+    map: run && run.mapGraph
+      ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
+      : [],
+  });
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -6614,7 +6924,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -6643,6 +6953,27 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // fan-out from one node, not the spread of the doors), and it could not be
   // measured at all. `floor:N` picks a node on that floor rather than naming an
   // id, so a sweep can walk the act without knowing the graph first.
+  //
+  // `?shotStorage=full` — STAND AT THE CAP.
+  //
+  // A REACH STATE, the same shape and reason as `?shotMaxHp`: the full-bag
+  // refusal (the ninth armament against an 8-slot cap) is a claim about how
+  // the reward menu behaves AT the storage boundary, and no instrument could
+  // fill a bag — a fresh shot run always has room, so every capture ever
+  // taken of the armament row was taken with slots free, and "refused
+  // legibly" and "silently claimed-but-not-stored" read identically (#290
+  // review at b6b7df0: collectArmament ignored addToStorage's false and
+  // could poison meta.found with a piece the bag refused). The bag fills
+  // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
+  // enters, its own cap and duplicate rules deciding what fits — never by
+  // assigning the array.
+  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
+    const cap = registries.balance.equipment.storageSlots || 8;
+    for (const piece of registries.equipment.armaments) {
+      if ((run.loadout.storage || []).length >= cap) break;
+      addToStorage(run.loadout, piece.id, cap);
+    }
+  }
   const shotAt = shotState === 'map' ? shotParams.get('shotAt') : null;
   if (shotAt) {
     const g = run.mapGraph;
@@ -6772,6 +7103,41 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildShopStock(registries, rng, run);
     showShop();
+  } else if (shotState === 'reward') {
+    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
+    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
+    // is a screen no instrument owns — release-shots derives its denominator
+    // from the states this file declares and screenreach can only reach a
+    // screen that has one.
+    //
+    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
+    // photographs identically every run, at its max edge (five rows: cinders,
+    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
+    // the other edge (no kinds, bare Continue), because a menu's zero case is
+    // where a derivation quietly draws furniture for absent rewards.
+    // The armament is authored, not rolled: the pose wants the same five rows
+    // in every capture, and a rolled id would vary with the seed. Collection
+    // still runs through the SAME collector the real sites hand in — the roll
+    // is pure now (rollDrop), so what a pose and a real reward share is the
+    // whole take/apply path, and what they differ in is only where the offer's
+    // ids came from. tools/reward-collect-drive.mjs exercises the real
+    // rollDrop → mountRewards door; this pose is for photographs.
+    const pose = shotParams.get('shotReward') || 'full';
+    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
+      title: 'VICTORY',
+      cinders: 32,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    mountRewards(app, {
+      registries, run, saves, rng,
+      onCollectArmament: (id) => collectArmament(id, 'showcase'),
+      onPersist: persist,
+      rewards: shotOffer,
+      onDone: () => { rewardDoneCount++; showMap(); },
+    });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
     //
@@ -7613,6 +7979,30 @@ const balance = {
     inspectHold: {
       ms: 400,
     },
+    // REWARD COLLECTION (E11, #256). THE ONE HOME OF THE WORD.
+    //
+    // Constantine, 2026-08-15 (the E11 card): Continue on the reward menu is
+    // ALWAYS pressable and a setting decides what it means — "auto-collect ON
+    // takes everything, picking at random where there is a choice; OFF gives
+    // only what was chosen, no nagging".
+    //
+    // `auto` is the default, and the reason is which mistake costs more: under
+    // auto a distracted Continue still banks the cinders and the relic (an
+    // explicit SKIP on a row is respected — deck discipline survives the
+    // setting); under manual a distracted Continue walks away from everything.
+    // Losing rewards you never saw is the worse silence. The cost of the
+    // default, stated: auto's card pick adds a card a deliberate player may
+    // not have wanted — one tap (Skip on the card row) prevents it.
+    //
+    // NO SETTINGS ROW DERIVES FROM THIS YET, ON PURPOSE — settings.js is under
+    // E3's live claim (#248); adding the row later is a data edit there, not a
+    // redesign (the handLayout precedent, three rows down). Until then the
+    // dial is this row and meta.settings.rewardCollect overrides it when a
+    // row exists to write it.
+    rewardCollect: {
+      def: 'auto',
+      modes: ['auto', 'manual'],
+    },
     // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
     //
     // Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
@@ -7730,7 +8120,21 @@ const balance = {
     // What `persistence` genuinely cannot say is the other half of his sentence
     // — the few pieces that are nobody's to FIND because they are everybody's —
     // and that is `basicTag` below.
-    persistence: 'both',
+    // HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+    // up mid run"*. That is this line and nothing else — the three values were
+    // already the closed set and 'perRun' is already documented above as "what
+    // you find is yours for this run only". Law 0's falsifier, answered by the
+    // machinery that was already here: an entry describes, the machinery
+    // derives, and the whole of item 1 is one word in a content table.
+    //
+    // WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+    // sentence this word cannot reach: `basicTag` below still exempts the few
+    // pieces that are everybody's from the found gate, so three `basic`
+    // armaments remain on the shelf in a run that has picked up nothing. That
+    // is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+    // here. It is flagged on the PR rather than averaged: if he wants a truly
+    // empty shelf, `basicTag: ''` is the second word and it is his to say.
+    persistence: 'perRun',
 
     // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
     // The tag that means "this is everybody's". It answers the FOUND gate only
@@ -7746,7 +8150,33 @@ const balance = {
     // universal shelf off entirely; a value naming a tag no armament carries is
     // a hard validation failure, because a setting that silently does nothing
     // is the one failure mode worse than a missing one.
-    basicTag: 'basic',
+    //
+    // KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+    // starting kit armory weapon shown on character creation. the armory should
+    // not show weapons not collected in run. it should not show items not
+    // available at character creation."*
+    //
+    // THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+    // The worry was that clearing this tag would also hide the pieces the player
+    // STARTED with — his exemption is the starting kit, not a category. It does
+    // not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+    // set, and `createRunState` puts the kit in the sets. Measured across all
+    // three shipped classes at this ref:
+    //
+    //   reaver    carries straightSword, roundShield, default
+    //   starseer  carries ashStaff, default
+    //   herald    carries boneSceptre, default
+    //
+    // So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+    // THIS RUN PICKED UP, per class, following the player rather than a tag —
+    // which is his sentence. What the tag was adding on top is the part he
+    // killed: it handed the starseer a straightSword and a roundShield it was
+    // never shown, and the herald all three.
+    //
+    // '' is the documented off value, not an invention (see the paragraph
+    // above); a value naming a tag no armament carries is still a hard
+    // validation failure, so this cannot rot into a silent no-op.
+    basicTag: '',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.
@@ -13181,7 +13611,7 @@ const SFX_MANIFEST = {
 // the content-build reachability check both consume this list; neither guesses
 // that every row before an underscore is intended as a composed-id family.
 const SFX_FAMILY_IDS = Object.freeze([
-  'procBurst', 'beat', 'holdTick', 'holdCommit',
+  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake',
 ]);
 
 // Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
@@ -13346,6 +13776,16 @@ const SFX_RECIPES = {
   ],
   buy: [
     { kind: 'tone', type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 },
+  ],
+  // REWARD COLLECTION (E11). A FAMILY row — the reward menu composes
+  // `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card,
+  // rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution
+  // falls through exact → this family → default, the procBurst shape (#71).
+  // Authoring a per-kind flourish later is ONE exact row here, zero code.
+  // The gesture: a short upward settle — receipt, not fanfare; `victory`
+  // already owns the fanfare and fires once at the screen, not per row.
+  rewardTake: [
+    { kind: 'tone', type: 'sine', freq: 520, to: 780, dur: 0.14, peak: 0.3 },
   ],
   nodeTravel: [
     { kind: 'tone', type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 },
@@ -15865,9 +16305,38 @@ const creationModes = [
     belowBaseline: 'forbid',
     redistribution: 'fixedTotal',
   },
+  // E5 (#250) — Constantine's own numbers, verbatim from the card: "10 points,
+  // configurable; points come back out when a stat is dropped; floor 8, ceiling
+  // 15 at creation, both customizable; the floor is the reclaim limit; 15 caps
+  // CREATION, not the character."
+  //   bonusPool 10        the ten points ("configurable" = it is content, here)
+  //   minimum 8 + allow   the floor IS the reclaim limit: a stat may be dropped
+  //                       below its baseline down to 8, and fixedTotal hands
+  //                       the difference back to the pool by construction
+  //   maximum 15          caps creation only — allocationProblems already
+  //                       raises the ceiling by levelled points, which is his
+  //                       "not the character" clause, shipped before this mode
+  // A SECOND MODE, NOT AN EDIT TO `standard`: standard's fixedTotal of 55 is
+  // what every existing save is validated against at the load door, and
+  // save.js ARCHIVES what fails there. Changing standard's pool would refuse
+  // every in-flight run the first boot after update.
+  {
+    id: 'pointbuy',
+    label: 'Assign points',
+    baseline: 10,
+    bonusPool: 10,
+    minimum: 8,
+    maximum: 15,
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
+  },
 ];
 
 // Complete mode × class × attribute product. No Origins are enabled in Phase 1.
+// The pointbuy presets are the EDITOR'S OPENING POSITION and the load-door
+// refill value — a legal allocation (sum 60, cells 8..15), thematically the
+// standard preset with the five extra points laid along each class's grain.
+// The player reshapes them; nothing here is a recommendation.
 const attributeRules = {
   defaultMode: 'standard',
   presets: {
@@ -15875,6 +16344,11 @@ const attributeRules = {
       reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
       starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
       herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
+    },
+    pointbuy: {
+      reaver: { strength: 14, dexterity: 10, constitution: 14, wisdom: 11, intelligence: 11 },
+      starseer: { strength: 10, dexterity: 12, constitution: 11, wisdom: 12, intelligence: 15 },
+      herald: { strength: 10, dexterity: 10, constitution: 13, wisdom: 15, intelligence: 12 },
     },
   },
 };
@@ -18379,6 +18853,19 @@ const ACTIONS = Object.freeze({
     hazard: 'choosing',
     note: 'a gain, and the player reached for it — the same ruling SAFE_OPS makes about addRelic',
   },
+  rewardContinue: {
+    of: 'leaving the reward screen and resolving the remaining offer',
+    lives: 'src/ui/screens/reward.js',
+    surface: 'reward',
+    // Continue closes the offer. In auto mode it also applies every pending
+    // reward; in manual mode every untouched reward is left behind. Neither
+    // result can be undone after navigation, and the control follows a column
+    // of adjacent reward rows a thumb is already selecting from.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the irreversible exit immediately follows the reward rows; a short press must remain an abort',
+  },
   draftPick: {
     of: 'drafting a card into a custom climb',
     lives: 'src/ui/screens/draft.js',
@@ -20353,7 +20840,11 @@ const SCHEMAS = Object.freeze({
     bonusPool: int,
     minimum: int,
     maximum: int,
-    belowBaseline: en('forbid'),
+    // E5 (#250): 'allow' is the reclaim — a stat may drop below its baseline
+    // to the mode's minimum, handing the points back to the pool. The model
+    // branch in attributes.js (allocationProblems' floor) has carried both
+    // semantics since the field existed; this set was closed to what shipped.
+    belowBaseline: en('forbid', 'allow'),
     redistribution: en('fixedTotal'),
   }),
   attributeRules: obj({
@@ -22718,6 +23209,59 @@ function validateRunStartingKit(run, registries, meta = {}, { legacy = false } =
   return run;
 }
 
+// ---------------------------------------------------------------------------
+// Starting armour (E5 / #250) — the same discovery shape as kits, for the set
+// you begin the climb wearing.
+//
+// STARTING-ELIGIBLE = the class's free set (unlock === '') PLUS any set whose
+// unlock the profile has EARNED (meta.unlocked — the same ledger the Armoury
+// reads via model/unlocks.js). No content edit widens this list: outfits.csv
+// keeps its "exactly one free set per class" contract and loadout.js keeps the
+// check that enforces it. What a player has won becomes a starting choice;
+// what they have not stays a prize.
+//
+// WHY meta AND NOT A NEW TABLE: the kit chooser above already answers "what
+// may this profile start with" from profile meta. Two eligibility ledgers for
+// two rows of the same screen would be two deciders — the #24 class of defect.
+// ---------------------------------------------------------------------------
+
+function armourRows(registries, classId) {
+  return (((registries || {}).equipment || {}).armour || []).filter((o) => o.classId === classId);
+}
+
+function armourIsStartingEligible(row, meta) {
+  if (!row) return false;
+  if (row.unlock === '') return true;
+  return new Set((meta && meta.unlocked) || []).has(row.unlock);
+}
+
+/** The sets this profile may begin in, authoring order, free set first-eligible. */
+function startingArmourViews(registries, classId, meta = {}) {
+  return armourRows(registries, classId)
+    .filter((row) => armourIsStartingEligible(row, meta))
+    .map((row) => ({ id: row.id, label: row.name, blurb: row.blurb, free: row.unlock === '' }));
+}
+
+/**
+ * The row the run starts wearing. `requestedId` absent → the class's free set,
+ * which is exactly what createLoadout always chose — a caller that never heard
+ * of this function gets yesterday's behaviour. A requested set that is not
+ * this class's, or not earned, is refused BY NAME, never silently swapped:
+ * a wrong-but-plausible fallback is the Law 0 clause 5 defect.
+ */
+function resolveStartingArmour(registries, classId, requestedId, meta = {}) {
+  const rows = armourRows(registries, classId);
+  const free = rows.find((row) => row.unlock === '');
+  if (!requestedId) {
+    if (!free) throw new Error(`class '${classId}' has no free starting armour set`);
+    return free;
+  }
+  const row = rows.find((entry) => entry.id === requestedId);
+  if (!row) throw new Error(`starting armour '${requestedId}' is unavailable to class '${classId}'`);
+  if (!armourIsStartingEligible(row, meta)) throw new Error(`starting armour '${requestedId}' is not unlocked`);
+  return row;
+}
+
 function recordArmamentDiscovery(meta, pieceId, {
   progressionMode = 'normal', source = 'unknown', runSeed = null, receiptLimit = 64,
 } = {}) {
@@ -22742,7 +23286,7 @@ function recordArmamentDiscovery(meta, pieceId, {
 }
 
 
-Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, startingKitPieceIds, startingKitProblems, kitIsDiscovered, startingKitViews, resolveStartingKit, startingKitSnapshot, validateRunStartingKit, recordArmamentDiscovery });
+Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, startingKitPieceIds, startingKitProblems, kitIsDiscovered, startingKitViews, resolveStartingKit, startingKitSnapshot, validateRunStartingKit, startingArmourViews, resolveStartingArmour, recordArmamentDiscovery });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -23855,7 +24399,7 @@ function setCellState(index, opened, visible) {
  * every new run with no change here. You start bare-handed in your class's one
  * unlocked armour set — the run is meant to arm you.
  */
-function createLoadout(registries, classId, startingKit = null) {
+function createLoadout(registries, classId, startingKit = null, startingArmour = null) {
   const eq = registries.equipment || {};
   const sets = {};
   const active = {};
@@ -23863,7 +24407,12 @@ function createLoadout(registries, classId, startingKit = null) {
     sets[slot.id] = new Array(Math.max(1, slot.sets)).fill(null);
     active[slot.id] = 0;
   }
-  const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+  // `startingArmour` is a RESOLVED row (model/startingKits.js
+  // resolveStartingArmour — class-checked, eligibility-checked), never a bare
+  // id: an id validated here would be a second decider for one question.
+  // Absent, the class's free set — byte-for-byte the old behaviour.
+  const starting = startingArmour
+    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
   const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
   for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
@@ -24962,7 +25511,7 @@ const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, resolveDe
 
 
 
-const { resolveStartingKit, startingKitSnapshot } = require("src/model/startingKits.js");
+const { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
 const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 // The run door's witness. Recording only; nothing here changes a number.
@@ -25008,6 +25557,7 @@ function createRunState({
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
   startingKitId = undefined,
+  startingArmourId = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -25019,7 +25569,12 @@ function createRunState({
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
   const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const loadout = createLoadout(registries, classId, startingKit);
+  // E5 (#250): the set the run begins wearing. Resolved against the same
+  // profile meta the kit above is — absent, the class's free set, which is
+  // what createLoadout always chose. The loadout row is the persisted home;
+  // no new run field, because run.loadout.sets.armor[0] already IS the record.
+  const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
+  const loadout = createLoadout(registries, classId, startingKit, startingArmour);
   for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
@@ -34480,7 +35035,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0c50f3bcc3';
+const SOURCE = '2ff73c45e7';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34514,7 +35069,7 @@ const SOURCE = '0c50f3bcc3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0912';
+const ORDINAL = '0956';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -34860,7 +35415,9 @@ const { createRunState } = require("src/model/state.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js");
 const { renderEquipmentRequirements, renderPlayerPoise } = require("src/ui/components/equipmentReceipts.js");
-const { startingKitViews } = require("src/model/startingKits.js");
+const { startingKitViews, startingArmourViews } = require("src/model/startingKits.js");
+const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } = require("src/model/attributes.js");
+const { equipmentRequirementReceipt } = require("src/model/loadout.js");
 
 function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -34871,7 +35428,20 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     spriteStyle: 'rendered',
     keepsakeId: 'none',
     startingKitId: null,
+    // E5 (#250): the set you begin wearing, and how your stats are laid.
+    // `attributes` is live only in pointbuy; in standard the preset is the
+    // allocation and the model owns it (createRunState reads the preset when
+    // `attributes` is not passed — one home, no copy here).
+    startingArmourId: null,
+    attributeMode: defaultCreationModeId(registries),
+    attributes: null,
   };
+  // THE PREVIEW'S ALLOCATION — the last LEGAL one. A pointbuy allocation is
+  // illegal every moment the pool is part-spent (fixedTotal), and createRunState
+  // rightly throws on it; a preview must never be built from a state the run
+  // could not start from. The editor and the START refusal carry the mid-edit
+  // truth; the receipts describe the run the last legal allocation would start.
+  let previewAttributes = null;
 
   // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
   // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
@@ -34924,6 +35494,15 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
           <div class="cz-fields">
             <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
             <div><p class="cz-label">STARTING KIT</p><div id="cz-kits" class="cz-opts"></div></div>
+            <!-- E5 (#250). Both rows arrive OPEN, and that is a ruling being
+                 honoured rather than a fold being forgotten: MR-189 scopes the
+                 fold to rows whose face buys words their options cannot, and
+                 rows that CHANGE THE RUN never fold — "folding them would hide
+                 the choosing behind a choice." Armour and stat points change
+                 the run. MR-183 withdrew the length argument; vertical scroll
+                 is the sanctioned cost. -->
+            <div><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cz-opts"></div></div>
+            <div><p class="cz-label">STAT POINTS</p><div id="cz-statedit" class="cz-statedit"></div></div>
             <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
             <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
             <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
@@ -34974,7 +35553,14 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
-    const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    const preview = createRunState({
+      seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId, attributeMode: state.attributeMode,
+      // Standard passes no allocation — the model reads its own preset (one
+      // home). Pointbuy passes the last LEGAL allocation; see previewAttributes.
+      ...(state.attributeMode === 'pointbuy' && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      profileMeta: meta,
+    });
     // THE SHORT FORM FIRST, and it is drawn from the same preview run the
     // receipts below use — one read of the run, two tiers of the same truth.
     const brief = creationBrief(registries, preview);
@@ -34992,8 +35578,13 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     const kit = surface.roles;
     const signature = surface.signature;
     const copies = surface.roleCopies;
-    $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
-      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+    // The SAME two lines the Armoury strip prints (ui/screens/equipment.js
+    // statsComparison) — same read model, same markup, one stylesheet home
+    // (`.statproj-*`). They used to differ by a literal space here and a
+    // <span> there, which is how the same block ended up separated on one
+    // screen and welded on the other.
+    $('#cz-stat-projection').innerHTML = `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise)
       + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
@@ -35022,6 +35613,152 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       kitBox.appendChild(button);
     }
   }
+  // ---- E5 (#250): starting armour + stat points -------------------------
+  // STARTING-ELIGIBLE ARMOUR = the class's free set plus every set this
+  // profile has EARNED (model/startingKits.js, the same meta.unlocked ledger
+  // the Armoury reads). A fresh profile sees one button; each prize won adds
+  // one. No copy of that rule lives here.
+  const armourBox = $('#cz-armours');
+  function renderArmours() {
+    const views = startingArmourViews(registries, state.classId, meta);
+    if (!views.some((row) => row.id === state.startingArmourId)) {
+      state.startingArmourId = (views.find((row) => row.free) || views[0]).id;
+    }
+    armourBox.innerHTML = '';
+    for (const set of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${set.id === state.startingArmourId ? ' chosen' : ''}`;
+      button.dataset.startingArmourId = set.id;
+      button.textContent = set.label;
+      // Law 3 clause 4 — the blurb is the set's own authored sentence, read
+      // from the row, never retyped.
+      attachTooltip(button, () => esc(set.blurb || set.label));
+      button.addEventListener('click', () => {
+        state.startingArmourId = set.id;
+        renderArmours();
+        renderPortrait();
+      });
+      armourBox.appendChild(button);
+    }
+  }
+
+  // THE STAT EDITOR. Every number on it is READ from the mode row in
+  // content/attributes.js (pool, floor, ceiling, labels) — a figure typed here
+  // would be a copy nothing syncs (Law 1 clause 2). His ruling, from the card:
+  // 10 points; dropped points come back (fixedTotal does that by construction);
+  // floor 8 is the reclaim limit; 15 caps creation, not the character (the
+  // model already raises the ceiling by levelled points).
+  const statBox = $('#cz-statedit');
+  const POINTBUY = 'pointbuy';
+  function pointbuyMode() { return creationMode(registries, POINTBUY); }
+  function resetAttributes() {
+    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    previewAttributes = { ...state.attributes };
+  }
+  function remainingPoints() {
+    const total = Object.values(state.attributes).reduce((a, b) => a + b, 0);
+    return allocationTotal(registries, POINTBUY) - total;
+  }
+  /** The one sentence START refuses with, or null. Pool first, then the kit. */
+  function statsProblem() {
+    // No allocation yet (a pointbuy mode nobody has edited) is the preset by
+    // construction — createRunState reads it from content — so nothing refuses.
+    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    const remaining = remainingPoints();
+    if (remaining !== 0) {
+      return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign — every point lands before the climb.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool — drop a stat to reclaim.`;
+    }
+    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    if (problems.length) return problems[0].msg;
+    // A legal allocation can still starve the chosen kit: requirements are the
+    // model's own receipt, asked here so the refusal lands at the button
+    // instead of as a throw inside the preview.
+    const kitRow = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId);
+    for (const pieceId of (kitRow && kitRow.pieceIds) || []) {
+      const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
+      if (!receipt.ok) {
+        const failed = receipt.failures[0];
+        return `${piece.name || piece.id} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
+      }
+    }
+    return null;
+  }
+  function renderStats() {
+    const mode = pointbuyMode();
+    statBox.innerHTML = '';
+    // The mode chips — labels from the content rows, like the sprite chips.
+    const chips = document.createElement('div');
+    chips.className = 'se-modes';
+    for (const m of registries.creationModes.all()) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `cz-opt se-mode${state.attributeMode === m.id ? ' chosen' : ''}`;
+      chip.textContent = m.label;
+      attachTooltip(chip, () => (m.id === POINTBUY
+        ? `Lay your own stats: ${m.bonusPool} points over baseline ${m.baseline}.<br>`
+          + `Floor ${m.minimum} — dropped points come back. Cap ${m.maximum} at creation; levels raise it later.`
+        : 'The class’s authored allocation — pick and climb.'));
+      chip.addEventListener('click', () => {
+        if (state.attributeMode === m.id) return;
+        state.attributeMode = m.id;
+        if (m.id === POINTBUY && !state.attributes) resetAttributes();
+        if (m.id === POINTBUY) previewAttributes = statsProblem() ? previewAttributes : { ...state.attributes };
+        renderStats();
+        renderPortrait();
+        seedRefusal();
+      });
+      chips.appendChild(chip);
+    }
+    statBox.appendChild(chips);
+    if (state.attributeMode !== POINTBUY) return;
+    if (!state.attributes) resetAttributes();
+    // Five rows and a pool line. Steppers refuse at the row's own edges with
+    // aria-disabled (never `disabled` — an unfocusable control is unaskable).
+    const remaining = remainingPoints();
+    const pool = document.createElement('p');
+    pool.className = 'se-pool';
+    pool.textContent = `Points to assign: ${remaining}`;
+    attachTooltip(pool, () => `${mode.bonusPool} over baseline ${mode.baseline}, floor ${mode.minimum}, cap ${mode.maximum} at creation.`);
+    statBox.appendChild(pool);
+    for (const def of orderedAttributes(registries)) {
+      const row = document.createElement('div');
+      row.className = 'se-row';
+      const value = state.attributes[def.id];
+      const atFloor = value <= mode.minimum;
+      const atCeil = value >= mode.maximum || remaining <= 0;
+      row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`
+        + `<span class="se-value">${value}</span>`;
+      const mk = (sign, refused, tip) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'se-step';
+        b.textContent = sign;
+        if (refused) b.setAttribute('aria-disabled', 'true');
+        attachTooltip(b, tip);
+        b.addEventListener('click', () => {
+          if (b.getAttribute('aria-disabled') === 'true') return;
+          state.attributes[def.id] = value + (sign === '+' ? 1 : -1);
+          if (!statsProblem()) previewAttributes = { ...state.attributes };
+          renderStats();
+          renderPortrait();
+          seedRefusal();
+        });
+        return b;
+      };
+      row.appendChild(mk('−', atFloor,
+        () => `−1 ${esc(def.label)} — floor ${mode.minimum}; a dropped point returns to the pool.`));
+      row.appendChild(mk('+', atCeil,
+        () => (remaining <= 0
+          ? 'The pool is spent — drop another stat to reclaim a point.'
+          : `+1 ${esc(def.label)} — cap ${mode.maximum} at creation; levels raise it later.`)));
+      statBox.appendChild(row);
+    }
+  }
+
   for (const cls of registries.classes.all()) {
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
@@ -35035,9 +35772,16 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     el.addEventListener('click', () => {
       state.classId = cls.id;
       state.startingKitId = null;
+      // E5: a class carries its own armour rows and its own preset — both
+      // choices are re-derived for the new class, exactly as the kit is.
+      state.startingArmourId = null;
+      if (state.attributeMode === POINTBUY) resetAttributes();
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
       renderKits();
+      renderArmours();
+      renderStats();
       renderPortrait();
+      seedRefusal();
     });
     classes.appendChild(el);
   }
@@ -35049,6 +35793,8 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   }
   classes.querySelector('.cz-class').classList.add('chosen');
   renderKits();
+  renderArmours();
+  renderStats();
 
   // ---- sigil + tint pickers ----
   const glyphBox = $('#cz-glyphs');
@@ -35170,11 +35916,49 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   ];
   const fields = app.querySelector('.cz-fields');
   fields.classList.add('cz-disc');
+  // THE ROWS THE MOUNT DOES NOT TAKE ARE STILL THE SCREEN'S, AND THEY GO BACK
+  // (E5 / #250 — the defect this repairs is mine, and it shipped nothing).
+  //
+  // `mountDisclosure` sets `host.innerHTML`, so mounting over `.cz-fields`
+  // DESTROYS every row in it. The six sections survive because SECTIONS holds
+  // their boxes by reference and the mount re-adopts them into its one panel.
+  // STARTING ARMOUR and STAT POINTS are not in SECTIONS — deliberately, below
+  // — so nothing held them and nothing brought them back: two rows this file
+  // writes were absent from the document from 9676d9a to aefc356, on a screen
+  // every gate called green.
+  //
+  // NEITHER ROW BECOMES A FACE. That is the design answer, and it is not the
+  // one-line one:
+  //   · MR-189's rule, still live in the comment beside their markup — a row
+  //     that CHANGES THE RUN never folds, because folding it hides the
+  //     choosing behind a choice. Armour and stat points change the run.
+  //   · Vira's replay item (d): the stat editor is a MULTI-CLICK surface, not
+  //     a pick-once choice. Every face here carries auto-advance — one pick
+  //     inside the open panel opens the next section — so a stepper's first
+  //     `+` would march a player off a row they had not finished. A face gives
+  //     this row that semantics BY CONSTRUCTION; there is no opting out of it.
+  // So both arrive OPEN, as themselves, under the fold row: the six picks read
+  // as one compact chooser, and the two rows you EDIT sit below it.
+  //
+  // DERIVED, NEVER LISTED. The open set is *every row of `.cz-fields` that
+  // does not hold a registered picker* — read off this template and SECTIONS,
+  // so no third hand-written list exists to fall out of step with the other
+  // two (Law 0 clause 4, which is the whole disease here). The derivation also
+  // inverts the failure: a future row added to the markup with no SECTIONS
+  // entry now APPEARS, open, instead of vanishing. Wrong-and-visible beats
+  // absent-and-green.
+  //
+  // READ BEFORE THE MOUNT — after it runs the adopted pickers live in the
+  // panel and no row contains its own box, so the test loses its referent.
+  const openRows = [...fields.children].filter((row) => !SECTIONS.some((s) => row.contains(s.box)));
   const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.box, sense: row.tip },
   })));
+  // ...and back into the host the mount just emptied, in the order the
+  // template wrote them, after the fold row.
+  for (const row of openRows) fields.appendChild(row);
   // One call after any pick — the faces are the screen's answer to "what did I
   // choose?", so they are re-read from `state`, never written twice.
   const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
@@ -35260,7 +36044,9 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   // two different things. It is marked with `aria-disabled` + `data-refusal`
   // (never `disabled`, which would make it unfocusable and unaskable) so a
   // player who presses it hears why at the place they pressed.
-  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem(), () => {
+  // E5: the button refuses for the seed OR the stats, and each names itself —
+  // the stat sentence is statsProblem()'s own, derived beside the editor.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
@@ -35271,13 +36057,17 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
-    if (seed.problem()) return; // the refusal already said why, at the button
+    if (seed.problem() || statsProblem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId,
+      attributeMode: state.attributeMode,
+      // Standard sends no allocation: the model's preset is the one home.
+      ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
 
@@ -35412,7 +36202,13 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
   const safe = String(sigil).replace(/[<>&"]/g, '');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`
+    // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
+    // The circle is symmetric and does not care; the GLYPH is text, and mirrored
+    // text reads as a rendering fault rather than as a character facing you.
+    // Reflected about its own centre, so it lands exactly where it already was.
+    `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
+    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    `</g>`
   );
 }
 
@@ -35523,8 +36319,12 @@ function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil) {
     const med = document.createElement('span');
     med.textContent = sigil;
+    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
+    // "the figure faces the viewer"). That mirror is right for the ART and wrong
+    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
+    // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
+      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
@@ -36027,6 +36827,10 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     const entry = rows.find((row) => row.key === key);
     const button = buttons.get(key);
     if (!entry || !button) return;
+    // A NODE FACE HAS NO VALUE SLOT — see drawFace. Rewriting innerHTML here
+    // would delete the adopted card and leave a button with a name in it, which
+    // reads as "it worked" and is the failure this seat is for.
+    if (entry.face && entry.face.node) return;
     entry.face.value = value;
     button.innerHTML = faceHtml(entry);
   }
@@ -36041,7 +36845,20 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     button.dataset.disclosure = entry.disclosure;
     button.dataset.reveal = 'closed';
     button.setAttribute('aria-expanded', 'false');
-    button.innerHTML = faceHtml(entry);
+    // A FACE MAY BE A NODE (Viki, 2026-08-21, for the Armoury's item panes).
+    // Constantine: *"it should be part of the card and is revealed pressing the
+    // card instead"* — so the CARD has to be the pressable thing, and a card is
+    // art plus four spans, not a label and a value. The alternative was a second
+    // hand-built fold in equipment.js, which is the debt tools/onefold.mjs
+    // exists to count; this keeps ONE renderer of the affordance.
+    //
+    // ADDITIVE AND GUARDED: no existing caller passes `face.node`, so both
+    // shipped callers (customize.js, shop.js) take the `faceHtml` road exactly
+    // as before. `setValue` below refuses to touch a node face rather than
+    // clobbering it — a word-reveal's value has no meaning for a face that is
+    // an object, and silently erasing the card would be the plausible failure.
+    if (entry.face && entry.face.node) button.appendChild(entry.face.node);
+    else button.innerHTML = faceHtml(entry);
     button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
@@ -40464,13 +41281,25 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
           <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
           <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
+          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
+               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
+               real buttons (components/hints.js, Sten 15d4bca), so "every
+               persistent combat action destination" now includes them — and the
+               grid's guarantee that revealing a cell "cannot shift, cover, or
+               steal a standing control's hit box" is exactly the guarantee the
+               strip was missing. It sat outside as a centred sibling row, so at
+               Text XL and under a wide rebind it grew into END TURN: #295,
+               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
+               gutter column this grid already declared was the space meant for it.
+               Grid areas cannot overlap, so the clearance is now structural and
+               stops being a number anybody re-tunes when a label changes. -->
+          ${hintBarHtml('combat')}
         </div>
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
-      ${hintBarHtml('combat')}
     </div>`;
 
   const $ = (sel) => app.querySelector(sel);
@@ -42113,6 +42942,8 @@ const { sfx } = require("src/ui/sfx.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
 
 const CFG = () => balance.equipment;
 
@@ -42403,19 +43234,43 @@ function modSummary(registries, piece) {
 // passed as false: a dead argument is a second copy of a decision, and the next
 // author to see `locked: false` at every call site would reasonably conclude the
 // picker still has a locked state to reach.
+//
+// TWO WRAPPERS, ONE MARKUP (Viki, 2026-08-21). The card is now BOTH a control in
+// its own right and the face of a disclosure — and a <button> inside a <button>
+// is not a thing the parser keeps, so the face wants the same card built out of
+// phrasing content instead. That is a second SHAPE, and it must not become a
+// second MARKUP: `pieceChipHtml` is the one home, and the two functions below
+// differ only in the element they hang it on.
+function pieceChipHtml(registries, piece) {
+  const mods = modSummary(registries, piece);
+  return `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">`
+    + `<span class="ec-name">${esc(piece.name)}</span>`
+    + `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>`
+    + `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
+}
+
+/** The art element dies quietly if the file is missing — the single-file dist
+ *  and file:// play both depend on this and it is easy to drop in a refactor. */
+function dropArtOnError(el) {
+  const art = el.querySelector('.ec-art');
+  if (art) art.addEventListener('error', () => art.remove());
+  return el;
+}
+
 function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
   el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';
-  const mods = modSummary(registries, piece);
-  el.innerHTML =
-    `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
-    `<span class="ec-name">${esc(piece.name)}</span>` +
-    `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
-    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
-  const art = el.querySelector('.ec-art');
-  art.addEventListener('error', () => art.remove());
-  return el;
+  el.innerHTML = pieceChipHtml(registries, piece);
+  return dropArtOnError(el);
+}
+
+/** The same card as phrasing content, for use INSIDE the disclosure face. */
+function pieceFace(registries, piece, { selected }) {
+  const el = document.createElement('span');
+  el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
+  el.innerHTML = pieceChipHtml(registries, piece);
+  return dropArtOnError(el);
 }
 
 /**
@@ -42734,41 +43589,47 @@ function mountEquipment(host, {
       return el;
     };
 
-    const bare = document.createElement('button');
-    bare.type = 'button';
-    bare.className = 'equip-chip bare';
-    bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
-    if (seal.ok) {
-      bare.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat, attributes: run.attributes });
-        commit();
-      });
-    } else sealChip(bare);
-    list.appendChild(bare);
-
-    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
-    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
-    // QUESTION (#95) and it is the fight's, not the profile's. The two states
-    // must not read alike or the screen lies about why it said no:
-    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
-    //     name, refusing with the rung's own hint out of unlocks.csv;
-    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
-    //     and name, dimmed, refusing with the slot's seal sentence.
-    // Different container, different content, different sentence, different
-    // author of the sentence. Nothing here says "locked" at the player.
+    // ---- THE CARD IS THE CONTROL (Constantine, 2026-08-21) -----------------
+    //
+    // His two sentences, and the second corrects the first, so both are kept:
+    //   "each item should be folded panes that can expand, the sub button
+    //    should exist. clicking on the armory item pane should auto expand it
+    //    with a button to equip (un equip in red if it's already equipped)"
+    //   "the sub button under the folded weapon army item pane should NOT
+    //    exist. it should be part of the card and is revealed pressing the card
+    //    instead"
+    //
+    // So: ONE gesture on ONE surface. The card is the face; pressing it reveals
+    // the comparison it always drew plus the single act you can take on it.
+    //
+    // MOUNTED, NOT BUILT. This is Sunna's disclosure renderer (D26,
+    // components/disclosure.js) — the same one the creation screen and the shop
+    // mount. tools/onefold.mjs counts the files that CONSTRUCT that affordance's
+    // markup and declares ONE; a fold hand-rolled here would have made it two,
+    // which is the debt that tool exists to hold at zero. What this act needed
+    // from her component was one additive capability — a face may be a NODE —
+    // because a card is art plus four spans and her faces were escaped text.
+    // FLAGGED FOR HER RULING on the PR: the grammar is untouched (one open at a
+    // time, the panel under the pressed row, the same aria contract), and the
+    // revert is deleting the two guarded branches in drawFace/setValue.
+    //
+    // "BARE" IS GONE, AND THAT IS A COLLAPSE, NOT A LOSS. It was a chip whose
+    // whole job was "put nothing here", which is exactly what Unequip does on
+    // the card that is already in the slot. Two controls for one act is the
+    // second copy this seat exists to refuse; with the slot empty there is no
+    // equipped card, and there was nothing for Bare to undo either.
+    //
+    // A SEALED PIECE STILL OPENS. `canEquip` refuses mid-fight, and refusing the
+    // READING as well would take away the compare he asked the card to carry
+    // ("the card should be the button for compare and stats"). The face opens;
+    // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
-    for (const piece of eligible(slot)) {
-      const chip = pieceChip(registries, piece, { selected: piece.id === current });
-      if (seal.ok) {
-        chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat, attributes: run.attributes });
-          sfx.play('cardPlay');
-          commit();
-        });
-      } else sealChip(chip);
-      const row = document.createElement('div');
-      row.className = 'equip-candidate-row';
-      row.appendChild(chip);
+    // The hold and the button must run the SAME closure — see `act` below.
+    const entryAct = new Map();
+    const entries = eligible(slot).map((piece) => {
+      const equipped = piece.id === current;
+      const body = document.createElement('div');
+      body.className = 'ep-body';
       // `meta` is handed over because the swap-price rows are priced with the
       // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
       // price them with the shipping default and read as plausible — the row
@@ -42777,8 +43638,106 @@ function mountEquipment(host, {
         candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
         meta,
       }).candidate;
-      row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
-      list.appendChild(row);
+      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      // "un equip in red" — `.danger` is this stylesheet's own word for red
+      // (styles/ui.css `.subtle.danger`, `--blood`/`--ember`), so the colour is
+      // named where colour is decided rather than typed here. THE WORD AND THE
+      // COLOUR ARE TWO CHANNELS and the check reads both: a control that says
+      // Unequip in the ordinary colour satisfies half his sentence.
+      btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
+      btn.dataset.act = equipped ? 'unequip' : 'equip';
+      btn.textContent = equipped ? 'Unequip' : 'Equip';
+      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
+      // a hold on the card AND a button in the opened pane; two copies of
+      // `equipPiece(...)` is two chances for the roads to disagree about what
+      // "equip" means, which is the second copy this seat exists to refuse.
+      const act = () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+        sfx.play('cardPlay');
+        commit();
+      };
+      if (seal.ok) btn.addEventListener('click', act);
+      else sealChip(btn);
+      body.appendChild(btn);
+      entryAct.set(piece.id, seal.ok ? act : null);
+
+      return {
+        key: piece.id,
+        kind: 'item',
+        disclosure: 'face',
+        equipped,
+        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
+        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+      };
+    });
+
+    const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
+
+    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
+    //
+    //   "press and hold on army card to equip, but aLso have an equip button
+    //    when card is expanded (unfolded). click unfolds the card and records
+    //    it when clicked again or clicked off the card"
+    //
+    // click        → unfold          (Sunna's renderer already does this)
+    // click again  → refold          (her toggle already does this)
+    // click off    → refold          (NEW, below — nothing did this)
+    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
+    //
+    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
+    // click also commits, that is one line and the reading is stated rather
+    // than buried.
+    //
+    // ---- THE HOLD IS NOT ARMED, AND THAT IS A FINDING, NOT AN OMISSION ----
+    //
+    // He asked for BOTH: "press and hold on army card to equip" AND "click
+    // unfolds the card". `armHold` (components/holdconfirm.js) is this tree's
+    // one hold gesture and it cannot serve both on ONE element, by design:
+    //
+    //   "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the
+    //    early release IS the abort, so the click it generates must die here
+    //    rather than become a second door."
+    //
+    // Measured, not read: arming the face made a short click do NOTHING — the
+    // card stopped unfolding, and A5's refold checks went red behind it. Rule 1
+    // is not incidental; it exists so a released-too-early hold can never
+    // become a second way to fire the thing it was guarding.
+    //
+    // SO THE CONFLICT IS REAL AND IT IS A RULING, NOT A PATCH. Making the early
+    // release unfold a pane is exactly the "second door" rule 1 forbids, and
+    // whether the Armoury card is safe enough to be the exception is not this
+    // file's call — it is the holdconfirm seat's, and Constantine's if they
+    // disagree. `armHold`/`holdMs` stay imported for the moment it is ruled.
+    //
+    // WHAT SHIPS MEANWHILE IS HIS ITEM 3, AND IT IS THE ACCESSIBLE ROAD ANYWAY:
+    // the equip button inside the unfolded pane. A press-and-hold has no
+    // keyboard or pad equivalent at all, so the button was always going to be
+    // the only door for those players — which is why it is not a fallback here.
+    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
+    // Armoury already owns a veil that closes the whole panel on an outside
+    // click, and a second document-level listener would race it — press outside
+    // everything and you would get a refold AND a close, from two homes.
+    // `.ep-list` is the whole card region, so this fires for a press anywhere
+    // else in the picker and nowhere else.
+    box.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.ep-list')) fold.close();
+    });
+    // WHICH CARD IS THE ONE YOU ARE WEARING, published on the face itself.
+    // Written after mount because the renderer owns the button; read by
+    // tools/armoury-picked-up.mjs, which must find the equipped card WITHOUT
+    // knowing the loadout — a probe that recomputed "which one is equipped"
+    // would agree with a bug as happily as with the truth.
+    for (const entry of entries) {
+      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
+      if (face && entry.equipped) face.dataset.equipped = '1';
+    }
+    if (!entries.length) {
+      list.insertAdjacentHTML('beforeend',
+        '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
     }
     return box;
   }
@@ -42830,8 +43789,8 @@ function mountEquipment(host, {
     const box = document.createElement('section');
     box.className = 'armoury-stats';
     box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
-      + `<div class="armoury-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
-      + `<div class="armoury-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
+      + `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
     return box;
   }
 
@@ -43596,86 +44555,530 @@ Object.assign(module.exports, { applyHandExemption });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
-// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
+// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
-// Rewards arrive pre-rolled by engine/encounters.js (deterministic streams);
-// this screen only presents them. Skipping the card is a visible affordance
-// (deck discipline, GDD §5). Cinders/relic/flask apply immediately; the flask
-// is lost with a note if all slots are full.
+// Constantine, 2026-08-15: "the reward should start with an initial menu of
+// reward types (card, potion, armament)" — Slay-the-Spire style. And his
+// answer on the E11 card: Continue is ALWAYS pressable and a setting decides
+// what it means — auto-collect ON takes everything, picking at random where
+// there is a choice; OFF gives only what was chosen, no nagging.
+//
+// WHAT MOVED, and why it is the whole point: the old screen APPLIED cinders,
+// relic and flask at mount — before the player saw anything — so a menu with
+// inspect-before-collect and leaving untouched rewards behind was impossible by construction.
+// Application now happens when a row is TAKEN (tap, or auto-collect at
+// Continue), through one apply function per kind. WHAT the rows are, which
+// are blocked and why, and what Continue means is model/rewardplan.js's one
+// derivation (test 61) — this screen draws rows and forwards taps; it decides
+// nothing (the rest.js/levelUpPlan precedent).
+//
+// The menu rows reuse `.class-pick` (the B9 uniform-card pattern from the
+// shrine fold) — same focus rules (input.js already lists
+// `.class-pick:not(.locked)`), same locked treatment for a blocked row, no
+// second card-button pattern in the tree. AND THE SAME MARKUP GRAMMAR: the
+// narrow layout's shared rule composes glyph + one `.cp-body` text column
+// (ui.css — "the card is auto, the text column is 1fr"), so everything but
+// the glyph rides inside `.cp-body`. The first cut emitted four bare flex
+// children and phone rows squeezed side-by-side — Codex 4989824448's
+// composition finding at b6b7df0, measured by Saga (creation's text column
+// 246.2px vs these rows' none).
+//
+// SEEN ('new' markers): "a 'new' marker on unseen cards/items/relics" — his
+// words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
+// what the run holds plus the profile's record: `meta.seen` (cards/relics/
+// flasks, written here best-effort on take) and `meta.found` (armaments,
+// written at COLLECTION through the handed-in collector — the roll is pure,
+// so at mount time the found set is honestly pre-drop and a first discovery
+// reads NEW; see main.js rollDrop/collectArmament and the f29d468 defect they
+// correct). Boundary, stated: other acquisition paths (shop, events, drafts)
+// do not write `meta.seen` yet, so a thing first met elsewhere can still read
+// NEW here once — the marker errs toward showing.
+//
+// `saves` and `rng` are optional: co-op stubs and old callers get the dial's
+// default and a deterministic first-card pick, never a crash and never
+// Math.random — a UI pick that desyncs a seeded run is a defect.
 
 const { renderCard } = require("src/ui/components/card.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
+const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
-function mountRewards(app, { registries, run, rewards, onDone }) {
-  const lines = [];
-  if (rewards.cinders) {
-    run.cinders += rewards.cinders;
-    lines.push(`<span style="color:var(--gold)">+${rewards.cinders} cinders</span> (${run.cinders} total)`);
+const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+
+// `onCollectArmament` is the armament's whole persistence, handed in by the
+// caller (main.js collectArmament): run storage + meta.found + the discovery
+// receipt. Handed in rather than done here because the persistence needs the
+// caller's run/shot context, and because a screen that decides nothing should
+// also STORE nothing itself. A caller that hands none gets reveal-only rows —
+// no such caller exists today; the boundary is named, not covered.
+function mountRewards(app, {
+  registries, run, rewards, onDone, saves = null, rng = null,
+  onCollectArmament = null, onPersist = null,
+}) {
+  const plan = rewardPlan(rewards, {
+    flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+    // The bag's room, read from the same array addToStorage writes — one
+    // home, two questions (the model asks "is there room", the collector's
+    // own gate asks "did THIS store land"). Derived here so the ninth piece
+    // against the cap is BLOCKED before any tap, the flask shape exactly.
+    armamentSlotsFree: Math.max(
+      0,
+      (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
+    ),
+  });
+  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
+  let chosenCardId = null;
+
+  // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
+  const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
+  const seenStore = meta.seen || {};
+  const marks = unseenIds(rewards, {
+    cards: new Set([...run.deck.map((c) => c.cardId), ...(seenStore.cards || [])]),
+    relics: new Set([...run.relics, ...(seenStore.relics || [])]),
+    flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
+    armaments: new Set([...(meta.found || [])]),
+  });
+
+  // Best-effort seen write on take. A quarantined profile refuses saveMeta —
+  // correctly — and the marker is a convenience, so a refusal never blocks the
+  // reward itself (the settings.js precedent for reading that result).
+  function recordSeen(kind, ids) {
+    if (!saves || !saves.saveMeta || !ids.length) return;
+    const m = saves.loadMeta() || {};
+    const seen = { ...(m.seen || {}) };
+    const key = { card: 'cards', relic: 'relics', flask: 'flasks' }[kind];
+    if (!key) return; // armaments already live in meta.found, one home
+    seen[key] = [...new Set([...(seen[key] || []), ...ids])];
+    saves.saveMeta({ ...m, seen });
   }
-  if (rewards.relicId) {
-    run.relics.push(rewards.relicId);
-    syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
-    const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}`);
+
+  // ---- one apply function per kind — tap and auto-collect share them -------
+  const apply = {
+    cinders(row) {
+      run.cinders += row.amount;
+      if (onPersist) onPersist();
+      return true;
+    },
+    card(row) {
+      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      chosenCardId = row.cardId;
+      recordSeen('card', [row.cardId]);
+      // A selected card is durable before Continue can close the offer. The
+      // caller hands in the run's one persistence door; a failed write throws
+      // before the row can claim Taken (the armament ordering, same rule).
+      if (onPersist) onPersist();
+      return true;
+    },
+    flask(row) {
+      run.flasks.push({ flaskId: row.flaskId });
+      recordSeen('flask', [row.flaskId]);
+      if (onPersist) onPersist();
+      return true;
+    },
+    relic(row) {
+      run.relics.push(row.relicId);
+      syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
+      recordSeen('relic', [row.relicId]);
+      if (onPersist) onPersist();
+      return true;
+    },
+    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+  };
+
+  function take(row, viaKind) {
+    // A row may say Taken only after its persistence door says it landed. The
+    // armament collector returns false at the storage/duplicate boundary; a
+    // refusal therefore cannot become a claimed-looking row (E11 review P2).
+    if (!apply[row.kind](row)) return false;
+    states[row.kind] = 'taken';
+    sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
+    renderMenu(viaKind || row.kind);
+    return true;
   }
-  if (rewards.flaskId) {
-    const def = registries.flasks.get(rewards.flaskId);
-    if (run.flasks.length < flaskSlotCap(registries.balance)) {
-      run.flasks.push({ flaskId: rewards.flaskId });
-      lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
-    } else {
-      lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
+
+  // ---- row copy: what a kind says in each state ----------------------------
+  function rowBody(row) {
+    const state = states[row.kind];
+    switch (row.kind) {
+      case 'cinders':
+        return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+      case 'card': {
+        if (state === 'taken') {
+          const def = registries.cards.get(chosenCardId);
+          return { title: 'Card', body: `<b>${esc((def && def.name) || chosenCardId)}</b> joins the deck.` };
+        }
+        return { title: 'Card', body: row.choice ? `Choose one of ${row.cardIds.length}.` : 'One card offered.' };
+      }
+      case 'flask': {
+        const def = registries.flasks.get(row.flaskId);
+        if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+      }
+      case 'armament': {
+        // The copy tracks the STATE, because the state is now true: nothing is
+        // stored until the row is taken (the roll is pure — main.js rollDrop),
+        // so "Carried" before a take would be the f29d468 lie re-worded.
+        const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // A full bag reads its refusal in the flask's own idiom — the copy
+        // switches on the model's token (blockedBy), never a re-derivation.
+        if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };
+        return {
+          title: 'Armament',
+          body: state === 'taken'
+            ? `${name}<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+            : name,
+        };
+      }
+      case 'relic': {
+        const def = registries.relics.get(row.relicId);
+        return { title: 'Relic', body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+      }
+      default:
+        return { title: row.kind, body: '' };
     }
   }
 
-  if (rewards.armamentId) {
-    // rollDrop already put it in storage and remembered it; this just tells the
-    // player, and says where it went — a found armament is carried, not held,
-    // so it does nothing until you walk to the Armoury and slot it.
-    const a = (registries.equipment.armaments || []).find((x) => x.id === rewards.armamentId);
-    if (a) {
-      lines.push(
-        `Armament: <b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` +
-        `<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
-      );
+  function isNew(row) {
+    switch (row.kind) {
+      case 'card': return row.cardIds.some((id) => marks.cards.includes(id));
+      case 'relic': return marks.relics.length > 0;
+      case 'flask': return marks.flasks.length > 0;
+      case 'armament': return marks.armaments.length > 0;
+      default: return false;
     }
+  }
+
+  function collectMode() {
+    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+    const dial = registries.balance.ui.rewardCollect || { def: 'auto', modes: ['auto', 'manual'] };
+    return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
+  }
+
+  // ---- the menu ------------------------------------------------------------
+  function renderMenu(focusKind = null) {
+    const mode = collectMode();
+    const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
+    app.innerHTML = `
+      <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
+        <div class="class-row reward-menu">
+          ${plan.rows.map((row) => {
+            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+            const { title, body } = rowBody(row);
+            return `
+            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
+                 data-kind="${esc(row.kind)}" data-state="${esc(state)}"
+                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+              <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+              <div class="cp-body">
+                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+                <p>${body}</p>
+                ${state === 'taken' ? '<span class="chip">Taken</span>'
+                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
+                  : ''}
+              </div>
+              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
+          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
+        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
+      </div>`;
+
+    for (const el of app.querySelectorAll('.reward-kind')) {
+      const kind = el.dataset.kind;
+      const row = plan.rows.find((r) => r.kind === kind);
+      const state = el.dataset.state;
+      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
+      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
+      // the label switches on the model's token, never on a re-derivation.
+      attachTooltip(el, () => {
+        if (state === 'blocked') {
+          return row.blockedBy === 'storage'
+            ? `<div class="tt-title">Storage full</div>${esc('Your armament storage is at its cap; this one stays where it fell.')}`
+            : `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
+        }
+        if (state === 'taken') return `<div class="tt-title">Taken</div>`;
+        if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
+        return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;
+      });
+      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
+      el.addEventListener('click', (ev) => {
+        if (row.kind === 'card') return renderChooser();
+        if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
+        take(row);
+      });
+    }
+    for (const btn of app.querySelectorAll('[data-skip]')) {
+      attachTooltip(btn, () => `<div class="tt-title">Skip unavailable reward</div>${esc('Leave this blocked reward behind.')}`);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        states[btn.dataset.skip] = 'skipped';
+        renderMenu(btn.dataset.skip);
+      });
+    }
+
+    const cont = app.querySelector('#reward-continue');
+    attachTooltip(cont, () => (mode === 'auto'
+      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
+      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+    const finish = () => {
+      // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
+      // closed set); the auto pick advances the same stream, so a seeded run
+      // resolves the same card every replay.
+      const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
+      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
+      for (const row of toTake) {
+        if (apply[row.kind](row)) states[row.kind] = 'taken';
+      }
+      if (toTake.length) sfx.play('rewardTake');
+      onDone(chosenCardId);
+    };
+    // The action is registered in secondbeat's enumerable table, so native
+    // keyboard/gamepad presses enter the same shared armPress door as pointer
+    // and touch; the configured dial remains the one duration authority.
+    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
+
+    if (isEngaged()) {
+      setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
+        || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
+    }
+  }
+
+  // Potion and Armament are inspect-before-collect surfaces. Opening either
+  // commits nothing; Back restores the exact menu state, and Take is the only
+  // collection door from the detail.
+  function renderDetail(row) {
+    const body = rowBody(row);
+    const isFlask = row.kind === 'flask';
+    app.innerHTML = `
+      <div class="screen" data-reward-detail="${esc(row.kind)}">
+        <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
+        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+        <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
+          <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
+          <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
+          <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+        </div>
+      </div>`;
+    app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return without collecting; your other choices keep.')}`);
+    back.addEventListener('click', () => renderMenu(row.kind));
+    if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
+  }
+
+  // ---- the card chooser: opens from the card row, Back returns -------------
+  function renderChooser() {
+    const row = plan.rows.find((r) => r.kind === 'card');
+    app.innerHTML = `
+      <div class="screen">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        <p class="subtitle">CHOOSE A CARD</p>
+        <div class="reward-row"></div>
+        <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+      </div>`;
+    const strip = app.querySelector('.reward-row');
+    for (const cardId of row.cardIds) {
+      const el = renderCard(registries, { cardId, upgraded: false }, {});
+      if (marks.cards.includes(cardId)) {
+        // The marker is a RENDERED badge, not only a data attribute — Codex
+        // 4989824448's third finding: `data-new` alone had no consumer in any
+        // stylesheet or renderer, so the promise was inert pixels-wise. The
+        // attribute stays as the machine-readable hook; the chip is what the
+        // player sees. Positioned inside `.card` (its named container —
+        // position: relative, ui.css) per Law 2.
+        el.dataset.new = '1';
+        const badge = document.createElement('span');
+        badge.className = 'chip reward-new card-badge-new';
+        badge.textContent = 'NEW';
+        el.appendChild(badge);
+      }
+      el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
+      strip.appendChild(el);
+    }
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);
+    back.addEventListener('click', () => renderMenu('card'));
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-back'), 0);
   }
 
   sfx.play('victory');
-  app.innerHTML = `
-    <div class="screen">
-      <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-      ${lines.map((l) => `<p style="font-size:14px">${l}</p>`).join('')}
-      ${rewards.cardIds && rewards.cardIds.length ? '<p class="subtitle">CHOOSE A CARD</p><div class="reward-row"></div>' : ''}
-      <button class="subtle" id="reward-continue">${rewards.cardIds && rewards.cardIds.length ? 'Skip the card' : 'CONTINUE'}</button>
-    </div>`;
-
-  const row = app.querySelector('.reward-row');
-  if (row) {
-    for (const cardId of rewards.cardIds) {
-      const el = renderCard(registries, { cardId, upgraded: false }, {});
-      el.addEventListener('click', () => {
-        run.deck.push({ instanceId: `r${run.deck.length}_${cardId}`, cardId, upgraded: false });
-        onDone(cardId);
-      });
-      row.appendChild(el);
-    }
-  }
-  app.querySelector('#reward-continue').addEventListener('click', () => onDone(null));
-
-  // Smart default (keyboard/gamepad): land on the first card to choose, else the
-  // Continue button.
-  if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-continue'), 0);
+  renderMenu();
 }
 
 
 Object.assign(module.exports, { mountRewards });
+
+},
+"src/model/rewardplan.js": function (module, exports, require) {
+// src/model/rewardplan.js — the reward MENU as a derivation (E11, #256).
+//
+// Constantine, 2026-08-15: "the reward should start with an initial menu of
+// reward types (card, potion, armament)". And his answer on the card's page:
+// Continue is ALWAYS pressable and a setting decides what it means —
+// auto-collect ON takes everything, picking at random where there is a choice;
+// OFF gives only what was chosen, no nagging.
+//
+// WHY A MODEL FILE AND NOT SCREEN CODE (the levelUpPlan precedent): the screen
+// draws rows and forwards taps; WHAT the rows are, which are blocked and why,
+// and what Continue means under each mode is one derivation with one home, so
+// the co-op renderer, the auto-collect path and any instrument all read the
+// same answer. The screen decides nothing.
+//
+// THE ROWS ARE DERIVED FROM THE OFFER (Law 0: an entry DESCRIBES, the
+// machinery DERIVES). A kind absent from the rewards object has no row. A new
+// reward field on the offer is one ORDER entry and one descriptor row here —
+// not a screen redesign.
+//
+// WHAT THIS FILE DOES NOT DO, stated: it never touches `run`, never applies a
+// reward, never rolls its own randomness (the pick function is HANDED IN so a
+// seeded run stays seeded), and never invents a seen-store (possessions are
+// handed in too). Application stays with the caller, one seam.
+
+/**
+ * The closed kind order — the menu's one spelling of "card, potion, armament"
+ * (his three) plus the two kinds the offers already carry (cinders, relic).
+ * Cinders lead because they are the certain, no-decision row; his named three
+ * follow in his order (flask IS the potion seat in this game).
+ */
+const REWARD_KIND_ORDER = Object.freeze(['cinders', 'card', 'flask', 'armament', 'relic']);
+
+/**
+ * Per-kind descriptors: how a kind reads its slice of the offer.
+ * `present` — does the offer carry this kind at all;
+ * `blocked` — a TOKEN reason collection can not happen, or null (the
+ * levelUpPlan precedent: a label switches on a word, never on two numbers).
+ */
+const KINDS = {
+  cinders: {
+    present: (r) => Number.isFinite(r.cinders) && r.cinders > 0,
+    row: (r) => ({ amount: r.cinders }),
+    blocked: () => null,
+  },
+  card: {
+    present: (r) => Array.isArray(r.cardIds) && r.cardIds.length > 0,
+    // One card is a take, several are a CHOICE — the row says which, so the
+    // screen knows to open a chooser and auto-collect knows to pick.
+    row: (r) => ({ cardIds: r.cardIds.slice(), choice: r.cardIds.length > 1 }),
+    blocked: () => null,
+  },
+  flask: {
+    present: (r) => !!r.flaskId,
+    row: (r) => ({ flaskId: r.flaskId }),
+    // A full belt is DERIVED here, not discovered at apply time: the old
+    // screen dropped the flask in the mud with a note; the menu says so
+    // before any tap, and auto-collect respects the same word.
+    blocked: (r, facts) => (facts.flaskSlotsFree > 0 ? null : 'slots'),
+  },
+  armament: {
+    present: (r) => !!r.armamentId,
+    // The roll is PURE (main.js rollDrop): nothing is stored until the row is
+    // TAKEN, through the caller's collector — which is what lets Skip and
+    // manual Continue honestly leave the piece behind. This row once carried
+    // `stored: true` because rollDrop persisted at roll time; that flag and
+    // the defect it described died together (#290 at f29d468).
+    row: (r) => ({ armamentId: r.armamentId }),
+    // A full bag is DERIVED here, the flask precedent one descriptor up: the
+    // menu says so before any tap, auto-collect respects the same token, and
+    // Taken is unreachable at the cap. Added at the b6b7df0 review's P1 —
+    // without this derivation the ninth piece against an 8-slot cap rendered
+    // takeable, and a collector that ignored addToStorage's false claimed it
+    // into meta.found while the bag refused it: claimed-but-not-stored, and
+    // excluded from every future drop.
+    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
+  },
+  relic: {
+    present: (r) => !!r.relicId,
+    row: (r) => ({ relicId: r.relicId }),
+    blocked: () => null,
+  },
+};
+
+/**
+ * rewardPlan(rewards, facts) → { rows }
+ * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`,
+ * `armamentSlotsFree`); the offer stays pure data. Defaults are CONSERVATIVE
+ * — an unstated fact reads as no room, so a caller that forgets to state one
+ * gets a blocked row it can see, never a silent over-grant.
+ */
+function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
+  const rows = [];
+  for (const kind of REWARD_KIND_ORDER) {
+    const d = KINDS[kind];
+    if (!d.present(rewards)) continue;
+    rows.push({ kind, blockedBy: d.blocked(rewards, facts), ...d.row(rewards) });
+  }
+  return { rows };
+}
+
+/**
+ * resolveContinue(plan, states, mode, pick) → { take, leave }
+ *
+ * `states` — per-kind 'taken' | 'skipped' | (absent = pending). Taken rows
+ * were applied at tap time and are NEVER re-taken here.
+ * `mode` — 'auto' | 'manual' (balance.ui.rewardCollect's closed set).
+ * `pick` — (n) → index in [0, n): the SEEDED chooser for a card row auto
+ * takes. Handed in so this file owns no randomness.
+ *
+ *   auto:   take every pending, un-blocked row; an explicit skip is respected
+ *           (his deck-discipline affordance survives the setting); a choice
+ *           row resolves through `pick`.
+ *   manual: take nothing — Continue means "done", and what was never chosen
+ *           is LEFT, listed with its reason so a caller can say so.
+ */
+function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0) {
+  const take = [];
+  const leave = [];
+  for (const row of plan.rows) {
+    const state = states[row.kind];
+    if (state === 'taken') continue; // applied at tap time; nothing left to do
+    if (row.blockedBy) { leave.push(row); continue; }
+    if (mode === 'auto' && state !== 'skipped') {
+      if (row.kind === 'card') {
+        const cardId = row.choice ? row.cardIds[pick(row.cardIds.length) % row.cardIds.length] : row.cardIds[0];
+        take.push({ ...row, cardId });
+      } else {
+        take.push(row);
+      }
+    } else {
+      leave.push(row);
+    }
+  }
+  return { take, leave };
+}
+
+/**
+ * unseenIds(rewards, possessions) → { cards, relics, flasks, armaments }
+ * The 'new' marker's derivation: an id is new iff the handed-in possession
+ * sets have never held it. The caller decides what "held" means (run
+ * inventory ∪ the profile's record); this file never reads a store.
+ */
+function unseenIds(rewards = {}, possessions = {}) {
+  const holds = (set, id) => !!(set && set.has(id));
+  return {
+    cards: (rewards.cardIds || []).filter((id) => !holds(possessions.cards, id)),
+    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
+    armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
+  };
+}
+
+
+Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, unseenIds });
 
 },
 "src/ui/screens/rest.js": function (module, exports, require) {
@@ -44913,6 +46316,23 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
+  // ALWAYS pressable and a setting decides what it means — auto-collect ON
+  // takes everything, picking at random where there is a choice; OFF gives
+  // only what was chosen, no nagging." The meanings live in
+  // model/rewardplan.js resolveContinue (test 61); this row only picks the
+  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
+  // what an interaction MEANS, tried by playing.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
+  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
+  // it shipped one PR behind the dial because this file was under E3's live
+  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
+  // released that claim ("manual has a reader and no writer a player can
+  // reach").
+  { cat: 'Advanced', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
+    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
@@ -46230,8 +47650,48 @@ Object.assign(module.exports, { renderProfileSection });
 const { esc } = require("src/ui/components/tooltip.js");
 const { AI_DISCLOSURE, disclosureAsText } = require("src/content/aiDisclosure.js");
 const { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } = require("src/buildversion.js");
+const { CHANGELOG, PROJECT_REPOSITORY_URL } = require("src/content/changelog.js");
 
-function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+/**
+ * A source-server build is development by construction. A standalone bundle
+ * is ambiguous until its host is known: the canonical GitHub Pages host is the
+ * current-dev preview, while a file:// bundle is a release-shaped artifact and
+ * must not silently gain a repository action.
+ */
+function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.location } = {}) {
+  if (runPath === 'source tree') return true;
+  return runPath === 'standalone file'
+    && locationLike?.protocol === 'https:'
+    && locationLike?.hostname === 'cehinds.github.io';
+}
+function shouldLinkChangelog(options = {}) {
+  return shouldLinkDebugVersion(options);
+}
+function changelogHtml(entries, { linkExternal = false } = {}) {
+  let group = null;
+  return entries.map((entry) => {
+    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
+    group = entry.group;
+    return `${heading}
+      <details class="about-change" data-change-id="${esc(entry.id)}">
+        <summary class="region-fold">
+          <span class="rf-label">${esc(entry.summary)}</span>
+          <span class="region-count">${esc(entry.build)}</span>
+        </summary>
+        <p class="set-note">${esc(entry.detail)}</p>
+        <p class="set-note">${linkExternal
+          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
+          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
+      </details>`;
+  }).join('');
+}
+
+function renderAboutSection(container, {
+  disclosure = AI_DISCLOSURE,
+  changelog = CHANGELOG,
+  runPath = RUN_PATH,
+  locationLike = globalThis.location,
+} = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -46273,15 +47733,24 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
   // is also the reason the About footer is no longer a stable string anyone can
   // eyeball for "did anything change".
+  const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
+    ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
+    : esc(ABOUT_BUILD_LINE);
+  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
+
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
       ${sections}
+      <section class="about-changelog" aria-labelledby="about-changelog-title">
+        <h2 id="about-changelog-title">Changelog</h2>
+        ${changelogHtml(changelog, { linkExternal: changeLinks })}
+      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the
@@ -46304,7 +47773,7 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
 }
 
 
-Object.assign(module.exports, { renderAboutSection });
+Object.assign(module.exports, { shouldLinkDebugVersion, shouldLinkChangelog, renderAboutSection });
 
 },
 "src/content/aiDisclosure.js": function (module, exports, require) {
@@ -46469,6 +47938,330 @@ function disclosureAsText(d = AI_DISCLOSURE, version = null) {
 Object.assign(module.exports, { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText });
 
 },
+"src/content/changelog.js": function (module, exports, require) {
+// src/content/changelog.js — the in-game reader for the root CHANGELOG.md.
+//
+// CHANGELOG.md is the authored owner. The generated module is only its bundled
+// transport: tools/about-changelog.mjs derives it and refuses drift. Keeping
+// that boundary explicit lets the standalone game show the receipts without
+// creating a second hand-maintained copy of their prose.
+
+const { GENERATED_CHANGELOG } = require("src/content/changelog.generated.js");
+
+const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
+
+function validateChangelog(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) throw new Error('changelog has no entries');
+  const ids = new Set();
+  for (const entry of entries) {
+    if (!/^pr-\d+$/.test(entry.id)) throw new Error(`unstable changelog id: ${entry.id}`);
+    if (ids.has(entry.id)) throw new Error(`duplicate changelog id: ${entry.id}`);
+    ids.add(entry.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`invalid date for ${entry.id}`);
+    if (!entry.group || !entry.summary || /[\r\n]/.test(entry.summary)) throw new Error(`invalid summary for ${entry.id}`);
+    if (!entry.detail || !entry.build || !Number.isInteger(entry.pullRequest)) throw new Error(`incomplete receipt for ${entry.id}`);
+    if (entry.url !== `${PROJECT_REPOSITORY_URL}/pull/${entry.pullRequest}`) throw new Error(`unsafe pull-request URL for ${entry.id}`);
+  }
+  return entries;
+}
+
+const CHANGELOG = Object.freeze(validateChangelog(GENERATED_CHANGELOG));
+
+
+Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANGELOG });
+
+},
+"src/content/changelog.generated.js": function (module, exports, require) {
+// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.
+// Do not edit: the focused check refuses any drift from the authoritative Markdown.
+
+const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-305",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your weapons are in the hands you gave them",
+    "detail": "The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.",
+    "build": "0.4.0.0947",
+    "pullRequest": 305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
+  {
+    "id": "pr-296",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your own music obeys the game's mix",
+    "detail": "Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.",
+    "build": "0.4.0.0930",
+    "pullRequest": 296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/296"
+  },
+  {
+    "id": "pr-290",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
+    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "build": "0.4.0.0929",
+    "pullRequest": 290,
+    "url": "https://github.com/cehinds/AshenSpire/pull/290"
+  },
+  {
+    "id": "pr-288",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Character creation is one panel at a time",
+    "detail": "Six sections — CLASS, STARTING KIT, KEEPSAKE, SIGIL, TINT, SPRITE — each a card that opens at its turn. CLASS is open on arrival; picking an option collapses the section and opens the next; any face re-opens out of order. After the flow, the column reads back your six choices in words. Keyboard and pad included: the cursor rides the advance, so Confirm-Confirm walks the whole flow accepting defaults.",
+    "build": "0.4.0.0911",
+    "pullRequest": 288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/288"
+  },
+  {
+    "id": "pr-291",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The merchant is five collapsing bars — and Sell is one of them",
+    "detail": "CARDS · RELICS · FLASKS · REMOVE A CARD · SELL, one open at a time, cards open on arrival. Buying keeps the bar you're looking at open. The merchant buys back what he sells — relics and flasks, at half the low end of the item's own price band — and the whole Sell bar can be switched off in Settings (then it's absent, not greyed).",
+    "build": "0.4.0.0912",
+    "pullRequest": 291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/291"
+  },
+  {
+    "id": "pr-289",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The short-screen warning reads whole at the largest text size",
+    "detail": "At Text XL on a very short screen, the last-resort refusal message no longer loses its sentence to its own glyph.",
+    "build": "0.4.0.0901",
+    "pullRequest": 289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/289"
+  },
+  {
+    "id": "pr-286",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Flask display verified healthy everywhere",
+    "detail": "Evidence-only: fourteen photographs of every reachable flask surface, both shapes — no source change; closed #277.",
+    "build": "0.4.0.0900",
+    "pullRequest": 286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/286"
+  },
+  {
+    "id": "pr-287",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Fullscreen is the first option under Display",
+    "detail": "One toggle at the head of Settings → Display, reflecting the real fullscreen state.",
+    "build": "0.4.0.0900",
+    "pullRequest": 287,
+    "url": "https://github.com/cehinds/AshenSpire/pull/287"
+  },
+  {
+    "id": "pr-244",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Title screen no longer crashes on a detached map board",
+    "detail": "The map's scroll-commit debounce could fire after leaving the map and take the title screen down.",
+    "build": "0.4.0.0893",
+    "pullRequest": 244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/244"
+  },
+  {
+    "id": "pr-226",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Status & Daily Briefs linked from the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0885",
+    "pullRequest": 226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/226"
+  },
+  {
+    "id": "pr-224",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat action row no longer overlaps or mis-scales",
+    "detail": "Merged as pull request #224 in development build 0.4.0.0885.",
+    "build": "0.4.0.0885",
+    "pullRequest": 224,
+    "url": "https://github.com/cehinds/AshenSpire/pull/224"
+  },
+  {
+    "id": "pr-225",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Hint-strip selftest runs on Windows",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/225"
+  },
+  {
+    "id": "pr-221",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "buildversion selftest cleanup is deterministic on macOS",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 221,
+    "url": "https://github.com/cehinds/AshenSpire/pull/221"
+  },
+  {
+    "id": "pr-223",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Build-stamp browser fixture inputs repaired",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/223"
+  },
+  {
+    "id": "pr-220",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Friendly card targets are visibly distinct, on every input",
+    "detail": "Cards that target you or an ally say so with the same clarity for mouse, keyboard, and pad.",
+    "build": "0.4.0.0878",
+    "pullRequest": 220,
+    "url": "https://github.com/cehinds/AshenSpire/pull/220"
+  },
+  {
+    "id": "pr-219",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat fits short landscape screens",
+    "detail": "Merged as pull request #219 in development build 0.4.0.0869.",
+    "build": "0.4.0.0869",
+    "pullRequest": 219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/219"
+  },
+  {
+    "id": "pr-218",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Guard absorption and residual damage show as separate floats",
+    "detail": "What your block ate and what got through are two numbers, not one.",
+    "build": "0.4.0.0867",
+    "pullRequest": 218,
+    "url": "https://github.com/cehinds/AshenSpire/pull/218"
+  },
+  {
+    "id": "pr-217",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Audio cues with optional samples stay immediate",
+    "detail": "No late hit-sounds while an optional sample resolves.",
+    "build": "0.4.0.0850",
+    "pullRequest": 217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/217"
+  },
+  {
+    "id": "pr-212",
+    "date": "2026-08-19",
+    "group": "2026-08-19",
+    "summary": "The current dev Pages preview is surfaced in the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0841",
+    "pullRequest": 212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/212"
+  },
+  {
+    "id": "pr-210",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Hybrid combat input parity completed",
+    "detail": "Mixing mouse, keyboard, and pad mid-combat keeps one coherent cursor and one set of affordances.",
+    "build": "0.4.0.0841",
+    "pullRequest": 210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/210"
+  },
+  {
+    "id": "pr-206",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Text size scales text, and only text",
+    "detail": "The accessibility text setting stops resizing non-text UI; UI size remains the whole-game control.",
+    "build": "0.4.0.0835",
+    "pullRequest": 206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/206"
+  },
+  {
+    "id": "pr-203",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Native map pan belongs to the map again",
+    "detail": "Merged as pull request #203 in development build 0.4.0.0828.",
+    "build": "0.4.0.0828",
+    "pullRequest": 203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/203"
+  },
+  {
+    "id": "pr-201",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Escape during the tutorial cancels the right thing",
+    "detail": "Merged as pull request #201 in development build 0.4.0.0822.",
+    "build": "0.4.0.0822",
+    "pullRequest": 201,
+    "url": "https://github.com/cehinds/AshenSpire/pull/201"
+  },
+  {
+    "id": "pr-202",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Map structure contrast is measurable — and raised",
+    "detail": "Paths and nodes hold a checked contrast floor.",
+    "build": "0.4.0.0807",
+    "pullRequest": 202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/202"
+  },
+  {
+    "id": "pr-199",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Combat HUD pages long strips and shows drag targets",
+    "detail": "Merged as pull request #199 in development build 0.4.0.0807.",
+    "build": "0.4.0.0807",
+    "pullRequest": 199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/199"
+  },
+  {
+    "id": "pr-200",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Map zoom and camera persist correctly",
+    "detail": "Returning to the map returns to your zoom and place.",
+    "build": "0.4.0.0799",
+    "pullRequest": 200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/200"
+  },
+  {
+    "id": "pr-186",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "The verified current build lives at the repository root",
+    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "build": "0.4.0.0788",
+    "pullRequest": 186,
+    "url": "https://github.com/cehinds/AshenSpire/pull/186"
+  },
+  {
+    "id": "pr-180",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "A reversible architecture map",
+    "detail": "Docs only.",
+    "build": "0.4.0.0777",
+    "pullRequest": 180,
+    "url": "https://github.com/cehinds/AshenSpire/pull/180"
+  }
+]);
+
+
+Object.assign(module.exports, { GENERATED_CHANGELOG });
+
+},
 "src/ui/audio.js": function (module, exports, require) {
 // src/ui/audio.js — procedural WebAudio engine (SPEC §7.4 audio).
 //
@@ -46526,6 +48319,8 @@ function initAudio(settings = {}) {
     tracks: {}, // context → [track urls] from the folder manifest
     mediaEl: null, // currently-playing external <audio>, if any
     mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
+    bedGains: [], // the live per-context level stage(s) — see bedGain()
+    retireTimers: new Set(), // pending stage releases — see retireStages()
   };
   applyGains();
 
@@ -46716,11 +48511,132 @@ function initAudio(settings = {}) {
       }
     }
     state.nodes = [];
+    retireStages(fade);
+  }
+
+  /**
+   * retireStages(fade) — RELEASE THE OUTGOING LEVEL STAGE *AFTER* ITS FADE, NOT
+   * DURING IT (#296).
+   *
+   * The defect this exists to stop, measured rather than reasoned about: the
+   * ramps above are SCHEDULED — they run for `fade` seconds after this function
+   * returns — while `bedGain()` used to disconnect the previous stage
+   * SYNCHRONOUSLY on the next playback. A ramp whose downstream path to the bus
+   * has already been cut is inaudible, so every context change (map -> combat,
+   * combat -> rest) stopped dead instead of fading. Six ramps against zero of
+   * one stage still connected, driven on the real engine.
+   *
+   * ONE NODE, TWO PROPERTIES, AND THEY ARE NOT THE SAME DESIGN. `bedGain`'s job
+   * is ROUTING — where `bed.gain` is read, once, for both doors. Its LIFETIME is
+   * a separate question and it belongs here, in the function that owns the fade
+   * length, because that is the only place that knows when the sound is finally
+   * over. Splitting them is the whole fix; keeping the disposal next to the
+   * creation is what hid the bug.
+   *
+   * The timer is tracked so a stage cannot leak: every retirement either fires
+   * or is cleared, and `--selftest`'s second plant is the one that watches for
+   * an accumulating node nobody released.
+   */
+  function retireStages(fade) {
+    const retiring = state.bedGains;
+    state.bedGains = [];
+    if (!retiring.length) return;
+    const t = now();
+    for (const g of retiring) {
+      // THE MARGIN IS A FUNCTION OF WHAT THE STAGE CARRIES, NOT OF `fade`.
+      //
+      // The first version of this computed `fade * 1000 + 120` and its comment
+      // claimed the stage "outlives BOTH, by the same margin the voices get."
+      // That was true of the voices I had enumerated and false of the ones I
+      // had not: `stopMusic` fades only what is in `state.nodes`, which is the
+      // DRONE alone — a melodic note runs 1.9s, its harmony 1.7s, a thump
+      // 0.36s, and none of them is registered anywhere. A context change one
+      // tick after a note began cut that note's tail at 0.72s. Densest in fast
+      // combat and boss beds, which is exactly where it would be heard.
+      //
+      // So every voice now stamps the stage with when it will actually be done
+      // (`keepAlive`), and the stage outlives the LATER of its own fade and
+      // that stamp. `fade` describes the drones; `endsAt` describes everything.
+      const until = Math.max(g.endsAt || 0, t + fade + 0.05);
+      const ms = Math.max(0, (until - t) * 1000) + 120;
+      const timer = setTimeout(() => {
+        state.retireTimers.delete(timer);
+        try { g.disconnect(); } catch (e) { /* already gone */ }
+      }, ms);
+      state.retireTimers.add(timer);
+    }
+  }
+
+  /**
+   * keepAlive(stage, until) — a voice declaring when it is genuinely finished.
+   *
+   * Every source that connects through a stage stamps the latest absolute time
+   * it will still be making sound. This is the ONE number retirement reads, and
+   * it exists because the two #296 review findings were the same defect at two
+   * altitudes: a margin derived from `fade` knows nothing about an envelope
+   * nobody registered, and knows nothing about a stage superseded without a
+   * context change at all. Both fall out of "a stage outlives what it carries."
+   */
+  function keepAlive(stage, until) {
+    if (!stage) return;
+    stage.endsAt = Math.max(stage.endsAt || 0, until);
   }
 
   const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  function drone(freq, gain) {
+  /**
+   * bedGain(bed) → THE ONE PLACE `bed.gain` IS READ (#48).
+   *
+   * A context's mix level used to be applied by whoever happened to be making
+   * sound: the synth multiplied it into four separate voice literals, and the
+   * external-track path — the one that matters the moment real music files
+   * arrive — never read it at all, connecting straight to the bus at unity. So
+   * a shrine track played as loud as a boss track, and the number somebody
+   * chose on purpose was silently discarded (Vega, #48).
+   *
+   * Two readers and no home is the defect; ONE STAGE EVERY SOURCE PASSES
+   * THROUGH is the fix. The voices below hand this node their own raw peaks
+   * (0.12, 0.16, …) and an external `<audio>` connects to it unchanged, so
+   * `bed.gain` is applied exactly once, in one place, to both doors. The
+   * synth's shipped levels do not move: `0.16 * gain` into unity and `0.16`
+   * into a stage at `gain` are the same product, which is what
+   * tools/music-bed-gain-probe.mjs measures per bed rather than asserts.
+   *
+   * A bed with no gain field plays at unity rather than silently at zero — a
+   * missing number is an authoring mistake, and silence is the one failure
+   * nobody notices (Law 1 clause 5).
+   */
+  function bedGain(bed) {
+    // THIS FUNCTION ROUTES; IT DOES NOT DISPOSE. It used to do both, and the
+    // disposal half was wrong: it disconnected the previous stage synchronously
+    // while that stage's voices were still fading, so the fade could not reach
+    // the output. The release now lives in `retireStages`, called by
+    // `stopMusic`, which is the only function that knows how long the sound has
+    // left. See the comment there (#296).
+    //
+    // THE COMMENT THAT USED TO SIT HERE NAMED THE HAZARD AND THEN TALKED ITSELF
+    // OUT OF IT — "its voices were stopped ... rather than mid-fade, where
+    // disconnecting would cut the tail the fade exists to produce." The voices
+    // were NOT stopped: `stopMusic` schedules their stop 0.65s out. Kept in the
+    // record because a confident sentence standing where a check belongs is the
+    // defect that produced this bug.
+    // A NEW STAGE SUPERSEDES THE OLD ONE, AND SUPERSEDING IS A RETIREMENT.
+    // Retirement used to happen only in `stopMusic`, so the path that makes a
+    // stage WITHOUT a context change — an external track ending and the
+    // playlist advancing to the next one — created a stage per track and
+    // released none: an idle title screen, or a manifest of short tracks, grew
+    // the graph without bound. Retiring here (at each stage's own `endsAt`,
+    // never synchronously) closes that without a second mechanism.
+    retireStages(0);
+    const g = ctx.createGain();
+    g.gain.value = bed && typeof bed.gain === 'number' ? bed.gain : 1;
+    g.endsAt = now();
+    g.connect(musicBus);
+    state.bedGains.push(g);
+    return g;
+  }
+
+  function drone(freq, gain, out) {
     const o = ctx.createOscillator();
     const o2 = ctx.createOscillator();
     const g = ctx.createGain();
@@ -46741,7 +48657,8 @@ function initAudio(settings = {}) {
     lfo.connect(lfoG).connect(lp.frequency);
     o.connect(lp);
     o2.connect(lp);
-    lp.connect(g).connect(musicBus);
+    lp.connect(g).connect(out);
+    keepAlive(out, now() + 1.5); // the drone's own ramp-in; stopMusic extends it
     o.start();
     o2.start();
     lfo.start();
@@ -46771,7 +48688,7 @@ function initAudio(settings = {}) {
     // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
-      playExternal(context, ext);
+      playExternal(context, ext, bed);
       return 'external';
     }
     if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
@@ -46790,7 +48707,13 @@ function initAudio(settings = {}) {
   // Stream a random track from the context's list; when it ends, play another
   // (fresh random pick → variety). Any load/decode error → the shipped bed
   // (or shipped silence) via proceduralFallback.
-  function playExternal(context, urls) {
+  //
+  // THE TRACK PASSES THROUGH THE SAME LEVEL STAGE THE SYNTH DOES (#48): it is
+  // the shipped table that says a shrine is quieter than a boss, and a file on
+  // disk is not a reason for that sentence to stop being true. The bed is
+  // handed in rather than looked up again — the caller already resolved it,
+  // and resolving it twice is how two readers of one number get born.
+  function playExternal(context, urls, bed) {
     const url = pickRandom(urls);
     let el;
     try {
@@ -46799,14 +48722,14 @@ function initAudio(settings = {}) {
       el.preload = 'auto';
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
-        src.connect(musicBus);
+        src.connect(bedGain(bed));
         state.mediaSources.set(el, src);
       }
     } catch (e) {
       return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls);
+      if (state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
       if (state.context === context) {
@@ -46821,7 +48744,10 @@ function initAudio(settings = {}) {
 
   function playProcedural(context, bed) {
     const variant = pickRandom(bed.variants);
-    if (bed.drone) drone(variant.root / 2, 0.12 * bed.gain);
+    // Every voice below carries its own RAW peak and meets the bed's level at
+    // one shared stage — see bedGain().
+    const out = bedGain(bed);
+    if (bed.drone) drone(variant.root / 2, 0.12, out);
     const scale = SCALES[variant.scale];
     const lift = variant.lift || 3;
     let step = 0;
@@ -46835,9 +48761,10 @@ function initAudio(settings = {}) {
       o.frequency.value = freq;
       const t = now();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16 * bed.gain, t + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.08);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
-      o.connect(g).connect(musicBus);
+      o.connect(g).connect(out);
+      keepAlive(out, t + 1.9);
       o.start(t);
       o.stop(t + 1.9);
       // Every few notes, lay a soft harmony a perfect fifth above — adds body
@@ -46848,9 +48775,10 @@ function initAudio(settings = {}) {
         h.type = 'sine';
         h.frequency.value = freq * 1.4983; // ~perfect fifth
         hg.gain.setValueAtTime(0.0001, t);
-        hg.gain.exponentialRampToValueAtTime(0.07 * bed.gain, t + 0.12);
+        hg.gain.exponentialRampToValueAtTime(0.07, t + 0.12);
         hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
-        h.connect(hg).connect(musicBus);
+        h.connect(hg).connect(out);
+        keepAlive(out, t + 1.7);
         h.start(t);
         h.stop(t + 1.7);
       }
@@ -46871,9 +48799,10 @@ function initAudio(settings = {}) {
         o.frequency.setValueAtTime(variant.root / 2, t);
         o.frequency.exponentialRampToValueAtTime(variant.root / 3, t + 0.18);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.22 * bed.gain, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-        o.connect(g).connect(musicBus);
+        o.connect(g).connect(out);
+        keepAlive(out, t + 0.36);
         o.start(t);
         o.stop(t + 0.36);
       };

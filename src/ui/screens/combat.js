@@ -98,13 +98,25 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
           <div class="pile exhaust" style="display:none"><span class="n"></span><small>EXHAUST</small></div>
           <div class="pile discard"><span class="n"></span><small>DISCARD</small></div>
+          <!-- THE HINT STRIP IS A SIXTH DESTINATION IN THIS GRID, AND IT IS HERE
+               FOR THE REASON THE COMMENT ABOVE ALREADY GIVES. The chips became
+               real buttons (components/hints.js, Sten 15d4bca), so "every
+               persistent combat action destination" now includes them — and the
+               grid's guarantee that revealing a cell "cannot shift, cover, or
+               steal a standing control's hit box" is exactly the guarantee the
+               strip was missing. It sat outside as a centred sibling row, so at
+               Text XL and under a wide rebind it grew into END TURN: #295,
+               3368.8 px2 / 2700.3 px2, regression from f2acfc9 (#21). The empty
+               gutter column this grid already declared was the space meant for it.
+               Grid areas cannot overlap, so the clearance is now structural and
+               stops being a number anybody re-tunes when a label changes. -->
+          ${hintBarHtml('combat')}
         </div>
       </div>
       <div class="fx-layer"></div>
       <svg id="target-arrow" width="100%" height="100%" style="display:none">
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
-      ${hintBarHtml('combat')}
     </div>`;
 
   const $ = (sel) => app.querySelector(sel);

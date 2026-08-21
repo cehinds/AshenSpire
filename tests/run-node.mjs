@@ -492,7 +492,21 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const reachSelf = runReach(['--selftest']);
   const reachSelfV = quote(reachSelf.out);
   console.log(
-    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  50. the status-reach check still catches its own known-bad corpus` +
+    // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
+    // "PASS  50." in every run: a reader grepping a run for "50." got two
+    // answers, and a reviewer told "50 is red" could not tell which half of the
+    // suite to open. Both numbers were allocated in good faith in different
+    // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
+    // intruder is this one. Moved to 29 — the ONE gap in the sequence
+    // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
+    // only number immune to what two in-flight PRs may allocate.
+    // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
+    // run-node's own numbering is no longer visually contiguous. A display label
+    // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
+    // checked, not assumed: the only tool that matches on "FAIL  <x>" is
+    // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
+    // ("P2 two losses produce TWO archives"), not one of these numbers.
+    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
       ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
   );
   if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
@@ -582,7 +596,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
 
-  // 62/63 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
+  // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
   //
   // Same two-line shape as every pair above, and here for a measured reason.
   //
@@ -608,19 +622,22 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // block below is therefore still true, and 59 is the first check in this suite
   // that is about the GATE rather than about the game.
   //
-  // NUMBERED 62/63, AND IT TOOK ME TWO TRIES TO GET THERE, WHICH IS THE POINT.
-  // My first wiring used 58/59 and printed "58." and "59." TWICE in one run —
-  // engine.test.js owns those (nearestShrine, the shrine glow). I moved to 60/61
-  // and COLLIDED AGAIN, because engine.test.js owns those too. That is exactly
-  // the collision the note above 36/37 warns about — "two files, no git conflict,
-  // and a suite that would have printed 35. twice" — and it caught me twice,
-  // one screen below the warning, in the very act of wiring a check whose whole
-  // subject is a number typed beside a list that lives in another file.
-  // 62/63 is DERIVED: engine.test.js's highest literal is 61, read off the file,
-  // not remembered. THE HAZARD IS STRUCTURAL AND STILL OPEN — these numbers are
-  // hand-allocated across two files with nothing checking them, and the next
-  // hand will hit it too. A check for duplicate test numbers is owed and is not
-  // built here; this act was one act.
+  // NUMBERED 67/68, AND IT TOOK ME FOUR TRIES, WHICH IS THE POINT AND IS NOW
+  // ALSO THE ANSWER. My first wiring used 58/59 and printed "58." and "59."
+  // TWICE in one run — engine.test.js owns those (nearestShrine, the shrine
+  // glow). I moved to 60/61 and COLLIDED AGAIN, for the same reason. I then took
+  // 62/63, which dev had explicitly reserved for this PR in the note beside
+  // 64/65 — and on the replay onto 456b8ea IT COLLIDED A THIRD TIME, because
+  // engine.test.js had meanwhile grown a 62 of its own. A reservation written in
+  // one file is not a reservation; it is a request the other file never read.
+  //
+  // THE HAZARD I CALLED "STRUCTURAL AND STILL OPEN" IS NOW CLOSED, AND NOT BY
+  // ME. tools/testnumbers.mjs (64/65, dev) is the check I said was owed and did
+  // not build. It is what caught this third collision — I did not notice it, the
+  // gate did — and 67 is DERIVED FROM ITS OUTPUT ("the next free number is 67"),
+  // not read off a file by hand and not remembered. That is the whole argument
+  // for wiring an instrument into a list: the two tries above cost a reviewer's
+  // attention, and this one cost nothing.
   // Two lines for the same reason every pair since 36/37 is two: 62 is the
   // check's own integrity against its planted corpus — its failure is the
   // check's fault. 63 is the state of the lists. NO PLANT COUNT AND NO TOOL
@@ -635,10 +652,43 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
     }
   };
 
+  // 64/65 — NO TWO TESTS WEAR THE SAME NUMBER.
+  //
+  // The hazard is named in this file already, above test 36: "two files, no git
+  // conflict, and a suite that would have printed 35. twice — the collision a
+  // merge cannot see." It was a warning with no check behind it, and dev printed
+  // "PASS  50." twice until the commit above. A warning a hand must remember is
+  // weaker than one a tool enforces, and this one had been forgotten by the hand
+  // that wrote a check while reading it.
+  //
+  // NUMBERED 64/65, NOT 62/63, AND THE GAP IS DELIBERATE: PR #301 holds 62/63 in
+  // flight for the gate-list pair. Allocating disjoint ranges across two open
+  // PRs is this check's own subject, applied to itself — and a gap costs
+  // nothing while a collision costs a reader.
+  //
+  // ⚠ AND THE RESERVATION DID NOT HOLD — #301, on replay. engine.test.js grew a
+  // 62 of its own in the meantime, so the pair this note held open was taken by
+  // the file the note could not talk to. The gate-list pair is 67/68 below. The
+  // paragraph above is kept exactly as written because it is the evidence: a
+  // range reserved in prose, in one of the two homes, is not reserved. THIS
+  // CHECK is what caught it.
+  //
+  // 64 is the check's own integrity against its planted corpus (five plants, one
+  // of which must go GREEN); 65 is the state of the two test files. No plant
+  // count and no label count in this comment — both live in the tool and its
+  // RESULT line carries them.
+  const runNums = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/testnumbers.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
   const gateSelf = runGate(['--selftest']);
   const gateSelfV = quote(gateSelf.out);
   console.log(
-    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  62. the gate-list check still catches its own known-bad corpus` +
+    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
       ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
   );
   if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
@@ -647,11 +697,30 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const gateTree = runGate([]);
   const gateTreeV = quote(gateTree.out);
   console.log(
-    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
+    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
       ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
       ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
   );
   if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const numsSelf = runNums(['--selftest']);
+  const numsSelfV = quote(numsSelf.out);
+  console.log(
+    `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
+      ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
+  );
+  if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const numsTree = runNums([]);
+  const numsTreeV = quote(numsTree.out);
+  console.log(
+    `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
+      ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
+      ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
+  );
+  if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
   else zoomPassed++;
 }
 
@@ -667,7 +736,7 @@ console.log('          Nothing here opens a browser, so no test in this file has
 // runs it" — and spelling the command instead is a different speech act: it is
 // what a reader would TYPE, and it reads as "this list runs this". This line was
 // the only command-form boundary reference in either gate list, and tools/gatelist.mjs
-// (62/63) now holds that distinction as a rule, so the one exception had to go.
+// (67/68) now holds that distinction as a rule, so the one exception had to go.
 // The sentence is unchanged; only the backticked command became a bare name.
 // — Bjorn, 2026-08-21, #295.
 console.log('          the screen. tools/zoomplace.mjs is the half that has.');
@@ -712,9 +781,14 @@ console.log('          modify you. They prove that vocabulary has one typed home
 console.log('          content doors accept the same words, and that a relic resource grant');
 console.log('          reaches max HP by one road with one answer at creation and at load.');
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
+console.log('          64-65 ARE ABOUT THE SUITE ITSELF, not the game: no two tests wear the same');
+console.log('          number. A CONSISTENCY check — it proves the declared labels do not collide,');
+console.log('          never that any label is the right one, and it reads only the two declared');
+console.log('          test sources, so a third test file or a number composed at runtime is');
+console.log('          invisible to it.');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
-console.log('          62–63 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
+console.log('          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
 console.log('          prove that every STEP naming an instrument invokes it (or states what goes');
 console.log('          unwatched), and that no invocation in a SHELL list has its exit status');
 console.log('          discarded. THE NAME IS THE MEASUREMENT: 63 says SWALLOWED, not SILENCED, because');

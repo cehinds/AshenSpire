@@ -220,7 +220,7 @@
 //   node tools/uprightgate.mjs --only 844x390
 //   node tools/uprightgate.mjs --text XL
 //   node tools/uprightgate.mjs --selftest      the same-door known-bad corpus
-//   node tools/uprightgate.mjs --ladder        DERIVE gateBelowH from the board
+//   node tools/uprightgate.mjs --ladder        DERIVE shortWideMinH from the board
 //        --ladder-text S      one text size instead of all four
 //        --ladder-width 800   comma list; the wall is a rect, not a height
 //        --ladder-from 390    floor of the exhaustive 1 px sweep (free — a cell
@@ -235,7 +235,7 @@
 //
 // Exit codes
 //   0  every walled shape is gated with true advice, and no shape where nothing
-//      walls is refused; under --ladder, gateBelowH is exactly max(wall h)+1 over
+//      walls is refused; under --ladder, shortWideMinH is exactly max(wall h)+1 over
 //      the measured text sizes; under --predicates, every wall in the sweep has
 //      the gate standing
 //   1  a finding
@@ -263,7 +263,7 @@
 
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -288,6 +288,53 @@ import { serve } from './serve.mjs';
 // because S is now where the constant's other edge shows — the heights just
 // above it that work for everyone. A corpus anchored to a moved number is the
 // same defect this branch was opened to fix.
+// ─────────────────────────────────────────────────────────────────────────────
+// THIS CORPUS EXITS 1, AND FIVE OF ITS PLANTS CANNOT BE CAUGHT HERE BY
+// CONSTRUCTION. Read this before "fixing" them. (Bjorn, 2026-08-21, #299.)
+//
+// `--selftest` exited 1 before this pass and exits 1 after it. What changed is
+// that its redness is now EXPLAINED instead of silent, which is the whole of
+// what this pass could honestly deliver.
+//
+//   · 4 plants were DRIFTED — their find-strings died when #27 gave the gate an
+//     `enabled` term. Re-aimed; all four now CAUGHT by their own named reds.
+//   · 1 plant is new (the band contract, below) and is CAUGHT.
+//   · 5 plants target the REFUSAL THRESHOLD and are UNCATCHABLE BY THIS TOOL.
+//
+// WHY, MEASURED — NOT ARGUED. `shortWideMinH` is not merely compared against
+// the board; it DECIDES the composition the board renders, so the wall moves
+// with it and every value is self-consistent. Same door, same width (800),
+// same text size (XL):
+//
+//     shortWideMinH: 340 (as shipped)  ->  wall h 330..339  ->  max(wall)+1 = 340  PASS
+//     shortWideMinH: 335 (planted)     ->  wall h 325..334  ->  max(wall)+1 = 335  PASS
+//
+// Lower it and the heights just under it stop being refused and start rendering
+// the compact composition, so the wall shrinks to meet the new number. Raise it
+// and those heights lose the compact composition, genuinely break, and the
+// refusal is justified by the very change under test. THE CONSTANT MANUFACTURES
+// ITS OWN PREMISE IN BOTH DIRECTIONS.
+//
+// This is NOT Charter 2b. 2b says a threshold with no cell adjacent to it cannot
+// tell you it is wrong, and answers with sample density. Here density is no help
+// whatever: there is no value of this constant that this derivation reports as
+// wrong, so `--ladder`'s agreement is not evidence about the number. A check
+// that cannot fail is decoration, and these five plants are what proves it.
+//
+// WHERE THE SOUND PREMISE LIVES. `balance.js` says this number is "the compact
+// wide composition's rendered lower edge … derived at one-pixel resolution by
+// tools/short-landscape-support.mjs before this value is consulted, so moving
+// the number without moving the rendered premise goes red." A derivation that
+// FORCES the compact composition and finds where its required controls stop
+// being whole would not be self-referential. Whether that tool actually does
+// this is UNMEASURED BY ME and outside my claimed path (#299) — routed as a
+// card, deliberately not chased inside this diff.
+//
+// DISPOSITION IS A REVIEWER'S CALL, NOT THE MAKER'S. By our own rule a plant
+// that provably cannot fail is decoration and should go; deleting five checks
+// on the strength of my own measurement is exactly the act a maker does not
+// clear for himself. They stay, labelled, until someone else rules.
+// ─────────────────────────────────────────────────────────────────────────────
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   let rc = await doorSelftest({
@@ -302,8 +349,15 @@ if (process.argv.includes('--selftest')) {
         // moment the tree moves, and this does not.
         name: 'the gate never mounts — the 1ab9777 wall, back',
         file: 'src/ui/components/upright.js',
-        find: '  if (!short) {',
-        replace: '  short = false;\n  if (!short) {',
+        // RE-AIMED 2026-08-21 (Bjorn). #27 gave the gate a settings term, so
+        // the early return reads `if (!short || enabled === false)` and this
+        // plant's find-string stopped existing. It had been a hard RED —
+        // PLANT SITE DRIFTED — from that merge until now, which is doorplant
+        // doing exactly its job: a corpus that silently stops running is the
+        // defect. The plant's SUBJECT is unchanged (no gate at all); only its
+        // aim moved.
+        find: '  if (!short || enabled === false) {',
+        replace: '  short = false;\n  if (!short || enabled === false) {',
         expectRed: /WALL: .end-turn lies at/,
       },
       {
@@ -312,8 +366,8 @@ if (process.argv.includes('--selftest')) {
         // red only because something checks that the refusal STOPS.
         name: 'the gate stands on every shape — a refusal with a dead premise',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse });',
-        replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
+        replace: '  updateUprightGate({ short: true, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
       {
@@ -322,8 +376,8 @@ if (process.argv.includes('--selftest')) {
         // going and looking at the turned viewport.
         name: 'the advice stops being derived — it always says "turn your phone"',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse });',
-        replace: '  updateUprightGate({ short, offerRotate: true });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
+        replace: '  updateUprightGate({ short, offerRotate: true, enabled: settings.uprightGate !== false });',
         expectRed: /(ADVICE IS FALSE|says 'rotate')/,
       },
       {
@@ -341,8 +395,8 @@ if (process.argv.includes('--selftest')) {
         // and lets the player start a run they cannot finish.
         name: 'the gate is combat-only — the player is let in at the door',
         file: 'src/main.js',
-        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse });',
-        replace: '  updateUprightGate({ short: short && !!document.querySelector(\'.combat\'), offerRotate: !turned.short && coarse });',
+        find: '  updateUprightGate({ short, offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
+        replace: '  updateUprightGate({ short: short && !!document.querySelector(\'.combat\'), offerRotate: !turned.short && coarse, enabled: settings.uprightGate !== false });',
         expectRed: /THE GATE IS NOT GLOBAL/,
       },
       {
@@ -359,11 +413,44 @@ if (process.argv.includes('--selftest')) {
         // the corpus now carries it. This is also the CONTENT door: the threshold
         // is a data value (Law 1), and a bad data value must fail loud and by
         // name (clause 5) rather than quietly refuse somebody's screen.
+        // RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299) — AT THE CONSTANT THAT
+        // ACTUALLY REFUSES. This plant moved `gateBelowH` and expected a
+        // refusal; since #27 that constant is the compact band's upper edge, so
+        // raising it moves shapes from wide into COMPACT and refuses nobody.
+        // The plant still applied, still ran, and tested a causal path the code
+        // no longer has — a stale PREMISE, not a stale string, which is why it
+        // reported a silent green instead of announcing itself the way the four
+        // drifted plants did. `shortWideMinH` is the edge with a wall under it
+        // (measured: at 800 wide, Text XL, the wall runs h 330..339 and
+        // max(wall)+1 = 340 = the written constant, exactly).
+        //
+        // IT MOVES BOTH HOMES, ON PURPOSE. The band-contract check added in this
+        // same pass fires whenever the constants and the documented table
+        // disagree — so a plant that moved only the constant tripped THAT red
+        // instead of this one and came back RED-FOR-WRONG-REASON. That was a
+        // defect I introduced, caught within the hour by the label I had just
+        // added, which is the whole argument for the label. A developer creeping
+        // this threshold moves both copies; the known-bad worth planting is the
+        // number being WRONG in both homes, not merely inconsistent between them.
         name: 'the threshold creeps up and refuses a working window (the branch\'s own first bug)',
+        edits: [
+          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 395,' },
+          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   395 <= h < 465           compact wide composition (when width fits)' },
+          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 395                  truthful upright/resize refusal' },
+        ],
+        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
+      },
+      {
+        // THE ONE `gateBelowH` PLANT THAT SURVIVES, RE-PURPOSED TO WHAT THAT
+        // CONSTANT ACTUALLY DECIDES. It picks between two WORKING compositions,
+        // so no rendered premise can contradict it and no refusal appears —
+        // but it is written TWICE (constants + the documented band table in the
+        // same file), and the copies must agree. This plant moves one copy.
+        name: 'the band edge moves in the constants and not in its own documentation',
         file: 'src/content/balance.js',
         find: '      gateBelowH: 465,',
         replace: '      gateBelowH: 520,',
-        expectRed: /GATE STANDS WHERE NOTHING WALLS/,
+        expectRed: /THE BAND CONTRACT DISAGREES WITH ITS OWN DOCUMENTATION/,
       },
     ],
   });
@@ -387,14 +474,32 @@ if (process.argv.includes('--selftest')) {
   // never trips, so the plant would report NOT CAUGHT for want of a shape.
   rc = await doorSelftest({
     tool: 'uprightgate.mjs',
-    args: ['--text', 'S', '--only', '800x466'],
+    // `--only` SELECTS FROM THE DECLARED SHAPE LIST; IT DOES NOT INVENT A CELL.
+    // My first re-anchor named `800x342`, which is not a rung in `LADDER_H`, so
+    // the run matched no shape and exited 2 — and the corpus reported it as a
+    // failure DISTINCT from a blind check, because `RED-FOR-WRONG-REASON` and
+    // `UNCAUGHT` are now different words. Under the old single label this would
+    // have read as "the tool is blind to a three-pixel creep" and I would have
+    // gone looking for the wrong defect. `844x340` IS declared — it is the
+    // compact composition's lower-edge cell, whole at Text XL by the rendered
+    // premise balance.js cites for that number.
+    args: ['--text', 'XL', '--only', '844x340'],
     timeoutMs: 900000,
     plants: [
       {
-        name: 'the threshold creeps three pixels above the last wall (the branch\'s own SECOND bug, re-anchored at Text S)',
-        file: 'src/content/balance.js',
-        find: '      gateBelowH: 465,',
-        replace: '      gateBelowH: 468,',
+        // RE-ANCHORED 2026-08-21 (Bjorn, AshenSpire#299): same three-pixel
+        // creep, moved onto the constant that refuses and a cell that can see
+        // it. The cell and the text size are BOTH part of the catch and both
+        // moved with the number — measured, not assumed: at Text XL the wall
+        // runs to h 339 and 340 is the first whole cell, so 844x340 is a screen
+        // that works and a constant creeping to 343 takes it away. Both homes
+        // move, for the reason the group-1 plant above records.
+        name: 'the threshold creeps three pixels above the last wall (the branch\'s own SECOND bug, re-anchored at Text XL)',
+        edits: [
+          { file: 'src/content/balance.js', find: '      shortWideMinH: 340,', replace: '      shortWideMinH: 343,' },
+          { file: 'src/content/balance.js', find: '//   340 <= h < 465           compact wide composition (when width fits)', replace: '//   343 <= h < 465           compact wide composition (when width fits)' },
+          { file: 'src/content/balance.js', find: '//   h < 340                  truthful upright/resize refusal', replace: '//   h < 343                  truthful upright/resize refusal' },
+        ],
         expectRed: /GATE STANDS WHERE NOTHING WALLS/,
       },
     ],
@@ -422,21 +527,29 @@ if (process.argv.includes('--selftest')) {
   // asserted — a sweep whose top cell is still a wall has not found the edge.
   rc = await doorSelftest({
     tool: 'uprightgate.mjs',
-    args: ['--ladder', '--ladder-text', 'XL', '--ladder-from', '455', '--ladder-to', '480'],
+    // SWEEP RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299) with the constant it
+    // checks. The window is still deliberately narrow and still contains the
+    // one-pixel edge that sets the whole number — measured on this tree at
+    // 800 wide, Text XL: the wall runs h 330..339, 340 is the first whole
+    // cell, max(wall)+1 = 340 = `shortWideMinH` as written. The old window
+    // (455..480) is the compact band's upper edge, where nothing walls at all,
+    // which is why both plants below used to fail for the WRONG REASON rather
+    // than going green: the sweep found no wall to reason about.
+    args: ['--ladder', '--ladder-text', 'XL', '--ladder-from', '330', '--ladder-to', '352'],
     timeoutMs: 900000,
     plants: [
       {
         name: '--ladder: the constant sits below the last wall (what 432 was — a wall with no gate)',
         file: 'src/content/balance.js',
-        find: '      gateBelowH: 465,',
-        replace: '      gateBelowH: 460,',
+        find: '      shortWideMinH: 340,',
+        replace: '      shortWideMinH: 335,',
         expectRed: /THE CONSTANT LEAVES A WALL UNGATED/,
       },
       {
         name: '--ladder: the constant refuses above the last wall (a refusal that outgrew its premise)',
         file: 'src/content/balance.js',
-        find: '      gateBelowH: 465,',
-        replace: '      gateBelowH: 475,',
+        find: '      shortWideMinH: 340,',
+        replace: '      shortWideMinH: 348,',
         expectRed: /THE CONSTANT REFUSES ABOVE ITS OWN PREMISE/,
       },
     ],
@@ -463,14 +576,22 @@ if (process.argv.includes('--selftest')) {
   // standing, keeps looking like a gate, and the wall walks out from under it.
   rc = await doorSelftest({
     tool: 'uprightgate.mjs',
-    args: ['--predicates', '--predicate-text', 'M', '--predicate-from', '385', '--predicate-to', '400'],
+    // WINDOW RE-AIMED 2026-08-21 (Bjorn, AshenSpire#299), and this group's own
+    // reasoning above is what demanded it: the plant needs REAL WALL CELLS in
+    // the clean run or it is reported caught for want of a referent. The old
+    // window (385..400 at Text M) sits entirely ABOVE the wall — measured on
+    // this tree, Text M walls h 315..339 and 340 is the first whole cell — so
+    // the clean run ruled on no wall at all. Both halves stay load-bearing, at
+    // heights the board actually has: 320..352 straddles the edge, with walled
+    // cells below it and whole cells above.
+    args: ['--predicates', '--predicate-text', 'M', '--predicate-from', '320', '--predicate-to', '352'],
     timeoutMs: 900000,
     plants: [
       {
         name: '--predicates: the constant drops below the wall\'s top edge — a wall the gate does not stand on',
         file: 'src/content/balance.js',
-        find: '      gateBelowH: 465,',
-        replace: '      gateBelowH: 380,',
+        find: '      shortWideMinH: 340,',
+        replace: '      shortWideMinH: 335,',
         expectRed: /A WALL WITH NO GATE/,
       },
     ],
@@ -828,9 +949,31 @@ function connectCdp(wsUrl) {
 // bundle carries those same bytes is tools/verify-shipped.mjs's subject.
 async function runLadder(read) {
   const { balance } = await import(pathToFileURL(resolve(ROOT, 'src/content/balance.js')).href);
-  const constant = balance?.ui?.uiScale?.gateBelowH;
+  // THE CONSTANT UNDER TEST IS THE REFUSAL THRESHOLD, AND SINCE #27 THAT IS
+  // `shortWideMinH` — NOT `gateBelowH` (Bjorn, 2026-08-21, AshenSpire#299).
+  //
+  // This derivation compares a RENDERED wall edge to a written number, so it is
+  // only sound if the written number is the one that decides refusals.
+  // `main.js:376` computes `short = h < gateBelowH && !compact`, and `compact`
+  // holds for any shape at or above `shortWideMinH` whose width still fits, so
+  // the band contract balance.js states in its own words is:
+  //
+  //     h >= gateBelowH            standard wide composition
+  //     shortWideMinH <= h < gateBelowH   compact wide composition
+  //     h < shortWideMinH          the refusal
+  //
+  // `gateBelowH` is therefore the COMPACT BAND'S UPPER EDGE — a choice between
+  // two working compositions, with no rendered premise to derive it against —
+  // while `shortWideMinH` is the edge with a wall under it. Sweeping the wall
+  // and comparing it to `gateBelowH` compared a measurement to an unrelated
+  // number: it is why this mode's two corpus plants failed for the WRONG
+  // REASON rather than going green, which is doorplant's new
+  // RED-FOR-WRONG-REASON class and was invisible while every non-catch shared
+  // one word.
+  const constant = balance?.ui?.uiScale?.shortWideMinH;
+  const bandTop = balance?.ui?.uiScale?.gateBelowH;
   if (constant == null) {
-    console.error(`uprightgate --ladder: balance.ui.uiScale.gateBelowH is absent. There is no constant to check, and absent is not a pass.`);
+    console.error(`uprightgate --ladder: balance.ui.uiScale.shortWideMinH is absent. There is no refusal constant to check, and absent is not a pass.`);
     return 2;
   }
   const from = +(argOf('--ladder-from') ?? 390);
@@ -857,14 +1000,17 @@ async function runLadder(read) {
     + `${String(r.ctl && r.ctl.present ? r.ctl.onScreenPct : 0).padStart(6)}% `
     + `whole ${r.wholeCount}/${r.wholeTotal}${r.cut.length ? ` cut[${r.cut.join(' ')}]` : ''}`;
 
-  console.log(`\n  --ladder — deriving gateBelowH from the board, at width(s) ${widths.join(',')}, text ${texts.join(',')}`);
+  console.log(`\n  --ladder — deriving shortWideMinH from the board, at width(s) ${widths.join(',')}, text ${texts.join(',')}`);
   console.log(`  THE PREDICATE IS THE WALL (MR-142): \`.end-turn\` UNREACHABLE — not one pixel on screen,`);
   console.log(`  no scroll path. THE DERIVATION IS max(wall h) + 1 (MR-143), never min(good h): the`);
   console.log(`  wall set is not an interval, and "the first h that stops being bad" cannot survive a hole.`);
-  console.log(`  gateBelowH as written in src/content/balance.js: ${constant}`);
+  console.log(`  shortWideMinH as written in src/content/balance.js: ${constant}   (the REFUSAL threshold — h below it is refused)`);
+  console.log(`  gateBelowH, for context only, NOT the subject of this derivation: ${bandTop} — the compact band's upper`);
+  console.log(`  edge, a choice between two WORKING compositions with no wall under it. It was this mode's subject`);
+  console.log(`  until 2026-08-21 and could not be derived from a board, because nothing renders differently at it.`);
   console.log(`\n  THE SWEEP — exhaustive 1 px over ${from}..${to}, every cell read, no bisection.`);
-  if (constant > to) console.log(`  NOTE: gateBelowH ${constant} is ABOVE the sweep's ceiling ${to}, so the COST table below sees only part of the refused span. The derivation is unaffected — it needs the wall's top edge, which is inside.`);
-  if (constant < from) console.log(`  NOTE: gateBelowH ${constant} is BELOW the sweep's floor ${from}, so the COST table below is empty by construction, not by measurement.`);
+  if (constant > to) console.log(`  NOTE: shortWideMinH ${constant} is ABOVE the sweep's ceiling ${to}, so the COST table below sees only part of the refused span. The derivation is unaffected — it needs the wall's top edge, which is inside.`);
+  if (constant < from) console.log(`  NOTE: shortWideMinH ${constant} is BELOW the sweep's floor ${from}, so the COST table below is empty by construction, not by measurement.`);
 
   const bad = [];
   const table = [];
@@ -965,7 +1111,7 @@ async function runLadder(read) {
   // falls on small-text players (working heights refused). It is printed per
   // text size, with the worst cell named, because a cost nobody counts is a cost
   // somebody discovers.
-  console.log(`\n  THE COST OF ONE NUMBER — heights below gateBelowH ${constant} that are NOT a wall (the player`);
+  console.log(`\n  THE COST OF ONE NUMBER — heights below shortWideMinH ${constant} that are NOT a wall (the player`);
   console.log(`  could reach END TURN there and is refused anyway). Reported, never asserted: it is the`);
   console.log(`  price of a single downward-closed threshold, and the ruling bought it deliberately.`);
   const noWallAnywhere = [];
@@ -1019,7 +1165,7 @@ async function runLadder(read) {
       fine either. Widening the refusal to cover it would hide a layout bug
       behind a wall — see THE COST above for what it actually costs a player.`);
 
-  console.log(`\n  ${bad.length ? `FAIL — ${bad.length} finding(s) over ${cells} cell(s)` : `PASS — ${cells} cell(s): gateBelowH ${constant} is exactly max(wall h)+1 over the measured set — every wall is covered and nothing above the last wall is refused`}`);
+  console.log(`\n  ${bad.length ? `FAIL — ${bad.length} finding(s) over ${cells} cell(s)` : `PASS — ${cells} cell(s): shortWideMinH ${constant} is exactly max(wall h)+1 over the measured set — every wall is covered and nothing above the last wall is refused`}`);
   for (const b of bad) console.log(`    - ${b}`);
   return bad.length ? 1 : 0;
 }
@@ -1546,7 +1692,7 @@ async function main() {
         const f = `${p.shape}: GATE STANDS WHERE NOTHING WALLS — ${s}, all ${WHOLE_SET.length} required controls whole `
           + `(${WHOLE_SET.join(', ')}), NO text size of S/M/L/XL puts .end-turn out of reach at this shape, and no cell measured `
           + `in this run walls at any height at or above ${p.h}. THIS IS THE REFUSAL OUTLIVING ITS PREMISE: re-derive with `
-          + `\`--ladder\` and lower balance.ui.uiScale.gateBelowH, or delete src/ui/components/upright.js. Do not leave it `
+          + `\`--ladder\` and lower balance.ui.uiScale.shortWideMinH, or delete src/ui/components/upright.js. Do not leave it `
           + `refusing a screen nobody is walled on.`;
         fails.push(f);
         console.log(`      <-- ${f}`);
@@ -1584,6 +1730,47 @@ async function main() {
       within the zoom-rounding quantum (~6 local px at the floor) can be clipped
       without gating. A clip is not a wall; clause W is what would catch it if it
       ever became one.`);
+
+  // ---- THE BAND CONTRACT, AND ITS SECOND COPY -----------------------------
+  //
+  // `gateBelowH` is the compact band's UPPER edge — a choice between two
+  // WORKING compositions, so unlike `shortWideMinH` it has no wall under it and
+  // nothing rendered to derive it against. That is exactly why the old corpus
+  // could not catch a plant on it: there was no premise for the plant to
+  // contradict.
+  //
+  // What it does have is a SECOND COPY. balance.js states the whole band table
+  // in prose, in its own comment, three lines with the numbers written out —
+  // and until now nothing checked that the prose and the constants agree. One
+  // fact, two homes, nothing comparing them: Law 1 clause 2, and the defect
+  // this seat exists to find.
+  //
+  // SAY WHICH KIND OF CHECK THIS IS: it proves the two copies AGREE, never that
+  // the surviving number is RIGHT. The rendered premise belongs to
+  // `shortWideMinH` and is `--ladder`'s subject. A consistency check sold as a
+  // correctness check is how a green stops meaning anything.
+  const bandDoc = await (async () => {
+    const src = readFileSync(resolve(ROOT, 'src/content/balance.js'), 'utf8');
+    const { balance } = await import(pathToFileURL(resolve(ROOT, 'src/content/balance.js')).href + `?band=${Date.now()}`);
+    const z = balance?.ui?.uiScale || {};
+    const wide = /^\s*\/\/\s*h\s*>=\s*(\d+)\s/m.exec(src);
+    const band = /^\s*\/\/\s*(\d+)\s*<=\s*h\s*<\s*(\d+)\s/m.exec(src);
+    const refuse = /^\s*\/\/\s*h\s*<\s*(\d+)\s/m.exec(src);
+    if (!wide || !band || !refuse) {
+      return `THE BAND TABLE IS UNREADABLE in src/content/balance.js — the three documented lines (\`h >= N\`, \`N <= h < N\`, \`h < N\`) did not parse. `
+        + `The table is the only second copy of these constants; if it moved or was reworded, this check has stopped checking and must be re-aimed, not deleted.`;
+    }
+    const docWide = +wide[1], docLo = +band[1], docHi = +band[2], docRefuse = +refuse[1];
+    const bad = [];
+    if (docWide !== z.gateBelowH || docHi !== z.gateBelowH) bad.push(`documented wide edge ${docWide}/${docHi} vs balance.ui.uiScale.gateBelowH ${z.gateBelowH}`);
+    if (docLo !== z.shortWideMinH || docRefuse !== z.shortWideMinH) bad.push(`documented compact floor ${docLo}/${docRefuse} vs balance.ui.uiScale.shortWideMinH ${z.shortWideMinH}`);
+    if (!bad.length) return null;
+    return `THE BAND CONTRACT DISAGREES WITH ITS OWN DOCUMENTATION — ${bad.join('; ')}. `
+      + `balance.js writes the band table twice: once as constants the game reads, once as prose a person reads. A number that moves in one home and not the other `
+      + `ships a game whose documentation describes a different game. Move both, in the same act.`;
+  })();
+  if (bandDoc) { fails.push(bandDoc); console.log(`      <-- ${bandDoc}`); }
+  else console.log(`\n  BAND CONTRACT: constants and the documented table agree (gateBelowH / shortWideMinH). CONSISTENCY ONLY — it proves the two copies match, never that either number is right; the rendered premise under shortWideMinH is \`--ladder\`'s.`);
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes: every walled shape refuses legibly with true advice, and no fitting shape refuses at all`}`);
   for (const f of fails) console.log(`    - ${f}`);
