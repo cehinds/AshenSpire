@@ -181,8 +181,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const kit = surface.roles;
     const signature = surface.signature;
     const copies = surface.roleCopies;
-    $('#cz-stat-projection').innerHTML = projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')
-      + projection.derived.map((row) => `<div><b>${esc(row.label)}</b> ${esc(row.formula)}${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')
+    // The SAME two lines the Armoury strip prints (ui/screens/equipment.js
+    // statsComparison) — same read model, same markup, one stylesheet home
+    // (`.statproj-*`). They used to differ by a literal space here and a
+    // <span> there, which is how the same block ended up separated on one
+    // screen and welded on the other.
+    $('#cz-stat-projection').innerHTML = `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`
       + renderEquipmentRequirements(surface.requirements)
       + renderPlayerPoise(surface.poise)
       + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
