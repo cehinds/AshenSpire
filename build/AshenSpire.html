@@ -3353,6 +3353,55 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    goes, and this is meant to be read. */
 .title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }
 
+/* ---------------------------------------------------------------------------
+   THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
+
+   Constantine, 2026-08-21: "the right hand and left hand weapons are on the
+   wrong side on the character model in all views armory, character creation and
+   combat. the sword shows on my right side of the screen, but on the left side
+   of the character since it's facing the player."
+
+   He is right, and it is measurable: tools/hand-side-probe.mjs reads the
+   alpha-weighted ink centroid of every handed armament against the body's own
+   ink centre and finds 23 of 24 drawn into the model's opposite hand. (The
+   denominator is every hand=left|right row in weapons.csv with its asset derived
+   as artKey || id, the runtime's own rule -- src/model/loadout.js:962.)
+
+   WHY THE CORRECTION IS HERE AND NOT IN THE ART. The side is not decided at
+   runtime by anything — `equippedFigure` stacks full-frame pre-rendered layers,
+   and THREE independent producers all place the main armament at world x=+0.62,
+   which the shared camera (at y=-8, looking toward +Y) puts on the VIEWER'S
+   RIGHT: tools/equipment-blender.py (`RX, LX = 0.62, -0.52`),
+   tools/sprites-blender.py (the same positions, by its own comment), and the
+   inline CLASS_SVG fallbacks (the Starseer staff at x=80 of a 110 viewBox).
+   One convention, backwards, in three places. Correcting it at the source means
+   re-rendering every armament and body in Blender, which is the RIGHT fix and
+   is carded; this rule is what makes the screen true until that runs.
+
+   WHY A MIRROR IS SAFE HERE, MEASURED RATHER THAN ASSUMED. A scaleX flip also
+   flips the art, so it is only honest if the art is symmetric. Measured on the
+   silhouette (alpha, mirrored against itself): body_reaver 0.3%, body_starseer
+   0.2%, body_herald 0.0% mismatched. The bodies are symmetric IN SHAPE. A first
+   pass measured 19-38% and nearly cost this fix — that number was COLOUR, and
+   the scene's three key lights are rotated off-axis (z -28/146/35 degrees), so
+   it was reading the lighting, not the geometry. What flipping actually changes
+   is which side the key light falls on, which no player can name. The one real
+   shape asymmetry is the armament itself (14.9-16.0% on the armed class
+   sprites) — and that is precisely the thing that must move.
+
+   EXACTLY ONE MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
+   and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
+   mirroring both selectors would cancel to identity on the combat board — the
+   screen that started this. The second rule is what keeps the count at one.
+
+   REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
+   and body art is re-rendered from corrected producers. Leaving both in place
+   double-flips and restores the bug wearing a fix's clothes.
+   --------------------------------------------------------------------------- */
+.class-sprite,
+.equipped-figure { transform: scaleX(-1); }
+.class-sprite .equipped-figure { transform: none; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -34833,7 +34882,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '316946e767';
+const SOURCE = '30ee5c535b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34867,7 +34916,7 @@ const SOURCE = '316946e767';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0946';
+const ORDINAL = '0947';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35995,7 +36044,13 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
   const safe = String(sigil).replace(/[<>&"]/g, '');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`
+    // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
+    // The circle is symmetric and does not care; the GLYPH is text, and mirrored
+    // text reads as a rendering fault rather than as a character facing you.
+    // Reflected about its own centre, so it lands exactly where it already was.
+    `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
+    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    `</g>`
   );
 }
 
@@ -36106,8 +36161,12 @@ function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil) {
     const med = document.createElement('span');
     med.textContent = sigil;
+    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
+    // "the figure faces the viewer"). That mirror is right for the ART and wrong
+    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
+    // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
+      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
@@ -47600,6 +47659,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-305",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your weapons are in the hands you gave them",
+    "detail": "The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.",
+    "build": "0.4.0.0947",
+    "pullRequest": 305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
   {
     "id": "pr-296",
     "date": "2026-08-21",
