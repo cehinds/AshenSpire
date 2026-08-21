@@ -111,133 +111,142 @@ export function readItem(code) {
 const isBlockScalar = (k) => !!k && /^\s*[|>][-+]?\s*$/.test(k.rest);
 
 export function lintWorkflowText(text, file = '<text>') {
-  const out = [];
-  const lines = String(text).split(/\r?\n/);
+  const findings = [];
+  let checks = 0;
+  const lines = String(text).split(/\r\n|\r|\n/);
   const indentOf = (l) => l.match(/^\s*/)[0].length;
 
-  let jobsIndent = -1;          // indent of the `jobs:` key
-  let jobIndent = -1;           // indent of a job NAME under jobs:
-  let jobName = null;
-  let jobStepsSeen = 0;         // `steps:` keys in THIS job — more than one is the bug
-  let jobKeyIndent = -1;        // indent of the job's OWN keys (runs-on, strategy, steps)
-  let stepsKeyIndent = -1;      // indent of the active `steps:` key
-  let itemIndent = -1;          // indent of the FIRST `- ` under it; every item must match
-  let inSteps = false;
-  let step = null;
-  let skipDeeperThan = -1;      // inside a block scalar (`run: |`): skip more-indented lines
+  // ---------------------------------------------------------------------
+  // ONE MECHANISM, EVERY LEVEL. Last-wins is a property of YAML MAPPINGS,
+  // not of any particular key, so it is asserted once here for whatever
+  // mapping the walk is standing in — the document root, the `jobs:`
+  // mapping (job IDs), a job's own keys, a step's keys, and anything
+  // deeper (`with:`, `env:`) for free.
+  //
+  // I checked four of those levels one at a time, each after being shown
+  // it: duplicate `run:` in a step, duplicate `steps:` in a job, duplicate
+  // job IDs, duplicate top-level `jobs:`. Four symptoms, one defect — the
+  // parser could not name the level it was in, so every level needed its
+  // own hand-written check and the next one was always missing.
+  //
+  // A CONTEXT is a mapping at one indent. A list entry always opens a
+  // FRESH context, so two steps may both carry `name:` while one step may
+  // not carry `run:` twice.
+  // ---------------------------------------------------------------------
+  const stack = [{ indent: -1, seen: new Map(), label: 'the document root', isStep: false, line: 0, name: null }];
+  const top = () => stack[stack.length - 1];
+  const pathOf = () => stack.map((c) => c.label).filter(Boolean).slice(1).join(' → ') || 'the document root';
 
-  const closeStep = () => {
-    if (!step) return;
-    const cmds = ['run', 'uses'].reduce((n, k) => n + (step.keys[k] || 0), 0);
+  const closeContext = (ctx) => {
+    if (!ctx.isStep) return;
+    const cmds = (ctx.seen.has('run') ? 1 : 0) + (ctx.seen.has('uses') ? 1 : 0);
+    checks += 1;
     if (cmds === 0) {
-      out.push(`${file}:${step.line}: step ${JSON.stringify(step.name)} carries NO \`run:\` and NO \`uses:\` — it can never execute, and a step that never runs never reaches the verdict door (#12).`);
+      findings.push(`${file}:${ctx.line}: step ${JSON.stringify(ctx.name || '(unnamed)')} carries NO \`run:\` and NO \`uses:\` — it can never execute, and a step that never runs never reaches the verdict door (#12).`);
     }
-    for (const k of Object.keys(step.keys)) {
-      if (step.keys[k] > 1) {
-        out.push(`${file}:${step.line}: step ${JSON.stringify(step.name)} carries ${step.keys[k]} \`${k}:\` keys — YAML resolves duplicates last-wins SILENTLY, so one of those commands never runs.`);
-      }
-    }
-    step = null;
   };
-  const closeJob = () => { closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1; jobStepsSeen = 0; jobKeyIndent = -1; };
+  const popTo = (indent) => { while (stack.length > 1 && top().indent >= indent) closeContext(stack.pop()); };
+  const popDeeper = (indent) => { while (stack.length > 1 && top().indent > indent) closeContext(stack.pop()); };
+
+  const record = (name, indent, line, label) => {
+    checks += 1;
+    const ctx = top();
+    if (ctx.seen.has(name)) {
+      findings.push(`${file}:${line}: duplicate key ${JSON.stringify(name)} in ${ctx.label} (first at line ${ctx.seen.get(name)}) — YAML resolves duplicates last-wins SILENTLY, so everything under the earlier one is discarded without a word.`);
+    } else {
+      ctx.seen.set(name, line);
+    }
+    return ctx;
+  };
+
+  let jobsIndent = -1;      // indent of the `jobs:` key
+  let jobIndent = -1;       // indent of a job ID under it
+  let jobKeyIndent = -1;    // indent of a job's own keys
+  let pendingItem = null;   // a dash-only entry waiting for its first key
+  let skipDeeperThan = -1;  // inside a block scalar: payload, not structure
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].replace(/\t/g, '  ');
-    // BLOCK SCALARS ARE PAYLOAD, NOT STRUCTURE. `run: |` carries shell, and
-    // shell contains lines that look exactly like YAML — a heredoc emitting
-    // `- name: data`, which this repo's own boundary job is full of. Reading
-    // that as a new step closed the real one and reported the PAYLOAD as
-    // command-less: a valid workflow, red forever, from a lint that now gates
-    // every CI run. Everything more indented than the key belongs to the key.
     if (skipDeeperThan >= 0) {
       if (!line.trim() || indentOf(line) > skipDeeperThan) continue;
       skipDeeperThan = -1;
     }
     if (!line.trim() || /^\s*#/.test(line)) continue;
-    const indent = indentOf(line);
-    // ONE stripped view, used by every key match below. Leading whitespace is
-    // untouched, so indentation anchoring is unaffected.
     const code = stripComment(line);
     if (!code.trim()) continue;
-
-    const k = readKey(code);
-    if (k && !k.item && k.name === 'jobs' && !k.rest.trim()) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
-
-    // A job header: a bare key one level inside `jobs:`.
-    if (jobsIndent >= 0 && indent > jobsIndent && k && !k.item && !k.rest.trim()
-        && (jobIndent === -1 || indent === jobIndent) && !inSteps) {
-      closeJob();
-      jobIndent = indent;
-      jobName = k.name;
-      continue;
-    }
-    // Leaving a job entirely (back out to `jobs:` level or shallower).
-    if (jobIndent >= 0 && indent <= jobsIndent && k && !k.item) { closeJob(); jobIndent = -1; jobName = null; continue; }
-
-    // A JOB'S OWN KEYS SIT AT ONE INDENT, and the shallowest key under the job
-    // header fixes it. Everything deeper is nested data.
-    if (jobIndent >= 0 && !inSteps && indent > jobIndent && k && !k.item
-        && (jobKeyIndent === -1 || indent < jobKeyIndent)) {
-      jobKeyIndent = indent;
-    }
-
-    // `steps:` COUNTS ONLY AT THE JOB-KEY INDENT. Unanchored, a matrix axis
-    // literally named `steps` (strategy.matrix.steps) read as the job's list,
-    // and the real job-level `steps:` then reported a FALSE DUPLICATE — this
-    // gate reddening a valid workflow. Same class as the heredoc: structure
-    // detected without anchoring to its level. Anchor it, do not special-case
-    // the word `matrix`.
-    if (k && !k.item && k.name === 'steps' && (!k.rest.trim() || isBlockScalar(k))
-        && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
-      closeStep();
-      jobStepsSeen += 1;
-      // TWO `steps:` IN ONE JOB IS THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP:
-      // last-wins silently discards the ENTIRE first list — the real suite —
-      // and the old parser simply started reading the second one and reported
-      // nothing. A duplicate-key hole in the duplicate-key checker.
-      if (jobStepsSeen > 1) {
-        out.push(`${file}:${i + 1}: job ${JSON.stringify(jobName || '(unnamed)')} carries ${jobStepsSeen} \`steps:\` keys — YAML resolves duplicates last-wins SILENTLY, so an entire steps list (every check in it) never runs.`);
-      }
-      inSteps = true; stepsKeyIndent = indent; itemIndent = -1;
-      continue;
-    }
-    if (!inSteps) continue;
-
-    // A key at or left of the `steps:` key ends the block.
-    if (indent <= stepsKeyIndent && k && !k.item) {
-      closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1;
-      i -= 1; // re-read this line as a job key / job header
-      continue;
-    }
+    const indent = indentOf(code);
 
     const item = readItem(code);
-    // ONLY AT THE LIST'S OWN INDENT. The first `- ` after `steps:` fixes it;
-    // anything deeper is nested data, not a step.
-    if (item && (itemIndent === -1 || indent === itemIndent)) {
-      closeStep();
-      if (itemIndent === -1) itemIndent = indent;
-      const first = item.key;
-      step = {
-        line: i + 1,
-        name: first && first.name === 'name' ? first.rest.trim() : '(unnamed)',
-        keys: first ? { [first.name]: 1 } : {},
-        // A DASH-ONLY ENTRY DOES NOT YET KNOW WHERE ITS KEYS SIT; the first
-        // key line below fixes the column, exactly as the first list item
-        // fixes the list's own.
-        indent: first ? first.keyIndent : -1,
-      };
-      if (first && isBlockScalar(first)) skipDeeperThan = first.keyIndent - 1;
+    if (item) {
+      // A list entry ends the previous entry and opens a fresh mapping.
+      popTo(item.indent);
+      const parent = top();
+      // A SEQUENCE IS NOT A MAPPING, so `steps:` opens no context of its own —
+      // its items hang off the JOB's mapping. The step-ness of an entry is
+      // therefore carried by the key that last opened a block in the parent.
+      const isStep = parent.pendingLabel === 'steps' && parent.pendingStepsList === true;
+      if (item.key) {
+        const ctx = { indent: item.key.keyIndent, seen: new Map(), label: isStep ? 'a step' : 'a list entry', isStep, line: i + 1, name: null };
+        stack.push(ctx);
+        if (item.key.name === 'name') ctx.name = item.key.rest.trim();
+        record(item.key.name, item.key.keyIndent, i + 1);
+        if (isBlockScalar(item.key)) skipDeeperThan = item.key.keyIndent - 1;
+      } else {
+        // Dash alone: the first key below fixes the column.
+        pendingItem = { indent: item.indent, isStep, line: i + 1 };
+      }
       continue;
     }
-    if (step && k && !k.item && (step.indent === -1 ? k.indent > itemIndent : k.indent === step.indent)) {
-      if (step.indent === -1) step.indent = k.indent;   // dash-only: the first key fixes the column
-      if (k.name === 'name' && step.name === '(unnamed)') step.name = k.rest.trim() || '(unnamed)';
-      step.keys[k.name] = (step.keys[k.name] || 0) + 1;
-      if (isBlockScalar(k)) skipDeeperThan = step.indent;
+
+    const k = readKey(code);
+    if (!k) continue;
+
+    if (pendingItem && indent > pendingItem.indent) {
+      const ctx = { indent, seen: new Map(), label: pendingItem.isStep ? 'a step' : 'a list entry', isStep: pendingItem.isStep, line: pendingItem.line, name: null };
+      stack.push(ctx);
+      pendingItem = null;
+    } else if (pendingItem) {
+      pendingItem = null;
     }
+
+    popDeeper(indent);
+    if (top().indent < indent) {
+      // The sentinel sits at -1 and the document's own top-level keys sit at
+      // 0, so the FIRST context pushed IS the document root — labelling it
+      // 'a mapping' is what kept `jobs:` from ever being recognised there.
+      const parent = top();
+      stack.push({
+        indent,
+        seen: new Map(),
+        label: stack.length === 1 ? 'the document root' : (parent.pendingLabel || 'a mapping'),
+        isStep: false,
+        line: i + 1,
+        name: null,
+        stepsList: parent.pendingStepsList === true,
+      });
+    }
+
+    const ctx = record(k.name, indent, i + 1);
+    if (ctx.isStep && k.name === 'name' && !ctx.name) ctx.name = k.rest.trim();
+
+    // Track where we are, so `steps:` can be recognised at JOB level only —
+    // a matrix axis named `steps` is a mapping key like any other.
+    if (k.name === 'jobs' && !k.rest.trim() && ctx.label === 'the document root') { jobsIndent = indent; jobIndent = -1; jobKeyIndent = -1; }
+    if (jobsIndent >= 0 && indent > jobsIndent && !k.rest.trim() && ctx.indent === (jobIndent === -1 ? indent : jobIndent) && ctx.label !== 'a step') {
+      if (jobIndent === -1) jobIndent = indent;
+      if (indent === jobIndent) jobKeyIndent = -1;
+    }
+    if (jobIndent >= 0 && indent > jobIndent && (jobKeyIndent === -1 || indent < jobKeyIndent)) jobKeyIndent = indent;
+
+    // The context this key OPENS (if a block follows) inherits a label.
+    ctx.pendingLabel = k.name;
+    ctx.pendingStepsList = k.name === 'steps' && indent === jobKeyIndent;
+
+    if (isBlockScalar(k)) skipDeeperThan = indent;
   }
-  closeJob();
-  return out;
+  popTo(-1);
+  closeContext(stack[0]);
+  return Object.assign(findings, { findings, checks });
 }
 
 const SELFTEST = [
@@ -309,6 +318,24 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n        name: Block\n        run: |\n          echo "- name: data"\n' },
   { name: 'mixed dash-only and inline items in one list', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Inline\n        run: echo ok\n      -\n        name: Ghost\n' },
+  // LAST-WINS AT EVERY MAPPING LEVEL — the class, planted level by level so
+  // the ONE mechanism has to prove it covers each. Four of these were found
+  // one at a time, each after being shown; the fifth (with:) is here because
+  // the mechanism gives it for free and nobody has had to report it.
+  { name: 'level: duplicate top-level `jobs:` mappings', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Real\n        run: echo 1\njobs:\n  b:\n    steps:\n      - name: Shadow\n        run: echo 2\n' },
+  { name: 'level: duplicate JOB IDs — the real suite vanishes', want: 1,
+    yml: 'on: push\njobs:\n  test:\n    steps:\n      - name: Real\n        run: node tests/run-node.mjs\n  test:\n    steps:\n      - name: Shadow\n        run: echo nothing\n' },
+  { name: 'level: duplicate job-level keys (steps:)', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n    steps:\n      - name: Two\n        run: echo 2\n' },
+  { name: 'level: duplicate step-level keys (run:)', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Twice\n        run: echo one\n        run: echo two\n' },
+  { name: 'level: duplicate keys inside a step\'s with: block, for free', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Setup\n        uses: actions/setup-node@v4\n        with:\n          node-version: 22\n          node-version: 24\n' },
+  { name: 'and two SIBLING steps may both carry name: and run:', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n      - name: Two\n        run: echo 2\n' },
+  { name: 'and two sibling JOBS may both carry runs-on: and steps:', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - name: One\n        run: echo 1\n  b:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Two\n        run: echo 2\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,
@@ -354,11 +381,20 @@ if (!existsSync(dir)) { console.error('workflow-lint: no .github/workflows — n
 const files = readdirSync(dir).filter((f) => /\.ya?ml$/.test(f));
 if (!files.length) { console.error('workflow-lint: no workflow files found — nothing measured.'); process.exit(2); }
 const findings = [];
-let steps = 0;
+// ONE PARSER, ONE ANSWER. This counter used to run its own narrower regex
+// over the same file, so the two readers disagreed the moment readItem()
+// learned dash-only entries: a workflow whose steps all use that form found
+// no defects and printed "OK — 0 checks passed", and the verdict door then
+// refused it — A VALID WORKFLOW MADE PERMANENTLY RED by this tool arguing
+// with itself. Every other finding tonight was a false green; that one was a
+// FALSE RED, manufactured by a second copy of the question inside one PR.
+// The count is now what the parse actually asserted.
+let checks = 0;
 for (const f of files) {
   const text = readFileSync(join(dir, f), 'utf8');
-  steps += (text.match(/^\s*-\s+(name|uses|run):/gm) || []).length;
-  findings.push(...lintWorkflowText(text, `.github/workflows/${f}`));
+  const result = lintWorkflowText(text, `.github/workflows/${f}`);
+  checks += result.checks;
+  findings.push(...result);
 }
 if (findings.length) {
   console.error(`\nworkflow-lint: FAILED ${findings.length} finding(s) over ${files.length} workflow(s).`);
@@ -367,6 +403,6 @@ if (findings.length) {
 }
 // One terminated verdict line carrying a count (#12's contract), so this tool
 // walks through the same door it protects.
-console.log(`\nworkflow-lint: OK — ${steps} checks passed.`);
+console.log(`\nworkflow-lint: OK — ${checks} checks passed.`);
 process.exit(0);
 }

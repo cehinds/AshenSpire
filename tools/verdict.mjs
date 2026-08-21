@@ -171,7 +171,13 @@ const VERDICTS = [
  * failure is the same defect as a door that admits silence, wearing a number.
  */
 export function readVerdict(text) {
-  const lines = String(text).split(/\r?\n/);
+  // A BARE \r IS A LINE BOUNDARY. Terminal progress reporters rewrite a line
+  // with a carriage return and no newline, so `…1 check passed\r…0 checks
+  // passed\n` arrived as ONE line: the first success grammar consumed the
+  // whole string and the trailing zero-work verdict was never seen. Splitting
+  // on all three terminators puts every verdict-shaped UPDATE into the
+  // exactly-one census, which is where a tool that changed its mind belongs.
+  const lines = String(text).split(/\r\n|\r|\n/);
   const hits = [];
   const refused = [];
   for (const raw of lines) {
@@ -402,6 +408,10 @@ const SELFTEST = [
   { name: 'a counted verdict printed while FAILING is still red',
     file: 'console.log("tool: OK — 9 checks passed."); process.exit(1);\n', want: 1 },
   // A REFUSED VERDICT ALONGSIDE AN ACCEPTED ONE IS AMBIGUITY, NOT NOISE.
+  { name: 'a progress reporter rewriting its line with a bare CR is still two verdicts',
+    file: 'process.stdout.write("tool: OK — 1 check passed\\rtool: OK — 0 checks passed\\n"); process.exit(0);\n', want: 1 },
+  { name: 'and a CR-rewritten line ending in a good verdict alone still passes',
+    file: 'process.stdout.write("working...\\rtool: OK — 7 checks passed\\n"); process.exit(0);\n', want: 0 },
   { name: 'a FAILING verdict followed by a passing one is refused, not greened',
     file: 'console.log("PASS — 1/2 shapes"); console.log("PASS — 2/2 shapes"); process.exit(0);\n', want: 1 },
   { name: 'and in the other order, which is how a retry would print it',
