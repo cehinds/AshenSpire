@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-296",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your own music obeys the game's mix",
+    "detail": "Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.",
+    "build": "0.4.0.0930",
+    "pullRequest": 296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/296"
+  },
+  {
     "id": "pr-290",
     "date": "2026-08-21",
     "group": "2026-08-21",

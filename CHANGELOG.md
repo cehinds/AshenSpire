@@ -19,6 +19,8 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-21
 
+- **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0930`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
+
 - **Rewards wait for a deliberate hold and leave untouched choices alone** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0929`). Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.
 
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
