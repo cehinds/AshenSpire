@@ -423,11 +423,6 @@ async function main() {
           : red('A3.danger', `the unequip control is not red — class "${un.cls}"`));
       }
     }
-  } catch (e) {
-    console.error(`    HARNESS could not run: ${e.message}`);
-    cdp.close(); await dropBrowser(); if (s.server) s.server.close();
-    process.exit(2);
-  }
 
     // ---- A4 / A5 · THE MAP MOUNT, where equipping is not sealed ---------
     //
@@ -446,14 +441,15 @@ async function main() {
     await wait(450);
     await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
       || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
-    // NO CARD HERE IS A FINDING, NOT A CRASH — and the difference is this file's
-    // own exit contract. `until` throws, and this stage sits OUTSIDE the try/catch
-    // above, so an empty shelf killed the run with an unhandled `timeout picker`
-    // and exited 1 — the code this header reserves for A FINDING. The tool was
-    // reporting a harness death in a finding's clothes. Found by hand-planting
-    // `persistence: 'unlocked'` in the real tree (Saga's WITHHOLD, ea2cf89).
-    // No new concept: `A4.nocard` below is already the sentence for "no card to
-    // press", so this just lets the existing emitter reach it.
+    // NO CARD HERE IS A FINDING, NOT A CRASH — and it is the ONE timeout on this
+    // stage that is. An empty shelf used to kill the run with an unhandled
+    // `timeout picker` and exit 1, the code line 41 reserves for A FINDING; the
+    // tool was reporting a harness death in a finding's clothes. Found by
+    // hand-planting `persistence: 'unlocked'` in the real tree (Saga's WITHHOLD,
+    // ea2cf89). No new concept: `A4.nocard` below is already the sentence for
+    // "no card to press", so catching into a boolean lets that emitter reach it.
+    // The two `until` calls just above are NOT this — a map that never mounts is
+    // a harness death, and they now reach the exit-2 catch at the end of main().
     const mapHasCard = await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'picker', 8000)
       .then(() => true, () => false);
     await wait(350);
@@ -534,6 +530,21 @@ async function main() {
       }
 
     }
+
+  // ONE HARNESS-DEATH HANDLER FOR THE WHOLE DRIVEN RUN, and this catch used to
+  // sit two hundred lines up. Saga measured the half I left open (ea2cf89 →
+  // 4d18b23): I named the structural cause and closed ONE of three `until`
+  // calls. The other two — waiting for the map, waiting for its overlay — still
+  // threw into the void and exited 1, the code line 41 reserves for A FINDING.
+  // The fix is not three fixes: A SECOND REGION WITH A DIFFERENT EXIT CONTRACT
+  // WAS THE DEFECT. There is now one, so no `until` added below can be born
+  // outside it. The one timeout that IS a finding says so at its own call site
+  // (`mapHasCard`, which catches into a boolean and reaches `A4.nocard`).
+  } catch (e) {
+    console.error(`    HARNESS could not run: ${e.message}`);
+    cdp.close(); await dropBrowser(); if (s.server) s.server.close();
+    process.exit(2);
+  }
 
   cdp.close(); await dropBrowser(); if (s.server) s.server.close();
   console.log(`\n  ${checks} checks, ${fails} finding(s)`);
