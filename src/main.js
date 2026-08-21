@@ -1240,6 +1240,8 @@ function enterNode(nodeId) {
       return mountRewards(app, {
         registries,
         run,
+        saves,
+        rng,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
           persist();
@@ -1461,6 +1463,8 @@ function onCombatEnd(result, combat, enc) {
     return mountRewards(app, {
       registries,
       run,
+      saves,
+      rng,
       rewards: bossRewards,
       onDone: () => advanceAct(),
     });
@@ -1480,6 +1484,8 @@ function onCombatEnd(result, combat, enc) {
   mountRewards(app, {
     registries,
     run,
+    saves,
+    rng,
     rewards,
     onDone: () => {
       persist();
@@ -1821,7 +1827,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -1972,6 +1978,34 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.cinders = 999;
     run.shopStock = buildShopStock(registries, rng, run);
     showShop();
+  } else if (shotState === 'reward') {
+    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
+    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
+    // is a screen no instrument owns — release-shots derives its denominator
+    // from the states this file declares and screenreach can only reach a
+    // screen that has one.
+    //
+    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
+    // photographs identically every run, at its max edge (five rows: cinders,
+    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
+    // the other edge (no kinds, bare Continue), because a menu's zero case is
+    // where a derivation quietly draws furniture for absent rewards.
+    // The armament is NOT pushed through rollDrop here: the pose shows the
+    // reveal row; storage side-effects belong to the roll, not the pose.
+    const pose = shotParams.get('shotReward') || 'full';
+    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
+      title: 'VICTORY',
+      cinders: 32,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    mountRewards(app, {
+      registries, run, saves, rng,
+      rewards: shotOffer,
+      onDone: () => showMap(),
+    });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
     //

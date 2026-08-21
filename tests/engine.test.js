@@ -14,6 +14,7 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
+import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
@@ -4814,6 +4815,85 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.capped, true, 'a cap of zero caps a fresh run');
     eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
     eq(c.offerable, false, 'either block closes the offer');
+  });
+
+  test('61. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
+    // Constantine, 2026-08-15: "the reward should start with an initial menu of
+    // reward types (card, potion, armament)". His answer on the page: Continue
+    // is ALWAYS pressable and a setting decides what it means — auto-collect ON
+    // takes everything, picking at random where there is a choice; OFF gives
+    // only what was chosen, no nagging.
+    //
+    // THE ROWS ARE DERIVED FROM THE OFFER (Law 0: the entry describes, the
+    // machinery derives) — a kind absent from the rewards object has no row,
+    // and a new reward field is one ORDER entry, not a screen redesign.
+
+    // EDGE 1 — THE EMPTY OFFER: no rows, and Continue still resolves.
+    let plan = rewardPlan({}, { flaskSlotsFree: 1 });
+    eq(plan.rows.length, 0, 'an empty offer derives an empty menu');
+    let res = resolveContinue(plan, {}, 'auto', () => 0);
+    eq(res.take.length, 0, 'auto-collect over nothing takes nothing');
+
+    // EDGE 2 — EVERY KIND AT ONCE (the boss shape plus a flask): five rows,
+    // in the declared order, each naming its kind.
+    const offer = {
+      cinders: 32,
+      cardIds: ['stomp', 'executioner', 'crimsonCleave'],
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    plan = rewardPlan(offer, { flaskSlotsFree: 1 });
+    eq(plan.rows.length, 5, 'five reward kinds derive five rows');
+    eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),
+      'rows come out in the one declared order');
+    const cardRow = plan.rows.find((r) => r.kind === 'card');
+    eq(cardRow.choice, true, 'a multi-card offer is a CHOICE row — it opens, it does not just apply');
+
+    // THE FLASK BLOCK IS DERIVED, NOT DISCOVERED AT APPLY TIME: zero free
+    // slots make the row blocked with a TOKEN reason (the levelUpPlan
+    // precedent — a label switches on a word, never on two numbers).
+    const full = rewardPlan(offer, { flaskSlotsFree: 0 });
+    eq(full.rows.find((r) => r.kind === 'flask').blockedBy, 'slots', 'a full belt blocks the flask row by name');
+    eq(plan.rows.find((r) => r.kind === 'flask').blockedBy, null, 'a free slot does not');
+
+    // AUTO takes everything not explicitly skipped — and picks the card by the
+    // SEEDED rng handed in, never its own randomness.
+    res = resolveContinue(plan, {}, 'auto', (n) => 2 % n);
+    eq(res.take.length, 5, 'auto over five pending rows takes five');
+    eq(res.take.find((t) => t.kind === 'card').cardId, 'crimsonCleave', 'the choice is made by the injected pick');
+
+    // A SKIP IS RESPECTED BY AUTO — his deck-discipline affordance survives
+    // the setting: skip the card, Continue, and the deck gains nothing.
+    res = resolveContinue(plan, { card: 'skipped' }, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'card'), false, 'auto never overrides an explicit skip');
+    eq(res.take.length, 4, 'the other four still come');
+
+    // MANUAL takes only what was taken: everything pending is LEFT, and that
+    // is the no-nagging contract — Continue works, it just means "done".
+    res = resolveContinue(plan, { cinders: 'taken' }, 'manual', () => 0);
+    eq(res.take.length, 0, 'manual adds nothing at Continue — taken rows were applied when tapped');
+    eq(res.leave.length, 4, 'and what was never chosen is left, named');
+
+    // A BLOCKED ROW IS NEVER TAKEN, whatever the mode — auto-collect refusing
+    // a full belt is the same sentence at the same seam as the tap refusing.
+    res = resolveContinue(full, {}, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'flask'), false, 'auto does not force a flask into a full belt');
+    eq(res.leave.find((l) => l.kind === 'flask').blockedBy, 'slots', 'the leave list carries the reason');
+
+    // THE SINGLE-CARD OFFER IS NOT A CHOICE — one card auto-takes as itself.
+    const one = rewardPlan({ cardIds: ['stomp'] }, { flaskSlotsFree: 1 });
+    res = resolveContinue(one, {}, 'auto', () => 0);
+    eq(res.take.find((t) => t.kind === 'card').cardId, 'stomp', 'a one-card row needs no pick');
+
+    // 'NEW' IS DERIVED FROM WHAT THE PROFILE HAS HELD, with the possessions
+    // handed in — the marker never invents a store it was not given.
+    const seen = { cards: new Set(['stomp']), relics: new Set(), flasks: new Set(['crimsonFlask']), armaments: new Set() };
+    const marks = unseenIds(offer, seen);
+    eq(marks.cards.includes('stomp'), false, 'a held card is not new');
+    eq(marks.cards.includes('executioner'), true, 'an unheld card is');
+    eq(marks.relics.includes('forsakenMedallion'), true, 'an unheld relic is new');
+    eq(marks.flasks.length, 0, 'a held flask kind is not');
   });
 
   const passed = results.filter((r) => r.ok).length;

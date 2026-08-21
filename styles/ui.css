@@ -827,6 +827,30 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
+   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
+   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
+   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
+   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
+.reward-menu { flex-wrap: wrap; justify-content: center; }
+/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
+   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
+   license. The glyph stays in text units: it is a typographic mark. */
+.reward-menu .reward-kind { width: 256px; padding: 19px; }
+.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
+.chip.reward-new { color: var(--gold); border-color: var(--gold); }
+.reward-skip {
+  margin-top: 13px;
+  min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;
+}
+/* Receive feedback: a taken row settles — border flashes gold and the card
+   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+@keyframes reward-took {
+  0% { border-color: var(--gold); transform: scale(1.04); }
+  100% { border-color: var(--line-soft); transform: scale(1); }
+}
+
 /* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
    portrait player meets after every fight, and it only became reachable at all
    because this branch fixed the fight. At 390x844 three cards need 417.6px in a

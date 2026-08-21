@@ -1,77 +1,265 @@
-// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
+// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
-// Rewards arrive pre-rolled by engine/encounters.js (deterministic streams);
-// this screen only presents them. Skipping the card is a visible affordance
-// (deck discipline, GDD §5). Cinders/relic/flask apply immediately; the flask
-// is lost with a note if all slots are full.
+// Constantine, 2026-08-15: "the reward should start with an initial menu of
+// reward types (card, potion, armament)" — Slay-the-Spire style. And his
+// answer on the E11 card: Continue is ALWAYS pressable and a setting decides
+// what it means — auto-collect ON takes everything, picking at random where
+// there is a choice; OFF gives only what was chosen, no nagging.
+//
+// WHAT MOVED, and why it is the whole point: the old screen APPLIED cinders,
+// relic and flask at mount — before the player saw anything — so a menu with
+// per-kind skip and "changing your mind" was impossible by construction.
+// Application now happens when a row is TAKEN (tap, or auto-collect at
+// Continue), through one apply function per kind. WHAT the rows are, which
+// are blocked and why, and what Continue means is model/rewardplan.js's one
+// derivation (test 61) — this screen draws rows and forwards taps; it decides
+// nothing (the rest.js/levelUpPlan precedent).
+//
+// The menu rows reuse `.class-pick` (the B9 uniform-card pattern from the
+// shrine fold) — same focus rules (input.js already lists
+// `.class-pick:not(.locked)`), same locked treatment for a blocked row, no
+// second card-button pattern in the tree.
+//
+// SEEN ('new' markers): "a 'new' marker on unseen cards/items/relics" — his
+// words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
+// what the run holds plus the profile's record: `meta.seen` (cards/relics/
+// flasks, written here best-effort on take) and `meta.found` (armaments,
+// written by rollDrop already). Boundary, stated: other acquisition paths
+// (shop, events, drafts) do not write `meta.seen` yet, so a thing first met
+// elsewhere can still read NEW here once — the marker errs toward showing.
+//
+// `saves` and `rng` are optional: co-op stubs and old callers get the dial's
+// default and a deterministic first-card pick, never a crash and never
+// Math.random — a UI pick that desyncs a seeded run is a defect.
 
 import { renderCard } from '../components/card.js';
-import { esc } from '../components/tooltip.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
+import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
 
-export function mountRewards(app, { registries, run, rewards, onDone }) {
-  const lines = [];
-  if (rewards.cinders) {
-    run.cinders += rewards.cinders;
-    lines.push(`<span style="color:var(--gold)">+${rewards.cinders} cinders</span> (${run.cinders} total)`);
+const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+
+export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null }) {
+  const plan = rewardPlan(rewards, {
+    flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+  });
+  const states = {}; // kind → 'taken' | 'skipped' (absent = pending)
+  let chosenCardId = null;
+
+  // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
+  const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
+  const seenStore = meta.seen || {};
+  const marks = unseenIds(rewards, {
+    cards: new Set([...run.deck.map((c) => c.cardId), ...(seenStore.cards || [])]),
+    relics: new Set([...run.relics, ...(seenStore.relics || [])]),
+    flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
+    armaments: new Set([...(meta.found || [])]),
+  });
+
+  // Best-effort seen write on take. A quarantined profile refuses saveMeta —
+  // correctly — and the marker is a convenience, so a refusal never blocks the
+  // reward itself (the settings.js precedent for reading that result).
+  function recordSeen(kind, ids) {
+    if (!saves || !saves.saveMeta || !ids.length) return;
+    const m = saves.loadMeta() || {};
+    const seen = { ...(m.seen || {}) };
+    const key = { card: 'cards', relic: 'relics', flask: 'flasks' }[kind];
+    if (!key) return; // armaments already live in meta.found, one home
+    seen[key] = [...new Set([...(seen[key] || []), ...ids])];
+    saves.saveMeta({ ...m, seen });
   }
-  if (rewards.relicId) {
-    run.relics.push(rewards.relicId);
-    syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
-    const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}`);
+
+  // ---- one apply function per kind — tap and auto-collect share them -------
+  const apply = {
+    cinders(row) { run.cinders += row.amount; },
+    card(row) {
+      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      chosenCardId = row.cardId;
+      recordSeen('card', [row.cardId]);
+    },
+    flask(row) {
+      run.flasks.push({ flaskId: row.flaskId });
+      recordSeen('flask', [row.flaskId]);
+    },
+    relic(row) {
+      run.relics.push(row.relicId);
+      syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
+      recordSeen('relic', [row.relicId]);
+    },
+    armament() { /* rollDrop stored it at roll time — taking is the reveal */ },
+  };
+
+  function take(row, viaKind) {
+    apply[row.kind](row);
+    states[row.kind] = 'taken';
+    sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
+    renderMenu(viaKind || row.kind);
   }
-  if (rewards.flaskId) {
-    const def = registries.flasks.get(rewards.flaskId);
-    if (run.flasks.length < flaskSlotCap(registries.balance)) {
-      run.flasks.push({ flaskId: rewards.flaskId });
-      lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
-    } else {
-      lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
+
+  // ---- row copy: what a kind says in each state ----------------------------
+  function rowBody(row) {
+    const state = states[row.kind];
+    switch (row.kind) {
+      case 'cinders':
+        return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+      case 'card': {
+        if (state === 'taken') {
+          const def = registries.cards.get(chosenCardId);
+          return { title: 'Card', body: `<b>${esc((def && def.name) || chosenCardId)}</b> joins the deck.` };
+        }
+        return { title: 'Card', body: row.choice ? `Choose one of ${row.cardIds.length}.` : 'One card offered.' };
+      }
+      case 'flask': {
+        const def = registries.flasks.get(row.flaskId);
+        if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+      }
+      case 'armament': {
+        const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
+        return {
+          title: 'Armament',
+          body: a
+            ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+            : 'Carried to the Armoury.',
+        };
+      }
+      case 'relic': {
+        const def = registries.relics.get(row.relicId);
+        return { title: 'Relic', body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+      }
+      default:
+        return { title: row.kind, body: '' };
     }
   }
 
-  if (rewards.armamentId) {
-    // rollDrop already put it in storage and remembered it; this just tells the
-    // player, and says where it went — a found armament is carried, not held,
-    // so it does nothing until you walk to the Armoury and slot it.
-    const a = (registries.equipment.armaments || []).find((x) => x.id === rewards.armamentId);
-    if (a) {
-      lines.push(
-        `Armament: <b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` +
-        `<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
-      );
+  function isNew(row) {
+    switch (row.kind) {
+      case 'card': return row.cardIds.some((id) => marks.cards.includes(id));
+      case 'relic': return marks.relics.length > 0;
+      case 'flask': return marks.flasks.length > 0;
+      case 'armament': return marks.armaments.length > 0;
+      default: return false;
     }
+  }
+
+  function collectMode() {
+    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+    const dial = registries.balance.ui.rewardCollect || { def: 'auto', modes: ['auto', 'manual'] };
+    return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
+  }
+
+  // ---- the menu ------------------------------------------------------------
+  function renderMenu(focusKind = null) {
+    const mode = collectMode();
+    const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
+    app.innerHTML = `
+      <div class="screen">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
+        <div class="class-row reward-menu">
+          ${plan.rows.map((row) => {
+            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+            const { title, body } = rowBody(row);
+            return `
+            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' ? ' locked' : ''}"
+                 data-kind="${esc(row.kind)}" data-state="${esc(state)}"
+                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+              <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+              <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+              <p>${body}</p>
+              ${state === 'taken' ? '<span class="chip">Taken</span>'
+                : state === 'blocked' ? '<span class="chip">Full</span>'
+                : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
+                : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="subtle" id="reward-continue">${
+          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE'}</button>
+      </div>`;
+
+    for (const el of app.querySelectorAll('.reward-kind')) {
+      const kind = el.dataset.kind;
+      const row = plan.rows.find((r) => r.kind === kind);
+      const state = el.dataset.state;
+      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
+      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
+      // the label switches on the model's token, never on a re-derivation.
+      attachTooltip(el, () => {
+        if (state === 'blocked') return `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
+        if (state === 'taken') return `<div class="tt-title">Taken</div>`;
+        if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
+        return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;
+      });
+      if (state === 'taken' || state === 'blocked') continue;
+      el.addEventListener('click', (ev) => {
+        if (ev.target && ev.target.dataset && ev.target.dataset.skip) return; // the Skip control owns its click
+        if (states[kind] === 'skipped') delete states[kind]; // changing your mind, his words
+        if (row.kind === 'card') return renderChooser();
+        take(row);
+      });
+    }
+    for (const btn of app.querySelectorAll('[data-skip]')) {
+      attachTooltip(btn, () => `<div class="tt-title">Skip</div>${esc('Leave it — auto-collect respects a skip.')}`);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        states[btn.dataset.skip] = 'skipped';
+        renderMenu(btn.dataset.skip);
+      });
+    }
+
+    const cont = app.querySelector('#reward-continue');
+    attachTooltip(cont, () => (mode === 'auto'
+      ? `<div class="tt-title">Continue</div>${esc('Takes everything not skipped; a card offer is picked for you.')}`
+      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+    cont.addEventListener('click', () => {
+      // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
+      // closed set); the auto pick advances the same stream, so a seeded run
+      // resolves the same card every replay.
+      const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
+      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
+      for (const row of toTake) {
+        apply[row.kind](row);
+        states[row.kind] = 'taken';
+      }
+      if (toTake.length) sfx.play('rewardTake');
+      onDone(chosenCardId);
+    });
+
+    if (isEngaged()) {
+      setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
+        || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
+    }
+  }
+
+  // ---- the card chooser: opens from the card row, Back returns -------------
+  function renderChooser() {
+    const row = plan.rows.find((r) => r.kind === 'card');
+    app.innerHTML = `
+      <div class="screen">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        <p class="subtitle">CHOOSE A CARD</p>
+        <div class="reward-row"></div>
+        <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+      </div>`;
+    const strip = app.querySelector('.reward-row');
+    for (const cardId of row.cardIds) {
+      const el = renderCard(registries, { cardId, upgraded: false }, {});
+      if (marks.cards.includes(cardId)) el.dataset.new = '1';
+      el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
+      strip.appendChild(el);
+    }
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);
+    back.addEventListener('click', () => renderMenu('card'));
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-back'), 0);
   }
 
   sfx.play('victory');
-  app.innerHTML = `
-    <div class="screen">
-      <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-      ${lines.map((l) => `<p style="font-size:14px">${l}</p>`).join('')}
-      ${rewards.cardIds && rewards.cardIds.length ? '<p class="subtitle">CHOOSE A CARD</p><div class="reward-row"></div>' : ''}
-      <button class="subtle" id="reward-continue">${rewards.cardIds && rewards.cardIds.length ? 'Skip the card' : 'CONTINUE'}</button>
-    </div>`;
-
-  const row = app.querySelector('.reward-row');
-  if (row) {
-    for (const cardId of rewards.cardIds) {
-      const el = renderCard(registries, { cardId, upgraded: false }, {});
-      el.addEventListener('click', () => {
-        run.deck.push({ instanceId: `r${run.deck.length}_${cardId}`, cardId, upgraded: false });
-        onDone(cardId);
-      });
-      row.appendChild(el);
-    }
-  }
-  app.querySelector('#reward-continue').addEventListener('click', () => onDone(null));
-
-  // Smart default (keyboard/gamepad): land on the first card to choose, else the
-  // Continue button.
-  if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-continue'), 0);
+  renderMenu();
 }
