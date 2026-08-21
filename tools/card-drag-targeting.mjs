@@ -82,8 +82,8 @@ if (process.argv.includes('--selftest')) {
     }, {
       name: 'a self-only drag names no default target',
       file: 'src/ui/screens/combat.js',
-      find: '        showSelfAim(legal);',
-      replace: '        showSelfAim(false);',
+      find: '      if (selfOnlyTarget) showSelfAim(legal);',
+      replace: '      /* planted: a self-only drag names no default target */',
       expectRed: /FAIL a self-only drag lights the player blue/,
     }, {
       name: 'pager escapes the hand overlay at Text XL',

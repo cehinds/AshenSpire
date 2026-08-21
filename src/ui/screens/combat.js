@@ -865,11 +865,21 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // #4d94e0 — friendlyTargets.js). Lit while the drop point is LEGAL, exactly
     // as the enemy aim is, so the highlight and the ghost's verdict never say
     // two different things about the same release.
+    //
+    // SCOPED TO THE PLAYER'S OWN ZONE, and that is not tidiness — it is the
+    // second shape of this function. The first called `clearAim()`, which owns
+    // the whole board, and let this branch skip `showDragAims([])` entirely.
+    // #198's accepted plant ("non-targeting drag incorrectly paints enemy aim
+    // silhouettes") went UNCAUGHT under it: the one line keeping a non-enemy
+    // drag from painting enemy silhouettes stopped running for the 54 self-only
+    // cards, so the plant armed and nothing exercised it. This aim owns the blue
+    // silhouette and nothing else; the clear reuses friendlyTargets.js rather
+    // than restating what an aim is made of.
     const showSelfAim = (on) => {
       const want = on ? app.querySelector('.combatant.player') : null;
       const cur = app.querySelector('.combatant.player.aiming.aim-self');
       if ((want && cur === want && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
-      clearAim();
+      clearTargetSilhouettes($('.player-zone'));
       if (want) setAim(want, 'self');
     };
 
@@ -898,11 +908,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         const enemies = inField ? livingEnemyEls() : [];
         showDragAims(enemies);
         legal = enemies.length > 0;
-      } else if (selfOnlyTarget) {
-        showSelfAim(legal);
       } else {
         showDragAims([]);
       }
+      // An ADDITION on top of the enemy silence above, never a branch around it:
+      // `showDragAims([])` is the one line that keeps a non-enemy drag from
+      // painting enemy silhouettes, and it has to keep running for a self-only
+      // card. 9 shipped cards reach that `else` with no self effect either
+      // (enterGorefire, enterBulwark, warriorsVow, transmute, masterOfStrategy
+      // and the four curses), so it is live code, not a fallback.
+      if (selfOnlyTarget) showSelfAim(legal);
       const state = legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
