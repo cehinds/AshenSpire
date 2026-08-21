@@ -278,13 +278,21 @@ async function main() {
         await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, S);
         await until(`!!document.querySelector('.combat.coop')`, 'coop');
       } else {
-        // THE PLAYER'S OWN ROAD TO A MAP WITH FLASKS ON IT.
+        // THE PLAYER'S OWN ROAD TO A MAP WITH FLASKS ON IT. RE-AIMED
+        // 2026-08-21 (Sunna, E2 / #247): the merchant became five folding
+        // bars — #shop-items split into #shop-relics and #shop-flasks, and
+        // the flask shelf sits behind the FLASKS bar — so the road gained
+        // the tap a player's road gained: open the bar, then buy. The old
+        // selector would find nothing and B0 would call the stock missing,
+        // which is this tool's own smaller-confident-number failure.
         await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
-        await until(`!!document.querySelector('#leave-shop')`, 'shop');
+        await until(`!!document.querySelector('[data-face="bar:flasks"]')`, 'shop');
         await wait(500);
         const bought = await ev(`(() => { let n = 0;
           for (let pass = 0; pass < 6; pass++) {
-            const row = [...document.querySelectorAll('#shop-items .class-pick')]
+            const face = document.querySelector('[data-face="bar:flasks"]');
+            if (face && face.getAttribute('aria-expanded') !== 'true') face.click();
+            const row = [...document.querySelectorAll('#shop-flasks .class-pick')]
               .find((el) => el.querySelector('.flask-identity') && !el.classList.contains('locked'));
             if (!row) break; row.click(); n++; }
           return n; })()`);

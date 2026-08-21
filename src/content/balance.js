@@ -63,6 +63,14 @@ export const balance = {
     flaskCost: [50, 80],
     removeBase: 75,
     removeStep: 25,
+    // E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
+    // same cost table his own stock rolls from (relicCost[rarity][0] /
+    // flaskCost[0]) — so a possession is always worth less than the cheapest
+    // he would sell one for, and the same item fetches the same cinders every
+    // visit, no rng. OUR number, labelled as ours: half, rounded down at the
+    // price, one word flips it. 0 turns the buy-back off at the table without
+    // touching the Settings toggle that owns the feature's visibility.
+    sellFraction: 0.5,
   },
 
   shrine: { healPct: 35 },
