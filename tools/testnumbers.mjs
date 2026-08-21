@@ -53,13 +53,18 @@
 //
 // KNOWN-BAD FIRST (development.md, *The instrument rule*), AND WHY NOT
 // doorplant.mjs. That harness requires the UNPLANTED copy to come back green,
-// and this tool's subject is RED on dev today — so its clean edge would fail
-// for the tree's state rather than the corpus's. The harness below keeps the
-// same door (file bytes in a copied real tree, the tool run whole from the
-// copy) and adds the edge doorplant cannot express: **a plant that must go
-// GREEN.** Removing the real collision and requiring 0 findings is the
-// direction everyone skips when the tree is already red — without it, a tool
-// that simply always reds would pass every other plant.
+// and this tool's subject was RED when it was written — so its clean edge would
+// have failed for the tree's state rather than the corpus's. The harness below
+// keeps the same door (file bytes in a copied real tree, the tool run whole from
+// the copy) and adds the edge doorplant cannot express: a plant that must go
+// GREEN, without which a tool that simply always reds passes every other plant.
+//
+// ⚠ THE COLLISION IS FIXED IN THE COMMIT AFTER THIS TOOL'S, so the baseline is
+// now genuinely green and the corpus keeps dev's real defect as a PLANT rather
+// than manufacturing its absence. That restructure was not my initiative: the
+// renumber moved the old plants' anchor, all five reported PLANT SITE DRIFTED,
+// and the wired test went red — a corpus refusing to run rather than quietly
+// passing. Read the note above PLANTS before editing any anchor here.
 //
 // Usage:
 //   node tools/testnumbers.mjs            the verdict
@@ -154,28 +159,44 @@ function collect(root) {
 
 // ── the same-door corpus ────────────────────────────────────────────────────
 if (process.argv.includes('--selftest')) {
-  const ABSENCE = { file: 'tests/run-node.mjs', find: '}  50. the status-reach', replace: '}  29. the status-reach' };
+  // ⚠ THE CORPUS WAS RESTRUCTURED WHEN THE DEFECT WAS FIXED, AND THE HARNESS
+  // DEMANDED IT. Every plant used to carry an ABSENCE edit that removed dev's
+  // real "50." collision first, because the tree was red and the green edge had
+  // to be manufactured. The commit that renumbered run-node's label to 29 moved
+  // that edit's anchor, all five plants reported PLANT SITE DRIFTED, and test 64
+  // went red — which is a corpus refusing to run rather than quietly passing,
+  // and is the behaviour worth having.
+  //
+  // Now the tree is clean, so the shape inverts and improves: the UNPLANTED copy
+  // is the green edge (no manufacturing), and the collision this card was opened
+  // for is kept as a PLANT — the real historical defect, re-runnable forever.
   const PLANTS = [
-    { name: 'BASELINE — the real collision on this tree, unedited', edits: [], want: 'red', match: /BAD\s+T1 / },
-    { name: 'ABSENCE — the collision removed; the check must go GREEN, not merely quieter', edits: [ABSENCE], want: 'green' },
-    { name: 'a duplicate INSIDE one home, not across the two', edits: [ABSENCE, { file: 'tests/run-node.mjs', find: '}  52. the closed-set', replace: '}  51. the closed-set' }], want: 'red', match: /BAD\s+T1 / },
-    // ⚠ THIS PLANT IS A PARTIAL ROT AND THAT IS BETTER THAN THE TOTAL ONE I
-    // AIMED FOR. `  test('` does not match every call — some are indented
-    // differently — so the emission pattern falls from 73 labels to TWO rather
-    // than to zero. The first T2 only fired at ZERO and printed "OK — 21 test
-    // labels, all unique", exit 0: a census that SHRANK, read as clean, inside
-    // the file written to refuse exactly that. The corpus found it, not me. The
-    // expected red is now the DISAGREEMENT between the two derivations, which is
-    // what actually knows.
+    { name: 'BASELINE — the unplanted copy must go GREEN, not merely quieter',
+      edits: [], want: 'green' },
+    { name: 'the real dev collision, re-planted: run-node takes back the 50 that engine.test.js owns',
+      edits: [{ file: 'tests/run-node.mjs', find: '}  29. the status-reach', replace: '}  50. the status-reach' }],
+      want: 'red', match: /BAD\s+T1 .*engine\.test\.js \+ tests\/run-node\.mjs/ },
+    { name: 'a duplicate INSIDE one home, not across the two',
+      edits: [{ file: 'tests/run-node.mjs', find: '}  52. the closed-set', replace: '}  51. the closed-set' }],
+      want: 'red', match: /BAD\s+T1 / },
+    // ⚠ A PARTIAL ROT, AND THAT IS BETTER THAN THE TOTAL ONE I AIMED FOR.
+    // `  test('` does not match every call — some are indented differently — so
+    // the emission pattern falls from 73 labels to TWO rather than to zero. The
+    // first T2 only fired at ZERO and printed "OK — 21 test labels, all unique",
+    // exit 0: a census that SHRANK, read as clean, inside the file written to
+    // refuse exactly that. The corpus found it, not me. The expected red is the
+    // DISAGREEMENT between two derivations, which is what actually knows.
     { name: "a home's emission pattern partially rots — 73 labels become 2, and a shrunken census is not a clean one",
-      edits: [ABSENCE, { file: 'tests/engine.test.js', find: "  test('", replace: "  spec('", all: true }], want: 'unknown', match: /derivations DISAGREE/ },
-    { name: 'a declared home stops existing', edits: [ABSENCE, { file: 'tests/run-node.mjs', drop: true }], want: 'unknown', match: /DOES NOT EXIST/ },
+      edits: [{ file: 'tests/engine.test.js', find: "  test('", replace: "  spec('", all: true }],
+      want: 'unknown', match: /derivations DISAGREE/ },
+    { name: 'a declared home stops existing',
+      edits: [{ file: 'tests/run-node.mjs', drop: true }], want: 'unknown', match: /DOES NOT EXIST/ },
   ];
 
   console.log(`testnumbers --selftest — same-door corpus (${PLANTS.length} plants)`);
   console.log('DOOR: each plant is FILE BYTES in a copied real tree; the tool runs WHOLE from that copy.');
-  console.log('      Not doorplant.mjs: it requires the unplanted copy to be green, and this tool\'s');
-  console.log('      subject is red on dev today. The GREEN plant below is the edge it cannot express.');
+  console.log('      The BASELINE plant is the unplanted copy and it must go GREEN — the edge everyone');
+  console.log('      skips, and without it a tool that simply always reds passes every other plant.');
   const dir = mkdtempSync(join(tmpdir(), 'testnumbers-selftest-'));
   let failed = 0;
   try {
