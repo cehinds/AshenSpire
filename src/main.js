@@ -682,7 +682,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -733,7 +733,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.seedString = seedToString(seed);

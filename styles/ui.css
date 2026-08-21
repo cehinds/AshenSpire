@@ -1069,13 +1069,42 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
-#cz-kits button.cz-opt {
-  /* Starting kits carry words and commit a run-defining choice. The generic
+#cz-kits button.cz-opt,
+#cz-armours button.cz-opt {
+  /* Starting kits and starting armour carry words and commit a run-defining choice. The generic
      sigil tile's 4rem square shrinks with body zoom; this specific interactive
      row uses the on-glass floor and grows around its authored label. */
   width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
+
+/* ---- E5 (#250): the stat-point editor -------------------------------------
+   Every NUMBER on this surface is written by customize.js from the creation
+   mode row (pool, floor, ceiling); this block is geometry only. Steppers sit
+   on the tap floor (base.css --tap-floor) because a thumb is the instrument;
+   aria-disabled dims without removing focus — an unfocusable control is
+   unaskable, the same ruling the BEGIN button carries. */
+.cz-statedit { display: flex; flex-direction: column; gap: 0.6rem; max-width: 24rem; }
+.se-modes { display: flex; gap: 0.8rem; }
+.se-modes .cz-opt.se-mode {
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
+.se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
+.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
+.se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-step {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 120ms, border-color 120ms;
+}
+.se-step:hover { transform: translateY(-1px); border-color: var(--parchment); }
+.se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.se-step[aria-disabled='true']:hover { transform: none; border-color: var(--line-soft); }
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }

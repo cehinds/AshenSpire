@@ -17,7 +17,9 @@ import { createRunState } from '../../model/state.js';
 import { statProjection } from '../../model/statProjection.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
-import { startingKitViews } from '../../model/startingKits.js';
+import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
+import { equipmentRequirementReceipt } from '../../model/loadout.js';
 
 export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -28,7 +30,20 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     spriteStyle: 'rendered',
     keepsakeId: 'none',
     startingKitId: null,
+    // E5 (#250): the set you begin wearing, and how your stats are laid.
+    // `attributes` is live only in pointbuy; in standard the preset is the
+    // allocation and the model owns it (createRunState reads the preset when
+    // `attributes` is not passed — one home, no copy here).
+    startingArmourId: null,
+    attributeMode: defaultCreationModeId(registries),
+    attributes: null,
   };
+  // THE PREVIEW'S ALLOCATION — the last LEGAL one. A pointbuy allocation is
+  // illegal every moment the pool is part-spent (fixedTotal), and createRunState
+  // rightly throws on it; a preview must never be built from a state the run
+  // could not start from. The editor and the START refusal carry the mid-edit
+  // truth; the receipts describe the run the last legal allocation would start.
+  let previewAttributes = null;
 
   // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
   // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
@@ -81,6 +96,15 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
           <div class="cz-fields">
             <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
             <div><p class="cz-label">STARTING KIT</p><div id="cz-kits" class="cz-opts"></div></div>
+            <!-- E5 (#250). Both rows arrive OPEN, and that is a ruling being
+                 honoured rather than a fold being forgotten: MR-189 scopes the
+                 fold to rows whose face buys words their options cannot, and
+                 rows that CHANGE THE RUN never fold — "folding them would hide
+                 the choosing behind a choice." Armour and stat points change
+                 the run. MR-183 withdrew the length argument; vertical scroll
+                 is the sanctioned cost. -->
+            <div><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cz-opts"></div></div>
+            <div><p class="cz-label">STAT POINTS</p><div id="cz-statedit" class="cz-statedit"></div></div>
             <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
             <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
             <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
@@ -131,7 +155,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
-    const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    const preview = createRunState({
+      seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId, attributeMode: state.attributeMode,
+      // Standard passes no allocation — the model reads its own preset (one
+      // home). Pointbuy passes the last LEGAL allocation; see previewAttributes.
+      ...(state.attributeMode === 'pointbuy' && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      profileMeta: meta,
+    });
     // THE SHORT FORM FIRST, and it is drawn from the same preview run the
     // receipts below use — one read of the run, two tiers of the same truth.
     const brief = creationBrief(registries, preview);
@@ -179,6 +210,152 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       kitBox.appendChild(button);
     }
   }
+  // ---- E5 (#250): starting armour + stat points -------------------------
+  // STARTING-ELIGIBLE ARMOUR = the class's free set plus every set this
+  // profile has EARNED (model/startingKits.js, the same meta.unlocked ledger
+  // the Armoury reads). A fresh profile sees one button; each prize won adds
+  // one. No copy of that rule lives here.
+  const armourBox = $('#cz-armours');
+  function renderArmours() {
+    const views = startingArmourViews(registries, state.classId, meta);
+    if (!views.some((row) => row.id === state.startingArmourId)) {
+      state.startingArmourId = (views.find((row) => row.free) || views[0]).id;
+    }
+    armourBox.innerHTML = '';
+    for (const set of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${set.id === state.startingArmourId ? ' chosen' : ''}`;
+      button.dataset.startingArmourId = set.id;
+      button.textContent = set.label;
+      // Law 3 clause 4 — the blurb is the set's own authored sentence, read
+      // from the row, never retyped.
+      attachTooltip(button, () => esc(set.blurb || set.label));
+      button.addEventListener('click', () => {
+        state.startingArmourId = set.id;
+        renderArmours();
+        renderPortrait();
+      });
+      armourBox.appendChild(button);
+    }
+  }
+
+  // THE STAT EDITOR. Every number on it is READ from the mode row in
+  // content/attributes.js (pool, floor, ceiling, labels) — a figure typed here
+  // would be a copy nothing syncs (Law 1 clause 2). His ruling, from the card:
+  // 10 points; dropped points come back (fixedTotal does that by construction);
+  // floor 8 is the reclaim limit; 15 caps creation, not the character (the
+  // model already raises the ceiling by levelled points).
+  const statBox = $('#cz-statedit');
+  const POINTBUY = 'pointbuy';
+  function pointbuyMode() { return creationMode(registries, POINTBUY); }
+  function resetAttributes() {
+    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    previewAttributes = { ...state.attributes };
+  }
+  function remainingPoints() {
+    const total = Object.values(state.attributes).reduce((a, b) => a + b, 0);
+    return allocationTotal(registries, POINTBUY) - total;
+  }
+  /** The one sentence START refuses with, or null. Pool first, then the kit. */
+  function statsProblem() {
+    // No allocation yet (a pointbuy mode nobody has edited) is the preset by
+    // construction — createRunState reads it from content — so nothing refuses.
+    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    const remaining = remainingPoints();
+    if (remaining !== 0) {
+      return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign — every point lands before the climb.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool — drop a stat to reclaim.`;
+    }
+    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    if (problems.length) return problems[0].msg;
+    // A legal allocation can still starve the chosen kit: requirements are the
+    // model's own receipt, asked here so the refusal lands at the button
+    // instead of as a throw inside the preview.
+    const kitRow = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId);
+    for (const pieceId of (kitRow && kitRow.pieceIds) || []) {
+      const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
+      if (!receipt.ok) {
+        const failed = receipt.failures[0];
+        return `${piece.name || piece.id} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
+      }
+    }
+    return null;
+  }
+  function renderStats() {
+    const mode = pointbuyMode();
+    statBox.innerHTML = '';
+    // The mode chips — labels from the content rows, like the sprite chips.
+    const chips = document.createElement('div');
+    chips.className = 'se-modes';
+    for (const m of registries.creationModes.all()) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `cz-opt se-mode${state.attributeMode === m.id ? ' chosen' : ''}`;
+      chip.textContent = m.label;
+      attachTooltip(chip, () => (m.id === POINTBUY
+        ? `Lay your own stats: ${m.bonusPool} points over baseline ${m.baseline}.<br>`
+          + `Floor ${m.minimum} — dropped points come back. Cap ${m.maximum} at creation; levels raise it later.`
+        : 'The class’s authored allocation — pick and climb.'));
+      chip.addEventListener('click', () => {
+        if (state.attributeMode === m.id) return;
+        state.attributeMode = m.id;
+        if (m.id === POINTBUY && !state.attributes) resetAttributes();
+        if (m.id === POINTBUY) previewAttributes = statsProblem() ? previewAttributes : { ...state.attributes };
+        renderStats();
+        renderPortrait();
+        seedRefusal();
+      });
+      chips.appendChild(chip);
+    }
+    statBox.appendChild(chips);
+    if (state.attributeMode !== POINTBUY) return;
+    if (!state.attributes) resetAttributes();
+    // Five rows and a pool line. Steppers refuse at the row's own edges with
+    // aria-disabled (never `disabled` — an unfocusable control is unaskable).
+    const remaining = remainingPoints();
+    const pool = document.createElement('p');
+    pool.className = 'se-pool';
+    pool.textContent = `Points to assign: ${remaining}`;
+    attachTooltip(pool, () => `${mode.bonusPool} over baseline ${mode.baseline}, floor ${mode.minimum}, cap ${mode.maximum} at creation.`);
+    statBox.appendChild(pool);
+    for (const def of orderedAttributes(registries)) {
+      const row = document.createElement('div');
+      row.className = 'se-row';
+      const value = state.attributes[def.id];
+      const atFloor = value <= mode.minimum;
+      const atCeil = value >= mode.maximum || remaining <= 0;
+      row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`
+        + `<span class="se-value">${value}</span>`;
+      const mk = (sign, refused, tip) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'se-step';
+        b.textContent = sign;
+        if (refused) b.setAttribute('aria-disabled', 'true');
+        attachTooltip(b, tip);
+        b.addEventListener('click', () => {
+          if (b.getAttribute('aria-disabled') === 'true') return;
+          state.attributes[def.id] = value + (sign === '+' ? 1 : -1);
+          if (!statsProblem()) previewAttributes = { ...state.attributes };
+          renderStats();
+          renderPortrait();
+          seedRefusal();
+        });
+        return b;
+      };
+      row.appendChild(mk('−', atFloor,
+        () => `−1 ${esc(def.label)} — floor ${mode.minimum}; a dropped point returns to the pool.`));
+      row.appendChild(mk('+', atCeil,
+        () => (remaining <= 0
+          ? 'The pool is spent — drop another stat to reclaim a point.'
+          : `+1 ${esc(def.label)} — cap ${mode.maximum} at creation; levels raise it later.`)));
+      statBox.appendChild(row);
+    }
+  }
+
   for (const cls of registries.classes.all()) {
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
@@ -192,9 +369,16 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     el.addEventListener('click', () => {
       state.classId = cls.id;
       state.startingKitId = null;
+      // E5: a class carries its own armour rows and its own preset — both
+      // choices are re-derived for the new class, exactly as the kit is.
+      state.startingArmourId = null;
+      if (state.attributeMode === POINTBUY) resetAttributes();
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
       renderKits();
+      renderArmours();
+      renderStats();
       renderPortrait();
+      seedRefusal();
     });
     classes.appendChild(el);
   }
@@ -206,6 +390,8 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   }
   classes.querySelector('.cz-class').classList.add('chosen');
   renderKits();
+  renderArmours();
+  renderStats();
 
   // ---- sigil + tint pickers ----
   const glyphBox = $('#cz-glyphs');
@@ -383,7 +569,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   // two different things. It is marked with `aria-disabled` + `data-refusal`
   // (never `disabled`, which would make it unfocusable and unaskable) so a
   // player who presses it hears why at the place they pressed.
-  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem(), () => {
+  // E5: the button refuses for the seed OR the stats, and each names itself —
+  // the stat sentence is statsProblem()'s own, derived beside the editor.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
@@ -394,13 +582,17 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
-    if (seed.problem()) return; // the refusal already said why, at the button
+    if (seed.problem() || statsProblem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId,
+      attributeMode: state.attributeMode,
+      // Standard sends no allocation: the model's preset is the one home.
+      ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
 
