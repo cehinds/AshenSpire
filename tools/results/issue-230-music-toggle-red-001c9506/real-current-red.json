@@ -1,0 +1,120 @@
+{
+  "kind": "issue-230-music-toggle-parity-real",
+  "issue": 230,
+  "head": "001c9506ef00500e186ff4e11827bc9b6cd6a522",
+  "paths": {
+    "balance": {
+      "path": "src/content/balance.js",
+      "sha256": "505e6a57076425444c5cd81ccca46c66348133403931cc36beaf7057418bd4cd"
+    },
+    "audio": {
+      "path": "src/ui/audio.js",
+      "sha256": "16733e6c0b704d9d9cb3ebc3298c0938f6ed6ebbb79861082a69a39e26323bc3"
+    },
+    "settings": {
+      "path": "src/ui/screens/settings.js",
+      "sha256": "68ae28a362762e27afe7c7c4191f493dd13cdfb4e9b9c6132a2e8a785a6b9bc4"
+    },
+    "quicknav": {
+      "path": "src/ui/components/quicknav.js",
+      "sha256": "0ae73e50c93c448b37ebcdd8b79f5f40a3a74329dfc64acc6ca6406a9b223361"
+    },
+    "menu": {
+      "path": "src/ui/uiContent.js",
+      "sha256": "86364308c07ad18e93715ceb2d9b991818acd0c97f66cfa13ca2c8279492f8be"
+    },
+    "main": {
+      "path": "src/main.js",
+      "sha256": "98a9d4e587c178d62114db343bc0eb9bdba38a99d66e5497933b7d3b19f6a7d8"
+    }
+  },
+  "door": {
+    "runtime": "real src/ui/audio.js initAudio() on the shared WebAudio stub, observed timers, gain buses, and fake external media",
+    "declarations": "real settingsRow()/settingOn() and menuRows() exports",
+    "ownershipBoundary": "bounded source scan of main.js and quicknav.js; no product code is mutated"
+  },
+  "boundary": "RED preparatory capture. Rendered desktop/phone Settings <-> Quick Menu interaction is the promotion gate after implementation.",
+  "observations": {
+    "sparseDefault": false,
+    "invalidHeals": false,
+    "persistence": false,
+    "offProceduralSilent": false,
+    "offExternalSilent": false,
+    "sameContextRestart": false,
+    "zeroVolumeEnabled": true,
+    "uiSynchronized": false,
+    "ariaAndCopy": false,
+    "oneCommitOwner": false,
+    "audioChannelsIndependent": true,
+    "unmuteKeepsMusicOff": false,
+    "disabledTimersAfterOff": 2,
+    "disabledExternalStarts": 1,
+    "liveExternalStopped": false,
+    "sameContextVolumePreserved": true,
+    "musicMenuRows": [],
+    "settingsRow": null
+  },
+  "checks": [
+    {
+      "id": "M1",
+      "label": "sparse musicEnabled defaults true",
+      "pass": false
+    },
+    {
+      "id": "M2",
+      "label": "invalid stored musicEnabled heals to the default",
+      "pass": false
+    },
+    {
+      "id": "M3",
+      "label": "explicit Music choice survives the settings persistence route",
+      "pass": false
+    },
+    {
+      "id": "M4",
+      "label": "Music off schedules no procedural sound or timers",
+      "pass": false
+    },
+    {
+      "id": "M5",
+      "label": "Music off starts no external media and stops live external media",
+      "pass": false
+    },
+    {
+      "id": "M6",
+      "label": "Music on restarts the recorded same context",
+      "pass": false
+    },
+    {
+      "id": "M7",
+      "label": "0% volume remains enabled and preserves the exact level",
+      "pass": true
+    },
+    {
+      "id": "M8",
+      "label": "Settings and Quick Menu expose one synchronized switch state",
+      "pass": false
+    },
+    {
+      "id": "M9",
+      "label": "both visible Music controls have switch semantics and truthful ON/OFF copy",
+      "pass": false
+    },
+    {
+      "id": "M10",
+      "label": "Quick Menu remains a launcher; one main-layer owner commits Music",
+      "pass": false
+    },
+    {
+      "id": "M11",
+      "label": "Music off does not mute SFX or alias global mute",
+      "pass": true
+    },
+    {
+      "id": "M12",
+      "label": "global mute off does not restart music that is still disabled",
+      "pass": false
+    }
+  ],
+  "verdict": "RED"
+}

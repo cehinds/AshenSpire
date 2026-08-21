@@ -1,0 +1,105 @@
+{
+  "kind": "issue-230-music-toggle-parity-selftest",
+  "head": "001c9506ef00500e186ff4e11827bc9b6cd6a522",
+  "door": "named observation mutants -> the same score() used for real source/audio observations",
+  "boundary": "This proves the scorer. Real-current mode separately drives initAudio. Rendered two-viewport promotion remains required after implementation.",
+  "held": true,
+  "mutants": [
+    {
+      "name": "sparse-default-off",
+      "field": "sparseDefault",
+      "caught": true,
+      "failed": [
+        "M1"
+      ]
+    },
+    {
+      "name": "invalid-value-not-healed",
+      "field": "invalidHeals",
+      "caught": true,
+      "failed": [
+        "M2"
+      ]
+    },
+    {
+      "name": "restore-drops-setting",
+      "field": "persistence",
+      "caught": true,
+      "failed": [
+        "M3"
+      ]
+    },
+    {
+      "name": "disabled-procedural-timers",
+      "field": "offProceduralSilent",
+      "caught": true,
+      "failed": [
+        "M4"
+      ]
+    },
+    {
+      "name": "disabled-external-keeps-playing",
+      "field": "offExternalSilent",
+      "caught": true,
+      "failed": [
+        "M5"
+      ]
+    },
+    {
+      "name": "same-context-reenable-noop",
+      "field": "sameContextRestart",
+      "caught": true,
+      "failed": [
+        "M6"
+      ]
+    },
+    {
+      "name": "volume-zero-loses-level",
+      "field": "zeroVolumeEnabled",
+      "caught": true,
+      "failed": [
+        "M7"
+      ]
+    },
+    {
+      "name": "overlay-settings-stale",
+      "field": "uiSynchronized",
+      "caught": true,
+      "failed": [
+        "M8"
+      ]
+    },
+    {
+      "name": "aria-state-stale",
+      "field": "ariaAndCopy",
+      "caught": true,
+      "failed": [
+        "M9"
+      ]
+    },
+    {
+      "name": "quicknav-second-owner",
+      "field": "oneCommitOwner",
+      "caught": true,
+      "failed": [
+        "M10"
+      ]
+    },
+    {
+      "name": "global-mute-alias",
+      "field": "audioChannelsIndependent",
+      "caught": true,
+      "failed": [
+        "M11"
+      ]
+    },
+    {
+      "name": "unmute-restarts-disabled-music",
+      "field": "unmuteKeepsMusicOff",
+      "caught": true,
+      "failed": [
+        "M12"
+      ]
+    }
+  ]
+}
