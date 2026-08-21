@@ -73,6 +73,16 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // ADDING A ROW IS A CONTRACT CHANGE and needs a plant in SELFTEST below.
 const NEGATION = /\b(?:not|never|no|un)\b/i;
 
+// A NONZERO FAILURE COUNT ANYWHERE ON THE LINE DISQUALIFIES IT, whatever else
+// the line says. `tool: OK — 9 checks passed, 4 failed` matched the "N checks
+// passed" row, captured the 9, and the trailing clause fell into the row's own
+// `[^\n]*$` tail: the door exited 0 while the child was explicitly reporting
+// failures. Found by a reviewer an hour after I rebuilt this matcher to reject
+// `1 passed, 4 failed` — I fixed the shape where the failure count came FIRST
+// and left the one where it trails. A verdict is an UNQUALIFIED success or it
+// is not a verdict.
+const FAILURE_COUNT = /\b(\d+)\s+(?:failed|failures?|errors?|missed|unresolved|red)\b/i;
+
 // THE TERMINAL-SUCCESS GRAMMAR, and every row is a FULL LINE, anchored.
 // Each row returns a positive count ONLY when the line states an unqualified
 // success: a ratio must be whole (n === m) and a suite must report zero
@@ -131,6 +141,11 @@ export function readVerdict(text) {
       if (!m) continue;
       // A NEGATED LINE IS NEVER A VERDICT. `NOT PASS`, `no checks passed`.
       if (NEGATION.test(line)) { refused.push({ line: line.trim(), why: 'negated' }); break; }
+      const fail = line.match(FAILURE_COUNT);
+      if (fail && Number(fail[1]) > 0) {
+        refused.push({ line: line.trim(), why: `states ${fail[1]} failure(s) on the same line` });
+        break;
+      }
       const n = v.count(m);
       if (n === null) { refused.push({ line: line.trim(), why: 'states a failure or a partial ratio' }); break; }
       hits.push({ count: n, form: v.name, line: line.trim() });
@@ -212,6 +227,12 @@ const SELFTEST = [
   { name: 'negated: "NOT PASS — 1/10"', file: 'console.log("NOT PASS — 1/10"); process.exit(0);\n', want: 3 },
   { name: 'negated: "NOT GREEN (1/9)"', file: 'console.log("NOT GREEN (1/9)"); process.exit(0);\n', want: 3 },
   { name: 'a suite reporting failures: "1 passed, 4 failed"', file: 'console.log("1 passed, 4 failed"); process.exit(0);\n', want: 3 },
+  { name: 'a CONTRADICTORY summary: "OK — 9 checks passed, 4 failed"',
+    file: 'console.log("tool: OK — 9 checks passed, 4 failed"); process.exit(0);\n', want: 3 },
+  { name: 'and its zero form is still a pass: "OK — 9 checks passed, 0 failed"',
+    file: 'console.log("tool: OK — 9 checks passed, 0 failed"); process.exit(0);\n', want: 0 },
+  { name: 'a trailing error count is refused too',
+    file: 'console.log("tool: OK — 12 checks passed (2 errors)"); process.exit(0);\n', want: 3 },
   { name: 'a partial ratio: "PASS — 1/27"', file: 'console.log("PASS — 1/27 shapes"); process.exit(0);\n', want: 3 },
   { name: 'changed its mind: 9 checks passed, then 0', want: 1,
     file: 'console.log("tool: OK — 9 checks passed."); console.log("tool: OK — 0 checks passed."); process.exit(0);\n' },

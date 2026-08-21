@@ -41,9 +41,18 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export function lintWorkflowText(text, file = '<text>') {
   const out = [];
   const lines = String(text).split(/\r?\n/);
+  const indentOf = (l) => l.match(/^\s*/)[0].length;
+
+  let jobsIndent = -1;          // indent of the `jobs:` key
+  let jobIndent = -1;           // indent of a job NAME under jobs:
+  let jobName = null;
+  let jobStepsSeen = 0;         // `steps:` keys in THIS job — more than one is the bug
+  let stepsKeyIndent = -1;      // indent of the active `steps:` key
+  let itemIndent = -1;          // indent of the FIRST `- ` under it; every item must match
   let inSteps = false;
-  let stepsIndent = -1;
   let step = null;
+  let skipDeeperThan = -1;      // inside a block scalar (`run: |`): skip more-indented lines
+
   const closeStep = () => {
     if (!step) return;
     const cmds = ['run', 'uses'].reduce((n, k) => n + (step.keys[k] || 0), 0);
@@ -57,32 +66,78 @@ export function lintWorkflowText(text, file = '<text>') {
     }
     step = null;
   };
+  const closeJob = () => { closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1; jobStepsSeen = 0; };
+
   for (let i = 0; i < lines.length; i++) {
-    const raw = lines[i];
-    const line = raw.replace(/\t/g, '  ');
+    const line = lines[i].replace(/\t/g, '  ');
+    // BLOCK SCALARS ARE PAYLOAD, NOT STRUCTURE. `run: |` carries shell, and
+    // shell contains lines that look exactly like YAML — a heredoc emitting
+    // `- name: data`, which this repo's own boundary job is full of. Reading
+    // that as a new step closed the real one and reported the PAYLOAD as
+    // command-less: a valid workflow, red forever, from a lint that now gates
+    // every CI run. Everything more indented than the key belongs to the key.
+    if (skipDeeperThan >= 0) {
+      if (!line.trim() || indentOf(line) > skipDeeperThan) continue;
+      skipDeeperThan = -1;
+    }
     if (!line.trim() || /^\s*#/.test(line)) continue;
-    const indent = line.match(/^\s*/)[0].length;
-    const m = line.match(/^\s*steps:\s*$/);
-    if (m) { closeStep(); inSteps = true; stepsIndent = indent; continue; }
-    if (!inSteps) continue;
-    // Leaving the steps block: a key at or left of `steps:` own indent.
-    if (indent <= stepsIndent && /^\s*[\w.-]+:/.test(line)) { closeStep(); inSteps = false; continue; }
-    const item = line.match(/^(\s*)-\s+([\w.-]+):(.*)$/);
-    if (item) {
+    const indent = indentOf(line);
+
+    if (/^\s*jobs:\s*$/.test(line)) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
+
+    // A job header: a bare key one level inside `jobs:`.
+    if (jobsIndent >= 0 && indent > jobsIndent && /^\s*[\w.-]+:\s*$/.test(line)
+        && (jobIndent === -1 || indent === jobIndent) && !inSteps) {
+      closeJob();
+      jobIndent = indent;
+      jobName = line.trim().replace(/:$/, '');
+      continue;
+    }
+    // Leaving a job entirely (back out to `jobs:` level or shallower).
+    if (jobIndent >= 0 && indent <= jobsIndent && /^\s*[\w.-]+:/.test(line)) { closeJob(); jobIndent = -1; jobName = null; continue; }
+
+    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(line)) {
       closeStep();
+      jobStepsSeen += 1;
+      // TWO `steps:` IN ONE JOB IS THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP:
+      // last-wins silently discards the ENTIRE first list — the real suite —
+      // and the old parser simply started reading the second one and reported
+      // nothing. A duplicate-key hole in the duplicate-key checker.
+      if (jobStepsSeen > 1) {
+        out.push(`${file}:${i + 1}: job ${JSON.stringify(jobName || '(unnamed)')} carries ${jobStepsSeen} \`steps:\` keys — YAML resolves duplicates last-wins SILENTLY, so an entire steps list (every check in it) never runs.`);
+      }
+      inSteps = true; stepsKeyIndent = indent; itemIndent = -1;
+      continue;
+    }
+    if (!inSteps) continue;
+
+    // A key at or left of the `steps:` key ends the block.
+    if (indent <= stepsKeyIndent && /^\s*[\w.-]+:/.test(line)) {
+      closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1;
+      i -= 1; // re-read this line as a job key / job header
+      continue;
+    }
+
+    const item = line.match(/^(\s*)-\s+([\w.-]+):(.*)$/);
+    // ONLY AT THE LIST'S OWN INDENT. The first `- ` after `steps:` fixes it;
+    // anything deeper is nested data, not a step.
+    if (item && (itemIndent === -1 || indent === itemIndent)) {
+      closeStep();
+      if (itemIndent === -1) itemIndent = indent;
       const key = item[2];
-      step = { line: i + 1, name: key === 'name' ? item[3].trim() : '(unnamed)', keys: { [key]: 1 }, indent: item[1].length + 2 };
+      step = { line: i + 1, name: key === 'name' ? item[3].trim() : '(unnamed)', keys: { [key]: 1 }, indent: indent + 2 };
+      if (/:\s*[|>][-+]?\s*$/.test(line)) skipDeeperThan = indent + 2 - 1;
       continue;
     }
     if (step) {
       const kv = line.match(/^(\s*)([\w.-]+):/);
       if (kv && kv[1].length === step.indent) {
-        const key = kv[2];
-        step.keys[key] = (step.keys[key] || 0) + 1;
+        step.keys[kv[2]] = (step.keys[kv[2]] || 0) + 1;
+        if (/:\s*[|>][-+]?\s*$/.test(line)) skipDeeperThan = step.indent;
       }
     }
   }
-  closeStep();
+  closeJob();
   return out;
 }
 
@@ -96,6 +151,21 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Ghost\n' },
   { name: 'a step with two run keys', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Twice\n        run: echo one\n        run: echo two\n' },
+  // (2) THE HEREDOC CASE — a valid `run: |` block whose payload contains a line
+  // that looks like a step. This repo's own boundary job is full of multi-line
+  // run blocks; reading payload as structure made a valid workflow red forever
+  // from a lint that gates every CI run.
+  { name: 'a run: | block carrying a step-shaped line is PAYLOAD, not a step', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Boundary\n        run: |\n          cat <<EOF\n          - name: data\n          EOF\n' },
+  { name: 'and a real command-less step AFTER a heredoc is still caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Boundary\n        run: |\n          echo "- name: data"\n      - name: Ghost\n' },
+  // (3) THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP: two `steps:` in one job.
+  { name: 'two steps: keys in one job — last-wins discards an ENTIRE list', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Real suite\n        run: node tests/run-node.mjs\n    steps:\n      - name: Shadow\n        run: echo nothing\n' },
+  { name: 'two jobs each with their own steps: is fine', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n  b:\n    steps:\n      - name: Two\n        run: echo 2\n' },
+  { name: 'nested list data under a step key is not a step', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Matrix\n        with:\n          args:\n            - name: inner\n        run: echo ok\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,
