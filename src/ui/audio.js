@@ -54,6 +54,7 @@ export function initAudio(settings = {}) {
     tracks: {}, // context → [track urls] from the folder manifest
     mediaEl: null, // currently-playing external <audio>, if any
     mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
+    bedGains: [], // the live per-context level stage(s) — see bedGain()
   };
   applyGains();
 
@@ -248,7 +249,45 @@ export function initAudio(settings = {}) {
 
   const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  function drone(freq, gain) {
+  /**
+   * bedGain(bed) → THE ONE PLACE `bed.gain` IS READ (#48).
+   *
+   * A context's mix level used to be applied by whoever happened to be making
+   * sound: the synth multiplied it into four separate voice literals, and the
+   * external-track path — the one that matters the moment real music files
+   * arrive — never read it at all, connecting straight to the bus at unity. So
+   * a shrine track played as loud as a boss track, and the number somebody
+   * chose on purpose was silently discarded (Vega, #48).
+   *
+   * Two readers and no home is the defect; ONE STAGE EVERY SOURCE PASSES
+   * THROUGH is the fix. The voices below hand this node their own raw peaks
+   * (0.12, 0.16, …) and an external `<audio>` connects to it unchanged, so
+   * `bed.gain` is applied exactly once, in one place, to both doors. The
+   * synth's shipped levels do not move: `0.16 * gain` into unity and `0.16`
+   * into a stage at `gain` are the same product, which is what
+   * tools/music-bed-gain-probe.mjs measures per bed rather than asserts.
+   *
+   * A bed with no gain field plays at unity rather than silently at zero — a
+   * missing number is an authoring mistake, and silence is the one failure
+   * nobody notices (Law 1 clause 5).
+   */
+  function bedGain(bed) {
+    // The previous playback's stage is finished with by the time a new one
+    // starts (its voices were stopped and any element paused in stopMusic), so
+    // it is released here rather than mid-fade, where disconnecting would cut
+    // the tail the fade exists to produce.
+    for (const g of state.bedGains) {
+      try { g.disconnect(); } catch (e) { /* already gone */ }
+    }
+    state.bedGains = [];
+    const g = ctx.createGain();
+    g.gain.value = bed && typeof bed.gain === 'number' ? bed.gain : 1;
+    g.connect(musicBus);
+    state.bedGains.push(g);
+    return g;
+  }
+
+  function drone(freq, gain, out) {
     const o = ctx.createOscillator();
     const o2 = ctx.createOscillator();
     const g = ctx.createGain();
@@ -269,7 +308,7 @@ export function initAudio(settings = {}) {
     lfo.connect(lfoG).connect(lp.frequency);
     o.connect(lp);
     o2.connect(lp);
-    lp.connect(g).connect(musicBus);
+    lp.connect(g).connect(out);
     o.start();
     o2.start();
     lfo.start();
@@ -299,7 +338,7 @@ export function initAudio(settings = {}) {
     // human typed on purpose, and the more specific intent wins.
     const ext = state.tracks[context];
     if (ext && ext.length) {
-      playExternal(context, ext);
+      playExternal(context, ext, bed);
       return 'external';
     }
     if (bed === MUSIC_SILENCE_WORD) return MUSIC_SILENCE_WORD;
@@ -318,7 +357,13 @@ export function initAudio(settings = {}) {
   // Stream a random track from the context's list; when it ends, play another
   // (fresh random pick → variety). Any load/decode error → the shipped bed
   // (or shipped silence) via proceduralFallback.
-  function playExternal(context, urls) {
+  //
+  // THE TRACK PASSES THROUGH THE SAME LEVEL STAGE THE SYNTH DOES (#48): it is
+  // the shipped table that says a shrine is quieter than a boss, and a file on
+  // disk is not a reason for that sentence to stop being true. The bed is
+  // handed in rather than looked up again — the caller already resolved it,
+  // and resolving it twice is how two readers of one number get born.
+  function playExternal(context, urls, bed) {
     const url = pickRandom(urls);
     let el;
     try {
@@ -327,14 +372,14 @@ export function initAudio(settings = {}) {
       el.preload = 'auto';
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
-        src.connect(musicBus);
+        src.connect(bedGain(bed));
         state.mediaSources.set(el, src);
       }
     } catch (e) {
       return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls);
+      if (state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
       if (state.context === context) {
@@ -349,7 +394,10 @@ export function initAudio(settings = {}) {
 
   function playProcedural(context, bed) {
     const variant = pickRandom(bed.variants);
-    if (bed.drone) drone(variant.root / 2, 0.12 * bed.gain);
+    // Every voice below carries its own RAW peak and meets the bed's level at
+    // one shared stage — see bedGain().
+    const out = bedGain(bed);
+    if (bed.drone) drone(variant.root / 2, 0.12, out);
     const scale = SCALES[variant.scale];
     const lift = variant.lift || 3;
     let step = 0;
@@ -363,9 +411,9 @@ export function initAudio(settings = {}) {
       o.frequency.value = freq;
       const t = now();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.16 * bed.gain, t + 0.08);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.08);
       g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
-      o.connect(g).connect(musicBus);
+      o.connect(g).connect(out);
       o.start(t);
       o.stop(t + 1.9);
       // Every few notes, lay a soft harmony a perfect fifth above — adds body
@@ -376,9 +424,9 @@ export function initAudio(settings = {}) {
         h.type = 'sine';
         h.frequency.value = freq * 1.4983; // ~perfect fifth
         hg.gain.setValueAtTime(0.0001, t);
-        hg.gain.exponentialRampToValueAtTime(0.07 * bed.gain, t + 0.12);
+        hg.gain.exponentialRampToValueAtTime(0.07, t + 0.12);
         hg.gain.exponentialRampToValueAtTime(0.0001, t + 1.6);
-        h.connect(hg).connect(musicBus);
+        h.connect(hg).connect(out);
         h.start(t);
         h.stop(t + 1.7);
       }
@@ -399,9 +447,9 @@ export function initAudio(settings = {}) {
         o.frequency.setValueAtTime(variant.root / 2, t);
         o.frequency.exponentialRampToValueAtTime(variant.root / 3, t + 0.18);
         g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.22 * bed.gain, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-        o.connect(g).connect(musicBus);
+        o.connect(g).connect(out);
         o.start(t);
         o.stop(t + 0.36);
       };
