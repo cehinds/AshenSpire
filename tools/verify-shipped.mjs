@@ -227,7 +227,9 @@ if (SELFTEST) {
       (caught ? '' : `  (got exit ${out.status})`));
     if (!caught) bad.push('zero-check plant');
   }
+  let ran = 0;
   const expect = (label, r, wantOk, wantCode) => {
+    ran += 1;
     const ok = r.ok === wantOk && r.code === wantCode;
     console.log(`  ${ok ? 'OK  ' : 'BAD '} ${label} → ${r.ok ? 'pass' : 'fail'} [${r.code}]` +
       (ok ? '' : `  (expected ${wantOk ? 'pass' : 'fail'} [${wantCode}])`));
@@ -339,7 +341,11 @@ if (SELFTEST) {
     for (const b of bad) console.error('    · ' + b);
     process.exit(1);
   }
-  console.log('\nverify-shipped --selftest: OK — every known-bad case failed for its named reason.');
+  // #12's contract: EXACTLY ONE terminated verdict line carrying a COUNT. The
+  // old line said "every known-bad case failed for its named reason" — true,
+  // and countless, so a corpus that quietly shrank to zero read the same.
+  // The zero-check plant above is counted with them (hence ran + 1).
+  console.log(`\nverify-shipped --selftest: OK — ${ran + 1} checks passed.`);
   process.exit(0);
 }
 

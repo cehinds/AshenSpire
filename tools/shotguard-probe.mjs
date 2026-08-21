@@ -299,7 +299,11 @@ async function evalIn(ws, session, expr) {
 }
 
 const failures = [];
+// #12: the verdict must carry a COUNT of what ran, so the checks are counted
+// where they happen rather than described afterwards.
+let ranChecks = 0;
 function check(name, ok, detail) {
+  ranChecks += 1;
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
   if (!ok) failures.push(name);
 }
@@ -452,7 +456,10 @@ if (MUTATE) {
     console.error('  A guard that cannot fail is not evidence. Fix the probe, not the expectation.');
     process.exit(1);
   }
-  console.log(`\nshotguard --mutate: OK — gate defeated, probe correctly failed ${failures.length} check(s):`);
+  // ONE TERMINATED VERDICT LINE, COUNTED (#12). The old wording carried the
+  // word "failed" with a number — true of the planted run and unreadable as a
+  // success by any honest reader, human or machine.
+  console.log(`\nshotguard --mutate: OK — ${failures.length} defeat(s) planted, ${failures.length} caught.`);
   for (const f of failures) console.log(`    · ${f}`);
   process.exit(0);
 }
@@ -461,7 +468,7 @@ if (failures.length) {
   console.error(`\nshotguard: ${failures.length} check(s) failed.`);
   process.exit(1);
 }
-console.log('\nshotguard: OK — ?shot= cannot reach the player\'s save; a normal boot still can.');
+console.log(`\nshotguard: OK — ${ranChecks} checks passed; ?shot= cannot reach the player's save, and a normal boot still can.`);
 process.exit(0);
 
 // Intercept src/main.js on the wire and serve the pre-fix body. The disk is never

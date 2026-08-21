@@ -31,11 +31,30 @@ zero-work green — because those need different fixes.
 
 **So a tool that CI trusts must print a counted verdict.** The accepted forms
 are a closed table at the top of `verdict.mjs` (`N checks passed`, `PASS — n/m`,
-`GREEN (n/m)`, `n passed, m failed`, `N … held`, `N caught`, `n of m … ran`). An
-unknown grammar is treated as silence, loudly, with the tool named — adding a
-row to that table is a contract change and ships with a plant in
+`GREEN (n/m)`, `n passed, m failed`, `N caught`, `n of m … ran`, `OK — N/N …`).
+
+**The line must state an unqualified success**, and the door proves it: a ratio
+must be whole (`PASS — 1/27` is refused), a suite must report zero failures
+(`1 passed, 4 failed` is refused), a negated line is never a verdict (`NOT PASS
+— 1/10`), and **two verdict lines are ambiguous** — a tool that says `9 checks
+passed` and later `0 checks passed` must not be readable as either. An unknown
+grammar is silence, loudly, with the tool named.
+
+**Wrapper flags are read only before the `--`.** `verdict -- node tool.mjs
+--selftest` runs the *tool's* self-test; the separator is required.
+
+Adding a grammar row is a contract change and ships with a plant in
 `node tools/verdict.mjs --selftest`, which runs first in CI so the door is never
-trusted unwatched.
+trusted unwatched. The two known-bads the contract requires live at
+`tests/fixtures/verdict/silent_exit_zero.mjs` (prints nothing, exits 0) and
+`tests/fixtures/verdict/vacuous_green.mjs` (well-formed verdict counting zero);
+the assertion must fail on both.
+
+**A step that never runs never reaches the door**, so `node
+tools/workflow-lint.mjs` reads `.github/workflows/*.yml` as text and refuses a
+step with no `run:`/`uses:` or one carrying duplicate keys — YAML resolves
+duplicates last-wins silently, and a parser has thrown that evidence away before
+you can check it.
 
 ## The four layers (dependencies point down only)
 
