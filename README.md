@@ -39,7 +39,7 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 > **Look at any image you regenerate before you commit it.** `tools/screenshot.mjs`
 > sizes the *window* rather than the viewport, so under Chromium 141 it writes a
 > picture whose bottom band is blank and still **exits 0**. Measured 2026-08-21 at
-> `3bafb25`: its one-shot path produced **87 blank rows** at the bottom of a
+> `456b8ea`: its one-shot path produced **87 blank rows** at the bottom of a
 > 1440x860 capture, where a CDP capture of the same page at the same size produced
 > **0**. A green exit is not a good picture.
 
