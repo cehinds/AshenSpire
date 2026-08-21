@@ -87,6 +87,34 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // ADDING A ROW IS A CONTRACT CHANGE and needs a plant in SELFTEST below.
 const NEGATION = /\b(?:not|never|no|un)\b/i;
 
+// THE CLAIM'S OWN NOUN IS A CLOSED SET TOO — because closing the LINE was not
+// enough. `PASS — 9/9 checks failed` and `tool: OK — 9/9 errors occurred` both
+// passed the terminated grammar: BOTH numbers belong to the verdict's own
+// captures, so the contradiction rule finds no extra number to object to, and
+// the noun after the ratio was an unrestricted word suffix — so a FAILURE WORD
+// SITTING IN THE CLAIM'S OWN SLOT READ AS SUCCESS.
+//
+// The fix is the closed-table principle applied one level deeper, and it is the
+// only version that does not reopen the English problem: the noun following a
+// ratio comes from a set of exact phrases this repo actually emits. Anything
+// else is unrecognised grammar, refused by name, and the tool either says one
+// of these or the set gains a row WITH A PLANT — a contract change, like every
+// other row here.
+//
+// ⚠ EXPECT THIS LIST TO BE INCOMPLETE. My enumeration of trailing-prose
+// summaries was one short a commit ago and the door found the sixth within a
+// minute. That is the mechanism working; the answer is to add the phrase and
+// its plant, NEVER to widen the slot back into a wildcard to silence it.
+const RATIO_NOUNS = new Set([
+  'shapes',
+  'placements photographed',
+  'plants observed red',
+  'known-bads observed red',
+  'current-build aliases refreshed',
+]);
+
+const knownNoun = (tail) => RATIO_NOUNS.has(String(tail || '').replace(/\s+/g, ' ').trim().toLowerCase());
+
 // THE CONTRADICTION RULE, AND IT IS ONE ANCHORED RULE RATHER THAN A LIST OF
 // PHRASINGS. Twice now I closed a shape and left the class: `4 failed` was
 // refused while `4 checks failed` walked through, because the filter demanded
@@ -141,12 +169,12 @@ const VERDICTS = [
   { name: 'label: OK — N <words>, N caught',
     re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s+[^,\n]*?,\s*(\d+)\s+caught\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[2]) : null) },
-  { name: 'label: OK — N/N <words>',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s*\/\s*(\d+)(?:\s+[\w -]*)?\s*[.!]?\s*$/di,
-    count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
-  { name: 'PASS — n/m <words>',
-    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)(?:\s+[\w -]*)?\s*[.!]?\s*$/di,
-    count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
+  { name: 'label: OK — N/N <known noun>',
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s*\/\s*(\d+)(?:\s+([\w -]*))?\s*[.!]?\s*$/di,
+    count: (m) => (Number(m[1]) === Number(m[2]) && knownNoun(m[3]) ? Number(m[1]) : null) },
+  { name: 'PASS — n/n <known noun>',
+    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)(?:\s+([\w -]*))?\s*[.!]?\s*$/di,
+    count: (m) => (Number(m[1]) === Number(m[2]) && knownNoun(m[3]) ? Number(m[1]) : null) },
   { name: 'label: GREEN (n/m)',
     re: /^\s*[\w][\w .+/-]*:\s*GREEN\s*\((\d+)\s*\/\s*(\d+)\)\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
@@ -447,6 +475,19 @@ const SELFTEST = [
     file: 'process.stdout.write("working...\\rtool: OK — 7 checks passed\\n"); process.exit(0);\n', want: 0 },
   // TRAILING TEXT IS UNRECOGNISED GRAMMAR — the pair of findings that pulled
   // in opposite directions, dissolved by one rule instead of interpreted.
+  // THE CLAIM'S OWN NOUN SLOT — closed after `9/9 checks failed` passed.
+  { name: 'a failure word IN THE NOUN SLOT is refused: "9/9 checks failed"',
+    file: 'console.log("PASS — 9/9 checks failed"); process.exit(0);\n', want: 3 },
+  { name: 'and "OK — 9/9 errors occurred" is refused',
+    file: 'console.log("tool: OK — 9/9 errors occurred"); process.exit(0);\n', want: 3 },
+  { name: 'an INVENTED success noun is refused too — the set is closed, not vetted',
+    file: 'console.log("tool: OK — 9/9 widgets frobnicated"); process.exit(0);\n', want: 3 },
+  { name: 'and every noun the repo actually emits still passes (shapes)',
+    file: 'console.log("PASS — 27/27 shapes"); process.exit(0);\n', want: 0 },
+  { name: 'known noun: current-build aliases refreshed',
+    file: 'console.log("launch: OK — 3/3 current-build aliases refreshed."); process.exit(0);\n', want: 0 },
+  { name: 'known noun: known-bads observed red',
+    file: 'console.log("buildversion --selftest: OK — 19/19 known-bads observed red"); process.exit(0);\n', want: 0 },
   { name: 'trailing prose claiming failure is refused: "; errors occurred"',
     file: 'console.log("tool: OK — 9 checks passed; errors occurred"); process.exit(0);\n', want: 3 },
   { name: 'a failure counted in WORDS is refused too: "; one check failed"',

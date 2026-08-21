@@ -180,6 +180,39 @@ export function lintWorkflowText(text, file = '<text>') {
     return ctx;
   };
 
+  // A FLOW MAPPING IS A KIND OF VALUE, NOT ONLY A KIND OF ENTRY. Handling it
+  // solely for an outer `- { … }` entry meant a block-style step carrying an
+  // inline flow value — `env: { FOO: one, FOO: two }` — recorded only `env`
+  // and returned NO FINDINGS while the duplicate resolved last-wins. So the
+  // walk lives here and is called from BOTH places: an entry, and any value
+  // that is a flow mapping.
+  const flowBody = (rest) => {
+    const t = String(rest || '').trim();
+    const m = t.match(/^\{(.*)\}$/);
+    return m ? m[1] : null;
+  };
+  const walkFlow = (body, ownerLabel, line, depth) => {
+    if (depth > 8) {
+      findings.push(`${file}:${line}: flow mapping nested deeper than this linter walks — refused BY NAME rather than read as "nothing here".`);
+      return;
+    }
+    for (const pair of splitFlow(body)) {
+      const kv = readKey(pair.trim());
+      if (!kv) continue;
+      record(kv.name, top().indent, line);
+      const nested = flowBody(kv.rest);
+      if (nested !== null) {
+        stack.push({ indent: top().indent + 1, seen: new Map(), label: kv.name, isStep: false, line, name: null });
+        walkFlow(nested, kv.name, line, depth + 1);
+        closeContext(stack.pop());
+      } else if (/^\[.*\{/.test(String(kv.rest || '').trim())) {
+        // A flow SEQUENCE carrying mappings: not walked, so it is refused by
+        // name rather than silently claimed as checked.
+        findings.push(`${file}:${line}: flow sequence containing a mapping at ${JSON.stringify(kv.name)} — this linter does not walk it, and says so rather than reading it as "nothing here".`);
+      }
+    }
+  };
+
   let jobsIndent = -1;      // indent of the `jobs:` key
   let jobIndent = -1;       // indent of a job ID under it
   let jobKeyIndent = -1;    // indent of a job's own keys
@@ -218,32 +251,11 @@ export function lintWorkflowText(text, file = '<text>') {
       const isStep = parent.pendingLabel === 'steps' && parent.pendingStepsList === true;
       const ctx = { indent: flow[1].length + 2, seen: new Map(), label: isStep ? 'a step' : 'a list entry', isStep, line: i + 1, name: null };
       stack.push(ctx);
-      // NESTED FLOW COLLECTIONS RECURSE. `with: { node-version: 22,
-      // node-version: 24 }` inside a flow step recorded only the TOP-LEVEL
-      // pairs, so a duplicate one level in was invisible — while this file
-      // now CLAIMS duplicates at every mapping level. A tool that claims a
-      // property it does not have is worse than one that admits the gap, so
-      // either it recurses or it refuses; recursion here is six lines.
-      const walkFlow = (body, label, depth) => {
-        if (depth > 8) {
-          findings.push(`${file}:${i + 1}: flow mapping nested deeper than this linter walks — refused BY NAME rather than read as "nothing here".`);
-          return;
-        }
-        for (const pair of splitFlow(body)) {
-          const kv = readKey(pair.trim());
-          if (!kv) continue;
-          if (kv.name === 'name' && !ctx.name && depth === 0) ctx.name = kv.rest.trim();
-          record(kv.name, ctx.indent, i + 1);
-          const nested = kv.rest.trim().match(/^\{(.*)\}$/);
-          if (nested) {
-            const child = { indent: ctx.indent + 1, seen: new Map(), label: kv.name, isStep: false, line: i + 1, name: null };
-            stack.push(child);
-            walkFlow(nested[1], kv.name, depth + 1);
-            stack.pop();
-          }
-        }
-      };
-      walkFlow(flow[2], ctx.label, 0);
+      for (const pair of splitFlow(flow[2])) {
+        const kv = readKey(pair.trim());
+        if (kv && kv.name === 'name' && !ctx.name) ctx.name = kv.rest.trim();
+      }
+      walkFlow(flow[2], ctx.label, i + 1, 0);
       closeContext(stack.pop());
       continue;
     }
@@ -338,6 +350,15 @@ export function lintWorkflowText(text, file = '<text>') {
     // The context this key OPENS (if a block follows) inherits a label.
     ctx.pendingLabel = k.name;
     ctx.pendingStepsList = k.name === 'steps' && indent === jobKeyIndent;
+
+    const inlineFlow = flowBody(k.rest);
+    if (inlineFlow !== null) {
+      stack.push({ indent: indent + 1, seen: new Map(), label: k.name, isStep: false, line: i + 1, name: null });
+      walkFlow(inlineFlow, k.name, i + 1, 0);
+      closeContext(stack.pop());
+    } else if (/^\[.*\{/.test(k.rest.trim())) {
+      findings.push(`${file}:${i + 1}: flow sequence containing a mapping at ${JSON.stringify(k.name)} — this linter does not walk it, and says so rather than reading it as "nothing here".`);
+    }
 
     if (isBlockScalar(k)) skipDeeperThan = indent;
   }
@@ -459,6 +480,15 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Setup, uses: actions/setup-node@v4, with: { node-version: 22, node-version: 24 } }\n' },
   { name: 'form: a healthy nested flow mapping is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Setup, uses: actions/setup-node@v4, with: { node-version: 22, cache: npm } }\n' },
+  // A FLOW MAPPING IS A KIND OF VALUE, NOT ONLY A KIND OF ENTRY.
+  { name: 'form: a duplicate inside an inline flow VALUE is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Env\n        env: { FOO: one, FOO: two }\n        run: echo ok\n' },
+  { name: 'form: a healthy inline flow value is silent', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Env\n        env: { FOO: one, BAR: two }\n        run: echo ok\n' },
+  { name: 'form: a flow value on a JOB key is walked too', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    env: { FOO: one, FOO: two }\n    steps:\n      - name: One\n        run: echo 1\n' },
+  { name: 'form: a flow SEQUENCE of mappings is refused by name, not claimed', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        include: [{ os: ubuntu, os: windows }]\n    steps:\n      - name: One\n        run: echo 1\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,
