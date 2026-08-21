@@ -367,6 +367,23 @@ function memberAfterExpression(tokens, start, end) {
   return memberAccessAt(tokens, cursor);
 }
 
+function memberAfterConditionalExpression(tokens, start, end) {
+  for (let cursor = end + 1; cursor < tokens.length; cursor++) {
+    if ([';', '{', '}'].includes(tokens[cursor]?.value)) break;
+    if (tokens[cursor]?.value !== ')') continue;
+    const open = findOpenBackward(tokens, cursor);
+    if (open < 0 || open >= start || tokens[open - 1]?.value === '?.' || !regexMayStart(tokens[open - 1])) continue;
+    const conditionalBranch = topLevelIndexes(tokens, open + 1, cursor, '?').some((operator) => start > operator);
+    const logicalAndBranch = topLevelIndexes(tokens, open + 1, cursor, '&&').some((operator) => start > operator);
+    const logicalAlternative = topLevelIndexes(tokens, open + 1, cursor, '||').length > 0 ||
+      topLevelIndexes(tokens, open + 1, cursor, '??').length > 0;
+    if (!conditionalBranch && !logicalAndBranch && !logicalAlternative) continue;
+    const access = memberAccessAt(tokens, cursor + 1);
+    if (access) return access;
+  }
+  return null;
+}
+
 function accessAfterExpression(tokens, start, end) {
   const access = memberAfterExpression(tokens, start, end);
   return access?.static && access.name === 'pathname' ? access : null;
@@ -404,6 +421,42 @@ function isStaticObjectPropertyName(tokens, index) {
   if (tokens[key]?.value === '*') key++;
   if (key !== index) return false;
   return tokens[index + 1]?.value === ':' || tokens[index + 1]?.value === '(';
+}
+
+function isStaticClassMemberName(tokens, index) {
+  let depth = 0;
+  let classOpen = -1;
+  for (let i = index - 1; i >= 0; i--) {
+    if (tokens[i].value === '}') { depth++; continue; }
+    if (tokens[i].value !== '{') continue;
+    if (depth > 0) { depth--; continue; }
+    classOpen = i;
+    break;
+  }
+  if (classOpen < 0 || headerKeywordBefore(tokens, 'class', classOpen) < 0) return false;
+
+  let entryStart = classOpen + 1;
+  let round = 0;
+  let square = 0;
+  let curly = 0;
+  for (let i = entryStart; i < index; i++) {
+    const value = tokens[i].value;
+    if (value === '(') round++;
+    else if (value === ')' && round > 0) round--;
+    else if (value === '[') square++;
+    else if (value === ']' && square > 0) square--;
+    else if (value === '{') curly++;
+    else if (value === '}' && curly > 0) {
+      curly--;
+      if (round === 0 && square === 0 && curly === 0) entryStart = i + 1;
+    } else if (value === ';' && round === 0 && square === 0 && curly === 0) entryStart = i + 1;
+  }
+
+  let key = entryStart;
+  while (['static', 'async', 'get', 'set', 'accessor'].includes(tokens[key]?.value)) key++;
+  if (tokens[key]?.value === '*') key++;
+  if (key !== index) return false;
+  return ['(', '=', ';', '}'].includes(tokens[index + 1]?.value);
 }
 
 function destructureBefore(tokens, assignment) {
@@ -951,7 +1004,8 @@ function findPathnameMisuses(tokens, errors) {
   };
 
   for (const url of urls.values()) {
-    const access = memberAfterExpression(tokens, url.start, url.close);
+    const access = memberAfterExpression(tokens, url.start, url.close) ||
+      memberAfterConditionalExpression(tokens, url.start, url.close);
     if (access?.static && access.name === 'pathname') add(url.start);
     else if (access && !access.static) add(url.start, 'ambiguous module URL alias flow');
   }
@@ -1033,7 +1087,8 @@ function findPathnameMisuses(tokens, errors) {
     if (declarations.has(i)) continue;
     if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) ||
         !isAlias(token.value, i)) continue;
-    if (['.', '?.'].includes(tokens[i - 1]?.value) || isStaticObjectPropertyName(tokens, i)) continue;
+    if (['.', '?.'].includes(tokens[i - 1]?.value) || isStaticObjectPropertyName(tokens, i) ||
+        isStaticClassMemberName(tokens, i)) continue;
     const access = accessAfterExpression(tokens, i, i);
     if (access) {
       if (!ASSIGNMENTS.has(tokens[access.end]?.value)) add(i);
@@ -1468,6 +1523,18 @@ function selftest() {
     ['static object method named like alias stays clean', "const u=new URL('./x',import.meta.url);const obj={u(){return 1}};fileURLToPath(u)", 0, 0, 0],
     ['static destructure key named like alias stays clean', "const u=new URL('./x',import.meta.url);const {u:value}=obj;fileURLToPath(u)", 0, 0, 0],
     ['unrelated ternary member names stay clean', "const u=new URL('./x',import.meta.url);ok?obj.u:other.u;fileURLToPath(u)", 0, 0, 0],
+    ['unrelated class method name stays clean', "const u=new URL('./x',import.meta.url);class X{u(){}}fileURLToPath(u)", 0, 0, 0],
+    ['unrelated class accessor name stays clean', "const u=new URL('./x',import.meta.url);class X{get u(){return 1}}fileURLToPath(u)", 0, 0, 0],
+    ['unrelated static class method name stays clean', "const u=new URL('./x',import.meta.url);class X{static u(){}}fileURLToPath(u)", 0, 0, 0],
+    ['unrelated class field name stays clean', "const u=new URL('./x',import.meta.url);class X{u=1}fileURLToPath(u)", 0, 0, 0],
+    ['computed class method key alias remains fail closed', "const u=new URL('./x',import.meta.url);class X{[u](){}}fileURLToPath(u)", 0, 0, 1],
+    ['conditional direct URL receiver pathname is caught', "(ok?new URL('./x',import.meta.url):platformValue).pathname", 1, 0, 0],
+    ['logical direct URL receiver pathname is caught', "(ok&&new URL('./x',import.meta.url)).pathname", 1, 0, 0],
+    ['nullish direct URL receiver pathname is caught', "(ok??new URL('./x',import.meta.url)).pathname", 1, 0, 0],
+    ['URL used only as conditional test stays clean', "(new URL('./x',import.meta.url)?platformA:platformB).pathname", 0, 0, 0],
+    ['URL left of logical and with platform result stays clean', "(new URL('./x',import.meta.url)&&platformValue).pathname", 0, 0, 0],
+    ['conditional direct URL receiver non-path member stays clean', "(ok?new URL('./x',import.meta.url):platformValue).origin", 0, 0, 0],
+    ['conditional direct URL receiver platform consumer stays clean', "fileURLToPath(ok?new URL('./x',import.meta.url):platformValue)", 0, 0, 0],
     ['unrelated static computed member name stays clean', "const u=new URL('./x',import.meta.url);obj['u'];fileURLToPath(u)", 0, 0, 0],
     ['object shorthand alias remains fail closed', "const u=new URL('./x',import.meta.url);const obj={u};fileURLToPath(u)", 0, 0, 1],
     ['object value alias remains fail closed', "const u=new URL('./x',import.meta.url);const obj={key:u};fileURLToPath(u)", 0, 0, 1],
