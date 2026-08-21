@@ -13,6 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { balance } from '../src/content/balance.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -22,6 +23,7 @@ const OUT = outAt >= 0 && args[outAt + 1]
   : join(ROOT, 'audit-evidence', 'issue-282-shrinefold-harness');
 const USE_DIST = process.argv.includes('--dist');
 const EVIDENCE_KIND = USE_DIST ? 'dist' : 'source';
+const TEXT_XL = balance.ui.textSize.XL;
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -30,6 +32,26 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 900000,
     env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
     plants: [
+      {
+        name: 'S0: the requested Text XL profile silently resolves to Text M',
+        file: 'src/main.js',
+        find: "  const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize\n    : (settings.largeText === true ? 'L' : 'M');",
+        replace: "  const tKey = 'M'; // KNOWN BAD: ignore the requested Text XL profile.",
+        expectRed: /S0 390x844: textXL=/,
+      },
+      {
+        name: 'S3: pointer activation cannot reach the Level fold face',
+        file: 'styles/ui.css',
+        append: '.shrine-screen [data-face="shrine:level"] { pointer-events: none !important; }',
+        expectRed: /S3 390x844: pointer open=/,
+      },
+      {
+        name: 'S3b: keyboard-generated disclosure clicks are ignored',
+        file: 'src/ui/components/disclosure.js',
+        find: "    button.addEventListener('click', () => {\n      hideTooltip();",
+        replace: "    button.addEventListener('click', (event) => {\n      if (event.detail === 0) return; // KNOWN BAD: Enter and Space do nothing.\n      hideTooltip();",
+        expectRed: /S3b 390x844: keyboard Enter close=/,
+      },
       {
         name: 'S2: the two collapsed shrine faces stop being uniform',
         file: 'styles/ui.css',
@@ -75,6 +97,7 @@ let checks = 0;
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const ok = (id, shape, detail) => { checks++; console.log(`  ok   ${id} ${shape} — ${detail}`); };
 const bad = (id, shape, detail) => { checks++; findings.push(`${id} ${shape}: ${detail}`); console.log(`  BAD  ${id} ${shape} — ${detail}`); };
+const SHOT_SETTINGS = encodeURIComponent(JSON.stringify({ textSize: 'XL' }));
 
 function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
@@ -107,11 +130,15 @@ const READ = `(() => {
   const panel = document.querySelector('.shrine-folds .disc-reveal');
   const screen = document.querySelector('.shrine-screen');
   const title = document.querySelector('.shrine-screen h2');
-  const controls = [...document.querySelectorAll('.shrine-folds button')].map(rect).filter(Boolean);
+  const controls = [...document.querySelectorAll('.shrine-folds button')]
+    .map((el) => ({ key:el.dataset.face || el.dataset.attr || el.textContent.trim().slice(0, 24), rect:rect(el) }))
+    .filter((row) => row.rect);
   return {
     title: title ? { text:title.textContent.trim(), rect:rect(title) } : null,
     viewport: { width:innerWidth, height:innerHeight, scrollX, scrollY },
     screen: screen ? { scrollTop:screen.scrollTop, scrollLeft:screen.scrollLeft, clientWidth:screen.clientWidth, clientHeight:screen.clientHeight, scrollWidth:screen.scrollWidth, scrollHeight:screen.scrollHeight, rect:rect(screen) } : null,
+    rootFontSize: document.documentElement.style.fontSize,
+    focusedFace: document.activeElement?.dataset?.face || null,
     faces: faces.map((el) => ({ key:el.dataset.face, expanded:el.getAttribute('aria-expanded'), disabled:el.disabled, ariaDisabled:el.getAttribute('aria-disabled'), value:(el.querySelector('.disc-value') || {}).textContent || '', rect:rect(el) })),
     open: panel && !panel.hidden ? panel.dataset.revealFor : null,
     revealRect: panel && !panel.hidden ? rect(panel) : null,
@@ -120,7 +147,8 @@ const READ = `(() => {
     level: (() => { const el=document.querySelector('#level-opt'); return el ? { affordable:el.dataset.affordable, blockedBy:el.dataset.blockedBy, cost:+el.dataset.cost, short:+el.dataset.short } : null; })(),
     counts: [...document.querySelectorAll('#flask-reallocate .flask-increment-count')].map((el) => +el.textContent.trim()),
     overflow: Math.max(0, document.documentElement.scrollWidth - innerWidth),
-    controlsOutside: controls.filter((r) => r.left < -0.5 || r.right > innerWidth + 0.5 || r.top < -0.5 || r.bottom > innerHeight + 0.5).length,
+    controlsOutsideX: controls.filter(({rect:r}) => r.left < -0.5 || r.right > innerWidth + 0.5).map((row) => row.key),
+    controlsOutsideY: controls.filter(({rect:r}) => r.top < -0.5 || r.bottom > innerHeight + 0.5).map((row) => row.key),
   };
 })()`;
 
@@ -155,7 +183,28 @@ async function main() {
         }
         throw new Error(`timeout waiting for ${label}`);
       };
-      const resetCaptureState = async () => {
+      const pointerPress = async (selector) => {
+        const point = await ev(`(() => {
+          const el = document.querySelector(${JSON.stringify(selector)});
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        })()`);
+        if (!point) return false;
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y }, sessionId);
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', buttons: 1, clickCount: 1 }, sessionId);
+        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', buttons: 0, clickCount: 1 }, sessionId);
+        return true;
+      };
+      const keyboardPress = async (selector, key, code, virtualKey, text = null) => {
+        const focused = await ev(`(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el)return false; el.focus(); return document.activeElement===el; })()`);
+        if (!focused) return false;
+        const common = { key, code, windowsVirtualKeyCode: virtualKey, nativeVirtualKeyCode: virtualKey };
+        await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', ...common, ...(text != null ? { text } : {}) }, sessionId);
+        await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', ...common }, sessionId);
+        return true;
+      };
+      const resetCaptureState = async (fitSelector = null) => {
         await ev(`new Promise((done) => {
           const screen = document.querySelector('.shrine-screen');
           window.scrollTo(0, 0);
@@ -164,34 +213,48 @@ async function main() {
             screen.scrollLeft = 0;
           }
           if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-          requestAnimationFrame(() => requestAnimationFrame(done));
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            const fit = ${JSON.stringify(fitSelector)} && document.querySelector(${JSON.stringify(fitSelector)});
+            fit?.scrollIntoView({ block:'end', inline:'nearest' });
+            requestAnimationFrame(() => requestAnimationFrame(done));
+          }));
         })`);
+        await cdp.send('Input.dispatchMouseEvent', {
+          type: 'mouseMoved',
+          x: shape.width - 2,
+          y: shape.height - 2,
+        }, sessionId);
+        await wait(300);
       };
-      const captureStateProblem = (state) => {
+      const captureStateProblem = (state, { posedScroll = false } = {}) => {
         const titleRect = state.title?.rect;
         const revealRect = state.revealRect;
         const exactViewport = state.viewport?.width === shape.width && state.viewport?.height === shape.height;
         const atOrigin = Math.abs(state.viewport?.scrollX || 0) < 0.5
           && Math.abs(state.viewport?.scrollY || 0) < 0.5
-          && Math.abs(state.screen?.scrollTop || 0) < 0.5
-          && Math.abs(state.screen?.scrollLeft || 0) < 0.5;
+          && Math.abs(state.screen?.scrollLeft || 0) < 0.5
+          && (posedScroll
+            ? state.screen?.scrollTop >= -0.5 && state.screen?.scrollTop <= state.screen?.scrollHeight - state.screen?.clientHeight + 0.5
+            : Math.abs(state.screen?.scrollTop || 0) < 0.5);
         const titleInside = state.title?.text === 'SHRINE OF EMBER' && titleRect
-          && titleRect.top >= -0.5 && titleRect.bottom <= shape.height + 0.5;
+          && titleRect.top >= 1 && titleRect.bottom <= shape.height + 0.5;
         const revealInside = revealRect && revealRect.left >= -0.5 && revealRect.right <= shape.width + 0.5
           && revealRect.top >= -0.5 && revealRect.bottom <= shape.height + 0.5;
         if (!exactViewport) return `viewport=${state.viewport?.width}x${state.viewport?.height}, expected ${shape.width}x${shape.height}`;
         if (!atOrigin) return `windowScroll=${state.viewport?.scrollX},${state.viewport?.scrollY} screenScroll=${state.screen?.scrollLeft},${state.screen?.scrollTop}`;
         if (!titleInside) return `title=${JSON.stringify(state.title)}`;
         if (!revealInside) return `revealRect=${JSON.stringify(revealRect)}`;
-        if (state.overflow !== 0 || state.controlsOutside !== 0) return `overflow=${state.overflow} controlsOutside=${state.controlsOutside}`;
+        if (state.overflow !== 0 || state.controlsOutsideX.length !== 0) return `overflow=${state.overflow} controlsOutsideX=${state.controlsOutsideX.join(',') || 'none'}`;
         return null;
       };
 
       console.log(`\n  ${shape.tag}`);
-      await cdp.send('Page.navigate', { url: `${base}?shot=rest` }, sessionId);
+      await cdp.send('Page.navigate', { url: `${base}?shot=rest&shotSettings=${SHOT_SETTINGS}` }, sessionId);
       await until(`!!document.querySelector('#flask-reallocate') && !!document.querySelector('#level-opt')`, 'shrine panels');
       await wait(300);
       const arrival = await ev(READ);
+      if (arrival.rootFontSize === TEXT_XL) ok('S0', shape.tag, `Text XL applied at the real shotSettings door (${arrival.rootFontSize})`);
+      else bad('S0', shape.tag, `textXL=${JSON.stringify(TEXT_XL)} rootFontSize=${JSON.stringify(arrival.rootFontSize)}`);
       const keys = arrival.faces.map((face) => face.key);
       if (keys.join('|') === 'shrine:flasks|shrine:level'
           && arrival.faces.every((face) => face.expanded === 'false')
@@ -205,36 +268,40 @@ async function main() {
       const uniform = flaskFace.rect && levelFace.rect
         && Math.abs(flaskFace.rect.width - levelFace.rect.width) < 1
         && Math.abs(flaskFace.rect.height - levelFace.rect.height) < 1;
-      if (uniform && flaskFace.rect.height >= 44 && arrival.overflow === 0 && arrival.controlsOutside === 0) {
-        ok('S2', shape.tag, `uniform ${flaskFace.rect.width.toFixed(1)}×${flaskFace.rect.height.toFixed(1)} faces; zero x-overflow; controls inside`);
+      if (uniform && flaskFace.rect.height >= 44 && arrival.overflow === 0 && arrival.controlsOutsideX.length === 0) {
+        ok('S2', shape.tag, `uniform ${flaskFace.rect.width.toFixed(1)}×${flaskFace.rect.height.toFixed(1)} faces; zero x-overflow; controls horizontally inside`);
       } else {
-        bad('S2', shape.tag, `uniform=${uniform} overflow=${arrival.overflow} controlsOutside=${arrival.controlsOutside}`);
+        bad('S2', shape.tag, `uniform=${uniform} overflow=${arrival.overflow} controlsOutsideX=${arrival.controlsOutsideX.join(',') || 'none'}`);
       }
 
-      await ev(`document.querySelector('[data-face="shrine:level"]').click(); true`);
+      const pointerOpened = await pointerPress('[data-face="shrine:level"]');
       await wait(150);
       const levelOpen = await ev(READ);
-      if (levelOpen.open === 'shrine:level' && levelOpen.levelArea && !levelOpen.flaskArea
-          && levelOpen.faces.find((face) => face.key === 'shrine:level')?.expanded === 'true') ok('S3', shape.tag, 'Level opens alone and reports expanded');
-      else bad('S3', shape.tag, `open=${levelOpen.open} levelArea=${levelOpen.levelArea} flaskArea=${levelOpen.flaskArea}`);
-      await ev(`document.querySelector('[data-face="shrine:level"]').click(); true`);
+      if (pointerOpened && levelOpen.open === 'shrine:level' && levelOpen.levelArea && !levelOpen.flaskArea
+          && levelOpen.faces.find((face) => face.key === 'shrine:level')?.expanded === 'true') ok('S3', shape.tag, 'real CDP pointer opens Level alone');
+      else bad('S3', shape.tag, `pointer open=${levelOpen.open} levelArea=${levelOpen.levelArea} flaskArea=${levelOpen.flaskArea}`);
+      const enterSent = await keyboardPress('[data-face="shrine:level"]', 'Enter', 'Enter', 13, '\r');
       await wait(150);
       const levelClosed = await ev(READ);
-      if (levelClosed.open === null && !levelClosed.levelArea && levelClosed.faces.every((face) => face.expanded === 'false')) ok('S3b', shape.tag, 'pressing the open face collapses it');
-      else bad('S3b', shape.tag, `open=${levelClosed.open} levelArea=${levelClosed.levelArea}`);
-      await ev(`document.querySelector('[data-face="shrine:level"]').click(); true`);
+      if (enterSent && levelClosed.open === null && !levelClosed.levelArea && levelClosed.faces.every((face) => face.expanded === 'false')) ok('S3b', shape.tag, 'real keyboard Enter collapses the focused face');
+      else bad('S3b', shape.tag, `keyboard Enter close=${levelClosed.open} levelArea=${levelClosed.levelArea}`);
+      const spaceSent = await keyboardPress('[data-face="shrine:level"]', ' ', 'Space', 32, ' ');
       await wait(150);
-      await resetCaptureState();
+      const spaceOpen = await ev(READ);
+      if (spaceSent && spaceOpen.open === 'shrine:level' && spaceOpen.levelArea
+          && spaceOpen.faces.find((face) => face.key === 'shrine:level')?.expanded === 'true') ok('S3c', shape.tag, 'real keyboard Space reopens Level');
+      else bad('S3c', shape.tag, `keyboard Space open=${spaceOpen.open} levelArea=${spaceOpen.levelArea}`);
+      await resetCaptureState('.shrine-folds .disc-reveal');
       const affordableState = await ev(READ);
-      const affordableProblem = captureStateProblem(affordableState);
-      if (affordableProblem) bad('S3c', shape.tag, `affordable capture refused: ${affordableProblem}`);
+      const affordableProblem = captureStateProblem(affordableState, { posedScroll: true });
+      if (affordableProblem) bad('S3d', shape.tag, `affordable capture refused: ${affordableProblem}`);
       else {
-        ok('S3c', shape.tag, 'affordable capture is at the exact viewport origin with title and reveal inside');
+        ok('S3d', shape.tag, `Text XL affordable capture is explicitly posed with title/reveal inside (screen scroll ${affordableState.screen.scrollTop.toFixed(1)})`);
         const affordablePng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-affordable-${shape.tag}.png`), Buffer.from(affordablePng.data, 'base64'));
+        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-affordable-text-xl-${shape.tag}.png`), Buffer.from(affordablePng.data, 'base64'));
       }
 
-      await ev(`document.querySelector('[data-face="shrine:flasks"]').click(); true`);
+      await pointerPress('[data-face="shrine:flasks"]');
       await wait(150);
       const flaskOpen = await ev(READ);
       if (flaskOpen.open === 'shrine:flasks' && flaskOpen.flaskArea && !flaskOpen.levelArea) ok('S4', shape.tag, 'opening Flask closes Level');
@@ -284,9 +351,29 @@ async function main() {
       if (finalProblem || !finalContract) {
         bad('S7', shape.tag, finalProblem || `final open=${finalState.open} flaskExpanded=${finalFlask?.expanded} levelExpanded=${finalLevel?.expanded} levelDisabled=${finalLevel?.disabled}`);
       } else {
-        ok('S7', shape.tag, `final ${shape.width}x${shape.height}; title and reveal inside; window/screen scroll 0; controls inside`);
+        const verticalReach = finalState.controlsOutsideY.length === 0
+          ? 'all controls vertically visible'
+          : `${finalState.controlsOutsideY.length} controls vertically outside but scroll-reachable`;
+        ok('S7', shape.tag, `final Text XL ${shape.width}x${shape.height}; title/reveal inside at origin; horizontal controls inside; ${verticalReach}`);
         const lowPng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-low-cinders-${shape.tag}.png`), Buffer.from(lowPng.data, 'base64'));
+        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-low-cinders-text-xl-${shape.tag}.png`), Buffer.from(lowPng.data, 'base64'));
+      }
+      await ev(`new Promise((done) => {
+        const face=document.querySelector('[data-face="shrine:level"]');
+        face?.scrollIntoView({ block:'end', inline:'nearest' });
+        requestAnimationFrame(() => requestAnimationFrame(done));
+      })`);
+      const disabledFaceState = await ev(READ);
+      const disabledFaceRect = disabledFaceState.faces.find((row) => row.key === 'shrine:level')?.rect;
+      const disabledFaceInside = disabledFaceRect && disabledFaceRect.left >= -0.5
+        && disabledFaceRect.right <= shape.width + 0.5 && disabledFaceRect.top >= -0.5
+        && disabledFaceRect.bottom <= shape.height + 0.5;
+      if (disabledFaceInside && disabledFaceState.faces.find((row) => row.key === 'shrine:level')?.disabled) {
+        ok('S7b', shape.tag, 'disabled Level face is reachable by vertical scroll at Text XL');
+        const disabledPng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-disabled-level-text-xl-${shape.tag}.png`), Buffer.from(disabledPng.data, 'base64'));
+      } else {
+        bad('S7b', shape.tag, `disabled Level face rect=${JSON.stringify(disabledFaceRect)} disabled=${disabledFaceState.faces.find((row) => row.key === 'shrine:level')?.disabled}`);
       }
       await cdp.send('Target.closeTarget', { targetId });
     }
