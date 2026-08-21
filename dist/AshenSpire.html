@@ -3222,11 +3222,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    itself 26px taller than the viewport. `data-short` is the layout decider's
    existing answer; this selector measures nothing and creates no breakpoint.
    Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again. */
+   wholly readable at the first height where the game must refuse again.
+
+   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
+   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
+   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
+   while this block's paragraph above promised readability. So below the compact
+   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
+   ("turn") the heading already carries in words, and at the one height where it
+   competes with a sentence for pixels, the sentence wins (every mark
+   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
 :root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
-:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
-:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-glyph { display: none; }
 :root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
 :root[data-short='true'] .upright-say { margin-bottom: 6px; }
 :root[data-short='true'] .upright-hint { margin-top: 8px; }
@@ -34473,7 +34480,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '64523a43bb';
+const SOURCE = '0c50f3bcc3';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34507,7 +34514,7 @@ const SOURCE = '64523a43bb';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0904';
+const ORDINAL = '0912';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -34843,6 +34850,7 @@ const { LOCKED_CLASSES } = require("src/content/index.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { focusElement } = require("src/ui/input.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { creationBrief } = require("src/model/creationBrief.js");
 const { relicText } = require("src/ui/components/card.js");
@@ -35171,12 +35179,45 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   // choose?", so they are re-read from `state`, never written twice.
   const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
   SECTIONS.forEach((row, i) => {
+    // THE CURSOR'S CLAIM IS READ AT CAPTURE — before any option's own listener
+    // can rebuild the box. KIT's does (renderKits), and after the rebuild the
+    // `.gp-focus` element is detached: a document query at the bubbling tail
+    // finds nothing and cannot tell "the pick came through the cursor" from
+    // "no cursor was ever summoned". Decided the moment the press lands.
+    let cursorWasInside = false;
+    row.box.addEventListener('click', () => {
+      const cursor = document.querySelector('.gp-focus');
+      cursorWasInside = !!cursor && row.box.contains(cursor);
+    }, true);
     row.box.addEventListener('click', (ev) => {
+      // OWNERSHIP IS THE DISPATCH, NOT THE TREE (Vira's P1 on #288, found by
+      // Codex). This listener sits ON row.box, so any event it hears travelled
+      // through this box when it was dispatched — that is the whole ownership
+      // question. The old `row.box.contains(picked)` re-asked it of the tree
+      // as it stands NOW, and KIT is the one section whose own pick listener
+      // rebuilds its box (renderKits) before this bubbling tail runs: the
+      // clicked button was detached, contains() said no, and the flow stalled
+      // at its second section on every kit pick.
       const picked = ev.target.closest('.cz-opt, .cz-class, .cz-keepsake');
       refreshFolds();
-      if (!picked || picked.classList.contains('locked') || !row.box.contains(picked)) return;
+      if (!picked || picked.classList.contains('locked')) return;
       const next = SECTIONS[i + 1];
       if (next) fold.open(next.key); else fold.close();
+      // A PICK THAT HIDES THE CURSOR'S ELEMENT OWES THE CURSOR A DESTINATION
+      // (Vira's P2 on #288, found by Codex). The advance just stashed this row
+      // — or renderKits detached its buttons outright — so a keyboard/pad
+      // player's next Confirm would fall back to the first focusable, the
+      // CLASS face, and march them back to section one on every pick. The
+      // destination is the flow's own next step: the just-opened section's
+      // current choice (or its first option) — so Confirm-Confirm walks the
+      // whole flow accepting defaults — and BEGIN THE CLIMB when the flow
+      // completes. A mouse pick with the cursor elsewhere transfers nothing:
+      // a player who never summoned the cursor is not handed one.
+      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);
     });
   });
   // "the top menu (class) should be expanded" — his words, and the arrival

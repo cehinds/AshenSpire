@@ -8,6 +8,7 @@ import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { creationBrief } from '../../model/creationBrief.js';
 import { relicText } from '../components/card.js';
@@ -336,12 +337,45 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   // choose?", so they are re-read from `state`, never written twice.
   const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
   SECTIONS.forEach((row, i) => {
+    // THE CURSOR'S CLAIM IS READ AT CAPTURE — before any option's own listener
+    // can rebuild the box. KIT's does (renderKits), and after the rebuild the
+    // `.gp-focus` element is detached: a document query at the bubbling tail
+    // finds nothing and cannot tell "the pick came through the cursor" from
+    // "no cursor was ever summoned". Decided the moment the press lands.
+    let cursorWasInside = false;
+    row.box.addEventListener('click', () => {
+      const cursor = document.querySelector('.gp-focus');
+      cursorWasInside = !!cursor && row.box.contains(cursor);
+    }, true);
     row.box.addEventListener('click', (ev) => {
+      // OWNERSHIP IS THE DISPATCH, NOT THE TREE (Vira's P1 on #288, found by
+      // Codex). This listener sits ON row.box, so any event it hears travelled
+      // through this box when it was dispatched — that is the whole ownership
+      // question. The old `row.box.contains(picked)` re-asked it of the tree
+      // as it stands NOW, and KIT is the one section whose own pick listener
+      // rebuilds its box (renderKits) before this bubbling tail runs: the
+      // clicked button was detached, contains() said no, and the flow stalled
+      // at its second section on every kit pick.
       const picked = ev.target.closest('.cz-opt, .cz-class, .cz-keepsake');
       refreshFolds();
-      if (!picked || picked.classList.contains('locked') || !row.box.contains(picked)) return;
+      if (!picked || picked.classList.contains('locked')) return;
       const next = SECTIONS[i + 1];
       if (next) fold.open(next.key); else fold.close();
+      // A PICK THAT HIDES THE CURSOR'S ELEMENT OWES THE CURSOR A DESTINATION
+      // (Vira's P2 on #288, found by Codex). The advance just stashed this row
+      // — or renderKits detached its buttons outright — so a keyboard/pad
+      // player's next Confirm would fall back to the first focusable, the
+      // CLASS face, and march them back to section one on every pick. The
+      // destination is the flow's own next step: the just-opened section's
+      // current choice (or its first option) — so Confirm-Confirm walks the
+      // whole flow accepting defaults — and BEGIN THE CLIMB when the flow
+      // completes. A mouse pick with the cursor elsewhere transfers nothing:
+      // a player who never summoned the cursor is not handed one.
+      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);
     });
   });
   // "the top menu (class) should be expanded" — his words, and the arrival
