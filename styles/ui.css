@@ -3031,7 +3031,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
    He is right, and it is measurable: tools/hand-side-probe.mjs reads the
    alpha-weighted ink centroid of every handed armament against the body's own
-   ink centre and finds 22 of 23 drawn into the model's opposite hand.
+   ink centre and finds 23 of 24 drawn into the model's opposite hand. (The
+   denominator is every hand=left|right row in weapons.csv with its asset derived
+   as artKey || id, the runtime's own rule -- src/model/loadout.js:962.)
 
    WHY THE CORRECTION IS HERE AND NOT IN THE ART. The side is not decided at
    runtime by anything — `equippedFigure` stacks full-frame pre-rendered layers,

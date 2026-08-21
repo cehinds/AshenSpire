@@ -156,16 +156,66 @@ const CARRIED = new Map([
   ['parryDagger', 'hand=left, built from the `dagger` archetype at the RIGHT hand position — equipment-blender.py dispatches on `geom` and never reads `hand`'],
 ]);
 
+// weapons.csv QUOTES ANY FIELD CONTAINING A COMMA — `blurb` does it repeatedly
+// ("Slow, and it does not care."). A positional `line.split(',')` shifts every
+// column after that field, so the one column this function must read correctly
+// is precisely the one a naive split gets wrong. This reads quoted fields
+// properly rather than approximately.
+function csvFields(line) {
+  const out = [];
+  let cur = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (quoted) {
+      if (c !== '"') { cur += c; continue; }
+      if (line[i + 1] === '"') { cur += '"'; i++; continue; }
+      quoted = false;
+    } else if (c === '"') quoted = true;
+    else if (c === ',') { out.push(cur); cur = ''; }
+    else cur += c;
+  }
+  out.push(cur);
+  return out;
+}
+
+// weapons.csv carries no machine-readable header row (line 1 is a comment), so
+// the column contract is positional. Named here rather than counted inline.
+const COL = { id: 0, hand: 3, artKey: 17 };
+
+// THE ASSET IS DERIVED THE WAY THE RUNTIME DERIVES IT — that is now this
+// function's whole job. `src/model/loadout.js:962` reads `piece.artKey ||
+// piece.id`, so a row may point at ANOTHER row's art. Deriving from `id` alone
+// measures a DIFFERENT POPULATION than the one that reaches the player, and
+// then reports the size of its own set as though it were the file's.
+//
+// THAT ALREADY HAPPENED HERE, and it is why this comment is long. `shortbow`
+// (hand=right, artKey=dagger) is the only non-identity artKey in the file.
+// Under the id-only rule there is no `weapon_shortbow.webp`, an `existsSync`
+// guard `continue`d past it WITHOUT PRINTING A LINE, and the tool reported
+// "22 of 23" out of a file holding 24 handed rows. Nothing was wrong on the
+// screen and every number looked reproducible. Law 0 clause 5 exactly: the
+// silent plausible derivation is the dangerous one, not the loud missing one.
+//
+// SO A HANDED ROW IS NEVER SUBTRACTED IN SILENCE. Every row with
+// `hand ∈ {left,right}` enters the population. One whose asset is absent is
+// carried in as `missing`, PRINTED BY NAME, and it fails the gate — a dropped
+// row is either measured or named, never quietly gone. There is deliberately
+// NO `continue` on a missing asset in this function; reintroducing one is the
+// regression P6 plants.
 function armaments() {
   const csv = readFileSync(resolve(ROOT, 'content/source/weapons.csv'), 'utf8');
   const rows = [];
   for (const line of csv.split('\n')) {
     if (!line.trim() || line.startsWith('#')) continue;
-    const f = line.split(',');
-    const [id, , , hand] = f;
+    const f = csvFields(line);
+    const id = f[COL.id];
+    const hand = f[COL.hand];
     if (!id || (hand !== 'left' && hand !== 'right')) continue;
-    if (!existsSync(resolve(ROOT, `assets/equipment/weapon_${id}.webp`))) continue;
-    rows.push({ id, hand, url: `assets/equipment/weapon_${id}.webp` });
+    // The runtime's own rule, `loadout.js:962`.
+    const art = (f[COL.artKey] || '').trim() || id;
+    const url = `assets/equipment/weapon_${art}.webp`;
+    rows.push({ id, hand, art, url, missing: !existsSync(resolve(ROOT, url)) });
   }
   return rows;
 }
@@ -381,6 +431,20 @@ if (process.argv.includes('--selftest')) {
         replace: "const CARRIED = new Map([\n  ['ghostBlade', 'a piece that does not exist'],",
         expectRed: /FINDING ghostBlade: carried in CARRIED but no such armament was measured/,
       },
+      {
+        // THE MEASURED SET MAY NOT SILENTLY SHRINK — the fourth failure
+        // direction, and the one that got past a real review. This restores
+        // the exact regression: derive the asset from `id` alone instead of
+        // the runtime's `artKey || id`, and `shortbow` (artKey=dagger) loses
+        // its asset. The old code answered that with a bare `continue` and
+        // printed a full-looking count over a population one row smaller than
+        // the file's. Now the row is named and the gate is red.
+        name: 'P6 the asset is derived from `id` alone — a handed row drops out of the population',
+        file: 'tools/hand-side-probe.mjs',
+        find: "    const art = (f[COL.artKey] || '').trim() || id;",
+        replace: "    const art = id;",
+        expectRed: /MISSING shortbow.*declared handed, never measured/,
+      },
     ],
   }));
 }
@@ -414,8 +478,14 @@ function sideOf(dx, band) {
 const wantFor = (hand) => (hand === 'right' ? 'viewer-left' : 'viewer-right');
 
 async function main() {
-  const pieces = armaments();
-  if (!pieces.length) throw new Error('no handed armament with an asset was found — an empty corpus is not a pass');
+  // THE POPULATION IS EVERY HANDED ROW IN THE FILE — the number this tool
+  // reports and the number it measured are now the same number, and where they
+  // cannot be, the difference is named row by row rather than subtracted.
+  const population = armaments();
+  const absent = population.filter((r) => r.missing);
+  const pieces = population.filter((r) => !r.missing);
+  if (!population.length) throw new Error('no handed armament was found in weapons.csv — an empty corpus is not a pass');
+  if (!pieces.length) throw new Error('every handed armament is missing its asset — nothing could be measured at all');
   const served = await serve({ root: ROOT, port: 8471, open: false });
   try {
     const { asset, rendered } = await run(served.port, pieces);
@@ -429,7 +499,8 @@ async function main() {
       if (sideOf(r.piece.centroid - asset.body.centroid, band1) !== wantFor(r.hand)) bakedWrong++;
     }
     console.log(`\nARM 1 · the baked art (DIAGNOSTIC — does not decide the exit code)`);
-    console.log(`  ${bakedWrong} of ${asset.out.length} handed armaments are baked into the model's opposite hand.`);
+    console.log(`  ${bakedWrong} of ${asset.out.length} MEASURED armaments are baked into the model's opposite hand`
+      + `${absent.length ? ` (of ${population.length} handed rows in weapons.csv; ${absent.length} unmeasurable, named below)` : ` — the file's full handed population of ${population.length}`}.`);
     console.log(`  Expected to stay wrong until the art is re-rendered from corrected producers.`);
 
     // ---- ARM 2 · what the player receives (THE GATE) ----
@@ -459,6 +530,14 @@ async function main() {
       if (carried && !ok) { carriedSeen.push(r.id); continue; }
       if (carried && ok) { bad.push({ id: r.id, reason: 'carried in CARRIED but renders correctly — delete the ledger row' }); continue; }
       if (!ok) bad.push({ ...r, dx, side, want });
+    }
+
+    // A HANDED ROW WITH NO ASSET IS NAMED, NOT SUBTRACTED. This is the whole
+    // of P6: the measured set may not silently shrink. The row cannot be
+    // measured, so it cannot be called correct — it is printed and it is red.
+    for (const m of absent) {
+      console.log(`  MISSING ${m.id.padEnd(20)} hand=${m.hand.padEnd(5)} art=${m.art} — declared handed, never measured`);
+      bad.push({ id: m.id, reason: `declared hand=${m.hand} but ${m.url} does not exist — a handed row was dropped from the measured set` });
     }
 
     // ---- ARM 2b · EXACTLY ONE MIRROR ----
@@ -491,10 +570,15 @@ async function main() {
       for (const b of bad) console.log(`  FINDING ${b.id}: ${b.reason || `drawn ${b.side}, wanted ${b.want}`}`);
       console.log(`  The figure faces the viewer, so a RIGHT-hand piece belongs on the VIEWER'S LEFT.`);
     } else {
+      // `population.length`, not `rows.length`: the denominator is what the
+      // FILE holds, so the count cannot quietly shrink to the size of whatever
+      // this run happened to manage to measure.
       const right = rows.length - carriedSeen.length;
-      console.log(`\nhand-side-probe: OK — ${right} of ${rows.length} handed armaments reach the player on the model's own correct side, `
+      console.log(`\nhand-side-probe: OK — ${right} of ${population.length} handed armaments reach the player on the model's own correct side, `
         + `with exactly one mirror; ${carriedSeen.length} carried above and still wrong.`);
-      console.log(`  This is NOT "all ${rows.length} are right" and must not be quoted as one.`);
+      console.log(`  Denominator is every hand=left|right row in weapons.csv, each row's asset derived`);
+      console.log(`  as artKey || id — the runtime's own rule (src/model/loadout.js:962).`);
+      console.log(`  This is NOT "all ${population.length} are right" and must not be quoted as one.`);
     }
     console.log('\nBOUNDARY — what a green here does NOT mean:');
     console.log('  · nothing about the ART being right. Arm 1 is still red by design: the fix is a');
