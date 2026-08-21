@@ -43,7 +43,9 @@ viewport it:
    allowed, measured reach path), with the title and active reveal fully inset;
 5. moves the pointer away, blurs focus, and uses an explicit capture pose so
    hover/focus residue cannot silently change the screenshots; and
-6. records the disabled Level face after scrolling it into view.
+6. records the disabled Level face after scrolling it into view; and
+7. compares each low-cinders capture to its immutable committed raw anchor
+   through a deterministic normalized-pixel contract.
 
 The desktop affordable Text XL pose needs `7px` of `.shrine-screen` vertical
 scroll to fit the entire active reveal; the phone pose needs `0px`. The final
@@ -51,11 +53,53 @@ low-cinders capture is taken at scroll origin. At desktop Text XL, the disabled
 Level face is below that origin frame and is proven reachable in the separate
 `disabled-level` capture.
 
+## Raw-byte nondeterminism and normalized-pixel contract
+
+Raw PNG identity is not an acceptance rule. Repeated exact-head source and
+dist runs produced three valid raw hashes for the desktop low-cinders frame:
+
+- committed anchor: `81354b7b753a412f5bbe6eb0ff6d63ca899182c1a9b65c8e59940411f67a6bcd`;
+- alternate A: `9b0163d443b78000a267270a71b52c8af2b8c0ca7e156d91fd875207e566db87`;
+- alternate B: `dfce19bb6a25fec2261705dd3e844721f7634bf5944206145bb32cbb99991080`.
+
+The largest pairwise difference is 44 pixels in the physical `1200x730`
+frame, bounded to rounded fold borders at `x=355..834`, `y=355..416`, with a
+maximum RGB-channel delta of exactly 1. Chrome's `--deterministic-mode` was
+also measured and did not remove this variation. The prior statement that
+source and dist were byte-identical on every run is withdrawn.
+
+The harness now decodes Chrome's non-interlaced 8-bit RGB/RGBA PNG itself and
+applies this explicit contract:
+
+- dimensions must match the committed anchor exactly;
+- a pixel whose maximum channel delta is `0` is identical;
+- a pixel whose maximum channel delta is `1` is reported as raster noise;
+- at most 64 raster-noise pixels are permitted; and
+- any channel delta greater than 1 is meaningful visual drift and fails.
+
+Every verdict reports both raw hash prefixes, noise/meaningful counts, maximum
+delta, and bounding box. A default verification run never replaces the raw
+anchor with whichever antialias variant won that compositor pass. A custom
+`--out` run still saves its actual raw candidate. This does not normalize or
+edit a screenshot; it normalizes only the comparison verdict.
+
+The 64-pixel allowance is wider than the observed 44-pixel maximum but remains
+tiny relative to the 876,000-pixel desktop frame. Two same-door plants prove
+that it does not hide meaningful change: a 4px fold translation produces more
+than 50,000 meaningful phone pixels, and a cyan fold-border plant produces
+more than 6,000 meaningful phone pixels. Existing plants separately catch the
+title leaving the viewport and collapsed-face geometry divergence.
+
 ## Focused results
 
-- `node tools/shrinefold.mjs` — source, `24/24` green.
-- `node tools/shrinefold.mjs --dist` — shipped bundle, `24/24` green.
-- `node tools/shrinefold.mjs --selftest` — `8/8` same-door plants caught and
+- Three repeated `node tools/shrinefold.mjs --out <unique-dir>` rounds —
+  source, `26/26` green each.
+- Three repeated `node tools/shrinefold.mjs --dist --out <unique-dir>` rounds
+  — shipped bundle, `26/26` green each.
+- Default source and dist runs — `26/26` each, with the committed anchors
+  unchanged before/after despite raw candidates `dfce19bb...` and
+  `9b0163d4...`.
+- `node tools/shrinefold.mjs --selftest` — `10/10` same-door plants caught and
   the unplanted copied tree green:
   - S0: requested Text XL silently resolves to Text M;
   - S3: pointer activation cannot reach the Level face;
@@ -64,7 +108,9 @@ Level face is below that origin frame and is proven reachable in the separate
   - S4: opening Flask leaves Level painted;
   - S6: cinder shortfall no longer disables Level;
   - S5: flask reallocation forgets the open fold; and
-  - S7: the final desktop title is clipped above the viewport.
+  - S7: the final desktop title is clipped above the viewport;
+  - S7c: an in-bounds 4px fold translation changes rendered geometry; and
+  - S7c: a cyan fold border changes the rendered palette.
 - `node tests/run-node.mjs` — `94 passed, 0 failed`.
 - `node tools/linkcheck.mjs` — `280/280` module graphs link.
 - `node tools/onefold.mjs` — fold constructors `1 == 1`; aria-expanded
@@ -76,9 +122,10 @@ Level face is below that origin frame and is proven reachable in the separate
 - `node tools/buildversion.mjs --check` — `8/8` green; H is explicitly n/a
   because the changes are only tool/evidence bytes.
 
-## Current Text XL capture hashes
+## Committed Text XL anchor hashes
 
-Source and dist are byte-identical for every corrected capture in this run:
+Source and dist anchors have matching bytes. Repeated raw-candidate identity is
+not claimed; the normalized contract above owns that verdict.
 
 - affordable `1200x730`:
   `965a0a9cae3359c738cda376d689cb9aa116cde0e1b4b403f9293dccb427a2df`

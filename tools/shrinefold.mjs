@@ -8,9 +8,11 @@
 // a cinder shortfall. Evidence is harness-owned and non-serialized: this tool
 // never overwrites the published docs/preview images.
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { balance } from '../src/content/balance.js';
@@ -21,9 +23,11 @@ const outAt = args.indexOf('--out');
 const OUT = outAt >= 0 && args[outAt + 1]
   ? resolve(args[outAt + 1])
   : join(ROOT, 'audit-evidence', 'issue-282-shrinefold-harness');
+const REFERENCE_OUT = join(ROOT, 'audit-evidence', 'issue-282-shrinefold-harness');
 const USE_DIST = process.argv.includes('--dist');
 const EVIDENCE_KIND = USE_DIST ? 'dist' : 'source';
 const TEXT_XL = balance.ui.textSize.XL;
+const MAX_RASTER_NOISE_PIXELS = 64;
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -31,6 +35,8 @@ if (process.argv.includes('--selftest')) {
     tool: 'shrinefold.mjs',
     timeoutMs: 900000,
     env: process.env.CHROME ? { CHROME: process.env.CHROME } : {},
+    extraCopy: ['assets', 'audit-evidence/issue-282-shrinefold-harness'],
+    includePng: true,
     plants: [
       {
         name: 'S0: the requested Text XL profile silently resolves to Text M',
@@ -85,6 +91,18 @@ if (process.argv.includes('--selftest')) {
         append: '.shrine-screen h2 { transform: translateY(-100px) !important; }',
         expectRed: /S7 1200x730: title=/,
       },
+      {
+        name: 'S7c: a geometry shift survives DOM in-bounds checks but changes the rendered fold',
+        file: 'styles/ui.css',
+        append: '.shrine-screen .shrine-folds { transform: translateX(4px) !important; }',
+        expectRed: /S7c 390x844: normalized visual drift/,
+      },
+      {
+        name: 'S7c: a palette drift survives DOM geometry checks but changes the rendered fold',
+        file: 'styles/ui.css',
+        append: '.shrine-screen .shrine-folds .disc-face { border-color: #00ffff !important; }',
+        expectRed: /S7c 390x844: normalized visual drift/,
+      },
     ],
   }));
 }
@@ -98,6 +116,165 @@ const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 const ok = (id, shape, detail) => { checks++; console.log(`  ok   ${id} ${shape} — ${detail}`); };
 const bad = (id, shape, detail) => { checks++; findings.push(`${id} ${shape}: ${detail}`); console.log(`  BAD  ${id} ${shape} — ${detail}`); };
 const SHOT_SETTINGS = encodeURIComponent(JSON.stringify({ textSize: 'XL' }));
+
+const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+
+function paeth(a, b, c) {
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
+  if (pa <= pb && pa <= pc) return a;
+  if (pb <= pc) return b;
+  return c;
+}
+
+// Chrome's screenshots are non-interlaced 8-bit RGB/RGBA PNGs. Decode that
+// narrow product directly so the evidence comparator has no package or image
+// tool whose version can silently change the verdict.
+function decodePng(bytes) {
+  const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+  if (bytes.length < 33 || !bytes.subarray(0, 8).equals(signature)) throw new Error('not a PNG');
+  let offset = 8;
+  let width = 0;
+  let height = 0;
+  let bitDepth = 0;
+  let colorType = -1;
+  let interlace = -1;
+  const idat = [];
+  while (offset + 12 <= bytes.length) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.toString('ascii', offset + 4, offset + 8);
+    const start = offset + 8;
+    const end = start + length;
+    if (end + 4 > bytes.length) throw new Error(`truncated PNG ${type} chunk`);
+    if (type === 'IHDR') {
+      width = bytes.readUInt32BE(start);
+      height = bytes.readUInt32BE(start + 4);
+      bitDepth = bytes[start + 8];
+      colorType = bytes[start + 9];
+      interlace = bytes[start + 12];
+    } else if (type === 'IDAT') idat.push(bytes.subarray(start, end));
+    offset = end + 4;
+    if (type === 'IEND') break;
+  }
+  const channels = colorType === 2 ? 3 : colorType === 6 ? 4 : 0;
+  if (!width || !height || bitDepth !== 8 || !channels || interlace !== 0) {
+    throw new Error(`unsupported PNG ${width}x${height} depth=${bitDepth} color=${colorType} interlace=${interlace}`);
+  }
+  const rowBytes = width * channels;
+  const raw = inflateSync(Buffer.concat(idat));
+  if (raw.length !== height * (rowBytes + 1)) {
+    throw new Error(`PNG scanlines=${raw.length}, expected ${height * (rowBytes + 1)}`);
+  }
+  const recon = Buffer.alloc(rowBytes * height);
+  let input = 0;
+  for (let y = 0; y < height; y++) {
+    const filter = raw[input++];
+    const row = y * rowBytes;
+    for (let x = 0; x < rowBytes; x++) {
+      const left = x >= channels ? recon[row + x - channels] : 0;
+      const up = y > 0 ? recon[row - rowBytes + x] : 0;
+      const upperLeft = y > 0 && x >= channels ? recon[row - rowBytes + x - channels] : 0;
+      let predictor;
+      if (filter === 0) predictor = 0;
+      else if (filter === 1) predictor = left;
+      else if (filter === 2) predictor = up;
+      else if (filter === 3) predictor = Math.floor((left + up) / 2);
+      else if (filter === 4) predictor = paeth(left, up, upperLeft);
+      else throw new Error(`unsupported PNG filter ${filter}`);
+      recon[row + x] = (raw[input++] + predictor) & 0xff;
+    }
+  }
+  const rgba = Buffer.alloc(width * height * 4);
+  for (let source = 0, target = 0; source < recon.length; source += channels, target += 4) {
+    rgba[target] = recon[source];
+    rgba[target + 1] = recon[source + 1];
+    rgba[target + 2] = recon[source + 2];
+    rgba[target + 3] = channels === 4 ? recon[source + 3] : 255;
+  }
+  return { width, height, rgba };
+}
+
+function normalizedPixelDiff(referenceBytes, candidateBytes) {
+  const reference = decodePng(referenceBytes);
+  const candidate = decodePng(candidateBytes);
+  if (reference.width !== candidate.width || reference.height !== candidate.height) {
+    return { dimensions: `${candidate.width}x${candidate.height} != ${reference.width}x${reference.height}`, meaningfulPixels: Infinity };
+  }
+  let rawDiffPixels = 0;
+  let rasterNoisePixels = 0;
+  let meaningfulPixels = 0;
+  let maxDelta = 0;
+  let minX = reference.width;
+  let minY = reference.height;
+  let maxX = -1;
+  let maxY = -1;
+  for (let i = 0; i < reference.rgba.length; i += 4) {
+    const delta = Math.max(
+      Math.abs(reference.rgba[i] - candidate.rgba[i]),
+      Math.abs(reference.rgba[i + 1] - candidate.rgba[i + 1]),
+      Math.abs(reference.rgba[i + 2] - candidate.rgba[i + 2]),
+      Math.abs(reference.rgba[i + 3] - candidate.rgba[i + 3]),
+    );
+    if (delta === 0) continue;
+    rawDiffPixels++;
+    if (delta <= 1) rasterNoisePixels++; else meaningfulPixels++;
+    maxDelta = Math.max(maxDelta, delta);
+    const pixel = i / 4;
+    const x = pixel % reference.width;
+    const y = Math.floor(pixel / reference.width);
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  }
+  return {
+    dimensions: `${reference.width}x${reference.height}`,
+    rawDiffPixels,
+    rasterNoisePixels,
+    meaningfulPixels,
+    maxDelta,
+    bbox: rawDiffPixels ? `${minX},${minY}..${maxX},${maxY}` : 'none',
+  };
+}
+
+async function recordNormalizedCapture(candidateBytes, filename, shapeTag) {
+  const referencePath = join(REFERENCE_OUT, filename);
+  let referenceBytes;
+  try {
+    referenceBytes = await readFile(referencePath);
+  } catch (error) {
+    bad('S7c', shapeTag, `missing committed pixel reference ${filename}: ${error.message}`);
+    if (resolve(OUT) !== resolve(REFERENCE_OUT)) await writeFile(join(OUT, filename), candidateBytes);
+    return;
+  }
+  let diff;
+  try {
+    diff = normalizedPixelDiff(referenceBytes, candidateBytes);
+  } catch (error) {
+    bad('S7c', shapeTag, `pixel comparison could not decode ${filename}: ${error.message}`);
+    if (resolve(OUT) !== resolve(REFERENCE_OUT)) await writeFile(join(OUT, filename), candidateBytes);
+    return;
+  }
+  const rawReference = hash(referenceBytes);
+  const rawCandidate = hash(candidateBytes);
+  const normalizedGreen = !diff.dimensions.includes('!=')
+    && diff.meaningfulPixels === 0
+    && diff.rasterNoisePixels <= MAX_RASTER_NOISE_PIXELS;
+  if (normalizedGreen) {
+    ok('S7c', shapeTag, `normalized pixels match; raw ${rawReference.slice(0, 12)}→${rawCandidate.slice(0, 12)}; `
+      + `${diff.rasterNoisePixels} raster-noise pixel(s) <=1 channel, 0 meaningful, bbox ${diff.bbox}`);
+  } else {
+    bad('S7c', shapeTag, `normalized visual drift; dimensions ${diff.dimensions}; `
+      + `${diff.rasterNoisePixels || 0} raster-noise, ${diff.meaningfulPixels} meaningful, `
+      + `max delta ${diff.maxDelta || 0}, bbox ${diff.bbox || 'n/a'}; raw ${rawReference.slice(0, 12)}→${rawCandidate.slice(0, 12)}`);
+  }
+  // The committed PNG is the immutable raw anchor. A default verification run
+  // never replaces it with an antialias variant that only happens to win this
+  // compositor pass. Custom --out runs retain their raw candidate for audit.
+  if (resolve(OUT) !== resolve(REFERENCE_OUT)) await writeFile(join(OUT, filename), candidateBytes);
+}
 
 function connect(wsUrl) {
   const ws = new WebSocket(wsUrl);
@@ -356,7 +533,8 @@ async function main() {
           : `${finalState.controlsOutsideY.length} controls vertically outside but scroll-reachable`;
         ok('S7', shape.tag, `final Text XL ${shape.width}x${shape.height}; title/reveal inside at origin; horizontal controls inside; ${verticalReach}`);
         const lowPng = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-        await writeFile(join(OUT, `${EVIDENCE_KIND}-shrine-fold-low-cinders-text-xl-${shape.tag}.png`), Buffer.from(lowPng.data, 'base64'));
+        const lowBytes = Buffer.from(lowPng.data, 'base64');
+        await recordNormalizedCapture(lowBytes, `${EVIDENCE_KIND}-shrine-fold-low-cinders-text-xl-${shape.tag}.png`, shape.tag);
       }
       await ev(`new Promise((done) => {
         const face=document.querySelector('[data-face="shrine:level"]');
