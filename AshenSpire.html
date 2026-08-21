@@ -1158,9 +1158,10 @@ button.rs-reset {
   pointer-events: none; z-index: 2;
 }
 .reward-skip {
-  margin-top: 13px;
+  margin-left: auto; align-self: center; flex: 0 0 auto;
   min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;
 }
+:root[data-layout='narrow'] .reward-kind .reward-skip { margin-left: auto; }
 /* Receive feedback: a taken row settles — border flashes gold and the card
    relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
@@ -5474,6 +5475,7 @@ const QUARANTINE_NOTICE =
 let run = null;
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
@@ -6102,8 +6104,10 @@ function enterNode(nodeId) {
         saves,
         rng,
         onCollectArmament: (id) => collectArmament(id, 'treasure'),
+        onPersist: persist,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
+          rewardDoneCount++;
           persist();
           showMap();
         },
@@ -6326,8 +6330,9 @@ function onCombatEnd(result, combat, enc) {
       saves,
       rng,
       onCollectArmament: (id) => collectArmament(id, 'boss'),
+      onPersist: persist,
       rewards: bossRewards,
-      onDone: () => advanceAct(),
+      onDone: () => { rewardDoneCount++; advanceAct(); },
     });
   }
 
@@ -6348,8 +6353,10 @@ function onCombatEnd(result, combat, enc) {
     saves,
     rng,
     onCollectArmament: (id) => collectArmament(id, enc.pool),
+    onPersist: persist,
     rewards,
     onDone: () => {
+      rewardDoneCount++;
       persist();
       showMap();
     },
@@ -6694,6 +6701,9 @@ if (shotState) {
     // ordering nothing on its own; found-unchanged is the real witness,
     // because found and receipts ride the same gated saveMeta.
     receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
+    liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
       : [],
@@ -6754,7 +6764,7 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
   // enters, its own cap and duplicate rules deciding what fits — never by
   // assigning the array.
-  if (shotState === 'map' && shotParams.get('shotStorage') === 'full') {
+  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
     const cap = registries.balance.equipment.storageSlots || 8;
     for (const piece of registries.equipment.armaments) {
       if ((run.loadout.storage || []).length >= cap) break;
@@ -6921,8 +6931,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     mountRewards(app, {
       registries, run, saves, rng,
       onCollectArmament: (id) => collectArmament(id, 'showcase'),
+      onPersist: persist,
       rewards: shotOffer,
-      onDone: () => showMap(),
+      onDone: () => { rewardDoneCount++; showMap(); },
     });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
@@ -18564,6 +18575,19 @@ const ACTIONS = Object.freeze({
     undo: 'none',
     hazard: 'choosing',
     note: 'a gain, and the player reached for it — the same ruling SAFE_OPS makes about addRelic',
+  },
+  rewardContinue: {
+    of: 'leaving the reward screen and resolving the remaining offer',
+    lives: 'src/ui/screens/reward.js',
+    surface: 'reward',
+    // Continue closes the offer. In auto mode it also applies every pending
+    // reward; in manual mode every untouched reward is left behind. Neither
+    // result can be undone after navigation, and the control follows a column
+    // of adjacent reward rows a thumb is already selecting from.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the irreversible exit immediately follows the reward rows; a short press must remain an abort',
   },
   draftPick: {
     of: 'drafting a card into a custom climb',
@@ -34666,7 +34690,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e1eb969839';
+const SOURCE = '859e44f9cd';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34700,7 +34724,7 @@ const SOURCE = 'e1eb969839';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0924';
+const ORDINAL = '0926';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43834,7 +43858,7 @@ const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
-const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
 const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -43844,7 +43868,10 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // caller's run/shot context, and because a screen that decides nothing should
 // also STORE nothing itself. A caller that hands none gets reveal-only rows —
 // no such caller exists today; the boundary is named, not covered.
-function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null, onCollectArmament = null }) {
+function mountRewards(app, {
+  registries, run, rewards, onDone, saves = null, rng = null,
+  onCollectArmament = null, onPersist = null,
+}) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
@@ -43889,6 +43916,10 @@ function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
+      // A selected card is durable before Continue can close the offer. The
+      // caller hands in the run's one persistence door; a failed write throws
+      // before the row can claim Taken (the armament ordering, same rule).
+      if (onPersist) onPersist();
       return true;
     },
     flask(row) {
@@ -43988,7 +44019,7 @@ function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng
             const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
             const { title, body } = rowBody(row);
             return `
-            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' ? ' locked' : ''}"
+            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
                  data-kind="${esc(row.kind)}" data-state="${esc(state)}"
                  data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
               <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
@@ -43996,9 +44027,11 @@ function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng
                 <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
                 <p>${body}</p>
                 ${state === 'taken' ? '<span class="chip">Taken</span>'
-                  : state === 'blocked' ? '<span class="chip">Full — left behind</span>'
+                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
                   : ''}
               </div>
+              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -44024,11 +44057,19 @@ function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng
         if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
         return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;
       });
-      if (state === 'taken' || state === 'blocked') continue;
+      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
         if (row.kind === 'card') return renderChooser();
         if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
         take(row);
+      });
+    }
+    for (const btn of app.querySelectorAll('[data-skip]')) {
+      attachTooltip(btn, () => `<div class="tt-title">Skip unavailable reward</div>${esc('Leave this blocked reward behind.')}`);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        states[btn.dataset.skip] = 'skipped';
+        renderMenu(btn.dataset.skip);
       });
     }
 
@@ -44048,15 +44089,10 @@ function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
     };
-    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
-    // Continue is deliberately always a hold, while sharing the same duration
-    // dial and armPress machinery as every other hold-confirm interaction.
-    // A configured "off" still uses the shortest authored hold instead of
-    // turning this irreversible screen transition back into a click.
-    const dial = registries.balance.ui.holdConfirm || { def: 'normal', steps: { normal: 600 } };
-    const configured = holdMs(settings, dial);
-    const positive = Object.values(dial.steps || {}).map(Number).filter((n) => n > 0);
-    armHold(cont, { ms: configured > 0 ? configured : Math.min(...positive, 600), onConfirm: finish, id: 'rewardContinue' });
+    // The action is registered in secondbeat's enumerable table, so native
+    // keyboard/gamepad presses enter the same shared armPress door as pointer
+    // and touch; the configured dial remains the one duration authority.
+    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
@@ -46859,8 +46895,43 @@ Object.assign(module.exports, { renderProfileSection });
 const { esc } = require("src/ui/components/tooltip.js");
 const { AI_DISCLOSURE, disclosureAsText } = require("src/content/aiDisclosure.js");
 const { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } = require("src/buildversion.js");
+const { CHANGELOG, PROJECT_REPOSITORY_URL } = require("src/content/changelog.js");
 
-function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+/**
+ * A source-server build is development by construction. A standalone bundle
+ * is ambiguous until its host is known: the canonical GitHub Pages host is the
+ * current-dev preview, while a file:// bundle is a release-shaped artifact and
+ * must not silently gain a repository action.
+ */
+function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.location } = {}) {
+  if (runPath === 'source tree') return true;
+  return runPath === 'standalone file'
+    && locationLike?.protocol === 'https:'
+    && locationLike?.hostname === 'cehinds.github.io';
+}
+function changelogHtml(entries) {
+  let group = null;
+  return entries.map((entry) => {
+    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
+    group = entry.group;
+    return `${heading}
+      <details class="about-change" data-change-id="${esc(entry.id)}">
+        <summary class="region-fold">
+          <span class="rf-label">${esc(entry.summary)}</span>
+          <span class="region-count">${esc(entry.build)}</span>
+        </summary>
+        <p class="set-note">${esc(entry.detail)}</p>
+        <p class="set-note"><a href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a></p>
+      </details>`;
+  }).join('');
+}
+
+function renderAboutSection(container, {
+  disclosure = AI_DISCLOSURE,
+  changelog = CHANGELOG,
+  runPath = RUN_PATH,
+  locationLike = globalThis.location,
+} = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -46902,15 +46973,23 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
   // is also the reason the About footer is no longer a stable string anyone can
   // eyeball for "did anything change".
+  const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
+    ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
+    : esc(ABOUT_BUILD_LINE);
+
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
       ${sections}
+      <section class="about-changelog" aria-labelledby="about-changelog-title">
+        <h2 id="about-changelog-title">Changelog</h2>
+        ${changelogHtml(changelog)}
+      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the
@@ -46933,7 +47012,7 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
 }
 
 
-Object.assign(module.exports, { renderAboutSection });
+Object.assign(module.exports, { shouldLinkDebugVersion, renderAboutSection });
 
 },
 "src/content/aiDisclosure.js": function (module, exports, require) {
@@ -47096,6 +47175,310 @@ function disclosureAsText(d = AI_DISCLOSURE, version = null) {
 
 
 Object.assign(module.exports, { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText });
+
+},
+"src/content/changelog.js": function (module, exports, require) {
+// src/content/changelog.js — the in-game reader for the root CHANGELOG.md.
+//
+// CHANGELOG.md is the authored owner. The generated module is only its bundled
+// transport: tools/about-changelog.mjs derives it and refuses drift. Keeping
+// that boundary explicit lets the standalone game show the receipts without
+// creating a second hand-maintained copy of their prose.
+
+const { GENERATED_CHANGELOG } = require("src/content/changelog.generated.js");
+
+const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
+
+function validateChangelog(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) throw new Error('changelog has no entries');
+  const ids = new Set();
+  for (const entry of entries) {
+    if (!/^pr-\d+$/.test(entry.id)) throw new Error(`unstable changelog id: ${entry.id}`);
+    if (ids.has(entry.id)) throw new Error(`duplicate changelog id: ${entry.id}`);
+    ids.add(entry.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`invalid date for ${entry.id}`);
+    if (!entry.group || !entry.summary || /[\r\n]/.test(entry.summary)) throw new Error(`invalid summary for ${entry.id}`);
+    if (!entry.detail || !entry.build || !Number.isInteger(entry.pullRequest)) throw new Error(`incomplete receipt for ${entry.id}`);
+    if (entry.url !== `${PROJECT_REPOSITORY_URL}/pull/${entry.pullRequest}`) throw new Error(`unsafe pull-request URL for ${entry.id}`);
+  }
+  return entries;
+}
+
+const CHANGELOG = Object.freeze(validateChangelog(GENERATED_CHANGELOG));
+
+
+Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANGELOG });
+
+},
+"src/content/changelog.generated.js": function (module, exports, require) {
+// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.
+// Do not edit: the focused check refuses any drift from the authoritative Markdown.
+
+const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-290",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
+    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "build": "0.4.0.0924",
+    "pullRequest": 290,
+    "url": "https://github.com/cehinds/AshenSpire/pull/290"
+  },
+  {
+    "id": "pr-288",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Character creation is one panel at a time",
+    "detail": "Six sections — CLASS, STARTING KIT, KEEPSAKE, SIGIL, TINT, SPRITE — each a card that opens at its turn. CLASS is open on arrival; picking an option collapses the section and opens the next; any face re-opens out of order. After the flow, the column reads back your six choices in words. Keyboard and pad included: the cursor rides the advance, so Confirm-Confirm walks the whole flow accepting defaults.",
+    "build": "0.4.0.0911",
+    "pullRequest": 288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/288"
+  },
+  {
+    "id": "pr-291",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The merchant is five collapsing bars — and Sell is one of them",
+    "detail": "CARDS · RELICS · FLASKS · REMOVE A CARD · SELL, one open at a time, cards open on arrival. Buying keeps the bar you're looking at open. The merchant buys back what he sells — relics and flasks, at half the low end of the item's own price band — and the whole Sell bar can be switched off in Settings (then it's absent, not greyed).",
+    "build": "0.4.0.0912",
+    "pullRequest": 291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/291"
+  },
+  {
+    "id": "pr-289",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The short-screen warning reads whole at the largest text size",
+    "detail": "At Text XL on a very short screen, the last-resort refusal message no longer loses its sentence to its own glyph.",
+    "build": "0.4.0.0901",
+    "pullRequest": 289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/289"
+  },
+  {
+    "id": "pr-286",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Flask display verified healthy everywhere",
+    "detail": "Evidence-only: fourteen photographs of every reachable flask surface, both shapes — no source change; closed #277.",
+    "build": "0.4.0.0900",
+    "pullRequest": 286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/286"
+  },
+  {
+    "id": "pr-287",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Fullscreen is the first option under Display",
+    "detail": "One toggle at the head of Settings → Display, reflecting the real fullscreen state.",
+    "build": "0.4.0.0900",
+    "pullRequest": 287,
+    "url": "https://github.com/cehinds/AshenSpire/pull/287"
+  },
+  {
+    "id": "pr-244",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Title screen no longer crashes on a detached map board",
+    "detail": "The map's scroll-commit debounce could fire after leaving the map and take the title screen down.",
+    "build": "0.4.0.0893",
+    "pullRequest": 244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/244"
+  },
+  {
+    "id": "pr-226",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Status & Daily Briefs linked from the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0885",
+    "pullRequest": 226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/226"
+  },
+  {
+    "id": "pr-224",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat action row no longer overlaps or mis-scales",
+    "detail": "Merged as pull request #224 in development build 0.4.0.0885.",
+    "build": "0.4.0.0885",
+    "pullRequest": 224,
+    "url": "https://github.com/cehinds/AshenSpire/pull/224"
+  },
+  {
+    "id": "pr-225",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Hint-strip selftest runs on Windows",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/225"
+  },
+  {
+    "id": "pr-221",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "buildversion selftest cleanup is deterministic on macOS",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 221,
+    "url": "https://github.com/cehinds/AshenSpire/pull/221"
+  },
+  {
+    "id": "pr-223",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Build-stamp browser fixture inputs repaired",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/223"
+  },
+  {
+    "id": "pr-220",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Friendly card targets are visibly distinct, on every input",
+    "detail": "Cards that target you or an ally say so with the same clarity for mouse, keyboard, and pad.",
+    "build": "0.4.0.0878",
+    "pullRequest": 220,
+    "url": "https://github.com/cehinds/AshenSpire/pull/220"
+  },
+  {
+    "id": "pr-219",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat fits short landscape screens",
+    "detail": "Merged as pull request #219 in development build 0.4.0.0869.",
+    "build": "0.4.0.0869",
+    "pullRequest": 219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/219"
+  },
+  {
+    "id": "pr-218",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Guard absorption and residual damage show as separate floats",
+    "detail": "What your block ate and what got through are two numbers, not one.",
+    "build": "0.4.0.0867",
+    "pullRequest": 218,
+    "url": "https://github.com/cehinds/AshenSpire/pull/218"
+  },
+  {
+    "id": "pr-217",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Audio cues with optional samples stay immediate",
+    "detail": "No late hit-sounds while an optional sample resolves.",
+    "build": "0.4.0.0850",
+    "pullRequest": 217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/217"
+  },
+  {
+    "id": "pr-212",
+    "date": "2026-08-19",
+    "group": "2026-08-19",
+    "summary": "The current dev Pages preview is surfaced in the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0841",
+    "pullRequest": 212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/212"
+  },
+  {
+    "id": "pr-210",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Hybrid combat input parity completed",
+    "detail": "Mixing mouse, keyboard, and pad mid-combat keeps one coherent cursor and one set of affordances.",
+    "build": "0.4.0.0841",
+    "pullRequest": 210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/210"
+  },
+  {
+    "id": "pr-206",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Text size scales text, and only text",
+    "detail": "The accessibility text setting stops resizing non-text UI; UI size remains the whole-game control.",
+    "build": "0.4.0.0835",
+    "pullRequest": 206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/206"
+  },
+  {
+    "id": "pr-203",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Native map pan belongs to the map again",
+    "detail": "Merged as pull request #203 in development build 0.4.0.0828.",
+    "build": "0.4.0.0828",
+    "pullRequest": 203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/203"
+  },
+  {
+    "id": "pr-201",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Escape during the tutorial cancels the right thing",
+    "detail": "Merged as pull request #201 in development build 0.4.0.0822.",
+    "build": "0.4.0.0822",
+    "pullRequest": 201,
+    "url": "https://github.com/cehinds/AshenSpire/pull/201"
+  },
+  {
+    "id": "pr-202",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Map structure contrast is measurable — and raised",
+    "detail": "Paths and nodes hold a checked contrast floor.",
+    "build": "0.4.0.0807",
+    "pullRequest": 202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/202"
+  },
+  {
+    "id": "pr-199",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Combat HUD pages long strips and shows drag targets",
+    "detail": "Merged as pull request #199 in development build 0.4.0.0807.",
+    "build": "0.4.0.0807",
+    "pullRequest": 199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/199"
+  },
+  {
+    "id": "pr-200",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Map zoom and camera persist correctly",
+    "detail": "Returning to the map returns to your zoom and place.",
+    "build": "0.4.0.0799",
+    "pullRequest": 200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/200"
+  },
+  {
+    "id": "pr-186",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "The verified current build lives at the repository root",
+    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "build": "0.4.0.0788",
+    "pullRequest": 186,
+    "url": "https://github.com/cehinds/AshenSpire/pull/186"
+  },
+  {
+    "id": "pr-180",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "A reversible architecture map",
+    "detail": "Docs only.",
+    "build": "0.4.0.0777",
+    "pullRequest": 180,
+    "url": "https://github.com/cehinds/AshenSpire/pull/180"
+  }
+]);
+
+
+Object.assign(module.exports, { GENERATED_CHANGELOG });
 
 },
 "src/ui/audio.js": function (module, exports, require) {

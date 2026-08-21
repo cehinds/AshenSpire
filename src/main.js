@@ -642,6 +642,7 @@ const QUARANTINE_NOTICE =
 let run = null;
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
@@ -1270,8 +1271,10 @@ function enterNode(nodeId) {
         saves,
         rng,
         onCollectArmament: (id) => collectArmament(id, 'treasure'),
+        onPersist: persist,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
+          rewardDoneCount++;
           persist();
           showMap();
         },
@@ -1494,8 +1497,9 @@ function onCombatEnd(result, combat, enc) {
       saves,
       rng,
       onCollectArmament: (id) => collectArmament(id, 'boss'),
+      onPersist: persist,
       rewards: bossRewards,
-      onDone: () => advanceAct(),
+      onDone: () => { rewardDoneCount++; advanceAct(); },
     });
   }
 
@@ -1516,8 +1520,10 @@ function onCombatEnd(result, combat, enc) {
     saves,
     rng,
     onCollectArmament: (id) => collectArmament(id, enc.pool),
+    onPersist: persist,
     rewards,
     onDone: () => {
+      rewardDoneCount++;
       persist();
       showMap();
     },
@@ -1862,6 +1868,9 @@ if (shotState) {
     // ordering nothing on its own; found-unchanged is the real witness,
     // because found and receipts ride the same gated saveMeta.
     receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
+    liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    done: rewardDoneCount,
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
       : [],
@@ -1922,7 +1931,7 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
   // enters, its own cap and duplicate rules deciding what fits — never by
   // assigning the array.
-  if (shotState === 'map' && shotParams.get('shotStorage') === 'full') {
+  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
     const cap = registries.balance.equipment.storageSlots || 8;
     for (const piece of registries.equipment.armaments) {
       if ((run.loadout.storage || []).length >= cap) break;
@@ -2089,8 +2098,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     mountRewards(app, {
       registries, run, saves, rng,
       onCollectArmament: (id) => collectArmament(id, 'showcase'),
+      onPersist: persist,
       rewards: shotOffer,
-      onDone: () => showMap(),
+      onDone: () => { rewardDoneCount++; showMap(); },
     });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.

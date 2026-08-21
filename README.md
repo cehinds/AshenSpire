@@ -11,6 +11,9 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 **[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
 the latest project status appears first, with timestamped updates and Daily Briefs below it.
 
+**[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
+naming the pull request that landed it and the build number it shipped in.
+
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
 after GitHub Pages finishes deploying it. This is a **development preview**, not
@@ -36,6 +39,9 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 | Title | Act map | Combat |
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
+
+The About changelog is checked through the real title → Settings → About route
+by `node tools/about-changelog.mjs`.
 
 More: the three [class sprites](docs/preview/class-sprites.svg).
 
@@ -69,7 +75,10 @@ No install, no framework, no build step for the source.
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
-- **Responsive browser play:** portrait and fitting short-wide landscape layouts stay playable down to 340 CSS pixels high; smaller viewports show a clear, recoverable short-screen warning instead of a clipped board.
+- **Character creation, one panel at a time:** six choices — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
+- **A merchant who buys back:** the shop is five collapsing bars — cards, relics, flasks, remove-a-card, and Sell — one open at a time. He buys back relics and flasks at half his own cheapest price, and the Sell bar can be switched off entirely in Settings.
+- **An in-game development changelog:** Settings → About reads the repository changelog as concise expandable rows, while development build stamps link back to the exact source repository and release-shaped standalone files remain inert.
+- **Responsive browser play:** portrait and fitting short-wide landscape layouts stay playable down to 340 CSS pixels high; smaller viewports show a clear, recoverable short-screen warning instead of a clipped board — a warning that reads whole even at the largest accessibility text size. Fullscreen is one toggle, first under Settings → Display.
 
 Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md](docs/GDD.md)** (design intent, UI mockups, art direction). The original brief: **[PROMPT.md](PROMPT.md)**.
 

@@ -43,9 +43,10 @@
 // happened.
 //
 // BOUNDARY: headless Chromium, one viewport (1200x730). This proves the
-// collection CONTRACT, not legibility (Sunna's gate) and not the elite/boss
-// arms of the same shared rollDrop call (same function, same collector — the
-// treasure arm is the cell; the others are named untested).
+// collection CONTRACT, not legibility (Sunna's gate). Treasure and elite enter
+// through real map nodes; boss enters through the shipped ?shot=boss combat
+// door. The harness sets combatants to defeated, then the real combat onEnd
+// route mounts each reward — it does not simulate the fights themselves.
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -67,7 +68,7 @@ if (process.argv.includes('--selftest')) {
         // taking becomes a reveal again and nothing is ever stored.
         name: 'apply.armament is a no-op — Take stores nothing',
         file: 'src/ui/screens/reward.js',
-        find: '    armament(row) { if (onCollectArmament) onCollectArmament(row.armamentId); },',
+        find: '    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },',
         replace: '    armament() { /* planted: the reveal-only no-op */ },',
         expectRed: /FAIL\s+S1 tap Take persists the armament \(meta\.found\)/,
       },
@@ -105,7 +106,7 @@ if (process.argv.includes('--selftest')) {
           },
           {
             file: 'src/main.js',
-            find: '  if (!stored) return; // the bag refused: nothing entered storage, so nothing is found — meta stays clean',
+            find: '  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean',
             replace: '  /* planted: the capacity gate is gone — collection proceeds though the bag refused */',
           },
         ],
@@ -217,6 +218,14 @@ const door = (() => {
 })();
 if (!door) { console.log('FAIL  no treasure node with a parent in the FALK act-1 graph — the door cannot be driven'); process.exit(1); }
 console.log(`door: treasure ${door.treasure} (floor ${door.floor}) via ${door.parent}, seed ${SEED}`);
+const eliteDoor = (() => {
+  const nodes = graph.map;
+  for (const elite of nodes.filter((n) => n.type === 'elite').sort((a, b) => a.floor - b.floor)) {
+    const parent = nodes.find((n) => n.next.includes(elite.id));
+    if (parent) return { elite: elite.id, parent: parent.id, floor: elite.floor };
+  }
+  return null;
+})();
 
 // One scenario = one boot (memory storage: always a fresh profile), standing
 // at the parent, then the REAL click on the REAL treasure node. `settings`
@@ -309,6 +318,13 @@ check('S7 at the cap the offer is refused legibly (blocked row, reason storage �
 // click; an un-blocked one at the cap is the defect), then Continue.
 await ev(clickSel('.reward-kind[data-kind="armament"]'));
 await sleep(120);
+// Clean full-storage rows are blocked and open nothing. The two collector
+// plants deliberately remove that face; follow the now-reachable detail's
+// explicit Take door so the corrupted collector is actually exercised.
+if (await ev(`!!document.querySelector('#reward-detail-take')`)) {
+  await ev(clickSel('#reward-detail-take'));
+  await sleep(120);
+}
 s = await spoils();
 check('S7 tapping claims nothing at the cap: no ninth piece enters meta.found while storage refuses it',
   s.found.length === 0, `meta.found is [${s.found}] with storage at ${s.storage.length}`);
@@ -320,6 +336,31 @@ check('S7 Continue leaves storage at the cap and meta.found unchanged',
   s.storage.length === 8 && s.found.length === 0, `storage ${s.storage.length}, meta.found [${s.found}]`);
 check('S7 no discovery receipt was written (count 0 — structurally 0 in showcase mode; found-unchanged above is the real witness, same gated write)',
   s.receipts === 0, `receipts ${s.receipts}`);
+
+async function finishPosedCombat(expectedTitle) {
+  await waitFor(`!!window.__combat && !!document.querySelector('.end-turn')`, `${expectedTitle} combat`);
+  await sleep(1800); // let the production intro/timeline release combat's busy gate
+  await ev(`(()=>{for(const e of window.__combat.enemies){e.hp=0;e.alive=false;}document.querySelector('.end-turn').click();return true})()`);
+  await waitFor(`!!document.querySelector('.reward-menu')`, `${expectedTitle} rewards`, 12000);
+  check(`${expectedTitle} real combat onEnd mounts the expected reward screen`, (await title()) === expectedTitle, `title '${await title()}'`);
+  check(`${expectedTitle} route offers an armament through its production roll`, await ev(`!!document.querySelector('[data-kind="armament"]')`));
+  await ev(clickSel('.reward-kind[data-kind="armament"]')); await sleep(100);
+  await ev(clickSel('#reward-detail-take')); await sleep(120);
+  const owned = await spoils();
+  check(`${expectedTitle} route persists its armament through the shared collector`, owned.found.length === 1 && owned.storage.length === 1,
+    `found [${owned.found}], storage [${owned.storage}]`);
+}
+
+// ---- S8/S9: elite + boss arms of the shared production collector ----------
+check('S8 an elite map door exists for the production route', !!eliteDoor, JSON.stringify(eliteDoor));
+if (eliteDoor) {
+  await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${eliteDoor.parent}`);
+  await waitFor(`!!document.querySelector('[data-node="${eliteDoor.elite}"]')`, 'the elite map node');
+  await ev(clickSel(`[data-node="${eliteDoor.elite}"]`));
+  await finishPosedCombat('ELITE VANQUISHED');
+}
+await nav(`${base}?shot=boss&shotSeed=${SEED}`);
+await finishPosedCombat('THE FELL WARDEN FALLS');
 
 // ---- S5: the card chooser wears a VISIBLE NEW badge (pose door — a renderer
 // fact; the treasure offer carries no cards, so the chooser's one home is the

@@ -15,6 +15,7 @@ import {
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
+import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
@@ -4864,6 +4865,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
     };
+    const continueBeat = beatFor('rewardContinue');
+    eq(continueBeat.form, 'hold', 'reward Continue is registered in the shared second-beat table as a hold');
+    eq(continueBeat.surface, 'reward', 'the census can route the registered action to the reward surface');
     plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 5, 'five reward kinds derive five rows');
     eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),

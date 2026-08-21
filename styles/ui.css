@@ -855,9 +855,10 @@ button.rs-reset {
   pointer-events: none; z-index: 2;
 }
 .reward-skip {
-  margin-top: 13px;
+  margin-left: auto; align-self: center; flex: 0 0 auto;
   min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;
 }
+:root[data-layout='narrow'] .reward-kind .reward-skip { margin-left: auto; }
 /* Receive feedback: a taken row settles — border flashes gold and the card
    relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }

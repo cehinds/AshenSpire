@@ -50,7 +50,7 @@ import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
+import { beatArmer } from '../components/holdconfirm.js';
 
 const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -60,7 +60,10 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // caller's run/shot context, and because a screen that decides nothing should
 // also STORE nothing itself. A caller that hands none gets reveal-only rows —
 // no such caller exists today; the boundary is named, not covered.
-export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null, onCollectArmament = null }) {
+export function mountRewards(app, {
+  registries, run, rewards, onDone, saves = null, rng = null,
+  onCollectArmament = null, onPersist = null,
+}) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
     // The bag's room, read from the same array addToStorage writes — one
@@ -105,6 +108,10 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
+      // A selected card is durable before Continue can close the offer. The
+      // caller hands in the run's one persistence door; a failed write throws
+      // before the row can claim Taken (the armament ordering, same rule).
+      if (onPersist) onPersist();
       return true;
     },
     flask(row) {
@@ -204,7 +211,7 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
             const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
             const { title, body } = rowBody(row);
             return `
-            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' ? ' locked' : ''}"
+            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
                  data-kind="${esc(row.kind)}" data-state="${esc(state)}"
                  data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
               <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
@@ -212,9 +219,11 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
                 <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
                 <p>${body}</p>
                 ${state === 'taken' ? '<span class="chip">Taken</span>'
-                  : state === 'blocked' ? '<span class="chip">Full — left behind</span>'
+                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
                   : ''}
               </div>
+              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
             </div>`;
           }).join('')}
         </div>
@@ -240,11 +249,19 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
         if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
         return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;
       });
-      if (state === 'taken' || state === 'blocked') continue;
+      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
         if (row.kind === 'card') return renderChooser();
         if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
         take(row);
+      });
+    }
+    for (const btn of app.querySelectorAll('[data-skip]')) {
+      attachTooltip(btn, () => `<div class="tt-title">Skip unavailable reward</div>${esc('Leave this blocked reward behind.')}`);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        states[btn.dataset.skip] = 'skipped';
+        renderMenu(btn.dataset.skip);
       });
     }
 
@@ -264,15 +281,10 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
     };
-    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
-    // Continue is deliberately always a hold, while sharing the same duration
-    // dial and armPress machinery as every other hold-confirm interaction.
-    // A configured "off" still uses the shortest authored hold instead of
-    // turning this irreversible screen transition back into a click.
-    const dial = registries.balance.ui.holdConfirm || { def: 'normal', steps: { normal: 600 } };
-    const configured = holdMs(settings, dial);
-    const positive = Object.values(dial.steps || {}).map(Number).filter((n) => n > 0);
-    armHold(cont, { ms: configured > 0 ? configured : Math.min(...positive, 600), onConfirm: finish, id: 'rewardContinue' });
+    // The action is registered in secondbeat's enumerable table, so native
+    // keyboard/gamepad presses enter the same shared armPress door as pointer
+    // and touch; the configured dial remains the one duration authority.
+    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
