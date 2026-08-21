@@ -133,27 +133,56 @@ function contradiction(line, m) {
 // EVERY ROW SHIPS WITH A PLANT (see SELFTEST). Adding one is a contract change.
 const VERDICTS = [
   { name: 'label: OK — N checks passed',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+checks?\s+passed\b[^\n]*$/di,
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s+checks?\s+passed\s*[.!]?\s*$/di,
     count: (m) => Number(m[1]) },
-  { name: 'label: OK — N of M ... ran',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+of\s+(\d+)\b[^\n]*\bran\b[^\n]*$/di,
+  { name: 'label: OK — N of M <words> ran',
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s+of\s+(\d+)\s+[\w -]*?ran\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
-  { name: 'label: OK — N ..., N caught',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+[^\n]*?,\s*(\d+)\s+caught\b[^\n]*$/di,
+  { name: 'label: OK — N <words>, N caught',
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s+[^,\n]*?,\s*(\d+)\s+caught\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[2]) : null) },
-  { name: 'label: OK — N/N <noun>',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/di,
+  { name: 'label: OK — N/N <words>',
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]?\s*(\d+)\s*\/\s*(\d+)(?:\s+[\w -]*)?\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
-  { name: 'PASS — n/m',
-    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/di,
+  { name: 'PASS — n/m <words>',
+    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)(?:\s+[\w -]*)?\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'label: GREEN (n/m)',
-    re: /^\s*[\w][\w .+/-]*:\s*GREEN\s*\((\d+)\s*\/\s*(\d+)\)[^\n]*$/di,
+    re: /^\s*[\w][\w .+/-]*:\s*GREEN\s*\((\d+)\s*\/\s*(\d+)\)\s*[.!]?\s*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'N passed, M failed',
-    re: /^\s*(\d+)\s+passed,\s*(\d+)\s+failed\b[^\n]*$/di,
+    re: /^\s*(\d+)\s+passed,\s*(\d+)\s+failed\s*[.!]?\s*$/di,
     count: (m) => (Number(m[2]) === 0 ? Number(m[1]) : null) },
 ];
+
+// THE LINE ENDS AT ITS COUNTED CLAIM. Every row above is anchored to end of
+// line (a closing `.` or `!` aside), and that single decision dissolves a pair
+// of findings that were pulling in opposite directions:
+//
+//   FALSE GREEN — `OK — 9 checks passed; errors occurred` and `…; one check
+//     failed` sailed through, because the contradiction rule only inspects
+//     NUMERIC tokens: a failure claim in prose, or with its quantity spelled
+//     as a word, was never examined at all.
+//   FALSE RED — `OK — 9 checks passed; no failures` was REFUSED, because the
+//     negation test matched the standalone "no" anywhere on the line. A tool
+//     honestly reporting zero failures was called a liar.
+//
+// Satisfying both at once means accepting "no failures", rejecting "errors
+// occurred", rejecting "one check failed" — that is NATURAL-LANGUAGE
+// UNDERSTANDING, it is unbounded, and every future loss is either a lie
+// accepted or an honest tool called a liar. So the line stops being prose to
+// interpret and becomes a CONTRACT: anything trailing the counted claim is
+// UNRECOGNISED GRAMMAR, refused by name, and the tool prints its commentary on
+// its own line.
+//
+// THE COST, STATED RATHER THAN DISCOVERED: a tool whose summary carries
+// trailing prose reds CI until its line is corrected, and each correction is
+// one line in that tool. Bounded and enumerable — five such lines existed in
+// this repo when this landed — SIX, in fact: my enumeration said five and the
+// door found the sixth (buildversion --selftest) the moment I ran it, which is
+// the bounded cost behaving exactly as advertised. All six are fixed here. That is
+// the same move as fixing the speaker instead of widening the listener, which
+// is the call this card has now made three times.
 
 /**
  * readVerdict(text) → { count, form, line } | { error, … }
@@ -352,11 +381,15 @@ const SELFTEST = [
   // AND THE RULE MUST NOT EAT AN HONEST MUTATION VERDICT: the counted red IS
   // the success there, and its digits are the verdict's own capture.
   { name: 'a mutation verdict counting red is still a pass',
-    file: 'console.log("buildstamp-shot --selftest: OK — 6/6 observed red, each named by the failure it should"); process.exit(0);\n', want: 0 },
+    file: 'console.log("buildstamp-shot --selftest: OK — 6/6 plants observed red"); process.exit(0);\n', want: 0 },
   { name: 'and a defect-counting mutate verdict is still a pass',
     file: 'console.log("dirorder --mutate: OK — 5 reinstatements of the defect, 5 caught."); process.exit(0);\n', want: 0 },
-  { name: 'and its zero form is still a pass: "OK — 9 checks passed, 0 failed"',
-    file: 'console.log("tool: OK — 9 checks passed, 0 failed"); process.exit(0);\n', want: 0 },
+  // MY OWN OLDER PLANT, CORRECTLY INVALIDATED BY THE STRICTER CONTRACT: under
+  // termination even an honest ", 0 failed" is a trailing clause, so it is
+  // refused as GRAMMAR and the tool prints it on its own line. The old
+  // expectation (pass) belonged to the era of interpreting the tail.
+  { name: 'even an honest ", 0 failed" tail is refused as grammar now',
+    file: 'console.log("tool: OK — 9 checks passed, 0 failed"); process.exit(0);\n', want: 3 },
   { name: 'a trailing error count is refused too',
     file: 'console.log("tool: OK — 12 checks passed (2 errors)"); process.exit(0);\n', want: 3 },
   { name: 'a partial ratio: "PASS — 1/27"', file: 'console.log("PASS — 1/27 shapes"); process.exit(0);\n', want: 3 },
@@ -412,6 +445,20 @@ const SELFTEST = [
     file: 'process.stdout.write("tool: OK — 1 check passed\\rtool: OK — 0 checks passed\\n"); process.exit(0);\n', want: 1 },
   { name: 'and a CR-rewritten line ending in a good verdict alone still passes',
     file: 'process.stdout.write("working...\\rtool: OK — 7 checks passed\\n"); process.exit(0);\n', want: 0 },
+  // TRAILING TEXT IS UNRECOGNISED GRAMMAR — the pair of findings that pulled
+  // in opposite directions, dissolved by one rule instead of interpreted.
+  { name: 'trailing prose claiming failure is refused: "; errors occurred"',
+    file: 'console.log("tool: OK — 9 checks passed; errors occurred"); process.exit(0);\n', want: 3 },
+  { name: 'a failure counted in WORDS is refused too: "; one check failed"',
+    file: 'console.log("tool: OK — 9 checks passed; one check failed"); process.exit(0);\n', want: 3 },
+  { name: 'and "; no failures" is refused as GRAMMAR, not called a liar',
+    file: 'console.log("tool: OK — 9 checks passed; no failures"); process.exit(0);\n', want: 3 },
+  { name: 'a bare counted claim passes, with or without a full stop',
+    file: 'console.log("tool: OK — 9 checks passed."); process.exit(0);\n', want: 0 },
+  { name: 'row: label: OK — N/N <words>, the corrected buildstamp form',
+    file: 'console.log("buildstamp-shot --selftest: OK — 6/6 plants observed red"); process.exit(0);\n', want: 0 },
+  { name: 'and the commentary is fine on its OWN line',
+    file: 'console.log("tool: OK — 9 checks passed"); console.log("  no failures; everything nominal."); process.exit(0);\n', want: 0 },
   { name: 'a FAILING verdict followed by a passing one is refused, not greened',
     file: 'console.log("PASS — 1/2 shapes"); console.log("PASS — 2/2 shapes"); process.exit(0);\n', want: 1 },
   { name: 'and in the other order, which is how a retry would print it',
@@ -424,11 +471,11 @@ const SELFTEST = [
   // ---- ONE PLANT PER GRAMMAR ROW (adding a row is a contract change) ----
   { name: 'row: label: OK — N checks passed', file: 'console.log("verify-shipped: OK — 6 checks passed."); process.exit(0);\n', want: 0 },
   { name: 'row: label: OK — N of M ... ran',
-    file: 'console.log("shotguard --selftest-unavailable: OK — 3 of 3 unavailability paths ran and all resolved to 2."); process.exit(0);\n', want: 0 },
+    file: 'console.log("shotguard --selftest-unavailable: OK — 3 of 3 unavailability paths ran"); process.exit(0);\n', want: 0 },
   { name: 'row: label: OK — N ..., N caught',
     file: 'console.log("dirorder --mutate: OK — 5 reinstatements of the defect, 5 caught."); process.exit(0);\n', want: 0 },
   { name: 'row: label: OK — N/N <noun>', file: 'console.log("buildstamp-shot: OK — 4/4 placements photographed"); process.exit(0);\n', want: 0 },
-  { name: 'row: PASS — n/m', file: 'console.log("PASS — 27/27 shapes: every walled shape refuses"); process.exit(0);\n', want: 0 },
+  { name: 'row: PASS — n/m', file: 'console.log("PASS — 27/27 shapes"); process.exit(0);\n', want: 0 },
   { name: 'row: label: GREEN (n/m)', file: 'console.error("map-camera persistence: GREEN (6/6)"); process.exit(0);\n', want: 0 },
   { name: 'row: N passed, M failed', file: 'console.log("94 passed, 0 failed"); process.exit(0);\n', want: 0 },
 
@@ -448,7 +495,7 @@ const SELFTEST = [
   // sentences and the corpus keeps them apart: my first expectation here said
   // 1, the door said 3, and the door was right.
   { name: 'tool change: shotguard now counts its checks',
-    file: 'console.log("shotguard: OK — 8 checks passed; ?shot= cannot reach the save."); process.exit(0);\n', want: 0 },
+    file: 'console.log("shotguard: OK — 8 checks passed"); process.exit(0);\n', want: 0 },
   { name: 'tool change: shotguard --mutate says CAUGHT, not "failed N"',
     file: 'console.log("shotguard --mutate: OK — 4 defeat(s) planted, 4 caught."); process.exit(0);\n', want: 0 },
   { name: 'and its OLD wording — "correctly failed 4 check(s)" — is refused',

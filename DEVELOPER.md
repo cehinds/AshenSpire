@@ -33,6 +33,16 @@ zero-work green — because those need different fixes.
 are a closed table at the top of `verdict.mjs` (`N checks passed`, `PASS — n/m`,
 `GREEN (n/m)`, `n passed, m failed`, `N caught`, `n of m … ran`, `OK — N/N …`).
 
+**The verdict line ENDS at its counted claim** (a closing `.` aside). Anything
+trailing — prose, a semicolon, an extra clause — is unrecognised grammar and is
+refused by name; print commentary on its own line. That is a contract rather
+than prose to interpret, and it is deliberate: satisfying "accept *no failures*,
+reject *errors occurred*, reject *one check failed*" is natural-language
+understanding, which is unbounded, and every loss there is either a lie accepted
+or an honest tool called a liar. **The cost is bounded and was paid in the same
+commit: six summary lines in this repo carried trailing prose and each was a
+one-line correction.**
+
 **The line must state an unqualified success**, and the door proves it: a ratio
 must be whole (`PASS — 1/27` is refused), a suite must report zero failures
 (`1 passed, 4 failed` is refused), a negated line is never a verdict (`NOT PASS

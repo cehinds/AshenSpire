@@ -1585,7 +1585,10 @@ async function main() {
       without gating. A clip is not a wall; clause W is what would catch it if it
       ever became one.`);
 
-  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes: every walled shape refuses legibly with true advice, and no fitting shape refuses at all`}`);
+  // #12: the PASS line ends at its counted claim; the sentence that explains
+  // what the count MEANS prints under it.
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes`}`);
+  if (!fails.length) console.log('  every walled shape refuses legibly with true advice, and no fitting shape refuses at all');
   for (const f of fails) console.log(`    - ${f}`);
   cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);

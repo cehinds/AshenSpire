@@ -218,12 +218,32 @@ export function lintWorkflowText(text, file = '<text>') {
       const isStep = parent.pendingLabel === 'steps' && parent.pendingStepsList === true;
       const ctx = { indent: flow[1].length + 2, seen: new Map(), label: isStep ? 'a step' : 'a list entry', isStep, line: i + 1, name: null };
       stack.push(ctx);
-      for (const pair of splitFlow(flow[2])) {
-        const kv = readKey(pair.trim());
-        if (!kv) continue;
-        if (kv.name === 'name' && !ctx.name) ctx.name = kv.rest.trim();
-        record(kv.name, ctx.indent, i + 1);
-      }
+      // NESTED FLOW COLLECTIONS RECURSE. `with: { node-version: 22,
+      // node-version: 24 }` inside a flow step recorded only the TOP-LEVEL
+      // pairs, so a duplicate one level in was invisible — while this file
+      // now CLAIMS duplicates at every mapping level. A tool that claims a
+      // property it does not have is worse than one that admits the gap, so
+      // either it recurses or it refuses; recursion here is six lines.
+      const walkFlow = (body, label, depth) => {
+        if (depth > 8) {
+          findings.push(`${file}:${i + 1}: flow mapping nested deeper than this linter walks — refused BY NAME rather than read as "nothing here".`);
+          return;
+        }
+        for (const pair of splitFlow(body)) {
+          const kv = readKey(pair.trim());
+          if (!kv) continue;
+          if (kv.name === 'name' && !ctx.name && depth === 0) ctx.name = kv.rest.trim();
+          record(kv.name, ctx.indent, i + 1);
+          const nested = kv.rest.trim().match(/^\{(.*)\}$/);
+          if (nested) {
+            const child = { indent: ctx.indent + 1, seen: new Map(), label: kv.name, isStep: false, line: i + 1, name: null };
+            stack.push(child);
+            walkFlow(nested[1], kv.name, depth + 1);
+            stack.pop();
+          }
+        }
+      };
+      walkFlow(flow[2], ctx.label, 0);
       closeContext(stack.pop());
       continue;
     }
@@ -435,6 +455,10 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        os:\n          - ubuntu-latest\n          - windows-latest\n    steps:\n      - name: One\n        run: echo 1\n' },
   { name: 'form: a plain multi-line scalar body is accepted, not refused', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Plain\n        run: echo ok\n        continue-on-error: false\n' },
+  { name: 'form: a duplicate inside a NESTED flow mapping is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Setup, uses: actions/setup-node@v4, with: { node-version: 22, node-version: 24 } }\n' },
+  { name: 'form: a healthy nested flow mapping is silent', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Setup, uses: actions/setup-node@v4, with: { node-version: 22, cache: npm } }\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

@@ -182,7 +182,11 @@ if (SELFTEST_UNAVAILABLE) {
   }
   // Count what actually ran. "all three" over two executed cases is the same
   // absence-as-result error this whole branch is about.
-  console.log(`\nshotguard --selftest-unavailable: OK — ${ran} of ${cases.length} unavailability paths ran and all resolved to 2.`);
+  // #12: the verdict line ENDS at its counted claim; commentary gets its own
+  // line. Trailing prose is unrecognised grammar at the door, and a summary
+  // nobody can parse is a summary nobody can gate on.
+  console.log(`\nshotguard --selftest-unavailable: OK — ${ran} of ${cases.length} unavailability paths ran`);
+  console.log('  and every one of them resolved to exit 2 — unknown, which blocks.');
   if (ran < cases.length) console.log('  (skipped cases are `unknown` on this platform, not verified.)');
   process.exit(0);
 }
@@ -468,7 +472,9 @@ if (failures.length) {
   console.error(`\nshotguard: ${failures.length} check(s) failed.`);
   process.exit(1);
 }
-console.log(`\nshotguard: OK — ${ranChecks} checks passed; ?shot= cannot reach the player's save, and a normal boot still can.`);
+// #12: counted claim on its own line, commentary below it.
+console.log(`\nshotguard: OK — ${ranChecks} checks passed`);
+console.log("  ?shot= cannot reach the player's save, and a normal boot still can.");
 process.exit(0);
 
 // Intercept src/main.js on the wire and serve the pre-fix body. The disk is never
