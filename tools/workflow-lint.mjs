@@ -100,6 +100,22 @@ export function readKey(code) {
  * command whatsoever — reported nothing, which is the exact silence this lint
  * exists to break, in the lint.
  */
+/** Split a flow mapping's body on top-level commas (quote and bracket aware). */
+export function splitFlow(body) {
+  const parts = [];
+  let depth = 0, q = null, cur = '';
+  for (const c of body) {
+    if (q) { cur += c; if (c === q) q = null; continue; }
+    if (c === '"' || c === "'") { q = c; cur += c; continue; }
+    if (c === '{' || c === '[') depth++;
+    if (c === '}' || c === ']') depth--;
+    if (c === ',' && depth === 0) { parts.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  if (cur.trim()) parts.push(cur);
+  return parts;
+}
+
 export function readItem(code) {
   const bare = code.match(/^(\s*)-\s*$/);
   if (bare) return { indent: bare[1].length, key: null };
@@ -108,7 +124,12 @@ export function readItem(code) {
   return null;
 }
 
-const isBlockScalar = (k) => !!k && /^\s*[|>][-+]?\s*$/.test(k.rest);
+// A BLOCK HEADER MAY CARRY AN INDENTATION INDICATOR AS WELL AS A CHOMPING ONE,
+// in either order: `|`, `|-`, `|+`, `|2`, `|2-`, `|-2`, and the `>` folded
+// forms. Recognising only chomping made `run: |2` not-a-block, so the scalar's
+// payload was parsed as structure and repeated `key:` lines inside a heredoc
+// were reported as duplicate keys — a VALID workflow, red forever.
+const isBlockScalar = (k) => !!k && /^\s*[|>](?:\d+[-+]?|[-+]\d*)?\s*$/.test(k.rest);
 
 export function lintWorkflowText(text, file = '<text>') {
   const findings = [];
@@ -176,6 +197,37 @@ export function lintWorkflowText(text, file = '<text>') {
     if (!code.trim()) continue;
     const indent = indentOf(code);
 
+    // A MULTI-DOCUMENT STREAM RESTARTS EVERY MAPPING. Without this, keys in
+    // the second document collide with the first and every one reads as a
+    // duplicate — and `---` was previously just an unclassified line.
+    if (/^(?:---|\.\.\.)(\s|$)/.test(code.trim())) {
+      popTo(-1);
+      stack.length = 1;
+      stack[0].seen = new Map();
+      jobsIndent = -1; jobIndent = -1; jobKeyIndent = -1; pendingItem = null;
+      continue;
+    }
+
+    // A FLOW-STYLE ENTRY IS STILL AN ENTRY: `- { name: X, run: a, run: b }`.
+    // Neither bare nor readKey-shaped, so no step context was created at all
+    // and a duplicate command sailed through as NO FINDINGS.
+    const flow = code.match(/^(\s*)-\s*\{(.*)\}\s*$/);
+    if (flow) {
+      popTo(flow[1].length);
+      const parent = top();
+      const isStep = parent.pendingLabel === 'steps' && parent.pendingStepsList === true;
+      const ctx = { indent: flow[1].length + 2, seen: new Map(), label: isStep ? 'a step' : 'a list entry', isStep, line: i + 1, name: null };
+      stack.push(ctx);
+      for (const pair of splitFlow(flow[2])) {
+        const kv = readKey(pair.trim());
+        if (!kv) continue;
+        if (kv.name === 'name' && !ctx.name) ctx.name = kv.rest.trim();
+        record(kv.name, ctx.indent, i + 1);
+      }
+      closeContext(stack.pop());
+      continue;
+    }
+
     const item = readItem(code);
     if (item) {
       // A list entry ends the previous entry and opens a fresh mapping.
@@ -199,7 +251,32 @@ export function lintWorkflowText(text, file = '<text>') {
     }
 
     const k = readKey(code);
-    if (!k) continue;
+    if (!k) {
+      // THE ASYMMETRY THIS CLOSES, and it is the defect behind five of this
+      // card's findings. verdict.mjs holds a CLOSED grammar where unknown
+      // grammar reads as SILENCE, loudly, naming the tool — the safe
+      // direction. This file held an OPEN-ENDED GUESS where unknown structure
+      // read as ABSENCE, silently: every YAML form it did not know was a
+      // silent pass (flow mappings) or a false red (indentation indicators),
+      // waiting to be found by someone enumerating faster than I generalise.
+      //
+      // Two shapes are legitimately not mapping keys and are accepted rather
+      // than refused: a bare sequence scalar (`- one`, a matrix axis value)
+      // and a plain multi-line scalar's continuation (a more-indented line
+      // carrying no colon).
+      // ANCHORS, ALIASES AND TAGS ARE STRUCTURE I DO NOT FOLLOW, and `- &a` is
+      // textually indistinguishable from the scalar `- one`. An alias can
+      // expand into a mapping whose keys I would never see, so these are
+      // refused BY NAME rather than guessed at — the same call the door makes
+      // about a grammar it does not speak.
+      const yamlMeta = /^\s*-?\s*[&*!]/.test(code);
+      const scalarItem = !yamlMeta && /^\s*-\s+\S/.test(code) && !code.includes(':');
+      const scalarBody = !yamlMeta && indent > top().indent && !code.includes(':') && !/^\s*-/.test(code);
+      if (scalarItem || scalarBody) continue;
+      checks += 1;
+      findings.push(`${file}:${i + 1}: unrecognised YAML form — ${JSON.stringify(code.trim().slice(0, 60))}. This linter reads a CLOSED set of forms; anything else is refused BY NAME rather than read as "nothing here", because an unknown form silently skipped is how a duplicate key gets through a duplicate-key checker (#12). Teach this file the form, or say why it is not structure.`);
+      continue;
+    }
 
     if (pendingItem && indent > pendingItem.indent) {
       const ctx = { indent, seen: new Map(), label: pendingItem.isStep ? 'a step' : 'a list entry', isStep: pendingItem.isStep, line: pendingItem.line, name: null };
@@ -336,6 +413,28 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n      - name: Two\n        run: echo 2\n' },
   { name: 'and two sibling JOBS may both carry runs-on: and steps:', want: 0,
     yml: 'on: push\njobs:\n  a:\n    runs-on: ubuntu-latest\n    steps:\n      - name: One\n        run: echo 1\n  b:\n    runs-on: ubuntu-latest\n    steps:\n      - name: Two\n        run: echo 2\n' },
+  // FLOW STYLE IS STILL A STEP (false green before).
+  { name: 'form: a flow-mapping step with a duplicate run: is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Twice, run: echo one, run: echo two }\n' },
+  { name: 'form: a healthy flow-mapping step is silent', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Fine, run: echo ok }\n' },
+  { name: 'form: a flow-mapping step with NO command is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Ghost }\n' },
+  // INDENTATION INDICATORS ARE BLOCK HEADERS (false red before).
+  { name: 'form: run: |2 is a block scalar, its payload is not structure', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Indented\n        run: |2\n          key: one\n          key: two\n' },
+  { name: 'form: run: |2- and run: >-2 are block scalars too', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: A\n        run: |2-\n          key: one\n          key: two\n      - name: B\n        run: >-\n          key: one\n          key: two\n' },
+  // MULTI-DOCUMENT STREAMS RESTART EVERY MAPPING.
+  { name: 'form: a second document does not collide with the first', want: 0,
+    yml: '---\non: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n---\non: push\njobs:\n  a:\n    steps:\n      - name: Two\n        run: echo 2\n' },
+  // AND THE DURABLE FIX: AN UNKNOWN FORM IS REFUSED BY NAME, NOT SKIPPED.
+  { name: 'form: an unrecognised YAML form is REFUSED by name, never silent', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Anchored\n        run: echo ok\n      - &alias\n' },
+  { name: 'form: a bare sequence scalar (a matrix value) is accepted, not refused', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        os:\n          - ubuntu-latest\n          - windows-latest\n    steps:\n      - name: One\n        run: echo 1\n' },
+  { name: 'form: a plain multi-line scalar body is accepted, not refused', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Plain\n        run: echo ok\n        continue-on-error: false\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

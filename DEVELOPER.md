@@ -52,9 +52,23 @@ the assertion must fail on both.
 
 **A step that never runs never reaches the door**, so `node
 tools/workflow-lint.mjs` reads `.github/workflows/*.yml` as text and refuses a
-step with no `run:`/`uses:` or one carrying duplicate keys — YAML resolves
-duplicates last-wins silently, and a parser has thrown that evidence away before
-you can check it.
+step with no `run:`/`uses:`, and any **duplicate key at any mapping level** —
+top-level keys, job IDs, job keys, step keys, `with:` blocks. YAML resolves
+duplicates last-wins silently, and a parser has thrown that evidence away
+before you can check it.
+
+**It reads a CLOSED set of YAML forms, and an unknown form is refused by name**
+— file, line, and the text — never treated as "nothing here". That is the same
+call `verdict.mjs` makes about a grammar it does not speak, and it is the safe
+direction: an unknown form silently skipped is how a duplicate key gets through
+a duplicate-key checker. **The cost is stated rather than discovered: the day
+someone writes a legal form this linter has not learned, CI goes red until it
+learns it.** Anchors, aliases and tags (`&a`, `*a`, `!tag`) are refused on
+purpose — an alias can expand into a mapping whose keys the linter would never
+see. **Whether this should instead be a real YAML parse is an open dependency
+question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
+enforces that by refusing bare specifiers); the refusal is what makes the gap
+loud in the meantime.
 
 ## The four layers (dependencies point down only)
 
