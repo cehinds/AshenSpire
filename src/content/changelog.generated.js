@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "Your weapons are in the hands you gave them",
     "detail": "The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.",
-    "build": "0.4.0.0934",
+    "build": "0.4.0.0935",
     "pullRequest": 305,
     "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
+  {
+    "id": "pr-296",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your own music obeys the game's mix",
+    "detail": "Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.",
+    "build": "0.4.0.0930",
+    "pullRequest": 296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/296"
   },
   {
     "id": "pr-290",
