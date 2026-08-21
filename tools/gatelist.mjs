@@ -102,16 +102,27 @@
 //   G3 EVERY DECLARED HOME WAS READ — a home that vanishes, or a workflow whose
 //      shape the reader does not recognise, is exit 2 (`unknown`, which blocks),
 //      never a quietly smaller census.
-//   G4 AN INVOCATION'S EXIT STATUS IS NOT SWALLOWED — VIRA'S CLOSE, AND THE ONE
-//      CHECK HERE THAT IS ABOUT A GREEN TREE. `node tools/x.mjs || true` is
-//      still an invocation by (1) — the parser sees it, the tool is `listed`,
-//      and every census in this file is happy. It is also SILENT, and on a green
-//      tree nothing else in the repo would notice. So an invocation may not sit
-//      on the left of `||`, may not be followed by `; true`, may not run under
-//      `set +e`, and may not sit in a step marked `continue-on-error: true`.
-//      BOUNDARY, because this one is easy to overstate: a pipeline that masks
-//      status (`cmd | tee`) is NOT detected, and neither is a wrapper script
-//      that exits 0 on its own. Named, not fixed.
+//   G4 AN INVOCATION'S EXIT STATUS IS NOT SWALLOWED — IN A SHELL GATE LIST ONLY.
+//      Vira's close, and the one check here about a GREEN tree. `node
+//      tools/x.mjs || true` is still an invocation by (1) — the parser sees it,
+//      the tool is `listed`, every census is happy — and it is SILENT. So an
+//      invocation may not sit on the left of `||`, be followed by `; true`, run
+//      under `set +e`, or sit in a step marked `continue-on-error: true`.
+//      ⚠ THE VENUE IS NARROW AND THE NARROWING IS THE HONEST PART. JAVASCRIPT
+//      gate lists are NOT audited: an ignored `spawnSync` result or a
+//      `try { execFileSync(...) } catch {}` stays `listed` and this tool says
+//      nothing. AND ITS OWN HOME IS ONE OF THEM — this file is run from
+//      tests/run-node.mjs, so the check built to ask "does this list listen?"
+//      is deaf in its own venue. The first version of G4 did not say so and
+//      counted JS invocations in its own denominator, which made the claim
+//      general while the coverage was not (reviewer P2 at 11ec9ab).
+//      Closing it honestly needs dataflow, not a heuristic — the suite's own
+//      pattern is try/catch -> `{ code }` -> an accumulator -> process.exit() —
+//      and a near-enough rule would be this file committing the defect it
+//      exists to name. So it is REFUSED BY NAME, in the tool's own output,
+//      every run. The red arrives the day someone builds it.
+//      Also not detected, in either venue: a pipeline that masks status
+//      (`cmd | tee`) and a wrapper script that exits 0 on its own.
 //
 // REPORTED, NOT ASSERTED — and it carries its removal condition on its face,
 // because an excuse that outlives its defect is how a suite goes green over a
@@ -615,12 +626,38 @@ if (shrugs.length) {
     + `(floor: ${MIN_COST_WORDS} words; the live models are tutorial-reach and release-shots)`);
 }
 
+// G4's VENUE IS DERIVED, NOT TYPED — the audited set is exactly the shell lists,
+// read off GATE_LISTS, so adding a list of either kind cannot leave this claim
+// silently wrong.
+const SHELL_LISTS = GATE_LISTS.filter((g) => g.kind === 'workflow').map((g) => g.path);
+const JS_LISTS = GATE_LISTS.filter((g) => g.kind !== 'workflow').map((g) => g.path);
+const shellInvocations = [...invoked.entries()].filter(([, ls]) => ls.some((l) => SHELL_LISTS.includes(l))).length;
+
 if (swallowed.length) {
-  bad('G4', `${swallowed.length} invocation(s) run with their exit status DISCARDED — listed, and silent: `
-    + swallowed.map((s) => `${s.tool} in ${s.list} (${s.why})`).join(' · '));
+  bad('G4', `${swallowed.length} invocation(s) in a SHELL gate list run with their exit status DISCARDED — `
+    + `listed, and silent: ${swallowed.map((s) => `${s.tool} in ${s.list} (${s.why})`).join(' · ')}`);
 } else {
-  ok('G4', `every one of the ${[...invoked.keys()].length} invocation(s) can fail the job that runs it `
-    + '(no `|| true`, no `; true`, no `set +e`, no `continue-on-error: true`)');
+  ok('G4', `every one of the ${shellInvocations} invocation(s) in ${SHELL_LISTS.join(', ')} can fail the job that runs it `
+    + '(no `|| true`, no `; true`, no `set +e`, no `continue-on-error: true`) — SHELL LISTS ONLY, see the refusal below');
+}
+
+// ⚠ WHAT G4 REFUSES TO CLAIM, BY NAME, EVERY RUN — AND ITS OWN HOME IS ON THE LIST.
+// Printed unconditionally, green or red, because a narrowed claim that is only
+// narrow in a comment is a general claim in practice.
+if (JS_LISTS.length) {
+  const jsInvoked = [...invoked.entries()].filter(([, ls]) => ls.some((l) => JS_LISTS.includes(l))).length;
+  console.log('');
+  console.log(`⚠ G4 IS NOT AUDITED IN JAVASCRIPT GATE LISTS: ${JS_LISTS.join(', ')} — ${jsInvoked} invocation(s) there`);
+  console.log('  are marked `listed` and their status propagation is UNCHECKED. An ignored `spawnSync`');
+  console.log('  result, or `try { execFileSync(...) } catch {}`, is silent and this tool will not say so.');
+  console.log('  ⚠ AND THIS TOOL RUNS INSIDE ONE OF THEM (tests/run-node.mjs, 62/63), so the check built to');
+  console.log('  ask "does this list listen?" IS DEAF IN ITS OWN VENUE and would report it clean.');
+  console.log('  NOT CLOSED BY A HEURISTIC, DELIBERATELY. Proving it needs real dataflow — the pattern in');
+  console.log('  that suite is try/catch -> a `{ code }` object -> an accumulator -> process.exit() — and');
+  console.log('  a near-enough rule here would be this file claiming a property it does not have, which is');
+  console.log('  the exact defect it exists to name. Stated instead, so the red arrives the day someone');
+  console.log('  builds it rather than the day someone trusts it. (Reviewer P2 at 11ec9ab; the analysis is');
+  console.log('  owed as a card and I did not file one — this act was one act.)');
 }
 
 const shown = ONLY_BROWSER ? rows.filter((r) => r.browser) : rows;
@@ -691,7 +728,9 @@ const tail = () => {
   console.log('          silent on whether a listed tool PASSES, on instruments a person starts at a');
   console.log('          terminal, and on any list not declared above — a gate that lives only in a');
   console.log('          PR body is invisible here, which is the hole SOP 14 §5a exists to name.');
-  console.log('          G4 does not see a masked pipeline (`cmd | tee`) or a wrapper that exits 0.');
+  console.log('          G4 covers SHELL lists only — JavaScript gate lists are refused by name above,');
+  console.log('          including the one this tool runs inside. It also does not see a masked pipeline');
+  console.log('          (`cmd | tee`) or a wrapper that exits 0 on its own.');
   console.log('          AND THE COST TEST IS A WORD FLOOR, WHICH CANNOT TELL A BOUNDARY STATEMENT FROM A');
   console.log('          RUN-IT-YOURSELF POINTER. "`node tools/surfaces.mjs` for the sets" passes it and');
   console.log('          says nothing about what goes unwatched, so an invocation SILENTLY DROPPED from a');

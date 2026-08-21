@@ -647,7 +647,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const gateTree = runGate([]);
   const gateTreeV = quote(gateTree.out);
   console.log(
-    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every instrument a gate list names is run by it or states what goes unwatched, and no invocation is silenced` +
+    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every instrument a gate list names is run by it or states what goes unwatched, and no SHELL invocation is silenced` +
       ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
       ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
   );
@@ -707,8 +707,11 @@ console.log('          They are SILENT on the other modifier vocabularies this g
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 console.log('          62–63 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
-console.log('          prove the declared lists RUN what they name and that no invocation has its');
-console.log('          exit status discarded. They say NOTHING about whether a listed tool passes,');
+console.log('          prove the declared lists RUN what they name, and that no invocation in a SHELL');
+console.log('          list has its exit status discarded. ⚠ THE SILENCING CHECK DOES NOT COVER THIS');
+console.log('          FILE: a JavaScript gate list is not audited for it, and this suite is one — so');
+console.log('          63 is deaf in its own venue and says so in its own output, by name, every run.');
+console.log('          They say NOTHING about whether a listed tool passes,');
 console.log('          nothing about instruments a person starts at a terminal, and nothing about a');
 console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
 console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
