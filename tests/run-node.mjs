@@ -492,7 +492,21 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const reachSelf = runReach(['--selftest']);
   const reachSelfV = quote(reachSelf.out);
   console.log(
-    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  50. the status-reach check still catches its own known-bad corpus` +
+    // WAS "50." AND COLLIDED WITH engine.test.js's OWN 50. Two tests printed
+    // "PASS  50." in every run: a reader grepping a run for "50." got two
+    // answers, and a reviewer told "50 is red" could not tell which half of the
+    // suite to open. Both numbers were allocated in good faith in different
+    // files; engine.test.js owns a contiguous 47-48-49-50 narrative, so the
+    // intruder is this one. Moved to 29 — the ONE gap in the sequence
+    // (tools/testnumbers.mjs --raw), never used in this repo's history, and the
+    // only number immune to what two in-flight PRs may allocate.
+    // COST, stated rather than hidden: this block reads 36-46, 29, 51-57 now, so
+    // run-node's own numbering is no longer visually contiguous. A display label
+    // is the cheapest thing in the file to spend, and NOTHING CONSUMES IT —
+    // checked, not assumed: the only tool that matches on "FAIL  <x>" is
+    // profile-durability-probe.mjs:154, and its `expectFail` is a NAME
+    // ("P2 two losses produce TWO archives"), not one of these numbers.
+    `${reachSelf.code === 0 && reachSelfV.text ? 'PASS' : 'FAIL'}  29. the status-reach check still catches its own known-bad corpus` +
       ` — ${reachSelfV.text || `statusreach --selftest (exit ${reachSelf.code}): ${reachSelfV.why}`}`
   );
   if (reachSelf.code !== 0 || !reachSelfV.text) zoomExtra++;
@@ -581,6 +595,51 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 64/65 — NO TWO TESTS WEAR THE SAME NUMBER.
+  //
+  // The hazard is named in this file already, above test 36: "two files, no git
+  // conflict, and a suite that would have printed 35. twice — the collision a
+  // merge cannot see." It was a warning with no check behind it, and dev printed
+  // "PASS  50." twice until the commit above. A warning a hand must remember is
+  // weaker than one a tool enforces, and this one had been forgotten by the hand
+  // that wrote a check while reading it.
+  //
+  // NUMBERED 64/65, NOT 62/63, AND THE GAP IS DELIBERATE: PR #301 holds 62/63 in
+  // flight for the gate-list pair. Allocating disjoint ranges across two open
+  // PRs is this check's own subject, applied to itself — and a gap costs
+  // nothing while a collision costs a reader.
+  //
+  // 64 is the check's own integrity against its planted corpus (five plants, one
+  // of which must go GREEN); 65 is the state of the two test files. No plant
+  // count and no label count in this comment — both live in the tool and its
+  // RESULT line carries them.
+  const runNums = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/testnumbers.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
+  const numsSelf = runNums(['--selftest']);
+  const numsSelfV = quote(numsSelf.out);
+  console.log(
+    `${numsSelf.code === 0 && numsSelfV.text ? 'PASS' : 'FAIL'}  64. the test-number check still catches its own known-bad corpus` +
+      ` — ${numsSelfV.text || `testnumbers --selftest (exit ${numsSelf.code}): ${numsSelfV.why}`}`
+  );
+  if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const numsTree = runNums([]);
+  const numsTreeV = quote(numsTree.out);
+  console.log(
+    `${numsTree.code === 0 && numsTreeV.text ? 'PASS' : 'FAIL'}  65. no two tests in this suite wear the same number` +
+      ` — ${numsTreeV.text || `testnumbers (exit ${numsTree.code}): ${numsTreeV.why}`}` +
+      ` (\`node tools/testnumbers.mjs --raw\` for every label and where it is declared)`
+  );
+  if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -632,6 +691,11 @@ console.log('          modify you. They prove that vocabulary has one typed home
 console.log('          content doors accept the same words, and that a relic resource grant');
 console.log('          reaches max HP by one road with one answer at creation and at load.');
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
+console.log('          64-65 ARE ABOUT THE SUITE ITSELF, not the game: no two tests wear the same');
+console.log('          number. A CONSISTENCY check — it proves the declared labels do not collide,');
+console.log('          never that any label is the right one, and it reads only the two declared');
+console.log('          test sources, so a third test file or a number composed at runtime is');
+console.log('          invisible to it.');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

@@ -730,7 +730,21 @@ export const balance = {
     // What `persistence` genuinely cannot say is the other half of his sentence
     // — the few pieces that are nobody's to FIND because they are everybody's —
     // and that is `basicTag` below.
-    persistence: 'both',
+    // HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+    // up mid run"*. That is this line and nothing else — the three values were
+    // already the closed set and 'perRun' is already documented above as "what
+    // you find is yours for this run only". Law 0's falsifier, answered by the
+    // machinery that was already here: an entry describes, the machinery
+    // derives, and the whole of item 1 is one word in a content table.
+    //
+    // WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+    // sentence this word cannot reach: `basicTag` below still exempts the few
+    // pieces that are everybody's from the found gate, so three `basic`
+    // armaments remain on the shelf in a run that has picked up nothing. That
+    // is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+    // here. It is flagged on the PR rather than averaged: if he wants a truly
+    // empty shelf, `basicTag: ''` is the second word and it is his to say.
+    persistence: 'perRun',
 
     // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
     // The tag that means "this is everybody's". It answers the FOUND gate only
@@ -746,7 +760,33 @@ export const balance = {
     // universal shelf off entirely; a value naming a tag no armament carries is
     // a hard validation failure, because a setting that silently does nothing
     // is the one failure mode worse than a missing one.
-    basicTag: 'basic',
+    //
+    // KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+    // starting kit armory weapon shown on character creation. the armory should
+    // not show weapons not collected in run. it should not show items not
+    // available at character creation."*
+    //
+    // THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+    // The worry was that clearing this tag would also hide the pieces the player
+    // STARTED with — his exemption is the starting kit, not a category. It does
+    // not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+    // set, and `createRunState` puts the kit in the sets. Measured across all
+    // three shipped classes at this ref:
+    //
+    //   reaver    carries straightSword, roundShield, default
+    //   starseer  carries ashStaff, default
+    //   herald    carries boneSceptre, default
+    //
+    // So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+    // THIS RUN PICKED UP, per class, following the player rather than a tag —
+    // which is his sentence. What the tag was adding on top is the part he
+    // killed: it handed the starseer a straightSword and a roundShield it was
+    // never shown, and the herald all three.
+    //
+    // '' is the documented off value, not an invention (see the paragraph
+    // above); a value naming a tag no armament carries is still a hard
+    // validation failure, so this cannot rot into a silent no-op.
+    basicTag: '',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.
