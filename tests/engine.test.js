@@ -2127,16 +2127,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // ---- the shelf's own three, same standard (A7) -------------------------
     oneProblem(bend({ basicTag: 'starter' }), 'starter', 'a basicTag no armament carries');
+    // `bend({ basicTag: 'basic' })`, not `bend({})`, since 2026-08-21: the
+    // shipped tag is now '' (he killed the universal shelf), so a registry bent
+    // with the shipped value has NO everybody's-rows and this refusal has
+    // nothing to refuse. THE VALIDATOR IS UNCHANGED AND STILL RIGHT — what
+    // moved is the config, so the test turns the concept back on to exercise
+    // it. A check that quietly passed on an empty population would be the
+    // vacuous green this file exists to refuse.
     const withEarnedBasic = {
-      ...bend({}),
+      ...bend({ basicTag: 'basic' }),
       equipment: {
         ...REG.equipment,
         armaments: REG.equipment.armaments.map((a) => (a.id === 'straightSword' ? { ...a, unlock: 'winAsReaver' } : a)),
       },
     };
     oneProblem(withEarnedBasic, 'straightSword', 'a row that is both everybody\'s and earned');
+    // Same reason as `withEarnedBasic` above: the shipped tag is '' since his
+    // 2026-08-21 kill, so the concept has to be turned on for its own refusal
+    // to have anything to refuse.
     const basicArmour = {
-      ...bend({}),
+      ...bend({ basicTag: 'basic' }),
       equipment: {
         ...REG.equipment,
         armour: REG.equipment.armour.map((o) => (o.id === 'default' && o.classId === 'reaver'
@@ -2470,26 +2480,66 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A catalogue would still fail here.
     const fresh = createLoadout(REG, 'reaver');
     const none = ownership(REG, { meta: {}, loadout: fresh });
+    // KILLED BY HIM, 2026-08-21 — the THIRD instruction this sub-check has
+    // served, and all three are kept above and here rather than overwritten:
+    //   "kill 3 basic weapons on self unless it's a starting kit armory weapon
+    //    shown on character creation."
+    // `basicTag` now ships as '' and the universal shelf is off. The exemption
+    // he wanted is THE STARTING KIT, and it needs no rule — the kit is WORN, so
+    // `carriedIds(loadout)` already holds it. That is what this line now proves.
     const basicTag = REG.balance.equipment.basicTag;
-    const basicsRight = rightPool.filter((p) => (p.tags || []).includes(basicTag)).map((p) => p.id);
-    assert(basicsRight.length > 0 && basicsRight.length < rightPool.length,
-      `the basics are a FEW of the pool, not none and not all (${basicsRight.length} of ${rightPool.length})`);
-    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), basicsRight.join(','),
-      `a fresh profile is offered exactly the '${basicTag}' rows (${basicsRight.join(', ')}) of ${rightPool.length} armaments`);
+    // The shelf's floor, DERIVED from the model rather than typed: what a fresh
+    // profile with nothing found is offered — i.e. the kit it is wearing.
+    const kitRight = rightPool.filter((p) => none.has(p)).map((p) => p.id);
+    eq(basicTag, '', 'the universal-shelf tag ships OFF — his 2026-08-21 kill');
+    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'straightSword',
+      'a fresh reaver is offered exactly the weapon it is WEARING — kit, not category');
 
-    // ---- 1b. …and the TAG is the mechanism, observed both ways -------------
-    // A knob read but never watched to change the outcome has not been built.
-    // Same registries, same profile, `basicTag` cleared: the shelf goes back to
-    // the pre-A7 number, which is the measurement the line above used to be.
-    const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
-    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id).join(','), 'straightSword',
-      'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
+    // ---- 1b. …and the TAG is still the mechanism, observed both ways -------
+    // A knob read but never watched to change the outcome has not been built —
+    // and that is as true of a knob turned OFF as of one turned on. The
+    // direction is simply reversed now: putting 'basic' back must WIDEN the
+    // shelf past the kit, which is exactly what he asked to stop happening.
+    const withBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: 'basic' } } };
+    const widened = rightPool.filter((p) => ownership(withBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id);
+    assert(widened.length > 1 && widened.includes('straightSword'),
+      `restoring basicTag widens the shelf past the kit (${widened.join(', ')}) — the tag, not a hard-coded list`);
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
-    const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    //
+    // RE-SCOPED BY HIM, NOT BY US (Viki, 2026-08-21) — AND THE TWO INSTRUCTIONS
+    // THIS TEST NOW SITS BETWEEN ARE BOTH KEPT HERE, because a test that quietly
+    // changed sides would hide the only thing a reader needs to know:
+    //
+    //   2026-08-08  "everything else is PROFILE SPECIFIC but maybe a few basic
+    //                weapons become available for all."
+    //   2026-08-21  "it should only show armory you actually PICKED UP MID RUN."
+    //
+    // Those are opposite ends of ONE dial — `balance.equipment.persistence` —
+    // and the later, explicit one is what ships: 'perRun'. THE CLAIM THIS
+    // SUB-CHECK DEFENDS IS UNCHANGED (what you found is offered, and ONLY that);
+    // what moved is WHERE "found" lives, from the profile to the run. So the
+    // dagger arrives the way a player actually gets one now — in the loadout,
+    // picked up this climb — instead of in `meta.found`.
+    //
+    // FLAGGED, NOT SETTLED: this is a design reversal and it is his to confirm
+    // or reverse in one line. If he wants the profile shelf back, `persistence`
+    // goes to 'both' and THIS SUB-CHECK IS THE ONE THAT MUST BE PUT BACK — which
+    // is why the old form is written above rather than deleted from history.
+    const picked = { ...fresh, storage: [...(fresh.storage || []), 'dagger'] };
+    const two = ownership(REG, { meta: {}, loadout: picked });
     const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
-    eq(offered.join(','), [...basicsRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
-      'one weapon found is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+    eq(offered.join(','), [...kitRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
+      'one weapon PICKED UP THIS RUN is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+
+    // ---- 2b. …and the profile no longer widens the shelf on its own -------
+    // The direction the re-scope CREATES, and it is the half a flipped dial
+    // would otherwise change in silence: a piece found in an earlier climb, with
+    // nothing carried this run, is NOT offered. Without this line, moving
+    // `persistence` back to 'both' passes every check in this file.
+    const profileOnly = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    eq(rightPool.filter((p) => profileOnly.has(p)).map((p) => p.id).join(','), kitRight.join(','),
+      'a piece found in an EARLIER run is not offered in this one — the shelf is the run\'s (persistence: perRun)');
 
     // ---- 3. the OTHER direction: the sandbox still opens everything --------
     // requireFound did not change meaning; turning it off still means everything

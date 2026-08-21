@@ -265,6 +265,10 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     const entry = rows.find((row) => row.key === key);
     const button = buttons.get(key);
     if (!entry || !button) return;
+    // A NODE FACE HAS NO VALUE SLOT — see drawFace. Rewriting innerHTML here
+    // would delete the adopted card and leave a button with a name in it, which
+    // reads as "it worked" and is the failure this seat is for.
+    if (entry.face && entry.face.node) return;
     entry.face.value = value;
     button.innerHTML = faceHtml(entry);
   }
@@ -279,7 +283,20 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     button.dataset.disclosure = entry.disclosure;
     button.dataset.reveal = 'closed';
     button.setAttribute('aria-expanded', 'false');
-    button.innerHTML = faceHtml(entry);
+    // A FACE MAY BE A NODE (Viki, 2026-08-21, for the Armoury's item panes).
+    // Constantine: *"it should be part of the card and is revealed pressing the
+    // card instead"* — so the CARD has to be the pressable thing, and a card is
+    // art plus four spans, not a label and a value. The alternative was a second
+    // hand-built fold in equipment.js, which is the debt tools/onefold.mjs
+    // exists to count; this keeps ONE renderer of the affordance.
+    //
+    // ADDITIVE AND GUARDED: no existing caller passes `face.node`, so both
+    // shipped callers (customize.js, shop.js) take the `faceHtml` road exactly
+    // as before. `setValue` below refuses to touch a node face rather than
+    // clobbering it — a word-reveal's value has no meaning for a face that is
+    // an object, and silently erasing the card would be the plausible failure.
+    if (entry.face && entry.face.node) button.appendChild(entry.face.node);
+    else button.innerHTML = faceHtml(entry);
     button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
