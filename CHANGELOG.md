@@ -20,7 +20,7 @@ structured owner" that card asks for.)*
 
 ## 2026-08-21
 
-- **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0918`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
+- **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0921`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
 
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
 
