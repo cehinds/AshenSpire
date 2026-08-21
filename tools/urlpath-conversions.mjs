@@ -1168,14 +1168,14 @@ function findHandRolledFileUrls(tokens) {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.type === 'template' && !token.tagged &&
-        token.hasInterpolation && /^file:\/{2,}/.test(token.value)) {
+        token.hasInterpolation && /^file:\/{2,}/i.test(token.value)) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
       continue;
     }
     if (token.type !== 'string' && token.type !== 'template') continue;
     const start = i - groupDepthBefore(tokens, i);
     const expression = concatenationPrefixAt(tokens, start);
-    if (expression && /^file:\/{2,}/.test(expression.prefix) && expression.dynamic) {
+    if (expression && /^file:\/{2,}/i.test(expression.prefix) && expression.dynamic) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
   }
@@ -1308,6 +1308,8 @@ function selftest() {
     ['outer call result control', "wrap(new URL('./x',import.meta.url)).pathname", 0, 0],
     ['other access controls', "new URL('./x',import.meta.url).origin;new URL('./x',import.meta.url).pathnameExtra", 0, 0],
     ['escaped two slash template', '`file:\\/\\/${path}`', 0, 1],
+    ['uppercase file scheme template', '`FILE://${path}`', 0, 1],
+    ['mixed-case file scheme concatenation', "'FiLe://' + path", 0, 1],
     ['three slash template', '`file:///${path}`', 0, 1],
     ['four slash template', '`file:////${path}`', 0, 1],
     ['single quote concat', "'file://' + path", 0, 1],
@@ -1327,7 +1329,7 @@ function selftest() {
     }
   }
   const matrixFailures = matrixResults.filter((result) => !result.ok);
-  say(matrixFailures.length === 0, 'shared token scanner passes the 41-case LF/CRLF adversarial matrix', matrixFailures.length ? matrixFailures.map((result) => `${result.eol}:${result.label}=path${result.actualPath}/file${result.actualFile}/other${result.other}`).join(', ') : '82/82');
+  say(matrixFailures.length === 0, 'shared token scanner passes the 43-case LF/CRLF adversarial matrix', matrixFailures.length ? matrixFailures.map((result) => `${result.eol}:${result.label}=path${result.actualPath}/file${result.actualFile}/other${result.other}`).join(', ') : '86/86');
 
   const ambiguityCases = [
     ['dynamic bracket', "const u=new URL('./x',import.meta.url);u[key]"],
