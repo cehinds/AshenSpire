@@ -34430,7 +34430,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0f3267fda8';
+const SOURCE = '129d8f53ee';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34464,7 +34464,7 @@ const SOURCE = '0f3267fda8';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0890';
+const ORDINAL = '0907';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -34491,7 +34491,7 @@ const ORDINAL = '0890';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-20';
+const BUILT = '2026-08-21';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -39114,6 +39114,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   }
 
   function emitViewState(commit = false, snapshot = viewSnapshot()) {
+    if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
