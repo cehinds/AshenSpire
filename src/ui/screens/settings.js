@@ -308,6 +308,14 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
+  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
+  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
+  // settingOn so the default's polarity has one home, here. ONE ROW, appended
+  // on purpose while another seat serializes this file for E3 — named in the
+  // E2 claim (#247) so the touch is on the record, not smuggled.
+  { cat: 'Advanced', key: 'shopSell', def: true, label: 'Merchant buys back',
+    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.

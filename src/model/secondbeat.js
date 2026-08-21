@@ -204,6 +204,19 @@ export const ACTIONS = Object.freeze({
     hazard: 'choosing',
     note: 'twenty small cards in a wrapped grid; the preview only ever existed on hover',
   },
+  shopSell: {
+    of: 'selling a possession back to the merchant',
+    lives: 'src/ui/screens/shop.js',
+    surface: 'shop',
+    // THE REMOVE'S MIRROR (E2 / #247): a relic or flask gone for good, one tap
+    // on a row in a wrapped shelf, cinders in return. The gain does not soften
+    // the stakes — the possession is the thing that cannot come back (the
+    // merchant does not restock what he buys), so the row carries shopRemove's
+    // characteristics and takes whatever form the table derives from them.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+  },
   shopRemove: {
     of: 'paying the merchant to burn a card out of the deck',
     lives: 'src/ui/screens/shop.js',

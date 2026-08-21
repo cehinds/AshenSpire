@@ -939,7 +939,19 @@ async function main() {
       // not close the menu before the scan reads it. Observed red without
       // this press at dev = 86564e6 ('7 claimed, 1 absent: useFlask') — the
       // census reading a closed menu as 'not wired', which means the opposite.
-      for (const opener of ['#smith-opt', '#remove-opt', '.flask-slot']) {
+      // The merchant folded into bars (E2 / #247), so two of the openers sit
+      // behind faces now — a folded control has no painted point, and a press
+      // that lands nowhere leaves the census reading "not wired" for "not
+      // open", the exact inversion the useFlask note above records. Bar faces
+      // first, then the rows they reveal; a selector that matches nothing
+      // still presses nothing, so non-shop surfaces are untouched.
+      for (const opener of ['[data-face="bar:remove"]', '#smith-opt', '#remove-opt', '.flask-slot', '[data-face="bar:sell"]']) {
+        // SCROLLED INTO VIEW FIRST: the shop's bars stack below an open CARDS
+        // shelf, so bar:remove sits at y=976 on a 844 phone — measured — and a
+        // press at an off-viewport point lands on nothing while reporting
+        // nothing. A player scrolls; the census scrolls the same way.
+        await ev(`(() => { const b = document.querySelector(${JSON.stringify(opener)}); if (b) b.scrollIntoView({ block: 'center' }); })()`);
+        await wait(120);
         const p = await pointOf(opener);
         if (p) { await press(p, 30); await wait(220); }
       }
@@ -1486,6 +1498,14 @@ async function main() {
   {
     console.log(`\n  THE MERCHANT — burning a card out of the deck for good`);
     await openShot('shop');
+    // The REMOVE bar first (E2 / #247): the brazier sits behind a fold now,
+    // and a folded control has no point to press.
+    await ev(`(() => { const b = document.querySelector('[data-face="bar:remove"]'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
+    await wait(120);
+    const bar = await pointOf('[data-face="bar:remove"]');
+    if (bar) { await press(bar, 30); await wait(250); }
+    await ev(`(() => { const b = document.querySelector('#remove-opt'); if (b) b.scrollIntoView({ block: 'center' }); })()`);
+    await wait(120);
     const openGrid = await pointOf('#remove-opt');
     if (!openGrid) skip('merchant', 'unasked', 'no ?shot=shop screen with a payable brazier at this ref');
     else {

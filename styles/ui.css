@@ -1115,6 +1115,11 @@ button.rs-reset {
    the two headings that separate the tiers. */
 .cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
 .cz-disc { width: 100%; }
+/* E2 (#247): the merchant's bars ride the same fold vocabulary as the
+   creation column (shop.js, THE BARS). The cap is the remove grid's own
+   900px — the widest thing a bar folds — so the bars and their shelves
+   agree on an edge instead of each choosing one. */
+.shop-bars { max-width: 900px; }
 .disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
 .disc-face {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
