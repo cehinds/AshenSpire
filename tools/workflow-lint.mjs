@@ -47,6 +47,7 @@ export function lintWorkflowText(text, file = '<text>') {
   let jobIndent = -1;           // indent of a job NAME under jobs:
   let jobName = null;
   let jobStepsSeen = 0;         // `steps:` keys in THIS job — more than one is the bug
+  let jobKeyIndent = -1;        // indent of the job's OWN keys (runs-on, strategy, steps)
   let stepsKeyIndent = -1;      // indent of the active `steps:` key
   let itemIndent = -1;          // indent of the FIRST `- ` under it; every item must match
   let inSteps = false;
@@ -66,7 +67,7 @@ export function lintWorkflowText(text, file = '<text>') {
     }
     step = null;
   };
-  const closeJob = () => { closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1; jobStepsSeen = 0; };
+  const closeJob = () => { closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1; jobStepsSeen = 0; jobKeyIndent = -1; };
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].replace(/\t/g, '  ');
@@ -96,7 +97,20 @@ export function lintWorkflowText(text, file = '<text>') {
     // Leaving a job entirely (back out to `jobs:` level or shallower).
     if (jobIndent >= 0 && indent <= jobsIndent && /^\s*[\w.-]+:/.test(line)) { closeJob(); jobIndent = -1; jobName = null; continue; }
 
-    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(line)) {
+    // A JOB'S OWN KEYS SIT AT ONE INDENT, and the shallowest key under the job
+    // header fixes it. Everything deeper is nested data.
+    if (jobIndent >= 0 && !inSteps && indent > jobIndent && /^\s*[\w.-]+:/.test(line)
+        && (jobKeyIndent === -1 || indent < jobKeyIndent)) {
+      jobKeyIndent = indent;
+    }
+
+    // `steps:` COUNTS ONLY AT THE JOB-KEY INDENT. Unanchored, a matrix axis
+    // literally named `steps` (strategy.matrix.steps) read as the job's list,
+    // and the real job-level `steps:` then reported a FALSE DUPLICATE — this
+    // gate reddening a valid workflow. Same class as the heredoc: structure
+    // detected without anchoring to its level. Anchor it, do not special-case
+    // the word `matrix`.
+    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(line) && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
       closeStep();
       jobStepsSeen += 1;
       // TWO `steps:` IN ONE JOB IS THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP:
@@ -166,6 +180,13 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: One\n        run: echo 1\n  b:\n    steps:\n      - name: Two\n        run: echo 2\n' },
   { name: 'nested list data under a step key is not a step', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Matrix\n        with:\n          args:\n            - name: inner\n        run: echo ok\n' },
+  // THE ESCAPE A REVIEWER FOUND: a matrix axis literally named `steps`. The
+  // general fix is anchoring, not a `matrix` special case — so the plant keeps
+  // the axis AND a real job-level steps list, and expects silence.
+  { name: 'a matrix axis named `steps` is not the job\'s steps list', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        steps:\n          - one\n          - two\n    steps:\n      - name: Real\n        run: echo ok\n' },
+  { name: 'and a REAL duplicate steps: is still caught beside a matrix axis', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        steps:\n          - one\n    steps:\n      - name: Real\n        run: echo ok\n    steps:\n      - name: Shadow\n        run: echo no\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

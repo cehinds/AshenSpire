@@ -61,7 +61,7 @@
 //     the tool named — rather than waved through. That is the safe direction.
 
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { mkdtempSync, writeFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -73,15 +73,42 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // ADDING A ROW IS A CONTRACT CHANGE and needs a plant in SELFTEST below.
 const NEGATION = /\b(?:not|never|no|un)\b/i;
 
-// A NONZERO FAILURE COUNT ANYWHERE ON THE LINE DISQUALIFIES IT, whatever else
-// the line says. `tool: OK — 9 checks passed, 4 failed` matched the "N checks
-// passed" row, captured the 9, and the trailing clause fell into the row's own
-// `[^\n]*$` tail: the door exited 0 while the child was explicitly reporting
-// failures. Found by a reviewer an hour after I rebuilt this matcher to reject
-// `1 passed, 4 failed` — I fixed the shape where the failure count came FIRST
-// and left the one where it trails. A verdict is an UNQUALIFIED success or it
-// is not a verdict.
-const FAILURE_COUNT = /\b(\d+)\s+(?:failed|failures?|errors?|missed|unresolved|red)\b/i;
+// THE CONTRADICTION RULE, AND IT IS ONE ANCHORED RULE RATHER THAN A LIST OF
+// PHRASINGS. Twice now I closed a shape and left the class: `4 failed` was
+// refused while `4 checks failed` walked through, because the filter demanded
+// the failure word IMMEDIATELY after the number. A third phrasing always
+// exists, so the fix stops enumerating them.
+//
+// THE RULE: a verdict line may carry no NONZERO number that (a) is not part of
+// the verdict's own captured count and (b) sits in failure context. The
+// anchor is the CAPTURE — every digit the matched row consumed is exempt by
+// SPAN, so a mutation tool's honest `6/6 observed red` and `5 reinstatements
+// of the defect, 5 caught` stay green while `9 checks passed, 4 checks failed`
+// and `12 checks passed (2 errors)` do not. Word order, intervening nouns and
+// punctuation stop mattering, which is what "general" has to mean here.
+const FAILURE_SENSE = /\b(?:fail\w*|error\w*|miss\w*|uncaught|unresolved|broken|withheld|red)\b/i;
+const FAILURE_WINDOW = 48;
+
+/** Every digit-run the matched row consumed, as [start,end) spans. */
+function consumedSpans(m) {
+  const spans = [];
+  if (m.indices) for (let g = 1; g < m.indices.length; g++) if (m.indices[g]) spans.push(m.indices[g]);
+  return spans;
+}
+
+/** A nonzero number outside the verdict's own count, sitting in failure context. */
+function contradiction(line, m) {
+  const spans = consumedSpans(m);
+  for (const num of line.matchAll(/\d+/g)) {
+    const [a, b] = [num.index, num.index + num[0].length];
+    if (spans.some(([s, e]) => a >= s && b <= e)) continue;      // the verdict's own count
+    if (Number(num[0]) === 0) continue;                          // "0 failed" is a pass
+    const near = line.slice(Math.max(0, a - FAILURE_WINDOW), b + FAILURE_WINDOW);
+    const hit = near.match(FAILURE_SENSE);
+    if (hit) return { count: num[0], word: hit[0] };
+  }
+  return null;
+}
 
 // THE TERMINAL-SUCCESS GRAMMAR, and every row is a FULL LINE, anchored.
 // Each row returns a positive count ONLY when the line states an unqualified
@@ -92,25 +119,25 @@ const FAILURE_COUNT = /\b(\d+)\s+(?:failed|failures?|errors?|missed|unresolved|r
 // EVERY ROW SHIPS WITH A PLANT (see SELFTEST). Adding one is a contract change.
 const VERDICTS = [
   { name: 'label: OK — N checks passed',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+checks?\s+passed\b[^\n]*$/i,
+    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+checks?\s+passed\b[^\n]*$/di,
     count: (m) => Number(m[1]) },
   { name: 'label: OK — N of M ... ran',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+of\s+(\d+)\b[^\n]*\bran\b[^\n]*$/i,
+    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+of\s+(\d+)\b[^\n]*\bran\b[^\n]*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'label: OK — N ..., N caught',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+[^\n]*?,\s*(\d+)\s+caught\b[^\n]*$/i,
+    re: /^\s*[\w][\w .+/-]*:\s*OK\b[^\n]*?(\d+)\s+[^\n]*?,\s*(\d+)\s+caught\b[^\n]*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[2]) : null) },
   { name: 'label: OK — N/N <noun>',
-    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/i,
+    re: /^\s*[\w][\w .+/-]*:\s*OK\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'PASS — n/m',
-    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/i,
+    re: /^\s*PASS\s*[—-]\s*(\d+)\s*\/\s*(\d+)\b[^\n]*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'label: GREEN (n/m)',
-    re: /^\s*[\w][\w .+/-]*:\s*GREEN\s*\((\d+)\s*\/\s*(\d+)\)[^\n]*$/i,
+    re: /^\s*[\w][\w .+/-]*:\s*GREEN\s*\((\d+)\s*\/\s*(\d+)\)[^\n]*$/di,
     count: (m) => (Number(m[1]) === Number(m[2]) ? Number(m[1]) : null) },
   { name: 'N passed, M failed',
-    re: /^\s*(\d+)\s+passed,\s*(\d+)\s+failed\b[^\n]*$/i,
+    re: /^\s*(\d+)\s+passed,\s*(\d+)\s+failed\b[^\n]*$/di,
     count: (m) => (Number(m[2]) === 0 ? Number(m[1]) : null) },
 ];
 
@@ -141,9 +168,9 @@ export function readVerdict(text) {
       if (!m) continue;
       // A NEGATED LINE IS NEVER A VERDICT. `NOT PASS`, `no checks passed`.
       if (NEGATION.test(line)) { refused.push({ line: line.trim(), why: 'negated' }); break; }
-      const fail = line.match(FAILURE_COUNT);
-      if (fail && Number(fail[1]) > 0) {
-        refused.push({ line: line.trim(), why: `states ${fail[1]} failure(s) on the same line` });
+      const contra = contradiction(line, m);
+      if (contra) {
+        refused.push({ line: line.trim(), why: `states ${contra.count} "${contra.word}" alongside its success count` });
         break;
       }
       const n = v.count(m);
@@ -229,6 +256,20 @@ const SELFTEST = [
   { name: 'a suite reporting failures: "1 passed, 4 failed"', file: 'console.log("1 passed, 4 failed"); process.exit(0);\n', want: 3 },
   { name: 'a CONTRADICTORY summary: "OK — 9 checks passed, 4 failed"',
     file: 'console.log("tool: OK — 9 checks passed, 4 failed"); process.exit(0);\n', want: 3 },
+  // THE ESCAPE A REVIEWER FOUND, plus two phrasings neither of us named: the
+  // rule is now general, so it must swallow all of them.
+  { name: 'an intervening noun does not hide it: "9 checks passed, 4 checks failed"',
+    file: 'console.log("tool: OK — 9 checks passed, 4 checks failed"); process.exit(0);\n', want: 3 },
+  { name: 'reverse order is refused too: "failures: 4"',
+    file: 'console.log("tool: OK — 9 checks passed; failures: 4"); process.exit(0);\n', want: 3 },
+  { name: 'a phrasing nobody enumerated: "4 uncaught"',
+    file: 'console.log("tool: OK — 9 checks passed, 4 uncaught"); process.exit(0);\n', want: 3 },
+  // AND THE RULE MUST NOT EAT AN HONEST MUTATION VERDICT: the counted red IS
+  // the success there, and its digits are the verdict's own capture.
+  { name: 'a mutation verdict counting red is still a pass',
+    file: 'console.log("buildstamp-shot --selftest: OK — 6/6 observed red, each named by the failure it should"); process.exit(0);\n', want: 0 },
+  { name: 'and a defect-counting mutate verdict is still a pass',
+    file: 'console.log("dirorder --mutate: OK — 5 reinstatements of the defect, 5 caught."); process.exit(0);\n', want: 0 },
   { name: 'and its zero form is still a pass: "OK — 9 checks passed, 0 failed"',
     file: 'console.log("tool: OK — 9 checks passed, 0 failed"); process.exit(0);\n', want: 0 },
   { name: 'a trailing error count is refused too',
@@ -335,13 +376,21 @@ async function selftest() {
 // reported green — the card's own defect class, inside the card's own fix.
 // Found by two reviewers independently, on the PR's own head, after a clean
 // local run. The plants below prove a wrapped `--selftest` reaches its child.
-const argv = process.argv.slice(2);
+// MAIN-MODULE GUARD — and finding it here is the night's lesson applied to
+// itself. I added exactly this to workflow-lint.mjs an hour ago, after
+// importing it ran the CLI and exited my caller, and I did not carry the fix
+// to its sibling: importing verdict.mjs to reuse `readVerdict` ran the whole
+// door and exited 2. Fix the CLASS, not the file that happened to bite.
+const IS_MAIN = import.meta.url === pathToFileURL(process.argv[1] || '').href;
+
+const argv = IS_MAIN ? process.argv.slice(2) : [];
 const sep = argv.indexOf('--');
 const mine = sep >= 0 ? argv.slice(0, sep) : argv;
 const rest = sep >= 0 ? argv.slice(sep + 1) : [];
 
-if (mine.includes('--selftest')) { await selftest(); }
+if (IS_MAIN && mine.includes('--selftest')) { await selftest(); }
 
+if (IS_MAIN) {
 const minIdx = mine.indexOf('--min');
 const min = minIdx >= 0 ? Number(mine[minIdx + 1]) : 1;
 if (!Number.isInteger(min) || min < 1) {
@@ -358,3 +407,4 @@ const r = await runOne(rest[0], rest.slice(1), { min });
 if (r.code === 0) console.log(`\nverdict: OK — ${r.note}`);
 else console.error(`\nverdict: ${r.note}`);
 process.exit(r.code);
+}
