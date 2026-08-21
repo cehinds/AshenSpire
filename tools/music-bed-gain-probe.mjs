@@ -265,6 +265,72 @@ for (const r of rows) {
   if (!okLoud) fails.push(`the top of the table is clamped, not carried (${loud.external.toFixed(6)}, wanted ${OUTPUT.toFixed(6)})`);
 }
 
+// ---- LIFETIME: does the outgoing stage OUTLIVE ITS OWN FADE? (#296) --------
+//
+// A SECOND INSTRUMENT IN THE SAME FILE, AND THE SPLIT IS DELIBERATE. Everything
+// above reads a LEVEL ALONG A ROUTE — structure at ONE INSTANT. A fade is
+// structure OVER TIME, and this file's own boundary said so before anyone found
+// a defect there: "nothing here has ears; this is the arithmetic of the graph."
+// That boundary was honest and it was also a hole, because the routing fix
+// (#296) changed a node's LIFETIME while every check here watched its ROUTE.
+//
+// So these two ask the question the route reading structurally cannot:
+//   L1  the outgoing stage is STILL CONNECTED while its voices' ramps run —
+//       otherwise the fade is scheduled into a cut wire and the music stops
+//       dead instead of fading.
+//   L2  and it is RELEASED afterwards — otherwise every context change leaks a
+//       gain node, which is the failure the fix itself would introduce if it
+//       simply never disposed.
+// Both directions, because one without the other is a fix that trades an
+// audible bug for a silent one.
+async function lifetime() {
+  const out = [];
+  const busSet = new Set(buses);
+  const stagesOn = () => graph.nodes.filter((n) => n.kind === 'gain' && n.outs.some((o) => busSet.has(o)));
+
+  engine.stopMusic(0);
+  await engine.configureMusic({ folder: '' });
+  engine.music('title');
+  engine.stopMusic(0);
+  await new Promise((r) => setTimeout(r, 200));
+
+  // THE SUBJECT IS THE STAGE THIS BED ACTUALLY FEEDS, not every gain node
+  // currently on the bus. The first version of this check took all of them and
+  // reported "9/9 held" — a pass carried mostly by stale nodes from earlier
+  // measurements, which are trivially still connected and prove nothing about
+  // the one stage under test. A plant aimed at a population that large would
+  // have been diluted by its own denominator.
+  graph.reset();
+  engine.music('map');                       // the outgoing bed
+  const live = new Set(stagesOn());
+  const voices = graph.nodes.filter((n) => n.kind === 'gain' && n.outs.some((o) => live.has(o)));
+  const outgoing = [...new Set(voices.flatMap((v) => v.outs.filter((o) => live.has(o))))];
+  graph.reset();
+
+  engine.music('combat');                    // the switch: stopMusic() then a new stage
+  const ramps = graph.scheduled.filter((r) => voices.includes(r.node));
+  const heldDuringFade = outgoing.filter((g) => g.outs.some((o) => busSet.has(o))).length;
+
+  const l1 = ramps.length > 0 && heldDuringFade === outgoing.length && outgoing.length > 0;
+  console.log(`${l1 ? 'OK  ' : 'MISS'} L1 the outgoing stage stays connected while its fade runs (${heldDuringFade}/${outgoing.length} held, ${ramps.length} ramp(s) pending)`);
+  if (!l1) {
+    out.push(ramps.length === 0
+      ? 'L1: no fade ramp was scheduled at the switch — nothing to protect, and that is its own defect'
+      : `L1: the fade is scheduled on voices whose stage is already cut from the bus (${heldDuringFade}/${outgoing.length} held) — the ramp cannot reach the output`);
+  }
+
+  // The fade is 0.6s and the release is scheduled a beat past it; wait past both
+  // rather than racing the timer this check exists to observe.
+  await new Promise((r) => setTimeout(r, 1000));
+  const stillHeld = outgoing.filter((g) => g.outs.some((o) => busSet.has(o))).length;
+  const l2 = stillHeld === 0;
+  console.log(`${l2 ? 'OK  ' : 'MISS'} L2 the outgoing stage is released once the fade is over (${stillHeld} still connected)`);
+  if (!l2) out.push(`L2: ${stillHeld} outgoing stage(s) never released — every context change leaks a gain node`);
+  return out;
+}
+
+for (const f of await lifetime()) fails.push(f);
+
 if (!selftest) {
   if (fails.length) {
     console.error('\nRESULT: the mix table does not govern what the player hears —');
@@ -295,49 +361,79 @@ const { fileURLToPath } = await import('node:url');
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const TREE = resolve(HERE, '..');
-const FROM = '        src.connect(bedGain(bed));';
-const TO = '        src.connect(musicBus);';
 
-const dir = mkdtempSync(join(tmpdir(), 'music-bed-gain-kb-'));
-for (const d of ['src', 'tools']) {
-  if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(dir, d), { recursive: true });
-}
-const enginePath = resolve(dir, 'src/ui/audio.js');
-const engineSrc = readFileSync(enginePath, 'utf8');
-const first = engineSrc.indexOf(FROM);
-if (first < 0 || engineSrc.indexOf(FROM, first + 1) >= 0) {
-  console.error(`RESULT: selftest FAILED — the plant found ${first < 0 ? 'NO' : 'MORE THAN ONE'} home in src/ui/audio.js.`);
-  console.error('  The external connect line moved. RE-AIM the plant at wherever the external source');
-  console.error('  now reaches the bus; do not delete it. A corpus that silently stops matching is');
-  console.error('  the eleven-instruments shape (development.md, the instrument rule).');
-  try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
-  process.exit(1);
-}
-writeFileSync(enginePath, engineSrc.slice(0, first) + TO + engineSrc.slice(first + FROM.length), 'utf8');
+// THREE PLANTS, EACH A REAL EDIT TO THE REAL ENGINE IN A DISPOSABLE COPY, with
+// this probe re-run INSIDE the copy so its own `../src/ui/audio.js` import
+// resolves to the planted engine. Every stage the real probe performs runs.
+//
+// P2 AND P3 ARE BOTH DIRECTIONS OF ONE FIX, and they are separate on purpose:
+// a repair that never disposes passes P2 and fails P3, and the synchronous
+// disposal that shipped fails P2 and passes P3. One plant either way would have
+// licensed the other bug. (#296 — and the rule it earned: when you change a
+// lifetime, plant both ends of it.)
+const PLANTS = [
+  {
+    name: 'P1 ROUTING — the external track goes straight to the bus again (#48 itself)',
+    from: '        src.connect(bedGain(bed));',
+    to: '        src.connect(musicBus);',
+    expect: [/external boss\/rest ratio 1\.000/, /the two doors agree with each other/],
+    wanted: 'the external ratio at 1.000 and the two doors disagreeing',
+  },
+  {
+    name: 'P2 LIFETIME, cut too early — the stage is disconnected while its fade still runs',
+    from: '  function retireStages(fade) {\n    const retiring = state.bedGains;\n    state.bedGains = [];\n    if (!retiring.length) return;',
+    to: '  function retireStages(fade) {\n    const retiring = state.bedGains;\n    state.bedGains = [];\n    if (!retiring.length) return;\n    for (const g of retiring) { try { g.disconnect(); } catch (e) { /* planted: the #296 defect */ } }\n    if (retiring.length) return;',
+    expect: [/L1 the outgoing stage stays connected/],
+    wanted: 'L1 red — the fade scheduled into a cut wire',
+  },
+  {
+    name: 'P3 LIFETIME, never released — the stage leaks on every context change',
+    from: '      const timer = setTimeout(() => {',
+    to: '      const timer = setTimeout(() => { if (1) return; // planted: the release never happens\n        void 0;',
+    expect: [/L2 the outgoing stage is released/],
+    wanted: 'L2 red — a gain node leaked per context change',
+  },
+];
 
-const planted = spawnSync(process.execPath, [resolve(dir, 'tools/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
-const out = (planted.stdout || '') + (planted.stderr || '');
-const missLines = out.split('\n').filter((l) => /^MISS /.test(l));
 const control = spawnSync(process.execPath, [resolve(TREE, 'tools/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
-
-console.log('\n  THE REAL DOOR: the routing fix reverted in a disposable copy, this probe re-run');
-console.log('    INSIDE that copy so its own engine import resolves to the reverted engine.');
+console.log('\n  THE REAL DOOR: each plant is an edit to src/ui/audio.js in a disposable copy of the');
+console.log('    tree, and this probe is re-run INSIDE that copy.');
 console.log(`    control (this tree, unplanted): exit ${control.status} — a red here would prove only that copying breaks it`);
-console.log(`    planted:                        exit ${planted.status}, ${missLines.length} MISS line(s)`);
-for (const l of missLines) console.log(`    red | ${l}`);
-try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
 
-// The expected failure is named, not "any nonzero exit": the external ratio
-// collapses to unity and the two doors stop agreeing. A revert that went red
-// for some other reason would not be this defect.
-const namedRed = missLines.some((l) => /external boss\/rest ratio 1\.000/.test(l))
-  && missLines.some((l) => /the two doors agree with each other/.test(l));
-if (!(control.status === 0 && planted.status === 1 && namedRed)) {
-  console.error('RESULT: selftest FAILED — the reverted engine did not go red BY NAME through the real');
-  console.error('  door. Wanted the external ratio at 1.000 and the two doors disagreeing — the exact');
-  console.error('  shape of #48. Failing for another reason is not red.');
+let held = control.status === 0;
+for (const plant of PLANTS) {
+  const dir = mkdtempSync(join(tmpdir(), 'music-bed-gain-kb-'));
+  for (const d of ['src', 'tools']) {
+    if (existsSync(resolve(TREE, d))) cpSync(resolve(TREE, d), resolve(dir, d), { recursive: true });
+  }
+  const enginePath = resolve(dir, 'src/ui/audio.js');
+  const engineSrc = readFileSync(enginePath, 'utf8');
+  const at = engineSrc.indexOf(plant.from);
+  if (at < 0 || engineSrc.indexOf(plant.from, at + 1) >= 0) {
+    console.error(`\n  PLANT SITE DRIFTED  ${plant.name}`);
+    console.error(`    its anchor found ${at < 0 ? 'NO' : 'MORE THAN ONE'} home in src/ui/audio.js. RE-AIM it; do not`);
+    console.error('    delete it. A corpus that silently stops matching is the eleven-instruments shape.');
+    try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
+    held = false;
+    continue;
+  }
+  writeFileSync(enginePath, engineSrc.slice(0, at) + plant.to + engineSrc.slice(at + plant.from.length), 'utf8');
+  const planted = spawnSync(process.execPath, [resolve(dir, 'tools/music-bed-gain-probe.mjs')], { encoding: 'utf8' });
+  const out = (planted.stdout || '') + (planted.stderr || '');
+  const missLines = out.split('\n').filter((l) => /^MISS /.test(l));
+  const named = plant.expect.every((re) => missLines.some((l) => re.test(l)));
+  const ok = planted.status === 1 && named;
+  console.log(`\n  ${ok ? 'CAUGHT' : 'MISSED'}  ${plant.name}`);
+  console.log(`    planted: exit ${planted.status}, ${missLines.length} MISS line(s); wanted ${plant.wanted}`);
+  for (const l of missLines.slice(0, 3)) console.log(`    red | ${l}`);
+  if (!ok) console.error(`    NOT RED BY NAME — failing for another reason is not red.`);
+  try { rmSync(dir, { recursive: true, force: true }); } catch { /* tmp */ }
+  held = held && ok;
+}
+
+if (!held) {
+  console.error('\nRESULT: selftest FAILED — see the MISSED plant(s) above.');
   process.exit(1);
 }
-console.log('\nRESULT: selftest held — #48 replanted in the real engine is caught by its named red,');
-console.log('  and the unplanted tree stays green.');
+console.log('\nRESULT: selftest held — 3/3 plants caught by their named reds, control green.');
 process.exit(0);

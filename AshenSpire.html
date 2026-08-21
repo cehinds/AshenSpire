@@ -34480,7 +34480,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '2cf42f5798';
+const SOURCE = 'b155f567a8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34514,7 +34514,7 @@ const SOURCE = '2cf42f5798';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0918';
+const ORDINAL = '0920';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46527,6 +46527,7 @@ function initAudio(settings = {}) {
     mediaEl: null, // currently-playing external <audio>, if any
     mediaSources: new WeakMap(), // <audio> → MediaElementSource (one per element)
     bedGains: [], // the live per-context level stage(s) — see bedGain()
+    retireTimers: new Set(), // pending stage releases — see retireStages()
   };
   applyGains();
 
@@ -46717,6 +46718,47 @@ function initAudio(settings = {}) {
       }
     }
     state.nodes = [];
+    retireStages(fade);
+  }
+
+  /**
+   * retireStages(fade) — RELEASE THE OUTGOING LEVEL STAGE *AFTER* ITS FADE, NOT
+   * DURING IT (#296).
+   *
+   * The defect this exists to stop, measured rather than reasoned about: the
+   * ramps above are SCHEDULED — they run for `fade` seconds after this function
+   * returns — while `bedGain()` used to disconnect the previous stage
+   * SYNCHRONOUSLY on the next playback. A ramp whose downstream path to the bus
+   * has already been cut is inaudible, so every context change (map -> combat,
+   * combat -> rest) stopped dead instead of fading. Six ramps against zero of
+   * one stage still connected, driven on the real engine.
+   *
+   * ONE NODE, TWO PROPERTIES, AND THEY ARE NOT THE SAME DESIGN. `bedGain`'s job
+   * is ROUTING — where `bed.gain` is read, once, for both doors. Its LIFETIME is
+   * a separate question and it belongs here, in the function that owns the fade
+   * length, because that is the only place that knows when the sound is finally
+   * over. Splitting them is the whole fix; keeping the disposal next to the
+   * creation is what hid the bug.
+   *
+   * The timer is tracked so a stage cannot leak: every retirement either fires
+   * or is cleared, and `--selftest`'s second plant is the one that watches for
+   * an accumulating node nobody released.
+   */
+  function retireStages(fade) {
+    const retiring = state.bedGains;
+    state.bedGains = [];
+    if (!retiring.length) return;
+    // The ramp ends at `fade`; the oscillators stop a beat later (`fade + 0.05`
+    // above). The stage outlives BOTH, by the same margin the voices get, so
+    // nothing is cut by arithmetic that is off by one scheduling tick.
+    const ms = Math.max(0, fade * 1000) + 120;
+    for (const g of retiring) {
+      const timer = setTimeout(() => {
+        state.retireTimers.delete(timer);
+        try { g.disconnect(); } catch (e) { /* already gone */ }
+      }, ms);
+      state.retireTimers.add(timer);
+    }
   }
 
   const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -46744,14 +46786,19 @@ function initAudio(settings = {}) {
    * nobody notices (Law 1 clause 5).
    */
   function bedGain(bed) {
-    // The previous playback's stage is finished with by the time a new one
-    // starts (its voices were stopped and any element paused in stopMusic), so
-    // it is released here rather than mid-fade, where disconnecting would cut
-    // the tail the fade exists to produce.
-    for (const g of state.bedGains) {
-      try { g.disconnect(); } catch (e) { /* already gone */ }
-    }
-    state.bedGains = [];
+    // THIS FUNCTION ROUTES; IT DOES NOT DISPOSE. It used to do both, and the
+    // disposal half was wrong: it disconnected the previous stage synchronously
+    // while that stage's voices were still fading, so the fade could not reach
+    // the output. The release now lives in `retireStages`, called by
+    // `stopMusic`, which is the only function that knows how long the sound has
+    // left. See the comment there (#296).
+    //
+    // THE COMMENT THAT USED TO SIT HERE NAMED THE HAZARD AND THEN TALKED ITSELF
+    // OUT OF IT — "its voices were stopped ... rather than mid-fade, where
+    // disconnecting would cut the tail the fade exists to produce." The voices
+    // were NOT stopped: `stopMusic` schedules their stop 0.65s out. Kept in the
+    // record because a confident sentence standing where a check belongs is the
+    // defect that produced this bug.
     const g = ctx.createGain();
     g.gain.value = bed && typeof bed.gain === 'number' ? bed.gain : 1;
     g.connect(musicBus);
