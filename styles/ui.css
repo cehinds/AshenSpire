@@ -839,6 +839,21 @@ button.rs-reset {
 .reward-menu .reward-kind { width: 256px; padding: 19px; }
 .reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
 .chip.reward-new { color: var(--gold); border-color: var(--gold); }
+/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
+   chooser set only `data-new`, which no stylesheet or renderer consumed, so
+   the unseen card looked identical to its neighbours). The chip dress is
+   restated here because `.chip` styling is scoped to `.class-pick` and this
+   badge lives inside `.card` — its named container (position: relative,
+   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
+   box); the label keeps its text unit. pointer-events: none — the badge marks
+   the card, the CARD takes the tap. */
+.card .card-badge-new {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  pointer-events: none; z-index: 2;
+}
 .reward-skip {
   margin-top: 13px;
   min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;

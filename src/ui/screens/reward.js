@@ -24,9 +24,12 @@
 // words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
 // what the run holds plus the profile's record: `meta.seen` (cards/relics/
 // flasks, written here best-effort on take) and `meta.found` (armaments,
-// written by rollDrop already). Boundary, stated: other acquisition paths
-// (shop, events, drafts) do not write `meta.seen` yet, so a thing first met
-// elsewhere can still read NEW here once — the marker errs toward showing.
+// written at COLLECTION through the handed-in collector — the roll is pure,
+// so at mount time the found set is honestly pre-drop and a first discovery
+// reads NEW; see main.js rollDrop/collectArmament and the f29d468 defect they
+// correct). Boundary, stated: other acquisition paths (shop, events, drafts)
+// do not write `meta.seen` yet, so a thing first met elsewhere can still read
+// NEW here once — the marker errs toward showing.
 //
 // `saves` and `rng` are optional: co-op stubs and old callers get the dial's
 // default and a deterministic first-card pick, never a crash and never
@@ -44,7 +47,13 @@ import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.j
 
 const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
-export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null }) {
+// `onCollectArmament` is the armament's whole persistence, handed in by the
+// caller (main.js collectArmament): run storage + meta.found + the discovery
+// receipt. Handed in rather than done here because the persistence needs the
+// caller's run/shot context, and because a screen that decides nothing should
+// also STORE nothing itself. A caller that hands none gets reveal-only rows —
+// no such caller exists today; the boundary is named, not covered.
+export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null, onCollectArmament = null }) {
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
   });
@@ -91,7 +100,7 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
     },
-    armament() { /* rollDrop stored it at roll time — taking is the reveal */ },
+    armament(row) { if (onCollectArmament) onCollectArmament(row.armamentId); },
   };
 
   function take(row, viaKind) {
@@ -120,12 +129,16 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
         return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
       }
       case 'armament': {
+        // The copy tracks the STATE, because the state is now true: nothing is
+        // stored until the row is taken (the roll is pure — main.js rollDrop),
+        // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
         return {
           title: 'Armament',
-          body: a
-            ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
-            : 'Carried to the Armoury.',
+          body: state === 'taken'
+            ? `${name}<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+            : name,
         };
       }
       case 'relic': {
@@ -250,7 +263,19 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
     const strip = app.querySelector('.reward-row');
     for (const cardId of row.cardIds) {
       const el = renderCard(registries, { cardId, upgraded: false }, {});
-      if (marks.cards.includes(cardId)) el.dataset.new = '1';
+      if (marks.cards.includes(cardId)) {
+        // The marker is a RENDERED badge, not only a data attribute — Codex
+        // 4989824448's third finding: `data-new` alone had no consumer in any
+        // stylesheet or renderer, so the promise was inert pixels-wise. The
+        // attribute stays as the machine-readable hook; the chip is what the
+        // player sees. Positioned inside `.card` (its named container —
+        // position: relative, ui.css) per Law 2.
+        el.dataset.new = '1';
+        const badge = document.createElement('span');
+        badge.className = 'chip reward-new card-badge-new';
+        badge.textContent = 'NEW';
+        el.appendChild(badge);
+      }
       el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
       strip.appendChild(el);
     }

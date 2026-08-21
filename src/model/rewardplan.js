@@ -59,10 +59,12 @@ const KINDS = {
   },
   armament: {
     present: (r) => !!r.armamentId,
-    // rollDrop stores an armament the moment it rolls — the row is a REVEAL
-    // ("carried; slot it in the Armoury"), and `stored: true` says why taking
-    // it moves nothing.
-    row: (r) => ({ armamentId: r.armamentId, stored: true }),
+    // The roll is PURE (main.js rollDrop): nothing is stored until the row is
+    // TAKEN, through the caller's collector — which is what lets Skip and
+    // manual Continue honestly leave the piece behind. This row once carried
+    // `stored: true` because rollDrop persisted at roll time; that flag and
+    // the defect it described died together (#290 at f29d468).
+    row: (r) => ({ armamentId: r.armamentId }),
     blocked: () => null,
   },
   relic: {
