@@ -284,13 +284,16 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         exceptionsSeen.push(d.exception?.description?.split('\n')[0] || d.text || 'unknown exception');
       }
     });
-    // The seeded slot restores at MAXIMUM scroll, where `scrollTop += 60` moves
-    // nothing and the pan precondition is a belief (review finding at 675be08).
-    // So the drive first walks to mid-extent and lets THAT commit clear the
-    // window, then pans and MEASURES the delta — the case refuses to reach a
-    // verdict on a pan that did not move. Both shipped shapes, phone and
-    // desktop; the verdict stays narrow: reached, returned to title, zero
-    // uncaught. Camera final-vs-resumed identity is #245's, not this case's.
+    // The pan is the PLAYER'S wheel, not an assignment: this tool's own
+    // boundary (the #38 cases above) is that writing scrollTop only proves
+    // JavaScript can write a number, and the review at ea7cd5e held this case
+    // to it. The drive wheels UP over the real scrollport's center — the
+    // seeded slot restores at MAXIMUM scroll, so upward is the direction with
+    // guaranteed headroom — and refuses a verdict unless the scroll event was
+    // TRUSTED (isTrusted, which no synthetic dispatch can forge) AND the
+    // camera moved a measured nonzero amount. Both shipped shapes. The
+    // verdict stays narrow: reached, returned to title, zero uncaught.
+    // Camera final-vs-resumed identity is #245's, not this case's.
     const exitShapeRows = [];
     for (const exitShape of [
       { name: '390x844', width: 390, height: 844, deviceScaleFactor: 3, mobile: true },
@@ -307,35 +310,59 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       })()`);
       await evaluate(`[...document.querySelectorAll('button')].find((b) => /continue/i.test(b.textContent)).click()`);
       await waitFor('the map after Continue', `!!document.querySelector('.map-scroll')`);
-      await wait(300); // outlast the camera backstop so the restore cannot race the walk below
+      await wait(300); // outlast the camera backstop so the restore cannot race the wheel below
       exceptionsSeen.length = 0; // the ?shot=title boot is its own observation; only the exit is on trial
+      const exitPoint = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const r = port.getBoundingClientRect();
+        window.__exitPanBefore = port.scrollTop;
+        window.__exitPanTrusted = null;
+        port.addEventListener('scroll', (ev) => {
+          if (window.__exitPanTrusted === null) window.__exitPanTrusted = ev.isTrusted;
+        }, { once: true });
+        return {
+          x: r.left + r.width * 0.5, y: r.top + r.height * 0.5,
+          maxScrollTop: Math.max(0, port.scrollHeight - port.clientHeight),
+        };
+      })()`);
+      await cdp.send('Input.dispatchMouseEvent', {
+        type: 'mouseWheel',
+        x: exitPoint.x,
+        y: exitPoint.y,
+        deltaX: 0,
+        deltaY: -220, // UP: the seeded camera stands at max, so headroom is above
+      }, sessionId);
       const exitDrive = await evaluate(`(async () => {
         const rest = (ms) => new Promise((done) => setTimeout(done, ms));
         const port = document.querySelector('.map-scroll');
-        const max = Math.max(0, port.scrollHeight - port.clientHeight);
-        port.scrollTop = Math.round(max * 0.5); // away from max: the pan below has headroom
-        port.dispatchEvent(new Event('scroll'));
-        await rest(250);                         // > 80 ms: the positioning commit clears the window
-        const before = port.scrollTop;
-        port.scrollTop = before + 60;            // THE pan — #243's precondition, now with room to move
-        port.dispatchEvent(new Event('scroll'));
+        const before = window.__exitPanBefore;
+        // The wheel lands asynchronously — a compositor frame after the CDP
+        // dispatch resolves. Anchor to the scroll EVENT, not to this drive's
+        // own clock: wait (bounded) for the trusted event to fire, then time
+        // the quit from it, so the 80 ms race is measured from the moment the
+        // board armed its timer.
+        const t0 = performance.now();
+        while (window.__exitPanTrusted === null && performance.now() - t0 < 500) await rest(5);
         const panDelta = port.scrollTop - before; // measured, not assumed
-        await rest(55);                          // inside the 80 ms window — the timer outlives the screen
+        const trusted = window.__exitPanTrusted;  // the browser's own word — no synthetic dispatch can forge it
+        await rest(45);                          // + ~10 ms of menu rests puts the quit ~55-65 ms after the scroll event — inside the 80 ms window, off the line
         document.querySelector('#open-menu').click(); await rest(5);
         const tab = [...document.querySelectorAll('button,[role=tab]')].find((b) => b.textContent.trim() === 'Save');
         if (tab) tab.click(); await rest(5);
         const quit = document.querySelector('#ovs-quit'); // "Save & Quit to Title"
-        if (!quit) return { reached: false, panDelta };
+        if (!quit) return { reached: false, panDelta, trusted };
         quit.click();
         await rest(400);                         // outlast the debounce and the save
-        return { reached: true, panDelta, onTitle: !!document.querySelector('.slot') };
+        return { reached: true, before, panDelta, trusted, onTitle: !!document.querySelector('.slot') };
       })()`);
       await wait(120); // let any exceptionThrown event cross the wire before the verdict
       exitShapeRows.push({
         shape: exitShape.name,
         pass: !!(exitDrive && exitDrive.reached && exitDrive.onTitle
-          && exitDrive.panDelta > 0 && exceptionsSeen.length === 0),
+          && exitDrive.trusted === true && Math.abs(exitDrive.panDelta) > 0
+          && exitPoint.maxScrollTop > 20 && exceptionsSeen.length === 0),
         exit: exitDrive,
+        maxScrollTop: exitPoint.maxScrollTop,
         uncaught: [...exceptionsSeen],
       });
     }
@@ -446,7 +473,10 @@ async function selftest() {
     const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;
     const raceCaught = ownership.debounceRace && !ownership.debounceRace.pass;
     const settleCaught = ownership.zeroHeightSettle && !ownership.zeroHeightSettle.pass;
-    const exitCaught = ownership.mapExitDuringDebounce && !ownership.mapExitDuringDebounce.pass;
+    const exitRows = ownership.mapExitDuringDebounce?.shapes || [];
+    const exitCaught = ownership.mapExitDuringDebounce && !ownership.mapExitDuringDebounce.pass
+      && exitRows.length === 2
+      && exitRows.every((row) => !row.pass && row.uncaught.some((u) => /streamCounters/.test(u)));
     console.log(`map-camera ownership selftest: ${fitCaught && raceCaught && settleCaught && exitCaught ? 'GREEN' : 'RED'} - `
       + `viewport ${fitCaught ? 'caught' : 'MISSED'}, debounce ${raceCaught ? 'caught' : 'MISSED'}, `
       + `zero-height settle ${settleCaught ? 'caught' : 'MISSED'}, `
@@ -487,7 +517,8 @@ if (SELFTEST) {
   const exit = results.mapExitDuringDebounce;
   console.log(`${exit && exit.pass ? 'PASS' : 'FAIL'} map exit during debounce: `
     + (exit && exit.shapes ? exit.shapes.map((row) => `${row.shape}: reached=${!!row.exit?.reached}, `
-      + `panDelta=${row.exit?.panDelta}, onTitle=${!!row.exit?.onTitle}, uncaught=${row.uncaught.length}`).join(' · ') : '?')
+      + `trusted=${row.exit?.trusted}, before=${row.exit?.before}, panDelta=${row.exit?.panDelta}, max=${row.maxScrollTop}, onTitle=${!!row.exit?.onTitle}, `
+      + `uncaught=${row.uncaught.length}`).join(' · ') : '?')
     + `${exit && exit.uncaught.length ? ` [${exit.uncaught[0]}]` : ''}`);
   if (!exit || !exit.pass) failures++;
   const total = results.length + 4;
