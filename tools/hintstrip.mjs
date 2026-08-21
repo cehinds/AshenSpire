@@ -74,6 +74,25 @@
 // this whole tool from the copy — same door as every number above.
 //
 // Sunna Falk, 2026-08-18.
+//
+// ── THE WAIVER, added 2026-08-21 by Bjorn (#295) ────────────────────────────
+//   node tools/hintstrip.mjs
+//   node tools/hintstrip.mjs --selftest
+//   node tools/hintstrip.mjs --waive "H2 <cell>,H2 <cell>" --waive-card 295
+//
+// The third form lands this gate in REPORTING mode for findings that are already
+// known and already carded, so a NEW gate can enter a list without a live defect
+// blocking every other lane while its fix is designed. Everything is still
+// measured and printed; only these exact findings stop failing the job.
+//
+// IT IS NOT `|| true`, AND THE DIFFERENCE IS ONE MACHINE-CHECKED SENTENCE:
+// **a waiver fails when its defect disappears.** Waive something that is no
+// longer there and this exits 1 telling you to delete the waiver. So the excuse
+// cannot outlive the defect — which is precisely how `axisfit`'s "reported,
+// never asserted" went quiet over a live bug (Law 5's enforcement note). The
+// full reasoning, the four outcomes, and why this does not breach ci.yml's
+// own "nothing here is to be relaxed" are at the waiver's code, near the bottom.
+// Exit: 0 waived exactly · 1 a new finding OR a stale waiver · 2 unknown.
 
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
@@ -94,9 +113,25 @@ const FAN_LIFT_PROP = (() => {
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  // THE WAIVER IS THREADED INTO THE CORPUS, and it has to be. doorplant finishes
+  // by running an UNPLANTED copy and requiring it green; the tree carries #295's
+  // two known findings, so without the waiver that edge is red for the TREE's
+  // state rather than the corpus's, and the whole selftest reports a baseline
+  // complaint instead of a plant result. With it: the clean copy is green
+  // because its only findings are the waived ones, and every plant is still red
+  // because each produces a finding OUTSIDE the waiver. The corpus therefore
+  // exercises the waiver on every run rather than trusting it.
+  const selftestArgs = [];
+  {
+    const i = process.argv.indexOf('--waive');
+    if (i >= 0) selftestArgs.push('--waive', process.argv[i + 1]);
+    const c = process.argv.indexOf('--waive-card');
+    if (c >= 0) selftestArgs.push('--waive-card', process.argv[c + 1]);
+  }
   process.exit(await doorSelftest({
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
+    args: selftestArgs,
     plants: [
       {
         // THE PILL GOES BACK ON THE TOPBAR — the state he complained about, and
@@ -485,6 +520,73 @@ async function main() {
     console.log('  every cell fitting. A card is OWED for it and was not filed.');
     console.log('');
   }
+  // ── THE WAIVER ────────────────────────────────────────────────────────────
+  // `--waive "<id>,<id>" --waive-card <n>` lands this gate in REPORTING mode for
+  // findings that are already known and already carded. Every finding is still
+  // measured, printed and named; what changes is only whether these exact ones
+  // fail the job.
+  //
+  // ⚠ READ THIS BEFORE DECIDING IT IS THE THING ci.yml FORBIDS. That comment
+  // forbids relaxing a check so a red goes away WHILE THE DEFECT STAYS. The
+  // property that separates this from `|| true` is one line and it is machine-
+  // checked in both directions:
+  //
+  //     A WAIVER FAILS WHEN ITS DEFECT DISAPPEARS.
+  //
+  // Waive a finding that is no longer there and this exits 1 and tells you to
+  // delete the waiver. So the excuse CANNOT outlive the defect — which is
+  // exactly how `axisfit`'s "reported, never asserted" went quiet over a live
+  // bug (Law 5's enforcement note), and I wrote that one. `|| true` and
+  // `continue-on-error` sever the verdict from the tree permanently and
+  // silently; this stays welded to it, and the weld is what makes the carve-out
+  // not a loophole.
+  //
+  // The four outcomes, and only the first is green:
+  //   findings == waived           → 0, printed as WAIVED with its card
+  //   a finding NOT waived         → 1, it is new and nobody has judged it
+  //   a waived finding is GONE     → 1, DELETE THE WAIVER (the anti-decay edge)
+  //   the instrument cannot run    → 2, unknown, unchanged and still blocking
+  //
+  // The waiver lives in the workflow step, beside the card number, so it appears
+  // in the diff that introduces it and in the diff that removes it. It is not a
+  // file, because a file is a second home for a fact with a two-week life.
+  const waiveArg = (() => { const i = process.argv.indexOf('--waive'); return i >= 0 ? process.argv[i + 1] : null; })();
+  const waiveCard = (() => { const i = process.argv.indexOf('--waive-card'); return i >= 0 ? process.argv[i + 1] : null; })();
+  const waived = waiveArg ? waiveArg.split(',').map((x) => x.trim()).filter(Boolean) : [];
+
+  if (waived.length) {
+    const unwaived = findings.filter((f) => !waived.includes(f));
+    const vanished = waived.filter((w) => !findings.includes(w));
+    console.log('');
+    console.log(`WAIVER: ${waived.length} known finding(s)${waiveCard ? `, carded as #${waiveCard}` : ' — NO CARD NAMED, which is a defect in the step, not in the strip'}`);
+    for (const w of waived) console.log(`  waived   ${w}${findings.includes(w) ? '' : '   ← NOT PRESENT'}`);
+    if (vanished.length) {
+      console.log('');
+      console.log(`hintstrip: WAIVER STALE — ${vanished.length} waived finding(s) are GONE: ${vanished.join(', ')}`);
+      console.log('           The defect this step was allowed to report has been fixed. DELETE THE WAIVER from');
+      console.log('           the workflow step and this gate goes blocking again. A waiver that outlives its');
+      console.log('           defect is the silence this whole card exists to catch, so it fails rather than');
+      console.log('           congratulating anyone.');
+      process.exit(1);
+    }
+    if (unwaived.length) {
+      console.log('');
+      console.log(`hintstrip: ${unwaived.length} NEW finding(s) outside the waiver — ${unwaived.join(', ')}`);
+      console.log('           These are not the known defect and nobody has judged them. BLOCKING.');
+      process.exit(1);
+    }
+    console.log('');
+    console.log(`hintstrip: REPORTING — ${findings.length} finding(s) over ${checks} check(s), all waived under #${waiveCard || '?'}`);
+    console.log(`           ${findings.join(', ')}`);
+    console.log('           THE DEFECT IS REAL AND IS NOT FIXED. This step is not blocking because the finding');
+    console.log('           is known and carded, and it will start blocking again the moment the finding');
+    console.log('           changes in either direction — a new one appears, or this one is fixed.');
+    console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');
+    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any chip');
+    console.log('          DOES anything when pressed — that is the strip\'s interactivity, not its layout.');
+    process.exit(0);
+  }
+
   if (findings.length) {
     console.log(`hintstrip: ${findings.length} finding(s) over ${checks} check(s) — ${findings.join(', ')}`);
     console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');

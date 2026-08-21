@@ -653,8 +653,13 @@ if (args.includes('--selftest')) {
         name: 'ONE step is emptied into an echo while a sibling step keeps the tool listed',
         edits: [{
           file: '.github/workflows/ci.yml',
-          find: '        run: node tools/hintstrip.mjs\n',
-          replace: '        run: echo node tools/hintstrip.mjs\n',
+          // ⚠ ANCHOR MOVED 2026-08-21 when the step became a folded scalar
+          // carrying --waive. The old anchor was `        run: node
+          // tools/hintstrip.mjs\\n`; the corpus reported PLANT SITE DRIFTED and
+          // test 62 went red rather than passing over a plant that no longer
+          // planted. Kept as a note because the drift is the corpus working.
+          find: '          node tools/hintstrip.mjs\n',
+          replace: '          echo node tools/hintstrip.mjs\n',
         }],
         expectRed: /BAD\s+G1 /,
       },
