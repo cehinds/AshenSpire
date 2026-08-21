@@ -41,6 +41,8 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
+import { startingArmourViews, resolveStartingArmour } from '../src/model/startingKits.js';
+import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -4935,6 +4937,75 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(marks.cards.includes('executioner'), true, 'an unheld card is');
     eq(marks.relics.includes('forsakenMedallion'), true, 'an unheld relic is new');
     eq(marks.flasks.length, 0, 'a held flask kind is not');
+  });
+
+  test('66. E5: stat points and starting armour at creation — his numbers, both edges', () => {
+    // Constantine, from the card (#250): "10 points, configurable; points come
+    // back out when a stat is dropped; floor 8, ceiling 15 at creation, both
+    // customizable; the floor is the reclaim limit; 15 caps CREATION, not the
+    // character." Read from the mode row, never retyped elsewhere.
+    const mode = REG.creationModes.all().find((m) => m.id === 'pointbuy');
+    assert(mode, 'the pointbuy creation mode exists');
+    eq(mode.bonusPool, 10, 'ten points');
+    eq(mode.minimum, 8, 'floor 8 — the reclaim limit');
+    eq(mode.maximum, 15, 'ceiling 15 at creation');
+    eq(mode.belowBaseline, 'allow', 'a stat may be dropped below baseline — that is the reclaim');
+    // standard is UNTOUCHED: its fixedTotal is what every existing save is
+    // validated against at the load door, and save.js archives what fails there.
+    const std = REG.creationModes.all().find((m) => m.id === 'standard');
+    eq(std.bonusPool, 5, 'standard pool unchanged');
+    eq(std.minimum, 10, 'standard floor unchanged');
+    eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+
+    // The allocation gate, both edges at every boundary his sentence names.
+    const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', legal).length, 0,
+      'floor 8 and ceiling 15 are both LEGAL cells, and dropped points respend elsewhere');
+    const belowFloor = { ...legal, dexterity: 7, wisdom: 13 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', belowFloor).length > 0, '7 is below the reclaim limit');
+    const overCeil = { ...legal, strength: 16, wisdom: 11 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', overCeil).length > 0, '16 is over the creation cap');
+    const unspent = { ...legal, wisdom: 11 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', unspent).length > 0, 'an unspent point refuses — fixedTotal');
+    // "15 caps CREATION, not the character": with levelled points granted, the
+    // same machinery raises the ceiling — the clause shipped before this mode.
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', { ...legal, strength: 16 }, 'attributes', 1).length, 0,
+      'one levelled point lifts the ceiling to 16 and pays for itself in the total');
+    // Presets are complete and legal for the new mode (the content gate).
+    for (const classId of REG.classes.ids()) {
+      eq(attributeAllocationProblems(REG, classId, 'pointbuy', classAttributePreset(REG, classId, 'pointbuy')).length, 0,
+        `pointbuy preset for '${classId}' is a legal allocation`);
+    }
+    // And a run actually carries a pointbuy allocation through creation.
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG, attributeMode: 'pointbuy', attributes: legal });
+    eq(run.attributeMode, 'pointbuy', 'the run records the mode');
+    eq(run.attributes.strength, 15, 'and the allocation, not the preset');
+
+    // STARTING ARMOUR. Eligibility = the free set + what the profile EARNED.
+    const fresh = startingArmourViews(REG, 'reaver', {});
+    eq(fresh.length, 1, 'a fresh profile starts with exactly the free set');
+    eq(fresh[0].free, true, 'and it is the free one');
+    const vigilUnlock = outfits.find((o) => o.id === 'vigil' && o.classId === 'reaver').unlock;
+    const veteran = { unlocked: [vigilUnlock] };
+    const views = startingArmourViews(REG, 'reaver', veteran);
+    eq(views.length, 2, 'an earned prize becomes a starting choice');
+    assert(views.some((v) => v.id === 'vigil'), 'and it is the earned set by name');
+    // Resolution, both edges: the earned set resolves; the unearned refuses BY
+    // NAME; a foreign class refuses; absent falls to the free set (yesterday's
+    // behaviour for every caller that never heard of the parameter).
+    eq(resolveStartingArmour(REG, 'reaver', 'vigil', veteran).id, 'vigil', 'earned resolves');
+    let threw = null;
+    try { resolveStartingArmour(REG, 'reaver', 'vigil', {}); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('vigil'), `unearned refuses BY NAME — got ${threw}`);
+    threw = null;
+    try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
+    eq(resolveStartingArmour(REG, 'reaver', undefined, {}).id, 'default', 'absent means the free set');
+    // And the run WEARS the choice: the loadout row is the persisted home.
+    const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
+    eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
+    const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
   });
 
   const passed = results.filter((r) => r.ok).length;

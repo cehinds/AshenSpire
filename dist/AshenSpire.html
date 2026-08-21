@@ -1419,13 +1419,42 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
-#cz-kits button.cz-opt {
-  /* Starting kits carry words and commit a run-defining choice. The generic
+#cz-kits button.cz-opt,
+#cz-armours button.cz-opt {
+  /* Starting kits and starting armour carry words and commit a run-defining choice. The generic
      sigil tile's 4rem square shrinks with body zoom; this specific interactive
      row uses the on-glass floor and grows around its authored label. */
   width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
+
+/* ---- E5 (#250): the stat-point editor -------------------------------------
+   Every NUMBER on this surface is written by customize.js from the creation
+   mode row (pool, floor, ceiling); this block is geometry only. Steppers sit
+   on the tap floor (base.css --tap-floor) because a thumb is the instrument;
+   aria-disabled dims without removing focus — an unfocusable control is
+   unaskable, the same ruling the BEGIN button carries. */
+.cz-statedit { display: flex; flex-direction: column; gap: 0.6rem; max-width: 24rem; }
+.se-modes { display: flex; gap: 0.8rem; }
+.se-modes .cz-opt.se-mode {
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
+.se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
+.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
+.se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-step {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 120ms, border-color 120ms;
+}
+.se-step:hover { transform: translateY(-1px); border-color: var(--parchment); }
+.se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.se-step[aria-disabled='true']:hover { transform: none; border-color: var(--line-soft); }
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
@@ -5523,7 +5552,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -5574,7 +5603,8 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, profileMeta: saves.loadMeta(),
+    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
   run.seedString = seedToString(seed);
@@ -16073,9 +16103,38 @@ const creationModes = [
     belowBaseline: 'forbid',
     redistribution: 'fixedTotal',
   },
+  // E5 (#250) — Constantine's own numbers, verbatim from the card: "10 points,
+  // configurable; points come back out when a stat is dropped; floor 8, ceiling
+  // 15 at creation, both customizable; the floor is the reclaim limit; 15 caps
+  // CREATION, not the character."
+  //   bonusPool 10        the ten points ("configurable" = it is content, here)
+  //   minimum 8 + allow   the floor IS the reclaim limit: a stat may be dropped
+  //                       below its baseline down to 8, and fixedTotal hands
+  //                       the difference back to the pool by construction
+  //   maximum 15          caps creation only — allocationProblems already
+  //                       raises the ceiling by levelled points, which is his
+  //                       "not the character" clause, shipped before this mode
+  // A SECOND MODE, NOT AN EDIT TO `standard`: standard's fixedTotal of 55 is
+  // what every existing save is validated against at the load door, and
+  // save.js ARCHIVES what fails there. Changing standard's pool would refuse
+  // every in-flight run the first boot after update.
+  {
+    id: 'pointbuy',
+    label: 'Assign points',
+    baseline: 10,
+    bonusPool: 10,
+    minimum: 8,
+    maximum: 15,
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
+  },
 ];
 
 // Complete mode × class × attribute product. No Origins are enabled in Phase 1.
+// The pointbuy presets are the EDITOR'S OPENING POSITION and the load-door
+// refill value — a legal allocation (sum 60, cells 8..15), thematically the
+// standard preset with the five extra points laid along each class's grain.
+// The player reshapes them; nothing here is a recommendation.
 const attributeRules = {
   defaultMode: 'standard',
   presets: {
@@ -16083,6 +16142,11 @@ const attributeRules = {
       reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
       starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
       herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
+    },
+    pointbuy: {
+      reaver: { strength: 14, dexterity: 10, constitution: 14, wisdom: 11, intelligence: 11 },
+      starseer: { strength: 10, dexterity: 12, constitution: 11, wisdom: 12, intelligence: 15 },
+      herald: { strength: 10, dexterity: 10, constitution: 13, wisdom: 15, intelligence: 12 },
     },
   },
 };
@@ -20574,7 +20638,11 @@ const SCHEMAS = Object.freeze({
     bonusPool: int,
     minimum: int,
     maximum: int,
-    belowBaseline: en('forbid'),
+    // E5 (#250): 'allow' is the reclaim — a stat may drop below its baseline
+    // to the mode's minimum, handing the points back to the pool. The model
+    // branch in attributes.js (allocationProblems' floor) has carried both
+    // semantics since the field existed; this set was closed to what shipped.
+    belowBaseline: en('forbid', 'allow'),
     redistribution: en('fixedTotal'),
   }),
   attributeRules: obj({
@@ -22939,6 +23007,59 @@ function validateRunStartingKit(run, registries, meta = {}, { legacy = false } =
   return run;
 }
 
+// ---------------------------------------------------------------------------
+// Starting armour (E5 / #250) — the same discovery shape as kits, for the set
+// you begin the climb wearing.
+//
+// STARTING-ELIGIBLE = the class's free set (unlock === '') PLUS any set whose
+// unlock the profile has EARNED (meta.unlocked — the same ledger the Armoury
+// reads via model/unlocks.js). No content edit widens this list: outfits.csv
+// keeps its "exactly one free set per class" contract and loadout.js keeps the
+// check that enforces it. What a player has won becomes a starting choice;
+// what they have not stays a prize.
+//
+// WHY meta AND NOT A NEW TABLE: the kit chooser above already answers "what
+// may this profile start with" from profile meta. Two eligibility ledgers for
+// two rows of the same screen would be two deciders — the #24 class of defect.
+// ---------------------------------------------------------------------------
+
+function armourRows(registries, classId) {
+  return (((registries || {}).equipment || {}).armour || []).filter((o) => o.classId === classId);
+}
+
+function armourIsStartingEligible(row, meta) {
+  if (!row) return false;
+  if (row.unlock === '') return true;
+  return new Set((meta && meta.unlocked) || []).has(row.unlock);
+}
+
+/** The sets this profile may begin in, authoring order, free set first-eligible. */
+function startingArmourViews(registries, classId, meta = {}) {
+  return armourRows(registries, classId)
+    .filter((row) => armourIsStartingEligible(row, meta))
+    .map((row) => ({ id: row.id, label: row.name, blurb: row.blurb, free: row.unlock === '' }));
+}
+
+/**
+ * The row the run starts wearing. `requestedId` absent → the class's free set,
+ * which is exactly what createLoadout always chose — a caller that never heard
+ * of this function gets yesterday's behaviour. A requested set that is not
+ * this class's, or not earned, is refused BY NAME, never silently swapped:
+ * a wrong-but-plausible fallback is the Law 0 clause 5 defect.
+ */
+function resolveStartingArmour(registries, classId, requestedId, meta = {}) {
+  const rows = armourRows(registries, classId);
+  const free = rows.find((row) => row.unlock === '');
+  if (!requestedId) {
+    if (!free) throw new Error(`class '${classId}' has no free starting armour set`);
+    return free;
+  }
+  const row = rows.find((entry) => entry.id === requestedId);
+  if (!row) throw new Error(`starting armour '${requestedId}' is unavailable to class '${classId}'`);
+  if (!armourIsStartingEligible(row, meta)) throw new Error(`starting armour '${requestedId}' is not unlocked`);
+  return row;
+}
+
 function recordArmamentDiscovery(meta, pieceId, {
   progressionMode = 'normal', source = 'unknown', runSeed = null, receiptLimit = 64,
 } = {}) {
@@ -22963,7 +23084,7 @@ function recordArmamentDiscovery(meta, pieceId, {
 }
 
 
-Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, startingKitPieceIds, startingKitProblems, kitIsDiscovered, startingKitViews, resolveStartingKit, startingKitSnapshot, validateRunStartingKit, recordArmamentDiscovery });
+Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, startingKitPieceIds, startingKitProblems, kitIsDiscovered, startingKitViews, resolveStartingKit, startingKitSnapshot, validateRunStartingKit, startingArmourViews, resolveStartingArmour, recordArmamentDiscovery });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -24076,7 +24197,7 @@ function setCellState(index, opened, visible) {
  * every new run with no change here. You start bare-handed in your class's one
  * unlocked armour set — the run is meant to arm you.
  */
-function createLoadout(registries, classId, startingKit = null) {
+function createLoadout(registries, classId, startingKit = null, startingArmour = null) {
   const eq = registries.equipment || {};
   const sets = {};
   const active = {};
@@ -24084,7 +24205,12 @@ function createLoadout(registries, classId, startingKit = null) {
     sets[slot.id] = new Array(Math.max(1, slot.sets)).fill(null);
     active[slot.id] = 0;
   }
-  const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+  // `startingArmour` is a RESOLVED row (model/startingKits.js
+  // resolveStartingArmour — class-checked, eligibility-checked), never a bare
+  // id: an id validated here would be a second decider for one question.
+  // Absent, the class's free set — byte-for-byte the old behaviour.
+  const starting = startingArmour
+    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
   const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
   for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {
@@ -25183,7 +25309,7 @@ const { createDerivedStatRuleSnapshot, restoreDerivedStatRuleSnapshot, resolveDe
 
 
 
-const { resolveStartingKit, startingKitSnapshot } = require("src/model/startingKits.js");
+const { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } = require("src/model/startingKits.js");
 const { DAMAGE_SCHOOLS } = require("src/model/schemas.js");
 const { resolveRelicModifiers } = require("src/model/relicModifiers.js");
 // The run door's witness. Recording only; nothing here changes a number.
@@ -25229,6 +25355,7 @@ function createRunState({
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
   startingKitId = undefined,
+  startingArmourId = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -25240,7 +25367,12 @@ function createRunState({
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
   const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const loadout = createLoadout(registries, classId, startingKit);
+  // E5 (#250): the set the run begins wearing. Resolved against the same
+  // profile meta the kit above is — absent, the class's free set, which is
+  // what createLoadout always chose. The loadout row is the persisted home;
+  // no new run field, because run.loadout.sets.armor[0] already IS the record.
+  const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
+  const loadout = createLoadout(registries, classId, startingKit, startingArmour);
   for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
@@ -34701,7 +34833,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '731e36d94f';
+const SOURCE = '316946e767';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34735,7 +34867,7 @@ const SOURCE = '731e36d94f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0930';
+const ORDINAL = '0946';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35081,7 +35213,9 @@ const { createRunState } = require("src/model/state.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js");
 const { renderEquipmentRequirements, renderPlayerPoise } = require("src/ui/components/equipmentReceipts.js");
-const { startingKitViews } = require("src/model/startingKits.js");
+const { startingKitViews, startingArmourViews } = require("src/model/startingKits.js");
+const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } = require("src/model/attributes.js");
+const { equipmentRequirementReceipt } = require("src/model/loadout.js");
 
 function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   const state = {
@@ -35092,7 +35226,20 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     spriteStyle: 'rendered',
     keepsakeId: 'none',
     startingKitId: null,
+    // E5 (#250): the set you begin wearing, and how your stats are laid.
+    // `attributes` is live only in pointbuy; in standard the preset is the
+    // allocation and the model owns it (createRunState reads the preset when
+    // `attributes` is not passed — one home, no copy here).
+    startingArmourId: null,
+    attributeMode: defaultCreationModeId(registries),
+    attributes: null,
   };
+  // THE PREVIEW'S ALLOCATION — the last LEGAL one. A pointbuy allocation is
+  // illegal every moment the pool is part-spent (fixedTotal), and createRunState
+  // rightly throws on it; a preview must never be built from a state the run
+  // could not start from. The editor and the START refusal carry the mid-edit
+  // truth; the receipts describe the run the last legal allocation would start.
+  let previewAttributes = null;
 
   // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
   // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
@@ -35145,6 +35292,15 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
           <div class="cz-fields">
             <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
             <div><p class="cz-label">STARTING KIT</p><div id="cz-kits" class="cz-opts"></div></div>
+            <!-- E5 (#250). Both rows arrive OPEN, and that is a ruling being
+                 honoured rather than a fold being forgotten: MR-189 scopes the
+                 fold to rows whose face buys words their options cannot, and
+                 rows that CHANGE THE RUN never fold — "folding them would hide
+                 the choosing behind a choice." Armour and stat points change
+                 the run. MR-183 withdrew the length argument; vertical scroll
+                 is the sanctioned cost. -->
+            <div><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cz-opts"></div></div>
+            <div><p class="cz-label">STAT POINTS</p><div id="cz-statedit" class="cz-statedit"></div></div>
             <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
             <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
             <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
@@ -35195,7 +35351,14 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       : null;
     if (sprite) p.appendChild(sprite);
     else p.textContent = state.glyph;
-    const preview = createRunState({ seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId, profileMeta: meta });
+    const preview = createRunState({
+      seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId, attributeMode: state.attributeMode,
+      // Standard passes no allocation — the model reads its own preset (one
+      // home). Pointbuy passes the last LEGAL allocation; see previewAttributes.
+      ...(state.attributeMode === 'pointbuy' && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      profileMeta: meta,
+    });
     // THE SHORT FORM FIRST, and it is drawn from the same preview run the
     // receipts below use — one read of the run, two tiers of the same truth.
     const brief = creationBrief(registries, preview);
@@ -35243,6 +35406,152 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       kitBox.appendChild(button);
     }
   }
+  // ---- E5 (#250): starting armour + stat points -------------------------
+  // STARTING-ELIGIBLE ARMOUR = the class's free set plus every set this
+  // profile has EARNED (model/startingKits.js, the same meta.unlocked ledger
+  // the Armoury reads). A fresh profile sees one button; each prize won adds
+  // one. No copy of that rule lives here.
+  const armourBox = $('#cz-armours');
+  function renderArmours() {
+    const views = startingArmourViews(registries, state.classId, meta);
+    if (!views.some((row) => row.id === state.startingArmourId)) {
+      state.startingArmourId = (views.find((row) => row.free) || views[0]).id;
+    }
+    armourBox.innerHTML = '';
+    for (const set of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${set.id === state.startingArmourId ? ' chosen' : ''}`;
+      button.dataset.startingArmourId = set.id;
+      button.textContent = set.label;
+      // Law 3 clause 4 — the blurb is the set's own authored sentence, read
+      // from the row, never retyped.
+      attachTooltip(button, () => esc(set.blurb || set.label));
+      button.addEventListener('click', () => {
+        state.startingArmourId = set.id;
+        renderArmours();
+        renderPortrait();
+      });
+      armourBox.appendChild(button);
+    }
+  }
+
+  // THE STAT EDITOR. Every number on it is READ from the mode row in
+  // content/attributes.js (pool, floor, ceiling, labels) — a figure typed here
+  // would be a copy nothing syncs (Law 1 clause 2). His ruling, from the card:
+  // 10 points; dropped points come back (fixedTotal does that by construction);
+  // floor 8 is the reclaim limit; 15 caps creation, not the character (the
+  // model already raises the ceiling by levelled points).
+  const statBox = $('#cz-statedit');
+  const POINTBUY = 'pointbuy';
+  function pointbuyMode() { return creationMode(registries, POINTBUY); }
+  function resetAttributes() {
+    state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
+    previewAttributes = { ...state.attributes };
+  }
+  function remainingPoints() {
+    const total = Object.values(state.attributes).reduce((a, b) => a + b, 0);
+    return allocationTotal(registries, POINTBUY) - total;
+  }
+  /** The one sentence START refuses with, or null. Pool first, then the kit. */
+  function statsProblem() {
+    // No allocation yet (a pointbuy mode nobody has edited) is the preset by
+    // construction — createRunState reads it from content — so nothing refuses.
+    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    const remaining = remainingPoints();
+    if (remaining !== 0) {
+      return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign — every point lands before the climb.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool — drop a stat to reclaim.`;
+    }
+    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    if (problems.length) return problems[0].msg;
+    // A legal allocation can still starve the chosen kit: requirements are the
+    // model's own receipt, asked here so the refusal lands at the button
+    // instead of as a throw inside the preview.
+    const kitRow = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId);
+    for (const pieceId of (kitRow && kitRow.pieceIds) || []) {
+      const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
+      if (!receipt.ok) {
+        const failed = receipt.failures[0];
+        return `${piece.name || piece.id} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
+      }
+    }
+    return null;
+  }
+  function renderStats() {
+    const mode = pointbuyMode();
+    statBox.innerHTML = '';
+    // The mode chips — labels from the content rows, like the sprite chips.
+    const chips = document.createElement('div');
+    chips.className = 'se-modes';
+    for (const m of registries.creationModes.all()) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `cz-opt se-mode${state.attributeMode === m.id ? ' chosen' : ''}`;
+      chip.textContent = m.label;
+      attachTooltip(chip, () => (m.id === POINTBUY
+        ? `Lay your own stats: ${m.bonusPool} points over baseline ${m.baseline}.<br>`
+          + `Floor ${m.minimum} — dropped points come back. Cap ${m.maximum} at creation; levels raise it later.`
+        : 'The class’s authored allocation — pick and climb.'));
+      chip.addEventListener('click', () => {
+        if (state.attributeMode === m.id) return;
+        state.attributeMode = m.id;
+        if (m.id === POINTBUY && !state.attributes) resetAttributes();
+        if (m.id === POINTBUY) previewAttributes = statsProblem() ? previewAttributes : { ...state.attributes };
+        renderStats();
+        renderPortrait();
+        seedRefusal();
+      });
+      chips.appendChild(chip);
+    }
+    statBox.appendChild(chips);
+    if (state.attributeMode !== POINTBUY) return;
+    if (!state.attributes) resetAttributes();
+    // Five rows and a pool line. Steppers refuse at the row's own edges with
+    // aria-disabled (never `disabled` — an unfocusable control is unaskable).
+    const remaining = remainingPoints();
+    const pool = document.createElement('p');
+    pool.className = 'se-pool';
+    pool.textContent = `Points to assign: ${remaining}`;
+    attachTooltip(pool, () => `${mode.bonusPool} over baseline ${mode.baseline}, floor ${mode.minimum}, cap ${mode.maximum} at creation.`);
+    statBox.appendChild(pool);
+    for (const def of orderedAttributes(registries)) {
+      const row = document.createElement('div');
+      row.className = 'se-row';
+      const value = state.attributes[def.id];
+      const atFloor = value <= mode.minimum;
+      const atCeil = value >= mode.maximum || remaining <= 0;
+      row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`
+        + `<span class="se-value">${value}</span>`;
+      const mk = (sign, refused, tip) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'se-step';
+        b.textContent = sign;
+        if (refused) b.setAttribute('aria-disabled', 'true');
+        attachTooltip(b, tip);
+        b.addEventListener('click', () => {
+          if (b.getAttribute('aria-disabled') === 'true') return;
+          state.attributes[def.id] = value + (sign === '+' ? 1 : -1);
+          if (!statsProblem()) previewAttributes = { ...state.attributes };
+          renderStats();
+          renderPortrait();
+          seedRefusal();
+        });
+        return b;
+      };
+      row.appendChild(mk('−', atFloor,
+        () => `−1 ${esc(def.label)} — floor ${mode.minimum}; a dropped point returns to the pool.`));
+      row.appendChild(mk('+', atCeil,
+        () => (remaining <= 0
+          ? 'The pool is spent — drop another stat to reclaim a point.'
+          : `+1 ${esc(def.label)} — cap ${mode.maximum} at creation; levels raise it later.`)));
+      statBox.appendChild(row);
+    }
+  }
+
   for (const cls of registries.classes.all()) {
     const el = document.createElement('div');
     el.className = 'class-pick cz-class';
@@ -35256,9 +35565,16 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     el.addEventListener('click', () => {
       state.classId = cls.id;
       state.startingKitId = null;
+      // E5: a class carries its own armour rows and its own preset — both
+      // choices are re-derived for the new class, exactly as the kit is.
+      state.startingArmourId = null;
+      if (state.attributeMode === POINTBUY) resetAttributes();
       classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
       renderKits();
+      renderArmours();
+      renderStats();
       renderPortrait();
+      seedRefusal();
     });
     classes.appendChild(el);
   }
@@ -35270,6 +35586,8 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   }
   classes.querySelector('.cz-class').classList.add('chosen');
   renderKits();
+  renderArmours();
+  renderStats();
 
   // ---- sigil + tint pickers ----
   const glyphBox = $('#cz-glyphs');
@@ -35391,11 +35709,49 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   ];
   const fields = app.querySelector('.cz-fields');
   fields.classList.add('cz-disc');
+  // THE ROWS THE MOUNT DOES NOT TAKE ARE STILL THE SCREEN'S, AND THEY GO BACK
+  // (E5 / #250 — the defect this repairs is mine, and it shipped nothing).
+  //
+  // `mountDisclosure` sets `host.innerHTML`, so mounting over `.cz-fields`
+  // DESTROYS every row in it. The six sections survive because SECTIONS holds
+  // their boxes by reference and the mount re-adopts them into its one panel.
+  // STARTING ARMOUR and STAT POINTS are not in SECTIONS — deliberately, below
+  // — so nothing held them and nothing brought them back: two rows this file
+  // writes were absent from the document from 9676d9a to aefc356, on a screen
+  // every gate called green.
+  //
+  // NEITHER ROW BECOMES A FACE. That is the design answer, and it is not the
+  // one-line one:
+  //   · MR-189's rule, still live in the comment beside their markup — a row
+  //     that CHANGES THE RUN never folds, because folding it hides the
+  //     choosing behind a choice. Armour and stat points change the run.
+  //   · Vira's replay item (d): the stat editor is a MULTI-CLICK surface, not
+  //     a pick-once choice. Every face here carries auto-advance — one pick
+  //     inside the open panel opens the next section — so a stepper's first
+  //     `+` would march a player off a row they had not finished. A face gives
+  //     this row that semantics BY CONSTRUCTION; there is no opting out of it.
+  // So both arrive OPEN, as themselves, under the fold row: the six picks read
+  // as one compact chooser, and the two rows you EDIT sit below it.
+  //
+  // DERIVED, NEVER LISTED. The open set is *every row of `.cz-fields` that
+  // does not hold a registered picker* — read off this template and SECTIONS,
+  // so no third hand-written list exists to fall out of step with the other
+  // two (Law 0 clause 4, which is the whole disease here). The derivation also
+  // inverts the failure: a future row added to the markup with no SECTIONS
+  // entry now APPEARS, open, instead of vanishing. Wrong-and-visible beats
+  // absent-and-green.
+  //
+  // READ BEFORE THE MOUNT — after it runs the adopted pickers live in the
+  // panel and no row contains its own box, so the test loses its referent.
+  const openRows = [...fields.children].filter((row) => !SECTIONS.some((s) => row.contains(s.box)));
   const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
     key: row.key, kind: 'pick', disclosure: 'face',
     face: { label: row.label, value: row.value() },
     reveal: { node: row.box, sense: row.tip },
   })));
+  // ...and back into the host the mount just emptied, in the order the
+  // template wrote them, after the fold row.
+  for (const row of openRows) fields.appendChild(row);
   // One call after any pick — the faces are the screen's answer to "what did I
   // choose?", so they are re-read from `state`, never written twice.
   const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
@@ -35481,7 +35837,9 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   // two different things. It is marked with `aria-disabled` + `data-refusal`
   // (never `disabled`, which would make it unfocusable and unaskable) so a
   // player who presses it hears why at the place they pressed.
-  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem(), () => {
+  // E5: the button refuses for the seed OR the stats, and each names itself —
+  // the stat sentence is statsProblem()'s own, derived beside the editor.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
     const cls = registries.classes.all().find((c) => c.id === state.classId);
     const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
     return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
@@ -35492,13 +35850,17 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
-    if (seed.problem()) return; // the refusal already said why, at the button
+    if (seed.problem() || statsProblem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId,
+      attributeMode: state.attributeMode,
+      // Standard sends no allocation: the model's preset is the one home.
+      ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
 
