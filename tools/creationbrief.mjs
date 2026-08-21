@@ -1066,6 +1066,41 @@ const PLANTS = [
       && /PASS the section his words name ARRIVES OPEN/.test(out)
       && /PASS each folded row names what is currently chosen, ON THE GLASS/.test(out),
   },
+
+  // --- #288's WITHHOLD (Vira at 4439b03, comment 5365107922; both catches are
+  // Codex's), added 2026-08-21 with the fixes. These two are the defects the
+  // corpus went green OVER: the flow probes picked CLASS and TINT — the two
+  // doors that toggle in place — and the pad path carried no drive at all.
+  // Each plant is the shipped defect re-spelled as file bytes on the fixed
+  // line, so the two sentences that now watch those doors keep a red they can
+  // be re-run against.
+  {
+    name: 'P22 the advance dies with the rebuilt node — the kit stall',
+    file: 'src/ui/screens/customize.js',
+    from: "      if (!picked || picked.classList.contains('locked')) return;",
+    to: "      if (!picked || picked.classList.contains('locked') || !row.box.contains(picked)) return; // planted: ownership re-asked of the tree as it stands NOW — the shipped P1",
+    what: 'the advance re-asks ownership of the rebuilt tree: KIT is the one section whose pick listener rebuilds its box before the bubbling tail runs, so contains() sees a detached button and the flow stalls at section two',
+    expect: 'the KIT sentence goes red while both toggle-in-place drives (class, tint) stay green — and the pad sentence reddens too, honestly: its second Enter lands on the kit tile, which is the same door',
+    mustRed: (out) => /FAIL picking a KIT advances the flow/.test(out),
+    mustStay: (out) => /PASS picking in the open section ADVANCES the flow/.test(out)
+      && /PASS the pick folds the row and advances/.test(out),
+  },
+  {
+    name: 'P23 the pick strands the cursor — the pad loop',
+    file: 'src/ui/screens/customize.js',
+    from: `      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);`,
+    to: "      // planted: the pick hides the cursor's element and hands it no destination — the shipped P2",
+    what: "the cursor transfer is dropped from the advance: fold.open() stashes the row holding .gp-focus, nothing moves the cursor, and the next Confirm's ensureFocus() falls back to the CLASS face and activates it in the same press",
+    expect: 'the pad sentence goes red — the second Enter reopens pick:class — while every click drive stays green, because a mouse pick never owed the cursor anything',
+    mustRed: (out) => /FAIL a pad pick CARRIES THE CURSOR/.test(out),
+    mustStay: (out) => /PASS picking a KIT advances the flow/.test(out)
+      && /PASS picking in the open section ADVANCES the flow/.test(out)
+      && /PASS the pick folds the row and advances/.test(out),
+  },
 ];
 
 function sandbox() {
@@ -1241,6 +1276,12 @@ async function selftest() {
   console.log('  anchor prints a smaller, honest green, which is the difference a count cannot make.');
   console.log('  The tooltip path (hover/gamepad focus) is ASSERTED every run and has never been');
   console.log('  watched to fail — it carries no plant here.');
+  console.log('  P22 AND P23 (#288\'s WITHHOLD, both catches Codex\'s) ARE THE TWO DOORS THE CORPUS');
+  console.log('  WENT GREEN OVER: the flow probes picked CLASS and TINT — the two sections that');
+  console.log('  toggle in place — while KIT, the one section that REBUILDS on pick, was never');
+  console.log('  driven; and the pad PICK path carried no drive at all. Both now run every sweep');
+  console.log('  (the kit drive by click, the pad drive with real CDP keys) and each was watched');
+  console.log('  red on the live defect at 4439b03 before the fix, then re-red through its plant.');
   process.exit(fails ? 1 : 0);
 }
 
@@ -1520,6 +1561,51 @@ async function main() {
       `picking in the open section ADVANCES the flow — reveal moved ${flow.before || 'nowhere'} → ${flow.after || 'nowhere'}, want ${FOLDED[0].key} → ${FOLDED[1].key}`);
     ok(flow.picked && flow.wanted !== '' && flow.value.includes(flow.wanted),
       `the advanced-past face is the RECEIPT of the pick — chose '${flow.wanted}', face now '${flow.value}'`);
+    // THE KIT PICK, DRIVEN BY NAME — the one door the drives above never
+    // entered, and the door #288's P1 stalled behind (Vira's WITHHOLD at
+    // 4439b03, comment 5365107922; the catch is Codex's). KIT is the only
+    // section whose own pick listener REBUILDS its box (renderKits →
+    // kitBox.innerHTML=''): an advance that requires the clicked node to
+    // survive in the tree goes green on every toggle-in-place section — class
+    // and tint, exactly the two the probes above pick — and dies exactly here,
+    // at the flow's second step. Watched RED on the unfixed tree (4439b03),
+    // through this drive, before the fix landed.
+    //
+    // The flow probe's restore left the reveal on pick:kit (its restore click
+    // advances — that is the mechanism working), so this drive picks where a
+    // player now stands. BEFORE UNLOCKS A CLASS LISTS ONE KIT (its baseline,
+    // already chosen; content/source/startingKits.csv's own rule) — the
+    // player's kit pick is a tap on that sole tile, and it must still advance.
+    const kitKey = 'pick:kit';
+    const kitNext = FOLDED[FOLDED.findIndex((row) => row.key === kitKey) + 1];
+    const kdrive = await ev(`(() => {
+      const fields = document.querySelector('.cz-fields');
+      const panel = fields && fields.querySelector('.disc-reveal');
+      const face = fields && fields.querySelector('[data-face="pick:kit"]');
+      if (panel && face && (panel.hidden || panel.dataset.revealFor !== 'pick:kit')) face.click();
+      const before = panel && !panel.hidden ? panel.dataset.revealFor : null;
+      const tiles = [...document.querySelectorAll('#cz-kits .cz-opt')];
+      const chosenTile = tiles.find((el) => el.classList.contains('chosen'));
+      const origId = chosenTile ? chosenTile.dataset.startingKitId : null;
+      const tile = tiles.find((el) => !el.classList.contains('chosen')) || tiles[0];
+      const label = tile ? (tile.textContent || '').trim() : '';
+      if (tile) tile.click();
+      const after = panel && !panel.hidden ? panel.dataset.revealFor : null;
+      const valueEl = fields && fields.querySelector('[data-face="pick:kit"] .disc-value');
+      const value = ((valueEl && valueEl.textContent) || '').replace(/\\s+/g, ' ').trim();
+      // PUT THE KIT BACK through the same door it changed by (the probe owes
+      // the restoration) — only when this drive actually changed the choice.
+      if (origId && tile && tile !== chosenTile && face) {
+        face.click();
+        const back = [...document.querySelectorAll('#cz-kits .cz-opt')].find((el) => el.dataset.startingKitId === origId);
+        if (back) back.click();
+      }
+      return { before, after, picked: !!tile, tiles: tiles.length, label, value };
+    })()`);
+    ok(kdrive.before === kitKey && kdrive.picked && kdrive.after === kitNext.key,
+      `picking a KIT advances the flow — the one section that REBUILDS on pick — reveal moved `
+      + `${kdrive.before || 'nowhere'} → ${kdrive.after || 'nowhere'}, want ${kitKey} → ${kitNext.key} `
+      + `(${kdrive.tiles} tile(s), picked '${kdrive.label}', receipt '${kdrive.value}')`);
     // The tap, and then the pick, on TINT — the row whose face is the only
     // place a touch player reads the colour's name, kept as the probe row so
     // the ink checks stay aimed where the purchase is.
@@ -1686,6 +1772,55 @@ async function main() {
       `every entry the tables name is anchor-measured in the composition that holds it — `
       + `${unmeasured.length ? `${unmeasured.length} never measured: ${unmeasured.join(' · ')}`
         : `${doorKeys('collapsed').length} collapsed, ${doorKeys('expanded').length} expanded, none missing`}`);
+
+    // ---- 8. the pad path (E4 / #288's P2) ----------------------------------
+    // REAL KEY EVENTS through CDP — the door input.js actually listens at —
+    // because this defect is INVISIBLE to a click drive: after a pick,
+    // fold.open() stashes the row holding `.gp-focus`, and the next Confirm's
+    // ensureFocus() falls back to the first focusable — the CLASS face — and
+    // activates it in the same press, so every keyboard/pad pick marched the
+    // player back to section one (Vira's WITHHOLD at 4439b03, comment
+    // 5365107922; the catch is Codex's). Watched RED on the unfixed tree,
+    // through these keys, before the fix landed.
+    //
+    // LAST ON PURPOSE, after the anchor pass, because a cursor pick is a real
+    // pick: nothing downstream inherits this drive's screen. The two Enters
+    // land on CHOSEN options wherever the arrows seat on one (arrival is the
+    // chosen class's own line), so the drive moves the FLOW, mostly not the
+    // choices — and nothing runs after it either way.
+    const padKeyTap = async (key, vk, text) => {
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key, code: key, windowsVirtualKeyCode: vk, ...(text ? { text } : {}) }, S);
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key, code: key, windowsVirtualKeyCode: vk }, S);
+      await wait(80);
+    };
+    await ev(`(() => {
+      const fields = document.querySelector('.cz-fields');
+      const panel = fields.querySelector('.disc-reveal');
+      if (panel.hidden || panel.dataset.revealFor !== ${JSON.stringify(FOLDED[0].key)}) {
+        fields.querySelector('[data-face=' + ${JSON.stringify(JSON.stringify(FOLDED[0].key))} + ']').click();
+      }
+      return true;
+    })()`);
+    let seated = false;
+    for (let i = 0; i < 15 && !seated; i++) {
+      await padKeyTap('ArrowDown', 40);
+      seated = await ev(`(() => { const f = document.querySelector('.gp-focus'); return !!(f && f.closest('#cz-classes')); })()`);
+    }
+    const PAD_STATE = `(() => {
+      const panel = document.querySelector('.cz-fields .disc-reveal');
+      const f = document.querySelector('.gp-focus');
+      return { reveal: panel && !panel.hidden ? panel.dataset.revealFor : null,
+        inNext: !!(f && f.closest(${JSON.stringify(FOLDED[1].box)})),
+        at: f ? ((f.textContent || '').trim().slice(0, 24) || f.className) : 'nowhere' }; })()`;
+    await padKeyTap('Enter', 13, '\r');
+    const pad1 = await ev(PAD_STATE);
+    await padKeyTap('Enter', 13, '\r');
+    const pad2 = await ev(PAD_STATE);
+    ok(seated && pad1.reveal === FOLDED[1].key && pad1.inNext && pad2.reveal === FOLDED[2].key,
+      `a pad pick CARRIES THE CURSOR — ${seated ? '' : 'the arrows never seated on a class option · '}`
+      + `Enter advanced ${FOLDED[0].key} → ${pad1.reveal || 'nowhere'} with the cursor `
+      + `${pad1.inNext ? 'on the revealed kit' : `at '${pad1.at}'`}, second Enter → ${pad2.reveal || 'nowhere'}, `
+      + `want ${FOLDED[1].key} then ${FOLDED[2].key}`);
 
     await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
   }
