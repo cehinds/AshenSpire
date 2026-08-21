@@ -589,6 +589,30 @@ export const balance = {
     inspectHold: {
       ms: 400,
     },
+    // REWARD COLLECTION (E11, #256). THE ONE HOME OF THE WORD.
+    //
+    // Constantine, 2026-08-15 (the E11 card): Continue on the reward menu is
+    // ALWAYS pressable and a setting decides what it means — "auto-collect ON
+    // takes everything, picking at random where there is a choice; OFF gives
+    // only what was chosen, no nagging".
+    //
+    // `auto` is the default, and the reason is which mistake costs more: under
+    // auto a distracted Continue still banks the cinders and the relic (an
+    // explicit SKIP on a row is respected — deck discipline survives the
+    // setting); under manual a distracted Continue walks away from everything.
+    // Losing rewards you never saw is the worse silence. The cost of the
+    // default, stated: auto's card pick adds a card a deliberate player may
+    // not have wanted — one tap (Skip on the card row) prevents it.
+    //
+    // NO SETTINGS ROW DERIVES FROM THIS YET, ON PURPOSE — settings.js is under
+    // E3's live claim (#248); adding the row later is a data edit there, not a
+    // redesign (the handLayout precedent, three rows down). Until then the
+    // dial is this row and meta.settings.rewardCollect overrides it when a
+    // row exists to write it.
+    rewardCollect: {
+      def: 'auto',
+      modes: ['auto', 'manual'],
+    },
     // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
     //
     // Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
@@ -706,7 +730,21 @@ export const balance = {
     // What `persistence` genuinely cannot say is the other half of his sentence
     // — the few pieces that are nobody's to FIND because they are everybody's —
     // and that is `basicTag` below.
-    persistence: 'both',
+    // HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+    // up mid run"*. That is this line and nothing else — the three values were
+    // already the closed set and 'perRun' is already documented above as "what
+    // you find is yours for this run only". Law 0's falsifier, answered by the
+    // machinery that was already here: an entry describes, the machinery
+    // derives, and the whole of item 1 is one word in a content table.
+    //
+    // WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+    // sentence this word cannot reach: `basicTag` below still exempts the few
+    // pieces that are everybody's from the found gate, so three `basic`
+    // armaments remain on the shelf in a run that has picked up nothing. That
+    // is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+    // here. It is flagged on the PR rather than averaged: if he wants a truly
+    // empty shelf, `basicTag: ''` is the second word and it is his to say.
+    persistence: 'perRun',
 
     // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
     // The tag that means "this is everybody's". It answers the FOUND gate only
@@ -722,7 +760,33 @@ export const balance = {
     // universal shelf off entirely; a value naming a tag no armament carries is
     // a hard validation failure, because a setting that silently does nothing
     // is the one failure mode worse than a missing one.
-    basicTag: 'basic',
+    //
+    // KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+    // starting kit armory weapon shown on character creation. the armory should
+    // not show weapons not collected in run. it should not show items not
+    // available at character creation."*
+    //
+    // THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+    // The worry was that clearing this tag would also hide the pieces the player
+    // STARTED with — his exemption is the starting kit, not a category. It does
+    // not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+    // set, and `createRunState` puts the kit in the sets. Measured across all
+    // three shipped classes at this ref:
+    //
+    //   reaver    carries straightSword, roundShield, default
+    //   starseer  carries ashStaff, default
+    //   herald    carries boneSceptre, default
+    //
+    // So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+    // THIS RUN PICKED UP, per class, following the player rather than a tag —
+    // which is his sentence. What the tag was adding on top is the part he
+    // killed: it handed the starseer a straightSword and a roundShield it was
+    // never shown, and the herald all three.
+    //
+    // '' is the documented off value, not an invention (see the paragraph
+    // above); a value naming a tag no armament carries is still a hard
+    // validation failure, so this cannot rot into a silent no-op.
+    basicTag: '',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.
