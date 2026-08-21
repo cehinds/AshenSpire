@@ -120,6 +120,12 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
   console.log(`      A plant carrying \`prep\` runs that command in the copy first, so a two-stage`);
   console.log(`      content door (spreadsheet -> content-build -> generated module) is travelled whole.`);
   console.log(`      Revert = the copy is discarded; the real tree is never edited.`);
+  // THE VERDICT VOCABULARY, PRINTED WHERE THE VERDICTS ARE READ. Each name is a
+  // different repair, and before 2026-08-21 three of them shared one word.
+  console.log(`      VERDICTS: CAUGHT = failed by its own named red · UNCAUGHT = tool stayed green`);
+  console.log(`                (blind check, or the plant's premise moved) · RED-FOR-WRONG-REASON =`);
+  console.log(`                failed by some OTHER red · RED-NOT-EXIT = red printed, exit still 0 ·`);
+  console.log(`                DRIFTED = the find-string is gone, so the plant never armed at all.`);
   const root = copyTree(extraCopy, { includePng });
   let failed = 0;
   try {
@@ -173,8 +179,33 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
         const line = r.out.split('\n').find((l) => p.expectRed.test(l)) || '';
         console.log(`  CAUGHT  "${p.name}" -> ${where}${p.prep ? ` (prep: ${p.prep.map((c) => c.join(' ')).join('; ')})` : ''} — exit ${r.code}; red named: ${line.trim().slice(0, 140)}`);
       } else {
+        // THREE FAILURES WEARING ONE NAME (Bjorn, 2026-08-21, AshenSpire#299).
+        //
+        // This branch used to print `NOT CAUGHT` for every non-catch, and the
+        // uprightgate corpus proved that hides the diagnosis: of its five
+        // non-catches, three exited 0 (the tool never noticed) and two exited 1
+        // (the tool DID fail — just not by its own named red, which is §3's
+        // "failing for the wrong reason is not red"). Those need opposite
+        // fixes: one says the check is blind, the other says the check is
+        // loud about something else. A third state — the red PRINTED while
+        // the tool still exited 0 — is an instrument that whispers, and it is
+        // the defect a console-only warning already cost this house once.
+        //
+        // VERDICT SEMANTICS ARE UNCHANGED ON PURPOSE: every branch below still
+        // counts one failure, exactly as before. This renames a failure; it
+        // never converts one into a pass. `doorplant` is shared by every
+        // `--selftest` corpus in the tree, so a corpus that passed before this
+        // change passes identically after it.
         failed++;
-        console.error(`  NOT CAUGHT  "${p.name}" -> ${where} — exit ${r.code}${r.signal ? ` (signal ${r.signal})` : ''}, expected-red ${matched ? 'matched but exit 0' : 'NOT in output'}. The known-bad was armed by the real door and this tool stayed green — decoration, not evidence.`);
+        const klass = r.code !== 0
+          ? 'RED-FOR-WRONG-REASON'
+          : matched ? 'RED-NOT-EXIT' : 'UNCAUGHT';
+        const why = {
+          'RED-FOR-WRONG-REASON': 'the tool FAILED, but not by the red this plant names — a red for the wrong reason is not a catch (SOP 14 §3). Either the plant broke something else on its way in, or the check that fired is not the check this plant is aimed at.',
+          'RED-NOT-EXIT': 'the expected red was PRINTED and the tool still exited 0 — the instrument whispered instead of failing. A check nobody can fail is not a check.',
+          UNCAUGHT: 'the known-bad was armed by the real door and this tool stayed green — decoration, not evidence. Either the check is blind to this defect, or the plant\'s PREMISE has moved: it still applies, still runs, and tests a causal path the code no longer has.',
+        }[klass];
+        console.error(`  ${klass}  "${p.name}" -> ${where} — exit ${r.code}${r.signal ? ` (signal ${r.signal})` : ''}, expected-red ${matched ? 'PRESENT' : 'NOT in output'}. ${why}`);
         console.error(`    tail: ${r.out.trim().split('\n').slice(-6).join('\n    ')}`);
       }
     }
