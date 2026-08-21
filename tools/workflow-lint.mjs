@@ -38,6 +38,31 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  * `steps:` key; its own keys are the lines at the item's key indent. Text, not
  * a parse tree, because the defect being hunted is invisible after parsing.
  */
+/**
+ * A line with its trailing YAML comment removed, for STRUCTURAL matching only.
+ *
+ * Every key pattern in this file anchored INDENTATION and stayed COMMENT-BLIND,
+ * so `build: # Linux job` was not a job header (the next bare `steps:` was
+ * consumed as one and the job never examined) and `steps: # checks` made the
+ * whole list invisible — the lint reporting success while the exact last-wins
+ * defect it gates sailed through. Two symptoms, one class, so this is one
+ * helper used at EVERY key match rather than two patched patterns.
+ *
+ * Quote-aware, because `run: echo "# not a comment"` must keep its value; a
+ * `#` counts only at line start or after whitespace, outside quotes. Block
+ * scalar bodies never reach here — they are skipped as payload upstream.
+ */
+export function stripComment(line) {
+  let q = null;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) { if (c === q) q = null; continue; }
+    if (c === '"' || c === "'") { q = c; continue; }
+    if (c === '#' && (i === 0 || /\s/.test(line[i - 1]))) return line.slice(0, i).trimEnd();
+  }
+  return line;
+}
+
 export function lintWorkflowText(text, file = '<text>') {
   const out = [];
   const lines = String(text).split(/\r?\n/);
@@ -83,11 +108,15 @@ export function lintWorkflowText(text, file = '<text>') {
     }
     if (!line.trim() || /^\s*#/.test(line)) continue;
     const indent = indentOf(line);
+    // ONE stripped view, used by every key match below. Leading whitespace is
+    // untouched, so indentation anchoring is unaffected.
+    const code = stripComment(line);
+    if (!code.trim()) continue;
 
-    if (/^\s*jobs:\s*$/.test(line)) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
+    if (/^\s*jobs:\s*$/.test(code)) { closeJob(); jobsIndent = indent; jobIndent = -1; jobName = null; continue; }
 
     // A job header: a bare key one level inside `jobs:`.
-    if (jobsIndent >= 0 && indent > jobsIndent && /^\s*[\w.-]+:\s*$/.test(line)
+    if (jobsIndent >= 0 && indent > jobsIndent && /^\s*[\w.-]+:\s*$/.test(code)
         && (jobIndent === -1 || indent === jobIndent) && !inSteps) {
       closeJob();
       jobIndent = indent;
@@ -95,11 +124,11 @@ export function lintWorkflowText(text, file = '<text>') {
       continue;
     }
     // Leaving a job entirely (back out to `jobs:` level or shallower).
-    if (jobIndent >= 0 && indent <= jobsIndent && /^\s*[\w.-]+:/.test(line)) { closeJob(); jobIndent = -1; jobName = null; continue; }
+    if (jobIndent >= 0 && indent <= jobsIndent && /^\s*[\w.-]+:/.test(code)) { closeJob(); jobIndent = -1; jobName = null; continue; }
 
     // A JOB'S OWN KEYS SIT AT ONE INDENT, and the shallowest key under the job
     // header fixes it. Everything deeper is nested data.
-    if (jobIndent >= 0 && !inSteps && indent > jobIndent && /^\s*[\w.-]+:/.test(line)
+    if (jobIndent >= 0 && !inSteps && indent > jobIndent && /^\s*[\w.-]+:/.test(code)
         && (jobKeyIndent === -1 || indent < jobKeyIndent)) {
       jobKeyIndent = indent;
     }
@@ -110,7 +139,7 @@ export function lintWorkflowText(text, file = '<text>') {
     // gate reddening a valid workflow. Same class as the heredoc: structure
     // detected without anchoring to its level. Anchor it, do not special-case
     // the word `matrix`.
-    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(line) && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
+    if (/^\s*steps:\s*(\|>?[-+]?)?\s*$/.test(code) && (jobKeyIndent === -1 || indent === jobKeyIndent)) {
       closeStep();
       jobStepsSeen += 1;
       // TWO `steps:` IN ONE JOB IS THE LINTER'S OWN DEFECT CLASS, ONE LEVEL UP:
@@ -126,13 +155,13 @@ export function lintWorkflowText(text, file = '<text>') {
     if (!inSteps) continue;
 
     // A key at or left of the `steps:` key ends the block.
-    if (indent <= stepsKeyIndent && /^\s*[\w.-]+:/.test(line)) {
+    if (indent <= stepsKeyIndent && /^\s*[\w.-]+:/.test(code)) {
       closeStep(); inSteps = false; stepsKeyIndent = -1; itemIndent = -1;
       i -= 1; // re-read this line as a job key / job header
       continue;
     }
 
-    const item = line.match(/^(\s*)-\s+([\w.-]+):(.*)$/);
+    const item = code.match(/^(\s*)-\s+([\w.-]+):(.*)$/);
     // ONLY AT THE LIST'S OWN INDENT. The first `- ` after `steps:` fixes it;
     // anything deeper is nested data, not a step.
     if (item && (itemIndent === -1 || indent === itemIndent)) {
@@ -140,14 +169,14 @@ export function lintWorkflowText(text, file = '<text>') {
       if (itemIndent === -1) itemIndent = indent;
       const key = item[2];
       step = { line: i + 1, name: key === 'name' ? item[3].trim() : '(unnamed)', keys: { [key]: 1 }, indent: indent + 2 };
-      if (/:\s*[|>][-+]?\s*$/.test(line)) skipDeeperThan = indent + 2 - 1;
+      if (/:\s*[|>][-+]?\s*$/.test(code)) skipDeeperThan = indent + 2 - 1;
       continue;
     }
     if (step) {
-      const kv = line.match(/^(\s*)([\w.-]+):/);
+      const kv = code.match(/^(\s*)([\w.-]+):/);
       if (kv && kv[1].length === step.indent) {
         step.keys[kv[2]] = (step.keys[kv[2]] || 0) + 1;
-        if (/:\s*[|>][-+]?\s*$/.test(line)) skipDeeperThan = step.indent;
+        if (/:\s*[|>][-+]?\s*$/.test(code)) skipDeeperThan = step.indent;
       }
     }
   }
@@ -187,6 +216,16 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        steps:\n          - one\n          - two\n    steps:\n      - name: Real\n        run: echo ok\n' },
   { name: 'and a REAL duplicate steps: is still caught beside a matrix axis', want: 1,
     yml: 'on: push\njobs:\n  a:\n    strategy:\n      matrix:\n        steps:\n          - one\n    steps:\n      - name: Real\n        run: echo ok\n    steps:\n      - name: Shadow\n        run: echo no\n' },
+  // COMMENT-BLINDNESS, both symptoms of the one class, plus the guard that
+  // keeps the general fix from eating a legitimate value.
+  { name: 'a job header with a trailing comment is still a job header', want: 1,
+    yml: 'on: push\njobs:\n  build: # Linux job\n    steps:\n      - name: Twice\n        run: echo one\n        run: echo two\n' },
+  { name: 'a steps: key with a trailing comment still opens the list', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps: # checks\n      - name: Ghost\n' },
+  { name: 'a quoted # inside a run value is NOT a comment', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Hash\n        run: echo "# not a comment"\n' },
+  { name: 'a commented duplicate steps: is still a duplicate', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps: # real\n      - name: One\n        run: echo 1\n    steps: # shadow\n      - name: Two\n        run: echo 2\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

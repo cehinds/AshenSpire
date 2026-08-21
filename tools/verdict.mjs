@@ -44,9 +44,14 @@
 // Exit codes — and they are DISTINCT ON PURPOSE, because "it failed" and "it
 // said nothing" need different fixes and a single code would merge them again:
 //   0  the wrapped tool exited 0 AND printed a verdict counting >= --min (1)
-//   1  the wrapped tool exited non-zero (propagated), or its verdict counted 0
+//   1  the wrapped tool's verdict counted 0, or it printed two verdicts
 //   3  the wrapped tool exited 0 and printed NO countable verdict — SILENCE
-//   2  usage error in this file itself
+//   2  usage error in this file, BEFORE any child is spawned
+//   *  ANY NONZERO CODE A WRAPPED TOOL EXITS WITH IS RETURNED VERBATIM and
+//      takes precedence over every row above. `2` from a browser probe means
+//      THE INSTRUMENT WAS UNAVAILABLE — unknown, which blocks and is not the
+//      same state as `1`, a check that ran and failed. This door reports
+//      states; it does not merge them.
 //
 // BOUNDARY, named rather than left to be found:
 //   · This proves a tool SAID it checked N things. It cannot prove the N checks
@@ -196,7 +201,18 @@ async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
       const label = [cmd, ...argv].join(' ');
       // A RED STAYS RED, AND IT IS NOT RE-JUDGED. If the tool already failed,
       // this file adds nothing and must not convert its exit code.
-      if (code !== 0) return done({ code: 1, out, note: `${label} exited ${code} — propagated` });
+      // THE CHILD'S CODE COMES BACK VERBATIM. Hard-coding 1 here erased a
+      // distinction this repo paid a real CI run to learn, and ci.yml says so
+      // in its own voice: *"The probe exits 2 when the instrument is
+      // unavailable, which is red on purpose: `unknown` blocks, and it must
+      // never read as a pass. It exits 1 only when a check actually RAN and
+      // failed. THOSE TWO WERE THE SAME EXIT CODE UNTIL RUN 1 OF THIS WORKFLOW
+      // TAUGHT ME OTHERWISE."* A door that maps many states onto one is the
+      // same defect as a tool that prints none — and mine said "propagated"
+      // while doing it, so the receipt lied too. Fourth distinction this door
+      // has been caught collapsing: silence-vs-success, failure-vs-success,
+      // unknown-vs-failure.
+      if (code !== 0) return done({ code, out, note: `${label} exited ${code} — propagated verbatim (unknown is not failure)` });
       const v = readVerdict(out);
       if (v.error === 'none') {
         const near = v.refused.length
@@ -281,6 +297,15 @@ const SELFTEST = [
   // ---- SILENCE AND PROPAGATION ----
   { name: 'unknown grammar reads as silence, loudly', file: 'console.log("everything is fine, trust me"); process.exit(0);\n', want: 3 },
   { name: 'a tool that FAILED keeps its own red (not re-judged)', file: 'console.log("tool: FAILED 2 of 5."); process.exit(1);\n', want: 1 },
+  // EXIT-CODE FIDELITY, BY NAME. 2 is "the instrument was unavailable"
+  // (unknown, blocks); 1 is "a check ran and failed". They are different
+  // sentences and the door must not merge them.
+  { name: 'a child exiting 2 (instrument unavailable) comes out 2, not 1',
+    file: 'process.exit(2);\n', want: 2 },
+  { name: 'a child exiting 1 (a check ran and failed) comes out 1',
+    file: 'console.log("tool: FAILED 2 of 5."); process.exit(1);\n', want: 1 },
+  { name: 'an unusual code (77) is not flattened either',
+    file: 'process.exit(77);\n', want: 77 },
   { name: 'a counted verdict printed while FAILING is still red',
     file: 'console.log("tool: OK — 9 checks passed."); process.exit(1);\n', want: 1 },
   { name: 'two DIFFERENT good verdicts are ambiguous, not "the best one"',
