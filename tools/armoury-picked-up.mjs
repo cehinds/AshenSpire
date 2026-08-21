@@ -49,6 +49,60 @@
 //
 // REMOVAL CONDITION: deleted the day the Armoury stops being the shelf — if the
 // picker ever moves off `ownership()`, A1 is measuring a predicate nobody reads.
+//
+// -----------------------------------------------------------------------------
+// FINDING CODES — one closed set, read by BOTH the emitter and the plant, so the
+// second copy never exists. Added 2026-08-21 after Saga's WITHHOLD at ea2cf89.
+//
+// WHAT BIT US, and it was my own rule from both ends. I wrote that an
+// `expectRed` matching a check ID instead of a sentence is not a plant but a
+// hope — /FAIL A1/ is satisfied by whichever of A1's three sub-checks happens to
+// fire, so it catches something and measures nothing. That correction was right
+// and it is kept. What it did NOT survive is the inverse: an `expectRed` bound
+// to a SENTENCE dies silently the day the sentence is reworded. Both of A1's
+// plants asserted prose this file no longer printed; the checks discriminated
+// correctly in both directions and the corpus reported NOT CAUGHT anyway.
+//
+// THE ANCHOR, and why it cannot rot either way:
+//   · A code names ONE ASSERTION IN ONE DIRECTION — `A1.wide` (the shelf offers
+//     what the run never picked up) and `A1.step` (a pickup does not move the
+//     shelf) are different codes, so a plant bound to one CANNOT be satisfied by
+//     the other. That is the discrimination the sentence was bought for.
+//   · The prose stays free. Reword any FAIL line and every plant still holds:
+//     the code and the sentence are printed by ONE call, so they cannot drift
+//     into two copies of the same fact.
+//   · A plant naming a code this file cannot emit THROWS AT LOAD (`redRe`
+//     below), so a rename is a hard red on the next run, never a silent green.
+//     doorplant already gives the plant's FIND-STRING that guarantee; this gives
+//     it to the assertion side, which is the half that was missing.
+//
+// REMOVAL CONDITION for the codes: deleted the day a plant is bound to something
+// stronger than an output match — a structured findings array the harness reads.
+// Then the string is the second copy and this block is the thing to cut.
+const CODES = new Set([
+  'A1.wide',   // the shelf offers a piece neither in the kit nor picked up
+  'A1.floor',  // the shelf is empty rather than narrow
+  'A1.step',   // picking a piece up does not move the shelf by exactly one
+  'A2.faces',  // the picker draws no item faces at all
+  'A2.folded', // the items do not arrive folded
+  'A3.stray',  // a pressable control sits outside the card
+  'A3.press',  // pressing the card does not reveal exactly that card
+  'A3.control',// the revealed card carries no equip control
+  'A3.marked', // no face is marked as the equipped piece
+  'A3.word',   // the equipped card's control does not say Unequip
+  'A3.danger', // the unequip control does not carry .danger
+  'A4.nocard', // no card on the map mount to press
+  'A4.acted',  // a short click equipped or unequipped
+  'A4.unfold', // a short click did not unfold the card
+  'A5.refold', // clicking again did not refold
+  'A5.pose',   // could not pose an open card with somewhere outside it
+  'A5.offcard',// clicking off the card left it open
+]);
+const known = (code) => { if (!CODES.has(code)) throw new Error(`armoury-picked-up: unknown finding code "${code}" — the codes are a closed set; add it above or fix the caller.`); return code; };
+/** The one emitter: the code and its sentence are born in the same call. */
+const red = (code, text) => `FAIL [${known(code)}] ${text}`;
+/** The one anchor a plant may use. Unknown code = throw, not a quiet miss. */
+const redRe = (code) => new RegExp(`FAIL \\[${known(code).replace('.', '\\.')}\\]`);
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -64,7 +118,9 @@ if (process.argv.includes('--selftest')) {
         edits: [{ file: 'src/content/balance.js',
           find: "    persistence: 'perRun',",
           replace: "    persistence: 'both'," }],
-        expectRed: /FAIL A1 the picker offers \d+ piece\(s\) this run never picked up/,
+        // BOUND TO ITS OWN DIRECTION BY CODE, not by prose. `both` widens the
+        // shelf past the run, so A1.wide is the sentence this defect owns.
+        expectRed: redRe('A1.wide'),
       },
       {
         // THE OTHER DIRECTION OF THE SAME COLLAPSE, and it is the one my own
@@ -85,7 +141,17 @@ if (process.argv.includes('--selftest')) {
         // (SOP 14 §3: failing for the wrong reason is not red). The emptiness
         // direction is the one my own Charter row names as the worse silence,
         // so it gets the assertion that can only be satisfied by it.
-        expectRed: /FAIL A1 a piece the run picked up \([a-zA-Z]+\) is not offered/,
+        //
+        // THAT REASONING STANDS; ITS ANCHOR DID NOT. The tightening above was
+        // written against a sentence this file has since reworded, so the plant
+        // asserted prose nobody prints and reported NOT CAUGHT while the check
+        // discriminated perfectly. A1.step is the same direction stated as a
+        // code: `both` does not fire it, `unlocked` does.
+        expectRed: redRe('A1.step'),
+        // BOUNDARY, measured not assumed: an empty shelf also draws no cards on
+        // the map mount, so this plant additionally kills the A4/A5 stage with
+        // `timeout picker`. The catch above is the MODEL-DOOR red, which prints
+        // before any browser boots — not the crash.
       },
       {
         // A2's known-bad: the panes arrive already open. This is the state the
@@ -97,7 +163,9 @@ if (process.argv.includes('--selftest')) {
           find: '    const fold = mountDisclosure(list, entries, { moreLabel: \'more\' });',
           replace: '    const fold = mountDisclosure(list, entries, { moreLabel: \'more\' });\n'
             + '    if (entries.length) fold.open(entries[0].key); // planted: arrives open' }],
-        expectRed: /FAIL A2/,
+        // A2 has two directions too — "no faces at all" is a different defect
+        // from "the faces arrive open". This plant owns the second.
+        expectRed: redRe('A2.folded'),
       },
       {
         // A3's known-bad, and it is HIS CORRECTION planted: a second control
@@ -111,7 +179,7 @@ if (process.argv.includes('--selftest')) {
             + '    sub.type = \'button\'; sub.className = \'ep-sub\'; sub.textContent = \'Stats\';\n'
             + '    list.appendChild(sub); // planted: the sub button he removed\n'
             + '    return box;\n  }\n\n  /** The rewrites, live:' }],
-        expectRed: /FAIL A3/,
+        expectRed: redRe('A3.stray'),
       },
       {
         // The RED half of "un equip in red". A plant that repaints the control
@@ -123,7 +191,10 @@ if (process.argv.includes('--selftest')) {
         edits: [{ file: 'src/ui/screens/equipment.js',
           find: "      btn.className = equipped ? 'ep-equip danger' : 'ep-equip';",
           replace: "      btn.className = 'ep-equip';" }],
-        expectRed: /FAIL A3/,
+        // The colour channel ONLY. A3.word is the other half of his sentence and
+        // this plant leaves the word alone on purpose, so binding to A3.word
+        // would be the "caught something, measured nothing" failure again.
+        expectRed: redRe('A3.danger'),
       },
     ],
   }));
@@ -186,15 +257,15 @@ async function a1Model() {
     seen.push(`${cls.id}: ${offered.join(', ') || '(none)'}`);
     if (strangers.length) {
       wideFail++;
-      console.log(`    FAIL A1 ${cls.id} is offered ${strangers.length} piece(s) neither in its kit nor picked up`
-        + ` — ${strangers.slice(0, 5).join(', ')}`);
+      console.log(`    ${red('A1.wide', `${cls.id} is offered ${strangers.length} piece(s) neither in its kit nor picked up`
+        + ` — ${strangers.slice(0, 5).join(', ')}`)}`);
     }
     // THE FLOOR, and it is the half his "unless" clause protects: a run that has
     // picked up nothing still shows the kit it is WEARING. A shelf of zero would
     // satisfy "nothing you did not pick up" and be the worse screen.
     if (!offered.length) {
       floorFail++;
-      console.log(`    FAIL A1 ${cls.id} is offered NOTHING — the shelf is empty, not narrow`);
+      console.log(`    ${red('A1.floor', `${cls.id} is offered NOTHING — the shelf is empty, not narrow`)}`);
     }
   }
   for (const line of seen) console.log(`      ${line}`);
@@ -215,7 +286,7 @@ async function a1Model() {
   ok(after === before + 1,
     after === before + 1
       ? `A1 picking one piece up adds exactly one to the shelf (${before} → ${after}, ${pickup.id})`
-      : `FAIL A1 picking up ${pickup.id} moved the shelf ${before} → ${after}, not by one`);
+      : red('A1.step', `picking up ${pickup.id} moved the shelf ${before} → ${after}, not by one`));
 }
 
 async function main() {
@@ -276,11 +347,11 @@ async function main() {
         }; })())`));
       console.log(`      faces ${snap.faces} · expanded at open ${snap.expandedAtOpen} · reveal panels showing ${snap.revealShown} · flat rows ${snap.chipsFlat}`);
       ok(snap.faces > 0, snap.faces > 0 ? `A2 the picker draws ${snap.faces} item faces`
-        : 'FAIL A2 the picker draws no item faces at all — nothing to fold');
+        : red('A2.faces', 'the picker draws no item faces at all — nothing to fold'));
       ok(snap.faces > 0 && snap.expandedAtOpen === 0 && snap.revealShown === 0,
         (snap.faces > 0 && snap.expandedAtOpen === 0 && snap.revealShown === 0)
           ? 'A2 every item arrives folded — 0 expanded, 0 panels showing'
-          : `FAIL A2 items do not arrive folded — ${snap.expandedAtOpen} face(s) expanded, ${snap.revealShown} panel(s) showing`);
+          : red('A2.folded', `items do not arrive folded — ${snap.expandedAtOpen} face(s) expanded, ${snap.revealShown} panel(s) showing`));
 
       // ---- A3 ----------------------------------------------------------
       console.log('\n  A3 · the card is the control  (page door)');
@@ -294,7 +365,7 @@ async function main() {
       })())`));
       ok(strays.stray === 0, strays.stray === 0
         ? `A3 no control outside the card — ${strays.total} button(s), all faces or inside the reveal`
-        : `FAIL A3 ${strays.stray} sub button(s) hang outside the card: ${strays.names.join(' · ')}`);
+        : red('A3.stray', `${strays.stray} sub button(s) hang outside the card: ${strays.names.join(' · ')}`));
 
       // Press the card. One gesture, and it must open THAT card and only it.
       const pressed = JSON.parse(await ev(`JSON.stringify((() => {
@@ -309,15 +380,15 @@ async function main() {
           btn: btn ? { text: btn.textContent.trim(), cls: btn.className, act: btn.dataset.act || '' } : null };
       })())`));
       await wait(200);
-      if (!pressed) { console.log('    FAIL A3 no face to press'); fails++; checks++; }
+      if (!pressed) { console.log(`    ${red('A3.press', 'no face to press')}`); fails++; checks++; }
       else {
         console.log(`      after press: ${pressed.openCount} open · panel shown ${pressed.panelShown} · control ${JSON.stringify(pressed.btn)}`);
         ok(pressed.openCount === 1 && pressed.openedIsPressed && pressed.panelShown,
           (pressed.openCount === 1 && pressed.openedIsPressed && pressed.panelShown)
             ? 'A3 pressing the card reveals exactly that card'
-            : `FAIL A3 pressing the card did not reveal it — ${pressed.openCount} open, panel shown ${pressed.panelShown}`);
+            : red('A3.press', `pressing the card did not reveal it — ${pressed.openCount} open, panel shown ${pressed.panelShown}`));
         ok(!!pressed.btn, pressed.btn ? `A3 the revealed card carries one equip control ("${pressed.btn.text}")`
-          : 'FAIL A3 the revealed card carries no equip control');
+          : red('A3.control', 'the revealed card carries no equip control'));
       }
 
       // The RED half. Find the face for the piece already in the set and press
@@ -340,16 +411,16 @@ async function main() {
           act: btn ? (btn.dataset.act || '') : null };
       })())`));
       if (un.none) {
-        console.log(`    FAIL A3 no face is marked as the equipped piece (faces: ${(un.faces || []).slice(0, 5).join(', ')}) — the red state is unreachable, so it is unmeasured`);
+        console.log(`    ${red('A3.marked', `no face is marked as the equipped piece (faces: ${(un.faces || []).slice(0, 5).join(', ')}) — the red state is unreachable, so it is unmeasured`)}`);
         fails++; checks++;
       } else {
         console.log(`      equipped card's control: ${JSON.stringify(un)}`);
         ok(/unequip/i.test(un.text || ''), /unequip/i.test(un.text || '')
           ? `A3 the equipped card's control says "${un.text}"`
-          : `FAIL A3 the equipped card's control says "${un.text}", not Unequip`);
+          : red('A3.word', `the equipped card's control says "${un.text}", not Unequip`));
         ok(/\bdanger\b/.test(un.cls || ''), /\bdanger\b/.test(un.cls || '')
           ? 'A3 the unequip control is red (carries .danger)'
-          : `FAIL A3 the unequip control is not red — class "${un.cls}"`);
+          : red('A3.danger', `the unequip control is not red — class "${un.cls}"`));
       }
     }
   } catch (e) {
@@ -375,7 +446,16 @@ async function main() {
     await wait(450);
     await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
       || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
-    await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'picker', 8000);
+    // NO CARD HERE IS A FINDING, NOT A CRASH — and the difference is this file's
+    // own exit contract. `until` throws, and this stage sits OUTSIDE the try/catch
+    // above, so an empty shelf killed the run with an unhandled `timeout picker`
+    // and exited 1 — the code this header reserves for A FINDING. The tool was
+    // reporting a harness death in a finding's clothes. Found by hand-planting
+    // `persistence: 'unlocked'` in the real tree (Saga's WITHHOLD, ea2cf89).
+    // No new concept: `A4.nocard` below is already the sentence for "no card to
+    // press", so this just lets the existing emitter reach it.
+    const mapHasCard = await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'picker', 8000)
+      .then(() => true, () => false);
     await wait(350);
 
     const faceBox = async () => JSON.parse(await ev(`JSON.stringify((() => {
@@ -395,8 +475,8 @@ async function main() {
     // click folds, click again unfolds, click elsewhere closes — and say
     // NOTHING about whether a real finger at those pixels hits the card. That
     // is a geometry question and it wants the zoom conversion, not this road.
-    const b0 = await faceBox();
-    if (!b0) { console.log('    FAIL A4 no card on the map mount to press'); fails++; checks++; }
+    const b0 = mapHasCard ? await faceBox() : null;
+    if (!b0) { console.log(`    ${red('A4.nocard', 'no card on the map mount to press')}`); fails++; checks++; }
     else {
       // THE LENGTH IS READ OFF THE CONTROL, never typed here. `armHold` publishes
       // the dial it actually armed with; a number in this file would stop
@@ -419,11 +499,11 @@ async function main() {
       ok(afterClick && afterClick.equipped === wasEquipped,
         (afterClick && afterClick.equipped === wasEquipped)
           ? `A4 a short click did NOT change what is equipped (still ${wasEquipped ? 'equipped' : 'empty'})`
-          : 'FAIL A4 a short click equipped/unequipped — click is supposed to fold, not act');
+          : red('A4.acted', 'a short click equipped/unequipped — click is supposed to fold, not act'));
       ok(afterClick && afterClick.expanded,
         (afterClick && afterClick.expanded)
           ? 'A4 a short click unfolded the card'
-          : 'FAIL A4 a short click did not unfold the card');
+          : red('A4.unfold', 'a short click did not unfold the card'));
 
       // 2 · CLICK AGAIN REFOLDS.
       const b1 = await faceBox();
@@ -432,7 +512,7 @@ async function main() {
       const b2 = await faceBox();
       ok(b2 && !b2.expanded, (b2 && !b2.expanded)
         ? 'A5 clicking the card again refolded it'
-        : 'FAIL A5 clicking again did not refold the card');
+        : red('A5.refold', 'clicking again did not refold the card'));
 
       // 3 · CLICK OFF THE CARD REFOLDS. Open it, then press the picker header.
       await ev(`document.querySelector('.equip-picker .ep-list .disc-face').click()`);
@@ -442,7 +522,7 @@ async function main() {
         const h = document.querySelector('.equip-picker h4'); if (!h) return null;
         const r = h.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
       if (!openNow || !openNow.expanded || !off) {
-        console.log('    FAIL A5 could not pose an open card with somewhere outside it to press — NOT a pass');
+        console.log(`    ${red('A5.pose', 'could not pose an open card with somewhere outside it to press — NOT a pass')}`);
         fails++; checks++;
       } else {
         await ev(`document.querySelector('.equip-picker h4').click()`);
@@ -450,7 +530,7 @@ async function main() {
         const b3 = await faceBox();
         ok(b3 && !b3.expanded, (b3 && !b3.expanded)
           ? 'A5 clicking OFF the card refolded it'
-          : 'FAIL A5 clicking off the card left it open');
+          : red('A5.offcard', 'clicking off the card left it open'));
       }
 
     }
