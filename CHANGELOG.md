@@ -18,6 +18,10 @@ point lives in `git log` and is not restated. (The in-game changelog is its
 own card, #189, and stays unbuilt; this file is the "one authoritative
 structured owner" that card asks for.)*
 
+## 2026-08-21
+
+- **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0918`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
+
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
 
 - **Character creation is one panel at a time** ([#288](https://github.com/cehinds/AshenSpire/pull/288), `0.4.0.0911`). Six sections — CLASS, STARTING KIT, KEEPSAKE, SIGIL, TINT, SPRITE — each a card that opens at its turn. CLASS is open on arrival; picking an option collapses the section and opens the next; any face re-opens out of order. After the flow, the column reads back your six choices in words. Keyboard and pad included: the cursor rides the advance, so Confirm-Confirm walks the whole flow accepting defaults.
