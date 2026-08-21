@@ -52,7 +52,9 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'reward-collect-drive.mjs',
-    timeoutMs: 900000,
+    // Each whole-browser plant normally finishes in under 15 seconds. Two
+    // minutes is a bounded failure, not the former 15-minute apparent stall.
+    timeoutMs: 120000,
     plants: [
       {
         // THE DEFECT ITSELF, replanted: persistence back at roll time — the
@@ -131,6 +133,27 @@ if (process.argv.includes('--selftest')) {
         ],
         expectRed: /FAIL\s+S7 tapping claims nothing at the cap/,
       },
+      {
+        name: 'cinders become Taken without a durable run snapshot',
+        file: 'src/ui/screens/reward.js',
+        find: '      run.cinders += row.amount;\n      if (onPersist) onPersist();\n      return true;',
+        replace: '      run.cinders += row.amount;\n      /* planted: no durable run snapshot */\n      return true;',
+        expectRed: /FAIL\s+S10 reload-before-Continue keeps cinders/,
+      },
+      {
+        name: 'a flask becomes Taken without a durable run snapshot',
+        file: 'src/ui/screens/reward.js',
+        find: "      recordSeen('flask', [row.flaskId]);\n      if (onPersist) onPersist();\n      return true;",
+        replace: "      recordSeen('flask', [row.flaskId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
+        expectRed: /FAIL\s+S10 reload-before-Continue keeps the flask/,
+      },
+      {
+        name: 'a relic becomes Taken without a durable run snapshot',
+        file: 'src/ui/screens/reward.js',
+        find: "      recordSeen('relic', [row.relicId]);\n      if (onPersist) onPersist();\n      return true;",
+        replace: "      recordSeen('relic', [row.relicId]);\n      /* planted: meta advances but the run is not durable */\n      return true;",
+        expectRed: /FAIL\s+S10 reload-before-Continue keeps the relic/,
+      },
     ],
   }));
 }
@@ -192,6 +215,43 @@ const check = (n, ok, d = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${!
 const base = `http://127.0.0.1:${port}/index.html`;
 const spoils = () => ev(`window.__spoils ? window.__spoils() : null`);
 const clickSel = (sel) => `(()=>{const el=document.querySelector('${sel}');if(!el)return false;el.dispatchEvent(new MouseEvent('click',{bubbles:true}));return true})()`;
+
+// S10 is the reload boundary the row itself owns. Mount the shipped renderer
+// with real registries, take exactly one non-card reward, and reconstruct the
+// run from the last snapshot its onPersist door received before Continue.
+await nav(`${base}?shot=reward`);
+const durableKinds = await ev(`(async()=>{
+  const [{ mountRewards }, { contentBundle }, { createRegistries }] = await Promise.all([
+    import('/src/ui/screens/reward.js'), import('/src/content/index.js'), import('/src/model/registries.js'),
+  ]);
+  const registries = createRegistries(contentBundle);
+  const cases = [
+    { kind:'cinders', rewards:{ cinders:17 }, take:(root)=>root.querySelector('[data-kind="cinders"]').click(), kept:(r)=>r.cinders===17 },
+    { kind:'flask', rewards:{ flaskId:'crimsonFlask' }, take:(root)=>{root.querySelector('[data-kind="flask"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.flasks.some(x=>x.flaskId==='crimsonFlask') },
+    { kind:'relic', rewards:{ relicId:'forsakenMedallion' }, take:(root)=>root.querySelector('[data-kind="relic"]').click(), kept:(r)=>r.relics.includes('forsakenMedallion') },
+    { kind:'armament', rewards:{ armamentId:'greatsword' }, take:(root)=>{root.querySelector('[data-kind="armament"]').click();root.querySelector('#reward-detail-take').click();}, kept:(r)=>r.loadout.storage.includes('greatsword') },
+  ];
+  const out = {};
+  for (const row of cases) {
+    const root=document.createElement('div'); document.body.appendChild(root);
+    const run={ cinders:0, deck:[], flasks:[], relics:[], loadout:{storage:[]} };
+    let meta={ settings:{rewardCollect:'manual'}, seen:{}, found:[] }, snapshot=null;
+    const persist=()=>{ snapshot=JSON.stringify(run); };
+    mountRewards(root, { registries, run, rewards:row.rewards, onDone(){}, onPersist:persist,
+      saves:{loadMeta:()=>meta,saveMeta:(next)=>{meta=next;}},
+      onCollectArmament:(id)=>{run.loadout.storage.push(id);meta={...meta,found:[...meta.found,id]};persist();return true;},
+    });
+    row.take(root);
+    const restored=snapshot&&JSON.parse(snapshot);
+    out[row.kind]={ok:!!restored&&row.kept(restored),persisted:!!snapshot,meta:JSON.parse(JSON.stringify(meta))};
+    root.remove();
+  }
+  return out;
+})()`, true);
+for (const [kind, words] of [['cinders','cinders'],['flask','the flask'],['relic','the relic'],['armament','the armament']]) {
+  check(`S10 reload-before-Continue keeps ${words}`, durableKinds[kind].ok, JSON.stringify(durableKinds[kind]));
+}
+
 async function holdSel(sel) {
   const p = await ev(`(()=>{const el=document.querySelector('${sel}');if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,ms:Number(el.dataset.holdMs)||600}})()`);
   if (!p) return false;

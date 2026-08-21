@@ -103,7 +103,11 @@ export function mountRewards(app, {
 
   // ---- one apply function per kind — tap and auto-collect share them -------
   const apply = {
-    cinders(row) { run.cinders += row.amount; return true; },
+    cinders(row) {
+      run.cinders += row.amount;
+      if (onPersist) onPersist();
+      return true;
+    },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
@@ -117,12 +121,14 @@ export function mountRewards(app, {
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
+      if (onPersist) onPersist();
       return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
+      if (onPersist) onPersist();
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },

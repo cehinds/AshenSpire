@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
     "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
-    "build": "0.4.0.0924",
+    "build": "0.4.0.0927",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
   },

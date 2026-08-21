@@ -34690,7 +34690,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '859e44f9cd';
+const SOURCE = 'fba007e134';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34724,7 +34724,7 @@ const SOURCE = '859e44f9cd';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0926';
+const ORDINAL = '0927';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43911,7 +43911,11 @@ function mountRewards(app, {
 
   // ---- one apply function per kind — tap and auto-collect share them -------
   const apply = {
-    cinders(row) { run.cinders += row.amount; return true; },
+    cinders(row) {
+      run.cinders += row.amount;
+      if (onPersist) onPersist();
+      return true;
+    },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
@@ -43925,12 +43929,14 @@ function mountRewards(app, {
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
+      if (onPersist) onPersist();
       return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
+      if (onPersist) onPersist();
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
@@ -47221,7 +47227,7 @@ const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
     "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
-    "build": "0.4.0.0924",
+    "build": "0.4.0.0927",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
   },
