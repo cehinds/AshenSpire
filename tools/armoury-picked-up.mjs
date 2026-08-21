@@ -94,9 +94,9 @@ if (process.argv.includes('--selftest')) {
         // inventing one.
         name: 'the candidate panes open unfolded',
         edits: [{ file: 'src/ui/screens/equipment.js',
-          find: '    mountDisclosure(list, entries, { moreLabel: \'more\' });',
-          replace: '    const planted = mountDisclosure(list, entries, { moreLabel: \'more\' });\n'
-            + '    if (entries.length) planted.open(entries[0].key); // planted: arrives open' }],
+          find: '    const fold = mountDisclosure(list, entries, { moreLabel: \'more\' });',
+          replace: '    const fold = mountDisclosure(list, entries, { moreLabel: \'more\' });\n'
+            + '    if (entries.length) fold.open(entries[0].key); // planted: arrives open' }],
         expectRed: /FAIL A2/,
       },
       {
@@ -162,46 +162,60 @@ function connectCdp(wsUrl) {
 // the known-bad enters where the real input enters: the content table it reads.
 // ---------------------------------------------------------------------------
 async function a1Model() {
-  console.log('\n  A1 · the shelf is the run\'s, not the profile\'s  (model door: ownership())');
+  console.log('\n  A1 · the shelf is KIT ∪ WHAT THIS RUN PICKED UP  (model door: ownership())');
   const { contentBundle } = await import('../src/content/index.js');
   const { createRegistries } = await import('../src/model/registries.js');
+  const { createRunState } = await import('../src/model/state.js');
   const { ownership, carriedIds } = await import('../src/model/loadout.js');
   const reg = createRegistries(contentBundle);
   const cfg = reg.balance.equipment;
-  const basicTag = cfg.basicTag;
   const pieces = [...(reg.equipment.armaments || [])];
-  const isBasic = (p) => !!basicTag && (p.tags || []).includes(basicTag);
+  console.log(`      persistence = ${JSON.stringify(cfg.persistence)} · basicTag = ${JSON.stringify(cfg.basicTag)}`);
 
-  // A run that has picked up NOTHING beyond its starting kit, and a profile
-  // that has found a great deal. These are the two edges of the same axis and
-  // the gap between them is exactly what he asked to be closed.
-  const fresh = { storage: [], sets: {} };
-  const carried = new Set(carriedIds(fresh));
-  const profileFound = pieces.map((p) => p.id); // the widest possible profile
-  const own = ownership(reg, { meta: { found: profileFound }, loadout: fresh });
-
-  const offered = pieces.filter((p) => own.has(p));
-  const notCarried = offered.filter((p) => !carried.has(p.id) && !isBasic(p));
-  console.log(`      persistence = ${JSON.stringify(cfg.persistence)} · basicTag = ${JSON.stringify(basicTag)}`);
-  console.log(`      armaments authored ${pieces.length} · profile found ${profileFound.length} · run carries ${carried.size}`);
-  console.log(`      picker would offer ${offered.length}; of those ${notCarried.length} are neither carried this run nor basic`);
-  ok(notCarried.length === 0,
-    notCarried.length === 0
-      ? `A1 every offered piece is carried this run or basic (offered ${offered.length}, basic ${offered.filter(isBasic).length})`
-      : `FAIL A1 the picker offers ${notCarried.length} piece(s) this run never picked up`
-        + ` — e.g. ${notCarried.slice(0, 4).map((p) => p.id).join(', ')}`);
-
-  // BOTH EDGES OF THE SAME PROPERTY, so a green cannot be vacuous: a piece the
-  // run DOES carry must still be offered. A shelf that offers nothing would
-  // satisfy the sentence above and be the worse defect.
-  const some = pieces.find((p) => !isBasic(p));
-  if (some) {
-    const withOne = { storage: [some.id], sets: {} };
-    const own2 = ownership(reg, { meta: { found: [] }, loadout: withOne });
-    ok(own2.has(some), own2.has(some)
-      ? `A1 a piece the run picked up IS offered (${some.id}) — the property is not vacuous`
-      : `FAIL A1 a piece the run picked up (${some.id}) is not offered — the shelf is empty, not narrow`);
+  // THE WIDEST POSSIBLE PROFILE, on purpose. If anything outside the run can
+  // reach the shelf, this is the corpus that finds it: every armament the game
+  // has, marked found in an earlier climb. His sentence says none of it counts.
+  const everything = pieces.map((p) => p.id);
+  let wideFail = 0; let floorFail = 0; const seen = [];
+  for (const cls of reg.classes.all()) {
+    const run = createRunState({ seed: 1, classId: cls.id, registries: reg, profileMeta: { found: everything } });
+    const carried = new Set(carriedIds(run.loadout));
+    const own = ownership(reg, { meta: { found: everything }, loadout: run.loadout });
+    const offered = pieces.filter((p) => own.has(p)).map((p) => p.id);
+    const strangers = offered.filter((id) => !carried.has(id));
+    seen.push(`${cls.id}: ${offered.join(', ') || '(none)'}`);
+    if (strangers.length) {
+      wideFail++;
+      console.log(`    FAIL A1 ${cls.id} is offered ${strangers.length} piece(s) neither in its kit nor picked up`
+        + ` — ${strangers.slice(0, 5).join(', ')}`);
+    }
+    // THE FLOOR, and it is the half his "unless" clause protects: a run that has
+    // picked up nothing still shows the kit it is WEARING. A shelf of zero would
+    // satisfy "nothing you did not pick up" and be the worse screen.
+    if (!offered.length) {
+      floorFail++;
+      console.log(`    FAIL A1 ${cls.id} is offered NOTHING — the shelf is empty, not narrow`);
+    }
   }
+  for (const line of seen) console.log(`      ${line}`);
+  checks += 2;
+  if (!wideFail) console.log(`    PASS A1 no class is offered anything outside its kit, against a MAXIMAL profile (${reg.classes.all().length} classes)`);
+  else fails++;
+  if (!floorFail) console.log('    PASS A1 every class still sees the kit it is wearing — the floor holds');
+  else fails++;
+
+  // AND A PICKUP IS STILL A PICKUP. Without this the two checks above are both
+  // satisfied by a shelf frozen at the kit forever, which is not his rule.
+  const cls0 = reg.classes.all()[0];
+  const run0 = createRunState({ seed: 1, classId: cls0.id, registries: reg, profileMeta: {} });
+  const before = pieces.filter((p) => ownership(reg, { meta: {}, loadout: run0.loadout }).has(p)).length;
+  const pickup = pieces.find((p) => !carriedIds(run0.loadout).includes(p.id));
+  run0.loadout.storage = [...(run0.loadout.storage || []), pickup.id];
+  const after = pieces.filter((p) => ownership(reg, { meta: {}, loadout: run0.loadout }).has(p)).length;
+  ok(after === before + 1,
+    after === before + 1
+      ? `A1 picking one piece up adds exactly one to the shelf (${before} → ${after}, ${pickup.id})`
+      : `FAIL A1 picking up ${pickup.id} moved the shelf ${before} → ${after}, not by one`);
 }
 
 async function main() {
@@ -344,10 +358,111 @@ async function main() {
     process.exit(2);
   }
 
+    // ---- A4 / A5 · THE MAP MOUNT, where equipping is not sealed ---------
+    //
+    // WHY A SECOND BOARD, AND IT IS NOT THOROUGHNESS. `?shot=combat` mounts the
+    // Armoury with inCombat: true, so `canEquip` SEALS every act — no hold is
+    // armed at all there, and a check for "the hold equips" would have been
+    // vacuous on the only board this file used to drive. His hold rules are
+    // only measurable where equipping is legal, which is the map. This also
+    // closes half the boundary this tool used to print.
+    console.log('\n  A4/A5 · click folds, and does NOT act  (map mount, ?shot=map)');
+    await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+    await until("!!document.querySelector('#open-armoury')", 'map');
+    await wait(700);
+    await ev("document.querySelector('#open-armoury').click()");
+    await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+    await wait(450);
+    await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+      || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+    await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'picker', 8000);
+    await wait(350);
+
+    const faceBox = async () => JSON.parse(await ev(`JSON.stringify((() => {
+      const f = document.querySelector('.equip-picker .ep-list .disc-face');
+      if (!f) return null; const r = f.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2,
+        holdMs: Number(f.dataset.holdMs || 0), equipped: f.dataset.equipped === '1',
+        expanded: f.getAttribute('aria-expanded') === 'true' }; })())`));
+
+    // THE CLICKS BELOW ARE DOM CLICKS, NOT SYNTHETIC POINTER EVENTS, AND THE
+    // DIFFERENCE IS NAMED RATHER THAN GLOSSED. This app scales itself with
+    // `body.style.zoom`, so `getBoundingClientRect()` px and CDP's input px are
+    // NOT the same coordinate space — fx.js's `viewportLocalBox` exists for
+    // exactly that conversion. A CDP press at rect coordinates landed nowhere
+    // and printed three reds that were mine, not the screen's.
+    // WHAT THIS COSTS, said plainly: these checks prove the HANDLER WIRING —
+    // click folds, click again unfolds, click elsewhere closes — and say
+    // NOTHING about whether a real finger at those pixels hits the card. That
+    // is a geometry question and it wants the zoom conversion, not this road.
+    const b0 = await faceBox();
+    if (!b0) { console.log('    FAIL A4 no card on the map mount to press'); fails++; checks++; }
+    else {
+      // THE LENGTH IS READ OFF THE CONTROL, never typed here. `armHold` publishes
+      // the dial it actually armed with; a number in this file would stop
+      // measuring the moment a player moves the Hold-to-confirm setting, and
+      // would also silently pass if the hold stopped being armed at all.
+      console.log(`      the card publishes data-hold-ms=${b0.holdMs} (the player's dial, derived — not a number this tool chose)`);
+      // NOT A CHECK, AND DELIBERATELY NOT ONE. His press-and-hold is BLOCKED on
+      // a ruling (see equipment.js: armHold's rule 1 kills the short click that
+      // his fold rule needs). Asserting it here would print a red for a thing
+      // nobody has agreed to build; asserting the opposite would quietly bless
+      // its absence. It is reported, and it is `unknown`.
+      console.log(`      UNBUILT: no hold armed (data-hold-ms=${b0.holdMs || 0}). His press-and-hold is blocked on a`);
+      console.log('      ruling — armHold rule 1 swallows the short click his fold rule needs. NOT counted either way.');
+
+      // 1 · A SHORT CLICK MUST NOT EQUIP. It unfolds, and nothing else.
+      const wasEquipped = b0.equipped;
+      await ev(`document.querySelector('.equip-picker .ep-list .disc-face').click()`);
+      await wait(400);
+      const afterClick = await faceBox();
+      ok(afterClick && afterClick.equipped === wasEquipped,
+        (afterClick && afterClick.equipped === wasEquipped)
+          ? `A4 a short click did NOT change what is equipped (still ${wasEquipped ? 'equipped' : 'empty'})`
+          : 'FAIL A4 a short click equipped/unequipped — click is supposed to fold, not act');
+      ok(afterClick && afterClick.expanded,
+        (afterClick && afterClick.expanded)
+          ? 'A4 a short click unfolded the card'
+          : 'FAIL A4 a short click did not unfold the card');
+
+      // 2 · CLICK AGAIN REFOLDS.
+      const b1 = await faceBox();
+      await ev(`document.querySelector('.equip-picker .ep-list .disc-face').click()`);
+      await wait(350);
+      const b2 = await faceBox();
+      ok(b2 && !b2.expanded, (b2 && !b2.expanded)
+        ? 'A5 clicking the card again refolded it'
+        : 'FAIL A5 clicking again did not refold the card');
+
+      // 3 · CLICK OFF THE CARD REFOLDS. Open it, then press the picker header.
+      await ev(`document.querySelector('.equip-picker .ep-list .disc-face').click()`);
+      await wait(300);
+      const openNow = await faceBox();
+      const off = JSON.parse(await ev(`JSON.stringify((() => {
+        const h = document.querySelector('.equip-picker h4'); if (!h) return null;
+        const r = h.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
+      if (!openNow || !openNow.expanded || !off) {
+        console.log('    FAIL A5 could not pose an open card with somewhere outside it to press — NOT a pass');
+        fails++; checks++;
+      } else {
+        await ev(`document.querySelector('.equip-picker h4').click()`);
+        await wait(350);
+        const b3 = await faceBox();
+        ok(b3 && !b3.expanded, (b3 && !b3.expanded)
+          ? 'A5 clicking OFF the card refolded it'
+          : 'FAIL A5 clicking off the card left it open');
+      }
+
+    }
+
   cdp.close(); await dropBrowser(); if (s.server) s.server.close();
   console.log(`\n  ${checks} checks, ${fails} finding(s)`);
-  console.log('  BOUNDARY: one container, one headless Chromium, ONE shape (1200x730), ONE board (?shot=combat,');
-  console.log('  the in-combat mount). The map Armoury is a second mount and is NOT covered by A2/A3.');
+  console.log('  BOUNDARY: one container, one headless Chromium, ONE shape (1200x730). A1 is a model-door');
+  console.log('  check and is shape- and mount-free. A2/A3 drive ?shot=combat (the IN-COMBAT mount, where');
+  console.log('  canEquip seals every act); A4/A5 drive ?shot=map (where it does not). The fold checks are');
+  console.log('  DOM clicks, not synthetic pointer presses: this app scales with body.style.zoom, so they');
+  console.log('  prove the handler wiring and say NOTHING about whether a finger at those pixels hits the');
+  console.log('  card. His press-and-hold is UNBUILT and blocked on a ruling — reported, never asserted.');
   process.exit(fails ? 1 : 0);
 }
 

@@ -760,7 +760,33 @@ export const balance = {
     // universal shelf off entirely; a value naming a tag no armament carries is
     // a hard validation failure, because a setting that silently does nothing
     // is the one failure mode worse than a missing one.
-    basicTag: 'basic',
+    //
+    // KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
+    // starting kit armory weapon shown on character creation. the armory should
+    // not show weapons not collected in run. it should not show items not
+    // available at character creation."*
+    //
+    // THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
+    // The worry was that clearing this tag would also hide the pieces the player
+    // STARTED with — his exemption is the starting kit, not a category. It does
+    // not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
+    // set, and `createRunState` puts the kit in the sets. Measured across all
+    // three shipped classes at this ref:
+    //
+    //   reaver    carries straightSword, roundShield, default
+    //   starseer  carries ashStaff, default
+    //   herald    carries boneSceptre, default
+    //
+    // So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
+    // THIS RUN PICKED UP, per class, following the player rather than a tag —
+    // which is his sentence. What the tag was adding on top is the part he
+    // killed: it handed the starseer a straightSword and a roundShield it was
+    // never shown, and the herald all three.
+    //
+    // '' is the documented off value, not an invention (see the paragraph
+    // above); a value naming a tag no armament carries is still a hard
+    // validation failure, so this cannot rot into a silent no-op.
+    basicTag: '',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.

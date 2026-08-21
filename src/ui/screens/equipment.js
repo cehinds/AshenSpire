@@ -32,6 +32,7 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
 
 const CFG = () => balance.equipment;
 
@@ -712,6 +713,8 @@ export function mountEquipment(host, {
     // ("the card should be the button for compare and stats"). The face opens;
     // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
+    // The hold and the button must run the SAME closure — see `act` below.
+    const entryAct = new Map();
     const entries = eligible(slot).map((piece) => {
       const equipped = piece.id === current;
       const body = document.createElement('div');
@@ -736,15 +739,20 @@ export function mountEquipment(host, {
       btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
       btn.dataset.act = equipped ? 'unequip' : 'equip';
       btn.textContent = equipped ? 'Unequip' : 'Equip';
-      if (seal.ok) {
-        btn.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
-            equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
-          sfx.play('cardPlay');
-          commit();
-        });
-      } else sealChip(btn);
+      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
+      // a hold on the card AND a button in the opened pane; two copies of
+      // `equipPiece(...)` is two chances for the roads to disagree about what
+      // "equip" means, which is the second copy this seat exists to refuse.
+      const act = () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+        sfx.play('cardPlay');
+        commit();
+      };
+      if (seal.ok) btn.addEventListener('click', act);
+      else sealChip(btn);
       body.appendChild(btn);
+      entryAct.set(piece.id, seal.ok ? act : null);
 
       return {
         key: piece.id,
@@ -756,7 +764,57 @@ export function mountEquipment(host, {
       };
     });
 
-    mountDisclosure(list, entries, { moreLabel: 'more' });
+    const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
+
+    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
+    //
+    //   "press and hold on army card to equip, but aLso have an equip button
+    //    when card is expanded (unfolded). click unfolds the card and records
+    //    it when clicked again or clicked off the card"
+    //
+    // click        → unfold          (Sunna's renderer already does this)
+    // click again  → refold          (her toggle already does this)
+    // click off    → refold          (NEW, below — nothing did this)
+    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
+    //
+    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
+    // click also commits, that is one line and the reading is stated rather
+    // than buried.
+    //
+    // ---- THE HOLD IS NOT ARMED, AND THAT IS A FINDING, NOT AN OMISSION ----
+    //
+    // He asked for BOTH: "press and hold on army card to equip" AND "click
+    // unfolds the card". `armHold` (components/holdconfirm.js) is this tree's
+    // one hold gesture and it cannot serve both on ONE element, by design:
+    //
+    //   "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the
+    //    early release IS the abort, so the click it generates must die here
+    //    rather than become a second door."
+    //
+    // Measured, not read: arming the face made a short click do NOTHING — the
+    // card stopped unfolding, and A5's refold checks went red behind it. Rule 1
+    // is not incidental; it exists so a released-too-early hold can never
+    // become a second way to fire the thing it was guarding.
+    //
+    // SO THE CONFLICT IS REAL AND IT IS A RULING, NOT A PATCH. Making the early
+    // release unfold a pane is exactly the "second door" rule 1 forbids, and
+    // whether the Armoury card is safe enough to be the exception is not this
+    // file's call — it is the holdconfirm seat's, and Constantine's if they
+    // disagree. `armHold`/`holdMs` stay imported for the moment it is ruled.
+    //
+    // WHAT SHIPS MEANWHILE IS HIS ITEM 3, AND IT IS THE ACCESSIBLE ROAD ANYWAY:
+    // the equip button inside the unfolded pane. A press-and-hold has no
+    // keyboard or pad equivalent at all, so the button was always going to be
+    // the only door for those players — which is why it is not a fallback here.
+    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
+    // Armoury already owns a veil that closes the whole panel on an outside
+    // click, and a second document-level listener would race it — press outside
+    // everything and you would get a refold AND a close, from two homes.
+    // `.ep-list` is the whole card region, so this fires for a press anywhere
+    // else in the picker and nowhere else.
+    box.addEventListener('click', (ev) => {
+      if (!ev.target.closest('.ep-list')) fold.close();
+    });
     // WHICH CARD IS THE ONE YOU ARE WEARING, published on the face itself.
     // Written after mount because the renderer owns the button; read by
     // tools/armoury-picked-up.mjs, which must find the equipped card WITHOUT
