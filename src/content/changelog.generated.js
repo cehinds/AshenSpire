@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-305",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Your weapons are in the hands you gave them",
+    "detail": "The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.",
+    "build": "0.4.0.0947",
+    "pullRequest": 305,
+    "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
+  {
     "id": "pr-296",
     "date": "2026-08-21",
     "group": "2026-08-21",
