@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-303",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The reward menu is written down, in the README and the changelog",
+    "detail": "Docs only.",
+    "build": "0.4.0.0931",
+    "pullRequest": 303,
+    "url": "https://github.com/cehinds/AshenSpire/pull/303"
+  },
+  {
     "id": "pr-290",
     "date": "2026-08-21",
     "group": "2026-08-21",
