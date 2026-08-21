@@ -109,6 +109,8 @@ function contract(surface, reading) {
   need(reading.minControl >= 43.99, `${surface}: relevant controls are at least 44px`);
   need(reading.controlsOutside === 0, `${surface}: relevant controls remain inside the viewport`);
   if (surface === 'grace') {
+    need(reading.flaskFoldOpen === true,
+      'grace: the real Flask disclosure is open before its controls are measured');
     need(reading.title === 'Reallocate Flask Charges', 'grace: exact feature name');
     need(reading.capacity === 3, 'grace: fixed capacity 3 is visible');
     // E10 (2026-08-17). This used to freeze the OLD surface —
@@ -158,7 +160,7 @@ function contract(surface, reading) {
 
 function proveMutants() {
   const grace = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
-    title: 'Reallocate Flask Charges', capacity: 3,
+    flaskFoldOpen: true, title: 'Reallocate Flask Charges', capacity: 3,
     steps: ['hp-o', 'hp+o', 'mana-o', 'mana+o'], counts: [2, 1], totalLine: '3 of 3 assigned', fullMana: true };
   const creation = { mounted: true, horizontalOverflow: 0, minControl: 44, controlsOutside: 0,
     kitCount: 2, chosenKit: 1, alternateSelected: true,
@@ -171,6 +173,7 @@ function proveMutants() {
     candidateProofVisible: true, primaryProofVisible: true };
   const plants = [
     ['missing landmark', 'grace', grace, (x) => { x.mounted = false; }],
+    ['Flask disclosure remains closed while its controls are measured', 'grace', grace, (x) => { x.flaskFoldOpen = false; }],
     ['the counts stop summing to capacity', 'grace', grace, (x) => { x.counts[1] = 2; }],
     ['a charge kind loses one of its two steps', 'grace', grace, (x) => { x.steps.pop(); }],
     ['the total line stops matching the total', 'grace', grace, (x) => { x.totalLine = '2 of 3 assigned'; }],
@@ -204,10 +207,15 @@ const READERS = {
   grace: `(() => {
     const n=(value)=>Math.round(value*100)/100;
     const root = document.querySelector('#flask-reallocate');
+    const face = document.querySelector('[data-face="shrine:flasks"]');
+    const reveal = document.querySelector('.shrine-folds .disc-reveal');
     const buttons = [...document.querySelectorAll('#flask-reallocate .flask-step')];
     const boxes = buttons.map((x) => x.getBoundingClientRect());
     const text = document.querySelector('#rest-opt p')?.textContent || '';
-    return { mounted: !!root, horizontalOverflow: Math.max(0, document.documentElement.scrollWidth-innerWidth),
+    return { mounted: !!root,
+      flaskFoldOpen: face?.getAttribute('aria-expanded') === 'true'
+        && reveal?.dataset.revealFor === 'shrine:flasks' && !root.hidden && root.style.display !== 'none',
+      horizontalOverflow: Math.max(0, document.documentElement.scrollWidth-innerWidth),
       minControl: boxes.length ? n(Math.min(...boxes.map((x) => Math.min(x.width,x.height)))) : 0,
       controlsOutside: boxes.filter((x) => x.left < 0 || x.right > innerWidth || x.top < 0 || x.bottom > innerHeight).length,
       title: root?.querySelector('h3')?.textContent.trim() || '', capacity: Number(/capacity\\D*(\\d+)/i.exec(root?.querySelector('p')?.textContent||'')?.[1]),
@@ -282,6 +290,15 @@ async function pose(b, base, surface) {
   await b.cdp.send('Page.navigate', { url: base + query }, b.sessionId);
   if (surface === 'grace') {
     await b.until('!!document.querySelector("#flask-reallocate")', 'Grace reallocation');
+    await b.until('!!document.querySelector(\'[data-face="shrine:flasks"]\')', 'Grace Flask disclosure');
+    await b.evaluate(`(() => {
+      const face = document.querySelector('[data-face="shrine:flasks"]');
+      if (face?.getAttribute('aria-expanded') !== 'true') face?.click();
+      return true;
+    })()`);
+    await b.until(`document.querySelector('[data-face="shrine:flasks"]')?.getAttribute('aria-expanded') === 'true'
+      && document.querySelector('.shrine-folds .disc-reveal')?.dataset.revealFor === 'shrine:flasks'
+      && document.querySelector('#flask-reallocate')?.style.display !== 'none'`, 'open Grace Flask disclosure');
     await b.evaluate('document.querySelector("#flask-reallocate").scrollIntoView({block:"center"}); true');
   } else if (surface === 'creation') {
     await openCreationFromProfile(b, base);
