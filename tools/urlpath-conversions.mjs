@@ -47,6 +47,9 @@ const regexMayStart = (previous) =>
 function regexMayStartAfterTokens(tokens) {
   const previous = tokens.at(-1);
   if (regexMayStart(previous)) return true;
+  if (previous?.value === 'default' && tokens.at(-2)?.value === 'export') return true;
+  if (previous?.value === 'extends' && !['.', '?.'].includes(tokens.at(-2)?.value) &&
+      headerKeywordBefore(tokens, 'class', tokens.length - 1) >= 0) return true;
   if (previous?.blockClose === 'statement') return true;
   if (previous?.type === 'identifier' && ['break', 'continue', 'debugger'].includes(previous.value)) return true;
   if (previous?.value !== ')') return false;
@@ -337,10 +340,16 @@ function staticMemberAt(tokens, start, name) {
 const memberPathnameAt = (tokens, start) => staticMemberAt(tokens, start, 'pathname');
 
 function accessAfterExpression(tokens, start, end) {
-  const groups = groupDepthBefore(tokens, start);
+  let expressionStart = start;
   let cursor = end + 1;
-  for (let i = 0; i < groups; i++) {
-    if (tokens[cursor]?.value !== ')') return null;
+  while (tokens[cursor]?.value === ')') {
+    const open = findOpenBackward(tokens, cursor);
+    if (open < 0 || tokens[open - 1]?.value === '?.' || !regexMayStart(tokens[open - 1])) break;
+    const commas = topLevelIndexes(tokens, open + 1, cursor, ',');
+    const transparent = open === expressionStart - 1;
+    const finalSequenceOperand = commas.at(-1) === expressionStart - 1;
+    if (!transparent && !finalSequenceOperand) break;
+    expressionStart = open;
     cursor++;
   }
   return memberPathnameAt(tokens, cursor);
@@ -511,7 +520,7 @@ function declarationSeeds(tokens, parameters, declarations, loopBindings) {
       braces.push(scope ? i : -1);
       if (scope) scopeBraces.push(i);
     }
-    const kind = declarations.get(i);
+    const kind = declarations.get(i) || (parameters.declarationNameIndexes.has(i) ? 'lexical' : null);
     if (kind && !loopBindings.has(i)) {
       let owner = scopeBraces.at(-1) ?? -1;
       if (kind === 'var') {
@@ -980,7 +989,17 @@ function findPathnameMisuses(tokens, errors) {
     const next = tokens[i + 1];
     const isAssignmentRhs = ASSIGNMENTS.has(previous?.value) && tokens[i - 2]?.type === 'identifier' &&
       !['.', '?.', ']'].includes(tokens[i - 3]?.value);
-    const isStaticNonPathMember = next?.value === '.' && tokens[i + 2]?.type === 'identifier';
+    let memberStart = i + 1;
+    const optionalMember = tokens[memberStart]?.value === '?.';
+    if (optionalMember) memberStart++;
+    const memberKey = tokens[memberStart + 1];
+    const staticBracketMember = tokens[memberStart]?.value === '[' &&
+      (memberKey?.type === 'string' || (memberKey?.type === 'template' && !memberKey.hasInterpolation && !memberKey.tagged)) &&
+      tokens[memberStart + 2]?.value === ']';
+    const isStaticNonPathMember =
+      (optionalMember && tokens[memberStart]?.type === 'identifier') ||
+      (tokens[memberStart]?.value === '.' && tokens[memberStart + 1]?.type === 'identifier') ||
+      staticBracketMember;
     const isPlatformConsumer = isPlatformConsumerAt(tokens, i);
     if (!isAssignmentRhs && !isStaticNonPathMember && !isPlatformConsumer && !ASSIGNMENTS.has(next?.value)) {
       add(i, 'ambiguous module URL alias flow');
@@ -1314,6 +1333,26 @@ function selftest() {
     ['for-of conditional URL element fails closed', "for(const u of [ok?new URL('./x',import.meta.url):platformValue]){u.pathname}", 0, 0, 1],
     ['for-of nested destructure fails closed', "for(const [u] of [[new URL('./x',import.meta.url)]]){u.pathname}", 0, 0, 1],
     ['for-in binds keys rather than URL values', "for(const u in {x:new URL('./x',import.meta.url)}){u.pathname}", 0, 0, 0],
+    ['export-default regex body stays inert', "export default /new URL(x,import.meta.url).pathname/", 0, 0, 0],
+    ['class-extends regex body stays inert', "class C extends /new URL(x,import.meta.url).pathname/ {}", 0, 0, 0],
+    ['export-default real URL pathname remains caught', "export default new URL('./x',import.meta.url).pathname", 1, 0, 0],
+    ['class-extends real URL pathname remains caught', "class C extends new URL('./x',import.meta.url).pathname {}", 1, 0, 0],
+    ['default member before division does not start regex', "obj.default/new URL('./x',import.meta.url).pathname", 1, 0, 0],
+    ['extends member before division does not start regex', "obj.extends/new URL('./x',import.meta.url).pathname", 1, 0, 0],
+    ['hoisted function declaration shadows earlier block use', "const u=new URL('./x',import.meta.url);{u.pathname;function u(){}}fileURLToPath(u)", 0, 0, 0],
+    ['different hoisted function name leaves URL use caught', "const u=new URL('./x',import.meta.url);{u.pathname;function v(){}}fileURLToPath(u)", 1, 0, 0],
+    ['hoisted async function declaration shadows earlier block use', "const u=new URL('./x',import.meta.url);{u.pathname;async function u(){}}fileURLToPath(u)", 0, 0, 0],
+    ['hoisted generator declaration shadows earlier block use', "const u=new URL('./x',import.meta.url);{u.pathname;function* u(){}}fileURLToPath(u)", 0, 0, 0],
+    ['static non-path string bracket read stays clean', "const u=new URL('./x',import.meta.url);console.log(u['origin']);fileURLToPath(u)", 0, 0, 0],
+    ['static non-path template bracket read stays clean', "const u=new URL('./x',import.meta.url);console.log(u[`origin`]);fileURLToPath(u)", 0, 0, 0],
+    ['optional static non-path bracket read stays clean', "const u=new URL('./x',import.meta.url);console.log(u?.['origin']);fileURLToPath(u)", 0, 0, 0],
+    ['optional static pathname bracket read remains caught', "const u=new URL('./x',import.meta.url);u?.['pathname']", 1, 0, 0],
+    ['dynamic bracket read remains fail closed', "const u=new URL('./x',import.meta.url);console.log(u[key]);fileURLToPath(u)", 0, 0, 1],
+    ['grouped sequence final URL operand pathname is caught', "(sideEffect(),new URL('./x',import.meta.url)).pathname", 1, 0, 0],
+    ['nested grouped sequence final URL operand pathname is caught', "((sideEffect(),new URL('./x',import.meta.url))).pathname", 1, 0, 0],
+    ['nested sequence final URL optional pathname is caught', "((a(),b()),new URL('./x',import.meta.url))?.pathname", 1, 0, 0],
+    ['grouped sequence final URL non-path member stays clean', "(sideEffect(),new URL('./x',import.meta.url)).origin", 0, 0, 0],
+    ['grouped sequence nonfinal URL operand stays clean', "(new URL('./x',import.meta.url),sideEffect()).pathname", 0, 0, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
