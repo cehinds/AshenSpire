@@ -294,7 +294,11 @@ jobs:
   # the same exit code until run 1 of this workflow taught me otherwise.
   # ---------------------------------------------------------------------------
   browser-guard:
-    name: ?shot= cannot touch a player's save
+    # RENAMED 2026-08-21 (#295). It read "?shot= cannot touch a player's save",
+    # which was the whole job when it was written and became one of four claims
+    # in it. A job name is what a red run shows first; one naming a single check
+    # sends the reader to the wrong tool. — Bjorn
+    name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -347,6 +351,61 @@ jobs:
         # will be slower and that number is not a promise about one.
         run: node tools/buildstamp-shot.mjs --selftest
 
+      # -----------------------------------------------------------------------
+      # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.
+      #
+      # This is the only step in this file added because a gate stayed SILENT
+      # rather than because a check was missing, and the distinction is the
+      # whole point. tools/hintstrip.mjs was written on 2026-08-18 with six
+      # same-door plants and a declared population. On 2026-08-20 PR #224
+      # ("unify combat action row", f2acfc9) moved END TURN into an absolutely
+      # positioned row that hangs into the strip's band; hintstrip went red at
+      # that commit and has been red every day since. THE PR PASSED EXACT-HEAD
+      # REVIEW ANYWAY, because the tool that contradicted it was in no list any
+      # gate walks — the reviewer's command set is derived by hand (SOP 14 §5a,
+      # family repo) and a set derived by hand is a set that can omit.
+      #
+      # So the defect this step answers is not the overlap. It is that a
+      # rendered layout invariant with no list is an invariant only until the
+      # next layout change. Vira bisected it to one commit (green c447075, red
+      # f2acfc9, red at dev 001c950) and ruled the wiring the real acceptance.
+      #
+      # ⚠ RED THE DAY IT WAS WIRED, ON PURPOSE, AND NOT TO BE "FIXED" HERE.
+      # H2 CLEAR is red at two of eight declared cells at the head that added
+      # this step — 1200x730 Text XL (END TURN, 3368.8 px2, 11.7% of the strip)
+      # and 1200x730 with a wide rebound label (2700.3 px2, 10.1%). The layout
+      # fix is a separate, unclaimed act on styles/combat.css. A loud red beats
+      # a quiet green: nothing here is to be relaxed, `|| true`'d, or moved to
+      # continue-on-error to get this workflow back to green. See the warning at
+      # the top of this file — a red means a claim in this repo is false, which
+      # is the entire reason it exists.
+      #
+      # ORDER, AND IT IS THE REVERSE OF THE PAIR ABOVE, DELIBERATELY. The
+      # selftest's harness (tools/doorplant.mjs) finishes by running an
+      # UNPLANTED copy and requires it green — so while the tree is red the
+      # selftest reports RED for the baseline, not for its plants. Running the
+      # tree check first means the run's first hintstrip line names the real
+      # finding (H2, with its numbers) instead of a baseline complaint a reader
+      # has to decode. When the layout is fixed both go green and the order
+      # stops mattering.
+      # -----------------------------------------------------------------------
+      - name: The combat hint strip is under the cards and touches no other control
+        # Six checks per cell over eight declared cells; a cell that stops being
+        # reached is red (H0), never absent. The strip is display:none on the
+        # narrow layout, so every check there is `unknown` and counts toward
+        # nothing — the tool prints that as a state with its reason.
+        run: node tools/hintstrip.mjs
+
+      - name: …and that gate can fail — six known-bads, each through the real door
+        # Inverted expectation, the idiom this job already uses three times.
+        # Seven whole-program runs (six plants + the unplanted clean edge), each
+        # copying the real tree, editing it as FILE BYTES, and booting its own
+        # browser: ~9 minutes on the Linux box it was wired on. Stated rather
+        # than guessed — this workflow bills by the minute and a runner will be
+        # slower. This is the most expensive step in the file; if the budget
+        # ever has to give, CUT IT ON PURPOSE WITH A NOTE, do not let it rot.
+        run: node tools/hintstrip.mjs --selftest
+
   # ---------------------------------------------------------------------------
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
@@ -385,15 +444,34 @@ jobs:
           echo "    including a tree that re-types it, each observed red by its own row"
           echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
           echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
+          # #295: the first LAYOUT invariant this workflow has ever run. No count
+          # and no cell list here — hintstrip declares its own population and
+          # prints it, and a number typed beside the list that owns it is the
+          # second-home defect this block has already been trimmed for twice.
+          echo "  · the combat hint strip is below every card, whole, on screen, and touching"
+          echo "    NO other combat control — at every cell hintstrip declares, including one"
+          echo "    written through the game's own rebind store; its six known-bads are each"
+          echo "    observed red through the same door. THIS IS RENDERED GEOMETRY, and it is"
+          echo "    the only rendered claim in this file that is about the GAME's layout."
           echo ""
           echo "IT DOES NOT MEAN:"
           echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"
           echo "    pixels differ from their ground inside one box in one browser at two shapes;"
           echo "    legibility is tools/contrast-audit.mjs and Sunna, placement is Viki, and the"
           echo "    stamp on the RELEASE artifact is tools/release-shots.mjs, not any job here."
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
-          echo "    opens a browser on the game itself, so every claim below is a claim"
-          echo "    about files, never about a fight."
+          # Was: "NOTHING HERE PLAYS IT. No job in this file opens a browser on the
+          # game itself, so every claim below is a claim about files, never about a
+          # fight." The first half stays true and the second half went FALSE the
+          # moment hintstrip was wired in above — it boots the game at ?shot=combat
+          # in a real browser and measures the rendered boxes. Edited rather than
+          # left standing beside its own contradiction, which is what this file did
+          # to its own requirement-1 header and had to say so in a fifty-line
+          # apology. A boundary that UNDERSTATES coverage rots exactly the way one
+          # that overstates it does. — Bjorn, 2026-08-21, wiring #295.
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job now opens a"
+          echo "    browser on the game (the hint-strip gate, at ?shot=combat) and it"
+          echo "    measures BOXES — where things sit, not whether pressing them does"
+          echo "    anything. No job here fights, wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -418,9 +496,15 @@ jobs:
           echo "    until a job is added. WHICH checks are unrun, and why no step was added"
           echo "    to this workflow, is stated once in tools/palette-check.sh's header"
           echo "    (\`CI DOES NOT RUN THIS\`); read that, not a copy of it kept here."
-          echo "  · that anything RENDERED. Art present in the file is not art on screen;"
+          # Narrowed, same act and same reason as the playability line above: the
+          # hint-strip gate reads rendered rects, so "nothing rendered" is no longer
+          # true as written. What it never touched — and still does not — is ART.
+          # — Bjorn, 2026-08-21, wiring #295.
+          echo "  · that the ART rendered. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
-          echo "    deterministic on this app (two runs of identical code differ)."
+          echo "    deterministic on this app (two runs of identical code differ). The"
+          echo "    hint-strip gate reads geometry off a live page — rects, never pixels —"
+          echo "    and it is silent about every surface but combat's control strip."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
           echo "    that row is Bjorn's with Vira verifying and nothing here checks it."

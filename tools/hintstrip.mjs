@@ -78,7 +78,7 @@
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -373,8 +373,30 @@ async function main() {
   console.log(`      into LOCAL px ONCE before comparison; text size set through the game's own settings`);
   console.log(`      door; the wide label written through the game's own rebind store, never into the DOM.`);
   console.log(`      ${FAN_LIFT_PROP} read out of src/ui/components/hand.js, not typed here.`);
+  // BROWSER RESOLUTION THROUGH browser.mjs's SINGLE HOME, and an absent browser
+  // is `unknown`, NOT a verdict.
+  //
+  // Both halves are required by the act that wired this tool into a gate list
+  // (#295), and neither is a tidy-up. It used to read `process.env.CHROME ||
+  // '/usr/bin/chromium'` — a second copy of the candidate list, one entry long.
+  // On the runner this gate now lives on (ci.yml `browser-guard`, ubuntu-latest)
+  // `/usr/bin/chromium` DOES NOT EXIST and `/usr/bin/google-chrome` does, so the
+  // wired step would have thrown, exited 1, and reported "the hint strip is
+  // broken" when the truth was "no browser was found". That is run 1 of this
+  // workflow repeating itself one tool later — ci.yml's own `browser-guard`
+  // header records it, and shotguard-probe's answer is the house rule: an
+  // unavailable instrument resolves to exit 2 (`unknown`, which blocks), never
+  // to a claim about the subject. This tool now does the same.
+  const browserPath = resolveBrowser();
+  if (!browserPath) {
+    console.error('hintstrip: UNKNOWN — no Chrome/Chromium found (tried $CHROME, $CHROME_PATH and the usual paths).');
+    console.error('           Exit 2, not 1: nothing was measured, so this is not a verdict about the strip.');
+    await s.close?.();
+    process.exit(2);
+  }
+  console.log(`      browser: ${browserPath}`);
   const { wsUrl, close: dropBrowser } = await launchBrowser({
-    prefix: 'hintstrip-', browser: process.env.CHROME || '/usr/bin/chromium', timeoutMs: 15000,
+    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000,
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
