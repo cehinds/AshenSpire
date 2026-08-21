@@ -34701,7 +34701,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '74d5d96f58';
+const SOURCE = '7359350715';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34735,7 +34735,7 @@ const SOURCE = '74d5d96f58';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0928';
+const ORDINAL = '0929';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46926,7 +46926,10 @@ function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.
     && locationLike?.protocol === 'https:'
     && locationLike?.hostname === 'cehinds.github.io';
 }
-function changelogHtml(entries) {
+function shouldLinkChangelog(options = {}) {
+  return shouldLinkDebugVersion(options);
+}
+function changelogHtml(entries, { linkExternal = false } = {}) {
   let group = null;
   return entries.map((entry) => {
     const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
@@ -46938,7 +46941,9 @@ function changelogHtml(entries) {
           <span class="region-count">${esc(entry.build)}</span>
         </summary>
         <p class="set-note">${esc(entry.detail)}</p>
-        <p class="set-note"><a href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a></p>
+        <p class="set-note">${linkExternal
+          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
+          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
       </details>`;
   }).join('');
 }
@@ -46993,6 +46998,7 @@ function renderAboutSection(container, {
   const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
     ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
     : esc(ABOUT_BUILD_LINE);
+  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
 
   container.innerHTML = `
     <div class="about-ai">
@@ -47000,7 +47006,7 @@ function renderAboutSection(container, {
       ${sections}
       <section class="about-changelog" aria-labelledby="about-changelog-title">
         <h2 id="about-changelog-title">Changelog</h2>
-        ${changelogHtml(changelog)}
+        ${changelogHtml(changelog, { linkExternal: changeLinks })}
       </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
@@ -47029,7 +47035,7 @@ function renderAboutSection(container, {
 }
 
 
-Object.assign(module.exports, { shouldLinkDebugVersion, renderAboutSection });
+Object.assign(module.exports, { shouldLinkDebugVersion, shouldLinkChangelog, renderAboutSection });
 
 },
 "src/content/aiDisclosure.js": function (module, exports, require) {
@@ -47238,7 +47244,7 @@ const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
     "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
-    "build": "0.4.0.0928",
+    "build": "0.4.0.0929",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
   },

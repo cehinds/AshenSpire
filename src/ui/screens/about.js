@@ -26,7 +26,10 @@ export function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = glob
     && locationLike?.protocol === 'https:'
     && locationLike?.hostname === 'cehinds.github.io';
 }
-function changelogHtml(entries) {
+export function shouldLinkChangelog(options = {}) {
+  return shouldLinkDebugVersion(options);
+}
+function changelogHtml(entries, { linkExternal = false } = {}) {
   let group = null;
   return entries.map((entry) => {
     const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
@@ -38,7 +41,9 @@ function changelogHtml(entries) {
           <span class="region-count">${esc(entry.build)}</span>
         </summary>
         <p class="set-note">${esc(entry.detail)}</p>
-        <p class="set-note"><a href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a></p>
+        <p class="set-note">${linkExternal
+          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
+          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
       </details>`;
   }).join('');
 }
@@ -93,6 +98,7 @@ export function renderAboutSection(container, {
   const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
     ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
     : esc(ABOUT_BUILD_LINE);
+  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
 
   container.innerHTML = `
     <div class="about-ai">
@@ -100,7 +106,7 @@ export function renderAboutSection(container, {
       ${sections}
       <section class="about-changelog" aria-labelledby="about-changelog-title">
         <h2 id="about-changelog-title">Changelog</h2>
-        ${changelogHtml(changelog)}
+        ${changelogHtml(changelog, { linkExternal: changeLinks })}
       </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>

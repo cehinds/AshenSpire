@@ -145,6 +145,8 @@ async function browserRoute(entries, {
         disclosureBlocks: host.querySelectorAll('.about-block').length,
         hasCopy: !!host.querySelector('.about-copy'),
         hasDone: !!host.querySelector('#set-close'),
+        changeLinks: [...host.querySelectorAll('a.about-change-pr')].map((link) => ({ href: link.href, target: link.target, rel: link.rel })),
+        changeInert: host.querySelectorAll('span.about-change-pr').length,
         source: { href: sourceLink?.href, target: sourceLink?.target, rel: sourceLink?.rel }
       };
     })()`);
@@ -164,11 +166,16 @@ async function browserRoute(entries, {
     const axNode = ax.nodes?.[0];
     const axExpanded = axNode?.properties?.find((property) => property.name === 'expanded')?.value?.value;
     const axFocused = axNode?.properties?.find((property) => property.name === 'focused')?.value?.value;
-    const contexts = artifact ? { pages: true, releaseHasLink: !!initial.source.href } : await evaluate(`(async () => {
-      const { shouldLinkDebugVersion } = await import('/src/ui/screens/about.js');
+    const contexts = artifact ? {
+      pages: true,
+      releaseHasLink: !!initial.source.href,
+      releaseChangelogHasLink: initial.changeLinks.length > 0,
+    } : await evaluate(`(async () => {
+      const { shouldLinkDebugVersion, shouldLinkChangelog } = await import('/src/ui/screens/about.js');
       return {
         pages: shouldLinkDebugVersion({ runPath: 'standalone file', locationLike: { protocol: 'https:', hostname: 'cehinds.github.io' } }),
-        releaseHasLink: shouldLinkDebugVersion({ runPath: 'standalone file', locationLike: { protocol: 'file:', hostname: '' } })
+        releaseHasLink: shouldLinkDebugVersion({ runPath: 'standalone file', locationLike: { protocol: 'file:', hostname: '' } }),
+        releaseChangelogHasLink: shouldLinkChangelog({ runPath: 'standalone file', locationLike: { protocol: 'file:', hostname: '' } })
       };
     })()`);
     const failures = [];
@@ -180,8 +187,14 @@ async function browserRoute(entries, {
     if (!initial.disclosureBlocks || !initial.hasCopy || !initial.hasDone) failures.push('existing About content or Done navigation was lost');
     if (!artifact && (initial.source.href?.replace(/\/$/, '') !== REPO || initial.source.target !== '_blank' || !initial.source.rel.includes('noopener'))) failures.push('source debug link is missing or unsafe');
     if (artifact && initial.source.href) failures.push('release standalone gained repository link');
+    if (!artifact && (initial.changeLinks.length !== entries.length || initial.changeInert !== 0
+      || initial.changeLinks.some((link) => !link.href.startsWith(`${REPO}/pull/`) || link.target !== '_blank' || !link.rel.includes('noopener')))) {
+      failures.push('development changelog links are missing or unsafe');
+    }
+    if (artifact && (initial.changeLinks.length !== 0 || initial.changeInert !== entries.length)) failures.push('release standalone changelog gained navigable anchor');
     if (!contexts.pages) failures.push('Pages development bundle has no repository link');
     if (contexts.releaseHasLink) failures.push('release file silently gained repository link');
+    if (contexts.releaseChangelogHasLink) failures.push('release standalone changelog gained navigable anchor');
     if (failures.length) throw new Error(failures.join('; '));
     if (screenshotDir) {
       await evaluate(`(() => {
@@ -268,6 +281,12 @@ async function selftest() {
       name: 'release standalone link leak', file: 'src/ui/screens/about.js',
       find: "return runPath === 'standalone file'\n    && locationLike?.protocol === 'https:'\n    && locationLike?.hostname === 'cehinds.github.io';",
       replace: "return runPath === 'standalone file';", expect: 'release file silently gained repository link',
+    },
+    {
+      name: 'release standalone changelog anchor leak', file: 'src/ui/screens/about.js',
+      find: 'export function shouldLinkChangelog(options = {}) {\n  return shouldLinkDebugVersion(options);\n}',
+      replace: 'export function shouldLinkChangelog() {\n  return true; // planted: release artifact can navigate externally\n}',
+      expect: 'release standalone changelog gained navigable anchor',
     },
   ];
   for (const plant of uiPlants) {
