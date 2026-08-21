@@ -50,6 +50,12 @@
 //   4  the wrapped tool was KILLED BY A SIGNAL before reporting — the
 //      environment stopped it (timeout, OOM, ENOSPC). Not a failure, not a
 //      pass: nothing was measured, so nothing may be concluded.
+//      POSIX ONLY. Windows has no signal delivery: a terminated child is
+//      reported with a real exit code (1, measured) and signal === null, so it
+//      comes back through the propagation rule above. The INVARIANT holds on
+//      every platform — a child that died without speaking is never 0 — but on
+//      Windows `killed` and `failed` are the same code, which is the
+//      platform's collapse and is named here rather than papered over.
 //   *  ANY NONZERO CODE A WRAPPED TOOL EXITS WITH IS RETURNED VERBATIM and
 //      takes precedence over every row above. `2` from a browser probe means
 //      THE INSTRUMENT WAS UNAVAILABLE — unknown, which blocks and is not the
@@ -171,6 +177,19 @@ export function readVerdict(text) {
   for (const raw of lines) {
     const line = raw.trimEnd();
     if (!line.trim()) continue;
+    // A NEGATED VERDICT SHAPE IS A VERDICT-SHAPED LINE, and it must reach the
+    // `refused` bucket or the rule above cannot see it. `NOT PASS — 1/10`
+    // matches no row BY DESIGN (the rows anchor on the success token), so it
+    // used to be invisible: prose, as far as the parse was concerned, and a
+    // good verdict beside it walked through. Stripping ONE leading negation
+    // and re-testing is deliberately the narrowest form of this — the door
+    // judges verdict lines, it does not police prose, and a boundary block
+    // reading "NOT A VERDICT AND NOT A FAILURE:" still matches nothing.
+    const denegated = line.replace(/^(\s*)(?:not|no)\s+/i, '$1');
+    if (denegated !== line && VERDICTS.some((v) => v.re.test(denegated))) {
+      refused.push({ line: line.trim(), why: 'a negated verdict shape' });
+      continue;
+    }
     for (const v of VERDICTS) {
       const m = line.match(v.re);
       if (!m) continue;
@@ -187,7 +206,19 @@ export function readVerdict(text) {
       break;
     }
   }
-  if (hits.length === 1) return hits[0];
+  // THE DECISION CONSULTS EVERYTHING THE PARSE COLLECTED. `refused` was built
+  // as a bucket and then not read when deciding, so a stream printing
+  // `PASS — 1/2` and then `PASS — 2/2` returned the sole ACCEPTED hit and
+  // greened a checker that had reported a failure. A collected-but-unread
+  // signal is its own defect: not two states merged, but one CAPTURED AND
+  // DISCARDED — the sixth distinction this door failed to honour.
+  //
+  // THE RULE, and it follows from the contract already written above: EXACTLY
+  // ONE terminated verdict line. A stream carrying verdict-shaped lines that
+  // were refused, alongside one that was accepted, is not "one verdict plus
+  // noise" — it is ambiguous, and ambiguity is a refusal, never a tiebreak in
+  // favour of the good news.
+  if (hits.length === 1 && refused.length === 0) return hits[0];
   if (hits.length === 0) return { error: 'none', refused };
   return { error: 'many', hits, refused };
 }
@@ -255,11 +286,14 @@ async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
         });
       }
       if (v.error === 'many') {
+        const refusedLines = (v.refused || []).map((r) => `    ✗ "${r.line}" — ${r.why}`);
         return done({
           code: 1, out,
-          note: `AMBIGUOUS: ${label} printed ${v.hits.length} terminal verdict lines; the contract is EXACTLY ONE (#12).\n`
-            + v.hits.map((h) => `    · "${h.line}" [${h.form}]`).join('\n')
-            + `\n  A tool that changes its mind (9 checks passed … then 0) must not be readable as either.`,
+          note: `AMBIGUOUS: ${label} printed ${v.hits.length} accepted and ${(v.refused || []).length} refused `
+            + `verdict-shaped line(s); the contract is EXACTLY ONE (#12).\n`
+            + v.hits.map((h) => `    ✓ "${h.line}" [${h.form}]`).join('\n')
+            + (refusedLines.length ? `\n${refusedLines.join('\n')}` : '')
+            + `\n  A tool that reports a failure and then a success must not be readable as either.`,
         });
       }
       if (v.count < min) {
@@ -330,12 +364,35 @@ const SELFTEST = [
   // (unknown, blocks); 1 is "a check ran and failed". They are different
   // sentences and the door must not merge them.
   // A CHILD KILLED MID-RUN. `process.exit(null)` used to coerce this to 0.
-  { name: 'a checker KILLED by SIGTERM comes out 4, never 0',
-    file: 'console.log("starting a long check..."); process.kill(process.pid, "SIGTERM");\n', want: 4, mustSay: 'KILLED' },
-  { name: 'a checker KILLED by SIGKILL (the OOM shape) comes out 4',
-    file: 'process.kill(process.pid, "SIGKILL");\n', want: 4, mustSay: 'KILLED' },
+  // KILLED MID-RUN. THE MECHANISM IS PLATFORM-SHAPED; THE INVARIANT IS NOT.
+  //
+  // POSIX delivers a real signal, so `close` hands back code === null plus the
+  // signal and the door answers 4. WINDOWS HAS NO SIGNAL DELIVERY: Node
+  // emulates `process.kill(self, 'SIGTERM'|'SIGKILL')` by terminating the
+  // process, and the parent sees a REAL EXIT CODE with signal === null — 1,
+  // measured on windows-latest / node 22.23.2 (run 32463037727, job
+  // 96713743110, all three plants: "exited 1 — propagated verbatim"). So code
+  // 4 is unreachable there BY THIS MECHANISM, and the door's own propagation
+  // rule carries the outcome instead.
+  //
+  // These plants therefore assert the PLATFORM'S ACTUAL SEMANTICS, plus
+  // `neverZero`, which is the sentence that must hold on all three runners:
+  // A CHILD THAT DIED WITHOUT SPEAKING IS NOT A PASS.
+  //
+  // ⚠ THE COST, NAMED RATHER THAN HIDDEN: on Windows a killed checker is
+  // reported as `1` and is therefore INDISTINGUISHABLE from "a check ran and
+  // failed". That collapse is the platform's, not this door's — and it is the
+  // same kind of merge this file exists to prevent, so it is written down
+  // rather than left for someone to discover in a starved run.
+  { name: 'a checker KILLED by SIGTERM is never a pass (POSIX 4 / win32 1)',
+    file: 'console.log("starting a long check..."); process.kill(process.pid, "SIGTERM");\n',
+    want: 4, winWant: 1, neverZero: true },
+  { name: 'a checker KILLED by SIGKILL, the OOM shape, is never a pass',
+    file: 'process.kill(process.pid, "SIGKILL");\n',
+    want: 4, winWant: 1, neverZero: true },
   { name: 'and a killed child that had ALREADY printed a good verdict is still killed',
-    file: 'console.log("tool: OK — 9 checks passed."); process.kill(process.pid, "SIGTERM");\n', want: 4, mustSay: 'KILLED' },
+    file: 'console.log("tool: OK — 9 checks passed."); process.kill(process.pid, "SIGTERM");\n',
+    want: 4, winWant: 1, neverZero: true },
   { name: 'a child exiting 2 (instrument unavailable) comes out 2, not 1',
     file: 'process.exit(2);\n', want: 2 },
   { name: 'a child exiting 1 (a check ran and failed) comes out 1',
@@ -344,6 +401,13 @@ const SELFTEST = [
     file: 'process.exit(77);\n', want: 77 },
   { name: 'a counted verdict printed while FAILING is still red',
     file: 'console.log("tool: OK — 9 checks passed."); process.exit(1);\n', want: 1 },
+  // A REFUSED VERDICT ALONGSIDE AN ACCEPTED ONE IS AMBIGUITY, NOT NOISE.
+  { name: 'a FAILING verdict followed by a passing one is refused, not greened',
+    file: 'console.log("PASS — 1/2 shapes"); console.log("PASS — 2/2 shapes"); process.exit(0);\n', want: 1 },
+  { name: 'and in the other order, which is how a retry would print it',
+    file: 'console.log("PASS — 2/2 shapes"); console.log("PASS — 1/2 shapes"); process.exit(0);\n', want: 1 },
+  { name: 'a negated verdict beside a good one is refused too',
+    file: 'console.log("NOT PASS — 1/10"); console.log("tool: OK — 9 checks passed."); process.exit(0);\n', want: 1 },
   { name: 'two DIFFERENT good verdicts are ambiguous, not "the best one"',
     file: 'console.log("a: OK — 9 checks passed."); console.log("PASS — 3/3 shapes"); process.exit(0);\n', want: 1 },
 
@@ -407,12 +471,23 @@ async function selftest() {
         bad++; console.log(`  MISSING  ${p.fixture} — the card requires this fixture to exist`);
         continue;
       }
+      // A PLANT'S PREMISE CAN BE PLATFORM-SHAPED, AND ONE OF MINE WAS. The
+      // MECHANISM may differ per OS; the INVARIANT may not. `winWant` names
+      // the platform's actual semantics (observed, cited) instead of skipping
+      // the plant or loosening it to "nonzero somehow".
+      const expected = (process.platform === 'win32' && p.winWant !== undefined) ? p.winWant : p.want;
       const r = await runOne(process.execPath, [f, ...(p.args || [])], { min: 1, quiet: true });
-      let ok = r.code === p.want;
+      let ok = r.code === expected;
+      // THE INVARIANT UNDER TEST, asserted on every runner by whatever
+      // mechanism that runner provides: a child that died without speaking is
+      // NOT A PASS. This holds even where the exact code differs.
+      if (p.neverZero && r.code === 0) ok = false;
       // `mustSay` proves the CHILD spoke — the argv plant's whole point.
       if (ok && p.mustSay && !`${r.out}${r.note || ''}`.includes(p.mustSay)) ok = false;
+      // The KILLED wording is asserted only where the signal path exists.
+      if (ok && p.neverZero && process.platform !== 'win32' && !`${r.note || ''}`.includes('KILLED')) ok = false;
       if (!ok) bad++;
-      console.log(`  ${ok ? 'CAUGHT ' : 'MISSED '} exit ${r.code} (want ${p.want})  ${p.name}`);
+      console.log(`  ${ok ? 'CAUGHT ' : 'MISSED '} exit ${r.code} (want ${expected})  ${p.name}`);
       if (!ok) console.log(`      note: ${(r.note || '').split('\n')[0] || 'child output did not carry ' + p.mustSay}`);
     }
   } finally {

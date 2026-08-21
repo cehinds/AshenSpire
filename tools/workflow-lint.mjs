@@ -82,6 +82,32 @@ export function readKey(code) {
   return { indent: m[1].length, item: !!m[2], name, rest: m[6], keyIndent: m[1].length + (m[2] ? 2 : 0) };
 }
 
+/**
+ * WHAT FORMS MAY A YAML LIST ITEM TAKE — asked once, here, instead of being
+ * discovered one variation at a time. This is the fourth pass over the same
+ * axis: indentation, then comments, then quoting, and now the SEQUENCE
+ * INDICATOR ITSELF, which need not share a line with its content:
+ *
+ *     - name: Build          the dash carries the first key
+ *     - "name": Build        …which may be quoted
+ *     -                      the dash stands ALONE and the keys follow,
+ *       name: Build          indented under it, at any deeper column
+ *     - run: |               …and the first key may open a block scalar
+ *
+ * `readItem` answers "does this line START a list entry, and does it carry its
+ * first key". A dash-only entry is real and was worth zero findings before:
+ * no step object was created at all, so a duplicate `run:` inside it — or no
+ * command whatsoever — reported nothing, which is the exact silence this lint
+ * exists to break, in the lint.
+ */
+export function readItem(code) {
+  const bare = code.match(/^(\s*)-\s*$/);
+  if (bare) return { indent: bare[1].length, key: null };
+  const k = readKey(code);
+  if (k && k.item) return { indent: k.indent, key: k };
+  return null;
+}
+
 const isBlockScalar = (k) => !!k && /^\s*[|>][-+]?\s*$/.test(k.rest);
 
 export function lintWorkflowText(text, file = '<text>') {
@@ -184,17 +210,28 @@ export function lintWorkflowText(text, file = '<text>') {
       continue;
     }
 
-    const item = k && k.item ? k : null;
+    const item = readItem(code);
     // ONLY AT THE LIST'S OWN INDENT. The first `- ` after `steps:` fixes it;
     // anything deeper is nested data, not a step.
     if (item && (itemIndent === -1 || indent === itemIndent)) {
       closeStep();
       if (itemIndent === -1) itemIndent = indent;
-      step = { line: i + 1, name: item.name === 'name' ? item.rest.trim() : '(unnamed)', keys: { [item.name]: 1 }, indent: item.keyIndent };
-      if (isBlockScalar(item)) skipDeeperThan = item.keyIndent - 1;
+      const first = item.key;
+      step = {
+        line: i + 1,
+        name: first && first.name === 'name' ? first.rest.trim() : '(unnamed)',
+        keys: first ? { [first.name]: 1 } : {},
+        // A DASH-ONLY ENTRY DOES NOT YET KNOW WHERE ITS KEYS SIT; the first
+        // key line below fixes the column, exactly as the first list item
+        // fixes the list's own.
+        indent: first ? first.keyIndent : -1,
+      };
+      if (first && isBlockScalar(first)) skipDeeperThan = first.keyIndent - 1;
       continue;
     }
-    if (step && k && !k.item && k.indent === step.indent) {
+    if (step && k && !k.item && (step.indent === -1 ? k.indent > itemIndent : k.indent === step.indent)) {
+      if (step.indent === -1) step.indent = k.indent;   // dash-only: the first key fixes the column
+      if (k.name === 'name' && step.name === '(unnamed)') step.name = k.rest.trim() || '(unnamed)';
       step.keys[k.name] = (step.keys[k.name] || 0) + 1;
       if (isBlockScalar(k)) skipDeeperThan = step.indent;
     }
@@ -257,6 +294,21 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Quoted\n        "run": echo ok\n' },
   { name: 'and a quoted DUPLICATE run: is still caught', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Twice\n        "run": echo one\n        run: echo two\n' },
+  // THE SEQUENCE-INDICATOR FORMS. A dash may stand alone, and its keys follow
+  // at any deeper column — worth ZERO findings before, because no step object
+  // was ever created.
+  { name: 'a dash-only item with a duplicate run: is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n        name: Twice\n        run: echo one\n        run: echo two\n' },
+  { name: 'a dash-only item with NO command is caught', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n        name: Ghost\n' },
+  { name: 'a healthy dash-only item is silent', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n        name: Fine\n        run: echo ok\n' },
+  { name: 'a dash-only item at a deeper key column still works', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n          name: Deep\n          run: echo one\n          run: echo two\n' },
+  { name: 'a dash-only item carrying a block scalar is not misread', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      -\n        name: Block\n        run: |\n          echo "- name: data"\n' },
+  { name: 'mixed dash-only and inline items in one list', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Inline\n        run: echo ok\n      -\n        name: Ghost\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,
