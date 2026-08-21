@@ -5,7 +5,7 @@
 // that boundary explicit lets the standalone game show the receipts without
 // creating a second hand-maintained copy of their prose.
 
-import { GENERATED_CHANGELOG } from './generated/changelog.js';
+import { GENERATED_CHANGELOG } from './changelog.generated.js';
 
 export const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
 

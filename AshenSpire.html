@@ -34480,7 +34480,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0c50f3bcc3';
+const SOURCE = '7324888548';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34514,7 +34514,7 @@ const SOURCE = '0c50f3bcc3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0912';
+const ORDINAL = '0920';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46230,8 +46230,44 @@ Object.assign(module.exports, { renderProfileSection });
 const { esc } = require("src/ui/components/tooltip.js");
 const { AI_DISCLOSURE, disclosureAsText } = require("src/content/aiDisclosure.js");
 const { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } = require("src/buildversion.js");
+const { CHANGELOG, PROJECT_REPOSITORY_URL } = require("src/content/changelog.js");
 
-function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+/**
+ * A source-server build is development by construction. A standalone bundle
+ * is ambiguous until its host is known: the canonical GitHub Pages host is the
+ * current-dev preview, while a file:// bundle is a release-shaped artifact and
+ * must not silently gain a repository action.
+ */
+function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.location } = {}) {
+  if (runPath === 'source tree') return true;
+  return runPath === 'standalone file'
+    && locationLike?.protocol === 'https:'
+    && locationLike?.hostname === 'cehinds.github.io';
+}
+
+function changelogHtml(entries) {
+  let group = null;
+  return entries.map((entry) => {
+    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
+    group = entry.group;
+    return `${heading}
+      <details class="about-change" data-change-id="${esc(entry.id)}">
+        <summary class="region-fold">
+          <span class="rf-label">${esc(entry.summary)}</span>
+          <span class="region-count">${esc(entry.build)}</span>
+        </summary>
+        <p class="set-note">${esc(entry.detail)}</p>
+        <p class="set-note"><a href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a></p>
+      </details>`;
+  }).join('');
+}
+
+function renderAboutSection(container, {
+  disclosure = AI_DISCLOSURE,
+  changelog = CHANGELOG,
+  runPath = RUN_PATH,
+  locationLike = globalThis.location,
+} = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -46273,15 +46309,23 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
   // is also the reason the About footer is no longer a stable string anyone can
   // eyeball for "did anything change".
+  const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
+    ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
+    : esc(ABOUT_BUILD_LINE);
+
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
       ${sections}
+      <section class="about-changelog" aria-labelledby="about-changelog-title">
+        <h2 id="about-changelog-title">Changelog</h2>
+        ${changelogHtml(changelog)}
+      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the
@@ -46304,7 +46348,7 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
 }
 
 
-Object.assign(module.exports, { renderAboutSection });
+Object.assign(module.exports, { shouldLinkDebugVersion, renderAboutSection });
 
 },
 "src/content/aiDisclosure.js": function (module, exports, require) {
@@ -46467,6 +46511,300 @@ function disclosureAsText(d = AI_DISCLOSURE, version = null) {
 
 
 Object.assign(module.exports, { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText });
+
+},
+"src/content/changelog.js": function (module, exports, require) {
+// src/content/changelog.js — the in-game reader for the root CHANGELOG.md.
+//
+// CHANGELOG.md is the authored owner. The generated module is only its bundled
+// transport: tools/about-changelog.mjs derives it and refuses drift. Keeping
+// that boundary explicit lets the standalone game show the receipts without
+// creating a second hand-maintained copy of their prose.
+
+const { GENERATED_CHANGELOG } = require("src/content/changelog.generated.js");
+
+const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
+
+function validateChangelog(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) throw new Error('changelog has no entries');
+  const ids = new Set();
+  for (const entry of entries) {
+    if (!/^pr-\d+$/.test(entry.id)) throw new Error(`unstable changelog id: ${entry.id}`);
+    if (ids.has(entry.id)) throw new Error(`duplicate changelog id: ${entry.id}`);
+    ids.add(entry.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`invalid date for ${entry.id}`);
+    if (!entry.group || !entry.summary || /[\r\n]/.test(entry.summary)) throw new Error(`invalid summary for ${entry.id}`);
+    if (!entry.detail || !entry.build || !Number.isInteger(entry.pullRequest)) throw new Error(`incomplete receipt for ${entry.id}`);
+    if (entry.url !== `${PROJECT_REPOSITORY_URL}/pull/${entry.pullRequest}`) throw new Error(`unsafe pull-request URL for ${entry.id}`);
+  }
+  return entries;
+}
+
+const CHANGELOG = Object.freeze(validateChangelog(GENERATED_CHANGELOG));
+
+
+Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANGELOG });
+
+},
+"src/content/changelog.generated.js": function (module, exports, require) {
+// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.
+// Do not edit: the focused check refuses any drift from the authoritative Markdown.
+
+const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-288",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Character creation is one panel at a time",
+    "detail": "Six sections — CLASS, STARTING KIT, KEEPSAKE, SIGIL, TINT, SPRITE — each a card that opens at its turn. CLASS is open on arrival; picking an option collapses the section and opens the next; any face re-opens out of order. After the flow, the column reads back your six choices in words. Keyboard and pad included: the cursor rides the advance, so Confirm-Confirm walks the whole flow accepting defaults.",
+    "build": "0.4.0.0911",
+    "pullRequest": 288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/288"
+  },
+  {
+    "id": "pr-291",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The merchant is five collapsing bars — and Sell is one of them",
+    "detail": "CARDS · RELICS · FLASKS · REMOVE A CARD · SELL, one open at a time, cards open on arrival. Buying keeps the bar you're looking at open. The merchant buys back what he sells — relics and flasks, at half the low end of the item's own price band — and the whole Sell bar can be switched off in Settings (then it's absent, not greyed).",
+    "build": "0.4.0.0912",
+    "pullRequest": 291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/291"
+  },
+  {
+    "id": "pr-289",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The short-screen warning reads whole at the largest text size",
+    "detail": "At Text XL on a very short screen, the last-resort refusal message no longer loses its sentence to its own glyph.",
+    "build": "0.4.0.0901",
+    "pullRequest": 289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/289"
+  },
+  {
+    "id": "pr-286",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Flask display verified healthy everywhere",
+    "detail": "Evidence-only: fourteen photographs of every reachable flask surface, both shapes — no source change; closed #277.",
+    "build": "0.4.0.0900",
+    "pullRequest": 286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/286"
+  },
+  {
+    "id": "pr-287",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Fullscreen is the first option under Display",
+    "detail": "One toggle at the head of Settings → Display, reflecting the real fullscreen state.",
+    "build": "0.4.0.0900",
+    "pullRequest": 287,
+    "url": "https://github.com/cehinds/AshenSpire/pull/287"
+  },
+  {
+    "id": "pr-244",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Title screen no longer crashes on a detached map board",
+    "detail": "The map's scroll-commit debounce could fire after leaving the map and take the title screen down.",
+    "build": "0.4.0.0893",
+    "pullRequest": 244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/244"
+  },
+  {
+    "id": "pr-226",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Status & Daily Briefs linked from the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0885",
+    "pullRequest": 226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/226"
+  },
+  {
+    "id": "pr-224",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat action row no longer overlaps or mis-scales",
+    "detail": "Merged as pull request #224 in development build 0.4.0.0885.",
+    "build": "0.4.0.0885",
+    "pullRequest": 224,
+    "url": "https://github.com/cehinds/AshenSpire/pull/224"
+  },
+  {
+    "id": "pr-225",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Hint-strip selftest runs on Windows",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/225"
+  },
+  {
+    "id": "pr-221",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "buildversion selftest cleanup is deterministic on macOS",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 221,
+    "url": "https://github.com/cehinds/AshenSpire/pull/221"
+  },
+  {
+    "id": "pr-223",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Build-stamp browser fixture inputs repaired",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/223"
+  },
+  {
+    "id": "pr-220",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Friendly card targets are visibly distinct, on every input",
+    "detail": "Cards that target you or an ally say so with the same clarity for mouse, keyboard, and pad.",
+    "build": "0.4.0.0878",
+    "pullRequest": 220,
+    "url": "https://github.com/cehinds/AshenSpire/pull/220"
+  },
+  {
+    "id": "pr-219",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat fits short landscape screens",
+    "detail": "Merged as pull request #219 in development build 0.4.0.0869.",
+    "build": "0.4.0.0869",
+    "pullRequest": 219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/219"
+  },
+  {
+    "id": "pr-218",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Guard absorption and residual damage show as separate floats",
+    "detail": "What your block ate and what got through are two numbers, not one.",
+    "build": "0.4.0.0867",
+    "pullRequest": 218,
+    "url": "https://github.com/cehinds/AshenSpire/pull/218"
+  },
+  {
+    "id": "pr-217",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Audio cues with optional samples stay immediate",
+    "detail": "No late hit-sounds while an optional sample resolves.",
+    "build": "0.4.0.0850",
+    "pullRequest": 217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/217"
+  },
+  {
+    "id": "pr-212",
+    "date": "2026-08-19",
+    "group": "2026-08-19",
+    "summary": "The current dev Pages preview is surfaced in the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0841",
+    "pullRequest": 212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/212"
+  },
+  {
+    "id": "pr-210",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Hybrid combat input parity completed",
+    "detail": "Mixing mouse, keyboard, and pad mid-combat keeps one coherent cursor and one set of affordances.",
+    "build": "0.4.0.0841",
+    "pullRequest": 210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/210"
+  },
+  {
+    "id": "pr-206",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Text size scales text, and only text",
+    "detail": "The accessibility text setting stops resizing non-text UI; UI size remains the whole-game control.",
+    "build": "0.4.0.0835",
+    "pullRequest": 206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/206"
+  },
+  {
+    "id": "pr-203",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Native map pan belongs to the map again",
+    "detail": "Merged as pull request #203 in development build 0.4.0.0828.",
+    "build": "0.4.0.0828",
+    "pullRequest": 203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/203"
+  },
+  {
+    "id": "pr-201",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Escape during the tutorial cancels the right thing",
+    "detail": "Merged as pull request #201 in development build 0.4.0.0822.",
+    "build": "0.4.0.0822",
+    "pullRequest": 201,
+    "url": "https://github.com/cehinds/AshenSpire/pull/201"
+  },
+  {
+    "id": "pr-202",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Map structure contrast is measurable — and raised",
+    "detail": "Paths and nodes hold a checked contrast floor.",
+    "build": "0.4.0.0807",
+    "pullRequest": 202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/202"
+  },
+  {
+    "id": "pr-199",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Combat HUD pages long strips and shows drag targets",
+    "detail": "Merged as pull request #199 in development build 0.4.0.0807.",
+    "build": "0.4.0.0807",
+    "pullRequest": 199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/199"
+  },
+  {
+    "id": "pr-200",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Map zoom and camera persist correctly",
+    "detail": "Returning to the map returns to your zoom and place.",
+    "build": "0.4.0.0799",
+    "pullRequest": 200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/200"
+  },
+  {
+    "id": "pr-186",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "The verified current build lives at the repository root",
+    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "build": "0.4.0.0788",
+    "pullRequest": 186,
+    "url": "https://github.com/cehinds/AshenSpire/pull/186"
+  },
+  {
+    "id": "pr-180",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "A reversible architecture map",
+    "detail": "Docs only.",
+    "build": "0.4.0.0777",
+    "pullRequest": 180,
+    "url": "https://github.com/cehinds/AshenSpire/pull/180"
+  }
+]);
+
+
+Object.assign(module.exports, { GENERATED_CHANGELOG });
 
 },
 "src/ui/audio.js": function (module, exports, require) {
