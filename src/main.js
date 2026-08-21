@@ -1123,6 +1123,9 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
+  // The reward row may say Taken only after both ownership homes and the
+  // resumable run agree. This is the production collector's commit boundary.
+  persist();
   return true;
 }
 
@@ -1862,6 +1865,7 @@ if (shotState) {
   window.__spoils = () => ({
     found: [...((saves.loadMeta() || {}).found || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
+    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
     // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
     // 'showcase', in which recordArmamentDiscovery deliberately writes no
     // receipt — so through this door the count is structurally 0 and proves

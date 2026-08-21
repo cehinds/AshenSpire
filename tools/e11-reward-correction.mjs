@@ -109,9 +109,9 @@ for (const cell of [{ n: 'desktop', w: 1200, h: 730, d: 1, s: {} }, { n: 'phone'
   await ev(`document.querySelector('#reward-continue').scrollIntoView({block:'nearest'})`); await sleep(100);
   const g = await ev(`(()=>{const e=document.querySelector('#reward-continue'),h=document.querySelector('#reward-hold-copy'),r=e.getBoundingClientRect(),q=h.getBoundingClientRect();return{ok:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&q.left>=0&&q.right<=innerWidth&&q.top>=0&&q.bottom<=innerHeight,r:[r.left,r.top,r.right,r.bottom],q:[q.left,q.top,q.right,q.bottom]}})()`);
   check(`${cell.n} Continue and hold feedback are wholly scroll-reachable`, g.ok, JSON.stringify(g)); await shot(`${cell.n}-menu`);
-  await click('.reward-kind[data-kind="flask"]'); await shot(`${cell.n}-potion-detail`); await click('#reward-back');
-  await click('.reward-kind[data-kind="armament"]'); await shot(`${cell.n}-armament-detail`);
-  if (cell.w === 390) {
+  await click('.reward-kind[data-kind="flask"]'); await sleep(240); await shot(`${cell.n}-potion-detail`); await click('#reward-back');
+  await click('.reward-kind[data-kind="armament"]'); await sleep(240); await shot(`${cell.n}-armament-detail`);
+  {
     await open({ rewardCollect: 'manual', holdConfirm: 'normal', ...cell.s }, '&shotStorage=full');
     const fallback = await ev(`(()=>{
       const all=[...document.querySelectorAll('.reward-skip,[data-skip]')], row=document.querySelector('[data-kind="armament"]'), b=row?.querySelector('[data-skip="armament"]');

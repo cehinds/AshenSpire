@@ -14,13 +14,12 @@ separately and remains **RED**. The version stamp in-game is
 log's pull-request references turn intermittent — whole runs of direct
 landings on 2026-08-14 to -16 name no pull request at all — so entries there
 would be reconstruction from memory, not receipts. The history before this
-point lives in `git log` and is not restated. (The in-game changelog is its
-own card, #189, and stays unbuilt; this file is the "one authoritative
-structured owner" that card asks for.)*
+point lives in `git log` and is not restated. The in-game changelog is #189's
+projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-21
 
-- **Rewards wait for a deliberate hold and leave untouched choices alone** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0927`). Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.
+- **Rewards wait for a deliberate hold and leave untouched choices alone** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0928`). Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.
 
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
 

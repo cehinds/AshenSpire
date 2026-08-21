@@ -84,6 +84,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },
       {
+        name: 'production armament collector returns success before the run is durable',
+        file: 'src/main.js',
+        find: '  // The reward row may say Taken only after both ownership homes and the\n  // resumable run agree. This is the production collector\'s commit boundary.\n  persist();\n  return true;',
+        replace: '  // planted: ownership changed, but the resumable run did not\n  return true;',
+        expectRed: /FAIL\s+S1 reload-before-Continue keeps the armament in saved run storage/,
+      },
+      {
         // The b6b7df0 P1's UI face alone: the full-bag derivation gone — the
         // ninth piece renders takeable at the cap. The collector's own gate
         // stays, so the tap stores nothing and writes nothing; what breaks is
@@ -323,6 +330,9 @@ await ev(clickSel('#reward-detail-take'));
 await sleep(120);
 s = await spoils();
 check('S1 tap Take persists the armament (meta.found)', s.found.length === 1, `meta.found is [${s.found}] after take`);
+check('S1 reload-before-Continue keeps the armament in saved run storage',
+  s.savedStorage.length === 1 && s.savedStorage[0] === s.storage[0],
+  `live storage [${s.storage}], reloaded storage [${s.savedStorage}]`);
 const takenId = s.found[0];
 check('S1 after take the NEW chip is gone',
   await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&!el.querySelector('.reward-new')})()`));
@@ -340,6 +350,7 @@ await sleep(200);
 s = await spoils();
 check('S2 auto Continue persists an unskipped armament (meta.found)', s.found.length === 1, `meta.found is [${s.found}]`);
 check('S2 auto Continue stores it in the run (storage)', s.storage.length === 1, `storage is [${s.storage}]`);
+check('S2 auto Continue stores it in the reload image', s.savedStorage.length === 1, `reloaded storage is [${s.savedStorage}]`);
 
 // ---- S3: ordinary rows expose no Skip; auto still takes pending rewards ----
 await bootTreasure();
@@ -407,8 +418,9 @@ async function finishPosedCombat(expectedTitle) {
   await ev(clickSel('.reward-kind[data-kind="armament"]')); await sleep(100);
   await ev(clickSel('#reward-detail-take')); await sleep(120);
   const owned = await spoils();
-  check(`${expectedTitle} route persists its armament through the shared collector`, owned.found.length === 1 && owned.storage.length === 1,
-    `found [${owned.found}], storage [${owned.storage}]`);
+  check(`${expectedTitle} route persists its armament through the shared collector`,
+    owned.found.length === 1 && owned.storage.length === 1 && owned.savedStorage.length === 1,
+    `found [${owned.found}], storage [${owned.storage}], reloaded [${owned.savedStorage}]`);
 }
 
 // ---- S8/S9: elite + boss arms of the shared production collector ----------

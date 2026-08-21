@@ -1158,10 +1158,17 @@ button.rs-reset {
   pointer-events: none; z-index: 2;
 }
 .reward-skip {
-  margin-left: auto; align-self: center; flex: 0 0 auto;
-  min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
 }
-:root[data-layout='narrow'] .reward-kind .reward-skip { margin-left: auto; }
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
 /* Receive feedback: a taken row settles — border flashes gold and the card
    relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
@@ -5956,6 +5963,9 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
+  // The reward row may say Taken only after both ownership homes and the
+  // resumable run agree. This is the production collector's commit boundary.
+  persist();
   return true;
 }
 
@@ -6695,6 +6705,7 @@ if (shotState) {
   window.__spoils = () => ({
     found: [...((saves.loadMeta() || {}).found || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
+    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
     // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
     // 'showcase', in which recordArmamentDiscovery deliberately writes no
     // receipt — so through this door the count is structurally 0 and proves
@@ -34690,7 +34701,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'fba007e134';
+const SOURCE = '74d5d96f58';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34724,7 +34735,7 @@ const SOURCE = 'fba007e134';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0927';
+const ORDINAL = '0928';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -47227,7 +47238,7 @@ const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
     "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
-    "build": "0.4.0.0927",
+    "build": "0.4.0.0928",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
   },

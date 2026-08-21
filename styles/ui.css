@@ -855,10 +855,17 @@ button.rs-reset {
   pointer-events: none; z-index: 2;
 }
 .reward-skip {
-  margin-left: auto; align-self: center; flex: 0 0 auto;
-  min-height: var(--tap-floor, 44px); min-width: var(--tap-floor, 44px); height: auto;
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
 }
-:root[data-layout='narrow'] .reward-kind .reward-skip { margin-left: auto; }
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
 /* Receive feedback: a taken row settles — border flashes gold and the card
    relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
 .reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
