@@ -4939,7 +4939,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(marks.flasks.length, 0, 'a held flask kind is not');
   });
 
-  test('63. E5: stat points and starting armour at creation — his numbers, both edges', () => {
+  test('66. E5: stat points and starting armour at creation — his numbers, both edges', () => {
     // Constantine, from the card (#250): "10 points, configurable; points come
     // back out when a stat is dropped; floor 8, ceiling 15 at creation, both
     // customizable; the floor is the reclaim limit; 15 caps CREATION, not the
