@@ -75,6 +75,11 @@ export function stripComment(line) {
  * Returns `{ indent, item, name, rest, keyIndent }` or null. `item` marks a
  * `- ` list entry; `keyIndent` is where the entry's OWN keys sit.
  */
+// `readKey` RETURNS NULL AND THAT IS A QUESTION, NOT AN ANSWER — every caller
+// must decide, and both callers now REFUSE rather than skip. The rule this
+// file and tools/verdict.mjs share is written out in verdict.mjs's negation
+// block: a decision made correctly is worth nothing at the sites that do not
+// consult it. Closing a set says nothing about where it is consulted.
 export function readKey(code) {
   const m = code.match(/^(\s*)(?:(-)\s+)?(?:"([^"]*)"|'([^']*)'|([\w.\-]+))\s*:(.*)$/);
   if (!m) return null;
@@ -115,9 +120,22 @@ export function readKey(code) {
 /** Split a flow mapping's body on top-level commas (quote and bracket aware). */
 export function splitFlow(body) {
   const parts = [];
-  let depth = 0, q = null, cur = '';
+  let depth = 0, q = null, cur = '', esc = false;
   for (const c of body) {
-    if (q) { cur += c; if (c === q) q = null; continue; }
+    // QUOTE STATE MUST CONSULT ESCAPES. Closing on every matching quote
+    // character — including an escaped one — desynchronises the split: in
+    // `{ name: "x\", run: decoy", run: one, run: two }` the escaped quote ended
+    // the string early, the real top-level commas fell INSIDE what the splitter
+    // then believed was quoted, and two real duplicate `run` keys collapsed into
+    // one unread segment. Only one reached duplicate detection, so the lint
+    // reported nothing on valid YAML carrying a genuine last-wins defect.
+    if (q) {
+      cur += c;
+      if (esc) { esc = false; continue; }
+      if (c === '\\' && q === '"') { esc = true; continue; }
+      if (c === q) q = null;
+      continue;
+    }
     if (c === '"' || c === "'") { q = c; cur += c; continue; }
     if (c === '{' || c === '[') depth++;
     if (c === '}' || c === ']') depth--;
@@ -209,8 +227,20 @@ export function lintWorkflowText(text, file = '<text>') {
       return;
     }
     for (const pair of splitFlow(body)) {
-      const kv = readKey(pair.trim());
-      if (!kv) continue;
+      const text = pair.trim();
+      if (!text) continue;
+      const kv = readKey(text);
+      // REFUSE WHAT CANNOT BE CLASSIFIED — the rule this file already applies to
+      // anchors, aliases, tags, flow sequences and escaped keys, which a `null`
+      // return one function away was quietly exempt from. A `?` explicit key
+      // (`? run : node real-suite`) is valid YAML, resolves last-wins against a
+      // later `run:`, and was SKIPPED rather than refused: the closed-grammar
+      // contract reopened by its own author.
+      if (!kv) {
+        checks += 1;
+        findings.push(`${file}:${line}: unrecognised pair ${JSON.stringify(text.slice(0, 60))} in a flow mapping — refused BY NAME rather than skipped, because a pair this linter cannot classify may be a key that collides under last-wins.`);
+        continue;
+      }
       if (kv.undecodable) {
         checks += 1;
         findings.push(`${file}:${line}: quoted key ${JSON.stringify(kv.name)} in a flow mapping carries an escape this linter does not decode — refused BY NAME.`);
@@ -518,6 +548,14 @@ const SELFTEST = [
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - name: Dup\n        "run": node real-suite\n        run: echo shadow\n' },
   { name: 'form: an escaped quoted key inside a flow mapping is refused too', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Flow, "\\u0072un": one, run: two }\n' },
+  // ESCAPE-AWARE FLOW SPLITTING, and the pair that proves it.
+  { name: 'form: an escaped quote does not desynchronise comma splitting', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "x\\", run: decoy", run: one, run: two }\n' },
+  { name: 'form: a normal quoted value with a comma inside still splits correctly', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "a, b", run: echo ok }\n' },
+  // AN UNCLASSIFIABLE PAIR IS REFUSED, NOT SKIPPED.
+  { name: 'form: a `?` explicit key in a flow mapping is refused by name', want: 1,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: Twice, ? run : node real-suite, run: echo shadow }\n' },
   { name: 'a healthy workflow is silent', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n      - name: Fine\n        run: echo ok\n' },
   { name: 'a step whose command is `uses` is a command too', want: 0,

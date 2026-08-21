@@ -96,9 +96,26 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // second list: both regexes are built from these words, so the two readings
 // cannot drift apart again. Same defect as the CLI counting steps with its own
 // regex while the parser used another — a second reader of one question.
+// ONE LIST — AND CONSULTED AT EVERY POSITION A VERDICT TOKEN CAN APPEAR.
+//
+// THE RULE THIS FILE KEEPS RELEARNING, written once so the next reader gets it
+// for free: A DECISION MADE CORRECTLY IS WORTH NOTHING AT THE SITES THAT DO NOT
+// CONSULT IT. I closed the negation vocabulary into one list — correct — and
+// then applied it at one site: the start of the line. So `tool: NEVER OK — 9
+// checks passed` reached neither `hits` nor `refused`, and a later success line
+// stood as the sole verdict: THE DOOR EXITED GREEN ON A CHECKER THAT SAID
+// "NEVER OK". Same defect as finding 33, one position over, an hour later.
+//
+// A closed set is closed only if there is exactly ONE of it AND every place a
+// verdict token can appear consults it. Vocabulary and POSITION are two axes
+// and closing one says nothing about the other.
 const NEGATION_WORDS = ['not', 'never', 'no', 'un'];
+const VERDICT_TOKENS = ['OK', 'PASS', 'GREEN'];
 const NEGATION = new RegExp(`\\b(?:${NEGATION_WORDS.join('|')})\\b`, 'i');
 const LEADING_NEGATION = new RegExp(`^(\\s*)(?:${NEGATION_WORDS.join('|')})\\s+`, 'i');
+// A negation sitting immediately before a verdict token, wherever that token is
+// — bare (`NEVER PASS …`) or behind a label (`tool: NEVER OK …`).
+const TOKEN_NEGATION = new RegExp(`\\b(?:${NEGATION_WORDS.join('|')})\\s+(?=(?:${VERDICT_TOKENS.join('|')})\\b)`, 'ig');
 
 // THE CLAIM'S OWN NOUN IS A CLOSED SET TOO — because closing the LINE was not
 // enough. `PASS — 9/9 checks failed` and `tool: OK — 9/9 errors occurred` both
@@ -261,7 +278,7 @@ export function readVerdict(text) {
     // and re-testing is deliberately the narrowest form of this — the door
     // judges verdict lines, it does not police prose, and a boundary block
     // reading "NOT A VERDICT AND NOT A FAILURE:" still matches nothing.
-    const denegated = line.replace(LEADING_NEGATION, '$1');
+    const denegated = line.replace(LEADING_NEGATION, '$1').replace(TOKEN_NEGATION, '');
     if (denegated !== line && VERDICTS.some((v) => v.re.test(denegated))) {
       refused.push({ line: line.trim(), why: 'a negated verdict shape' });
       continue;
@@ -519,6 +536,13 @@ const SELFTEST = [
     file: 'console.log("PASS — 2/2 shapes"); console.log("PASS — 1/2 shapes"); process.exit(0);\n', want: 1 },
   // THE TWO-LIST DEFECT: `never` was in one reading of "negation" and not the
   // other, so this line reached neither bucket and the retry below won.
+  // THE SAME VOCABULARY, ONE POSITION OVER: behind a label.
+  { name: 'a LABELLED "NEVER OK" is a negated verdict, and a retry cannot win',
+    file: 'console.log("tool: NEVER OK — 9 checks passed"); console.log("tool: OK — 9 checks passed"); process.exit(0);\n', want: 1 },
+  { name: 'and a labelled NEVER OK alone is refused, not silent-passed',
+    file: 'console.log("tool: NEVER OK — 9 checks passed"); process.exit(0);\n', want: 3 },
+  { name: 'a labelled NOT GREEN is caught at that position too',
+    file: 'console.log("map-camera persistence: NOT GREEN (6/6)"); console.log("tool: OK — 9 checks passed"); process.exit(0);\n', want: 1 },
   { name: 'NEVER is a negation in BOTH readings, so a retry cannot win',
     file: 'console.log("NEVER PASS — 1/10"); console.log("tool: OK — 9 checks passed"); process.exit(0);\n', want: 1 },
   { name: 'and a NEVER-negated shape alone is refused, not silent-passed',
