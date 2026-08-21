@@ -93,7 +93,19 @@
 //
 // ASSERTED (this tool goes red):
 //   G1 NO PROSE WEARING COVERAGE — a tool named in EXECUTED OUTPUT is invoked by
-//      that list, or its line states a cost. Source comments are exempt.
+//      THE STEP THAT NAMES IT, or its line states a cost. Source comments are
+//      exempt. ⚠ THE SCOPE IS THE STEP, NOT THE LIST, and that is not a detail:
+//      a list-scoped test exempts a step emptied into an `echo` whenever a
+//      SIBLING step keeps the tool-level listing alive, which is #295's defect
+//      one degree finer — not "a tool in no list" but "a tool in a list that has
+//      stopped running it HERE". Site-local, so it needs no baseline.
+//      ⚠ WHAT REMAINS UNSEEN, and it is smaller but real: a step DELETED
+//      OUTRIGHT, naming nothing, while another invocation of the same tool
+//      survives. Nothing names it, so nothing fires. Closing that needs a
+//      per-site baseline — a frozen number in a second home — and I would rather
+//      state the gap than plant a rotting number. NAMED HERE AND IN THE OUTPUT,
+//      not only here, because a boundary that lives only in a comment is how the
+//      previous version of this clause shipped over its own residue.
 //   G2 AN EXCLUSION NAMES ITS COST — D78: the reason must say WHICH DEFECT CLASS
 //      goes unwatched, not merely that the check is expensive. The live models
 //      are already in the tree — `tutorial-reach` and `release-shots`, each named
@@ -295,7 +307,21 @@ function printedRefs(cmd) {
   const toks = tokenize(cmd);
   if (!toks.length || toks[0].quoted || toks[0].t !== 'echo') return [];
   const said = toks.slice(1).map((t) => t.t).join(' ');
-  return (said.match(TOOL_REF) || []).map((tool) => ({ tool, said }));
+  return (said.match(TOOL_REF) || []).map((tool) => ({ tool, said, commandForm: isCommandForm(said, tool) }));
+}
+
+// COMMAND FORM: the printed text spells `node <tool>`. THIS IS THE DECIDABLE
+// TEST VIRA'S RULING TURNS ON, and it judges FORM, never English. A boundary
+// line names its tool BARE — "tools/tutorial-reach.mjs drives 8 viewports and NO
+// job here runs it" — which is the convention in every one of ci.yml's boundary
+// lines. Spelling `node tools/x.mjs` is a different speech act: it is the
+// command a reader would type, printed by a list, and it reads as "this list
+// runs this". So a command-form reference gets NO cost escape: the list that
+// prints it must invoke it. Derived from the house's own convention, not
+// invented — measured at origin/dev, 15 of 16 printed command-form references
+// are to tools their list actually invokes.
+function isCommandForm(said, tool) {
+  return new RegExp(`node\\s+${tool.replace(/[.]/g, '\\.')}`).test(said);
 }
 
 // ── the workflow reader ─────────────────────────────────────────────────────
@@ -381,10 +407,15 @@ function jsPrintedRefs(clean) {
       else if (clean[j] === ')') { depth--; if (depth === 0) { end = j; break; } }
     }
     const said = clean.slice(m.index, end + 1);
-    for (const tool of said.match(TOOL_REF) || []) out.push({ tool, said: said.replace(/\s+/g, ' ') });
+    for (const tool of said.match(TOOL_REF) || []) {
+      const flat = said.replace(/\s+/g, ' ');
+      out.push({ tool, said: flat, commandForm: isCommandForm(flat, tool) });
+    }
   }
   return out;
 }
+
+const words = (s) => s.replace(TOOL_REF, ' ').replace(/[^A-Za-z]+/g, ' ').trim().split(/\s+/).filter(Boolean);
 
 // ── the derivation, AS A FUNCTION OF THE REF ────────────────────────────────
 // One function, called once per ref. `--since` calls it twice, which is the
@@ -412,6 +443,8 @@ function census(ref) {
   const invoked = new Map();
   const printed = new Map();
   const swallowed = [];
+  const orphanSites = [];   // a STEP that names a tool it does not invoke, with no cost stated
+  const sites = new Map();  // `tool\u0000list` -> how many invocation sites
   const problems = [];
   const note = (map, k, v) => { if (!map.has(k)) map.set(k, []); map.get(k).push(v); };
 
@@ -424,9 +457,23 @@ function census(ref) {
       for (const { body, continueOnError } of payloads) {
         const setPlusE = /^\s*set\s+\+e\b/m.test(stripShellComments(body));
         const cmds = shellCommands(body);
+        // ⚠ THE SCOPE IS THE STEP, NOT THE LIST, AND THAT IS THE WHOLE FIX.
+        // Judging a printed name against "is this tool invoked ANYWHERE in this
+        // file" exempts a step that has quietly stopped running its tool while a
+        // sibling step keeps the tool-level listing alive. That is #295's defect
+        // one degree finer — not "a tool in no list" but "a tool in a list that
+        // has stopped running it HERE — and the difference between `listed` and
+        // `run where it is supposed to be run` is the distinction this whole
+        // card exists on. Site-local, so it needs NO baseline and no frozen
+        // count: a step that names a tool it does not invoke either states a
+        // cost or is a finding.
+        const stepInvoked = new Set();
+        const stepPrinted = [];
         for (const [idx, { cmd, after }] of cmds.entries()) {
           for (const t of invocationsIn(cmd)) {
             note(invoked, t, path);
+            stepInvoked.add(t);
+            sites.set(`${t}\u0000${path}`, (sites.get(`${t}\u0000${path}`) || 0) + 1);
             const next = cmds[idx + 1];
             const why = after === '||' ? 'it sits on the left of `||`, so a failure is discarded'
               : (after === ';' && next && /^true\b/.test(next.cmd)) ? 'it is followed by `; true`, which discards the failure'
@@ -435,13 +482,36 @@ function census(ref) {
               : null;
             if (why) swallowed.push({ tool: t, list: path, why });
           }
-          for (const r of printedRefs(cmd)) note(printed, r.tool, { list: path, said: r.said });
+          for (const r of printedRefs(cmd)) stepPrinted.push(r);
+        }
+        for (const r of stepPrinted) {
+          note(printed, r.tool, { list: path, said: r.said });
+          const excused = !r.commandForm && words(r.said).length >= MIN_COST_WORDS;
+          if (!stepInvoked.has(r.tool) && !excused) {
+            orphanSites.push({ tool: r.tool, list: path, said: r.said.slice(0, 70),
+              why: r.commandForm ? 'printed in COMMAND FORM (`node <tool>`) by a step that does not run it' : 'named with no cost stated' });
+          }
         }
       }
     } else {
+      // THE JS ANALOGUE OF A STEP IS THE FILE. A JS gate list has no `run:`
+      // payloads to scope by, so the orphan test runs at file scope: a tool this
+      // list PRINTS, does not INVOKE anywhere in the file, and states no cost.
+      // ⚠ THIS BRANCH WAS SILENT FOR ONE COMMIT. Step-scoping G1 moved its
+      // finding source to `orphanSites`, which only the shell reader filled, so
+      // JS printed names stopped being checked at all — a check narrowed in one
+      // venue and switched OFF in the other. Caught by plant 5 going NOT CAUGHT.
       const clean = stripJsComments(text);
-      for (const t of jsInvocations(clean)) note(invoked, t, path);
-      for (const r of jsPrintedRefs(clean)) note(printed, r.tool, { list: path, said: r.said });
+      const fileInvoked = jsInvocations(clean);
+      for (const t of fileInvoked) note(invoked, t, path);
+      for (const r of jsPrintedRefs(clean)) {
+        note(printed, r.tool, { list: path, said: r.said });
+        const excused = !r.commandForm && words(r.said).length >= MIN_COST_WORDS;
+        if (!fileInvoked.has(r.tool) && !excused) {
+          orphanSites.push({ tool: r.tool, list: path, said: r.said.slice(0, 70),
+            why: r.commandForm ? 'printed in COMMAND FORM (`node <tool>`) by a list that does not run it' : 'named with no cost stated' });
+        }
+      }
     }
   }
 
@@ -469,13 +539,11 @@ function census(ref) {
     printedIn: (printed.get(t) || []).map((x) => x.list),
   }));
 
-  return { rows, invoked, printed, swallowed, problems, linkRoots, browserCallers };
+  return { rows, invoked, printed, swallowed, orphanSites, sites, problems, linkRoots, browserCallers };
 }
 
-const words = (s) => s.replace(TOOL_REF, ' ').replace(/[^A-Za-z]+/g, ' ').trim().split(/\s+/).filter(Boolean);
-
 // ── verdict ─────────────────────────────────────────────────────────────────
-const { rows, invoked, swallowed, problems, linkRoots, browserCallers } = census(REF);
+const { rows, invoked, swallowed, orphanSites, sites, problems, linkRoots, browserCallers } = census(REF);
 
 const findings = [];
 let checks = 0;
@@ -557,15 +625,41 @@ if (args.includes('--selftest')) {
         // English — so it is NAMED in the boundary rather than papered over, and
         // this plant now aims at what the JS reader genuinely catches: a printed
         // name for a tool the list does not run and says no cost for.
-        name: 'a JS list prints the name of a tool it does not run, with no cost stated',
+        // ⚠ RESTORED TO THE VERSION THAT ESCAPED. This plant drops `surfaces`'
+        // real invocation and leaves the printed hint "`node tools/surfaces.mjs`
+        // for the sets" standing. At b60503d it came back GREEN and I boundaried
+        // it as "a judgement about English". Vira ruled that wrong — right about
+        // the English, wrong that it was the gap — and she was correct: the
+        // decidable test is FORM, not meaning. A command-form reference gets no
+        // cost escape, so this is red now, and the boundary paragraph that
+        // excused it is deleted rather than softened.
+        name: 'a JS list drops an invocation while its printed command-form hint survives',
         edits: [{
           file: 'tests/run-node.mjs',
-          append: "console.log('tools/mapfit.mjs');",
+          find: "['tools/surfaces.mjs', ...args]",
+          replace: "['tools/verify-shipped.mjs', ...args]",
         }],
         expectRed: /BAD\s+G1 /,
       },
       {
-        // PLANT 6 — a declared home stops being readable. Not a smaller census:
+        // ⚠ PLANT 6 — THE REVIEWER'S OWN, AND THE THIRD I OWE. Only hintstrip's
+        // MAIN step is emptied into an echo; its `--selftest` step survives, so
+        // the tool stays `listed` and G4 has a live invocation to bless. The
+        // list-scoped G1 this file shipped at b60503d could not discriminate
+        // this — it needed EVERY invocation of a tool removed. The step-scoped
+        // G1 fires on the one site. This is the residue I named in my own
+        // boundary and shipped behind it: a stated boundary is not a discharged
+        // one (Vira's law, in her words).
+        name: 'ONE step is emptied into an echo while a sibling step keeps the tool listed',
+        edits: [{
+          file: '.github/workflows/ci.yml',
+          find: '        run: node tools/hintstrip.mjs\n',
+          replace: '        run: echo node tools/hintstrip.mjs\n',
+        }],
+        expectRed: /BAD\s+G1 /,
+      },
+      {
+        // PLANT 7 — a declared home stops being readable. Not a smaller census:
         // exit 2, `unknown`, which blocks.
         name: 'a declared gate list stops being recognisable and the census may not shrink quietly',
         edits: [{
@@ -608,13 +702,20 @@ if (problems.length) {
 }
 ok('G3', `all ${GATE_LISTS.length} declared homes read and recognised; linkcheck ROOTS = [${linkRoots.join(', ')}]`);
 
-const prose = rows.filter((r) => r.printedIn.length && r.state !== 'listed' && r.state !== 'excluded-with-a-reason');
-if (prose.length) {
-  bad('G1', `${prose.length} tool(s) are NAMED IN EXECUTED OUTPUT by a gate list, are not invoked by it, and state no cost — `
-    + `a name a reader takes for coverage: ${prose.map((r) => `${r.tool} (printed by ${r.printedIn.join(', ')})`).join(' · ')}`);
+// G1 IS JUDGED PER STEP, NOT PER LIST. `orphanSites` holds every step that
+// names a tool it does not itself invoke without stating a cost — which catches
+// a step emptied into an `echo` while a SIBLING step keeps the tool-level
+// listing alive. The old list-scoped test could not see that, and said so only
+// in prose. (Reviewer P3 at b60503d; the residue was one I had named myself and
+// shipped behind a boundary — a stated boundary is not a discharged one.)
+if (orphanSites.length) {
+  bad('G1', `${orphanSites.length} step(s) NAME a tool in executed output that the SAME step does not invoke, `
+    + `and state no cost — a step that has quietly stopped running its tool while the list still lists it: `
+    + orphanSites.map((o) => `${o.tool} in ${o.list} — ${o.why} ("${o.said}")`).join(' · '));
 } else {
-  ok('G1', `every tool named in executed output is either invoked in command position or states what goes unwatched `
-    + `(${rows.filter((r) => r.printedIn.length).length} printed, ${rows.filter((r) => r.state === 'listed').length} invoked)`);
+  const printedCount = rows.filter((r) => r.printedIn.length).length;
+  ok('G1', `every step that names a tool in executed output either invokes it in that same step or states what `
+    + `goes unwatched (${printedCount} tool(s) named across the lists, ${rows.filter((r) => r.state === 'listed').length} invoked)`);
 }
 
 const excludedRows = rows.filter((r) => r.state === 'excluded-with-a-reason');
@@ -667,8 +768,25 @@ const STATES = ['listed', 'excluded-with-a-reason', 'linked-but-never-run', 'unl
 console.log('');
 if (RAW) {
   for (const r of shown) {
+    // SITE COUNTS, reported: `listed` says a tool is run SOMEWHERE; the count
+    // says in how many places. That is the difference between "this tool is
+    // listed" and "this tool is run where it is supposed to be run", and it is
+    // the distinction #295 exists on. Reported and NOT asserted — asserting a
+    // count needs a baseline, a baseline is a frozen number in a second home,
+    // and the step-scoped G1 above catches the real defect without one.
+    // ⚠ THE COUNT IS PRINTED ONLY WHERE IT WAS MEASURED. Sites are counted in
+    // the shell reader; the JS reader collects a SET and has no per-site count.
+    // The first version printed `×1` for JS rows from a `|| 1` fallback — a
+    // number I had not measured, displayed as if I had, in the very tool whose
+    // subject is that mistake. JS rows now carry no multiplier at all.
+    const siteNote = (invoked.get(r.tool) || [])
+      .filter((l, i, a) => a.indexOf(l) === i)
+      .map((l) => {
+        const n = sites.get(`${r.tool}\u0000${l}`);
+        return n === undefined ? l : `${l}\u00d7${n}`;
+      }).join(' + ');
     console.log(`  ${r.state.padEnd(22)} ${r.browser ? '[browser] ' : '          '}${r.tool}`
-      + (r.by ? `  <- ${r.by}` : '') + (r.reason ? `  :: ${r.reason.slice(0, 56)}` : ''));
+      + (siteNote ? `  <- ${siteNote}` : '') + (r.reason ? `  :: ${r.reason.slice(0, 56)}` : ''));
   }
   console.log('');
 }
@@ -728,15 +846,19 @@ const tail = () => {
   console.log('          silent on whether a listed tool PASSES, on instruments a person starts at a');
   console.log('          terminal, and on any list not declared above — a gate that lives only in a');
   console.log('          PR body is invisible here, which is the hole SOP 14 §5a exists to name.');
+  console.log('          G1 IS STEP-SCOPED and catches a step emptied into an `echo`. It does NOT see a');
+  console.log('          step DELETED OUTRIGHT while another invocation of the same tool survives —');
+  console.log('          nothing names it, so nothing fires. That needs a per-site baseline, which is a');
+  console.log('          frozen number in a second home; stated rather than planted.');
   console.log('          G4 covers SHELL lists only — JavaScript gate lists are refused by name above,');
   console.log('          including the one this tool runs inside. It also does not see a masked pipeline');
   console.log('          (`cmd | tee`) or a wrapper that exits 0 on its own.');
-  console.log('          AND THE COST TEST IS A WORD FLOOR, WHICH CANNOT TELL A BOUNDARY STATEMENT FROM A');
-  console.log('          RUN-IT-YOURSELF POINTER. "`node tools/surfaces.mjs` for the sets" passes it and');
-  console.log('          says nothing about what goes unwatched, so an invocation SILENTLY DROPPED from a');
-  console.log('          list whose tool also prints a hint reads as `excluded-with-a-reason`. Found by');
-  console.log('          planting exactly that and watching this tool stay green; named rather than fixed,');
-  console.log('          because the fix is a judgement about English and I would rather state the hole.');
+  console.log('          THE COST ESCAPE DOES NOT APPLY TO A COMMAND-FORM REFERENCE. A line that spells');
+  console.log('          `node <tool>` is the command a reader would type, and reads as "this list runs');
+  console.log('          this", so the list that prints it must invoke it. Judged by FORM, never by');
+  console.log('          English — a boundary line names its tool BARE, which is the convention in every');
+  console.log("          one of ci.yml's boundary lines. This retired a boundary I had shipped over a");
+  console.log('          decidable defect (Vira at 11ec9ab).');
 };
 if (findings.length) {
   console.log(`RESULT: ${findings.length} finding(s) over ${checks} check(s) — ${findings.join(', ')}.`);

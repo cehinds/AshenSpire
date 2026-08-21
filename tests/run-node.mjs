@@ -647,7 +647,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const gateTree = runGate([]);
   const gateTreeV = quote(gateTree.out);
   console.log(
-    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every instrument a gate list names is run by it or states what goes unwatched, and no SHELL invocation is silenced` +
+    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  63. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
       ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
       ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
   );
@@ -662,7 +662,15 @@ console.log('          homes, never that a pixel renders wrong. 38 is arithmetic
 console.log('          numbers a caller supplies, and the #15 defect was a correct');
 console.log('          clamp computed in the wrong space, which 38 cannot detect.');
 console.log('          Nothing here opens a browser, so no test in this file has seen');
-console.log('          the screen. `node tools/zoomplace.mjs` is the half that has.');
+// BARE FORM, not `node tools/zoomplace.mjs`. Every boundary line in ci.yml names
+// its tool bare — "tools/tutorial-reach.mjs drives 8 viewports and NO job here
+// runs it" — and spelling the command instead is a different speech act: it is
+// what a reader would TYPE, and it reads as "this list runs this". This line was
+// the only command-form boundary reference in either gate list, and tools/gatelist.mjs
+// (62/63) now holds that distinction as a rule, so the one exception had to go.
+// The sentence is unchanged; only the backticked command became a bare name.
+// — Bjorn, 2026-08-21, #295.
+console.log('          the screen. tools/zoomplace.mjs is the half that has.');
 console.log('          39–40 are a JOIN between two source lists: they prove every');
 console.log('          declared navigable surface HAS a handler, never that the');
 console.log('          handler draws anything — release-shots is the half that has');
@@ -707,8 +715,10 @@ console.log('          They are SILENT on the other modifier vocabularies this g
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 console.log('          62–63 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
-console.log('          prove the declared lists RUN what they name, and that no invocation in a SHELL');
-console.log('          list has its exit status discarded. ⚠ THE SILENCING CHECK DOES NOT COVER THIS');
+console.log('          prove that every STEP naming an instrument invokes it (or states what goes');
+console.log('          unwatched), and that no invocation in a SHELL list has its exit status');
+console.log('          discarded. THE NAME IS THE MEASUREMENT: 63 says SWALLOWED, not SILENCED, because');
+console.log('          swallowing is what G4 measures. ⚠ IT DOES NOT COVER THIS');
 console.log('          FILE: a JavaScript gate list is not audited for it, and this suite is one — so');
 console.log('          63 is deaf in its own venue and says so in its own output, by name, every run.');
 console.log('          They say NOTHING about whether a listed tool passes,');
