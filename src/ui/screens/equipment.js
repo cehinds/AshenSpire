@@ -31,6 +31,7 @@ import { sfx } from '../sfx.js';
 import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
+import { mountDisclosure } from '../components/disclosure.js';
 
 const CFG = () => balance.equipment;
 
@@ -321,19 +322,43 @@ function modSummary(registries, piece) {
 // passed as false: a dead argument is a second copy of a decision, and the next
 // author to see `locked: false` at every call site would reasonably conclude the
 // picker still has a locked state to reach.
+//
+// TWO WRAPPERS, ONE MARKUP (Viki, 2026-08-21). The card is now BOTH a control in
+// its own right and the face of a disclosure — and a <button> inside a <button>
+// is not a thing the parser keeps, so the face wants the same card built out of
+// phrasing content instead. That is a second SHAPE, and it must not become a
+// second MARKUP: `pieceChipHtml` is the one home, and the two functions below
+// differ only in the element they hang it on.
+function pieceChipHtml(registries, piece) {
+  const mods = modSummary(registries, piece);
+  return `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">`
+    + `<span class="ec-name">${esc(piece.name)}</span>`
+    + `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>`
+    + `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
+}
+
+/** The art element dies quietly if the file is missing — the single-file dist
+ *  and file:// play both depend on this and it is easy to drop in a refactor. */
+function dropArtOnError(el) {
+  const art = el.querySelector('.ec-art');
+  if (art) art.addEventListener('error', () => art.remove());
+  return el;
+}
+
 function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
   el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';
-  const mods = modSummary(registries, piece);
-  el.innerHTML =
-    `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
-    `<span class="ec-name">${esc(piece.name)}</span>` +
-    `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
-    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
-  const art = el.querySelector('.ec-art');
-  art.addEventListener('error', () => art.remove());
-  return el;
+  el.innerHTML = pieceChipHtml(registries, piece);
+  return dropArtOnError(el);
+}
+
+/** The same card as phrasing content, for use INSIDE the disclosure face. */
+function pieceFace(registries, piece, { selected }) {
+  const el = document.createElement('span');
+  el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
+  el.innerHTML = pieceChipHtml(registries, piece);
+  return dropArtOnError(el);
 }
 
 /**
@@ -652,41 +677,45 @@ export function mountEquipment(host, {
       return el;
     };
 
-    const bare = document.createElement('button');
-    bare.type = 'button';
-    bare.className = 'equip-chip bare';
-    bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
-    if (seal.ok) {
-      bare.addEventListener('click', () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat, attributes: run.attributes });
-        commit();
-      });
-    } else sealChip(bare);
-    list.appendChild(bare);
-
-    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
-    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
-    // QUESTION (#95) and it is the fight's, not the profile's. The two states
-    // must not read alike or the screen lies about why it said no:
-    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
-    //     name, refusing with the rung's own hint out of unlocks.csv;
-    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
-    //     and name, dimmed, refusing with the slot's seal sentence.
-    // Different container, different content, different sentence, different
-    // author of the sentence. Nothing here says "locked" at the player.
+    // ---- THE CARD IS THE CONTROL (Constantine, 2026-08-21) -----------------
+    //
+    // His two sentences, and the second corrects the first, so both are kept:
+    //   "each item should be folded panes that can expand, the sub button
+    //    should exist. clicking on the armory item pane should auto expand it
+    //    with a button to equip (un equip in red if it's already equipped)"
+    //   "the sub button under the folded weapon army item pane should NOT
+    //    exist. it should be part of the card and is revealed pressing the card
+    //    instead"
+    //
+    // So: ONE gesture on ONE surface. The card is the face; pressing it reveals
+    // the comparison it always drew plus the single act you can take on it.
+    //
+    // MOUNTED, NOT BUILT. This is Sunna's disclosure renderer (D26,
+    // components/disclosure.js) — the same one the creation screen and the shop
+    // mount. tools/onefold.mjs counts the files that CONSTRUCT that affordance's
+    // markup and declares ONE; a fold hand-rolled here would have made it two,
+    // which is the debt that tool exists to hold at zero. What this act needed
+    // from her component was one additive capability — a face may be a NODE —
+    // because a card is art plus four spans and her faces were escaped text.
+    // FLAGGED FOR HER RULING on the PR: the grammar is untouched (one open at a
+    // time, the panel under the pressed row, the same aria contract), and the
+    // revert is deleting the two guarded branches in drawFace/setValue.
+    //
+    // "BARE" IS GONE, AND THAT IS A COLLAPSE, NOT A LOSS. It was a chip whose
+    // whole job was "put nothing here", which is exactly what Unequip does on
+    // the card that is already in the slot. Two controls for one act is the
+    // second copy this seat exists to refuse; with the slot empty there is no
+    // equipped card, and there was nothing for Bare to undo either.
+    //
+    // A SEALED PIECE STILL OPENS. `canEquip` refuses mid-fight, and refusing the
+    // READING as well would take away the compare he asked the card to carry
+    // ("the card should be the button for compare and stats"). The face opens;
+    // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
-    for (const piece of eligible(slot)) {
-      const chip = pieceChip(registries, piece, { selected: piece.id === current });
-      if (seal.ok) {
-        chip.addEventListener('click', () => {
-          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat, attributes: run.attributes });
-          sfx.play('cardPlay');
-          commit();
-        });
-      } else sealChip(chip);
-      const row = document.createElement('div');
-      row.className = 'equip-candidate-row';
-      row.appendChild(chip);
+    const entries = eligible(slot).map((piece) => {
+      const equipped = piece.id === current;
+      const body = document.createElement('div');
+      body.className = 'ep-body';
       // `meta` is handed over because the swap-price rows are priced with the
       // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
       // price them with the shipping default and read as plausible — the row
@@ -695,8 +724,51 @@ export function mountEquipment(host, {
         candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
         meta,
       }).candidate;
-      row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
-      list.appendChild(row);
+      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      // "un equip in red" — `.danger` is this stylesheet's own word for red
+      // (styles/ui.css `.subtle.danger`, `--blood`/`--ember`), so the colour is
+      // named where colour is decided rather than typed here. THE WORD AND THE
+      // COLOUR ARE TWO CHANNELS and the check reads both: a control that says
+      // Unequip in the ordinary colour satisfies half his sentence.
+      btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
+      btn.dataset.act = equipped ? 'unequip' : 'equip';
+      btn.textContent = equipped ? 'Unequip' : 'Equip';
+      if (seal.ok) {
+        btn.addEventListener('click', () => {
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+            equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+          sfx.play('cardPlay');
+          commit();
+        });
+      } else sealChip(btn);
+      body.appendChild(btn);
+
+      return {
+        key: piece.id,
+        kind: 'item',
+        disclosure: 'face',
+        equipped,
+        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
+        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+      };
+    });
+
+    mountDisclosure(list, entries, { moreLabel: 'more' });
+    // WHICH CARD IS THE ONE YOU ARE WEARING, published on the face itself.
+    // Written after mount because the renderer owns the button; read by
+    // tools/armoury-picked-up.mjs, which must find the equipped card WITHOUT
+    // knowing the loadout — a probe that recomputed "which one is equipped"
+    // would agree with a bug as happily as with the truth.
+    for (const entry of entries) {
+      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
+      if (face && entry.equipped) face.dataset.equipped = '1';
+    }
+    if (!entries.length) {
+      list.insertAdjacentHTML('beforeend',
+        '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
     }
     return box;
   }

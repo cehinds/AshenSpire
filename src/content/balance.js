@@ -730,7 +730,21 @@ export const balance = {
     // What `persistence` genuinely cannot say is the other half of his sentence
     // — the few pieces that are nobody's to FIND because they are everybody's —
     // and that is `basicTag` below.
-    persistence: 'both',
+    // HIS WORD, 2026-08-21: *"it should only show armory you actually picked
+    // up mid run"*. That is this line and nothing else — the three values were
+    // already the closed set and 'perRun' is already documented above as "what
+    // you find is yours for this run only". Law 0's falsifier, answered by the
+    // machinery that was already here: an entry describes, the machinery
+    // derives, and the whole of item 1 is one word in a content table.
+    //
+    // WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
+    // sentence this word cannot reach: `basicTag` below still exempts the few
+    // pieces that are everybody's from the found gate, so three `basic`
+    // armaments remain on the shelf in a run that has picked up nothing. That
+    // is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
+    // here. It is flagged on the PR rather than averaged: if he wants a truly
+    // empty shelf, `basicTag: ''` is the second word and it is his to say.
+    persistence: 'perRun',
 
     // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
     // The tag that means "this is everybody's". It answers the FOUND gate only

@@ -2484,10 +2484,40 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
-    const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    //
+    // RE-SCOPED BY HIM, NOT BY US (Viki, 2026-08-21) — AND THE TWO INSTRUCTIONS
+    // THIS TEST NOW SITS BETWEEN ARE BOTH KEPT HERE, because a test that quietly
+    // changed sides would hide the only thing a reader needs to know:
+    //
+    //   2026-08-08  "everything else is PROFILE SPECIFIC but maybe a few basic
+    //                weapons become available for all."
+    //   2026-08-21  "it should only show armory you actually PICKED UP MID RUN."
+    //
+    // Those are opposite ends of ONE dial — `balance.equipment.persistence` —
+    // and the later, explicit one is what ships: 'perRun'. THE CLAIM THIS
+    // SUB-CHECK DEFENDS IS UNCHANGED (what you found is offered, and ONLY that);
+    // what moved is WHERE "found" lives, from the profile to the run. So the
+    // dagger arrives the way a player actually gets one now — in the loadout,
+    // picked up this climb — instead of in `meta.found`.
+    //
+    // FLAGGED, NOT SETTLED: this is a design reversal and it is his to confirm
+    // or reverse in one line. If he wants the profile shelf back, `persistence`
+    // goes to 'both' and THIS SUB-CHECK IS THE ONE THAT MUST BE PUT BACK — which
+    // is why the old form is written above rather than deleted from history.
+    const picked = { ...fresh, storage: [...(fresh.storage || []), 'dagger'] };
+    const two = ownership(REG, { meta: {}, loadout: picked });
     const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
     eq(offered.join(','), [...basicsRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
-      'one weapon found is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+      'one weapon PICKED UP THIS RUN is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+
+    // ---- 2b. …and the profile no longer widens the shelf on its own -------
+    // The direction the re-scope CREATES, and it is the half a flipped dial
+    // would otherwise change in silence: a piece found in an earlier climb, with
+    // nothing carried this run, is NOT offered. Without this line, moving
+    // `persistence` back to 'both' passes every check in this file.
+    const profileOnly = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    eq(rightPool.filter((p) => profileOnly.has(p)).map((p) => p.id).join(','), basicsRight.join(','),
+      'a piece found in an EARLIER run is not offered in this one — the shelf is the run\'s (persistence: perRun)');
 
     // ---- 3. the OTHER direction: the sandbox still opens everything --------
     // requireFound did not change meaning; turning it off still means everything
