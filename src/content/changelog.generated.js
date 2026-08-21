@@ -6,8 +6,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-290",
     "date": "2026-08-21",
     "group": "2026-08-21",
-    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
-    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "summary": "Rewards are a menu you open, not a handful you're handed",
+    "detail": "Cinders, cards, potions, armaments and relics arrive as rows, and nothing is applied until you take it — so you can look before you collect, and Back leaves the menu exactly as you found it. A reward with nowhere to go — a full flask belt, a full armament bag — says so on its own row before you tap it, and it is the only kind of row that offers Skip. Continue is always pressable and says what it will do; **Settings → Advanced → Reward collection** decides which: Auto (the default) takes everything you did not skip, picking a card for you, while Manual means done — only what you chose comes along. Continue is a press-and-hold on mouse, touch, keyboard, and pad.",
     "build": "0.4.0.0929",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
