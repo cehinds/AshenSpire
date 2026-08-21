@@ -827,6 +827,53 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
+   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
+   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
+   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
+   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
+.reward-menu { flex-wrap: wrap; justify-content: center; }
+/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
+   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
+   license. The glyph stays in text units: it is a typographic mark. */
+.reward-menu .reward-kind { width: 256px; padding: 19px; }
+.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
+.chip.reward-new { color: var(--gold); border-color: var(--gold); }
+/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
+   chooser set only `data-new`, which no stylesheet or renderer consumed, so
+   the unseen card looked identical to its neighbours). The chip dress is
+   restated here because `.chip` styling is scoped to `.class-pick` and this
+   badge lives inside `.card` — its named container (position: relative,
+   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
+   box); the label keeps its text unit. pointer-events: none — the badge marks
+   the card, the CARD takes the tap. */
+.card .card-badge-new {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  pointer-events: none; z-index: 2;
+}
+.reward-skip {
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
+}
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
+/* Receive feedback: a taken row settles — border flashes gold and the card
+   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+@keyframes reward-took {
+  0% { border-color: var(--gold); transform: scale(1.04); }
+  100% { border-color: var(--line-soft); transform: scale(1); }
+}
+
 /* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
    portrait player meets after every fight, and it only became reachable at all
    because this branch fixed the fight. At 390x844 three cards need 417.6px in a
@@ -1144,6 +1191,11 @@ button.rs-reset {
    the two headings that separate the tiers. */
 .cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
 .cz-disc { width: 100%; }
+/* E2 (#247): the merchant's bars ride the same fold vocabulary as the
+   creation column (shop.js, THE BARS). The cap is the remove grid's own
+   900px — the widest thing a bar folds — so the bars and their shelves
+   agree on an edge instead of each choosing one. */
+.shop-bars { max-width: 900px; }
 .disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
 .disc-face {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -1161,11 +1213,14 @@ button.rs-reset {
 /* The armament and relic faces carry names rather than numbers, so they read
    as rows rather than chips — one per line, on every shape. */
 .disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
-/* A FOLDED PICKER (MR-151) reads as a ROW, not a chip: the label on the left,
-   the current choice on the right, full width — so the four folded rows of
-   `.cz-fields` stack the way the six unfolded ones did, and the answer to
-   "what did I pick?" is on the same line as the question. Same `.disc-face`
-   floor, same tap, same panel; only the reveal's contents differ. */
+/* A FOLDED PICKER (MR-151; the whole column since E4 / #249) reads as a ROW,
+   not a chip: the label on the left, the current choice on the right, full
+   width — so the six folded sections of `.cz-fields` stack as uniform cards,
+   which is his sketch (`<icon> <option name>`, one per line), and the answer
+   to "what did I pick?" is on the same line as the question. Same
+   `.disc-face` floor, same tap, same panel; only the reveal's contents
+   differ. Full-width faces also mean every face owns its line, so the panel
+   (a row of the same wrap) always lands DIRECTLY under the tapped face. */
 .disc-pick { flex: 1 1 100%; justify-content: space-between; }
 /* The picker inside a fold WRAPS. Out in `.cz-fields` these rows had the
    column's full 560 px; inside the panel they have that less the panel's own
@@ -1173,6 +1228,13 @@ button.rs-reset {
    the side (Law 5). `.cz-opts` is shared with the lobby, so the wrap is
    scoped to the fold rather than granted to every option row in the game. */
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
+/* The class tiles and keepsake tiles wrap inside the panel for the same Law 5
+   reason (E4): out in `.cz-fields` they had the column's full width, inside
+   the panel they have that less the panel's own padding, and a row that
+   cannot wrap answers the loss by running off the side. Narrow layout keeps
+   its own column shape for `.class-row` (further down), which wins by
+   specificity, so this is the WIDE shape's wrap only. */
+.disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
 .disc-more { border-style: dashed; }
 /* ONE panel, under the LINE THE TAPPED FACE IS ON: the entry the player asked
    about. The sentence is the authored one, the list is derived, and the RECEIPT
@@ -2933,11 +2995,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    itself 26px taller than the viewport. `data-short` is the layout decider's
    existing answer; this selector measures nothing and creates no breakpoint.
    Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again. */
+   wholly readable at the first height where the game must refuse again.
+
+   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
+   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
+   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
+   while this block's paragraph above promised readability. So below the compact
+   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
+   ("turn") the heading already carries in words, and at the one height where it
+   competes with a sentence for pixels, the sentence wins (every mark
+   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
 :root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
-:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
-:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-glyph { display: none; }
 :root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
 :root[data-short='true'] .upright-say { margin-bottom: 6px; }
 :root[data-short='true'] .upright-hint { margin-top: 8px; }

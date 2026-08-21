@@ -308,6 +308,14 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
+  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
+  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
+  // settingOn so the default's polarity has one home, here. ONE ROW, appended
+  // on purpose while another seat serializes this file for E3 — named in the
+  // E2 claim (#247) so the touch is on the record, not smuggled.
+  { cat: 'Advanced', key: 'shopSell', def: true, label: 'Merchant buys back',
+    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -339,6 +347,23 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
+  // ALWAYS pressable and a setting decides what it means — auto-collect ON
+  // takes everything, picking at random where there is a choice; OFF gives
+  // only what was chosen, no nagging." The meanings live in
+  // model/rewardplan.js resolveContinue (test 61); this row only picks the
+  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
+  // what an interaction MEANS, tried by playing.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
+  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
+  // it shipped one PR behind the dial because this file was under E3's live
+  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
+  // released that claim ("manual has a reader and no writer a player can
+  // reach").
+  { cat: 'Advanced', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
+    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN

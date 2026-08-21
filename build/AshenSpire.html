@@ -1130,6 +1130,53 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
+   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
+   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
+   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
+   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
+.reward-menu { flex-wrap: wrap; justify-content: center; }
+/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
+   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
+   license. The glyph stays in text units: it is a typographic mark. */
+.reward-menu .reward-kind { width: 256px; padding: 19px; }
+.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
+.chip.reward-new { color: var(--gold); border-color: var(--gold); }
+/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
+   chooser set only `data-new`, which no stylesheet or renderer consumed, so
+   the unseen card looked identical to its neighbours). The chip dress is
+   restated here because `.chip` styling is scoped to `.class-pick` and this
+   badge lives inside `.card` — its named container (position: relative,
+   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
+   box); the label keeps its text unit. pointer-events: none — the badge marks
+   the card, the CARD takes the tap. */
+.card .card-badge-new {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  pointer-events: none; z-index: 2;
+}
+.reward-skip {
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
+}
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
+/* Receive feedback: a taken row settles — border flashes gold and the card
+   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+@keyframes reward-took {
+  0% { border-color: var(--gold); transform: scale(1.04); }
+  100% { border-color: var(--line-soft); transform: scale(1); }
+}
+
 /* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
    portrait player meets after every fight, and it only became reachable at all
    because this branch fixed the fight. At 390x844 three cards need 417.6px in a
@@ -1447,6 +1494,11 @@ button.rs-reset {
    the two headings that separate the tiers. */
 .cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
 .cz-disc { width: 100%; }
+/* E2 (#247): the merchant's bars ride the same fold vocabulary as the
+   creation column (shop.js, THE BARS). The cap is the remove grid's own
+   900px — the widest thing a bar folds — so the bars and their shelves
+   agree on an edge instead of each choosing one. */
+.shop-bars { max-width: 900px; }
 .disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
 .disc-face {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -1464,11 +1516,14 @@ button.rs-reset {
 /* The armament and relic faces carry names rather than numbers, so they read
    as rows rather than chips — one per line, on every shape. */
 .disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
-/* A FOLDED PICKER (MR-151) reads as a ROW, not a chip: the label on the left,
-   the current choice on the right, full width — so the four folded rows of
-   `.cz-fields` stack the way the six unfolded ones did, and the answer to
-   "what did I pick?" is on the same line as the question. Same `.disc-face`
-   floor, same tap, same panel; only the reveal's contents differ. */
+/* A FOLDED PICKER (MR-151; the whole column since E4 / #249) reads as a ROW,
+   not a chip: the label on the left, the current choice on the right, full
+   width — so the six folded sections of `.cz-fields` stack as uniform cards,
+   which is his sketch (`<icon> <option name>`, one per line), and the answer
+   to "what did I pick?" is on the same line as the question. Same
+   `.disc-face` floor, same tap, same panel; only the reveal's contents
+   differ. Full-width faces also mean every face owns its line, so the panel
+   (a row of the same wrap) always lands DIRECTLY under the tapped face. */
 .disc-pick { flex: 1 1 100%; justify-content: space-between; }
 /* The picker inside a fold WRAPS. Out in `.cz-fields` these rows had the
    column's full 560 px; inside the panel they have that less the panel's own
@@ -1476,6 +1531,13 @@ button.rs-reset {
    the side (Law 5). `.cz-opts` is shared with the lobby, so the wrap is
    scoped to the fold rather than granted to every option row in the game. */
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
+/* The class tiles and keepsake tiles wrap inside the panel for the same Law 5
+   reason (E4): out in `.cz-fields` they had the column's full width, inside
+   the panel they have that less the panel's own padding, and a row that
+   cannot wrap answers the loss by running off the side. Narrow layout keeps
+   its own column shape for `.class-row` (further down), which wins by
+   specificity, so this is the WIDE shape's wrap only. */
+.disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
 .disc-more { border-style: dashed; }
 /* ONE panel, under the LINE THE TAPPED FACE IS ON: the entry the player asked
    about. The sentence is the authored one, the list is derived, and the RECEIPT
@@ -3236,11 +3298,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    itself 26px taller than the viewport. `data-short` is the layout decider's
    existing answer; this selector measures nothing and creates no breakpoint.
    Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again. */
+   wholly readable at the first height where the game must refuse again.
+
+   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
+   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
+   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
+   while this block's paragraph above promised readability. So below the compact
+   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
+   ("turn") the heading already carries in words, and at the one height where it
+   competes with a sentence for pixels, the sentence wins (every mark
+   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
 :root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
-:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
-:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-glyph { display: none; }
 :root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
 :root[data-short='true'] .upright-say { margin-bottom: 6px; }
 :root[data-short='true'] .upright-hint { margin-top: 8px; }
@@ -5442,6 +5511,7 @@ const QUARANTINE_NOTICE =
 let run = null;
 let rng = null;
 let activeSlot = 1; // which save slot the current run persists to (SPEC §3.12 + slots)
+let rewardDoneCount = 0; // shot/read receipt: each mounted reward callback increments once
 
 // Autosave the current run to its slot (after every committed choice).
 function persist() {
@@ -5871,12 +5941,17 @@ function runResult(victory) {
  * disagree about what counts.
  */
 /**
- * rollDrop(source) → armament id | null, and it is REMEMBERED.
+ * rollDrop(source) → armament id | null — a PURE roll, nothing stored.
  *
- * Finding a piece does two things at once, which is the whole bargain: it goes
- * into this run's storage so you can use it now, and into the profile's found
- * set so it stays available in every run after — a climb that ends badly still
- * widens the wardrobe.
+ * It used to be REMEMBERED: the roll itself pushed the piece into run storage
+ * and meta.found, before the reward menu ever mounted. That made the menu's
+ * armament row a lie three ways at once — Skip could not leave it, manual
+ * Continue could not leave it, and NEW could never show on first discovery,
+ * because the ownership comparison ran against a found set the roll had
+ * already written (Aurora's merge review on #290 at f29d468; Codex
+ * 4989824448). Persistence now lives in collectArmament, reached only through
+ * the reward screen's take/apply path — tap, or auto-collect at Continue.
+ * The exclusion inputs (found, carried) are read-only here.
  */
 function rollDrop(source) {
   const meta = saves.loadMeta();
@@ -5885,18 +5960,43 @@ function rollDrop(source) {
     found: meta.found || [],
     carried: carriedIds(run.loadout),
   });
-  if (!id) return null;
-  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  return id; // the roll is PURE: collection persists (collectArmament), not discovery
+}
+
+/**
+ * collectArmament(id, source) — the one home of the armament bargain, fired
+ * when the player TAKES the row (or auto-collect takes it for them): the piece
+ * goes into this run's storage so you can use it now, and into the profile's
+ * found set so it stays available in every run after — a climb that ends badly
+ * still widens the wardrobe. What was never taken was never found: a skipped
+ * or left-behind piece stays out of meta.found and can drop again.
+ */
+function collectArmament(id, source) {
+  if (!id) return false;
+  // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
+  // addToStorage returns false at the cap and on a duplicate, and a found
+  // entry for a piece the bag refused is a poisoned record — claimed but not
+  // stored, and excluded from every future drop. The menu derives the same
+  // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
+  // the depth behind that face — same array, its own answer.
+  const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
-    meta.found = [...(meta.found || []), id];
-    const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
-    const recorded = recordArmamentDiscovery(meta, id, {
-      progressionMode, source, runSeed: run.seedString,
-      receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
-    });
-    saves.saveMeta(recorded.meta);
+    const meta = saves.loadMeta();
+    if (!(meta.found || []).includes(id)) {
+      meta.found = [...(meta.found || []), id];
+      const progressionMode = shotState ? 'showcase' : isCustomRun(run.custom) ? 'custom' : 'normal';
+      const recorded = recordArmamentDiscovery(meta, id, {
+        progressionMode, source, runSeed: run.seedString,
+        receiptLimit: registries.balance.equipment.startingKitDiscovery.receiptLimit,
+      });
+      saves.saveMeta(recorded.meta);
+    }
   }
-  return id;
+  // The reward row may say Taken only after both ownership homes and the
+  // resumable run agree. This is the production collector's commit boundary.
+  persist();
+  return true;
 }
 
 function finishRun(victory) {
@@ -6041,8 +6141,13 @@ function enterNode(nodeId) {
       return mountRewards(app, {
         registries,
         run,
+        saves,
+        rng,
+        onCollectArmament: (id) => collectArmament(id, 'treasure'),
+        onPersist: persist,
         rewards: { relicId, armamentId, title: 'TREASURE' },
         onDone: () => {
+          rewardDoneCount++;
           persist();
           showMap();
         },
@@ -6262,8 +6367,12 @@ function onCombatEnd(result, combat, enc) {
     return mountRewards(app, {
       registries,
       run,
+      saves,
+      rng,
+      onCollectArmament: (id) => collectArmament(id, 'boss'),
+      onPersist: persist,
       rewards: bossRewards,
-      onDone: () => advanceAct(),
+      onDone: () => { rewardDoneCount++; advanceAct(); },
     });
   }
 
@@ -6281,8 +6390,13 @@ function onCombatEnd(result, combat, enc) {
   mountRewards(app, {
     registries,
     run,
+    saves,
+    rng,
+    onCollectArmament: (id) => collectArmament(id, enc.pool),
+    onPersist: persist,
     rewards,
     onDone: () => {
+      rewardDoneCount++;
       persist();
       showMap();
     },
@@ -6609,6 +6723,32 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
+  // proves WHEN an armament becomes owned (meta.found) and stored (the run's
+  // loadout) around the reward menu, and a shot boot runs on MEMORY storage
+  // (pickStorage above), so no localStorage read can witness those writes —
+  // holdconfirm's own sentence applies: "it committed" is a claim about
+  // storage state, not about which screen is mounted. This reads the manager's
+  // own loadMeta and the live run, never a copy. The map slice is the drive's
+  // door finder: it needs a real treasure node to click, and the graph is run
+  // state. Read-only, shot boots only; a player never has it.
+  window.__spoils = () => ({
+    found: [...((saves.loadMeta() || {}).found || [])],
+    storage: [...(((run || {}).loadout || {}).storage || [])],
+    savedStorage: [...((((saves.loadRun(registries, activeSlot) || {}).loadout || {}).storage) || [])],
+    // Receipt COUNT only. Boundary, stated: a shot boot's progressionMode is
+    // 'showcase', in which recordArmamentDiscovery deliberately writes no
+    // receipt — so through this door the count is structurally 0 and proves
+    // ordering nothing on its own; found-unchanged is the real witness,
+    // because found and receipts ride the same gated saveMeta.
+    receipts: ((saves.loadMeta() || {}).discoveryReceipts || []).length,
+    liveDeck: [...((run || {}).deck || [])].map((card) => card.cardId),
+    savedDeck: [...((saves.loadRun(registries, activeSlot) || {}).deck || [])].map((card) => card.cardId),
+    done: rewardDoneCount,
+    map: run && run.mapGraph
+      ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
+      : [],
+  });
   // `which` picks the anchor: 'last' is the RIGHTMOST combatant, which is where
   // the clipping lives — a probe anchored to the leftmost cannot reproduce the
   // defect and would be a green that can't fail.
@@ -6622,7 +6762,7 @@ if (shotState) {
   };
 }
 
-if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop') {
+if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'rest' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -6651,6 +6791,27 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // fan-out from one node, not the spread of the doors), and it could not be
   // measured at all. `floor:N` picks a node on that floor rather than naming an
   // id, so a sweep can walk the act without knowing the graph first.
+  //
+  // `?shotStorage=full` — STAND AT THE CAP.
+  //
+  // A REACH STATE, the same shape and reason as `?shotMaxHp`: the full-bag
+  // refusal (the ninth armament against an 8-slot cap) is a claim about how
+  // the reward menu behaves AT the storage boundary, and no instrument could
+  // fill a bag — a fresh shot run always has room, so every capture ever
+  // taken of the armament row was taken with slots free, and "refused
+  // legibly" and "silently claimed-but-not-stored" read identically (#290
+  // review at b6b7df0: collectArmament ignored addToStorage's false and
+  // could poison meta.found with a piece the bag refused). The bag fills
+  // THROUGH THE REAL WRITER — addToStorage, the same door every real drop
+  // enters, its own cap and duplicate rules deciding what fits — never by
+  // assigning the array.
+  if ((shotState === 'map' || shotState === 'reward') && shotParams.get('shotStorage') === 'full') {
+    const cap = registries.balance.equipment.storageSlots || 8;
+    for (const piece of registries.equipment.armaments) {
+      if ((run.loadout.storage || []).length >= cap) break;
+      addToStorage(run.loadout, piece.id, cap);
+    }
+  }
   const shotAt = shotState === 'map' ? shotParams.get('shotAt') : null;
   if (shotAt) {
     const g = run.mapGraph;
@@ -6771,8 +6932,50 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     run.cinders = 999;
+    // AND ONE FLASK IN THE POSE (E2 / #247), same discipline as ?shot=combat's
+    // two: the SELL bar's shelf is the player's own goods, and a fresh run
+    // owns nothing the merchant prices (the starter relic is deliberately
+    // unpriced) — so without this line the one control `shopSell` arms is
+    // ABSENT on the only screen the census can open, and "not wired" and
+    // "nothing to sell" read identically. One flask, authored id, no rng.
+    run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildShopStock(registries, rng, run);
     showShop();
+  } else if (shotState === 'reward') {
+    // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
+    // as `?shot=rest` and `?shot=shop` above: a screen without a ?shot= state
+    // is a screen no instrument owns — release-shots derives its denominator
+    // from the states this file declares and screenreach can only reach a
+    // screen that has one.
+    //
+    // POSED WITH EVERY KIND PRESENT, AUTHORED, NO RNG IN THE OFFER — the menu
+    // photographs identically every run, at its max edge (five rows: cinders,
+    // a three-card choice, flask, armament, relic). `?shotReward=empty` poses
+    // the other edge (no kinds, bare Continue), because a menu's zero case is
+    // where a derivation quietly draws furniture for absent rewards.
+    // The armament is authored, not rolled: the pose wants the same five rows
+    // in every capture, and a rolled id would vary with the seed. Collection
+    // still runs through the SAME collector the real sites hand in — the roll
+    // is pure now (rollDrop), so what a pose and a real reward share is the
+    // whole take/apply path, and what they differ in is only where the offer's
+    // ids came from. tools/reward-collect-drive.mjs exercises the real
+    // rollDrop → mountRewards door; this pose is for photographs.
+    const pose = shotParams.get('shotReward') || 'full';
+    const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
+      title: 'VICTORY',
+      cinders: 32,
+      cardIds: registries.classes.get(run.class).cardPool.slice(0, 3),
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    mountRewards(app, {
+      registries, run, saves, rng,
+      onCollectArmament: (id) => collectArmament(id, 'showcase'),
+      onPersist: persist,
+      rewards: shotOffer,
+      onDone: () => { rewardDoneCount++; showMap(); },
+    });
   } else if (shotState === 'combat' || shotState === 'fx') {
     // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
     //
@@ -7088,6 +7291,14 @@ const balance = {
     flaskCost: [50, 80],
     removeBase: 75,
     removeStep: 25,
+    // E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
+    // same cost table his own stock rolls from (relicCost[rarity][0] /
+    // flaskCost[0]) — so a possession is always worth less than the cheapest
+    // he would sell one for, and the same item fetches the same cinders every
+    // visit, no rng. OUR number, labelled as ours: half, rounded down at the
+    // price, one word flips it. 0 turns the buy-back off at the table without
+    // touching the Settings toggle that owns the feature's visibility.
+    sellFraction: 0.5,
   },
 
   shrine: { healPct: 35 },
@@ -7605,6 +7816,30 @@ const balance = {
     // pre-gesture behaviour byte for byte.
     inspectHold: {
       ms: 400,
+    },
+    // REWARD COLLECTION (E11, #256). THE ONE HOME OF THE WORD.
+    //
+    // Constantine, 2026-08-15 (the E11 card): Continue on the reward menu is
+    // ALWAYS pressable and a setting decides what it means — "auto-collect ON
+    // takes everything, picking at random where there is a choice; OFF gives
+    // only what was chosen, no nagging".
+    //
+    // `auto` is the default, and the reason is which mistake costs more: under
+    // auto a distracted Continue still banks the cinders and the relic (an
+    // explicit SKIP on a row is respected — deck discipline survives the
+    // setting); under manual a distracted Continue walks away from everything.
+    // Losing rewards you never saw is the worse silence. The cost of the
+    // default, stated: auto's card pick adds a card a deliberate player may
+    // not have wanted — one tap (Skip on the card row) prevents it.
+    //
+    // NO SETTINGS ROW DERIVES FROM THIS YET, ON PURPOSE — settings.js is under
+    // E3's live claim (#248); adding the row later is a data edit there, not a
+    // redesign (the handLayout precedent, three rows down). Until then the
+    // dial is this row and meta.settings.rewardCollect overrides it when a
+    // row exists to write it.
+    rewardCollect: {
+      def: 'auto',
+      modes: ['auto', 'manual'],
     },
     // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
     //
@@ -13174,7 +13409,7 @@ const SFX_MANIFEST = {
 // the content-build reachability check both consume this list; neither guesses
 // that every row before an underscore is intended as a composed-id family.
 const SFX_FAMILY_IDS = Object.freeze([
-  'procBurst', 'beat', 'holdTick', 'holdCommit',
+  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake',
 ]);
 
 // Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
@@ -13339,6 +13574,16 @@ const SFX_RECIPES = {
   ],
   buy: [
     { kind: 'tone', type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 },
+  ],
+  // REWARD COLLECTION (E11). A FAMILY row — the reward menu composes
+  // `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card,
+  // rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution
+  // falls through exact → this family → default, the procBurst shape (#71).
+  // Authoring a per-kind flourish later is ONE exact row here, zero code.
+  // The gesture: a short upward settle — receipt, not fanfare; `victory`
+  // already owns the fanfare and fires once at the screen, not per row.
+  rewardTake: [
+    { kind: 'tone', type: 'sine', freq: 520, to: 780, dur: 0.14, peak: 0.3 },
   ],
   nodeTravel: [
     { kind: 'tone', type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 },
@@ -18279,6 +18524,19 @@ const ACTIONS = Object.freeze({
     hazard: 'choosing',
     note: 'twenty small cards in a wrapped grid; the preview only ever existed on hover',
   },
+  shopSell: {
+    of: 'selling a possession back to the merchant',
+    lives: 'src/ui/screens/shop.js',
+    surface: 'shop',
+    // THE REMOVE'S MIRROR (E2 / #247): a relic or flask gone for good, one tap
+    // on a row in a wrapped shelf, cinders in return. The gain does not soften
+    // the stakes — the possession is the thing that cannot come back (the
+    // merchant does not restock what he buys), so the row carries shopRemove's
+    // characteristics and takes whatever form the table derives from them.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'choosing',
+  },
   shopRemove: {
     of: 'paying the merchant to burn a card out of the deck',
     lives: 'src/ui/screens/shop.js',
@@ -18392,6 +18650,19 @@ const ACTIONS = Object.freeze({
     undo: 'none',
     hazard: 'choosing',
     note: 'a gain, and the player reached for it — the same ruling SAFE_OPS makes about addRelic',
+  },
+  rewardContinue: {
+    of: 'leaving the reward screen and resolving the remaining offer',
+    lives: 'src/ui/screens/reward.js',
+    surface: 'reward',
+    // Continue closes the offer. In auto mode it also applies every pending
+    // reward; in manual mode every untouched reward is left behind. Neither
+    // result can be undone after navigation, and the control follows a column
+    // of adjacent reward rows a thumb is already selecting from.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the irreversible exit immediately follows the reward rows; a short press must remain an abort',
   },
   draftPick: {
     of: 'drafting a card into a custom climb',
@@ -34562,7 +34833,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '7ac0c10cda';
+const SOURCE = '9d3608ff80';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34596,7 +34867,7 @@ const SOURCE = '7ac0c10cda';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0902';
+const ORDINAL = '0930';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -34932,6 +35203,7 @@ const { LOCKED_CLASSES } = require("src/content/index.js");
 const { KEEPSAKES } = require("src/content/keepsakes.js");
 const { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } = require("src/ui/assets.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { focusElement } = require("src/ui/input.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { creationBrief } = require("src/model/creationBrief.js");
 const { relicText } = require("src/ui/components/card.js");
@@ -35000,14 +35272,14 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
   //    screen was reachable by the pad or keyboard cursor at all.
   //
-  // 4. ONE OF THESE SIX ROWS IS FOLDED (MR-151, 2026-08-16; MR-171 took
-  //    KEEPSAKE back out the same day and MR-189 took SIGIL and SPRITE out
-  //    after them). The `<p class="cz-label">` for TINT is REPLACED at mount by
-  //    a disclosure face carrying the same word plus the current choice IN
-  //    WORDS; the picker itself is adopted into that face's reveal panel and
-  //    starts hidden. CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE arrive
-  //    open, exactly as this markup writes them. See "THE FOLD" below — the
-  //    markup here is what the screen starts as, not what it arrives as.
+  // 4. ALL SIX ROWS FOLD (E4 / #249, superseding MR-151/170/171/189's one-row
+  //    scope — see "THE FOLD" below for why their reasons moved rather than
+  //    died). The six wrappers and their `<p class="cz-label">`s written here
+  //    are BUILD SCAFFOLDING: the pickers are constructed inside them, then
+  //    one mountDisclosure over `.cz-fields` replaces the lot with six faces
+  //    (label + current choice in words) and adopts every picker into the one
+  //    reveal panel. CLASS arrives open — his words. The markup here is what
+  //    the screen starts as, never what it arrives as.
   //
   // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
   // it is gated on Constantine's word, which he has not given.
@@ -35380,82 +35652,116 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     ksBox.appendChild(el);
   });
 
-  // ---- THE FOLD (MR-151, narrowed by MR-171 and MR-189) ------------------
-  // Constantine, 2026-08-16: "go ahead and allow the fold". He had already said
-  // the stat descriptions "kind of suck"; D26 answered that for the preview
-  // pane and left `.cz-fields` as six stacked rows, four of which are picked
-  // once (or never) and then sit open for the rest of the screen. ONE of those
-  // four folds, BY THE SAME MECHANISM — mountDisclosure, not a second renderer.
-  // The extension is `reveal.node` in components/disclosure.js; there is no
-  // fold code in this file, on purpose. A second one is what tools/onefold.mjs
-  // counts and what handrenderers.mjs is still paying for on the hand.
+  // ---- THE FOLD, NOW THE WHOLE COLUMN (E4 / #249) -------------------------
+  // Constantine, 2026-08-15, verbatim: "all the options to be panel buttons
+  // that expand to show more details... the top menu (class) should be
+  // expanded. once selected(short hold) then it collapses and the next section
+  // auto opens... keep options minimum in detail with tool tips on hold or
+  // hover." Filed as E4; dealt to this seat by Marina's wave-two (family
+  // f30e1ca) as one pattern with B9/B10 and E2's shop bars.
   //
-  // DEFAULT FOLDED, and that is the whole of his yes. The other reading —
-  // "allow" as *available*, a fold that defaults open — leaves the arrival
-  // screen exactly as long as the one he called bad, so it answers nothing.
+  // THIS SUPERSEDES MR-151/170/171/189's ONE-ROW SCOPE, AND THEIR REASONS MOVE
+  // RATHER THAN DIE. MR-189 judged each row's fold on what its face buys in
+  // words ON A STACKED SCREEN, where every other row sat open beside it — and
+  // there it was right: folding KEEPSAKE hid the one choice that changes the
+  // run behind a row reading `KEEPSAKE Nothing`. E4 replaces the stacked
+  // screen with a TURN-TAKING one. Each section is auto-opened AT ITS TURN, so
+  // its options get the glass they had when unfolded — nothing is hidden
+  // behind a choice, it is scheduled — and after its turn the face is the
+  // RECEIPT of the pick in words (`KEEPSAKE Old Cinder`), which is the exact
+  // thing MR-171 measured as missing. SIGIL's face value is still the glyph:
+  // his own sketch is `<icon> <option name>`, and the glyph IS that option's
+  // name. tools/creationbrief.mjs's roster moved with this table (its rule:
+  // one line here + one line there, red at both edges until both exist).
   //
-  // A ROSTER IS NOT A DECISION — IT IS FOUR DECISIONS WEARING ONE NAME. That is
-  // Marina's own words ruling her own error (MR-189): a count of options is not
-  // a count of legibility, so each row is judged on what its FACE BUYS IN
-  // WORDS, and only one row buys anything.
+  // THE GESTURES, per the recorded answer on the E4 row: TAP selects; HOLD /
+  // HOVER explains (attachTooltip, the affordance this screen already speaks
+  // on every face and option). His "short hold to select" is NOT built and NOT
+  // discarded — the recorded answer defers it to a Settings option, and
+  // settings.js is deliberately untouched from this lane while E3 serializes
+  // that file under another seat. Wiring the option when that lane lands is
+  // one listener swap in the advance below.
   //
-  //   TINT   5 unlabelled swatches → the face says `TINT Goldbough gold`. The
-  //          current colour's NAME, to touch, FOR THE FIRST TIME. See the
-  //          comment on the swatch above: a tint swatch is pure colour with no
-  //          text of its own, and `attachTooltip` answers hover and pad-focus
-  //          only. UNFOLDED, TINT ON A PHONE IS FIVE UNTITLED COLOUR BLOBS.
-  //          (Viki, at e64e196: the fold is the first mechanism on this screen
-  //          that tells a touch player the colour they are wearing.)
-  //   SIGIL  6 glyphs → the face value is `state.glyph`, THE EMOJI AGAIN.
-  //          Nothing in words, and it costs a tap on the one row you pick by
-  //          look. OUT (MR-189).
-  //   SPRITE 3 chips already reading Rendered / Classic / Sigil → the face
-  //          repeats one of them. Nothing in words, a tap, and MORE vertical
-  //          than it saves, because a 44 px face replaces a compact label.
-  //          OUT (MR-189).
-  //   KEEPSAKE  four tiles carrying NAME AND EFFECT in plain words ('Old Cinder
-  //          · Begin the climb with 50 cinders') became one row reading
-  //          `KEEPSAKE Nothing`, and it is the only one of the four that
-  //          changes the run. OUT (MR-170/171); measured tiles painted 4 → 0.
+  // ONE MOUNT, SIX ENTRIES — one panel at a time is the mount's own rule, so
+  // "one section open" needs no coordination code. The mechanism's per-entry
+  // live reveal is components/disclosure.js's E4 generalization; there is
+  // still no fold code in this file, and tools/onefold.mjs still counts one.
   //
-  // WHAT IS NOT FOLDED, and it is a decision, not an omission: CLASS, STARTING
-  // KIT, KEEPSAKE, SIGIL and SPRITE. The first three change the run and are what
-  // the arrival screen is FOR; folding them would hide the choosing behind a
-  // choice. The last two say in their own options everything a face could say.
-  //
-  // THIS IS NOT A LENGTH ARGUMENT, and the length argument is WITHDRAWN
-  // (MR-183): none of Constantine's 47 quoted directions names length, D26's
-  // words are about CLUTTER, and his nearest adjacent words sanction vertical
-  // scrolling. The metric this fold answers is the one tools/creationbrief.mjs
-  // prints — OPTIONS OFF THE GLASS BEHIND FACES. Do not re-argue it in pixels.
-  //
-  // IT REFOLDS AS TWO LINES, ON PURPOSE. Constantine has been told, not asked,
-  // and his veto is free: putting any row back is one row in the table below
-  // plus one row in tools/creationbrief.mjs's roster — and creationbrief goes
-  // RED at both edges until the second line is written, so the two cannot
-  // drift apart. Nothing else on this screen needs touching either way.
-  const FOLDED = [
+  // AUTO-ADVANCE IS A PICK, NEVER A TAP. Tapping a face only opens or closes
+  // it — "can be re collapsed back", his message 4 — so a player can revisit
+  // any section without being marched forward. Picking an OPTION inside the
+  // open panel is what advances: the listener sits on the adopted box at the
+  // bubbling tail, so every option's own state-writing handler has already run
+  // when the faces refresh, and a locked option advances nothing.
+  const SECTIONS = [
+    { key: 'pick:class', label: 'CLASS', box: classes, tip: 'Choose who climbs. Tap a class to select it.',
+      value: () => { const c = registries.classes.all().find((x) => x.id === state.classId); return c ? c.name : state.classId; } },
+    { key: 'pick:kit', label: 'STARTING KIT', box: kitBox, tip: 'The gear you begin with. Tap to change it.',
+      value: () => { const v = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId); return v ? v.label : '—'; } },
+    { key: 'pick:keepsake', label: 'KEEPSAKE', box: ksBox, tip: 'One starting boon. Hold an option to read what it does.',
+      value: () => { const k = KEEPSAKES.find((x) => x.id === state.keepsakeId); return k ? k.name : 'Nothing'; } },
+    { key: 'pick:sigil', label: 'SIGIL', box: glyphBox, tip: 'The mark combat shows when sprites are off.',
+      value: () => state.glyph },
     { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
       value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'How your figure is drawn on the board.',
+      value: () => { const s = SPRITE_STYLES.find((x) => x.id === state.spriteStyle); return s ? s.name : '—'; } },
   ];
-  for (const row of FOLDED) {
-    // The host is the row wrapper `.cz-fields` already has — its <p class label>
-    // is replaced by the face, which carries the same word plus the answer.
-    const host = row.box.parentElement;
-    host.classList.add('cz-disc');
-    const mount = mountDisclosure(host, [{
-      key: row.key, kind: 'pick', disclosure: 'face',
-      face: { label: row.label, value: row.value() },
-      reveal: { node: row.box, sense: row.tip },
-    }]);
-    row.refresh = () => mount.setValue(row.key, row.value());
-  }
+  const fields = app.querySelector('.cz-fields');
+  fields.classList.add('cz-disc');
+  const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.box, sense: row.tip },
+  })));
   // One call after any pick — the faces are the screen's answer to "what did I
   // choose?", so they are re-read from `state`, never written twice.
-  const refreshFolds = () => { for (const row of FOLDED) row.refresh(); };
-  for (const row of FOLDED) {
-    row.box.addEventListener('click', refreshFolds);
-  }
+  const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
+  SECTIONS.forEach((row, i) => {
+    // THE CURSOR'S CLAIM IS READ AT CAPTURE — before any option's own listener
+    // can rebuild the box. KIT's does (renderKits), and after the rebuild the
+    // `.gp-focus` element is detached: a document query at the bubbling tail
+    // finds nothing and cannot tell "the pick came through the cursor" from
+    // "no cursor was ever summoned". Decided the moment the press lands.
+    let cursorWasInside = false;
+    row.box.addEventListener('click', () => {
+      const cursor = document.querySelector('.gp-focus');
+      cursorWasInside = !!cursor && row.box.contains(cursor);
+    }, true);
+    row.box.addEventListener('click', (ev) => {
+      // OWNERSHIP IS THE DISPATCH, NOT THE TREE (Vira's P1 on #288, found by
+      // Codex). This listener sits ON row.box, so any event it hears travelled
+      // through this box when it was dispatched — that is the whole ownership
+      // question. The old `row.box.contains(picked)` re-asked it of the tree
+      // as it stands NOW, and KIT is the one section whose own pick listener
+      // rebuilds its box (renderKits) before this bubbling tail runs: the
+      // clicked button was detached, contains() said no, and the flow stalled
+      // at its second section on every kit pick.
+      const picked = ev.target.closest('.cz-opt, .cz-class, .cz-keepsake');
+      refreshFolds();
+      if (!picked || picked.classList.contains('locked')) return;
+      const next = SECTIONS[i + 1];
+      if (next) fold.open(next.key); else fold.close();
+      // A PICK THAT HIDES THE CURSOR'S ELEMENT OWES THE CURSOR A DESTINATION
+      // (Vira's P2 on #288, found by Codex). The advance just stashed this row
+      // — or renderKits detached its buttons outright — so a keyboard/pad
+      // player's next Confirm would fall back to the first focusable, the
+      // CLASS face, and march them back to section one on every pick. The
+      // destination is the flow's own next step: the just-opened section's
+      // current choice (or its first option) — so Confirm-Confirm walks the
+      // whole flow accepting defaults — and BEGIN THE CLIMB when the flow
+      // completes. A mouse pick with the cursor elsewhere transfers nothing:
+      // a player who never summoned the cursor is not handed one.
+      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);
+    });
+  });
+  // "the top menu (class) should be expanded" — his words, and the arrival
+  // state creationbrief.mjs's roster names for exactly one key.
+  fold.open('pick:class');
 
   const nameEl = $('#cz-name');
   nameEl.addEventListener('input', (ev) => {
@@ -36165,16 +36471,46 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const panel = host.querySelector('.disc-reveal');
   const buttons = new Map();
   let openKey = null;
-  // The one live node this host folds, if any. It is adopted ONCE: a picker
-  // re-parented on every open would lose nothing visible and would still be a
-  // second renderer's habit — move it in, then only `hidden` moves.
-  const held = rows.find((entry) => entry.reveal && entry.reveal.node) || null;
-  if (held) panel.appendChild(held.reveal.node);
+  // The live nodes this host folds — ONE PER ENTRY since E4 (#249), because a
+  // host with six folded pickers is the creation screen and a host with four
+  // is the shop, and "one held node per mount" was a limit of the first
+  // caller, not a rule of the mechanism. Each is adopted ONCE, at mount: a
+  // picker re-parented on every open would lose nothing visible and would
+  // still be a second renderer's habit — move it in, then only `hidden` moves.
+  // INLINE display, NOT the hidden attribute, and the choice is a measured
+  // one (E4): `[hidden]`'s UA rule is `display: none` at attribute-selector
+  // specificity, and the adopted pickers carry author display rules at the
+  // same specificity (`.cz-opts { display: flex }`, `.class-row`,
+  // `.cz-keepsakes`) — author origin wins, so `hidden` on these nodes paints
+  // ANYWAY. Watched red through creationbrief before this line: five shut
+  // sections with every option on the glass. An inline style loses to
+  // nothing but !important, which nothing here uses. The attribute is still
+  // set for what it is — semantics — while the inline style owns the paint.
+  const held = new Map();
+  const stash = (node) => { node.hidden = true; node.style.display = 'none'; };
+  const surface = (node) => { node.hidden = false; node.style.display = ''; };
+  for (const entry of rows) {
+    if (entry.reveal && entry.reveal.node) {
+      stash(entry.reveal.node);
+      held.set(entry.key, entry.reveal.node);
+      panel.appendChild(entry.reveal.node);
+    }
+  }
+  // Word reveals render HERE, never into panel.innerHTML: the panel now owns
+  // adopted nodes, and innerHTML on the shared parent would destroy them. The
+  // wrapper is invisible to every selector in ui.css (all descend from
+  // `.disc-reveal`) and to onefold.mjs's vocabulary count, checked when added.
+  const words = document.createElement('div');
+  words.className = 'disc-words';
+  words.hidden = true;
+  panel.appendChild(words);
 
   function close() {
     openKey = null;
     panel.hidden = true;
-    if (!held) panel.innerHTML = '';
+    words.hidden = true;
+    words.innerHTML = '';
+    for (const node of held.values()) stash(node);
     panel.removeAttribute('data-reveal-for');
     for (const button of buttons.values()) {
       button.setAttribute('aria-expanded', 'false');
@@ -36214,7 +36550,12 @@ function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     if (!entry) return;
     close();
     openKey = key;
-    if (!held) panel.innerHTML = revealHtml(entry);
+    const node = held.get(key);
+    if (node) surface(node);
+    else {
+      words.innerHTML = revealHtml(entry);
+      words.hidden = false;
+    }
     const button = buttons.get(key);
     // Placed BEFORE it is un-hidden: see placeUnderRow.
     placeUnderRow(button);
@@ -43800,86 +44141,530 @@ Object.assign(module.exports, { applyHandExemption });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
-// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1)
+// src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
-// Rewards arrive pre-rolled by engine/encounters.js (deterministic streams);
-// this screen only presents them. Skipping the card is a visible affordance
-// (deck discipline, GDD §5). Cinders/relic/flask apply immediately; the flask
-// is lost with a note if all slots are full.
+// Constantine, 2026-08-15: "the reward should start with an initial menu of
+// reward types (card, potion, armament)" — Slay-the-Spire style. And his
+// answer on the E11 card: Continue is ALWAYS pressable and a setting decides
+// what it means — auto-collect ON takes everything, picking at random where
+// there is a choice; OFF gives only what was chosen, no nagging.
+//
+// WHAT MOVED, and why it is the whole point: the old screen APPLIED cinders,
+// relic and flask at mount — before the player saw anything — so a menu with
+// inspect-before-collect and leaving untouched rewards behind was impossible by construction.
+// Application now happens when a row is TAKEN (tap, or auto-collect at
+// Continue), through one apply function per kind. WHAT the rows are, which
+// are blocked and why, and what Continue means is model/rewardplan.js's one
+// derivation (test 61) — this screen draws rows and forwards taps; it decides
+// nothing (the rest.js/levelUpPlan precedent).
+//
+// The menu rows reuse `.class-pick` (the B9 uniform-card pattern from the
+// shrine fold) — same focus rules (input.js already lists
+// `.class-pick:not(.locked)`), same locked treatment for a blocked row, no
+// second card-button pattern in the tree. AND THE SAME MARKUP GRAMMAR: the
+// narrow layout's shared rule composes glyph + one `.cp-body` text column
+// (ui.css — "the card is auto, the text column is 1fr"), so everything but
+// the glyph rides inside `.cp-body`. The first cut emitted four bare flex
+// children and phone rows squeezed side-by-side — Codex 4989824448's
+// composition finding at b6b7df0, measured by Saga (creation's text column
+// 246.2px vs these rows' none).
+//
+// SEEN ('new' markers): "a 'new' marker on unseen cards/items/relics" — his
+// words on the card. Unseen is DERIVED (model/rewardplan.js unseenIds) from
+// what the run holds plus the profile's record: `meta.seen` (cards/relics/
+// flasks, written here best-effort on take) and `meta.found` (armaments,
+// written at COLLECTION through the handed-in collector — the roll is pure,
+// so at mount time the found set is honestly pre-drop and a first discovery
+// reads NEW; see main.js rollDrop/collectArmament and the f29d468 defect they
+// correct). Boundary, stated: other acquisition paths (shop, events, drafts)
+// do not write `meta.seen` yet, so a thing first met elsewhere can still read
+// NEW here once — the marker errs toward showing.
+//
+// `saves` and `rng` are optional: co-op stubs and old callers get the dial's
+// default and a deterministic first-card pick, never a crash and never
+// Math.random — a UI pick that desyncs a seeded run is a defect.
 
 const { renderCard } = require("src/ui/components/card.js");
-const { esc } = require("src/ui/components/tooltip.js");
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { sfx } = require("src/ui/sfx.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
+const { rewardPlan, resolveContinue, unseenIds } = require("src/model/rewardplan.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
 
-function mountRewards(app, { registries, run, rewards, onDone }) {
-  const lines = [];
-  if (rewards.cinders) {
-    run.cinders += rewards.cinders;
-    lines.push(`<span style="color:var(--gold)">+${rewards.cinders} cinders</span> (${run.cinders} total)`);
+const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+
+// `onCollectArmament` is the armament's whole persistence, handed in by the
+// caller (main.js collectArmament): run storage + meta.found + the discovery
+// receipt. Handed in rather than done here because the persistence needs the
+// caller's run/shot context, and because a screen that decides nothing should
+// also STORE nothing itself. A caller that hands none gets reveal-only rows —
+// no such caller exists today; the boundary is named, not covered.
+function mountRewards(app, {
+  registries, run, rewards, onDone, saves = null, rng = null,
+  onCollectArmament = null, onPersist = null,
+}) {
+  const plan = rewardPlan(rewards, {
+    flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+    // The bag's room, read from the same array addToStorage writes — one
+    // home, two questions (the model asks "is there room", the collector's
+    // own gate asks "did THIS store land"). Derived here so the ninth piece
+    // against the cap is BLOCKED before any tap, the flask shape exactly.
+    armamentSlotsFree: Math.max(
+      0,
+      (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
+    ),
+  });
+  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
+  let chosenCardId = null;
+
+  // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
+  const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
+  const seenStore = meta.seen || {};
+  const marks = unseenIds(rewards, {
+    cards: new Set([...run.deck.map((c) => c.cardId), ...(seenStore.cards || [])]),
+    relics: new Set([...run.relics, ...(seenStore.relics || [])]),
+    flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
+    armaments: new Set([...(meta.found || [])]),
+  });
+
+  // Best-effort seen write on take. A quarantined profile refuses saveMeta —
+  // correctly — and the marker is a convenience, so a refusal never blocks the
+  // reward itself (the settings.js precedent for reading that result).
+  function recordSeen(kind, ids) {
+    if (!saves || !saves.saveMeta || !ids.length) return;
+    const m = saves.loadMeta() || {};
+    const seen = { ...(m.seen || {}) };
+    const key = { card: 'cards', relic: 'relics', flask: 'flasks' }[kind];
+    if (!key) return; // armaments already live in meta.found, one home
+    seen[key] = [...new Set([...(seen[key] || []), ...ids])];
+    saves.saveMeta({ ...m, seen });
   }
-  if (rewards.relicId) {
-    run.relics.push(rewards.relicId);
-    syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
-    const def = registries.relics.get(rewards.relicId);
-    lines.push(`Relic: <b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}`);
+
+  // ---- one apply function per kind — tap and auto-collect share them -------
+  const apply = {
+    cinders(row) {
+      run.cinders += row.amount;
+      if (onPersist) onPersist();
+      return true;
+    },
+    card(row) {
+      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      chosenCardId = row.cardId;
+      recordSeen('card', [row.cardId]);
+      // A selected card is durable before Continue can close the offer. The
+      // caller hands in the run's one persistence door; a failed write throws
+      // before the row can claim Taken (the armament ordering, same rule).
+      if (onPersist) onPersist();
+      return true;
+    },
+    flask(row) {
+      run.flasks.push({ flaskId: row.flaskId });
+      recordSeen('flask', [row.flaskId]);
+      if (onPersist) onPersist();
+      return true;
+    },
+    relic(row) {
+      run.relics.push(row.relicId);
+      syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
+      recordSeen('relic', [row.relicId]);
+      if (onPersist) onPersist();
+      return true;
+    },
+    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+  };
+
+  function take(row, viaKind) {
+    // A row may say Taken only after its persistence door says it landed. The
+    // armament collector returns false at the storage/duplicate boundary; a
+    // refusal therefore cannot become a claimed-looking row (E11 review P2).
+    if (!apply[row.kind](row)) return false;
+    states[row.kind] = 'taken';
+    sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
+    renderMenu(viaKind || row.kind);
+    return true;
   }
-  if (rewards.flaskId) {
-    const def = registries.flasks.get(rewards.flaskId);
-    if (run.flasks.length < flaskSlotCap(registries.balance)) {
-      run.flasks.push({ flaskId: rewards.flaskId });
-      lines.push(`Flask: <b>${flaskIdentityHtml(def)}</b>`);
-    } else {
-      lines.push(`<span style="color:var(--muted)">A ${esc(def.name)} — but your flask slots are full. It stays in the mud.</span>`);
+
+  // ---- row copy: what a kind says in each state ----------------------------
+  function rowBody(row) {
+    const state = states[row.kind];
+    switch (row.kind) {
+      case 'cinders':
+        return { title: `${row.amount} cinders`, body: state === 'taken' ? `${run.cinders} total` : 'The climb’s coin.' };
+      case 'card': {
+        if (state === 'taken') {
+          const def = registries.cards.get(chosenCardId);
+          return { title: 'Card', body: `<b>${esc((def && def.name) || chosenCardId)}</b> joins the deck.` };
+        }
+        return { title: 'Card', body: row.choice ? `Choose one of ${row.cardIds.length}.` : 'One card offered.' };
+      }
+      case 'flask': {
+        const def = registries.flasks.get(row.flaskId);
+        if (row.blockedBy === 'slots') return { title: 'Flask', body: `A ${esc(def.name)} — but your flask slots are full. It stays in the mud.` };
+        return { title: 'Flask', body: `<b>${flaskIdentityHtml(def)}</b>` };
+      }
+      case 'armament': {
+        // The copy tracks the STATE, because the state is now true: nothing is
+        // stored until the row is taken (the roll is pure — main.js rollDrop),
+        // so "Carried" before a take would be the f29d468 lie re-worded.
+        const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
+        const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        // A full bag reads its refusal in the flask's own idiom — the copy
+        // switches on the model's token (blockedBy), never a re-derivation.
+        if (row.blockedBy === 'storage') return { title: 'Armament', body: `${name} — but your storage is full. It stays where it fell.` };
+        return {
+          title: 'Armament',
+          body: state === 'taken'
+            ? `${name}<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
+            : name,
+        };
+      }
+      case 'relic': {
+        const def = registries.relics.get(row.relicId);
+        return { title: 'Relic', body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+      }
+      default:
+        return { title: row.kind, body: '' };
     }
   }
 
-  if (rewards.armamentId) {
-    // rollDrop already put it in storage and remembered it; this just tells the
-    // player, and says where it went — a found armament is carried, not held,
-    // so it does nothing until you walk to the Armoury and slot it.
-    const a = (registries.equipment.armaments || []).find((x) => x.id === rewards.armamentId);
-    if (a) {
-      lines.push(
-        `Armament: <b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` +
-        `<br><span style="color:var(--muted)">Carried. Slot it in the Armoury (⚒).</span>`
-      );
+  function isNew(row) {
+    switch (row.kind) {
+      case 'card': return row.cardIds.some((id) => marks.cards.includes(id));
+      case 'relic': return marks.relics.length > 0;
+      case 'flask': return marks.flasks.length > 0;
+      case 'armament': return marks.armaments.length > 0;
+      default: return false;
     }
+  }
+
+  function collectMode() {
+    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+    const dial = registries.balance.ui.rewardCollect || { def: 'auto', modes: ['auto', 'manual'] };
+    return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
+  }
+
+  // ---- the menu ------------------------------------------------------------
+  function renderMenu(focusKind = null) {
+    const mode = collectMode();
+    const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
+    app.innerHTML = `
+      <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
+        <div class="class-row reward-menu">
+          ${plan.rows.map((row) => {
+            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+            const { title, body } = rowBody(row);
+            return `
+            <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' || state === 'skipped' ? ' locked' : ''}"
+                 data-kind="${esc(row.kind)}" data-state="${esc(state)}"
+                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+              <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
+              <div class="cp-body">
+                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+                <p>${body}</p>
+                ${state === 'taken' ? '<span class="chip">Taken</span>'
+                  : state === 'blocked' ? '<span class="chip">Full — choose Skip to leave it behind</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped</span>'
+                  : ''}
+              </div>
+              ${state === 'blocked' ? `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true" aria-label="Skip unavailable ${esc(title)} reward">Skip</button>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
+          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
+        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
+      </div>`;
+
+    for (const el of app.querySelectorAll('.reward-kind')) {
+      const kind = el.dataset.kind;
+      const row = plan.rows.find((r) => r.kind === kind);
+      const state = el.dataset.state;
+      // Law 3 clause 4: a real tooltip, for hover AND the pad/keyboard focus
+      // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
+      // the label switches on the model's token, never on a re-derivation.
+      attachTooltip(el, () => {
+        if (state === 'blocked') {
+          return row.blockedBy === 'storage'
+            ? `<div class="tt-title">Storage full</div>${esc('Your armament storage is at its cap; this one stays where it fell.')}`
+            : `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
+        }
+        if (state === 'taken') return `<div class="tt-title">Taken</div>`;
+        if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
+        return `<div class="tt-title">Take</div>${esc('Tap to collect.')}`;
+      });
+      if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
+      el.addEventListener('click', (ev) => {
+        if (row.kind === 'card') return renderChooser();
+        if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
+        take(row);
+      });
+    }
+    for (const btn of app.querySelectorAll('[data-skip]')) {
+      attachTooltip(btn, () => `<div class="tt-title">Skip unavailable reward</div>${esc('Leave this blocked reward behind.')}`);
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        states[btn.dataset.skip] = 'skipped';
+        renderMenu(btn.dataset.skip);
+      });
+    }
+
+    const cont = app.querySelector('#reward-continue');
+    attachTooltip(cont, () => (mode === 'auto'
+      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
+      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+    const finish = () => {
+      // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
+      // closed set); the auto pick advances the same stream, so a seeded run
+      // resolves the same card every replay.
+      const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
+      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
+      for (const row of toTake) {
+        if (apply[row.kind](row)) states[row.kind] = 'taken';
+      }
+      if (toTake.length) sfx.play('rewardTake');
+      onDone(chosenCardId);
+    };
+    // The action is registered in secondbeat's enumerable table, so native
+    // keyboard/gamepad presses enter the same shared armPress door as pointer
+    // and touch; the configured dial remains the one duration authority.
+    beatArmer(meta, registries)(cont, 'rewardContinue', { onConfirm: finish });
+
+    if (isEngaged()) {
+      setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
+        || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
+    }
+  }
+
+  // Potion and Armament are inspect-before-collect surfaces. Opening either
+  // commits nothing; Back restores the exact menu state, and Take is the only
+  // collection door from the detail.
+  function renderDetail(row) {
+    const body = rowBody(row);
+    const isFlask = row.kind === 'flask';
+    app.innerHTML = `
+      <div class="screen" data-reward-detail="${esc(row.kind)}">
+        <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
+        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+        <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
+          <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
+          <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
+          <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+        </div>
+      </div>`;
+    app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return without collecting; your other choices keep.')}`);
+    back.addEventListener('click', () => renderMenu(row.kind));
+    if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
+  }
+
+  // ---- the card chooser: opens from the card row, Back returns -------------
+  function renderChooser() {
+    const row = plan.rows.find((r) => r.kind === 'card');
+    app.innerHTML = `
+      <div class="screen">
+        <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
+        <p class="subtitle">CHOOSE A CARD</p>
+        <div class="reward-row"></div>
+        <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+      </div>`;
+    const strip = app.querySelector('.reward-row');
+    for (const cardId of row.cardIds) {
+      const el = renderCard(registries, { cardId, upgraded: false }, {});
+      if (marks.cards.includes(cardId)) {
+        // The marker is a RENDERED badge, not only a data attribute — Codex
+        // 4989824448's third finding: `data-new` alone had no consumer in any
+        // stylesheet or renderer, so the promise was inert pixels-wise. The
+        // attribute stays as the machine-readable hook; the chip is what the
+        // player sees. Positioned inside `.card` (its named container —
+        // position: relative, ui.css) per Law 2.
+        el.dataset.new = '1';
+        const badge = document.createElement('span');
+        badge.className = 'chip reward-new card-badge-new';
+        badge.textContent = 'NEW';
+        el.appendChild(badge);
+      }
+      el.addEventListener('click', () => take({ ...row, cardId }, 'card'));
+      strip.appendChild(el);
+    }
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return to the spoils — the offer keeps.')}`);
+    back.addEventListener('click', () => renderMenu('card'));
+    if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-back'), 0);
   }
 
   sfx.play('victory');
-  app.innerHTML = `
-    <div class="screen">
-      <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
-      ${lines.map((l) => `<p style="font-size:14px">${l}</p>`).join('')}
-      ${rewards.cardIds && rewards.cardIds.length ? '<p class="subtitle">CHOOSE A CARD</p><div class="reward-row"></div>' : ''}
-      <button class="subtle" id="reward-continue">${rewards.cardIds && rewards.cardIds.length ? 'Skip the card' : 'CONTINUE'}</button>
-    </div>`;
-
-  const row = app.querySelector('.reward-row');
-  if (row) {
-    for (const cardId of rewards.cardIds) {
-      const el = renderCard(registries, { cardId, upgraded: false }, {});
-      el.addEventListener('click', () => {
-        run.deck.push({ instanceId: `r${run.deck.length}_${cardId}`, cardId, upgraded: false });
-        onDone(cardId);
-      });
-      row.appendChild(el);
-    }
-  }
-  app.querySelector('#reward-continue').addEventListener('click', () => onDone(null));
-
-  // Smart default (keyboard/gamepad): land on the first card to choose, else the
-  // Continue button.
-  if (isEngaged()) setTimeout(() => focusFirst('.reward-row .card') || focusFirst('#reward-continue'), 0);
+  renderMenu();
 }
 
 
 Object.assign(module.exports, { mountRewards });
+
+},
+"src/model/rewardplan.js": function (module, exports, require) {
+// src/model/rewardplan.js — the reward MENU as a derivation (E11, #256).
+//
+// Constantine, 2026-08-15: "the reward should start with an initial menu of
+// reward types (card, potion, armament)". And his answer on the card's page:
+// Continue is ALWAYS pressable and a setting decides what it means —
+// auto-collect ON takes everything, picking at random where there is a choice;
+// OFF gives only what was chosen, no nagging.
+//
+// WHY A MODEL FILE AND NOT SCREEN CODE (the levelUpPlan precedent): the screen
+// draws rows and forwards taps; WHAT the rows are, which are blocked and why,
+// and what Continue means under each mode is one derivation with one home, so
+// the co-op renderer, the auto-collect path and any instrument all read the
+// same answer. The screen decides nothing.
+//
+// THE ROWS ARE DERIVED FROM THE OFFER (Law 0: an entry DESCRIBES, the
+// machinery DERIVES). A kind absent from the rewards object has no row. A new
+// reward field on the offer is one ORDER entry and one descriptor row here —
+// not a screen redesign.
+//
+// WHAT THIS FILE DOES NOT DO, stated: it never touches `run`, never applies a
+// reward, never rolls its own randomness (the pick function is HANDED IN so a
+// seeded run stays seeded), and never invents a seen-store (possessions are
+// handed in too). Application stays with the caller, one seam.
+
+/**
+ * The closed kind order — the menu's one spelling of "card, potion, armament"
+ * (his three) plus the two kinds the offers already carry (cinders, relic).
+ * Cinders lead because they are the certain, no-decision row; his named three
+ * follow in his order (flask IS the potion seat in this game).
+ */
+const REWARD_KIND_ORDER = Object.freeze(['cinders', 'card', 'flask', 'armament', 'relic']);
+
+/**
+ * Per-kind descriptors: how a kind reads its slice of the offer.
+ * `present` — does the offer carry this kind at all;
+ * `blocked` — a TOKEN reason collection can not happen, or null (the
+ * levelUpPlan precedent: a label switches on a word, never on two numbers).
+ */
+const KINDS = {
+  cinders: {
+    present: (r) => Number.isFinite(r.cinders) && r.cinders > 0,
+    row: (r) => ({ amount: r.cinders }),
+    blocked: () => null,
+  },
+  card: {
+    present: (r) => Array.isArray(r.cardIds) && r.cardIds.length > 0,
+    // One card is a take, several are a CHOICE — the row says which, so the
+    // screen knows to open a chooser and auto-collect knows to pick.
+    row: (r) => ({ cardIds: r.cardIds.slice(), choice: r.cardIds.length > 1 }),
+    blocked: () => null,
+  },
+  flask: {
+    present: (r) => !!r.flaskId,
+    row: (r) => ({ flaskId: r.flaskId }),
+    // A full belt is DERIVED here, not discovered at apply time: the old
+    // screen dropped the flask in the mud with a note; the menu says so
+    // before any tap, and auto-collect respects the same word.
+    blocked: (r, facts) => (facts.flaskSlotsFree > 0 ? null : 'slots'),
+  },
+  armament: {
+    present: (r) => !!r.armamentId,
+    // The roll is PURE (main.js rollDrop): nothing is stored until the row is
+    // TAKEN, through the caller's collector — which is what lets Skip and
+    // manual Continue honestly leave the piece behind. This row once carried
+    // `stored: true` because rollDrop persisted at roll time; that flag and
+    // the defect it described died together (#290 at f29d468).
+    row: (r) => ({ armamentId: r.armamentId }),
+    // A full bag is DERIVED here, the flask precedent one descriptor up: the
+    // menu says so before any tap, auto-collect respects the same token, and
+    // Taken is unreachable at the cap. Added at the b6b7df0 review's P1 —
+    // without this derivation the ninth piece against an 8-slot cap rendered
+    // takeable, and a collector that ignored addToStorage's false claimed it
+    // into meta.found while the bag refused it: claimed-but-not-stored, and
+    // excluded from every future drop.
+    blocked: (r, facts) => (facts.armamentSlotsFree > 0 ? null : 'storage'),
+  },
+  relic: {
+    present: (r) => !!r.relicId,
+    row: (r) => ({ relicId: r.relicId }),
+    blocked: () => null,
+  },
+};
+
+/**
+ * rewardPlan(rewards, facts) → { rows }
+ * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`,
+ * `armamentSlotsFree`); the offer stays pure data. Defaults are CONSERVATIVE
+ * — an unstated fact reads as no room, so a caller that forgets to state one
+ * gets a blocked row it can see, never a silent over-grant.
+ */
+function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
+  const rows = [];
+  for (const kind of REWARD_KIND_ORDER) {
+    const d = KINDS[kind];
+    if (!d.present(rewards)) continue;
+    rows.push({ kind, blockedBy: d.blocked(rewards, facts), ...d.row(rewards) });
+  }
+  return { rows };
+}
+
+/**
+ * resolveContinue(plan, states, mode, pick) → { take, leave }
+ *
+ * `states` — per-kind 'taken' | 'skipped' | (absent = pending). Taken rows
+ * were applied at tap time and are NEVER re-taken here.
+ * `mode` — 'auto' | 'manual' (balance.ui.rewardCollect's closed set).
+ * `pick` — (n) → index in [0, n): the SEEDED chooser for a card row auto
+ * takes. Handed in so this file owns no randomness.
+ *
+ *   auto:   take every pending, un-blocked row; an explicit skip is respected
+ *           (his deck-discipline affordance survives the setting); a choice
+ *           row resolves through `pick`.
+ *   manual: take nothing — Continue means "done", and what was never chosen
+ *           is LEFT, listed with its reason so a caller can say so.
+ */
+function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0) {
+  const take = [];
+  const leave = [];
+  for (const row of plan.rows) {
+    const state = states[row.kind];
+    if (state === 'taken') continue; // applied at tap time; nothing left to do
+    if (row.blockedBy) { leave.push(row); continue; }
+    if (mode === 'auto' && state !== 'skipped') {
+      if (row.kind === 'card') {
+        const cardId = row.choice ? row.cardIds[pick(row.cardIds.length) % row.cardIds.length] : row.cardIds[0];
+        take.push({ ...row, cardId });
+      } else {
+        take.push(row);
+      }
+    } else {
+      leave.push(row);
+    }
+  }
+  return { take, leave };
+}
+
+/**
+ * unseenIds(rewards, possessions) → { cards, relics, flasks, armaments }
+ * The 'new' marker's derivation: an id is new iff the handed-in possession
+ * sets have never held it. The caller decides what "held" means (run
+ * inventory ∪ the profile's record); this file never reads a store.
+ */
+function unseenIds(rewards = {}, possessions = {}) {
+  const holds = (set, id) => !!(set && set.has(id));
+  return {
+    cards: (rewards.cardIds || []).filter((id) => !holds(possessions.cards, id)),
+    relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],
+    flasks: rewards.flaskId && !holds(possessions.flasks, rewards.flaskId) ? [rewards.flaskId] : [],
+    armaments: rewards.armamentId && !holds(possessions.armaments, rewards.armamentId) ? [rewards.armamentId] : [],
+  };
+}
+
+
+Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, unseenIds });
 
 },
 "src/ui/screens/rest.js": function (module, exports, require) {
@@ -44474,6 +45259,43 @@ Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, applyL
 //
 // The stock lives on run.shopStock (rolled once on first entry and saved),
 // so a reload restores the exact same shelves — SPEC §3.11 determinism.
+//
+// ---- THE BARS (E2 / #247) -----------------------------------------------
+// Constantine, 2026-08-15, verbatim: "the shop is really hard to see cards...
+// relics cards and weapons/armaments, and a sell function should be
+// horizontal buttons that expand and collapse. show examples." Dealt by
+// Marina's wave-two (family f30e1ca) as ONE pattern with B9/B10/E4 — the
+// same mountDisclosure, never a second renderer (tools/onefold.mjs counts).
+//
+// FIVE BARS over the stock this merchant actually rolls — CARDS · RELICS ·
+// FLASKS · REMOVE A CARD · SELL — each a full-width face carrying its label
+// and its answer in words (what is left, what it costs), one open at a time,
+// CARDS open on arrival because the cards are what he said he could not see.
+// There is deliberately NO weapons/armaments bar: buildShopStock rolls no
+// armament stock (balance.equipment.drops has no shop channel), and a bar
+// for a category that cannot occur is a lie about the shop. The day the
+// merchant stocks armaments, its bar is one entry in BARS below.
+//
+// SELL, and whose numbers these are. The recorded answer on the E2 row:
+// Sell is its own bar, conditional on a NEW Settings toggle ('Merchant buys
+// back', Advanced, DEFAULT ON until he says otherwise), and ABSENT — not
+// greyed — when the toggle is off, because a feature he switched off that
+// still greys at him is a nag. WHAT is sellable is OUR derivation, labelled:
+// the merchant buys back what the merchant SELLS — relics and flasks, never
+// deck cards, because burning a card already COSTS cinders at this same
+// counter (Remove), and a shop that pays you for the thing it charges to
+// destroy is two prices for one act. Starter-rarity relics are not offered:
+// they are the class's identity, not goods, and no cost table prices them.
+// The PRICE is table arithmetic, not a typed number per item — see
+// sellPriceFor and balance.shop.sellFraction, whose comment states the same
+// derivation. One word from him flips any clause of this paragraph.
+//
+// THE FOLD SURVIVES THE RE-RENDER. Every purchase re-renders the whole
+// screen (the stock moved); the open bar is read off the mount before the
+// rebuild and re-opened after, so buying a flask leaves you looking at
+// flasks, not snapped back to cards.
+//
+// The rendered check on all of it is tools/shopbars.mjs, both shapes.
 
 const { renderCard } = require("src/ui/components/card.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
@@ -44484,6 +45306,27 @@ const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { flaskSlotCap } = require("src/model/gracerefill.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { settingOn } = require("src/ui/screens/settings.js");
+
+/**
+ * The merchant's buy-back price, DERIVED — never typed per item. The base is
+ * the LOW END of the same cost table the shop's own stock rolls from
+ * (balance.shop.relicCost / flaskCost), so a possession is always worth less
+ * than the cheapest the merchant would sell one for, and no rng: the same
+ * item fetches the same cinders every visit. `sellFraction` lives in the
+ * balance table with this derivation restated at the number.
+ */
+function sellPriceFor(balance, kind, def) {
+  const shop = balance.shop;
+  const fraction = shop.sellFraction;
+  if (!(fraction > 0)) return 0;
+  if (kind === 'relic') {
+    const range = shop.relicCost[def.rarity];
+    return range ? Math.floor(range[0] * fraction) : 0; // no table row (starter) → not priced
+  }
+  return Math.floor(shop.flaskCost[0] * fraction);
+}
 
 function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   const stock = run.shopStock;
@@ -44492,24 +45335,54 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
   // the same ruling consequence.js makes about every cinder spend). Removing a
   // card takes something out of the deck for good, from a wrapped grid of small
   // cards, one tap. Nobody asked for this one; it is here because the Smith's
-  // machinery answers it for free and it is the same mistake.
+  // machinery answers it for free and it is the same mistake. Selling is the
+  // remove's mirror — a possession gone for good — so `shopSell` sits in the
+  // same table and takes whatever beat the table derives.
   const arm = beatArmer(meta, registries);
   const slotsFree = () => run.flasks.length < flaskSlotCap(registries.balance);
+  const sellOn = () => settingOn((meta || {}).settings, 'shopSell');
+
+  /** Everything the player could sell right now, each row priced by the table. */
+  function sellables() {
+    const out = [];
+    run.relics.forEach((rid, at) => {
+      const def = registries.relics.get(rid);
+      const price = sellPriceFor(registries.balance, 'relic', def);
+      if (price > 0) out.push({ kind: 'relic', at, def, price, title: `${def.icon || '◆'} ${def.name}`, desc: relicText(def, registries) });
+    });
+    run.flasks.forEach((f, at) => {
+      const def = registries.flasks.get(f.flaskId);
+      const price = sellPriceFor(registries.balance, 'flask', def);
+      if (price > 0) out.push({ kind: 'flask', at, def, price, title: flaskIdentityHtml(def), titleHtml: true, desc: def.textTemplate || '' });
+    });
+    return out;
+  }
+
+  // The open bar OUTLIVES the render — see THE BARS above.
+  let fold = null;
+  let openBar = 'bar:cards';
 
   function render() {
+    if (fold && fold.openKey) openBar = fold.openKey;
     app.innerHTML = `
       <div class="screen" style="justify-content:flex-start;overflow-y:auto;gap:14px;padding-top:28px">
         <h2 style="color:var(--gold);font-size:24px">THE WANDERING MERCHANT</h2>
         <p class="subtitle">"I'VE CLIMBED HIGHER THAN YOU. I CAME BACK. DRAW YOUR OWN CONCLUSIONS."</p>
         <p style="color:var(--gold)">Cinders: <b>${run.cinders}</b> · HP ${run.hp}/${run.maxHp}</p>
-        <div class="reward-row" id="shop-cards"></div>
-        <div class="class-row" id="shop-items"></div>
-        <div class="class-row">
-          <div class="class-pick${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt">
-            <div class="glyph">✂</div><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p>
+        <div class="shop-bars cz-disc">
+          <div class="reward-row" id="shop-cards"></div>
+          <div class="class-row" id="shop-relics"></div>
+          <div class="class-row" id="shop-flasks"></div>
+          <div id="shop-remove">
+            <div class="class-row">
+              <div class="class-pick${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt">
+                <div class="glyph">✂</div><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p>
+              </div>
+            </div>
+            <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
           </div>
+          <div class="class-row" id="shop-sell"></div>
         </div>
-        <div id="remove-grid" class="deck-strip" style="display:none;max-width:900px"></div>
         <button id="leave-shop">LEAVE</button>
       </div>`;
 
@@ -44547,10 +45420,10 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       cardsRow.appendChild(wrap);
     });
 
-    const items = app.querySelector('#shop-items');
+    const relicsRow = app.querySelector('#shop-relics');
     stock.relics.forEach((item, i) => {
       const def = registries.relics.get(item.id);
-      items.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, run.cinders >= item.cost, () => {
+      relicsRow.appendChild(shopItem(`${def.icon || '◆'} ${def.name}`, relicText(def, registries), item.cost, run.cinders >= item.cost, () => {
         run.cinders -= item.cost;
         run.relics.push(item.id);
         syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
@@ -44560,10 +45433,11 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
         render();
       }));
     });
+    const flasksRow = app.querySelector('#shop-flasks');
     stock.flasks.forEach((item, i) => {
       const def = registries.flasks.get(item.id);
       const can = run.cinders >= item.cost && slotsFree();
-      items.appendChild(shopItem(flaskIdentityHtml(def), slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
+      flasksRow.appendChild(shopItem(flaskIdentityHtml(def), slotsFree() ? def.textTemplate : 'Flask slots full.', item.cost, can, () => {
         run.cinders -= item.cost;
         run.flasks.push({ flaskId: item.id });
         stock.flasks.splice(i, 1);
@@ -44602,14 +45476,68 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
       });
     }
 
+    // ---- the SELL shelf: the player's own goods, priced by the table ------
+    const sellRow = app.querySelector('#shop-sell');
+    const goods = sellOn() ? sellables() : [];
+    goods.forEach((row) => {
+      const el = shopItem(row.title, row.desc, row.price, true, null, { titleHtml: !!row.titleHtml, costWord: 'cinders back' });
+      arm(el, 'shopSell', {
+        question: `Sell ${row.def.name} back to the merchant? ${row.price} cinders, and it is gone.`,
+        confirmLabel: 'SELL IT',
+        onConfirm: () => {
+          if (row.kind === 'relic') {
+            run.relics.splice(row.at, 1);
+            syncFlaskGrowth(registries, run); // a sold growth source unbinds the same way a bought one binds
+          } else {
+            run.flasks.splice(row.at, 1);
+          }
+          run.cinders += row.price;
+          sfx.play('buy');
+          onChanged();
+          render();
+        },
+      });
+      sellRow.appendChild(el);
+    });
+
     app.querySelector('#leave-shop').addEventListener('click', onLeave);
+
+    // ---- the fold: one mount, one open bar, faces that answer in words ----
+    const BARS = [
+      { key: 'bar:cards', label: 'CARDS', node: cardsRow,
+        value: () => (stock.cards.length ? `${stock.cards.length} for sale` : 'sold out'),
+        tip: 'Cards for cinders. Tap to browse the shelf.' },
+      { key: 'bar:relics', label: 'RELICS', node: relicsRow,
+        value: () => (stock.relics.length ? `${stock.relics.length} for sale` : 'sold out'),
+        tip: 'Relics for cinders.' },
+      { key: 'bar:flasks', label: 'FLASKS', node: flasksRow,
+        value: () => (stock.flasks.length ? `${stock.flasks.length} for sale` : 'sold out'),
+        tip: 'Flasks for cinders.' },
+      { key: 'bar:remove', label: 'REMOVE A CARD', node: app.querySelector('#shop-remove'),
+        value: () => `${stock.removeCost} cinders`,
+        tip: 'Pay the merchant to burn a card out of the deck.' },
+      // ABSENT, never greyed, when his toggle is off — the recorded answer.
+      ...(sellOn() ? [{ key: 'bar:sell', label: 'SELL', node: sellRow,
+        value: () => (goods.length ? `${goods.length} the merchant will take` : 'nothing he wants'),
+        tip: 'The merchant buys back relics and flasks, at his prices.' }] : []),
+    ];
+    fold = mountDisclosure(app.querySelector('.shop-bars'), BARS.map((bar) => ({
+      key: bar.key, kind: 'pick', disclosure: 'face',
+      face: { label: bar.label, value: bar.value() },
+      reveal: { node: bar.node, sense: bar.tip },
+    })));
+    // Re-open the bar the player was in — or CARDS on arrival, the shelf he
+    // said he could not see. A bar that vanished mid-visit (SELL emptied and
+    // the toggle is a rebuild away) falls back to CARDS rather than throwing.
+    if (!BARS.some((bar) => bar.key === openBar)) openBar = 'bar:cards';
+    fold.open(openBar);
   }
 
-  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false } = {}) {
+  function shopItem(title, desc, cost, affordable, onBuy, { titleHtml = false, costWord = 'cinders' } = {}) {
     const el = document.createElement('div');
     el.className = `class-pick${affordable ? '' : ' locked'}`;
-    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} cinders</span>`;
-    if (affordable) el.addEventListener('click', onBuy);
+    el.innerHTML = `<h3 style="font-size:13px">${titleHtml ? title : esc(title)}</h3><p>${esc(desc)}</p><span class="chip" style="color:${affordable ? 'var(--gold)' : 'var(--muted)'}">${cost} ${esc(costWord)}</span>`;
+    if (affordable && onBuy) el.addEventListener('click', onBuy);
     return el;
   }
 
@@ -44622,771 +45550,6 @@ function mountShop(app, { registries, run, meta, onLeave, onChanged }) {
 
 
 Object.assign(module.exports, { mountShop });
-
-},
-"src/ui/screens/event.js": function (module, exports, require) {
-// src/ui/screens/event.js — Unknown-node events (SPEC §5.6, §7.1)
-//
-// Choices run through executeRunEffects (the same DSL as everything else).
-// A startCombat effect sets run.combatEntered; the orchestrator (main.js)
-// launches it after the result text.
-
-const { executeRunEffects } = require("src/engine/actions.js");
-const { esc } = require("src/ui/components/tooltip.js");
-const { isEngaged, focusFirst } = require("src/ui/input.js");
-const { isBindingChoice } = require("src/model/consequence.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
-
-function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
-  const def = registries.events.get(eventId);
-  // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
-  // says, or which choices deserve one — it names the action and hands over the
-  // commit. `secondbeat.js` rules; `holdconfirm.js` performs. That is the whole
-  // point of tonight: `armHold` used to have exactly one caller and it was this
-  // line, which is how "same with ending turn" was lost.
-  const arm = beatArmer(meta, registries);
-  const disarmers = [];
-
-  function meets(requires) {
-    if (!requires) return true;
-    if (typeof requires.cinders === 'number' && run.cinders < requires.cinders) return false;
-    return true;
-  }
-
-  // `min(420px, 100%)`, NOT `420px` — Sten, 2026-08-14, on Marina's axisfit
-  // ruling (event rows 15-18px, DEFECT, dated 2026-08-16). The bare 420 was a
-  // desk width the narrow container never granted: `.screen`'s content box is
-  // 385 local px at 390x844, so the centred column stuck 18px past the
-  // scrollport's end edge (15 at 360x640, 17 at 412x915 — measured at 929b6ea
-  // by tools/axisfit.mjs; these were the only red rows on this screen). The px
-  // half is LAWFUL — a choice column's width is box geometry and answers to no
-  // text setting (Law 4 clause 3) — the defect was the missing bound, so the
-  // bound is what the fix adds (Law 2: named container, proven inside it).
-  // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
-  // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
-  app.innerHTML = `
-    <div class="screen" style="gap:20px">
-      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
-      <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
-      <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
-      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
-    </div>`;
-
-  const box = app.querySelector('#choices');
-  def.choices.forEach((choice, i) => {
-    const btn = document.createElement('button');
-    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
-    // on this screen and the floor belongs to THEM, not to every subtle button
-    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
-    // be the blanket conversion the law tells nobody to attempt.
-    btn.className = 'subtle ev-choice';
-    // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
-    // a px label does NOT answer the Text size control, while `.subtle`'s
-    // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
-    // that will. The size now lives in the stylesheet in rem, where the one
-    // question it answers is "how big is a letter".
-    btn.dataset.choice = String(i);
-    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
-    btn.textContent = choice.label;
-    // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
-    // player can pay today. Vira's finding, and it is my own sentence back at
-    // me — latent is not fixed.
-    //
-    // The lockout property is "a player who cannot perform a hold can still
-    // leave every event screen", and that has to hold at EVERY purse. My
-    // instrument was reading `disabled`, which is a fact about ONE MOUNTED
-    // STATE: `meets()` below disables only an UNAFFORDABLE requirement, and
-    // `balance.startingCinders` is 0, so the sweep mounts poor and the two
-    // predicates happen to agree. They agreed via a number in balance.js that
-    // nothing tied to them. Raise the purse and they diverge on three choices
-    // (weepingPilgrim, sleepingSmith, merchantsGhost) — no verdict moved, which
-    // is luck, not a guarantee.
-    //
-    // So the fact goes on the element, like `data-binding` beside it: a door
-    // behind a price is not a door you can count on, at any purse, and the
-    // instrument reads that off the screen instead of re-deriving it.
-    // ---- BOTH CONTENT FACTS ARE WRITTEN HERE, ABOVE THE BRANCH, and the second
-    // one is Vira handing me my own sentence back a second time: LATENT IS NOT
-    // FIXED. I hoisted `data-requires` out of the affordability branch and
-    // walked straight past its neighbour three lines below, in the same
-    // function. `data-binding` was set only inside the AFFORDABLE branch, so an
-    // unaffordable binding choice published NO `data-binding` — the screen
-    // saying "not binding" about a choice that is.
-    //
-    // It changes nothing today: she checked rather than assumed, and the
-    // priced-and-binding overlap is EMPTY across all 54 shipped choices; the
-    // free-door test was safe regardless, because such a bar carries
-    // `data-requires`. It is still the same defect, and the reason it is worth
-    // the hoist is her breadcrumb, which I am keeping verbatim:
-    //
-    //   WHEN A FACT MOVES FROM A MODULE ONTO A SCREEN, ASK AT WHAT MOMENT IT IS
-    //   WRITTEN. A `data-` attribute set inside a conditional branch is a STATE
-    //   FACT WEARING A CONTENT FACT'S CLOTHES.
-    //
-    // So: whether this choice is priced, and whether it binds, are properties of
-    // the ENTRY and are published unconditionally. What stays inside the branch
-    // is only what is genuinely about this moment — the disabling, and the
-    // arming of a gesture on a button nobody can press.
-    if (choice.requires) btn.dataset.requires = '1';
-    // WHICH BARS BIND IS DERIVED, never listed. `isBindingChoice` reads this
-    // choice's own ops and the cards they name; author a twenty-first event with
-    // a curse in it and the hold is already there.
-    const binding = isBindingChoice(choice, registries);
-    if (binding) btn.dataset.binding = '1';
-
-    if (!meets(choice.requires)) {
-      btn.disabled = true;
-      btn.textContent += ' (cannot afford)';
-    } else {
-      const commit = () => {
-        executeRunEffects({ run, registries, rng }, choice.effects);
-        showResult(choice.resultText);
-      };
-      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
-      // CHARACTERISTIC of the choice, derived from its own ops
-      // (model/consequence.js); the beat is derived from that characteristic
-      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
-      // position all moved into the machinery with it — a bar that cannot be
-      // pressed still never gets armed, because this branch is the affordable
-      // one and always was.
-      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
-    }
-    box.appendChild(btn);
-  });
-
-  // Smart default (keyboard/gamepad): land on the first available choice.
-  if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
-
-  function showResult(text) {
-    // Every armed bar is torn down before the box is emptied. `box.innerHTML =
-    // ''` drops the buttons but NOT the window-level Escape listener each hold
-    // owns, and a listener outliving its button is exactly the leak #22 was
-    // about — one screen's worth is nothing, thirteen floors of it is not.
-    while (disarmers.length) disarmers.pop()();
-    box.innerHTML = '';
-    const p = document.createElement('p');
-    p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
-    p.textContent = text;
-    const cont = document.createElement('button');
-    cont.textContent = run.combatEntered ? 'STEEL YOURSELF' : 'CONTINUE';
-    cont.addEventListener('click', onDone);
-    box.appendChild(p);
-    box.appendChild(cont);
-    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
-  }
-}
-
-
-Object.assign(module.exports, { mountEvent });
-
-},
-"src/model/consequence.js": function (module, exports, require) {
-// src/model/consequence.js — DOES THIS CHOICE LEAVE A MARK THE RUN CANNOT TAKE
-// BACK? One home for that question, and it is asked of the entry's own
-// characteristics, never of a list of event ids.
-//
-// WHY IT IS NOT A LIST. The obvious build for "hold to confirm the dangerous
-// ones" is a set of event ids somewhere in the UI. That set is wrong the day
-// someone authors the twenty-first event: the new curse ships with no hold and
-// nothing goes red, because a hand-kept list cannot know what it was not told.
-// Law 0 clause 1 says the entry DESCRIBES and the machinery DERIVES, and this
-// is that sentence applied to danger.
-//
-// ---------------------------------------------------------------------------
-// IT FAILS CLOSED, AND THE FIRST DRAFT DID NOT. Viki's gate, and both halves of
-// it were right:
-//
-//   (1) SIGN-BLINDNESS. `addCinders` was excluded categorically, but a spend is
-//       `{ op: 'addCinders', amount: -50 }` and three shipped choices do exactly
-//       that. Under this file's own axis they qualified, and the answer came
-//       back "a tap is enough".
-//   (2) THE CLOSURE WAS OVER THE WRONG SET, and this is the sharper one. The
-//       claim was bounded by `RUN_OPCODES`. Event effect lists DEMONSTRABLY
-//       LEAVE IT — `damage` and `heal` ship in events today — because
-//       `executeRunEffects` runs the whole `OPCODES` vocabulary through a
-//       player facade. Nothing bleeds yet; the argument was simply unsound. An
-//       event that borrows a permanent combat op (`exhaust`) would be invisible
-//       with nothing red.
-//
-// His verdict, and it is the fix in one line: THE ENUMERATION WAS LOAD-BEARING
-// WHERE A DEFAULT SHOULD BE. So the enumeration flipped. There is no list of
-// dangerous ops any more. There is a list of ops POSITIVELY KNOWN TO BE SAFE,
-// and everything else — every op nobody has ruled on, every opcode added after
-// this file was written, every typo — is binding. Being wrong now costs one
-// held thumb and is visible on screen; before, it cost a curse and was silent.
-// ---------------------------------------------------------------------------
-//
-// THE FALSIFIERS, both run by tools/holdconfirm.mjs:
-//   --new-entry   author one fictional event with a curse, content only, ZERO
-//                 code commits: it arrives holding.
-//   --fail-closed a choice carrying an op this file has never heard of holds,
-//                 and the run prints every declared opcode that would.
-//
-// WHOSE THIS IS. The *characteristic* — what makes a consequence heavy — was
-// dispatched to VIKI. Viki may replace the body and keep the name; every caller
-// reads these functions and nothing re-derives them.
-
-/**
- * THE AXIS: a choice is binding when it writes something this run has no way to
- * get back and the player did not want it. Everything below is the SAFE side of
- * that line, stated positively, with the reason each one is here — because an
- * unexplained entry on a fail-open list is how (1) and (2) happened.
- *
- * A word not in this set is BINDING. That is the whole design.
- */
-const SAFE_OPS = Object.freeze({
-  // Gains. Permanent, and the player reached for them.
-  addRelic: 'a relic is a gain, and permanence is the point of it',
-  addFlask: 'a flask is a gain',
-  addFlaskCapacity: 'flask capacity is a gain',
-  upgradeCard: 'as permanent as anything here, and wanted — the axis is "paid, not gained"',
-
-  // Numbers that move back.
-  damage: 'HP moves both ways; a rest, a flask or a heal undoes it',
-  heal: 'a gain, and the same number',
-  loseHp: 'the combat spelling of `damage` — same number, same faucet',
-  block: 'lives and dies inside one turn',
-  gainEnergy: 'lives and dies inside one turn',
-
-  // THE ONE COST WITH A FAUCET, and it is a named exception rather than a
-  // silence — Viki asked for the line and the reason, so here they are.
-  //
-  // Cinders are ruled SAFE AT EVERY SIGN, spend included. Every other binding
-  // op writes to something the run cannot refill: a card gone, max HP gone, a
-  // curse in the deck for good. Cinders come back — combat pays, treasure pays,
-  // events pay. So a mis-tapped spend costs TEMPO, not STATE, and tempo is what
-  // the rest of the run is for.
-  //
-  // NOT justified by "every shipped spend buys something in the same effect
-  // list" — which is true today (-50 + addRelic, -30 + heal, -60 + addRelic) and
-  // is exactly the kind of property that dies green the day content moves. The
-  // faucet is the reason; the pairing is a coincidence I am deliberately not
-  // leaning on.
-  //
-  // OVERTURN THIS the day a spend can strand a run — a cost the player cannot
-  // earn back before the thing it was needed for.
-  addCinders: 'the one cost with a faucet: play refills it, so a mis-tap costs tempo, not state',
-
-  // A RISK IS NOT A COST, and this one needs saying out loud because it is the
-  // most common shape in the file — 7 of the 20 shipped events reach a fight.
-  // You enter a fight with everything you still have; nothing has been spent at
-  // the moment of the tap. Holding all seven would put ceremony on the ordinary
-  // case, which is how a safety step teaches players to rush past it.
-  startCombat: 'a risk taken with everything still in hand, not a cost paid',
-});
-
-/**
- * `addCardToDeck` is the one op that is binding OR NOT depending on WHAT IT
- * NAMES — the same opcode hands you a blessing or a Guilt. So it is not in
- * SAFE_OPS at all; it is decided below from the CARD's own declared `type`,
- * which content already writes and `CARD_TYPES` already closes.
- */
-const BINDING_CARD_TYPES = Object.freeze(['curse', 'status']);
-
-/**
- * `Object.hasOwn`, NEVER `in` — and this is Vira's finding, in the commit whose
- * whole subject was the fail-closed default.
- *
- * `'toString' in SAFE_OPS` is TRUE. So is `constructor`, `valueOf`,
- * `hasOwnProperty`, `__proto__`, `isPrototypeOf`. `in` walks the prototype
- * chain, so six inherited names came back NON-BINDING from the two functions
- * whose entire job is the opposite:
- *
- *   failClosedOps(['toString','constructor','valueOf','hasOwnProperty',
- *                  '__proto__','exhaust','burnRelic'])   ->  ['exhaust','burnRelic']
- *
- * Five of seven reported safe. Latent — no declared opcode is named any of
- * those — and latent is not fixed. Her sentence: A FAIL-CLOSED DEFAULT THAT
- * FAILS OPEN ON SIX INPUTS. One word, and it is this one.
- */
-const isSafeOp = (op) => Object.hasOwn(SAFE_OPS, op);
-
-/** Which of a declared vocabulary this file would hold. For the instrument. */
-function failClosedOps(opcodes) {
-  return (opcodes || []).filter((op) => !isSafeOp(op) && op !== 'addCardToDeck');
-}
-
-/**
- * THE PREMISE UNDER THE CINDER EXCEPTION, DERIVED SO A THIRD PARTY CAN RUN IT.
- *
- * Vira again, and it is the same correction I made one layer up and then failed
- * to apply to myself: my check asserted THE EXCEPTION (`spend === false`), which
- * stays green the day the faucet is deleted. It has to assert THE PREMISE.
- *
- * The faucet is not an assertion, it is in the data: `balance.rewards.cinders`
- * pays 15-25 normal, 35-50 elite, 75-90 boss, and 13 event choices grant against
- * 3 that spend. So the honest predicate is hers:
- *
- *   THE LARGEST CINDER SPEND MUST NOT EXCEED THE LARGEST SINGLE ENCOUNTER
- *   REWARD — today 60 against 90.
- *
- * Above that line a mis-tap costs more than any one fight can return, and
- * "tempo, not state" stops being true. My written overturn condition — "a cost
- * the player cannot earn back before the thing it was needed for" — was not a
- * predicate anyone could run, because that fact is stored nowhere. This one is.
- *
- * Returns null when it holds, or the failing numbers.
- */
-function cinderPremise(events, rewardCinders) {
-  let worstSpend = 0;
-  for (const e of events || []) {
-    for (const ch of e.choices || []) {
-      for (const eff of ch.effects || []) {
-        if (eff && eff.op === 'addCinders' && Number(eff.amount) < 0) {
-          worstSpend = Math.max(worstSpend, -Number(eff.amount));
-        }
-      }
-    }
-  }
-  let bestReward = 0;
-  for (const band of Object.values(rewardCinders || {})) {
-    if (Array.isArray(band)) bestReward = Math.max(bestReward, Number(band[band.length - 1]) || 0);
-  }
-  if (worstSpend <= bestReward) return null;
-  return { worstSpend, bestReward };
-}
-
-/**
- * bindingReasons(choice, registries) -> string[]
- *
- * Empty means "a tap is enough" — and it now means it only for ops this file
- * has positively ruled safe. Non-empty is why, for an instrument and a log;
- * never rendered raw at a player.
- */
-function bindingReasons(choice, registries) {
-  const out = [];
-  // A MALFORMED EFFECTS ARRAY BINDS, and it used to return safe — Vira's second
-  // finding on the same function, and it was inconsistent with itself: a
-  // malformed EFFECT already bound while a malformed effects ARRAY came back
-  // "a tap is enough". `effects: undefined` on a choice with a label is a
-  // half-authored entry, and half-authored is the state this file exists to be
-  // careful about. An intentionally empty list is `effects: []`, which is a
-  // real array and stays free — that is the Leave door on all twenty events.
-  if (!choice || typeof choice !== 'object') return ['malformed-choice'];
-  if (!Array.isArray(choice.effects)) return ['malformed-effects-list'];
-  for (const eff of choice.effects) {
-    // A malformed effect is not a safe effect.
-    if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') { out.push('malformed-effect'); continue; }
-
-    if (eff.op === 'addCardToDeck') {
-      // `random: true` adds a card nobody named. Not knowably a curse, so not
-      // knowably safe either — and this function never says "safe" about
-      // something it did not check.
-      if (eff.random || eff.card == null) { out.push('addCardToDeck:unnamed'); continue; }
-      const def = registries && registries.cards && registries.cards.get ? registries.cards.get(eff.card) : null;
-      const type = def ? def.type : null;
-      if (type == null || BINDING_CARD_TYPES.includes(type)) out.push(`addCardToDeck:${type || 'unknown'}`);
-      continue;
-    }
-
-    // THE DEFAULT, and it is the whole correction: unrecognised is binding.
-    if (!isSafeOp(eff.op)) out.push(`unrecognised-op:${eff.op}`);
-  }
-  return out;
-}
-
-/** The one predicate every caller asks. */
-function isBindingChoice(choice, registries) {
-  return bindingReasons(choice, registries).length > 0;
-}
-
-
-Object.assign(module.exports, { SAFE_OPS, BINDING_CARD_TYPES, failClosedOps, cinderPremise, bindingReasons, isBindingChoice });
-
-},
-"src/ui/screens/gameover.js": function (module, exports, require) {
-// src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
-
-const { resolveCard } = require("src/model/registries.js");
-const { esc } = require("src/ui/components/tooltip.js");
-const { sfx } = require("src/ui/sfx.js");
-
-function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
-  sfx.play(victory ? 'victory' : 'youDied');
-  const title = victory ? 'EMBER RESTORED' : 'YOU PERISHED';
-  const color = victory ? 'var(--gold)' : 'var(--blood)';
-
-  app.innerHTML = `
-    <div class="screen" style="gap:22px">
-      <h1 class="title-big" style="color:${color}">${title}</h1>
-      <table class="stats-table">
-        <tr><td>Forsaken</td><td>${esc((game.customization && game.customization.name) || 'Forsaken')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
-        <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
-        <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
-        <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>
-        <tr><td>Damage dealt</td><td>${game.stats.damageDealt}</td></tr>
-        <tr><td>Damage taken</td><td>${game.stats.damageTaken}</td></tr>
-        <tr><td>Cinders held</td><td>${game.cinders}</td></tr>
-        <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
-      </table>
-      ${earned.length ? `<div class="go-earned">
-        <p class="subtitle">${earned.length === 1 ? 'EARNED' : 'EARNED'}</p>
-        ${earned.map((u) => `<div class="ge-row"><span class="ge-name">${esc(u.name)}</span><span class="ge-kind">${esc(u.kind)}</span></div>`).join('')}
-      </div>` : ''}
-      <div>
-        <p class="subtitle" style="text-align:center;margin-bottom:8px">FINAL DECK (${game.deck.length})</p>
-        <div class="deck-strip"></div>
-      </div>
-      <div class="go-actions">
-        <button id="to-title">RETURN TO TITLE</button>
-        <button class="subtle" id="to-history">RUN HISTORY</button>
-      </div>
-    </div>`;
-
-  const strip = app.querySelector('.deck-strip');
-  for (const inst of game.deck) {
-    const def = resolveCard(registries, inst);
-    const el = document.createElement('span');
-    el.className = `mini${inst.upgraded ? ' upgraded' : ''}`;
-    el.textContent = def.name;
-    strip.appendChild(el);
-  }
-  app.querySelector('#to-title').addEventListener('click', onTitle);
-  if (onHistory) app.querySelector('#to-history').addEventListener('click', onHistory);
-}
-
-
-Object.assign(module.exports, { mountGameOver });
-
-},
-"src/ui/screens/history.js": function (module, exports, require) {
-// src/ui/screens/history.js — run history + aggregate win rates (SPEC §3.12, §9 M4)
-//
-// Reads the last 20 run results recorded by save.recordResult (sote_meta_v1)
-// and shown most-recent-first. Also surfaces the win-rate telemetry the M3
-// balance notes call for: overall and per-class win %.
-
-const { esc } = require("src/ui/components/tooltip.js");
-
-function mountHistory(app, { meta, onBack }) {
-  const results = (meta.results || []).slice().reverse(); // most recent first
-  // Win-rate telemetry counts STANDARD runs only — custom climbs are excluded
-  // so their modifiers can't skew the balance numbers (SPEC §10).
-  const standard = results.filter((r) => !r.custom);
-  const customCount = results.length - standard.length;
-  const total = standard.length;
-  const wins = standard.filter((r) => r.victory).length;
-  const pct = total ? Math.round((wins / total) * 100) : 0;
-
-  // Per-class win/run tallies (the balance telemetry payoff) — standard only.
-  const byClass = {};
-  for (const r of standard) {
-    const k = r.className || r.class || '—';
-    const b = (byClass[k] = byClass[k] || { runs: 0, wins: 0 });
-    b.runs += 1;
-    if (r.victory) b.wins += 1;
-  }
-  const classLine = Object.entries(byClass)
-    .map(([k, b]) => `${esc(k)} ${b.wins}/${b.runs}`)
-    .join('  ·  ');
-
-  const rows = results
-    .map((r) => {
-      const outcome = r.victory
-        ? '<span class="hx-win">RUNE RESTORED</span>'
-        : '<span class="hx-loss">YOU PERISHED</span>';
-      const reached = r.victory
-        ? `Act ${r.act || 3} cleared`
-        : `Act ${r.act || 1} · Floor ${r.floor != null ? r.floor : '—'}`;
-      const tag = r.custom
-        ? `<span class="hx-custom" title="Custom Climb — excluded from win rate">CUSTOM${r.ascension ? ` A${r.ascension}` : ''}</span>`
-        : '';
-      return `<tr>
-        <td>${outcome}</td>
-        <td>${esc(r.className || r.class || '—')}${tag}</td>
-        <td>${reached}</td>
-        <td class="hx-num">${r.fightsWon != null ? r.fightsWon : '—'}</td>
-        <td class="hx-seed">${esc(r.seed || '')}</td>
-      </tr>`;
-    })
-    .join('');
-
-  const customNote = customCount ? ` · ${customCount} CUSTOM (not counted)` : '';
-  const body = results.length
-    ? `<p class="subtitle">${total} STANDARD RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE${customNote}</p>
-       <p class="hx-byclass">${classLine}</p>
-       <div class="hx-wrap">
-         <table class="hx-table">
-           <thead><tr><th>Outcome</th><th>Class</th><th>Reached</th><th>Fights</th><th>Seed</th></tr></thead>
-           <tbody>${rows}</tbody>
-         </table>
-       </div>`
-    : `<p class="subtitle" style="margin-top:24px">NO RUNS RECORDED YET</p>
-       <p style="color:var(--muted);font-size:12px">The spire remembers those who climb it.</p>`;
-
-  app.innerHTML = `
-    <div class="screen" style="justify-content:flex-start;gap:14px;padding-top:44px">
-      <h1 class="title-big" style="font-size:32px">RUN HISTORY</h1>
-      ${body}
-      <button id="hx-back">BACK</button>
-    </div>`;
-
-  app.querySelector('#hx-back').addEventListener('click', onBack);
-}
-
-
-Object.assign(module.exports, { mountHistory });
-
-},
-"src/ui/screens/compendium.js": function (module, exports, require) {
-// src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
-//
-// Constantine, verbatim: *"the potential weapons to unlock should be in its own
-// menu on the main menu that keeps most things hidden."*
-//
-// THE LAST CLAUSE IS THE DESIGN, not decoration. This is a screen whose subject
-// is the shape of what you do NOT have, and the honest failure modes sit either
-// side of it: show everything and the surprise of finding a Twinblade is spent
-// in a menu on turn one; show nothing and it is an empty room with a title. So
-// the line, and it is one sentence:
-//
-//     A LOCKED ENTRY GIVES YOU ITS SHAPE AND ITS RARITY AND NOTHING ELSE.
-//
-// Shape is enough to want it. A name and a stat line is the item delivered
-// without the climb. The silhouette is the piece's OWN icon painted to black —
-// no second asset, no new column, nothing for an author to draw twice (Law 1
-// clause 4: assets bind by name, and this binds to the same name).
-//
-// ---- AND THE ASSET SET CANNOT HONOUR THAT PROMISE FIVE TIMES ----------------
-//
-// Freja's own finding against her own screen, measured AT THE 68 px BOX THE GAME
-// ACTUALLY PAINTS rather than at native size — which is the half that matters,
-// and the half a native-size measurement had already missed. Carried into the
-// merge by Viki because a promise this file cannot keep is a claim, not a bug
-// report, and the claim is the thing I own:
-//
-//   24 icons -> 21 DISTINCT silhouettes at 68 px. Two collision groups.
-//   buckler == roundShield == spikedShield   one drawing. A REDRAW.
-//   ashStaff  vs boneSceptre                 15 differing px at 224, ZERO at
-//                                            68. The BOX destroys a real
-//                                            distinction — a different fix, and
-//                                            nobody had named this one.
-//
-// SHARPEST, AND IT IS NOT A DEGRADED PROMISE BUT AN ABSENT ONE: `buckler` and
-// `roundShield` share shape AND rarity. Two cells with NO distinguishing mark
-// between them at all, stacked in the same column at 390. For that pair the
-// sentence above delivers nothing.
-//
-// NEITHER FIX IS IN THIS FILE and neither is taken here: one is a redraw, one is
-// a box size, and both are art direction. What is fixed here is the OVER-CLAIM —
-// this header stated a property of the asset set that five cells do not have.
-//
-// ---- WHY IT IS NOT ORGANISED BY WHAT YOU HAVE -------------------------------
-//
-// The obvious build is two bands: YOURS, then the rest. I refused it. Two bands
-// makes the screen's shape a function of your progress — on a fresh profile band
-// one is empty and the whole page is a list of things you failed to get, and
-// every find reflows the grid under you.
-//
-// So the structure is the COLLECTION's shape and it never moves: one section per
-// armament kind, in the order the table declares them, every cell always in the
-// same place. What changes is how much of it is LIT. In a palette this dark,
-// LIGHT IS THE HIERARCHY — the eye lands on what is yours because it is the only
-// bright thing in the grid, and I do not have to reorder anything to put it
-// first. A constant grid that fills in reads as a map of what exists; a
-// re-sorting list reads as a scoreboard.
-//
-// ---- WHAT AN AUTHOR WRITES, AND WHAT DERIVES (Law 0 clause 1) ---------------
-//
-// NOTHING. There is no compendium table and there must never be one. A row here
-// IS a row of content/source/weapons.csv seen from another angle, and everything
-// this screen draws comes off the characteristics already on it:
-//
-//   which section    `kind`            the section exists because a row is filed
-//                                      under it — no authored list of sections
-//   the silhouette   `id`              assets/equipment/icon_<id>.webp, the same
-//                                      file the Armoury already binds by name
-//   the rarity ring  `rarity`
-//   is it yours      `unlock` + the found gate → ownership() in model/loadout.js
-//   how much shows   that gate's reveal mode  → pieceReveal() in model/unlocks.js
-//
-// Two homes, and the split is the point (Viki, resolving the #90 merge): the
-// first is a fact about your PROFILE, the second about the CATALOGUE ROW. This
-// screen authors neither and asks both.
-//
-// A second list of unlockables would be the defect this house has spent two days
-// killing, and it is the easiest one to commit here: this screen wants a table
-// of "things to chase" so badly that writing one feels like the feature.
-//
-// ---- WHAT THIS SCREEN IS NOT ------------------------------------------------
-//
-// It is not the Armoury and it does not equip anything: it is reached from the
-// title, where there is no run, no class, and therefore no armour — armour is
-// `classId`-scoped and has no subject outside a run. THAT IS WHY THE SCREEN IS
-// ARMAMENTS ONLY, and the reason is where he put it, not my taste.
-//
-// ~~Armour's unlocks are already visible, with their hints, in the Armoury
-// picker.~~ STRUCK BY THE MERGE, not by its author (Viki). That was true at
-// 77a02b9 and #90 falsified it underneath this branch: the picker now offers
-// only what you own, so an unearned armour set is ABSENT there rather than
-// locked-with-a-hint. Nine of twelve armour rows carry an unlock, and as of dev
-// no screen in the game says they exist — `unlockView()` below, whose whole job
-// is "what the wardrobe should draw", has ZERO callers in src/ at every ref I
-// checked (77a02b9, e79e1cd, 52e0bc1).
-//
-// THE HOLE IS #90'S, NOT THIS SCREEN'S, and this branch neither opens nor closes
-// it. Recorded here because the sentence it replaces gave a REASON for excluding
-// armour, and that reason has expired: whether armour joins this screen is a
-// design call for Freja and Constantine ("weapons" was his word), not a
-// resolution I take while merging someone else's branch.
-//
-// LAW 3: this screen declares NO TAB SET. Three sections in one scroll are a
-// list, not tabs (clause 6's corollary), so the bumpers stay with whatever owns
-// them and there is nothing here to cycle — stated rather than left undefined,
-// because clause 6 makes an unanswered context the defect. Every cell is a
-// control and carries a tooltip for hover AND the focus cursor (clause 4), which
-// is also where a locked cell's reason lives: printing "not yet found" twenty
-// three times IS the wall of grey, and the wall is the thing to avoid.
-//
-// TWO OPEN, NEITHER THIS BRANCH'S AND NEITHER FIXED HERE (Freja, carried by Viki
-// so the next reader does not rediscover them):
-//
-//   THE TAP PATH IS WRONG, on the screen whose whole payload is the tooltip. It
-//   shows under the finger with `afterRelease: null`, and the 24 <button>s below
-//   carry NO click handler at all. That is component behaviour and it is already
-//   on dev — `showTooltipAt()` exists, one handler closes it, and it is hers.
-//
-//   GOLD MEANS TWO THINGS ON ONE GRID — *rare* and *yours*. Her palette, and
-//   Sunna's floor the moment it costs the read.
-
-const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
-const { assetUrl } = require("src/ui/assetmap.js");
-const { pieceReveal } = require("src/model/unlocks.js");
-const { ownership } = require("src/model/loadout.js");
-const { LOCK_COPY, armamentKindLabel } = require("src/ui/uiContent.js");
-
-/** A piece's mods, written the way a player reads them. */
-function modSummary(modFields, piece) {
-  const parts = [];
-  for (const raw of piece.mods || []) {
-    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
-    if (!m) continue;
-    const spec = (modFields || {})[m[2]];
-    if (!spec) continue;
-    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
-    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
-    parts.push(`${where}${spec.label} ${sign}`);
-  }
-  return parts;
-}
-
-/**
- * The sections, DERIVED. A kind exists because a row is filed under it, in the
- * order the table first mentions it — the same shape #88 gave settings
- * categories. There is no list of sections to fall out of step with the table,
- * so a new kind of armament appears here the day it is authored and an emptied
- * kind takes its heading with it. A heading over nothing is the defect one level
- * up from the fourth cell, and this is how it cannot happen.
- */
-function sections(rows) {
-  const order = [];
-  const by = new Map();
-  for (const r of rows) {
-    if (!by.has(r.kind)) { by.set(r.kind, []); order.push(r.kind); }
-    by.get(r.kind).push(r);
-  }
-  return order.map((kind) => ({ kind, label: armamentKindLabel(kind), rows: by.get(kind) }));
-}
-
-function cell(piece, { state, hint, gate }, modFields) {
-  const held = state === 'held';
-  const named = held || state === 'listed';
-  const el = document.createElement('button');
-  el.type = 'button';
-  el.className = `cp-cell rarity-${piece.rarity || 'common'} state-${state}`;
-  el.dataset.member = piece.id;
-  // A held piece is announced by name; a withheld one is announced as what it
-  // is, which is a shape you do not have. Screen readers get the same deal the
-  // eye does — the alternative is an accessible label that leaks every name the
-  // picture is deliberately hiding.
-  el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
-  el.innerHTML =
-    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`))}" alt=""></span>`
-    + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
-  const art = el.querySelector('img');
-  art.addEventListener('error', () => art.remove());
-
-  attachTooltip(el, () => {
-    if (held) {
-      const mods = modSummary(modFields, piece);
-      return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
-        + ((piece.tags || []).length ? `<br>${(piece.tags || []).map(esc).join(' · ')}` : '')
-        + (mods.length ? `<br>${mods.map(esc).join(' · ')}` : '')
-        + (piece.blurb ? `<br><i>${esc(piece.blurb)}</i>` : '');
-    }
-    // WITHHELD, and the tooltip is held to the same line the picture is. It says
-    // the rarity and the hand — which the ring and the section already say, so
-    // it reveals nothing new — and then why it is not yours. It does NOT say the
-    // name, the tags, the mods or the blurb, because a tooltip is not a loophole
-    // in the design; it is the same decision at a different magnification.
-    const head = named ? `<b>${esc(piece.name)}</b><br>` : '';
-    return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
-  });
-  return el;
-}
-
-/**
- * mountCompendium(app, { registries, meta, onBack })
- *
- * `meta.found` is the profile's permanent record of what it has ever held, and
- * off-run it is the whole of "yours" — there is no loadout to carry anything.
- * That makes this a PROFILE surface rather than a run surface, which is what
- * being on the title menu already meant.
- */
-function mountCompendium(app, { registries, meta = {}, onBack }) {
-  const eq = registries.equipment || {};
-  // WHAT IS YOURS IS NOT THIS SCREEN'S QUESTION (Viki, resolving the #90 merge).
-  // This read `meta.found` directly and built its own unlocked/available sets —
-  // a second definition of ownership, correct today and wrong the moment
-  // `balance.equipment.persistence` is not 'both'. One home, asked here:
-  // `loadout: null`, because off the title menu there is no run to carry
-  // anything, and the model already knows what that means for each persistence.
-  // Reading `registries.balance` rather than the imported module is the same
-  // narrowing — it is the object `ownership()` itself was handed.
-  const drops = (((registries.balance || {}).equipment || {}).drops) || {};
-  const owned = ownership(registries, { meta, loadout: null });
-  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
-
-  // The drawn set, and the denominator comes FROM IT rather than from the table.
-  // A 'hidden' piece is absent AND uncounted on purpose: "1 of 25" over
-  // twenty-four cells is the count advertising the shape of the hole the
-  // silhouettes were careful not to show. The two halves of one secret have to
-  // agree, so only one of them is allowed to do the arithmetic.
-  const drawn = [];
-  for (const piece of eq.armaments || []) {
-    const r = pieceReveal(piece, { owned, unlockById, drops });
-    if (r.state === 'hidden') continue;
-    drawn.push({ piece, r });
-  }
-  const total = drawn.length;
-  const heldCount = drawn.filter(({ r }) => r.state === 'held').length;
-
-  app.innerHTML = `
-    <div class="screen compendium" data-surface="compendium">
-      <h1 class="title-big">ARMAMENTS</h1>
-      <p class="subtitle">${heldCount} OF ${total} HELD</p>
-      <div class="cp-scroll"><div class="cp-sections"></div></div>
-      <button id="cp-back">BACK</button>
-    </div>`;
-
-  const host = app.querySelector('.cp-sections');
-  for (const sec of sections(drawn.map(({ piece }) => piece))) {
-    const mine = drawn.filter(({ piece }) => piece.kind === sec.kind);
-    const have = mine.filter(({ r }) => r.state === 'held').length;
-    const box = document.createElement('section');
-    box.className = 'cp-section';
-    box.innerHTML = `<h2 class="cp-head">${esc(sec.label)}<span class="cp-count">${have}/${mine.length}</span></h2>`
-      + '<div class="cp-grid"></div>';
-    const grid = box.querySelector('.cp-grid');
-    for (const { piece, r } of mine) grid.appendChild(cell(piece, r, eq.modFields));
-    host.appendChild(box);
-  }
-
-  app.querySelector('#cp-back').addEventListener('click', onBack);
-}
-
-
-Object.assign(module.exports, { mountCompendium });
 
 },
 "src/ui/screens/settings.js": function (module, exports, require) {
@@ -45700,6 +45863,14 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
+  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
+  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
+  // settingOn so the default's polarity has one home, here. ONE ROW, appended
+  // on purpose while another seat serializes this file for E3 — named in the
+  // E2 claim (#247) so the touch is on the record, not smuggled.
+  { cat: 'Advanced', key: 'shopSell', def: true, label: 'Merchant buys back',
+    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -45731,6 +45902,23 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
+  // ALWAYS pressable and a setting decides what it means — auto-collect ON
+  // takes everything, picking at random where there is a choice; OFF gives
+  // only what was chosen, no nagging." The meanings live in
+  // model/rewardplan.js resolveContinue (test 61); this row only picks the
+  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
+  // what an interaction MEANS, tried by playing.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
+  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
+  // it shipped one PR behind the dial because this file was under E3's live
+  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
+  // released that claim ("manual has a reader and no writer a player can
+  // reach").
+  { cat: 'Advanced', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
+    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
@@ -47048,8 +47236,48 @@ Object.assign(module.exports, { renderProfileSection });
 const { esc } = require("src/ui/components/tooltip.js");
 const { AI_DISCLOSURE, disclosureAsText } = require("src/content/aiDisclosure.js");
 const { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } = require("src/buildversion.js");
+const { CHANGELOG, PROJECT_REPOSITORY_URL } = require("src/content/changelog.js");
 
-function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
+/**
+ * A source-server build is development by construction. A standalone bundle
+ * is ambiguous until its host is known: the canonical GitHub Pages host is the
+ * current-dev preview, while a file:// bundle is a release-shaped artifact and
+ * must not silently gain a repository action.
+ */
+function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.location } = {}) {
+  if (runPath === 'source tree') return true;
+  return runPath === 'standalone file'
+    && locationLike?.protocol === 'https:'
+    && locationLike?.hostname === 'cehinds.github.io';
+}
+function shouldLinkChangelog(options = {}) {
+  return shouldLinkDebugVersion(options);
+}
+function changelogHtml(entries, { linkExternal = false } = {}) {
+  let group = null;
+  return entries.map((entry) => {
+    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
+    group = entry.group;
+    return `${heading}
+      <details class="about-change" data-change-id="${esc(entry.id)}">
+        <summary class="region-fold">
+          <span class="rf-label">${esc(entry.summary)}</span>
+          <span class="region-count">${esc(entry.build)}</span>
+        </summary>
+        <p class="set-note">${esc(entry.detail)}</p>
+        <p class="set-note">${linkExternal
+          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
+          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
+      </details>`;
+  }).join('');
+}
+
+function renderAboutSection(container, {
+  disclosure = AI_DISCLOSURE,
+  changelog = CHANGELOG,
+  runPath = RUN_PATH,
+  locationLike = globalThis.location,
+} = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -47091,15 +47319,24 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
   // is also the reason the About footer is no longer a stable string anyone can
   // eyeball for "did anything change".
+  const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
+    ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
+    : esc(ABOUT_BUILD_LINE);
+  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
+
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
       ${sections}
+      <section class="about-changelog" aria-labelledby="about-changelog-title">
+        <h2 id="about-changelog-title">Changelog</h2>
+        ${changelogHtml(changelog, { linkExternal: changeLinks })}
+      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the
@@ -47122,7 +47359,7 @@ function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
 }
 
 
-Object.assign(module.exports, { renderAboutSection });
+Object.assign(module.exports, { shouldLinkDebugVersion, shouldLinkChangelog, renderAboutSection });
 
 },
 "src/content/aiDisclosure.js": function (module, exports, require) {
@@ -47285,6 +47522,310 @@ function disclosureAsText(d = AI_DISCLOSURE, version = null) {
 
 
 Object.assign(module.exports, { AI_DISCLOSURE, DISCLOSURE_PARTS, disclosureAsText });
+
+},
+"src/content/changelog.js": function (module, exports, require) {
+// src/content/changelog.js — the in-game reader for the root CHANGELOG.md.
+//
+// CHANGELOG.md is the authored owner. The generated module is only its bundled
+// transport: tools/about-changelog.mjs derives it and refuses drift. Keeping
+// that boundary explicit lets the standalone game show the receipts without
+// creating a second hand-maintained copy of their prose.
+
+const { GENERATED_CHANGELOG } = require("src/content/changelog.generated.js");
+
+const PROJECT_REPOSITORY_URL = 'https://github.com/cehinds/AshenSpire';
+
+function validateChangelog(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) throw new Error('changelog has no entries');
+  const ids = new Set();
+  for (const entry of entries) {
+    if (!/^pr-\d+$/.test(entry.id)) throw new Error(`unstable changelog id: ${entry.id}`);
+    if (ids.has(entry.id)) throw new Error(`duplicate changelog id: ${entry.id}`);
+    ids.add(entry.id);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`invalid date for ${entry.id}`);
+    if (!entry.group || !entry.summary || /[\r\n]/.test(entry.summary)) throw new Error(`invalid summary for ${entry.id}`);
+    if (!entry.detail || !entry.build || !Number.isInteger(entry.pullRequest)) throw new Error(`incomplete receipt for ${entry.id}`);
+    if (entry.url !== `${PROJECT_REPOSITORY_URL}/pull/${entry.pullRequest}`) throw new Error(`unsafe pull-request URL for ${entry.id}`);
+  }
+  return entries;
+}
+
+const CHANGELOG = Object.freeze(validateChangelog(GENERATED_CHANGELOG));
+
+
+Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANGELOG });
+
+},
+"src/content/changelog.generated.js": function (module, exports, require) {
+// GENERATED from /CHANGELOG.md by tools/about-changelog.mjs --write.
+// Do not edit: the focused check refuses any drift from the authoritative Markdown.
+
+const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-290",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
+    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "build": "0.4.0.0929",
+    "pullRequest": 290,
+    "url": "https://github.com/cehinds/AshenSpire/pull/290"
+  },
+  {
+    "id": "pr-288",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Character creation is one panel at a time",
+    "detail": "Six sections — CLASS, STARTING KIT, KEEPSAKE, SIGIL, TINT, SPRITE — each a card that opens at its turn. CLASS is open on arrival; picking an option collapses the section and opens the next; any face re-opens out of order. After the flow, the column reads back your six choices in words. Keyboard and pad included: the cursor rides the advance, so Confirm-Confirm walks the whole flow accepting defaults.",
+    "build": "0.4.0.0911",
+    "pullRequest": 288,
+    "url": "https://github.com/cehinds/AshenSpire/pull/288"
+  },
+  {
+    "id": "pr-291",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The merchant is five collapsing bars — and Sell is one of them",
+    "detail": "CARDS · RELICS · FLASKS · REMOVE A CARD · SELL, one open at a time, cards open on arrival. Buying keeps the bar you're looking at open. The merchant buys back what he sells — relics and flasks, at half the low end of the item's own price band — and the whole Sell bar can be switched off in Settings (then it's absent, not greyed).",
+    "build": "0.4.0.0912",
+    "pullRequest": 291,
+    "url": "https://github.com/cehinds/AshenSpire/pull/291"
+  },
+  {
+    "id": "pr-289",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "The short-screen warning reads whole at the largest text size",
+    "detail": "At Text XL on a very short screen, the last-resort refusal message no longer loses its sentence to its own glyph.",
+    "build": "0.4.0.0901",
+    "pullRequest": 289,
+    "url": "https://github.com/cehinds/AshenSpire/pull/289"
+  },
+  {
+    "id": "pr-286",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Flask display verified healthy everywhere",
+    "detail": "Evidence-only: fourteen photographs of every reachable flask surface, both shapes — no source change; closed #277.",
+    "build": "0.4.0.0900",
+    "pullRequest": 286,
+    "url": "https://github.com/cehinds/AshenSpire/pull/286"
+  },
+  {
+    "id": "pr-287",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Fullscreen is the first option under Display",
+    "detail": "One toggle at the head of Settings → Display, reflecting the real fullscreen state.",
+    "build": "0.4.0.0900",
+    "pullRequest": 287,
+    "url": "https://github.com/cehinds/AshenSpire/pull/287"
+  },
+  {
+    "id": "pr-244",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Title screen no longer crashes on a detached map board",
+    "detail": "The map's scroll-commit debounce could fire after leaving the map and take the title screen down.",
+    "build": "0.4.0.0893",
+    "pullRequest": 244,
+    "url": "https://github.com/cehinds/AshenSpire/pull/244"
+  },
+  {
+    "id": "pr-226",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Status & Daily Briefs linked from the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0885",
+    "pullRequest": 226,
+    "url": "https://github.com/cehinds/AshenSpire/pull/226"
+  },
+  {
+    "id": "pr-224",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat action row no longer overlaps or mis-scales",
+    "detail": "Merged as pull request #224 in development build 0.4.0.0885.",
+    "build": "0.4.0.0885",
+    "pullRequest": 224,
+    "url": "https://github.com/cehinds/AshenSpire/pull/224"
+  },
+  {
+    "id": "pr-225",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Hint-strip selftest runs on Windows",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 225,
+    "url": "https://github.com/cehinds/AshenSpire/pull/225"
+  },
+  {
+    "id": "pr-221",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "buildversion selftest cleanup is deterministic on macOS",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 221,
+    "url": "https://github.com/cehinds/AshenSpire/pull/221"
+  },
+  {
+    "id": "pr-223",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Build-stamp browser fixture inputs repaired",
+    "detail": "Tooling only.",
+    "build": "0.4.0.0878",
+    "pullRequest": 223,
+    "url": "https://github.com/cehinds/AshenSpire/pull/223"
+  },
+  {
+    "id": "pr-220",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Friendly card targets are visibly distinct, on every input",
+    "detail": "Cards that target you or an ally say so with the same clarity for mouse, keyboard, and pad.",
+    "build": "0.4.0.0878",
+    "pullRequest": 220,
+    "url": "https://github.com/cehinds/AshenSpire/pull/220"
+  },
+  {
+    "id": "pr-219",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Combat fits short landscape screens",
+    "detail": "Merged as pull request #219 in development build 0.4.0.0869.",
+    "build": "0.4.0.0869",
+    "pullRequest": 219,
+    "url": "https://github.com/cehinds/AshenSpire/pull/219"
+  },
+  {
+    "id": "pr-218",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Guard absorption and residual damage show as separate floats",
+    "detail": "What your block ate and what got through are two numbers, not one.",
+    "build": "0.4.0.0867",
+    "pullRequest": 218,
+    "url": "https://github.com/cehinds/AshenSpire/pull/218"
+  },
+  {
+    "id": "pr-217",
+    "date": "2026-08-20",
+    "group": "2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912",
+    "summary": "Audio cues with optional samples stay immediate",
+    "detail": "No late hit-sounds while an optional sample resolves.",
+    "build": "0.4.0.0850",
+    "pullRequest": 217,
+    "url": "https://github.com/cehinds/AshenSpire/pull/217"
+  },
+  {
+    "id": "pr-212",
+    "date": "2026-08-19",
+    "group": "2026-08-19",
+    "summary": "The current dev Pages preview is surfaced in the README",
+    "detail": "Docs only.",
+    "build": "0.4.0.0841",
+    "pullRequest": 212,
+    "url": "https://github.com/cehinds/AshenSpire/pull/212"
+  },
+  {
+    "id": "pr-210",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Hybrid combat input parity completed",
+    "detail": "Mixing mouse, keyboard, and pad mid-combat keeps one coherent cursor and one set of affordances.",
+    "build": "0.4.0.0841",
+    "pullRequest": 210,
+    "url": "https://github.com/cehinds/AshenSpire/pull/210"
+  },
+  {
+    "id": "pr-206",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Text size scales text, and only text",
+    "detail": "The accessibility text setting stops resizing non-text UI; UI size remains the whole-game control.",
+    "build": "0.4.0.0835",
+    "pullRequest": 206,
+    "url": "https://github.com/cehinds/AshenSpire/pull/206"
+  },
+  {
+    "id": "pr-203",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Native map pan belongs to the map again",
+    "detail": "Merged as pull request #203 in development build 0.4.0.0828.",
+    "build": "0.4.0.0828",
+    "pullRequest": 203,
+    "url": "https://github.com/cehinds/AshenSpire/pull/203"
+  },
+  {
+    "id": "pr-201",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Escape during the tutorial cancels the right thing",
+    "detail": "Merged as pull request #201 in development build 0.4.0.0822.",
+    "build": "0.4.0.0822",
+    "pullRequest": 201,
+    "url": "https://github.com/cehinds/AshenSpire/pull/201"
+  },
+  {
+    "id": "pr-202",
+    "date": "2026-08-18",
+    "group": "2026-08-18",
+    "summary": "Map structure contrast is measurable — and raised",
+    "detail": "Paths and nodes hold a checked contrast floor.",
+    "build": "0.4.0.0807",
+    "pullRequest": 202,
+    "url": "https://github.com/cehinds/AshenSpire/pull/202"
+  },
+  {
+    "id": "pr-199",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Combat HUD pages long strips and shows drag targets",
+    "detail": "Merged as pull request #199 in development build 0.4.0.0807.",
+    "build": "0.4.0.0807",
+    "pullRequest": 199,
+    "url": "https://github.com/cehinds/AshenSpire/pull/199"
+  },
+  {
+    "id": "pr-200",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "Map zoom and camera persist correctly",
+    "detail": "Returning to the map returns to your zoom and place.",
+    "build": "0.4.0.0799",
+    "pullRequest": 200,
+    "url": "https://github.com/cehinds/AshenSpire/pull/200"
+  },
+  {
+    "id": "pr-186",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "The verified current build lives at the repository root",
+    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "build": "0.4.0.0788",
+    "pullRequest": 186,
+    "url": "https://github.com/cehinds/AshenSpire/pull/186"
+  },
+  {
+    "id": "pr-180",
+    "date": "2026-08-17",
+    "group": "2026-08-17",
+    "summary": "A reversible architecture map",
+    "detail": "Docs only.",
+    "build": "0.4.0.0777",
+    "pullRequest": 180,
+    "url": "https://github.com/cehinds/AshenSpire/pull/180"
+  }
+]);
+
+
+Object.assign(module.exports, { GENERATED_CHANGELOG });
 
 },
 "src/ui/audio.js": function (module, exports, require) {
@@ -47806,6 +48347,771 @@ function silentEngine() {
 
 
 Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
+
+},
+"src/ui/screens/event.js": function (module, exports, require) {
+// src/ui/screens/event.js — Unknown-node events (SPEC §5.6, §7.1)
+//
+// Choices run through executeRunEffects (the same DSL as everything else).
+// A startCombat effect sets run.combatEntered; the orchestrator (main.js)
+// launches it after the result text.
+
+const { executeRunEffects } = require("src/engine/actions.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { isEngaged, focusFirst } = require("src/ui/input.js");
+const { isBindingChoice } = require("src/model/consequence.js");
+const { beatArmer } = require("src/ui/components/holdconfirm.js");
+
+function mountEvent(app, { registries, run, meta, rng, eventId, onDone }) {
+  const def = registries.events.get(eventId);
+  // THE ONE DOOR. This screen no longer knows what a hold is, what the dial
+  // says, or which choices deserve one — it names the action and hands over the
+  // commit. `secondbeat.js` rules; `holdconfirm.js` performs. That is the whole
+  // point of tonight: `armHold` used to have exactly one caller and it was this
+  // line, which is how "same with ending turn" was lost.
+  const arm = beatArmer(meta, registries);
+  const disarmers = [];
+
+  function meets(requires) {
+    if (!requires) return true;
+    if (typeof requires.cinders === 'number' && run.cinders < requires.cinders) return false;
+    return true;
+  }
+
+  // `min(420px, 100%)`, NOT `420px` — Sten, 2026-08-14, on Marina's axisfit
+  // ruling (event rows 15-18px, DEFECT, dated 2026-08-16). The bare 420 was a
+  // desk width the narrow container never granted: `.screen`'s content box is
+  // 385 local px at 390x844, so the centred column stuck 18px past the
+  // scrollport's end edge (15 at 360x640, 17 at 412x915 — measured at 929b6ea
+  // by tools/axisfit.mjs; these were the only red rows on this screen). The px
+  // half is LAWFUL — a choice column's width is box geometry and answers to no
+  // text setting (Law 4 clause 3) — the defect was the missing bound, so the
+  // bound is what the fix adds (Law 2: named container, proven inside it).
+  // The bars inside stretch to the column; their `min-height: var(--tap-floor)`
+  // (button.ev-choice, ui.css) is untouched, so nothing shrinks under 44.
+  app.innerHTML = `
+    <div class="screen" style="gap:20px">
+      <div class="event-art" style="font-size:56px">${esc(def.art || '❖')}</div>
+      <h2 style="color:var(--gold);font-size:24px">${esc(def.name).toUpperCase()}</h2>
+      <p style="max-width:560px;text-align:center;line-height:1.7;color:var(--parchment)">${esc(def.text)}</p>
+      <div id="choices" style="display:flex;flex-direction:column;gap:10px;min-width:min(420px,100%)"></div>
+    </div>`;
+
+  const box = app.querySelector('#choices');
+  def.choices.forEach((choice, i) => {
+    const btn = document.createElement('button');
+    // `ev-choice`, not a bare `.subtle`: these three bars are the only control
+    // on this screen and the floor belongs to THEM, not to every subtle button
+    // in the game. Law 4 is a ratchet, not a sweep — flooring `.subtle` would
+    // be the blanket conversion the law tells nobody to attempt.
+    btn.className = 'subtle ev-choice';
+    // `style.fontSize = '13px'` was here, and it was Law 4 clause 1 backwards:
+    // a px label does NOT answer the Text size control, while `.subtle`'s
+    // `padding: 0.6rem` meant the BOX did. Text that will not grow inside a box
+    // that will. The size now lives in the stylesheet in rem, where the one
+    // question it answers is "how big is a letter".
+    btn.dataset.choice = String(i);
+    btn.style.animationDelay = `${i * 70}ms`; // staggered entrance
+    btn.textContent = choice.label;
+    // A PRICE IS A CONTENT FACT AND THE SCREEN PUBLISHES IT, whether or not the
+    // player can pay today. Vira's finding, and it is my own sentence back at
+    // me — latent is not fixed.
+    //
+    // The lockout property is "a player who cannot perform a hold can still
+    // leave every event screen", and that has to hold at EVERY purse. My
+    // instrument was reading `disabled`, which is a fact about ONE MOUNTED
+    // STATE: `meets()` below disables only an UNAFFORDABLE requirement, and
+    // `balance.startingCinders` is 0, so the sweep mounts poor and the two
+    // predicates happen to agree. They agreed via a number in balance.js that
+    // nothing tied to them. Raise the purse and they diverge on three choices
+    // (weepingPilgrim, sleepingSmith, merchantsGhost) — no verdict moved, which
+    // is luck, not a guarantee.
+    //
+    // So the fact goes on the element, like `data-binding` beside it: a door
+    // behind a price is not a door you can count on, at any purse, and the
+    // instrument reads that off the screen instead of re-deriving it.
+    // ---- BOTH CONTENT FACTS ARE WRITTEN HERE, ABOVE THE BRANCH, and the second
+    // one is Vira handing me my own sentence back a second time: LATENT IS NOT
+    // FIXED. I hoisted `data-requires` out of the affordability branch and
+    // walked straight past its neighbour three lines below, in the same
+    // function. `data-binding` was set only inside the AFFORDABLE branch, so an
+    // unaffordable binding choice published NO `data-binding` — the screen
+    // saying "not binding" about a choice that is.
+    //
+    // It changes nothing today: she checked rather than assumed, and the
+    // priced-and-binding overlap is EMPTY across all 54 shipped choices; the
+    // free-door test was safe regardless, because such a bar carries
+    // `data-requires`. It is still the same defect, and the reason it is worth
+    // the hoist is her breadcrumb, which I am keeping verbatim:
+    //
+    //   WHEN A FACT MOVES FROM A MODULE ONTO A SCREEN, ASK AT WHAT MOMENT IT IS
+    //   WRITTEN. A `data-` attribute set inside a conditional branch is a STATE
+    //   FACT WEARING A CONTENT FACT'S CLOTHES.
+    //
+    // So: whether this choice is priced, and whether it binds, are properties of
+    // the ENTRY and are published unconditionally. What stays inside the branch
+    // is only what is genuinely about this moment — the disabling, and the
+    // arming of a gesture on a button nobody can press.
+    if (choice.requires) btn.dataset.requires = '1';
+    // WHICH BARS BIND IS DERIVED, never listed. `isBindingChoice` reads this
+    // choice's own ops and the cards they name; author a twenty-first event with
+    // a curse in it and the hold is already there.
+    const binding = isBindingChoice(choice, registries);
+    if (binding) btn.dataset.binding = '1';
+
+    if (!meets(choice.requires)) {
+      btn.disabled = true;
+      btn.textContent += ' (cannot afford)';
+    } else {
+      const commit = () => {
+        executeRunEffects({ run, registries, rng }, choice.effects);
+        showResult(choice.resultText);
+      };
+      // WHETHER THIS BAR HOLDS IS NOT DECIDED HERE. `binding` is a
+      // CHARACTERISTIC of the choice, derived from its own ops
+      // (model/consequence.js); the beat is derived from that characteristic
+      // (model/secondbeat.js). The HOLD hint, the fill, the dial and the "off"
+      // position all moved into the machinery with it — a bar that cannot be
+      // pressed still never gets armed, because this branch is the affordable
+      // one and always was.
+      disarmers.push(arm(btn, 'eventChoice', { ctx: { binding }, onConfirm: commit }));
+    }
+    box.appendChild(btn);
+  });
+
+  // Smart default (keyboard/gamepad): land on the first available choice.
+  if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+
+  function showResult(text) {
+    // Every armed bar is torn down before the box is emptied. `box.innerHTML =
+    // ''` drops the buttons but NOT the window-level Escape listener each hold
+    // owns, and a listener outliving its button is exactly the leak #22 was
+    // about — one screen's worth is nothing, thirteen floors of it is not.
+    while (disarmers.length) disarmers.pop()();
+    box.innerHTML = '';
+    const p = document.createElement('p');
+    p.style.cssText = 'max-width:560px;text-align:center;line-height:1.7;color:var(--muted);font-style:italic';
+    p.textContent = text;
+    const cont = document.createElement('button');
+    cont.textContent = run.combatEntered ? 'STEEL YOURSELF' : 'CONTINUE';
+    cont.addEventListener('click', onDone);
+    box.appendChild(p);
+    box.appendChild(cont);
+    if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
+  }
+}
+
+
+Object.assign(module.exports, { mountEvent });
+
+},
+"src/model/consequence.js": function (module, exports, require) {
+// src/model/consequence.js — DOES THIS CHOICE LEAVE A MARK THE RUN CANNOT TAKE
+// BACK? One home for that question, and it is asked of the entry's own
+// characteristics, never of a list of event ids.
+//
+// WHY IT IS NOT A LIST. The obvious build for "hold to confirm the dangerous
+// ones" is a set of event ids somewhere in the UI. That set is wrong the day
+// someone authors the twenty-first event: the new curse ships with no hold and
+// nothing goes red, because a hand-kept list cannot know what it was not told.
+// Law 0 clause 1 says the entry DESCRIBES and the machinery DERIVES, and this
+// is that sentence applied to danger.
+//
+// ---------------------------------------------------------------------------
+// IT FAILS CLOSED, AND THE FIRST DRAFT DID NOT. Viki's gate, and both halves of
+// it were right:
+//
+//   (1) SIGN-BLINDNESS. `addCinders` was excluded categorically, but a spend is
+//       `{ op: 'addCinders', amount: -50 }` and three shipped choices do exactly
+//       that. Under this file's own axis they qualified, and the answer came
+//       back "a tap is enough".
+//   (2) THE CLOSURE WAS OVER THE WRONG SET, and this is the sharper one. The
+//       claim was bounded by `RUN_OPCODES`. Event effect lists DEMONSTRABLY
+//       LEAVE IT — `damage` and `heal` ship in events today — because
+//       `executeRunEffects` runs the whole `OPCODES` vocabulary through a
+//       player facade. Nothing bleeds yet; the argument was simply unsound. An
+//       event that borrows a permanent combat op (`exhaust`) would be invisible
+//       with nothing red.
+//
+// His verdict, and it is the fix in one line: THE ENUMERATION WAS LOAD-BEARING
+// WHERE A DEFAULT SHOULD BE. So the enumeration flipped. There is no list of
+// dangerous ops any more. There is a list of ops POSITIVELY KNOWN TO BE SAFE,
+// and everything else — every op nobody has ruled on, every opcode added after
+// this file was written, every typo — is binding. Being wrong now costs one
+// held thumb and is visible on screen; before, it cost a curse and was silent.
+// ---------------------------------------------------------------------------
+//
+// THE FALSIFIERS, both run by tools/holdconfirm.mjs:
+//   --new-entry   author one fictional event with a curse, content only, ZERO
+//                 code commits: it arrives holding.
+//   --fail-closed a choice carrying an op this file has never heard of holds,
+//                 and the run prints every declared opcode that would.
+//
+// WHOSE THIS IS. The *characteristic* — what makes a consequence heavy — was
+// dispatched to VIKI. Viki may replace the body and keep the name; every caller
+// reads these functions and nothing re-derives them.
+
+/**
+ * THE AXIS: a choice is binding when it writes something this run has no way to
+ * get back and the player did not want it. Everything below is the SAFE side of
+ * that line, stated positively, with the reason each one is here — because an
+ * unexplained entry on a fail-open list is how (1) and (2) happened.
+ *
+ * A word not in this set is BINDING. That is the whole design.
+ */
+const SAFE_OPS = Object.freeze({
+  // Gains. Permanent, and the player reached for them.
+  addRelic: 'a relic is a gain, and permanence is the point of it',
+  addFlask: 'a flask is a gain',
+  addFlaskCapacity: 'flask capacity is a gain',
+  upgradeCard: 'as permanent as anything here, and wanted — the axis is "paid, not gained"',
+
+  // Numbers that move back.
+  damage: 'HP moves both ways; a rest, a flask or a heal undoes it',
+  heal: 'a gain, and the same number',
+  loseHp: 'the combat spelling of `damage` — same number, same faucet',
+  block: 'lives and dies inside one turn',
+  gainEnergy: 'lives and dies inside one turn',
+
+  // THE ONE COST WITH A FAUCET, and it is a named exception rather than a
+  // silence — Viki asked for the line and the reason, so here they are.
+  //
+  // Cinders are ruled SAFE AT EVERY SIGN, spend included. Every other binding
+  // op writes to something the run cannot refill: a card gone, max HP gone, a
+  // curse in the deck for good. Cinders come back — combat pays, treasure pays,
+  // events pay. So a mis-tapped spend costs TEMPO, not STATE, and tempo is what
+  // the rest of the run is for.
+  //
+  // NOT justified by "every shipped spend buys something in the same effect
+  // list" — which is true today (-50 + addRelic, -30 + heal, -60 + addRelic) and
+  // is exactly the kind of property that dies green the day content moves. The
+  // faucet is the reason; the pairing is a coincidence I am deliberately not
+  // leaning on.
+  //
+  // OVERTURN THIS the day a spend can strand a run — a cost the player cannot
+  // earn back before the thing it was needed for.
+  addCinders: 'the one cost with a faucet: play refills it, so a mis-tap costs tempo, not state',
+
+  // A RISK IS NOT A COST, and this one needs saying out loud because it is the
+  // most common shape in the file — 7 of the 20 shipped events reach a fight.
+  // You enter a fight with everything you still have; nothing has been spent at
+  // the moment of the tap. Holding all seven would put ceremony on the ordinary
+  // case, which is how a safety step teaches players to rush past it.
+  startCombat: 'a risk taken with everything still in hand, not a cost paid',
+});
+
+/**
+ * `addCardToDeck` is the one op that is binding OR NOT depending on WHAT IT
+ * NAMES — the same opcode hands you a blessing or a Guilt. So it is not in
+ * SAFE_OPS at all; it is decided below from the CARD's own declared `type`,
+ * which content already writes and `CARD_TYPES` already closes.
+ */
+const BINDING_CARD_TYPES = Object.freeze(['curse', 'status']);
+
+/**
+ * `Object.hasOwn`, NEVER `in` — and this is Vira's finding, in the commit whose
+ * whole subject was the fail-closed default.
+ *
+ * `'toString' in SAFE_OPS` is TRUE. So is `constructor`, `valueOf`,
+ * `hasOwnProperty`, `__proto__`, `isPrototypeOf`. `in` walks the prototype
+ * chain, so six inherited names came back NON-BINDING from the two functions
+ * whose entire job is the opposite:
+ *
+ *   failClosedOps(['toString','constructor','valueOf','hasOwnProperty',
+ *                  '__proto__','exhaust','burnRelic'])   ->  ['exhaust','burnRelic']
+ *
+ * Five of seven reported safe. Latent — no declared opcode is named any of
+ * those — and latent is not fixed. Her sentence: A FAIL-CLOSED DEFAULT THAT
+ * FAILS OPEN ON SIX INPUTS. One word, and it is this one.
+ */
+const isSafeOp = (op) => Object.hasOwn(SAFE_OPS, op);
+
+/** Which of a declared vocabulary this file would hold. For the instrument. */
+function failClosedOps(opcodes) {
+  return (opcodes || []).filter((op) => !isSafeOp(op) && op !== 'addCardToDeck');
+}
+
+/**
+ * THE PREMISE UNDER THE CINDER EXCEPTION, DERIVED SO A THIRD PARTY CAN RUN IT.
+ *
+ * Vira again, and it is the same correction I made one layer up and then failed
+ * to apply to myself: my check asserted THE EXCEPTION (`spend === false`), which
+ * stays green the day the faucet is deleted. It has to assert THE PREMISE.
+ *
+ * The faucet is not an assertion, it is in the data: `balance.rewards.cinders`
+ * pays 15-25 normal, 35-50 elite, 75-90 boss, and 13 event choices grant against
+ * 3 that spend. So the honest predicate is hers:
+ *
+ *   THE LARGEST CINDER SPEND MUST NOT EXCEED THE LARGEST SINGLE ENCOUNTER
+ *   REWARD — today 60 against 90.
+ *
+ * Above that line a mis-tap costs more than any one fight can return, and
+ * "tempo, not state" stops being true. My written overturn condition — "a cost
+ * the player cannot earn back before the thing it was needed for" — was not a
+ * predicate anyone could run, because that fact is stored nowhere. This one is.
+ *
+ * Returns null when it holds, or the failing numbers.
+ */
+function cinderPremise(events, rewardCinders) {
+  let worstSpend = 0;
+  for (const e of events || []) {
+    for (const ch of e.choices || []) {
+      for (const eff of ch.effects || []) {
+        if (eff && eff.op === 'addCinders' && Number(eff.amount) < 0) {
+          worstSpend = Math.max(worstSpend, -Number(eff.amount));
+        }
+      }
+    }
+  }
+  let bestReward = 0;
+  for (const band of Object.values(rewardCinders || {})) {
+    if (Array.isArray(band)) bestReward = Math.max(bestReward, Number(band[band.length - 1]) || 0);
+  }
+  if (worstSpend <= bestReward) return null;
+  return { worstSpend, bestReward };
+}
+
+/**
+ * bindingReasons(choice, registries) -> string[]
+ *
+ * Empty means "a tap is enough" — and it now means it only for ops this file
+ * has positively ruled safe. Non-empty is why, for an instrument and a log;
+ * never rendered raw at a player.
+ */
+function bindingReasons(choice, registries) {
+  const out = [];
+  // A MALFORMED EFFECTS ARRAY BINDS, and it used to return safe — Vira's second
+  // finding on the same function, and it was inconsistent with itself: a
+  // malformed EFFECT already bound while a malformed effects ARRAY came back
+  // "a tap is enough". `effects: undefined` on a choice with a label is a
+  // half-authored entry, and half-authored is the state this file exists to be
+  // careful about. An intentionally empty list is `effects: []`, which is a
+  // real array and stays free — that is the Leave door on all twenty events.
+  if (!choice || typeof choice !== 'object') return ['malformed-choice'];
+  if (!Array.isArray(choice.effects)) return ['malformed-effects-list'];
+  for (const eff of choice.effects) {
+    // A malformed effect is not a safe effect.
+    if (!eff || typeof eff !== 'object' || typeof eff.op !== 'string') { out.push('malformed-effect'); continue; }
+
+    if (eff.op === 'addCardToDeck') {
+      // `random: true` adds a card nobody named. Not knowably a curse, so not
+      // knowably safe either — and this function never says "safe" about
+      // something it did not check.
+      if (eff.random || eff.card == null) { out.push('addCardToDeck:unnamed'); continue; }
+      const def = registries && registries.cards && registries.cards.get ? registries.cards.get(eff.card) : null;
+      const type = def ? def.type : null;
+      if (type == null || BINDING_CARD_TYPES.includes(type)) out.push(`addCardToDeck:${type || 'unknown'}`);
+      continue;
+    }
+
+    // THE DEFAULT, and it is the whole correction: unrecognised is binding.
+    if (!isSafeOp(eff.op)) out.push(`unrecognised-op:${eff.op}`);
+  }
+  return out;
+}
+
+/** The one predicate every caller asks. */
+function isBindingChoice(choice, registries) {
+  return bindingReasons(choice, registries).length > 0;
+}
+
+
+Object.assign(module.exports, { SAFE_OPS, BINDING_CARD_TYPES, failClosedOps, cinderPremise, bindingReasons, isBindingChoice });
+
+},
+"src/ui/screens/gameover.js": function (module, exports, require) {
+// src/ui/screens/gameover.js — YOU PERISHED / EMBER RESTORED (SPEC §7.4)
+
+const { resolveCard } = require("src/model/registries.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { sfx } = require("src/ui/sfx.js");
+
+function mountGameOver(app, { registries, game, victory, onTitle, onHistory, earned = [] }) {
+  sfx.play(victory ? 'victory' : 'youDied');
+  const title = victory ? 'EMBER RESTORED' : 'YOU PERISHED';
+  const color = victory ? 'var(--gold)' : 'var(--blood)';
+
+  app.innerHTML = `
+    <div class="screen" style="gap:22px">
+      <h1 class="title-big" style="color:${color}">${title}</h1>
+      <table class="stats-table">
+        <tr><td>Forsaken</td><td>${esc((game.customization && game.customization.name) || 'Forsaken')} ${esc((game.customization && game.customization.glyph) || '')}</td></tr>
+        <tr><td>Seed</td><td style="font-family:monospace">${esc(game.seedString)}</td></tr>
+        <tr><td>Floor reached</td><td>${game.floor}${game.mapGraph ? ` / ${game.mapGraph.floors}` : ''}</td></tr>
+        <tr><td>Fights won</td><td>${game.stats.fightsWon}</td></tr>
+        <tr><td>Damage dealt</td><td>${game.stats.damageDealt}</td></tr>
+        <tr><td>Damage taken</td><td>${game.stats.damageTaken}</td></tr>
+        <tr><td>Cinders held</td><td>${game.cinders}</td></tr>
+        <tr><td>Final HP</td><td>${victory ? game.hp : 0} / ${game.maxHp}</td></tr>
+      </table>
+      ${earned.length ? `<div class="go-earned">
+        <p class="subtitle">${earned.length === 1 ? 'EARNED' : 'EARNED'}</p>
+        ${earned.map((u) => `<div class="ge-row"><span class="ge-name">${esc(u.name)}</span><span class="ge-kind">${esc(u.kind)}</span></div>`).join('')}
+      </div>` : ''}
+      <div>
+        <p class="subtitle" style="text-align:center;margin-bottom:8px">FINAL DECK (${game.deck.length})</p>
+        <div class="deck-strip"></div>
+      </div>
+      <div class="go-actions">
+        <button id="to-title">RETURN TO TITLE</button>
+        <button class="subtle" id="to-history">RUN HISTORY</button>
+      </div>
+    </div>`;
+
+  const strip = app.querySelector('.deck-strip');
+  for (const inst of game.deck) {
+    const def = resolveCard(registries, inst);
+    const el = document.createElement('span');
+    el.className = `mini${inst.upgraded ? ' upgraded' : ''}`;
+    el.textContent = def.name;
+    strip.appendChild(el);
+  }
+  app.querySelector('#to-title').addEventListener('click', onTitle);
+  if (onHistory) app.querySelector('#to-history').addEventListener('click', onHistory);
+}
+
+
+Object.assign(module.exports, { mountGameOver });
+
+},
+"src/ui/screens/history.js": function (module, exports, require) {
+// src/ui/screens/history.js — run history + aggregate win rates (SPEC §3.12, §9 M4)
+//
+// Reads the last 20 run results recorded by save.recordResult (sote_meta_v1)
+// and shown most-recent-first. Also surfaces the win-rate telemetry the M3
+// balance notes call for: overall and per-class win %.
+
+const { esc } = require("src/ui/components/tooltip.js");
+
+function mountHistory(app, { meta, onBack }) {
+  const results = (meta.results || []).slice().reverse(); // most recent first
+  // Win-rate telemetry counts STANDARD runs only — custom climbs are excluded
+  // so their modifiers can't skew the balance numbers (SPEC §10).
+  const standard = results.filter((r) => !r.custom);
+  const customCount = results.length - standard.length;
+  const total = standard.length;
+  const wins = standard.filter((r) => r.victory).length;
+  const pct = total ? Math.round((wins / total) * 100) : 0;
+
+  // Per-class win/run tallies (the balance telemetry payoff) — standard only.
+  const byClass = {};
+  for (const r of standard) {
+    const k = r.className || r.class || '—';
+    const b = (byClass[k] = byClass[k] || { runs: 0, wins: 0 });
+    b.runs += 1;
+    if (r.victory) b.wins += 1;
+  }
+  const classLine = Object.entries(byClass)
+    .map(([k, b]) => `${esc(k)} ${b.wins}/${b.runs}`)
+    .join('  ·  ');
+
+  const rows = results
+    .map((r) => {
+      const outcome = r.victory
+        ? '<span class="hx-win">RUNE RESTORED</span>'
+        : '<span class="hx-loss">YOU PERISHED</span>';
+      const reached = r.victory
+        ? `Act ${r.act || 3} cleared`
+        : `Act ${r.act || 1} · Floor ${r.floor != null ? r.floor : '—'}`;
+      const tag = r.custom
+        ? `<span class="hx-custom" title="Custom Climb — excluded from win rate">CUSTOM${r.ascension ? ` A${r.ascension}` : ''}</span>`
+        : '';
+      return `<tr>
+        <td>${outcome}</td>
+        <td>${esc(r.className || r.class || '—')}${tag}</td>
+        <td>${reached}</td>
+        <td class="hx-num">${r.fightsWon != null ? r.fightsWon : '—'}</td>
+        <td class="hx-seed">${esc(r.seed || '')}</td>
+      </tr>`;
+    })
+    .join('');
+
+  const customNote = customCount ? ` · ${customCount} CUSTOM (not counted)` : '';
+  const body = results.length
+    ? `<p class="subtitle">${total} STANDARD RUN${total === 1 ? '' : 'S'} · ${wins} WON · ${pct}% WIN RATE${customNote}</p>
+       <p class="hx-byclass">${classLine}</p>
+       <div class="hx-wrap">
+         <table class="hx-table">
+           <thead><tr><th>Outcome</th><th>Class</th><th>Reached</th><th>Fights</th><th>Seed</th></tr></thead>
+           <tbody>${rows}</tbody>
+         </table>
+       </div>`
+    : `<p class="subtitle" style="margin-top:24px">NO RUNS RECORDED YET</p>
+       <p style="color:var(--muted);font-size:12px">The spire remembers those who climb it.</p>`;
+
+  app.innerHTML = `
+    <div class="screen" style="justify-content:flex-start;gap:14px;padding-top:44px">
+      <h1 class="title-big" style="font-size:32px">RUN HISTORY</h1>
+      ${body}
+      <button id="hx-back">BACK</button>
+    </div>`;
+
+  app.querySelector('#hx-back').addEventListener('click', onBack);
+}
+
+
+Object.assign(module.exports, { mountHistory });
+
+},
+"src/ui/screens/compendium.js": function (module, exports, require) {
+// src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
+//
+// Constantine, verbatim: *"the potential weapons to unlock should be in its own
+// menu on the main menu that keeps most things hidden."*
+//
+// THE LAST CLAUSE IS THE DESIGN, not decoration. This is a screen whose subject
+// is the shape of what you do NOT have, and the honest failure modes sit either
+// side of it: show everything and the surprise of finding a Twinblade is spent
+// in a menu on turn one; show nothing and it is an empty room with a title. So
+// the line, and it is one sentence:
+//
+//     A LOCKED ENTRY GIVES YOU ITS SHAPE AND ITS RARITY AND NOTHING ELSE.
+//
+// Shape is enough to want it. A name and a stat line is the item delivered
+// without the climb. The silhouette is the piece's OWN icon painted to black —
+// no second asset, no new column, nothing for an author to draw twice (Law 1
+// clause 4: assets bind by name, and this binds to the same name).
+//
+// ---- AND THE ASSET SET CANNOT HONOUR THAT PROMISE FIVE TIMES ----------------
+//
+// Freja's own finding against her own screen, measured AT THE 68 px BOX THE GAME
+// ACTUALLY PAINTS rather than at native size — which is the half that matters,
+// and the half a native-size measurement had already missed. Carried into the
+// merge by Viki because a promise this file cannot keep is a claim, not a bug
+// report, and the claim is the thing I own:
+//
+//   24 icons -> 21 DISTINCT silhouettes at 68 px. Two collision groups.
+//   buckler == roundShield == spikedShield   one drawing. A REDRAW.
+//   ashStaff  vs boneSceptre                 15 differing px at 224, ZERO at
+//                                            68. The BOX destroys a real
+//                                            distinction — a different fix, and
+//                                            nobody had named this one.
+//
+// SHARPEST, AND IT IS NOT A DEGRADED PROMISE BUT AN ABSENT ONE: `buckler` and
+// `roundShield` share shape AND rarity. Two cells with NO distinguishing mark
+// between them at all, stacked in the same column at 390. For that pair the
+// sentence above delivers nothing.
+//
+// NEITHER FIX IS IN THIS FILE and neither is taken here: one is a redraw, one is
+// a box size, and both are art direction. What is fixed here is the OVER-CLAIM —
+// this header stated a property of the asset set that five cells do not have.
+//
+// ---- WHY IT IS NOT ORGANISED BY WHAT YOU HAVE -------------------------------
+//
+// The obvious build is two bands: YOURS, then the rest. I refused it. Two bands
+// makes the screen's shape a function of your progress — on a fresh profile band
+// one is empty and the whole page is a list of things you failed to get, and
+// every find reflows the grid under you.
+//
+// So the structure is the COLLECTION's shape and it never moves: one section per
+// armament kind, in the order the table declares them, every cell always in the
+// same place. What changes is how much of it is LIT. In a palette this dark,
+// LIGHT IS THE HIERARCHY — the eye lands on what is yours because it is the only
+// bright thing in the grid, and I do not have to reorder anything to put it
+// first. A constant grid that fills in reads as a map of what exists; a
+// re-sorting list reads as a scoreboard.
+//
+// ---- WHAT AN AUTHOR WRITES, AND WHAT DERIVES (Law 0 clause 1) ---------------
+//
+// NOTHING. There is no compendium table and there must never be one. A row here
+// IS a row of content/source/weapons.csv seen from another angle, and everything
+// this screen draws comes off the characteristics already on it:
+//
+//   which section    `kind`            the section exists because a row is filed
+//                                      under it — no authored list of sections
+//   the silhouette   `id`              assets/equipment/icon_<id>.webp, the same
+//                                      file the Armoury already binds by name
+//   the rarity ring  `rarity`
+//   is it yours      `unlock` + the found gate → ownership() in model/loadout.js
+//   how much shows   that gate's reveal mode  → pieceReveal() in model/unlocks.js
+//
+// Two homes, and the split is the point (Viki, resolving the #90 merge): the
+// first is a fact about your PROFILE, the second about the CATALOGUE ROW. This
+// screen authors neither and asks both.
+//
+// A second list of unlockables would be the defect this house has spent two days
+// killing, and it is the easiest one to commit here: this screen wants a table
+// of "things to chase" so badly that writing one feels like the feature.
+//
+// ---- WHAT THIS SCREEN IS NOT ------------------------------------------------
+//
+// It is not the Armoury and it does not equip anything: it is reached from the
+// title, where there is no run, no class, and therefore no armour — armour is
+// `classId`-scoped and has no subject outside a run. THAT IS WHY THE SCREEN IS
+// ARMAMENTS ONLY, and the reason is where he put it, not my taste.
+//
+// ~~Armour's unlocks are already visible, with their hints, in the Armoury
+// picker.~~ STRUCK BY THE MERGE, not by its author (Viki). That was true at
+// 77a02b9 and #90 falsified it underneath this branch: the picker now offers
+// only what you own, so an unearned armour set is ABSENT there rather than
+// locked-with-a-hint. Nine of twelve armour rows carry an unlock, and as of dev
+// no screen in the game says they exist — `unlockView()` below, whose whole job
+// is "what the wardrobe should draw", has ZERO callers in src/ at every ref I
+// checked (77a02b9, e79e1cd, 52e0bc1).
+//
+// THE HOLE IS #90'S, NOT THIS SCREEN'S, and this branch neither opens nor closes
+// it. Recorded here because the sentence it replaces gave a REASON for excluding
+// armour, and that reason has expired: whether armour joins this screen is a
+// design call for Freja and Constantine ("weapons" was his word), not a
+// resolution I take while merging someone else's branch.
+//
+// LAW 3: this screen declares NO TAB SET. Three sections in one scroll are a
+// list, not tabs (clause 6's corollary), so the bumpers stay with whatever owns
+// them and there is nothing here to cycle — stated rather than left undefined,
+// because clause 6 makes an unanswered context the defect. Every cell is a
+// control and carries a tooltip for hover AND the focus cursor (clause 4), which
+// is also where a locked cell's reason lives: printing "not yet found" twenty
+// three times IS the wall of grey, and the wall is the thing to avoid.
+//
+// TWO OPEN, NEITHER THIS BRANCH'S AND NEITHER FIXED HERE (Freja, carried by Viki
+// so the next reader does not rediscover them):
+//
+//   THE TAP PATH IS WRONG, on the screen whose whole payload is the tooltip. It
+//   shows under the finger with `afterRelease: null`, and the 24 <button>s below
+//   carry NO click handler at all. That is component behaviour and it is already
+//   on dev — `showTooltipAt()` exists, one handler closes it, and it is hers.
+//
+//   GOLD MEANS TWO THINGS ON ONE GRID — *rare* and *yours*. Her palette, and
+//   Sunna's floor the moment it costs the read.
+
+const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { assetUrl } = require("src/ui/assetmap.js");
+const { pieceReveal } = require("src/model/unlocks.js");
+const { ownership } = require("src/model/loadout.js");
+const { LOCK_COPY, armamentKindLabel } = require("src/ui/uiContent.js");
+
+/** A piece's mods, written the way a player reads them. */
+function modSummary(modFields, piece) {
+  const parts = [];
+  for (const raw of piece.mods || []) {
+    const m = /^(\w+)\.(\w+)=([+-]?\d+)$/.exec(raw);
+    if (!m) continue;
+    const spec = (modFields || {})[m[2]];
+    if (!spec) continue;
+    const where = m[1] === 'self' ? '' : `${m[1][0].toUpperCase()}${m[1].slice(1)} `;
+    const sign = m[3][0] === '+' || m[3][0] === '-' ? m[3] : `= ${m[3]}`;
+    parts.push(`${where}${spec.label} ${sign}`);
+  }
+  return parts;
+}
+
+/**
+ * The sections, DERIVED. A kind exists because a row is filed under it, in the
+ * order the table first mentions it — the same shape #88 gave settings
+ * categories. There is no list of sections to fall out of step with the table,
+ * so a new kind of armament appears here the day it is authored and an emptied
+ * kind takes its heading with it. A heading over nothing is the defect one level
+ * up from the fourth cell, and this is how it cannot happen.
+ */
+function sections(rows) {
+  const order = [];
+  const by = new Map();
+  for (const r of rows) {
+    if (!by.has(r.kind)) { by.set(r.kind, []); order.push(r.kind); }
+    by.get(r.kind).push(r);
+  }
+  return order.map((kind) => ({ kind, label: armamentKindLabel(kind), rows: by.get(kind) }));
+}
+
+function cell(piece, { state, hint, gate }, modFields) {
+  const held = state === 'held';
+  const named = held || state === 'listed';
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = `cp-cell rarity-${piece.rarity || 'common'} state-${state}`;
+  el.dataset.member = piece.id;
+  // A held piece is announced by name; a withheld one is announced as what it
+  // is, which is a shape you do not have. Screen readers get the same deal the
+  // eye does — the alternative is an accessible label that leaks every name the
+  // picture is deliberately hiding.
+  el.setAttribute('aria-label', named ? piece.name : `Unknown ${piece.kind}`);
+  el.innerHTML =
+    `<span class="cp-art"><img src="${esc(assetUrl(`assets/equipment/icon_${piece.artKey || piece.id}.webp`))}" alt=""></span>`
+    + `<span class="cp-name">${named ? esc(piece.name) : ''}</span>`;
+  const art = el.querySelector('img');
+  art.addEventListener('error', () => art.remove());
+
+  attachTooltip(el, () => {
+    if (held) {
+      const mods = modSummary(modFields, piece);
+      return `<b>${esc(piece.name)}</b><br>${esc(piece.rarity)} · ${esc(piece.hand)} hand`
+        + ((piece.tags || []).length ? `<br>${(piece.tags || []).map(esc).join(' · ')}` : '')
+        + (mods.length ? `<br>${mods.map(esc).join(' · ')}` : '')
+        + (piece.blurb ? `<br><i>${esc(piece.blurb)}</i>` : '');
+    }
+    // WITHHELD, and the tooltip is held to the same line the picture is. It says
+    // the rarity and the hand — which the ring and the section already say, so
+    // it reveals nothing new — and then why it is not yours. It does NOT say the
+    // name, the tags, the mods or the blurb, because a tooltip is not a loophole
+    // in the design; it is the same decision at a different magnification.
+    const head = named ? `<b>${esc(piece.name)}</b><br>` : '';
+    return `${head}${esc(piece.rarity)} · ${esc(piece.hand)} hand<br><i>${esc(hint || LOCK_COPY[gate] || '')}</i>`;
+  });
+  return el;
+}
+
+/**
+ * mountCompendium(app, { registries, meta, onBack })
+ *
+ * `meta.found` is the profile's permanent record of what it has ever held, and
+ * off-run it is the whole of "yours" — there is no loadout to carry anything.
+ * That makes this a PROFILE surface rather than a run surface, which is what
+ * being on the title menu already meant.
+ */
+function mountCompendium(app, { registries, meta = {}, onBack }) {
+  const eq = registries.equipment || {};
+  // WHAT IS YOURS IS NOT THIS SCREEN'S QUESTION (Viki, resolving the #90 merge).
+  // This read `meta.found` directly and built its own unlocked/available sets —
+  // a second definition of ownership, correct today and wrong the moment
+  // `balance.equipment.persistence` is not 'both'. One home, asked here:
+  // `loadout: null`, because off the title menu there is no run to carry
+  // anything, and the model already knows what that means for each persistence.
+  // Reading `registries.balance` rather than the imported module is the same
+  // narrowing — it is the object `ownership()` itself was handed.
+  const drops = (((registries.balance || {}).equipment || {}).drops) || {};
+  const owned = ownership(registries, { meta, loadout: null });
+  const unlockById = new Map((registries.unlocks || []).map((u) => [u.id, u]));
+
+  // The drawn set, and the denominator comes FROM IT rather than from the table.
+  // A 'hidden' piece is absent AND uncounted on purpose: "1 of 25" over
+  // twenty-four cells is the count advertising the shape of the hole the
+  // silhouettes were careful not to show. The two halves of one secret have to
+  // agree, so only one of them is allowed to do the arithmetic.
+  const drawn = [];
+  for (const piece of eq.armaments || []) {
+    const r = pieceReveal(piece, { owned, unlockById, drops });
+    if (r.state === 'hidden') continue;
+    drawn.push({ piece, r });
+  }
+  const total = drawn.length;
+  const heldCount = drawn.filter(({ r }) => r.state === 'held').length;
+
+  app.innerHTML = `
+    <div class="screen compendium" data-surface="compendium">
+      <h1 class="title-big">ARMAMENTS</h1>
+      <p class="subtitle">${heldCount} OF ${total} HELD</p>
+      <div class="cp-scroll"><div class="cp-sections"></div></div>
+      <button id="cp-back">BACK</button>
+    </div>`;
+
+  const host = app.querySelector('.cp-sections');
+  for (const sec of sections(drawn.map(({ piece }) => piece))) {
+    const mine = drawn.filter(({ piece }) => piece.kind === sec.kind);
+    const have = mine.filter(({ r }) => r.state === 'held').length;
+    const box = document.createElement('section');
+    box.className = 'cp-section';
+    box.innerHTML = `<h2 class="cp-head">${esc(sec.label)}<span class="cp-count">${have}/${mine.length}</span></h2>`
+      + '<div class="cp-grid"></div>';
+    const grid = box.querySelector('.cp-grid');
+    for (const { piece, r } of mine) grid.appendChild(cell(piece, r, eq.modFields));
+    host.appendChild(box);
+  }
+
+  app.querySelector('#cp-back').addEventListener('click', onBack);
+}
+
+
+Object.assign(module.exports, { mountCompendium });
 
 },
 "src/ui/components/overlay.js": function (module, exports, require) {
