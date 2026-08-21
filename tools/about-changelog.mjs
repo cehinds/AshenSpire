@@ -288,6 +288,13 @@ async function selftest() {
       replace: 'export function shouldLinkChangelog() {\n  return true; // planted: release artifact can navigate externally\n}',
       expect: 'release standalone changelog gained navigable anchor',
     },
+    {
+      name: 'release standalone renderer call-site forces changelog anchors', file: 'src/ui/screens/about.js',
+      find: 'changelogHtml(changelog, { linkExternal: changeLinks })',
+      replace: 'changelogHtml(changelog, { linkExternal: true })',
+      expect: 'release standalone changelog gained navigable anchor',
+      standalone: true,
+    },
   ];
   for (const plant of uiPlants) {
     const tempParent = mkdtempSync(join(tmpdir(), 'about-changelog-plant-'));
@@ -306,7 +313,21 @@ async function selftest() {
       const before = readFileSync(target, 'utf8');
       if (!before.includes(plant.find)) throw new Error(`${plant.name}: plant site drifted`);
       writeFileSync(target, before.replace(plant.find, plant.replace));
-      const child = spawnSync(process.execPath, [SCRIPT, '--root', tempRoot, '--probe-source'], {
+      if (plant.standalone) {
+        for (const args of [
+          ['init', '-q'],
+          ['add', '-A'],
+          ['-c', 'user.name=About Plant', '-c', 'user.email=about-plant@example.invalid', 'commit', '-q', '-m', 'standalone plant'],
+        ]) {
+          const git = spawnSync('git', args, { cwd: tempRoot, encoding: 'utf8', timeout: 60000 });
+          if (git.status !== 0) throw new Error(`${plant.name}: git ${args[0]} failed: ${git.stderr || git.stdout}`);
+        }
+        const built = spawnSync(process.execPath, [resolve(tempRoot, 'tools/launch.mjs'), '--build-only'], {
+          cwd: tempRoot, encoding: 'utf8', timeout: 60000,
+        });
+        if (built.status !== 0) throw new Error(`${plant.name}: standalone build failed: ${built.stderr || built.stdout}`);
+      }
+      const child = spawnSync(process.execPath, [SCRIPT, '--root', tempRoot, ...(plant.standalone ? [] : ['--probe-source'])], {
         cwd: tempRoot, encoding: 'utf8', timeout: 60000,
       });
       const output = `${child.stdout || ''}\n${child.stderr || ''}`;
