@@ -15,6 +15,28 @@ node tests/run-node.mjs        # CI-style, exits 1 on failure
 # or open tests/index.html in a browser — same suite, green/red list
 ```
 
+## The CI door: a tool's silence is not its success (#12)
+
+Every CI step that runs a checker is wrapped:
+
+```
+node tools/verdict.mjs -- node tools/verify-shipped.mjs
+```
+
+`verdict.mjs` refuses two greens CI used to accept, because CI reads exit codes
+only: a tool that **exits 0 printing nothing** (its `main()` never ran on that
+platform) and a tool whose verdict **counts zero** ("OK — 0 checks passed").
+Exit codes are distinct on purpose — `3` is silence, `1` is a real failure or a
+zero-work green — because those need different fixes.
+
+**So a tool that CI trusts must print a counted verdict.** The accepted forms
+are a closed table at the top of `verdict.mjs` (`N checks passed`, `PASS — n/m`,
+`GREEN (n/m)`, `n passed, m failed`, `N … held`, `N caught`, `n of m … ran`). An
+unknown grammar is treated as silence, loudly, with the tool named — adding a
+row to that table is a contract change and ships with a plant in
+`node tools/verdict.mjs --selftest`, which runs first in CI so the door is never
+trusted unwatched.
+
 ## The four layers (dependencies point down only)
 
 ```
