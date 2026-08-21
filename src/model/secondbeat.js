@@ -331,6 +331,19 @@ export const ACTIONS = Object.freeze({
     hazard: 'choosing',
     note: 'a gain, and the player reached for it — the same ruling SAFE_OPS makes about addRelic',
   },
+  rewardContinue: {
+    of: 'leaving the reward screen and resolving the remaining offer',
+    lives: 'src/ui/screens/reward.js',
+    surface: 'reward',
+    // Continue closes the offer. In auto mode it also applies every pending
+    // reward; in manual mode every untouched reward is left behind. Neither
+    // result can be undone after navigation, and the control follows a column
+    // of adjacent reward rows a thumb is already selecting from.
+    stakes: 'run',
+    undo: 'none',
+    hazard: 'pointing',
+    note: 'the irreversible exit immediately follows the reward rows; a short press must remain an abort',
+  },
   draftPick: {
     of: 'drafting a card into a custom climb',
     lives: 'src/ui/screens/draft.js',
