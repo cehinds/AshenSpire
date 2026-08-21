@@ -70,8 +70,12 @@ if (process.argv.includes('--selftest')) {
     }, {
       name: 'non-targeting drag incorrectly paints enemy aim silhouettes',
       file: 'src/ui/screens/combat.js',
-      find: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims([]);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
-      replace: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims(inField ? livingEnemyEls() : []);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
+      // Context trimmed to the block itself when #311 put `if (selfOnlyTarget)
+      // showSelfAim(legal);` between it and the `const state` line — the plant
+      // read DRIFTED, which is doorplant working. The plant's substance is
+      // unchanged; only the adjacency it quoted moved.
+      find: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims([]);', '      }'),
+      replace: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims(inField ? livingEnemyEls() : []);', '      }'),
       expectRed: /FAIL non-targeting drag produces no enemy aim/,
     }, {
       name: 'an open read keeps the press, so a slow drag can never start',
