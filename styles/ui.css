@@ -1186,6 +1186,27 @@ button.rs-reset {
 .disc-reveal .disc-lines { margin: 0; padding-left: 1.4rem; color: var(--muted); font-size: 1.05rem; }
 .disc-reveal .disc-receipt { margin: 0.4rem 0 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.04em; }
 
+/* #282 — the shrine's two secondary actions are one compact fold column.
+   Every selector stays under the shrine host: the shared disclosure remains
+   unchanged for creation, merchant, combat, and armament consumers. */
+.shrine-screen .shrine-folds { width: min(100%, 40rem); }
+.shrine-screen .shrine-folds .disc-reveal > .class-pick {
+  width: 100%; padding: 1.2rem; cursor: default; transform: none;
+}
+.shrine-screen .shrine-folds .disc-reveal > .class-pick:hover {
+  border-color: var(--line-soft); transform: none;
+}
+.shrine-screen .shrine-folds .disc-face:disabled {
+  opacity: 0.45; cursor: default; border-color: var(--line-soft);
+}
+.shrine-screen .shrine-folds .disc-face:disabled:hover { border-color: var(--line-soft); }
+:root[data-layout='narrow'] .shrine-screen .shrine-folds .disc-reveal > .class-pick {
+  display: block; text-align: center;
+}
+:root[data-layout='narrow'] .shrine-screen .shrine-folds .disc-reveal > .class-pick .glyph {
+  margin-bottom: 0.8rem;
+}
+
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
 .hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }

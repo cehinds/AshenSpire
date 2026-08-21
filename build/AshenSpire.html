@@ -1489,6 +1489,27 @@ button.rs-reset {
 .disc-reveal .disc-lines { margin: 0; padding-left: 1.4rem; color: var(--muted); font-size: 1.05rem; }
 .disc-reveal .disc-receipt { margin: 0.4rem 0 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.04em; }
 
+/* #282 — the shrine's two secondary actions are one compact fold column.
+   Every selector stays under the shrine host: the shared disclosure remains
+   unchanged for creation, merchant, combat, and armament consumers. */
+.shrine-screen .shrine-folds { width: min(100%, 40rem); }
+.shrine-screen .shrine-folds .disc-reveal > .class-pick {
+  width: 100%; padding: 1.2rem; cursor: default; transform: none;
+}
+.shrine-screen .shrine-folds .disc-reveal > .class-pick:hover {
+  border-color: var(--line-soft); transform: none;
+}
+.shrine-screen .shrine-folds .disc-face:disabled {
+  opacity: 0.45; cursor: default; border-color: var(--line-soft);
+}
+.shrine-screen .shrine-folds .disc-face:disabled:hover { border-color: var(--line-soft); }
+:root[data-layout='narrow'] .shrine-screen .shrine-folds .disc-reveal > .class-pick {
+  display: block; text-align: center;
+}
+:root[data-layout='narrow'] .shrine-screen .shrine-folds .disc-reveal > .class-pick .glyph {
+  margin-bottom: 0.8rem;
+}
+
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
 .hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }
@@ -34480,7 +34501,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0c50f3bcc3';
+const SOURCE = '152d2ecf7a';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34514,7 +34535,7 @@ const SOURCE = '0c50f3bcc3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0912';
+const ORDINAL = '0918';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43708,6 +43729,7 @@ const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } = require("src/model/gracerefill.js");
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
@@ -43778,7 +43800,7 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openFold = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -43798,7 +43820,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   const level = levelUpPlan(registries, run, { pointsPerLevel: levelValue });
 
   app.innerHTML = `
-    <div class="screen">
+    <div class="screen shrine-screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       ${refillLineHtml(registries, refill)}
@@ -43813,6 +43835,9 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           <h3>Smith</h3>
           <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
         </div>
+      </div>
+      <div class="shrine-folds"></div>
+      <div class="shrine-fold-source" hidden>
         <div class="class-pick" id="flask-reallocate">
           <div class="glyph">⚗</div>
           <h3>Reallocate Flask Charges</h3>
@@ -43888,6 +43913,37 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
 
+  // FLASKS AND LEVEL UP SHARE THE HOUSE DISCLOSURE, rather than growing a
+  // shrine-only accordion. The live nodes keep the existing controls and their
+  // model-owned data seam intact; the renderer owns the collapsed faces,
+  // one-open-at-a-time rule, and aria-expanded state.
+  const flaskPanel = app.querySelector('#flask-reallocate');
+  const levelPanel = app.querySelector('#level-opt');
+  const fold = mountDisclosure(app.querySelector('.shrine-folds'), [
+    {
+      key: 'shrine:flasks', kind: 'pick', disclosure: 'face',
+      face: { label: 'FLASKS', value: `${charge.assigned} / ${charge.capacity}` },
+      reveal: { node: flaskPanel, sense: 'Reallocate charges without changing the total.' },
+    },
+    {
+      key: 'shrine:level', kind: 'pick', disclosure: 'face',
+      face: {
+        label: 'LEVEL UP',
+        value: level.blockedBy === 'cinders'
+          ? `${level.short} cinders short`
+          : level.capped ? 'level cap reached' : `${level.cost} cinders`,
+      },
+      reveal: { node: levelPanel, sense: 'Spend cinders to improve one attribute.' },
+    },
+  ]);
+  app.querySelector('.shrine-fold-source').remove();
+  const levelFace = app.querySelector('[data-face="shrine:level"]');
+  if (!level.offerable) {
+    levelFace.disabled = true;
+    levelFace.setAttribute('aria-disabled', 'true');
+  }
+  if (openFold === 'shrine:flasks' || (openFold === 'shrine:level' && level.offerable)) fold.open(openFold);
+
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
       onConfirm: () => {
@@ -43935,7 +43991,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] }, openFold: 'shrine:flasks' });
     });
   }
   // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
@@ -43958,7 +44014,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           // the price has moved, the purse has moved, and so has a derived pool
           // the Rest panel is quoting. A screen that stayed put would be
           // offering the old price for the next point.
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openFold: 'shrine:level' });
         },
       });
     }
