@@ -372,6 +372,40 @@ function accessAfterExpression(tokens, start, end) {
   return access?.static && access.name === 'pathname' ? access : null;
 }
 
+function isStaticObjectPropertyName(tokens, index) {
+  let round = 0;
+  let square = 0;
+  let curly = 0;
+  let objectOpen = -1;
+  for (let i = index - 1; i >= 0; i--) {
+    const value = tokens[i].value;
+    if (value === ')') { round++; continue; }
+    if (value === ']') { square++; continue; }
+    if (value === '}') { curly++; continue; }
+    if (value === '(') {
+      if (round > 0) { round--; continue; }
+      return false;
+    }
+    if (value === '[') {
+      if (square > 0) { square--; continue; }
+      return false;
+    }
+    if (value === '{') {
+      if (curly > 0) { curly--; continue; }
+      if (round === 0 && square === 0 && tokens[i].blockOpen === 'expression') objectOpen = i;
+      break;
+    }
+  }
+  if (objectOpen < 0) return false;
+
+  const entryStart = (topLevelIndexes(tokens, objectOpen + 1, index, ',').at(-1) ?? objectOpen) + 1;
+  let key = entryStart;
+  if (['async', 'get', 'set'].includes(tokens[key]?.value)) key++;
+  if (tokens[key]?.value === '*') key++;
+  if (key !== index) return false;
+  return tokens[index + 1]?.value === ':' || tokens[index + 1]?.value === '(';
+}
+
 function destructureBefore(tokens, assignment) {
   const close = tokens[assignment - 1]?.value;
   const openValue = close === '}' ? '{' : close === ']' ? '[' : null;
@@ -999,6 +1033,7 @@ function findPathnameMisuses(tokens, errors) {
     if (declarations.has(i)) continue;
     if (parameters.parameterIndexes.has(i) || parameters.keyIndexes.has(i) ||
         !isAlias(token.value, i)) continue;
+    if (['.', '?.'].includes(tokens[i - 1]?.value) || isStaticObjectPropertyName(tokens, i)) continue;
     const access = accessAfterExpression(tokens, i, i);
     if (access) {
       if (!ASSIGNMENTS.has(tokens[access.end]?.value)) add(i);
@@ -1024,6 +1059,55 @@ function isTaggedTemplate(tokens, index) {
      ['string', 'number', 'regex', 'template'].includes(previous.type) || [')', ']'].includes(previous.value)));
 }
 
+function templateOperandAt(tokens, start) {
+  const first = tokens[start];
+  if (first?.type !== 'template' || first.tagged) return null;
+  if (!first.hasInterpolation) return { dynamic: false, end: start + 1, prefix: first.value };
+  let cursor = start + 1;
+  let depth = 0;
+  while (cursor < tokens.length) {
+    if (tokens[cursor].value === '${') depth++;
+    else if (tokens[cursor].value === '}$' && --depth === 0) {
+      const segment = tokens[cursor + 1];
+      if (segment?.type !== 'template') return null;
+      cursor += 2;
+      if (!segment.hasInterpolation) return { dynamic: true, end: cursor, prefix: first.value };
+      continue;
+    }
+    cursor++;
+  }
+  return null;
+}
+
+function concatenationOperandAt(tokens, start) {
+  const token = tokens[start];
+  if (token?.type === 'string') return { dynamic: false, end: start + 1, prefix: token.value };
+  const template = templateOperandAt(tokens, start);
+  if (template) return template;
+  if (token?.value !== '(' || !regexMayStart(tokens[start - 1])) {
+    return token ? { dynamic: true, end: start + 1, prefix: '' } : null;
+  }
+  const close = findClose(tokens, start);
+  if (close < 0) return null;
+  const inner = concatenationPrefixAt(tokens, start + 1, close);
+  if (!inner || inner.end !== close) return { dynamic: true, end: close + 1, prefix: '' };
+  return { ...inner, end: close + 1 };
+}
+
+function concatenationPrefixAt(tokens, start, limit = tokens.length) {
+  const first = concatenationOperandAt(tokens, start);
+  if (!first || first.end > limit) return null;
+  let { dynamic, end, prefix } = first;
+  while (end < limit && tokens[end]?.value === '+') {
+    const next = concatenationOperandAt(tokens, end + 1);
+    if (!next || next.end > limit) break;
+    if (!dynamic) prefix += next.prefix;
+    dynamic ||= next.dynamic;
+    end = next.end;
+  }
+  return { dynamic, end, prefix };
+}
+
 function findHandRolledFileUrls(tokens) {
   const findings = [];
   for (let i = 0; i < tokens.length; i++) {
@@ -1031,12 +1115,12 @@ function findHandRolledFileUrls(tokens) {
     if (token.type === 'template' && !token.tagged &&
         token.hasInterpolation && /^file:\/{2,}/.test(token.value)) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
+      continue;
     }
-    let afterLiteral = i + 1;
-    for (let groups = groupDepthBefore(tokens, i); groups > 0 && tokens[afterLiteral]?.value === ')'; groups--) {
-      afterLiteral++;
-    }
-    if (token.type === 'string' && /^file:\/{2,}/.test(token.value) && tokens[afterLiteral]?.value === '+') {
+    if (token.type !== 'string' && token.type !== 'template') continue;
+    const start = i - groupDepthBefore(tokens, i);
+    const expression = concatenationPrefixAt(tokens, start);
+    if (expression && /^file:\/{2,}/.test(expression.prefix) && expression.dynamic) {
       findings.push({ index: token.start, kind: 'hand-rolled file URL' });
     }
   }
@@ -1378,6 +1462,27 @@ function selftest() {
     ['awaited call result around URL stays clean', "async function f(){(await wrap(new URL('./x',import.meta.url))).pathname}", 0, 0, 0],
     ['await-wrapped URL non-path member stays clean', "async function f(){(await new URL('./x',import.meta.url)).origin}", 0, 0, 0],
     ['await over direct URL pathname stays caught', "async function f(){await new URL('./x',import.meta.url).pathname}", 1, 0, 0],
+    ['unrelated dot member named like alias stays clean', "const u=new URL('./x',import.meta.url);obj.u;fileURLToPath(u)", 0, 0, 0],
+    ['unrelated optional member named like alias stays clean', "const u=new URL('./x',import.meta.url);obj?.u;fileURLToPath(u)", 0, 0, 0],
+    ['static object key named like alias stays clean', "const u=new URL('./x',import.meta.url);const obj={u:1};fileURLToPath(u)", 0, 0, 0],
+    ['static object method named like alias stays clean', "const u=new URL('./x',import.meta.url);const obj={u(){return 1}};fileURLToPath(u)", 0, 0, 0],
+    ['static destructure key named like alias stays clean', "const u=new URL('./x',import.meta.url);const {u:value}=obj;fileURLToPath(u)", 0, 0, 0],
+    ['unrelated ternary member names stay clean', "const u=new URL('./x',import.meta.url);ok?obj.u:other.u;fileURLToPath(u)", 0, 0, 0],
+    ['unrelated static computed member name stays clean', "const u=new URL('./x',import.meta.url);obj['u'];fileURLToPath(u)", 0, 0, 0],
+    ['object shorthand alias remains fail closed', "const u=new URL('./x',import.meta.url);const obj={u};fileURLToPath(u)", 0, 0, 1],
+    ['object value alias remains fail closed', "const u=new URL('./x',import.meta.url);const obj={key:u};fileURLToPath(u)", 0, 0, 1],
+    ['computed receiver alias remains fail closed', "const u=new URL('./x',import.meta.url);obj[u];fileURLToPath(u)", 0, 0, 1],
+    ['ternary alias use remains fail closed', "const u=new URL('./x',import.meta.url);ok?u:platformValue;fileURLToPath(u)", 0, 0, 1],
+    ['split two-slash file prefix is caught', "const href='file:'+'//'+path", 0, 1, 0],
+    ['split three-slash file prefix is caught', "const href='file:'+ '///' +path", 0, 1, 0],
+    ['scheme and slash fragments are both split', "const href='file'+':'+'//'+path", 0, 1, 0],
+    ['multiline split file prefix is caught', "const href='file:' +\n  '//' +\n  path", 0, 1, 0],
+    ['grouped left split file prefix is caught', "const href=('file:')+'//'+path", 0, 1, 0],
+    ['grouped right split file prefix is caught', "const href='file:'+('//'+path)", 0, 1, 0],
+    ['split four-slash file prefix is caught', "const href=('file:')+('////')+path", 0, 1, 0],
+    ['static template prefix before dynamic template is caught', 'const href=`file:`+`//${path}`', 0, 1, 0],
+    ['split static file URL without dynamic operand stays clean', "const href='file:'+'//static/path'", 0, 0, 0],
+    ['ordinary string spelling split prefix stays clean', "const prose=\"'file:'+'//'+path\"", 0, 0, 0],
   ];
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
