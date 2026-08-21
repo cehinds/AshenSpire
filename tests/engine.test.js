@@ -70,7 +70,7 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -4817,7 +4817,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
-  test('61. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
+  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
+    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
+    // the first option in the display". Order on the screen IS array order in
+    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
+    // sequence — so this reads through the same door the renderer uses, not a
+    // copy of the table.
+    const display = categoryHandler('Display').rows;
+    eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
+    eq(display.filter((r) => r.key === 'fullscreen').length, 1,
+      'and it appears exactly once — the row MOVED, it was not copied');
+    // The other edge: a move re-orders, it must not shrink. The row that held
+    // first place is still filed, just no longer first.
+    const sprites = display.findIndex((r) => r.key === 'useSprites');
+    assert(sprites > 0, 'Character sprites is still a Display row, behind Fullscreen');
+    // And the toggle kept its shape in transit: same type, same label, so the
+    // renderer draws the same control in the new seat.
+    const fs = display[0];
+    eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
+    eq(fs.label, 'Fullscreen', 'same label');
+  });
+
+  test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
     // Constantine, 2026-08-15: "the reward should start with an initial menu of
     // reward types (card, potion, armament)". His answer on the page: Continue
     // is ALWAYS pressable and a setting decides what it means — auto-collect ON

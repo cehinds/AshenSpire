@@ -164,16 +164,46 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const panel = host.querySelector('.disc-reveal');
   const buttons = new Map();
   let openKey = null;
-  // The one live node this host folds, if any. It is adopted ONCE: a picker
-  // re-parented on every open would lose nothing visible and would still be a
-  // second renderer's habit — move it in, then only `hidden` moves.
-  const held = rows.find((entry) => entry.reveal && entry.reveal.node) || null;
-  if (held) panel.appendChild(held.reveal.node);
+  // The live nodes this host folds — ONE PER ENTRY since E4 (#249), because a
+  // host with six folded pickers is the creation screen and a host with four
+  // is the shop, and "one held node per mount" was a limit of the first
+  // caller, not a rule of the mechanism. Each is adopted ONCE, at mount: a
+  // picker re-parented on every open would lose nothing visible and would
+  // still be a second renderer's habit — move it in, then only `hidden` moves.
+  // INLINE display, NOT the hidden attribute, and the choice is a measured
+  // one (E4): `[hidden]`'s UA rule is `display: none` at attribute-selector
+  // specificity, and the adopted pickers carry author display rules at the
+  // same specificity (`.cz-opts { display: flex }`, `.class-row`,
+  // `.cz-keepsakes`) — author origin wins, so `hidden` on these nodes paints
+  // ANYWAY. Watched red through creationbrief before this line: five shut
+  // sections with every option on the glass. An inline style loses to
+  // nothing but !important, which nothing here uses. The attribute is still
+  // set for what it is — semantics — while the inline style owns the paint.
+  const held = new Map();
+  const stash = (node) => { node.hidden = true; node.style.display = 'none'; };
+  const surface = (node) => { node.hidden = false; node.style.display = ''; };
+  for (const entry of rows) {
+    if (entry.reveal && entry.reveal.node) {
+      stash(entry.reveal.node);
+      held.set(entry.key, entry.reveal.node);
+      panel.appendChild(entry.reveal.node);
+    }
+  }
+  // Word reveals render HERE, never into panel.innerHTML: the panel now owns
+  // adopted nodes, and innerHTML on the shared parent would destroy them. The
+  // wrapper is invisible to every selector in ui.css (all descend from
+  // `.disc-reveal`) and to onefold.mjs's vocabulary count, checked when added.
+  const words = document.createElement('div');
+  words.className = 'disc-words';
+  words.hidden = true;
+  panel.appendChild(words);
 
   function close() {
     openKey = null;
     panel.hidden = true;
-    if (!held) panel.innerHTML = '';
+    words.hidden = true;
+    words.innerHTML = '';
+    for (const node of held.values()) stash(node);
     panel.removeAttribute('data-reveal-for');
     for (const button of buttons.values()) {
       button.setAttribute('aria-expanded', 'false');
@@ -213,7 +243,12 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     if (!entry) return;
     close();
     openKey = key;
-    if (!held) panel.innerHTML = revealHtml(entry);
+    const node = held.get(key);
+    if (node) surface(node);
+    else {
+      words.innerHTML = revealHtml(entry);
+      words.hidden = false;
+    }
     const button = buttons.get(key);
     // Placed BEFORE it is un-hidden: see placeUnderRow.
     placeUnderRow(button);

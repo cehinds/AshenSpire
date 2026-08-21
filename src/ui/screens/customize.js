@@ -8,6 +8,7 @@ import { LOCKED_CLASSES } from '../../content/index.js';
 import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
+import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { creationBrief } from '../../model/creationBrief.js';
 import { relicText } from '../components/card.js';
@@ -61,14 +62,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
   //    screen was reachable by the pad or keyboard cursor at all.
   //
-  // 4. ONE OF THESE SIX ROWS IS FOLDED (MR-151, 2026-08-16; MR-171 took
-  //    KEEPSAKE back out the same day and MR-189 took SIGIL and SPRITE out
-  //    after them). The `<p class="cz-label">` for TINT is REPLACED at mount by
-  //    a disclosure face carrying the same word plus the current choice IN
-  //    WORDS; the picker itself is adopted into that face's reveal panel and
-  //    starts hidden. CLASS, STARTING KIT, KEEPSAKE, SIGIL and SPRITE arrive
-  //    open, exactly as this markup writes them. See "THE FOLD" below — the
-  //    markup here is what the screen starts as, not what it arrives as.
+  // 4. ALL SIX ROWS FOLD (E4 / #249, superseding MR-151/170/171/189's one-row
+  //    scope — see "THE FOLD" below for why their reasons moved rather than
+  //    died). The six wrappers and their `<p class="cz-label">`s written here
+  //    are BUILD SCAFFOLDING: the pickers are constructed inside them, then
+  //    one mountDisclosure over `.cz-fields` replaces the lot with six faces
+  //    (label + current choice in words) and adopts every picker into the one
+  //    reveal panel. CLASS arrives open — his words. The markup here is what
+  //    the screen starts as, never what it arrives as.
   //
   // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
   // it is gated on Constantine's word, which he has not given.
@@ -270,82 +271,116 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     ksBox.appendChild(el);
   });
 
-  // ---- THE FOLD (MR-151, narrowed by MR-171 and MR-189) ------------------
-  // Constantine, 2026-08-16: "go ahead and allow the fold". He had already said
-  // the stat descriptions "kind of suck"; D26 answered that for the preview
-  // pane and left `.cz-fields` as six stacked rows, four of which are picked
-  // once (or never) and then sit open for the rest of the screen. ONE of those
-  // four folds, BY THE SAME MECHANISM — mountDisclosure, not a second renderer.
-  // The extension is `reveal.node` in components/disclosure.js; there is no
-  // fold code in this file, on purpose. A second one is what tools/onefold.mjs
-  // counts and what handrenderers.mjs is still paying for on the hand.
+  // ---- THE FOLD, NOW THE WHOLE COLUMN (E4 / #249) -------------------------
+  // Constantine, 2026-08-15, verbatim: "all the options to be panel buttons
+  // that expand to show more details... the top menu (class) should be
+  // expanded. once selected(short hold) then it collapses and the next section
+  // auto opens... keep options minimum in detail with tool tips on hold or
+  // hover." Filed as E4; dealt to this seat by Marina's wave-two (family
+  // f30e1ca) as one pattern with B9/B10 and E2's shop bars.
   //
-  // DEFAULT FOLDED, and that is the whole of his yes. The other reading —
-  // "allow" as *available*, a fold that defaults open — leaves the arrival
-  // screen exactly as long as the one he called bad, so it answers nothing.
+  // THIS SUPERSEDES MR-151/170/171/189's ONE-ROW SCOPE, AND THEIR REASONS MOVE
+  // RATHER THAN DIE. MR-189 judged each row's fold on what its face buys in
+  // words ON A STACKED SCREEN, where every other row sat open beside it — and
+  // there it was right: folding KEEPSAKE hid the one choice that changes the
+  // run behind a row reading `KEEPSAKE Nothing`. E4 replaces the stacked
+  // screen with a TURN-TAKING one. Each section is auto-opened AT ITS TURN, so
+  // its options get the glass they had when unfolded — nothing is hidden
+  // behind a choice, it is scheduled — and after its turn the face is the
+  // RECEIPT of the pick in words (`KEEPSAKE Old Cinder`), which is the exact
+  // thing MR-171 measured as missing. SIGIL's face value is still the glyph:
+  // his own sketch is `<icon> <option name>`, and the glyph IS that option's
+  // name. tools/creationbrief.mjs's roster moved with this table (its rule:
+  // one line here + one line there, red at both edges until both exist).
   //
-  // A ROSTER IS NOT A DECISION — IT IS FOUR DECISIONS WEARING ONE NAME. That is
-  // Marina's own words ruling her own error (MR-189): a count of options is not
-  // a count of legibility, so each row is judged on what its FACE BUYS IN
-  // WORDS, and only one row buys anything.
+  // THE GESTURES, per the recorded answer on the E4 row: TAP selects; HOLD /
+  // HOVER explains (attachTooltip, the affordance this screen already speaks
+  // on every face and option). His "short hold to select" is NOT built and NOT
+  // discarded — the recorded answer defers it to a Settings option, and
+  // settings.js is deliberately untouched from this lane while E3 serializes
+  // that file under another seat. Wiring the option when that lane lands is
+  // one listener swap in the advance below.
   //
-  //   TINT   5 unlabelled swatches → the face says `TINT Goldbough gold`. The
-  //          current colour's NAME, to touch, FOR THE FIRST TIME. See the
-  //          comment on the swatch above: a tint swatch is pure colour with no
-  //          text of its own, and `attachTooltip` answers hover and pad-focus
-  //          only. UNFOLDED, TINT ON A PHONE IS FIVE UNTITLED COLOUR BLOBS.
-  //          (Viki, at e64e196: the fold is the first mechanism on this screen
-  //          that tells a touch player the colour they are wearing.)
-  //   SIGIL  6 glyphs → the face value is `state.glyph`, THE EMOJI AGAIN.
-  //          Nothing in words, and it costs a tap on the one row you pick by
-  //          look. OUT (MR-189).
-  //   SPRITE 3 chips already reading Rendered / Classic / Sigil → the face
-  //          repeats one of them. Nothing in words, a tap, and MORE vertical
-  //          than it saves, because a 44 px face replaces a compact label.
-  //          OUT (MR-189).
-  //   KEEPSAKE  four tiles carrying NAME AND EFFECT in plain words ('Old Cinder
-  //          · Begin the climb with 50 cinders') became one row reading
-  //          `KEEPSAKE Nothing`, and it is the only one of the four that
-  //          changes the run. OUT (MR-170/171); measured tiles painted 4 → 0.
+  // ONE MOUNT, SIX ENTRIES — one panel at a time is the mount's own rule, so
+  // "one section open" needs no coordination code. The mechanism's per-entry
+  // live reveal is components/disclosure.js's E4 generalization; there is
+  // still no fold code in this file, and tools/onefold.mjs still counts one.
   //
-  // WHAT IS NOT FOLDED, and it is a decision, not an omission: CLASS, STARTING
-  // KIT, KEEPSAKE, SIGIL and SPRITE. The first three change the run and are what
-  // the arrival screen is FOR; folding them would hide the choosing behind a
-  // choice. The last two say in their own options everything a face could say.
-  //
-  // THIS IS NOT A LENGTH ARGUMENT, and the length argument is WITHDRAWN
-  // (MR-183): none of Constantine's 47 quoted directions names length, D26's
-  // words are about CLUTTER, and his nearest adjacent words sanction vertical
-  // scrolling. The metric this fold answers is the one tools/creationbrief.mjs
-  // prints — OPTIONS OFF THE GLASS BEHIND FACES. Do not re-argue it in pixels.
-  //
-  // IT REFOLDS AS TWO LINES, ON PURPOSE. Constantine has been told, not asked,
-  // and his veto is free: putting any row back is one row in the table below
-  // plus one row in tools/creationbrief.mjs's roster — and creationbrief goes
-  // RED at both edges until the second line is written, so the two cannot
-  // drift apart. Nothing else on this screen needs touching either way.
-  const FOLDED = [
+  // AUTO-ADVANCE IS A PICK, NEVER A TAP. Tapping a face only opens or closes
+  // it — "can be re collapsed back", his message 4 — so a player can revisit
+  // any section without being marched forward. Picking an OPTION inside the
+  // open panel is what advances: the listener sits on the adopted box at the
+  // bubbling tail, so every option's own state-writing handler has already run
+  // when the faces refresh, and a locked option advances nothing.
+  const SECTIONS = [
+    { key: 'pick:class', label: 'CLASS', box: classes, tip: 'Choose who climbs. Tap a class to select it.',
+      value: () => { const c = registries.classes.all().find((x) => x.id === state.classId); return c ? c.name : state.classId; } },
+    { key: 'pick:kit', label: 'STARTING KIT', box: kitBox, tip: 'The gear you begin with. Tap to change it.',
+      value: () => { const v = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId); return v ? v.label : '—'; } },
+    { key: 'pick:keepsake', label: 'KEEPSAKE', box: ksBox, tip: 'One starting boon. Hold an option to read what it does.',
+      value: () => { const k = KEEPSAKES.find((x) => x.id === state.keepsakeId); return k ? k.name : 'Nothing'; } },
+    { key: 'pick:sigil', label: 'SIGIL', box: glyphBox, tip: 'The mark combat shows when sprites are off.',
+      value: () => state.glyph },
     { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
       value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'How your figure is drawn on the board.',
+      value: () => { const s = SPRITE_STYLES.find((x) => x.id === state.spriteStyle); return s ? s.name : '—'; } },
   ];
-  for (const row of FOLDED) {
-    // The host is the row wrapper `.cz-fields` already has — its <p class label>
-    // is replaced by the face, which carries the same word plus the answer.
-    const host = row.box.parentElement;
-    host.classList.add('cz-disc');
-    const mount = mountDisclosure(host, [{
-      key: row.key, kind: 'pick', disclosure: 'face',
-      face: { label: row.label, value: row.value() },
-      reveal: { node: row.box, sense: row.tip },
-    }]);
-    row.refresh = () => mount.setValue(row.key, row.value());
-  }
+  const fields = app.querySelector('.cz-fields');
+  fields.classList.add('cz-disc');
+  const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.box, sense: row.tip },
+  })));
   // One call after any pick — the faces are the screen's answer to "what did I
   // choose?", so they are re-read from `state`, never written twice.
-  const refreshFolds = () => { for (const row of FOLDED) row.refresh(); };
-  for (const row of FOLDED) {
-    row.box.addEventListener('click', refreshFolds);
-  }
+  const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
+  SECTIONS.forEach((row, i) => {
+    // THE CURSOR'S CLAIM IS READ AT CAPTURE — before any option's own listener
+    // can rebuild the box. KIT's does (renderKits), and after the rebuild the
+    // `.gp-focus` element is detached: a document query at the bubbling tail
+    // finds nothing and cannot tell "the pick came through the cursor" from
+    // "no cursor was ever summoned". Decided the moment the press lands.
+    let cursorWasInside = false;
+    row.box.addEventListener('click', () => {
+      const cursor = document.querySelector('.gp-focus');
+      cursorWasInside = !!cursor && row.box.contains(cursor);
+    }, true);
+    row.box.addEventListener('click', (ev) => {
+      // OWNERSHIP IS THE DISPATCH, NOT THE TREE (Vira's P1 on #288, found by
+      // Codex). This listener sits ON row.box, so any event it hears travelled
+      // through this box when it was dispatched — that is the whole ownership
+      // question. The old `row.box.contains(picked)` re-asked it of the tree
+      // as it stands NOW, and KIT is the one section whose own pick listener
+      // rebuilds its box (renderKits) before this bubbling tail runs: the
+      // clicked button was detached, contains() said no, and the flow stalled
+      // at its second section on every kit pick.
+      const picked = ev.target.closest('.cz-opt, .cz-class, .cz-keepsake');
+      refreshFolds();
+      if (!picked || picked.classList.contains('locked')) return;
+      const next = SECTIONS[i + 1];
+      if (next) fold.open(next.key); else fold.close();
+      // A PICK THAT HIDES THE CURSOR'S ELEMENT OWES THE CURSOR A DESTINATION
+      // (Vira's P2 on #288, found by Codex). The advance just stashed this row
+      // — or renderKits detached its buttons outright — so a keyboard/pad
+      // player's next Confirm would fall back to the first focusable, the
+      // CLASS face, and march them back to section one on every pick. The
+      // destination is the flow's own next step: the just-opened section's
+      // current choice (or its first option) — so Confirm-Confirm walks the
+      // whole flow accepting defaults — and BEGIN THE CLIMB when the flow
+      // completes. A mouse pick with the cursor elsewhere transfers nothing:
+      // a player who never summoned the cursor is not handed one.
+      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);
+    });
+  });
+  // "the top menu (class) should be expanded" — his words, and the arrival
+  // state creationbrief.mjs's roster names for exactly one key.
+  fold.open('pick:class');
 
   const nameEl = $('#cz-name');
   nameEl.addEventListener('input', (ev) => {

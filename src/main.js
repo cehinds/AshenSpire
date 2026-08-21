@@ -1976,6 +1976,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
     run.floor = 8;
     run.deck.push(...createDeck(registries.classes.get(run.class).cardPool.slice(0, 10), createIdGen('shot')));
     run.cinders = 999;
+    // AND ONE FLASK IN THE POSE (E2 / #247), same discipline as ?shot=combat's
+    // two: the SELL bar's shelf is the player's own goods, and a fresh run
+    // owns nothing the merchant prices (the starter relic is deliberately
+    // unpriced) — so without this line the one control `shopSell` arms is
+    // ABSENT on the only screen the census can open, and "not wired" and
+    // "nothing to sell" read identically. One flask, authored id, no rng.
+    run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildShopStock(registries, rng, run);
     showShop();
   } else if (shotState === 'reward') {
