@@ -3217,11 +3217,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    itself 26px taller than the viewport. `data-short` is the layout decider's
    existing answer; this selector measures nothing and creates no breakpoint.
    Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again. */
+   wholly readable at the first height where the game must refuse again.
+
+   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
+   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
+   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
+   while this block's paragraph above promised readability. So below the compact
+   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
+   ("turn") the heading already carries in words, and at the one height where it
+   competes with a sentence for pixels, the sentence wins (every mark
+   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
 :root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
-:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
-:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-glyph { display: none; }
 :root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
 :root[data-short='true'] .upright-say { margin-bottom: 6px; }
 :root[data-short='true'] .upright-hint { margin-top: 8px; }
@@ -34440,7 +34447,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '11e9e562ee';
+const SOURCE = '9f400f65a1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -34474,7 +34481,7 @@ const SOURCE = '11e9e562ee';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0901';
+const ORDINAL = '0904';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
