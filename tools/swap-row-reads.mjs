@@ -109,9 +109,140 @@ import { existsSync, mkdirSync, writeFileSync, readFileSync, readdirSync, cpSync
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
+// ---- THE INK READER, ABSORBED FROM linebudget-camera.mjs (#179) ------------
+// Vira's card, and it is one sentence: CAPTURE IS NOT READING. This file called
+// Page.captureScreenshot at four sites and wrote every PNG straight to disk
+// without ever looking at one — it held the thing and discarded it, while a
+// second tool existed only to look. These two functions are that tool's
+// working half, moved here whole; \`linebudget-camera.mjs\` is deleted in the
+// same commit, per its own removal condition.
+//
+// WHAT THE MOVE COSTS, said out loud because it is the real work of this card
+// and not the seventy-five lines: Bjorn's independence claim was "the two
+// readings share no code path below the DOM." Sharing a process does not break
+// that — \`bands()\` reads getClientRects, \`inkBands\` reads pixels, and neither
+// can reach the other. What the merge DOES put at risk is that a future hand
+// makes the ink reading derive from the rect reading (cropping to a band, say,
+// and then counting inside it) — at which point the second coat becomes a
+// mirror. The crop is the row's own box and the count is taken over the WHOLE
+// crop for exactly that reason. The failure direction stays the kind one: a
+// wrong box crops the wrong pixels and the readings DISAGREE. False red, never
+// false green.
+//
+// THE DELETED TOOL'S RECORDED RUNS ARE KEPT, deliberately:
+// `tools/results/linebudget-camera/` holds the crops and the transcript where
+// the crush cell was watched BOTH WAYS (`false-green-red-before-green-dabd7d9.txt`
+// — before: "PASS — the two readings agree at every cell", exit 0; after: 8
+// findings, exit 1). That is the observation this file's INK reading is built
+// on. Deleting the tool deletes a second home for an assertion; deleting its
+// evidence would delete the proof the assertion was ever earned.
+function decodePng(buf) {
+  if (buf.readUInt32BE(0) !== 0x89504e47) throw new Error('not a PNG');
+  let p = 8, w = 0, h = 0, depth = 0, colour = 0, interlace = 0;
+  const idat = [];
+  while (p < buf.length) {
+    const len = buf.readUInt32BE(p);
+    const type = buf.toString('ascii', p + 4, p + 8);
+    const data = buf.subarray(p + 8, p + 8 + len);
+    if (type === 'IHDR') {
+      w = data.readUInt32BE(0); h = data.readUInt32BE(4);
+      depth = data[8]; colour = data[9]; interlace = data[12];
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  if (depth !== 8 || interlace !== 0) throw new Error(`unsupported PNG (depth ${depth}, interlace ${interlace})`);
+  const ch = { 0: 1, 2: 3, 4: 2, 6: 4 }[colour];
+  if (!ch) throw new Error(`unsupported PNG colour type ${colour}`);
+  const raw = inflateSync(Buffer.concat(idat));
+  const stride = w * ch;
+  const out = Buffer.alloc(h * stride);
+  let q = 0;
+  for (let y = 0; y < h; y++) {
+    const f = raw[q++];
+    const line = raw.subarray(q, q + stride); q += stride;
+    const cur = out.subarray(y * stride, (y + 1) * stride);
+    const prev = y ? out.subarray((y - 1) * stride, y * stride) : null;
+    for (let x = 0; x < stride; x++) {
+      const a = x >= ch ? cur[x - ch] : 0;
+      const b = prev ? prev[x] : 0;
+      const c = prev && x >= ch ? prev[x - ch] : 0;
+      let v = line[x];
+      if (f === 1) v += a;
+      else if (f === 2) v += b;
+      else if (f === 3) v += (a + b) >> 1;
+      else if (f === 4) {
+        const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c);
+        v += (pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c);
+      }
+      cur[x] = v & 0xff;
+    }
+  }
+  return { w, h, ch, px: out };
+}
+
+// Bands of ink, counted off the image. The background is the crop's own modal
+// luminance — MEASURED, never typed, because this panel's colour is a token.
+// The two literals are this reader's own and are printed on every run.
+const INK_DELTA = 24;      // luminance away from the crop's background to be ink
+const INK_MIN_PIXELS = 2;  // pixels in a scanline before that line counts as inked
+function inkBands(buf) {
+  const { w, h, ch, px } = decodePng(buf);
+  const lum = new Uint8Array(w * h);
+  for (let i = 0, n = w * h; i < n; i++) {
+    const o = i * ch;
+    lum[i] = ch >= 3 ? Math.round(0.299 * px[o] + 0.587 * px[o + 1] + 0.114 * px[o + 2]) : px[o];
+  }
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < lum.length; i++) hist[lum[i]]++;
+  let bg = 0;
+  for (let v = 1; v < 256; v++) if (hist[v] > hist[bg]) bg = v;
+  const runs = [];
+  let start = -1;
+  for (let y = 0; y < h; y++) {
+    let inked = 0;
+    for (let x = 0; x < w; x++) if (Math.abs(lum[y * w + x] - bg) >= INK_DELTA) inked++;
+    const on = inked >= INK_MIN_PIXELS;
+    if (on && start < 0) start = y;
+    if (!on && start >= 0) { runs.push([start, y - 1]); start = -1; }
+  }
+  if (start >= 0) runs.push([start, h - 1]);
+  // A tall glyph can bridge two bands in a photograph; say so rather than
+  // silently reporting the smaller number as fact.
+  const bridged = runs.some(([a, b]) => (b - a + 1) > Math.max(4, h / 2));
+  return { bands: runs.length, bridged };
+}
+
+// THE ROW, SCROLLED TO AND RE-MEASURED AT PHOTOGRAPH TIME (#179).
+//
+// This exists because the first version of the ink reading cropped using the
+// boxes from the main probe — measured BEFORE the surface was scrolled to the
+// rows — and photographed the wrong pixels: four disagreements on a healthy
+// tree at 390x844, and six unphotographable rows at 360x640 where the row was
+// simply below the fold. Both were false, and the second is the more
+// instructive: this file's own header says the first frame "proves a screen
+// appeared and not that a person can read the thing being gated," and I had
+// just repeated that mistake one layer down. A rect measured at one scroll
+// position is not a box at another.
+//
+// So the box is re-read immediately before the shutter, and `clipped` is
+// answered at that moment too.
+const ROW_BOX = (i) => `(() => {
+  const rows = [...document.querySelectorAll('.equip-resource-change:not(.none)')];
+  const li = rows[${i}];
+  if (!li) return { gone: true };
+  li.scrollIntoView({ block: 'center' });
+  const r = li.getBoundingClientRect();
+  return {
+    x: r.left, y: r.top, w: r.width, h: r.height,
+    clipped: r.top < 0 || r.bottom > innerHeight || r.height <= 0,
+  };
+})()`;
+
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 const oi = args.indexOf('--out');
@@ -276,6 +407,12 @@ const PROBE = `(() => {
       headLines: headLines(li, note),
       noteLines: note ? lines(note) : 0,
       left: rect.left, right: rect.right, width: rect.width, height: rect.height,
+      // THE CROP BOX for the ink reading (#179). CSS px in the viewport's own
+      // frame, which is what Page.captureScreenshot's \`clip\` takes; \`clipped\`
+      // says the row is not wholly on screen, and an unphotographable row is
+      // reported unknown rather than counted.
+      x: rect.left, y: rect.top, w: rect.width, h: rect.height,
+      clipped: rect.top < 0 || rect.bottom > innerHeight || rect.height <= 0,
       // Law 2: proven inside its named container's rendered rect, not assumed.
       insideHost: hostRect ? (rect.left >= hostRect.left - 0.5 && rect.right <= hostRect.right + 0.5) : null,
       insideViewport: rect.left >= -0.5 && rect.right <= innerWidth + 0.5,
@@ -527,6 +664,7 @@ async function main() {
   const findings = [];
   const shots = [];
   const report = [];
+  const inkCells = []; // the ink reading, one cell per photographed row (#179)
 
   for (const shape of SHAPES) {
     await c.send('Emulation.setDeviceMetricsOverride', { width: shape.width, height: shape.height, deviceScaleFactor: shape.dsf, mobile: shape.mobile });
@@ -625,6 +763,54 @@ async function main() {
           findings.push(`${shape.tag}/${rule}: LINE BUDGET — the row occupies ${r.liLines} line(s) but its parts measure ${r.headLines} + ${r.noteLines} = ${r.headLines + r.noteLines}. A line is SHARED between the price and its note, which is the run-on measured in lines instead of in pixels.`);
         }
       }
+      // ---- THE INK READING: what the LINE BUDGET counts is a rect (#179) ----
+      // Vira's card. Every number in the budget above comes out of `bands()`,
+      // reading getClientRects — a claim about LAYOUT, read as a claim about
+      // what a person can see. The cell that proves the difference is a crush:
+      // `.equip-resource-change small { line-height: 0.4 }` leaves the budget
+      // GREEN at li 2 = head 1 + note 1 while the note's two lines are PRINTED
+      // ON TOP OF EACH OTHER and cannot be read at all. The budget gets greener
+      // as that defect deepens — at 0.75 and 0.62 it goes red, at 0.4 green —
+      // which is the tell that it reports on the seam, never on the row.
+      //
+      // So the row is photographed at its own box and the ink is counted. Both
+      // readings are asserted UNCONDITIONALLY: gating the comparison on the
+      // budget being green is the exact bug MR-102 found in the tool this
+      // replaces, where a wrapped head turned the check off silently.
+      for (let i = 0; i < m.rows.length; i++) {
+        const r = m.rows[i];
+        const label = `${shape.tag}/${rule} row ${i}`;
+        const box = await ev(ROW_BOX(i));
+        await sleep(180);
+        const box2 = await ev(ROW_BOX(i)); // settled: the same read twice, after the scroll
+        if (!box2 || box2.gone) { findings.push(`${label}: INK — the row vanished between measure and photograph.`); continue; }
+        if (box2.clipped) { findings.push(`${label}: INK — the row is not wholly on screen after scrollIntoView, so no photograph is possible and no count is reported. Unknown is not green.`); continue; }
+        let read;
+        try {
+          const shot = await c.send('Page.captureScreenshot', {
+            format: 'png',
+            clip: { x: box2.x, y: box2.y, width: Math.max(1, box2.w), height: Math.max(1, box2.h), scale: 2 },
+          });
+          const buf = Buffer.from(shot.data, 'base64');
+          writeFileSync(join(OUT, `ink-${rule}-${shape.tag}-row${i}.png`), buf);
+          read = inkBands(buf);
+        } catch (e) {
+          findings.push(`${label}: INK — the camera could not read its own crop: ${e.message}. Unknown is not green.`);
+          continue;
+        }
+        inkCells.push({ shape: shape.tag, rule, row: i, liLines: r.liLines, ink: read.bands, bridged: read.bridged });
+        if (read.bands !== r.liLines) {
+          findings.push(`${label}: INK — bands() reads ${r.liLines} line(s), ${read.bands} band(s) of ink are painted. The budget is measuring boxes; a person reads what is printed.${read.bridged ? ' (a tall glyph may be bridging two bands in the photograph — read the crop)' : ''}`);
+        }
+        // THE NOTE THAT IS IN THE DOM AND PAINTS NOTHING. Both readings agree at
+        // 1 = 1 + 0 and the player is shown a price that moved with no reason
+        // beside it — the case where agreement is exactly why nothing else
+        // would speak. Carried over from the tool this absorbs.
+        if (r.hasNote && r.noteText && r.noteLines === 0) {
+          findings.push(`${label}: INK — the row has a note in the DOM ("${r.noteText.slice(0, 40)}…") that paints no box at all. A reason nobody can read is not a reason.`);
+        }
+      }
+
       // ---- UNMOVED AND UNEXPLAINED ------------------------------------------
       // The note VANISHING was watched only from inside `--selftest`, which
       // parsed this tool's own report to notice it. A check that lives in the
@@ -753,6 +939,15 @@ async function main() {
   console.log('  L4 summary tap target vs a MEASURED --tap-floor probe, both in device px after body{zoom}');
   console.log('  L2 every row inside its container and the viewport; every chip\'s TEXT inside its own box');
   console.log('  ONE WORD  a price and a sentence not printed with nothing between them — boundary: any positive gap');
+  if (inkCells.length) {
+    const dis = inkCells.filter((k) => k.ink !== k.liLines).length;
+    console.log(`\n  INK          ${inkCells.length} row(s) photographed at their own box and read; ${dis} disagree with bands().`);
+    console.log(`               ink threshold ${INK_DELTA}/255 from each crop's own modal background, ${INK_MIN_PIXELS}+ pixel(s) to ink a scanline.`);
+    console.log('               shape    rule       row  bands()  ink');
+    for (const k of inkCells) {
+      console.log(`               ${k.shape.padEnd(9)}${k.rule.padEnd(11)}${String(k.row).padEnd(5)}${String(k.liLines).padEnd(9)}${k.ink}${k.bridged ? '  (bridged)' : ''}`);
+    }
+  }
   console.log('  LINE BUDGET  li-lines == head-lines + note-lines, AND head-lines == 1. The expected li-count is');
   console.log('               DERIVED from the note measured on the same run — the 3 and the 1 are typed nowhere.');
   console.log('  UNMOVED AND UNEXPLAINED  a price that did not move, under a picker promising a delta, carries a note.');
@@ -910,6 +1105,22 @@ async function cdp(p) {
 // ---------------------------------------------------------------------------
 const PLANTS = [
   {
+    // THE CARD'S OWN CELL (#179, Vira). The note's lines are printed ON TOP OF
+    // EACH OTHER: two line boxes, one band of ink, unreadable. This is the
+    // plant the INK reading exists for, and `alsoSilent` scores the LINE
+    // BUDGET on the same run — measuring, rather than asserting, that a rect
+    // reading cannot see it. Bjorn's finding, kept: the budget gets GREENER as
+    // this defect deepens (red at line-height 0.75 and 0.62, green at 0.4), so
+    // the crush is set at 0.4 on purpose — the value where the old reading is
+    // most confidently wrong.
+    name: 'the note is crushed onto one line of ink — two line boxes, one band (#179)',
+    file: 'styles/ui.css',
+    find: '.equip-resource-change small { display: block; }',
+    replace: '.equip-resource-change small { display: block; line-height: 0.4; }',
+    expect: /INK — bands\(\) reads/,
+    alsoSilent: { name: 'the LINE BUDGET (the rect reading this card replaces)', re: /LINE BUDGET/ },
+  },
+  {
     name: 'the comparison stops wrapping — one long note bleeds the column sideways (LAW 5)',
     file: 'styles/ui.css',
     find: '.equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }',
@@ -988,7 +1199,17 @@ function copyTree(dir) {
     recursive: true,
     // assets/ and music/ are KEPT: a copy with no art boots a different screen,
     // and a plant scored against a different screen is scored against nothing.
-    filter: (src) => !/(^|\/)(\.git|node_modules|dist|build)(\/|$)/.test(src.replace(ROOT, ''))
+    //
+    // `docs/` IS EXCLUDED, ADDED 2026-08-21 (#179), and the reason is a real
+    // failure and not tidiness: docs/ is 163 MB of prose and preview imagery
+    // that no boot reads, and this selftest copies the whole tree ONCE PER
+    // PLANT. On a box with under a gigabyte free the run died of ENOSPC
+    // partway down the corpus — five plants scored, the sixth never copied.
+    // A selftest that cannot finish on a working machine proves nothing about
+    // the plants it never reached, and it fails in a way that looks like a
+    // tool bug rather than a full disk. Nothing under docs/ is served to the
+    // page; assets/, content/, styles/ and src/ still are.
+    filter: (src) => !/(^|\/)(\.git|node_modules|dist|build|docs)(\/|$)/.test(src.replace(ROOT, ''))
       && !src.replace(ROOT, '').startsWith('/tools/results'),
   });
   const csv = join(dir, 'content', 'source', 'weapons.csv');
