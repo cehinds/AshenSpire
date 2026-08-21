@@ -136,9 +136,10 @@ if (process.argv.includes('--selftest')) {
 
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { fileURLToPath } from 'node:url';
 
 const SEED = 'FALK'; // armaments stream first draw = 11 ≤ 60: the treasure drops
-const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8207, open: false });
+const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8207, open: false });
 await launchBrowser({
   prefix: 'reward-collect-', browser: process.env.CHROME || '/usr/bin/chromium',
   headless: '--headless=new', awaitEndpoint: false,
@@ -190,6 +191,15 @@ const check = (n, ok, d = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${!
 const base = `http://127.0.0.1:${port}/index.html`;
 const spoils = () => ev(`window.__spoils ? window.__spoils() : null`);
 const clickSel = (sel) => `(()=>{const el=document.querySelector('${sel}');if(!el)return false;el.dispatchEvent(new MouseEvent('click',{bubbles:true}));return true})()`;
+async function holdSel(sel) {
+  const p = await ev(`(()=>{const el=document.querySelector('${sel}');if(!el)return null;const r=el.getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,ms:Number(el.dataset.holdMs)||600}})()`);
+  if (!p) return false;
+  await c.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', clickCount: 1 });
+  await sleep(p.ms + 120);
+  await c.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: p.x, y: p.y, button: 'left', clickCount: 1 });
+  await sleep(200);
+  return true;
+}
 
 // ---- find the treasure door once: a treasure node and a parent that links to it
 await nav(`${base}?shot=map&shotSeed=${SEED}`);
@@ -237,11 +247,17 @@ check('S1 pre-take: the armament row shows NEW on first discovery',
 await ev(clickSel('.reward-kind[data-kind="armament"]'));
 await sleep(120);
 s = await spoils();
+check('S1 opening Armament shows its distinct detail without collecting',
+  await ev(`!!document.querySelector('[data-reward-detail="armament"]')`) && s.found.length === 0 && s.storage.length === 0,
+  `detail/ownership mismatch: found [${s.found}], storage [${s.storage}]`);
+await ev(clickSel('#reward-detail-take'));
+await sleep(120);
+s = await spoils();
 check('S1 tap Take persists the armament (meta.found)', s.found.length === 1, `meta.found is [${s.found}] after take`);
 const takenId = s.found[0];
 check('S1 after take the NEW chip is gone',
   await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&!el.querySelector('.reward-new')})()`));
-await ev(clickSel('#reward-continue'));
+await holdSel('#reward-continue');
 await sleep(200);
 s = await spoils();
 check('S1 Continue after a take does not persist it again — exactly once (meta.found)',
@@ -250,26 +266,23 @@ check('S1 exactly one copy in run storage', s.storage.filter((x) => x === takenI
 
 // ---- S2: auto mode, no tap — Continue takes the unskipped armament ---------
 await bootTreasure();
-await ev(clickSel('#reward-continue'));
+await holdSel('#reward-continue');
 await sleep(200);
 s = await spoils();
 check('S2 auto Continue persists an unskipped armament (meta.found)', s.found.length === 1, `meta.found is [${s.found}]`);
 check('S2 auto Continue stores it in the run (storage)', s.storage.length === 1, `storage is [${s.storage}]`);
 
-// ---- S3: explicit Skip leaves it unowned -----------------------------------
+// ---- S3: ordinary rows expose no Skip; auto still takes pending rewards ----
 await bootTreasure();
-await ev(clickSel('.reward-kind[data-kind="armament"] [data-skip="armament"]'));
-await sleep(120);
-await ev(clickSel('#reward-continue'));
-await sleep(200);
+check('S3 ordinary pending rows expose no Skip control or label',
+  await ev(`!document.querySelector('.reward-skip,[data-skip]') && ![...document.querySelectorAll('.reward-kind')].some((e)=>/\\bSkip\\b/i.test(e.textContent))`));
+await holdSel('#reward-continue');
 s = await spoils();
-check('S3 explicit Skip leaves the armament unowned (meta.found) — "Leave it" tells the truth', s.found.length === 0, `meta.found is [${s.found}]`);
-check('S3 explicit Skip leaves run storage empty', s.storage.length === 0, `storage is [${s.storage}]`);
+check('S3 auto Continue still collects the pending armament', s.found.length === 1, `meta.found is [${s.found}]`);
 
 // ---- S4: manual mode, no take — Continue means done, not take --------------
 await bootTreasure({ settings: { rewardCollect: 'manual' } });
-await ev(clickSel('#reward-continue'));
-await sleep(200);
+await holdSel('#reward-continue');
 s = await spoils();
 check('S4 manual Continue leaves an untaken armament unowned (meta.found) — only what the player chose', s.found.length === 0, `meta.found is [${s.found}]`);
 check('S4 manual Continue leaves run storage empty', s.storage.length === 0, `storage is [${s.storage}]`);
@@ -301,8 +314,7 @@ check('S7 tapping claims nothing at the cap: no ninth piece enters meta.found wh
   s.found.length === 0, `meta.found is [${s.found}] with storage at ${s.storage.length}`);
 check('S7 the row does not read Taken at the cap',
   await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&el.dataset.state!=='taken'})()`));
-await ev(clickSel('#reward-continue'));
-await sleep(200);
+await holdSel('#reward-continue');
 s = await spoils();
 check('S7 Continue leaves storage at the cap and meta.found unchanged',
   s.storage.length === 8 && s.found.length === 0, `storage ${s.storage.length}, meta.found [${s.found}]`);

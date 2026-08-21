@@ -8,7 +8,7 @@
 //
 // WHAT MOVED, and why it is the whole point: the old screen APPLIED cinders,
 // relic and flask at mount — before the player saw anything — so a menu with
-// per-kind skip and "changing your mind" was impossible by construction.
+// inspect-before-collect and leaving untouched rewards behind was impossible by construction.
 // Application now happens when a row is TAKEN (tap, or auto-collect at
 // Continue), through one apply function per kind. WHAT the rows are, which
 // are blocked and why, and what Continue means is model/rewardplan.js's one
@@ -50,6 +50,7 @@ import { flaskIdentityHtml } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, resolveContinue, unseenIds } from '../../model/rewardplan.js';
+import { armHold, holdMs } from '../components/holdconfirm.js';
 
 const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -71,7 +72,7 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
-  const states = {}; // kind → 'taken' | 'skipped' (absent = pending)
+  const states = {}; // kind → 'taken' (absent = pending / implicitly left in manual mode)
   let chosenCardId = null;
 
   // ---- the 'new' derivation: run inventory ∪ the profile's record ----------
@@ -99,29 +100,36 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
 
   // ---- one apply function per kind — tap and auto-collect share them -------
   const apply = {
-    cinders(row) { run.cinders += row.amount; },
+    cinders(row) { run.cinders += row.amount; return true; },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
+      return true;
     },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
+      return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
+      return true;
     },
-    armament(row) { if (onCollectArmament) onCollectArmament(row.armamentId); },
+    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
   };
 
   function take(row, viaKind) {
-    apply[row.kind](row);
+    // A row may say Taken only after its persistence door says it landed. The
+    // armament collector returns false at the storage/duplicate boundary; a
+    // refusal therefore cannot become a claimed-looking row (E11 review P2).
+    if (!apply[row.kind](row)) return false;
     states[row.kind] = 'taken';
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
+    return true;
   }
 
   // ---- row copy: what a kind says in each state ----------------------------
@@ -188,7 +196,7 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
     const mode = collectMode();
     const pending = plan.rows.filter((r) => !states[r.kind] && !r.blockedBy);
     app.innerHTML = `
-      <div class="screen">
+      <div class="screen" style="padding-bottom:calc(var(--tap-floor, 44px) + 16px)">
         <h2 style="color:var(--gold);font-size:26px">${esc(rewards.title || 'VICTORY')}</h2>
         ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
         <div class="class-row reward-menu">
@@ -204,15 +212,15 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
                 <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
                 <p>${body}</p>
                 ${state === 'taken' ? '<span class="chip">Taken</span>'
-                  : state === 'blocked' ? '<span class="chip">Full</span>'
-                  : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
-                  : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+                  : state === 'blocked' ? '<span class="chip">Full — left behind</span>'
+                  : ''}
               </div>
             </div>`;
           }).join('')}
         </div>
-        <button class="subtle" id="reward-continue">${
-          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE'}</button>
+        <button class="subtle" id="reward-continue" data-focusable="true" aria-describedby="reward-hold-copy">${
+          mode === 'auto' && pending.length ? 'CONTINUE — take the rest' : 'CONTINUE — leave the rest'}</button>
+        <p id="reward-hold-copy" class="subtitle" aria-live="polite">PRESS AND HOLD TO CONTINUE</p>
       </div>`;
 
     for (const el of app.querySelectorAll('.reward-kind')) {
@@ -234,43 +242,68 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       });
       if (state === 'taken' || state === 'blocked') continue;
       el.addEventListener('click', (ev) => {
-        if (ev.target && ev.target.dataset && ev.target.dataset.skip) return; // the Skip control owns its click
-        if (states[kind] === 'skipped') delete states[kind]; // changing your mind, his words
         if (row.kind === 'card') return renderChooser();
+        if (row.kind === 'flask' || row.kind === 'armament') return renderDetail(row);
         take(row);
-      });
-    }
-    for (const btn of app.querySelectorAll('[data-skip]')) {
-      attachTooltip(btn, () => `<div class="tt-title">Skip</div>${esc('Leave it — auto-collect respects a skip.')}`);
-      btn.addEventListener('click', (ev) => {
-        ev.stopPropagation();
-        states[btn.dataset.skip] = 'skipped';
-        renderMenu(btn.dataset.skip);
       });
     }
 
     const cont = app.querySelector('#reward-continue');
     attachTooltip(cont, () => (mode === 'auto'
-      ? `<div class="tt-title">Continue</div>${esc('Takes everything not skipped; a card offer is picked for you.')}`
+      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
       : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
-    cont.addEventListener('click', () => {
+    const finish = () => {
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
       for (const row of toTake) {
-        apply[row.kind](row);
-        states[row.kind] = 'taken';
+        if (apply[row.kind](row)) states[row.kind] = 'taken';
       }
       if (toTake.length) sfx.play('rewardTake');
       onDone(chosenCardId);
-    });
+    };
+    const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+    // Continue is deliberately always a hold, while sharing the same duration
+    // dial and armPress machinery as every other hold-confirm interaction.
+    // A configured "off" still uses the shortest authored hold instead of
+    // turning this irreversible screen transition back into a click.
+    const dial = registries.balance.ui.holdConfirm || { def: 'normal', steps: { normal: 600 } };
+    const configured = holdMs(settings, dial);
+    const positive = Object.values(dial.steps || {}).map(Number).filter((n) => n > 0);
+    armHold(cont, { ms: configured > 0 ? configured : Math.min(...positive, 600), onConfirm: finish, id: 'rewardContinue' });
 
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-kind="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
     }
+  }
+
+  // Potion and Armament are inspect-before-collect surfaces. Opening either
+  // commits nothing; Back restores the exact menu state, and Take is the only
+  // collection door from the detail.
+  function renderDetail(row) {
+    const body = rowBody(row);
+    const isFlask = row.kind === 'flask';
+    app.innerHTML = `
+      <div class="screen" data-reward-detail="${esc(row.kind)}">
+        <h2 style="color:var(--gold);font-size:26px">${isFlask ? 'POTION' : 'ARMAMENT'}</h2>
+        <p class="subtitle">${isFlask ? 'INSPECT THE POTION' : 'INSPECT THE ARMAMENT'}</p>
+        <div class="class-pick reward-kind" data-kind="${esc(row.kind)}">
+          <div class="glyph">${KIND_GLYPHS[row.kind]}</div>
+          <div class="cp-body"><h3>${esc(body.title)}</h3><p>${body.body}</p></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <button class="subtle" id="reward-detail-take" data-focusable="true">TAKE ${isFlask ? 'POTION' : 'ARMAMENT'}</button>
+          <button class="subtle" id="reward-back" data-focusable="true">Back</button>
+        </div>
+      </div>`;
+    app.querySelector('#reward-detail-take').addEventListener('click', () => take(row, row.kind));
+    const back = app.querySelector('#reward-back');
+    attachTooltip(back, () => `<div class="tt-title">Back</div>${esc('Return without collecting; your other choices keep.')}`);
+    back.addEventListener('click', () => renderMenu(row.kind));
+    if (isEngaged()) setTimeout(() => focusFirst('#reward-detail-take') || focusFirst('#reward-back'), 0);
   }
 
   // ---- the card chooser: opens from the card row, Back returns -------------

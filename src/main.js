@@ -1101,7 +1101,7 @@ function rollDrop(source) {
  * or left-behind piece stays out of meta.found and can drop again.
  */
 function collectArmament(id, source) {
-  if (!id) return;
+  if (!id) return false;
   // COLLECTION IS GATED ON THE STORE LANDING (the b6b7df0 review's P1):
   // addToStorage returns false at the cap and on a duplicate, and a found
   // entry for a piece the bag refused is a poisoned record — claimed but not
@@ -1109,7 +1109,7 @@ function collectArmament(id, source) {
   // boundary up front (rewardplan's 'storage' blockedBy), so this gate is
   // the depth behind that face — same array, its own answer.
   const stored = addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
-  if (!stored) return; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
+  if (!stored) return false; // the bag refused: nothing entered storage, so nothing is found — meta stays clean
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     const meta = saves.loadMeta();
     if (!(meta.found || []).includes(id)) {
@@ -1122,6 +1122,7 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
+  return true;
 }
 
 function finishRun(victory) {
