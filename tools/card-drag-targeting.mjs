@@ -1,10 +1,24 @@
-// tools/card-drag-targeting.mjs — browser acceptance for #150 + #198.
+// tools/card-drag-targeting.mjs — browser acceptance for #150 + #198 + #311.
 //
 // The same real page and pointer door checks the approved hand paging controls,
 // drag start, nearest-only single target switching, all-target multi aim,
 // non-targeting silence, one legal commit, zero illegal commits, cleanup on
 // both endings, and Text XL pager geometry. `--selftest` plants each accepted
 // defect back through this same browser door.
+//
+// #311 ADDS TWO CELLS TO THE SAME DOOR, because both are facts about what a
+// DRAG does and this file is where the next drag change will run them.
+//   * A READ YIELDS TO A DRAG. The inspect dial (balance.ui.inspectHold, 400 ms)
+//     starts at pointerdown, so any press slower than that to its first 12 px
+//     used to open the read and never give the press back. Measured red at
+//     four shapes before the fix, 4/4. The cell waits on `data-inspect="open"`
+//     rather than timing a camera against the dial — the attribute is what
+//     holdconfirm.js publishes for exactly this.
+//   * A SELF-ONLY CARD NAMES ITS ONE TARGET. Constantine: "dragging a block
+//     should default highlight player character since it can only target that
+//     character." `friendlyTargetMode` (model/friendlyTargets.js) is the one
+//     home of that predicate; the colour is #209's TARGET_COLORS.self and is
+//     read from the DOM here rather than re-typed.
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
@@ -59,6 +73,18 @@ if (process.argv.includes('--selftest')) {
       find: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims([]);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
       replace: lines('src/ui/screens/combat.js', '      } else {', '        showDragAims(inField ? livingEnemyEls() : []);', '      }', "      const state = legal ? 'legal' : 'illegal';"),
       expectRed: /FAIL non-targeting drag produces no enemy aim/,
+    }, {
+      name: 'an open read keeps the press, so a slow drag can never start',
+      file: 'src/ui/components/holdconfirm.js',
+      find: '        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();',
+      replace: '        if (phase === \'pending\' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();',
+      expectRed: /FAIL an open read yields to a drag/,
+    }, {
+      name: 'a self-only drag names no default target',
+      file: 'src/ui/screens/combat.js',
+      find: '        showSelfAim(legal);',
+      replace: '        showSelfAim(false);',
+      expectRed: /FAIL a self-only drag lights the player blue/,
     }, {
       name: 'pager escapes the hand overlay at Text XL',
       file: 'styles/combat.css',
@@ -170,7 +196,11 @@ async function main() {
         aimed:[...document.querySelectorAll('.enemy.aiming.aim-enemy')].map(x=>x.dataset.eid),
         silhouettes:document.querySelectorAll('.enemy.aiming.aim-enemy .aim-silho').length,
         labeledEnemies:document.querySelectorAll('.enemy[data-drop-state],.enemy .drop-verdict').length,
-        ghosts:document.querySelectorAll('.card-drag-ghost').length
+        ghosts:document.querySelectorAll('.card-drag-ghost').length,
+        inspectCopies:document.querySelectorAll('.card-inspect').length,
+        selfSilho:(()=>{const s=document.querySelector('.combatant.player.aiming.aim-self .aim-silho');
+          return s?{color:s.style.getPropertyValue('--target-color'),rel:s.dataset.targetRelationship}:null;})(),
+        allSilhouettes:document.querySelectorAll('.aim-silho').length
       }))()`);
 
       const shotSettings = encodeURIComponent(JSON.stringify({ textSize }));
@@ -293,6 +323,82 @@ async function main() {
       ok(!illegalEnd.mode && illegalEnd.dropAttrs === 0 && illegalEnd.aimed.length === 0
         && illegalEnd.silhouettes === 0 && illegalEnd.ghosts === 0,
       'illegal drop clears every drag marker', JSON.stringify(illegalEnd));
+
+      // ---- #311 · A READ YIELDS TO A DRAG -----------------------------------
+      // His words: "if a card is selected and the enemy is highlighted, I can't
+      // drag the card on the enemy to use it." The select is real (a trusted
+      // click), the wait is on the PUBLISHED state rather than on the dial, and
+      // the drag is deliberately unhurried — 12 steps of 25 ms — because a hurried
+      // one was never the failing gesture.
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'combat read-yield reset'); await wait(350);
+      await mouse('mouseMoved', 2, 2, false); await wait(80); // park the cursor: no hover state of its own
+      const yieldCard = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Slashing Strike/.test(x.textContent)); if(!c)return null; c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const yieldFoe = (await ev(`[...document.querySelectorAll('.enemy:not(.dead)')].map(e=>{const r=e.getBoundingClientRect();return {id:e.dataset.eid,x:r.left+r.width/2,y:r.top+r.height/2}})`))[0];
+      if (!yieldCard || !yieldFoe) throw new Error(`${shape}: read-yield proof needs one targetable card and one living enemy`);
+      await mouse('mousePressed', yieldCard.x, yieldCard.y, true);
+      await mouse('mouseReleased', yieldCard.x, yieldCard.y, false); await wait(300);
+      const selBox = await ev(`(() => { const c=document.querySelector('.hand .card.selected'); if(!c)return null; const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      ok(!!selBox, 'the click-to-target select is real before the drag begins', JSON.stringify(selBox));
+      const beforeYield = await state();
+      await mouse('mousePressed', selBox.x, selBox.y, true);
+      await until(`document.querySelector('.hand .card.selected').dataset.inspect === 'open'`, 'the inspect copy to open under the press', 4000);
+      for (let i = 1; i <= 12; i++) {
+        await mouse('mouseMoved', selBox.x + (yieldFoe.x - selBox.x) * i / 12, selBox.y + (yieldFoe.y - selBox.y) * i / 12, true);
+        await wait(25);
+      }
+      await wait(140);
+      const yieldArmed = await state();
+      ok(yieldArmed.mode && yieldArmed.ghosts === 1 && yieldArmed.inspectCopies === 0,
+        'an open read yields to a drag', JSON.stringify(yieldArmed));
+      await mouse('mouseReleased', yieldFoe.x, yieldFoe.y, false); await wait(700);
+      const yieldEnd = await state();
+      ok(yieldEnd.discard === beforeYield.discard + 1, 'the yielded drag plays exactly once', `${beforeYield.discard} -> ${yieldEnd.discard}`);
+
+      // ---- #311 · THE EDGE THE OLD GUARD PROTECTED --------------------------
+      // A 13 px reading DRIFT must still commit nothing. It cannot: a drift ends
+      // in the hand, `.hand-area` and `.field` are siblings, and the drop needs
+      // `closest('.field')`. Watched here so the next hand that widens the drop
+      // surface finds out from this file rather than from a player.
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'combat drift reset'); await wait(350);
+      await mouse('mouseMoved', 2, 2, false); await wait(80);
+      const driftCard = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Shield Defend/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const beforeDrift = await state();
+      await mouse('mousePressed', driftCard.x, driftCard.y, true);
+      await until(`[...document.querySelectorAll('.hand .card')].find(x=>/Shield Defend/.test(x.textContent)).dataset.inspect === 'open'`, 'the inspect copy to open before the drift', 4000);
+      for (const d of [6, 12, 16, 18]) { await mouse('mouseMoved', driftCard.x + d, driftCard.y - d, true); await wait(60); }
+      await mouse('mouseReleased', driftCard.x + 18, driftCard.y - 18, false); await wait(700);
+      const driftEnd = await state();
+      ok(driftEnd.discard === beforeDrift.discard && driftEnd.energy === beforeDrift.energy,
+        'an 18 px reading drift over the hand commits nothing', `${beforeDrift.discard} -> ${driftEnd.discard}, ${beforeDrift.energy} -> ${driftEnd.energy}`);
+
+      // ---- #311 · A SELF-ONLY CARD NAMES ITS ONE TARGET ---------------------
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await until(`!!document.querySelector('.combat .hand .card')`, 'combat self-aim reset'); await wait(350);
+      await mouse('mouseMoved', 2, 2, false); await wait(80);
+      const selfCard = await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')].find(x=>/Shield Defend/.test(x.textContent)); c.scrollIntoView({inline:'center',block:'nearest'}); const r=c.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
+      const fieldPoint = await ev(`(() => { const r=document.querySelector('.field').getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height*0.6}; })()`);
+      const beforeSelf = await state();
+      await mouse('mousePressed', selfCard.x, selfCard.y, true);
+      await mouse('mouseMoved', selfCard.x, selfCard.y - 30, true); await wait(60);
+      await mouse('mouseMoved', fieldPoint.x, fieldPoint.y, true); await wait(160);
+      const selfArmed = await state();
+      // The colour is READ, never re-typed: TARGET_COLORS.self has one home
+      // (components/friendlyTargets.js) and #209's door already guards its value.
+      ok(selfArmed.selfSilho && selfArmed.selfSilho.rel === 'self' && selfArmed.selfSilho.color === '#4d94e0'
+        && selfArmed.aimed.length === 0 && selfArmed.allSilhouettes === 1 && selfArmed.drop === 'legal',
+      'a self-only drag lights the player blue and lights no enemy', JSON.stringify(selfArmed));
+      if (screenshots) {
+        const dir = join(ROOT, 'docs', 'preview'); mkdirSync(dir, { recursive: true });
+        const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, S);
+        const textSuffix = textSize === 'M' ? '' : `-text-${textSize.toLowerCase()}`;
+        writeFileSync(join(dir, `combat-ui-drag-self-${shape}${textSuffix}.png`), Buffer.from(shot.data, 'base64'));
+      }
+      await mouse('mouseReleased', fieldPoint.x, fieldPoint.y, false); await wait(700);
+      const selfEnd = await state();
+      ok(!selfEnd.selfSilho && selfEnd.allSilhouettes === 0 && selfEnd.discard === beforeSelf.discard + 1,
+        'the blue default aim clears on drop and the card plays once', JSON.stringify(selfEnd));
 
       await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat multi-target reset'); await wait(350);
