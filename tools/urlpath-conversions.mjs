@@ -598,9 +598,9 @@ function loopAliasRanges(tokens, declarations) {
       for (const index of binding.indexes) {
         range.aliases.set(tokens[index].value, false);
         range.bindingIndexes.add(index);
-        if (declaration && declarations.has(index)) bindingToRange.set(index, range);
+        if (declaration && declaration !== 'var' && declarations.has(index)) bindingToRange.set(index, range);
       }
-      range.assignmentTarget = !declaration;
+      range.assignmentTarget = !declaration || declaration === 'var';
     } else {
       for (const [index, kind] of declarations) {
         if (!['const', 'let'].includes(kind) || enclosingForOpen(tokens, index) !== open) continue;
@@ -1621,6 +1621,12 @@ function selftest() {
     ['F20', `let a=${reviewU},b=a;a=b;for(const u of [b]){u.pathname}`, 1],
     ['F21', `async function f(){for await(const u of [${reviewU}]){u.pathname}}`, 1],
     ['F21-control', `async function f(){for await(const u of [${reviewU}]){fileURLToPath(u)}}`, 0],
+    ['F22', `for(var u of [${reviewU}]){}u.pathname`, 1],
+    ['F22-control', `for(var u of [${reviewU}]){}fileURLToPath(u)`, 0],
+    ['F23', `for(var u of [${reviewP}]){}u.pathname`, 0],
+    ['F24', `var u=${reviewU};for(var u of [${reviewP}]){}u.pathname`, 1],
+    ['F25', `for(var [u] of [[${reviewU}]]){}u.pathname`, 1],
+    ['F26', `for(let u of [${reviewU}]){}u.pathname`, 0],
   ];
   const reviewResults = [];
   for (const eol of ['\n', '\r\n']) {
