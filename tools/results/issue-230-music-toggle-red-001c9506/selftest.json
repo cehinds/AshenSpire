@@ -1,105 +1,245 @@
 {
   "kind": "issue-230-music-toggle-parity-selftest",
-  "head": "001c9506ef00500e186ff4e11827bc9b6cd6a522",
-  "door": "named observation mutants -> the same score() used for real source/audio observations",
-  "boundary": "This proves the scorer. Real-current mode separately drives initAudio. Rendered two-viewport promotion remains required after implementation.",
-  "held": true,
-  "mutants": [
+  "provenance": {
+    "instrument": {
+      "path": "tools/music-toggle-parity.mjs",
+      "sha256": "394c8a2167a3647f208ed032e4cb0cfdb1a811c238640d250b086becb52bd02e"
+    },
+    "subject": {
+      "digest": "1df1ce6af88c5022889c7a71f5290051a40a5c19db13c09a2e9a1f03d1f2fbc5",
+      "paths": {
+        "balance": {
+          "path": "src/content/balance.js",
+          "sha256": "505e6a57076425444c5cd81ccca46c66348133403931cc36beaf7057418bd4cd"
+        },
+        "audio": {
+          "path": "src/ui/audio.js",
+          "sha256": "16733e6c0b704d9d9cb3ebc3298c0938f6ed6ebbb79861082a69a39e26323bc3"
+        },
+        "settings": {
+          "path": "src/ui/screens/settings.js",
+          "sha256": "68ae28a362762e27afe7c7c4191f493dd13cdfb4e9b9c6132a2e8a785a6b9bc4"
+        },
+        "quicknav": {
+          "path": "src/ui/components/quicknav.js",
+          "sha256": "0ae73e50c93c448b37ebcdd8b79f5f40a3a74329dfc64acc6ca6406a9b223361"
+        },
+        "menu": {
+          "path": "src/ui/uiContent.js",
+          "sha256": "86364308c07ad18e93715ceb2d9b991818acd0c97f66cfa13ca2c8279492f8be"
+        },
+        "main": {
+          "path": "src/main.js",
+          "sha256": "98a9d4e587c178d62114db343bc0eb9bdba38a99d66e5497933b7d3b19f6a7d8"
+        }
+      }
+    }
+  },
+  "door": "Each named plant changes a Settings profile door, audio engine adapter, or Music-row/owner fixture and travels through the same collectSettingsDoor(), collectAudioDoor(), and collectUiDoor() functions used by real-current mode.",
+  "boundary": "Collector-travelling selftest. Real-current mode drives shipped modules; rendered desktop/phone promotion remains required after implementation.",
+  "baseline": [
     {
-      "name": "sparse-default-off",
-      "field": "sparseDefault",
-      "caught": true,
+      "id": "M1",
+      "label": "sparse musicEnabled defaults true",
+      "pass": true
+    },
+    {
+      "id": "M2",
+      "label": "invalid stored musicEnabled heals to the default",
+      "pass": true
+    },
+    {
+      "id": "M3",
+      "label": "explicit Music choice survives the settings persistence route",
+      "pass": true
+    },
+    {
+      "id": "M4",
+      "label": "Music off schedules no procedural sound or timers",
+      "pass": true
+    },
+    {
+      "id": "M5",
+      "label": "Music off starts no external media and stops live external media",
+      "pass": true
+    },
+    {
+      "id": "M6",
+      "label": "Music on restarts the recorded same context without changing saved volume",
+      "pass": true
+    },
+    {
+      "id": "M7",
+      "label": "0% volume remains enabled and preserves the exact level",
+      "pass": true
+    },
+    {
+      "id": "M8",
+      "label": "Settings and Quick Menu expose one synchronized switch state",
+      "pass": true
+    },
+    {
+      "id": "M9",
+      "label": "both visible Music controls have switch semantics and truthful ON/OFF copy",
+      "pass": true
+    },
+    {
+      "id": "M10",
+      "label": "Quick Menu remains a launcher; one main-layer owner commits Music",
+      "pass": true
+    },
+    {
+      "id": "M11",
+      "label": "Music off does not mute SFX or alias global mute",
+      "pass": true
+    },
+    {
+      "id": "M12",
+      "label": "global mute off does not restart music that is still disabled",
+      "pass": true
+    }
+  ],
+  "held": true,
+  "plants": [
+    {
+      "name": "balance-default-disagrees-with-music-row",
+      "expected": [
+        "M1"
+      ],
       "failed": [
         "M1"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "invalid-value-not-healed",
-      "field": "invalidHeals",
-      "caught": true,
+      "name": "persisted-invalid-not-canonically-healed",
+      "expected": [
+        "M2"
+      ],
       "failed": [
         "M2"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "restore-drops-setting",
-      "field": "persistence",
-      "caught": true,
+      "name": "reload-drops-explicit-choice",
+      "expected": [
+        "M3"
+      ],
       "failed": [
         "M3"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "disabled-procedural-timers",
-      "field": "offProceduralSilent",
-      "caught": true,
+      "name": "disabled-procedural-schedules-timer",
+      "expected": [
+        "M4"
+      ],
       "failed": [
         "M4"
-      ]
+      ],
+      "caught": true
     },
     {
       "name": "disabled-external-keeps-playing",
-      "field": "offExternalSilent",
-      "caught": true,
+      "expected": [
+        "M5"
+      ],
       "failed": [
         "M5"
-      ]
+      ],
+      "caught": true
     },
     {
       "name": "same-context-reenable-noop",
-      "field": "sameContextRestart",
-      "caught": true,
+      "expected": [
+        "M6"
+      ],
       "failed": [
         "M6"
-      ]
+      ],
+      "caught": true
+    },
+    {
+      "name": "same-context-reenable-resets-35-percent",
+      "expected": [
+        "M6"
+      ],
+      "failed": [
+        "M6"
+      ],
+      "caught": true
     },
     {
       "name": "volume-zero-loses-level",
-      "field": "zeroVolumeEnabled",
-      "caught": true,
+      "expected": [
+        "M7"
+      ],
       "failed": [
         "M7"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "overlay-settings-stale",
-      "field": "uiSynchronized",
-      "caught": true,
+      "name": "overlay-music-row-stale",
+      "expected": [
+        "M8"
+      ],
       "failed": [
         "M8"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "aria-state-stale",
-      "field": "ariaAndCopy",
-      "caught": true,
+      "name": "music-row-aria-state-stale",
+      "expected": [
+        "M9"
+      ],
       "failed": [
         "M9"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "quicknav-second-owner",
-      "field": "oneCommitOwner",
-      "caught": true,
+      "name": "quicknav-becomes-second-music-owner",
+      "expected": [
+        "M10"
+      ],
       "failed": [
         "M10"
-      ]
+      ],
+      "caught": true
     },
     {
-      "name": "global-mute-alias",
-      "field": "audioChannelsIndependent",
-      "caught": true,
+      "name": "music-owner-vocabulary-split-across-routes",
+      "expected": [
+        "M10"
+      ],
+      "failed": [
+        "M10"
+      ],
+      "caught": true
+    },
+    {
+      "name": "music-off-aliases-global-mute",
+      "expected": [
+        "M11"
+      ],
       "failed": [
         "M11"
-      ]
+      ],
+      "caught": true
     },
     {
       "name": "unmute-restarts-disabled-music",
-      "field": "unmuteKeepsMusicOff",
-      "caught": true,
+      "expected": [
+        "M12"
+      ],
       "failed": [
         "M12"
-      ]
+      ],
+      "caught": true
     }
   ]
 }
