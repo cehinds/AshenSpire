@@ -78,7 +78,13 @@ function sigilMedallion(cx, cy, t, sigil, plainR) {
   const safe = String(sigil).replace(/[<>&"]/g, '');
   return (
     `<circle cx="${cx}" cy="${cy}" r="8" fill="#14100c" stroke="${t}" stroke-width="1.5"/>` +
-    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>`
+    // The whole figure is mirrored (styles/ui.css, "the figure faces the viewer").
+    // The circle is symmetric and does not care; the GLYPH is text, and mirrored
+    // text reads as a rendering fault rather than as a character facing you.
+    // Reflected about its own centre, so it lands exactly where it already was.
+    `<g transform="translate(${cx * 2},0) scale(-1,1)">` +
+    `<text x="${cx}" y="${cy + 0.5}" font-size="11" fill="#e8dcc0" text-anchor="middle" dominant-baseline="central">${safe}</text>` +
+    `</g>`
   );
 }
 
@@ -189,8 +195,12 @@ export function classSprite(classId, tint, sigil, tintId, style) {
   if (sigil) {
     const med = document.createElement('span');
     med.textContent = sigil;
+    // `scaleX(-1)` UNDOES the figure mirror this element inherits (styles/ui.css,
+    // "the figure faces the viewer"). That mirror is right for the ART and wrong
+    // for a GLYPH: a sigil is text, and mirrored text reads as a rendering fault.
+    // The medallion is centred on the chest, so flipping it back moves nothing.
     med.style.cssText =
-      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);` +
+      `position:absolute;left:50%;top:53%;transform:translate(-50%,-50%) scaleX(-1);` +
       `width:22px;height:22px;border-radius:50%;background:#14100c;border:1.5px solid ${tint};` +
       'display:flex;align-items:center;justify-content:center;font-size:13px;color:#e8dcc0;';
     el.appendChild(med);
