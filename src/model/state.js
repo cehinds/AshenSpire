@@ -19,7 +19,7 @@ import {
   resolveDerivedStatRules,
   deriveStat,
 } from './derivedStats.js';
-import { resolveStartingKit, startingKitSnapshot } from './startingKits.js';
+import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
@@ -65,6 +65,7 @@ export function createRunState({
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
   startingKitId = undefined,
+  startingArmourId = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -76,7 +77,12 @@ export function createRunState({
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
   const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
-  const loadout = createLoadout(registries, classId, startingKit);
+  // E5 (#250): the set the run begins wearing. Resolved against the same
+  // profile meta the kit above is — absent, the class's free set, which is
+  // what createLoadout always chose. The loadout row is the persisted home;
+  // no new run field, because run.loadout.sets.armor[0] already IS the record.
+  const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
+  const loadout = createLoadout(registries, classId, startingKit, startingArmour);
   for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
