@@ -261,7 +261,8 @@ const columnOverflows = [];
 let checks = 0;
 const ok = (id, cell, msg) => { checks++; console.log(`  ok   ${id} ${cell} — ${msg}`); };
 const bad = (id, cell, msg) => { checks++; findings.push(`${id} ${cell}`); console.log(`  BAD  ${id} ${cell} — ${msg}`); };
-const unk = (id, cell, msg) => { console.log(`  unk  ${id} ${cell} — ${msg}`); };
+let unknowns = 0;
+const unk = (id, cell, msg) => { unknowns++; console.log(`  unk  ${id} ${cell} — ${msg}`); };
 
 const READ = (prop) => `(() => {
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
@@ -541,6 +542,38 @@ async function main() {
     console.log('  every cell fitting. A card is OWED for it and was not filed.');
     console.log('');
   }
+
+  // ⚠ WHAT THE EXIT STATUS ITSELF REFUSES TO CLAIM. UNCONDITIONAL, green or
+  // red, on the same ground as everything else this tool prints unprompted: a
+  // narrowed claim that is only narrow in a PR body is a general claim in
+  // practice (Marina, D104, applied to myself here rather than waiting to be
+  // told twice).
+  //
+  // FOUND BY MY OWN PLANT, AND REPRODUCED BY VIKI NON-AUTHOR. Remove the
+  // `--action-row-drop` reservation and the strip goes off the viewport at all
+  // four wide cells; H5 degrades from `ok` to `unknown`; the check count falls
+  // 22 -> 18; and THIS TOOL PRINTS `OK` AND EXITS 0. H0 asserts the cells it
+  // REACHED, which is still 8 of 8 — nothing asserts the number of checks
+  // actually MADE, so four assertions can become four non-assertions with no
+  // effect on `$?`. A regression that converts greens to unknowns is invisible
+  // to anyone reading the exit code, which is what a gate list reads.
+  //
+  // NOT CLOSED HERE, AND THE REASON IS A REAL CONFLICT RATHER THAN BUDGET. The
+  // obvious fix — a floor on `checks`, or making `unknown` block the way the
+  // no-browser path already does (exit 2) — would turn this gate RED on Law 4
+  // clause 4's pre-existing column debt, which is exactly what H5's `unknown`
+  // branch was built to refuse to score, and which is not this lane's to pay.
+  // Choosing between "an unknown blocks" and "an unknown is not this tool's
+  // verdict" is a design call with an owner, not a tidy-up. Stated instead, so
+  // the number is in front of a reader every run.
+  console.log(`⚠ ${unknowns} verdict(s) resolved to \`unknown\` this run and are counted in NEITHER`);
+  console.log(`  \`${checks} check(s)\` NOR the findings — so a cell that DEGRADES from a green to an`);
+  console.log('  `unknown` shrinks this tool\'s denominator and leaves its EXIT STATUS UNCHANGED.');
+  console.log('  4 of them are the narrow layout, where the strip does not render and nothing is');
+  console.log('  measurable by design. THE REST ARE NOT BY DESIGN. A check that stops being');
+  console.log('  EXERCISED does not fail — it goes quiet, and this tool cannot presently say so.');
+  console.log('  A card is OWED: does an `unknown` block, or is it not this tool\'s verdict?');
+  console.log('');
   // ── THE WAIVER ────────────────────────────────────────────────────────────
   // `--waive "<id>,<id>" --waive-card <n>` lands this gate in REPORTING mode for
   // findings that are already known and already carded. Every finding is still

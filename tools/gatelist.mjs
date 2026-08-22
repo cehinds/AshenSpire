@@ -777,6 +777,44 @@ if (JS_LISTS.length) {
   console.log('  owed as a card and I did not file one — this act was one act.)');
 }
 
+// ⚠ WHAT THE CENSUS ITSELF REFUSES TO CLAIM — DELEGATING WRAPPERS.
+// UNCONDITIONAL, green or red, and for the same reason as the block above: a
+// narrowed claim that is only narrow in a comment is a general claim in
+// practice. This one is printed on a tree where the defect DOES NOT EXIST YET,
+// which is the point — it is a refusal to assert, not a finding.
+//
+// Marina's ruling D104 (2026-08-22). #294 introduces `tools/verdict.mjs`, a
+// door every gated tool is spelled through. `invocationsIn()` credits the FIRST
+// `tools/` token after `node` and returns there, so a wrapped step reads as the
+// WRAPPER and every tool it fronts silently leaves `listed` — the steps survive
+// and the wiring does not. That is "an instrument un-wired during a rewrite",
+// arriving by wrapping rather than by deletion, and this tool would report the
+// shrunken census as clean.
+//
+// I DID NOT BUILD THE RECOGNITION HERE, and the refusal is why that is honest
+// rather than a gap. `tools/verdict.mjs` is not in this tree, so a
+// wrapper-recognition branch written now could not be planted against — and an
+// unexercised branch is the exact defect this PR spent its length naming (I
+// blinded two of my own plants inside it and the harness had to tell me).
+// Refusing to assert is the opposite act from asserting something I cannot check.
+//
+// NOTE FOR WHOEVER LANDS IT: the fix is NOT a token in WRAPPERS. That set is
+// consulted only for tokens BEFORE the `node` head (`env FOO=1 node x.mjs`); a
+// wrapper spelled as node's SCRIPT ARGUMENT is handled by the loop underneath,
+// which returns on the first `tools/` match with no wrapper test at all.
+// `WRAPPERS.add('verdict.mjs')` is inert — verified by running `invocationsIn`,
+// by me and independently by Viki.
+//
+// REMOVAL CONDITION, and it is not optional: this block is deleted in the SAME
+// COMMIT that adds the recognition and its plant. A stated boundary is not a
+// discharged one — my own words at 11ec9ab, held to me here.
+console.log('');
+console.log('⚠ DELEGATING WRAPPERS ARE NOT RECOGNISED. A step spelled `node <wrapper> tools/x.mjs`');
+console.log('  (or `node <wrapper> -- node tools/x.mjs`) reads as the WRAPPER; the tool it delegates');
+console.log('  to is invisible to this census and will read `unlisted`. NO SUCH WRAPPER EXISTS IN');
+console.log('  THIS TREE TODAY. The day one lands, every tool it fronts is miscounted here and this');
+console.log('  tool will not say so. (Marina, D104; the recognition and this line go together.)');
+
 const shown = ONLY_BROWSER ? rows.filter((r) => r.browser) : rows;
 const count = (s) => shown.filter((r) => r.state === s).length;
 const STATES = ['listed', 'excluded-with-a-reason', 'linked-but-never-run', 'unlisted'];
