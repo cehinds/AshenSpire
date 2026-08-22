@@ -493,10 +493,19 @@ jobs:
       - name: The Armoury arrives with the figure, and one click is the whole cost
         # Two shapes, real Chromium through tools/browser.mjs's CDP path. GATED:
         # the figure arrives whole where the view declares one; CARDS arrives
-        # COLLAPSED on every shape; the fold round-trips; one click opens the
-        # strip ABOVE THE FOLD; #305's mirror is exactly one. REPORTED and
-        # deliberately not gated: stripFullyVisible, false at `dev` and at head
-        # alike — a pre-existing scroll this change neither adds nor removes.
+        # carrying `data-collapsed='1'` on every shape; the fold round-trips; one
+        # click opens the strip ABOVE THE FOLD; #305's mirror is exactly one.
+        # THAT COLLAPSE CLAUSE IS DELIBERATELY NARROWER THAN IT WAS, and the old
+        # wording — "CARDS arrives COLLAPSED on every shape" — was the false half.
+        # The check reads the ATTRIBUTE; it never measures whether the strip is on
+        # the screen. Planted a `display: block` on the collapsed strip in
+        # styles/ui.css and the phone rendered the whole pane on arrival, 344x1007,
+        # with `data-collapsed='1'` intact and the tool green at 21/21. A step
+        # comment is a coverage claim, so it now claims the state the check holds.
+        # The limit itself is printed by the tool's own boundary, every run.
+        # REPORTED and deliberately not gated: stripFullyVisible, false at `dev`
+        # and at head alike — a pre-existing scroll this change neither adds nor
+        # removes.
         run: node tools/armoury-arrival-figure.mjs
 
       # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
