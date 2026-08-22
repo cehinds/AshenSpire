@@ -472,7 +472,9 @@ export async function selftest() {
     console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
   }
-  console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red, each by the row or command that owns it,`);
+  // #12: the counted claim terminates the line; the qualifier prints below it.
+  console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red`);
+  console.log('  each by the row or command that owns it,');
   console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
   console.log('  the same three doors the real runs use. The last pair is watched RED and GREEN over');

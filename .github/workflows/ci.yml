@@ -195,13 +195,32 @@ jobs:
         with:
           node-version: '22'
 
+      # #12 — THE CI DOOR PROVES ITSELF BEFORE IT JUDGES ANYTHING ELSE.
+      # Every checker step below is wrapped in tools/verdict.mjs, which refuses a
+      # tool that exits 0 while printing no counted verdict (SILENCE, exit 3) or a
+      # verdict counting zero (exit 1). A wrapper nobody has watched fail is the
+      # very defect this card names, so its known-bad corpus runs first.
+      - name: The verdict door can fail (12 plants, each a real child process)
+        run: node tools/verdict.mjs -- node tools/verdict.mjs --selftest
+
+      # AND THE DOOR CANNOT SEE THE WIRING ABOVE ITSELF: a step with no command,
+      # or a step whose command was overwritten by a duplicate key, never runs at
+      # all and therefore never reaches the door. That is how the first cut of
+      # this very PR shipped — `- name: Engine suite` with no `run:` and the door
+      # step carrying two. workflow-lint reads this file as text and refuses both.
+      - name: The workflow lint can fail (7 plants)
+        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs --selftest
+
+      - name: Every workflow step actually runs a command
+        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs
+
       - name: Engine suite
-        run: node tests/run-node.mjs
+        run: node tools/verdict.mjs -- node tests/run-node.mjs
 
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
-        run: node tools/verify-shipped.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/verify-shipped.mjs --selftest
 
       - name: Directory order — the corpus history already wrote
         # HERE, in the matrix job, and not in `reproducible`: the claim under test is
@@ -209,14 +228,14 @@ jobs:
         # on every runner. It also measures the divergence itself — that collation
         # and byte order disagree about the blightHound pair on THIS filesystem's
         # Node — which was reasoned and never run until this step existed.
-        run: node tools/dirorder.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/dirorder.mjs --selftest
 
       - name: Directory order — reinstate the defect five ways, catch each
         # Inverted expectation, the same idiom as shotguard-probe --mutate. Without
         # this the step above is a corpus nobody has watched go red. Case 1 is Vira's
         # exact mutation — the one that put the 40c5b21 key order back with every
         # other leg of this gate green.
-        run: node tools/dirorder.mjs --mutate
+        run: node tools/verdict.mjs -- node tools/dirorder.mjs --mutate
 
       - name: One version, derived — SOP 5's detector, which this file said was missing
         # Requirement 3's named gap, closed. The header above used to say "SOP 5's
@@ -229,12 +248,12 @@ jobs:
         # digest canonicalizes CRLF, so a Windows checkout and a Linux checkout of one
         # commit must derive the SAME string or the shipped stamp is a fact about a
         # filesystem. This repo has already paid once for that (tools/dirorder.mjs).
-        run: node tools/buildversion.mjs --check
+        run: node tools/verdict.mjs -- node tools/buildversion.mjs --check
 
       - name: …and it can fail — six known-bads, each caught by the row that owns it
         # Inverted expectation, the idiom already in this job twice. Includes the
         # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
-        run: node tools/buildversion.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/buildversion.mjs --selftest
 
   # ---------------------------------------------------------------------------
   # Is the artifact we ship the artifact this source builds — on every platform?
@@ -270,10 +289,10 @@ jobs:
           node-version: '22'
 
       - name: Rebuild the standalone and refresh root + dist/
-        run: node tools/launch.mjs --build-only
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
 
       - name: Root + dist carry their art, and ARE the build
-        run: node tools/verify-shipped.mjs
+        run: node tools/verdict.mjs -- node tools/verify-shipped.mjs
 
       - name: The committed artifact equals a fresh build on THIS runner
         # The check that catches both staleness and cross-platform build drift.
@@ -322,16 +341,16 @@ jobs:
         # blocks), and this step triggers all three on purpose in ~3 seconds.
         # Raising a timeout until it stops firing would be the author grading his
         # own guard, which is what this whole branch exists to delete.
-        run: node tools/shotguard-probe.mjs --selftest-unavailable
+        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs --selftest-unavailable
 
       - name: Storage gate holds, and a normal boot still saves
-        run: node tools/shotguard-probe.mjs
+        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs
 
       - name: The probe can fail — gate defeated on the wire, failures required
         # Inverted expectation. Without this step the step above is a guard that
         # has never failed. (`--defeat-gate` is the same defeat WITHOUT the
         # inversion and exits 1; it is for a human at a terminal, not for here.)
-        run: node tools/shotguard-probe.mjs --mutate
+        run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs --mutate
 
       - name: The build version is INK on the three screens he named
         # Constantine asked for the build version on the main menu, the map and in
@@ -341,7 +360,7 @@ jobs:
         # browser for the same reason the save guard does: the failure modes are
         # `opacity: 0` and a narrow-layout `display: none`, neither of which is
         # visible from Node.
-        run: node tools/buildstamp-shot.mjs
+        run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs
 
       - name: …and that gate can fail — six ways to lose the ink, each caught
         # Inverted expectation. Seven whole-program runs — a control and six
@@ -349,7 +368,7 @@ jobs:
         # 64s on the machine it was written on. Stated rather than guessed,
         # because this workflow bills by the minute and runs by hand; a runner
         # will be slower and that number is not a promise about one.
-        run: node tools/buildstamp-shot.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
 
       # -----------------------------------------------------------------------
       # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.
