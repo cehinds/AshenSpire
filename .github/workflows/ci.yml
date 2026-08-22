@@ -464,6 +464,33 @@ jobs:
         # needs no excuse. Every plant is still red by its own named finding.
         run: node tools/hintstrip.mjs --selftest
 
+      # ---- #316's probe, wired because a probe nobody runs is the same defect
+      # as a probe that prints without asserting, and this file just carried
+      # BOTH within one hour. `gatelist --raw` classed it `linked-but-never-run`
+      # alongside 121 other tools; that is the tree's default state and a card of
+      # its own, but this one is the named regression probe for a ruling
+      # Constantine made and priced, so it does not get to sit in the census
+      # while the PR that ships it argues from its output.
+      - name: The Armoury arrives with the figure, and one click is the whole cost
+        # Two shapes, real Chromium through tools/browser.mjs's CDP path. GATED:
+        # the figure arrives whole where the view declares one; CARDS arrives
+        # COLLAPSED on every shape; the fold round-trips; one click opens the
+        # strip ABOVE THE FOLD; #305's mirror is exactly one. REPORTED and
+        # deliberately not gated: stripFullyVisible, false at `dev` and at head
+        # alike — a pre-existing scroll this change neither adds nor removes.
+        run: node tools/armoury-arrival-figure.mjs
+
+      # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
+      # The three gates above this each have a `--selftest` / `--mutate` door.
+      # This tool has none. Its two known-bads — an initially-EXPANDED CARDS pane
+      # and a strip pushed below the fold — were HAND-PLANTED in the real tree,
+      # observed green before the fix and red by name after, on both shapes, and
+      # reverted. That is evidence in a PR body, not a gate in this file: nothing
+      # here re-runs it. A `--selftest` door is the honest close and it is not
+      # built. Until it is, this step proves the tree passes and proves NOTHING
+      # about whether the check can still fail — which is exactly the property
+      # Vira's finding above says a list cannot assume.
+
   # ---------------------------------------------------------------------------
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
@@ -509,8 +536,23 @@ jobs:
           echo "  · the combat hint strip is below every card, whole, on screen, and touching"
           echo "    NO other combat control — at every cell hintstrip declares, including one"
           echo "    written through the game's own rebind store; its six known-bads are each"
-          echo "    observed red through the same door. THIS IS RENDERED GEOMETRY, and it is"
-          echo "    the only rendered claim in this file that is about the GAME's layout."
+          echo "    observed red through the same door. THIS IS RENDERED GEOMETRY."
+          # WAS: "...and it is the only rendered claim in this file that is about the
+          # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
+          # Armoury step below — a second browser-driven rendered-layout claim in this
+          # same job. Codex found it at `b9b3e81`, in the same act that wired the gate
+          # in. A boundary that has silently stopped being true is D104 arriving from
+          # the other side: there the narrowing lived only in a comment, here the
+          # narrowing was real and the world moved out from under it. Same cure —
+          # the claim and the coverage change in ONE act, or the green lies.
+          # — Sunna, 2026-08-22, wiring the Armoury gate.
+          echo "  · the Armoury arrives with the FIGURE WHOLE where a view declares one, CARDS"
+          echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
+          echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
+          echo "    #305's single compositing mirror required as a literal transform, so a"
+          echo "    mirror that is DOUBLED or GONE both fail. RENDERED GEOMETRY, second of two."
+          echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
+          echo "    the tree passes and proves NOTHING about whether the check can still fail."
           echo ""
           echo "IT DOES NOT MEAN:"
           echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"
@@ -526,10 +568,30 @@ jobs:
           # to its own requirement-1 header and had to say so in a fifty-line
           # apology. A boundary that UNDERSTATES coverage rots exactly the way one
           # that overstates it does. — Bjorn, 2026-08-21, wiring #295.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job now opens a"
-          echo "    browser on the game (the hint-strip gate, at ?shot=combat) and it"
-          echo "    measures BOXES — where things sit, not whether pressing them does"
-          echo "    anything. No job here fights, wins, loses, or finishes a run."
+          # STILL ONE JOB — that half was checked rather than assumed: the Armoury gate
+          # is a STEP inside this same browser-guard job, so "one job" holds. What went
+          # false is the parenthetical, which named one gate where there are now two,
+          # and "not whether pressing them does anything" — the Armoury gate drives
+          # CARDS and requires the pane to open. Narrowed to what is still true.
+          #
+          # CORRECTED AGAIN 2026-08-22, and this correction is the whole reason the
+          # block exists. The line below read "PRESSES exactly ONE control". IT DOES
+          # NOT PRESS. The tool dispatches HTMLElement.click(), which runs the handler
+          # on a control no player could touch — planted `pointer-events: none;
+          # opacity: 0` and every gate passed with clicks=1 — and the tool's OWN
+          # printed boundary says "THE CLICK IS A DOM click(), NOT A PRESS". So the
+          # repo held TWO HOMES FOR ONE FACT, contradicting, and the FALSE one was the
+          # one that prints on every green run. Law 0 clause 4. Marina withdrew her own
+          # PASS over this rather than let it stand, on her own test: a MISSING boundary
+          # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
+          # — Sunna.
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job opens a browser"
+          echo "    on the game — TWO gates inside it: the hint-strip gate at ?shot=combat and"
+          echo "    the Armoury gate at ?shot=combat -> the Armoury overlay. They measure"
+          echo "    BOXES, and the Armoury gate DISPATCHES A DOM CLICK at exactly ONE control"
+          echo "    (CARDS) and checks that a pane opened — it does NOT press it, and cannot"
+          echo "    tell whether a player could. Its own output says so on every run. NOTHING"
+          echo "    HERE IS PRESSED. No job here fights, wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -561,8 +623,10 @@ jobs:
           echo "  · that the ART rendered. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
           echo "    deterministic on this app (two runs of identical code differ). The"
-          echo "    hint-strip gate reads geometry off a live page — rects, never pixels —"
-          echo "    and it is silent about every surface but combat's control strip."
+          echo "    two browser gates read geometry off a live page — rects, never pixels —"
+          echo "    and between them they are silent about every surface but combat's control"
+          echo "    strip and the Armoury's figure-and-cards pane. NEITHER compares an image:"
+          echo "    the pixel diffs in #316 were run by hand and are not repeated here."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
           echo "    that row is Bjorn's with Vira verifying and nothing here checks it."
