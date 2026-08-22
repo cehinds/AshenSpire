@@ -144,16 +144,77 @@ function printBoundary() {
   console.log('        summary matches no readVerdict row, so wrapping the COMPOSER today would find');
   console.log('        exactly one recognised line — THIS one — and hand it this count. Not a defect');
   console.log('        today; the fix belongs to whoever wraps that tool, in the same act.');
-  console.log('  THE EXIT PATHS ABOVE main() ARE COVERED BY A NET, NOT BY A PLANT. A bad flag now');
-  console.log('        refuses inside main() and any other module-scope death is caught by an');
-  console.log('        uncaughtException handler that calls the same finish(2). Neither is reachable');
-  console.log('        by this corpus — a plant mutates SOURCE and both die before a source file is');
-  console.log('        read — so both edges of each were run by hand, not planted. STILL UNCOVERED:');
-  console.log('        a failure of this file\'s four static imports, which rejects before any handler');
-  console.log('        of ours exists; verdict.mjs calls that HARNESS COULD NOT RUN and it is right.');
+  console.log('  THE EXITS OUTSIDE main()\'S CATCH ARE COVERED BY A LATCH, NOT BY A COUNT. A bad flag');
+  console.log('        refuses INSIDE main(); every other death outside it — module init, and an async');
+  console.log('        callback throwing while main() runs — is caught by one uncaughtException');
+  console.log('        handler that LATCHES the fatal, closes the browser, the CDP socket and the');
+  console.log('        server, and forces exit 2. The latch is load-bearing: process.exitCode is not');
+  console.log('        final the way process.exit() was, so without it a later-resolving main() over-');
+  console.log('        wrote a FATAL with its own success line and verdict.mjs read that as a green.');
+  console.log('        NOT PLANTED IN THIS CORPUS, run by hand both ways instead: the init deaths die');
+  console.log('        before any source file is read, and the async one needs serve.mjs mutated.');
+  console.log('        STILL UNCOVERED: a failure of this file\'s four static imports, which rejects');
+  console.log('        before any handler of ours exists, and a SIGKILL, which no handler can catch —');
+  console.log('        verdict.mjs calls those HARNESS COULD NOT RUN and KILLED, and it is right.');
+}
+
+// THE FATAL LATCH, AND IT EXISTS BECAUSE THE FLUSH FIX TOOK ONE AWAY. Moving
+// from `process.exit()` to `process.exitCode` is what stops a piped write being
+// truncated — measured, see finish() below — but `process.exit()` was ALSO what
+// made a fatal exit FINAL. Take it away and the exit code becomes a variable
+// that anything reaching finish() later can reassign, INCLUDING A SUCCESS PATH
+// ALREADY IN FLIGHT. Found by Codex on `e387131` and reproduced here by
+// producing the false pass rather than by reading the code: a non-EADDRINUSE
+// server error (`tools/serve.mjs:149` rethrows one) arriving while main() is
+// still running took the exit code from 2 to 0 and printed
+// `OK — 45 checks passed`, and `tools/verdict.mjs` read that and reported
+// `verdict: OK — 45`, exit 0. A fatal error through the gate as a full green,
+// which is the worst state in this house.
+//
+// So the fatal is LATCHED, not merely set: once `fatal` is non-null every later
+// finish() is forced to 2 whatever it was called with, and exactly one counted
+// line is ever printed.
+let fatal = null;
+let finished = false;
+
+// THE CLEANUP HAS ONE HOME, because two callers need it now and two copies of a
+// teardown is the second copy this house exists to catch (Law 0 clause 4).
+// main() registers each handle THE MOMENT IT EXISTS, so a death between two
+// awaits still closes what already opened. It is idempotent: whichever of the
+// crash handler and main()'s `finally` gets here first does the work, and the
+// other is a no-op.
+//
+// AND IT IS WHY THE HANDLER CALLS IT AT ALL: finish() only sets
+// `process.exitCode`, so without this the CDP socket, the browser and the
+// static server keep the event loop alive and the tool HANGS instead of dying —
+// the other half of the same finding. Closing the socket also makes main()'s
+// next `cdp.send` reject, which drives the run out through its own `finally`
+// rather than leaving it aiming a pointer at a dead page.
+let liveCdp = null;
+let liveBrowser = null;
+let liveServed = null;
+async function closeEverything() {
+  const cdp = liveCdp; const browser = liveBrowser; const served = liveServed;
+  liveCdp = null; liveBrowser = null; liveServed = null;
+  try { if (cdp) cdp.close(); } catch { /* already gone */ }
+  try { if (browser) await browser.close(); } catch { /* already gone */ }
+  try { if (served) served.server.close(); } catch { /* already gone */ }
 }
 
 function finish(code, why = null) {
+  // THE LATCH, FIRST, BEFORE ANYTHING IS PRINTED OR SET. A run that died of an
+  // uncaught exception is `unknown`, and `unknown` outranks every verdict a
+  // later-resolving main() can reach.
+  if (fatal !== null) { code = 2; why = why || fatal; }
+  // EXACTLY ONE COUNTED LINE, EVER. A second one would make readVerdict report
+  // AMBIGUOUS — or, worse, be the only recognised row and hand the door the
+  // wrong count. A late death still RAISES the exit code; it never reprints.
+  if (finished) {
+    if (why) console.error(`card-drag-targeting: ${why}`);
+    if (code > (process.exitCode || 0)) process.exitCode = code;
+    return;
+  }
+  finished = true;
   if (why) console.error(`card-drag-targeting: ${why}`);
   console.log('');
   if (code === 0) console.log(`card-drag-targeting: OK — ${checks} checks passed`);
@@ -162,15 +223,17 @@ function finish(code, why = null) {
   // `process.exitCode`, NEVER `process.exit()`, AND THE REASON IS MEASURED.
   // On POSIX a pipe is an ASYNCHRONOUS stdout, so `process.exit()` can kill the
   // process with writes still queued — and the two lines above are the last
-  // thing written. Reproduced through the real door: a stub with this tool's
-  // output shape (180 checks, ~30 KB) emitted in one tick, run as
-  // `node tools/verdict.mjs -- node <stub>` with stdout piped, lost its tail on
-  // 2 of 10 runs — the verdict line went with it and `verdict.mjs` reported
-  // SILENCE, exit 3. A tool that passed every check read as a tool that said
-  // nothing, intermittently, which is the one state this whole file exists to
-  // make impossible. Setting the code and returning lets Node drain first; the
-  // `finally` in main() has already closed CDP, the browser and the server, so
-  // there is no handle left to hold the process open.
+  // thing written. Reproduced through the real door, and re-measured at this
+  // head because the first sizing of it was too narrow: this tool's output
+  // shape (180 checks, ~27 KB) run as `node tools/verdict.mjs -- node <stub>`
+  // with stdout piped lost its tail on 10 of 20 runs emitted in ONE TICK — and
+  // on 5 of 40 STREAMED, which the earlier note said was safe. It is not.
+  // STREAMING THE BODY BUYS NOTHING, BECAUSE THE TAIL IS ALWAYS ONE TICK: the
+  // verdict line and this boundary are written in a single burst whatever the
+  // body did. Every lost run cut at the same byte, 23087, at check 172 of 180 —
+  // and one of them lost ONLY the verdict and the boundary, every PASS intact.
+  // `verdict.mjs` called each of them SILENCE, exit 3. With `process.exitCode`
+  // and natural shutdown: 40 of 40 intact.
   process.exitCode = code;
 }
 
@@ -188,33 +251,34 @@ function finish(code, why = null) {
 // `--selftest` branch below is module scope too: `lines()` reads four source
 // files off disk and `import('./doorplant.mjs')` resolves, all above the guard.
 //
-// MEASURED, NOT ASSUMED — node v22.22.2, three module-scope death shapes, all
-// three caught by this handler: a synchronous top-level throw; a rejected
-// top-level `await import(...)`; a throw after a top-level await.
+// AND IT IS NOT ONLY A MODULE-SCOPE NET, WHICH IS THE HALF I GOT WRONG FIRST.
+// `uncaughtException` is process-wide: it also catches an async callback that
+// throws while main() is RUNNING, and that case needs the latch and the cleanup
+// above, not just a printed boundary. Restricting the handler to initialization
+// would have left that case uncovered; latching covers both with one mechanism.
+//
+// MEASURED, NOT ASSUMED — node v22.22.2, four death shapes, all four caught: a
+// synchronous top-level throw; a rejected top-level `await import(...)`; a throw
+// after a top-level await; and a `setTimeout` throw from inside `serve.mjs`'s
+// own error branch, planted as file bytes in a copied real tree.
 //
 // REGISTERED HERE, and the position is load-bearing: it must sit BELOW the
-// `let boundaryPrinted` / `checks` / `fails` declarations, because the handler
-// body reaches those bindings and a TDZ read inside a crash handler is a second
-// crash — the same temporal-dead-zone mistake this file already made once, in
-// the commit above. It must sit ABOVE the first module-scope statement that can
-// throw, which is the `--selftest` branch immediately below.
+// `fatal` / `finished` / `boundaryPrinted` / `checks` / `fails` declarations,
+// because the handler body reaches those bindings and a TDZ read inside a crash
+// handler is a second crash — the same temporal-dead-zone mistake this file
+// already made once, two commits back. It must sit ABOVE the first module-scope
+// statement that can throw, which is the `--selftest` branch immediately below.
 //
 // WHAT IT DOES NOT COVER, stated positively: the four static `import`s at the
 // top of this file. Those reject before any of this module's code exists, so no
 // handler of ours can be registered yet. That path still dies bare — and
 // `verdict.mjs` still names it HARNESS COULD NOT RUN, exit 2, which is correct.
+// Nor does it cover a SIGKILL, which no handler can; `verdict.mjs` calls that
+// KILLED, exit 4.
 process.on('uncaughtException', (e) => {
-  const why = `died above main() — ${(e && e.message) || e}`;
-  // A LATE DEATH MUST NOT PRINT A SECOND COUNTED LINE. If finish() already ran,
-  // the one verdict line is already out; another would make readVerdict report
-  // AMBIGUOUS and convert a true green into a finding — a worse lie than the
-  // crash. So a post-verdict death is marked `unknown` on the exit code and
-  // says why on stderr, and the grammar on stdout stays EXACTLY ONE line.
-  if (boundaryPrinted) {
-    console.error(`card-drag-targeting: ${why} — AFTER the verdict was printed`);
-    process.exitCode = 2;
-    return;
-  }
+  const why = `died outside main()'s catch — ${(e && e.message) || e}`;
+  if (fatal === null) fatal = why;
+  void closeEverything();
   finish(2, why);
 });
 
@@ -451,10 +515,14 @@ function connectCdp(wsUrl) {
 async function main() {
   if (!TEXT_SIZES.includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
   if (!browserPath) throw new Error('no Chrome/Edge found; pass --browser or set CHROME');
+  // EACH HANDLE IS REGISTERED THE MOMENT IT EXISTS, never in a batch at the end:
+  // a death between two of these awaits must still close what already opened.
   const served = useDist ? null : await serve({ root: ROOT, port: 8298, open: false });
+  liveServed = served;
   const base = useDist ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href : `http://localhost:${served.port}/`;
   const browser = await launchBrowser({ prefix: 'carddrag-', browser: browserPath, timeoutMs: 15000 });
-  const cdp = connectCdp(browser.wsUrl); await cdp.ready;
+  liveBrowser = browser;
+  const cdp = connectCdp(browser.wsUrl); liveCdp = cdp; await cdp.ready;
   // THE COUNT IS DERIVED BY INCREMENTING AS EACH CHECK IS EVALUATED, never
   // typed and never recounted from a list — a hand-typed N is a second copy of
   // the truth and it is the one that rots.
@@ -1007,7 +1075,7 @@ async function main() {
     }
     if (!ran) throw new Error(`--only ${only} matched no shape`);
   } finally {
-    cdp.close(); await browser.close(); if (served) served.server.close();
+    await closeEverything();
   }
 }
 
