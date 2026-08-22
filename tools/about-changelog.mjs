@@ -87,10 +87,54 @@ const INLINE_REFUSED = [
 // and parens are skipped, per CommonMark; the destination's own parens nest too
 // (`[a](/x(y))`).
 //
-// BOUNDARY, and it is a real one: this is a SCANNER, NOT A PARSER. It does not know
-// code spans, so `` `arr[0](x)` `` is refused even though GitHub renders it as code
-// — an over-fire, in the safe direction, and it is printed in REFUSAL_SCOPE rather
-// than left for the author to discover.
+// BOUNDARY, and it is a real one: this is a SCANNER, NOT A PARSER. What it does
+// about that is MASK CODE SPANS BEFORE EVERY REFUSAL SCAN, because "it does not
+// know code spans" had TWO directions and only one of them was printed.
+//
+// The printed one was the over-fire: `` `arr[0](x)` `` refused though GitHub renders
+// it as code. Harmless — the author is told, and rewrites.
+//
+// THE ONE THAT WAS NOT PRINTED IS THE ONE THAT MATTERED. The same blindness makes
+// a `]` inside a code span close a link label EARLY, so ``[the `]` guide](/guide)``
+// — a valid CommonMark link — was not refused, and the flattener then removed the
+// backticks and shipped `See [the ] guide](/guide)`. NOT A LEAK, A CORRUPTION: every
+// other form this PR found shipped the author's own words; this one rewrote the
+// sentence into words nobody wrote. Measured by Sten 2026-08-22 at the file door,
+// `--write` exit 0. A declared limit that names only the safe direction is worse
+// than an undeclared one: it tells the reader which way not to look.
+//
+// So one mask closes both directions at once, and it is DELIBERATELY THE SAME
+// REGEX THE FLATTENER USES — 1b's lesson, one home: two transforms meant to agree
+// and written twice will disagree, and that is how the previous gap was opened by
+// the commit that closed the one before it. The mask is length-preserving, so every
+// index the scanners compute still points at the real character.
+export const CODE_SPAN = /(?<!`)(`+)(?!`)([\s\S]*?)(?<!`)\1(?!`)/g;
+export function maskCodeSpans(text) {
+  return text.replace(CODE_SPAN, (span) => 'x'.repeat(span.length));
+}
+// A DESTINATION IN ANGLE BRACKETS IS NOT PAREN-BALANCED, AND THAT IS THE WHOLE
+// SPELLING. CommonMark lets `[a](<...>)` hold unbalanced parens because the `<>`
+// delimits instead — `[link](<#foo(and(bar)>)` is a link and GitHub renders it,
+// while `matchingBracket` on the parens returns -1 and the link rule never fired.
+//
+// The report that opened this quoted `[link](<foo(and(bar)>)`, which exits 1 — BY
+// THE RAW-HTML RULE, not this one, because `<f` is `<[a-zA-Z…`. Move the first
+// character out of that class (`<#`, `<(`) and it shipped. THE RULE CREDITED WITH
+// THE CATCH WAS NOT THE RULE THAT CAUGHT IT, and checking that is what found this.
+//
+// Recognised by the opening `<` and a closing `>`, backslash escapes skipped, no
+// unescaped `<` between: narrower than CommonMark (which also bars line endings we
+// cannot see, a receipt being one line) and it OVER-FIRES on `](<` that opens no
+// link. Refusal is the safe direction and the clean corpus is measured for it.
+function angleDestination(text, open) {
+  if (text[open + 1] !== '<') return false;
+  for (let i = open + 2; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] === '<' || text[i] === '\n') return false;
+    if (text[i] === '>') return true;
+  }
+  return false;
+}
 function matchingBracket(text, start, open, close) {
   let depth = 0;
   for (let i = start; i < text.length; i++) {
@@ -101,13 +145,15 @@ function matchingBracket(text, start, open, close) {
   }
   return -1;
 }
-export function findBracketedRefusal(text) {
+export function findBracketedRefusal(raw) {
+  const text = maskCodeSpans(raw);
   for (let i = 0; i < text.length; i++) {
     if (text[i] === '\\') { i++; continue; }
     if (text[i] !== '[') continue;
     const label = matchingBracket(text, i, '[', ']');
     if (label < 0) continue;
-    if (text[label + 1] === '(' && matchingBracket(text, label + 1, '(', ')') >= 0) {
+    if (text[label + 1] === '('
+      && (matchingBracket(text, label + 1, '(', ')') >= 0 || angleDestination(text, label + 1))) {
       return text[i - 1] === '!' ? 'an image' : 'a link';
     }
     if (text[label + 1] === '[' && matchingBracket(text, label + 1, '[', ']') >= 0) {
@@ -121,17 +167,30 @@ export function findBracketedRefusal(text) {
 // list reaches src/content/changelog.generated.js verbatim and is rendered to the
 // player as text by `esc()` in src/ui/screens/about.js.
 export const REFUSAL_SCOPE = [
-  'about-changelog REFUSES: image · inline link · full and collapsed reference link —',
-  '  all three with an EMPTY destination or a NESTED-BRACKET label, at any depth ·',
-  '  shortcut reference on a defined label · raw HTML, comment and processing',
-  '  instruction (`<letter`, `</`, `<!`, `<?`).',
+  'about-changelog REFUSES ONE SCANNED SHAPE — A SUBSET OF THE LINK SPELLINGS, NOT',
+  '  `inline link` ENTIRE. The subset: an unescaped `[` OUTSIDE A CODE SPAN whose',
+  '  matching `]` is found by COUNTING depth (any depth), followed immediately by',
+  '  `](` + a destination that is paren-balanced or angle-delimited `<…>`, EMPTY',
+  '  included — image, inline link — or by `][label]` — full and collapsed reference',
+  '  link. Not bracket-shaped, also refused: shortcut reference on a defined label ·',
+  '  raw HTML, comment and processing instruction (`<letter`, `</`, `<!`, `<?`).',
+  'A LINK SPELLING OUTSIDE THAT SHAPE IS NOT REFUSED AND SHIPS TO THE PLAYER',
+  '  VERBATIM. This line names the predicate, not a completeness claim: the lists',
+  '  below are what has been MEASURED outside it, never all of it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
   '  span delimited by a backtick run of ANY length.',
-  'A FORM ON NEITHER LIST SHIPS TO THE PLAYER VERBATIM. Open, measured, not fixed:',
-  '  non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities ·',
-  '  backslash escapes · a bare URL GitHub autolinks. None is present in CHANGELOG.md today.',
-  'IT SCANS, IT DOES NOT PARSE: a link or a `<tag`-shaped span inside a code span is',
-  '  refused too, and `a <b and b> c` reads as raw HTML. Over-fire, in the safe direction.',
+  'OPEN, MEASURED, NOT FIXED: emphasis INSIDE a code span is stripped — `` `**b**` ``',
+  '  ships as `b` where GitHub shows the asterisks · non-ASCII label case folding',
+  '  (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities · backslash escapes · a bare',
+  '  URL GitHub autolinks. None of them is present in CHANGELOG.md today.',
+  'IT SCANS, IT DOES NOT PARSE, AND THAT CUTS BOTH WAYS — the half this line used to',
+  '  leave out. Code spans are masked (backtick-run matched, the flattener\'s own',
+  '  regex) before EVERY scan. OVER-FIRES, harmless: `a <b and b> c` reads as raw',
+  '  HTML; `](<` is taken as an angle destination whether or not a link follows.',
+  '  UNDER-FIRES, NOT harmless: the mask is itself a scan, so wherever a real',
+  '  parser\'s code-span or escape boundaries differ from this one\'s, the form is',
+  '  invisible here and SHIPS. The measured members are the OPEN list above;',
+  '  neither direction is bounded by this tool.',
 ].join('\n');
 export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
@@ -172,13 +231,18 @@ export function flattenInline(text, where, labels = new Set()) {
   if (bracketed) {
     throw new Error(`${where}: prose contains ${bracketed}, which the in-game changelog cannot render — write it in words`);
   }
+  // The mask is applied to EVERY refusal scan, not only the bracket one, because
+  // "inside a code span" is one fact about the text and a rule that held for one
+  // scanner and not the others would be the same disagreement in a new place.
+  // `` `<b>` `` and `` `[docs]` `` are code on GitHub and are code here.
+  const masked = maskCodeSpans(text);
   for (const [pattern, what] of INLINE_REFUSED) {
-    if (pattern.test(text)) {
+    if (pattern.test(masked)) {
       throw new Error(`${where}: prose contains ${what}, which the in-game changelog cannot render — write it in words`);
     }
   }
   if (labels.size) {
-    for (const [, label] of text.matchAll(/\[([^\][]+)\]/g)) {
+    for (const [, label] of masked.matchAll(/\[([^\][]+)\]/g)) {
       if (labels.has(normalizeLinkLabel(label))) {
         throw new Error(`${where}: prose contains a shortcut reference link, which the in-game changelog cannot render — write it in words`);
       }
@@ -198,7 +262,7 @@ export function flattenInline(text, where, labels = new Set()) {
     // backreference, and the lookarounds keep the run from being cut short at either
     // end. A backtick that is part of the span's CONTENT survives, as it must:
     // ``` ``a`b`` ``` is the text ``a`b`` on GitHub too.
-    .replace(/(?<!`)(`+)(?!`)([\s\S]*?)(?<!`)\1(?!`)/g, '$2');
+    .replace(CODE_SPAN, '$2');
 }
 
 export function parseChangelog(markdown) {
@@ -578,6 +642,45 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. It reads ```bar``` here.',
       write: { detail: 'Docs only. It reads bar here.' },
+    },
+    // Sten's BLOCK at `5bb82f2`, 2026-08-22. `REFUSAL_SCOPE` said `inline link`
+    // unqualified and TWO valid CommonMark inline links walked past it. The first
+    // is the only form this PR ever found that CORRUPTS rather than leaks: the
+    // scanner stopped the label at the `]` inside a code span, refused nothing, and
+    // the flattener then took the backticks off — `See [the ] guide](/guide)`, words
+    // nobody wrote. Blank out `maskCodeSpans` and exactly these two go MISS, one by
+    // exit code and one by the projection, because removing the mask restores the
+    // OVER-fire in the same stroke as the under-fire and only a write plant sees it.
+    {
+      name: 'code-span `]` closing a link label EARLY — a corruption, not a leak', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the `]` guide](/guide) for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'a link-shaped code span is code, not a refusal', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads `arr[0](x)` here.',
+      write: { detail: 'Docs only. It reads arr[0](x) here.' },
+    },
+    // Same block, second form. A destination in `<…>` need not balance its parens,
+    // so `matchingBracket` returned -1 and the link rule never ran. The report that
+    // opened it quoted `[link](<foo(and(bar)>)`, which exits 1 BY THE RAW-HTML RULE
+    // — `<f` is a letter — so the finding reads as unreproduced until you check
+    // WHICH rule caught it. Both plants below start the destination with a character
+    // outside `[a-zA-Z/!?]`, so raw HTML cannot fire and only the link rule can.
+    // Make `angleDestination` return false and exactly these two go MISS.
+    {
+      name: 'angle-bracket destination with unbalanced parens', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [link](<#foo(and(bar)>) for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'angle-bracket destination, no letter to trip the raw-HTML rule', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [link](<(a>) for the rest.',
+      expect: 'prose contains a link',
     },
     {
       name: 'missing title Settings route', file: 'src/ui/screens/title.js',
