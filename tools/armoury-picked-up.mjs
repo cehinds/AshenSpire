@@ -703,6 +703,28 @@ async function main() {
     { type, key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk }, S);
   const until = async (x, w, ms = 25000) => { const t = Date.now();
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(60); } throw new Error('timeout ' + w); };
+  // ONE HOME FOR "ACTIVATE, THEN WAIT FOR THE PAGE TO ANSWER". Every A7 stage
+  // ends the same way — one ordinary Enter on a view tab, then read `data-view`
+  // — and every one of them used to SLEEP 400 ms and read. THAT IS A LYING
+  // INSTRUMENT ON A BUSY BOX, and it was measured lying on 2026-08-22: inside
+  // `--selftest` the clean copy went red twice on A7.swallow + A7.mouseswallow
+  // while an identical copy run standalone was green (63 checks, 0 findings),
+  // with another seat holding 26 Chromium processes on the same container. A
+  // fixed sleep turns "the render was slow" into "the eater ate it", which is a
+  // finding nobody can distinguish from the real one.
+  //
+  // SO IT POLLS, BOUNDED. A real swallow still fails — the view never changes,
+  // the poll spends its whole budget and the assertion below reads the
+  // unchanged value. What is gone is only the false red. The timeout is
+  // swallowed on purpose: the VERDICT is the assertion that follows, never the
+  // absence of a throw.
+  const enterAndSettle = async (want) => {
+    await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
+    await key('keyUp', 'Enter', 'Enter', 13);
+    await until(`document.querySelector('.armoury').dataset.view === ${JSON.stringify(want)}`,
+      'view moved', 6000).catch(() => {});
+    return ev("document.querySelector('.armoury').dataset.view");
+  };
 
   try {
     await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
@@ -1251,9 +1273,7 @@ async function main() {
           console.log(`    ${red('A7.swallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
           fails++; checks++;
         } else {
-          await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
-          await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
-          const view1 = await ev("document.querySelector('.armoury').dataset.view");
+          const view1 = await enterAndSettle(target);
           console.log(`      then one ordinary Enter on the "${target}" view tab: data-view "${view0}" → "${view1}"`);
           ok(view1 === target, view1 === target
             ? `A7 the next keyboard activation was NOT swallowed (data-view "${view0}" → "${view1}")`
@@ -1380,9 +1400,7 @@ async function main() {
             console.log(`    ${red('A7.mouseswallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
             fails++; checks++;
           } else {
-            await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
-            await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
-            const mv1 = await ev("document.querySelector('.armoury').dataset.view");
+            const mv1 = await enterAndSettle(mtarget);
             console.log(`      then one ordinary KEYBOARD Enter on the "${mtarget}" view tab: data-view "${mv0}" → "${mv1}"`);
             ok(mv1 === mtarget, mv1 === mtarget
               ? `A7 the next keyboard activation after a MOUSE hold was NOT swallowed (data-view "${mv0}" → "${mv1}")`
@@ -1502,9 +1520,7 @@ async function main() {
             console.log(`    ${red('A7.cancelswallow', `${edge.say}: no second view tab to activate — nothing to watch the eater against, NOT a pass`)}`);
             fails++; checks++;
           } else {
-            await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
-            await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
-            const cv1 = await ev("document.querySelector('.armoury').dataset.view");
+            const cv1 = await enterAndSettle(ctarget);
             console.log(`      then one ordinary KEYBOARD Enter on the "${ctarget}" view tab: data-view "${cv0}" → "${cv1}"`);
             ok(cv1 === ctarget, cv1 === ctarget
               ? `A7 ${edge.say}: the next keyboard activation after a CANCELLED hold was NOT swallowed (data-view "${cv0}" → "${cv1}")`
