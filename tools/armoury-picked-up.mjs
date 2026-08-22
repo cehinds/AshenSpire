@@ -129,9 +129,23 @@ const CODES = new Set([
   'A6.leak',        // an aborted hold unfolded the card
   'A6.acted',       // an aborted hold equipped or unequipped
   'A6.equips',      // a completed hold did not equip
-  'A6.tail',        // the lift after a completed hold activated something else
+  'A6.tail',        // the lift after a completed hold dispatched a click the swallow did not eat
   'A6.button',      // the in-card equip button no longer equips on a plain click
+  // A7/A8 — SOMETHING ARMED THAT SHOULD NOT BE, AND SOMETHING NEVER DISARMED.
+  // Both found by Codex on 2026-08-22, both verified here before either was
+  // touched. One direction per code, as above.
+  'A7.nokey',    // the focus cursor could not be walked onto the grip with real keys
+  'A7.keyhold',  // a held Confirm KEY did not commit on the grip
+  'A7.swallow',  // the next ordinary keyboard activation was eaten by the lift-eater
+  'A8.leak',     // window keydown listeners outlived the closed Armoury
+  'A8.escleak',  // the Escape handler outlived the closed Armoury
 ]);
+// NO CODE FOR THE BOUNDARY PLANT, DELIBERATELY. A code in this set is a finding
+// this file EMITS; the boundary plant asserts the opposite — that the run died
+// without emitting anything and printed its boundary anyway. Giving it a code
+// would put one fact in two homes and make the closed set a lie about itself.
+// That plant binds to the boundary's own words; see BOUNDARY_ANCHOR below.
+const BOUNDARY_ANCHOR = /THE RUN DIED, so this count is what was reached/;
 const known = (code) => { if (!CODES.has(code)) throw new Error(`armoury-picked-up: unknown finding code "${code}" — the codes are a closed set; add it above or fix the caller.`); return code; };
 /** The one emitter: the code and its sentence are born in the same call. */
 const red = (code, text) => `FAIL [${known(code)}] ${text}`;
@@ -297,9 +311,64 @@ if (process.argv.includes('--selftest')) {
         // `BUTTON.es-cell` — a picker the player never asked for.
         name: 'the lift after a completed hold is not swallowed (the redraw eats the finger)',
         edits: [{ file: 'src/ui/screens/equipment.js',
-          find: 'onConfirm: () => { eatTheLift(); act(); }',
-          replace: 'onConfirm: act /* planted: no lift swallow */' }],
+          find: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },",
+          replace: 'onConfirm: act, /* planted: no lift swallow */' }],
         expectRed: redRe('A6.tail'),
+      },
+      {
+        // CODEX, 2026-08-22, AND THE INVERSE OF THE PLANT ABOVE. That one takes
+        // the eater away from the road that needs it; this one gives it back to
+        // the three roads that do not. Verified before it was fixed: a held
+        // Confirm key committed on the grip and the next Enter on the view tab
+        // did nothing at all.
+        name: 'the lift-eater is armed on every road, including the ones with no lift',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },",
+          replace: 'onConfirm: () => { eatTheLift(); act(); }, /* planted: armed on keyboard and pad too */' }],
+        expectRed: redRe('A7.swallow'),
+      },
+      {
+        // CODEX, 2026-08-22. `draw()` drains the grips; a CLOSE runs no draw.
+        // Removing the drain from `close()` is the defect exactly as it stood.
+        name: 'the grips are not disarmed when the Armoury closes',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: '    while (heldGrips.length) heldGrips.pop()();\n    document.removeEventListener',
+          replace: '    /* planted: no grip drain on close */\n    document.removeEventListener' }],
+        expectRed: redRe('A8.leak'),
+      },
+      {
+        // THE HALF THAT WAS NOT MINE, planted so the repair is watched too. This
+        // is dev's behaviour restored: the Escape handler removes itself only on
+        // the Escape path, so every ✕ and every backdrop tap leaves one behind.
+        name: 'the Escape handler is only removed on the Escape path (dev\'s shape)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: "    document.removeEventListener('keydown', onKey);\n    wrap.remove();",
+          replace: '    wrap.remove();' }],
+        expectRed: redRe('A8.escleak'),
+      },
+      {
+        // THE INSTRUMENT'S OWN EXIT, and it is planted in THIS FILE because that
+        // is where the defect would live. Bjorn measured 41 of 69 boundary-
+        // printing tools with an exit path above their print; this tool had
+        // three. The plant makes the first driven wait unreachable, so the run
+        // dies in the harness with nothing checked — and the assertion is that
+        // the BOUNDARY PRINTS ANYWAY and the exit is 2.
+        //
+        // Bound to the boundary's own sentence rather than to a finding code:
+        // there is no finding here, which is the whole point (see the note by
+        // BOUNDARY_ANCHOR). If that sentence is reworded this plant fails loudly
+        // on the next run, which is the correct direction for it to rot.
+        name: 'the run dies in the harness before a single check (does the boundary still print?)',
+        //
+        // The find-string carries the `?shot=combat` line above it ON PURPOSE:
+        // this plant edits the tool it is written in, so a bare `until(...)`
+        // token would match the plant's OWN definition first (doorplant replaces
+        // the first occurrence) and arm nothing. That is the plant-editing-
+        // itself trap, and it costs one line of context to close.
+        edits: [{ file: 'tools/armoury-picked-up.mjs',
+          find: `?shot=combat\` }, S);\n    await until("!!document.querySelector('.combat .hand .card')", 'combat');`,
+          replace: `?shot=combat\` }, S);\n    await until("!!document.querySelector('.combat .hand .card-that-cannot-exist')", 'combat');` }],
+        expectRed: BOUNDARY_ANCHOR,
       },
       {
         // HIS OWN GUARDRAIL ON HIS OWN RULING: the grip must not become the
@@ -330,6 +399,59 @@ const SHAPE = [1200, 730];
 
 let fails = 0; let checks = 0;
 const ok = (cond, what) => { checks++; if (cond) console.log(`    PASS ${what}`); else { fails++; console.log(`    ${what}`); } };
+
+// ---------------------------------------------------------------------------
+// ONE EXIT, AND THE BOUNDARY IS PART OF IT.
+//
+// Bjorn measured 41 of 69 boundary-printing tools with an exit path ABOVE their
+// print, and Sunna's own tool was one of them the same night — an unreachable
+// subject gave 0 boundary lines, 0 verdict lines, exit 2, under a comment three
+// lines up calling the print unconditional. THIS TOOL WAS ONE TOO, THREE TIMES
+// OVER: the no-Chrome exit, the harness-death catch, and a throw out of
+// `a1Model()` (which runs before the try, so it exited 1 — the code reserved
+// for A FINDING — having checked nothing and said nothing).
+//
+// A comment cannot fix that, and neither can three careful `console.log`s: the
+// defect is that there was more than one place to leave from. There is now one.
+// Every exit in this file goes through `finish()`, so the boundary cannot be
+// skipped by a path added later — which is the only version of this that stays
+// true after I stop looking at it.
+//
+// WATCHED, not asserted: `--selftest`'s `A0.boundary` plant makes the first
+// `until` unreachable and the run dies in the harness. The boundary prints
+// anyway, and exit is 2.
+let boundaryPrinted = false;
+function finish(code, why = null) {
+  if (why) console.error(`    HARNESS could not run: ${why}`);
+  if (!boundaryPrinted) {
+    boundaryPrinted = true;
+    console.log(`\n  ${checks} checks, ${fails} finding(s)${why ? ' — THE RUN DIED, so this count is what was reached, not what exists' : ''}`);
+    console.log('  BOUNDARY: one container, one headless Chromium, ONE shape (1200x730). A1 is a model-door');
+    console.log('  check and is shape- and mount-free. A2/A3 drive ?shot=combat (the IN-COMBAT mount, where');
+    console.log('  canEquip seals every act); A4/A5 drive ?shot=map (where it does not). The fold checks are');
+    console.log('  DOM clicks, not synthetic pointer presses, and they prove the handler wiring only.');
+    console.log('  A6 IS THE ONE THAT PROVES A REAL FINGER CAN REACH A CONTROL, and two other PRs now');
+    console.log('  defer to it, so its extent is stated positively: REAL CDP input — Input.dispatchMouseEvent');
+    console.log('  AND Input.dispatchTouchEvent — aimed at the coordinates elementFromPoint reports for the');
+    console.log('  control, with a pointerdown recorded on the element either side, so a press that misses');
+    console.log('  is A6.finger and never a quiet pass. WHAT A6 DOES NOT COVER: any shape but 1200x730;');
+    console.log('  any control but the Armoury grip, the card face and the in-card button; the pad; a real');
+    console.log('  human finger\'s size, angle or accuracy (a CDP point is exact and a thumb is not); and');
+    console.log('  anything under a CSS transform or a body zoom — rect px and CDP input px are different');
+    console.log('  spaces (#304), and A6 aims in RAW rect px. That is correct HERE because this app scales');
+    console.log('  with --ui-zoom, which does not move the rect, and it was measured: at 390x844 with');
+    console.log('  --ui-zoom 0.9 the raw centre lands and rect x zoom lands on the wrong control. A surface');
+    console.log('  that ever uses body.style.zoom or a transform breaks that and A6 would need converting.');
+    console.log('  KEYBOARD IS NOW DRIVEN, by A7 only, and only for the eater: real Input.dispatchKeyEvent');
+    console.log('  through input.js\'s own road. THE PAD IS NOT DRIVEN HERE — tools/holdconfirm.mjs is where');
+    console.log('  that is watched. A8 counts window/document keydown listeners with getEventListeners over');
+    console.log('  six open/close cycles on the map mount; it says nothing about any other listener kind.');
+    console.log('  The phone shape 390x844 was driven by hand during the build and is not in this run.');
+    console.log('  tools/screenshot.mjs is NOT used: it prints an 87 px white band and exits 0 under');
+    console.log('  Chromium 141, so every frame here is Page.captureScreenshot over browser.mjs\'s CDP path.');
+  }
+  process.exit(code);
+}
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
@@ -405,7 +527,7 @@ async function a1Model() {
 }
 
 async function main() {
-  if (!browserPath) { console.error('armoury-picked-up: no Chrome/Chromium — set $CHROME'); process.exit(2); }
+  if (!browserPath) finish(2, 'no Chrome/Chromium — set $CHROME');
   console.log(`armoury-picked-up — source tree, real browser, ${SHAPE[0]}x${SHAPE[1]}, ?shot=combat`);
 
   await a1Model();
@@ -426,6 +548,16 @@ async function main() {
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
     return r.result.value;
   };
+  // `getEventListeners` is the command-line API, not a page global — A8 is the
+  // only caller and it says so here rather than widening `ev` for everyone.
+  const evCLI = async (e) => {
+    const r = await cdp.send('Runtime.evaluate',
+      { expression: e, awaitPromise: true, returnByValue: true, includeCommandLineAPI: true }, S);
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
+    return r.result.value;
+  };
+  const key = async (type, k, code, vk) => cdp.send('Input.dispatchKeyEvent',
+    { type, key: k, code, windowsVirtualKeyCode: vk, nativeVirtualKeyCode: vk }, S);
   const until = async (x, w, ms = 25000) => { const t = Date.now();
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(60); } throw new Error('timeout ' + w); };
 
@@ -843,13 +975,28 @@ async function main() {
       // THE LIFT AFTER THE COMMIT. armHold fires AT FULL and the screen redraws
       // under the finger, so the click the lift generates lands on whatever now
       // occupies that pixel — rule 1's own swallow lives on an element that no
-      // longer exists. Measured at 1200x730 touch before the fix: the release
+      // longer exists. Measured at 1200x730 touch on base c06c4f2: the release
       // hit `BUTTON.es-cell` and re-opened a picker nobody asked for.
-      const woke = tail.filter((h) => h.t === 'click' && h.ctrl);
+      //
+      // THIS ASSERTION WAS `click && closest('button')` AND IT WENT UNFALSIFIABLE
+      // UNDER ME, WHICH IS WHY IT IS WIDER NOW. #316 opens the Armoury on the
+      // figure and the right pane became 524 px, so the pixel under the finger
+      // after the redraw is no longer a slot cell. Planted at THIS head with the
+      // swallow removed entirely, the recorder caught
+      // `{"t":"click","ctrl":false,"tag":"DIV.armoury-right"}` — a real
+      // unswallowed lift that the old predicate scored as a PASS. The corpus had
+      // not stopped producing the defect; the predicate had stopped mentioning it.
+      //
+      // The eater's claim is "the lift's click is swallowed", not "the click
+      // landed somewhere harmless", so the check now says what the mechanism
+      // says: ZERO clicks after the lift, control or not. Clean-tree reading is
+      // `[]` on both mouse and touch, and it is `[]` because nothing is
+      // dispatched — the eater stops it at window capture, above this recorder.
+      const woke = tail.filter((h) => h.t === 'click');
       ok(woke.length === 0, woke.length === 0
-        ? `A6 the ${way} lift after a completed hold activated nothing else`
-        : red('A6.tail', `the ${way} lift after a completed hold activated ${woke.length} other control(s): `
-          + woke.map((h) => h.tag).join(' · ')));
+        ? `A6 the ${way} lift after a completed hold dispatched no click at all — the swallow held`
+        : red('A6.tail', `the ${way} lift after a completed hold dispatched ${woke.length} click(s) the swallow did not eat: `
+          + woke.map((h) => `${h.tag}${h.ctrl ? ' (A CONTROL — it activated)' : ''}`).join(' · ')));
 
       // 3 · THE IN-CARD BUTTON IS STILL A DOOR. His ruling must not make the
       // hold the only road: a plain click on the revealed control still equips.
@@ -884,6 +1031,140 @@ async function main() {
     }
     await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false, maxTouchPoints: 1 }, S);
 
+    // ---- A7 · THE LIFT-EATER IS A POINTER DEVICE -----------------------
+    //
+    // A6 above proves a finger can reach the grip and that a completed hold's
+    // lift is swallowed. THIS IS THE OTHER HALF OF THAT SWALLOW: the eater must
+    // not exist on a road that has no lift.
+    //
+    // `armHold` runs one `onConfirm` for every road — a held pointer, a held
+    // Confirm KEY, a held Confirm PAD BUTTON (armPress, ui/gesture.js S7), and
+    // the synthetic `detail === 0` click input.js dispatches when no hold is
+    // owed. A keyboard commit generates NO trailing click, and the eater is
+    // released by the next `pointerdown` — which a keyboard never sends. So it
+    // sat armed and ate the next activation anywhere on the page.
+    //
+    // REAL KEYS, input.js's own road: `Input.dispatchKeyEvent`, the focus cursor
+    // WALKED onto the grip with real ArrowDown rather than assigned, so a run
+    // where the cursor cannot reach the grip is A7.nokey and never a quiet pass.
+    console.log('\n  A7 · the eater is a pointer device  (map mount, REAL keyboard input)');
+    {
+      await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+      await until("!!document.querySelector('#open-armoury')", 'map');
+      await wait(700);
+      await ev("document.querySelector('#open-armoury').click()");
+      await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+      await wait(450);
+      await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+        || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+      const gripThere = await until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+        .then(() => true, () => false);
+      let landed = false;
+      let steps = 0;
+      if (gripThere) {
+        await wait(350);
+        for (; steps < 40 && !landed; steps++) {
+          await key('rawKeyDown', 'ArrowDown', 'ArrowDown', 40);
+          await key('keyUp', 'ArrowDown', 'ArrowDown', 40);
+          await wait(70);
+          landed = await ev("!!document.querySelector('.ep-hold.gp-focus')");
+        }
+      }
+      console.log(`      focus cursor walked onto the grip with real ArrowDown: ${landed} (${steps} press(es))`);
+      ok(landed, landed
+        ? `A7 the focus cursor reaches the grip with real keys (${steps} ArrowDown)`
+        : red('A7.nokey', 'no number of real ArrowDown presses put the focus cursor on the grip — the keyboard road could not be driven, NOT a pass'));
+      if (landed) {
+        const slotSay7 = () => ev("document.querySelector('.armoury-overlay .equip-slot .es-cell').textContent.trim()");
+        const k0 = await slotSay7();
+        await key('rawKeyDown', 'Enter', 'Enter', 13);
+        await wait(900);              // 900 of a 600 ms dial — past full
+        await key('keyUp', 'Enter', 'Enter', 13);
+        await wait(400);
+        const k1 = await slotSay7();
+        console.log(`      held Enter (900 ms of a 600 ms dial): slot "${k0}" → "${k1}"`);
+        ok(k1 !== k0, k1 !== k0
+          ? `A7 a held Confirm KEY commits on the grip ("${k0}" → "${k1}")`
+          : red('A7.keyhold', `a held Confirm key left the slot at "${k0}" — the keyboard road does not reach the hold at all`));
+        // THE ASSERTION THIS STAGE EXISTS FOR. One ordinary keyboard activation
+        // somewhere else on the page, immediately after. If the eater is armed
+        // it dies at window capture and the control does nothing.
+        const view0 = await ev("document.querySelector('.armoury').dataset.view");
+        const target = await ev(`(() => {
+          const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
+          const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+          if (!other) return null;
+          document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
+          other.classList.add('gp-focus');
+          return other.dataset.member; })()`);
+        if (!target) {
+          console.log(`    ${red('A7.swallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
+          fails++; checks++;
+        } else {
+          await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
+          await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
+          const view1 = await ev("document.querySelector('.armoury').dataset.view");
+          console.log(`      then one ordinary Enter on the "${target}" view tab: data-view "${view0}" → "${view1}"`);
+          ok(view1 === target, view1 === target
+            ? `A7 the next keyboard activation was NOT swallowed (data-view "${view0}" → "${view1}")`
+            : red('A7.swallow', `the next keyboard activation did nothing — data-view stayed "${view1}" after Enter on "${target}"; a lift-eater armed by a keyboard commit ate it`));
+        }
+      }
+    }
+
+    // ---- A8 · EVERY GRIP A DRAW ARMED IS DISARMED BY THE CLOSE ----------
+    //
+    // `armHold` adds a window-level keydown listener (its Escape abort) that
+    // only its own `disarm()` removes. `draw()` drains them because it replaces
+    // the subtree they are bound to — but a CLOSE runs no draw, and the ✕ and
+    // the backdrop close without one. Codex found it; this counts it.
+    //
+    // A CENSUS, NOT A SAMPLE: the count is taken with the Armoury SHUT, then
+    // again after each full open→picker→close-by-✕ cycle, so the number is
+    // "what outlived the panel" and nothing else. Six cycles, because one leak
+    // per cycle is a line and one leak once is a coincidence.
+    console.log('\n  A8 · nothing this mount armed outlives its close  (map mount, listener census)');
+    {
+      await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+      await until("!!document.querySelector('#open-armoury')", 'map');
+      await wait(700);
+      const win = () => evCLI("(getEventListeners(window).keydown || []).length");
+      const doc = () => evCLI("(getEventListeners(document).keydown || []).length");
+      const w0 = await win(); const d0 = await doc();
+      const wSeen = []; const dSeen = [];
+      let cycles = 0;
+      for (let i = 0; i < 6; i++) {
+        await ev("document.querySelector('#open-armoury').click()");
+        await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+        await wait(350);
+        await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+          || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+        const gripped = await until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+          .then(() => true, () => false);
+        if (!gripped) break;
+        await wait(200);
+        await ev("document.querySelector('.armoury-overlay .armoury-close').click()");
+        await wait(300);
+        if (await ev("!!document.querySelector('.armoury-overlay')")) break;
+        cycles++;
+        wSeen.push(await win()); dSeen.push(await doc());
+      }
+      console.log(`      shut: window keydown ${w0} · document keydown ${d0}`);
+      console.log(`      after ${cycles} open→picker→close-by-✕ cycle(s): window ${wSeen.join(',') || '(none)'} · document ${dSeen.join(',') || '(none)'}`);
+      const wLast = wSeen.length ? wSeen[wSeen.length - 1] : w0;
+      const dLast = dSeen.length ? dSeen[dSeen.length - 1] : d0;
+      ok(cycles === 6 && wLast === w0, (cycles === 6 && wLast === w0)
+        ? `A8 window keydown listeners are flat across ${cycles} close cycles (${w0})`
+        : red('A8.leak', cycles !== 6
+          ? `only ${cycles} of 6 close cycles completed — the census could not be taken, NOT a pass`
+          : `${wLast - w0} window keydown listener(s) outlived the closed Armoury (${w0} → ${wSeen.join(',')}) — a grip armed by a draw that no close put down`));
+      ok(cycles === 6 && dLast === d0, (cycles === 6 && dLast === d0)
+        ? `A8 the Escape handler is flat across ${cycles} close cycles (${d0})`
+        : red('A8.escleak', cycles !== 6
+          ? `only ${cycles} of 6 close cycles completed — the census could not be taken, NOT a pass`
+          : `${dLast - d0} document keydown listener(s) outlived the closed Armoury (${d0} → ${dSeen.join(',')})`));
+    }
+
   // ONE HARNESS-DEATH HANDLER FOR THE WHOLE DRIVEN RUN, and this catch used to
   // sit two hundred lines up. Saga measured the half I left open (ea2cf89 →
   // 4d18b23): I named the structural cause and closed ONE of three `until`
@@ -894,24 +1175,17 @@ async function main() {
   // outside it. The one timeout that IS a finding says so at its own call site
   // (`mapHasCard`, which catches into a boolean and reaches `A4.nocard`).
   } catch (e) {
-    console.error(`    HARNESS could not run: ${e.message}`);
     cdp.close(); await dropBrowser(); if (s.server) s.server.close();
-    process.exit(2);
+    finish(2, e.message);
   }
 
   cdp.close(); await dropBrowser(); if (s.server) s.server.close();
-  console.log(`\n  ${checks} checks, ${fails} finding(s)`);
-  console.log('  BOUNDARY: one container, one headless Chromium, ONE shape (1200x730). A1 is a model-door');
-  console.log('  check and is shape- and mount-free. A2/A3 drive ?shot=combat (the IN-COMBAT mount, where');
-  console.log('  canEquip seals every act); A4/A5 drive ?shot=map (where it does not). The fold checks are');
-  console.log('  DOM clicks, not synthetic pointer presses, and they prove the handler wiring only. A6 is');
-  console.log('  the opposite road and the reason it exists: REAL CDP input, mouse AND touch, aimed at the');
-  console.log('  grip\'s own centre with an elementFromPoint and a recorded pointerdown either side of it,');
-  console.log('  so a press that misses is A6.finger and never a quiet pass. Still ONE shape (1200x730):');
-  console.log('  the phone shape 390x844 was driven by hand during the build (--ui-zoom 0.9, raw rect px');
-  console.log('  land, rect x zoom do NOT) and is not in this run. Keyboard and pad are NOT driven here —');
-  console.log('  armPress serves them (ui/gesture.js, S7), tools/holdconfirm.mjs is where that is watched.');
-  process.exit(fails ? 1 : 0);
+  finish(fails ? 1 : 0);
 }
 
-await main();
+// EVERY DOOR OUT OF THIS FILE IS `finish()`, INCLUDING THE ONES I DID NOT WRITE.
+// `a1Model()` runs before the driven try and a throw there used to leave through
+// node's own unhandled-rejection path: exit 1, the code reserved for a finding,
+// with no boundary and no count. This catch is not belt-and-braces — it is the
+// third exit path the audit found.
+await main().catch((e) => finish(2, e && e.message ? e.message : String(e)));

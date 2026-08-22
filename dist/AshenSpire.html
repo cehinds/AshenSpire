@@ -35084,7 +35084,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '73d41d2013';
+const SOURCE = 'e5acb2edb4';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35118,7 +35118,7 @@ const SOURCE = '73d41d2013';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0984';
+const ORDINAL = '1008';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43574,7 +43574,26 @@ function mountEquipment(host, {
   wrap.className = 'modal-veil armoury-overlay';
   host.appendChild(wrap);
 
+  // ONE TEARDOWN HOME, AND THAT IS THE WHOLE FIX. Everything this mount arms
+  // OUTSIDE its own subtree is put down HERE, because `close()` is the only act
+  // every exit path runs — the ✕, the backdrop tap, Escape, and a caller's own
+  // `close()`. `draw()` drains the grips too, and must: it replaces the subtree
+  // they are bound to. But a close runs NO draw, so the last render's grips were
+  // dying with their elements and keeping their listeners.
+  //
+  // MEASURED, BOTH HALVES, `getEventListeners` over six open→picker→close-by-✕
+  // cycles, map mount, 1200x730, real Chromium over browser.mjs's CDP path:
+  //   window   keydown  3 → 4,5,6,7,8,9   ONE PER CYCLE — every grip `armHold`
+  //            armed and only `draw()` drained. MINE, and Codex found it.
+  //   document keydown  0 → 1,2,3,4,5,6   the Escape handler below, which
+  //            removed itself on the Escape path only. NOT MINE: the same probe
+  //            against dev 3926a68, where no grip exists, reads 0 → 1..6 too.
+  //            Repaired in the same act because it is the same disease and this
+  //            is now the one place that answers it.
+  // After this, both are flat at 3 and 0 — A8 below is that measurement as a check.
   const close = () => {
+    while (heldGrips.length) heldGrips.pop()();
+    document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
   };
@@ -43956,10 +43975,36 @@ function mountEquipment(host, {
         addEventListener('click', eat, true);
         addEventListener('pointerdown', off, true);
       };
+      // THE EATER IS A POINTER DEVICE AND IT NOW SAYS SO. Codex found this and
+      // it is real: `armHold` runs this same `onConfirm` for a held Confirm KEY
+      // and a held Confirm PAD BUTTON (armPress, ui/gesture.js S7) and for the
+      // synthetic `detail === 0` click input.js dispatches when no hold is owed.
+      // NONE of those has a lift to swallow — and the eater is released by the
+      // next `pointerdown`, which on those roads never comes. So it sat armed
+      // and ate the next activation ANYWHERE ON THE PAGE.
+      //
+      // WATCHED, at the real keyboard door, `Input.dispatchKeyEvent` through
+      // input.js's own road, map mount, 1200x730:
+      //   cursor walked onto the grip with real ArrowDown, Enter held 900 ms of
+      //   a 600 ms dial → committed, slot "Straight Sword" → "＋". Then one
+      //   ordinary Enter on the Grid view tab → `data-view` "hybrid" → "hybrid".
+      //   THE TAB DID NOTHING. That is F3's shape, which this comment three
+      //   lines up claimed the design had avoided — it had avoided it only for
+      //   the road it was written on.
+      //
+      // `ev.type === 'pointerdown'` is exactly and only the fire-at-full of a
+      // POINTER press: `armPress` hands `begin` the pointerdown itself as the
+      // origin event, and no other road can produce that type here. A source
+      // flag would be a second copy of a fact the event already carries.
+      //
       // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
       // a second `equipPiece(...)` here is two chances to disagree about what
       // "equip" means, which is the copy this seat exists to refuse.
-      heldGrips.push(armHold(grip, { ms: gripMs, onConfirm: () => { eatTheLift(); act(); }, id: 'equipPiece' }));
+      heldGrips.push(armHold(grip, {
+        ms: gripMs,
+        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },
+        id: 'equipPiece',
+      }));
     }
     //
     // THE IN-CARD BUTTON STAYS AND IS NOT A FALLBACK. It is the road for
@@ -44212,8 +44257,10 @@ function mountEquipment(host, {
     }
   }
 
+  // The removal moved INTO `close()` — see the block there. Leaving a copy here
+  // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+    if (e.key === 'Escape') close();
   };
   document.addEventListener('keydown', onKey);
 
