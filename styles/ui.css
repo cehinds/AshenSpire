@@ -2242,6 +2242,39 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+
+/* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
+   Both screens that print `model/statProjection` — the Armoury strip and the
+   creation screen's `#cz-stat-projection` — shipped these two blocks with NO
+   RULE AT ALL, so every separator was whatever the markup happened to leave
+   behind: zero. Measured at dev 3bafb25, 1440x860 and 390x844, by reading the
+   rendered text runs rather than the source:
+
+     STR 13DEX 10CON 12WIS 10INT 10
+     Draw / turn and opening hand3 + 2 tier x 1 = 5The current engine uses this…
+
+   Sunna read that off a screenshot she was taking of something else (#305) and
+   handed it over rather than banking it.
+
+   THIS IS MR-76 ONE BLOCK OVER — "printed with 0px between them and read as one
+   word", the same sentence `.equip-resource-change small` above already carries.
+   So nothing is invented here: the derived row copies `.equip-role-receipts >
+   div`, which has the identical <b>/<span>/<small> shape and lives in this same
+   strip, and the attribute row copies `.player-poise-receipt ul` — a wrapping
+   row of chips, which is what a phone needs at 390 where a nowrap row would run
+   off the side. One home, because the two screens print one read model. */
+.statproj-attributes { display: flex; flex-wrap: wrap; gap: 0.2rem 1.1rem; }
+.statproj-derived {
+  display: grid; gap: 0.35rem;
+  /* BOUNDED, and the bound is the point. `.equip-role-receipts` gets its width
+     from `flex: 1 1 28rem`; this block has no flex parent, so an unbounded
+     1fr/2fr split put `Mana` and its formula ~400 px apart across empty panel
+     at 1440 — separated, and still not a pair you can read at a glance. */
+  max-width: 44rem;
+}
+.statproj-derived > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.1rem 0.8rem; }
+.statproj-derived span, .statproj-derived small { color: var(--muted); }
+.statproj-derived small { grid-column: 2; }
 .arcane-exposure-meter, .arcane-exposure-immune {
   min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
   overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;

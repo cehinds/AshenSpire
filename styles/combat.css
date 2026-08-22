@@ -492,7 +492,25 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 /* ---------- hand + controls ---------- */
-.hand-area { height: 23rem; flex-shrink: 0; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+/* #295 — `--action-row-drop` IS THE ONE HOME FOR HOW FAR THE ACTION ROW HANGS
+   BELOW THE HAND, AND IT HAS TWO CONSUMERS THAT USED TO AGREE BY ACCIDENT.
+   `.combat-action-row` is bottom-anchored to `.hand-area` at a NEGATIVE offset,
+   so it hangs into the band underneath — and nothing in the column reserved that
+   band. It stayed on screen only because the hint strip happened to be the last
+   in-flow row of `.combat` and happened to be about that tall. That is a fact
+   written in two places with nothing checking it: move the strip and the whole
+   action row drops off the bottom of the viewport (measured: 47/52/62 px of new
+   `.combat` overflow, and hintstrip H5 goes from `ok 0 px` to `unknown` at all
+   four wide cells — it does not go RED, which is the second finding).
+   The offset and its reservation are now the same token, so they cannot drift,
+   and `short-wide`'s deeper drop below overrides ONE value instead of leaving a
+   6.4rem hang against a 5.2rem reservation that was never written down. */
+.combat { --action-row-drop: 5.2rem; }
+.hand-area {
+  height: 23rem; flex-shrink: 0; position: relative;
+  display: flex; align-items: flex-end; justify-content: center;
+  margin-bottom: var(--action-row-drop);
+}
 .hand-overlay {
   width: min(72rem, calc(100% - 2rem)); height: 100%; min-width: 0;
   display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "hand";
@@ -579,14 +597,42 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 
 .combat-action-row {
-  position: absolute; inset-inline: 1.6rem; bottom: -5.2rem; z-index: 30;
+  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 30;
   display: grid;
   grid-template-columns: max(5.6rem, var(--tap-floor)) max(5.2rem, var(--tap-floor)) minmax(0, 1fr) minmax(15rem, auto) max(5.2rem, var(--tap-floor)) max(5.2rem, var(--tap-floor));
-  grid-template-areas: "energy draw . end exhaust discard";
+  grid-template-areas: "energy draw hints end exhaust discard";
   align-items: end; gap: 0.8rem;
   pointer-events: none;
 }
 .combat-action-row > * { pointer-events: auto; }
+/* #295 — THE STRIP TAKES THE GUTTER THIS GRID ALREADY DECLARED. It was `.`; it
+   is now `hints`, and no track changed width. The overlap it fixes was never a
+   near miss that got worse: END TURN's column is `minmax(15rem, auto)`, so it
+   widens with its own label, while the strip was centred on the VIEWPORT by a
+   sibling rule. Two homes for "the middle of the bottom band", agreeing only by
+   luck at the shipped text size. One home now.
+
+   `padding-block: 0` IS THE HALF THAT KEEPS H1 GREEN, AND IT DELETES A RULE
+   RATHER THAN TUNING ONE. `.hint-bar`'s `0.4rem` block padding is the padding of
+   a FLOATING PILL — the thing this element stopped being the moment it became a
+   grid cell. Left in, the strip is the tallest item in a bottom-anchored row
+   (53.2 px against 50.4 at Text S), so the row grows UPWARD into the hand and a
+   card lands on the strip by 0.69 px — measured, and the exact cost Sunna
+   recorded as open on falk/295-hintstrip-layout-sunna @ 33ebb8b. Taken out, the
+   strip is its chips' own height, the row's height is unchanged at every text
+   size, and H1's clearance goes back to what it was before this act
+   (5.70 / 6.34 / 7.61 px). The chips keep `--tap-floor`; nothing pressable
+   shrank. Inline padding is untouched — it is the pill's horizontal breathing
+   room and the grid does not supply it.
+
+   NARROW IS NOT REACHED BY ANY OF THIS: `:root[data-layout='narrow'] .hint-bar`
+   is `display: none` (styles/ui.css, #29 slice 0) and narrow re-declares this
+   grid's areas without a `hints` track, so an unplaced item there would have
+   created an implicit track — it cannot, because it renders no box. */
+.combat-action-row > .hint-bar.hint-combat {
+  grid-area: hints; justify-self: center; align-self: end;
+  margin: 0; max-width: 100%; padding-block: 0;
+}
 .energy-orb {
   position: absolute; left: 3.4rem; bottom: 6.6rem; width: 6.8rem; height: 6.8rem; border-radius: 50%;
   background: #1c1610; border: 3px solid var(--gold);
@@ -880,7 +926,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .hand .card.selected {
   transform: translateY(-12px) scale(1.1) !important;
 }
-:root[data-composition='short-wide'] .combat-action-row { bottom: -6.4rem; }
+:root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
@@ -1050,6 +1096,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.8);
   }
 
+  /* Narrow puts the row back in the flow as a grid child of .hand-area, so
+     there is no hang to reserve — the token's consumer is gone and so is the
+     margin. Both halves are dropped together, in one place. */
+  :root[data-layout='narrow'] .hand-area { margin-bottom: 0; }
   :root[data-layout='narrow'] .combat-action-row {
     grid-area: actions; position: static; inset: auto; width: 100%;
     grid-template-columns: max(5.6rem, var(--tap-floor)) minmax(0, 1fr) repeat(3, max(4.2rem, var(--tap-floor)));

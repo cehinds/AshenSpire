@@ -596,6 +596,62 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
 
+  // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
+  //
+  // Same two-line shape as every pair above, and here for a measured reason.
+  //
+  // #295: `tools/hintstrip.mjs` was red for four days while PR #224 passed
+  // exact-head review, because the instrument that contradicted it was in no
+  // list any gate walks. The gate command set in this house is derived BY HAND
+  // (SOP 14 §5a), and on 2026-08-21 two experienced hands derived it wrongly in
+  // opposite directions inside one hour — a grep cannot tell `run:` from `echo`.
+  //
+  // ⚠ AND THE HALF THAT PUT IT IN *THIS* FILE RATHER THAN THE WORKFLOW, WHICH IS
+  // VIRA'S FINDING. Wiring an instrument into `ci.yml` is not enough. I claimed
+  // hintstrip's two steps were a redundant pair, having planted `|| true` on the
+  // first and watched the job stay red. The selftest's clean edge IS the first
+  // step re-run, so the job stayed red because THE SAME CHECK FAILED TWICE — and
+  // the day the tree goes green, `|| true` on that step silences the gate with
+  // no signal at all. The redundancy evaporates at exactly the moment it would
+  // matter, because a green tree is the only state in which a regression can be
+  // introduced. `gatelist --selftest` plants that `|| true` and requires G4 red,
+  // and THIS suite runs on a green tree, at every gate, with no dispatch.
+  //
+  // IT BELONGS HERE AND NOT IN ci.yml: it opens no browser, needs no port and no
+  // build — it reads the declared lists and parses them. This file's BOUNDARY
+  // block below is therefore still true, and 59 is the first check in this suite
+  // that is about the GATE rather than about the game.
+  //
+  // NUMBERED 67/68, AND IT TOOK ME FOUR TRIES, WHICH IS THE POINT AND IS NOW
+  // ALSO THE ANSWER. My first wiring used 58/59 and printed "58." and "59."
+  // TWICE in one run — engine.test.js owns those (nearestShrine, the shrine
+  // glow). I moved to 60/61 and COLLIDED AGAIN, for the same reason. I then took
+  // 62/63, which dev had explicitly reserved for this PR in the note beside
+  // 64/65 — and on the replay onto 456b8ea IT COLLIDED A THIRD TIME, because
+  // engine.test.js had meanwhile grown a 62 of its own. A reservation written in
+  // one file is not a reservation; it is a request the other file never read.
+  //
+  // THE HAZARD I CALLED "STRUCTURAL AND STILL OPEN" IS NOW CLOSED, AND NOT BY
+  // ME. tools/testnumbers.mjs (64/65, dev) is the check I said was owed and did
+  // not build. It is what caught this third collision — I did not notice it, the
+  // gate did — and 67 is DERIVED FROM ITS OUTPUT ("the next free number is 67"),
+  // not read off a file by hand and not remembered. That is the whole argument
+  // for wiring an instrument into a list: the two tries above cost a reviewer's
+  // attention, and this one cost nothing.
+  // Two lines for the same reason every pair since 36/37 is two: 62 is the
+  // check's own integrity against its planted corpus — its failure is the
+  // check's fault. 63 is the state of the lists. NO PLANT COUNT AND NO TOOL
+  // COUNT IN THIS COMMENT: both live in gatelist.mjs and its RESULT line carries
+  // them, and a number typed beside the list that owns it is the exact defect
+  // this pair exists to catch.
+  const runGate = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/gatelist.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+
   // 64/65 — NO TWO TESTS WEAR THE SAME NUMBER.
   //
   // The hazard is named in this file already, above test 36: "two files, no git
@@ -610,6 +666,13 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   // PRs is this check's own subject, applied to itself — and a gap costs
   // nothing while a collision costs a reader.
   //
+  // ⚠ AND THE RESERVATION DID NOT HOLD — #301, on replay. engine.test.js grew a
+  // 62 of its own in the meantime, so the pair this note held open was taken by
+  // the file the note could not talk to. The gate-list pair is 67/68 below. The
+  // paragraph above is kept exactly as written because it is the evidence: a
+  // range reserved in prose, in one of the two homes, is not reserved. THIS
+  // CHECK is what caught it.
+  //
   // 64 is the check's own integrity against its planted corpus (five plants, one
   // of which must go GREEN); 65 is the state of the two test files. No plant
   // count and no label count in this comment — both live in the tool and its
@@ -621,6 +684,25 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
       return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
     }
   };
+
+  const gateSelf = runGate(['--selftest']);
+  const gateSelfV = quote(gateSelf.out);
+  console.log(
+    `${gateSelf.code === 0 && gateSelfV.text ? 'PASS' : 'FAIL'}  67. the gate-list check still catches its own known-bad corpus` +
+      ` — ${gateSelfV.text || `gatelist --selftest (exit ${gateSelf.code}): ${gateSelfV.why}`}`
+  );
+  if (gateSelf.code !== 0 || !gateSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const gateTree = runGate([]);
+  const gateTreeV = quote(gateTree.out);
+  console.log(
+    `${gateTree.code === 0 && gateTreeV.text ? 'PASS' : 'FAIL'}  68. every step that names an instrument invokes it or states what goes unwatched, and no shell invocation's exit status is swallowed` +
+      ` — ${gateTreeV.text || `gatelist (exit ${gateTree.code}): ${gateTreeV.why}`}` +
+      ` (\`node tools/gatelist.mjs --raw\` for the census, \`--since <ref>\` for what a ref ADDED)`
+  );
+  if (gateTree.code !== 0 || !gateTreeV.text) zoomExtra++;
+  else zoomPassed++;
 
   const numsSelf = runNums(['--selftest']);
   const numsSelfV = quote(numsSelf.out);
@@ -649,7 +731,15 @@ console.log('          homes, never that a pixel renders wrong. 38 is arithmetic
 console.log('          numbers a caller supplies, and the #15 defect was a correct');
 console.log('          clamp computed in the wrong space, which 38 cannot detect.');
 console.log('          Nothing here opens a browser, so no test in this file has seen');
-console.log('          the screen. `node tools/zoomplace.mjs` is the half that has.');
+// BARE FORM, not `node tools/zoomplace.mjs`. Every boundary line in ci.yml names
+// its tool bare — "tools/tutorial-reach.mjs drives 8 viewports and NO job here
+// runs it" — and spelling the command instead is a different speech act: it is
+// what a reader would TYPE, and it reads as "this list runs this". This line was
+// the only command-form boundary reference in either gate list, and tools/gatelist.mjs
+// (67/68) now holds that distinction as a rule, so the one exception had to go.
+// The sentence is unchanged; only the backticked command became a bare name.
+// — Bjorn, 2026-08-21, #295.
+console.log('          the screen. tools/zoomplace.mjs is the half that has.');
 console.log('          39–40 are a JOIN between two source lists: they prove every');
 console.log('          declared navigable surface HAS a handler, never that the');
 console.log('          handler draws anything — release-shots is the half that has');
@@ -698,4 +788,16 @@ console.log('          test sources, so a third test file or a number composed a
 console.log('          invisible to it.');
 console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
+console.log('          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
+console.log('          prove that every STEP naming an instrument invokes it (or states what goes');
+console.log('          unwatched), and that no invocation in a SHELL list has its exit status');
+console.log('          discarded. THE NAME IS THE MEASUREMENT: 63 says SWALLOWED, not SILENCED, because');
+console.log('          swallowing is what G4 measures. ⚠ IT DOES NOT COVER THIS');
+console.log('          FILE: a JavaScript gate list is not audited for it, and this suite is one — so');
+console.log('          63 is deaf in its own venue and says so in its own output, by name, every run.');
+console.log('          They say NOTHING about whether a listed tool passes,');
+console.log('          nothing about instruments a person starts at a terminal, and nothing about a');
+console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
+console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
+console.log('          design call with real costs, and it is not this suite\'s to make.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
