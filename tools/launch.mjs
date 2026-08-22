@@ -8,7 +8,7 @@
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, copyFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -92,13 +92,27 @@ const src = resolve(ROOT, 'build', 'AshenSpire.html');
 const distDir = resolve(ROOT, 'dist');
 mkdirSync(distDir, { recursive: true });
 const ver = version();
-copyFileSync(src, resolve(ROOT, 'AshenSpire.html'));
-copyFileSync(src, resolve(distDir, 'AshenSpire.html'));
-copyFileSync(src, resolve(distDir, `AshenSpire-${ver}.html`));
+// #12 NAMES THIS TOOL IN SCOPE, AND A BUILDER IS NOT EXEMPT. CI ran this
+// unwrapped, so a run that copied nothing — a stranded main(), a swallowed
+// throw — exited 0 and read green like any other step. The aliases are counted
+// and VERIFIED to exist after the copy, so the number is a measurement of what
+// landed rather than a constant typed beside three copy calls.
+const aliases = [
+  resolve(ROOT, 'AshenSpire.html'),
+  resolve(distDir, 'AshenSpire.html'),
+  resolve(distDir, `AshenSpire-${ver}.html`),
+];
+for (const dest of aliases) copyFileSync(src, dest);
+const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
+if (landed !== aliases.length) {
+  console.error(`launch: REFUSED — ${landed} of ${aliases.length} current-build aliases exist after the copy.`);
+  process.exit(1);
+}
 
 if (args.includes('--build-only')) {
-  console.log('launch: --build-only set, skipping server.');
+  // The terminated verdict line #12's contract requires: one line, one count.
+  console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
 
