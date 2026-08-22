@@ -250,6 +250,12 @@ function printBoundary() {
   console.log('     reproduced it at this door and ruled it non-blocking-but-undeclared, which is');
   console.log('     why it is here. ONE printed number did move — `body` on the phone, 372x663 to');
   console.log('     372x29, the space the open strip took from the panel — and nothing reads it.');
+  console.log('     AND THE REFOLD GATE HAS THE SAME HOLE, NAMED HERE SO IT IS NOT MISTAKEN FOR');
+  console.log('     A SECOND OPINION: `the fold still refolds` compares refold.cardsCollapsed to');
+  console.log('     arrival.cardsCollapsed — two reads of the same attribute, so the round trip');
+  console.log('     is green on a strip that never left the screen. Marina measured it at this');
+  console.log('     door under the same plant: refold reported collapsed=1 with the pane still');
+  console.log('     344x1007. Arrival and refold are ONE claim about the attribute, not two.');
   console.log('   · THE SAME HOLE, TWICE MORE, STATED SO NEITHER IS MISTAKEN FOR COVER. Bjorn\'s');
   console.log('     A5 in tools/watched-probes.json reads `aria-expanded`, which the plant also');
   console.log('     left untouched. And THE DESKTOP IS COVERED ONLY BY ACCIDENT: an UNSCOPED');
