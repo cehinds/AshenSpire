@@ -32465,11 +32465,20 @@ function armHold(btn, { ms, onConfirm, id = null }) {
 //                                the finger; RELEASE closes it and the click
 //                                that follows is swallowed exactly once —
 //                                a completed read must never become a play.
-//   once open, movement does NOTHING here, and the caller is expected to
-//   refuse to start a drag while `data-inspect="open"` (combat does): the
-//   alternative — collapse into a live drag — lets a 13 px reading drift end
-//   with a no-target card PLAYED on release over the field. A read must not
-//   be able to become a commit; lift and aim again.
+//   once open, movement STILL abandons the read — the boundary above says "any
+//   time" and now means it. It did not: the abandon was scoped to `pending`,
+//   and since the timer starts at pointerdown, ANY press slower than the dial
+//   to its first 12 px (a hesitation, or simply aiming slowly) opened the read
+//   and then never yielded it. Constantine reported the visible half of that
+//   ("if a card is selected and the enemy is highlighted, I can't drag the
+//   card on the enemy to use it"); measured at 5 shapes, 5/5 dead. The caller
+//   still refuses to start a drag while `data-inspect="open"` (combat does),
+//   and that is now a backstop rather than the mechanism.
+//   WHAT THAT GUARD PROTECTED STILL HOLDS, and it is watched at both edges: a
+//   13 px reading DRIFT commits nothing, because a drift ends in the hand and
+//   `.hand-area` is not `.field` (siblings; combat's drop needs
+//   `closest('.field')`). Crossing 12 px and then carrying the card onto the
+//   battlefield is not a drift — it is the drag this boundary exists to name.
 //
 // LAW 4 / RESTORE: the expanded copy is `pointer-events: none`, steals no
 // focus, covers no tap floor it can eat, and release removes it entirely —
@@ -32583,9 +32592,12 @@ function armInspect(el, { ms, onOpen = null } = {}) {
     track({
       onMove: (mv) => {
         // Past the shared boundary this press is a drag (or the narrow
-        // hand's scroll) — theirs, silently. Once open, movement is the
-        // finger drifting while reading and changes nothing here.
-        if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
+        // hand's scroll) — theirs, silently, AT ANY PHASE. The `pending`
+        // scope that used to sit here is the reported defect: measured on
+        // this tree at 1200x730, hold 350 ms then drag PLAYED, hold 450 ms
+        // played NOTHING, and a steady 1.5 px / 60 ms aim — moving the whole
+        // time — played NOTHING. See the disambiguation block in the header.
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
       },
       onEnd: (up, { cancelled, source }) => {
         const completed = phase === 'open' && !cancelled;
@@ -34985,7 +34997,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '81d6efa92a';
+const SOURCE = '6efdb4c75f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35019,7 +35031,7 @@ const SOURCE = '81d6efa92a';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0955';
+const ORDINAL = '0970';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41151,6 +41163,7 @@ const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
 const { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } = require("src/ui/input.js");
 const { clearTargetSilhouettes, renderTargetSilhouette } = require("src/ui/components/friendlyTargets.js");
+const { friendlyTargetMode } = require("src/model/friendlyTargets.js");
 const { hintBarHtml, setHintMode } = require("src/ui/components/hints.js");
 const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
@@ -41965,6 +41978,16 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     let startY = 0;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
       ? 'all' : pv.needsTarget ? 'single' : 'none';
+    // A card whose only legal target is the player has ONE destination, so the
+    // drag names it instead of making him aim at it (his words: "dragging a
+    // block should default highlight player character since it can only target
+    // that character"). `friendlyTargetMode` is the ONE home of "can only
+    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
+    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
+    // depend on who is alive and connected and are deliberately NOT wired
+    // here; solo has no allies to state that rule against.
+    const selfOnlyTarget = dragTargetMode === 'none'
+      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -41981,6 +42004,28 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           && current.every((enemy) => wanted.has(enemy) && enemy.querySelector('.aim-silho'))) return;
       clearAim();
       enemies.forEach((enemy) => setAim(enemy, 'enemy'));
+    };
+
+    // The blue half of the same one visual the red aim uses (TARGET_COLORS.self,
+    // #4d94e0 — friendlyTargets.js). Lit while the drop point is LEGAL, exactly
+    // as the enemy aim is, so the highlight and the ghost's verdict never say
+    // two different things about the same release.
+    //
+    // SCOPED TO THE PLAYER'S OWN ZONE, and that is not tidiness — it is the
+    // second shape of this function. The first called `clearAim()`, which owns
+    // the whole board, and let this branch skip `showDragAims([])` entirely.
+    // #198's accepted plant ("non-targeting drag incorrectly paints enemy aim
+    // silhouettes") went UNCAUGHT under it: the one line keeping a non-enemy
+    // drag from painting enemy silhouettes stopped running for the 54 self-only
+    // cards, so the plant armed and nothing exercised it. This aim owns the blue
+    // silhouette and nothing else; the clear reuses friendlyTargets.js rather
+    // than restating what an aim is made of.
+    const showSelfAim = (on) => {
+      const want = on ? app.querySelector('.combatant.player') : null;
+      const cur = app.querySelector('.combatant.player.aiming.aim-self');
+      if ((want && cur === want && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
+      clearTargetSilhouettes($('.player-zone'));
+      if (want) setAim(want, 'self');
     };
 
     const clearDragTargeting = () => {
@@ -42011,6 +42056,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       } else {
         showDragAims([]);
       }
+      // An ADDITION on top of the enemy silence above, never a branch around it:
+      // `showDragAims([])` is the one line that keeps a non-enemy drag from
+      // painting enemy silhouettes, and it has to keep running for a self-only
+      // card. 9 shipped cards reach that `else` with no self effect either
+      // (enterGorefire, enterBulwark, warriorsVow, transmute, masterOfStrategy
+      // and the four curses), so it is live code, not a fallback.
+      if (selfOnlyTarget) showSelfAim(legal);
       const state = legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
@@ -42844,6 +42896,58 @@ function decorateFriendlyTarget(combatantEl, { relationship, label }) {
 
 
 Object.assign(module.exports, { TARGET_COLORS, clearTargetSilhouettes, renderTargetSilhouette, decorateFriendlyTarget });
+
+},
+"src/model/friendlyTargets.js": function (module, exports, require) {
+// Headless friendly-target semantics shared by the authoritative engine and
+// browser clients. This layer deliberately owns no DOM, colours, or rendering.
+
+// Every hostile member of the effect target vocabulary owns card resolution
+// before source-side self effects are considered. An AoE/random strike may
+// heal, block, exhaust, or otherwise affect its source without becoming a
+// friendly-target transaction.
+const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
+
+function friendlyTargetMode(def) {
+  const effects = def && Array.isArray(def.effects) ? def.effects : [];
+  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
+  const hasAlly = effects.some((effect) => effect.target === 'ally');
+  const hasSelf = effects.some((effect) => effect.target === 'self');
+  // Enemy cards continue through enemy aiming even when they also have a
+  // source-side self effect. Friendly aiming owns ally cards and pure self
+  // cards only.
+  if (hasEnemy || (!hasAlly && !hasSelf)) return 'none';
+  if (hasAlly && hasSelf) return 'mixed';
+  return hasAlly ? 'ally' : 'self';
+}
+
+function friendlyTargetPlan(def, actorId, players = []) {
+  const mode = friendlyTargetMode(def);
+  if (mode === 'none') return { mode, active: false, targets: [], legalIds: [] };
+  const targets = [];
+  for (const player of players) {
+    if (!player || !player.alive || !player.connected) continue;
+    const relationship = player.id === actorId ? 'self' : 'ally';
+    if (mode === 'self' && relationship !== 'self') continue;
+    if (mode === 'ally' && relationship !== 'ally') continue;
+    targets.push({ id: player.id, relationship });
+  }
+  return { mode, active: true, targets, legalIds: targets.map((target) => target.id) };
+}
+
+function assertFriendlyTarget(plan, requestedId, actorId) {
+  if (!plan || !plan.active) return requestedId;
+  // A self-only card historically omitted targetId. Preserve that network
+  // compatibility while the new clients always send their explicit choice.
+  const targetId = requestedId == null && plan.mode === 'self' ? actorId : requestedId;
+  if (!plan.legalIds.includes(targetId)) {
+    throw new Error(`Invalid ${plan.mode} target '${targetId == null ? 'none' : targetId}'`);
+  }
+  return targetId;
+}
+
+
+Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFriendlyTarget });
 
 },
 "src/ui/screens/equipment.js": function (module, exports, require) {
@@ -51650,58 +51754,6 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
 
 
 Object.assign(module.exports, { mountCoop });
-
-},
-"src/model/friendlyTargets.js": function (module, exports, require) {
-// Headless friendly-target semantics shared by the authoritative engine and
-// browser clients. This layer deliberately owns no DOM, colours, or rendering.
-
-// Every hostile member of the effect target vocabulary owns card resolution
-// before source-side self effects are considered. An AoE/random strike may
-// heal, block, exhaust, or otherwise affect its source without becoming a
-// friendly-target transaction.
-const HOSTILE_TARGETS = new Set(['enemy', 'allEnemies', 'randomEnemy']);
-
-function friendlyTargetMode(def) {
-  const effects = def && Array.isArray(def.effects) ? def.effects : [];
-  const hasEnemy = effects.some((effect) => HOSTILE_TARGETS.has(effect.target));
-  const hasAlly = effects.some((effect) => effect.target === 'ally');
-  const hasSelf = effects.some((effect) => effect.target === 'self');
-  // Enemy cards continue through enemy aiming even when they also have a
-  // source-side self effect. Friendly aiming owns ally cards and pure self
-  // cards only.
-  if (hasEnemy || (!hasAlly && !hasSelf)) return 'none';
-  if (hasAlly && hasSelf) return 'mixed';
-  return hasAlly ? 'ally' : 'self';
-}
-
-function friendlyTargetPlan(def, actorId, players = []) {
-  const mode = friendlyTargetMode(def);
-  if (mode === 'none') return { mode, active: false, targets: [], legalIds: [] };
-  const targets = [];
-  for (const player of players) {
-    if (!player || !player.alive || !player.connected) continue;
-    const relationship = player.id === actorId ? 'self' : 'ally';
-    if (mode === 'self' && relationship !== 'self') continue;
-    if (mode === 'ally' && relationship !== 'ally') continue;
-    targets.push({ id: player.id, relationship });
-  }
-  return { mode, active: true, targets, legalIds: targets.map((target) => target.id) };
-}
-
-function assertFriendlyTarget(plan, requestedId, actorId) {
-  if (!plan || !plan.active) return requestedId;
-  // A self-only card historically omitted targetId. Preserve that network
-  // compatibility while the new clients always send their explicit choice.
-  const targetId = requestedId == null && plan.mode === 'self' ? actorId : requestedId;
-  if (!plan.legalIds.includes(targetId)) {
-    throw new Error(`Invalid ${plan.mode} target '${targetId == null ? 'none' : targetId}'`);
-  }
-  return targetId;
-}
-
-
-Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFriendlyTarget });
 
 },
 "src/ui/components/holdbeat.js": function (module, exports, require) {
