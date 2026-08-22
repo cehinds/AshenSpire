@@ -147,6 +147,15 @@ const CODES = new Set([
   'A7.nomouse',      // no grip could be held with a real mouse — the road was not driven
   'A7.mousehold',    // a completed MOUSE hold did not commit on the grip
   'A7.mouseswallow', // the next activation after a MOUSE hold was eaten by the lift-eater
+  // A7's CANCEL half — the THIRD arming road, found 2026-08-22 after the first
+  // two were closed one at a time. A completed hold whose pointer is then
+  // CANCELLED (a system gesture, lost capture, palm) never lifts, so no click
+  // is ever dispatched — measured, both with the grip present and with it
+  // removed. One direction per code, as above.
+  'A7.nocancel',      // no grip to cancel on — the cancel road was not driven
+  'A7.cancelhold',    // a hold cancelled AFTER full did not commit on the grip
+  'A7.cancelabort',   // a hold cancelled BEFORE full committed anyway
+  'A7.cancelswallow', // the next activation after a CANCELLED hold was eaten
   'A9.name',         // a grip does not name its piece in the accessibility tree
   'A9.collide',      // two grips in one picker share an accessible name
   'A9.blind',        // no picker opened, so no grip name was read at all
@@ -158,8 +167,20 @@ const CODES = new Set([
 // That plant binds to the boundary's own words; see BOUNDARY_ANCHOR below.
 const BOUNDARY_ANCHOR = /THE RUN DIED, so this count is what was reached/;
 const known = (code) => { if (!CODES.has(code)) throw new Error(`armoury-picked-up: unknown finding code "${code}" — the codes are a closed set; add it above or fix the caller.`); return code; };
-/** The one emitter: the code and its sentence are born in the same call. */
-const red = (code, text) => `FAIL [${known(code)}] ${text}`;
+/** The one emitter: the code and its sentence are born in the same call.
+ *
+ *  IT ALSO KEEPS THE LIST, and that is a defect this tool paid for on
+ *  2026-08-22. `doorplant` quotes the LAST EIGHT LINES of a red run, and this
+ *  tool's boundary is far longer than eight lines — so a clean-copy red inside
+ *  `--selftest` printed nothing but boundary prose and the finding was
+ *  invisible in the one place it had to be read. Every call site prints its own
+ *  red where it happens; `finish()` prints them again, LAST, so a harness that
+ *  reads the end of the output reads the findings. Recorded here rather than at
+ *  the fourteen call sites because this call is the one home a finding is born
+ *  in — every `red(...)` is evaluated only on the failing branch of its own
+ *  ternary, so this list is exactly the findings and never the passes. */
+const FOUND = [];
+const red = (code, text) => { const line = `FAIL [${known(code)}] ${text}`; FOUND.push(line); return line; };
 /** The one anchor a plant may use. Unknown code = throw, not a quiet miss. */
 const redRe = (code) => new RegExp(`FAIL \\[${known(code).replace('.', '\\.')}\\]`);
 
@@ -170,7 +191,19 @@ if (process.argv.includes('--selftest')) {
   // NOT CAUGHT and the check underneath it goes unwatched, which is how the
   // A6.tail plant sat green while its subject had moved. One copy here means a
   // change to the gate breaks all three loudly, together, in the same run.
-  const GATE = "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown' && ev.pointerType !== 'mouse') eatTheLift(); act(); },";
+  const GATE = "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(ev.pointerId); act(); },";
+  // THE ONE PREDICATE, ALSO ONCE. `WHOSE` is the line that closes all three
+  // arming roads — the eater eats the click carrying its own gesture's
+  // pointerId and nothing else. Three plants below remove it; if it is
+  // reworded, all three break loudly together instead of quietly reporting
+  // NOT CAUGHT, which is the whole reason GATE lives up here too.
+  const WHOSE = '          if (e.pointerId !== pointerId) return;';
+  // The cancel teardown, which is HYGIENE ON TOP OF `WHOSE` and not a second
+  // guard for a second case: a cancelled pointer dispatches no click, so the
+  // eater is torn down rather than left inert. A plant that wants the cancel
+  // defect back has to remove both, and that is a fact about the fix.
+  const CANCELDOWN = "        addEventListener('pointercancel', gone, true);";
+  const UNGUARDED = '          /* planted: the eater does not check whose lift this is */';
   process.exit(await doorSelftest({
     tool: 'armoury-picked-up.mjs',
     timeoutMs: 900000,
@@ -338,10 +371,20 @@ if (process.argv.includes('--selftest')) {
         // the three roads that do not. Verified before it was fixed: a held
         // Confirm key committed on the grip and the next Enter on the view tab
         // did nothing at all.
-        name: 'the lift-eater is armed on every road, including the ones with no lift',
-        edits: [{ file: 'src/ui/screens/equipment.js',
-          find: GATE,
-          replace: 'onConfirm: () => { eatTheLift(); act(); }, /* planted: armed on keyboard and pad too */' }],
+        // TWO EDITS, AND THE SECOND ONE IS THE POINT. Widening the road gate
+        // alone no longer reproduces this: the eater armed on a keyboard
+        // commit waits for a click carrying a pointerId the keyboard has not
+        // got (input.js's synthetic click is id -1, measured), so it starves
+        // instead of eating. The defect needs the PREDICATE gone as well —
+        // which is the honest statement that `WHOSE`, not the road gate, is
+        // what closed this road.
+        name: 'the lift-eater is armed on every road, and does not check whose lift it eats',
+        edits: [
+          { file: 'src/ui/screens/equipment.js',
+            find: GATE,
+            replace: 'onConfirm: (ev) => { eatTheLift(ev && ev.pointerId); act(); }, /* planted: armed on keyboard and pad too */' },
+          { file: 'src/ui/screens/equipment.js', find: WHOSE, replace: UNGUARDED },
+        ],
         expectRed: redRe('A7.swallow'),
       },
       {
@@ -353,11 +396,43 @@ if (process.argv.includes('--selftest')) {
         // device gate goes. A6 CANNOT SEE IT — `[]` after a mouse lift either
         // way — so it is bound to A7's mouse-origin check, which watches the
         // product: one keyboard Enter on a view tab after a mouse hold.
-        name: 'the lift-eater is armed on the MOUSE road, which has no lift (Codex P2a)',
-        edits: [{ file: 'src/ui/screens/equipment.js',
-          find: GATE,
-          replace: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); }, /* planted: armed on mouse too */" }],
+        // REPOINTED 2026-08-22 WITH THE THIRD FINDING. This plant used to
+        // delete `pointerType !== 'mouse'`, and that gate no longer exists:
+        // the device special case was the wrong shape of answer and the
+        // predicate replaced it. The defect it named is still exactly one edit
+        // away — an eater that does not ask whose lift it is arms on the mouse
+        // road with a pointerId nothing will ever match, and eats the next
+        // keyboard activation instead. SURGICAL: the keyboard road stays
+        // closed by the road gate and the cancel road by its teardown, so this
+        // plant reds A7.mouseswallow and nothing else.
+        name: 'the lift-eater does not check whose lift it is (the MOUSE road, Codex P2a)',
+        edits: [{ file: 'src/ui/screens/equipment.js', find: WHOSE, replace: UNGUARDED }],
         expectRed: redRe('A7.mouseswallow'),
+      },
+      {
+        // THE THIRD ARMING ROAD, 2026-08-22. A touch hold that reaches full
+        // COMMITS and then the pointer is CANCELLED rather than lifted — a
+        // system gesture, a lost capture, a palm. No click is ever dispatched
+        // (measured on a probe button, both sides), so the eater armed at full
+        // outlives its own gesture.
+        //
+        // THIS ROAD IS CLOSED TWICE AND THE PLANT SAYS SO BY NEEDING BOTH
+        // EDITS. `WHOSE` makes the armed eater inert; `CANCELDOWN` removes it
+        // outright. Neither alone reproduces the defect, which is the honest
+        // shape of the fix and not a plant being generous with itself.
+        //
+        // BOUNDARY, STATED: removing `WHOSE` also reds A7.mouseswallow in the
+        // same run, because it is one predicate serving both roads. This plant
+        // is bound to A7.cancelswallow, the road furthest from where the
+        // predicate is written, so it can only be satisfied by its own stage.
+        name: 'the eater is not torn down when a completed hold is CANCELLED instead of lifted',
+        edits: [
+          { file: 'src/ui/screens/equipment.js', find: WHOSE, replace: UNGUARDED },
+          { file: 'src/ui/screens/equipment.js',
+            find: CANCELDOWN,
+            replace: '        /* planted: no teardown when the gesture is cancelled */' },
+        ],
+        expectRed: redRe('A7.cancelswallow'),
       },
       {
         // CODEX, 2026-08-22 (P2b). The grip loses its accessible name and
@@ -493,8 +568,14 @@ function finish(code, why = null) {
     console.log('  can see a mouse-armed eater: A6 reads [] after a mouse lift whether one is armed or not,');
     console.log('  because a mouse release over a removed element makes NO CLICK — A7 measures that premise');
     console.log('  on a probe button of its own, both sides, and it is a claim about the BROWSER, not this');
-    console.log('  app. PEN IS NOT DRIVEN AND NOT MEASURED: the gate arms for every non-mouse pointer, so a');
-    console.log('  pen that emits no click leaves an eater waiting for the pointerdown a pen user sends next.');
+    console.log('  app. THE CANCEL ROAD IS DRIVEN AT BOTH EDGES, with Input.dispatchTouchEvent touchCancel:');
+    console.log('  below full (the abort — must not commit) and above it (fired at full, then cancelled —');
+    console.log('  must commit AND must leave the next activation alive). PEN IS NOT DRIVEN AND NOT');
+    console.log('  MEASURED: the fix makes no device assumption at all now — the eater eats the click that');
+    console.log('  carries its own gesture\'s pointerId — but no pen event has been dispatched at this ref.');
+    console.log('  ON THE MOUSE ROAD THE EATER ARMS AND IS NEVER FED, so one window click-capture listener');
+    console.log('  stands from the hold to the next pointerdown: INERT, not absent, and nothing here counts');
+    console.log('  listeners of that kind (A8 counts keydown only).');
     console.log('  A8 counts window/document keydown listeners with getEventListeners over');
     console.log('  six open/close cycles on the map mount; it says nothing about any other listener kind.');
     console.log('  A9 READS THE ACCESSIBILITY TREE (Accessibility.getFullAXTree), which is a different tree');
@@ -508,6 +589,10 @@ function finish(code, why = null) {
     console.log('  tools/screenshot.mjs is NOT used: it prints an 87 px white band and exits 0 under');
     console.log('  Chromium 141, so every frame here is Page.captureScreenshot over browser.mjs\'s CDP path.');
   }
+  // THE FINDINGS, LAST. See the note on `red` — a harness quotes the tail, and
+  // this tool's tail is boundary prose. A run with no findings prints nothing
+  // here, so silence is the green and there is no line to mistake for one.
+  for (const line of FOUND) console.log(`  ${line}`);
   process.exit(code);
 }
 
@@ -1176,15 +1261,22 @@ async function main() {
         }
       }
 
-      // ---- A7 · THE PREMISE THE MOUSE GATE RESTS ON ------------------
+      // ---- A7 · THE PREMISE NOTHING RESTS ON ANY MORE ----------------
       //
-      // `equipment.js` does not arm the eater when `ev.pointerType === 'mouse'`,
-      // and the ONLY reason that is safe is that a mouse release over an element
-      // removed between press and release generates no click at all. That fact
-      // was written at :308-310 of this file for a year of nobody checking it,
-      // and a fix rested on it. IT IS A CLAIM ABOUT THE BROWSER, not about this
-      // app: a Chromium that starts dispatching that click turns the gate above
-      // into the A6.tail defect on mouse, silently, with every check green.
+      // KEPT, AND DEMOTED, 2026-08-22. `equipment.js` used to refuse to arm the
+      // eater when `ev.pointerType === 'mouse'`, and the only reason that was
+      // safe was this: a mouse release over an element removed between press
+      // and release generates no click at all. A DEVICE GATE IS A BET ON THE
+      // BROWSER — the day this stopped being true the gate turned back into the
+      // A6.tail defect on mouse, silently, with every check green. The gate is
+      // gone; the eater now asks whose lift a click is, which needs no premise.
+      //
+      // SO WHY THIS STILL RUNS: it is what makes A6 blind on the mouse road
+      // (`[]` after a mouse lift whether an eater is armed or not), and it is
+      // what leaves an inert listener standing on that road until the next
+      // pointerdown. Both are printed as boundaries below, and a boundary
+      // resting on an unwatched claim about the browser is one nobody checked.
+      // It is a claim about CHROMIUM, not about this app.
       //
       // Measured on the live page with a probe button of this tool's own making,
       // BOTH SIDES of the one condition that matters: element present at release
@@ -1221,7 +1313,7 @@ async function main() {
           ? 'A7 the premise holds — a mouse release over a REMOVED element makes no click, over a present one it makes exactly 1'
           : red('A7.premise', present.length !== 1
             ? `the control case failed: a mouse press/release on a PRESENT button produced ${present.length} click(s), not 1 — the probe was never hit, so the removed case below measures nothing`
-            : `a mouse release over a REMOVED element produced ${removed.length} click(s) — the premise equipment.js's pointerType gate rests on is FALSE in this browser, and the mouse road now needs the eater it is not given`));
+            : `a mouse release over a REMOVED element produced ${removed.length} click(s) — this browser DOES dispatch it, so A6 is no longer blind on the mouse road and the two boundaries citing that are stale`));
       }
 
       // ---- A7 · THE MOUSE ORIGIN, WHICH A6 CANNOT SEE ----------------
@@ -1233,6 +1325,11 @@ async function main() {
       // anywhere on the page. Reproduced before the fix at 1200x730: window
       // click-capture listeners NET +1 after the lift, and the next Enter on the
       // Grid view tab left `data-view` at "hybrid".
+      //
+      // STILL DRIVEN AFTER THE FIX CHANGED SHAPE. The eater now ARMS on this
+      // road and is simply never fed, so this stage is the one that proves the
+      // armed-and-inert state really is inert. A check retired because its gate
+      // was deleted would have been measuring the gate, not the road.
       //
       // THIS IS A7.swallow's ASSERTION WITH A MOUSE IN FRONT OF IT, and it is a
       // separate check because A6 reads `[]` after a mouse lift either way.
@@ -1291,6 +1388,128 @@ async function main() {
               ? `A7 the next keyboard activation after a MOUSE hold was NOT swallowed (data-view "${mv0}" → "${mv1}")`
               : red('A7.mouseswallow', `the next keyboard activation after a MOUSE hold did nothing — data-view stayed "${mv1}" after Enter on "${mtarget}";`
                 + ' a lift-eater armed by a mouse commit, which has no lift to eat, ate it instead'));
+          }
+        }
+      }
+      // ---- A7 · THE COMPLETED HOLD THAT IS CANCELLED, NOT LIFTED ------
+      //
+      // THE THIRD ARMING ROAD, and it is here because the first two were found
+      // one at a time. A touch or pen hold that reaches full COMMITS — that is
+      // fire-at-full, holdconfirm.js's design — and the pointer can then end
+      // with `pointercancel` instead of `pointerup`: a system gesture takes the
+      // touch, the browser drops the capture, a palm lands. `trackGesture`
+      // (ui/gesture.js) calls `onEnd` either way, so the app never notices.
+      //
+      // A CANCELLED POINTER PRODUCES NO CLICK. Measured on this page with a
+      // probe button of this tool's own making, both with the element present
+      // at the cancel and with it removed first — the same two-sided shape
+      // A7.premise uses for the mouse, and for the same reason: a run where the
+      // probe was never hit also prints `[]`.
+      //
+      // So the eater armed at full waits for a lift that never comes, and the
+      // NEXT activation on any other road pays for it — A7.swallow's assertion
+      // with a cancelled finger in front of it.
+      //
+      // BOTH EDGES OF THE CANCEL, because the population that only cancels late
+      // cannot tell you the early cancel is right: BELOW full the hold is the
+      // ABORT and must not commit, ABOVE full it must commit. Both must leave
+      // the next keyboard activation alive.
+      {
+        const tprobe = JSON.parse(await ev(`JSON.stringify((() => {
+          document.querySelectorAll('#a7-cancel-probe').forEach((n) => n.remove());
+          const d = document.createElement('button');
+          d.id = 'a7-cancel-probe'; d.textContent = 'probe';
+          d.style.cssText = 'position:fixed;left:20px;top:120px;width:200px;height:80px;z-index:2147483647';
+          document.body.appendChild(d);
+          window.__a7c = [];
+          document.addEventListener('click', (e) => window.__a7c.push(e.target.id || e.target.tagName), true);
+          const r = d.getBoundingClientRect();
+          return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
+        const tdown = (x, y) => cdp.send('Input.dispatchTouchEvent',
+          { type: 'touchStart', touchPoints: [{ x: Math.round(x), y: Math.round(y) }] }, S);
+        const tup = () => cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S);
+        const tcancel = () => cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] }, S);
+        await ev('window.__a7c = []');
+        await tdown(tprobe.x, tprobe.y); await wait(60); await tup(); await wait(250);
+        const lifted = JSON.parse(await ev('JSON.stringify(window.__a7c)'));
+        await ev('window.__a7c = []');
+        await tdown(tprobe.x, tprobe.y); await wait(60); await tcancel(); await wait(250);
+        const cancelled = JSON.parse(await ev('JSON.stringify(window.__a7c)'));
+        await ev("document.querySelectorAll('#a7-cancel-probe').forEach((n) => n.remove())");
+        console.log(`      touch on a probe button — LIFTED ${JSON.stringify(lifted)} · CANCELLED ${JSON.stringify(cancelled)}`);
+        ok(lifted.length === 1 && cancelled.length === 0, (lifted.length === 1 && cancelled.length === 0)
+          ? 'A7 the cancel premise holds — a cancelled touch makes no click, a lifted one makes exactly 1'
+          : red('A7.premise', lifted.length !== 1
+            ? `the control case failed: a touch tap on a PRESENT button produced ${lifted.length} click(s), not 1 — the probe was never hit, so the cancelled case below measures nothing`
+            : `a CANCELLED touch produced ${cancelled.length} click(s) — a cancelled pointer does dispatch one in this browser, and the eater must then be allowed to eat it rather than torn down`));
+
+        for (const edge of [
+          { say: 'BELOW full (the abort)', over: -400, commits: false },
+          { say: 'ABOVE full (fired, then cancelled)', over: +300, commits: true },
+        ]) {
+          await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+          await until("!!document.querySelector('#open-armoury')", 'map');
+          await wait(700);
+          await ev("document.querySelector('#open-armoury').click()");
+          await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+          await wait(450);
+          await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+            || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+          const gripC = await until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+            .then(() => true, () => false);
+          if (!gripC) {
+            console.log(`    ${red('A7.nocancel', `${edge.say}: no grip to cancel a hold on — the cancel road could not be driven, NOT a pass`)}`);
+            fails++; checks++;
+            continue;
+          }
+          await wait(350);
+          const aimC = JSON.parse(await ev(`JSON.stringify((() => {
+            const g = document.querySelector('.equip-picker .ep-list .ep-hold');
+            g.scrollIntoView({ block: 'center' });
+            const r = g.getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
+          const holdC = Number(await ev("document.querySelector('.ep-hold').dataset.holdMs || 600"));
+          const slotC = () => ev("document.querySelector('.armoury-overlay .equip-slot .es-cell').textContent.trim()");
+          const c0 = await slotC();
+          await tdown(aimC.x, aimC.y);
+          await wait(Math.max(80, holdC + edge.over));
+          await tcancel();
+          await wait(400);
+          const c1 = await slotC();
+          console.log(`      ${edge.say}: touch held ${Math.max(80, holdC + edge.over)} ms of a ${holdC} ms dial, then CANCELLED: slot "${c0}" → "${c1}"`);
+          if (edge.commits) {
+            ok(c1 !== c0, c1 !== c0
+              ? `A7 a hold cancelled AFTER full still commits ("${c0}" → "${c1}") — fire-at-full, so the eater IS armed`
+              : red('A7.cancelhold', `a hold held past full and then cancelled left the slot at "${c0}" — the road did not reach the commit, so the swallow check below measures nothing`));
+          } else {
+            ok(c1 === c0, c1 === c0
+              ? `A7 a hold cancelled BEFORE full does not commit (slot stayed "${c0}") — the abort survives a cancel`
+              : red('A7.cancelabort', `a hold cancelled BEFORE full equipped anyway ("${c0}" → "${c1}") — a cancelled gesture became a commit`));
+          }
+          // THE ASSERTION THIS STAGE EXISTS FOR, at both edges. One ordinary
+          // keyboard activation elsewhere on the page, straight after the
+          // cancel. If an eater is armed and has no lift coming, it dies at
+          // window capture and the control does nothing.
+          const cv0 = await ev("document.querySelector('.armoury').dataset.view");
+          const ctarget = await ev(`(() => {
+            const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
+            const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+            if (!other) return null;
+            document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
+            other.classList.add('gp-focus');
+            return other.dataset.member; })()`);
+          if (!ctarget) {
+            console.log(`    ${red('A7.cancelswallow', `${edge.say}: no second view tab to activate — nothing to watch the eater against, NOT a pass`)}`);
+            fails++; checks++;
+          } else {
+            await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
+            await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
+            const cv1 = await ev("document.querySelector('.armoury').dataset.view");
+            console.log(`      then one ordinary KEYBOARD Enter on the "${ctarget}" view tab: data-view "${cv0}" → "${cv1}"`);
+            ok(cv1 === ctarget, cv1 === ctarget
+              ? `A7 ${edge.say}: the next keyboard activation after a CANCELLED hold was NOT swallowed (data-view "${cv0}" → "${cv1}")`
+              : red('A7.cancelswallow', `${edge.say}: the next keyboard activation after a CANCELLED hold did nothing — data-view stayed "${cv1}" after Enter on "${ctarget}";`
+                + ' the pointer never lifted, so no click was ever coming, and the eater armed at full ate an unrelated one'));
           }
         }
       }

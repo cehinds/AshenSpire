@@ -942,77 +942,125 @@ export function mountEquipment(host, {
       // only because this is the caller that has it today.
       //
       // NO TIMER, so there is no stale swallow to eat a later real tap (Vira's
-      // F3, which this tree has already paid for once): the eater is released
-      // by the next `pointerdown`, i.e. by the player starting a NEW press. The
-      // click that belongs to the gesture that just committed has no pointerdown
-      // in front of it, and it is the only click this can ever eat.
-      const eatTheLift = () => {
+      // F3, which this tree has already paid for once).
+      //
+      // THE EATER EATS ONE CLICK AND IT IS THE ONE ITS OWN POINTER MAKES —
+      // AND THAT ONE PREDICATE IS THE WHOLE FIX FOR THREE FINDINGS.
+      //
+      // It was armed on *a hold completed* and released by *the next
+      // pointerdown*, and neither half is about the click it exists to eat. So
+      // the same defect was found three times, one road at a time, by three
+      // different readers: a held Confirm KEY commits with no lift (A7.swallow)
+      // · a MOUSE release over the element `act()` just removed makes no click
+      // (A7.mouseswallow, Codex P2a) · a touch or pen that reaches full and is
+      // then CANCELLED never lifts at all (A7.cancelswallow). Every one of them
+      // left a window click-capture listener standing, and the next activation
+      // ANYWHERE — the Grid tab, one Enter — paid for it.
+      //
+      // TWO SPECIAL CASES WERE THE WRONG SHAPE OF ANSWER and both are gone:
+      // `ev.pointerType !== 'mouse'` is DELETED. The question was never *which
+      // device* — it is *whose lift is this click*, and the event answers it.
+      // Measured, Chromium 141, 1200x730, browser.mjs CDP path:
+      //     touch tap, element present   pointerdown id 2  -> click id 2
+      //     touch tap, element REMOVED   pointerdown id 3  -> click id 3 (DIV)
+      //     touch CANCELLED after 900 ms pointerdown id 4  -> NO CLICK AT ALL
+      //     mouse press/release          pointerdown id 1  -> click id 1
+      // A REAL click is a PointerEvent in this engine and carries the
+      // pointerId of the gesture that produced it. A trailing lift therefore
+      // identifies itself, and a cancelled finger cannot forge one because
+      // there is no click at all.
+      //
+      // AND THE SYNTHETIC ACTIVATIONS CANNOT FORGE ONE EITHER — measured for
+      // BOTH forms this tree actually uses, because they differ and I had the
+      // wrong one written here first:
+      //     input.js:509  new MouseEvent('click')  -> MouseEvent, NO pointerId
+      //                                                property at all
+      //     input.js:844  el.click()               -> PointerEvent, id -1
+      // `undefined !== 4` and `-1 !== 4`. input.js's keyboard and pad road is
+      // the FIRST of those, which is the one A7.swallow drives.
+      //
+      // AND DELETING THE DEVICE GATE REMOVES A BET ON THE BROWSER. That gate
+      // rested on "a mouse over a removed element makes no click" — true today
+      // (A7.premise watches it), and the day it stops being true the gate turns
+      // silently back into the defect it replaced. The identity check needs no
+      // such premise: if a mouse ever does dispatch that click, it carries id 1
+      // and is eaten, which is the behaviour we want either way.
+      //
+      // WHAT IS LEFT OF THE ROAD GATE IS SCOPE, NOT A CASE: `ev.type ===
+      // 'pointerdown'` at the call site is "this gesture had a pointer at all".
+      // A held key, a held pad button and the synthetic `detail === 0` click
+      // reach `onConfirm` with no pointer behind them and no lift owed.
+      //
+      // AND THE CANCEL TEARS THE EATER DOWN rather than merely starving it.
+      // Measured above: a cancelled pointer dispatches NO click, so the eater
+      // has nothing left to wait for and goes now instead of at some later
+      // pointerdown. The identity check already makes it harmless; this makes
+      // it absent, which is the difference between a quiet listener and none.
+      //
+      // BOUNDARY, STATED POSITIVELY. On the MOUSE road the eater still arms and
+      // is fed nothing, so one window click-capture listener lives from the
+      // hold to the next `pointerdown` — inert (id 1 matches no other click),
+      // not free. PEN IS STILL NOT DRIVEN: it now needs no device assumption at
+      // all, which is strictly better than the gate it replaces, but no pen
+      // event has been dispatched at this ref.
+      const eatTheLift = (pointerId) => {
         const off = () => {
           removeEventListener('click', eat, true);
           removeEventListener('pointerdown', off, true);
+          removeEventListener('pointercancel', gone, true);
         };
-        const eat = (e) => { e.stopPropagation(); e.preventDefault(); off(); };
+        // WHOSE LIFT IS THIS. Anything else — a synthetic activation click, a
+        // later real tap, another finger — is not this gesture's and is none of
+        // this eater's business.
+        const eat = (e) => {
+          if (e.pointerId !== pointerId) return;
+          e.stopPropagation(); e.preventDefault(); off();
+        };
+        // THIS GESTURE ENDED WITHOUT LIFTING. No click is coming; go now.
+        const gone = (e) => { if (e.pointerId === pointerId) off(); };
         addEventListener('click', eat, true);
         addEventListener('pointerdown', off, true);
+        addEventListener('pointercancel', gone, true);
       };
-      // THE EATER IS A POINTER DEVICE AND IT NOW SAYS SO. Codex found this and
-      // it is real: `armHold` runs this same `onConfirm` for a held Confirm KEY
-      // and a held Confirm PAD BUTTON (armPress, ui/gesture.js S7) and for the
-      // synthetic `detail === 0` click input.js dispatches when no hold is owed.
-      // NONE of those has a lift to swallow — and the eater is released by the
-      // next `pointerdown`, which on those roads never comes. So it sat armed
-      // and ate the next activation ANYWHERE ON THE PAGE.
+      // THE THREE ROADS, WATCHED FAILING BEFORE THEY WERE CLOSED. Kept as a
+      // record of what was measured, not as a second copy of the reasoning —
+      // that is the block above, and it has one home.
       //
-      // WATCHED, at the real keyboard door, `Input.dispatchKeyEvent` through
-      // input.js's own road, map mount, 1200x730:
-      //   cursor walked onto the grip with real ArrowDown, Enter held 900 ms of
-      //   a 600 ms dial → committed, slot "Straight Sword" → "＋". Then one
-      //   ordinary Enter on the Grid view tab → `data-view` "hybrid" → "hybrid".
-      //   THE TAB DID NOTHING. That is F3's shape, which this comment three
-      //   lines up claimed the design had avoided — it had avoided it only for
-      //   the road it was written on.
+      //   KEY (A7.swallow). Real `Input.dispatchKeyEvent` through input.js's
+      //   own road, map mount, 1200x730: cursor walked onto the grip with real
+      //   ArrowDown, Enter held 900 ms of a 600 ms dial -> committed, slot
+      //   "Straight Sword" -> "＋". Then one ordinary Enter on the Grid view
+      //   tab -> `data-view` "hybrid" -> "hybrid". THE TAB DID NOTHING.
+      //   MOUSE (A7.mouseswallow, Codex P2a). Same shape with a 900 ms mouse
+      //   hold in front of it: window click-capture listeners NET +1 after the
+      //   lift, ZERO clicks dispatched, and the next Enter -> "hybrid" ->
+      //   "hybrid" again. A6 CANNOT SEE THIS: it reads [] after a mouse lift
+      //   whether an eater is armed or not.
+      //   CANCEL (A7.cancelswallow). Touch held 900 ms of a 600 ms dial, then
+      //   `Input.dispatchTouchEvent touchCancel`: slot "Straight Sword" -> "＋"
+      //   (fire-at-full, so the eater armed), no click ever dispatched, and the
+      //   next Enter -> "hybrid" -> "hybrid". BOTH EDGES of the cancel are
+      //   driven — cancelled BELOW full is the abort and must not commit, and
+      //   it was already green, because an abort never reaches `onConfirm`.
+      //
+      // A6.tail COULD NEVER HAVE CAUGHT THE MOUSE ONE and its comment said
+      // otherwise. It reads [] on the mouse road whether the eater is armed or
+      // not — the plant proves it, naming the TOUCH lift with the swallow
+      // removed entirely. One zero came from the eater and one from the
+      // browser; the comment credited both to the eater. Corrected in place.
+      // A7 owns the mouse and cancel roads.
       //
       // `ev.type === 'pointerdown'` is exactly and only the fire-at-full of a
       // POINTER press: `armPress` hands `begin` the pointerdown itself as the
       // origin event, and no other road can produce that type here. A source
       // flag would be a second copy of a fact the event already carries.
       //
-      // AND `pointerType !== 'mouse'`, BECAUSE A MOUSE IS A POINTER WITH NO
-      // LIFT TO EAT. Codex found this too, and it is the SAME defect one road
-      // over: the gate above fixed the keyboard and pad origins and left the
-      // mouse origin arming an eater that never eats. The premise was already
-      // written down in my own tool — tools/armoury-picked-up.mjs:308-310 says
-      // a mouse release over a removed element generates no click at all — and
-      // the fix did not use it. A fact in the file that never reached the
-      // predicate is the shape this seat exists to refuse.
-      //
-      // SO IT WAS MEASURED BEFORE IT WAS BELIEVED, three ways, Chromium 141,
-      // 1200x730, over browser.mjs's CDP path:
-      //   1 · bare DOM, same page: press a button, REMOVE it, release at the
-      //       same point -> []. Control, element left in place -> ["click"].
-      //   2 · the real grip, completed 900 ms mouse hold: window-capture
-      //       listener traffic ["+click","+pointerdown"] during the hold, ZERO
-      //       clicks after the lift, and NET +1 window click-capture listener
-      //       still armed afterwards.
-      //   3 · the product: one ordinary keyboard Enter on the Grid view tab
-      //       straight after that mouse hold -> data-view "hybrid" -> "hybrid".
-      //       THE TAB DID NOTHING.
-      // Point 3 is A7's finding entered by mouse instead of by key, so the
-      // eater outlived its own gesture on the road the gate was written FOR.
-      //
-      // WHY NOT ARM ONLY FOR `touch`. Touch is measured to produce the click
-      // (that is what this eater was built for); PEN is not measured either
-      // way. Arming for non-mouse takes the safe side of that boundary: a pen
-      // that emits no click leaves the eater waiting for a pointerdown a pen
-      // user is about to send anyway, while a pen that DOES emit one would
-      // otherwise re-open a picker nobody asked for. Named rather than guessed.
-      //
       // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
       // a second `equipPiece(...)` here is two chances to disagree about what
       // "equip" means, which is the copy this seat exists to refuse.
       heldGrips.push(armHold(grip, {
         ms: gripMs,
-        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown' && ev.pointerType !== 'mouse') eatTheLift(); act(); },
+        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(ev.pointerId); act(); },
         id: 'equipPiece',
       }));
     }
