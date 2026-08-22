@@ -313,7 +313,11 @@ jobs:
   # the same exit code until run 1 of this workflow taught me otherwise.
   # ---------------------------------------------------------------------------
   browser-guard:
-    name: ?shot= cannot touch a player's save
+    # RENAMED 2026-08-21 (#295). It read "?shot= cannot touch a player's save",
+    # which was the whole job when it was written and became one of four claims
+    # in it. A job name is what a red run shows first; one naming a single check
+    # sends the reader to the wrong tool. — Bjorn
+    name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -366,6 +370,146 @@ jobs:
         # will be slower and that number is not a promise about one.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
 
+      # -----------------------------------------------------------------------
+      # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.
+      #
+      # This is the only step in this file added because a gate stayed SILENT
+      # rather than because a check was missing, and the distinction is the
+      # whole point. tools/hintstrip.mjs was written on 2026-08-18 with six
+      # same-door plants and a declared population. On 2026-08-20 PR #224
+      # ("unify combat action row", f2acfc9) moved END TURN into an absolutely
+      # positioned row that hangs into the strip's band; hintstrip went red at
+      # that commit and has been red every day since. THE PR PASSED EXACT-HEAD
+      # REVIEW ANYWAY, because the tool that contradicted it was in no list any
+      # gate walks — the reviewer's command set is derived by hand (SOP 14 §5a,
+      # family repo) and a set derived by hand is a set that can omit.
+      #
+      # So the defect this step answers is not the overlap. It is that a
+      # rendered layout invariant with no list is an invariant only until the
+      # next layout change. Vira bisected it to one commit (green c447075, red
+      # f2acfc9, red at dev 001c950) and ruled the wiring the real acceptance.
+      #
+      # ⚠ REPORTING UNTIL #295'S LAYOUT HALF LANDS. THAT CARD OWNS THIS FINDING.
+      # A standing red with no named owner stops being a signal and becomes
+      # background noise, which is the state a gate does not recover from — so
+      # the expiry is written here, beside the step, and it is ENFORCED rather
+      # than remembered: the waiver names #295 and the step fails the moment
+      # that finding changes in either direction. If you are reading this
+      # because the job is red: open #295. If #295 is CLOSED, the fix has landed
+      # and the step is telling you to delete the two ids above.
+      #
+      # ⚠ THE FINDING IS REAL AND IS NOT TO BE "FIXED" HERE.
+      # H2 CLEAR fails at two of eight declared cells — 1200x730 Text XL (END
+      # TURN, 3368.8 px2, 11.7% of the strip) and 1200x730 with a wide rebound
+      # label (2700.3 px2, 10.1%). Both are printed on every run. The layout fix
+      # is a separate act on styles/combat.css and is in progress.
+      # NOTHING HERE IS TO BE RELAXED, `|| true`'d, OR MOVED TO
+      # continue-on-error. Those hide a defect; the waiver above cannot, because
+      # it fails when the defect goes away. See the warning at the top of this
+      # file — a red means a claim in this repo is false, which is the entire
+      # reason it exists.
+      #
+      # ⚠ THESE TWO STEPS ARE NOT A REDUNDANT PAIR, AND AN EARLIER VERSION OF
+      # THIS FILE'S PR BODY CLAIMED THEY WERE. Vira's derivation, from
+      # doorplant.mjs:181-186: the selftest finishes by running the tool on an
+      # UNPLANTED copy and requiring it green — which IS step 1, re-run. So while
+      # the tree is red, a `|| true` on step 1 leaves the job red only because
+      # THE SAME CHECK FAILED TWICE; the day the layout is fixed, step 1 goes
+      # green, the clean copy exits 0, step 2 goes green, and `|| true` on step 1
+      # silences this gate completely. The redundancy evaporates at exactly the
+      # moment it would matter, because a green tree is the only state in which a
+      # regression can be introduced. THE REAL GUARD IS `tools/gatelist.mjs`,
+      # wired into tests/run-node.mjs (67/68): it parses this file, and a
+      # swallowed exit status here is red THERE, on a green tree, with no browser
+      # and no dispatch.
+      #
+      # ORDER, AND IT IS THE REVERSE OF THE PAIR ABOVE, DELIBERATELY. The
+      # selftest's harness (tools/doorplant.mjs) finishes by running an
+      # UNPLANTED copy and requires it green — so while the tree is red the
+      # selftest reports RED for the baseline, not for its plants. Running the
+      # tree check first means the run's first hintstrip line names the real
+      # finding (H2, with its numbers) instead of a baseline complaint a reader
+      # has to decode. When the layout is fixed both go green and the order
+      # stops mattering.
+      # -----------------------------------------------------------------------
+      # ⚠ THIS STEP WAS IN REPORTING MODE AND IS NOW BLOCKING. THE WAIVER IS
+      # GONE, AND IT REMOVED ITSELF — read this before adding another one.
+      #
+      # This gate arrived with a known, carded, already-measured defect (#295:
+      # the strip overlapped END TURN by 3368.8 px2 at Text XL and 2700.3 px2
+      # under a wide rebind). Rather than land red or land relaxed, it landed
+      # with a waiver WELDED TO THAT DEFECT in both directions:
+      #   · a finding outside the waiver          → the step FAILS (it is new)
+      #   · a WAIVED finding that has GONE AWAY   → the step FAILS ("delete the
+      #                                             waiver")
+      #   · the instrument cannot run             → exit 2, unknown, blocks
+      # The note here read: "Removing the two ids when #295's layout half lands
+      # is not optional housekeeping — the step fails until you do."
+      #
+      # IT DID. #295's layout half landed in the same commit as this wiring, on
+      # Constantine's ruling that nothing red should ever land — and the first
+      # dispatch at that head went RED with `WAIVER STALE — 2 waived finding(s)
+      # are GONE`. I had fixed the defect and left the excuse behind; the machine
+      # check caught it, not me and not a reviewer. That is the whole argument for
+      # an expiring waiver over `|| true` or `continue-on-error`, both of which
+      # sever the verdict from the tree permanently and silently: `axisfit`
+      # carried "reported, never asserted" over a live bug for months precisely
+      # because nothing made its excuse expire (Law 5's enforcement note).
+      #
+      # THE STEP IS NOW A PLAIN BLOCKING GATE with nothing waived. If a future
+      # act needs a waiver here, it needs a card id and it must fail the moment
+      # its findings go away — the carve-out is not a standing permission.
+      - name: The combat hint strip is under the cards and touches no other control
+        # Six checks per cell over eight declared cells; a cell that stops being
+        # reached is red (H0), never absent. The strip is display:none on the
+        # narrow layout, so every check there is `unknown` and counts toward
+        # nothing — the tool prints that as a state with its reason.
+        run: node tools/hintstrip.mjs
+
+      - name: …and that gate can fail — six known-bads, each through the real door
+        # Inverted expectation, the idiom this job already uses three times.
+        # Seven whole-program runs (six plants + the unplanted clean edge), each
+        # copying the real tree, editing it as FILE BYTES, and booting its own
+        # browser: ~9 minutes on the Linux box it was wired on. Stated rather
+        # than guessed — this workflow bills by the minute and a runner will be
+        # slower. This is the most expensive step in the file; if the budget
+        # ever has to give, CUT IT ON PURPOSE WITH A NOTE, do not let it rot.
+        # NO WAIVER HERE EITHER, AND THE REASON IT USED TO NEED ONE IS GONE.
+        # doorplant's corpus ends on an UNPLANTED copy that must come back GREEN.
+        # While the tree carried #295's two findings, that clean edge was red for
+        # the TREE's state, so the waiver was what kept this step reporting a
+        # plant result rather than a baseline complaint. The tree is green now, so
+        # the clean edge is green on its own merits — the stronger state, and it
+        # needs no excuse. Every plant is still red by its own named finding.
+        run: node tools/hintstrip.mjs --selftest
+
+      # ---- #316's probe, wired because a probe nobody runs is the same defect
+      # as a probe that prints without asserting, and this file just carried
+      # BOTH within one hour. `gatelist --raw` classed it `linked-but-never-run`
+      # alongside 121 other tools; that is the tree's default state and a card of
+      # its own, but this one is the named regression probe for a ruling
+      # Constantine made and priced, so it does not get to sit in the census
+      # while the PR that ships it argues from its output.
+      - name: The Armoury arrives with the figure, and one click is the whole cost
+        # Two shapes, real Chromium through tools/browser.mjs's CDP path. GATED:
+        # the figure arrives whole where the view declares one; CARDS arrives
+        # COLLAPSED on every shape; the fold round-trips; one click opens the
+        # strip ABOVE THE FOLD; #305's mirror is exactly one. REPORTED and
+        # deliberately not gated: stripFullyVisible, false at `dev` and at head
+        # alike — a pre-existing scroll this change neither adds nor removes.
+        run: node tools/armoury-arrival-figure.mjs
+
+      # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
+      # The three gates above this each have a `--selftest` / `--mutate` door.
+      # This tool has none. Its two known-bads — an initially-EXPANDED CARDS pane
+      # and a strip pushed below the fold — were HAND-PLANTED in the real tree,
+      # observed green before the fix and red by name after, on both shapes, and
+      # reverted. That is evidence in a PR body, not a gate in this file: nothing
+      # here re-runs it. A `--selftest` door is the honest close and it is not
+      # built. Until it is, this step proves the tree passes and proves NOTHING
+      # about whether the check can still fail — which is exactly the property
+      # Vira's finding above says a list cannot assume.
+
   # ---------------------------------------------------------------------------
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
@@ -404,15 +548,69 @@ jobs:
           echo "    including a tree that re-types it, each observed red by its own row"
           echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
           echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
+          # #295: the first LAYOUT invariant this workflow has ever run. No count
+          # and no cell list here — hintstrip declares its own population and
+          # prints it, and a number typed beside the list that owns it is the
+          # second-home defect this block has already been trimmed for twice.
+          echo "  · the combat hint strip is below every card, whole, on screen, and touching"
+          echo "    NO other combat control — at every cell hintstrip declares, including one"
+          echo "    written through the game's own rebind store; its six known-bads are each"
+          echo "    observed red through the same door. THIS IS RENDERED GEOMETRY."
+          # WAS: "...and it is the only rendered claim in this file that is about the
+          # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
+          # Armoury step below — a second browser-driven rendered-layout claim in this
+          # same job. Codex found it at `b9b3e81`, in the same act that wired the gate
+          # in. A boundary that has silently stopped being true is D104 arriving from
+          # the other side: there the narrowing lived only in a comment, here the
+          # narrowing was real and the world moved out from under it. Same cure —
+          # the claim and the coverage change in ONE act, or the green lies.
+          # — Sunna, 2026-08-22, wiring the Armoury gate.
+          echo "  · the Armoury arrives with the FIGURE WHOLE where a view declares one, CARDS"
+          echo "    arrives COLLAPSED on every shape, and ONE click expands it to a box with"
+          echo "    AREA above the fold and folds it back — at 1440x860 and 390x844, with"
+          echo "    #305's single compositing mirror required as a literal transform, so a"
+          echo "    mirror that is DOUBLED or GONE both fail. RENDERED GEOMETRY, second of two."
+          echo "    Its known-bads were hand-planted and are NOT re-run here: this step proves"
+          echo "    the tree passes and proves NOTHING about whether the check can still fail."
           echo ""
           echo "IT DOES NOT MEAN:"
           echo "  · that the build stamp is LEGIBLE, or in the right place. The ink gate proves"
           echo "    pixels differ from their ground inside one box in one browser at two shapes;"
           echo "    legibility is tools/contrast-audit.mjs and Sunna, placement is Viki, and the"
           echo "    stamp on the RELEASE artifact is tools/release-shots.mjs, not any job here."
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. No job in this file"
-          echo "    opens a browser on the game itself, so every claim below is a claim"
-          echo "    about files, never about a fight."
+          # Was: "NOTHING HERE PLAYS IT. No job in this file opens a browser on the
+          # game itself, so every claim below is a claim about files, never about a
+          # fight." The first half stays true and the second half went FALSE the
+          # moment hintstrip was wired in above — it boots the game at ?shot=combat
+          # in a real browser and measures the rendered boxes. Edited rather than
+          # left standing beside its own contradiction, which is what this file did
+          # to its own requirement-1 header and had to say so in a fifty-line
+          # apology. A boundary that UNDERSTATES coverage rots exactly the way one
+          # that overstates it does. — Bjorn, 2026-08-21, wiring #295.
+          # STILL ONE JOB — that half was checked rather than assumed: the Armoury gate
+          # is a STEP inside this same browser-guard job, so "one job" holds. What went
+          # false is the parenthetical, which named one gate where there are now two,
+          # and "not whether pressing them does anything" — the Armoury gate drives
+          # CARDS and requires the pane to open. Narrowed to what is still true.
+          #
+          # CORRECTED AGAIN 2026-08-22, and this correction is the whole reason the
+          # block exists. The line below read "PRESSES exactly ONE control". IT DOES
+          # NOT PRESS. The tool dispatches HTMLElement.click(), which runs the handler
+          # on a control no player could touch — planted `pointer-events: none;
+          # opacity: 0` and every gate passed with clicks=1 — and the tool's OWN
+          # printed boundary says "THE CLICK IS A DOM click(), NOT A PRESS". So the
+          # repo held TWO HOMES FOR ONE FACT, contradicting, and the FALSE one was the
+          # one that prints on every green run. Law 0 clause 4. Marina withdrew her own
+          # PASS over this rather than let it stand, on her own test: a MISSING boundary
+          # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
+          # — Sunna.
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job opens a browser"
+          echo "    on the game — TWO gates inside it: the hint-strip gate at ?shot=combat and"
+          echo "    the Armoury gate at ?shot=combat -> the Armoury overlay. They measure"
+          echo "    BOXES, and the Armoury gate DISPATCHES A DOM CLICK at exactly ONE control"
+          echo "    (CARDS) and checks that a pane opened — it does NOT press it, and cannot"
+          echo "    tell whether a player could. Its own output says so on every run. NOTHING"
+          echo "    HERE IS PRESSED. No job here fights, wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -437,9 +635,17 @@ jobs:
           echo "    until a job is added. WHICH checks are unrun, and why no step was added"
           echo "    to this workflow, is stated once in tools/palette-check.sh's header"
           echo "    (\`CI DOES NOT RUN THIS\`); read that, not a copy of it kept here."
-          echo "  · that anything RENDERED. Art present in the file is not art on screen;"
+          # Narrowed, same act and same reason as the playability line above: the
+          # hint-strip gate reads rendered rects, so "nothing rendered" is no longer
+          # true as written. What it never touched — and still does not — is ART.
+          # — Bjorn, 2026-08-21, wiring #295.
+          echo "  · that the ART rendered. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
-          echo "    deterministic on this app (two runs of identical code differ)."
+          echo "    deterministic on this app (two runs of identical code differ). The"
+          echo "    two browser gates read geometry off a live page — rects, never pixels —"
+          echo "    and between them they are silent about every surface but combat's control"
+          echo "    strip and the Armoury's figure-and-cards pane. NEITHER compares an image:"
+          echo "    the pixel diffs in #316 were run by hand and are not repeated here."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
           echo "    that row is Bjorn's with Vira verifying and nothing here checks it."

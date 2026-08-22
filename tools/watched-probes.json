@@ -396,9 +396,9 @@
   {
    "id": "A5",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js:424 opensCollapsed(..., narrow) — the phone opens the context pane FOLDED",
+   "read": "src/ui/screens/equipment.js:254 opensCollapsed(regionId, stored) — a context pane opens FOLDED on EVERY shape unless the player's own stored choice says otherwise (D99, #316). REPAIRED 2026-08-22 by Sunna, in another seat's file and said so out loud: this row cited line 424 and a `narrow` third parameter, and #316 removed that parameter. Line 424 is now an unrelated statement, so the derivation pointed at code that does not exist while the row reported green — tools/watched.mjs only checks that this field is NON-EMPTY, never that it still names anything real. That weakness is Bjorn's and is bigger than this row.",
    "screen": "the Armoury › the fold, opened and closed",
-   "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that a phone OPENS folded, and that the fold still opens. Both edges are driven.",
+   "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that the pane OPENS folded, and that the fold still opens. Both edges are driven. SCOPE, STATED RATHER THAN IMPLIED: the rule this row watches is now every shape, but the reach below still drives the PHONE ONLY. That is a narrower drive than the rule, and widening it is a change to Bjorn's probe rather than a repair of a false derivation, so it is left as his call and named here instead of done quietly. tools/armoury-arrival-figure.mjs (#316) asserts the desktop edge in the meantime.",
    "reach": [
     {
      "op": "goto",
@@ -426,7 +426,7 @@
     "wrong": [
      {
       "js": "window.__first !== 'false'",
-      "why": "the phone does NOT open the cards pane folded — the slots do not get the room his sentence asked for"
+      "why": "this shape does NOT open the cards pane folded — the slots do not get the room his sentence asked for. Since D99 (#316) that is a failure on EVERY shape, not only the phone; this reach drives the phone, so a desktop regression is not caught HERE — see tools/armoury-arrival-figure.mjs"
      },
      {
       "js": "window.__second !== 'true'",

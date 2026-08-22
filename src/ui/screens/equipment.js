@@ -220,14 +220,41 @@ export function contextRegions() {
  *
  * THE SAME THREE TERMS THE VIEW ALREADY USES, and reusing them is why this
  * bought no new field (see mountEquipment below): the player's own stored
- * choice, always, on every shape; otherwise the shape's default. The shape's
- * default for CONTEXT is *collapsed on a phone* — which is the honest form of
- * "which pane a phone opens on" once panes can fold.
+ * choice, always, on every shape; otherwise the shape's default.
+ *
+ * THE SHAPE'S DEFAULT FOR CONTEXT IS *COLLAPSED*, ON EVERY SHAPE — Constantine's
+ * ruling, 2026-08-21: *the Armoury opens with the figure, and CARDS is one click
+ * away.* It used to be `!!narrow` — collapsed on a phone only — and the cost of
+ * that was measured, not argued, at dev `456b8ea`, 1440x860, `?shot=combat`:
+ *
+ *     arrival, CARDS expanded   .armoury-figure VISIBLE 260x139  (area 36140)
+ *     after one CARDS click     .armoury-figure VISIBLE 260x330  (area 85800)
+ *
+ * THE LAYOUT BOX IS 260x330 BOTH TIMES AND THAT IS THE TRAP. `getBoundingClientRect`
+ * on the figure never moves; what moves is `.armoury-left`, its scroll parent,
+ * which is 275x139 with the strip open and 260x628 with it shut. Reading the
+ * figure's own rect says "nothing changed" while 58% of the figure is behind a
+ * clipped, scrolling edge. The number this rule is answerable to is therefore the
+ * VISIBLE area — the rect intersected with every clipping ancestor — and it is
+ * measured that way in tools/armoury-arrival-figure.mjs, both edges, both shapes.
+ *
+ * NARROW IS NOT CONSULTED ANY MORE, AND DROPPING IT IS THE POINT, NOT AN OVERSIGHT.
+ * `narrow` here was a SECOND decider of what arrives open, on top of
+ * `narrowDefaultView` — which already answers "what does a phone open on" and
+ * answers it with `rack`, the view whose whole job is to have no figure. Measured
+ * at 390x844: `.armoury-figure` is ABSENT, so on a phone there was never a figure
+ * for the strip to squeeze, and this rule changes NOTHING there — the phone
+ * already opened folded. Keeping the parameter would have left two rules that can
+ * disagree about one screen, which is #24's shape.
+ *
+ * The parameter is gone from the signature rather than left unread: an argument
+ * nothing consults is the next reader's false lead, and mountEquipment is its one
+ * caller.
  */
-export function opensCollapsed(regionId, stored, narrow) {
+export function opensCollapsed(regionId, stored) {
   const s = stored && stored[regionId];
   if (typeof s === 'boolean') return s;
-  return !!narrow;
+  return true;
 }
 
 // ---- the builders ----------------------------------------------------------
@@ -453,7 +480,7 @@ export function mountEquipment(host, {
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
   const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
-  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, narrow)]));
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
