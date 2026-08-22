@@ -59,9 +59,21 @@ import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+// EACH SHAPE DECLARES WHAT IT EXPECTS TO SEE, because `data-figure` alone cannot
+// tell an EXPECTED absence from a REGRESSION. Codex, at `7d39ad3`: flip
+// `balance.equipment.defaultView` from `hybrid` to the figureless `rack` and the
+// DESKTOP reports `data-figure=0`, so every figure and mirror assertion is skipped
+// and the run exits green — with the figure gone from the exact screen D99 is about.
+// Planted and confirmed: `view=rack data-figure=0 … all gates green`.
+//
+// The phone is the ONLY shape whose figurelessness is expected, and it is expected
+// because `narrowDefaultView` opens `rack`, whose whole job is `figure: false`. So
+// the expectation is stated HERE, per shape, and asserted BEFORE `data-figure` is
+// allowed to excuse anything — the same move Vira made in `foldsurvivors`: do not
+// trust a state, assert the input that produces it.
 const SHAPES = [
-  { name: 'desktop', w: 1440, h: 860 },
-  { name: 'phone', w: 390, h: 844 },
+  { name: 'desktop', w: 1440, h: 860, expectFigure: true },
+  { name: 'phone', w: 390, h: 844, expectFigure: false },
 ];
 
 function connectCdp(wsUrl) {
@@ -139,7 +151,15 @@ const PROBE = `(() => {
     stripBox: box(strip),
     // Above the fold = the strip's top edge is inside the viewport AND its
     // whole box is too. A pane you must scroll to is not one click away.
-    stripAboveFold: strip ? (box(strip).top < vh) : null,
+    // INTERSECTS THE VIEWPORT — not merely "starts before its bottom edge".
+    // top < vh alone accepts a strip lying ENTIRELY ABOVE the viewport: Codex,
+    // at 7d39ad3, top=-500 bottom=-131. Planted top: -1400px and the tool
+    // printed top=-1079 aboveFold=true and all-gates-green on a pane no player
+    // could see. A half-open interval where the claim is an INTERSECTION. Both
+    // edges now; the name is kept so the output line reads the same for anyone
+    // comparing runs. (No backticks in this comment: it lives inside PROBE's
+    // own template literal, and a stray one ends the string.)
+    stripAboveFold: strip ? (box(strip).top < vh && box(strip).bottom > 0) : null,
     stripFullyVisible: strip ? (box(strip).bottom <= vh && box(strip).top >= 0) : null,
     viewportH: vh,
   };
@@ -169,6 +189,20 @@ async function run() {
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(60); } throw new Error('timeout ' + w); };
 
   let fails = 0;
+  // A COUNTED VERDICT NEEDS A REAL COUNT. #294's door refuses a bare
+  // `all gates green` as silence, and D103 said the bill for that would be paid
+  // per tool — this is one of the n. So every assertion is RECORDED as it is
+  // evaluated, and the terminal line states what was actually counted. The
+  // number is never typed: if a branch does not run, it is not in it.
+  let checks = 0;
+  let unknowns = 0;
+  const unknownWhy = new Set();
+  const gate = (ok, msg) => {
+    checks++;
+    if (!ok) { console.log(`    FAIL ${msg}`); fails++; }
+    return ok;
+  };
+  const skip = (why) => { unknowns++; unknownWhy.add(why); };
   try {
     for (const shape of SHAPES) {
       await cdp.send('Emulation.setDeviceMetricsOverride',
@@ -233,111 +267,142 @@ async function run() {
         + `   .armoury-figure transform=${arrival.figTransform}`);
 
       // ---- the gates -----------------------------------------------------
-      // THE FIGURE'S ABSENCE AT NARROW IS A DECLARED PROPERTY, NOT A DEFECT, and
-      // asserting it away would be this tool lying about the phone. `rack` is the
-      // view `narrowDefaultView` opens a phone on and its whole job is `figure:
-      // false` — so the gate is read off what the screen SAYS it is drawing
-      // (`data-figure`), never off the shape. A phone that starts drawing a
-      // figure will be gated here the moment it does.
-      if (arrival.dataFigure === '1' && !f) { console.log('    FAIL view declares a figure and none rendered'); fails++; }
-      if (arrival.dataFigure === '0') {
+      //
+      // WHAT THIS TOOL PROVES AND WHAT IT DOES NOT — stated here and PRINTED
+      // unconditionally at the end, because three rounds of findings on this file
+      // were all one shape: geometry satisfied without reachability, or a state
+      // trusted instead of asserted.
+      //
+      // It drives `HTMLElement.click()`. That runs the handler whether the control
+      // is visible, on-screen, covered, or hit-testable at all. Codex demonstrated
+      // it at `7d39ad3` and I planted it: `pointer-events: none; opacity: 0` on the
+      // CARDS control — unpressable by any player — and every gate green with
+      // `clicks=1`. VIKI NAMED THIS EXACT BOUNDARY IN #304's BODY and this probe
+      // inherited the limit without the declaration. It is declared now, in the
+      // output rather than in a comment, and the reachability gate is a card with
+      // her `body.style.zoom` coordinate finding attached — #315's A6 already
+      // drives real CDP input aimed with `elementFromPoint`, so the door exists and
+      // duplicating it here would be a second home for one act.
+      //
+      // THE EXPECTED VIEW, ASSERTED BEFORE `data-figure` IS ALLOWED TO EXCUSE
+      // ANYTHING. Otherwise a desktop regressed to the figureless `rack` skips every
+      // figure and mirror check and exits green.
+      if (shape.expectFigure) {
+        gate(arrival.dataFigure === '1',
+          `this shape must open on a view that DECLARES a figure, and it opened on `
+          + `'${arrival.view}' with data-figure=${arrival.dataFigure} `
+          + `— check balance.equipment.defaultView; every figure and mirror gate below `
+          + `is skipped when this is 0, so a regression here would otherwise pass in silence`);
+      } else {
+        gate(arrival.dataFigure === '0',
+          `this shape is expected to open on the figureless view and it declared a figure `
+          + `(view='${arrival.view}', data-figure=${arrival.dataFigure}) — the phone's `
+          + `no-op claim in this PR would no longer hold`);
         console.log('    note: this view declares no figure (data-figure=0) — nothing for the strip to squeeze here');
       }
-      // THE RULING, AS A NUMBER. Where a figure exists, it must arrive WHOLE:
-      // its visible area is its layout area, not a clipped band of it.
-      if (arrival.dataFigure === '1' && f && fv) {
-        const whole = fv.area >= f.area * 0.98;
-        console.log(`    ruling      figure arrives ${whole ? 'WHOLE' : 'CLIPPED'}`
-          + `  visible/layout = ${(fv.area / f.area * 100).toFixed(0)}%`);
-        if (!whole) { console.log('    FAIL the figure does not arrive whole — the ruling is not met'); fails++; }
+
+      // THE FIGURE'S ABSENCE AT NARROW IS A DECLARED PROPERTY, NOT A DEFECT, and
+      // asserting it away would be this tool lying about the phone. The gate is read
+      // off what the screen SAYS it is drawing (`data-figure`) — but only now that
+      // the line above has proved the screen was ASKED to draw one.
+      if (arrival.dataFigure === '1') {
+        const rendered = gate(!!f, 'view declares a figure and none rendered');
+        // THE RULING, AS A NUMBER. Where a figure exists, it must arrive WHOLE:
+        // its visible area is its layout area, not a clipped band of it.
+        if (rendered && fv) {
+          const whole = fv.area >= f.area * 0.98;
+          console.log(`    ruling      figure arrives ${whole ? 'WHOLE' : 'CLIPPED'}`
+            + `  visible/layout = ${(fv.area / f.area * 100).toFixed(0)}%`);
+          gate(whole, 'the figure does not arrive whole — the ruling is not met');
+        } else {
+          skip('the figure did not render, so its arrival area could not be measured');
+        }
+      } else {
+        skip('the view declares no figure (data-figure=0), so the arrival-area gate does not apply');
       }
-      if (!arrival.foldBtnPresent) { console.log('    FAIL no CARDS control — nothing to click'); fails++; }
+
+      gate(arrival.foldBtnPresent, 'no CARDS control — nothing to click');
+
       // THE RULING'S OTHER HALF, AND IT IS NOT THE FIGURE'S. D99 is two sentences:
       // the Armoury opens on the figure, AND *cards start carded*. The round trip
       // below only proves the fold is reversible — it is satisfied by ANY starting
-      // state, so on its own it would pass a tree where CARDS arrives expanded.
-      // Asserted on EVERY shape, and deliberately NOT behind `data-figure`: the
-      // figure gate is skipped at narrow because that view declares no figure and
-      // asserting one would be this tool lying about the phone — but CARDS exists
-      // on every shape, so its arrival state is gated on every shape. Skipping
-      // both together is what let a narrow-only regression read "all gates green".
+      // state. Asserted on EVERY shape and deliberately NOT behind `data-figure`:
+      // CARDS exists on every shape, and skipping both together is what let a
+      // narrow-only regression read "all gates green".
       if (arrival.cardsCollapsed === null) {
-        console.log('    FAIL no CARDS region — its arrival state cannot be read'); fails++;
-      } else if (arrival.cardsCollapsed !== '1') {
-        console.log(`    FAIL CARDS did not arrive collapsed (data-collapsed=${arrival.cardsCollapsed}) — the ruling is not met on this shape`); fails++;
+        gate(false, 'no CARDS region — its arrival state cannot be read');
+      } else {
+        gate(arrival.cardsCollapsed === '1',
+          `CARDS did not arrive collapsed (data-collapsed=${arrival.cardsCollapsed}) — the ruling is not met on this shape`);
       }
-      if (refold && refold.cardsCollapsed !== arrival.cardsCollapsed) {
-        console.log('    FAIL cards did not return to their arrival state after a second click'); fails++;
+
+      if (refold) {
+        gate(refold.cardsCollapsed === arrival.cardsCollapsed,
+          'cards did not return to their arrival state after a second click');
+      } else {
+        skip('the fold control was absent, so the second click was never driven');
       }
-      // ONE CLICK HAS TO OPEN SOMETHING YOU CAN SEE. `stripAboveFold` was computed
-      // and PRINTED from the first run of this tool and asserted by nothing, so a
-      // strip pushed entirely below the viewport exited 0 — the exact regression
-      // this file exists to catch, passing. Gated now, on every shape.
+
+      // ONE CLICK HAS TO OPEN SOMETHING YOU CAN SEE — three assertions in order,
+      // because each is only meaningful once the one before it holds.
       //
-      // `stripFullyVisible` is REPORTED and deliberately NOT gated, and the
-      // distinction is the whole point rather than an omission: the strip's last
-      // row already sat below the fold at `dev` on arrival, so gating it true
-      // would red a condition this change did not introduce and Constantine never
-      // ruled on. What he was quoted is ONE CLICK; what that click opens has to be
-      // REACHABLE, which is `aboveFold`. A number a tool prints is either gated or
-      // labelled — printing it bare is how a check goes quiet.
+      //   (i)  the click CHANGED THE STATE. A no-op handler leaves the collapsed
+      //        `.equip-cards` answering with a 0x0 box at top 0 — inside the
+      //        viewport, so `aboveFold` reads TRUE — and the second no-op leaves
+      //        `refold` equal to arrival, so the round trip passes too.
+      //   (ii) what opened HAS AREA. `aboveFold` on a zero-sized box is a claim
+      //        about a point, not about a pane.
+      //   (iii) and it INTERSECTS THE VIEWPORT, both edges — see `stripAboveFold`.
       //
-      // AND THE CLICK HAS TO HAVE DONE SOMETHING FIRST. Codex, at `b9b3e81`: if the
-      // CARDS handler regresses to a no-op, the collapsed `.equip-cards` still
-      // answers `getBoundingClientRect()` with a 0x0 box at top 0 — which is inside
-      // the viewport, so `aboveFold` reads TRUE — and the second no-op leaves
-      // `refold.cardsCollapsed` equal to arrival, so the round-trip check passes too.
-      // Reproduced by planting `if (r.id === 'cards') return;` in the handler: every
-      // gate green while one click opened nothing. So the state change is asserted
-      // BEFORE the geometry, and the box is required to have AREA — `aboveFold` on a
-      // zero-sized box is a claim about a point, not about a pane.
-      // Scoped to a CORRECT arrival, deliberately: from a wrongly-expanded arrival the
-      // first click legitimately COLLAPSES, and a gate that shouted "the control is
-      // inert" there would name the wrong cause beside the gate that names the right
-      // one. One defect, one message — the arrival gate above owns that case.
+      // `stripFullyVisible` is REPORTED and deliberately NOT gated: it is false at
+      // `dev` and at head alike, a pre-existing scroll this change neither adds nor
+      // removes, and gating it would red a condition nobody ruled on. A number a
+      // tool prints is either GATED or LABELLED.
+      //
+      // Scoped to a CORRECT arrival: from a wrongly-expanded arrival the first click
+      // legitimately COLLAPSES, and shouting "the control is inert" there would name
+      // the wrong cause beside the gate that names the right one.
       if (afterClick && arrival.cardsCollapsed === '1') {
-        if (afterClick.cardsCollapsed !== '0') {
-          console.log(`    FAIL one click did not expand CARDS (data-collapsed=${afterClick.cardsCollapsed} after the click) — the control is inert`); fails++;
-        } else if (!afterClick.stripBox || afterClick.stripBox.w <= 0 || afterClick.stripBox.h <= 0) {
-          console.log(`    FAIL CARDS reports expanded but its strip has no area (${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h}` : 'ABSENT'}) — nothing was opened`); fails++;
-        } else if (afterClick.stripAboveFold !== true) {
-          console.log(`    FAIL one click opened CARDS below the fold (top=${afterClick.stripBox.top}, vh=${afterClick.viewportH})`
-            + ' — the cost is a click AND a scroll, not the click he was quoted'); fails++;
+        const expanded = gate(afterClick.cardsCollapsed === '0',
+          `one click did not expand CARDS (data-collapsed=${afterClick.cardsCollapsed} after the click) — the control is inert`);
+        if (expanded) {
+          const hasArea = gate(!!afterClick.stripBox && afterClick.stripBox.w > 0 && afterClick.stripBox.h > 0,
+            `CARDS reports expanded but its strip has no area (${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h}` : 'ABSENT'}) — nothing was opened`);
+          if (hasArea) {
+            gate(afterClick.stripAboveFold === true,
+              `one click opened CARDS outside the viewport (top=${afterClick.stripBox.top}, bottom=${afterClick.stripBox.bottom}, vh=${afterClick.viewportH})`
+              + ' — the cost is a click AND a scroll, not the click he was quoted');
+          } else {
+            skip('the opened strip had no area, so its position could not be judged');
+          }
+        } else {
+          skip('the click did not expand CARDS, so nothing was opened to measure');
+          skip('the click did not expand CARDS, so no opened pane could be placed');
         }
+      } else {
+        skip('CARDS did not arrive collapsed, so the one-click cost was not measurable from a correct start');
       }
+
       // #305: EXACTLY ONE MIRROR ON THE ART — and "exactly one" has to exclude ZERO.
       //
-      // THIS GUARD WAS WEAKER THAN TWO REVIEWERS SAID IT WAS, AND I AM WRITING THAT
-      // HERE RATHER THAN QUIETLY STRENGTHENING IT. As first written the condition read
-      // `artTransform && artTransform !== 'none' && artTransform !== matrix(...)`, so it
-      // fired only on a WRONG transform. A MISSING one — the `scaleX(-1)` rule deleted,
-      // which Chromium resolves to `none` — passed, and a missing art element (`null`)
-      // passed too. Codex found it at `b9b3e81`; I planted it by dropping
-      // `.equipped-figure` from that rule and the tool printed `all gates green` with
-      // the mirror gone. My own PR body and Viki's PASS both cited this row as proof
-      // #305 was undisturbed, and she named it specifically as "measured as resolved
-      // transforms, not inferred from the empty CSS diff". The measurement was real;
-      // the ASSERTION over it accepted the defect it was named for. A double flip and
-      // a deleted flip look the same to a reader and did not look the same to this
-      // check — it caught one and waved the other through.
-      //
-      // Where the view DECLARES a figure, the art must carry the literal single mirror.
-      // At narrow, `data-figure=0` and there is no art, so there is nothing to assert
-      // and the tool says nothing rather than inventing a claim about the phone.
+      // THIS GUARD WAS WEAKER THAN TWO REVIEWERS SAID IT WAS. As first written it
+      // fired only on a WRONG transform, so a DELETED `scaleX(-1)` (Chromium: `none`)
+      // and a missing art element (`null`) both passed. My own PR body and Viki's
+      // PASS both cited this row as proof #305 was undisturbed. The measurement was
+      // real; the assertion over it accepted the defect it was named for.
       if (arrival.dataFigure === '1') {
         if (arrival.artTransform === null) {
-          console.log('    FAIL the view declares a figure but .equipped-figure is absent — #305\'s mirror has nothing to sit on'); fails++;
-        } else if (arrival.artTransform !== 'matrix(-1, 0, 0, 1, 0, 0)') {
-          console.log(`    FAIL .equipped-figure is not carrying #305's single mirror: ${arrival.artTransform}`
-            + (arrival.artTransform === 'none' ? ' — the mirror is GONE, not doubled' : '')); fails++;
+          gate(false, 'the view declares a figure but .equipped-figure is absent — #305\'s mirror has nothing to sit on');
+        } else {
+          gate(arrival.artTransform === 'matrix(-1, 0, 0, 1, 0, 0)',
+            `.equipped-figure is not carrying #305's single mirror: ${arrival.artTransform}`
+            + (arrival.artTransform === 'none' ? ' — the mirror is GONE, not doubled' : ''));
         }
-      } else if (arrival.artTransform && arrival.artTransform !== 'none'
-                 && arrival.artTransform !== 'matrix(-1, 0, 0, 1, 0, 0)') {
-        console.log(`    FAIL .equipped-figure transform is not the single #305 mirror: ${arrival.artTransform}`); fails++;
+      } else {
+        skip('the view declares no figure, so there is no art to carry #305\'s mirror');
       }
-      if (arrival.figTransform && arrival.figTransform !== 'none') {
-        console.log(`    FAIL a transform appeared on .armoury-figure — second mirror risk: ${arrival.figTransform}`); fails++;
-      }
+      gate(!arrival.figTransform || arrival.figTransform === 'none',
+        `a transform appeared on .armoury-figure — second mirror risk: ${arrival.figTransform}`);
     }
   } finally {
     await cdp.send('Target.closeTarget', { targetId }).catch(() => {});
@@ -345,7 +410,46 @@ async function run() {
   }
 
   if (json) console.log('\n' + JSON.stringify(out, null, 2));
-  console.log(`\n  ${fails ? `${fails} FAIL` : 'all gates green'}`);
+
+  // THE BOUNDARY IS PRINTED, NOT COMMENTED — unconditionally, green or red.
+  // Three rounds of findings on this file were one shape: geometry satisfied
+  // without reachability. Two of those were predicate bugs and are fixed. The
+  // third is the tool's SHAPE and is not fixable here, so it is declared where a
+  // reader of the output will see it, the way gatelist and hintstrip declare
+  // theirs. A limit stated only in a comment is a limit the next reader inherits
+  // as a defect — which is exactly what happened between #304's body and this file.
+  console.log('');
+  console.log('  BOUNDARY — what a green here does NOT mean:');
+  console.log('   · THE CLICK IS A DOM `.click()`, NOT A PRESS. It runs the handler whether the');
+  console.log('     control is visible, on screen, covered, or hit-testable. Planted');
+  console.log('     `pointer-events: none; opacity: 0` on the CARDS control — unpressable by any');
+  console.log('     player — and every gate here still passed with clicks=1. SO THIS TOOL DOES');
+  console.log('     NOT PROVE A PLAYER CAN PERFORM THE CLICK D99 PRICED. It proves the handler');
+  console.log('     is wired and the geometry that follows is right. Viki named this same limit');
+  console.log('     in #304 and measured why it is hard here (body.style.zoom: rect px and CDP');
+  console.log('     input px are different spaces); #315\'s A6 is the door that solves it.');
+  console.log('   · stripFullyVisible is REPORTED, never gated — false at dev and at head alike.');
+  console.log('   · two shapes only, 1440x860 and 390x844; the band between them is unmeasured.');
+  console.log('   · one container, one headless Chromium, deviceScaleFactor 1. No pixels are');
+  console.log('     compared here: every number above is a rect.');
+  if (unknowns) {
+    console.log('');
+    console.log(`  ⚠ ${unknowns} assertion(s) resolved to \`unknown\` this run and are counted in NEITHER`);
+    console.log('    the verdict below nor the failures. `unknown` shrinks this tool\'s denominator');
+    console.log('    and leaves its EXIT STATUS UNCHANGED — printed unconditionally so a run that');
+    console.log('    quietly stops asserting things is visible as a falling count, not as silence:');
+    for (const why of unknownWhy) console.log(`      · ${why}`);
+  }
+
+  // ONE TERMINATED VERDICT LINE, CARRYING WHAT WAS ACTUALLY COUNTED. #294's
+  // `readVerdict` refuses a bare "all gates green" as silence, and D103 ruled the
+  // closed grammar stands and the bill is paid per tool. This is that payment.
+  // The count is DERIVED — every gate() call increments it as it is evaluated —
+  // so it cannot be a number typed to satisfy a parser. Nothing trails the claim:
+  // the commentary above is on its own lines, which is the door's whole contract.
+  console.log('');
+  if (fails) console.log(`  armoury-arrival-figure: ${fails} of ${checks} checks FAILED`);
+  else console.log(`  armoury-arrival-figure: OK — ${checks} checks passed`);
   process.exit(fails ? 1 : 0);
 }
 
