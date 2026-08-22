@@ -653,13 +653,24 @@ if (args.includes('--selftest')) {
         name: 'ONE step is emptied into an echo while a sibling step keeps the tool listed',
         edits: [{
           file: '.github/workflows/ci.yml',
-          // ⚠ ANCHOR MOVED 2026-08-21 when the step became a folded scalar
-          // carrying --waive. The old anchor was `        run: node
-          // tools/hintstrip.mjs\\n`; the corpus reported PLANT SITE DRIFTED and
-          // test 62 went red rather than passing over a plant that no longer
-          // planted. Kept as a note because the drift is the corpus working.
-          find: '          node tools/hintstrip.mjs\n',
-          replace: '          echo node tools/hintstrip.mjs\n',
+          // ⚠ ANCHOR MOVED TWICE, AND IT HAS MOVED BACK. First on 2026-08-21
+          // when the step became a folded scalar carrying --waive: the old
+          // anchor stopped matching, the corpus reported PLANT SITE DRIFTED, and
+          // the paired test went red rather than passing over a plant that no
+          // longer planted.
+          //
+          // It has now moved BACK to that original `run:` scalar form, because
+          // #295's layout half landed and the waiver DELETED ITSELF — the step
+          // is a plain `run:` again. The corpus caught the drift a second time,
+          // the same way, in the same act that removed the waiver.
+          //
+          // BOTH MOVES ARE THE CORPUS WORKING, AND THE NOTE IS KEPT RATHER THAN
+          // TIDIED: a find-string is a SECOND COPY of a line that lives in
+          // another file, and nothing but this drift report checks that the two
+          // still agree. That is the defect this whole tool is about, sitting
+          // inside its own selftest — declared, not quietly fixed.
+          find: '        run: node tools/hintstrip.mjs\n',
+          replace: '        run: echo node tools/hintstrip.mjs\n',
         }],
         expectRed: /BAD\s+G1 /,
       },

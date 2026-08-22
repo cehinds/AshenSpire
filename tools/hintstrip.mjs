@@ -113,25 +113,16 @@ const FAN_LIFT_PROP = (() => {
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  // THE WAIVER IS THREADED INTO THE CORPUS, and it has to be. doorplant finishes
-  // by running an UNPLANTED copy and requiring it green; the tree carries #295's
-  // two known findings, so without the waiver that edge is red for the TREE's
-  // state rather than the corpus's, and the whole selftest reports a baseline
-  // complaint instead of a plant result. With it: the clean copy is green
-  // because its only findings are the waived ones, and every plant is still red
-  // because each produces a finding OUTSIDE the waiver. The corpus therefore
-  // exercises the waiver on every run rather than trusting it.
-  const selftestArgs = [];
-  {
-    const i = process.argv.indexOf('--waive');
-    if (i >= 0) selftestArgs.push('--waive', process.argv[i + 1]);
-    const c = process.argv.indexOf('--waive-card');
-    if (c >= 0) selftestArgs.push('--waive-card', process.argv[c + 1]);
-  }
+  // THE WAIVER THREADING IS GONE, AND SO IS THE REASON FOR IT. It used to
+  // forward --waive into the corpus because doorplant finishes on an UNPLANTED
+  // copy that must come back green, and the tree carried #295's two findings —
+  // so without it the clean edge was red for the TREE's state rather than the
+  // corpus's. #295's layout half has landed: the clean copy is green on its own
+  // merits now, which is the stronger state and needs no excuse. Every plant is
+  // still red by its own named finding.
   process.exit(await doorSelftest({
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
-    args: selftestArgs,
     plants: [
       {
         // THE PILL GOES BACK ON THE TOPBAR — the state he complained about, and
@@ -146,14 +137,30 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H2 /,
       },
       {
-        // THE STRIP IS AT THE BOTTOM AND THE CARDS ARE ON IT. Pinned to the
-        // bottom of the VIEWPORT, so it reserves no height and the hand does not
-        // move — "at the bottom" satisfied while "not overlapped" is not. H1.
-        name: 'the strip is at the bottom but pinned, so it reserves nothing and the cards lie on it',
+        // THE CARDS ARE ON THE STRIP. Same defect class as before — "at the
+        // bottom" satisfied while "not overlapped" is not, caught by H1 — but
+        // AIMED AT A DIFFERENT RULE, and the move is recorded rather than
+        // silently re-pointed.
+        //
+        // ⚠ THIS PLANT'S PREMISE MOVED WHEN #295's LAYOUT HALF LANDED, AND THE
+        // HARNESS SAID SO BEFORE I DID. It used to pin the strip to the viewport
+        // bottom so it reserved no height and the hand did not move. The strip no
+        // longer reserves that band at all — `--action-row-drop` does — so the
+        // old edit stopped producing H1 and produced H2 instead: the harness
+        // returned RED-FOR-WRONG-REASON, which is not a catch (SOP 14 §3). A red
+        // for the wrong reason would have read as a pass to anyone counting
+        // colours.
+        //
+        // What now decides whether a card lands on the strip is the strip's own
+        // block padding: with it, the strip is the tallest item in a
+        // bottom-anchored row and the row grows UPWARD into the hand. That is
+        // the live causal path, so that is where the plant points. 93.2 px2 of
+        // card on the strip at Text S.
+        name: 'the strip pads itself back into a pill and the row grows up into the hand, so a card lies on it',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  position: static; top: auto; bottom: auto; transform: none;',
-          replace: '  position: fixed; top: auto; bottom: 0.6rem; transform: translateX(-50%);',
+          file: 'styles/combat.css',
+          find: '  margin: 0; max-width: 100%; padding-block: 0;',
+          replace: '  margin: 0; max-width: 100%;',
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -172,11 +179,25 @@ if (process.argv.includes('--selftest')) {
         // THE SILENT CLIP COMES BACK. nowrap + overflow:hidden, which is how a
         // label wider than `E` used to vanish without a mark. H3 catches it
         // ONLY under the wide label, which is why H4 is not a courtesy.
+        //
+        // ⚠ RE-AIMED FOR THE SAME REASON AS THE PLANT ABOVE, and it went UNCAUGHT
+        // first — the harness's word, not a guess. It used to edit ui.css's
+        // `.hint-bar.hint-combat`. #295's layout half added
+        // `.combat-action-row > .hint-bar.hint-combat`, which is one class more
+        // specific and re-declares `max-width`, so the planted narrow width was
+        // simply overridden and nothing clipped. The plant still armed, still
+        // ran, and tested a causal path the code no longer had.
+        //
+        // THIS IS MY OWN #314 LESSON ARRIVING A SECOND TIME, FROM THE OTHER SIDE:
+        // there I blinded a plant by adding a BRANCH around the line it watched;
+        // here I blinded one by adding a more specific RULE over the declaration
+        // it watched. Both are ways to make a check stop being exercised without
+        // touching the check. It does not fail — it goes quiet.
         name: 'the strip clips instead of wrapping, so a wide rebound label disappears',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;',
-          replace: '  align-self: center; margin: 0 auto 0.6rem; max-width: 20rem; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
+          file: 'styles/combat.css',
+          find: '  margin: 0; max-width: 100%; padding-block: 0;',
+          replace: '  margin: 0; max-width: 20rem; padding-block: 0; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
         }],
         expectRed: /BAD\s+H3 /,
       },
