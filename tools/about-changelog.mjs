@@ -67,11 +67,34 @@ const INLINE_REFUSED = [
 ];
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
 const LINK_DEFINITION = /^ {0,3}\[([^\]]+)\]:\s*\S/;
+// CommonMark §link-reference-definitions, "matching link labels": two labels match
+// when their NORMALIZED forms are equal — case folded, outer whitespace stripped,
+// and CONSECUTIVE INTERNAL spaces, tabs and line endings COLLAPSED TO ONE SPACE.
+//
+// That last clause is the one this file got wrong. The first version of the check
+// compared `trim().toLowerCase()` on each side, so `[the   guide]: …` defining and
+// `See [the guide]` using were two different labels HERE and one label on GitHub:
+// the page rendered a link, the lookup missed, `--write` exited 0, and About showed
+// the brackets. Measured both directions on 2026-08-22 — spaced definition against
+// tight use, tight definition against spaced use, and a tab inside the definition.
+//
+// ONE normalizer, called at BOTH comparison sites, is the whole fix. Two transforms
+// that are meant to agree and are written twice will disagree, which is how the gap
+// was opened by the commit that closed the previous one.
+//
+// BOUNDARY: `toLowerCase()` is not Unicode case folding — it is the practical
+// approximation, and it differs on a handful of scripts (ß, ﬁ, dotted/dotless i).
+// Every label in CHANGELOG.md today is ASCII, and there are none. Labels spanning
+// a line break are also out of reach: definitions are matched line by line, and a
+// receipt is one line, so a multi-line label cannot occur in either position.
+export function normalizeLinkLabel(label) {
+  return label.replace(/[ \t\r\n]+/g, ' ').trim().toLowerCase();
+}
 export function linkDefinitionLabels(markdown) {
   const labels = new Set();
   for (const line of markdown.split(/\r?\n/)) {
     const match = line.match(LINK_DEFINITION);
-    if (match) labels.add(match[1].trim().toLowerCase());
+    if (match) labels.add(normalizeLinkLabel(match[1]));
   }
   return labels;
 }
@@ -83,7 +106,7 @@ export function flattenInline(text, where, labels = new Set()) {
   }
   if (labels.size) {
     for (const [, label] of text.matchAll(/\[([^\][]+)\]/g)) {
-      if (labels.has(label.trim().toLowerCase())) {
+      if (labels.has(normalizeLinkLabel(label))) {
         throw new Error(`${where}: prose contains a shortcut reference link, which the in-game changelog cannot render — write it in words`);
       }
     }
@@ -334,6 +357,13 @@ async function selftest() {
     if (plain.detail !== 'The row reads [no reward] and stops there.') throw new Error(`rewrote it to: ${plain.detail}`);
     console.log('PASS bracketed prose with no link definition is accepted unchanged');
   } catch (error) { console.error(`FAIL bracketed prose refused or altered: ${error.message}`); process.exitCode = 1; }
+  // …and the normalizer must not invent a match either: internal spacing is only
+  // collapsed for COMPARISON, never in the prose the player reads.
+  try {
+    const [spaced] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). It reads [the   guide] and stops.\n');
+    if (spaced.detail !== 'It reads [the   guide] and stops.') throw new Error(`rewrote it to: ${spaced.detail}`);
+    console.log('PASS internal spacing is normalized for comparison only, never in the prose');
+  } catch (error) { console.error(`FAIL spaced bracketed prose refused or altered: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
@@ -356,6 +386,29 @@ async function selftest() {
       name: 'shortcut reference link in prose', file: 'CHANGELOG.md',
       find: '). Docs only.',
       replace: '). Docs only. See [docs] for the rest.\n\n[docs]: https://example.invalid/guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    // The label normalizer's own neighbourhood, one cell either side of it, both
+    // through the file. CommonMark collapses consecutive internal whitespace when
+    // matching labels; comparing raw `trim().toLowerCase()` on each side missed
+    // both of these while GitHub rendered a link. Delete the collapse from
+    // normalizeLinkLabel and these two are the plants that go MISS.
+    {
+      name: 'shortcut link, spaced definition against tight use', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the guide] for the rest.\n\n[the   guide]: https://example.invalid/guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'shortcut link, tight definition against spaced use', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the   guide] for the rest.\n\n[the guide]: https://example.invalid/guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'shortcut link, TAB inside the definition label', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the guide] for the rest.\n\n[the\tguide]: https://example.invalid/guide',
       expect: 'prose contains a shortcut reference link',
     },
     {
