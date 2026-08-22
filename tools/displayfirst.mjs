@@ -254,8 +254,12 @@ function printBoundary() {
   console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
   console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
   console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
-  console.log('  · D3 judges the Fullscreen row\'s own box against all four viewport edges. It says');
-  console.log('    nothing about whether an ANCESTOR clips it, or whether another element covers it.');
+  console.log('  · D3 judges the Fullscreen row\'s own box against all four viewport edges, and its');
+  console.log('    EFFECTIVE OPACITY through every ancestor to the root. It still says nothing about');
+  console.log('    whether an ANCESTOR CLIPS it (overflow/clip-path), whether another ELEMENT COVERS');
+  console.log('    it, or whether an ancestor is merely FAINT — the opacity test is `> 0`, so 0.01 is');
+  console.log('    invisible to a player and green here. Closing those means deciding what "painted"');
+  console.log('    means, which is a different instrument.');
   console.log('  · Linux headless Chromium only; windows-latest and macos-latest are `unknown`.');
   console.log('  · NOT WIRED INTO ci.yml (see the header) — between hand-runs this is `unknown`.');
   if (expected === null) {
@@ -268,26 +272,100 @@ function printBoundary() {
   console.log('');
 }
 
-/** The ONE exit. Every path — pass, fail, no-browser, thrown — ends here. */
+// ---------------------------------------------------------------------------
+// THE EXIT DOES NOT CUT THE OUTPUT OFF, AND UNTIL 2026-08-22 IT COULD.
+//
+// `finish()` printed the boundary and the verdict and called `process.exit()`
+// in the same breath, on every state; `--selftest` did the same. On POSIX,
+// Node's stdout is SYNCHRONOUS to a file or a TTY and ASYNCHRONOUS TO A PIPE.
+// `process.exit()` does not drain a queued write. So the one line this gate
+// promises on every exit path is exactly the line a pipe can eat.
+//
+// MEASURED, NOT REASONED, and it is not a race — it is deterministic once the
+// pipe is full (Linux pipe buffer, 64 KiB; a reader stalled 300 ms):
+//
+//   bytes on stdout   process.exit()     process.exitCode
+//   1 KiB             0/20 truncated     0/20
+//   64 KiB           20/20 TRUNCATED     0/20
+//   256 KiB          20/20 TRUNCATED     0/20
+//   1 MiB            20/20 TRUNCATED     0/20
+//
+// SIZED HONESTLY, BECAUSE THE SIZING IS THE INTERESTING PART: this tool's own
+// largest measured run is 5,207 bytes of stdout (the full 8-cell green), an
+// order of magnitude under the buffer, so I could not produce a truncation from
+// its own output on Linux. What CAN produce one is a CONSUMER whose pipe is
+// already full — a log collector, a `tee`, a CI step reading two streams — and
+// that is the corpus's flush plant below, which fills the pipe first and then
+// requires the terminal line to survive. So: a real defect, watched, whose
+// exposure today is a slow consumer rather than this tool's own verbosity.
+//
+// AND THE OTHER HALF, WHICH IS WHY THIS IS NOT A ONE-WORD CHANGE. `process.exit`
+// was also doing a second job nobody wrote down: killing a process that
+// `serve.mjs`'s HTTP server and a live Chromium would otherwise hold open.
+// Removing it without `shutdown()` converts every truncation into a HANG — the
+// same defect in a worse coat, since a hang prints nothing at all. So the exits
+// are ordered: close what we opened, print, set `process.exitCode`, return, and
+// let the loop drain and end by itself. `forceExitAfterDrain` is the backstop
+// for a handle nobody accounted for, and it arms ONLY AFTER both streams have
+// flushed — never before, because that would be the truncation again.
+// ---------------------------------------------------------------------------
+
+/** What this run opened, so an error path can close it. Set as each is created. */
+const live = { cdp: null, dropBrowser: null, server: null };
+
+/** Idempotent, and it never throws: a failed teardown may not eat the verdict. */
+async function shutdown() {
+  const { cdp, dropBrowser, server } = live;
+  live.cdp = null; live.dropBrowser = null; live.server = null;
+  try { cdp?.close(); } catch { /* the socket may already be gone — that is the case we are in */ }
+  try { await dropBrowser?.(); } catch { /* browser.mjs prints its own removal failures by name */ }
+  try { await server?.close?.(); } catch { /* nothing left to serve */ }
+}
+
+/**
+ * The backstop, and it is deliberately NOT a substitute for closing handles.
+ * If something still holds the event loop three seconds after the promised
+ * output has DRAINED, leave anyway with the verdict's own code — a gate that
+ * hangs is read as slow, not as failing. The empty write's callback is what
+ * "drained" means here, and the timer is unref'd so a process that can exit on
+ * its own still does, immediately.
+ */
+function forceExitAfterDrain(code) {
+  let waiting = 2;
+  const armed = () => {
+    if (--waiting) return;
+    const t = setTimeout(() => process.exit(code), 3000);
+    t.unref?.();
+  };
+  try { process.stdout.write('', armed); process.stderr.write('', armed); } catch { /* closed */ }
+}
+
+/**
+ * The ONE exit. Every path — pass, fail, no-browser, thrown — ends here.
+ * Returns the exit code; callers RETURN this so nothing runs after a verdict.
+ */
 function finish(state, detail) {
   printBoundary();
+  let code = 1;
   if (state === 'ok') {
     console.log(`displayfirst: OK — ${passes} checks passed`);
-    process.exit(0);
-  }
-  if (state === 'fail') {
+    code = 0;
+  } else if (state === 'fail') {
     console.error(`displayfirst: FAIL — ${bad} finding(s) across ${reached} cells`);
-    process.exit(1);
-  }
+    code = 1;
   // NOT VERDICT-SHAPED, ON PURPOSE — see the block above. `readVerdict` returns
   // {error:'none'} for both of these, which is silence, which blocks.
-  if (state === 'unknown') {
+  } else if (state === 'unknown') {
     console.error(`displayfirst: UNKNOWN — nothing was measured (${detail}).`);
-    process.exit(2);
+    code = 2;
+  } else {
+    console.error(`displayfirst: STOPPED — the run ended on an error after ${reached}`
+      + `${expected === null ? '' : ` of ${expected}`} cell(s) (${detail}). Nothing above is a verdict.`);
+    code = 1;
   }
-  console.error(`displayfirst: STOPPED — the run ended on an error after ${reached}`
-    + `${expected === null ? '' : ` of ${expected}`} cell(s) (${detail}). Nothing above is a verdict.`);
-  process.exit(1);
+  process.exitCode = code;
+  forceExitAfterDrain(code);
+  return code;
 }
 
 // ---------------------------------------------------------------------------
@@ -298,12 +376,31 @@ function finish(state, detail) {
 const READ = `(() => {
   const panel = document.querySelector('#set-panel');
   if (!panel) return { panel: false };
+  // EFFECTIVE OPACITY — the row's own value MULTIPLIED BY EVERY ANCESTOR'S.
+  //
+  // Opacity is the one of the three hiding mechanisms that neither inherits nor
+  // collapses the box. \`display:none\` on an ancestor gives the row a 0x0 rect,
+  // and \`visibility:hidden\` inherits, so \`getComputedStyle(row).visibility\`
+  // already carries an ancestor's. \`opacity: 0\` on \`.set-panel\` or
+  // \`.modal-veil\` does NEITHER: the row keeps its dimensions and reports
+  // \`opacity: 1\`, so a per-element read sees a visible row on an invisible
+  // panel. Codex found it at this line, 2026-08-22; it is the same shape as the
+  // right edge and \`docX\` — a predicate narrower than the sentence it backs.
+  const effOpacity = (el) => {
+    let o = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const v = parseFloat(getComputedStyle(n).opacity);
+      if (!Number.isNaN(v)) o *= v;
+    }
+    return +o.toFixed(4);
+  };
   const rows = [...panel.querySelectorAll('.set-row')].map((row) => {
     const ctrl = row.querySelector('[data-key]');
     const b = row.getBoundingClientRect();
     const cs = getComputedStyle(row);
     return {
       key: ctrl ? ctrl.dataset.key : null,
+      effOpacity: effOpacity(row),
       // ALL FOUR SIDES ARE READ, because all four are judged. The right edge
       // was not read here until 2026-08-22, which is half of why D3 never
       // checked it: a predicate cannot name an edge the read never carried.
@@ -316,7 +413,7 @@ const READ = `(() => {
   // VISIBLE means a player could see it if they looked: it occupies space and
   // is not hidden. Being off-screen is D3's question, not this one.
   const visible = rows.filter((r) => r.display !== 'none' && r.visibility !== 'hidden'
-    && r.w > 0 && r.h > 0 && r.opacity !== '0');
+    && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0);
   // GEOMETRIC ORDER, not DOM order. This is the whole reason the tool exists.
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
   const fs = rows.filter((r) => r.key === ${JSON.stringify(WANT)});
@@ -328,26 +425,91 @@ const READ = `(() => {
     first: visible.length ? visible[0] : null,
     fsCount: fs.length,
     fs: fs[0] || null,
+    panelEffOpacity: effOpacity(panel),
     scroll: { panelTop: panel.scrollTop, docY: window.scrollY, docX: window.scrollX },
     vp: { w: window.innerWidth, h: window.innerHeight },
   };
 })()`;
 
+// EVERY COMMAND HAS TO COME BACK, OR SAY THAT IT DID NOT. A HANG IS THE SAME
+// DEFECT AS A BLANK BAND IN A DIFFERENT COAT — Sunna's sentence, 2026-08-22,
+// after her screenshot harness hung forever on `Page.captureScreenshot` and two
+// runs died having photographed four screens and reported nothing about the six
+// they missed.
+//
+// THE DEFECT, at this line until 2026-08-22 (Codex, `:351`): a promise went into
+// `pending` and ONLY a matching `message` event ever took it out. There was no
+// close handler, no error handler and no timeout. So there were two ways to
+// suspend `main()` forever, and neither printed anything:
+//
+//   1. THE SOCKET DIES. Chromium crashes or the DevTools socket drops after the
+//      command is sent and before the reply arrives. No message ever comes.
+//   2. THE SOCKET LIVES AND THE REPLY DOES NOT. The renderer is blocked, so
+//      `Runtime.evaluate` is queued behind a main thread that never yields.
+//      **This is Sunna's shape, and it is the one a close handler does NOT
+//      cover** — the socket is perfectly healthy the whole time.
+//
+// Either way `main()` never settles, `serve.mjs`'s HTTP server keeps the loop
+// alive, and this hand-run gate hangs WITHOUT printing the STOPPED line and the
+// boundary it promises on every exit path. A gate that hangs is read as a slow
+// gate, not a failing one; nobody re-runs it and nothing goes red.
+//
+// BOTH DOORS ARE CLOSED HERE, because they are two different failures:
+//   · close/error rejects EVERY pending command by name and poisons the socket,
+//     so a command issued after the death fails immediately instead of joining
+//     a queue nothing will ever drain;
+//   · each command carries its own timeout, which is the ONLY thing that
+//     catches case 2. Watched, not asserted: corpus plant 14 blocks the page's
+//     main thread and the run reaches STOPPED naming this timeout.
+//
+// The bound is generous on purpose — the slowest legitimate command here is an
+// `awaitPromise` evaluate that clicks through two menus with ~1.6 s of waits
+// inside it. 30 s is 18x that. It is a deadline, not a performance budget.
+const CDP_TIMEOUT_MS = 30000;
+
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
+  let dead = null;
+  const killPending = (why) => {
+    dead = dead || why;
+    for (const [, p] of pending) { clearTimeout(p.timer); p.rej(cdpError(why)); }
+    pending.clear();
+  };
+  // Tagged so `until()` can tell a transport death from a page that has simply
+  // not painted yet. A polling loop that swallows the first is a hang wearing a
+  // retry's clothes.
+  const cdpError = (msg) => Object.assign(new Error(msg), { cdp: true });
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
     if (m.id && pending.has(m.id)) {
-      const { res, rej } = pending.get(m.id); pending.delete(m.id);
+      const { res, rej, timer } = pending.get(m.id); pending.delete(m.id); clearTimeout(timer);
       if (m.error) rej(new Error(m.error.message)); else res(m.result);
     }
   });
+  ws.addEventListener('close', () => killPending('the DevTools socket CLOSED with commands still in '
+    + 'flight — Chromium is gone and no reply is coming'));
+  ws.addEventListener('error', (e) => killPending('the DevTools socket ERRORED with commands still in '
+    + `flight (${(e && (e.message || e.error?.message)) || 'no detail'})`));
   return {
-    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
+    ready: new Promise((res, rej) => {
+      ws.addEventListener('open', res);
+      ws.addEventListener('error', rej);
+      ws.addEventListener('close', () => rej(cdpError('the DevTools socket closed before it opened')));
+    }),
     send(method, params = {}, sessionId) {
+      if (dead) return Promise.reject(cdpError(`${method} was not sent: ${dead}`));
       const id = nextId++;
       return new Promise((res, rej) => {
-        pending.set(id, { res, rej });
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          rej(cdpError(`CDP ${method} did not answer within ${CDP_TIMEOUT_MS} ms. The socket is `
+            + 'alive and the reply never came — a blocked renderer looks exactly like this, and so '
+            + 'does a command the browser silently dropped. Nothing below it was measured.'));
+        }, CDP_TIMEOUT_MS);
+        // A deadline must not be the thing that keeps the process alive after
+        // the verdict is printed.
+        timer.unref?.();
+        pending.set(id, { res, rej, timer });
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     },
@@ -388,8 +550,10 @@ function judge(r, cell) {
     return null;
   }
   if (!r.visibleKeys.length) {
-    fail(`FINDING D0/population cell=${cell} visible=0 dom=${r.domKeys.length} — the Display panel `
-      + 'renders NO visible control rows. Nothing here is evidence about ordering.');
+    fail(`FINDING D0/population cell=${cell} visible=0 dom=${r.domKeys.length} `
+      + `panelEffectiveOpacity=${r.panelEffOpacity} — the Display panel renders NO visible control `
+      + 'rows. Nothing here is evidence about ordering. (A panelEffectiveOpacity of 0 means the rows '
+      + 'are all there and the whole panel is transparent — the boxes are real and nobody can see them.)');
     return null;
   }
   const first = r.first ? r.first.key : null;
@@ -410,7 +574,22 @@ function judge(r, cell) {
   if (!fs) {
     fail(`FINDING D3/ink cell=${cell} key=${WANT} present=false — the Fullscreen row is not in the panel at all.`);
   } else {
-    const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0 && fs.opacity !== '0';
+    // SHOWN NOW INCLUDES EVERY ANCESTOR'S OPACITY, NOT JUST THE ROW'S.
+    //
+    // Until 2026-08-22 this read `fs.opacity !== '0'` — the ROW's own computed
+    // value — and opacity does not inherit. `.set-panel { opacity: 0 }` or
+    // `.modal-veil { opacity: 0 }` left the row reporting `opacity: 1` with its
+    // full box, so `shown` was true, D1's geometric order was true, and this
+    // tool could print OK over a settings panel nobody can see. Codex, at
+    // `:413`. `effOpacity` is the product up to the root, computed in the page.
+    //
+    // THE THRESHOLD IS EXACTLY ZERO AND THAT IS DECLARED, NOT HIDDEN: an
+    // ancestor at `opacity: 0.01` is invisible to a player and passes here, the
+    // same way the row's own 0.01 always has. Refusing "faint" would need a
+    // number nobody has ruled on; refusing "absent" needs none. The residue is
+    // in the printed boundary block with ancestor clip and occlusion.
+    const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0
+      && fs.opacity !== '0' && fs.effOpacity > 0;
     // ON SCREEN MEANS THE WHOLE BOX, AND THAT MEANS FOUR EDGES.
     //
     // Until 2026-08-22 this predicate named THREE: `top >= 0 && left >= 0 &&
@@ -474,13 +653,14 @@ function judge(r, cell) {
     const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
     if (!shown || !onscreen || !unscrolled) {
       fail(`FINDING D3/ink cell=${cell} key=${WANT} visible=${shown} onscreen=${onscreen} unscrolled=${unscrolled} `
+        + `effectiveOpacity=${fs.effOpacity} `
         + `scroll=(${scrolls}) `
         + `offscreen-edges=[${offscreen.join(',')}] box=(${box}) of viewport ${r.vp.w}x${r.vp.h} `
         + `(display:${fs.display} visibility:${fs.visibility}) `
         + '— first that a player has to scroll to, or cannot see, is not first.');
     } else {
       note(`D3/ink ${cell} box (${box}) wholly inside viewport ${r.vp.w}x${r.vp.h} on all four edges, `
-        + `nothing scrolled (${scrolls})`);
+        + `nothing scrolled (${scrolls}), effective opacity ${fs.effOpacity} through every ancestor`);
     }
   }
   return first;
@@ -497,7 +677,7 @@ async function main() {
     console.error('              population, and an empty population cannot tell you anything about the');
     console.error('              screen. Nothing was measured, so this is not a verdict.');
     expected = 0;
-    finish('unknown', narrowingErrors.join(' | '));
+    return finish('unknown', narrowingErrors.join(' | '));
   }
   expected = SHAPES.length * TEXTS.length * DOORS.length;
   if (expected === 0) {
@@ -506,11 +686,15 @@ async function main() {
     console.error('              REFUSED, not passed. D0 compares `reached` against `expected`, and both');
     console.error('              derive from the same filter — at zero that comparison is self-satisfying');
     console.error('              and would print a green over a world with nothing in it.');
-    finish('unknown', 'declared population is zero cells');
+    return finish('unknown', 'declared population is zero cells');
   }
 
   const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')));
   const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8474), open: false });
+  // REGISTERED THE MOMENT IT EXISTS, not at the end: an error between here and
+  // the last line leaves this server holding the event loop open, and a gate
+  // that hangs prints nothing at all.
+  live.server = s;
   const base = `http://localhost:${s.port}/`;
   console.log(`displayfirst — ${base} (root ${ROOT})`);
   console.log('DOOR: source tree over http in headless Chromium; the panel is opened by CLICKING the');
@@ -525,15 +709,16 @@ async function main() {
   if (!browserPath) {
     console.error('displayfirst: no Chrome/Chromium found (tried $CHROME, $CHROME_PATH and the usual paths).');
     console.error('              Exit 2, not 1: nothing was measured, so this is not a verdict about the screen.');
-    await s.close?.();
-    finish('unknown', 'no Chrome/Chromium found');
+    await shutdown();
+    return finish('unknown', 'no Chrome/Chromium found');
   }
   console.log(`      browser: ${browserPath}`);
 
   const { wsUrl, close: dropBrowser } = await launchBrowser({
     prefix: 'displayfirst-', browser: browserPath, timeoutMs: 15000,
   });
-  const cdp = connectCdp(wsUrl); await cdp.ready;
+  live.dropBrowser = dropBrowser;
+  const cdp = connectCdp(wsUrl); live.cdp = cdp; await cdp.ready;
 
   const heights = [];
 
@@ -548,9 +733,20 @@ async function main() {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
       return r.result.value;
     };
+    // A TRANSPORT DEATH IS NOT A PAGE THAT HAS NOT PAINTED YET. This loop used
+    // to `.catch(() => false)` everything, which is right for "the selector is
+    // not there yet" and wrong for "the socket is gone": it would poll a dead
+    // connection until its own 25 s ran out and then report the wrong cause.
+    // `e.cdp` marks the transport failures, and those are rethrown so the
+    // STOPPED line names what actually happened.
     const until = async (x, w, ms = 25000) => {
       const t = Date.now();
-      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); }
+      while (Date.now() - t < ms) {
+        let got = false;
+        try { got = await ev(x); } catch (e) { if (e && e.cdp) throw e; got = false; }
+        if (got) return 1;
+        await wait(150);
+      }
       throw new Error(`timeout waiting for ${w}`);
     };
 
@@ -646,28 +842,35 @@ async function main() {
       + `(${SHAPES.length} shape(s) x ${TEXTS.length} text size(s) x ${DOORS.length} doors)`);
   }
 
-  cdp.close(); await dropBrowser(); await s.close?.();
+  await shutdown();
 
-  finish(bad ? 'fail' : 'ok');
+  return finish(bad ? 'fail' : 'ok');
 }
 
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// TWELVE PLANTS. THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument
-// for this file existing at all: plants 2, 3 and 4 leave `ROWS` and
+// FOURTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
+// THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
+// existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
 // stays green while the screen is wrong.
 //
 // PLANTS 6-9 are one per viewport edge — D3's four-edge sentence, watched to
 // fail at each edge rather than asserted. PLANT 11 is the third scroll axis,
-// which the predicate read and never used.
+// which the predicate read and never used. PLANT 13 is the ancestor nobody
+// asked about: `opacity: 0` on a door's `.modal-veil`, where every box is real,
+// every box is first, and nobody can see any of it.
 //
-// PLANTS 10 AND 12 ARE NOT ABOUT THE SCREEN AT ALL — they are about whether THIS
-// TOOL still speaks when it cannot measure. 10 makes the subject unreachable and
-// requires the BOUNDARY and a non-verdict-shaped state line to print anyway; 12
-// removes the panel and requires the run to reach its intended FAIL with both
-// cells, rather than dying in its own diagnostic and reporting SILENCE.
+// PLANTS 10, 12, 14 AND 15 ARE NOT ABOUT THE SCREEN AT ALL — they are about
+// whether THIS TOOL still speaks when it cannot measure. 10 makes the subject
+// unreachable and requires the BOUNDARY and a non-verdict-shaped state line to
+// print anyway; 12 removes the panel and requires the run to reach its intended
+// FAIL with both cells, rather than dying in its own diagnostic and reporting
+// SILENCE; 14 blocks the renderer so a CDP command is sent and never answered,
+// which is a HANG — the only one of these four that used to print nothing at
+// all, not even a wrong thing; 15 hands the run a full pipe and a stalled reader
+// and requires the terminal line to arrive whole.
 //
 // A COUNT IS NOT A GUARANTEE, and this corpus is the evidence for that sentence:
 // plant 10 counted for a week while asserting the symptom instead of the thing
@@ -845,22 +1048,229 @@ async function selftest() {
       replace: '<div class="set-panel" id="set-panel-renamed" role="tabpanel"',
       expectRed: /displayfirst: FAIL — \d+ finding\(s\) across 2 cells/,
     },
+    {
+      // 13 — AN ANCESTOR IS TRANSPARENT AND EVERY BOX IS STILL THERE. The row
+      // is `opacity: 1`, full size, first, on screen, nothing scrolled — and
+      // the panel it lives on cannot be seen. Opacity does not inherit and does
+      // not collapse the box, which is what separates it from the other two
+      // hiding mechanisms this tool already refused. Codex found it at `:413`;
+      // it is the same paint gap Bjorn carded on `armoury-arrival-figure`, where
+      // `opacity:0` and `visibility:hidden` both passed 21/21.
+      //
+      // `.modal-veil` and not `.set-panel` on purpose: it is a DOOR-SPECIFIC
+      // ancestor several levels above the row (settings.js builds it at the
+      // title door, overlay.js in the run), so this plant only passes if the
+      // walk really goes to the root rather than checking one parent.
+      name: 'a door ancestor is fully transparent — every box is real and nobody can see it',
+      file: 'styles/ui.css',
+      append: '.modal-veil { opacity: 0 !important; }',
+      expectRed: /FINDING D0\/population .*panelEffectiveOpacity=0/,
+    },
+    {
+      // 14 — THE RENDERER NEVER YIELDS: a CDP command that is SENT AND NEVER
+      // ANSWERED, with a perfectly healthy socket. This is Sunna's shape, from
+      // the night her screenshot harness hung forever on `Page.captureScreenshot`
+      // and two runs died having photographed four screens and said nothing
+      // about the six they missed — *a hang is the same defect as a blank band
+      // in a different coat.*
+      //
+      // WHY IT IS NOT PLANT 10 AGAIN. Plant 10's page THROWS: `until()` reaches
+      // its own 25 s bound and the tool speaks. Here the page's main thread
+      // spins, so `Runtime.evaluate` is queued behind it and the reply never
+      // comes — `until()` is suspended INSIDE a single await and its own bound
+      // never gets to run. Before the timeout landed, this ran until doorplant
+      // killed it at 300 s: no boundary, no verdict, no exit code, nothing to
+      // read. A close/error handler does not catch this one; only a deadline on
+      // the command does.
+      //
+      // It costs its own 30 s. That wait IS the defect it plants, so it is not
+      // tuned away — the same argument plant 10 makes about its 25 s.
+      name: 'the page main thread never yields — a CDP command is sent and never answered',
+      file: 'src/ui/screens/settings.js',
+      append: 'const __planted = Date.now();\n'
+        + '// planted: block the renderer so every CDP reply is queued behind a thread that never yields\n'
+        + 'while (Date.now() - __planted < 120000) { /* spin */ }',
+      expectRed: /BOUNDARY — printed on EVERY exit path[\s\S]*displayfirst: STOPPED — the run ended on an error[\s\S]*did not answer within \d+ ms/,
+    },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: ten whole-tool browser runs plus a
-  // clean run is eleven browser boots. The population is one shape and one text
-  // size, both doors — the DOOR is unnarrowed, which is the axis the corpus is
-  // about. Plant 10 spends its own 25 s waiting for a page that never boots;
-  // that wait IS the defect it plants, so it is not tuned away.
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: fourteen whole-tool browser runs plus
+  // a clean run is fifteen browser boots. The population is one shape and one
+  // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
+  // is about. Plant 10 spends its own 25 s waiting for a page that never boots
+  // and plant 14 its own 30 s waiting for a reply that never comes; those waits
+  // ARE the defects they plant, so they are not tuned away. Plant 15 boots no
+  // browser at all — its subject is the exit path, not the screen.
   const code = await doorSelftest({
     tool: 'displayfirst.mjs',
     args: ['--only-shape', '1440x860', '--only-text', 'M', '--port', '8475'],
     plants,
     timeoutMs: 300000,
   });
+  // THE FIFTEENTH KNOWN-BAD IS NOT A FILE EDIT, so it cannot live in the array
+  // above: doorplant runs the tool with `spawnSync`, which drains both pipes
+  // continuously, and a reader that always drains is the one consumer this
+  // defect cannot reach. See `pipedOutputPlant`.
+  const flushCode = await pipedOutputPlant();
+  const total = code || flushCode;
+  // DOORPLANT'S OWN VERDICT LINE COVERS PLANTS 1-14 AND IS PRINTED BEFORE PLANT
+  // 15 RUNS. Left as it is — it is that harness's line about its own corpus —
+  // and closed here instead, because a run that printed `SELFTEST GREEN` and
+  // then failed plant 15 would be a tool contradicting itself in its own output,
+  // which is the whole complaint this file makes about everything else.
+  if (total) {
+    console.error(`displayfirst: SELFTEST RED — plants 1-14 (doorplant, above) ${code ? 'RED' : 'green'}, `
+      + `plant 15 the piped consumer ${flushCode ? 'RED' : 'green'}. The line above covers 1-14 only.`);
+  } else {
+    console.log('displayfirst: SELFTEST GREEN — 14 file-byte plants (doorplant, above) AND plant 15, '
+      + 'the piped consumer, which the line above does not cover.');
+  }
   // The corpus run is an exit path too, so it prints the boundary like every
   // other one. doorplant owns the verdict line here; this owns the limits.
   printBoundary();
-  process.exit(code);
+  process.exitCode = total;
+  forceExitAfterDrain(total);
+  return total;
+}
+
+// ---------------------------------------------------------------------------
+// PLANT 15 — THE PIPED CONSUMER. Its known-bad is not a defect in the game and
+// not a defect in a file: it is a CONDITION THE CALLER SUPPLIES — stdout is a
+// pipe whose buffer is already full and whose reader has stalled. That is an
+// ordinary CI log collector, a `| tee`, a wrapper reading two streams.
+//
+// WHAT IT GUARDS: the complete terminal line, on the exit path this tool
+// promises to print one on. `process.exit()` does not drain a queued write, so
+// before 2026-08-22 this gate could print its boundary and its verdict into a
+// pipe and die with both still in the queue — silence, from the tool whose
+// entire argument is that silence is the defect.
+//
+// IT CARRIES ITS OWN BOTH EDGES, EVERY RUN, and that is deliberate. Plant 10
+// counted for a week while asserting the symptom instead of the thing it
+// guards, and the check for that is mutation. So this plant MUTATES THE REAL
+// TOOL BACK — `process.exitCode` + return replaced by `process.exit(code)`, the
+// pre-fix bytes — and requires the mutant to LOSE the line before it will
+// believe the fixed tool KEPT it. A run where both survive means the pipe never
+// filled and the plant proved nothing; that is a hard red here, not a pass.
+//
+// THE DOOR: a real subprocess (`node tools/displayfirst.mjs --only-shape
+// 1440x680`, the cheap exit-2 path — no browser, no server) run from a COPY of
+// tools/, its stdout and stderr joined onto one pipe by the shell, read by a
+// consumer that sleeps 400 ms first. The 256 KiB of filler is written by the
+// WRAPPER, not by the tool: the plant supplies the full pipe, never fake output
+// from the subject.
+//
+// MEASURED, so the sizing is not a mood: with the reader stalled, the mutant
+// loses the line 20/20 at 64 KiB, 256 KiB and 1 MiB, and 0/20 at 1 KiB; the
+// fixed form keeps it 0/20 truncated at every one of those sizes. This tool's
+// own largest run is 5,207 bytes, well under a Linux pipe buffer — which is why
+// the exposure is a full-pipe consumer and not this tool's verbosity, and why
+// the plant fills the pipe rather than making the tool shout.
+// ---------------------------------------------------------------------------
+const FLUSH_FILL_BYTES = 262144;
+const FLUSH_RUNS = 5;
+
+async function pipedOutputPlant() {
+  const { mkdtempSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+
+  console.log('');
+  console.log(`  plant 15 — THE PIPED CONSUMER (${FLUSH_RUNS} repetitions, both edges each run)`);
+  if (process.platform === 'win32') {
+    unk('plant 15 — NOT RUN on win32: the door is a POSIX shell pipeline. Declared, not skipped '
+      + 'quietly; on Windows the drain behaviour of this exit path is `unknown`.');
+    return 0;
+  }
+
+  const dir = mkdtempSync(join(tmpdir(), 'flushdoor-'));
+  try {
+    cpSync(join(ROOT, 'tools'), join(dir, 'tools'), {
+      recursive: true,
+      filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.png$/.test(src),
+    });
+    // THE MUTANT IS THE REAL FILE WITH THE FIX TAKEN OUT, and the count is
+    // checked: a find-string that has drifted is a hard red, never a skip.
+    const real = readFileSync(join(ROOT, 'tools/displayfirst.mjs'), 'utf8');
+    // Both find-strings carry real newlines, so they match the CODE and not the
+    // two escaped copies of themselves sitting a few lines below this one.
+    const FIND_FINISH = '  process.exitCode = code;\n  forceExitAfterDrain(code);\n  return code;\n}';
+    const FIND_SELFTEST = '  process.exitCode = total;\n  forceExitAfterDrain(total);\n  return total;\n}';
+    const missing = [
+      real.includes(FIND_FINISH) ? null : 'finish()',
+      real.includes(FIND_SELFTEST) ? null : 'selftest()',
+    ].filter(Boolean);
+    if (missing.length) {
+      fail(`plant 15: PLANT SITE DRIFTED — the drain-safe exit shape is gone from ${missing.join(' and ')}, `
+        + 'so the pre-fix mutant could not be built. A corpus that silently stops running is the defect: '
+        + 'nothing below this line would have been evidence.');
+      return 1;
+    }
+    const mutant = real
+      .split(FIND_FINISH).join('  process.exit(code);\n}')
+      .split(FIND_SELFTEST).join('  process.exit(total);\n}');
+    writeFileSync(join(dir, 'tools/displayfirst.MUTANT.mjs'), mutant);
+    writeFileSync(join(dir, 'flushdoor.mjs'), [
+      "// The consumer's side of the door: fill the pipe, THEN run the tool whole.",
+      "import { pathToFileURL } from 'node:url';",
+      "import { resolve } from 'node:path';",
+      'const tool = resolve(process.argv[2]);',
+      'process.stdout.write(`${\'#\'.repeat(Number(process.argv[3]))}\\n`);',
+      "process.argv = [process.argv[0], tool, '--only-shape', '1440x680'];",
+      'await import(pathToFileURL(tool));',
+      '',
+    ].join('\n'));
+
+    const runOnce = (toolRel) => {
+      const cmd = `"${process.execPath}" flushdoor.mjs ${toolRel} ${FLUSH_FILL_BYTES} 2>&1 `
+        + '| ( sleep 0.4; cat ) > piped.txt';
+      spawnSync('/bin/sh', ['-c', cmd], { cwd: dir, encoding: 'utf8', timeout: 60000 });
+      const out = readFileSync(join(dir, 'piped.txt'), 'utf8');
+      return {
+        whole: out.length >= FLUSH_FILL_BYTES,
+        line: /^displayfirst: UNKNOWN — nothing was measured \(.+\)\.$/m.test(out),
+        bytes: out.length,
+      };
+    };
+
+    let bad15 = 0;
+    for (let i = 1; i <= FLUSH_RUNS; i++) {
+      const m = runOnce('tools/displayfirst.MUTANT.mjs');
+      const f = runOnce('tools/displayfirst.mjs');
+      // THE ORDER OF THESE THREE IS THE ARGUMENT. The fixed run must be whole;
+      // the mutant must have LOST the line; and the mutant must have lost BYTES
+      // to it, which is how this run says the pipe really filled rather than
+      // asserting that it did. An empty result and a zero look identical and
+      // mean the opposite.
+      if (!f.whole || !f.line) {
+        fail(`plant 15 run ${i}: THE FIX DID NOT HOLD — the terminal line was truncated by a full pipe `
+          + `(${f.bytes} B of ${FLUSH_FILL_BYTES} B read, terminal line ${f.line ? 'present' : 'GONE'}). `
+          + 'A gate that promises a line on every exit path did not print one.');
+        bad15++; continue;
+      }
+      if (m.line) {
+        fail(`plant 15 run ${i}: UNCAUGHT — the pre-fix mutant (process.exit) KEPT its terminal line `
+          + `through a full pipe (${m.bytes} B read), so this plant does not distinguish the fix from `
+          + 'its absence. Read nothing into the fixed run beside it.');
+        bad15++; continue;
+      }
+      if (m.bytes >= f.bytes) {
+        fail(`plant 15 run ${i}: THE PIPE NEVER FILLED — the mutant read ${m.bytes} B against the `
+          + `fixed run's ${f.bytes} B, so nothing was queued at exit and this run is evidence of nothing.`);
+        bad15++; continue;
+      }
+      note(`plant 15 run ${i}/${FLUSH_RUNS} — mutant LOST the terminal line and stopped at ${m.bytes} B `
+        + `(the pipe buffer); fixed delivered ${f.bytes} B with the terminal line whole.`);
+    }
+    if (bad15) {
+      console.error(`  RED  plant 15 — ${bad15} of ${FLUSH_RUNS} repetition(s) failed.`);
+      return 1;
+    }
+    console.log(`  CAUGHT  "the terminal line survives a full pipe" -> ${FLUSH_RUNS}/${FLUSH_RUNS} `
+      + 'repetitions, mutant truncated every time, fixed whole every time.');
+    return 0;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 // THE FAILURE PATH GOES THROUGH THE SAME DOOR AS THE SUCCESS PATH. This line
@@ -868,7 +1278,12 @@ async function selftest() {
 // boundary print, which is the #320 shape. The stack is still printed, because
 // a boundary is not a diagnosis; what changed is that the boundary and a
 // non-verdict-shaped state line now follow it.
-main().catch((e) => {
+main().catch(async (e) => {
   console.error(`displayfirst: ${(e && e.stack) || e}`);
+  // CLOSE FIRST, THEN SPEAK. The server and the browser this run opened are
+  // still up on every thrown path, and with `process.exit()` gone they would
+  // hold the loop open forever — the STOPPED line would print and the gate
+  // would still never return. Teardown never throws (see `shutdown`).
+  await shutdown();
   finish('stopped', (e && e.message) || String(e));
 });
