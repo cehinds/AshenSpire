@@ -571,14 +571,27 @@ jobs:
           # STILL ONE JOB — that half was checked rather than assumed: the Armoury gate
           # is a STEP inside this same browser-guard job, so "one job" holds. What went
           # false is the parenthetical, which named one gate where there are now two,
-          # and "not whether pressing them does anything" — the Armoury gate DOES press
-          # CARDS and require the pane to open. Narrowed to what is still true.
+          # and "not whether pressing them does anything" — the Armoury gate drives
+          # CARDS and requires the pane to open. Narrowed to what is still true.
+          #
+          # CORRECTED AGAIN 2026-08-22, and this correction is the whole reason the
+          # block exists. The line below read "PRESSES exactly ONE control". IT DOES
+          # NOT PRESS. The tool dispatches HTMLElement.click(), which runs the handler
+          # on a control no player could touch — planted `pointer-events: none;
+          # opacity: 0` and every gate passed with clicks=1 — and the tool's OWN
+          # printed boundary says "THE CLICK IS A DOM click(), NOT A PRESS". So the
+          # repo held TWO HOMES FOR ONE FACT, contradicting, and the FALSE one was the
+          # one that prints on every green run. Law 0 clause 4. Marina withdrew her own
+          # PASS over this rather than let it stand, on her own test: a MISSING boundary
+          # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
+          # — Sunna.
           echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job opens a browser"
           echo "    on the game — TWO gates inside it: the hint-strip gate at ?shot=combat and"
           echo "    the Armoury gate at ?shot=combat -> the Armoury overlay. They measure"
-          echo "    BOXES, and the Armoury gate presses exactly ONE control (CARDS) and checks"
-          echo "    that a pane opened. Nothing else here is pressed. No job here fights,"
-          echo "    wins, loses, or finishes a run."
+          echo "    BOXES, and the Armoury gate DISPATCHES A DOM CLICK at exactly ONE control"
+          echo "    (CARDS) and checks that a pane opened — it does NOT press it, and cannot"
+          echo "    tell whether a player could. Its own output says so on every run. NOTHING"
+          echo "    HERE IS PRESSED. No job here fights, wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that

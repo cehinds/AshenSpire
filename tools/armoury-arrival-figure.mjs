@@ -175,6 +175,82 @@ const PROBE = `(() => {
   };
 })()`;
 
+// ---- COUNTERS AND THE BOUNDARY, AT MODULE SCOPE AND FOR ONE REASON ---------
+// They used to live inside run(), and so did the boundary print — which meant the
+// "unconditional" boundary reached exactly ONE of this tool's TWO exit paths. A
+// throw anywhere in the drive (browser refuses to launch, the screen never
+// renders, CDP drops) unwound past the print straight into run().catch, and the
+// reader got a stack trace, exit 2, and NO statement of what the instrument does
+// or does not prove. Measured, not read: planted a navigation to a screen that
+// never renders combat and the run printed `0` BOUNDARY lines and `0` verdict
+// lines before exiting 2.
+//
+// Bjorn measured the class in #320: 41 of 69 boundary-printing tools have an exit
+// path above their print. This file was one of the 41 while claiming in its own
+// comment to be unconditional — the same defect as a FALSE boundary, one layer
+// out: a refusal that does not reach its reader is decoration.
+let fails = 0;
+// A COUNTED VERDICT NEEDS A REAL COUNT. #294's door refuses a bare
+// `all gates green` as silence, and D103 said the bill would be paid per tool —
+// this is one of the n. Every assertion is RECORDED as it is evaluated, so the
+// number is never typed: if a branch does not run, it is not in it.
+let checks = 0;
+let unknowns = 0;
+const unknownWhy = new Set();
+const gate = (ok, msg) => {
+  checks++;
+  if (!ok) { console.log(`    FAIL ${msg}`); fails++; }
+  return ok;
+};
+const skip = (why) => { unknowns++; unknownWhy.add(why); };
+
+function printBoundary() {
+  // THE BOUNDARY IS PRINTED, NOT COMMENTED — unconditionally, green or red.
+  // Three rounds of findings on this file were one shape: geometry satisfied
+  // without reachability. Two of those were predicate bugs and are fixed. The
+  // third is the tool's SHAPE and is not fixable here, so it is declared where a
+  // reader of the output will see it, the way gatelist and hintstrip declare
+  // theirs. A limit stated only in a comment is a limit the next reader inherits
+  // as a defect — which is exactly what happened between #304's body and this file.
+  console.log('');
+  console.log('  BOUNDARY — what a green here does NOT mean:');
+  console.log('   · THE CLICK IS A DOM `.click()`, NOT A PRESS. It runs the handler whether the');
+  console.log('     control is visible, on screen, covered, or hit-testable. Planted');
+  console.log('     `pointer-events: none; opacity: 0` on the CARDS control — unpressable by any');
+  console.log('     player — and every gate here still passed with clicks=1. SO THIS TOOL DOES');
+  console.log('     NOT PROVE A PLAYER CAN PERFORM THE CLICK D99 PRICED. It proves the handler');
+  console.log('     is wired and the geometry that follows is right. Viki named this same limit');
+  console.log('     in #304 and measured why it is hard here (body.style.zoom: rect px and CDP');
+  console.log('     input px are different spaces); #315\'s A6 is the door that solves it.');
+  console.log('   · stripFullyVisible is REPORTED, never gated — false at dev and at head alike,');
+  console.log('     a pre-existing scroll this change neither adds nor removes. What IS gated is');
+  console.log('     that SOME of the opened pane is on screen, measured as the rect intersected');
+  console.log('     with every clipping ancestor and the viewport — the same primitive the figure');
+  console.log('     uses. A sliver passes that gate; the visible share is printed so a shrinking');
+  console.log('     one is a falling number rather than a silent pass.');
+  console.log('   · POSITION AND CLIPPING ARE NOT PAINT, and this is a LIVE GAP, not a nicety.');
+  console.log('     visible() intersects the rect with every clipping ancestor and the viewport.');
+  console.log('     It does not read opacity, visibility, or what is drawn over the top. Planted');
+  console.log('     `opacity: 0` and then `visibility: hidden` on the whole card strip: both');
+  console.log('     printed VISIBLE 1220x252 and OK — 21 checks passed, byte-identical to a clean');
+  console.log('     run, with nothing on the screen. So this tool can still say a pane opened');
+  console.log('     where a player sees nothing — the same sentence it exists to refuse, one');
+  console.log('     layer in. CARDED, not fixed here: closing it needs a paint-level read');
+  console.log('     (composited opacity, visibility, and an occlusion test), which is the same');
+  console.log('     instrument the reachability card needs and belongs with it.');
+  console.log('   · two shapes only, 1440x860 and 390x844; the band between them is unmeasured.');
+  console.log('   · one container, one headless Chromium, deviceScaleFactor 1. No pixels are');
+  console.log('     compared here: every number above is a rect.');
+  if (unknowns) {
+    console.log('');
+    console.log(`  ⚠ ${unknowns} assertion(s) resolved to \`unknown\` this run and are counted in NEITHER`);
+    console.log('    the verdict below nor the failures. `unknown` shrinks this tool\'s denominator');
+    console.log('    and leaves its EXIT STATUS UNCHANGED — printed unconditionally so a run that');
+    console.log('    quietly stops asserting things is visible as a falling count, not as silence:');
+    for (const why of unknownWhy) console.log(`      · ${why}`);
+  }
+}
+
 async function run() {
   const json = process.argv.includes('--json');
   const out = {};
@@ -198,21 +274,6 @@ async function run() {
   const until = async (x, w, ms = 25000) => { const t = Date.now();
     while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(60); } throw new Error('timeout ' + w); };
 
-  let fails = 0;
-  // A COUNTED VERDICT NEEDS A REAL COUNT. #294's door refuses a bare
-  // `all gates green` as silence, and D103 said the bill for that would be paid
-  // per tool — this is one of the n. So every assertion is RECORDED as it is
-  // evaluated, and the terminal line states what was actually counted. The
-  // number is never typed: if a branch does not run, it is not in it.
-  let checks = 0;
-  let unknowns = 0;
-  const unknownWhy = new Set();
-  const gate = (ok, msg) => {
-    checks++;
-    if (!ok) { console.log(`    FAIL ${msg}`); fails++; }
-    return ok;
-  };
-  const skip = (why) => { unknowns++; unknownWhy.add(why); };
   try {
     for (const shape of SHAPES) {
       await cdp.send('Emulation.setDeviceMetricsOverride',
@@ -452,40 +513,7 @@ async function run() {
 
   if (json) console.log('\n' + JSON.stringify(out, null, 2));
 
-  // THE BOUNDARY IS PRINTED, NOT COMMENTED — unconditionally, green or red.
-  // Three rounds of findings on this file were one shape: geometry satisfied
-  // without reachability. Two of those were predicate bugs and are fixed. The
-  // third is the tool's SHAPE and is not fixable here, so it is declared where a
-  // reader of the output will see it, the way gatelist and hintstrip declare
-  // theirs. A limit stated only in a comment is a limit the next reader inherits
-  // as a defect — which is exactly what happened between #304's body and this file.
-  console.log('');
-  console.log('  BOUNDARY — what a green here does NOT mean:');
-  console.log('   · THE CLICK IS A DOM `.click()`, NOT A PRESS. It runs the handler whether the');
-  console.log('     control is visible, on screen, covered, or hit-testable. Planted');
-  console.log('     `pointer-events: none; opacity: 0` on the CARDS control — unpressable by any');
-  console.log('     player — and every gate here still passed with clicks=1. SO THIS TOOL DOES');
-  console.log('     NOT PROVE A PLAYER CAN PERFORM THE CLICK D99 PRICED. It proves the handler');
-  console.log('     is wired and the geometry that follows is right. Viki named this same limit');
-  console.log('     in #304 and measured why it is hard here (body.style.zoom: rect px and CDP');
-  console.log('     input px are different spaces); #315\'s A6 is the door that solves it.');
-  console.log('   · stripFullyVisible is REPORTED, never gated — false at dev and at head alike,');
-  console.log('     a pre-existing scroll this change neither adds nor removes. What IS gated is');
-  console.log('     that SOME of the opened pane is on screen, measured as the rect intersected');
-  console.log('     with every clipping ancestor and the viewport — the same primitive the figure');
-  console.log('     uses. A sliver passes that gate; the visible share is printed so a shrinking');
-  console.log('     one is a falling number rather than a silent pass.');
-  console.log('   · two shapes only, 1440x860 and 390x844; the band between them is unmeasured.');
-  console.log('   · one container, one headless Chromium, deviceScaleFactor 1. No pixels are');
-  console.log('     compared here: every number above is a rect.');
-  if (unknowns) {
-    console.log('');
-    console.log(`  ⚠ ${unknowns} assertion(s) resolved to \`unknown\` this run and are counted in NEITHER`);
-    console.log('    the verdict below nor the failures. `unknown` shrinks this tool\'s denominator');
-    console.log('    and leaves its EXIT STATUS UNCHANGED — printed unconditionally so a run that');
-    console.log('    quietly stops asserting things is visible as a falling count, not as silence:');
-    for (const why of unknownWhy) console.log(`      · ${why}`);
-  }
+  printBoundary();
 
   // ONE TERMINATED VERDICT LINE, CARRYING WHAT WAS ACTUALLY COUNTED. #294's
   // `readVerdict` refuses a bare "all gates green" as silence, and D103 ruled the
@@ -499,4 +527,14 @@ async function run() {
   process.exit(fails ? 1 : 0);
 }
 
-run().catch((e) => { console.error(e); process.exit(2); });
+run().catch((e) => {
+  console.error(e);
+  // THE SAME BOUNDARY ON THE FAILURE PATH, and a state line that is deliberately
+  // NOT verdict-shaped: #294's door must read SILENCE here, because an instrument
+  // that could not run has judged nothing. `unknown` blocks; it is not a red and
+  // it is certainly not a green.
+  printBoundary();
+  console.log('');
+  console.log(`  armoury-arrival-figure: DID NOT COMPLETE — the instrument failed before it could judge (${checks} assertion(s) had been evaluated). This is \`unknown\`, which blocks, and is not a verdict.`);
+  process.exit(2);
+});
