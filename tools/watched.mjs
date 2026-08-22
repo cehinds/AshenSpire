@@ -34,10 +34,20 @@
 // probe naming a row the ledger no longer carries is red too: drift has two signs.
 //
 // WHO DREW EVERY EDGE. Every probe in `tools/watched-probes.json` carries `by`
-// (the person who chose its selector, its reach and its expectation) and `read`
-// (the source file the selector was READ out of, not guessed). A probe missing
-// either is a floor failure, not a warning — a shape list and a tolerance are the
-// same object, and an unsigned one is an opinion wearing a number.
+// (the person who chose its selector, its reach and its expectation), `read`
+// (the source FILES the selector was READ out of, not guessed) and `anchors`
+// (literal strings from those files whose disappearance means the derivation is
+// dead). A probe missing any of the three is a floor failure, not a warning — a
+// shape list and a tolerance are the same object, and an unsigned one is an
+// opinion wearing a number.
+//
+// AMENDED 2026-08-22 (Bjorn), and the amendment is the point: `read` used to be
+// checked for being NON-EMPTY and nothing else, so a probe could cite a deleted
+// file or a symbol that had moved and this tool printed `watched` beside it. See
+// THE READ FLOOR below for the measurement that produced the rule. `anchors` is
+// a second copy of a fact — deliberately, because a citation IS one, and the
+// only thing that makes a second copy safe is something checking the two agree.
+// That check is what did not exist.
 //
 // WHAT THIS GREEN DOES NOT COVER, said before it is cited:
 //   · It proves the control was ON SCREEN in the shipped bundle at this shape.
@@ -60,17 +70,20 @@
 // re-runs the harness." That is this file's subject wearing a picture.)
 //
 // KNOWN-BAD FIRST (development.md, *The instrument rule*). `--selftest` plants
-// NINE breakages and requires each to be OBSERVED red before this file may be
+// FOURTEEN breakages and requires each to be OBSERVED red before this file may be
 // cited as coverage: a control that cannot be there, a screen that cannot open,
 // a ledger row with no probe, a probe for a row the ledger dropped, a state
 // expectation that must fail, a content pattern that cannot match, zero rows, an
-// empty population, and an unsigned probe. A check that names a thing it cannot
-// fail on is a receipt.
+// empty population, an unsigned probe, a dead anchor, a probe with no anchors, a
+// `read` naming a deleted file, a typed line number, and — plant 14, the only one
+// that mutates the SOURCE rather than the probe — THE CODE MOVING OUT FROM UNDER
+// A CORRECT PROBE. A check that names a thing it cannot fail on is a receipt.
 //
 // Usage:
 //   node tools/watched.mjs --ledger <path-to-asks.json> [--shape 390x844]
 //                          [--only G7,S3] [--src] [--dump] [--out DIR]
 //   node tools/watched.mjs --selftest --ledger <path-to-asks.json>
+//   node tools/watched.mjs --check-reads          (the read floor alone; no browser)
 // Exit: 0 every row watched or declared · 1 any red · 2 the harness could not run
 //
 // REMOVAL CONDITION: deleted the day the ledger's `state` column is itself
@@ -133,6 +146,116 @@ function readPopulation(ledgerPath) {
   return { pop, total: all.length, gate: doc.gate || {} };
 }
 
+// ---- THE READ FLOOR: a derivation that no longer exists must not read green --
+//
+// Bjorn, 2026-08-22. Codex found the hole on #316 and the probe it found was
+// mine (A5). The probe is not the finding. THIS IS: until today `readProbes`
+// checked that `read` was NON-EMPTY and nothing else, so a probe could name a
+// file that had been deleted, a line past the end of it, or a symbol that no
+// longer existed, and this tool would print `watched` beside it. **The
+// instrument whose whole job is catching probe rot could not tell a live
+// derivation from a dead one.**
+//
+// MEASURED BEFORE IT WAS FIXED, at `dev` = 897d9fa, over the 47 probes that owe
+// a `read`: 73 of them carried a typed `file:line`. SEVENTEEN of those 73
+// resolved at the line they named. 24 probes of 47 named a line whose subject
+// had moved (median drift far past any tolerable window: `.set-tabs` 461 lines,
+// `.end-turn` 1161), 3 named a symbol that is not in the cited file AT ALL
+// (`.map-zoom` and its three buttons left `map.js` for `mapboard.js`;
+// `data-hold-action` left `holdconfirm.js`), one named a line past the end of
+// its file (`map.js:534`, 309 lines long) and one named a file this repo does
+// not contain. **Not one of those was red.**
+//
+// WHAT IT NOW REQUIRES, and why each is the cheapest rule that can go red:
+//
+//   1  `read` names FILES, and every file it names must EXIST.
+//   2  `read` may not carry a typed `:LINE`. A line number is DERIVED from the
+//      anchor below and PRINTED by this tool. A typed one is a second home for
+//      a fact the machine already holds — Law 0 clause 4 — and 56 of the 73 in
+//      the corpus were wrong, which is what a second home with no checker does.
+//   3  every probe that owes a `read` declares `anchors`: LITERAL strings, each
+//      of which must occur in at least one file the `read` names. An anchor is
+//      the identity of the derivation — the symbol, selector, key or content
+//      string the probe was built from. When it goes, the derivation is dead
+//      and this floor is red BY NAME.
+//
+// WHAT THIS IS NOT, said before it is cited. It is a CONSISTENCY check, not a
+// correctness one (my own card, failure 3): it proves the probe still points at
+// something that exists. It does not prove the probe points at the RIGHT thing,
+// and it never will — that is what `by` is for, and `by` is a person. An anchor
+// chosen loose enough to survive anything is a green that means nothing, and
+// this floor cannot detect one; it can only be planted against by whoever picks
+// it. **I picked a loose one myself while measuring this** — a scraped `FOLDED`
+// matched an unrelated comment 26 lines away and turned A5's own rot green in
+// my scratch harness. That is why anchors are DECLARED and never scraped.
+//
+// Run it alone — no browser, no ledger, no bundle:
+//   node tools/watched.mjs --check-reads
+const READ_LINE_RE = /:(\d+)(?:[-,]\d+)?/;
+const READ_PATH_RE = /(?:^|[\s·,(])((?:src|styles|tools|tests|docs|content|dist)\/[A-Za-z0-9_\-/.]+\.[A-Za-z0-9]+)/g;
+
+function resolveReads(probeRows) {
+  const findings = [];
+  const table = [];
+  for (const p of probeRows) {
+    if (p.kind === 'off-build') continue;
+    const read = String(p.read || '');
+    const files = [...new Set([...read.matchAll(READ_PATH_RE)].map((m) => m[1]))];
+    if (files.length === 0) findings.push(`${p.id}: \`read\` names no file in this repo. A derivation with no source is an opinion.`);
+    for (const f of files) {
+      if (!existsSync(resolve(ROOT, f))) findings.push(`${p.id}: \`read\` names ${f} — THAT FILE IS NOT IN THIS TREE.`);
+    }
+    const typed = READ_LINE_RE.exec(read);
+    if (typed) findings.push(`${p.id}: \`read\` types a line number (\`:${typed[1]}\`). Lines are DERIVED here and printed; delete it. (56 of the 73 typed lines in this corpus were wrong.)`);
+    const anchors = Array.isArray(p.anchors) ? p.anchors : null;
+    if (!anchors || anchors.length === 0) {
+      findings.push(`${p.id}: no \`anchors\`. Name at least one LITERAL string from a file in \`read\` — the thing whose disappearance means this probe's derivation is dead.`);
+      continue;
+    }
+    for (const a of anchors) {
+      if (typeof a !== 'string' || a.length < 4) { findings.push(`${p.id}: anchor ${JSON.stringify(a)} is too short to identify anything.`); continue; }
+      let found = null;
+      for (const f of files) {
+        const abs = resolve(ROOT, f);
+        if (!existsSync(abs)) continue;
+        const lines = readFileSync(abs, 'utf8').split('\n');
+        const i = lines.findIndex((l) => l.includes(a));
+        if (i >= 0) { found = { file: f, line: i + 1, hits: lines.filter((l) => l.includes(a)).length }; break; }
+      }
+      if (found) table.push({ id: p.id, by: p.by, anchor: a, ...found });
+      else findings.push(`${p.id}: anchor ${JSON.stringify(a)} is in NONE of the files \`read\` names (${files.join(', ')}). The derivation this probe was built from is gone or has moved.`);
+    }
+  }
+  return { findings, table };
+}
+
+function reportReads(probeRows) {
+  const { findings, table } = resolveReads(probeRows);
+  const owed = probeRows.filter((p) => p.kind !== 'off-build').length;
+  console.log(`watched --check-reads — ${owed} probe(s) owe a source derivation; ${table.length} anchor(s) resolved\n`);
+  let last = '';
+  for (const r of table) {
+    console.log(`  ${(r.id === last ? '' : r.id).padEnd(5)} ${`${r.file}:${r.line}`.padEnd(46)} ${JSON.stringify(r.anchor)}${r.hits > 1 ? `  (${r.hits} sites)` : ''}`);
+    last = r.id;
+  }
+  if (findings.length) {
+    console.log(`\n  ${findings.length} DEAD DERIVATION(S) — a probe reading something that is not there any more:`);
+    for (const f of findings) console.log(`    ✗ ${f}`);
+  }
+  console.log('\nBOUNDARY, and it is the same one every consistency check carries: this proves each');
+  console.log('  probe still points at something that EXISTS. It does not prove it points at the RIGHT');
+  console.log('  thing — an anchor picked loose enough to survive anything is a green that means');
+  console.log('  nothing, and nothing here can see that. `by` names the person who picked it.');
+  console.log('  The LINES above are DERIVED from the anchors on this run; none is typed anywhere.');
+  // A terminated RESULT sentence with its own counted claim, so the suite's
+  // reader can quote it and D103's verdict door can recognise it. A tool whose
+  // summary no door can parse is one nobody can wire into a gate.
+  console.log(findings.length
+    ? `RESULT: FAIL — ${findings.length} dead derivation(s) across ${owed} probe(s); ${table.length} anchor(s) still resolve.`
+    : `RESULT: OK — ${owed} probe(s), ${table.length} anchor(s), 0 dead derivations.`);
+  return findings.length;
+}
+
 function readProbes(path) {
   if (!existsSync(path)) die(`${path} does not exist — this instrument has no probes and would report 39 unaccounted rows as if that were news`);
   let doc;
@@ -147,6 +270,14 @@ function readProbes(path) {
     if (!p.by) die(`${path}: ${p.id} names nobody in \`by\`. Who drew this edge?`);
     if (p.kind !== 'off-build' && !p.read) die(`${path}: ${p.id} does not say which source file its selector was READ out of`);
     byId.set(p.id, p);
+  }
+  // THE READ FLOOR. Until 2026-08-22 the line above was the whole check: `read`
+  // had to be non-empty. A non-empty string naming a deleted file passed it.
+  const { findings } = resolveReads(rows);
+  if (findings.length) {
+    console.error(`FLOOR: ${findings.length} probe derivation(s) in ${path} no longer resolve. Run \`node tools/watched.mjs --check-reads\` for the table.`);
+    for (const f of findings) console.error(`  \u2717 ${f}`);
+    process.exit(2);
   }
   return { byId, doc };
 }
@@ -568,6 +699,15 @@ function gitShort() {
 async function selftest() {
   const { runSelftest } = await import('./watched-selftest.mjs');
   return runSelftest({ ROOT, LEDGER, PROBES, OUT });
+}
+
+// `--check-reads` is the READ FLOOR ALONE: no browser, no ledger, no bundle, so
+// it can be run by a person in a second and wired into CI, which the rest of
+// this file cannot be. It exits 2 on a dead derivation, which is the same floor
+// exit a full run would take — one home for the rule, two doors to it.
+if (has('--check-reads')) {
+  const { probes: rows } = JSON.parse(readFileSync(PROBES, 'utf8'));
+  process.exit(reportReads(rows) ? 2 : 0);
 }
 
 if (SELFTEST) {

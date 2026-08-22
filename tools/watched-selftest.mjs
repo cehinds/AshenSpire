@@ -6,8 +6,9 @@
 // audit that could not itself go red would be the same defect one level up, and
 // it would be MY defect this time.
 //
-// Nine plants. Each mutates ONE thing — a probe, the ledger, the states — writes
-// it to a temp dir, runs the REAL tool end-to-end against it, and requires the
+// Thirteen plants. Each mutates ONE thing — a probe, the ledger, the states, or
+// (plant 14, deliberately) THE SOURCE THE PROBE WAS READ OUT OF — writes it to a
+// temp dir, runs the REAL tool end-to-end against it, and requires the
 // expected red. Nothing is faked in memory: the plants go through the same
 // argument parsing, the same browser, the same verdict code as a real run.
 //
@@ -20,9 +21,14 @@
 //   7  FLOOR exit 2     a ledger with zero rows
 //   8  FLOOR exit 2     a ledger whose rows are all in other states
 //   9  FLOOR exit 2     a probe that names nobody in `by`
+//  10  FLOOR exit 2     an `anchors` literal that is in none of its `read` files
+//  11  FLOOR exit 2     a probe declaring no `anchors` at all
+//  12  FLOOR exit 2     a `read` naming a file this tree does not contain
+//  13  FLOOR exit 2     a typed `:LINE` back in a `read` (lines are DERIVED here)
+//  14  FLOOR exit 2     THE SOURCE MOVES UNDER A CORRECT PROBE — the A5 case
 //
 // Run: node tools/watched.mjs --selftest --ledger <path-to-asks.json>
-// Exit: 0 all nine observed red · 1 any plant came back GREEN (the bad news)
+// Exit: 0 all of them observed red · 1 any plant came back GREEN (the bad news)
 
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, cpSync, rmSync } from 'node:fs';
@@ -72,7 +78,11 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   // 4 — drift the other way: a probe for a row the ledger dropped.
   {
     const pr = clone(probes);
-    pr.probes.push({ id: 'ZZ9', by: 'Bjorn', read: 'a plant', screen: 'nowhere',
+    // ZZ9 carries a REAL read and REAL anchors (2026-08-22): the read floor is a
+    // floor, so a fixture that trips it exits 2 and this plant would score the
+    // wrong red — a mutation credited with a defect it did not cause.
+    pr.probes.push({ id: 'ZZ9', by: 'Bjorn', read: 'src/ui/screens/settings.js (a plant, and it must survive the read floor to reach the check it is for)',
+      anchors: ["key: 'holdConfirm'"], screen: 'nowhere',
       reach: [{ op: 'goto', q: '' }], expect: { present: { title: '#settings' } } });
     plants.push({ name: '4 stale probe', probes: pr, only: 'S3', want: /STALE PROBES[\s\S]*ZZ9/, wantExit: 1 });
   }
@@ -113,15 +123,77 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
     plants.push({ name: '9 FLOOR unsigned probe', probes: pr, only: 'S3', want: /names nobody in `by`/, wantExit: 2 });
   }
 
-  console.log(`watched --selftest — ${plants.length} plants, each run through the REAL tool\n`);
+  // ---- 10-14: THE READ FLOOR --------------------------------------------------
+  // Bjorn, 2026-08-22. Nine plants above and not one of them touched `read`,
+  // because until today `read` was checked for being NON-EMPTY and nothing else.
+  // A probe could name a deleted file, a line past the end of one, or a symbol
+  // that no longer existed, and every plant above would still have gone red on
+  // schedule while the probe itself printed `watched`. THE INSTRUMENT WHOSE JOB
+  // IS CATCHING PROBE ROT COULD NOT TELL A LIVE DERIVATION FROM A DEAD ONE.
+  //
+  // Plant 14 is the one that matters and it is the only one that mutates the
+  // SOURCE rather than the probe file: the probe is untouched and correct, and
+  // the code it was read out of moves underneath it. That is the real failure —
+  // #316 removing `opensCollapsed(..., narrow)` while A5 kept citing it — and a
+  // corpus of probe-side plants alone would never have shown it.
+  {
+    const pr = clone(probes);
+    pr.probes.find((x) => x.id === 'S3').anchors = ['a-symbol-nobody-ever-wrote'];
+    plants.push({ name: '10 FLOOR dead anchor', probes: pr, only: 'S3', reads: true, want: /S3: anchor "a-symbol-nobody-ever-wrote" is in NONE/, wantExit: 2 });
+  }
+  {
+    const pr = clone(probes);
+    delete pr.probes.find((x) => x.id === 'S3').anchors;
+    plants.push({ name: '11 FLOOR no anchors', probes: pr, only: 'S3', reads: true, want: /S3: no `anchors`/, wantExit: 2 });
+  }
+  {
+    const pr = clone(probes);
+    pr.probes.find((x) => x.id === 'S3').read = 'src/ui/screens/settings-that-was-deleted.js (the holdConfirm row)';
+    plants.push({ name: '12 FLOOR read names a deleted file', probes: pr, only: 'S3', reads: true, want: /THAT FILE IS NOT IN THIS TREE/, wantExit: 2 });
+  }
+  {
+    const pr = clone(probes);
+    pr.probes.find((x) => x.id === 'S3').read = 'src/ui/screens/settings.js:203 (the holdConfirm row)';
+    plants.push({ name: '13 FLOOR a typed line returns', probes: pr, only: 'S3', reads: true, want: /types a line number \(`:203`\)/, wantExit: 2 });
+  }
+
+  // 14 — THE ONE THAT MUTATES THE SOURCE, NOT THE PROBE. Every plant above
+  // breaks the probe file; this one leaves the probe correct and moves the code
+  // out from under it, which is the failure that actually happened (A5 citing
+  // `opensCollapsed(..., narrow)` while #316 removes the signature). It runs in
+  // a COPY OF THE TREE so the mutation is real on disk and the tool resolves
+  // ROOT to it — the same-door rule pictureSelftest below is built on.
+  {
+    const tree = mkdtempSync(join(tmpdir(), 'watched-readsrc-'));
+    for (const n of ['src', 'styles', 'tools', 'content']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
+    const victim = join(tree, 'src/ui/screens/settings.js');
+    const before = readFileSync(victim, 'utf8');
+    if (!before.includes("key: 'holdConfirm'")) { console.error("FLOOR: plant 14 expects S3's anchor in settings.js and did not find it"); return 2; }
+    writeFileSync(victim, before.split("key: 'holdConfirm'").join("key: 'holdToCommit'"));
+    let out = ''; let code = 0;
+    try { out = execFileSync(process.execPath, [join(tree, 'tools/watched.mjs'), '--check-reads'], { cwd: tree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
+    const ok = code === 2 && /S3: anchor "key: 'holdConfirm'" is in NONE/.test(out);
+    console.log(`watched --selftest — plant 14, THE SOURCE MOVED UNDER A CORRECT PROBE`);
+    console.log(`  ${ok ? 'RED ok' : 'GREEN  '}  14 source renamed under S3   exit ${code} (wanted 2)${ok ? '' : '  — THE EXPECTED RED DID NOT APPEAR'}`);
+    rmSync(tree, { recursive: true, force: true });
+    if (!ok) { console.log('\nPlant 14 came back GREEN: this instrument cannot see the code move under a probe, which is the only defect it was built for.'); return 1; }
+  }
+
+  console.log(`\nwatched --selftest — ${plants.length} plants, each run through the REAL tool\n`);
   let failed = 0;
   for (const pl of plants) {
     const lPath = pl.ledger ? write(`${pl.name.split(' ')[0]}-ledger.json`, pl.ledger) : LEDGER;
     const pPath = pl.probes ? write(`${pl.name.split(' ')[0]}-probes.json`, pl.probes) : PROBES;
     let out = ''; let code = 0;
     try {
-      out = execFileSync(process.execPath, [join(ROOT, 'tools/watched.mjs'),
-        '--ledger', lPath, '--probes', pPath, '--only', pl.only, '--out', shotsDir],
+      // A `reads` plant goes through the SAME tool by its cheap door
+      // (`--check-reads`): no browser, no ledger, no bundle — which is the door
+      // CI can afford and therefore the one that has to be watched failing.
+      out = execFileSync(process.execPath, pl.reads
+        ? [join(ROOT, 'tools/watched.mjs'), '--check-reads', '--probes', pPath]
+        : [join(ROOT, 'tools/watched.mjs'),
+          '--ledger', lPath, '--probes', pPath, '--only', pl.only, '--out', shotsDir],
       { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     } catch (e) {
       code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`;
@@ -144,9 +216,14 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
     console.log(`\nThe COMMITTED PICTURES sub-check misbehaved. This instrument may NOT be cited for that half.`);
     return 1;
   }
-  console.log('BOUNDARY: the plants prove the VERDICT MACHINE and the COMMITTED PICTURES sub-check can fail.');
-  console.log('  They do not prove any individual probe points at the right control — that is what `read` and');
-  console.log('  `by` in the probe file are for, and they are a person.');
+  console.log('BOUNDARY: the plants prove the VERDICT MACHINE, the COMMITTED PICTURES sub-check and the');
+  console.log('  READ FLOOR can each fail. AMENDED 2026-08-22 (Bjorn) — the sentence that stood here said');
+  console.log('  `read` was a person and nothing more, and that was true for exactly as long as nothing');
+  console.log('  checked it: 24 of the 47 probes owing one were reading something that had moved or gone.');
+  console.log('  What is now MACHINE-CHECKED: every file a `read` names exists, every `anchors` literal is');
+  console.log('  still in one of them, and no line number is typed anywhere. What is STILL A PERSON: whether');
+  console.log('  the anchor identifies the RIGHT thing. An anchor loose enough to survive any edit is a');
+  console.log('  green that means nothing and no plant here can see one — `by` is who to ask.');
   return 0;
 }
 
