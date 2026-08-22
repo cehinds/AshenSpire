@@ -41,12 +41,27 @@
 //               left) — never DOM order. A check that read DOM order would be
 //               green under `flex-direction: column-reverse`, where every box
 //               is where it always was and the player sees the list backwards.
-//   D2 ONCE     exactly one `fullscreen` control is in the panel. A move that
-//               copies is not a move.
-//   D3 INK      that row is on screen ON ARRIVAL — non-zero box, not
-//               `display:none` / `visibility:hidden`, and its box is wholly
-//               inside the viewport ON ALL FOUR EDGES, with nothing scrolled ON
-//               ALL THREE AXES (panel, document Y, document X).
+//   D2 ONCE     exactly one `fullscreen` CONTROL is in the panel. A move that
+//               copies is not a move. IT COUNTED ROWS UNTIL 2026-08-22, and a
+//               row reports only its FIRST `[data-key]`: two Fullscreen toggles
+//               rendered inside ONE `.set-row` gave `count=1` and passed. The
+//               sentence said control, the predicate said container. Codex,
+//               `:419`. Both numbers are printed now — `controls=N rows=M` —
+//               because their divergence IS the defect.
+//   D3 INK      that row AND THE CONTROL INSIDE IT are on screen ON ARRIVAL —
+//               non-zero box, not `display:none` / `visibility:hidden`, not
+//               transparent through ANY ancestor, and each box wholly inside the
+//               viewport ON ALL FOUR EDGES, with nothing scrolled ON ALL THREE
+//               AXES (panel, document Y, document X).
+//               TWO BOXES SINCE 2026-08-22, and the second one is the sweep D2's
+//               finding earned: this judged the `.set-row` and called it the
+//               control. A toggle displaced, shrunk or faded INSIDE a row that
+//               is exactly where it belongs left every number correct and the
+//               control out of reach.
+//               ANCESTOR OPACITY SINCE 2026-08-22 TOO: opacity neither inherits
+//               nor collapses the box, so `.modal-veil { opacity: 0 }` left the
+//               row at `opacity: 1`, full size, and this tool printed
+//               `OK — 8 checks passed` over a panel nobody could see.
 //               "First" that a player has to scroll to is not first.
 //               NOTHING SCROLLED MEANT TWO AXES UNTIL 2026-08-22: `docX` was
 //               read off the page and never reached the predicate, so a document
@@ -254,6 +269,10 @@ function printBoundary() {
   console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
   console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
   console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
+  console.log('  · D1 orders ROWS, and that is its subject on purpose: two controls inside ONE row have');
+  console.log('    no order of their own here, and D1 would report whichever the DOM lists first. D2');
+  console.log('    counts controls and D3 judges the control\'s own box, so a duplicate or a displaced');
+  console.log('    control is caught — but their ORDER within a shared row is not measured.');
   console.log('  · D3 judges the Fullscreen row\'s own box against all four viewport edges, and its');
   console.log('    EFFECTIVE OPACITY through every ancestor to the root. It still says nothing about');
   console.log('    whether an ANCESTOR CLIPS it (overflow/clip-path), whether another ELEMENT COVERS');
@@ -313,6 +332,9 @@ function printBoundary() {
 /** What this run opened, so an error path can close it. Set as each is created. */
 const live = { cdp: null, dropBrowser: null, server: null };
 
+/** The verdict this run has already ended on, if any. See the latch in `finish`. */
+let ended = null;
+
 /** Idempotent, and it never throws: a failed teardown may not eat the verdict. */
 async function shutdown() {
   const { cdp, dropBrowser, server } = live;
@@ -345,24 +367,44 @@ function forceExitAfterDrain(code) {
  * Returns the exit code; callers RETURN this so nothing runs after a verdict.
  */
 function finish(state, detail) {
+  const code = state === 'ok' ? 0 : state === 'unknown' ? 2 : 1;
+  // THE FATAL STATE LATCHES. `process.exit()` made an exit FINAL, and that was
+  // the second job nobody wrote down when four seats were told to switch to
+  // `process.exitCode` today: a code is a VARIABLE, so a later path can set it
+  // back to 0 and a run that already died prints a green. Codex found that on
+  // #322. Silence blocks; a green does not — trading truncation for a false
+  // green would be worse than the bug the switch was for.
+  //
+  // MEASURED IN THIS FILE RATHER THAN ASSUMED FROM THE CLASS: no
+  // `uncaughtException` and no `unhandledRejection` handler is installed
+  // anywhere in this tool's import graph (`browser.mjs` installs `exit` and the
+  // four signals and nothing else), so Node's default — terminate — still holds
+  // for an async throw, and `main()`'s promise settles once. I found no
+  // reachable double-finish path here. THE LATCH IS NOT RELYING ON THAT SURVEY:
+  // a survey is a claim about today's call graph, and this is a claim about the
+  // verdict. A non-green may be overwritten by nothing; a green may always be
+  // overwritten by a later non-green, which is the direction that keeps a late
+  // failure visible.
+  if (ended && code === 0 && ended.code !== 0) {
+    console.error(`displayfirst: SECOND VERDICT REFUSED — this run already ended on `
+      + `${ended.state.toUpperCase()} (exit ${ended.code}) and a later path tried to print OK. `
+      + 'The first stands. A green may not overwrite a run that already failed.');
+    return ended.code;
+  }
   printBoundary();
-  let code = 1;
   if (state === 'ok') {
     console.log(`displayfirst: OK — ${passes} checks passed`);
-    code = 0;
   } else if (state === 'fail') {
     console.error(`displayfirst: FAIL — ${bad} finding(s) across ${reached} cells`);
-    code = 1;
   // NOT VERDICT-SHAPED, ON PURPOSE — see the block above. `readVerdict` returns
   // {error:'none'} for both of these, which is silence, which blocks.
   } else if (state === 'unknown') {
     console.error(`displayfirst: UNKNOWN — nothing was measured (${detail}).`);
-    code = 2;
   } else {
     console.error(`displayfirst: STOPPED — the run ended on an error after ${reached}`
       + `${expected === null ? '' : ` of ${expected}`} cell(s) (${detail}). Nothing above is a verdict.`);
-    code = 1;
   }
+  ended = { state, code };
   process.exitCode = code;
   forceExitAfterDrain(code);
   return code;
@@ -417,14 +459,37 @@ const READ = `(() => {
   // GEOMETRIC ORDER, not DOM order. This is the whole reason the tool exists.
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
   const fs = rows.filter((r) => r.key === ${JSON.stringify(WANT)});
+  // THE CONTROLS THEMSELVES, COUNTED AS CONTROLS. \`rows\` is one entry per
+  // \`.set-row\`, and each row reports \`querySelector('[data-key]')\` — THE
+  // FIRST match. A regression that renders the Fullscreen toggle TWICE INSIDE
+  // ONE ROW collapses to a single key there, so counting rows returns 1 while
+  // two controls are on the screen. D2 promises exactly one CONTROL. Codex, at
+  // \`:419\`, 2026-08-22 — the third time in this file a predicate measured
+  // something adjacent to the noun its own sentence used.
+  const fsEls = [...panel.querySelectorAll('[data-key="' + ${JSON.stringify(WANT)} + '"]')];
+  const boxOf = (el) => {
+    const b = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    return {
+      top: +b.top.toFixed(2), left: +b.left.toFixed(2),
+      bottom: +b.bottom.toFixed(2), right: +b.right.toFixed(2),
+      w: +b.width.toFixed(2), h: +b.height.toFixed(2),
+      display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
+      effOpacity: effOpacity(el),
+    };
+  };
   return {
     panel: true,
     tab: (document.querySelector('.set-tab.on') || { dataset: {} }).dataset.member,
     domKeys: rows.map((r) => r.key),
     visibleKeys: visible.map((r) => r.key),
     first: visible.length ? visible[0] : null,
-    fsCount: fs.length,
+    fsCount: fsEls.length,
+    fsRowCount: fs.length,
     fs: fs[0] || null,
+    // The control's OWN box, so D3 can stop trusting the container to speak for
+    // the thing inside it.
+    fsCtrl: fsEls[0] ? boxOf(fsEls[0]) : null,
     panelEffOpacity: effOpacity(panel),
     scroll: { panelTop: panel.scrollTop, docY: window.scrollY, docX: window.scrollX },
     vp: { w: window.innerWidth, h: window.innerHeight },
@@ -564,10 +629,18 @@ function judge(r, cell) {
   } else {
     note(`D1/order ${cell} first=${first} (geometric, ${r.visibleKeys.length} visible rows)`);
   }
+  // D2 COUNTS CONTROLS, NOT CONTAINING ROWS, AND THE TWO NUMBERS ARE BOTH
+  // PRINTED so a reader can see when they diverge. Until 2026-08-22 this read
+  // the ROW count: two Fullscreen toggles inside one `.set-row` reported
+  // `count=1` and passed, because each row contributes the FIRST `[data-key]`
+  // it contains and nothing looks wrong in the code.
   if (r.fsCount !== 1) {
-    fail(`FINDING D2/once cell=${cell} count=${r.fsCount} want=1 — the row must have MOVED, not been copied.`);
+    fail(`FINDING D2/once cell=${cell} controls=${r.fsCount} rows=${r.fsRowCount} want=1 control — the `
+      + 'row must have MOVED, not been copied, and a second control inside the SAME row is still a copy. '
+      + '(controls > rows means the duplicate is inside one row, which is the shape a row-count check '
+      + 'cannot see.)');
   } else {
-    note(`D2/once ${cell} count=1`);
+    note(`D2/once ${cell} controls=1 rows=${r.fsRowCount}`);
   }
   // D3 INK — on screen with nothing scrolled.
   const fs = r.fs;
@@ -590,6 +663,8 @@ function judge(r, cell) {
     // in the printed boundary block with ancestor clip and occlusion.
     const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0
       && fs.opacity !== '0' && fs.effOpacity > 0;
+    // eslint-disable-next-line no-unused-vars -- `shown` is the row's half; the
+    // control's half is `ctrlState.shown` below, and both are printed.
     // ON SCREEN MEANS THE WHOLE BOX, AND THAT MEANS FOUR EDGES.
     //
     // Until 2026-08-22 this predicate named THREE: `top >= 0 && left >= 0 &&
@@ -621,14 +696,35 @@ function judge(r, cell) {
     // half a CSS pixel: it forgives rounding and nothing else — the plants
     // above miss by four thousand.
     const EPS = 0.5;
-    const edgeOk = {
-      top: fs.top >= -EPS,
-      left: fs.left >= -EPS,
-      bottom: fs.bottom <= r.vp.h + EPS,
-      right: fs.right <= r.vp.w + EPS,
+    // ONE JUDGEMENT, APPLIED TO TWO BOXES — THE ROW AND THE CONTROL INSIDE IT.
+    //
+    // The sweep Codex's `:419` finding earned: every predicate here was checked
+    // against the noun in its own sentence, and D3 was the second one measuring
+    // a CONTAINER. The row is `.set-row`, and the thing the player has to reach
+    // is the toggle inside it. A control shifted, shrunk or faded WITHIN a row
+    // that is still exactly where it belongs leaves every number in the row's
+    // rect correct — which is the same way the duplicate hid from D2, and the
+    // same way `column-reverse` hid from a DOM-order check.
+    const boxState = (b) => {
+      const edgeOk = {
+        top: b.top >= -EPS,
+        left: b.left >= -EPS,
+        bottom: b.bottom <= r.vp.h + EPS,
+        right: b.right <= r.vp.w + EPS,
+      };
+      const off = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
+      return {
+        shown: b.display !== 'none' && b.visibility !== 'hidden' && b.w > 0 && b.h > 0
+          && b.opacity !== '0' && b.effOpacity > 0,
+        off,
+        onscreen: off.length === 0,
+      };
     };
-    const offscreen = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
-    const onscreen = offscreen.length === 0;
+    const rowState = boxState(fs);
+    const ctrl = r.fsCtrl;
+    const ctrlState = ctrl ? boxState(ctrl) : null;
+    const offscreen = rowState.off;
+    const onscreen = rowState.onscreen;
     // NOTHING SCROLLED MEANS NOTHING, AND THAT IS THREE AXES, NOT TWO.
     //
     // `docX` was READ off the page and never used. With the document scrolled
@@ -651,16 +747,24 @@ function judge(r, cell) {
     const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
     const scrolls = `panelTop=${r.scroll.panelTop} docY=${r.scroll.docY} docX=${r.scroll.docX}`;
     const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
-    if (!shown || !onscreen || !unscrolled) {
-      fail(`FINDING D3/ink cell=${cell} key=${WANT} visible=${shown} onscreen=${onscreen} unscrolled=${unscrolled} `
-        + `effectiveOpacity=${fs.effOpacity} `
-        + `scroll=(${scrolls}) `
-        + `offscreen-edges=[${offscreen.join(',')}] box=(${box}) of viewport ${r.vp.w}x${r.vp.h} `
-        + `(display:${fs.display} visibility:${fs.visibility}) `
-        + '— first that a player has to scroll to, or cannot see, is not first.');
+    const ctrlBox = ctrl ? `x ${ctrl.left}..${ctrl.right}, y ${ctrl.top}..${ctrl.bottom}` : 'absent';
+    const ctrlOk = !!ctrlState && ctrlState.shown && ctrlState.onscreen;
+    if (!shown || !onscreen || !unscrolled || !ctrlOk) {
+      fail(`FINDING D3/ink cell=${cell} key=${WANT} `
+        + `row(visible=${shown} onscreen=${onscreen} effectiveOpacity=${fs.effOpacity} `
+        + `offscreen-edges=[${offscreen.join(',')}] box=(${box})) `
+        + `control(present=${!!ctrl} visible=${ctrlState ? ctrlState.shown : 'n/a'} `
+        + `onscreen=${ctrlState ? ctrlState.onscreen : 'n/a'} `
+        + `effectiveOpacity=${ctrl ? ctrl.effOpacity : 'n/a'} `
+        + `offscreen-edges=[${ctrlState ? ctrlState.off.join(',') : ''}] box=(${ctrlBox})) `
+        + `unscrolled=${unscrolled} scroll=(${scrolls}) of viewport ${r.vp.w}x${r.vp.h} `
+        + `(row display:${fs.display} visibility:${fs.visibility}) `
+        + '— first that a player has to scroll to, or cannot see, is not first, and a row a player '
+        + 'can see is not a control a player can reach.');
     } else {
-      note(`D3/ink ${cell} box (${box}) wholly inside viewport ${r.vp.w}x${r.vp.h} on all four edges, `
-        + `nothing scrolled (${scrolls}), effective opacity ${fs.effOpacity} through every ancestor`);
+      note(`D3/ink ${cell} row box (${box}) AND control box (${ctrlBox}) both wholly inside viewport `
+        + `${r.vp.w}x${r.vp.h} on all four edges, nothing scrolled (${scrolls}), effective opacity `
+        + `${fs.effOpacity} row / ${ctrl.effOpacity} control through every ancestor`);
     }
   }
   return first;
@@ -850,7 +954,7 @@ async function main() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// FOURTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
+// SEVENTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
@@ -861,6 +965,13 @@ async function main() {
 // which the predicate read and never used. PLANT 13 is the ancestor nobody
 // asked about: `opacity: 0` on a door's `.modal-veil`, where every box is real,
 // every box is first, and nobody can see any of it.
+//
+// PLANTS 16 AND 17 ARE THE CONTAINER SWEEP, and they are here because the same
+// mistake had now been made three times in this one file: a predicate measuring
+// the thing NEXT TO the noun its own sentence uses. 16 renders the Fullscreen
+// control twice inside one row, which a row-count cannot see; 17 pushes the
+// control 4000 px sideways inside a row that never moves, which a row-rect
+// cannot see. Both were green before 2026-08-22.
 //
 // PLANTS 10, 12, 14 AND 15 ARE NOT ABOUT THE SCREEN AT ALL — they are about
 // whether THIS TOOL still speaks when it cannot measure. 10 makes the subject
@@ -880,6 +991,18 @@ async function main() {
 // corpus to go red — and it is caught by hand today, twice tonight (this plant
 // and #320's headline plant). Recorded here as a gap; not built here.
 // ---------------------------------------------------------------------------
+// The Fullscreen toggle's markup, byte-exact from `rowHtml` in
+// src/ui/screens/settings.js. A PLAIN STRING, never a template literal: those
+// bytes contain `${on ? 'on' : ''}` and friends, and a template literal would
+// interpolate them here instead of matching them there — a plant whose
+// find-string evaluates is a plant that never arms. doorplant turns an
+// unmatched find-string into a hard red, so this is watched, not hoped.
+const FS_BUTTON = [
+  '      <button class="toggle ${on ? \'on\' : \'\'}" data-key="${r.key}"${r.type === \'action\' ? \' data-action="1"\' : \'\'} role="switch" aria-checked="${on}">',
+  '        <span class="knob"></span>',
+  '      </button>',
+].join('\n');
+
 async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const plants = [
@@ -1092,9 +1215,60 @@ async function selftest() {
         + 'while (Date.now() - __planted < 120000) { /* spin */ }',
       expectRed: /BOUNDARY — printed on EVERY exit path[\s\S]*displayfirst: STOPPED — the run ended on an error[\s\S]*did not answer within \d+ ms/,
     },
+    {
+      // 15 is the piped consumer and is not a file edit — see `pipedOutputPlant`.
+      //
+      // 16 — THE CONTROL IS RENDERED TWICE INSIDE ITS OWN ROW. Every `.set-row`
+      // still holds one key as far as `querySelector` is concerned, because
+      // that call returns the FIRST match, so a check that counts ROWS reports
+      // `count=1` over two Fullscreen toggles and D2's sentence — *exactly one
+      // control* — is false while its predicate is true. Watched: UNCAUGHT
+      // before, `displayfirst: OK`, exit 0.
+      //
+      // A move that copies is the defect D2 exists for, and this is the copy it
+      // could not see.
+      name: 'the Fullscreen control is rendered twice INSIDE its existing row (row count still 1)',
+      file: 'src/ui/screens/settings.js',
+      find: FS_BUTTON,
+      replace: `${FS_BUTTON}\n${FS_BUTTON}`,
+      expectRed: /FINDING D2\/once .*controls=2 rows=1/,
+    },
+    {
+      // 17 — THE ROW IS EXACTLY WHERE IT BELONGS AND THE CONTROL IS NOT. The
+      // second half of the same sweep: D3 read the ROW's rect, and a toggle
+      // pushed 4000 px sideways inside a `position: relative` shift leaves that
+      // rect untouched. Same shape as plant 4, one level down — every number
+      // the check reads is correct and the player cannot reach the control.
+      name: 'the Fullscreen CONTROL sits 4000px right while its row does not move',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row [data-key="fullscreen"] { position: relative !important; left: 4000px !important; }',
+      expectRed: /FINDING D3\/ink .*control\(present=true .*onscreen=false/,
+    },
+    {
+      // 18 — A FATAL, THEN A GREEN, IN ONE RUN. The only plant here whose
+      // known-bad is planted in THIS FILE, because the subject is this file's
+      // own exit contract.
+      //
+      // `process.exit()` was doing a second job nobody wrote down: it made an
+      // exit FINAL. `process.exitCode` is a VARIABLE, so once four seats were
+      // told to switch today, a run that had already died could have its code
+      // set back to 0 by a later path and print a green. Codex found the shape
+      // on #322; this requires it to stay impossible here.
+      //
+      // WATCHED, BOTH EDGES, 2026-08-22, before the latch existed: with the
+      // latch removed the same mutation printed `displayfirst: OK — 0 checks
+      // passed` after its own STOPPED line and exited 0 — a false green over a
+      // dead run, which is strictly worse than the truncation the switch was
+      // made to fix. With the latch: exit 1, and the refusal is printed by name.
+      name: 'a fatal verdict is followed by a green in the same run (the exit code must not be overwritten)',
+      file: 'tools/displayfirst.mjs',
+      find: "  return finish(bad ? 'fail' : 'ok');",
+      replace: "  finish('stopped', 'planted: a fatal arrived first');\n  return finish(bad ? 'fail' : 'ok');",
+      expectRed: /displayfirst: SECOND VERDICT REFUSED — this run already ended on STOPPED \(exit 1\)/,
+    },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: fourteen whole-tool browser runs plus
-  // a clean run is fifteen browser boots. The population is one shape and one
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen whole-tool browser runs plus
+  // a clean run is eighteen browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
@@ -1121,7 +1295,7 @@ async function selftest() {
     console.error(`displayfirst: SELFTEST RED — plants 1-14 (doorplant, above) ${code ? 'RED' : 'green'}, `
       + `plant 15 the piped consumer ${flushCode ? 'RED' : 'green'}. The line above covers 1-14 only.`);
   } else {
-    console.log('displayfirst: SELFTEST GREEN — 14 file-byte plants (doorplant, above) AND plant 15, '
+    console.log('displayfirst: SELFTEST GREEN — 17 file-byte plants (doorplant, above) AND plant 15, '
       + 'the piped consumer, which the line above does not cover.');
   }
   // The corpus run is an exit path too, so it prints the boundary like every
