@@ -41,30 +41,55 @@ const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 73
 // about them. REMOVAL: deleted the day Settings → About renders Markdown itself,
 // at which point this is a second copy of that renderer's job.
 //
-// THE REFUSAL COVERS EVERY LINK FORM THIS FILE CAN CARRY, not only the inline one.
-// It shipped naming `[text](url)` alone, and Markdown has three more spellings that
-// GitHub renders as links and this projection would have copied verbatim: the full
-// reference `[text][label]`, the collapsed `[text][]`, and the shortcut `[text]`
-// standing on a `[label]: url` definition elsewhere in the file. All three reached
-// the projection on 2026-08-22 with `--write` and the gate both at exit 0 — the
-// refusal was NARROWER THAN THE SENTENCE DESCRIBING IT, which is the defect this
-// whole change exists to stop, committed by the instrument written to stop it.
-// Found by Codex and, from the other side, by Bjorn's card on the same file.
+// THE REFUSAL DOES NOT COVER EVERY FORM, AND THIS COMMENT SAID IT DID.
+//
+// It read "THE REFUSAL COVERS EVERY LINK FORM THIS FILE CAN CARRY" and that was
+// FALSE when written. Sunna measured four forms walking past it on 2026-08-22, each
+// at `--write` exit 0 and each reaching the projection: `[details]()`, an HTML
+// comment, `<?php ?>`, and `[SS]` against a `[ß]: url` definition. She checked the
+// ink: `esc()` renders them as visible text, so THE HTML COMMENT GITHUB HIDES IS
+// SHOWN TO THE PLAYER IN FULL. And the sharpest of it — `[x]()` was never a sixth
+// spelling, it was a HOLE IN THE FIRST ONE: the inline pattern required a non-empty
+// destination, so even "recognises `[text](url)`" was not quite true.
+//
+// A false completeness sentence is worse than a missing one. A reader who trusts it
+// stops looking; a missing boundary at least leaves them uninformed rather than
+// confidently wrong. THE LIST BELOW IS THE CLAIM NOW, and it is printed at runtime
+// (REFUSAL_SCOPE) rather than living only here, because a boundary in a `//` comment
+// is invisible to everyone reading the tool's green — Law 0 clause 4, and Vira's
+// "the door named is the extent of the green".
 //
 // The shortcut form cannot be seen in one line of prose — `[docs]` is a link only
 // if a definition for it exists — so `parseChangelog` collects the file's defined
 // labels and hands them down. With no definitions in the file the check is inert,
 // which is why it cannot fire on ordinary bracketed prose.
 //
-// NOT CLOSED HERE, and carded with Bjorn's finding rather than ridden in: `~~strike~~`,
-// HTML entities (`&amp;`), backslash escapes (`\*escaped\*`), and a bare URL that
-// GitHub autolinks. None is a link form; none is present in CHANGELOG.md today.
+// NOT A WHITELIST, deliberately, and this is measured rather than preferred:
+// CHANGELOG.md legitimately carries non-ASCII on 14 lines — em-dashes and arrows.
+// A plain-text whitelist reds the corpus on day one, and one tuned until it stops
+// is a blacklist with a better name.
 const INLINE_REFUSED = [
   [/!\[[^\]]*\]\([^)]*\)/, 'an image'],
-  [/\[[^\]]+\]\([^)]+\)/, 'a link'],
+  // `[^)]*`, not `[^)]+`: an EMPTY destination `[x]()` is still a link on GitHub.
+  [/\[[^\]]+\]\([^)]*\)/, 'a link'],
   [/\[[^\]]+\]\[[^\]]*\]/, 'a reference-style link'],
-  [/<[a-zA-Z/][^>]*>/, 'raw HTML'],
+  // `!` and `?` alongside the letters: an HTML comment and a processing instruction
+  // are hidden by GitHub and PRINTED BY `esc()`, which is the worse direction.
+  [/<[a-zA-Z/!?][^>]*>/, 'raw HTML'],
 ];
+// WHAT THIS TOOL REFUSES, AND WHAT IT LETS THROUGH. Printed on every exit path, so
+// no green from here can be read as wider than it is. Anything not on the refused
+// list reaches src/content/changelog.generated.js verbatim and is rendered to the
+// player as text by `esc()` in src/ui/screens/about.js.
+export const REFUSAL_SCOPE = [
+  'about-changelog REFUSES: image · inline link (empty destination included) · full and',
+  '  collapsed reference link · shortcut reference on a defined label · raw HTML, comment',
+  '  and processing instruction (`<letter`, `</`, `<!`, `<?`).',
+  'A FORM NOT ON THAT LIST SHIPS TO THE PLAYER VERBATIM. Open, measured, not fixed:',
+  '  non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities ·',
+  '  backslash escapes · a bare URL GitHub autolinks. None is present in CHANGELOG.md today.',
+].join('\n');
+export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
 const LINK_DEFINITION = /^ {0,3}\[([^\]]+)\]:\s*\S/;
 // CommonMark §link-reference-definitions, "matching link labels": two labels match
@@ -364,6 +389,14 @@ async function selftest() {
     if (spaced.detail !== 'It reads [the   guide] and stops.') throw new Error(`rewrote it to: ${spaced.detail}`);
     console.log('PASS internal spacing is normalized for comparison only, never in the prose');
   } catch (error) { console.error(`FAIL spaced bracketed prose refused or altered: ${error.message}`); process.exitCode = 1; }
+  // The widened raw-HTML class must not swallow ordinary prose: `<` followed by a
+  // space is arithmetic, not markup. (The preamble's own `0.4.0.<ordinal>` WOULD
+  // match, and is unreachable by construction — only `- ` and `## ` lines are read.)
+  try {
+    const [cmp] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Costs 3 < 5 and 9 > 2, both fine.\n');
+    if (cmp.detail !== 'Costs 3 < 5 and 9 > 2, both fine.') throw new Error(`rewrote it to: ${cmp.detail}`);
+    console.log('PASS bare comparison signs are not read as markup');
+  } catch (error) { console.error(`FAIL comparison prose refused or altered: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
@@ -404,6 +437,28 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. See [the   guide] for the rest.\n\n[the guide]: https://example.invalid/guide',
       expect: 'prose contains a shortcut reference link',
+    },
+    // Sunna's four, 2026-08-22. Three are closed and planted here; the fourth
+    // (non-ASCII case folding) is DECLARED OPEN in REFUSAL_SCOPE and has no plant,
+    // because a plant for a form the tool does not refuse would have to assert the
+    // leak — and the honest home for that is the printed scope, not a green.
+    {
+      name: 'inline link with an EMPTY destination', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [details]() for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'HTML comment in prose — hidden by GitHub, PRINTED to the player', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Note.<!-- maintainer note -->',
+      expect: 'prose contains raw HTML',
+    },
+    {
+      name: 'processing instruction in prose', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Note.<?php ?>',
+      expect: 'prose contains raw HTML',
     },
     {
       name: 'shortcut link, TAB inside the definition label', file: 'CHANGELOG.md',
@@ -482,20 +537,29 @@ async function selftest() {
   else if (!process.exitCode) console.log(`about-changelog selftest: ${caught} known-bads caught / 0 missed`);
 }
 
-if (process.argv.includes('--write')) {
-  const entries = parseChangelog(readFileSync(OWNER, 'utf8'));
-  writeFileSync(GENERATED, generatedText(entries));
-  console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
-} else if (process.argv.includes('--selftest')) {
-  await selftest();
-} else if (process.argv.includes('--probe-source')) {
-  const entries = await checkProjection();
-  await browserCheck(entries, { sourceOnly: true });
-  console.log(`about-changelog source probe: ${entries.length} receipts; real Settings route PASS`);
-} else {
-  const entries = await checkProjection();
-  const shotsAt = process.argv.indexOf('--shots');
-  const screenshotDir = shotsAt >= 0 && process.argv[shotsAt + 1] ? resolve(ROOT, process.argv[shotsAt + 1]) : null;
-  await browserCheck(entries, { screenshotDir });
-  console.log(`about-changelog: ${entries.length} receipts match CHANGELOG.md; source + selected standalone Settings routes PASS`);
+// EVERY exit path names the scope — the greens by printing it after their verdict,
+// the reds by printing it before the error goes up. A verdict a reader can see and
+// a boundary they cannot is how a narrow check gets cited as a wide one.
+try {
+  if (process.argv.includes('--write')) {
+    const entries = parseChangelog(readFileSync(OWNER, 'utf8'));
+    writeFileSync(GENERATED, generatedText(entries));
+    console.log(`wrote ${entries.length} receipts to ${GENERATED}`);
+  } else if (process.argv.includes('--selftest')) {
+    await selftest();
+  } else if (process.argv.includes('--probe-source')) {
+    const entries = await checkProjection();
+    await browserCheck(entries, { sourceOnly: true });
+    console.log(`about-changelog source probe: ${entries.length} receipts; real Settings route PASS`);
+  } else {
+    const entries = await checkProjection();
+    const shotsAt = process.argv.indexOf('--shots');
+    const screenshotDir = shotsAt >= 0 && process.argv[shotsAt + 1] ? resolve(ROOT, process.argv[shotsAt + 1]) : null;
+    await browserCheck(entries, { screenshotDir });
+    console.log(`about-changelog: ${entries.length} receipts match CHANGELOG.md; source + selected standalone Settings routes PASS`);
+  }
+  printRefusalScope();
+} catch (error) {
+  printRefusalScope();
+  throw error;
 }
