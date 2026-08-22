@@ -284,22 +284,56 @@ function tokenize(cmd) {
 const WRAPPERS = new Set(['env', 'time', 'exec', 'sudo']);
 const TOOL_ARG = new RegExp(`^(?:\\./)?(${TOOL_RE})$`);
 
+// DELEGATING WRAPPERS — A SECOND SET, BECAUSE THEY SIT ON THE OTHER SIDE OF THE
+// HEAD. `env` / `time` / `exec` / `sudo` are argv[0] and are stepped over by the
+// while-loop below BEFORE `node` is read. `tools/verdict.mjs` is node's SCRIPT
+// ARGUMENT — it is read AFTER the head, by the scan that used to return on the
+// first `tools/` token it saw. So `WRAPPERS.add('tools/verdict.mjs')` is INERT:
+// that set is never consulted past the head, and a census taken with it added
+// is byte-identical to one taken without it. Plant 9 in the corpus below is
+// that demonstration, so nobody re-tries the one-line fix that does nothing.
+//
+// CLOSED SET, and that is this recognition's boundary: a delegating wrapper NOT
+// named here reads as itself, and every tool it fronts stays invisible to the
+// census. Adding one is one line. The tail BOUNDARY block says so in the output,
+// because a limit that is only narrow in a comment is a general claim in practice.
+const DELEGATING = new Set(['tools/verdict.mjs']);
+
 // The heart of the specification.
+//
+// ONE SCAN, RE-ENTERED — not one lookup. A delegating wrapper fronts a whole
+// second command (`node tools/verdict.mjs -- node tools/x.mjs`), so recognising
+// it means CONTINUING the scan past it under exactly the same rule, never
+// consulting a set of names at a single point. Both the wrapper and the tool it
+// fronts are returned, because both genuinely run: dropping the wrapper would
+// report `verdict.mjs` as `unlisted` while ci.yml invokes it sixteen times.
 function invocationsIn(cmd) {
   const toks = tokenize(cmd);
+  const found = [];
   let k = 0;
-  while (k < toks.length && !toks[k].quoted
-    && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[k].t) || WRAPPERS.has(toks[k].t))) k++;
-  if (k >= toks.length) return [];
-  const head = toks[k];
-  if (head.quoted) return [];                          // `"node" …` is data
-  if (!(head.t === 'node' || /\/node$/.test(head.t))) return [];
-  for (const tok of toks.slice(k + 1)) {
-    if (tok.t.startsWith('-')) continue;               // node's own flags
-    const m = tok.t.match(TOOL_ARG);
-    return m ? [m[1]] : [];                            // the script argument, or nothing
+  for (;;) {
+    while (k < toks.length && !toks[k].quoted
+      && (/^[A-Za-z_][A-Za-z0-9_]*=/.test(toks[k].t) || WRAPPERS.has(toks[k].t))) k++;
+    if (k >= toks.length) return found;
+    const head = toks[k];
+    if (head.quoted) return found;                     // `"node" …` is data
+    if (!(head.t === 'node' || /\/node$/.test(head.t))) return found;
+    let i = k + 1;
+    while (i < toks.length && toks[i].t.startsWith('-')) i++;   // node's own flags
+    if (i >= toks.length) return found;
+    const m = toks[i].t.match(TOOL_ARG);
+    if (!m) return found;                              // the script argument, or nothing
+    found.push(m[1]);
+    if (!DELEGATING.has(m[1])) return found;
+    // It delegates. Its own argv ends at a BARE `--`; what follows is the
+    // command it runs, and that command is read by the rule above, from the top.
+    // No `--` means nothing was delegated — `verdict.mjs` itself exits 2 on that
+    // usage — so the wrapper alone is what this step invokes.
+    let s = i + 1;
+    while (s < toks.length && !(toks[s].t === '--' && !toks[s].quoted)) s++;
+    if (s >= toks.length) return found;
+    k = s + 1;                                         // strictly increasing → terminates
   }
-  return [];
 }
 
 // Tools named by a command that only PRINTS. Returns [{ tool, said }].
@@ -573,9 +607,14 @@ if (args.includes('--selftest')) {
         name: 'every invocation of a tool is moved into an echo, so it is prose wearing coverage',
         edits: [{
           file: '.github/workflows/ci.yml',
-          find: '        run: node tools/buildstamp-shot.mjs',
+          // RE-AIMED 2026-08-22 (Sten, #294's replay): every checker step in
+          // ci.yml is now spelled through `node tools/verdict.mjs -- …`, so the
+          // old find-string `run: node tools/buildstamp-shot.mjs` no longer
+          // exists and this plant reported PLANT SITE DRIFTED — the corpus
+          // catching its own premise moving, which is what it is for.
+          find: '        run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs',
           all: true,
-          replace: '        run: echo node tools/buildstamp-shot.mjs',
+          replace: '        run: echo node tools/verdict.mjs -- node tools/buildstamp-shot.mjs',
         }],
         expectRed: /BAD\s+G1 /,
       },
@@ -588,8 +627,9 @@ if (args.includes('--selftest')) {
         name: 'a listed invocation has its exit status swallowed by `|| true`',
         edits: [{
           file: '.github/workflows/ci.yml',
-          find: '        run: node tools/buildstamp-shot.mjs --selftest',
-          replace: '        run: node tools/buildstamp-shot.mjs --selftest || true',
+          // RE-AIMED 2026-08-22 (Sten) for the same reason as plant 1.
+          find: '        run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest',
+          replace: '        run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest || true',
         }],
         expectRed: /BAD\s+G4 /,
       },
@@ -686,6 +726,77 @@ if (args.includes('--selftest')) {
         }],
         expectRed: /BAD\s+G3 |no `run:` payloads/,
       },
+      {
+        // PLANT 8 — THE SAME EDIT AS PLANT 7, A DIFFERENT CLAIM, AND THE SHARED
+        // SITE IS DELIBERATE. Plant 7 asserts the census refuses to shrink
+        // quietly. This one asserts that on that very path the tool still says
+        // WHAT IT DOES NOT AUDIT. Both refusal prints used to sit BELOW
+        // `process.exit(2)` while their own comments called them unconditional,
+        // so a reader who hit an unreadable gate list got exit 2 and silence.
+        // Bjorn measured the class in #320 — 41 of 69 boundary-printing tools
+        // have an exit path above their print — and Sunna repaired the same
+        // shape in tools/armoury-arrival-figure.mjs the same night. One edit
+        // cannot carry two expectRed regexes, so it carries two plants.
+        name: 'the census cannot be taken, and the refusal must still reach the reader',
+        edits: [{
+          file: '.github/workflows/ci.yml',
+          find: '        run: ',
+          all: true,
+          replace: '        x-run-removed-by-plant: ',
+        }],
+        expectRed: /G4 IS NOT AUDITED IN JAVASCRIPT GATE LISTS/,
+      },
+      {
+        // PLANT 9 — THE DELEGATING-WRAPPER RECOGNITION, PLANTED WHERE IT IS
+        // ASSERTED. The census itself is REPORTED, never asserted, so a wrong
+        // census has no red of its own (that silence is exactly what D104
+        // weighed). G4 does assert, and it NAMES the tools it found — so a
+        // swallowed WRAPPED step is the one place the recognition is visible to
+        // a machine. The red must name `tools/workflow-lint.mjs`, the tool the
+        // wrapper fronts. Against the pre-recognition door this is
+        // RED-FOR-WRONG-REASON, not CAUGHT: G4 still fires, and it names only
+        // `tools/verdict.mjs`. Measured both ways, 2026-08-22.
+        name: 'a WRAPPED invocation is swallowed, and the red must name the tool the wrapper fronts',
+        edits: [{
+          file: '.github/workflows/ci.yml',
+          find: '        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
+          replace: '        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs || true\n',
+        }],
+        expectRed: /BAD\s+G4 [^\n]*tools\/workflow-lint\.mjs/,
+      },
+      {
+        // PLANT 10 — `WRAPPERS.add()` IS INERT, AND THIS IS THE PROOF THAT
+        // RE-RUNS. #301's boundary line warned whoever landed this that the fix
+        // is not a token in WRAPPERS. A warning in a deleted comment protects
+        // nobody, so the claim is planted instead: the recognition is REPLACED
+        // by the one-line fix that does nothing, and a step that names the tool
+        // it runs through the wrapper becomes a FALSE ORPHAN under G1.
+        //
+        // BOTH EDGES, AND THE SECOND ONE IS WHY THE ci.yml EDIT IS HERE RATHER
+        // THAN IN THE REAL FILE: with the recognition intact, edit 2 alone is
+        // GREEN — the step invokes what it names. With edit 1 on top of it the
+        // step reads as the wrapper, the printed command-form name matches
+        // nothing invoked, and G1 goes red naming tools/workflow-lint.mjs.
+        // Same site, same bytes; the only difference is the recognition.
+        name: 'the recognition is replaced by an inert WRAPPERS.add(), and a wrapped step becomes a false orphan',
+        edits: [
+          {
+            file: 'tools/gatelist.mjs',
+            // THE LEADING NEWLINE IS LOAD-BEARING: this find-string is a second
+            // copy of a line that lives 500 lines up in this same file, so an
+            // unanchored match would hit THIS definition first if the two ever
+            // swap order. Anchored to column 0, it can only match the real one.
+            find: "\nconst DELEGATING = new Set(['tools/verdict.mjs']);\n",
+            replace: "\nconst DELEGATING = new Set([]);\nWRAPPERS.add('tools/verdict.mjs');\nWRAPPERS.add('verdict.mjs');\n",
+          },
+          {
+            file: '.github/workflows/ci.yml',
+            find: '      - name: Every workflow step actually runs a command\n        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
+            replace: '      - name: Every workflow step actually runs a command\n        run: |\n          echo running node tools/workflow-lint.mjs\n          node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
+          },
+        ],
+        expectRed: /BAD\s+G1 [^\n]*tools\/workflow-lint\.mjs/,
+      },
   ];
   const code = await doorSelftest({ tool: 'gatelist.mjs', timeoutMs: 120000, extraCopy: ['.github', 'tests'], plants: PLANTS });
   // The corpus's own verdict, in the shape tests/run-node.mjs quotes. The plant
@@ -708,8 +819,54 @@ console.log('      PROSE — and if it is PRINTED prose it must state what goes 
 console.log(`      Homes: ${GATE_LISTS.map((g) => g.path).join(' · ')}`);
 console.log('');
 
+// G4's VENUE IS DERIVED, NOT TYPED — the audited set is exactly the shell lists,
+// read off GATE_LISTS, so adding a list of either kind cannot leave this claim
+// silently wrong.
+const SHELL_LISTS = GATE_LISTS.filter((g) => g.kind === 'workflow').map((g) => g.path);
+const JS_LISTS = GATE_LISTS.filter((g) => g.kind !== 'workflow').map((g) => g.path);
+
+// ⚠ WHAT G4 REFUSES TO CLAIM, BY NAME, EVERY RUN — AND ITS OWN HOME IS ON THE LIST.
+//
+// AT MODULE SCOPE, AND CALLED ON BOTH EXIT PATHS, WHICH IS NEW. This block said
+// "printed unconditionally, green or red" in its own comment and sat BELOW the
+// `process.exit(2)` that G3 takes when a declared gate list cannot be read — so
+// on that path the tool exited having stated nothing about what it does not
+// audit. THE COMMENT WAS THE DEFECT: an unconditional claim with an exit path
+// above it. Bjorn measured the class in #320 (41 of 69 boundary-printing tools
+// have an exit path above their print); Sunna repaired the same shape in
+// tools/armoury-arrival-figure.mjs the same night by hoisting the boundary to
+// module scope and calling it from both paths. This is her repair, here.
+// A refusal that does not reach its reader is decoration.
+//
+// THE COUNT IS THE ONE THING THAT DOES NOT TRAVEL, and it is refused rather than
+// printed small. On the G3 path `invoked` holds whatever was read before the
+// unreadable home — half a scan — and a number derived from half a census read
+// beside the word UNKNOWN is the merged state this whole tool exists to refuse.
+// The REFUSAL is a standing fact about G4's venue and is true on either path;
+// the number is a census result, and there is no census. Same distinction as
+// Sunna's failure-path state line, which is deliberately not verdict-shaped.
+function printJsAuditRefusal({ censusTaken }) {
+  if (!JS_LISTS.length) return;
+  const jsInvoked = censusTaken
+    ? `${[...invoked.entries()].filter(([, ls]) => ls.some((l) => JS_LISTS.includes(l))).length} invocation(s) there`
+    : 'the count there is UNKNOWN — no census was taken';
+  console.log('');
+  console.log(`⚠ G4 IS NOT AUDITED IN JAVASCRIPT GATE LISTS: ${JS_LISTS.join(', ')} — ${jsInvoked}`);
+  console.log('  are marked `listed` and their status propagation is UNCHECKED. An ignored `spawnSync`');
+  console.log('  result, or `try { execFileSync(...) } catch {}`, is silent and this tool will not say so.');
+  console.log('  ⚠ AND THIS TOOL RUNS INSIDE ONE OF THEM (tests/run-node.mjs, 67/68), so the check built to');
+  console.log('  ask "does this list listen?" IS DEAF IN ITS OWN VENUE and would report it clean.');
+  console.log('  NOT CLOSED BY A HEURISTIC, DELIBERATELY. Proving it needs real dataflow — the pattern in');
+  console.log('  that suite is try/catch -> a `{ code }` object -> an accumulator -> process.exit() — and');
+  console.log('  a near-enough rule here would be this file claiming a property it does not have, which is');
+  console.log('  the exact defect it exists to name. Stated instead, so the red arrives the day someone');
+  console.log('  builds it rather than the day someone trusts it. (Reviewer P2 at 11ec9ab; the analysis is');
+  console.log('  owed as a card and I did not file one — this act was one act.)');
+}
+
 if (problems.length) {
   for (const p of problems) bad('G3', p);
+  printJsAuditRefusal({ censusTaken: false });
   console.log('');
   console.log(`RESULT: UNKNOWN — ${problems.length} declared home(s) could not be read, so no census was taken.`);
   console.log('BOUNDARY: exit 2 is `unknown`, which blocks. It is NOT a verdict about coverage —');
@@ -743,11 +900,6 @@ if (shrugs.length) {
     + `(floor: ${MIN_COST_WORDS} words; the live models are tutorial-reach and release-shots)`);
 }
 
-// G4's VENUE IS DERIVED, NOT TYPED — the audited set is exactly the shell lists,
-// read off GATE_LISTS, so adding a list of either kind cannot leave this claim
-// silently wrong.
-const SHELL_LISTS = GATE_LISTS.filter((g) => g.kind === 'workflow').map((g) => g.path);
-const JS_LISTS = GATE_LISTS.filter((g) => g.kind !== 'workflow').map((g) => g.path);
 const shellInvocations = [...invoked.entries()].filter(([, ls]) => ls.some((l) => SHELL_LISTS.includes(l))).length;
 
 if (swallowed.length) {
@@ -758,62 +910,8 @@ if (swallowed.length) {
     + '(no `|| true`, no `; true`, no `set +e`, no `continue-on-error: true`) — SHELL LISTS ONLY, see the refusal below');
 }
 
-// ⚠ WHAT G4 REFUSES TO CLAIM, BY NAME, EVERY RUN — AND ITS OWN HOME IS ON THE LIST.
-// Printed unconditionally, green or red, because a narrowed claim that is only
-// narrow in a comment is a general claim in practice.
-if (JS_LISTS.length) {
-  const jsInvoked = [...invoked.entries()].filter(([, ls]) => ls.some((l) => JS_LISTS.includes(l))).length;
-  console.log('');
-  console.log(`⚠ G4 IS NOT AUDITED IN JAVASCRIPT GATE LISTS: ${JS_LISTS.join(', ')} — ${jsInvoked} invocation(s) there`);
-  console.log('  are marked `listed` and their status propagation is UNCHECKED. An ignored `spawnSync`');
-  console.log('  result, or `try { execFileSync(...) } catch {}`, is silent and this tool will not say so.');
-  console.log('  ⚠ AND THIS TOOL RUNS INSIDE ONE OF THEM (tests/run-node.mjs, 67/68), so the check built to');
-  console.log('  ask "does this list listen?" IS DEAF IN ITS OWN VENUE and would report it clean.');
-  console.log('  NOT CLOSED BY A HEURISTIC, DELIBERATELY. Proving it needs real dataflow — the pattern in');
-  console.log('  that suite is try/catch -> a `{ code }` object -> an accumulator -> process.exit() — and');
-  console.log('  a near-enough rule here would be this file claiming a property it does not have, which is');
-  console.log('  the exact defect it exists to name. Stated instead, so the red arrives the day someone');
-  console.log('  builds it rather than the day someone trusts it. (Reviewer P2 at 11ec9ab; the analysis is');
-  console.log('  owed as a card and I did not file one — this act was one act.)');
-}
+printJsAuditRefusal({ censusTaken: true });
 
-// ⚠ WHAT THE CENSUS ITSELF REFUSES TO CLAIM — DELEGATING WRAPPERS.
-// UNCONDITIONAL, green or red, and for the same reason as the block above: a
-// narrowed claim that is only narrow in a comment is a general claim in
-// practice. This one is printed on a tree where the defect DOES NOT EXIST YET,
-// which is the point — it is a refusal to assert, not a finding.
-//
-// Marina's ruling D104 (2026-08-22). #294 introduces `tools/verdict.mjs`, a
-// door every gated tool is spelled through. `invocationsIn()` credits the FIRST
-// `tools/` token after `node` and returns there, so a wrapped step reads as the
-// WRAPPER and every tool it fronts silently leaves `listed` — the steps survive
-// and the wiring does not. That is "an instrument un-wired during a rewrite",
-// arriving by wrapping rather than by deletion, and this tool would report the
-// shrunken census as clean.
-//
-// I DID NOT BUILD THE RECOGNITION HERE, and the refusal is why that is honest
-// rather than a gap. `tools/verdict.mjs` is not in this tree, so a
-// wrapper-recognition branch written now could not be planted against — and an
-// unexercised branch is the exact defect this PR spent its length naming (I
-// blinded two of my own plants inside it and the harness had to tell me).
-// Refusing to assert is the opposite act from asserting something I cannot check.
-//
-// NOTE FOR WHOEVER LANDS IT: the fix is NOT a token in WRAPPERS. That set is
-// consulted only for tokens BEFORE the `node` head (`env FOO=1 node x.mjs`); a
-// wrapper spelled as node's SCRIPT ARGUMENT is handled by the loop underneath,
-// which returns on the first `tools/` match with no wrapper test at all.
-// `WRAPPERS.add('verdict.mjs')` is inert — verified by running `invocationsIn`,
-// by me and independently by Viki.
-//
-// REMOVAL CONDITION, and it is not optional: this block is deleted in the SAME
-// COMMIT that adds the recognition and its plant. A stated boundary is not a
-// discharged one — my own words at 11ec9ab, held to me here.
-console.log('');
-console.log('⚠ DELEGATING WRAPPERS ARE NOT RECOGNISED. A step spelled `node <wrapper> tools/x.mjs`');
-console.log('  (or `node <wrapper> -- node tools/x.mjs`) reads as the WRAPPER; the tool it delegates');
-console.log('  to is invisible to this census and will read `unlisted`. NO SUCH WRAPPER EXISTS IN');
-console.log('  THIS TREE TODAY. The day one lands, every tool it fronts is miscounted here and this');
-console.log('  tool will not say so. (Marina, D104; the recognition and this line go together.)');
 
 const shown = ONLY_BROWSER ? rows.filter((r) => r.browser) : rows;
 const count = (s) => shown.filter((r) => r.state === s).length;
@@ -907,6 +1005,10 @@ const tail = () => {
   console.log('          G4 covers SHELL lists only — JavaScript gate lists are refused by name above,');
   console.log('          including the one this tool runs inside. It also does not see a masked pipeline');
   console.log('          (`cmd | tee`) or a wrapper that exits 0 on its own.');
+  console.log('          DELEGATING WRAPPERS ARE RECOGNISED FROM A CLOSED SET, and the set is the limit:');
+  console.log(`          [${[...DELEGATING].join(', ')}]. A step spelled \`node <wrapper> -- node tools/x.mjs\``);
+  console.log('          credits BOTH only for a wrapper on that list; one that is not on it reads as');
+  console.log('          itself and every tool it fronts stays invisible here. Adding one is one line.');
   console.log('          THE COST ESCAPE DOES NOT APPLY TO A COMMAND-FORM REFERENCE. A line that spells');
   console.log('          `node <tool>` is the command a reader would type, and reads as "this list runs');
   console.log('          this", so the list that prints it must invoke it. Judged by FORM, never by');

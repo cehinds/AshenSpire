@@ -1772,7 +1772,11 @@ async function main() {
   if (bandDoc) { fails.push(bandDoc); console.log(`      <-- ${bandDoc}`); }
   else console.log(`\n  BAND CONTRACT: constants and the documented table agree (gateBelowH / shortWideMinH). CONSISTENCY ONLY — it proves the two copies match, never that either number is right; the rendered premise under shortWideMinH is \`--ladder\`'s.`);
 
-  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes: every walled shape refuses legibly with true advice, and no fitting shape refuses at all`}`);
+
+  // #12: the PASS line ends at its counted claim; the sentence that explains
+  // what the count MEANS prints under it.
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) over ${cells} shape(s)` : `PASS — ${cells}/${cells} shapes`}`);
+  if (!fails.length) console.log('  every walled shape refuses legibly with true advice, and no fitting shape refuses at all');
   for (const f of fails) console.log(`    - ${f}`);
   cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);

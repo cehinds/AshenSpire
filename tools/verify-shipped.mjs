@@ -40,9 +40,9 @@
 // claims. NOT removed for having passed a long time: --selftest is what keeps it
 // honest, and a --selftest that stops failing on the corpus is itself the alarm.
 
-import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { readFileSync, existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -203,7 +203,33 @@ function boundary(lines) {
 if (SELFTEST) {
   console.log('verify-shipped --selftest: every case below must land on its expected verdict.\n');
   const bad = [];
+
+  // THE ZERO-CHECK PLANT (#12), and it enters by the SAME DOOR the real tool
+  // does: a COPY of this file's own bytes with the recorder neutered, written
+  // beside it so its imports resolve, executed as a child process. Nothing is
+  // handed to an inner function; the thing proven is the exit path.
+  {
+    const meFile = fileURLToPath(import.meta.url);
+    const plantPath = resolve(dirname(meFile), `.verify-shipped-zero-plant-${process.pid}.mjs`);
+    const src = readFileSync(meFile, 'utf8')
+      .replace('function record(r) {\n  results.push(r);', 'function record(r) {\n  return;')
+      .replace("const SELFTEST = args.includes('--selftest');", 'const SELFTEST = false;');
+    let out = { status: null, stdout: '', stderr: '' };
+    try {
+      writeFileSync(plantPath, src);
+      const r = spawnSync(process.execPath, [plantPath], { encoding: 'utf8' });
+      out = { status: r.status, stdout: r.stdout || '', stderr: r.stderr || '' };
+    } finally {
+      try { unlinkSync(plantPath); } catch { /* already gone */ }
+    }
+    const caught = out.status === 1 && /REFUSED — ran 0 check/.test(out.stderr + out.stdout);
+    console.log(`  ${caught ? 'OK  ' : 'BAD '} plant: recorder neutered → zero checks must REFUSE, not print OK` +
+      (caught ? '' : `  (got exit ${out.status})`));
+    if (!caught) bad.push('zero-check plant');
+  }
+  let ran = 0;
   const expect = (label, r, wantOk, wantCode) => {
+    ran += 1;
     const ok = r.ok === wantOk && r.code === wantCode;
     console.log(`  ${ok ? 'OK  ' : 'BAD '} ${label} → ${r.ok ? 'pass' : 'fail'} [${r.code}]` +
       (ok ? '' : `  (expected ${wantOk ? 'pass' : 'fail'} [${wantCode}])`));
@@ -315,7 +341,11 @@ if (SELFTEST) {
     for (const b of bad) console.error('    · ' + b);
     process.exit(1);
   }
-  console.log('\nverify-shipped --selftest: OK — every known-bad case failed for its named reason.');
+  // #12's contract: EXACTLY ONE terminated verdict line carrying a COUNT. The
+  // old line said "every known-bad case failed for its named reason" — true,
+  // and countless, so a corpus that quietly shrank to zero read the same.
+  // The zero-check plant above is counted with them (hence ran + 1).
+  console.log(`\nverify-shipped --selftest: OK — ${ran + 1} checks passed.`);
   process.exit(0);
 }
 
@@ -390,6 +420,23 @@ const failed = results.filter((r) => !r.ok);
 if (failed.length) {
   console.error(`\nverify-shipped: FAILED ${failed.length} of ${results.length}.`);
   console.error('  Fix: node tools/launch.mjs --build-only   (rebuilds build/ and refreshes the root + dist current-build aliases)');
+  process.exit(1);
+}
+// #12'S SECOND LIVE INSTANCE, CLOSED AT THE TOOL AS WELL AS AT THE DOOR.
+// This line printed `OK — 0 checks passed.` and exited 0 when the recorder was
+// neutered — observed, not reasoned (the plant in --selftest re-runs it). The
+// CI door (tools/verdict.mjs) now refuses that green for every tool at once;
+// this floor is here because a person running this tool BY HAND is not standing
+// at that door, and the tool that owns a claim should be able to state it.
+//
+// THE FLOOR IS BELOW THE POPULATION AND NEVER TRACKS IT: today this tool
+// records 6 checks. A floor that follows the count upward is a number retyped
+// to match whatever happened, which is the defect one file over (verify's own
+// ASSET_MAP note says the same thing about its own floor).
+const MIN_CHECKS = 4;
+if (results.length < MIN_CHECKS) {
+  console.error(`\nverify-shipped: REFUSED — ran ${results.length} check(s), floor is ${MIN_CHECKS}.`);
+  console.error('  A tool that checked nothing and a tool that found nothing are the same green (#12).');
   process.exit(1);
 }
 console.log(`\nverify-shipped: OK — ${results.length} checks passed.`);
