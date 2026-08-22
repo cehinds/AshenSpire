@@ -23,6 +23,41 @@ const REPO = 'https://github.com/cehinds/AshenSpire';
 const PHONE = Object.freeze({ tag: 'phone-390x844', width: 390, height: 844, mobile: true });
 const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 730, mobile: false });
 
+// The prose has ONE home — CHANGELOG.md — and TWO readers: GitHub, which renders
+// Markdown, and Settings → About, which escapes every character as plain text
+// (`about.js`, `esc(entry.detail)`). Copying prose verbatim therefore shipped the
+// SYNTAX to the player: #290's `**Settings → Advanced → Reward collection**` with
+// its asterisks, and #186's backticks before it, in every artifact.
+//
+// The projection FLATTENS the inline subset the file actually uses, so the author
+// keeps writing Markdown and each reader is handed what it can read — Law 0 c.1,
+// the machinery derives. It REFUSES what it cannot flatten without losing the
+// information (a link loses its href, an image loses everything), so a future
+// author is told by name instead of shipping a mangled receipt — Law 0 c.5: a
+// missing field that fails loud is cheap; a plausible wrong one is invisible.
+//
+// BOUNDARY: a flattener, not a Markdown parser. It knows emphasis and code spans;
+// it does not know tables, block constructs or nested emphasis and claims nothing
+// about them. REMOVAL: deleted the day Settings → About renders Markdown itself,
+// at which point this is a second copy of that renderer's job.
+const INLINE_REFUSED = [
+  [/!\[[^\]]*\]\([^)]*\)/, 'an image'],
+  [/\[[^\]]+\]\([^)]+\)/, 'a link'],
+  [/<[a-zA-Z/][^>]*>/, 'raw HTML'],
+];
+export function flattenInline(text, where) {
+  for (const [pattern, what] of INLINE_REFUSED) {
+    if (pattern.test(text)) {
+      throw new Error(`${where}: prose contains ${what}, which the in-game changelog cannot render — write it in words`);
+    }
+  }
+  return text
+    .replace(/(\*\*|__)(?=\S)([\s\S]*?\S)\1/g, '$2')
+    .replace(/(?<![\w*])\*(?=\S)([^*]*?\S)\*(?!\w)/g, '$1')
+    .replace(/(?<![\w_])_(?=\S)([^_]*?\S)_(?!\w)/g, '$1')
+    .replace(/`([^`]+)`/g, '$1');
+}
+
 export function parseChangelog(markdown) {
   const entries = [];
   let group = '';
@@ -36,12 +71,13 @@ export function parseChangelog(markdown) {
     const date = group.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
     if (!date) throw new Error(`receipt has no dated group: ${line}`);
     const pullRequest = Number(prText);
+    const where = `receipt #${pullRequest}`;
     entries.push({
       id: `pr-${pullRequest}`,
       date,
       group,
-      summary,
-      detail: prose || `Merged as pull request #${pullRequest} in development build ${build}.`,
+      summary: flattenInline(summary, where),
+      detail: flattenInline(prose, where) || `Merged as pull request #${pullRequest} in development build ${build}.`,
       build,
       pullRequest,
       url,

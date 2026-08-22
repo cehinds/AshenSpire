@@ -19,13 +19,14 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-21
 
+- **The reward menu is written down, in the README and the changelog** ([#317](https://github.com/cehinds/AshenSpire/pull/317), `0.4.0.0995`). Docs only.
+
 - **Your weapons are in the hands you gave them** ([#305](https://github.com/cehinds/AshenSpire/pull/305), `0.4.0.0947`). The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.
 
 - **Stat points and a starting-armour choice at creation** ([#292](https://github.com/cehinds/AshenSpire/pull/292), `0.4.0.0946`). Two more rows on the creation screen, and both stay open where the six pickers fold. STARTING ARMOUR offers your class's own set plus every set you have earned — a new profile sees one, and each prize won becomes another way to begin. STAT POINTS hands you ten to place across the five stats: they arrive laid along your class's grain, dropping a stat gives its points back, and nothing goes below 8 or above 15 at creation. BEGIN THE CLIMB waits while points are unspent, and if an allocation starves your starting kit it says which stat and how much it needs.
 
 - **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0930`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
 
-- **The reward menu is written down, in the README and the changelog** ([#303](https://github.com/cehinds/AshenSpire/pull/303), `0.4.0.0981`). Docs only.
 - **Rewards are a menu you open, not a handful you're handed** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0929`). Cinders, cards, flasks, armaments and relics arrive as rows, and nothing is applied until you take it — so you can look before you collect, and Back leaves the menu exactly as you found it. A reward with nowhere to go — a full flask belt, a full armament bag — says so on its own row before you tap it, and it is the only kind of row that offers Skip. Continue is always pressable and says what it will do; **Settings → Advanced → Reward collection** decides which: Auto (the default) takes everything you did not skip, picking a card for you, while Manual means done — only what you chose comes along. Continue is a press-and-hold on mouse, touch, keyboard, and pad.
 
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
