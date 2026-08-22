@@ -464,6 +464,33 @@ jobs:
         # needs no excuse. Every plant is still red by its own named finding.
         run: node tools/hintstrip.mjs --selftest
 
+      # ---- #316's probe, wired because a probe nobody runs is the same defect
+      # as a probe that prints without asserting, and this file just carried
+      # BOTH within one hour. `gatelist --raw` classed it `linked-but-never-run`
+      # alongside 121 other tools; that is the tree's default state and a card of
+      # its own, but this one is the named regression probe for a ruling
+      # Constantine made and priced, so it does not get to sit in the census
+      # while the PR that ships it argues from its output.
+      - name: The Armoury arrives with the figure, and one click is the whole cost
+        # Two shapes, real Chromium through tools/browser.mjs's CDP path. GATED:
+        # the figure arrives whole where the view declares one; CARDS arrives
+        # COLLAPSED on every shape; the fold round-trips; one click opens the
+        # strip ABOVE THE FOLD; #305's mirror is exactly one. REPORTED and
+        # deliberately not gated: stripFullyVisible, false at `dev` and at head
+        # alike — a pre-existing scroll this change neither adds nor removes.
+        run: node tools/armoury-arrival-figure.mjs
+
+      # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
+      # The three gates above this each have a `--selftest` / `--mutate` door.
+      # This tool has none. Its two known-bads — an initially-EXPANDED CARDS pane
+      # and a strip pushed below the fold — were HAND-PLANTED in the real tree,
+      # observed green before the fix and red by name after, on both shapes, and
+      # reverted. That is evidence in a PR body, not a gate in this file: nothing
+      # here re-runs it. A `--selftest` door is the honest close and it is not
+      # built. Until it is, this step proves the tree passes and proves NOTHING
+      # about whether the check can still fail — which is exactly the property
+      # Vira's finding above says a list cannot assume.
+
   # ---------------------------------------------------------------------------
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.

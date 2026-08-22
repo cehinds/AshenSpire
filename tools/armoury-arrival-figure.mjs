@@ -29,7 +29,19 @@
 //
 // COST, MEASURED AND NOT QUOTED. "One click away" is checked as an actual
 // click count AND as whether the cards land above the fold once opened: a
-// click plus a scroll is not the cost he was told. Both are printed.
+// click plus a scroll is not the cost he was told.
+//
+// WHAT IS GATED vs WHAT IS ONLY REPORTED — stated here because the first two
+// versions of this file printed four numbers and asserted two of them, and a
+// printed number reads as a checked one. Codex found both gaps at `e5fe1dd`;
+// two non-author verdicts had passed this probe without asking whether it
+// asserted what it printed.
+//   GATED    figure arrives whole (where the view declares one) · CARDS arrives
+//            COLLAPSED, on every shape · the fold round-trips · one click opens
+//            the strip ABOVE THE FOLD · #305's mirror, exactly one
+//   REPORTED stripFullyVisible — false at `dev` and at head alike, a pre-existing
+//            scroll this change neither adds nor removes. Labelled in the output
+//            so it cannot be mistaken for a gate.
 //
 // DOOR. Source tree, repo's own tools/serve.mjs, real Chromium through
 // tools/browser.mjs's CDP path. NOT tools/screenshot.mjs — its one-shot flags
@@ -207,7 +219,9 @@ async function run() {
       }
       if (afterClick) {
         console.log(`    cost         clicks=${clicks}  strip ${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h} top=${afterClick.stripBox.top}` : 'ABSENT'}`
-          + `  aboveFold=${afterClick.stripAboveFold}  fullyVisible=${afterClick.stripFullyVisible}  vh=${afterClick.viewportH}`);
+          + `  aboveFold=${afterClick.stripAboveFold} [GATED]`
+          + `  fullyVisible=${afterClick.stripFullyVisible} [reported, not gated]`
+          + `  vh=${afterClick.viewportH}`);
       }
       if (refold) {
         console.log(`    refold       cards collapsed=${refold.cardsCollapsed}`
@@ -236,8 +250,38 @@ async function run() {
         if (!whole) { console.log('    FAIL the figure does not arrive whole — the ruling is not met'); fails++; }
       }
       if (!arrival.foldBtnPresent) { console.log('    FAIL no CARDS control — nothing to click'); fails++; }
+      // THE RULING'S OTHER HALF, AND IT IS NOT THE FIGURE'S. D99 is two sentences:
+      // the Armoury opens on the figure, AND *cards start carded*. The round trip
+      // below only proves the fold is reversible — it is satisfied by ANY starting
+      // state, so on its own it would pass a tree where CARDS arrives expanded.
+      // Asserted on EVERY shape, and deliberately NOT behind `data-figure`: the
+      // figure gate is skipped at narrow because that view declares no figure and
+      // asserting one would be this tool lying about the phone — but CARDS exists
+      // on every shape, so its arrival state is gated on every shape. Skipping
+      // both together is what let a narrow-only regression read "all gates green".
+      if (arrival.cardsCollapsed === null) {
+        console.log('    FAIL no CARDS region — its arrival state cannot be read'); fails++;
+      } else if (arrival.cardsCollapsed !== '1') {
+        console.log(`    FAIL CARDS did not arrive collapsed (data-collapsed=${arrival.cardsCollapsed}) — the ruling is not met on this shape`); fails++;
+      }
       if (refold && refold.cardsCollapsed !== arrival.cardsCollapsed) {
         console.log('    FAIL cards did not return to their arrival state after a second click'); fails++;
+      }
+      // ONE CLICK HAS TO OPEN SOMETHING YOU CAN SEE. `stripAboveFold` was computed
+      // and PRINTED from the first run of this tool and asserted by nothing, so a
+      // strip pushed entirely below the viewport exited 0 — the exact regression
+      // this file exists to catch, passing. Gated now, on every shape.
+      //
+      // `stripFullyVisible` is REPORTED and deliberately NOT gated, and the
+      // distinction is the whole point rather than an omission: the strip's last
+      // row already sat below the fold at `dev` on arrival, so gating it true
+      // would red a condition this change did not introduce and Constantine never
+      // ruled on. What he was quoted is ONE CLICK; what that click opens has to be
+      // REACHABLE, which is `aboveFold`. A number a tool prints is either gated or
+      // labelled — printing it bare is how a check goes quiet.
+      if (afterClick && afterClick.stripBox && afterClick.stripAboveFold !== true) {
+        console.log(`    FAIL one click opened CARDS below the fold (top=${afterClick.stripBox.top}, vh=${afterClick.viewportH})`
+          + ' — the cost is a click AND a scroll, not the click he was quoted'); fails++;
       }
       // #305: exactly one mirror on the art, none added to the container.
       if (arrival.artTransform && arrival.artTransform !== 'none'
