@@ -115,12 +115,12 @@ function printBoundary() {
   console.log('        the pair either side of that dial (cell 3 pending, the #311 read-yield cell open)');
   console.log('        is NOT an adjacent pair — a CDP round trip is tens of ms, so no cell here sits one');
   console.log('        millisecond off the threshold and this door cannot place one. The dial itself is');
-  console.log('        therefore watched, not bounded. AND ONE CELL HERE IS WATCHED, NOT PROVEN:');
-  console.log('        "no read opens ON TOP of the live medium drag" has no plant of its own. The');
-  console.log('        plant written for it — the read abandoned only once open — reds the TOUCH');
-  console.log('        cell and leaves the mouse cell at the same dwell GREEN, measured both ways at');
-  console.log('        1200x730. Under the instrument rule that assertion is `unknown` and may not be');
-  console.log('        cited as coverage, whatever it prints. NOT COVERED: a plain unselected touch drag');
+  console.log('        therefore watched, not bounded. THE MID-DRAG CELL IS NOW PROVEN, NOT WATCHED:');
+  console.log('        "no read opens ON TOP of the live medium drag" has a same-door plant of its own');
+  console.log('        — the read yielding to every pointer BUT a mouse — observed RED at 1200x730');
+  console.log('        through the real page (data-inspect=open, inspectCopies 1, exit 1). The older');
+  console.log('        plant, the read abandoned only once open, reds the TOUCH cell only; both ship,');
+  console.log('        one per side. NOT COVERED: a plain unselected touch drag');
   console.log('        (tools/gesture-cancel.mjs check 5 owns that gesture — one home, not two); the');
   console.log('        narrow pan-x axis split (same tool, check 6); any text size but the one passed;');
   console.log('        a real thumb\'s size, angle or accuracy; body zoom or a CSS transform, since this');
@@ -140,7 +140,19 @@ function finish(code, why = null) {
   if (code === 0) console.log(`card-drag-targeting: OK — ${checks} checks passed`);
   else console.log(`  ${fails} finding(s) in ${checks} check(s) reached${why ? ' before the run died' : ''}`);
   printBoundary();
-  process.exit(code);
+  // `process.exitCode`, NEVER `process.exit()`, AND THE REASON IS MEASURED.
+  // On POSIX a pipe is an ASYNCHRONOUS stdout, so `process.exit()` can kill the
+  // process with writes still queued — and the two lines above are the last
+  // thing written. Reproduced through the real door: a stub with this tool's
+  // output shape (180 checks, ~30 KB) emitted in one tick, run as
+  // `node tools/verdict.mjs -- node <stub>` with stdout piped, lost its tail on
+  // 2 of 10 runs — the verdict line went with it and `verdict.mjs` reported
+  // SILENCE, exit 3. A tool that passed every check read as a tool that said
+  // nothing, intermittently, which is the one state this whole file exists to
+  // make impossible. Setting the code and returning lets Node drain first; the
+  // `finally` in main() has already closed CDP, the browser and the server, so
+  // there is no handle left to hold the process open.
+  process.exitCode = code;
 }
 
 if (process.argv.includes('--selftest')) {
@@ -260,6 +272,32 @@ if (process.argv.includes('--selftest')) {
       replace: "        if (phase === 'open' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();",
       expectRed: /FAIL cell 4 the touch drag arms the drop off a selected card/,
     }, {
+      // THE MOUSE HALF OF THE PLANT ABOVE, AND IT CLOSES A WITHHOLD THIS FILE
+      // WAS CARRYING. The plant above reds the TOUCH cell and leaves the mouse
+      // cell green, so cell 3's mid-drag assertion had no plant of its own: the
+      // boundary called it `unknown` while `ok()` counted it into the terminal
+      // total. One fact with two homes, disagreeing (Law 0 clause 4) — and the
+      // one a machine reads was the false one.
+      //
+      // WHAT THE EARLIER NOTE COULD NOT FIND, FOUND BY PLANTING RATHER THAN
+      // READING: the mouse read is abandoned by `onMove` at SLOP like any
+      // other pointer. Scope that abandon to every pointer EXCEPT a mouse and
+      // the mouse aim keeps its dial running, so the read reaches `open` and a
+      // card-sized copy lands over the board while the player is still aiming.
+      // Observed RED at 1200x730 through the real page, unplanted-green either
+      // side: `data-inspect=open`, `inspectCopies: 1`, exit 1.
+      //
+      // COLLATERAL NAMED RATHER THAN TRIMMED: it also reds the two #311
+      // read-yield cells and `combat chrome stays inside the viewport`, because
+      // the copy it opens is a real element on a real board. A narrower plant
+      // that reds only this one line would be a plant aimed at the assertion
+      // instead of at the defect.
+      name: 'the read yields to every pointer BUT a mouse, so it opens on top of a live mouse drag',
+      file: 'src/ui/components/holdconfirm.js',
+      find: '        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();',
+      replace: "        if (mv.pointerType !== 'mouse' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();",
+      expectRed: /FAIL cell 3 no read opens ON TOP of the live medium drag/,
+    }, {
       // THE BOUNDARY ITSELF, and it is planted rather than read. The hand draws
       // no card, so the FIRST `until` is unreachable and the run dies inside the
       // harness — not at a check. What must survive that is the boundary block
@@ -291,7 +329,12 @@ if (process.argv.includes('--selftest')) {
     }],
   });
   printBoundary();
-  process.exit(selftestCode);
+  // Same reason as finish(), and this branch had the same shape: the boundary
+  // block is ~30 lines written immediately before the exit. `process.exit()`
+  // here was ALSO doing control flow — it is what kept the module from falling
+  // through into main() — so the fall-through is now guarded explicitly at the
+  // call site instead of by a side effect of exiting.
+  process.exitCode = selftestCode;
 }
 
 const BROWSERS = [
@@ -903,4 +946,6 @@ async function main() {
 // print ("PASS — card drag targeting and approved hand paging hold at every
 // measured shape") matched no row and was refused, exit 3. It is one of the ~40
 // D103 named and left to "whoever wraps next"; this is that wrap.
-main().then(() => finish(fails ? 1 : 0)).catch((e) => finish(2, e.message));
+if (!process.argv.includes('--selftest')) {
+  main().then(() => finish(fails ? 1 : 0)).catch((e) => finish(2, e.message));
+}
