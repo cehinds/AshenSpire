@@ -71,6 +71,78 @@ const lines = (file, ...rows) => {
   return rows.join(bytes.includes('\r\n') ? '\r\n' : '\n');
 };
 
+// THE COUNTERS ARE MODULE-SCOPE BECAUSE THE BOUNDARY OUTLIVES `main`. A run
+// that dies in the harness still has to say how much of the door it reached,
+// and a count that lives inside the try block cannot be printed from the catch.
+let fails = 0;
+let checks = 0;
+let ran = 0;
+let boundaryPrinted = false;
+
+// EVERY EXIT PATH PRINTS THIS. Not the green one, not "at the end of main()" —
+// Vira's line printed at the end of `main()` too, and `main()` also had a
+// `.catch` and a `process.exit(2)` above it. Proved with a plant, not by reading
+// the file (`--selftest`, "the run dies in the harness before any check"): the
+// boundary prints and the exit is 2.
+//
+// AND IT SITS ABOVE THE `--selftest` BRANCH BECAUSE THE FIRST CUT OF THIS DID
+// NOT, AND THAT WAS THE SAME DEFECT ONE LEVEL UP. It sat below, with a comment
+// claiming the function declaration hoists so the branch could call it. THE
+// FUNCTION HOISTS; `let boundaryPrinted` DOES NOT — it is in its temporal dead
+// zone until the module reaches it, which a `process.exit` at the top never
+// does. Measured: `--selftest` printed SELFTEST GREEN and then died with
+// `ReferenceError: Cannot access 'boundaryPrinted' before initialization`, exit
+// 1 on a run in which all 15 plants were caught.
+//
+// NO PLANT COULD HAVE CAUGHT IT, and that is the part worth keeping: every
+// plant runs the tool WITHOUT `--selftest`, because the harness IS the
+// selftest. So this one exit path is the one no corpus reaches, and the claim
+// about it was carried by a comment — which is exactly the shape this whole
+// file's night was about. It is checkable only by running the flag, which is
+// now the standing instruction here: change this block, run `--selftest`, and
+// read the LAST line, not the verdict.
+function printBoundary() {
+  if (boundaryPrinted) return;
+  boundaryPrinted = true;
+  console.log('  BOUNDARY: Linux headless Chromium, one container, four emulated shapes and ONE text');
+  console.log('        size per run. Synthesized CDP input, never a finger and never a real mouse:');
+  console.log('        Input.dispatchMouseEvent for cells 1-3, Emulation.setTouchEmulationEnabled +');
+  console.log('        Input.dispatchTouchEvent for cell 4, every press aimed at the coordinates');
+  console.log('        elementFromPoint reports and every pointerdown in cell 4 read back with its');
+  console.log('        pointerType, so a press that misses is a named failure and never a quiet pass.');
+  console.log('        THE DIAL IS MEASURED, NOT TYPED: cell 3 solves balance.ui.inspectHold out of two');
+  console.log('        data-inspect-progress samples and dwells at 0.65 of it. WHAT THAT DOES NOT BUY:');
+  console.log('        the pair either side of that dial (cell 3 pending, the #311 read-yield cell open)');
+  console.log('        is NOT an adjacent pair — a CDP round trip is tens of ms, so no cell here sits one');
+  console.log('        millisecond off the threshold and this door cannot place one. The dial itself is');
+  console.log('        therefore watched, not bounded. AND ONE CELL HERE IS WATCHED, NOT PROVEN:');
+  console.log('        "no read opens ON TOP of the live medium drag" has no plant of its own. The');
+  console.log('        plant written for it — the read abandoned only once open — reds the TOUCH');
+  console.log('        cell and leaves the mouse cell at the same dwell GREEN, measured both ways at');
+  console.log('        1200x730. Under the instrument rule that assertion is `unknown` and may not be');
+  console.log('        cited as coverage, whatever it prints. NOT COVERED: a plain unselected touch drag');
+  console.log('        (tools/gesture-cancel.mjs check 5 owns that gesture — one home, not two); the');
+  console.log('        narrow pan-x axis split (same tool, check 6); any text size but the one passed;');
+  console.log('        a real thumb\'s size, angle or accuracy; body zoom or a CSS transform, since this');
+  console.log('        aims in raw rect px; and CI, which runs NEITHER this tool nor its composer');
+  console.log('        (tools/hybrid-input-parity.mjs) — every number above comes from a hand-dispatched');
+  console.log('        run, so a green here is a claim about this machine, not about the pipeline.');
+  console.log('  ONE HAZARD THIS WRAP CREATES, named where the text that causes it is printed: the');
+  console.log('        composer above REPRINTS this whole stream, verdict line included. Its own');
+  console.log('        summary matches no readVerdict row, so wrapping the COMPOSER today would find');
+  console.log('        exactly one recognised line — THIS one — and hand it this count. Not a defect');
+  console.log('        today; the fix belongs to whoever wraps that tool, in the same act.');
+}
+
+function finish(code, why = null) {
+  if (why) console.error(`card-drag-targeting: ${why}`);
+  console.log('');
+  if (code === 0) console.log(`card-drag-targeting: OK — ${checks} checks passed`);
+  else console.log(`  ${fails} finding(s) in ${checks} check(s) reached${why ? ' before the run died' : ''}`);
+  printBoundary();
+  process.exit(code);
+}
+
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   // EVERY exit path, this one included: `printBoundary` is a hoisted function
@@ -262,58 +334,6 @@ function connectCdp(wsUrl) {
     },
     close: () => ws.close(),
   };
-}
-
-// THE COUNTERS ARE MODULE-SCOPE BECAUSE THE BOUNDARY OUTLIVES `main`. A run
-// that dies in the harness still has to say how much of the door it reached,
-// and a count that lives inside the try block cannot be printed from the catch.
-let fails = 0;
-let checks = 0;
-let ran = 0;
-let boundaryPrinted = false;
-
-// EVERY EXIT PATH PRINTS THIS. Not the green one, not "at the end of main()" —
-// Vira's line printed at the end of `main()` too, and `main()` also had a
-// `.catch` and a `process.exit(2)` above it. This is a function declaration on
-// purpose: it hoists, so the `--selftest` branch at the top of this file can
-// call it as well. Proved with a plant, not by reading the file
-// (`--selftest`, "the first wait is unreachable, so the run dies in the
-// harness"): the boundary prints and the exit is 2.
-function printBoundary() {
-  if (boundaryPrinted) return;
-  boundaryPrinted = true;
-  console.log('  BOUNDARY: Linux headless Chromium, one container, four emulated shapes and ONE text');
-  console.log('        size per run. Synthesized CDP input, never a finger and never a real mouse:');
-  console.log('        Input.dispatchMouseEvent for cells 1-3, Emulation.setTouchEmulationEnabled +');
-  console.log('        Input.dispatchTouchEvent for cell 4, every press aimed at the coordinates');
-  console.log('        elementFromPoint reports and every pointerdown in cell 4 read back with its');
-  console.log('        pointerType, so a press that misses is a named failure and never a quiet pass.');
-  console.log('        THE DIAL IS MEASURED, NOT TYPED: cell 3 solves balance.ui.inspectHold out of two');
-  console.log('        data-inspect-progress samples and dwells at 0.65 of it. WHAT THAT DOES NOT BUY:');
-  console.log('        the pair either side of that dial (cell 3 pending, the #311 read-yield cell open)');
-  console.log('        is NOT an adjacent pair — a CDP round trip is tens of ms, so no cell here sits one');
-  console.log('        millisecond off the threshold and this door cannot place one. The dial itself is');
-  console.log('        therefore watched, not bounded. AND ONE CELL HERE IS WATCHED, NOT PROVEN:');
-  console.log('        "no read opens ON TOP of the live medium drag" has no plant of its own. The');
-  console.log('        plant written for it — the read abandoned only once open — reds the TOUCH');
-  console.log('        cell and leaves the mouse cell at the same dwell GREEN, measured both ways at');
-  console.log('        1200x730. Under the instrument rule that assertion is `unknown` and may not be');
-  console.log('        cited as coverage, whatever it prints. NOT COVERED: a plain unselected touch drag');
-  console.log('        (tools/gesture-cancel.mjs check 5 owns that gesture — one home, not two); the');
-  console.log('        narrow pan-x axis split (same tool, check 6); any text size but the one passed;');
-  console.log('        a real thumb\'s size, angle or accuracy; body zoom or a CSS transform, since this');
-  console.log('        aims in raw rect px; and CI, which runs NEITHER this tool nor its composer');
-  console.log('        (tools/hybrid-input-parity.mjs) — every number above comes from a hand-dispatched');
-  console.log('        run, so a green here is a claim about this machine, not about the pipeline.');
-}
-
-function finish(code, why = null) {
-  if (why) console.error(`card-drag-targeting: ${why}`);
-  console.log('');
-  if (code === 0) console.log(`card-drag-targeting: OK — ${checks} checks passed`);
-  else console.log(`  ${fails} finding(s) in ${checks} check(s) reached${why ? ' before the run died' : ''}`);
-  printBoundary();
-  process.exit(code);
 }
 
 async function main() {
