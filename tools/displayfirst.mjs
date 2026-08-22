@@ -45,8 +45,16 @@
 //               copies is not a move.
 //   D3 INK      that row is on screen ON ARRIVAL — non-zero box, not
 //               `display:none` / `visibility:hidden`, and its box is wholly
-//               inside the viewport with nothing scrolled. "First" that a
-//               player has to scroll to is not first.
+//               inside the viewport ON ALL FOUR EDGES, with nothing scrolled.
+//               "First" that a player has to scroll to is not first.
+//               THE FOUR EDGES ARE THE POINT, and this sentence was a lie for
+//               one of them until 2026-08-22: the predicate named top, left and
+//               bottom and never mentioned the RIGHT edge, so a row pushed
+//               clean off the right of the viewport passed. Measured at the
+//               real door, one plant per edge — left, top and bottom CAUGHT,
+//               right UNCAUGHT with `OK — 2 cells passed`, exit 0. All four are
+//               in the corpus now, so the sentence and the predicate name the
+//               same set and each edge has been WATCHED to fail.
 //   D4 DOORS    the title-screen modal and the in-run overlay give the SAME
 //               answer at the same shape and text size. One home renders both
 //               (`renderSettings`); a divergence means that stopped being true.
@@ -126,11 +134,99 @@ const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_S
 const TEXTS = onlyText ? ALL_TEXTS.filter((t) => t === onlyText) : ALL_TEXTS;
 const DOORS = ALL_DOORS;
 
+// ---------------------------------------------------------------------------
+// THE COUNTERS AND THE BOUNDARY LIVE AT MODULE SCOPE, AND THE REASON IS A
+// MEASUREMENT ABOUT THIS FILE, NOT A STYLE PREFERENCE.
+//
+// Bjorn measured in #320 that 41 of 69 boundary-printing tools in this repo
+// have an EXIT PATH ABOVE THEIR PRINT. This tool was one of them. Until
+// 2026-08-22 the BOUNDARY block sat inside `main()` after the cell loop, and
+// three paths reached an exit without ever passing it:
+//
+//   · `process.exit(2)` when no browser is found;
+//   · the top-level `main().catch(...)`, which any throw takes — a navigation
+//     that never settles, a door whose controls are gone, a dead server;
+//   · consequently, EVERY run against a subject that will not boot.
+//
+// Planted and watched rather than assumed (corpus plant 10, below): a settings
+// module that throws on load leaves the page blank, `until()` times out, and at
+// `07ead53` that run printed a stack, exit 1, ZERO boundary lines and ZERO
+// verdict lines. A tool that says nothing about its own limits exactly when it
+// failed to measure anything is the "green wasn't clearance" shape inverted.
+//
+// So: counters at module scope, `printBoundary()` at module scope, and EVERY
+// exit goes through `finish()`. `printBoundary()` is idempotent, so a path that
+// is reached twice prints once.
+//
+// THE FAILURE-PATH LINE IS DELIBERATELY NOT VERDICT-SHAPED. #294's
+// `readVerdict` reads a stream and returns the one terminated verdict line;
+// `displayfirst: STOPPED — …` and `displayfirst: UNKNOWN — …` match no row in
+// its grammar, so it returns `{error:'none'}` — SILENCE, which blocks. That is
+// the correct reading of a run that measured nothing, and it is why those lines
+// are shaped the way they are rather than merely worded that way. Checked
+// against `readVerdict` itself, not eyeballed.
+//
+// THE GREEN LINE IS VERDICT-SHAPED, and it moved to get there: it used to read
+// `OK — N cells passed; 0 findings`, which `readVerdict` also returns
+// `{error:'none'}` for — prose after the counted claim is unrecognised grammar,
+// by that door's contract. A green nobody can read is the same silence as a red
+// nobody printed.
+// ---------------------------------------------------------------------------
 let bad = 0;
 let unknown = 0;
+let passes = 0;
+let reached = 0;
+let expected = null;
 const fail = (line) => { bad++; console.error(`RED  ${line}`); };
-const note = (line) => console.log(`  ok  ${line}`);
+const note = (line) => { passes++; console.log(`  ok  ${line}`); };
 const unk = (line) => { unknown++; console.log(`  ??  ${line}`); };
+
+let boundaryPrinted = false;
+function printBoundary() {
+  if (boundaryPrinted) return;
+  boundaryPrinted = true;
+  console.log('');
+  console.log('BOUNDARY — printed on EVERY exit path, green, red or crashed, because a gate that prints');
+  console.log('  only on the paths it survived is "green wasn\'t clearance" shipped as infrastructure:');
+  console.log('  · THE LOOK-AND-FEEL HALF OF #248 IS NOT ASSERTED HERE and is still unowned. This tool');
+  console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
+  console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
+  console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
+  console.log('  · D3 judges the Fullscreen row\'s own box against all four viewport edges. It says');
+  console.log('    nothing about whether an ANCESTOR clips it, or whether another element covers it.');
+  console.log('  · Linux headless Chromium only; windows-latest and macos-latest are `unknown`.');
+  console.log('  · NOT WIRED INTO ci.yml (see the header) — between hand-runs this is `unknown`.');
+  if (expected === null) {
+    console.log('  · this run measured NO cells of its own — it is the corpus harness, and what it');
+    console.log('    reports is whether the plants went red, never whether the screen is right.');
+  } else {
+    console.log(`  · cells measured: ${reached} of ${expected} declared.`);
+  }
+  if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
+  console.log('');
+}
+
+/** The ONE exit. Every path — pass, fail, no-browser, thrown — ends here. */
+function finish(state, detail) {
+  printBoundary();
+  if (state === 'ok') {
+    console.log(`displayfirst: OK — ${passes} checks passed`);
+    process.exit(0);
+  }
+  if (state === 'fail') {
+    console.error(`displayfirst: FAIL — ${bad} finding(s) across ${reached} cells`);
+    process.exit(1);
+  }
+  // NOT VERDICT-SHAPED, ON PURPOSE — see the block above. `readVerdict` returns
+  // {error:'none'} for both of these, which is silence, which blocks.
+  if (state === 'unknown') {
+    console.error(`displayfirst: UNKNOWN — nothing was measured (${detail}).`);
+    process.exit(2);
+  }
+  console.error(`displayfirst: STOPPED — the run ended on an error after ${reached}`
+    + `${expected === null ? '' : ` of ${expected}`} cell(s) (${detail}). Nothing above is a verdict.`);
+  process.exit(1);
+}
 
 // ---------------------------------------------------------------------------
 // The page-side read. Returns the VISIBLE Display rows in GEOMETRIC order, each
@@ -146,8 +242,12 @@ const READ = `(() => {
     const cs = getComputedStyle(row);
     return {
       key: ctrl ? ctrl.dataset.key : null,
+      // ALL FOUR SIDES ARE READ, because all four are judged. The right edge
+      // was not read here until 2026-08-22, which is half of why D3 never
+      // checked it: a predicate cannot name an edge the read never carried.
       top: +b.top.toFixed(2), left: +b.left.toFixed(2),
-      bottom: +b.bottom.toFixed(2), w: +b.width.toFixed(2), h: +b.height.toFixed(2),
+      bottom: +b.bottom.toFixed(2), right: +b.right.toFixed(2),
+      w: +b.width.toFixed(2), h: +b.height.toFixed(2),
       display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
     };
   });
@@ -249,14 +349,54 @@ function judge(r, cell) {
     fail(`FINDING D3/ink cell=${cell} key=${WANT} present=false — the Fullscreen row is not in the panel at all.`);
   } else {
     const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0 && fs.opacity !== '0';
-    const onscreen = fs.top >= 0 && fs.left >= 0 && fs.bottom <= r.vp.h + 0.5 && fs.top <= r.vp.h;
+    // ON SCREEN MEANS THE WHOLE BOX, AND THAT MEANS FOUR EDGES.
+    //
+    // Until 2026-08-22 this predicate named THREE: `top >= 0 && left >= 0 &&
+    // bottom <= vp.h && top <= vp.h`. The RIGHT edge was never mentioned, while
+    // the sentence this predicate backs — D3's "its box is wholly inside the
+    // viewport" — claimed all four. That is the shape the house found five
+    // times over the same night: a predicate narrower than the sentence it
+    // backs, and the gap is `unknown`, not green (development.md, the same-door
+    // clause: where the two disagree the PREDICATE wins and the sentence is
+    // rewritten to it — here the predicate was the thing that was wrong, so it
+    // is the predicate that moved).
+    //
+    // MEASURED, NOT REASONED, and all four edges were exercised rather than
+    // three assumed. At `07ead53` + the dev merge, one plant per edge —
+    // `position: relative` on the first Display row, +/-4000 px, entering as
+    // file bytes in a copied real tree, the tool run WHOLE from the copy:
+    //
+    //   left -4000   CAUGHT   box printed, exit 1
+    //   top  -4000   CAUGHT   box printed, exit 1
+    //   top  +4000   CAUGHT   box printed, exit 1
+    //   left +4000   UNCAUGHT `displayfirst: OK — 2 cells passed; 0 findings`, exit 0
+    //
+    // So the right edge was the only one missing — a census of four, not a
+    // belief about three. All four plants are now in the corpus below, so this
+    // predicate has been watched to fail at every edge it names.
+    //
+    // ONE TOLERANCE, ALL FOUR EDGES. The old form carried `+ 0.5` at the bottom
+    // only; sub-pixel layout is not a property of one side of a box. EPS is
+    // half a CSS pixel: it forgives rounding and nothing else — the plants
+    // above miss by four thousand.
+    const EPS = 0.5;
+    const edgeOk = {
+      top: fs.top >= -EPS,
+      left: fs.left >= -EPS,
+      bottom: fs.bottom <= r.vp.h + EPS,
+      right: fs.right <= r.vp.w + EPS,
+    };
+    const offscreen = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
+    const onscreen = offscreen.length === 0;
     const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0;
+    const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
     if (!shown || !onscreen || !unscrolled) {
       fail(`FINDING D3/ink cell=${cell} key=${WANT} visible=${shown} onscreen=${onscreen} unscrolled=${unscrolled} `
-        + `box=${fs.top}..${fs.bottom} of viewport ${r.vp.w}x${r.vp.h} (display:${fs.display} visibility:${fs.visibility}) `
+        + `offscreen-edges=[${offscreen.join(',')}] box=(${box}) of viewport ${r.vp.w}x${r.vp.h} `
+        + `(display:${fs.display} visibility:${fs.visibility}) `
         + '— first that a player has to scroll to, or cannot see, is not first.');
     } else {
-      note(`D3/ink ${cell} box ${fs.top}..${fs.bottom} inside viewport ${r.vp.w}x${r.vp.h}, nothing scrolled`);
+      note(`D3/ink ${cell} box (${box}) wholly inside viewport ${r.vp.w}x${r.vp.h} on all four edges, nothing scrolled`);
     }
   }
   return first;
@@ -279,10 +419,10 @@ async function main() {
 
   const browserPath = resolveBrowser();
   if (!browserPath) {
-    console.error('displayfirst: UNKNOWN — no Chrome/Chromium found (tried $CHROME, $CHROME_PATH and the usual paths).');
+    console.error('displayfirst: no Chrome/Chromium found (tried $CHROME, $CHROME_PATH and the usual paths).');
     console.error('              Exit 2, not 1: nothing was measured, so this is not a verdict about the screen.');
     await s.close?.();
-    process.exit(2);
+    finish('unknown', 'no Chrome/Chromium found');
   }
   console.log(`      browser: ${browserPath}`);
 
@@ -291,8 +431,7 @@ async function main() {
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
-  const expected = SHAPES.length * TEXTS.length * DOORS.length;
-  let reached = 0;
+  expected = SHAPES.length * TEXTS.length * DOORS.length;
   const heights = [];
 
   for (const vp of SHAPES) {
@@ -394,33 +533,21 @@ async function main() {
 
   cdp.close(); await dropBrowser(); await s.close?.();
 
-  console.log('');
-  console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
-  console.log('  "green wasn\'t clearance" shipped as infrastructure:');
-  console.log('  · THE LOOK-AND-FEEL HALF OF #248 IS NOT ASSERTED HERE and is still unowned. This tool');
-  console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
-  console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
-  console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
-  console.log('  · Linux headless Chromium only; windows-latest and macos-latest are `unknown`.');
-  console.log('  · NOT WIRED INTO ci.yml (see the header) — between hand-runs this is `unknown`.');
-  if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
-  console.log('');
-
-  if (bad) {
-    console.error(`displayfirst: FAIL — ${bad} finding(s) across ${reached} cells`);
-    process.exit(1);
-  }
-  console.log(`displayfirst: OK — ${reached} cells passed; 0 findings`);
-  process.exit(0);
+  finish(bad ? 'fail' : 'ok');
 }
 
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// FIVE PLANTS. THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument
+// TEN PLANTS. THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument
 // for this file existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
 // stays green while the screen is wrong.
+//
+// PLANTS 6-9 are one per viewport edge — D3's four-edge sentence, watched to
+// fail at each edge rather than asserted. PLANT 10 is not about the screen: it
+// makes the subject unreachable and requires the tool's own BOUNDARY and a
+// non-verdict-shaped state line to print anyway.
 // ---------------------------------------------------------------------------
 async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -479,18 +606,82 @@ async function selftest() {
       replace: '  const rows = ROWS.filter((r) => r.cat === cat && cat !== \'Display\');',
       expectRed: /FINDING D0\/population/,
     },
+    // -----------------------------------------------------------------------
+    // 6-9 — ONE PLANT PER VIEWPORT EDGE. D3's sentence claims the box is
+    // "wholly inside the viewport"; these four are the census that says so
+    // instead of believing it. Each pushes the Fullscreen row 4000 px past one
+    // edge with `position: relative`, which leaves the ARRAY, the DOM and every
+    // other box exactly where they were — the same shape as plant 4.
+    //
+    // Plant 6 is the one this corpus was missing on 2026-08-22: run against the
+    // three-edge predicate it was UNCAUGHT, exit 0, `displayfirst: OK — 2 cells
+    // passed; 0 findings`. Plants 7-9 were CAUGHT before the fix and are kept
+    // anyway, because "the other three were fine" is a claim that rots the
+    // moment someone rewrites the predicate — and it is exactly the claim I
+    // could not have made honestly without running them.
+    // -----------------------------------------------------------------------
+    {
+      name: 'EDGE RIGHT — the Fullscreen row sits 4000px off the right of the viewport',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { position: relative !important; left: 4000px !important; }',
+      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*right/,
+    },
+    {
+      name: 'EDGE LEFT — the Fullscreen row sits 4000px off the left of the viewport',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { position: relative !important; left: -4000px !important; }',
+      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*left/,
+    },
+    {
+      name: 'EDGE TOP — the Fullscreen row sits 4000px off the top of the viewport',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { position: relative !important; top: -4000px !important; }',
+      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+    },
+    {
+      name: 'EDGE BOTTOM — the Fullscreen row sits 4000px off the bottom of the viewport',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { position: relative !important; top: 4000px !important; }',
+      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*bottom/,
+    },
+    {
+      // 10 — THE UNREACHABLE SUBJECT, and this plant is not about the screen at
+      // all: it is about whether THIS TOOL still speaks when it cannot measure.
+      // The settings module throws on load, the page never boots, `until()`
+      // times out and `main()` rejects. At `07ead53` that path printed a stack,
+      // exit 1, ZERO boundary lines and ZERO verdict lines — one of Bjorn's 41
+      // (#320). The expected red is the BOUNDARY SURVIVING, not a finding about
+      // Display: a run that measured nothing must still say what it does not
+      // cover, and must say so in a line `readVerdict` reads as silence.
+      name: 'the settings module throws on load — the subject is unreachable (boundary must still print)',
+      file: 'src/ui/screens/settings.js',
+      append: 'throw new Error("planted: settings module fails on load");',
+      expectRed: /displayfirst: STOPPED — the run ended on an error/,
+    },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: five whole-tool browser runs plus a
-  // clean run is six browser boots. The population is one shape and one text
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: ten whole-tool browser runs plus a
+  // clean run is eleven browser boots. The population is one shape and one text
   // size, both doors — the DOOR is unnarrowed, which is the axis the corpus is
-  // about.
+  // about. Plant 10 spends its own 25 s waiting for a page that never boots;
+  // that wait IS the defect it plants, so it is not tuned away.
   const code = await doorSelftest({
     tool: 'displayfirst.mjs',
     args: ['--only-shape', '1440x860', '--only-text', 'M', '--port', '8475'],
     plants,
     timeoutMs: 300000,
   });
+  // The corpus run is an exit path too, so it prints the boundary like every
+  // other one. doorplant owns the verdict line here; this owns the limits.
+  printBoundary();
   process.exit(code);
 }
 
-main().catch((e) => { console.error(`displayfirst: ${e && e.stack || e}`); process.exit(1); });
+// THE FAILURE PATH GOES THROUGH THE SAME DOOR AS THE SUCCESS PATH. This line
+// used to be `console.error(stack); process.exit(1)` — an exit above the
+// boundary print, which is the #320 shape. The stack is still printed, because
+// a boundary is not a diagnosis; what changed is that the boundary and a
+// non-verdict-shaped state line now follow it.
+main().catch((e) => {
+  console.error(`displayfirst: ${(e && e.stack) || e}`);
+  finish('stopped', (e && e.message) || String(e));
+});
