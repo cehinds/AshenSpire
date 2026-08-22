@@ -37,8 +37,10 @@
 // two non-author verdicts had passed this probe without asking whether it
 // asserted what it printed.
 //   GATED    figure arrives whole (where the view declares one) · CARDS arrives
-//            COLLAPSED, on every shape · the fold round-trips · one click opens
-//            the strip ABOVE THE FOLD · #305's mirror, exactly one
+//            COLLAPSED, on every shape · one click actually EXPANDS it, to a box
+//            with AREA, ABOVE THE FOLD · the fold round-trips · #305's mirror is
+//            the literal single matrix where a figure is declared — ZERO mirrors
+//            fail it, which they did not until Codex found that at `b9b3e81`
 //   REPORTED stripFullyVisible — false at `dev` and at head alike, a pre-existing
 //            scroll this change neither adds nor removes. Labelled in the output
 //            so it cannot be mistaken for a gate.
@@ -279,13 +281,58 @@ async function run() {
       // ruled on. What he was quoted is ONE CLICK; what that click opens has to be
       // REACHABLE, which is `aboveFold`. A number a tool prints is either gated or
       // labelled — printing it bare is how a check goes quiet.
-      if (afterClick && afterClick.stripBox && afterClick.stripAboveFold !== true) {
-        console.log(`    FAIL one click opened CARDS below the fold (top=${afterClick.stripBox.top}, vh=${afterClick.viewportH})`
-          + ' — the cost is a click AND a scroll, not the click he was quoted'); fails++;
+      //
+      // AND THE CLICK HAS TO HAVE DONE SOMETHING FIRST. Codex, at `b9b3e81`: if the
+      // CARDS handler regresses to a no-op, the collapsed `.equip-cards` still
+      // answers `getBoundingClientRect()` with a 0x0 box at top 0 — which is inside
+      // the viewport, so `aboveFold` reads TRUE — and the second no-op leaves
+      // `refold.cardsCollapsed` equal to arrival, so the round-trip check passes too.
+      // Reproduced by planting `if (r.id === 'cards') return;` in the handler: every
+      // gate green while one click opened nothing. So the state change is asserted
+      // BEFORE the geometry, and the box is required to have AREA — `aboveFold` on a
+      // zero-sized box is a claim about a point, not about a pane.
+      // Scoped to a CORRECT arrival, deliberately: from a wrongly-expanded arrival the
+      // first click legitimately COLLAPSES, and a gate that shouted "the control is
+      // inert" there would name the wrong cause beside the gate that names the right
+      // one. One defect, one message — the arrival gate above owns that case.
+      if (afterClick && arrival.cardsCollapsed === '1') {
+        if (afterClick.cardsCollapsed !== '0') {
+          console.log(`    FAIL one click did not expand CARDS (data-collapsed=${afterClick.cardsCollapsed} after the click) — the control is inert`); fails++;
+        } else if (!afterClick.stripBox || afterClick.stripBox.w <= 0 || afterClick.stripBox.h <= 0) {
+          console.log(`    FAIL CARDS reports expanded but its strip has no area (${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h}` : 'ABSENT'}) — nothing was opened`); fails++;
+        } else if (afterClick.stripAboveFold !== true) {
+          console.log(`    FAIL one click opened CARDS below the fold (top=${afterClick.stripBox.top}, vh=${afterClick.viewportH})`
+            + ' — the cost is a click AND a scroll, not the click he was quoted'); fails++;
+        }
       }
-      // #305: exactly one mirror on the art, none added to the container.
-      if (arrival.artTransform && arrival.artTransform !== 'none'
-          && arrival.artTransform !== 'matrix(-1, 0, 0, 1, 0, 0)') {
+      // #305: EXACTLY ONE MIRROR ON THE ART — and "exactly one" has to exclude ZERO.
+      //
+      // THIS GUARD WAS WEAKER THAN TWO REVIEWERS SAID IT WAS, AND I AM WRITING THAT
+      // HERE RATHER THAN QUIETLY STRENGTHENING IT. As first written the condition read
+      // `artTransform && artTransform !== 'none' && artTransform !== matrix(...)`, so it
+      // fired only on a WRONG transform. A MISSING one — the `scaleX(-1)` rule deleted,
+      // which Chromium resolves to `none` — passed, and a missing art element (`null`)
+      // passed too. Codex found it at `b9b3e81`; I planted it by dropping
+      // `.equipped-figure` from that rule and the tool printed `all gates green` with
+      // the mirror gone. My own PR body and Viki's PASS both cited this row as proof
+      // #305 was undisturbed, and she named it specifically as "measured as resolved
+      // transforms, not inferred from the empty CSS diff". The measurement was real;
+      // the ASSERTION over it accepted the defect it was named for. A double flip and
+      // a deleted flip look the same to a reader and did not look the same to this
+      // check — it caught one and waved the other through.
+      //
+      // Where the view DECLARES a figure, the art must carry the literal single mirror.
+      // At narrow, `data-figure=0` and there is no art, so there is nothing to assert
+      // and the tool says nothing rather than inventing a claim about the phone.
+      if (arrival.dataFigure === '1') {
+        if (arrival.artTransform === null) {
+          console.log('    FAIL the view declares a figure but .equipped-figure is absent — #305\'s mirror has nothing to sit on'); fails++;
+        } else if (arrival.artTransform !== 'matrix(-1, 0, 0, 1, 0, 0)') {
+          console.log(`    FAIL .equipped-figure is not carrying #305's single mirror: ${arrival.artTransform}`
+            + (arrival.artTransform === 'none' ? ' — the mirror is GONE, not doubled' : '')); fails++;
+        }
+      } else if (arrival.artTransform && arrival.artTransform !== 'none'
+                 && arrival.artTransform !== 'matrix(-1, 0, 0, 1, 0, 0)') {
         console.log(`    FAIL .equipped-figure transform is not the single #305 mirror: ${arrival.artTransform}`); fails++;
       }
       if (arrival.figTransform && arrival.figTransform !== 'none') {
