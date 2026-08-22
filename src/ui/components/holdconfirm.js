@@ -387,11 +387,20 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
 //                                the finger; RELEASE closes it and the click
 //                                that follows is swallowed exactly once —
 //                                a completed read must never become a play.
-//   once open, movement does NOTHING here, and the caller is expected to
-//   refuse to start a drag while `data-inspect="open"` (combat does): the
-//   alternative — collapse into a live drag — lets a 13 px reading drift end
-//   with a no-target card PLAYED on release over the field. A read must not
-//   be able to become a commit; lift and aim again.
+//   once open, movement STILL abandons the read — the boundary above says "any
+//   time" and now means it. It did not: the abandon was scoped to `pending`,
+//   and since the timer starts at pointerdown, ANY press slower than the dial
+//   to its first 12 px (a hesitation, or simply aiming slowly) opened the read
+//   and then never yielded it. Constantine reported the visible half of that
+//   ("if a card is selected and the enemy is highlighted, I can't drag the
+//   card on the enemy to use it"); measured at 5 shapes, 5/5 dead. The caller
+//   still refuses to start a drag while `data-inspect="open"` (combat does),
+//   and that is now a backstop rather than the mechanism.
+//   WHAT THAT GUARD PROTECTED STILL HOLDS, and it is watched at both edges: a
+//   13 px reading DRIFT commits nothing, because a drift ends in the hand and
+//   `.hand-area` is not `.field` (siblings; combat's drop needs
+//   `closest('.field')`). Crossing 12 px and then carrying the card onto the
+//   battlefield is not a drift — it is the drag this boundary exists to name.
 //
 // LAW 4 / RESTORE: the expanded copy is `pointer-events: none`, steals no
 // focus, covers no tap floor it can eat, and release removes it entirely —
@@ -505,9 +514,12 @@ export function armInspect(el, { ms, onOpen = null } = {}) {
     track({
       onMove: (mv) => {
         // Past the shared boundary this press is a drag (or the narrow
-        // hand's scroll) — theirs, silently. Once open, movement is the
-        // finger drifting while reading and changes nothing here.
-        if (phase === 'pending' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
+        // hand's scroll) — theirs, silently, AT ANY PHASE. The `pending`
+        // scope that used to sit here is the reported defect: measured on
+        // this tree at 1200x730, hold 350 ms then drag PLAYED, hold 450 ms
+        // played NOTHING, and a steady 1.5 px / 60 ms aim — moving the whole
+        // time — played NOTHING. See the disambiguation block in the header.
+        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();
       },
       onEnd: (up, { cancelled, source }) => {
         const completed = phase === 'open' && !cancelled;

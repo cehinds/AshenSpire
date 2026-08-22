@@ -18,6 +18,7 @@ import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
 import { focusElement, focusFirst, matchAction, isEngaged, keyLabel, padLabel, hasGamepad, actionHint } from '../input.js';
 import { clearTargetSilhouettes, renderTargetSilhouette } from '../components/friendlyTargets.js';
+import { friendlyTargetMode } from '../../model/friendlyTargets.js';
 import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
@@ -844,6 +845,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     let startY = 0;
     const dragTargetMode = pv.values.some((value) => value.target === 'allEnemies')
       ? 'all' : pv.needsTarget ? 'single' : 'none';
+    // A card whose only legal target is the player has ONE destination, so the
+    // drag names it instead of making him aim at it (his words: "dragging a
+    // block should default highlight player character since it can only target
+    // that character"). `friendlyTargetMode` is the ONE home of "can only
+    // target X" — model/friendlyTargets.js, #209 — and `'self'` is the only
+    // mode a solo board can resolve to a single target. `'ally'` and `'mixed'`
+    // depend on who is alive and connected and are deliberately NOT wired
+    // here; solo has no allies to state that rule against.
+    const selfOnlyTarget = dragTargetMode === 'none'
+      && friendlyTargetMode(resolveCard(registries, inst)) === 'self';
 
     const livingEnemyEls = () => [...app.querySelectorAll('.enemy:not(.dead)')];
 
@@ -860,6 +871,28 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           && current.every((enemy) => wanted.has(enemy) && enemy.querySelector('.aim-silho'))) return;
       clearAim();
       enemies.forEach((enemy) => setAim(enemy, 'enemy'));
+    };
+
+    // The blue half of the same one visual the red aim uses (TARGET_COLORS.self,
+    // #4d94e0 — friendlyTargets.js). Lit while the drop point is LEGAL, exactly
+    // as the enemy aim is, so the highlight and the ghost's verdict never say
+    // two different things about the same release.
+    //
+    // SCOPED TO THE PLAYER'S OWN ZONE, and that is not tidiness — it is the
+    // second shape of this function. The first called `clearAim()`, which owns
+    // the whole board, and let this branch skip `showDragAims([])` entirely.
+    // #198's accepted plant ("non-targeting drag incorrectly paints enemy aim
+    // silhouettes") went UNCAUGHT under it: the one line keeping a non-enemy
+    // drag from painting enemy silhouettes stopped running for the 54 self-only
+    // cards, so the plant armed and nothing exercised it. This aim owns the blue
+    // silhouette and nothing else; the clear reuses friendlyTargets.js rather
+    // than restating what an aim is made of.
+    const showSelfAim = (on) => {
+      const want = on ? app.querySelector('.combatant.player') : null;
+      const cur = app.querySelector('.combatant.player.aiming.aim-self');
+      if ((want && cur === want && cur.querySelector('.aim-silho')) || (!want && !cur)) return;
+      clearTargetSilhouettes($('.player-zone'));
+      if (want) setAim(want, 'self');
     };
 
     const clearDragTargeting = () => {
@@ -890,6 +923,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       } else {
         showDragAims([]);
       }
+      // An ADDITION on top of the enemy silence above, never a branch around it:
+      // `showDragAims([])` is the one line that keeps a non-enemy drag from
+      // painting enemy silhouettes, and it has to keep running for a self-only
+      // card. 9 shipped cards reach that `else` with no self effect either
+      // (enterGorefire, enterBulwark, warriorsVow, transmute, masterOfStrategy
+      // and the four curses), so it is live code, not a fallback.
+      if (selfOnlyTarget) showSelfAim(legal);
       const state = legal ? 'legal' : 'illegal';
       combatEl.dataset.dropState = state;
       dragGhost.dataset.dropState = state;
