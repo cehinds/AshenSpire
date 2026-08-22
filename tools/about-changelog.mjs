@@ -40,15 +40,52 @@ const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 73
 // it does not know tables, block constructs or nested emphasis and claims nothing
 // about them. REMOVAL: deleted the day Settings → About renders Markdown itself,
 // at which point this is a second copy of that renderer's job.
+//
+// THE REFUSAL COVERS EVERY LINK FORM THIS FILE CAN CARRY, not only the inline one.
+// It shipped naming `[text](url)` alone, and Markdown has three more spellings that
+// GitHub renders as links and this projection would have copied verbatim: the full
+// reference `[text][label]`, the collapsed `[text][]`, and the shortcut `[text]`
+// standing on a `[label]: url` definition elsewhere in the file. All three reached
+// the projection on 2026-08-22 with `--write` and the gate both at exit 0 — the
+// refusal was NARROWER THAN THE SENTENCE DESCRIBING IT, which is the defect this
+// whole change exists to stop, committed by the instrument written to stop it.
+// Found by Codex and, from the other side, by Bjorn's card on the same file.
+//
+// The shortcut form cannot be seen in one line of prose — `[docs]` is a link only
+// if a definition for it exists — so `parseChangelog` collects the file's defined
+// labels and hands them down. With no definitions in the file the check is inert,
+// which is why it cannot fire on ordinary bracketed prose.
+//
+// NOT CLOSED HERE, and carded with Bjorn's finding rather than ridden in: `~~strike~~`,
+// HTML entities (`&amp;`), backslash escapes (`\*escaped\*`), and a bare URL that
+// GitHub autolinks. None is a link form; none is present in CHANGELOG.md today.
 const INLINE_REFUSED = [
   [/!\[[^\]]*\]\([^)]*\)/, 'an image'],
   [/\[[^\]]+\]\([^)]+\)/, 'a link'],
+  [/\[[^\]]+\]\[[^\]]*\]/, 'a reference-style link'],
   [/<[a-zA-Z/][^>]*>/, 'raw HTML'],
 ];
-export function flattenInline(text, where) {
+// A link-reference definition: `[label]: https://…`, up to three spaces indented.
+const LINK_DEFINITION = /^ {0,3}\[([^\]]+)\]:\s*\S/;
+export function linkDefinitionLabels(markdown) {
+  const labels = new Set();
+  for (const line of markdown.split(/\r?\n/)) {
+    const match = line.match(LINK_DEFINITION);
+    if (match) labels.add(match[1].trim().toLowerCase());
+  }
+  return labels;
+}
+export function flattenInline(text, where, labels = new Set()) {
   for (const [pattern, what] of INLINE_REFUSED) {
     if (pattern.test(text)) {
       throw new Error(`${where}: prose contains ${what}, which the in-game changelog cannot render — write it in words`);
+    }
+  }
+  if (labels.size) {
+    for (const [, label] of text.matchAll(/\[([^\][]+)\]/g)) {
+      if (labels.has(label.trim().toLowerCase())) {
+        throw new Error(`${where}: prose contains a shortcut reference link, which the in-game changelog cannot render — write it in words`);
+      }
     }
   }
   return text
@@ -60,6 +97,7 @@ export function flattenInline(text, where) {
 
 export function parseChangelog(markdown) {
   const entries = [];
+  const labels = linkDefinitionLabels(markdown);
   let group = '';
   for (const line of markdown.split(/\r?\n/)) {
     if (line.startsWith('## ')) { group = line.slice(3).trim(); continue; }
@@ -76,8 +114,8 @@ export function parseChangelog(markdown) {
       id: `pr-${pullRequest}`,
       date,
       group,
-      summary: flattenInline(summary, where),
-      detail: flattenInline(prose, where) || `Merged as pull request #${pullRequest} in development build ${build}.`,
+      summary: flattenInline(summary, where, labels),
+      detail: flattenInline(prose, where, labels) || `Merged as pull request #${pullRequest} in development build ${build}.`,
       build,
       pullRequest,
       url,
@@ -289,8 +327,37 @@ async function selftest() {
   // share one, while their PR-derived stable entry IDs remain distinct.
   try { validateChangelog([good[0], { ...good[1], build: good[0].build }]); console.log('PASS duplicate build accepted with distinct stable IDs'); }
   catch (error) { console.error(`FAIL duplicate build rejected: ${error.message}`); process.exitCode = 1; }
+  // A refusal that over-fires on ordinary prose is its own defect. Bracketed words
+  // with NO link definition in the file are not a link, and must survive untouched.
+  try {
+    const [plain] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). The row reads [no reward] and stops there.\n');
+    if (plain.detail !== 'The row reads [no reward] and stops there.') throw new Error(`rewrote it to: ${plain.detail}`);
+    console.log('PASS bracketed prose with no link definition is accepted unchanged');
+  } catch (error) { console.error(`FAIL bracketed prose refused or altered: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
-  const uiPlants = [
+  // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
+  // by a child process through `--probe-source`, so the refusal is exercised from
+  // the file rather than from a string handed to the parser. All three of these
+  // reached the projection at exit 0 before 2026-08-22.
+  const treePlants = [
+    {
+      name: 'reference-style link in prose', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the guide][docs] for the rest.\n\n[docs]: https://example.invalid/guide',
+      expect: 'prose contains a reference-style link',
+    },
+    {
+      name: 'collapsed reference link in prose', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs][] for the rest.\n\n[docs]: https://example.invalid/guide',
+      expect: 'prose contains a reference-style link',
+    },
+    {
+      name: 'shortcut reference link in prose', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs] for the rest.\n\n[docs]: https://example.invalid/guide',
+      expect: 'prose contains a shortcut reference link',
+    },
     {
       name: 'missing title Settings route', file: 'src/ui/screens/title.js',
       find: 'id="settings"', replace: 'id="settings-missing"', expect: 'title Settings control is unreachable',
@@ -325,7 +392,7 @@ async function selftest() {
       expect: 'release standalone changelog gained navigable anchor',
     },
   ];
-  for (const plant of uiPlants) {
+  for (const plant of treePlants) {
     const tempParent = mkdtempSync(join(tmpdir(), 'about-changelog-plant-'));
     const tempRoot = join(tempParent, 'repo');
     try {
@@ -357,7 +424,7 @@ async function selftest() {
       rmSync(tempParent, { recursive: true, force: true });
     }
   }
-  const grandTotal = total + uiPlants.length;
+  const grandTotal = total + treePlants.length;
   if (caught !== grandTotal || !good.length) process.exitCode = 1;
   else if (!process.exitCode) console.log(`about-changelog selftest: ${caught} known-bads caught / 0 missed`);
 }
