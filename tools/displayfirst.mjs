@@ -45,8 +45,17 @@
 //               copies is not a move.
 //   D3 INK      that row is on screen ON ARRIVAL — non-zero box, not
 //               `display:none` / `visibility:hidden`, and its box is wholly
-//               inside the viewport ON ALL FOUR EDGES, with nothing scrolled.
+//               inside the viewport ON ALL FOUR EDGES, with nothing scrolled ON
+//               ALL THREE AXES (panel, document Y, document X).
 //               "First" that a player has to scroll to is not first.
+//               NOTHING SCROLLED MEANT TWO AXES UNTIL 2026-08-22: `docX` was
+//               read off the page and never reached the predicate, so a document
+//               scrolled 500 px sideways printed "nothing scrolled" and exited
+//               0. That is a FALSE PRINTED CLAIM rather than a demonstrated
+//               false green — `.modal-veil` is fixed, so the row could not
+//               actually be pushed off — and on this house's own test that is
+//               the worse of the two, because nothing fails and the reader is
+//               left confidently wrong.
 //               THE FOUR EDGES ARE THE POINT, and this sentence was a lie for
 //               one of them until 2026-08-22: the predicate named top, left and
 //               bottom and never mentioned the RIGHT edge, so a row pushed
@@ -61,7 +70,12 @@
 //   D0 POP      the declared cell count is reached, and a Display panel with NO
 //               rows is RED. An empty population and a clean one look identical
 //               to a check that only hunts for violations, and they mean the
-//               opposite.
+//               opposite. AND THE DECLARED COUNT ITSELF MAY NOT BE ZERO:
+//               `reached === expected` is self-satisfying at zero, so a zero
+//               population is REFUSED (exit 2, UNKNOWN), never passed — and a
+//               narrowing flag that matches nothing is refused before it can
+//               produce one. See the `--only-*` block below for the run that
+//               printed `OK — 1 checks passed` over no cells at all.
 //
 // BOTH EDGES, named because the gate requires it:
 //   · EMPTY — Display with zero rows (plant 5). D0 goes red; nothing else may
@@ -94,11 +108,17 @@
 //     only position 1 is held. The rest may be reordered freely.
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
 //     and macOS are `unknown` here as everywhere else in this repo.
-//   · IT IS NOT WIRED INTO ci.yml. Deliberate — see the PR. `.github/workflows/
-//     ci.yml` is open under #294, and adding a step to the gate list while that
-//     lane is mid-flight changes the census under its author's feet. Until it is
-//     wired this gate is a seat's hand-run, which under SOP 2's silence guard is
-//     `unknown` between runs, not green.
+//   · IT IS NOT WIRED INTO ci.yml, AND MY STATED REASON HAS EXPIRED. It read
+//     "`ci.yml` is open under #294 and adding a step mid-flight changes the
+//     census under its author's feet." #294 has LANDED — `dev` is `8b5c030` —
+//     so that sentence is no longer true and I am not keeping a dead reason to
+//     hold a live position. The reason NOW is the defect above it: a gate that
+//     could print green having measured ZERO cells would make the census say
+//     `covered` about a check that can be empty. That refusal landed today, in
+//     this file. THE WIRING IS ITS OWN CARD and is not smuggled in behind a
+//     fix — Marina's ruling, 2026-08-22. Until it is wired this gate is a seat's
+//     hand-run, which under SOP 2's silence guard is `unknown` between runs,
+//     not green.
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day #248's ordering ask is
 // withdrawn or superseded by a different first row — in which case the ask moves
@@ -128,10 +148,52 @@ const ALL_DOORS = ['title', 'inrun'];
 // The selftest narrows the population so five whole-tool browser runs finish in
 // a sensible time. It is DECLARED, never implied: `--only-shape` / `--only-text`
 // print in the header of every run that uses them.
+//
+// AND THE VALUE IS NOW VALIDATED, because a narrowing flag is the one input that
+// can empty the population. Found by Marina 2026-08-22 at this line, reproduced
+// here before the fix:
+//
+//   $ node tools/displayfirst.mjs --only-shape 1440x680     # typo for 860
+//     ok  D0/population reached=0 declared=0 (0 shape(s) x 2 text size(s) x 2 doors)
+//   · cells measured: 0 of 0 declared.
+//   displayfirst: OK — 1 checks passed                       exit 0
+//
+// `expected` derives from the SAME filter that produces the cells, so
+// `reached === expected` is SELF-SATISFYING AT ZERO — the check compares a
+// number against itself and calls the agreement a pass.
+//
+// IT WALKS THROUGH #294's FLOOR, and the count is why: ONE check passed, not
+// zero, and that one is the self-satisfying D0 line. `verdict.mjs`'s ZERO-WORK
+// GREEN floor fires only at exactly 0, so wrapped in the real door this read
+// `verdict: OK — verdict: 1 via [label: OK — N checks passed]`, exit 0.
+//
+// THE INVERSION IS THE PART WORTH KEEPING. The boundary block told the truth in
+// the same breath — `cells measured: 0 of 0 declared` — while the verdict line
+// lied. That is the exact defect this tool exists to catch, committed by this
+// tool: a predicate narrower than the sentence it backs, printed as green.
+//
+// So, two refusals, and neither is a pass:
+//   · an unknown VALUE is refused before anything boots, by name, with the legal
+//     set printed — a typo may not silently select an empty world;
+//   · a DECLARED POPULATION OF ZERO is refused outright, whatever produced it.
+//     The second does not depend on my having enumerated every narrowing axis,
+//     which is the half that would rot when someone adds a third flag.
+// Both exit 2 as `UNKNOWN — nothing was measured`, which #294's `readVerdict`
+// reads as SILENCE and blocks on. Nothing measured is not a verdict.
+const hasFlag = (f) => args.indexOf(f) >= 0;
 const onlyShape = argOf('--only-shape');
 const onlyText = argOf('--only-text');
-const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
-const TEXTS = onlyText ? ALL_TEXTS.filter((t) => t === onlyText) : ALL_TEXTS;
+const narrowingErrors = [];
+if (hasFlag('--only-shape') && !ALL_SHAPES.some((s) => s.tag === onlyShape)) {
+  narrowingErrors.push(`--only-shape ${JSON.stringify(onlyShape ?? null)} matches no known shape `
+    + `(known: ${ALL_SHAPES.map((s) => s.tag).join(', ')}) — it would select ZERO cells.`);
+}
+if (hasFlag('--only-text') && !ALL_TEXTS.includes(onlyText)) {
+  narrowingErrors.push(`--only-text ${JSON.stringify(onlyText ?? null)} matches no known text size `
+    + `(known: ${ALL_TEXTS.join(', ')}) — it would select ZERO cells.`);
+}
+const SHAPES = onlyShape != null ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
+const TEXTS = onlyText != null ? ALL_TEXTS.filter((t) => t === onlyText) : ALL_TEXTS;
 const DOORS = ALL_DOORS;
 
 // ---------------------------------------------------------------------------
@@ -388,15 +450,37 @@ function judge(r, cell) {
     };
     const offscreen = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
     const onscreen = offscreen.length === 0;
-    const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0;
+    // NOTHING SCROLLED MEANS NOTHING, AND THAT IS THREE AXES, NOT TWO.
+    //
+    // `docX` was READ off the page and never used. With the document scrolled
+    // 500 px horizontally the read came back
+    // `{"panelTop":0,"docY":0,"docX":500}` in both cells and this tool printed
+    // "nothing scrolled", exit 0 — Marina, 2026-08-22.
+    //
+    // SIZED HONESTLY, and her sizing is kept rather than inflated: `.modal-veil`
+    // is `position: fixed; inset: 0`, so a document scroll cannot today push
+    // this row off screen, and the four-edge check above reads VIEWPORT
+    // coordinates that already account for scroll. So this was a FALSE PRINTED
+    // CLAIM, not a demonstrated false green. **On this house's own test that is
+    // the worse of the two**: a false green fails the next person who plants
+    // against it; a false sentence leaves a reader confidently wrong and
+    // nothing ever fails. Same shape as the right edge — a predicate narrower
+    // than the sentence it backs — and the predicate is again what moved.
+    //
+    // Watched, not asserted: corpus plant 11 scrolls the document 500 px right
+    // through the real door and this predicate goes red naming `docX=500`.
+    const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
+    const scrolls = `panelTop=${r.scroll.panelTop} docY=${r.scroll.docY} docX=${r.scroll.docX}`;
     const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
     if (!shown || !onscreen || !unscrolled) {
       fail(`FINDING D3/ink cell=${cell} key=${WANT} visible=${shown} onscreen=${onscreen} unscrolled=${unscrolled} `
+        + `scroll=(${scrolls}) `
         + `offscreen-edges=[${offscreen.join(',')}] box=(${box}) of viewport ${r.vp.w}x${r.vp.h} `
         + `(display:${fs.display} visibility:${fs.visibility}) `
         + '— first that a player has to scroll to, or cannot see, is not first.');
     } else {
-      note(`D3/ink ${cell} box (${box}) wholly inside viewport ${r.vp.w}x${r.vp.h} on all four edges, nothing scrolled`);
+      note(`D3/ink ${cell} box (${box}) wholly inside viewport ${r.vp.w}x${r.vp.h} on all four edges, `
+        + `nothing scrolled (${scrolls})`);
     }
   }
   return first;
@@ -404,6 +488,26 @@ function judge(r, cell) {
 
 async function main() {
   if (args.includes('--selftest')) return selftest();
+
+  // THE POPULATION IS SETTLED BEFORE ANYTHING BOOTS — no server, no browser, no
+  // cells — because both refusals below are about there being nothing to measure.
+  if (narrowingErrors.length) {
+    for (const e of narrowingErrors) console.error(`displayfirst: ${e}`);
+    console.error('              Exit 2, not 0: a narrowing flag that matches nothing selects an EMPTY');
+    console.error('              population, and an empty population cannot tell you anything about the');
+    console.error('              screen. Nothing was measured, so this is not a verdict.');
+    expected = 0;
+    finish('unknown', narrowingErrors.join(' | '));
+  }
+  expected = SHAPES.length * TEXTS.length * DOORS.length;
+  if (expected === 0) {
+    console.error('displayfirst: the declared population is ZERO cells '
+      + `(${SHAPES.length} shape(s) x ${TEXTS.length} text size(s) x ${DOORS.length} door(s)).`);
+    console.error('              REFUSED, not passed. D0 compares `reached` against `expected`, and both');
+    console.error('              derive from the same filter — at zero that comparison is self-satisfying');
+    console.error('              and would print a green over a world with nothing in it.');
+    finish('unknown', 'declared population is zero cells');
+  }
 
   const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')));
   const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8474), open: false });
@@ -431,7 +535,6 @@ async function main() {
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
-  expected = SHAPES.length * TEXTS.length * DOORS.length;
   const heights = [];
 
   for (const vp of SHAPES) {
@@ -483,7 +586,19 @@ async function main() {
         // cell is a second copy of the M cell wearing a different name, and the
         // "both edges" claim is decoration.
         if (r && r.fs) heights.push({ shape: vp.tag, door, text, h: r.fs.h });
-        console.log(`      ${cell}: tab=${r && r.tab} rows=${r && r.domKeys.length} `
+        // THE DIAGNOSTIC MUST NOT KILL THE RUN, and it did until 2026-08-22.
+        // Marina's plant: rename `#set-panel`. `judge()` does its job — it
+        // records `FINDING D0/population panel=absent` — and then this line read
+        // `r.domKeys.length` off `{panel:false}` and threw. Exit was 1 either
+        // way, but the tool printed `displayfirst: STOPPED — the run ended on an
+        // error`, and STOPPED is deliberately shaped to read as SILENCE:
+        // *nothing was measured*. Something WAS measured, and the run also lost
+        // its second cell. A diagnostic that converts a FAIL into a STOPPED is
+        // an instrument lying about its own death — every field here is now
+        // optional-read, because a read that came back empty is exactly when
+        // this line matters most.
+        console.log(`      ${cell}: tab=${r && r.panel ? r.tab : 'n/a (no #set-panel)'} `
+          + `rows=${r && r.domKeys ? r.domKeys.length : 'n/a'} `
           + `fullscreenRowHeight=${r && r.fs ? r.fs.h : 'n/a'}`);
       }
       // D4 DOORS — the two surfaces must agree.
@@ -539,15 +654,28 @@ async function main() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// TEN PLANTS. THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument
+// TWELVE PLANTS. THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument
 // for this file existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
 // stays green while the screen is wrong.
 //
 // PLANTS 6-9 are one per viewport edge — D3's four-edge sentence, watched to
-// fail at each edge rather than asserted. PLANT 10 is not about the screen: it
-// makes the subject unreachable and requires the tool's own BOUNDARY and a
-// non-verdict-shaped state line to print anyway.
+// fail at each edge rather than asserted. PLANT 11 is the third scroll axis,
+// which the predicate read and never used.
+//
+// PLANTS 10 AND 12 ARE NOT ABOUT THE SCREEN AT ALL — they are about whether THIS
+// TOOL still speaks when it cannot measure. 10 makes the subject unreachable and
+// requires the BOUNDARY and a non-verdict-shaped state line to print anyway; 12
+// removes the panel and requires the run to reach its intended FAIL with both
+// cells, rather than dying in its own diagnostic and reporting SILENCE.
+//
+// A COUNT IS NOT A GUARANTEE, and this corpus is the evidence for that sentence:
+// plant 10 counted for a week while asserting the symptom instead of the thing
+// it guards (see its own comment). A corpus counts plants; NOTHING IN THIS HOUSE
+// COUNTS WHETHER A PLANT ASSERTS WHAT IT CLAIMS TO PROTECT. The check for that
+// is mutation — break the guarded behaviour, leave the defect, and require the
+// corpus to go red — and it is caught by hand today, twice tonight (this plant
+// and #320's headline plant). Recorded here as a gap; not built here.
 // ---------------------------------------------------------------------------
 async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -653,10 +781,69 @@ async function selftest() {
       // (#320). The expected red is the BOUNDARY SURVIVING, not a finding about
       // Display: a run that measured nothing must still say what it does not
       // cover, and must say so in a line `readVerdict` reads as silence.
+      //
+      // THE ASSERTION WAS THE SYMPTOM AND NOT THE THING, until 2026-08-22.
+      // `expectRed` named only `STOPPED`, so the plant passed on a tool with no
+      // boundary at all. Marina proved it with the exact mutation — settings
+      // throws on load AND `printBoundary()` is a no-op — and this plant still
+      // reported `CAUGHT`, `SELFTEST GREEN`, exit 0. So the 10/10 above this
+      // line was TRUE and meant less than it read: nine plants guarded the
+      // screen and the tenth guarded nothing it claimed to.
+      //
+      // Both outputs are required now. HONEST ABOUT WHAT "IN ORDER" BUYS HERE:
+      // `doorplant` concatenates stdout then stderr, the boundary is stdout and
+      // the state line is stderr, so the ordering in this regex is satisfied by
+      // the concatenation and not by the run. What it actually requires — and
+      // what plant 10 was missing — is that BOTH are present.
+      //
+      // ONE COSMETIC SEAM, NAMED RATHER THAN PATCHED: doorplant reports the
+      // matching line with `out.split('\n').find(l => expectRed.test(l))`, which
+      // is per-LINE, so a two-line assertion prints `red named:` with nothing
+      // after it. The catch is real; only the excerpt is empty. Fixing it is a
+      // one-line change in `tools/doorplant.mjs` — a file EVERY corpus in this
+      // tree shares — and it is not going in behind a displayfirst fix. Filed,
+      // not smuggled.
+      //
+      // WATCHED, BOTH EDGES, 2026-08-22. Mutation: this plant's own known-bad
+      // PLUS `printBoundary()` made a no-op, entering as file bytes in a copied
+      // real tree. Against the old one-line assertion: `CAUGHT`, `SELFTEST
+      // GREEN`, exit 0 — the corpus counted a plant that did not require the
+      // thing it exists to guard. Against this assertion:
+      // `RED-FOR-WRONG-REASON`, expected-red NOT in output, `SELFTEST RED`,
+      // exit 1.
       name: 'the settings module throws on load — the subject is unreachable (boundary must still print)',
       file: 'src/ui/screens/settings.js',
       append: 'throw new Error("planted: settings module fails on load");',
-      expectRed: /displayfirst: STOPPED — the run ended on an error/,
+      expectRed: /BOUNDARY — printed on EVERY exit path[\s\S]*displayfirst: STOPPED — the run ended on an error/,
+    },
+    {
+      // 11 — THE DOCUMENT IS SCROLLED SIDEWAYS. `docX` was read off the page and
+      // never used, so this run printed "nothing scrolled" with the document
+      // 500 px to the right — a FALSE SENTENCE, exit 0. The plant makes the
+      // document wider than the viewport and holds it scrolled; `.modal-veil` is
+      // fixed, so the row's own box stays legally on screen and D3's four-edge
+      // half stays green. THAT IS THE POINT: only the scroll half can catch this,
+      // which is why the scroll half had to name all three axes.
+      name: 'the document is scrolled 500px right while the fixed panel stays put (docX)',
+      file: 'src/ui/screens/settings.js',
+      append: 'document.documentElement.style.minWidth = "3000px";\n'
+        + 'setInterval(() => { if (window.scrollX !== 500) window.scrollTo(500, 0); }, 50);',
+      expectRed: /FINDING D3\/ink .*unscrolled=false .*docX=500/,
+    },
+    {
+      // 12 — THE PANEL ID IS RENAMED, and this plant is aimed at THIS TOOL's own
+      // failure reporting, not at the screen. `judge()` correctly records
+      // `D0/population panel=absent`; before 2026-08-22 the per-cell diagnostic
+      // then read `r.domKeys.length` off `{panel:false}` and threw, so the run
+      // printed `STOPPED` — the line shaped to say NOTHING WAS MEASURED — and
+      // lost its second cell. The expected red requires the intended FAIL *and*
+      // `across 2 cells`: a real finding, reported as a finding, with no cell
+      // dropped on the way.
+      name: 'the panel id is renamed — every read returns {panel:false} (must FAIL, not STOP)',
+      file: 'src/ui/screens/settings.js',
+      find: '<div class="set-panel" id="set-panel" role="tabpanel"',
+      replace: '<div class="set-panel" id="set-panel-renamed" role="tabpanel"',
+      expectRed: /displayfirst: FAIL — \d+ finding\(s\) across 2 cells/,
     },
   ];
   // NARROWED ON PURPOSE AND SAID OUT LOUD: ten whole-tool browser runs plus a
