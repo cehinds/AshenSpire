@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-21",
     "summary": "The reward menu is written down, in the README and the changelog",
     "detail": "Docs only.",
-    "build": "0.4.0.0995",
+    "build": "0.4.0.1000",
     "pullRequest": 317,
     "url": "https://github.com/cehinds/AshenSpire/pull/317"
+  },
+  {
+    "id": "pr-316",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The Armoury opens on your figure, and CARDS is one click away",
+    "detail": "The card strip now arrives folded by default, on every shape, so the character you dressed is whole the moment the panel opens instead of being squeezed into a scrolling sliver by the cards beneath it. One click on CARDS opens the strip, another folds it again, and outside a fight whatever you leave it on is what the Armoury gives you next time — it arrives the way you left it. The Armoury you open mid-fight keeps no such memory: it starts folded every time, whatever you did to it last. On a phone nothing changes: that view never showed the figure and already opened folded.",
+    "build": "0.4.0.0983",
+    "pullRequest": 316,
+    "url": "https://github.com/cehinds/AshenSpire/pull/316"
   },
   {
     "id": "pr-305",

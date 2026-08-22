@@ -19,7 +19,9 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-21
 
-- **The reward menu is written down, in the README and the changelog** ([#317](https://github.com/cehinds/AshenSpire/pull/317), `0.4.0.0995`). Docs only.
+- **The reward menu is written down, in the README and the changelog** ([#317](https://github.com/cehinds/AshenSpire/pull/317), `0.4.0.1000`). Docs only.
+
+- **The Armoury opens on your figure, and CARDS is one click away** ([#316](https://github.com/cehinds/AshenSpire/pull/316), `0.4.0.0983`). The card strip now arrives folded by default, on every shape, so the character you dressed is whole the moment the panel opens instead of being squeezed into a scrolling sliver by the cards beneath it. One click on CARDS opens the strip, another folds it again, and outside a fight whatever you leave it on is what the Armoury gives you next time — it arrives the way you left it. The Armoury you open mid-fight keeps no such memory: it starts folded every time, whatever you did to it last. On a phone nothing changes: that view never showed the figure and already opened folded.
 
 - **Your weapons are in the hands you gave them** ([#305](https://github.com/cehinds/AshenSpire/pull/305), `0.4.0.0947`). The character model faces you, so the armament in its right hand belongs on your left — the way it does when you face another person. It was drawn the other way round in the Armoury, in character creation, and in combat. Sword and shield now sit on the hands you equipped them to. One off-hand piece, the Parrying Dagger, is still on the wrong side and is tracked separately.
 
