@@ -25,11 +25,16 @@
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
 }
-/* Kept for the map header, which still draws a .who column with an .hpbar in
-   it. The combat HUD has neither any more, so these are inert there. */
+/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+   THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
+   inside any `.topbar`, and this rule set its height and its fill colour while
+   map.css overrode the width to 15rem — a typed constant standing where a
+   length that ENCODES A MAXIMUM belongs. The map now mounts the shared
+   `.resbars` through ui/components/resbars.js like combat and co-op do.
+   Deleted rather than left inert: a rule matching nothing is a second home
+   waiting for its second copy, and `grep hpbar styles/` should land a reader
+   on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-.topbar .hpbar { width: 19rem; height: 1.4rem; }
-.topbar .hpbar .fill { background: var(--blood); }
 /* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
    `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
    `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,

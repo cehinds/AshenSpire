@@ -315,13 +315,35 @@
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
 /* ---------- horizontal map header (matches the combat top bar) ---------- */
-/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
+/* Reuses .topbar/.portrait/.who/.relics from combat.css; these rules add
    the map-specific stats, wrapping, and the legend popover. Items are flex so
    they reflow as customization toggles hide/show them. */
 .map-header {
   height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
 }
-.map-header .hpbar { width: 15rem; }
+/* THE BAR TRACK IS DERIVED, NOT TYPED (E9 / #254). What was here was
+   `.map-header .hpbar { width: 15rem }` — the map's own hand-written health bar
+   at a hand-typed length, beside a combat HUD whose track is `flex: 1` off the
+   row. Two renderers and two tracks for one grammar; the same character read at
+   two proportions depending on the screen, and nothing could see it because each
+   was internally consistent on its own.
+   Now the `.who` column GROWS and the host fills it, so the track is the header
+   width minus the portrait, the stats and the buttons — derived by the browser,
+   exactly as `.topbar.combat-hud .resbars-host` is. Nothing types a ceiling, so
+   a bar cannot lie about a maximum on this screen either.
+   `100%` is a flex BASIS on a header that ALREADY wraps (`flex-wrap: wrap`
+   above), so it costs no new structure: the bar column takes a line of its own
+   and the portrait, stats and buttons flow onto the next one — the same
+   two-band shape the combat HUD has. MEASURED, and this is why it is 100%
+   rather than a column share: at `1 1 16rem` the map's HP track came out
+   385.6 px against combat's 1090.8 at 1440x860, and 69.1 against 116.1 at
+   390x844 — where 18 % of 69.1 is 12.4 px, UNDER the 16 px minimum-width floor.
+   The floor then fired on the map and not in combat for the same character, so
+   one screen drew a dashed stub and the other a proportional bar. Same plan,
+   same renderer, different ink. A track this narrow is what re-introduces the
+   divergence the shared renderer just removed. */
+.map-header .who { flex: 1 1 100%; min-width: 0; }
+.map-header .resbars-host { width: 100%; min-width: 0; }
 .map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
 .map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
@@ -361,7 +383,9 @@
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
 body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
+/* (compact drops the name; the bar track re-derives itself from the narrower
+   row with no rule of its own — the 12rem `.hpbar` override that used to sit
+   here was the second typed track and went with the first.) */
 body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
 body.map-compact .map-substrip { padding: 0.2rem 1rem; }
 body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }

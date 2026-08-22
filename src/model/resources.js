@@ -139,17 +139,7 @@ function maxOf(values) {
  * Derived once per registries, not per frame.
  */
 export function resourceDomains(registries) {
-  const enemies = registries.enemies.all();
-  const playerPop = [{
-    maxHp: registries.statDomains.hp,
-    maxMana: registries.statDomains.mana,
-    maxStamina: registries.statDomains.stamina,
-    // The player's poise ceiling: the largest stagger threshold the equipment
-    // tables can grant (registries.js derives it beside the other domains).
-    poiseMax: registries.statDomains.poise,
-  }];
-  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
-  const pops = { main: playerPop, model: bothPop };
+  const pops = populationsFor(registries);
   const out = {};
   for (const surface of HUD_SURFACES) {
     out[surface] = {};
@@ -162,11 +152,73 @@ export function resourceDomains(registries) {
   return out;
 }
 
+/** The two populations, one walk, so the two ceilings below cannot disagree. */
+function populationsFor(registries) {
+  const enemies = registries.enemies.all();
+  const playerPop = [{
+    maxHp: registries.statDomains.hp,
+    maxMana: registries.statDomains.mana,
+    maxStamina: registries.statDomains.stamina,
+    // The player's poise ceiling: the largest stagger threshold the equipment
+    // tables can grant (registries.js derives it beside the other domains).
+    poiseMax: registries.statDomains.poise,
+  }];
+  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
+  return { main: playerPop, model: bothPop };
+}
+
+/**
+ * resourceLabelCeilings(registries) → { [surfaceId]: { [rowId]: number } }
+ *
+ * THE WIDEST NUMBER A PLATE CAN EVER PRINT, and it is NOT the trough's
+ * reference. These were one field until 2026-08-22 and his 500/50 ruling
+ * (E9 / #254) pulled them apart:
+ *
+ *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
+ *     above anything the content can reach. `domainMax`, 500 for HP.
+ *   · the PLATE reserves the width of the widest LABEL it will ever draw, so
+ *     the track cannot move when a digit is gained mid-run (resbars.js's
+ *     `--plate-reserve-*`, and the reason it exists is measured there). The
+ *     label prints `cur/max`, so the widest it can ever be is set by the
+ *     largest max the CONTENT can produce — 96, not 500.
+ *
+ * MEASURED, because collapsing them is not a style question: while the reserve
+ * read the reference, HP reserved three digits for a number that tops out at
+ * two and every pool reserved two for a number that tops out at one. At
+ * 320x640 that ate the banded pool cells down to 5.81 px and the MP and SP
+ * plates CLIPPED THEIR OWN LABELS ("◆ 2/2") at all eight swept maxima —
+ * tools/hudbars.mjs A4, sixteen findings, green on dev the same hour.
+ *
+ * ALWAYS DERIVED FROM CONTENT: `domainMax` is deliberately NOT consulted here.
+ * A reference below the population would still have to print the real max.
+ *
+ * Memoised per registries — `resourceBarPlan` is called per render and this
+ * walks every enemy.
+ */
+const labelCeilingCache = new WeakMap();
+export function resourceLabelCeilings(registries) {
+  const hit = labelCeilingCache.get(registries);
+  if (hit) return hit;
+  const pops = populationsFor(registries);
+  const out = {};
+  for (const surface of HUD_SURFACES) {
+    out[surface] = {};
+    for (const row of registries.resources.all()) {
+      const src = RESOURCE_SOURCES[row.source];
+      if (!src) continue;
+      out[surface][row.id] = src.domain(pops[surface]);
+    }
+  }
+  labelCeilingCache.set(registries, out);
+  return out;
+}
+
 /**
  * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
  *
  * ONE function, both HUDs. A bar is:
- *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, floored }
+ *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, domain,
+ *     labelMax, floored }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -202,6 +254,7 @@ export function resourceBarPlan(registries, surface, view, entity, domains) {
     .filter((r) => r.surfaces.includes(surface))
     .sort((a, b) => a.order - b.order);
   const scaleByMax = surfaceScalesByMax(registries, surface);
+  const labelCeilings = resourceLabelCeilings(registries)[surface] || {};
   for (const row of rows) {
     const src = RESOURCE_SOURCES[row.source];
     const val = src && src.read(view, entity);
@@ -220,6 +273,9 @@ export function resourceBarPlan(registries, surface, view, entity, domains) {
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
       lengthPct: scaleByMax ? Math.max(0, Math.min(100, raw * 100)) : 100,
       domain,
+      // The plate's reservation ceiling, and it is NOT `domain` — see
+      // resourceLabelCeilings above for the measurement that separated them.
+      labelMax: Math.max(val.max, labelCeilings[row.id] || 0),
     });
   }
   return bars;

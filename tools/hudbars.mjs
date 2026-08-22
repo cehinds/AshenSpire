@@ -219,9 +219,28 @@ const SHOTS_OUT = val('--shots', null);
 
 // THE SWEEP. Real maxima, and the range is not invented: 40 is a cursed reaver
 // (actions.js loseMaxHpPct halves it), 72/78/84 are the three shipped classes,
-// 88 is a reaver in the one outfit that carries `self.maxHp=+4`, and 120/160 sit
-// above the domain to prove the ceiling clamps rather than overflows.
-const SWEEP = [40, 56, 72, 78, 84, 88, 120, 160];
+// 88 is a reaver in the one outfit that carries `self.maxHp=+4`.
+const SWEEP_CONTENT = [40, 56, 72, 78, 84, 88];
+// THE TWO CEILING POSES USED TO BE TYPED — `120, 160`, with the comment "sit
+// above the domain to prove the ceiling clamps rather than overflows". They
+// were above the domain when the domain was the derived population (94ish) and
+// they are BELOW IT NOW: E9 / #254 made the hp domain a REFERENCE of 500
+// (src/content/resources.js HUD_REFERENCE_MAX), and A3's premise — "at max 160,
+// above the derived domain" — silently became false. The check went red while
+// nothing about the screen was wrong.
+//
+// So the two ceiling poses are DERIVED from the domain the tree actually has,
+// which is what the comment always meant. This is a strengthening, not a
+// relaxation: the sweep now reaches the real ceiling (500) and one pose above
+// it instead of stopping at a third of the way up. A tree that derives no
+// domain (the legacy shape) keeps the old typed pair, because there is nothing
+// to derive from and a silent shorter sweep would be worse than a stale one.
+const LEGACY_CEILING_POSES = [120, 160];
+function sweepFor(domain) {
+  if (!Number.isFinite(domain) || domain <= 0) return [...SWEEP_CONTENT, ...LEGACY_CEILING_POSES];
+  const ceiling = Math.max(Math.round(domain), SWEEP_CONTENT[SWEEP_CONTENT.length - 1] + 1);
+  return [...SWEEP_CONTENT.filter((v) => v < ceiling), ceiling, Math.round(ceiling * 1.25)];
+}
 const MIN_POINTS = 5; // distinct rendered widths required before this reports
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -415,10 +434,10 @@ function proveAnonymousLabelFails() {
   }
 }
 
-async function sweepShape(b, href, [w, h]) {
+async function sweepShape(b, href, [w, h], sweep) {
   await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
   const rows = [];
-  for (const max of SWEEP) {
+  for (const max of sweep) {
     await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMaxHp=${max}` }, b.S);
     await b.until(`!!document.querySelector('.combat .topbar')`, `combat topbar @ max ${max}`);
     await wait(320); // the fill has a 200ms width transition; let it land
@@ -747,11 +766,11 @@ function judge(shape, rows, hpDomain) {
 
   // ---- the denominator guard: a sweep that measured one thing N times -------
   if (distinct < MIN_POINTS) {
-    fail('A1', `${tag}: TRACKING — ${SWEEP.length} maxima from ${SWEEP[0]} to ${SWEEP[SWEEP.length - 1]} produced only ${distinct} distinct rendered widths `
+    fail('A1', `${tag}: TRACKING — ${rows.length} maxima from ${rows[0].max} to ${rows[rows.length - 1].max} produced only ${distinct} distinct rendered widths `
       + `(${widths.join(', ')} px). The bar's length is not a function of the maximum. `
       + (rows[0].legacy ? 'This tree has no .resbars-host — it is the pre-change HUD, whose health bar is a typed constant.' : ''));
   } else {
-    notes.push(`A1 ${tag}: TRACKING ok — ${distinct} distinct widths across ${SWEEP.length} maxima`);
+    notes.push(`A1 ${tag}: TRACKING ok — ${distinct} distinct widths across ${rows.length} maxima`);
   }
 
   // ---- A1 strict monotonicity below the domain ceiling ----------------------
@@ -1047,7 +1066,7 @@ async function verdictAt(href, shape, hpDomain) {
   fails.length = 0; notes.length = 0;
   const b = await open();
   try {
-    const rows = await sweepShape(b, href, shape);
+    const rows = await sweepShape(b, href, shape, sweepFor(hpDomain));
     judge(shape, rows, hpDomain);
   } finally { b.close(); }
   return { fails: [...fails], notes: [...notes] };
@@ -1289,7 +1308,7 @@ async function main() {
   const source = SHOTS_OUT ? await serve({ root: TREE, port: 8317, open: false }) : null;
   try {
     for (const shape of SHAPES) {
-      const rows = await sweepShape(b, href, shape);
+      const rows = await sweepShape(b, href, shape, sweepFor(domains && domains.hp));
       all[`${shape[0]}x${shape[1]}`] = rows;
       console.log(`\n  ${shape[0]}x${shape[1]}   track ${rows[0].trackW} px${rows[0].legacy ? '   [LEGACY HUD — no .resbars-host in this tree]' : ''}`);
       console.log('    max    bar px   px/point   bars  label   floored');

@@ -94,7 +94,18 @@ function hybridUnit(bar, tooltipExtra) {
   // reservation applied while only the glyph shows would steal track for a
   // label that is not there); the CSS applies each var in the same container
   // window that shows its variant.
-  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
+  //
+  // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
+  // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
+  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+  // reach. The plate must reserve the widest LABEL it can ever draw, which is
+  // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
+  // the reference put three digits where two will ever print and crushed the
+  // banded pool cells to 5.81 px at 320x640, clipping "◆ 2/2" — measured, and
+  // the derivation of `labelMax` is in model/resources.js resourceLabelCeilings.
+  // The fallback chain keeps a legacy plan (no labelMax) rendering as before.
+  const ceiling = Number.isFinite(bar.labelMax) ? bar.labelMax : (bar.domain || bar.max);
+  const digits = String(Math.trunc(Math.max(bar.max, ceiling, 1))).length;
   const plate = document.createElement('div');
   plate.className = 'resplate';
   plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);

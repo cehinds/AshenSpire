@@ -3494,11 +3494,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
 }
-/* Kept for the map header, which still draws a .who column with an .hpbar in
-   it. The combat HUD has neither any more, so these are inert there. */
+/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+   THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
+   inside any `.topbar`, and this rule set its height and its fill colour while
+   map.css overrode the width to 15rem — a typed constant standing where a
+   length that ENCODES A MAXIMUM belongs. The map now mounts the shared
+   `.resbars` through ui/components/resbars.js like combat and co-op do.
+   Deleted rather than left inert: a rule matching nothing is a second home
+   waiting for its second copy, and `grep hpbar styles/` should land a reader
+   on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-.topbar .hpbar { width: 19rem; height: 1.4rem; }
-.topbar .hpbar .fill { background: var(--blood); }
 /* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
    `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
    `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
@@ -4923,13 +4928,35 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
 /* ---------- horizontal map header (matches the combat top bar) ---------- */
-/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
+/* Reuses .topbar/.portrait/.who/.relics from combat.css; these rules add
    the map-specific stats, wrapping, and the legend popover. Items are flex so
    they reflow as customization toggles hide/show them. */
 .map-header {
   height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
 }
-.map-header .hpbar { width: 15rem; }
+/* THE BAR TRACK IS DERIVED, NOT TYPED (E9 / #254). What was here was
+   `.map-header .hpbar { width: 15rem }` — the map's own hand-written health bar
+   at a hand-typed length, beside a combat HUD whose track is `flex: 1` off the
+   row. Two renderers and two tracks for one grammar; the same character read at
+   two proportions depending on the screen, and nothing could see it because each
+   was internally consistent on its own.
+   Now the `.who` column GROWS and the host fills it, so the track is the header
+   width minus the portrait, the stats and the buttons — derived by the browser,
+   exactly as `.topbar.combat-hud .resbars-host` is. Nothing types a ceiling, so
+   a bar cannot lie about a maximum on this screen either.
+   `100%` is a flex BASIS on a header that ALREADY wraps (`flex-wrap: wrap`
+   above), so it costs no new structure: the bar column takes a line of its own
+   and the portrait, stats and buttons flow onto the next one — the same
+   two-band shape the combat HUD has. MEASURED, and this is why it is 100%
+   rather than a column share: at `1 1 16rem` the map's HP track came out
+   385.6 px against combat's 1090.8 at 1440x860, and 69.1 against 116.1 at
+   390x844 — where 18 % of 69.1 is 12.4 px, UNDER the 16 px minimum-width floor.
+   The floor then fired on the map and not in combat for the same character, so
+   one screen drew a dashed stub and the other a proportional bar. Same plan,
+   same renderer, different ink. A track this narrow is what re-introduces the
+   divergence the shared renderer just removed. */
+.map-header .who { flex: 1 1 100%; min-width: 0; }
+.map-header .resbars-host { width: 100%; min-width: 0; }
 .map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
 .map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
@@ -4969,7 +4996,9 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
 body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
+/* (compact drops the name; the bar track re-derives itself from the narrower
+   row with no rule of its own — the 12rem `.hpbar` override that used to sit
+   here was the second typed track and went with the first.) */
 body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
 body.map-compact .map-substrip { padding: 0.2rem 1rem; }
 body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
@@ -6943,6 +6972,64 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
+  //
+  // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
+  // DIFFERENT MAXIMUM.
+  //
+  // A REACH STATE, exactly the shape and reason as `?shotAt` and `?shotEvent`
+  // below. His bar-scaling rule ("the size of that bar should scale depending on
+  // the max total") is a claim about how the HUD behaves ACROSS maxima, and no
+  // instrument could vary a maximum: every capture this repo has ever taken of
+  // the HUD was taken at the reaver's own numbers. One max is not the scale, in
+  // the same way one map is not the map. These are the levers tools/hudbars.mjs
+  // and tools/hudparity.mjs sweep, and the proof that a bar's length tracks the
+  // number is worth nothing without them.
+  //
+  // They move the RUN's fields, which are the same fields a curse and an armour
+  // mod move (actions.js runMods, loadout.js) — so a value enters through the
+  // door a real maximum enters, never through the renderer.
+  //
+  // MOVED HERE 2026-08-22 (E9 / #254) FROM INSIDE THE `combat|fx` BRANCH, and
+  // the move is the point: the map now draws the SAME HUD through the same
+  // renderer, and a lever that reaches one screen and not the other cannot ask
+  // whether the two agree — the instrument would be comparing a posed combat
+  // screen against an unposed map. One site, every `?shot=` state that shows a
+  // HUD. THE WIDENING IS REAL AND DELIBERATE: states that never read these
+  // params before (reward, shop, rest, event, death) now do. They are dev-only
+  // reach params on a boot that cannot touch a save, and a per-state allow-list
+  // here would be a second copy of the state list above.
+  const shotMaxHp = Number(shotParams.get('shotMaxHp'));
+  if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
+    run.maxHp = Math.floor(shotMaxHp);
+    run.hp = Math.min(run.hp, run.maxHp);
+  }
+  // Current mana enters through the run, before combat entity creation; the
+  // renderer never receives a fabricated value.
+  const shotMana = Number(shotParams.get('shotMana'));
+  if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
+    run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
+  }
+  const shotMaxMana = Number(shotParams.get('shotMaxMana'));
+  if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
+    run.maxMana = Math.floor(shotMaxMana);
+    run.mana = Math.min(run.mana, run.maxMana);
+  }
+  const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
+  if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
+    run.maxStamina = Math.floor(shotMaxStamina);
+    run.stamina = Math.min(run.stamina, run.maxStamina);
+  }
+  // `newRun()` ends in `startClimb()` -> `showMap()`, so on the map state the
+  // screen is ALREADY DRAWN by the time the lines above run. Re-draw it, or the
+  // photograph shows the un-posed character while the URL says otherwise — the
+  // exact silent-lie shape that cost a whole set of E9 frames on 2026-08-22
+  // (gamedesign/sunna/log/2026/2026-08-22_the-caps-that-were-never-reachable.md).
+  // Guarded on a door actually having fired so an ordinary `?shot=map` mounts
+  // once, as it always has.
+  const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
+    .some((k) => shotParams.has(k));
+  if (posedPools && shotState === 'map') showMap();
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
@@ -7139,43 +7226,10 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
       onDone: () => { rewardDoneCount++; showMap(); },
     });
   } else if (shotState === 'combat' || shotState === 'fx') {
-    // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
-    //
-    // A REACH STATE, exactly the shape and reason as ?shotAt and ?shotEvent
-    // above. His bar-scaling rule ("the size of that bar should scale depending
-    // on the max total") is a claim about how the HUD behaves ACROSS maxima,
-    // and no instrument could vary a maximum: every capture this repo has ever
-    // taken of the combat HUD was taken at the reaver's 84. One max is not the
-    // scale, in the same way one map is not the map. This is the lever
-    // tools/hudbars.mjs sweeps, and the proof that the bar length tracks the
-    // number is worth nothing without it.
-    //
-    // It moves the RUN's maxHp, which is the same field a curse and an armour
-    // mod move (actions.js:549, loadout.js runMods) — so the value enters
-    // through the door a real maximum enters, not through the renderer.
-    const shotMaxHp = Number(shotParams.get('shotMaxHp'));
-    if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
-      run.maxHp = Math.floor(shotMaxHp);
-      run.hp = Math.min(run.hp, run.maxHp);
-    }
-    // Current mana enters through the run, before combat entity creation; the
-    // renderer never receives a fabricated value.
-    const shotMana = Number(shotParams.get('shotMana'));
-    if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
-      run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
-    }
-    const shotMaxMana = Number(shotParams.get('shotMaxMana'));
-    if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
-      run.maxMana = Math.floor(shotMaxMana);
-      run.mana = Math.min(run.mana, run.maxMana);
-    }
-    const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
-    if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
-      run.maxStamina = Math.floor(shotMaxStamina);
-      run.stamina = Math.min(run.stamina, run.maxStamina);
-    }
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
-    // three doors above there is no run field to write: the player's poise max
+    // four POOL doors (which sit above the shot branches, right after newRun,
+    // because the map reads them too) there is no run field to write: the
+    // player's poise max
     // is derived per fight from the loadout (engine/combat.js reads the
     // equipment threshold receipt at entity creation). So this door enters at
     // the receipt's OUTPUT seam — the explicit override createCombat already
@@ -9251,6 +9305,8 @@ Object.assign(module.exports, { stances });
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
+//              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
+//              his 500/50, one home. Poise omits it and stays derived.
 //   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
 //              line of the HUD; a row with no band gets a line of its own.
 //              The approved hybrid (2026-08-13) puts Mana and Stamina beside
@@ -9275,6 +9331,52 @@ Object.assign(module.exports, { stances });
 // SEAM, stated not hidden: MP and SP are still raw hexes with NO cb-safe
 // swap of their own — whether #315c9b / #4d7a45 hold under deuteranopia is
 // a call for the Player-experience seat, not silently mine.
+/**
+ * THE REFERENCE SCALE — HIS RULING, 2026-08-22, AND IT LIVES HERE ALONE.
+ *
+ * Constantine: **500 HP / 50 MP / 50 SP** (E9, #254 — Aurora's reading (b) of
+ * the three specs; the 200/20 of reading (c) is dead by the same word). A bar's
+ * TROUGH is `scale(max) / scale(reference)` of its track, so these two numbers
+ * are the whole of what a full bar looks like. Change them here and nowhere
+ * else: the rows below point at them, `resourceDomains()` reads the row, and no
+ * render path types a ceiling.
+ *
+ * WHAT IT COSTS, MEASURED BEFORE HE CHOSE IT AND RE-STATED HERE SO NOBODY HAS TO
+ * GO LOOKING (Sunna, 2026-08-22, on the game's own content and its own level-up
+ * door — not estimated):
+ *
+ *   the WHOLE reachable player population is 74..94 HP and 2..4 MP/SP.
+ *   Reaching 200 max HP costs 273 level-ups / 153,972 cinders against a
+ *   whole-run budget balance.js itself puts at 400-1200. 500 is further still.
+ *
+ *   So at 500/50 a FULL bar is:
+ *     level 1     74/500 = 14.8 % of its track   ~15 %
+ *     end-game    94/500 = 18.8 % of its track   ~19 %
+ *     a full MP/SP pool  4/50 =  8 % of a half-unit track — BELOW the 16 px
+ *     minimum-width floor at 390x844, so it renders AT the floor and DASHED
+ *     (the broken-axis mark, styles/combat.css `--resbar-min`): the trough
+ *     stops encoding the maximum and says so, and the plate beside it prints
+ *     `MP 4/4` regardless. That is the existing pattern for a bar too thin to
+ *     read; nothing here softens the scale to avoid it.
+ *
+ * He was shown these numbers and reaffirmed 500/50. THIS COMMENT IS THE PRICE
+ * TAG, NOT AN ARGUMENT — the ruling is made. It is written down because the
+ * numbers may move again and the next person to move them should not have to
+ * re-derive what they buy.
+ *
+ * REMOVAL CONDITION (SOP 1's corollary): deleted the day the trough stops
+ * encoding a maximum, or the day max-HP progression reaches this band and the
+ * reference becomes the derived ceiling again (drop `domainMax` from the rows
+ * and `resourceDomains()` derives from content, which is what it does today for
+ * poise).
+ */
+const HUD_REFERENCE_MAX = Object.freeze({
+  /** Health's upper reference. His number. */
+  hp: 500,
+  /** Every pool's upper reference — Mana and Stamina share it. His number. */
+  pool: 50,
+});
+
 const resources = [
   {
     id: 'stamina',
@@ -9285,6 +9387,7 @@ const resources = [
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
+    domainMax: HUD_REFERENCE_MAX.pool,
     band: 'pools',
   },
   {
@@ -9296,6 +9399,7 @@ const resources = [
     order: 20,
     surfaces: ['main'],
     source: 'mana',
+    domainMax: HUD_REFERENCE_MAX.pool,
     band: 'pools',
   },
   {
@@ -9307,6 +9411,7 @@ const resources = [
     order: 10,
     surfaces: ['main', 'model'],
     source: 'hp',
+    domainMax: HUD_REFERENCE_MAX.hp,
   },
   {
     id: 'poise',
@@ -9323,7 +9428,7 @@ const resources = [
 ];
 
 
-Object.assign(module.exports, { resources });
+Object.assign(module.exports, { HUD_REFERENCE_MAX, resources });
 
 },
 "src/content/keywords.js": function (module, exports, require) {
@@ -21282,17 +21387,7 @@ function maxOf(values) {
  * Derived once per registries, not per frame.
  */
 function resourceDomains(registries) {
-  const enemies = registries.enemies.all();
-  const playerPop = [{
-    maxHp: registries.statDomains.hp,
-    maxMana: registries.statDomains.mana,
-    maxStamina: registries.statDomains.stamina,
-    // The player's poise ceiling: the largest stagger threshold the equipment
-    // tables can grant (registries.js derives it beside the other domains).
-    poiseMax: registries.statDomains.poise,
-  }];
-  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
-  const pops = { main: playerPop, model: bothPop };
+  const pops = populationsFor(registries);
   const out = {};
   for (const surface of HUD_SURFACES) {
     out[surface] = {};
@@ -21305,11 +21400,73 @@ function resourceDomains(registries) {
   return out;
 }
 
+/** The two populations, one walk, so the two ceilings below cannot disagree. */
+function populationsFor(registries) {
+  const enemies = registries.enemies.all();
+  const playerPop = [{
+    maxHp: registries.statDomains.hp,
+    maxMana: registries.statDomains.mana,
+    maxStamina: registries.statDomains.stamina,
+    // The player's poise ceiling: the largest stagger threshold the equipment
+    // tables can grant (registries.js derives it beside the other domains).
+    poiseMax: registries.statDomains.poise,
+  }];
+  const bothPop = [...playerPop, ...enemies.map((e) => ({ maxHp: e.hp, poiseMax: e.poiseMax }))];
+  return { main: playerPop, model: bothPop };
+}
+
+/**
+ * resourceLabelCeilings(registries) → { [surfaceId]: { [rowId]: number } }
+ *
+ * THE WIDEST NUMBER A PLATE CAN EVER PRINT, and it is NOT the trough's
+ * reference. These were one field until 2026-08-22 and his 500/50 ruling
+ * (E9 / #254) pulled them apart:
+ *
+ *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
+ *     above anything the content can reach. `domainMax`, 500 for HP.
+ *   · the PLATE reserves the width of the widest LABEL it will ever draw, so
+ *     the track cannot move when a digit is gained mid-run (resbars.js's
+ *     `--plate-reserve-*`, and the reason it exists is measured there). The
+ *     label prints `cur/max`, so the widest it can ever be is set by the
+ *     largest max the CONTENT can produce — 96, not 500.
+ *
+ * MEASURED, because collapsing them is not a style question: while the reserve
+ * read the reference, HP reserved three digits for a number that tops out at
+ * two and every pool reserved two for a number that tops out at one. At
+ * 320x640 that ate the banded pool cells down to 5.81 px and the MP and SP
+ * plates CLIPPED THEIR OWN LABELS ("◆ 2/2") at all eight swept maxima —
+ * tools/hudbars.mjs A4, sixteen findings, green on dev the same hour.
+ *
+ * ALWAYS DERIVED FROM CONTENT: `domainMax` is deliberately NOT consulted here.
+ * A reference below the population would still have to print the real max.
+ *
+ * Memoised per registries — `resourceBarPlan` is called per render and this
+ * walks every enemy.
+ */
+const labelCeilingCache = new WeakMap();
+function resourceLabelCeilings(registries) {
+  const hit = labelCeilingCache.get(registries);
+  if (hit) return hit;
+  const pops = populationsFor(registries);
+  const out = {};
+  for (const surface of HUD_SURFACES) {
+    out[surface] = {};
+    for (const row of registries.resources.all()) {
+      const src = RESOURCE_SOURCES[row.source];
+      if (!src) continue;
+      out[surface][row.id] = src.domain(pops[surface]);
+    }
+  }
+  labelCeilingCache.set(registries, out);
+  return out;
+}
+
 /**
  * resourceBarPlan(registries, surface, view, entity, domains) → [bar]
  *
  * ONE function, both HUDs. A bar is:
- *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, floored }
+ *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, domain,
+ *     labelMax, floored }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -21345,6 +21502,7 @@ function resourceBarPlan(registries, surface, view, entity, domains) {
     .filter((r) => r.surfaces.includes(surface))
     .sort((a, b) => a.order - b.order);
   const scaleByMax = surfaceScalesByMax(registries, surface);
+  const labelCeilings = resourceLabelCeilings(registries)[surface] || {};
   for (const row of rows) {
     const src = RESOURCE_SOURCES[row.source];
     const val = src && src.read(view, entity);
@@ -21363,6 +21521,9 @@ function resourceBarPlan(registries, surface, view, entity, domains) {
       pct: Math.max(0, Math.min(100, (val.cur / val.max) * 100)),
       lengthPct: scaleByMax ? Math.max(0, Math.min(100, raw * 100)) : 100,
       domain,
+      // The plate's reservation ceiling, and it is NOT `domain` — see
+      // resourceLabelCeilings above for the measurement that separated them.
+      labelMax: Math.max(val.max, labelCeilings[row.id] || 0),
     });
   }
   return bars;
@@ -21375,7 +21536,7 @@ function surfaceScalesByMax(registries, surface) {
 }
 
 
-Object.assign(module.exports, { resourceScale, RESOURCE_SOURCES, RESOURCE_SOURCE_IDS, RESOURCE_WEIGHTS, HUD_SURFACES, resourceDomains, resourceBarPlan, surfaceScalesByMax });
+Object.assign(module.exports, { resourceScale, RESOURCE_SOURCES, RESOURCE_SOURCE_IDS, RESOURCE_WEIGHTS, HUD_SURFACES, resourceDomains, resourceLabelCeilings, resourceBarPlan, surfaceScalesByMax });
 
 },
 "src/model/disclosure.js": function (module, exports, require) {
@@ -35047,7 +35208,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'db17513a04';
+const SOURCE = '302cf21ff4';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35081,7 +35242,7 @@ const SOURCE = 'db17513a04';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '0999';
+const ORDINAL = '1029';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38573,6 +38734,8 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
+const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -38615,7 +38778,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const fog = mode === 'fog';
 
   const cz = run.customization || {};
-  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const hasRelics = run.relics.length > 0;
@@ -38638,7 +38800,18 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
         <div class="who">
           <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
-          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
+          <!-- E9 / #254 - ONE HUD. This used to be a hand-written
+               div.bar.hpbar with its own percentage fill and its own 15rem
+               CSS track: a SECOND renderer for the one grammar combat draws
+               through ui/components/resbars.js. Two renderers meant the same
+               character's health read at two different proportions depending
+               on which screen you were looking at, and no instrument could
+               see it because each was internally consistent. The host is
+               empty here and filled below by the same call combat.js and
+               coop.js make. (No backticks in this block: it lives inside a
+               template literal, and one closed it early - the game's own
+               validation banner caught that, not a test.) -->
+          <div class="resbars-host"></div>
         </div>
         <span class="mh-stat cinders">⛁ ${run.cinders}</span>
         <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
@@ -38660,6 +38833,37 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
       </div>
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
+
+  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
+  //
+  // E9 / #254, his words: "I'd like the hud to look the same both combat and
+  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
+  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
+  // the identical call combat.js:435 and coop.js:460 make. So:
+  //
+  //   · WHICH rows appear is content/resources.js's business, not this
+  //     screen's. HP, then the Mana/Stamina band, then poise — the map does
+  //     not get its own list and cannot drift from combat's.
+  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
+  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     means the same thing on both screens.
+  //   · The `run` IS the view and the entity here, exactly as it is in
+  //     tools/hybridstats.mjs — the readers take current/max off it and a row
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. That is
+  //     why POISE does not draw on the map: outside a fight there is no poise
+  //     meter, and the refusal path is the right answer rather than a bar with
+  //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
+  //     which excuses exactly this one row and reds on any other difference.
+  //   · markFlooredBars() runs here for the same reason it runs in combat: the
+  //     minimum-width floor is a RENDERED fact, and a floored trough must wear
+  //     the dashed broken-axis mark on this screen too or the map would show a
+  //     bar that is no longer to scale and does not say so.
+  const resHost = app.querySelector('.map-header .resbars-host');
+  if (resHost) {
+    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
+    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
+    markFlooredBars(resHost);
+  }
 
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -41190,6 +41394,218 @@ function flaskActionPlan({
 
 
 Object.assign(module.exports, { flaskActionPlan });
+
+},
+"src/ui/components/resbars.js": function (module, exports, require) {
+// src/ui/components/resbars.js — the ONE renderer for every resource bar.
+//
+// It knows nothing about health, poise, stamina or mana. It is handed a plan
+// (model/resources.js resourceBarPlan) and draws it. That is the whole point:
+// the day a resource exists, its bar is a row in content/resources.js and this
+// file does not change.
+//
+// TWO GEOMETRIES, and only one of them is new:
+//   the FILL   — width = cur/max. Every bar this game has ever drawn did this.
+//   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
+//                length encodes the maximum, so a bar cannot lie about a stat.
+//
+// TWO STRUCTURES, keyed on the surface — the approved hybrid (2026-08-13,
+// claude-family falk-family: hybrid-confirmation/output/selection-record.json,
+// owner pixels owners/F1-resource-health.png, F2-resource-mana.png,
+// F2-resource-stamina.png):
+//
+//   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
+//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
+//             `band` sit side by side on one line (F2's Mana+Stamina row);
+//             a bar with no band takes a line alone (F1's Health row). The
+//             trough's track is its unit's remaining width, derived by flex —
+//             nothing types a ceiling, so a bar cannot overflow its cell
+//             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
+//   'model' — unchanged: the under-model strip keeps its inside label, which
+//             is also what the approved combat mock draws under the fighters.
+//
+// NOTHING IS TYPED. The line splits into equal unit cells by flex; the trough
+// track is unit minus plate, derived; the trough is a percentage of that.
+
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+
+/**
+ * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
+ *
+ * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
+ * wants Stagger's own text, which is content and not this file's to know).
+ */
+function resourceBars(plan, { surface, tooltipExtra } = {}) {
+  const wrap = document.createElement('div');
+  wrap.className = 'resbars';
+  wrap.dataset.surface = surface || 'main';
+  if ((surface || 'main') === 'main') {
+    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
+    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // the plan is already in `order` order, and a band split across the stack
+    // would be a row author asking for two contradictory things at once —
+    // rendering it as two lines keeps the order authoritative.
+    for (const group of groupByBand(plan)) {
+      const line = document.createElement('div');
+      line.className = 'resline';
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      wrap.appendChild(line);
+    }
+  } else {
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
+  }
+  return wrap;
+}
+
+function groupByBand(plan) {
+  const groups = [];
+  for (const bar of plan) {
+    const prev = groups[groups.length - 1];
+    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);
+    else groups.push([bar]);
+  }
+  return groups;
+}
+
+/** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
+function hybridUnit(bar, tooltipExtra) {
+  const unit = document.createElement('div');
+  unit.className = 'resunit';
+  unit.dataset.res = bar.id;
+
+  // THE PLATE. The label lives BESIDE the trough now, not inside it — the
+  // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
+  // short trough can no longer collide with its own words. The three variants
+  // still ride the DOM and degrade by measured fit, but the container is the
+  // UNIT (whose width flex sets), not the plate (whose width its own content
+  // sets — a container query there would be circular).
+  //
+  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
+  // track is the unit minus the plate — so if the plate's width followed its
+  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
+  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
+  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
+  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
+  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
+  // ceiling — derived per bar from data, never typed — in `ch` with tabular
+  // numerals, so the reservation tracks the Text-size setting like the text
+  // it is. Each degradation variant reserves its own width (a full-name
+  // reservation applied while only the glyph shows would steal track for a
+  // label that is not there); the CSS applies each var in the same container
+  // window that shows its variant.
+  //
+  // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
+  // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
+  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+  // reach. The plate must reserve the widest LABEL it can ever draw, which is
+  // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
+  // the reference put three digits where two will ever print and crushed the
+  // banded pool cells to 5.81 px at 320x640, clipping "◆ 2/2" — measured, and
+  // the derivation of `labelMax` is in model/resources.js resourceLabelCeilings.
+  // The fallback chain keeps a legacy plan (no labelMax) rendering as before.
+  const ceiling = Number.isFinite(bar.labelMax) ? bar.labelMax : (bar.domain || bar.max);
+  const digits = String(Math.trunc(Math.max(bar.max, ceiling, 1))).length;
+  const plate = document.createElement('div');
+  plate.className = 'resplate';
+  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
+  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
+  plate.innerHTML =
+    `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  unit.appendChild(plate);
+
+  const track = document.createElement('div');
+  track.className = 'restrack';
+  track.appendChild(troughEl(bar));
+  unit.appendChild(track);
+
+  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  return unit;
+}
+
+/** The under-model strip bar: trough with the label inside (unchanged shape). */
+function stripBar(bar, tooltipExtra) {
+  const el = troughEl(bar);
+  const label = document.createElement('div');
+  label.className = 'label';
+  label.innerHTML =
+    `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
+    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
+  el.appendChild(label);
+  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  return el;
+}
+
+/** The trough itself — the one element whose LENGTH is the data. */
+function troughEl(bar) {
+  const el = document.createElement('div');
+  el.className = `bar resbar resbar-${bar.weight}`;
+  el.dataset.res = bar.id;
+  // THE TROUGH LENGTH — the one line that is his whole instruction.
+  el.style.width = `${bar.lengthPct.toFixed(3)}%`;
+  el.style.setProperty('--res-tint', bar.tint);
+  // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
+  // to a glyph on a short unit, so `.textContent` is neither stable nor a fair
+  // reading of what the bar says. Instruments and assistive tech read these
+  // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
+  el.dataset.cur = String(bar.cur);
+  el.dataset.max = String(bar.max);
+  el.setAttribute('role', 'img');
+  el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
+
+  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
+  // flooring; whether the floor FIRED is a rendered fact (it depends on the
+  // track, the zoom and the floor together), so it is stamped after layout by
+  // markFlooredBars() rather than guessed at here. A floored trough is drawn
+  // DASHED — the broken-axis mark — because two different maxima below the
+  // floor render the same length, and a bar that is no longer to scale must
+  // not look like one that is.
+  const fill = document.createElement('div');
+  fill.className = 'fill';
+  fill.style.width = `${bar.pct.toFixed(2)}%`;
+  el.appendChild(fill);
+  return el;
+}
+
+function tooltipHtml(bar, tooltipExtra) {
+  const extra = (tooltipExtra && tooltipExtra(bar)) || '';
+  // The tooltip is the floor of legibility for this bar: whatever the plate is
+  // too narrow to print, this always says. Including the maximum, which is the
+  // number a floored bar has stopped encoding.
+  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
+}
+
+/**
+ * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
+ * clause caught, by MEASURING the rendered trough against the floor.
+ *
+ * Called after layout. A bar is floored when its rendered width is wider than
+ * the width its own lengthPct asked for — which is precisely what `min-width`
+ * winning looks like, and it needs no second copy of the floor's value.
+ *
+ * The track each percentage resolves against is the bar's own CONTAINING BLOCK
+ * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
+ * per bar rather than passed in, because since the hybrid two bars on one line
+ * no longer share a track and a single passed-in width would be wrong for one
+ * of them. The old second parameter is accepted and ignored.
+ */
+function markFlooredBars(root) {
+  const bars = root.querySelectorAll('.resbar');
+  for (const el of bars) {
+    const asked = parseFloat(el.style.width); // percent
+    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
+    if (!Number.isFinite(asked) || !trackW) continue;
+    const wanted = (asked / 100) * trackW;
+    const got = el.getBoundingClientRect().width;
+    if (got > wanted + 0.5) el.dataset.floored = '1';
+    else delete el.dataset.floored;
+  }
+}
+
+
+Object.assign(module.exports, { resourceBars, markFlooredBars });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
@@ -44101,207 +44517,6 @@ function mountEquipment(host, {
 
 
 Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, mountEquipment });
-
-},
-"src/ui/components/resbars.js": function (module, exports, require) {
-// src/ui/components/resbars.js — the ONE renderer for every resource bar.
-//
-// It knows nothing about health, poise, stamina or mana. It is handed a plan
-// (model/resources.js resourceBarPlan) and draws it. That is the whole point:
-// the day a resource exists, its bar is a row in content/resources.js and this
-// file does not change.
-//
-// TWO GEOMETRIES, and only one of them is new:
-//   the FILL   — width = cur/max. Every bar this game has ever drawn did this.
-//   the TROUGH — width = scale(max)/scale(domain). HIS ASK. The trough's own
-//                length encodes the maximum, so a bar cannot lie about a stat.
-//
-// TWO STRUCTURES, keyed on the surface — the approved hybrid (2026-08-13,
-// claude-family falk-family: hybrid-confirmation/output/selection-record.json,
-// owner pixels owners/F1-resource-health.png, F2-resource-mana.png,
-// F2-resource-stamina.png):
-//
-//   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
-//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
-//             `band` sit side by side on one line (F2's Mana+Stamina row);
-//             a bar with no band takes a line alone (F1's Health row). The
-//             trough's track is its unit's remaining width, derived by flex —
-//             nothing types a ceiling, so a bar cannot overflow its cell
-//             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
-//   'model' — unchanged: the under-model strip keeps its inside label, which
-//             is also what the approved combat mock draws under the fighters.
-//
-// NOTHING IS TYPED. The line splits into equal unit cells by flex; the trough
-// track is unit minus plate, derived; the trough is a percentage of that.
-
-const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-
-/**
- * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
- *
- * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
- * wants Stagger's own text, which is content and not this file's to know).
- */
-function resourceBars(plan, { surface, tooltipExtra } = {}) {
-  const wrap = document.createElement('div');
-  wrap.className = 'resbars';
-  wrap.dataset.surface = surface || 'main';
-  if ((surface || 'main') === 'main') {
-    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
-    // a line; everything else lines alone. Consecutive-only is deliberate:
-    // the plan is already in `order` order, and a band split across the stack
-    // would be a row author asking for two contradictory things at once —
-    // rendering it as two lines keeps the order authoritative.
-    for (const group of groupByBand(plan)) {
-      const line = document.createElement('div');
-      line.className = 'resline';
-      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
-      wrap.appendChild(line);
-    }
-  } else {
-    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
-  }
-  return wrap;
-}
-
-function groupByBand(plan) {
-  const groups = [];
-  for (const bar of plan) {
-    const prev = groups[groups.length - 1];
-    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);
-    else groups.push([bar]);
-  }
-  return groups;
-}
-
-/** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
-function hybridUnit(bar, tooltipExtra) {
-  const unit = document.createElement('div');
-  unit.className = 'resunit';
-  unit.dataset.res = bar.id;
-
-  // THE PLATE. The label lives BESIDE the trough now, not inside it — the
-  // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
-  // short trough can no longer collide with its own words. The three variants
-  // still ride the DOM and degrade by measured fit, but the container is the
-  // UNIT (whose width flex sets), not the plate (whose width its own content
-  // sets — a container query there would be circular).
-  //
-  // THE PLATE IS RESERVED, AND THIS IS LOAD-BEARING, NOT POLISH. The trough's
-  // track is the unit minus the plate — so if the plate's width followed its
-  // own digits, crossing 99 -> 100 max HP would WIDEN the plate, NARROW the
-  // track, and the bar for the BIGGER pool would render SHORTER. Observed,
-  // not hypothesised: before this reserve, sweeping max 88 -> 120 through
-  // ?shotMaxHp shrank the health bar 92.91 -> 88.53 px (tools/hudbars.mjs A1,
-  // 2026-08-13). So the plate reserves the width of its own resource's DOMAIN
-  // ceiling — derived per bar from data, never typed — in `ch` with tabular
-  // numerals, so the reservation tracks the Text-size setting like the text
-  // it is. Each degradation variant reserves its own width (a full-name
-  // reservation applied while only the glyph shows would steal track for a
-  // label that is not there); the CSS applies each var in the same container
-  // window that shows its variant.
-  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
-  const plate = document.createElement('div');
-  plate.className = 'resplate';
-  plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
-  plate.style.setProperty('--plate-reserve-num', `${2 * digits + 4}ch`);
-  plate.innerHTML =
-    `<span class="l-full">${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
-    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
-  unit.appendChild(plate);
-
-  const track = document.createElement('div');
-  track.className = 'restrack';
-  track.appendChild(troughEl(bar));
-  unit.appendChild(track);
-
-  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
-  return unit;
-}
-
-/** The under-model strip bar: trough with the label inside (unchanged shape). */
-function stripBar(bar, tooltipExtra) {
-  const el = troughEl(bar);
-  const label = document.createElement('div');
-  label.className = 'label';
-  label.innerHTML =
-    `<span class="l-full">${esc(bar.glyph)} ${esc(bar.name)} ${bar.cur}/${bar.max}</span>` +
-    `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
-    `<span class="l-glyph">${esc(bar.glyph)}</span>`;
-  el.appendChild(label);
-  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
-  return el;
-}
-
-/** The trough itself — the one element whose LENGTH is the data. */
-function troughEl(bar) {
-  const el = document.createElement('div');
-  el.className = `bar resbar resbar-${bar.weight}`;
-  el.dataset.res = bar.id;
-  // THE TROUGH LENGTH — the one line that is his whole instruction.
-  el.style.width = `${bar.lengthPct.toFixed(3)}%`;
-  el.style.setProperty('--res-tint', bar.tint);
-  // THE MACHINE-READABLE HOME, and it is not decoration. The label degrades
-  // to a glyph on a short unit, so `.textContent` is neither stable nor a fair
-  // reading of what the bar says. Instruments and assistive tech read these
-  // instead: tools/veil-owns-input.mjs and tools/hudbars.mjs both do.
-  el.dataset.cur = String(bar.cur);
-  el.dataset.max = String(bar.max);
-  el.setAttribute('role', 'img');
-  el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
-
-  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
-  // flooring; whether the floor FIRED is a rendered fact (it depends on the
-  // track, the zoom and the floor together), so it is stamped after layout by
-  // markFlooredBars() rather than guessed at here. A floored trough is drawn
-  // DASHED — the broken-axis mark — because two different maxima below the
-  // floor render the same length, and a bar that is no longer to scale must
-  // not look like one that is.
-  const fill = document.createElement('div');
-  fill.className = 'fill';
-  fill.style.width = `${bar.pct.toFixed(2)}%`;
-  el.appendChild(fill);
-  return el;
-}
-
-function tooltipHtml(bar, tooltipExtra) {
-  const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-  // The tooltip is the floor of legibility for this bar: whatever the plate is
-  // too narrow to print, this always says. Including the maximum, which is the
-  // number a floored bar has stopped encoding.
-  return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
-}
-
-/**
- * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
- * clause caught, by MEASURING the rendered trough against the floor.
- *
- * Called after layout. A bar is floored when its rendered width is wider than
- * the width its own lengthPct asked for — which is precisely what `min-width`
- * winning looks like, and it needs no second copy of the floor's value.
- *
- * The track each percentage resolves against is the bar's own CONTAINING BLOCK
- * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
- * per bar rather than passed in, because since the hybrid two bars on one line
- * no longer share a track and a single passed-in width would be wrong for one
- * of them. The old second parameter is accepted and ignored.
- */
-function markFlooredBars(root) {
-  const bars = root.querySelectorAll('.resbar');
-  for (const el of bars) {
-    const asked = parseFloat(el.style.width); // percent
-    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
-    if (!Number.isFinite(asked) || !trackW) continue;
-    const wanted = (asked / 100) * trackW;
-    const got = el.getBoundingClientRect().width;
-    if (got > wanted + 0.5) el.dataset.floored = '1';
-    else delete el.dataset.floored;
-  }
-}
-
-
-Object.assign(module.exports, { resourceBars, markFlooredBars });
 
 },
 "src/ui/components/arcaneExposure.js": function (module, exports, require) {
