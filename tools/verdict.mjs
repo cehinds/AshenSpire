@@ -46,7 +46,11 @@
 //   0  the wrapped tool exited 0 AND printed a verdict counting >= --min (1)
 //   1  the wrapped tool's verdict counted 0, or it printed two verdicts
 //   3  the wrapped tool exited 0 and printed NO countable verdict — SILENCE
-//   2  usage error in this file, BEFORE any child is spawned
+//   2  THE HARNESS COULD NOT RUN — nothing was measured, so nothing may be
+//      concluded. Three roads reach it: a usage error in this file BEFORE any
+//      child is spawned; a child that could not be spawned at all; and A CHILD
+//      THAT DIED OF AN UNHANDLED EXCEPTION. That last one is why this row was
+//      rewritten — see HARNESS DEATH, below.
 //   4  the wrapped tool was KILLED BY A SIGNAL before reporting — the
 //      environment stopped it (timeout, OOM, ENOSPC). Not a failure, not a
 //      pass: nothing was measured, so nothing may be concluded.
@@ -56,7 +60,40 @@
 //      every platform — a child that died without speaking is never 0 — but on
 //      Windows `killed` and `failed` are the same code, which is the
 //      platform's collapse and is named here rather than papered over.
-//   *  ANY NONZERO CODE A WRAPPED TOOL EXITS WITH IS RETURNED VERBATIM and
+//
+// HARNESS DEATH — THE ONE STATE THIS DOOR WAS STILL MERGING, and it is the
+// commonest instrument death in this tree. An unhandled throw or rejection in a
+// Node child exits **1**, and `1` is this door's word for *a check ran and
+// failed*. So the door reported a dead harness as a finding: the exact merge the
+// file exists to refuse, sitting in the file's own propagation rule. Saga
+// measured it against this PR's thesis and the thesis was unmet.
+//
+// NOT THEORETICAL, AND NOT MINE. Viki hit it the same day: `armoury-picked-up
+// .mjs` exited 1 on an unhandled `timeout picker` and reported a harness death
+// in a finding's clothes. She moved HER tool to exit 2. A door is the wrong
+// place to fix one tool at a time — that is this card's founding argument — so
+// the rule belongs here, in her vocabulary: **2 = HARNESS could not run.**
+//
+// THE DISCRIMINATOR, and it is narrow on purpose: exit code exactly 1, no
+// signal, AND the child's captured output carries Node's FATAL-EXCEPTION
+// SIGNATURE — a stack frame (`\n    at `) together with the `Node.js vX.Y.Z`
+// trailer Node prints only on the uncaught-exception/unhandled-rejection path.
+// Restricted to 1 because 1 is the only code that collides; 2, 4 and 77 already
+// say distinct things and are untouched.
+//
+// ITS BOUNDARY, named rather than left to be found:
+//   · A tool that CATCHES its own error and deliberately exits 1 — even one
+//     that prints a stack — is a FINDING and stays 1. The trailer is the tell,
+//     and there is a plant for exactly that shape.
+//   · The trailer is NODE'S. A python or shell harness that dies unhandled
+//     exits 1 with no signature and is still read as a finding. Every child in
+//     this tree's CI is `node`; the day one is not, this discriminator is blind
+//     to it and says so here rather than in a starved run.
+//   · A child that prints the trailer text itself while exiting 1 is
+//     misread. It is a lie a tool has to work at, and the safe direction: the
+//     failure mode is "blocked as unknown", never "green".
+//
+//   *  ANY OTHER NONZERO CODE A WRAPPED TOOL EXITS WITH IS RETURNED VERBATIM and
 //      takes precedence over every row above. `2` from a browser probe means
 //      THE INSTRUMENT WAS UNAVAILABLE — unknown, which blocks and is not the
 //      same state as `1`, a check that ran and failed. This door reports
@@ -316,6 +353,16 @@ export function readVerdict(text) {
   return { error: 'many', hits, refused };
 }
 
+// NODE'S FATAL-EXCEPTION SIGNATURE. Node prints the offending source line, the
+// error, a stack, and then a bare `Node.js vX.Y.Z` trailer — and it prints that
+// trailer ONLY on the fatal uncaught-exception / unhandled-rejection path, never
+// for a tool that reports and exits on its own terms. Both halves are required:
+// a stack frame AND the trailer. One list, one reader, as with the negation
+// vocabulary above — this question is asked in exactly one place.
+const NODE_STACK_FRAME = /\n\s+at\s/;
+const NODE_FATAL_TRAILER = /(?:^|\n)Node\.js v\d+\.\d+\.\d+[^\n]*\s*$/;
+const nodeFatal = (out) => NODE_STACK_FRAME.test(out) && NODE_FATAL_TRAILER.test(out.replace(/\s+$/, ''));
+
 async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
   return new Promise((done) => {
     let out = '';
@@ -365,6 +412,23 @@ async function runOne(cmd, argv, { min, quiet = false, env } = {}) {
       // while doing it, so the receipt lied too. Fourth distinction this door
       // has been caught collapsing: silence-vs-success, failure-vs-success,
       // unknown-vs-failure.
+      // A HARNESS DEATH IS NOT A FINDING, AND `1` WAS BOTH OF THEM. See
+      // HARNESS DEATH in the header: an unhandled throw exits 1, which is this
+      // door's code for "a check ran and failed", so the door merged the two
+      // states it was written to keep apart — for the commonest instrument
+      // death in this tree. Viki's vocabulary is adopted rather than invented:
+      // 2 is HARNESS could not run, which is where `child.on('error')` above
+      // already lands. Narrow by construction: code === 1 only.
+      if (code === 1 && nodeFatal(out)) {
+        return done({
+          code: 2, out,
+          note: `HARNESS COULD NOT RUN: ${label} died of an unhandled exception and exited 1.\n`
+            + '  This is not a finding — the harness never reached a verdict, so nothing was\n'
+            + '  measured and nothing may be concluded. Node exits 1 for an uncaught throw, the\n'
+            + '  same code a real failure uses; the fatal-exception trailer is what separates them.\n'
+            + '  Fix the instrument, then re-run. `unknown` blocks and is never a pass.',
+        });
+      }
       if (code !== 0) return done({ code, out, note: `${label} exited ${code} — propagated verbatim (unknown is not failure)` });
       const v = readVerdict(out);
       if (v.error === 'none') {
@@ -490,6 +554,26 @@ const SELFTEST = [
   { name: 'and a killed child that had ALREADY printed a good verdict is still killed',
     file: 'console.log("tool: OK — 9 checks passed."); process.kill(process.pid, "SIGTERM");\n',
     want: 4, winWant: 1, neverZero: true },
+  // ---- HARNESS DEATH vs A FINDING. Both edges, because `1` was both. ----
+  { name: 'HARNESS: an unhandled top-level throw exits 2, not 1',
+    file: 'throw new Error("selector went missing");\n', want: 2, mustSay: 'HARNESS COULD NOT RUN' },
+  { name: "HARNESS: Viki's real shape — an unhandled throw from a timer",
+    file: 'setTimeout(() => { throw new Error("timeout picker"); }, 1);\n',
+    want: 2, mustSay: 'HARNESS COULD NOT RUN' },
+  { name: 'HARNESS: an unhandled promise rejection is a death, not a finding',
+    file: 'Promise.reject(new Error("no browser"));\n', want: 2, mustSay: 'HARNESS COULD NOT RUN' },
+  { name: 'HARNESS: a death AFTER a good verdict is still a death, never a pass',
+    file: 'console.log("tool: OK — 9 checks passed."); throw new Error("died cleaning up");\n',
+    want: 2, neverZero: true, mustSay: 'HARNESS COULD NOT RUN' },
+  // THE OTHER EDGE, AND IT IS THE ONE THAT KEEPS THE RULE HONEST: a tool that
+  // catches its own error and exits 1 on purpose is a FINDING and stays 1 —
+  // even when it prints stack-shaped text. The trailer is the discriminator,
+  // not the word "Error" and not an `at` line.
+  { name: 'FINDING: a tool that reports a caught error and exits 1 stays 1',
+    file: 'console.error("Error: two copies disagree\\n    at compare (tools/x.mjs:4:1)"); console.log("tool: FAILED 1 of 3."); process.exit(1);\n',
+    want: 1 },
+  { name: 'FINDING: a stated failure with no fatal trailer is still a finding',
+    file: 'console.log("tool: FAILED 2 of 5."); process.exit(1);\n', want: 1 },
   { name: 'a child exiting 2 (instrument unavailable) comes out 2, not 1',
     file: 'process.exit(2);\n', want: 2 },
   { name: 'a child exiting 1 (a check ran and failed) comes out 1',
@@ -628,7 +712,11 @@ async function selftest() {
       // `mustSay` proves the CHILD spoke — the argv plant's whole point.
       if (ok && p.mustSay && !`${r.out}${r.note || ''}`.includes(p.mustSay)) ok = false;
       // The KILLED wording is asserted only where the signal path exists.
-      if (ok && p.neverZero && process.platform !== 'win32' && !`${r.note || ''}`.includes('KILLED')) ok = false;
+      // Asserted only where 4 is the expectation: `neverZero` is the shared
+      // invariant, but KILLED is the SIGNAL path's wording. A harness-death
+      // plant also carries neverZero and says HARNESS, not KILLED — one
+      // invariant, two mechanisms, each asserted by its own `mustSay`.
+      if (ok && p.neverZero && p.want === 4 && process.platform !== 'win32' && !`${r.note || ''}`.includes('KILLED')) ok = false;
       if (!ok) bad++;
       console.log(`  ${ok ? 'CAUGHT ' : 'MISSED '} exit ${r.code} (want ${expected})  ${p.name}`);
       if (!ok) console.log(`      note: ${(r.note || '').split('\n')[0] || 'child output did not carry ' + p.mustSay}`);

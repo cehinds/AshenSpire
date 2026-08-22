@@ -27,7 +27,20 @@ node tools/verdict.mjs -- node tools/verify-shipped.mjs
 only: a tool that **exits 0 printing nothing** (its `main()` never ran on that
 platform) and a tool whose verdict **counts zero** ("OK — 0 checks passed").
 Exit codes are distinct on purpose — `3` is silence, `1` is a real failure or a
-zero-work green — because those need different fixes.
+zero-work green, `4` is a child killed by a signal, and **`2` is *the harness
+could not run*** — because those need different fixes.
+
+**A harness death is not a finding.** An unhandled throw or rejection in a Node
+child exits `1`, which is the same code as *a check ran and failed* — so the door
+merged the two states it exists to keep apart, for the commonest instrument death
+in this tree. It now answers **`2` (HARNESS could not run)** when a child exits
+exactly `1` and its output carries Node's fatal-exception signature: a stack
+frame together with the `Node.js vX.Y.Z` trailer Node prints only on the uncaught
+path. Nothing else moves — `2`, `4` and any other code were already distinct.
+**The boundary is the tell, not the word "Error":** a tool that catches its own
+error and deliberately exits `1` is a finding and stays `1`, even if it prints a
+stack; a non-Node harness that dies unhandled has no trailer and is read as a
+finding. Both edges are planted in `--selftest`.
 
 **So a tool that CI trusts must print a counted verdict.** The accepted forms
 are a closed table at the top of `verdict.mjs` (`N checks passed`, `PASS — n/m`,
