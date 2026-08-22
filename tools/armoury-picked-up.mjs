@@ -139,6 +139,17 @@ const CODES = new Set([
   'A7.swallow',  // the next ordinary keyboard activation was eaten by the lift-eater
   'A8.leak',     // window keydown listeners outlived the closed Armoury
   'A8.escleak',  // the Escape handler outlived the closed Armoury
+  // A7's MOUSE half and A9 — Codex again, 2026-08-22 (P2a, P2b), both verified
+  // here before either was touched. `A7.premise` is the odd one and says so: it
+  // is a finding about the BROWSER, not this app — the fact equipment.js's
+  // pointerType gate rests on, asserted so it can stop being true out loud.
+  'A7.premise',      // a mouse release over a REMOVED element made a click after all
+  'A7.nomouse',      // no grip could be held with a real mouse — the road was not driven
+  'A7.mousehold',    // a completed MOUSE hold did not commit on the grip
+  'A7.mouseswallow', // the next activation after a MOUSE hold was eaten by the lift-eater
+  'A9.name',         // a grip does not name its piece in the accessibility tree
+  'A9.collide',      // two grips in one picker share an accessible name
+  'A9.blind',        // no picker opened, so no grip name was read at all
 ]);
 // NO CODE FOR THE BOUNDARY PLANT, DELIBERATELY. A code in this set is a finding
 // this file EMITS; the boundary plant asserts the opposite — that the run died
@@ -154,6 +165,12 @@ const redRe = (code) => new RegExp(`FAIL \\[${known(code).replace('.', '\\.')}\\
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  // THE GATE LINE, ONCE. Three plants edit this exact literal, and a plant
+  // whose find-string has drifted from source does not fail — doorplant reports
+  // NOT CAUGHT and the check underneath it goes unwatched, which is how the
+  // A6.tail plant sat green while its subject had moved. One copy here means a
+  // change to the gate breaks all three loudly, together, in the same run.
+  const GATE = "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown' && ev.pointerType !== 'mouse') eatTheLift(); act(); },";
   process.exit(await doorSelftest({
     tool: 'armoury-picked-up.mjs',
     timeoutMs: 900000,
@@ -311,7 +328,7 @@ if (process.argv.includes('--selftest')) {
         // `BUTTON.es-cell` — a picker the player never asked for.
         name: 'the lift after a completed hold is not swallowed (the redraw eats the finger)',
         edits: [{ file: 'src/ui/screens/equipment.js',
-          find: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },",
+          find: GATE,
           replace: 'onConfirm: act, /* planted: no lift swallow */' }],
         expectRed: redRe('A6.tail'),
       },
@@ -323,9 +340,37 @@ if (process.argv.includes('--selftest')) {
         // did nothing at all.
         name: 'the lift-eater is armed on every road, including the ones with no lift',
         edits: [{ file: 'src/ui/screens/equipment.js',
-          find: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },",
+          find: GATE,
           replace: 'onConfirm: () => { eatTheLift(); act(); }, /* planted: armed on keyboard and pad too */' }],
         expectRed: redRe('A7.swallow'),
+      },
+      {
+        // CODEX, 2026-08-22 (P2a). THE HALF THE FIRST GATE LEFT: `pointerdown`
+        // alone is true of a MOUSE press too, and a mouse release over the
+        // element `act()` has just removed makes no click — so the eater armed
+        // and never fired, and the next activation on ANY other road paid for
+        // it. This plant restores exactly that state: the road gate stays, the
+        // device gate goes. A6 CANNOT SEE IT — `[]` after a mouse lift either
+        // way — so it is bound to A7's mouse-origin check, which watches the
+        // product: one keyboard Enter on a view tab after a mouse hold.
+        name: 'the lift-eater is armed on the MOUSE road, which has no lift (Codex P2a)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: GATE,
+          replace: "onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); }, /* planted: armed on mouse too */" }],
+        expectRed: redRe('A7.mouseswallow'),
+      },
+      {
+        // CODEX, 2026-08-22 (P2b). The grip loses its accessible name and
+        // nothing else changes: it still equips, still holds, still meets the
+        // tap floor, still reads `Equip` on screen. Every other check in this
+        // file passes. Measured at the max edge before the fix — eight grips,
+        // seven named `Equip HOLD`, six collisions — which is the state this
+        // plant returns the tree to.
+        name: 'the grip loses the piece name from its accessible name (Codex P2b)',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: "      grip.setAttribute('aria-label',\n        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);",
+          replace: '      /* planted: the grip is named `Equip` and nothing else */' }],
+        expectRed: redRe('A9.name'),
       },
       {
         // CODEX, 2026-08-22. `draw()` drains the grips; a CLOSE runs no draw.
@@ -444,8 +489,21 @@ function finish(code, why = null) {
     console.log('  that ever uses body.style.zoom or a transform breaks that and A6 would need converting.');
     console.log('  KEYBOARD IS NOW DRIVEN, by A7 only, and only for the eater: real Input.dispatchKeyEvent');
     console.log('  through input.js\'s own road. THE PAD IS NOT DRIVEN HERE — tools/holdconfirm.mjs is where');
-    console.log('  that is watched. A8 counts window/document keydown listeners with getEventListeners over');
+    console.log('  that is watched. A7 ALSO DRIVES A MOUSE HOLD AND THEN A KEY, which is the only stage that');
+    console.log('  can see a mouse-armed eater: A6 reads [] after a mouse lift whether one is armed or not,');
+    console.log('  because a mouse release over a removed element makes NO CLICK — A7 measures that premise');
+    console.log('  on a probe button of its own, both sides, and it is a claim about the BROWSER, not this');
+    console.log('  app. PEN IS NOT DRIVEN AND NOT MEASURED: the gate arms for every non-mouse pointer, so a');
+    console.log('  pen that emits no click leaves an eater waiting for the pointerdown a pen user sends next.');
+    console.log('  A8 counts window/document keydown listeners with getEventListeners over');
     console.log('  six open/close cycles on the map mount; it says nothing about any other listener kind.');
+    console.log('  A9 READS THE ACCESSIBILITY TREE (Accessibility.getFullAXTree), which is a different tree');
+    console.log('  from the DOM — it is the whole reason data-hold-for does not answer P2b. It covers the');
+    console.log('  GRIPS ONLY, at two edges (one candidate, and eight with ?shotStorage=full filled through');
+    console.log('  addToStorage). It does NOT cover the in-card control: the fold is an accordion — all eight');
+    console.log('  faces clicked left aria-expanded true on exactly one — so at most one such control is in');
+    console.log('  the tree at a time and it has no sibling to collide with. NO SCREEN READER WAS RUN: this');
+    console.log('  is the name Chromium computes, not what NVDA or VoiceOver announces from it.');
     console.log('  The phone shape 390x844 was driven by hand during the build and is not in this run.');
     console.log('  tools/screenshot.mjs is NOT used: it prints an 87 px white band and exits 0 under');
     console.log('  Chromium 141, so every frame here is Page.captureScreenshot over browser.mjs\'s CDP path.');
@@ -990,8 +1048,15 @@ async function main() {
       // The eater's claim is "the lift's click is swallowed", not "the click
       // landed somewhere harmless", so the check now says what the mechanism
       // says: ZERO clicks after the lift, control or not. Clean-tree reading is
-      // `[]` on both mouse and touch, and it is `[]` because nothing is
-      // dispatched — the eater stops it at window capture, above this recorder.
+      // `[]` on both mouse and touch — AND THE TWO ZEROES HAVE DIFFERENT CAUSES,
+      // which this comment claimed otherwise until 2026-08-22 and which is why
+      // Codex's P2a could hide here. On TOUCH the eater stops a real click at
+      // window capture, above this recorder. On MOUSE there was never a click:
+      // a mouse release over an element removed between press and release
+      // generates none — the premise stated at :308-310 of this file, now
+      // measured by A7 below rather than only written down. So A6.tail is blind
+      // to the mouse road by construction: it reads the same `[]` whether the
+      // eater is armed there or not, and cannot be made to see it. A7 owns it.
       const woke = tail.filter((h) => h.t === 'click');
       ok(woke.length === 0, woke.length === 0
         ? `A6 the ${way} lift after a completed hold dispatched no click at all — the swallow held`
@@ -1047,7 +1112,7 @@ async function main() {
     // REAL KEYS, input.js's own road: `Input.dispatchKeyEvent`, the focus cursor
     // WALKED onto the grip with real ArrowDown rather than assigned, so a run
     // where the cursor cannot reach the grip is A7.nokey and never a quiet pass.
-    console.log('\n  A7 · the eater is a pointer device  (map mount, REAL keyboard input)');
+    console.log('\n  A7 · the eater is armed only where a lift makes a click  (map mount, REAL keyboard AND mouse input)');
     {
       await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
       await until("!!document.querySelector('#open-armoury')", 'map');
@@ -1110,6 +1175,125 @@ async function main() {
             : red('A7.swallow', `the next keyboard activation did nothing — data-view stayed "${view1}" after Enter on "${target}"; a lift-eater armed by a keyboard commit ate it`));
         }
       }
+
+      // ---- A7 · THE PREMISE THE MOUSE GATE RESTS ON ------------------
+      //
+      // `equipment.js` does not arm the eater when `ev.pointerType === 'mouse'`,
+      // and the ONLY reason that is safe is that a mouse release over an element
+      // removed between press and release generates no click at all. That fact
+      // was written at :308-310 of this file for a year of nobody checking it,
+      // and a fix rested on it. IT IS A CLAIM ABOUT THE BROWSER, not about this
+      // app: a Chromium that starts dispatching that click turns the gate above
+      // into the A6.tail defect on mouse, silently, with every check green.
+      //
+      // Measured on the live page with a probe button of this tool's own making,
+      // BOTH SIDES of the one condition that matters: element present at release
+      // (a click is expected) and element removed before it (none is).
+      {
+        const box = JSON.parse(await ev(`JSON.stringify((() => {
+          document.querySelectorAll('#a7-probe').forEach((n) => n.remove());
+          const d = document.createElement('button');
+          d.id = 'a7-probe'; d.textContent = 'probe';
+          d.style.cssText = 'position:fixed;left:20px;top:20px;width:200px;height:80px;z-index:2147483647';
+          document.body.appendChild(d);
+          window.__a7p = [];
+          document.addEventListener('click', (e) => window.__a7p.push(e.target.id || e.target.tagName), true);
+          const r = d.getBoundingClientRect();
+          return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
+        const mdown = (x, y) => cdp.send('Input.dispatchMouseEvent',
+          { type: 'mousePressed', x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, buttons: 1 }, S);
+        const mup = (x, y) => cdp.send('Input.dispatchMouseEvent',
+          { type: 'mouseReleased', x: Math.round(x), y: Math.round(y), button: 'left', clickCount: 1, buttons: 0 }, S);
+        await ev('window.__a7p = []');
+        await mdown(box.x, box.y); await wait(60); await mup(box.x, box.y); await wait(250);
+        const present = JSON.parse(await ev('JSON.stringify(window.__a7p)'));
+        await ev('window.__a7p = []');
+        await mdown(box.x, box.y); await wait(60);
+        await ev("document.querySelector('#a7-probe').remove()");
+        await wait(60);
+        await mup(box.x, box.y); await wait(250);
+        const removed = JSON.parse(await ev('JSON.stringify(window.__a7p)'));
+        await ev("document.querySelectorAll('#a7-probe').forEach((n) => n.remove())");
+        console.log(`      mouse press/release over a probe button — element PRESENT ${JSON.stringify(present)} · element REMOVED first ${JSON.stringify(removed)}`);
+        // BOTH SIDES, because either alone is worthless: a run where the probe
+        // is never hit at all also prints [] for the removed case.
+        ok(present.length === 1 && removed.length === 0, (present.length === 1 && removed.length === 0)
+          ? 'A7 the premise holds — a mouse release over a REMOVED element makes no click, over a present one it makes exactly 1'
+          : red('A7.premise', present.length !== 1
+            ? `the control case failed: a mouse press/release on a PRESENT button produced ${present.length} click(s), not 1 — the probe was never hit, so the removed case below measures nothing`
+            : `a mouse release over a REMOVED element produced ${removed.length} click(s) — the premise equipment.js's pointerType gate rests on is FALSE in this browser, and the mouse road now needs the eater it is not given`));
+      }
+
+      // ---- A7 · THE MOUSE ORIGIN, WHICH A6 CANNOT SEE ----------------
+      //
+      // Codex, 2026-08-22 (P2a). The `ev.type === 'pointerdown'` gate fixed the
+      // key and pad origins and left the MOUSE one arming an eater with nothing
+      // to eat — released only by the next `pointerdown`, so a player who
+      // finishes a mouse hold and reaches for the keyboard loses one activation
+      // anywhere on the page. Reproduced before the fix at 1200x730: window
+      // click-capture listeners NET +1 after the lift, and the next Enter on the
+      // Grid view tab left `data-view` at "hybrid".
+      //
+      // THIS IS A7.swallow's ASSERTION WITH A MOUSE IN FRONT OF IT, and it is a
+      // separate check because A6 reads `[]` after a mouse lift either way.
+      {
+        await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+        await until("!!document.querySelector('#open-armoury')", 'map');
+        await wait(700);
+        await ev("document.querySelector('#open-armoury').click()");
+        await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+        await wait(450);
+        await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+          || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+        const grip7 = await until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+          .then(() => true, () => false);
+        if (!grip7) {
+          console.log(`    ${red('A7.nomouse', 'no grip to hold with a mouse — the mouse road could not be driven, NOT a pass')}`);
+          fails++; checks++;
+        } else {
+          await wait(350);
+          const aim7 = JSON.parse(await ev(`JSON.stringify((() => {
+            const g = document.querySelector('.equip-picker .ep-list .ep-hold');
+            g.scrollIntoView({ block: 'center' });
+            const r = g.getBoundingClientRect();
+            return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })())`));
+          const hold7 = Number(await ev("document.querySelector('.ep-hold').dataset.holdMs || 600"));
+          const slot7 = () => ev("document.querySelector('.armoury-overlay .equip-slot .es-cell').textContent.trim()");
+          const m0 = await slot7();
+          await cdp.send('Input.dispatchMouseEvent',
+            { type: 'mousePressed', x: Math.round(aim7.x), y: Math.round(aim7.y), button: 'left', clickCount: 1, buttons: 1 }, S);
+          await wait(hold7 + 300);
+          const m1 = await slot7();
+          await cdp.send('Input.dispatchMouseEvent',
+            { type: 'mouseReleased', x: Math.round(aim7.x), y: Math.round(aim7.y), button: 'left', clickCount: 1, buttons: 0 }, S);
+          await wait(400);
+          console.log(`      held MOUSE (${hold7 + 300} ms of a ${hold7} ms dial): slot "${m0}" → "${m1}"`);
+          ok(m1 !== m0, m1 !== m0
+            ? `A7 a completed MOUSE hold commits on the grip ("${m0}" → "${m1}")`
+            : red('A7.mousehold', `a completed mouse hold left the slot at "${m0}" — the mouse road did not reach the hold, so nothing below is measured`));
+          const mv0 = await ev("document.querySelector('.armoury').dataset.view");
+          const mtarget = await ev(`(() => {
+            const tabs = [...document.querySelectorAll('[data-surface="armouryView"] [data-member]')];
+            const other = tabs.find((t) => t.dataset.member !== document.querySelector('.armoury').dataset.view);
+            if (!other) return null;
+            document.querySelectorAll('.gp-focus').forEach((e) => e.classList.remove('gp-focus'));
+            other.classList.add('gp-focus');
+            return other.dataset.member; })()`);
+          if (!mtarget) {
+            console.log(`    ${red('A7.mouseswallow', 'no second view tab to activate — nothing to watch the eater against, NOT a pass')}`);
+            fails++; checks++;
+          } else {
+            await key('rawKeyDown', 'Enter', 'Enter', 13); await wait(90);
+            await key('keyUp', 'Enter', 'Enter', 13); await wait(400);
+            const mv1 = await ev("document.querySelector('.armoury').dataset.view");
+            console.log(`      then one ordinary KEYBOARD Enter on the "${mtarget}" view tab: data-view "${mv0}" → "${mv1}"`);
+            ok(mv1 === mtarget, mv1 === mtarget
+              ? `A7 the next keyboard activation after a MOUSE hold was NOT swallowed (data-view "${mv0}" → "${mv1}")`
+              : red('A7.mouseswallow', `the next keyboard activation after a MOUSE hold did nothing — data-view stayed "${mv1}" after Enter on "${mtarget}";`
+                + ' a lift-eater armed by a mouse commit, which has no lift to eat, ate it instead'));
+          }
+        }
+      }
     }
 
     // ---- A8 · EVERY GRIP A DRAW ARMED IS DISARMED BY THE CLOSE ----------
@@ -1163,6 +1347,109 @@ async function main() {
         : red('A8.escleak', cycles !== 6
           ? `only ${cycles} of 6 close cycles completed — the census could not be taken, NOT a pass`
           : `${dLast - d0} document keydown listener(s) outlived the closed Armoury (${d0} → ${dSeen.join(',')})`));
+    }
+
+    // ---- A9 · EVERY GRIP SAYS WHICH PIECE IT IS FOR ---------------------
+    //
+    // Codex, 2026-08-22 (P2b), and it is a defect OF HIS RULING rather than a
+    // nicety. D97 puts a SECOND control on every candidate; a second control
+    // with no name is a worse screen-reader and voice-control surface than the
+    // single one it joined, and that is not what he was shown when he ruled.
+    //
+    // READ OFF THE ACCESSIBILITY TREE, never the DOM. `data-hold-for` carries
+    // the piece id and is NOT in that tree — that is the whole finding, so a
+    // check that read the dataset would agree with itself and prove nothing.
+    // `Accessibility.getFullAXTree` is the same tree a screen reader consumes.
+    //
+    // BOTH EDGES, and the max edge needs a bag: `?shot=map&shotStorage=full`
+    // fills it through `addToStorage`, the real writer every drop enters, so
+    // the eight candidates are the product's own, not an array this tool wrote.
+    //   ONE candidate  — no sibling to be confused with; the name must still
+    //                    carry the piece, because a lone `Equip` tells a blind
+    //                    player nothing about what they are about to wear.
+    //   MANY candidates — measured before the fix: 8 grips, AX names
+    //                    ["Unequip HOLD","Equip HOLD" x7], 6 collisions.
+    //
+    // NOT THE IN-CARD CONTROL, AND THAT IS MEASURED TOO: the fold is an
+    // ACCORDION. Clicking all eight faces left `aria-expanded="true"` on
+    // exactly ONE, and a folded card's `.ep-equip` is absent from the AX tree
+    // altogether. At most one in-card control exists at a time, inside the card
+    // whose face carries the name — no sibling, no collision, nothing to name.
+    console.log('\n  A9 · every grip names its piece  (map mount, ACCESSIBILITY TREE, both edges)');
+    {
+      await cdp.send('DOM.enable', {}, S);
+      await cdp.send('Accessibility.enable', {}, S);
+      const axGrips = async () => {
+        const { nodes } = await cdp.send('Accessibility.getFullAXTree', {}, S);
+        const byBackend = new Map();
+        for (const n of nodes) if (n.backendDOMNodeId != null) byBackend.set(n.backendDOMNodeId, n);
+        const { root } = await cdp.send('DOM.getDocument', { depth: -1, pierce: true }, S);
+        const { nodeIds } = await cdp.send('DOM.querySelectorAll',
+          { nodeId: root.nodeId, selector: '.equip-picker .ep-list .ep-hold' }, S);
+        const out = [];
+        for (const nodeId of nodeIds) {
+          const { node } = await cdp.send('DOM.describeNode', { nodeId }, S);
+          const ax = byBackend.get(node.backendNodeId);
+          out.push({ name: ax && ax.name ? String(ax.name.value) : '', role: ax && ax.role ? ax.role.value : null });
+        }
+        return out;
+      };
+      // Every edge in one walk: the bag-full run gives the main hand EIGHT
+      // candidates and other slots ONE, so both ends enter by the same door.
+      for (const edge of [{ q: '?shot=map&shotStorage=full', say: 'bag FULL (max edge)' },
+        { q: '?shot=map', say: 'fresh run (empty edge)' }]) {
+        await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
+        await until("!!document.querySelector('#open-armoury')", 'map');
+        await wait(700);
+        const cells = Number(await ev("document.querySelectorAll('.armoury-overlay .equip-slot .es-cell').length")) || 0;
+        void cells;
+        await ev("document.querySelector('#open-armoury').click()");
+        await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+        await wait(450);
+        const slotCount = Number(await ev(`document.querySelectorAll('.armoury-overlay .equip-slot .es-cell:not(.locked)').length`));
+        let seen = 0;
+        for (let i = 0; i < slotCount; i++) {
+          const opened = await ev(`(() => {
+            const c = [...document.querySelectorAll('.armoury-overlay .equip-slot .es-cell:not(.locked)')][${i}];
+            if (!c) return false; c.click(); return true; })()`);
+          if (!opened) continue;
+          await wait(500);
+          if (!await ev("!!document.querySelector('.equip-picker .ep-list .ep-hold')")) continue;
+          const pieces = JSON.parse(await ev(`JSON.stringify(
+            [...document.querySelectorAll('.equip-picker .ep-list .disc-face .df-label, .equip-picker .ep-list .disc-face')]
+              .filter((n) => n.classList.contains('disc-face'))
+              .map((f) => (f.querySelector('.ec-name') || f).textContent.trim()))`));
+          const names = (await axGrips()).map((g) => g.name);
+          const dups = names.length - new Set(names).size;
+          const unnamed = names.filter((n, k) => {
+            const piece = (pieces[k] || '').trim();
+            return !piece || !n.toLowerCase().includes(piece.toLowerCase());
+          }).length;
+          seen++;
+          console.log(`      ${edge.say} · slot ${i}: ${names.length} grip(s) · pieces ${JSON.stringify(pieces)}`);
+          console.log(`          AX names ${JSON.stringify(names)}`);
+          ok(unnamed === 0, unnamed === 0
+            ? `A9 ${edge.say} slot ${i}: all ${names.length} grip name(s) carry their piece`
+            : red('A9.name', `${edge.say} slot ${i}: ${unnamed} of ${names.length} grip(s) do not name their piece in the accessibility tree`
+              + ` — ${JSON.stringify(names)} against ${JSON.stringify(pieces)}. data-hold-for is not in that tree.`));
+          ok(dups === 0, dups === 0
+            ? `A9 ${edge.say} slot ${i}: no two grips share an accessible name (${names.length} candidate(s))`
+            : red('A9.collide', `${edge.say} slot ${i}: ${dups} grip name collision(s) among ${names.length} candidates — ${JSON.stringify(names)};`
+              + ' assistive tech and voice control meet several sibling buttons with one name'));
+          // Back to a clean panel: each slot's picker is read on its own draw.
+          await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
+          await until("!!document.querySelector('#open-armoury')", 'map');
+          await wait(650);
+          await ev("document.querySelector('#open-armoury').click()");
+          await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+          await wait(400);
+        }
+        // A run where no picker opened would print nothing and pass — the blind
+        // green this house keeps finding. It is a finding, not a skip.
+        ok(seen > 0, seen > 0
+          ? `A9 ${edge.say}: ${seen} slot picker(s) read off the accessibility tree`
+          : red('A9.blind', `${edge.say}: no slot picker opened at all — no grip name was read, NOT a pass`));
+      }
     }
 
   // ONE HARNESS-DEATH HANDLER FOR THE WHOLE DRIVEN RUN, and this catch used to

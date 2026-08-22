@@ -886,6 +886,38 @@ export function mountEquipment(host, {
       grip.dataset.holdFor = entry.key;
       grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
       grip.textContent = entry.equipped ? 'Unequip' : 'Equip';
+      // WHICH PIECE THIS GRIP IS FOR, IN THE ACCESSIBILITY TREE. Codex found
+      // it and it is a defect of HIS RULING, not a nicety: D97 puts a SECOND
+      // control on every candidate, and until this line every one of them was
+      // named `Equip`. MEASURED, at ?shot=map&shotStorage=full (the bag filled
+      // through addToStorage, the real writer), main-hand, 1200x730, off
+      // `Accessibility.getFullAXTree`:
+      //
+      //   8 grips · AX names ["Unequip HOLD","Equip HOLD" x7] · 6 collisions
+      //
+      // A screen reader reads "Equip HOLD, button" seven times and a voice
+      // user has nothing to say. `data-hold-for` carries the id and IS NOT IN
+      // THAT TREE — also measured, not assumed. Two elements per candidate is
+      // his call and it ships; two elements where the new one has no name is a
+      // WORSE reader experience than the one control it joined, which is not
+      // what he ruled on.
+      //
+      // ONLY THE GRIP, AND THAT IS A MEASUREMENT TOO. The in-card `.ep-equip`
+      // is absent from the AX tree while folded, and the fold is an ACCORDION —
+      // clicking all eight faces left `aria-expanded="true"` on exactly ONE. So
+      // at most one in-card control exists at a time, inside the card whose
+      // face carries the name, and it has no sibling to be confused with. A
+      // second aria-label there would be a name nothing can collide with.
+      //
+      // `aria-label` and not `aria-labelledby`: the grip is a SIBLING of the
+      // face by construction (see the note below — that is rule 1's safety),
+      // so pointing at the face would mean minting an id for it and keeping
+      // two nodes in step across every redraw. The word and the piece already
+      // sit in this scope; naming the control here is one home, not two.
+      // It also drops the `HOLD` hint span out of the name — `aria-label`
+      // overrides content, and "Equip HOLD" was the hint leaking into it.
+      grip.setAttribute('aria-label',
+        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);
       // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
       // Nested inside the face the grip's aborted click would bubble into the
       // unfold path and only `stopPropagation` would stand between them — which
@@ -945,12 +977,42 @@ export function mountEquipment(host, {
       // origin event, and no other road can produce that type here. A source
       // flag would be a second copy of a fact the event already carries.
       //
+      // AND `pointerType !== 'mouse'`, BECAUSE A MOUSE IS A POINTER WITH NO
+      // LIFT TO EAT. Codex found this too, and it is the SAME defect one road
+      // over: the gate above fixed the keyboard and pad origins and left the
+      // mouse origin arming an eater that never eats. The premise was already
+      // written down in my own tool — tools/armoury-picked-up.mjs:308-310 says
+      // a mouse release over a removed element generates no click at all — and
+      // the fix did not use it. A fact in the file that never reached the
+      // predicate is the shape this seat exists to refuse.
+      //
+      // SO IT WAS MEASURED BEFORE IT WAS BELIEVED, three ways, Chromium 141,
+      // 1200x730, over browser.mjs's CDP path:
+      //   1 · bare DOM, same page: press a button, REMOVE it, release at the
+      //       same point -> []. Control, element left in place -> ["click"].
+      //   2 · the real grip, completed 900 ms mouse hold: window-capture
+      //       listener traffic ["+click","+pointerdown"] during the hold, ZERO
+      //       clicks after the lift, and NET +1 window click-capture listener
+      //       still armed afterwards.
+      //   3 · the product: one ordinary keyboard Enter on the Grid view tab
+      //       straight after that mouse hold -> data-view "hybrid" -> "hybrid".
+      //       THE TAB DID NOTHING.
+      // Point 3 is A7's finding entered by mouse instead of by key, so the
+      // eater outlived its own gesture on the road the gate was written FOR.
+      //
+      // WHY NOT ARM ONLY FOR `touch`. Touch is measured to produce the click
+      // (that is what this eater was built for); PEN is not measured either
+      // way. Arming for non-mouse takes the safe side of that boundary: a pen
+      // that emits no click leaves the eater waiting for a pointerdown a pen
+      // user is about to send anyway, while a pen that DOES emit one would
+      // otherwise re-open a picker nobody asked for. Named rather than guessed.
+      //
       // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
       // a second `equipPiece(...)` here is two chances to disagree about what
       // "equip" means, which is the copy this seat exists to refuse.
       heldGrips.push(armHold(grip, {
         ms: gripMs,
-        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(); act(); },
+        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown' && ev.pointerType !== 'mouse') eatTheLift(); act(); },
         id: 'equipPiece',
       }));
     }
