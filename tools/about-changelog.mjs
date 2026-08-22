@@ -69,25 +69,69 @@ const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 73
 // A plain-text whitelist reds the corpus on day one, and one tuned until it stops
 // is a blacklist with a better name.
 const INLINE_REFUSED = [
-  [/!\[[^\]]*\]\([^)]*\)/, 'an image'],
-  // `[^)]*`, not `[^)]+`: an EMPTY destination `[x]()` is still a link on GitHub.
-  [/\[[^\]]+\]\([^)]*\)/, 'a link'],
-  [/\[[^\]]+\]\[[^\]]*\]/, 'a reference-style link'],
   // `!` and `?` alongside the letters: an HTML comment and a processing instruction
   // are hidden by GitHub and PRINTED BY `esc()`, which is the worse direction.
   [/<[a-zA-Z/!?][^>]*>/, 'raw HTML'],
 ];
+// THE BRACKETED FORMS ARE COUNTED, NOT PATTERN-MATCHED, AND THAT IS THE WHOLE POINT.
+//
+// CommonMark allows brackets inside LINK TEXT "if they appear as a matched pair of
+// brackets", to ANY depth: `[the [advanced] guide](/guide)` is a valid link and
+// GitHub renders it. `\[[^\]]+\]\([^)]*\)` stops at the INNER `]` and let it
+// through — measured 2026-08-22 by Codex and by Bjorn at the real door, `--write`
+// exit 0, the syntax in `changelog.generated.js` and on the glass.
+//
+// That was the THIRD hole in one pattern (`[x]()` was the second), and a third hole
+// in one line is a shape, not a bug: WIDENING THE CHARACTER CLASS BUYS ONE LEVEL OF
+// NESTING AND RE-OPENS ON TWO. So the depth is counted. Backslash-escaped brackets
+// and parens are skipped, per CommonMark; the destination's own parens nest too
+// (`[a](/x(y))`).
+//
+// BOUNDARY, and it is a real one: this is a SCANNER, NOT A PARSER. It does not know
+// code spans, so `` `arr[0](x)` `` is refused even though GitHub renders it as code
+// — an over-fire, in the safe direction, and it is printed in REFUSAL_SCOPE rather
+// than left for the author to discover.
+function matchingBracket(text, start, open, close) {
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    const character = text[i];
+    if (character === '\\') { i++; continue; }
+    if (character === open) depth++;
+    else if (character === close) { depth--; if (depth === 0) return i; }
+  }
+  return -1;
+}
+export function findBracketedRefusal(text) {
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] !== '[') continue;
+    const label = matchingBracket(text, i, '[', ']');
+    if (label < 0) continue;
+    if (text[label + 1] === '(' && matchingBracket(text, label + 1, '(', ')') >= 0) {
+      return text[i - 1] === '!' ? 'an image' : 'a link';
+    }
+    if (text[label + 1] === '[' && matchingBracket(text, label + 1, '[', ']') >= 0) {
+      return 'a reference-style link';
+    }
+  }
+  return null;
+}
 // WHAT THIS TOOL REFUSES, AND WHAT IT LETS THROUGH. Printed on every exit path, so
 // no green from here can be read as wider than it is. Anything not on the refused
 // list reaches src/content/changelog.generated.js verbatim and is rendered to the
 // player as text by `esc()` in src/ui/screens/about.js.
 export const REFUSAL_SCOPE = [
-  'about-changelog REFUSES: image · inline link (empty destination included) · full and',
-  '  collapsed reference link · shortcut reference on a defined label · raw HTML, comment',
-  '  and processing instruction (`<letter`, `</`, `<!`, `<?`).',
-  'A FORM NOT ON THAT LIST SHIPS TO THE PLAYER VERBATIM. Open, measured, not fixed:',
+  'about-changelog REFUSES: image · inline link · full and collapsed reference link —',
+  '  all three with an EMPTY destination or a NESTED-BRACKET label, at any depth ·',
+  '  shortcut reference on a defined label · raw HTML, comment and processing',
+  '  instruction (`<letter`, `</`, `<!`, `<?`).',
+  'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
+  '  span delimited by a backtick run of ANY length.',
+  'A FORM ON NEITHER LIST SHIPS TO THE PLAYER VERBATIM. Open, measured, not fixed:',
   '  non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities ·',
   '  backslash escapes · a bare URL GitHub autolinks. None is present in CHANGELOG.md today.',
+  'IT SCANS, IT DOES NOT PARSE: a link or a `<tag`-shaped span inside a code span is',
+  '  refused too, and `a <b and b> c` reads as raw HTML. Over-fire, in the safe direction.',
 ].join('\n');
 export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
@@ -124,6 +168,10 @@ export function linkDefinitionLabels(markdown) {
   return labels;
 }
 export function flattenInline(text, where, labels = new Set()) {
+  const bracketed = findBracketedRefusal(text);
+  if (bracketed) {
+    throw new Error(`${where}: prose contains ${bracketed}, which the in-game changelog cannot render — write it in words`);
+  }
   for (const [pattern, what] of INLINE_REFUSED) {
     if (pattern.test(text)) {
       throw new Error(`${where}: prose contains ${what}, which the in-game changelog cannot render — write it in words`);
@@ -140,7 +188,17 @@ export function flattenInline(text, where, labels = new Set()) {
     .replace(/(\*\*|__)(?=\S)([\s\S]*?\S)\1/g, '$2')
     .replace(/(?<![\w*])\*(?=\S)([^*]*?\S)\*(?!\w)/g, '$1')
     .replace(/(?<![\w_])_(?=\S)([^_]*?\S)_(?!\w)/g, '$1')
-    .replace(/`([^`]+)`/g, '$1');
+    // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
+    // DELIMITER. CommonMark: a run of N backticks opens, and the span ends at the
+    // next run of EXACTLY N. `` `([^`]+)` `` matched the INNER pair of ``` ``foo`` ```
+    // and left the outer backticks standing, so a two-backtick span became a
+    // ONE-backtick span in the projection — literal backticks reaching the player,
+    // which is the defect this whole change exists to stop. Measured 2026-08-22 by
+    // Codex and by Bjorn at the real door. The run length is now carried by a
+    // backreference, and the lookarounds keep the run from being cut short at either
+    // end. A backtick that is part of the span's CONTENT survives, as it must:
+    // ``` ``a`b`` ``` is the text ``a`b`` on GitHub too.
+    .replace(/(?<!`)(`+)(?!`)([\s\S]*?)(?<!`)\1(?!`)/g, '$2');
 }
 
 export function parseChangelog(markdown) {
@@ -397,6 +455,14 @@ async function selftest() {
     if (cmp.detail !== 'Costs 3 < 5 and 9 > 2, both fine.') throw new Error(`rewrote it to: ${cmp.detail}`);
     console.log('PASS bare comparison signs are not read as markup');
   } catch (error) { console.error(`FAIL comparison prose refused or altered: ${error.message}`); process.exitCode = 1; }
+  // The bracket SCANNER's own over-fire edge. CommonMark requires `](` to be
+  // adjacent: a bracketed phrase followed by a SPACE and a parenthesis is ordinary
+  // prose on GitHub, and counting depth must not turn it into a link here.
+  try {
+    const [gap] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). The row reads [no reward] (and stops).\n');
+    if (gap.detail !== 'The row reads [no reward] (and stops).') throw new Error(`rewrote it to: ${gap.detail}`);
+    console.log('PASS a bracketed phrase and a separated parenthesis is not read as a link');
+  } catch (error) { console.error(`FAIL separated bracket and parenthesis refused or altered: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
@@ -466,6 +532,53 @@ async function selftest() {
       replace: '). Docs only. See [the guide] for the rest.\n\n[the\tguide]: https://example.invalid/guide',
       expect: 'prose contains a shortcut reference link',
     },
+    // Codex `3836350414` and Bjorn's BLOCK, 2026-08-22, at `a7f1424`. A nested-bracket
+    // label is valid CommonMark link text and GitHub renders it; the old character
+    // class stopped at the inner `]`. Counting depth closes the FORM rather than one
+    // more level of it, so a plant two deep is planted beside the plant one deep.
+    // Stop the label scan at the first `]` and exactly these four go MISS.
+    {
+      name: 'inline link with a NESTED-BRACKET label', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the [advanced] guide](/guide) for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'inline link with a label nested TWO deep', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the [very [advanced]] guide](/guide) for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'reference-style link with a NESTED-BRACKET label', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the [advanced] guide][docs] for the rest.\n\n[docs]: https://example.invalid/guide',
+      expect: 'prose contains a reference-style link',
+    },
+    {
+      name: 'image with a NESTED-BRACKET alt text', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See ![the [wide] shot](/i.png) for the rest.',
+      expect: 'prose contains an image',
+    },
+    // Codex `3836350419`, same head. NOT a refusal — a FLATTEN, so the plant reads
+    // what reached the projection instead of reading an error. `` `([^`]+)` ``
+    // matched the inner pair and left the outer backticks standing: a two-backtick
+    // span became a ONE-backtick span in `changelog.generated.js`, which is literal
+    // backticks reaching the player. Revert the run-length backreference and exactly
+    // these two go MISS.
+    {
+      name: 'two-backtick code span, flattened whole', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads ``foo`` here.',
+      write: { detail: 'Docs only. It reads foo here.' },
+    },
+    {
+      name: 'three-backtick code span, flattened whole', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads ```bar``` here.',
+      write: { detail: 'Docs only. It reads bar here.' },
+    },
     {
       name: 'missing title Settings route', file: 'src/ui/screens/title.js',
       find: 'id="settings"', replace: 'id="settings-missing"', expect: 'title Settings control is unreachable',
@@ -517,11 +630,27 @@ async function selftest() {
       const before = readFileSync(target, 'utf8');
       if (!before.includes(plant.find)) throw new Error(`${plant.name}: plant site drifted`);
       writeFileSync(target, before.replace(plant.find, plant.replace));
-      const child = spawnSync(process.execPath, [SCRIPT, '--root', tempRoot, '--probe-source'], {
+      // A REFUSAL plant reads the error; a FLATTEN plant reads the projection. The
+      // second kind cannot be checked by an exit code — the tool is SUPPOSED to
+      // accept the prose — so it goes through `--write` in the copied tree and the
+      // written module is read back. That is the same door and the same child.
+      const mode = plant.write ? '--write' : '--probe-source';
+      const child = spawnSync(process.execPath, [SCRIPT, '--root', tempRoot, mode], {
         cwd: tempRoot, encoding: 'utf8', timeout: 60000,
       });
       const output = `${child.stdout || ''}\n${child.stderr || ''}`;
-      if (child.status === 0 || !output.includes(plant.expect)) {
+      if (plant.write) {
+        const projected = child.status === 0
+          ? readFileSync(resolve(tempRoot, 'src/content/changelog.generated.js'), 'utf8')
+          : '';
+        if (child.status !== 0 || !projected.includes(JSON.stringify(plant.write.detail).slice(1, -1))) {
+          console.error(`MISS ${plant.name}: exit=${child.status}; expected detail ${JSON.stringify(plant.write.detail)}; output=${output.slice(-600)}`);
+          process.exitCode = 1;
+        } else {
+          caught++;
+          console.log(`CAUGHT ${plant.name}`);
+        }
+      } else if (child.status === 0 || !output.includes(plant.expect)) {
         console.error(`MISS ${plant.name}: exit=${child.status}; expected ${plant.expect}; output=${output.slice(-1200)}`);
         process.exitCode = 1;
       } else {
