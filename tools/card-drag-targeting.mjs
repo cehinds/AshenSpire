@@ -28,6 +28,18 @@
 // red, a run that dies in the harness, and `--selftest` — proved by a plant
 // (the hand draws no card; exit 2, boundary printed) rather than by reading it.
 //
+// THAT CLAIM WAS FALSE FOR THE PATHS ABOVE `main()`, AND IT WAS FALSE IN THE
+// COMMIT THAT MADE IT. `--text typo` threw at module scope, above the guarded
+// `main().then(…).catch(…)`, and exited 1 with an empty stdout: no verdict, no
+// boundary. Fixed two ways, because one of them only fixes one line — the
+// argument checks moved INTO `main()` so a bad flag is a named refusal, and an
+// `uncaughtException` net registered beside finish() so any OTHER module-scope
+// death (the `--selftest` branch reads four files and resolves an import up
+// there too) still prints the extent. NO PLANT REACHES EITHER: the corpus
+// mutates source and runs this tool, and both of these die before a source file
+// is read. Same class as the `--selftest` ordering bug above — run the flag,
+// read the LAST line.
+//
 // The same real page and pointer door checks the approved hand paging controls,
 // drag start, nearest-only single target switching, all-target multi aim,
 // non-targeting silence, one legal commit, zero illegal commits, cleanup on
@@ -132,6 +144,13 @@ function printBoundary() {
   console.log('        summary matches no readVerdict row, so wrapping the COMPOSER today would find');
   console.log('        exactly one recognised line — THIS one — and hand it this count. Not a defect');
   console.log('        today; the fix belongs to whoever wraps that tool, in the same act.');
+  console.log('  THE EXIT PATHS ABOVE main() ARE COVERED BY A NET, NOT BY A PLANT. A bad flag now');
+  console.log('        refuses inside main() and any other module-scope death is caught by an');
+  console.log('        uncaughtException handler that calls the same finish(2). Neither is reachable');
+  console.log('        by this corpus — a plant mutates SOURCE and both die before a source file is');
+  console.log('        read — so both edges of each were run by hand, not planted. STILL UNCOVERED:');
+  console.log('        a failure of this file\'s four static imports, which rejects before any handler');
+  console.log('        of ours exists; verdict.mjs calls that HARNESS COULD NOT RUN and it is right.');
 }
 
 function finish(code, why = null) {
@@ -154,6 +173,50 @@ function finish(code, why = null) {
   // there is no handle left to hold the process open.
   process.exitCode = code;
 }
+
+// THE FIX AND THE HOLE IN ONE COMMIT, AGAIN — and that is why the net is here
+// rather than one more moved line. `main()` is guarded: `.then(finish).catch((e)
+// => finish(2, …))` at the bottom of this file, so every death INSIDE it prints
+// the boundary. Everything at MODULE SCOPE runs ABOVE that guard and had
+// nothing. Measured at 725ca10a: `node tools/card-drag-targeting.mjs --text typo`
+// threw at the argument check, exited 1 with ZERO bytes on stdout — no verdict
+// line, no boundary — which breaks the every-exit-path claim this file's own
+// header makes. It is the same defect as gatelist's G3, where `process.exit(2)`
+// sat above both refusal prints; mine, one round later.
+//
+// A PER-INSTANCE FIX WOULD LEAVE THE CLASS OPEN IN THIS SAME FILE. The
+// `--selftest` branch below is module scope too: `lines()` reads four source
+// files off disk and `import('./doorplant.mjs')` resolves, all above the guard.
+//
+// MEASURED, NOT ASSUMED — node v22.22.2, three module-scope death shapes, all
+// three caught by this handler: a synchronous top-level throw; a rejected
+// top-level `await import(...)`; a throw after a top-level await.
+//
+// REGISTERED HERE, and the position is load-bearing: it must sit BELOW the
+// `let boundaryPrinted` / `checks` / `fails` declarations, because the handler
+// body reaches those bindings and a TDZ read inside a crash handler is a second
+// crash — the same temporal-dead-zone mistake this file already made once, in
+// the commit above. It must sit ABOVE the first module-scope statement that can
+// throw, which is the `--selftest` branch immediately below.
+//
+// WHAT IT DOES NOT COVER, stated positively: the four static `import`s at the
+// top of this file. Those reject before any of this module's code exists, so no
+// handler of ours can be registered yet. That path still dies bare — and
+// `verdict.mjs` still names it HARNESS COULD NOT RUN, exit 2, which is correct.
+process.on('uncaughtException', (e) => {
+  const why = `died above main() — ${(e && e.message) || e}`;
+  // A LATE DEATH MUST NOT PRINT A SECOND COUNTED LINE. If finish() already ran,
+  // the one verdict line is already out; another would make readVerdict report
+  // AMBIGUOUS and convert a true green into a finding — a worse lie than the
+  // crash. So a post-verdict death is marked `unknown` on the exit code and
+  // says why on stderr, and the grammar on stdout stays EXACTLY ONE line.
+  if (boundaryPrinted) {
+    console.error(`card-drag-targeting: ${why} — AFTER the verdict was printed`);
+    process.exitCode = 2;
+    return;
+  }
+  finish(2, why);
+});
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -354,7 +417,13 @@ const only = argOf('--only');
 const screenshots = args.includes('--screenshots');
 const useDist = args.includes('--dist');
 const textSize = argOf('--text') || 'M';
-if (!['S', 'M', 'L', 'XL'].includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
+// THE ARGUMENT CHECKS LIVE IN `main()`, NOT HERE. A throw on this line is a
+// throw at module scope, above the `.catch` that owns finish(2, …) — which is
+// how a typo'd flag exited 1 with an empty stdout at 725ca10a. The handler
+// registered near finish() catches it now either way; putting the refusal
+// inside the guarded path is what makes it a NAMED refusal in this tool's own
+// grammar instead of a rescued crash.
+const TEXT_SIZES = ['S', 'M', 'L', 'XL'];
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -380,6 +449,7 @@ function connectCdp(wsUrl) {
 }
 
 async function main() {
+  if (!TEXT_SIZES.includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
   if (!browserPath) throw new Error('no Chrome/Edge found; pass --browser or set CHROME');
   const served = useDist ? null : await serve({ root: ROOT, port: 8298, open: false });
   const base = useDist ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href : `http://localhost:${served.port}/`;
