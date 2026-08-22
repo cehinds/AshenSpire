@@ -149,6 +149,16 @@ const PROBE = `(() => {
     foldBtnPresent: !!foldBtn,
     foldBtnBox: box(foldBtn),
     stripBox: box(strip),
+    // THE SAME PRIMITIVE THE FIGURE ALREADY USES, applied to the subject it was
+    // never applied to. This file solved this once: the figure's own rect reads
+    // 260x330 whether the strip is open or shut, so measuring the RECT reports
+    // nothing changed while half the figure sits behind a clipped edge — and the
+    // answer was not a predicate, it was measuring the rect intersected with every
+    // clipping ancestor and the viewport. Then the strip was measured with
+    // hand-rolled vertical arithmetic instead. Four rounds of findings all reduce
+    // to that: geometry satisfiable while nothing is on screen. The knowledge was
+    // in the file; the code used it for one subject and not the other.
+    stripVisible: visible(strip),
     // Above the fold = the strip's top edge is inside the viewport AND its
     // whole box is too. A pane you must scroll to is not one click away.
     // INTERSECTS THE VIEWPORT — not merely "starts before its bottom edge".
@@ -255,7 +265,8 @@ async function run() {
       }
       if (afterClick) {
         console.log(`    cost         clicks=${clicks}  strip ${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h} top=${afterClick.stripBox.top}` : 'ABSENT'}`
-          + `  aboveFold=${afterClick.stripAboveFold} [GATED]`
+          + `  VISIBLE ${afterClick.stripVisible ? `${afterClick.stripVisible.w}x${afterClick.stripVisible.h} (area ${afterClick.stripVisible.area})` : 'ABSENT'} [GATED > 0]`
+          + `  aboveFold=${afterClick.stripAboveFold} [reported — subsumed by VISIBLE]`
           + `  fullyVisible=${afterClick.stripFullyVisible} [reported, not gated]`
           + `  vh=${afterClick.viewportH}`);
       }
@@ -310,10 +321,30 @@ async function run() {
         // THE RULING, AS A NUMBER. Where a figure exists, it must arrive WHOLE:
         // its visible area is its layout area, not a clipped band of it.
         if (rendered && fv) {
-          const whole = fv.area >= f.area * 0.98;
-          console.log(`    ruling      figure arrives ${whole ? 'WHOLE' : 'CLIPPED'}`
-            + `  visible/layout = ${(fv.area / f.area * 100).toFixed(0)}%`);
-          gate(whole, 'the figure does not arrive whole — the ruling is not met');
+          // A ZERO-AREA FIGURE IS NOT A WHOLE ONE. `fv.area >= f.area * 0.98`
+          // evaluates `0 >= 0` when the figure collapses, so `display:none` or a
+          // 0x0 box passed the headline gate of this PR and printed
+          // `visible/layout = NaN%`. Planted `width:0;height:0` with the art's
+          // mirror left intact: `figure arrives WHOLE`, `OK — 19 checks passed`,
+          // on an Armoury with no figure on it at all. The ratio is meaningless
+          // without a denominator, so the denominator is asserted first.
+          const laidOut = gate(f.area > 0,
+            `the view declares a figure and it has NO LAYOUT AREA (${f.w}x${f.h}) — it is not on the screen at all`);
+          if (laidOut) {
+            const shown = gate(fv.area > 0,
+              `the figure has a ${f.w}x${f.h} box but NONE of it is visible — clipped or scrolled entirely out of view`);
+            if (shown) {
+              const whole = fv.area >= f.area * 0.98;
+              console.log(`    ruling      figure arrives ${whole ? 'WHOLE' : 'CLIPPED'}`
+                + `  visible/layout = ${(fv.area / f.area * 100).toFixed(0)}%`);
+              gate(whole, 'the figure does not arrive whole — the ruling is not met');
+            } else {
+              skip('none of the figure was visible, so its whole/clipped ratio says nothing');
+            }
+          } else {
+            skip('the figure had no layout area, so nothing could be visible of it');
+            skip('the figure had no layout area, so its whole/clipped ratio has no denominator');
+          }
         } else {
           skip('the figure did not render, so its arrival area could not be measured');
         }
@@ -369,11 +400,21 @@ async function run() {
           const hasArea = gate(!!afterClick.stripBox && afterClick.stripBox.w > 0 && afterClick.stripBox.h > 0,
             `CARDS reports expanded but its strip has no area (${afterClick.stripBox ? `${afterClick.stripBox.w}x${afterClick.stripBox.h}` : 'ABSENT'}) — nothing was opened`);
           if (hasArea) {
-            gate(afterClick.stripAboveFold === true,
-              `one click opened CARDS outside the viewport (top=${afterClick.stripBox.top}, bottom=${afterClick.stripBox.bottom}, vh=${afterClick.viewportH})`
-              + ' — the cost is a click AND a scroll, not the click he was quoted');
+            // ON SCREEN, MEASURED THE WAY THE FIGURE IS MEASURED. `top < vh &&
+            // bottom > 0` is one axis: a strip pushed off the LEFT edge satisfies
+            // both with full width and height, and the run printed
+            // `OK — 19 checks passed` with nothing visible. Planted `left: -4000px`
+            // and confirmed. `visible()` intersects the rect with every clipping
+            // ancestor AND the viewport, on both axes, which is the claim — so
+            // `stripAboveFold` is now REPORTED and subsumed rather than gated.
+            const sv = afterClick.stripVisible;
+            gate(!!sv && sv.area > 0,
+              `one click opened CARDS where none of it is on screen `
+              + `(box ${afterClick.stripBox.w}x${afterClick.stripBox.h} at top=${afterClick.stripBox.top}, `
+              + `visible ${sv ? `${sv.w}x${sv.h}` : 'ABSENT'}, vh=${afterClick.viewportH}) `
+              + '— the cost is a click AND a hunt, not the click he was quoted');
           } else {
-            skip('the opened strip had no area, so its position could not be judged');
+            skip('the opened strip had no layout area, so none of it could be visible');
           }
         } else {
           skip('the click did not expand CARDS, so nothing was opened to measure');
@@ -428,7 +469,12 @@ async function run() {
   console.log('     is wired and the geometry that follows is right. Viki named this same limit');
   console.log('     in #304 and measured why it is hard here (body.style.zoom: rect px and CDP');
   console.log('     input px are different spaces); #315\'s A6 is the door that solves it.');
-  console.log('   · stripFullyVisible is REPORTED, never gated — false at dev and at head alike.');
+  console.log('   · stripFullyVisible is REPORTED, never gated — false at dev and at head alike,');
+  console.log('     a pre-existing scroll this change neither adds nor removes. What IS gated is');
+  console.log('     that SOME of the opened pane is on screen, measured as the rect intersected');
+  console.log('     with every clipping ancestor and the viewport — the same primitive the figure');
+  console.log('     uses. A sliver passes that gate; the visible share is printed so a shrinking');
+  console.log('     one is a falling number rather than a silent pass.');
   console.log('   · two shapes only, 1440x860 and 390x844; the band between them is unmeasured.');
   console.log('   · one container, one headless Chromium, deviceScaleFactor 1. No pixels are');
   console.log('     compared here: every number above is a rect.');
