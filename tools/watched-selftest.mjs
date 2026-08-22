@@ -154,7 +154,11 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   {
     const pr = clone(probes);
     pr.probes.find((x) => x.id === 'S3').read = 'src/ui/screens/settings.js:203 (the holdConfirm row)';
-    plants.push({ name: '13 FLOOR a typed line returns', probes: pr, only: 'S3', reads: true, want: /types a line number \(`:203`\)/, wantExit: 2 });
+    plants.push({ name: '13 FLOOR a typed line returns', probes: pr, only: 'S3', reads: true, want: /types a line number \(`src\/ui\/screens\/settings\.js:203`\)/  // RE-AIMED 2026-08-22: the finding now
+      // names the PATH with the line, because the predicate became `citationsIn(read, 2)` — the
+      // census's own C1/C2 rule — rather than a bare /:(\d+)/ that matched prose. The plant went
+      // GREEN on the message change and told me so; that is the corpus catching its own premise.
+      , wantExit: 2 });
   }
 
   // 14 — THE ONE THAT MUTATES THE SOURCE, NOT THE PROBE. Every plant above
@@ -178,6 +182,53 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
     console.log(`  ${ok ? 'RED ok' : 'GREEN  '}  14 source renamed under S3   exit ${code} (wanted 2)${ok ? '' : '  — THE EXPECTED RED DID NOT APPEAR'}`);
     rmSync(tree, { recursive: true, force: true });
     if (!ok) { console.log('\nPlant 14 came back GREEN: this instrument cannot see the code move under a probe, which is the only defect it was built for.'); return 1; }
+  }
+
+  // 15 — PARAMETER REMOVAL, WHICH IS WHAT #316 ACTUALLY DID, AND PLANT 14 DOES
+  // NOT MODEL IT. Saga blocked #320 on this and she was right twice over: my
+  // body said the plant that mattered was `opensCollapsed` RENAMED, and #316
+  // does not rename it — it drops the third parameter and returns `true`. The
+  // SYMBOL SURVIVES. So a probe anchored on the bare symbol stays green through
+  // the exact edit it was written to catch, and she proved that by applying the
+  // real dev bytes to my head and getting `0 dead derivations`, exit 0.
+  //
+  // Two things go red here, and the SECOND one is the plant. First: the anchor
+  // is now the SIGNATURE, so removing a parameter moves it. Second, and this is
+  // the cost edge that stops the fix rotting back: with the anchor set to the
+  // BARE SYMBOL, the same mutation is GREEN — measured below, in the same run,
+  // on the same bytes. A plant that only shows the red proves the check fires;
+  // this one proves the ANCHOR CHOICE is what makes it fire.
+  {
+    const tree = mkdtempSync(join(tmpdir(), 'watched-readparam-'));
+    for (const n of ['src', 'styles', 'tools', 'content']) cpSync(join(ROOT, n), join(tree, n), { recursive: true });
+    const victim = join(tree, 'src/ui/screens/equipment.js');
+    const SIG = 'export function opensCollapsed(regionId, stored)';
+    const before = readFileSync(victim, 'utf8');
+    if (!before.includes(`${SIG} {`)) { console.error("FLOOR: plant 15 expects A5's signature anchor in equipment.js and did not find it"); return 2; }
+    // The mutation: a parameter appears. Same class as #316's removal — the
+    // signature moves, the symbol does not.
+    writeFileSync(victim, before.replace(`${SIG} {`, `${SIG.slice(0, -1)}, narrow) {`));
+    const runIt = () => {
+      let out = ''; let code = 0;
+      try { out = execFileSync(process.execPath, [join(tree, 'tools/watched.mjs'), '--check-reads'], { cwd: tree, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }); }
+      catch (e) { code = e.status ?? -1; out = `${e.stdout || ''}${e.stderr || ''}`; }
+      return { out, code };
+    };
+    const tight = runIt();
+    const okRed = tight.code === 2 && /A5: anchor "export function opensCollapsed\(regionId, stored\)" is in NONE/.test(tight.out);
+    // COST EDGE: loosen the anchor back to the bare symbol, same bytes.
+    const probesPath = join(tree, 'tools/watched-probes.json');
+    const pj = readFileSync(probesPath, 'utf8');
+    writeFileSync(probesPath, pj.replace(`"${SIG}"`, '"opensCollapsed"'));
+    const loose = runIt();
+    const okGreen = loose.code === 0;
+    console.log('watched --selftest — plant 15, A PARAMETER MOVED UNDER A CORRECT PROBE (#316\'s real shape)');
+    console.log(`  ${okRed ? 'RED ok' : 'GREEN  '}  15 signature anchor   exit ${tight.code} (wanted 2)${okRed ? '' : '  — THE EXPECTED RED DID NOT APPEAR'}`);
+    console.log(`  ${okGreen ? 'GREEN ok' : 'RED    '}  15 COST EDGE: bare-symbol anchor, same bytes   exit ${loose.code} (wanted 0)`);
+    console.log('          — that green is the defect Saga blocked #320 for, kept here so it cannot come back.');
+    rmSync(tree, { recursive: true, force: true });
+    if (!okRed) { console.log('\nPlant 15 came back GREEN: a parameter can move under A5 unseen, which is the exact defect this probe is named for.'); return 1; }
+    if (!okGreen) { console.log('\nPlant 15 cost edge went RED: the bare-symbol anchor now fails too, so this plant no longer isolates the anchor choice. Re-aim it.'); return 1; }
   }
 
   console.log(`\nwatched --selftest — ${plants.length} plants, each run through the REAL tool\n`);
@@ -219,7 +270,12 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   console.log('BOUNDARY: the plants prove the VERDICT MACHINE, the COMMITTED PICTURES sub-check and the');
   console.log('  READ FLOOR can each fail. AMENDED 2026-08-22 (Bjorn) — the sentence that stood here said');
   console.log('  `read` was a person and nothing more, and that was true for exactly as long as nothing');
-  console.log('  checked it: 24 of the 47 probes owing one were reading something that had moved or gone.');
+  console.log('  checked it: THIRTY-TWO of the 47 probes owing one carried at least one citation that no');
+  console.log('  longer resolved — the same figure under all three extraction rules, which is why it is the');
+  console.log('  one quoted. DERIVE IT, DO NOT TRUST IT: `node tools/watched.mjs --census-citations <corpus>`');
+  console.log('  prints the rule beside the number. Three figures I published before Saga re-derived them');
+  console.log('  (`24 of 47`, `17 of 73`, a `.end-turn` drift of `1161`) did not survive, and each was wrong');
+  console.log('  for one reason: its counting rule lived nowhere a reader could read it.');
   console.log('  What is now MACHINE-CHECKED: every file a `read` names exists, every `anchors` literal is');
   console.log('  still in one of them, and no line number is typed anywhere. What is STILL A PERSON: whether');
   console.log('  the anchor identifies the RIGHT thing. An anchor loose enough to survive any edit is a');

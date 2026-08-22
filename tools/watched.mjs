@@ -156,23 +156,37 @@ function readPopulation(ledgerPath) {
 // instrument whose whole job is catching probe rot could not tell a live
 // derivation from a dead one.**
 //
-// MEASURED BEFORE IT WAS FIXED, at `dev` = 897d9fa, over the 47 probes that owe
-// a `read`: 73 of them carried a typed `file:line`. SEVENTEEN of those 73
-// resolved at the line they named. 24 probes of 47 named a line whose subject
-// had moved (median drift far past any tolerable window: `.set-tabs` 461 lines,
-// `.end-turn` 1161), 3 named a symbol that is not in the cited file AT ALL
-// (`.map-zoom` and its three buttons left `map.js` for `mapboard.js`;
-// `data-hold-action` left `holdconfirm.js`), one named a line past the end of
-// its file (`map.js:534`, 309 lines long) and one named a file this repo does
-// not contain. **Not one of those was red.**
+// MEASURED BEFORE IT WAS FIXED — AND THE FIGURES ARE DERIVED BY THIS TOOL, NOT
+// TYPED HERE, BECAUSE FOUR OF THEM WERE TYPED HERE AND THREE OF THOSE WERE WRONG.
+//
+//     node tools/watched.mjs --census-citations <corpus.json>
+//
+// Saga blocked #320 for exactly this and she was right: I published `41 of 69`,
+// `24 of 47`, `17 of 73` and a `.end-turn` drift of `1161`, and a reader could
+// not re-derive one of them, because the counting rule lived in my head. A
+// census whose rule is remembered is the disease this file is about, committed
+// in the file that is about it. The command above prints the RULE beside every
+// number it prints, so the next reader gets the same answer or a different rule
+// they can name. Run it against `897d9fa:tools/watched-probes.json` for the
+// before-picture.
+//
+// WHAT SURVIVED RE-DERIVATION, and it is the finding: over the 47 probes that
+// owe a `read`, THIRTY-TWO carry at least one citation that does not resolve —
+// and 32 is the same under all three extraction rules below, which is why it is
+// the number this floor is argued from. Three named a symbol that is not in the
+// cited file AT ALL (`.map-zoom` and its three buttons left `map.js` for
+// `mapboard.js`; `data-hold-action` left `holdconfirm.js`), one named a line
+// past the end of its file (`map.js:534`, 309 lines long) and one named a file
+// this repo does not contain. **Not one of those was red.**
 //
 // WHAT IT NOW REQUIRES, and why each is the cheapest rule that can go red:
 //
 //   1  `read` names FILES, and every file it names must EXIST.
 //   2  `read` may not carry a typed `:LINE`. A line number is DERIVED from the
 //      anchor below and PRINTED by this tool. A typed one is a second home for
-//      a fact the machine already holds — Law 0 clause 4 — and 56 of the 73 in
-//      the corpus were wrong, which is what a second home with no checker does.
+//      a fact the machine already holds — Law 0 clause 4 — and two thirds of
+//      them in the corpus were wrong, which is what a second home with no
+//      checker does. The exact count and its rule: `--census-citations`.
 //   3  every probe that owes a `read` declares `anchors`: LITERAL strings, each
 //      of which must occur in at least one file the `read` names. An anchor is
 //      the identity of the derivation — the symbol, selector, key or content
@@ -191,7 +205,14 @@ function readPopulation(ledgerPath) {
 //
 // Run it alone — no browser, no ledger, no bundle:
 //   node tools/watched.mjs --check-reads
-const READ_LINE_RE = /:(\d+)(?:[-,]\d+)?/;
+// THE TYPED-LINE PREDICATE IS THE CENSUS'S OWN C2 RULE, AND IT IS ONE HOME, NOT
+// TWO. It used to be a bare /:(\d+)/ over the whole `read` — which matched a
+// line number MENTIONED IN PROSE as readily as one used as a citation, and it
+// caught me the moment I wrote the sentence explaining the rule: the words "its
+// typed `:254` is DELETED" tripped the floor that had just deleted it. A
+// predicate that cannot tell a citation from a sentence about a citation is the
+// same defect one level up, so the check now asks `citationsIn(read, 2)` — the
+// exact extraction `--census-citations` prints and argues from.
 const READ_PATH_RE = /(?:^|[\s·,(])((?:src|styles|tools|tests|docs|content|dist)\/[A-Za-z0-9_\-/.]+\.[A-Za-z0-9]+)/g;
 
 function resolveReads(probeRows) {
@@ -205,8 +226,8 @@ function resolveReads(probeRows) {
     for (const f of files) {
       if (!existsSync(resolve(ROOT, f))) findings.push(`${p.id}: \`read\` names ${f} — THAT FILE IS NOT IN THIS TREE.`);
     }
-    const typed = READ_LINE_RE.exec(read);
-    if (typed) findings.push(`${p.id}: \`read\` types a line number (\`:${typed[1]}\`). Lines are DERIVED here and printed; delete it. (56 of the 73 typed lines in this corpus were wrong.)`);
+    const typed = citationsIn(read, 2)[0];
+    if (typed) findings.push(`${p.id}: \`read\` types a line number (\`${typed.path}:${typed.a}\`). Lines are DERIVED here and printed; delete it. Why this rule earns its keep is MEASURED, not remembered: \`node tools/watched.mjs --census-citations <corpus.json>\` prints the count and the rule that produced it.`);
     const anchors = Array.isArray(p.anchors) ? p.anchors : null;
     if (!anchors || anchors.length === 0) {
       findings.push(`${p.id}: no \`anchors\`. Name at least one LITERAL string from a file in \`read\` — the thing whose disappearance means this probe's derivation is dead.`);
@@ -243,6 +264,11 @@ function reportReads(probeRows) {
     for (const f of findings) console.log(`    ✗ ${f}`);
   }
   console.log('\nBOUNDARY, and it is the same one every consistency check carries: this proves each');
+  console.log('  THE TYPED-LINE RULE CAN GO RED ON PROSE, AND THAT IS THE DIRECTION IT FAILS IN.');
+  console.log('  It is the census C2 extraction: a bare `:N` inherits the nearest path to its left, so a');
+  console.log('  line number MENTIONED in a `read` after a path reads as a citation. A false RED — loud, at');
+  console.log('  the row, one edit to clear — never a false green. It caught the sentence explaining the');
+  console.log('  rule, which is how it came to be named here.');
   console.log('  probe still points at something that EXISTS. It does not prove it points at the RIGHT');
   console.log('  thing — an anchor picked loose enough to survive anything is a green that means');
   console.log('  nothing, and nothing here can see that. `by` names the person who picked it.');
@@ -254,6 +280,37 @@ function reportReads(probeRows) {
     ? `RESULT: FAIL — ${findings.length} dead derivation(s) across ${owed} probe(s); ${table.length} anchor(s) still resolve.`
     : `RESULT: OK — ${owed} probe(s), ${table.length} anchor(s), 0 dead derivations.`);
   return findings.length;
+}
+
+// ⚠ THE STANDING HALF OF THE BOUNDARY, AT MODULE SCOPE AND CALLED FROM EVERY
+// EXIT — which is new, and it is Saga's finding on #320, in my own file.
+//
+// The read floor I added in `readProbes` exits 2 ABOVE this block, so a tree
+// whose probe derivations had rotted got exit 2 and SILENCE: 0 boundary lines,
+// 0 verdict lines, on a path this PR introduced. That is the exact shape I
+// measured across this tree — a boundary print with an exit path above it —
+// committed in the instrument that measures it. Sunna repaired the same shape
+// in tools/armoury-arrival-figure.mjs and Sten in tools/gatelist.mjs; this is
+// their repair, here.
+//
+// THE SPLIT IS DELIBERATE AND IT IS THE ONLY HONEST ONE. What travels is the
+// STANDING half — facts about what this instrument can and cannot see, true on
+// every path because they are properties of the tool, not of the run. What does
+// NOT travel is the RUN half — the artifact photographed, the gate, the
+// committed-picture census — because on the floor path there was no run, and a
+// run fact printed where no run happened is the merged state this file exists
+// to refuse. Same distinction Sten drew for gatelist's census count.
+function printStandingBoundary({ green = true } = {}) {
+  console.log('');
+  // The header is conditional because it is a CLAIM. "what this green does not
+  // cover" printed above a red is a false word in a boundary block, which is the
+  // defect this whole file is about, spelled in four letters.
+  console.log(green ? 'BOUNDARY — what this green does NOT cover:' : 'BOUNDARY — what this REFUSAL does not tell you either:');
+  console.log(`  · ${SHAPES.map((s) => s.tag).join(', ')} only, headless Chromium, one Linux box. Windows unrun — he has not run it either.`);
+  console.log('  · `watched` = the control was ON SCREEN and photographable in the state he opens it in.');
+  console.log('    It is NOT "it works", and it is not a person\'s eyes. The picture still needs a reader,');
+  console.log('    and the report that cites this run names who looked.');
+  console.log('  · `no-screen` rows are a PERSON\'s claim, printed by name above and never folded into watched.');
 }
 
 function readProbes(path) {
@@ -277,6 +334,11 @@ function readProbes(path) {
   if (findings.length) {
     console.error(`FLOOR: ${findings.length} probe derivation(s) in ${path} no longer resolve. Run \`node tools/watched.mjs --check-reads\` for the table.`);
     for (const f of findings) console.error(`  \u2717 ${f}`);
+    printStandingBoundary({ green: false });
+    console.log('  · NO RUN HAPPENED. The artifact, the gate and the committed-picture census are');
+    console.log('    UNKNOWN on this path — nothing was photographed, so no number about a run is');
+    console.log('    printed beside this refusal.');
+    console.log('RESULT: UNKNOWN — the probe corpus could not be read, so no audit was taken.');
     process.exit(2);
   }
   return { byId, doc };
@@ -647,13 +709,7 @@ function reportOut({ results, extras = [], stale, pop, total, gate, artifact }) 
     for (const id of stale) console.log(`  ${id}`);
   }
 
-  console.log('');
-  console.log('BOUNDARY — what this green does NOT cover:');
-  console.log(`  · ${SHAPES.map((s) => s.tag).join(', ')} only, headless Chromium, one Linux box. Windows unrun — he has not run it either.`);
-  console.log('  · `watched` = the control was ON SCREEN and photographable in the state he opens it in.');
-  console.log('    It is NOT "it works", and it is not a person\'s eyes. The picture still needs a reader,');
-  console.log('    and the report that cites this run names who looked.');
-  console.log('  · `no-screen` rows are a PERSON\'s claim, printed by name above and never folded into watched.');
+  printStandingBoundary();
   console.log(`  · the artifact was ${artifact.slice(ROOT.length + 1)}; a stale bundle photographs a tree nobody is on (provenance printed at the top).`);
   console.log(`  · gate: ledger game ${gate.game ?? '?'} · this tree ${gitShort()}`);
 
@@ -705,6 +761,130 @@ async function selftest() {
 // it can be run by a person in a second and wired into CI, which the rest of
 // this file cannot be. It exits 2 on a dead derivation, which is the same floor
 // exit a full run would take — one home for the rule, two doors to it.
+// ---- THE CITATION CENSUS — the rule is PRINTED, so the number is re-derivable --
+//
+// Added 2026-08-22 by Bjorn, because Saga blocked #320 on the one thing that
+// deserved it: three of my four headline figures did not re-derive, and the
+// reason was that no artifact stated the counting rule. She got 67, 76 and 80
+// for one figure of mine that read 73 — which is not two people disagreeing, it
+// is two people measuring different things and both being right.
+//
+// So the rule is a first-class printed object here. THREE EXTRACTION RULES,
+// named, each counted, because a corpus of hand-written prose has no single
+// honest tokenisation:
+//
+//   C1  STRICT       a path WITH an extension, then `:N` or `:N-M`.
+//   C2  + CONT       C1 plus a BARE `:N` that inherits the nearest path to its
+//                    left (`statuses.js:73-93 (…) · :156-162 (…)`).
+//   C3  + COMMA      C2 plus each extra number in `path:N,M`.
+//
+// AND ONE RESOLUTION PREDICATE, stated because it is the half that moves most:
+// a citation RESOLVES iff at least one literal token (>=4 chars, not a bare
+// number, not a stop-word) drawn from the prose that FOLLOWS it — up to the next
+// ` · ` — occurs inside lines N..M of the file it names, read from THIS tree.
+//
+// THE HONEST HEADLINE IS THE RULE-INVARIANT ONE. The citation totals move with
+// the extraction rule (67 / 75 / 79 on the pre-fix corpus) and the resolve count
+// moves with the predicate. The count of PROBES carrying at least one dead
+// citation does not: it is the same under all three. That is the number to
+// argue from, and it is the one this census prints last.
+const STOPWORDS = new Set(['the','and','that','this','with','from','into','when','then','than','only','here','they','them','what','which','were','been','have','does','still','never','once','also','line','lines','file','files','after','before','under','over','same','each','both','said','says','name','names']);
+const CITE_PATH = /([A-Za-z0-9_./-]+\.[A-Za-z0-9]+):(\d+)(?:-(\d+))?((?:,\d+)*)/g;
+const CITE_BARE = /(^|[^A-Za-z0-9_./-]):(\d+)(?:-(\d+))?(?![\d\w])/g;
+
+function citationsIn(read, rule) {
+  const out = []; const marks = [];
+  CITE_PATH.lastIndex = 0;
+  let m;
+  while ((m = CITE_PATH.exec(read))) marks.push({ i: m.index, len: m[0].length, path: m[1], a: +m[2], b: m[3] ? +m[3] : +m[2], extra: m[4] });
+  for (const k of marks) {
+    out.push({ path: k.path, a: k.a, b: k.b, idx: k.i });
+    if (rule >= 3 && k.extra) for (const n of k.extra.split(',').filter(Boolean)) out.push({ path: k.path, a: +n, b: +n, idx: k.i });
+  }
+  if (rule >= 2) {
+    CITE_BARE.lastIndex = 0;
+    let b;
+    while ((b = CITE_BARE.exec(read))) {
+      const at = b.index + b[1].length;
+      if (marks.some((k) => at >= k.i && at < k.i + k.len)) continue;
+      const prior = marks.filter((k) => k.i < at).pop();
+      if (!prior) continue;
+      out.push({ path: prior.path, a: +b[2], b: b[3] ? +b[3] : +b[2], idx: at });
+    }
+  }
+  return out;
+}
+
+function censusCitations(corpusPath) {
+  const doc = JSON.parse(readFileSync(corpusPath, 'utf8'));
+  const rows = (Array.isArray(doc.probes) ? doc.probes : []).filter((p) => p.read);
+  const cache = new Map();
+  const linesOf = (rel) => {
+    if (cache.has(rel)) return cache.get(rel);
+    const abs = join(ROOT, rel);
+    const v = existsSync(abs) ? readFileSync(abs, 'utf8').split('\n') : null;
+    cache.set(rel, v); return v;
+  };
+  const tokensOf = (prose) => [...new Set((prose.match(/[A-Za-z0-9_$.#'-]{4,}/g) || [])
+    .map((t) => t.replace(/^[.'#-]+|[.'-]+$/g, ''))
+    .filter((t) => t.length >= 4 && !/^\d+$/.test(t) && !STOPWORDS.has(t.toLowerCase())))];
+
+  console.log(`watched --census-citations — ${corpusPath.startsWith(ROOT) ? corpusPath.slice(ROOT.length + 1) : corpusPath}`);
+  console.log(`  source tree: ${gitShort()}   probes carrying a \`read\`: ${rows.length}`);
+  console.log('');
+  console.log('  THE RULE, PRINTED, BECAUSE A CENSUS WHOSE RULE IS REMEMBERED IS NOT A MEASUREMENT:');
+  console.log('    C1 STRICT   a path with an extension, then `:N` or `:N-M`');
+  console.log('    C2 + CONT   C1 plus a bare `:N` inheriting the nearest path to its left');
+  console.log('    C3 + COMMA  C2 plus each extra number in `path:N,M`');
+  console.log('    RESOLVES    >=1 literal token (>=4 chars, not a number, not a stop-word) taken from');
+  console.log('                the prose after the citation, up to the next ` · `, occurs in lines N..M');
+  console.log('');
+  let invariant = null; let agree = true;
+  for (const rule of [1, 2, 3]) {
+    let total = 0, ok = 0, dead = 0, noSubject = 0, missing = 0, past = 0;
+    const staleProbes = new Set();
+    for (const p of rows) {
+      for (const c of citationsIn(p.read, rule)) {
+        total++;
+        const L = linesOf(c.path);
+        if (!L) { missing++; dead++; staleProbes.add(p.id); continue; }
+        if (c.a > L.length) { past++; dead++; staleProbes.add(p.id); continue; }
+        const tail = p.read.slice(c.idx);
+        const stop = tail.indexOf(' · ');
+        const toks = tokensOf(stop < 0 ? tail : tail.slice(0, stop));
+        if (!toks.length) { noSubject++; continue; }
+        const hay = L.slice(c.a - 1, c.b).join('\n');
+        if (toks.some((t) => hay.includes(t))) ok++; else { dead++; staleProbes.add(p.id); }
+      }
+    }
+    console.log(`  C${rule}: ${String(total).padStart(3)} citation(s)   ${String(ok).padStart(3)} resolve   ${String(dead).padStart(3)} do NOT   ${noSubject} with no checkable subject`);
+    console.log(`      of the dead: ${missing} name a file not in this tree, ${past} name a line past end of file`);
+    console.log(`      probes with >=1 dead citation: ${staleProbes.size} of ${rows.length}`);
+    if (invariant === null) invariant = staleProbes.size; else if (invariant !== staleProbes.size) agree = false;
+  }
+  console.log('');
+  console.log('BOUNDARY — what this census does NOT claim:');
+  console.log('  · it is a CONSISTENCY measure, never a correctness one. A citation that resolves may');
+  console.log('    still point at the wrong thing; nothing here reads intent. (My own card, failure 3.)');
+  console.log('  · the totals are RULE-DEPENDENT and the three rows above are the evidence for that,');
+  console.log('    not a hedge around it. Quote a total without naming C1/C2/C3 and it is not re-derivable.');
+  console.log('  · the resolve counts move with the predicate above; another defensible predicate gives');
+  console.log('    another number. Saga\'s gave 27 where mine gives 24 on the same corpus. Both stand.');
+  console.log('  · it reads THIS tree. Run it against another checkout and every number may differ,');
+  console.log('    which is the whole point of the floor it argues for.');
+  console.log('');
+  console.log(agree
+    ? `RESULT: OK — ${rows.length} probe(s) read; ${invariant} carry at least one dead citation under ALL THREE rules, so that figure is rule-invariant and is the one to quote.`
+    : `RESULT: OK — ${rows.length} probe(s) read; the stale-probe count is NOT rule-invariant here, so no single figure may be quoted without naming its rule.`);
+  return 0;
+}
+
+if (has('--census-citations')) {
+  const i = process.argv.indexOf('--census-citations');
+  const corpus = process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : PROBES;
+  process.exit(censusCitations(corpus));
+}
+
 if (has('--check-reads')) {
   const { probes: rows } = JSON.parse(readFileSync(PROBES, 'utf8'));
   process.exit(reportReads(rows) ? 2 : 0);
