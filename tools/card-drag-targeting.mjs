@@ -153,6 +153,16 @@ function printBoundary() {
   console.log('        wrote a FATAL with its own success line and verdict.mjs read that as a green.');
   console.log('        NOT PLANTED IN THIS CORPUS, run by hand both ways instead: the init deaths die');
   console.log('        before any source file is read, and the async one needs serve.mjs mutated.');
+  console.log('  ONE PLANT IN THIS CORPUS WAS INTERMITTENT AND IS NOT ANY MORE, and the number is');
+  console.log('        here because the first explanation for it was wrong. "the read is abandoned only');
+  console.log('        when open" reported UNCAUGHT twice; at 725ca10a I blamed a loaded box, re-ran it');
+  console.log('        ONCE on a quiet box, got a red, and wrote that down. ONE RED IS NOT A RATE. Same');
+  console.log('        door, one shape, six serial runs on a quiet box: NAMED RED IN 1 OF 6. Cell 4 was');
+  console.log('        sampling its mid-drag state ~180 ms in while the dial is ~400 ms, so under the');
+  console.log('        known-bad the read had usually not opened yet. Cell 4 now dwells past the');
+  console.log('        MEASURED dial before sampling, which is what cell 3 already did: 6 of 6 red under');
+  console.log('        the plant, 180 of 180 green clean. Any corpus green printed before that fix is');
+  console.log('        UNKNOWN for that one assertion, not green.');
   console.log('        STILL UNCOVERED: a failure of this file\'s four static imports, which rejects');
   console.log('        before any handler of ours exists, and a SIGKILL, which no handler can catch —');
   console.log('        verdict.mjs calls those HARNESS COULD NOT RUN and KILLED, and it is right.');
@@ -230,8 +240,12 @@ function finish(code, why = null) {
   // on 5 of 40 STREAMED, which the earlier note said was safe. It is not.
   // STREAMING THE BODY BUYS NOTHING, BECAUSE THE TAIL IS ALWAYS ONE TICK: the
   // verdict line and this boundary are written in a single burst whatever the
-  // body did. Every lost run cut at the same byte, 23087, at check 172 of 180 —
-  // and one of them lost ONLY the verdict and the boundary, every PASS intact.
+  // body did. EIGHT OF THE NINE LOSSES cut at a buffer boundary — 23087 bytes on
+  // the one-tick stub (4 of 4), 23089 on the streamed one (4 of 5), every one at
+  // check 172 of 180. THE NINTH is the one that shows the failure mode: it cut at
+  // 24153 with all 180 PASS lines intact, losing ONLY the verdict and the
+  // boundary. (This comment first said "every lost run cut at 23087" — true of one
+  // stub, false of the set. The run that breaks the pattern is the evidence.)
   // `verdict.mjs` called each of them SILENCE, exit 3. With `process.exitCode`
   // and natural shutdown: 40 of 40 intact.
   process.exitCode = code;
@@ -1054,6 +1068,25 @@ async function main() {
         await touchAt('touchMove', c4b.x + (f4.x - c4b.x) * i / 6, c4b.y + (f4.y - c4b.y) * i / 6);
         await wait(30);
       }
+      // DWELL PAST THE MEASURED DIAL BEFORE SAMPLING — THE SAME CONSTRUCTION
+      // CELL 3 ALREADY USES TWELVE LINES UP, AND CELL 4 WAS MISSING IT.
+      // Without this the sample lands ~180 ms after touchStart (6 moves x 30 ms
+      // plus CDP round trips) while the inspect dial is ~400 ms, so under the
+      // known-bad the read has usually NOT reached `open` yet and the plant
+      // reports UNCAUGHT — which reads exactly like "the check is blind."
+      //
+      // MEASURED, BECAUSE I HAD ALREADY EXPLAINED THIS AWAY ONCE. At 725ca10a I
+      // saw this plant go UNCAUGHT, blamed a loaded box, re-ran it once on a
+      // quiet box, got a red, and wrote that down as the answer. ONE RED IS NOT
+      // A RATE. Re-measured properly at 8c140fb, same door, one shape, six
+      // serial runs on a quiet box: NAMED RED IN 1 OF 6. The plant was
+      // intermittent, and the corpus green it produced was `unknown`, not green.
+      //
+      // Under the FIX this changes nothing: the touch read is abandoned at SLOP
+      // on the first move, so `data-inspect` is idle and inspectCopies stays 0
+      // however long we wait. Under the KNOWN-BAD the dial now always fires
+      // before the sample. Costs one dial-length per shape.
+      await wait(dialMs > 0 ? dialMs : 400);
       const armed4 = await say();
       await touchAt('touchEnd'); await wait(800);
       const end4 = await say();
