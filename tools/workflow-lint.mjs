@@ -136,7 +136,22 @@ export function splitFlow(body) {
       if (c === q) q = null;
       continue;
     }
-    if (c === '"' || c === "'") { q = c; cur += c; continue; }
+    // A QUOTE ONLY OPENS A SCALAR AT THE START OF ONE — and this is the SAME
+    // AXIS ONE SHAPE OVER from the escape fix above, found by my own hand while
+    // verifying that reviewer's case at this head. Their shape (`"x\\"`, one
+    // backslash) is caught. `"x\\\\"`, TWO backslashes, is also valid YAML —
+    // safe_load resolves it last-wins to `run: two`, discarding a real command —
+    // and this splitter reported NOTHING on it: the escaped backslash closes the
+    // quote correctly, then the `"` in the plain scalar `decoy"` OPENED a new
+    // one that never closed, swallowing both real top-level commas.
+    //
+    // The rule is YAML's own: `"` begins a quoted scalar only where a scalar may
+    // begin — at the start of the body, or just after `,` `{` `[` `:`. Anywhere
+    // else it is an ordinary character inside a plain scalar. Fixing the ESCAPE
+    // axis said nothing about the POSITION axis; this file has written that
+    // lesson down twice already, and it caught me a third time.
+    const before = cur.replace(/\s+$/, '');
+    if ((c === '"' || c === "'") && (before === '' || /[,{[:]$/.test(before))) { q = c; cur += c; continue; }
     if (c === '{' || c === '[') depth++;
     if (c === '}' || c === ']') depth--;
     if (c === ',' && depth === 0) { parts.push(cur); cur = ''; continue; }
@@ -551,6 +566,22 @@ const SELFTEST = [
   // ESCAPE-AWARE FLOW SPLITTING, and the pair that proves it.
   { name: 'form: an escaped quote does not desynchronise comma splitting', want: 1,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "x\\", run: decoy", run: one, run: two }\n' },
+  // THE SAME AXIS ONE SHAPE OVER, and it was live until I planted it. With TWO
+  // backslashes the escape rule closes the quote correctly and the `"` inside the
+  // plain scalar `decoy"` opened a new one that never closed — both real commas
+  // swallowed, one `run` recorded, NO finding. `yaml.safe_load` resolves this
+  // exact text last-wins to `run: two`, discarding a real command. Fixing the
+  // ESCAPE axis said nothing about the POSITION axis.
+  // want 2, and the number is the evidence: this text carries THREE top-level
+  // `run` pairs (`decoy"`, `one`, `two`), so two of them collide with the first.
+  // The reviewer's shape has two pairs and one finding. Typing 1 here would have
+  // meant I had not read what the splitter now returns.
+  { name: 'form: a quote mid-scalar does not open one (the OTHER escape shape)', want: 2,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "x\\\\", run: decoy", run: one, run: two }\n' },
+  // AND THE COST EDGE: a legitimately quoted value carrying a comma must still
+  // split correctly, or this rule buys a duplicate-catch with a false red.
+  { name: 'form: a quoted value containing a comma is still one pair', want: 0,
+    yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "a, b", run: one }\n' },
   { name: 'form: a normal quoted value with a comma inside still splits correctly', want: 0,
     yml: 'on: push\njobs:\n  a:\n    steps:\n      - { name: "a, b", run: echo ok }\n' },
   // AN UNCLASSIFIABLE PAIR IS REFUSED, NOT SKIPPED.
