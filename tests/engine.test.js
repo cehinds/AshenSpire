@@ -4876,6 +4876,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // ROWS — categoryHandler() filters without sorting, rowHtml renders in
     // sequence — so this reads through the same door the renderer uses, not a
     // copy of the table.
+    //
+    // ⚠ THAT SECOND SENTENCE IS A CLAIM THIS TEST DOES NOT CHECK, and it was
+    // written here as though it did. It is true at this ref, and three one-line
+    // edits make it false while every assertion below stays green: the RENDERER
+    // reordering what the table hands it (`categoryHtml`), CSS hiding the first
+    // row, and CSS reversing the visual order of a DOM that never moved. All
+    // three are planted and watched failing in
+    // `node tools/displayfirst.mjs --selftest`, which reads the RENDERED panel
+    // at both doors, at two shapes and two text sizes. This test holds the
+    // TABLE; that tool holds the SCREEN; neither substitutes for the other, and
+    // the tool is a hand-run — `unknown` between runs, not green.
+    // Amended 2026-08-22 by Vira. The assertions are unchanged.
     const display = categoryHandler('Display').rows;
     eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
     eq(display.filter((r) => r.key === 'fullscreen').length, 1,
