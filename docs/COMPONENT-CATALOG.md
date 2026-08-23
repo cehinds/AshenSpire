@@ -67,3 +67,10 @@ Any UI element or component change should link this catalog in the merge or PR
 summary. If the change alters a stable ID, model/factory, renderer, composition,
 or reuse surface, update this catalog and the matching visual miniature before
 the merge.
+
+## Current shared HUD tuning
+
+The catalog's shared HUD currently uses a 70% portrait-badge scale, an 8 px
+primary-row gap, a 2 px Quick Access card gap, and a 2 px vertical vital-row
+gap. These are data-owned in `balance.ui.hudPresentation`, projected once by
+`src/main.js`, and consumed by the shared Map/Combat stylesheet.

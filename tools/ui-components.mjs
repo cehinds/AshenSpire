@@ -95,15 +95,18 @@ export function findings(r) {
   if (!REQUIRED_IDS.every((id) => r.spec.includes(`\`${id}\``))) {
     bad.push('C10 SPEC no longer codifies every public component id');
   }
-  if (!/hudPresentation:\s*\{\s*componentBackgroundOpacityPct:\s*0,\s*metadataFontPx:\s*11,\s*beltItemGapPx:\s*2,?\s*\}/.test(r.balance)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px'].every((name) => r.main.includes(`'${name}'`))
-      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx'].every((name) => r.validate.includes(name))) {
+  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*\}/.test(r.balance)
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px'].every((name) => r.main.includes(`'${name}'`))
+      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
   if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
       || !/font-size:\s*calc\(var\(--hud-metadata-font-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/background:\s*color-mix\(in srgb, var\(--panel\) var\(--hud-component-background-opacity\), transparent\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-belt-item-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
+      || !/width:\s*calc\(3\.8rem \* var\(--hud-portrait-scale\)\)/.test(r.css)
+      || !/gap:\s*calc\(var\(--hud-primary-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
+      || !/gap:\s*calc\(var\(--hud-resource-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/\.hud-potions \.flask-slot\s*\{[^}]*width:\s*var\(--hud-utility-visual-size\);[^}]*min-width:\s*var\(--hud-utility-visual-size\);/.test(r.css)
       || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');

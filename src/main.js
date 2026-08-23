@@ -249,6 +249,10 @@ const projectHudToken = (key, min, max, cssName, unit) => {
 projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
 projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
 projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
+projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
+projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
+projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
+projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads

@@ -697,12 +697,16 @@ export function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, and beltItemGapPx');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, and resourceRowGapPx');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
         ['metadataFontPx', 8, 24],
         ['beltItemGapPx', 0, 12],
+        ['portraitScale', 0.5, 1],
+        ['primaryRowGapPx', 0, 24],
+        ['controlGapPx', 0, 12],
+        ['resourceRowGapPx', 0, 12],
       ]) {
         const value = hp[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {

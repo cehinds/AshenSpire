@@ -42,7 +42,7 @@
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-top {
-  --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
   --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
   --hud-control-visual: calc(32px / var(--ui-zoom, 1));
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
@@ -112,11 +112,11 @@
 
 @container run-header (max-width: 720px) {
   .hud-run-meta .build-source { display: none; }
-  .hud-identity .portrait { width: 36px; height: 36px; font-size: 18px; }
+  .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
 }
 @container run-header (max-width: 520px) {
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
-  .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
+  .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
 @container run-header (max-width: 430px) {
   .hud-run-meta .build-number { display: none; }
@@ -129,9 +129,12 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--hud-quick-panel-size);
   justify-content: space-between;
-  gap: 1rem;
   min-width: 0;
 }
+.topbar.combat-hud.shared-hud .hud-resource-row {
+  gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-bottom { gap: 1rem; }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
 .topbar.combat-hud.shared-hud .hud-bottom { align-items: center; }
 .topbar.combat-hud.shared-hud .hud-vitals-panel,
@@ -275,8 +278,8 @@
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
 .topbar .portrait {
-  width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
-  border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
+  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: 50%; background: var(--panel);
+  border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: calc(2rem * var(--hud-portrait-scale));
   flex-shrink: 0;
 }
 .topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
@@ -317,7 +320,7 @@
    lengths read as a ragged right edge — which IS the information: a longer bar
    is a bigger pool, at a glance, without a number. Elden Ring's HUD, his
    reference, does exactly this. */
-.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
+.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ---- THE HYBRID MAIN HUD (approved 2026-08-13) ----
    Source of the look: the owner pixels in the family repo's approved hybrid —
@@ -1219,8 +1222,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1)); }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
+    gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+  }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
   :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
     grid-template-columns: minmax(0, 1fr) auto;

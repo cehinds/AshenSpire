@@ -260,6 +260,13 @@ export const balance = {
       componentBackgroundOpacityPct: 0,
       metadataFontPx: 11,
       beltItemGapPx: 2,
+      // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
+      // legacy badge; the primary row, control grid, and vital rows each own
+      // their own gap so responsive layouts do not hide a second copy.
+      portraitScale: 0.7,
+      primaryRowGapPx: 8,
+      controlGapPx: 2,
+      resourceRowGapPx: 2,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {

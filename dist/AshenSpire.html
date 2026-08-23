@@ -3565,7 +3565,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-top {
-  --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
   --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
   --hud-control-visual: calc(32px / var(--ui-zoom, 1));
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
@@ -3635,11 +3635,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @container run-header (max-width: 720px) {
   .hud-run-meta .build-source { display: none; }
-  .hud-identity .portrait { width: 36px; height: 36px; font-size: 18px; }
+  .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
 }
 @container run-header (max-width: 520px) {
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
-  .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
+  .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
 @container run-header (max-width: 430px) {
   .hud-run-meta .build-number { display: none; }
@@ -3652,9 +3652,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--hud-quick-panel-size);
   justify-content: space-between;
-  gap: 1rem;
   min-width: 0;
 }
+.topbar.combat-hud.shared-hud .hud-resource-row {
+  gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-bottom { gap: 1rem; }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
 .topbar.combat-hud.shared-hud .hud-bottom { align-items: center; }
 .topbar.combat-hud.shared-hud .hud-vitals-panel,
@@ -3798,8 +3801,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
 .topbar .portrait {
-  width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
-  border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
+  width: calc(3.8rem * var(--hud-portrait-scale)); height: calc(3.8rem * var(--hud-portrait-scale)); border-radius: 50%; background: var(--panel);
+  border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: calc(2rem * var(--hud-portrait-scale));
   flex-shrink: 0;
 }
 .topbar .nm { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 0.15em; }
@@ -3840,7 +3843,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    lengths read as a ragged right edge — which IS the information: a longer bar
    is a bigger pool, at a glance, without a number. Elden Ring's HUD, his
    reference, does exactly this. */
-.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(3px / var(--ui-zoom, 1)); }
+.resbars { display: flex; flex-direction: column; align-items: flex-start; gap: calc(var(--hud-resource-row-gap-px) / var(--ui-zoom, 1)); }
 
 /* ---- THE HYBRID MAIN HUD (approved 2026-08-13) ----
    Source of the look: the owner pixels in the family repo's approved hybrid —
@@ -4742,8 +4745,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1)); }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
+    gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
+  }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
   :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -5508,6 +5513,10 @@ const projectHudToken = (key, min, max, cssName, unit) => {
 projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
 projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
 projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
+projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
+projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
+projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
+projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -7931,6 +7940,13 @@ const balance = {
       componentBackgroundOpacityPct: 0,
       metadataFontPx: 11,
       beltItemGapPx: 2,
+      // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
+      // legacy badge; the primary row, control grid, and vital rows each own
+      // their own gap so responsive layouts do not hide a second copy.
+      portraitScale: 0.7,
+      primaryRowGapPx: 8,
+      controlGapPx: 2,
+      resourceRowGapPx: 2,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -18398,12 +18414,16 @@ function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, and beltItemGapPx');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, and resourceRowGapPx');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
         ['metadataFontPx', 8, 24],
         ['beltItemGapPx', 0, 12],
+        ['portraitScale', 0.5, 1],
+        ['primaryRowGapPx', 0, 24],
+        ['controlGapPx', 0, 12],
+        ['resourceRowGapPx', 0, 12],
       ]) {
         const value = hp[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
@@ -36659,7 +36679,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '40cfb3cb0f';
+const SOURCE = '1ebc72ce22';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36693,7 +36713,7 @@ const SOURCE = '40cfb3cb0f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1144';
+const ORDINAL = '1147';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
