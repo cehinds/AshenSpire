@@ -32,6 +32,32 @@ import { anchorLocalBox } from '../fx.js';
 
 import { attachTooltip, esc } from './tooltip.js';
 
+const cardFrameObservers = new Map();
+let detachedFrameCleanup = null;
+
+function observeCardFrames(wrap) {
+  if (typeof ResizeObserver === 'undefined') return;
+  const observer = new ResizeObserver(() => syncCardFrames(wrap));
+  observer.observe(wrap);
+  cardFrameObservers.set(wrap, observer);
+  wrap._cardFrameObserver = observer;
+
+  if (!detachedFrameCleanup && typeof MutationObserver !== 'undefined') {
+    detachedFrameCleanup = new MutationObserver(() => {
+      for (const [candidate, candidateObserver] of cardFrameObservers) {
+        if (candidate.isConnected) continue;
+        candidateObserver.disconnect();
+        cardFrameObservers.delete(candidate);
+      }
+      if (!cardFrameObservers.size) {
+        detachedFrameCleanup.disconnect();
+        detachedFrameCleanup = null;
+      }
+    });
+    detachedFrameCleanup.observe(document.documentElement, { childList: true, subtree: true });
+  }
+}
+
 /**
  * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
  *
@@ -59,11 +85,7 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
     // its plate + trough ends just after the scaled trough. A ResizeObserver
     // keeps that visual frame aligned when the viewport or UI scale changes.
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
-    if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(() => syncCardFrames(wrap));
-      observer.observe(wrap);
-      wrap._cardFrameObserver = observer;
-    }
+    observeCardFrames(wrap);
   } else {
     for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
   }

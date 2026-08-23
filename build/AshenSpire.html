@@ -35152,7 +35152,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'accbba87ab';
+const SOURCE = '9f7ea6fcb7';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35186,7 +35186,7 @@ const SOURCE = 'accbba87ab';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1068';
+const ORDINAL = '1074';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41335,6 +41335,8 @@ Object.assign(module.exports, { flaskActionPlan });
 },
 "src/ui/components/resbars.js": function (module, exports, require) {
 // src/ui/components/resbars.js — the ONE renderer for every resource bar.
+
+const { anchorLocalBox } = require("src/ui/fx.js");
 //
 // It knows nothing about health, poise, stamina or mana. It is handed a plan
 // (model/resources.js resourceBarPlan) and draws it. That is the whole point:
@@ -41366,6 +41368,32 @@ Object.assign(module.exports, { flaskActionPlan });
 
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 
+const cardFrameObservers = new Map();
+let detachedFrameCleanup = null;
+
+function observeCardFrames(wrap) {
+  if (typeof ResizeObserver === 'undefined') return;
+  const observer = new ResizeObserver(() => syncCardFrames(wrap));
+  observer.observe(wrap);
+  cardFrameObservers.set(wrap, observer);
+  wrap._cardFrameObserver = observer;
+
+  if (!detachedFrameCleanup && typeof MutationObserver !== 'undefined') {
+    detachedFrameCleanup = new MutationObserver(() => {
+      for (const [candidate, candidateObserver] of cardFrameObservers) {
+        if (candidate.isConnected) continue;
+        candidateObserver.disconnect();
+        cardFrameObservers.delete(candidate);
+      }
+      if (!cardFrameObservers.size) {
+        detachedFrameCleanup.disconnect();
+        detachedFrameCleanup = null;
+      }
+    });
+    detachedFrameCleanup.observe(document.documentElement, { childList: true, subtree: true });
+  }
+}
+
 /**
  * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
  *
@@ -41393,11 +41421,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     // its plate + trough ends just after the scaled trough. A ResizeObserver
     // keeps that visual frame aligned when the viewport or UI scale changes.
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
-    if (typeof ResizeObserver !== 'undefined') {
-      const observer = new ResizeObserver(() => syncCardFrames(wrap));
-      observer.observe(wrap);
-      wrap._cardFrameObserver = observer;
-    }
+    observeCardFrames(wrap);
   } else {
     for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
   }
@@ -41483,13 +41507,10 @@ function syncCardFrames(root) {
     const frame = unit.querySelector(':scope > .rescard-frame');
     const bar = unit.querySelector('.restrack > .resbar');
     if (!frame || !bar) continue;
-    const ub = unit.getBoundingClientRect();
-    const bb = bar.getBoundingClientRect();
-    const width = Math.min(ub.width, Math.max(0, bb.right - ub.left + RIGHT_PAD));
-    // getBoundingClientRect is in rendered coordinates; inline width is local
-    // CSS coordinates. UI zoom transforms the former, so convert explicitly.
-    const scale = ub.width > 0 && unit.offsetWidth > 0 ? ub.width / unit.offsetWidth : 1;
-    frame.style.width = `${width / scale}px`;
+    const unitBox = anchorLocalBox(unit, unit);
+    const barBox = anchorLocalBox(unit, bar);
+    const width = Math.min(unitBox.width, Math.max(0, barBox.left + barBox.width + RIGHT_PAD));
+    frame.style.width = `${width}px`;
   }
 }
 
