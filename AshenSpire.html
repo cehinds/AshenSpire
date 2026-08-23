@@ -3510,6 +3510,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
+  --hud-control-visual: calc(32px / var(--ui-zoom, 1));
+  --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
   display: grid;
   gap: calc(5px / var(--ui-zoom, 1));
@@ -3521,6 +3524,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   align-items: center;
   gap: 1rem;
   min-width: 0;
+  container: run-header / inline-size;
 }
 .topbar.combat-hud.shared-hud .hud-identity {
   display: flex;
@@ -3528,21 +3532,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   gap: 0.8rem;
   min-width: 0;
 }
-.topbar.combat-hud.shared-hud .hud-identity-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.topbar.combat-hud.shared-hud .hud-identity-copy .nm,
-.topbar.combat-hud.shared-hud .hud-context {
+.topbar.combat-hud.shared-hud .hud-identity .nm {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.topbar.combat-hud.shared-hud .hud-context {
-  color: var(--muted);
-  font-size: 1rem;
-  letter-spacing: 0.08em;
 }
 .topbar.combat-hud.shared-hud .hud-center {
   display: flex;
@@ -3557,36 +3550,76 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem 0.8rem;
   min-width: 0;
+  overflow: hidden;
   color: var(--muted);
   font-size: 1rem;
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before {
+  content: '· SEED ' attr(data-seed);
+  grid-column: 2;
+  margin-inline: 0.8rem;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number { grid-column: 1; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-source { grid-column: 3; }
+
+@container run-header (max-width: 720px) {
+  .hud-run-meta .build-source { display: none; }
+  .hud-identity .portrait { width: 36px; height: 36px; font-size: 18px; }
+}
+@container run-header (max-width: 520px) {
+  .hud-run-meta .build-stamp[data-seed]::before { display: none; }
+  .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
+}
+@container run-header (max-width: 340px) {
+  .hud-run-meta .build-number { display: none; }
+}
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) var(--hud-quick-panel-size);
+  justify-content: space-between;
   gap: 1rem;
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
 .topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
-.topbar.combat-hud.shared-hud .hud-bottom:has(.hud-potions:empty) { display: none; }
-.topbar.combat-hud.shared-hud .hud-left-stack {
+.topbar.combat-hud.shared-hud .hud-vitals-panel,
+.topbar.combat-hud.shared-hud .hud-control-grid {
+  box-sizing: border-box;
+  height: var(--hud-quick-panel-size);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(8px / var(--ui-zoom, 1));
+  background: color-mix(in srgb, var(--panel) 74%, transparent);
+  padding: var(--hud-panel-pad);
+}
+.topbar.combat-hud.shared-hud .hud-vitals-panel {
   grid-column: 1;
-  display: grid;
-  align-content: space-between;
-  gap: var(--hud-control-gap);
-  width: var(--hud-resource-available-pct);
+  width: min(100%, var(--hud-resource-available-vw));
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .resbars-host {
   width: 100%;
+  height: 100%;
   max-width: 100%;
   min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host > .resbars {
+  height: 100%;
+  justify-content: space-between;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 2;
@@ -3613,24 +3646,43 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   box-sizing: border-box;
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding: 0;
+  padding: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid .topbar-btn > span,
+.topbar.combat-hud.shared-hud .hud-control-grid .flask-identity {
+  box-sizing: border-box;
+  width: var(--hud-control-visual);
+  height: var(--hud-control-visual);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(7px / var(--ui-zoom, 1));
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .topbar.combat-hud.shared-hud .hud-potions,
 .topbar.combat-hud.shared-hud .hud-relics {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-potions {
   justify-content: flex-end;
   flex-direction: row;
+  overflow-x: auto;
+  direction: rtl;
+  scrollbar-width: thin;
 }
 .topbar.combat-hud.shared-hud .hud-relics {
   justify-content: flex-start;
   margin-left: 0;
+  width: min(100%, var(--hud-resource-available-vw));
+  overflow-x: auto;
 }
 .topbar.combat-hud.shared-hud .hud-potions { grid-column: 2; }
+.topbar.combat-hud.shared-hud .hud-potions > * { direction: ltr; flex: 0 0 auto; }
 
 /* Utility potions read as relic-sized chips below the primary controls while
    their real button retains the global tap floor. The flex row is end-anchored:
@@ -3906,12 +3958,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
-  width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-  padding-bottom: 2.6rem; gap: 0.6rem;
+  width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-block: 0.6rem; gap: 0.6rem;
 }
 .enemy-row {
-  flex: 1; display: flex; align-items: flex-end; justify-content: space-evenly;
-  padding-bottom: 2.6rem; gap: 1rem;
+  flex: 1; display: flex; align-items: center; justify-content: space-evenly;
+  padding-block: 0.6rem; gap: 1rem;
 }
 
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
@@ -4526,7 +4578,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 :root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
-:root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
+:root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
 :root[data-composition='short-wide'] .combatant .intent {
   margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
@@ -4612,18 +4664,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
-  /* Keep Cinders in the true centre column. Progress/build moves to its own
-     wrapped line, while resources and controls keep their left/right tracks. */
+  /* Keep the reusable header on one row. Container queries above progressively
+     remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
-    row-gap: calc(4px / var(--ui-zoom, 1));
+    gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-run-meta {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
-    justify-content: center;
-  }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-context { display: none; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
@@ -4650,12 +4695,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
-  :root[data-layout='narrow'] .player-zone { width: 32%; padding-bottom: 1.2rem; }
+  :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   /* The player sprite is sized from balance.ui.spriteTiers and does not know
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
-  :root[data-layout='narrow'] .enemy-row { padding-bottom: 1.2rem; gap: 0.4rem; }
+  :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
   :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
   :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
   :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
@@ -5378,6 +5423,7 @@ if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAv
   throw new Error(`balance.ui.hudBars.main.availableWidthPct must be in [80, 85], got ${JSON.stringify(UI.hudBars?.main?.availableWidthPct)}`);
 }
 document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
+document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -36102,7 +36148,7 @@ Object.assign(module.exports, { topVeil, veilIsOpen });
 // deliberately rather than by luck.
 
 const { esc } = require("src/ui/components/tooltip.js");
-const { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED } = require("src/buildversion.js");
+const { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED, SOURCE } = require("src/buildversion.js");
 
 /**
  * The one sentence a player gets if they hover it, and it asks for the report.
@@ -36125,8 +36171,15 @@ const WHY = !BUILD_IS_STAMPED
  * `place` names the surface ('title' | 'map' | 'combat') and reaches the DOM so
  * the gate can count placements instead of taking three on trust.
  */
-function buildStampHtml(place) {
-  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">${esc(BUILD_STAMP_TEXT)}</span>`;
+function buildStampHtml(place, { split = false, seed = null } = {}) {
+  const contents = split
+    ? `<span class="build-number">BUILD ${esc(BUILD_VERSION)}</span>`
+      + `<span class="build-source"> · src ${esc(SOURCE)}</span>`
+    : esc(BUILD_STAMP_TEXT);
+  const seedAttrs = split && seed != null
+    ? ` data-seed="${esc(seed)}" aria-label="BUILD ${esc(BUILD_VERSION)}, SEED ${esc(seed)}, SOURCE ${esc(SOURCE)}"`
+    : '';
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}"${seedAttrs} title="${esc(WHY)}">${contents}</span>`;
 }
 
 
@@ -36291,7 +36344,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e4a9251439';
+const SOURCE = '93a1ac2067';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36325,7 +36378,7 @@ const SOURCE = 'e4a9251439';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1104';
+const ORDINAL = '1108';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39843,6 +39896,7 @@ const { hudShellHtml } = require("src/ui/components/hudmeta.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -39994,6 +40048,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'relic';
+    markUiComponent(el, UI.relicSlot);
     el.textContent = def.icon || '◆';
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
@@ -40008,6 +40063,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     el.type = 'button';
     el.className = 'relic flask-slot flask-charge';
     el.dataset.flaskKind = kind;
+    markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
     el.setAttribute('aria-disabled', String(current <= 0));
     el.appendChild(flaskPresentation(def, { showName: false }));
     const count = document.createElement('b');
@@ -40037,6 +40093,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     // unified-cursor exception in input.js. Keep utility flasks reachable by
     // keyboard/gamepad Confirm as well as pointer click.
     el.className = 'mh-flask flask-slot';
+    markUiComponent(el, UI.potionControl);
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {
@@ -42525,17 +42582,78 @@ Object.assign(module.exports, { flaskActionPlan });
 
 },
 "src/ui/components/hudmeta.js": function (module, exports, require) {
-// Shared map/combat HUD shell. Screens supply state and wire the controls; this
-// component owns the row order and every placement hook so the two surfaces
-// cannot drift into different HUDs again.
+// Reusable Map/Combat HUD assets. Each exported function owns one named DOM
+// component; sharedRunHudHtml composes them without taking ownership of run
+// state or screen callbacks.
 const { esc } = require("src/ui/components/tooltip.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 
 function progressText(value, total, label) {
   return total == null ? `${label} ${value}` : `${label} ${value} / ${total}`;
 }
 
-function hudShellHtml({
+function identityClusterHtml(identity) {
+  return `<div class="hud-identity" ${uiComponentAttrs(UI.identityCluster)}>
+    <div class="portrait" ${uiComponentAttrs(UI.portraitBadge)} style="border-color:${esc(identity.tint)}">${esc(identity.glyph)}</div>
+    <span class="nm" ${uiComponentAttrs(UI.characterTitle)}>${esc(identity.name)} · ${esc(identity.classLabel)}</span>
+  </div>`;
+}
+
+function cindersCounterHtml(cinders) {
+  return `<div class="hud-center" ${uiComponentAttrs(UI.cindersCounter)} role="status" aria-label="${esc(`${cinders} cinders`)}">
+    <span class="hud-cinders">⛁ ${esc(cinders)}</span>
+  </div>`;
+}
+
+function buildMetadataTrailHtml({ place, act, actTotal, floor, floorTotal, seed }) {
+  return `<div class="hud-run-meta" ${uiComponentAttrs(UI.buildMetadataTrail)}>
+    <span class="hud-act">${esc(progressText(act, actTotal, 'ACT'))}</span>
+    <span class="hud-floor">${esc(progressText(floor, floorTotal, 'FLOOR'))}</span>
+    ${buildStampHtml(place, { split: true, seed })}
+  </div>`;
+}
+
+function runHeaderStripHtml({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }) {
+  return `<div class="hud-info-row" ${uiComponentAttrs(UI.runHeaderStrip)}>
+    ${identityClusterHtml(identity)}
+    ${cindersCounterHtml(cinders)}
+    ${buildMetadataTrailHtml({ place, act, actTotal, floor, floorTotal, seed })}
+  </div>`;
+}
+
+function vitalsPanelHtml() {
+  return `<section class="hud-vitals-panel" ${uiComponentAttrs(UI.vitalsPanel)} aria-label="Health, mana, and stamina">
+    <div class="resbars-host" ${uiComponentAttrs(UI.resourceMeter)}></div>
+  </section>`;
+}
+
+function quickAccessPanelHtml(controls) {
+  return `<section class="hud-control-grid" ${uiComponentAttrs(UI.quickAccessPanel)} aria-label="Quick access">
+    <div class="hud-actions">
+      <button class="topbar-btn" ${uiComponentAttrs(UI.armouryControl)} id="${esc(controls.armouryId)}" title="Armoury" aria-label="Armoury"><span aria-hidden="true">⚒</span></button>
+      <button class="topbar-btn" ${uiComponentAttrs(UI.quickMenuControl)} id="${esc(controls.menuId)}" data-action-hint="menu"
+        title="${esc(controls.menuHint)}" aria-label="${esc(controls.menuHint)}"><span aria-hidden="true">☰</span></button>
+    </div>
+    <div class="flasks hud-charge-flasks" aria-label="Healing and mana flasks"></div>
+  </section>`;
+}
+
+function primaryHudRowHtml(controls) {
+  return `<div class="hud-resource-row" ${uiComponentAttrs(UI.primaryHudRow)}>
+    ${vitalsPanelHtml()}
+    ${quickAccessPanelHtml(controls)}
+  </div>`;
+}
+
+function inventoryBeltHtml(place) {
+  return `<div class="hud-bottom" ${uiComponentAttrs(UI.inventoryBelt)}>
+    <div class="relics hud-relics" ${uiComponentAttrs(UI.relicTray)} aria-label="Relics"></div>
+    <div class="hud-potions${place === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(UI.potionTray)} aria-label="Potions"></div>
+  </div>`;
+}
+
+function sharedRunHudHtml({
   place,
   headerClass = '',
   cinders,
@@ -42548,55 +42666,73 @@ function hudShellHtml({
   controls,
   overlayHtml = '',
 } = {}) {
-  const actText = progressText(act, actTotal, 'ACT');
-  const floorText = progressText(floor, floorTotal, 'FLOOR');
-  const context = identity.context
-    ? `<span class="hud-context">${esc(identity.context)}</span>`
-    : '';
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}">
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(UI.sharedRunHud, place)}>
     <div class="hud-top">
-      <div class="hud-info-row">
-        <div class="hud-identity">
-          <div class="portrait" style="border-color:${esc(identity.tint)}">${esc(identity.glyph)}</div>
-          <div class="hud-identity-copy">
-            <span class="nm">${esc(identity.name)} · ${esc(identity.classLabel)}</span>
-            ${context}
-          </div>
-        </div>
-        <div class="hud-center" role="status" aria-label="${esc(`${cinders} cinders`)}">
-          <span class="hud-cinders">⛁ ${esc(cinders)}</span>
-        </div>
-        <div class="hud-run-meta">
-          <span class="hud-act">${esc(actText)}</span>
-          <span class="hud-floor">${esc(floorText)}</span>
-          <span class="hud-seed mh-seed" title="Run seed">SEED ${esc(seed)}</span>
-          ${buildStampHtml(place)}
-        </div>
-      </div>
-      <div class="hud-resource-row">
-        <div class="hud-left-stack">
-          <div class="resbars-host"></div>
-          <div class="relics hud-relics" aria-label="Relics"></div>
-        </div>
-        <div class="hud-control-grid">
-          <div class="hud-actions">
-            <button class="topbar-btn" id="${esc(controls.armouryId)}" title="Armoury">⚒</button>
-            <button class="topbar-btn" id="${esc(controls.menuId)}" data-action-hint="menu"
-              title="${esc(controls.menuHint)}" aria-label="${esc(controls.menuHint)}">☰</button>
-          </div>
-          <div class="flasks hud-charge-flasks" aria-label="Healing and mana flasks"></div>
-        </div>
-      </div>
-      <div class="hud-bottom">
-        <div class="hud-potions${place === 'map' ? ' mh-flasks' : ''}" aria-label="Potions"></div>
-      </div>
+      ${runHeaderStripHtml({ place, cinders, act, actTotal, floor, floorTotal, seed, identity })}
+      ${primaryHudRowHtml(controls)}
+      ${inventoryBeltHtml(place)}
     </div>
     ${overlayHtml}
   </header>`;
 }
 
+// Compatibility name for older tools and callers. It is the same reusable
+// composition, not a second renderer.
+const hudShellHtml = sharedRunHudHtml;
 
-Object.assign(module.exports, { hudShellHtml });
+
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+
+},
+"src/ui/components/uiComponents.js": function (module, exports, require) {
+// Stable public names for reusable DOM UI assets. Screens may select a
+// component by this semantic id, but never duplicate its structure.
+const UI_COMPONENTS = Object.freeze({
+  sharedRunHud: 'shared-run-hud',
+  runHeaderStrip: 'run-header-strip',
+  identityCluster: 'identity-cluster',
+  portraitBadge: 'portrait-badge',
+  characterTitle: 'character-title',
+  cindersCounter: 'cinders-counter',
+  buildMetadataTrail: 'build-metadata-trail',
+  primaryHudRow: 'primary-hud-row',
+  vitalsPanel: 'vitals-panel',
+  resourceMeter: 'resource-meter',
+  quickAccessPanel: 'quick-access-panel',
+  armouryControl: 'armoury-control',
+  quickMenuControl: 'quick-menu-control',
+  crimsonFlaskControl: 'crimson-flask-control',
+  azureFlaskControl: 'azure-flask-control',
+  inventoryBelt: 'inventory-belt',
+  relicTray: 'relic-tray',
+  relicSlot: 'relic-slot',
+  potionTray: 'potion-tray',
+  potionControl: 'potion-control',
+  battlefieldStage: 'battlefield-stage',
+  combatantFrame: 'combatant-frame',
+  playerCombatantFrame: 'player-combatant-frame',
+  enemyCombatantFrame: 'enemy-combatant-frame',
+  playerHandTray: 'player-hand-tray',
+  combatActionRail: 'combat-action-rail',
+});
+
+const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));
+
+function uiComponentAttrs(component, variant = '') {
+  if (!KNOWN_COMPONENTS.has(component)) throw new Error(`Unknown UI component: ${component}`);
+  return `data-ui-component="${component}"${variant ? ` data-ui-variant="${variant}"` : ''}`;
+}
+
+function markUiComponent(element, component, variant = '') {
+  if (!element) throw new Error(`Cannot mark missing UI component: ${component}`);
+  if (!KNOWN_COMPONENTS.has(component)) throw new Error(`Unknown UI component: ${component}`);
+  element.dataset.uiComponent = component;
+  if (variant) element.dataset.uiVariant = variant;
+  return element;
+}
+
+
+Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent });
 
 },
 "src/ui/components/resbars.js": function (module, exports, require) {
@@ -42867,6 +43003,8 @@ const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/f
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { combatantFrame } = require("src/ui/components/combatantFrame.js");
+const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -42904,12 +43042,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         },
       })}
       <div class="${backdropClass(run.actNumber)}"></div>
-      <div class="field">
+      <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
-        <div class="hand-overlay" data-paging="false">
+        <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
           <button class="hand-page hand-prev" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
           <!-- The strip itself — cards, fan, key hints, the inspect hold, the
@@ -42925,7 +43063,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         <!-- One grid owns every persistent combat action destination. Keeping
              the optional Exhaust cell in that same grid means revealing it
              cannot shift, cover, or steal a standing control's hit box. -->
-        <div class="combat-action-row" role="group" aria-label="Combat actions">
+        <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           <div class="energy-orb"></div>
           <button class="end-turn">END TURN</button>
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -43267,6 +43405,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const el = document.createElement('div');
       el.className = 'relic';
       el.dataset.relicId = rid;
+      markUiComponent(el, UI.relicSlot);
       el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
@@ -43292,6 +43431,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const el = document.createElement('button');
       el.className = 'relic flask-slot flask-charge';
       el.type = 'button';
+      markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
       el.setAttribute('aria-disabled', String(current <= 0));
       el.appendChild(flaskPresentation(def, { showName: false }));
       const count = document.createElement('b');
@@ -43308,6 +43448,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'relic flask-slot';
+      markUiComponent(el, UI.potionControl);
       el.dataset.flaskSlot = String(slot);
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
@@ -43478,9 +43619,25 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const zone = $('.player-zone');
     zone.innerHTML = '';
     const p = combat.player;
-    const box = document.createElement('div');
-    box.className = `combatant player${selfArm ? ' armed' : ''}`;
-    box.dataset.eid = 'player';
+    const trailing = [];
+    if (p.stanceId) {
+      const st = registries.stances.get(p.stanceId);
+      const chip = document.createElement('div');
+      chip.className = `stance-chip ${p.stanceId}`;
+      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
+      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
+      trailing.push(chip);
+    }
+    trailing.push(statusRow(p));
+    const box = combatantFrame({
+      role: 'player',
+      entityId: 'player',
+      classNames: selfArm ? ['armed'] : [],
+      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
+      blockBadge: blockBadge(p),
+      meters: meterBars(p),
+      trailing,
+    });
     // When a self/buff card is armed, the player is a confirmable target.
     if (selfArm) {
       box.dataset.focusable = '';
@@ -43489,22 +43646,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         if (selfArm) playCard(selfArm, null);
       });
     }
-    const sprite = document.createElement('div');
-    sprite.className = 'sprite';
-    sprite.appendChild(playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)));
-    const badge = blockBadge(p);
-    if (badge) sprite.appendChild(badge);
-    box.appendChild(sprite);
-    box.appendChild(meterBars(p));
-    if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
-      const chip = document.createElement('div');
-      chip.className = `stance-chip ${p.stanceId}`;
-      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
-      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
-      box.appendChild(chip);
-    }
-    box.appendChild(statusRow(p));
     zone.appendChild(box);
   }
 
@@ -43525,10 +43666,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const box = document.createElement('div');
-      box.className = `combatant enemy${dv(enemy).alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
-      box.dataset.eid = enemy.id;
-      if (enemy.alive) box.appendChild(intentEl(enemy));
+      const leading = [];
+      if (enemy.alive) leading.push(intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -43536,21 +43675,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           const kh = document.createElement('span');
           kh.className = 'enemy-key';
           kh.textContent = idx + 1;
-          box.appendChild(kh);
+          leading.push(kh);
         }
       }
-      const sprite = document.createElement('div');
-      sprite.className = 'sprite';
-      sprite.appendChild(enemySprite(def));
-      const badge = blockBadge(enemy);
-      if (badge) sprite.appendChild(badge);
-      box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'nm';
       nm.textContent = def.name;
-      box.appendChild(nm);
-      box.appendChild(meterBars(enemy));
-      box.appendChild(statusRow(enemy));
+      const box = combatantFrame({
+        role: 'enemy',
+        entityId: enemy.id,
+        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
+        leading,
+        sprite: enemySprite(def),
+        blockBadge: blockBadge(enemy),
+        name: nm,
+        meters: meterBars(enemy),
+        trailing: [statusRow(enemy)],
+      });
       if (enemy.alive) {
         box.addEventListener('click', () => {
           if (selected) playCard(selected, enemy.id);
@@ -46122,6 +46263,56 @@ function applyHandExemption(el) {
 
 
 Object.assign(module.exports, { applyHandExemption });
+
+},
+"src/ui/components/combatantFrame.js": function (module, exports, require) {
+// One DOM frame for player and enemy combatants. The screen supplies rendered
+// slots and interaction callbacks; this component owns only stable structure,
+// role semantics, and component identity.
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+
+function appendAll(parent, nodes) {
+  for (const node of nodes || []) if (node) parent.appendChild(node);
+}
+
+function combatantFrame({
+  role,
+  entityId,
+  classNames = [],
+  leading = [],
+  sprite,
+  blockBadge = null,
+  name = null,
+  meters = null,
+  trailing = [],
+} = {}) {
+  if (role !== 'player' && role !== 'enemy') throw new Error(`Unknown combatant role: ${role}`);
+  if (!sprite) throw new Error('combatantFrame requires a sprite');
+
+  const frame = document.createElement('article');
+  frame.className = ['combatant', role, ...classNames.filter(Boolean)].join(' ');
+  frame.dataset.eid = entityId;
+  markUiComponent(frame, UI.combatantFrame, role);
+  frame.dataset.uiRoleComponent = role === 'player'
+    ? UI.playerCombatantFrame
+    : UI.enemyCombatantFrame;
+
+  appendAll(frame, leading);
+
+  const spriteHost = document.createElement('div');
+  spriteHost.className = 'sprite';
+  spriteHost.appendChild(sprite);
+  if (blockBadge) spriteHost.appendChild(blockBadge);
+  frame.appendChild(spriteHost);
+
+  if (name) frame.appendChild(name);
+  if (meters) frame.appendChild(meters);
+  appendAll(frame, trailing);
+  return frame;
+}
+
+
+Object.assign(module.exports, { combatantFrame });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {
