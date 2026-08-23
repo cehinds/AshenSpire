@@ -818,7 +818,8 @@ function closeServer(s) {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// FOURTEEN PLANTS/CLI EDGES, and each one is aimed at THIS TOOL'S SUBJECT rather than at a
+// EIGHTEEN FILE-BYTE PLANTS PLUS FOUR CLI EDGES, and each one is aimed at
+// THIS TOOL'S SUBJECT rather than at a
 // symptom near it. The question asked of every plant was: if the thing this
 // check guards were deleted, would this go red? The subject is "the two screens
 // draw the same character at the same proportions, at his reference".
@@ -997,8 +998,27 @@ async function selftest() {
       expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
     },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen file-byte plants plus the
-  // clean re-run are eighteen browser boots. The four argv plants below start no browser.
+  // THIS PLANT HAS ITS OWN POPULATION. The narrow reservation is inert at the
+  // 844x340 short-wide shape used by the main corpus, so putting this plant in
+  // `plants` would let it stay green while the exact 320x640/high regression
+  // returned. Its second same-door run is not duplicate coverage: it is the
+  // one cell where the shipped narrow rule is causal.
+  const narrowPlants = [
+    {
+      name: 'the narrow resource row stops reserving the centred Floor and Cinders receipt',
+      file: 'styles/combat.css',
+      find: "  :root[data-layout='narrow'] .topbar.combat-hud .hud-top {\n"
+        + '    padding-top: calc(16px / var(--ui-zoom, 1));\n'
+        + '  }\n'
+        + "  :root[data-layout='narrow'] .topbar.combat-hud .hud-center { top: 0; }",
+      replace: '  /* narrow centred-receipt reservation removed by plant */',
+      expectRed: /FINDING P8\/no-overlap 320x640\/high .*resourceFrames=\[/,
+    },
+  ];
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen general file-byte plants
+  // plus their clean re-run are eighteen browser boots. The narrow plant and
+  // its clean re-run add two boots at the one causal cell. The four argv plants
+  // below start no browser.
   // The door population is ONE
   // shape and TWO poses — 844x340, shipped and high — and the pair is chosen,
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside
@@ -1011,6 +1031,12 @@ async function selftest() {
     args: ['--only-shape', '844x340', '--only-pose', 'shipped,high', '--port', '8478'],
     plants,
     timeoutMs: 420000,
+  });
+  const narrowCode = await doorSelftest({
+    tool: 'hudparity.mjs',
+    args: ['--only-shape', '320x640', '--only-pose', 'high', '--port', '8479'],
+    plants: narrowPlants,
+    timeoutMs: 180000,
   });
   // CLI selectors enter through argv, so these plants use that same door rather
   // than mutating source bytes. Every bad selector must fail before a browser
@@ -1039,9 +1065,9 @@ async function selftest() {
   // than typed — `plants observed red` is one of tools/verdict.mjs's known
   // nouns, so this line survives readVerdict and a run that catches fewer
   // plants prints no verdict at all rather than a smaller confident one.
-  const total = plants.length + selectorCases.length;
-  if (code === 0 && selectorFailed === 0) console.log(`hudparity --selftest: OK — ${total}/${total} plants observed red`);
-  process.exit(code || selectorFailed ? 1 : 0);
+  const total = plants.length + narrowPlants.length + selectorCases.length;
+  if (code === 0 && narrowCode === 0 && selectorFailed === 0) console.log(`hudparity --selftest: OK — ${total}/${total} plants observed red`);
+  process.exit(code || narrowCode || selectorFailed ? 1 : 0);
 }
 
 main().catch((e) => {
