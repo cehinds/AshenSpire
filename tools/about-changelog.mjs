@@ -300,7 +300,7 @@ export const REFUSAL_SCOPE = [
   '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
   '  LINK AND CODE-SPAN SPELLINGS THIS TOOL HAS NOT BEEN SHOWN. The list below is',
   '  what has been MEASURED outside the subset. IT IS NOT A COMPLETENESS CLAIM AND',
-  '  MUST NOT BE READ AS ONE — FIVE of its entries were found on the day it was',
+  '  MUST NOT BE READ AS ONE — FOUR of its entries were found on the day it was',
   '  written: one in the fix that was closing the entry above it, and one MINUTES',
   '  AFTER this sentence stopped claiming a construct. That is the evidence for',
   '  the sentence, not against it.',
@@ -308,8 +308,6 @@ export const REFUSAL_SCOPE = [
   '  span delimited by a backtick run of ANY length · a backslash-escaped emphasis',
   '  marker or backtick into the literal marker CommonMark shows.',
   'OPEN, MEASURED, NOT FIXED — each reaches the player:',
-  '  · emphasis INSIDE a code span is stripped: `` `**b**` `` ships as `b`, where',
-  '    GitHub shows the asterisks.',
   '  · a PADDED code span keeps its padding: `` ` foo ` `` ships as `  foo  `,',
   '    where CommonMark strips one leading and one trailing space. The in-game text',
   '    silently differs from the rendered Markdown.',
@@ -362,22 +360,78 @@ export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 export function normalizeLinkLabel(label) {
   return label.replace(/[ \t\r\n]+/g, ' ').trim().toLowerCase();
 }
-function fencedCodeDelimiter(line) {
-  const content = stripBlockContainerPrefixes(line);
+function fencedCodeDelimiter(content) {
   const match = content.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
   if (!match) return null;
   return { marker: match[1][0], length: match[1].length, tail: match[2] };
 }
-function stripBlockContainerPrefixes(line) {
+function blockContainerLine(line) {
   let content = line;
+  const containers = [];
   for (let depth = 0; depth < 32; depth++) {
     const quote = content.match(/^ {0,3}>[ \t]?/);
-    if (quote) { content = content.slice(quote[0].length); continue; }
+    if (quote) {
+      containers.push({ type: 'quote' });
+      content = content.slice(quote[0].length);
+      continue;
+    }
     const list = content.match(/^ {0,3}(?:[*+-]|\d{1,9}[.)])(?:[ \t]{1,4}|$)/);
-    if (list) { content = content.slice(list[0].length); continue; }
+    if (list) {
+      containers.push({ type: 'list', indent: list[0].length });
+      content = content.slice(list[0].length);
+      continue;
+    }
     break;
   }
+  return { content, containers };
+}
+function stripBlockContainerPrefixes(line) {
+  return blockContainerLine(line).content;
+}
+function contentInsideContainers(line, containers) {
+  let content = line;
+  for (const container of containers) {
+    if (container.type === 'quote') {
+      const quote = content.match(/^ {0,3}>[ \t]?/);
+      if (!quote) return null;
+      content = content.slice(quote[0].length);
+      continue;
+    }
+    const indentation = content.match(/^ */)[0].length;
+    if (indentation < container.indent) return null;
+    content = content.slice(container.indent);
+  }
   return content;
+}
+const RAW_HTML_BLOCK_TAGS = new Set([
+  'address', 'article', 'aside', 'base', 'basefont', 'blockquote', 'body',
+  'caption', 'center', 'col', 'colgroup', 'dd', 'details', 'dialog', 'dir',
+  'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+  'frame', 'frameset', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header',
+  'hr', 'html', 'iframe', 'legend', 'li', 'link', 'main', 'menu', 'menuitem',
+  'nav', 'noframes', 'ol', 'optgroup', 'option', 'p', 'param', 'search',
+  'section', 'summary', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead',
+  'title', 'tr', 'track', 'ul',
+]);
+function rawHtmlBlockStart(content) {
+  const line = content.replace(/^ {0,3}/, '');
+  if (line.startsWith('<!--')) return { end: /-->/ };
+  if (line.startsWith('<?')) return { end: /\?>/ };
+  if (line.startsWith('<![CDATA[')) return { end: /\]\]>/ };
+  if (/^<![A-Z]/.test(line)) return { end: />/ };
+  const literal = line.match(/^<(script|pre|style|textarea)(?:[ \t]|>|$)/i);
+  if (literal) return { end: new RegExp(`</${literal[1]}[ \\t]*>`, 'i') };
+  const tag = line.match(/^<\/?([A-Za-z][A-Za-z0-9-]*)(?:[ \t]|\/?>|$)/);
+  if (tag && RAW_HTML_BLOCK_TAGS.has(tag[1].toLowerCase())) return { untilBlank: true };
+  // CommonMark's type-7 block: a complete open/close tag on a line, including a
+  // custom element, keeps Markdown inactive until the next blank line.
+  if (/^<\/?[A-Za-z][A-Za-z0-9-]*(?:[ \t][^<>]*)?\/?>[ \t]*$/.test(line)) {
+    return { untilBlank: true };
+  }
+  return null;
+}
+function rawHtmlBlockEnds(block, content) {
+  return block.untilBlank ? /^[ \t]*$/.test(content) : block.end.test(content);
 }
 function linkDefinitionLabel(line) {
   const start = line.search(/^ {0,3}\[/);
@@ -390,25 +444,46 @@ function linkDefinitionLabel(line) {
 export function linkDefinitionLabels(markdown) {
   const labels = new Set();
   let fence = null;
+  let html = null;
   for (const line of markdown.split(/\r?\n/)) {
-    // Definitions inside block quotes/lists remain document-wide in CommonMark,
-    // so one prefix stripper feeds both this collector and the fence scanner. A
-    // closer uses the same marker and at least the opener's run length; a backtick
-    // info string cannot itself contain a backtick. Those are the block facts this
-    // narrow collector needs to keep examples out and live definitions in.
-    const delimiter = fencedCodeDelimiter(line);
+    // A fenced/HTML block belongs to its quote/list containers. Leaving one of
+    // those containers ends that block before the current line is interpreted;
+    // CommonMark does not let an unclosed quoted/listed fence swallow later
+    // top-level definitions.
     if (fence) {
-      if (delimiter
-        && delimiter.marker === fence.marker
-        && delimiter.length >= fence.length
-        && /^[ \t]*$/.test(delimiter.tail)) fence = null;
-      continue;
+      const content = contentInsideContainers(line, fence.containers);
+      if (content !== null) {
+        const delimiter = fencedCodeDelimiter(content);
+        if (delimiter
+          && delimiter.marker === fence.marker
+          && delimiter.length >= fence.length
+          && /^[ \t]*$/.test(delimiter.tail)) fence = null;
+        continue;
+      }
+      fence = null;
     }
+    if (html) {
+      const content = contentInsideContainers(line, html.containers);
+      if (content !== null) {
+        if (rawHtmlBlockEnds(html, content)) html = null;
+        continue;
+      }
+      html = null;
+    }
+    const context = blockContainerLine(line);
+    const delimiter = fencedCodeDelimiter(context.content);
     if (delimiter && !(delimiter.marker === '`' && delimiter.tail.includes('`'))) {
-      fence = delimiter;
+      fence = { ...delimiter, containers: context.containers };
       continue;
     }
-    const label = linkDefinitionLabel(stripBlockContainerPrefixes(line));
+    const htmlStart = rawHtmlBlockStart(context.content);
+    if (htmlStart) {
+      if (!rawHtmlBlockEnds(htmlStart, context.content)) {
+        html = { ...htmlStart, containers: context.containers };
+      }
+      continue;
+    }
+    const label = linkDefinitionLabel(context.content);
     if (label !== null) labels.add(label);
   }
   return labels;
@@ -455,11 +530,15 @@ function consumeRun(run, count, fromEnd, removed) {
   }
   run.remaining -= count;
 }
-function flattenEmphasis(text) {
+function flattenEmphasis(text, protectedRanges = []) {
   const removed = new Set();
   const escaped = new Set();
+  const protectedIndexes = new Set();
+  for (const range of protectedRanges) {
+    for (let i = range.start; i < range.end; i++) protectedIndexes.add(i);
+  }
   for (let i = 0; i < text.length; i++) {
-    if (text[i] !== '*' && text[i] !== '_') continue;
+    if (protectedIndexes.has(i) || (text[i] !== '*' && text[i] !== '_')) continue;
     // CommonMark consumes the active escape and renders the marker literally.
     // Leaving the slash in the projection would expose syntax; treating the marker
     // as a delimiter would delete the character the author meant the player to see.
@@ -476,10 +555,12 @@ function flattenEmphasis(text) {
   }
   const runs = [];
   for (let i = 0; i < text.length; i++) {
-    if ((text[i] !== '*' && text[i] !== '_') || escaped.has(i)) continue;
+    if (protectedIndexes.has(i)
+      || (text[i] !== '*' && text[i] !== '_') || escaped.has(i)) continue;
     const marker = text[i];
     const start = i;
-    while (text[i + 1] === marker && !escaped.has(i + 1)) i++;
+    while (text[i + 1] === marker
+      && !protectedIndexes.has(i + 1) && !escaped.has(i + 1)) i++;
     const length = i - start + 1;
     const { left, right, beforePunctuation, afterPunctuation } = delimiterFlanking(text, start, length);
     const canOpen = marker === '_'
@@ -559,7 +640,11 @@ export function flattenInline(text, where, labels = new Set()) {
   // A code span opens and closes with a run of exactly the same length. The shared
   // scanner carries that length without cutting a longer run short; escaped opening
   // backticks stay literal, while backslashes inside an opened span remain content.
-  return flattenCodeSpans(flattenEmphasis(text));
+  // Emphasis may open before a code span and close after it, so segmenting the
+  // line would lose a real delimiter pair. Instead, protect every marker inside
+  // complete code spans while matching the surrounding emphasis on the full line;
+  // the shared code-span pass then removes only the backtick delimiters.
+  return flattenCodeSpans(flattenEmphasis(text, codeSpanRanges(text)));
 }
 
 export function parseChangelog(markdown) {
@@ -1051,6 +1136,12 @@ async function selftest() {
       replace: '). Docs only. It reads ```bar``` here.',
       write: { detail: 'Docs only. It reads bar here.' },
     },
+    {
+      name: 'emphasis can span a code span without consuming its marker', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads *foo `*` bar* here.',
+      write: { detail: 'Docs only. It reads foo * bar here.' },
+    },
     // Sten's BLOCK at `5bb82f2`, 2026-08-22. `REFUSAL_SCOPE` said `inline link`
     // unqualified and TWO valid CommonMark inline links walked past it. The first
     // is the only form this PR ever found that CORRUPTS rather than leaks: the
@@ -1130,6 +1221,24 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. Keeps [quoted] literal.\n\n> ```text\n> [quoted]: /guide\n> ```',
       write: { detail: 'Docs only. Keeps [quoted] literal.' },
+    },
+    {
+      name: 'a quoted fence ends when the quote container ends', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs].\n\n> ```text\n> [example]: /example\n\n[docs]: /guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'a listed fence ends when the list container ends', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs].\n\n1. ```text\n   [example]: /example\n\n[docs]: /guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'a definition inside a raw HTML block is not active', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Keeps [docs] literal.\n\n<div>\n[docs]: /guide\n</div>',
+      write: { detail: 'Docs only. Keeps [docs] literal.' },
     },
     // Same block, second form. A destination in `<…>` need not balance its parens,
     // so `matchingBracket` returned -1 and the link rule never ran. The report that
