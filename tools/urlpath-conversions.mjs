@@ -837,11 +837,90 @@ function unwrapAssigned(tokens, start, end, urls, isAlias) {
   return after === end ? result : null;
 }
 
+const PLATFORM_BINDING_CACHE = new WeakMap();
+
+function nodeUrlPlatformBindings(tokens) {
+  const cached = PLATFORM_BINDING_CACHE.get(tokens);
+  if (cached) return cached;
+  const direct = new Set();
+  const namespaces = new Set();
+  const importBindingIndexes = new Set();
+  for (let keyword = 0; keyword < tokens.length; keyword++) {
+    if (tokens[keyword].value !== 'import' || tokens[keyword + 1]?.value === '(') continue;
+    let from = -1;
+    for (let i = keyword + 1; i < tokens.length && tokens[i].value !== ';'; i++) {
+      if (tokens[i].value === 'from' && tokens[i + 1]?.type === 'string') { from = i; break; }
+    }
+    if (from < 0 || tokens[from + 1].value !== 'node:url') continue;
+    for (let i = keyword + 1; i < from; i++) {
+      if (tokens[i].value === 'fileURLToPath' && ['{', ','].includes(tokens[i - 1]?.value)) {
+        const local = tokens[i + 1]?.value === 'as' ? i + 2 : i;
+        if (tokens[local]?.type !== 'identifier') continue;
+        direct.add(tokens[local].value);
+        importBindingIndexes.add(i);
+        importBindingIndexes.add(local);
+      }
+      if (tokens[i].value === '*' && tokens[i + 1]?.value === 'as' && tokens[i + 2]?.type === 'identifier') {
+        namespaces.add(tokens[i + 2].value);
+        importBindingIndexes.add(i + 2);
+      }
+    }
+  }
+
+  // An imported converter that is shadowed or reassigned is not the imported
+  // converter at every call site. Conservatively stop trusting that spelling
+  // for the file; alias-use analysis then fails closed instead of blessing a
+  // local function merely because it shares the platform API's name.
+  if (direct.size || namespaces.size) {
+    const parameters = parameterScopes(tokens);
+    const declarations = collectDeclarationBindings(tokens);
+    const unsafe = new Set();
+    const candidates = new Set([...direct, ...namespaces]);
+    for (let i = 0; i < tokens.length; i++) {
+      const name = tokens[i].value;
+      if (!candidates.has(name) || importBindingIndexes.has(i)) continue;
+      const previous = tokens[i - 1];
+      const next = tokens[i + 1];
+      const assignmentTarget = ASSIGNMENTS.has(next?.value) && !['.', '?.', ']'].includes(previous?.value);
+      const updateTarget = ['++', '--'].includes(next?.value) || ['++', '--'].includes(previous?.value);
+      if (declarations.has(i) || parameters.parameterIndexes.has(i) ||
+          parameters.declarationNameIndexes.has(i) ||
+          ['function', 'class'].includes(previous?.value) || assignmentTarget || updateTarget) {
+        unsafe.add(name);
+      }
+    }
+    for (const name of unsafe) { direct.delete(name); namespaces.delete(name); }
+  }
+
+  const result = { direct, namespaces };
+  PLATFORM_BINDING_CACHE.set(tokens, result);
+  return result;
+}
+
+function isNodeUrlPlatformCallAt(tokens, open) {
+  const bindings = nodeUrlPlatformBindings(tokens);
+  let callee = open - 1;
+  if (tokens[callee]?.value === '?.') callee--;
+  if (tokens[callee]?.type === 'identifier') {
+    if (bindings.direct.has(tokens[callee].value)) return true;
+    const separator = tokens[callee - 1];
+    const receiver = tokens[callee - 2];
+    return tokens[callee].value === 'fileURLToPath' && ['.', '?.'].includes(separator?.value) &&
+      receiver?.type === 'identifier' && bindings.namespaces.has(receiver.value);
+  }
+  if (tokens[callee]?.value !== ']') return false;
+  const bracket = findOpenBackward(tokens, callee, '[', ']');
+  if (bracket < 0 || bracket + 2 !== callee || tokens[bracket + 1]?.type !== 'string' ||
+      tokens[bracket + 1].value !== 'fileURLToPath') return false;
+  let receiver = bracket - 1;
+  if (tokens[receiver]?.value === '?.') receiver--;
+  return tokens[receiver]?.type === 'identifier' && bindings.namespaces.has(tokens[receiver].value);
+}
+
 function containingPlatformCall(tokens, index) {
   for (let open = index - 1; open >= 0; open--) {
     if (tokens[open].value !== '(') continue;
-    const callee = tokens[open - 1]?.value === '?.' ? tokens[open - 2] : tokens[open - 1];
-    if (callee?.value !== 'fileURLToPath') continue;
+    if (!isNodeUrlPlatformCallAt(tokens, open)) continue;
     const close = findClose(tokens, open);
     if (close >= index) return { open, close };
   }
@@ -1213,7 +1292,7 @@ function report(root = ROOT) {
   }
   console.log(`RESULT: scanned ${result.files} JavaScript module(s) under tools/ and tests/; ${result.findings.length} unconverted module URL/filesystem path site(s).`);
   console.log(`EXCLUDED: ${KNOWN_BAD} is the deliberate known-bad corpus; --selftest proves both fixtures.`);
-  console.log('BOUNDARY: token-aware scan catches actual dynamic file:// template/concatenation constructs and same-file static new URL(..., import.meta.url) pathname conversions through direct, grouped, optional, bracket, destructuring, and bounded local-alias forms. Ambiguous lexical or alias flow fails closed; cross-module flow and platform-API semantic correctness remain outside this guard.');
+  console.log('BOUNDARY: token-aware scan catches actual dynamic file:// template/concatenation constructs and same-file static new URL(..., import.meta.url) pathname conversions through direct, grouped, optional, bracket, destructuring, and bounded local-alias forms. Platform consumers are trusted only through static node:url imports (named aliases and namespace members); ambiguous lexical, binding, or alias flow fails closed. Cross-module flow and platform-API semantic correctness remain outside this guard.');
   return result.files ? (result.findings.length ? 1 : 0) : 2;
 }
 
@@ -1232,6 +1311,8 @@ function selftest() {
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`);
     if (!ok) failures++;
   };
+  const platformImport = "import { fileURLToPath } from 'node:url';\n";
+  const scanCase = (source, eol = '\n') => scanSource(platformImport.replace(/\n/g, eol) + source);
 
   const clean = collect(ROOT);
   say(clean.findings.length === 0, 'clean tree has no hand-rolled conversion', clean.findings.map((finding) => `${finding.path}:${finding.line}`).join(', '));
@@ -1321,7 +1402,7 @@ function selftest() {
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expectedPath, expectedFile] of matrix) {
       const converted = source.replace(/\n/g, eol);
-      const findings = scanSource(converted).findings;
+      const findings = scanCase(converted, eol).findings;
       const actualPath = findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
       const actualFile = findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
       const other = findings.length - actualPath - actualFile;
@@ -1342,7 +1423,7 @@ function selftest() {
   const ambiguityResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source] of ambiguityCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol), eol).findings;
       ambiguityResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', count: findings.filter((finding) => finding.kind === 'ambiguous module URL alias flow').length, total: findings.length });
     }
   }
@@ -1556,7 +1637,7 @@ function selftest() {
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expectedPath, expectedFile, expectedAmbiguous] of blockerCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol), eol).findings;
       const actualPath = findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
       const actualFile = findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
       const actualAmbiguous = findings.filter((finding) => finding.kind === 'ambiguous module URL alias flow').length;
@@ -1567,6 +1648,39 @@ function selftest() {
   const blockerFailures = blockerResults.filter((result) => !result.ok);
   say(blockerFailures.length === 0, 'exact-head blocker matrix passes through the shared LF/CRLF scanner',
     blockerFailures.length ? blockerFailures.map((result) => `${result.eol}:${result.label}=path${result.actualPath}/file${result.actualFile}/amb${result.actualAmbiguous}/other${result.other}`).join(', ') : `${blockerResults.length}/${blockerResults.length}`);
+
+  const platformBindingCases = [
+    ['named node:url alias is a platform consumer',
+      "import {fileURLToPath as toPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);toPath(u)", 0],
+    ['optional named node:url alias is a platform consumer',
+      "import {fileURLToPath as toPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);toPath?.(u)", 0],
+    ['node:url namespace member is a platform consumer',
+      "import * as nodeUrl from 'node:url';\nconst u=new URL('./x',import.meta.url);nodeUrl.fileURLToPath(u)", 0],
+    ['node:url static namespace bracket is a platform consumer',
+      "import * as nodeUrl from 'node:url';\nconst u=new URL('./x',import.meta.url);nodeUrl['fileURLToPath'](u)", 0],
+    ['same named import from another module is not trusted',
+      "import {fileURLToPath} from './fake.mjs';\nconst u=new URL('./x',import.meta.url);fileURLToPath(u)", 1],
+    ['same namespace member from another module is not trusted',
+      "import * as fake from './fake.mjs';\nconst u=new URL('./x',import.meta.url);fake.fileURLToPath(u)", 1],
+    ['default import with the platform spelling is not trusted',
+      "import fileURLToPath from 'node:url';\nconst u=new URL('./x',import.meta.url);fileURLToPath(u)", 1],
+    ['renamed different node:url export is not trusted',
+      "import {pathToFileURL as fileURLToPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);fileURLToPath(u)", 1],
+    ['unrelated local function with the platform spelling is not trusted',
+      "function fileURLToPath(value){return value}const u=new URL('./x',import.meta.url);fileURLToPath(u)", 1],
+    ['shadowed node:url alias is not trusted',
+      "import {fileURLToPath as toPath} from 'node:url';\nfunction f(toPath){const u=new URL('./x',import.meta.url);toPath(u)}", 1],
+  ];
+  const platformBindingResults = [];
+  for (const eol of ['\n', '\r\n']) {
+    for (const [label, source, expected] of platformBindingCases) {
+      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      platformBindingResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', expected, actual: findings.length });
+    }
+  }
+  const platformBindingFailures = platformBindingResults.filter((result) => result.actual !== result.expected);
+  say(platformBindingFailures.length === 0, 'node:url consumers are authorized by their imported binding in LF and CRLF',
+    platformBindingFailures.length ? platformBindingFailures.map((result) => `${result.eol}:${result.label}=${result.actual}/${result.expected}`).join(', ') : `${platformBindingResults.length}/${platformBindingResults.length}`);
 
   const reviewU = "new URL('./x',import.meta.url)";
   const reviewP = "'./x'";
@@ -1633,7 +1747,7 @@ function selftest() {
   const reviewResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expected] of reviewCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol), eol).findings;
       reviewResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', expected, actual: findings.length });
     }
   }
