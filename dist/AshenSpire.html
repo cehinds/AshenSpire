@@ -23683,6 +23683,14 @@ function validateRunStartingKit(run, registries, meta = {}, { legacy = false } =
   }
   if (typeof run.startingKitId !== 'string') throw new Error('run startingKitId is required');
   if (!run.startingKitSnapshot || typeof run.startingKitSnapshot !== 'object') throw new Error('run startingKitSnapshot is required');
+  const armourGrant = run.loadout && run.loadout.creationArmourGrant;
+  if (armourGrant != null) {
+    if (!armourGrant || typeof armourGrant !== 'object' || Array.isArray(armourGrant)
+      || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
+      throw new Error('run creationArmourGrant is malformed');
+    }
+    resolveStartingArmour(registries, run.class, armourGrant.id, meta);
+  }
   const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   if (run.startingKitSnapshot.customized === true) {
     if (run.startingKitSnapshot.id !== row.id || run.startingKitSnapshot.classId !== row.classId) {
@@ -23809,10 +23817,12 @@ function characterCreationProblems(source) {
   const equipment = (source && source.equipment) || {};
   const relics = source && source.relics && typeof source.relics.ids === 'function'
     ? source.relics.ids()
-    : ((source && source.relics) || []).map((row) => row.id);
-  const classIds = new Set(classes.map((row) => row.id));
+    : ((source && source.relics) || []).filter((row) => row && typeof row === 'object').map((row) => row.id);
+  const classIds = new Set(classes.filter((row) => row && typeof row === 'object').map((row) => row.id));
   const relicIds = new Set(relics);
-  const armamentIds = new Set((equipment.armaments || []).map((row) => row.id));
+  const armamentIds = new Set((equipment.armaments || [])
+    .filter((row) => row && typeof row === 'object')
+    .map((row) => row.id));
   for (const [classId, row] of Object.entries(cfg.classes)) {
     const path = `characterCreation.classes.${classId}`;
     if (!classIds.has(classId)) problems.push(`${path}: unknown class`);
@@ -23833,7 +23843,7 @@ function characterCreationProblems(source) {
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
     const configuredRelicIds = Array.isArray(row.relicIds) ? row.relicIds : [];
     for (const id of armourIds) {
-      if (!(equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id)) {
+      if (!(equipment.armour || []).some((piece) => piece && piece.classId === classId && piece.id === id)) {
         problems.push(`${path}.armourIds: unknown armour '${id}' for '${classId}'`);
       }
     }
@@ -23845,7 +23855,7 @@ function characterCreationProblems(source) {
       const id = baselineKit && baselineKit[slotId];
       if (id && !handIds.includes(id)) problems.push(`${path}.handIds: must include baseline ${slotId} armament '${id}'`);
     }
-    const cls = classes.find((candidate) => candidate.id === classId);
+    const cls = classes.find((candidate) => candidate && candidate.id === classId);
     if (cls && !configuredRelicIds.includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);
@@ -24955,6 +24965,7 @@ function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
+  const creationArmourGrant = loadout && loadout.creationArmourGrant;
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -24974,6 +24985,9 @@ function ownership(registries, { meta = {}, loadout = null } = {}) {
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
+    if (creationArmourGrant
+      && creationArmourGrant.classId === piece.classId
+      && creationArmourGrant.id === piece.id) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
@@ -25130,7 +25144,12 @@ function createLoadout(registries, classId, startingKit = null, startingArmour =
     if (!pieceId) continue;
     if (sets[slotId]) sets[slotId][0] = pieceId;
   }
-  return { sets, active, storage: [] };
+  return {
+    sets,
+    active,
+    storage: [],
+    creationArmourGrant: starting ? { classId, id: starting.id } : null,
+  };
 }
 
 function profileById(registries, id) {
@@ -35886,7 +35905,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '19844e3ff1';
+const SOURCE = '76691dcb34';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35920,7 +35939,7 @@ const SOURCE = '19844e3ff1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1123';
+const ORDINAL = '1124';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

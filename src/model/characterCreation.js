@@ -23,10 +23,12 @@ export function characterCreationProblems(source) {
   const equipment = (source && source.equipment) || {};
   const relics = source && source.relics && typeof source.relics.ids === 'function'
     ? source.relics.ids()
-    : ((source && source.relics) || []).map((row) => row.id);
-  const classIds = new Set(classes.map((row) => row.id));
+    : ((source && source.relics) || []).filter((row) => row && typeof row === 'object').map((row) => row.id);
+  const classIds = new Set(classes.filter((row) => row && typeof row === 'object').map((row) => row.id));
   const relicIds = new Set(relics);
-  const armamentIds = new Set((equipment.armaments || []).map((row) => row.id));
+  const armamentIds = new Set((equipment.armaments || [])
+    .filter((row) => row && typeof row === 'object')
+    .map((row) => row.id));
   for (const [classId, row] of Object.entries(cfg.classes)) {
     const path = `characterCreation.classes.${classId}`;
     if (!classIds.has(classId)) problems.push(`${path}: unknown class`);
@@ -47,7 +49,7 @@ export function characterCreationProblems(source) {
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
     const configuredRelicIds = Array.isArray(row.relicIds) ? row.relicIds : [];
     for (const id of armourIds) {
-      if (!(equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id)) {
+      if (!(equipment.armour || []).some((piece) => piece && piece.classId === classId && piece.id === id)) {
         problems.push(`${path}.armourIds: unknown armour '${id}' for '${classId}'`);
       }
     }
@@ -59,7 +61,7 @@ export function characterCreationProblems(source) {
       const id = baselineKit && baselineKit[slotId];
       if (id && !handIds.includes(id)) problems.push(`${path}.handIds: must include baseline ${slotId} armament '${id}'`);
     }
-    const cls = classes.find((candidate) => candidate.id === classId);
+    const cls = classes.find((candidate) => candidate && candidate.id === classId);
     if (cls && !configuredRelicIds.includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);

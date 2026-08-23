@@ -138,6 +138,14 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
   }
   if (typeof run.startingKitId !== 'string') throw new Error('run startingKitId is required');
   if (!run.startingKitSnapshot || typeof run.startingKitSnapshot !== 'object') throw new Error('run startingKitSnapshot is required');
+  const armourGrant = run.loadout && run.loadout.creationArmourGrant;
+  if (armourGrant != null) {
+    if (!armourGrant || typeof armourGrant !== 'object' || Array.isArray(armourGrant)
+      || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
+      throw new Error('run creationArmourGrant is malformed');
+    }
+    resolveStartingArmour(registries, run.class, armourGrant.id, meta);
+  }
   const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   if (run.startingKitSnapshot.customized === true) {
     if (run.startingKitSnapshot.id !== row.id || run.startingKitSnapshot.classId !== row.classId) {

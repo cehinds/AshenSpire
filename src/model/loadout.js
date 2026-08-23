@@ -644,6 +644,7 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
+  const creationArmourGrant = loadout && loadout.creationArmourGrant;
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -663,6 +664,9 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
+    if (creationArmourGrant
+      && creationArmourGrant.classId === piece.classId
+      && creationArmourGrant.id === piece.id) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
@@ -819,7 +823,12 @@ export function createLoadout(registries, classId, startingKit = null, startingA
     if (!pieceId) continue;
     if (sets[slotId]) sets[slotId][0] = pieceId;
   }
-  return { sets, active, storage: [] };
+  return {
+    sets,
+    active,
+    storage: [],
+    creationArmourGrant: starting ? { classId, id: starting.id } : null,
+  };
 }
 
 function profileById(registries, id) {

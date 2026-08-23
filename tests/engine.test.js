@@ -5206,6 +5206,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // And the run WEARS the choice: the loadout row is the persisted home.
     const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
+    const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
+    const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
+    assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
+      'a JSON-authored creation armour remains owned after switching away');
+    assert(equipPiece(REG, worn.loadout, 'armor', 0, vigil.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the granted creation armour can be equipped again');
+    const wornRestored = deserializeRun(serializeRun(worn));
+    validateRunStartingKit(wornRestored, REG, {});
+    assert(ownership(REG, { meta: {}, loadout: wornRestored.loadout }).has(vigil),
+      'the creation armour grant remains owned across the save boundary');
     const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
   });
@@ -5332,6 +5344,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
     assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
       'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
+
+    for (const [label, mutate] of [
+      ['class', (bundle) => { bundle.classes[0] = null; }],
+      ['armament', (bundle) => { bundle.equipment.armaments[0] = null; }],
+    ]) {
+      const malformedDependency = {
+        ...contentBundle,
+        classes: [...contentBundle.classes],
+        equipment: { ...contentBundle.equipment, armaments: [...contentBundle.equipment.armaments] },
+      };
+      mutate(malformedDependency);
+      const dependencyValidation = validateContent(malformedDependency);
+      assert(!dependencyValidation.ok,
+        `a null ${label} dependency row returns validation errors instead of throwing`);
+    }
 
     const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     missingBaselineHands.characterCreation.classes.reaver.handIds = ['greatsword', 'buckler'];
