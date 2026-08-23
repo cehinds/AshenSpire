@@ -5,5 +5,89 @@ export const armouryUi = {
   "equippedTag": {
     "useCustomColor": true,
     "customColor": "#7FD47F"
+  },
+  "layout": {
+    "shell": {
+      "characterRatio": 0.4,
+      "equipmentRatio": 0.6,
+      "gapRem": 1.6
+    },
+    "character": {
+      "spriteRatio": 0.38,
+      "statsRatio": 0.62,
+      "statsPaneRatio": 0.6,
+      "minWidth": "0"
+    },
+    "equipment": {
+      "groupLabel": "Armaments",
+      "outerBorder": false,
+      "slotOrder": [
+        "armor",
+        "rightHand",
+        "leftHand"
+      ]
+    },
+    "combatPower": {
+      "groupLabel": "Combat Power",
+      "cards": [
+        {
+          "id": "strike",
+          "role": "attack",
+          "label": "Strike",
+          "fullLabel": "Strike Power"
+        },
+        {
+          "id": "potency",
+          "role": "technique",
+          "label": "Potency",
+          "fullLabel": "Technique Potency"
+        },
+        {
+          "id": "defense",
+          "role": "guard",
+          "label": "Defense",
+          "fullLabel": "Guard / Defense"
+        }
+      ]
+    },
+    "cards": {
+      "defaultView": "list",
+      "gridColumns": 4
+    },
+    "viewModes": {
+      "grid": {
+        "label": "Character",
+        "pane": "character",
+        "character": "expanded",
+        "armaments": "folded",
+        "inventory": "folded",
+        "cards": "expanded"
+      },
+      "rack": {
+        "label": "Inventory",
+        "pane": "inventory",
+        "character": "folded",
+        "armaments": "folded",
+        "inventory": "expanded",
+        "cards": "folded"
+      },
+      "hybrid": {
+        "label": "Hybrid",
+        "pane": "both",
+        "character": "folded",
+        "armaments": "folded",
+        "inventory": "folded",
+        "cards": "folded"
+      }
+    },
+    "responsive": {
+      "breakpoint": 760,
+      "phone": {
+        "minWidth": "0",
+        "characterRatio": 0.4,
+        "equipmentRatio": 0.6,
+        "cardsGridColumns": 2
+      }
+    }
   }
 };

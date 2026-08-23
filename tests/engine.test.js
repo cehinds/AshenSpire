@@ -68,6 +68,7 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
+import { normalizeArmouryLayout } from '../src/model/armouryLayout.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
@@ -5423,6 +5424,28 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
       e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
     'a hand roster that omits the baseline kit is refused by armament id before customization boots');
+  });
+
+  test('72. Armoury layout is authored, stable, and responsive', () => {
+    const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
+    eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
+    eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
+    eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
+    eq(layout.character.statsRatio, 0.62, 'stats own the authored 62% character height');
+    eq(layout.character.statsPaneRatio, 0.6, 'Character gives the right column 60% of the full-width character pane');
+  eq(layout.cards.defaultView, 'list', 'Cards defaults to the authored vertical list');
+  eq(layout.cards.gridColumns, 4, 'Cards grid columns are authored as four');
+  eq(layout.responsive.phone.cardsGridColumns, 2, 'Phone Cards grid columns are authored as two');
+    eq(layout.equipment.slotOrder.join(','), 'armor,rightHand,leftHand', 'equipment order is authored armor then right and left hand');
+    eq(layout.combatPower.cards.map((card) => card.id).join(','), 'strike,potency,defense', 'Combat Power cards are authored in vertical display order');
+    eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
+    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
+    eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
+    eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
+    eq(layout.viewModes.rack.armaments, 'folded', 'Inventory keeps each armament subcard folded until selected');
+    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
+    eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
+    assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
   });
 
   const passed = results.filter((r) => r.ok).length;
