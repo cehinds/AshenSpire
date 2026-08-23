@@ -125,8 +125,11 @@ function insideLinkDestination(text, index) {
     if (text[i] !== '[') continue;
     const labelEnd = matchingBracket(text, i, '[', ']');
     if (labelEnd < 0 || text[labelEnd + 1] !== '(') continue;
-    const destinationEnd = matchingBracket(text, labelEnd + 1, '(', ')');
-    if (labelEnd + 1 < index && destinationEnd >= index) return true;
+    const destinationOpen = labelEnd + 1;
+    const angleEnd = angleDestinationEnd(text, destinationOpen);
+    if (destinationOpen < index && angleEnd >= index) return true;
+    const destinationEnd = matchingBracket(text, destinationOpen, '(', ')');
+    if (destinationOpen < index && destinationEnd >= index) return true;
   }
   return false;
 }
@@ -217,14 +220,17 @@ function flattenCodeSpans(text) {
 // unescaped `<` between: narrower than CommonMark (which also bars line endings we
 // cannot see, a receipt being one line) and it OVER-FIRES on `](<` that opens no
 // link. Refusal is the safe direction and the clean corpus is measured for it.
-function angleDestination(text, open) {
-  if (text[open + 1] !== '<') return false;
+function angleDestinationEnd(text, open) {
+  if (text[open + 1] !== '<') return -1;
   for (let i = open + 2; i < text.length; i++) {
     if (text[i] === '\\') { i++; continue; }
-    if (text[i] === '<' || text[i] === '\n') return false;
-    if (text[i] === '>') return true;
+    if (text[i] === '<' || text[i] === '\n') return -1;
+    if (text[i] === '>') return i;
   }
-  return false;
+  return -1;
+}
+function angleDestination(text, open) {
+  return angleDestinationEnd(text, open) >= 0;
 }
 function matchingBracket(text, start, open, close) {
   let depth = 0;
@@ -1028,6 +1034,12 @@ async function selftest() {
       name: 'a code span cannot open inside a bare link destination', file: 'CHANGELOG.md',
       find: '). Docs only.',
       replace: '). Docs only. See [x](foo`)` for the rest.',
+      expect: 'prose contains a link',
+    },
+    {
+      name: 'a code span cannot cross an angle-bracket link destination', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [x](<#foo(`>)` for the rest.',
       expect: 'prose contains a link',
     },
     // Same block, second form. A destination in `<…>` need not balance its parens,
