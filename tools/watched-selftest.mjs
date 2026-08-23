@@ -270,16 +270,19 @@ export function runSelftest({ ROOT, LEDGER, PROBES }) {
   console.log('BOUNDARY: the plants prove the VERDICT MACHINE, the COMMITTED PICTURES sub-check and the');
   console.log('  READ FLOOR can each fail. AMENDED 2026-08-22 (Bjorn) — the sentence that stood here said');
   console.log('  `read` was a person and nothing more, and that was true for exactly as long as nothing');
-  console.log('  checked it: THIRTY-TWO of the 47 probes owing one carried at least one citation that no');
-  console.log('  longer resolved — the same figure under all three extraction rules, which is why it is the');
-  console.log('  one quoted. DERIVE IT, DO NOT TRUST IT: `node tools/watched.mjs --census-citations <corpus>`');
-  console.log('  prints the rule beside the number. Three figures I published before Saga re-derived them');
+  console.log('  checked it: at `897d9fa:tools/watched-probes.json`, THIRTY-TWO of the 47 probes owing');
+  console.log('  one carried at least one citation that no longer resolved against this source tree — the');
+  console.log('  same figure under all three extraction rules, which is why it is the one quoted. DERIVE IT,');
+  console.log('  DO NOT TRUST IT: `node tools/watched.mjs --census-citations <corpus>` prints the rule beside');
+  console.log('  the number. Three figures I published before Saga re-derived them');
   console.log('  (`24 of 47`, `17 of 73`, a `.end-turn` drift of `1161`) did not survive, and each was wrong');
   console.log('  for one reason: its counting rule lived nowhere a reader could read it.');
   console.log('  What is now MACHINE-CHECKED: every file a `read` names exists, every `anchors` literal is');
-  console.log('  still in one of them, and no line number is typed anywhere. What is STILL A PERSON: whether');
-  console.log('  the anchor identifies the RIGHT thing. An anchor loose enough to survive any edit is a');
-  console.log('  green that means nothing and no plant here can see one — `by` is who to ask.');
+  console.log('  still in one of them, and no C1 STRICT path-with-extension citation types a line number.');
+  console.log('  Orphan bare `:N`, extensionless `path:N`, and bare continuations are FALSE-GREEN LIMITS.');
+  console.log('  What is STILL A PERSON: whether the anchor identifies the RIGHT thing. An anchor loose');
+  console.log('  enough to survive any edit is a green that means nothing and no plant here can see one —');
+  console.log('  `by` is who to ask.');
   return 0;
 }
 

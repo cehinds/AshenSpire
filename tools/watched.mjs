@@ -69,15 +69,15 @@
 // preview shots "still show the old 27 px map until whoever owns the shots
 // re-runs the harness." That is this file's subject wearing a picture.)
 //
-// KNOWN-BAD FIRST (development.md, *The instrument rule*). `--selftest` plants
-// FOURTEEN breakages and requires each to be OBSERVED red before this file may be
-// cited as coverage: a control that cannot be there, a screen that cannot open,
-// a ledger row with no probe, a probe for a row the ledger dropped, a state
-// expectation that must fail, a content pattern that cannot match, zero rows, an
-// empty population, an unsigned probe, a dead anchor, a probe with no anchors, a
-// `read` naming a deleted file, a typed line number, and — plant 14, the only one
-// that mutates the SOURCE rather than the probe — THE CODE MOVING OUT FROM UNDER
-// A CORRECT PROBE. A check that names a thing it cannot fail on is a receipt.
+// KNOWN-BAD FIRST (development.md, *The instrument rule*). `--selftest` requires
+// every planted outcome below to be observed before this file may be cited as
+// coverage: a control that cannot be there, a screen that cannot open, a ledger
+// row with no probe, a probe for a row the ledger dropped, a state expectation
+// that must fail, a content pattern that cannot match, zero rows, an empty
+// population, an unsigned probe, a dead anchor, a probe with no anchors, a
+// `read` naming a deleted file, a typed line number, source movement under a
+// correct probe, and parameter movement under both tight and loose anchors. A
+// check that names a thing it cannot fail on is a receipt.
 //
 // Usage:
 //   node tools/watched.mjs --ledger <path-to-asks.json> [--shape 390x844]
@@ -182,11 +182,12 @@ function readPopulation(ledgerPath) {
 // WHAT IT NOW REQUIRES, and why each is the cheapest rule that can go red:
 //
 //   1  `read` names FILES, and every file it names must EXIST.
-//   2  `read` may not carry a typed `:LINE`. A line number is DERIVED from the
-//      anchor below and PRINTED by this tool. A typed one is a second home for
-//      a fact the machine already holds — Law 0 clause 4 — and two thirds of
-//      them in the corpus were wrong, which is what a second home with no
-//      checker does. The exact count and its rule: `--census-citations`.
+//   2  `read` may not carry a C1 STRICT citation: a path with an extension plus
+//      `:LINE`. A line number is DERIVED from the anchor below and PRINTED by
+//      this tool. A typed one is a second home for a fact the machine already
+//      holds — Law 0 clause 4. The exact count and its rule:
+//      `--census-citations`. Forms this floor does not recognise are named in
+//      every `--check-reads` boundary instead of being claimed as covered.
 //   3  every probe that owes a `read` declares `anchors`: LITERAL strings, each
 //      of which must occur in at least one file the `read` names. An anchor is
 //      the identity of the derivation — the symbol, selector, key or content
@@ -205,14 +206,12 @@ function readPopulation(ledgerPath) {
 //
 // Run it alone — no browser, no ledger, no bundle:
 //   node tools/watched.mjs --check-reads
-// THE TYPED-LINE PREDICATE IS THE CENSUS'S OWN C2 RULE, AND IT IS ONE HOME, NOT
-// TWO. It used to be a bare /:(\d+)/ over the whole `read` — which matched a
-// line number MENTIONED IN PROSE as readily as one used as a citation, and it
-// caught me the moment I wrote the sentence explaining the rule: the words "its
-// typed `:254` is DELETED" tripped the floor that had just deleted it. A
-// predicate that cannot tell a citation from a sentence about a citation is the
-// same defect one level up, so the check now asks `citationsIn(read, 2)` — the
-// exact extraction `--census-citations` prints and argues from.
+// THE TYPED-LINE FLOOR IS C1 STRICT. The census still prints C2 and C3 to
+// measure the historical corpus, but those wider extraction rules are not this
+// refusal. Saga and Marina planted the distinction at `dbebb57`: orphan bare
+// `:N`, extensionless `path:N`, and bare continuations left after the first C1
+// citation loses its line all pass this floor. That is a false-green boundary,
+// stated in every run below; it is not rewritten as coverage by calling C1 C2.
 const READ_PATH_RE = /(?:^|[\s·,(])((?:src|styles|tools|tests|docs|content|dist)\/[A-Za-z0-9_\-/.]+\.[A-Za-z0-9]+)/g;
 
 function resolveReads(probeRows) {
@@ -226,7 +225,7 @@ function resolveReads(probeRows) {
     for (const f of files) {
       if (!existsSync(resolve(ROOT, f))) findings.push(`${p.id}: \`read\` names ${f} — THAT FILE IS NOT IN THIS TREE.`);
     }
-    const typed = citationsIn(read, 2)[0];
+    const typed = citationsIn(read, 1)[0];
     if (typed) findings.push(`${p.id}: \`read\` types a line number (\`${typed.path}:${typed.a}\`). Lines are DERIVED here and printed; delete it. Why this rule earns its keep is MEASURED, not remembered: \`node tools/watched.mjs --census-citations <corpus.json>\` prints the count and the rule that produced it.`);
     const anchors = Array.isArray(p.anchors) ? p.anchors : null;
     if (!anchors || anchors.length === 0) {
@@ -264,14 +263,13 @@ function reportReads(probeRows) {
     for (const f of findings) console.log(`    ✗ ${f}`);
   }
   console.log('\nBOUNDARY, and it is the same one every consistency check carries: this proves each');
-  console.log('  THE TYPED-LINE RULE CAN GO RED ON PROSE, AND THAT IS THE DIRECTION IT FAILS IN.');
-  console.log('  It is the census C2 extraction: a bare `:N` inherits the nearest path to its left, so a');
-  console.log('  line number MENTIONED in a `read` after a path reads as a citation. A false RED — loud, at');
-  console.log('  the row, one edit to clear — never a false green. It caught the sentence explaining the');
-  console.log('  rule, which is how it came to be named here.');
   console.log('  probe still points at something that EXISTS. It does not prove it points at the RIGHT');
   console.log('  thing — an anchor picked loose enough to survive anything is a green that means');
   console.log('  nothing, and nothing here can see that. `by` names the person who picked it.');
+  console.log('  THE TYPED-LINE FLOOR USES C1 STRICT: a path with an extension plus `:N` or `:N-M`.');
+  console.log('  It does NOT detect an orphan bare `:N`, extensionless `path:N`, or bare continuations');
+  console.log('  left after the first strict citation loses its line. Those are FALSE-GREEN LIMITS;');
+  console.log('  do not cite this floor as covering them. `--census-citations` prints the wider rules.');
   console.log('  The LINES above are DERIVED from the anchors on this run; none is typed anywhere.');
   // A terminated RESULT sentence with its own counted claim, so the suite's
   // reader can quote it and D103's verdict door can recognise it. A tool whose
