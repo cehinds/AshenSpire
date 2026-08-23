@@ -885,7 +885,8 @@ export function mountEquipment(host, {
       grip.className = entry.equipped ? 'ep-hold danger' : 'ep-hold';
       grip.dataset.holdFor = entry.key;
       grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
-      grip.textContent = entry.equipped ? 'Unequip' : 'Equip';
+      const verb = entry.equipped ? 'Unequip' : 'Equip';
+      grip.textContent = verb;
       // WHICH PIECE THIS GRIP IS FOR, IN THE ACCESSIBILITY TREE. Codex found
       // it and it is a defect of HIS RULING, not a nicety: D97 puts a SECOND
       // control on every candidate, and until this line every one of them was
@@ -914,10 +915,10 @@ export function mountEquipment(host, {
       // so pointing at the face would mean minting an id for it and keeping
       // two nodes in step across every redraw. The word and the piece already
       // sit in this scope; naming the control here is one home, not two.
-      // It also drops the `HOLD` hint span out of the name — `aria-label`
-      // overrides content, and "Equip HOLD" was the hint leaking into it.
+      // `aria-label` overrides content, so carry the conditional HOLD hint into
+      // the accessible name instead of silently removing the instruction.
       grip.setAttribute('aria-label',
-        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);
+        `${verb} ${entry.face.label}${gripMs > 0 ? ' — hold' : ''}`);
       // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
       // Nested inside the face the grip's aborted click would bubble into the
       // unfold path and only `stopPropagation` would stand between them — which
@@ -1006,7 +1007,7 @@ export function mountEquipment(host, {
       const eatTheLift = (pointerId) => {
         const off = () => {
           removeEventListener('click', eat, true);
-          removeEventListener('pointerdown', off, true);
+          removeEventListener('pointerdown', down, true);
           removeEventListener('pointercancel', gone, true);
         };
         // WHOSE LIFT IS THIS. Anything else — a synthetic activation click, a
@@ -1016,10 +1017,13 @@ export function mountEquipment(host, {
           if (e.pointerId !== pointerId) return;
           e.stopPropagation(); e.preventDefault(); off();
         };
+        // Another pointer is not this gesture. Keep this eater until its own
+        // pointer clicks, cancels, or begins a later gesture with the same id.
+        const down = (e) => { if (e.pointerId === pointerId) off(); };
         // THIS GESTURE ENDED WITHOUT LIFTING. No click is coming; go now.
         const gone = (e) => { if (e.pointerId === pointerId) off(); };
         addEventListener('click', eat, true);
-        addEventListener('pointerdown', off, true);
+        addEventListener('pointerdown', down, true);
         addEventListener('pointercancel', gone, true);
       };
       // THE THREE ROADS, WATCHED FAILING BEFORE THEY WERE CLOSED. Kept as a

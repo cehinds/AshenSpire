@@ -156,8 +156,13 @@ const CODES = new Set([
   'A7.cancelhold',    // a hold cancelled AFTER full did not commit on the grip
   'A7.cancelabort',   // a hold cancelled BEFORE full committed anyway
   'A7.cancelswallow', // the next activation after a CANCELLED hold was eaten
+  'A7.nomulti',       // no grip could be driven with two overlapping pointers
+  'A7.multicommit',   // the original above-full pointer did not commit
+  'A7.multitail',     // another pointer disarmed the original pointer's lift eater
+  'A7.multiabort',    // an overlapping below-full pointer committed anyway
   'A9.name',         // a grip does not name its piece in the accessibility tree
   'A9.collide',      // two grips in one picker share an accessible name
+  'A9.hold',         // an armed grip's accessible name does not say that it requires a hold
   'A9.blind',        // no picker opened, so no grip name was read at all
 ]);
 // NO CODE FOR THE BOUNDARY PLANT, DELIBERATELY. A code in this set is a finding
@@ -198,6 +203,8 @@ if (process.argv.includes('--selftest')) {
   // reworded, all three break loudly together instead of quietly reporting
   // NOT CAUGHT, which is the whole reason GATE lives up here too.
   const WHOSE = '          if (e.pointerId !== pointerId) return;';
+  const DOWN = "        const down = (e) => { if (e.pointerId === pointerId) off(); };";
+  const LABEL = "        `${verb} ${entry.face.label}${gripMs > 0 ? ' — hold' : ''}`);";
   // The cancel teardown, which is HYGIENE ON TOP OF `WHOSE` and not a second
   // guard for a second case: a cancelled pointer dispatches no click, so the
   // eater is torn down rather than left inert. A plant that wants the cancel
@@ -435,6 +442,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: redRe('A7.cancelswallow'),
       },
       {
+        name: 'another pointerdown disarms this gesture\'s lift eater',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: DOWN,
+          replace: '        const down = () => off(); /* planted: any pointer disarms A */' }],
+        expectRed: redRe('A7.multitail'),
+      },
+      {
         // CODEX, 2026-08-22 (P2b). The grip loses its accessible name and
         // nothing else changes: it still equips, still holds, still meets the
         // tap floor, still reads `Equip` on screen. Every other check in this
@@ -443,9 +457,16 @@ if (process.argv.includes('--selftest')) {
         // plant returns the tree to.
         name: 'the grip loses the piece name from its accessible name (Codex P2b)',
         edits: [{ file: 'src/ui/screens/equipment.js',
-          find: "      grip.setAttribute('aria-label',\n        `${entry.equipped ? 'Unequip' : 'Equip'} ${entry.face.label}`);",
+          find: "      grip.setAttribute('aria-label',\n" + LABEL,
           replace: '      /* planted: the grip is named `Equip` and nothing else */' }],
         expectRed: redRe('A9.name'),
+      },
+      {
+        name: 'an armed grip omits the hold instruction from its accessible name',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: LABEL,
+          replace: '        `${verb} ${entry.face.label}`); /* planted: HOLD is hidden from assistive tech */' }],
+        expectRed: redRe('A9.hold'),
       },
       {
         // CODEX, 2026-08-22. `draw()` drains the grips; a CLOSE runs no draw.
@@ -1528,6 +1549,77 @@ async function main() {
                 + ' the pointer never lifted, so no click was ever coming, and the eater armed at full ate an unrelated one'));
           }
         }
+
+        // ---- A7 · A SECOND FINGER IS NOT THIS GESTURE -----------------
+        //
+        // Pointer A reaches the hold threshold and rebuilds the picker while
+        // it is still down. Pointer B then lands elsewhere before A lifts.
+        // B's pointerdown must not disarm A's eater: A still owns one trailing
+        // click, even though its original grip no longer exists. The below-full
+        // edge is the control — overlapping input must not turn an abort into a
+        // commit.
+        for (const edge of [
+          { say: 'BELOW full (overlap control)', over: -400, commits: false },
+          { say: 'ABOVE full (A commits, B lands, A lifts)', over: +300, commits: true },
+        ]) {
+          await cdp.send('Page.navigate', { url: `${base}?shot=map` }, S);
+          await until("!!document.querySelector('#open-armoury')", 'map');
+          await wait(700);
+          await ev("document.querySelector('#open-armoury').click()");
+          await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
+          await wait(450);
+          await ev(`(() => { const b = document.querySelector('.armoury-overlay .equip-slot .es-cell:not(.locked)')
+            || document.querySelector('.armoury-overlay .equip-slot .es-cell'); if (b) b.click(); return !!b; })()`);
+          const gripM = await until("!!document.querySelector('.equip-picker .ep-list .ep-hold')", 'grip', 8000)
+            .then(() => true, () => false);
+          if (!gripM) {
+            console.log(`    ${red('A7.nomulti', `${edge.say}: no grip for the overlapping-pointer run — NOT a pass`)}`);
+            fails++; checks++;
+            continue;
+          }
+          await wait(350);
+          const multi = JSON.parse(await ev(`JSON.stringify((() => {
+            const g = document.querySelector('.equip-picker .ep-list .ep-hold');
+            g.scrollIntoView({ block: 'center' });
+            const r = g.getBoundingClientRect();
+            window.__a7multi = [];
+            document.addEventListener('click', (e) => window.__a7multi.push({
+              id: e.pointerId, target: e.target.id || e.target.className || e.target.tagName
+            }), true);
+            return { ax: r.x + r.width / 2, ay: r.y + r.height / 2,
+              hold: Number(g.dataset.holdMs || 600) }; })())`));
+          const slotM = () => ev("document.querySelector('.armoury-overlay .equip-slot .es-cell').textContent.trim()");
+          const m0 = await slotM();
+          const A = { x: Math.round(multi.ax), y: Math.round(multi.ay), id: 41 };
+          await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 2 }, S);
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [A] }, S);
+          await wait(Math.max(80, multi.hold + edge.over));
+          const m1 = await slotM();
+          // Keep A as real CDP touch input, then inject B as the exact unrelated
+          // pointerdown the global eater listens for. A second CDP touch causes
+          // Chromium to suppress A's click entirely, which cannot discriminate
+          // this listener defect; the product boundary here is the PointerEvent
+          // identity, so B is injected at that boundary while A remains real.
+          await ev("window.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 42, pointerType: 'touch', bubbles: true, cancelable: true }))");
+          await wait(80);
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S);
+          await wait(350);
+          const clicks = JSON.parse(await ev('JSON.stringify(window.__a7multi || [])'));
+          await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false, maxTouchPoints: 1 }, S);
+          console.log(`      ${edge.say}: slot "${m0}" → "${m1}"; clicks after A lifted ${JSON.stringify(clicks)}`);
+          if (edge.commits) {
+            ok(m1 !== m0, m1 !== m0
+              ? `A7 the original pointer committed before the overlap ("${m0}" → "${m1}")`
+              : red('A7.multicommit', `the above-full pointer did not commit before the second pointer landed (slot stayed "${m0}")`));
+            ok(clicks.length === 0, clicks.length === 0
+              ? 'A7 another pointerdown did not disarm the original pointer\'s owed lift eater'
+              : red('A7.multitail', `pointer A leaked ${clicks.length} click(s) after pointer B landed — ${JSON.stringify(clicks)}`));
+          } else {
+            ok(m1 === m0, m1 === m0
+              ? `A7 the below-full overlap stayed an abort (slot "${m0}")`
+              : red('A7.multiabort', `the below-full overlap committed (slot "${m0}" → "${m1}")`));
+          }
+        }
       }
     }
 
@@ -1625,7 +1717,11 @@ async function main() {
         for (const nodeId of nodeIds) {
           const { node } = await cdp.send('DOM.describeNode', { nodeId }, S);
           const ax = byBackend.get(node.backendNodeId);
-          out.push({ name: ax && ax.name ? String(ax.name.value) : '', role: ax && ax.role ? ax.role.value : null });
+          const attrs = {};
+          for (let i = 0; i < (node.attributes || []).length; i += 2) attrs[node.attributes[i]] = node.attributes[i + 1];
+          out.push({ name: ax && ax.name ? String(ax.name.value) : '',
+            role: ax && ax.role ? ax.role.value : null,
+            holdMs: Number(attrs['data-hold-ms'] || 0) });
         }
         return out;
       };
@@ -1654,12 +1750,14 @@ async function main() {
             [...document.querySelectorAll('.equip-picker .ep-list .disc-face .df-label, .equip-picker .ep-list .disc-face')]
               .filter((n) => n.classList.contains('disc-face'))
               .map((f) => (f.querySelector('.ec-name') || f).textContent.trim()))`));
-          const names = (await axGrips()).map((g) => g.name);
+          const grips = await axGrips();
+          const names = grips.map((g) => g.name);
           const dups = names.length - new Set(names).size;
           const unnamed = names.filter((n, k) => {
             const piece = (pieces[k] || '').trim();
             return !piece || !n.toLowerCase().includes(piece.toLowerCase());
           }).length;
+          const missingHold = grips.filter((g) => g.holdMs > 0 && !/\bhold\b/i.test(g.name)).length;
           seen++;
           console.log(`      ${edge.say} · slot ${i}: ${names.length} grip(s) · pieces ${JSON.stringify(pieces)}`);
           console.log(`          AX names ${JSON.stringify(names)}`);
@@ -1671,6 +1769,9 @@ async function main() {
             ? `A9 ${edge.say} slot ${i}: no two grips share an accessible name (${names.length} candidate(s))`
             : red('A9.collide', `${edge.say} slot ${i}: ${dups} grip name collision(s) among ${names.length} candidates — ${JSON.stringify(names)};`
               + ' assistive tech and voice control meet several sibling buttons with one name'));
+          ok(missingHold === 0, missingHold === 0
+            ? `A9 every armed grip exposes its hold requirement (${names.length} candidate(s))`
+            : red('A9.hold', `${edge.say} slot ${i}: ${missingHold} armed grip(s) omit the hold requirement from their accessible name — ${JSON.stringify(names)}`));
           // Back to a clean panel: each slot's picker is read on its own draw.
           await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
           await until("!!document.querySelector('#open-armoury')", 'map');
