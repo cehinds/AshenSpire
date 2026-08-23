@@ -294,7 +294,7 @@ export const REFUSAL_SCOPE = [
   '  link-reference DEFINITION IN THE FILE, because `[a][b]` with nothing defined',
   '  is ordinary prose and GitHub renders it literally. Also refused, not',
   '  bracket-counted: a shortcut reference on a DEFINITION FOUND ON ONE LINE',
-  '  OUTSIDE A TOP-LEVEL FENCED CODE BLOCK ·',
+  '  OUTSIDE A FENCED CODE BLOCK, INCLUDING QUOTE/LIST CONTAINERS ·',
   '  raw HTML, comment and processing instruction (`<letter`, `</`, `<!`, `<?`).',
   'ANY FORM OUTSIDE THAT SUBSET REACHES THE PLAYER — verbatim if it is not',
   '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
@@ -363,19 +363,39 @@ export function normalizeLinkLabel(label) {
   return label.replace(/[ \t\r\n]+/g, ' ').trim().toLowerCase();
 }
 function fencedCodeDelimiter(line) {
-  const match = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+  const content = stripBlockContainerPrefixes(line);
+  const match = content.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
   if (!match) return null;
   return { marker: match[1][0], length: match[1].length, tail: match[2] };
+}
+function stripBlockContainerPrefixes(line) {
+  let content = line;
+  for (let depth = 0; depth < 32; depth++) {
+    const quote = content.match(/^ {0,3}>[ \t]?/);
+    if (quote) { content = content.slice(quote[0].length); continue; }
+    const list = content.match(/^ {0,3}(?:[*+-]|\d{1,9}[.)])(?:[ \t]{1,4}|$)/);
+    if (list) { content = content.slice(list[0].length); continue; }
+    break;
+  }
+  return content;
+}
+function linkDefinitionLabel(line) {
+  const start = line.search(/^ {0,3}\[/);
+  if (start < 0) return null;
+  const open = line.indexOf('[', start);
+  const close = matchingBracket(line, open, '[', ']');
+  if (close < 0 || line[close + 1] !== ':' || !/^\s*\S/.test(line.slice(close + 2))) return null;
+  return normalizeLinkLabel(line.slice(open + 1, close));
 }
 export function linkDefinitionLabels(markdown) {
   const labels = new Set();
   let fence = null;
   for (const line of markdown.split(/\r?\n/)) {
-    // This collector only accepts physical definitions indented 0–3 spaces, so
-    // top-level fences are the matching block context it must exclude. A closer
-    // uses the same marker and at least the opener's run length; a backtick info
-    // string cannot itself contain a backtick. Those are the CommonMark fence
-    // facts needed to keep examples from becoming definitions here.
+    // Definitions inside block quotes/lists remain document-wide in CommonMark,
+    // so one prefix stripper feeds both this collector and the fence scanner. A
+    // closer uses the same marker and at least the opener's run length; a backtick
+    // info string cannot itself contain a backtick. Those are the block facts this
+    // narrow collector needs to keep examples out and live definitions in.
     const delimiter = fencedCodeDelimiter(line);
     if (fence) {
       if (delimiter
@@ -388,12 +408,8 @@ export function linkDefinitionLabels(markdown) {
       fence = delimiter;
       continue;
     }
-    const start = line.search(/^ {0,3}\[/);
-    if (start < 0) continue;
-    const open = line.indexOf('[', start);
-    const close = matchingBracket(line, open, '[', ']');
-    if (close < 0 || line[close + 1] !== ':' || !/^\s*\S/.test(line.slice(close + 2))) continue;
-    labels.add(normalizeLinkLabel(line.slice(open + 1, close)));
+    const label = linkDefinitionLabel(stripBlockContainerPrefixes(line));
+    if (label !== null) labels.add(label);
   }
   return labels;
 }
@@ -553,6 +569,7 @@ export function parseChangelog(markdown) {
   for (const line of markdown.split(/\r?\n/)) {
     if (line.startsWith('## ')) { group = line.slice(3).trim(); continue; }
     if (!line.startsWith('- ')) continue;
+    if (linkDefinitionLabel(stripBlockContainerPrefixes(line)) !== null) continue;
     const match = line.match(/^- \*\*(.+?)\*\* \(\[#(\d+)\]\((https:\/\/github\.com\/cehinds\/AshenSpire\/pull\/(\d+))\), `([^`]+)`\)\.(?: (.+))?$/);
     if (!match) throw new Error(`unparseable changelog receipt: ${line}`);
     const [, summary, prText, url, urlPr, build, prose = ''] = match;
@@ -1083,6 +1100,36 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. See [docs].\n\n```text\n[example]: /example\n```\n\n[docs]: /guide',
       expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'a reference definition inside a block quote remains active', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs].\n\n> [docs]: /guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'a reference definition inside an ordered list remains active', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [ordered].\n\n1. [ordered]: /guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'a definition behind nested quote and list prefixes remains active', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [nested].\n\n> 1. [nested]: /guide',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'an unused bullet-list definition is metadata, not a malformed receipt', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only.\n\n- [unused]: /guide',
+      write: { detail: 'Docs only.' },
+    },
+    {
+      name: 'a definition inside a quoted fence remains only an example', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Keeps [quoted] literal.\n\n> ```text\n> [quoted]: /guide\n> ```',
+      write: { detail: 'Docs only. Keeps [quoted] literal.' },
     },
     // Same block, second form. A destination in `<…>` need not balance its parens,
     // so `matchingBracket` returned -1 and the link rule never ran. The report that
