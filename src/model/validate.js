@@ -413,7 +413,8 @@ export function validateContent(bundle) {
     const split = problem.indexOf(':');
     err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
   }
-  for (const keepsake of (b.characterCreation && b.characterCreation.keepsakes) || []) {
+  const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
+  for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
     validateEffects(keepsake.effects || [], `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
   }
 

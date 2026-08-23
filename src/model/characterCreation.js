@@ -30,7 +30,11 @@ export function characterCreationProblems(source) {
   for (const [classId, row] of Object.entries(cfg.classes)) {
     const path = `characterCreation.classes.${classId}`;
     if (!classIds.has(classId)) problems.push(`${path}: unknown class`);
-    for (const key of Object.keys(row || {})) if (!CLASS_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      problems.push(`${path}: must be an object`);
+      continue;
+    }
+    for (const key of Object.keys(row)) if (!CLASS_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
     for (const field of CLASS_FIELDS) {
       const values = row && row[field];
       if (!Array.isArray(values) || values.length < 2) {
@@ -53,7 +57,7 @@ export function characterCreationProblems(source) {
   const keepsakes = cfg.keepsakes;
   if (!Array.isArray(keepsakes) || keepsakes.length < 2) problems.push('characterCreation.keepsakes: must contain at least two choices');
   const seen = new Set();
-  for (const row of keepsakes || []) {
+  for (const row of Array.isArray(keepsakes) ? keepsakes : []) {
     const path = `characterCreation.keepsakes.${(row && row.id) || '?'}`;
     for (const key of Object.keys(row || {})) if (!['id', 'name', 'icon', 'desc', 'effects'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
     if (!row || typeof row.id !== 'string' || !row.id) problems.push(`${path}.id: must be non-empty`);

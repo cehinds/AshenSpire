@@ -5293,6 +5293,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'an invalid sprite side fails by its JSON path');
     assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
       'a short/dangling hand roster fails by its JSON path');
+
+    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedKeepsakes.characterCreation.keepsakes = {};
+    const keepsakeValidation = validateContent(malformedKeepsakes);
+    assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
+      'a non-array keepsake roster reports its JSON path instead of throwing');
+
+    const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedClass.characterCreation.classes.reaver = null;
+    const classValidation = validateContent(malformedClass);
+    assert(!classValidation.ok && classValidation.errors.some((e) => e.path.includes('characterCreation.classes.reaver')),
+      'a null class roster reports its JSON path instead of throwing');
   });
 
   const passed = results.filter((r) => r.ok).length;
