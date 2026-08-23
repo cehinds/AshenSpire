@@ -834,7 +834,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   for (const profile of registries.equipment.basicCardProfiles || []) {
     const rule = snapshot.profiles[profile.id];
     if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
     if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
     if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
     if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
@@ -890,6 +890,7 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
   const raw = rule.baseValue + tier.value + rarityBonus;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
   return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
 }
 

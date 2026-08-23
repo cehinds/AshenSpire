@@ -12,7 +12,7 @@
 import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
-import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
+import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
   createDerivedStatRuleSnapshot,
   restoreDerivedStatRuleSnapshot,
@@ -75,6 +75,7 @@ export function createRunState({
   const attributes = requestedAttributes === undefined
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
+  const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
   const idGen = createIdGen('rc');
   const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
   // E5 (#250): the set the run begins wearing. Resolved against the same
@@ -83,7 +84,12 @@ export function createRunState({
   // no new run field, because run.loadout.sets.armor[0] already IS the record.
   const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
   const loadout = createLoadout(registries, classId, startingKit, startingArmour);
-  for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
+  // A class's baseline kit is part of its birth contract, not an equipment
+  // choice made after creation. Alternate kits still pass the requirement
+  // gate; the baseline remains usable when a save-safe mode retunes attributes.
+  for (const [slotId, itemId] of startingKit.baseline
+    ? []
+    : Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
     const receipt = equipmentRequirementReceipt(registries, piece, attributes);
@@ -104,6 +110,7 @@ export function createRunState({
     startingKitId: startingKit.id,
     startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
+    attributeModeSnapshot,
     attributes,
     // LEVELS BOUGHT AT SHRINES, per run — Constantine: "players should have the
     // option to level up their character (per run) by trading cinders". It is a
@@ -208,16 +215,23 @@ export function initializeRunDerivedStats(run, registries, {
   derivedStatOptions = {},
   preserveDeficits = true,
 } = {}) {
+  const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  const modeModifiers = modeProfiles
+    ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
+    : derivedStatOptions.modeModifiers;
+  const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
   const hpEquipmentBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
-    : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
+    : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
-  const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  // Ruleset 3 was the first fully persisted, host-owned snapshot. Preserve it
+  // exactly across later balance tables; versions 1/2 remain migration inputs.
+  const existingIsCurrent = existing && existing.rulesetVersion >= 3 && existing.rulesetVersion <= currentRuleset;
   let restoredExisting = null;
-  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries, effectiveDerivedStatOptions));
 
   // Schema v3 and older had no explanation for permanent max-HP reductions.
   // Infer the exact residual once from the old authoritative rule plus current
@@ -307,7 +321,7 @@ export function initializeRunDerivedStats(run, registries, {
   // wrong answer Law 0 clause 5 is about.
   const hostRules = resolveDerivedStatRules(
     registries.derivedStatRules,
-    derivedOptions(registries, derivedStatOptions),
+    derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
     Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
@@ -319,7 +333,7 @@ export function initializeRunDerivedStats(run, registries, {
   const receipt = existingIsCurrent
     ? restoredExisting
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
-      ...derivedOptions(registries, derivedStatOptions),
+      ...derivedOptions(registries, effectiveDerivedStatOptions),
       classDef,
       relicModifierReceipt,
     });
@@ -405,6 +419,7 @@ export const RUN_SHAPE = [
   { key: 'startingKitSnapshot', type: 'object' },
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
+  { key: 'attributeModeSnapshot', type: 'object', optional: true },
   { key: 'attributes', type: 'object', optional: true },
   // Optional so a run saved before shrine levelling existed still loads: absent
   // reads as zero levels bought, which is what such a run is. `levelPoints` is
@@ -476,6 +491,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
+  if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);

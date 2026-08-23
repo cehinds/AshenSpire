@@ -19,18 +19,7 @@ export const relics = [
     rarity: 'starter',
     passives: {
       modifiers: [
-        { tag: 'resource.flat', resource: 'hp', amount: 2 },
-        {
-          tag: 'resource.attributeTier',
-          resource: 'hp',
-          sourceStat: 'constitution',
-          // NO `pointsPerTier` — it said 5, which is derivedStatRules' own tier
-          // size written a second time. The row means "+1 HP per TIER of CON";
-          // what a tier is belongs to the rule it folds into. At the shipping
-          // tier size this changes no number (tests 57 and 60c), and stating it
-          // again is still legal if a relic ever wants its own granularity.
-          amountPerTier: 1,
-        },
+        { tag: 'resource.flat', resource: 'hp', amount: 10 },
       ],
     },
     icon: '🏅',
@@ -42,7 +31,7 @@ export const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Max HP +{hpFlat}, plus +{hpPerTier} per completed CON tier. Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 

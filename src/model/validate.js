@@ -447,6 +447,17 @@ export function validateContent(bundle) {
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  const equipmentProfileIds = new Set((((b.equipment || {}).basicCardProfiles) || []).map((row) => row && row.id));
+  for (const mode of b.creationModes || []) {
+    for (const [profileId, patch] of Object.entries((mode && mode.equipmentProfiles) || {})) {
+      const path = `creationModes.${mode.id}.equipmentProfiles.${profileId}`;
+      if (!equipmentProfileIds.has(profileId)) err(path, `unknown equipment profile '${profileId}'`);
+      if (patch.baseValue !== undefined && !Number.isFinite(patch.baseValue)) err(`${path}.baseValue`, 'must be finite');
+      if (patch.pointsPerTier !== undefined && (!Number.isFinite(patch.pointsPerTier) || patch.pointsPerTier <= 0)) err(`${path}.pointsPerTier`, 'must be finite and > 0');
+      if (patch.gainPerTier !== undefined && !Number.isFinite(patch.gainPerTier)) err(`${path}.gainPerTier`, 'must be finite');
+      if (patch.cap !== undefined && patch.cap !== null && (!Number.isFinite(patch.cap) || patch.cap < 0)) err(`${path}.cap`, 'must be null or finite and >= 0');
+    }
+  }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp', 'hpPerConTier'],

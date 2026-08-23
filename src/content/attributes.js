@@ -30,6 +30,29 @@ export const attributes = [
 
 export const creationModes = [
   {
+    id: 'tuned',
+    label: 'Tuned',
+    baseline: 10,
+    bonusPool: 3,
+    minimum: 8,
+    maximum: 15,
+    belowBaseline: 'allow',
+    redistribution: 'fixedTotal',
+    equipmentProfiles: {
+      unarmedAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      bladeAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      daggerPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      bowPierceAttack: { baseValue: -6, scalingStat: 'strength', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      staffMagicAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      sceptreArcaneAttack: { baseValue: -6, scalingStat: 'wisdom', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      unarmedGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      weaponGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      shieldGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      staffGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+      sceptreGuard: { baseValue: -6, scalingStat: 'dexterity', pointsPerTier: 1, rounding: 'floor', gainPerTier: 1 },
+    },
+  },
+  {
     id: 'standard',
     label: 'Standard',
     baseline: 10,
@@ -72,8 +95,13 @@ export const creationModes = [
 // standard preset with the five extra points laid along each class's grain.
 // The player reshapes them; nothing here is a recommendation.
 export const attributeRules = {
-  defaultMode: 'standard',
+  defaultMode: 'tuned',
   presets: {
+    tuned: {
+      reaver: { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 },
+      starseer: { strength: 11, dexterity: 11, constitution: 8, wisdom: 13, intelligence: 10 },
+      herald: { strength: 12, dexterity: 11, constitution: 8, wisdom: 12, intelligence: 10 },
+    },
     standard: {
       reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
       starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },

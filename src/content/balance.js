@@ -135,8 +135,8 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 20,
-    costStep: 4,
+    firstCost: 800,
+    costStep: 200,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
