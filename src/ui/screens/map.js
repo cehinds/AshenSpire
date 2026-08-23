@@ -38,6 +38,9 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudCenterHtml } from '../components/hudmeta.js';
+import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { resourceBars } from '../components/resbars.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -80,7 +83,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const fog = mode === 'fog';
 
   const cz = run.customization || {};
-  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const hasRelics = run.relics.length > 0;
@@ -99,20 +101,29 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <header class="topbar map-header">
-        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
-          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
+      <header class="topbar combat-hud map-header">
+        <!-- E9 / #254 - ONE HUD. The entire top row now has the same structure
+             as combat: the shared resource host, Armoury, Menu. This used to be
+             a hand-written div.bar.hpbar at its own 15rem width; its first E9
+             replacement reused the renderer but gave the map a full-width row,
+             so 320x640 could still show a different physical length for the
+             same percentage. Sharing the row geometry removes that last second HUD.
+             (No backticks here: this block lives inside a template literal.) -->
+        <div class="hud-top">
+          <div class="resbars-host"></div>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+            <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
-        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
-        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        ${buildStampHtml('map')}
-        <div class="mh-actions">
-          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+          <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`}</span>
+          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('map')}
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
@@ -125,6 +136,32 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       </div>
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
+
+  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
+  //
+  // E9 / #254, his words: "I'd like the hud to look the same both combat and
+  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
+  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
+  // the identical call combat.js:435 and coop.js:460 make. So:
+  //
+  //   · WHICH rows appear is content/resources.js's business, not this
+  //     screen's. HP, then Mana, then Stamina — the map does
+  //     not get its own list and cannot drift from combat's.
+  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
+  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     means the same thing on both screens.
+  //   · The `run` IS the view and the entity here, exactly as it is in
+  //     tools/hybridstats.mjs — the readers take current/max off it and a row
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. Poise is
+  //     model-surface-only on the combat character card, so it never enters
+  //     this shared main-surface plan on either screen.
+  //   · the shared component writes the exact max/reference percentage; there
+  //     is no screen-specific floor or post-layout correction.
+  const resHost = app.querySelector('.map-header .resbars-host');
+  if (resHost) {
+    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
+    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
+  }
 
   // ---- THE BOARD -------------------------------------------------------
   //
