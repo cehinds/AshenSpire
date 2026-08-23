@@ -713,6 +713,31 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
   else zoomPassed++;
 
+  // 69 — THE PROBE CORPUS'S OWN DERIVATIONS. Bjorn, 2026-08-22. `tools/watched.mjs`
+  // is one of the 131 tools `gatelist` counts as executed by no declared gate
+  // list, so its floors reached no automated run at all — and the floor added
+  // today is the one that catches a probe still citing code that has moved.
+  // Wiring it here is the whole point: a floor nobody runs is the defect it was
+  // built to catch, one level up. `--check-reads` needs no browser, no ledger and
+  // no bundle, which is why this door and not the full audit is the one CI can
+  // afford to hold.
+  const runReads = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/watched.mjs', '--check-reads', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const reads = runReads([]);
+  const readsV = quote(reads.out);
+  console.log(
+    `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
+      ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
+      ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
+  );
+  if (reads.code !== 0 || !readsV.text) zoomExtra++;
+  else zoomPassed++;
+
   const numsTree = runNums([]);
   const numsTreeV = quote(numsTree.out);
   console.log(
@@ -800,4 +825,12 @@ console.log('          nothing about instruments a person starts at a terminal, 
 console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
 console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
 console.log('          design call with real costs, and it is not this suite\'s to make.');
+console.log('          69 IS A CONSISTENCY CHECK OVER A CITATION, NOT A CORRECTNESS ONE. It proves');
+console.log('          every watched-probe still names a file that exists and an anchor literal');
+console.log('          still in it — it CANNOT tell whether that anchor identifies the right thing,');
+console.log('          and an anchor picked loose enough to survive any edit greens here forever.');
+console.log('          `by` in tools/watched-probes.json names who picked it. It also runs only the');
+console.log('          READ door of tools/watched.mjs: nothing in this suite opens the build, drives');
+console.log('          a probe, or photographs a control, so `watched` as a VERDICT is still');
+console.log('          unwatched by CI — only the derivations behind it are.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
