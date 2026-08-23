@@ -51,11 +51,31 @@ function parseArgs(argv) {
 }
 
 function resolveLibraryDir(override) {
+  const environmentOverride = process.env[ENV_LIBRARY_DIR];
   return resolve(
     override
-      ?? process.env[ENV_LIBRARY_DIR]
+      ?? (environmentOverride?.trim() ? environmentOverride : undefined)
       ?? join(homedir(), '.constantine', 'prompt-library'),
   );
+}
+
+function validateCommandArgs({ command, id, extra }) {
+  if (extra.length) throw new Error(`Unexpected argument: ${extra[0]}`);
+  switch (command) {
+    case 'install':
+    case 'list':
+    case 'path':
+    case 'verify':
+      if (id) throw new Error(`Unexpected argument: ${id}`);
+      break;
+    case 'summary':
+      break;
+    case 'print':
+      if (!id) throw new Error('print requires a prompt id.');
+      break;
+    default:
+      throw new Error(usage());
+  }
 }
 
 function sha256(bytes) {
@@ -207,8 +227,8 @@ async function print(libraryDir, id) {
 
 async function main() {
   const parsed = parseArgs(process.argv.slice(2));
+  validateCommandArgs(parsed);
   const libraryDir = resolveLibraryDir(parsed.libraryDir);
-  if (parsed.extra.length) throw new Error(`Unexpected argument: ${parsed.extra[0]}`);
   switch (parsed.command) {
     case 'install': await install(libraryDir); break;
     case 'list': await list(libraryDir); break;
@@ -216,7 +236,6 @@ async function main() {
     case 'summary': await summary(libraryDir, parsed.id); break;
     case 'print': await print(libraryDir, parsed.id); break;
     case 'verify': await verify(libraryDir); break;
-    default: throw new Error(usage());
   }
 }
 

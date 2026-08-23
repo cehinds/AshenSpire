@@ -214,6 +214,9 @@ jobs:
       - name: Every workflow step actually runs a command
         run: node tools/verdict.mjs -- node tools/workflow-lint.mjs
 
+      - name: Prompt-library CLI safety plants
+        run: node tools/verdict.mjs -- node tools/prompt-library-selftest.mjs
+
       - name: Engine suite
         run: node tools/verdict.mjs -- node tests/run-node.mjs
 
