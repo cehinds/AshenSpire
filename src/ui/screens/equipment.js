@@ -18,7 +18,7 @@ import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
   canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
-  ownership, openedSets, visibleSets, rungFor, setCellState, slotHand,
+  ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
 } from '../../model/loadout.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
@@ -34,6 +34,7 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { normalizeArmouryLayout, orderArmourySlots } from '../../model/armouryLayout.js';
 
 const CFG = () => balance.equipment;
 
@@ -90,9 +91,9 @@ function cellKey(row) {
 // one key here plus its rule in ui.css: the DOM builder below already obeys
 // `figure` on both branches, so the table really is the only decider.
 const LAYOUTS = {
-  'figure:1|slots:flank': buildFlank, // 'grid'   — the person, kit hanging off them
-  'figure:1|slots:list': buildList, // 'hybrid' — the rack with the figure beside it
-  'figure:0|slots:list': buildList, // 'rack'   — the list, no figure
+  'figure:1|slots:flank': buildArmoury, // Grid keeps the shared shell
+  'figure:1|slots:list': buildArmoury, // Hybrid keeps the shared shell
+  'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
 };
 
 /** Every declared view id, in authored order. The one enumeration. */
@@ -276,34 +277,25 @@ export function opensCollapsed(regionId, stored) {
 // above true: adding `figure:0|slots:flank` to LAYOUTS is one key and one rule
 // in ui.css, because nothing here would have to change.
 
-function buildFlank(L, ui) {
-  // The figure in the middle with its kit hanging off it, hands on the side they
-  // are actually held: the sprite carries the right-hand armament at screen
-  // right, so the Right Hand column is the right one.
-  const cols = { l: document.createElement('div'), r: document.createElement('div') };
-  cols.l.className = 'ag-col';
-  cols.r.className = 'ag-col';
-  ui.blocks.forEach(({ slot, el: b }, i) => {
-    const id = slot.id.toLowerCase();
-    const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
-    cols[side].appendChild(b);
-  });
-  ui.left.appendChild(cols.l);
-  if (L.figure) ui.left.appendChild(ui.figure());
-  ui.left.appendChild(cols.r);
-  ui.right.appendChild(ui.picker());
-}
+function buildArmoury(L, ui) {
+  // Grid, Rack, and Hybrid are presentation names for the same authored shell.
+  // The view selector remains available for saved preferences and probes, but
+  // no view is allowed to hide the character or move hand sockets into a flank.
+  const character = ui.character();
+  ui.left.appendChild(character);
 
-function buildList(L, ui) {
-  // One column of slots beside the figure — or without it, when the row says
-  // `figure: false`. The id is not consulted: 'rack' is simply the row that
-  // asks for no figure.
-  if (L.figure) ui.left.appendChild(ui.figure());
-  const slotWrap = document.createElement('div');
-  slotWrap.className = 'equip-slots';
-  for (const b of ui.blocks) slotWrap.appendChild(b.el);
-  ui.right.appendChild(slotWrap);
-  ui.right.appendChild(ui.picker());
+  const equipment = document.createElement('section');
+  equipment.className = 'armoury-equipment';
+  equipment.innerHTML = `<header class="armoury-equipment-head"><h3>${esc(ui.layout.equipment.groupLabel)}</h3>`
+    + '<p>Choose a socket, then compare what you carry.</p></header>';
+  const slots = document.createElement('div');
+  slots.className = 'equip-slots';
+  const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
+  const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
+  for (const slot of ordered) slots.appendChild(byId.get(slot.id));
+  equipment.appendChild(slots);
+  equipment.appendChild(ui.picker());
+  ui.right.appendChild(equipment);
 }
 
 /**
@@ -492,6 +484,7 @@ export function mountEquipment(host, {
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
+  const layout = normalizeArmouryLayout(eq.armouryUi && eq.armouryUi.layout);
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
@@ -1071,6 +1064,102 @@ export function mountEquipment(host, {
     return box;
   }
 
+  function characterPowerEntries() {
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const role = (id, label) => {
+      const row = surface.roles.find((candidate) => candidate.role === id);
+      const value = row ? row.receipt.value : 0;
+      const formula = row
+        ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
+        : 'No armament receipt is active.';
+      return {
+        key: id,
+        kind: 'power',
+        disclosure: 'face',
+        face: { label, value: String(value) },
+        reveal: { title: label, sense: `${label} after the current loadout.`, lines: [formula] },
+      };
+    };
+    return [role('attack', 'Strike power'), role('guard', 'Guard / defense'), role('technique', 'Technique power')];
+  }
+
+  function attributeEntries(projection) {
+    const pieces = equippedPieces(registries, run.loadout, run.class);
+    return projection.attributes.map((row) => {
+      const bonuses = pieces.flatMap((piece) => (piece.mods || [])
+        .filter((mod) => mod.toLowerCase().includes(row.id.slice(0, 3)))
+        .map((mod) => `${piece.name}: ${mod}`));
+      return {
+        key: row.id,
+        kind: 'attribute',
+        disclosure: 'face',
+        face: { label: row.shortLabel || row.label, value: String(row.value) },
+        reveal: {
+          title: row.label,
+          sense: 'Base value plus current equipment and relic bonuses.',
+          lines: [`Base ${row.value}`, ...(bonuses.length ? bonuses : ['No direct item bonus authored.'])],
+        },
+      };
+    });
+  }
+
+  function relicEntries() {
+    return (run.relics || []).map((id) => {
+      const relic = registries.relics.get(id);
+      return {
+        key: id,
+        kind: 'relic',
+        disclosure: 'face',
+        face: { label: relic.name, value: 'Equipped' },
+        reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.'] },
+      };
+    });
+  }
+
+  function characterStatsPanel() {
+    const box = document.createElement('section');
+    box.className = 'armoury-character-stats';
+    const cls = registries.classes.get(run.class);
+    const projection = statProjection(registries, run);
+    box.innerHTML = `<header class="character-summary"><h3>${esc(cls.name)}</h3>`
+      + `<p>${esc(cls.description || '')}</p><span>Level ${Number(run.level || 1)}</span></header>`;
+
+    const powers = document.createElement('section');
+    powers.className = 'character-power-cards';
+    mountDisclosure(powers, characterPowerEntries(), { moreLabel: 'more powers' });
+    box.appendChild(powers);
+
+    const attributes = document.createElement('section');
+    attributes.className = 'character-attributes';
+    attributes.innerHTML = '<h4>Attributes</h4>';
+    const attributeHost = document.createElement('div');
+    mountDisclosure(attributeHost, attributeEntries(projection), { moreLabel: 'more attributes' });
+    attributes.appendChild(attributeHost);
+    box.appendChild(attributes);
+
+    const relics = document.createElement('section');
+    relics.className = 'character-relics';
+    relics.innerHTML = `<h4>Relics <span>${(run.relics || []).length}</span></h4>`;
+    const relicHost = document.createElement('div');
+    const entries = relicEntries();
+    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics' });
+    else relicHost.innerHTML = '<p class="ep-hint">No relics equipped.</p>';
+    relics.appendChild(relicHost);
+    box.appendChild(relics);
+    return box;
+  }
+
+  function characterPanel() {
+    const panel = document.createElement('section');
+    panel.className = 'armoury-character';
+    const sprite = document.createElement('div');
+    sprite.className = 'armoury-sprite-pane';
+    sprite.appendChild(figureFor(registries, run, cz));
+    panel.appendChild(sprite);
+    panel.appendChild(characterStatsPanel());
+    return panel;
+  }
+
   function commit() {
     // Every loadout mutation lands here, so this is the one wire for the
     // growth chain's talisman source (model/flaskgrowth.js): a worn growth
@@ -1164,7 +1253,7 @@ export function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-composition="character-equipment">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views" data-surface="armouryView">
@@ -1180,6 +1269,17 @@ export function mountEquipment(host, {
         <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
+
+    const panel = wrap.querySelector('.armoury');
+    panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
+      ? 'phone' : 'desktop';
+    panel.style.setProperty('--armoury-character-ratio', `${layout.shell.characterRatio}fr`);
+    panel.style.setProperty('--armoury-equipment-ratio', `${layout.shell.equipmentRatio}fr`);
+    panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
+    panel.style.setProperty('--armoury-sprite-ratio', String(layout.character.spriteRatio));
+    panel.style.setProperty('--armoury-stats-ratio', String(layout.character.statsRatio));
+    panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
+    panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -1214,7 +1314,9 @@ export function mountEquipment(host, {
     if (build) {
       build(L, {
         left, right, blocks,
+        layout,
         figure: () => figureFor(registries, run, cz),
+        character: () => characterPanel(),
         picker: () => pickerBlock(),
       });
     } else {

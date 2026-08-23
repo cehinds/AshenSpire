@@ -3519,6 +3519,176 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
 
+/* ---------- Shared Armoury shell (Grid / Rack / Hybrid) -------------------
+   The three view names remain saved presentation choices, but the player
+   should never lose the character or have to relearn the socket order. The
+   authored ratios arrive as CSS variables from armouryUi.json, so this is one
+   responsive shell rather than three hand-tuned layouts. */
+.armoury[data-composition='character-equipment'] .armoury-body {
+  display: grid;
+  grid-template-columns: minmax(0, var(--armoury-character-ratio)) minmax(0, var(--armoury-equipment-ratio));
+  gap: var(--armoury-gap);
+  min-height: 0;
+  flex-direction: initial;
+  overflow: hidden;
+}
+.armoury[data-composition='character-equipment'] .armoury-left,
+.armoury[data-composition='character-equipment'][data-figure='0'] .armoury-left {
+  display: flex;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden auto;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: initial;
+}
+.armoury[data-composition='character-equipment'] .armoury-right {
+  display: flex;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  overflow: hidden auto;
+  flex: initial;
+}
+/* The legacy flank rule hid its picker when Grid was not active. The shared
+   shell keeps the vertical socket pane present in every view, so its explicit
+   composition selector must win that older convenience rule. */
+.armoury[data-composition='character-equipment'][data-slots='flank']:not(.picking) .armoury-right {
+  display: flex;
+}
+.armoury-character {
+  display: grid;
+  grid-template-rows: minmax(10rem, var(--armoury-sprite-ratio)) minmax(0, var(--armoury-stats-ratio));
+  gap: 1rem;
+  min-width: 0;
+  min-height: 100%;
+}
+.armoury-sprite-pane {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 10rem;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  background: rgba(10, 8, 6, 0.26);
+}
+.armoury-sprite-pane .armoury-figure {
+  width: min(100%, 30rem);
+  height: 100%;
+  max-height: 100%;
+  min-width: 0;
+}
+.armoury-character-stats {
+  min-width: 0;
+  overflow: auto;
+  padding: 0.2rem;
+}
+.character-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.8rem;
+  align-items: baseline;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+.character-summary span { color: var(--muted); white-space: nowrap; }
+.character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
+.character-power-cards,
+.character-attributes,
+.character-relics { margin-top: 0.7rem; }
+.character-attributes h4,
+.character-relics h4 { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.character-relics h4 span { color: var(--muted); margin-left: 0.35rem; }
+.character-power-cards .disc-faces,
+.character-attributes .disc-faces,
+.character-relics .disc-faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
+.character-power-cards .disc-face,
+.character-attributes .disc-face,
+.character-relics .disc-face {
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: var(--panel);
+  color: var(--parchment);
+  text-align: left;
+}
+.character-power-cards .disc-name,
+.character-attributes .disc-name,
+.character-relics .disc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.character-power-cards .disc-value,
+.character-attributes .disc-value { margin-left: auto; color: var(--gold); }
+.character-power-cards .disc-reveal,
+.character-attributes .disc-reveal,
+.character-relics .disc-reveal { grid-column: 1 / -1; }
+.armoury-equipment { min-width: 0; }
+.armoury-equipment-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.armoury-equipment-head h3 { color: var(--gold); font-size: 1.2rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.armoury-equipment-head p { color: var(--muted); font-size: 0.9rem; text-align: right; }
+.armoury[data-composition='character-equipment'] .equip-slots {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 0.8rem;
+}
+.armoury[data-composition='character-equipment'] .equip-slot {
+  width: 100%;
+  min-width: 0;
+}
+.armoury[data-composition='character-equipment'] .es-sets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+.armoury[data-composition='character-equipment'] .es-cell {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  min-height: 5.4rem;
+}
+.armoury[data-composition='character-equipment'] .es-cell span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
+
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, var(--armoury-phone-character-ratio)) minmax(0, var(--armoury-phone-equipment-ratio));
+  gap: 0.7rem;
+  padding: 0.7rem;
+}
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head { gap: 0.5rem; padding: 0.7rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head h2 { font-size: 1.3rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views { gap: 0.2rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views button { padding: 0.25rem 0.45rem; font-size: 0.9rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-character { grid-template-rows: minmax(8rem, var(--armoury-sprite-ratio)) minmax(0, var(--armoury-stats-ratio)); gap: 0.6rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-sprite-pane { min-height: 8rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head { display: block; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head p { margin-top: 0.2rem; text-align: left; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .es-sets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell { min-height: 4.7rem; padding: 0.15rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell img { height: 2.5rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -16319,6 +16489,34 @@ const armouryUi = {
   "equippedTag": {
     "useCustomColor": true,
     "customColor": "#7FD47F"
+  },
+  "layout": {
+    "shell": {
+      "characterRatio": 0.64,
+      "equipmentRatio": 0.36,
+      "gapRem": 1.6
+    },
+    "character": {
+      "spriteRatio": 0.6,
+      "statsRatio": 0.4,
+      "minWidth": "0"
+    },
+    "equipment": {
+      "groupLabel": "Armaments",
+      "slotOrder": [
+        "armaments",
+        "rightHand",
+        "leftHand"
+      ]
+    },
+    "responsive": {
+      "breakpoint": 760,
+      "phone": {
+        "minWidth": "0",
+        "characterRatio": 0.46,
+        "equipmentRatio": 0.54
+      }
+    }
   }
 };
 
@@ -23577,6 +23775,8 @@ Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, s
 // whether the equipped badge uses its custom colour; it never reads a raw JSON
 // field and invents its own fallback. `null` means "use the current motif".
 
+const { normalizeArmouryLayout } = require("src/model/armouryLayout.js");
+
 const HEX_COLOUR = /^#[0-9a-f]{6}$/i;
 
 function armouryUiProblems(config) {
@@ -23585,7 +23785,7 @@ function armouryUiProblems(config) {
     return [{ path: 'equipment.armouryUi', message: 'must be an object' }];
   }
   for (const key of Object.keys(config)) {
-    if (key !== 'equippedTag') {
+    if (!['equippedTag', 'layout'].includes(key)) {
       problems.push({ path: `equipment.armouryUi.${key}`, message: 'Unknown field' });
     }
   }
@@ -23611,6 +23811,13 @@ function armouryUiProblems(config) {
       message: `must be a six-digit hex colour such as #7FD47F — got ${JSON.stringify(tag.customColor)}`,
     });
   }
+  if (config.layout !== undefined) {
+    try {
+      normalizeArmouryLayout(config.layout);
+    } catch (error) {
+      problems.push({ path: 'equipment.armouryUi.layout', message: error.message });
+    }
+  }
   return problems;
 }
 
@@ -23622,6 +23829,114 @@ function equippedTagColor(config) {
 
 
 Object.assign(module.exports, { armouryUiProblems, equippedTagColor });
+
+},
+"src/model/armouryLayout.js": function (module, exports, require) {
+// src/model/armouryLayout.js — the data contract for the Armoury shell.
+//
+// This module is deliberately pure. Content authors tune the proportions and
+// order in content/source/armouryUi.json; the UI reads this normalized shape
+// and never embeds a second set of layout numbers.
+
+const DEFAULTS = Object.freeze({
+  shell: { characterRatio: 0.64, equipmentRatio: 0.36, gapRem: 1.6 },
+  character: { spriteRatio: 0.6, statsRatio: 0.4, minWidth: '0' },
+  equipment: { groupLabel: 'Armaments', slotOrder: ['armaments', 'rightHand', 'leftHand'] },
+  responsive: {
+    breakpoint: 760,
+    phone: { minWidth: '0', characterRatio: 0.46, equipmentRatio: 0.54 },
+  },
+});
+
+const ratio = (value, path) => {
+  if (!Number.isFinite(value) || value <= 0 || value >= 1) {
+    throw new Error(`armouryUi.layout.${path} must be a number between 0 and 1`);
+  }
+  return value;
+};
+
+const positive = (value, path) => {
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`armouryUi.layout.${path} must be positive`);
+  return value;
+};
+
+/**
+ * Normalize and validate authored Armoury layout content.
+ *
+ * The returned object is detached from the JSON module so callers can attach
+ * CSS variables without mutating the frozen content registry.
+ */
+function normalizeArmouryLayout(source = {}) {
+  const raw = source && typeof source === 'object' ? source : {};
+  const shell = { ...DEFAULTS.shell, ...(raw.shell || {}) };
+  const character = { ...DEFAULTS.character, ...(raw.character || {}) };
+  const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
+  const responsive = { ...DEFAULTS.responsive, ...(raw.responsive || {}) };
+  const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
+
+  const shellTotal = Number(shell.characterRatio) + Number(shell.equipmentRatio);
+  if (Math.abs(shellTotal - 1) > 0.0001) {
+    throw new Error(`armouryUi.layout.shell ratios must total 1 (got ${shellTotal})`);
+  }
+  const characterTotal = Number(character.spriteRatio) + Number(character.statsRatio);
+  if (Math.abs(characterTotal - 1) > 0.0001) {
+    throw new Error(`armouryUi.layout.character ratios must total 1 (got ${characterTotal})`);
+  }
+  const phoneTotal = Number(phone.characterRatio) + Number(phone.equipmentRatio);
+  if (Math.abs(phoneTotal - 1) > 0.0001) {
+    throw new Error(`armouryUi.layout.responsive.phone ratios must total 1 (got ${phoneTotal})`);
+  }
+  if (!Array.isArray(equipment.slotOrder) || equipment.slotOrder.length < 3
+    || equipment.slotOrder[0] !== 'armaments'
+    || !equipment.slotOrder.includes('rightHand')
+    || !equipment.slotOrder.includes('leftHand')) {
+    throw new Error('armouryUi.layout.equipment.slotOrder must start with armaments and include rightHand and leftHand');
+  }
+
+  return Object.freeze({
+    shell: Object.freeze({
+      characterRatio: ratio(Number(shell.characterRatio), 'shell.characterRatio'),
+      equipmentRatio: ratio(Number(shell.equipmentRatio), 'shell.equipmentRatio'),
+      gapRem: positive(Number(shell.gapRem), 'shell.gapRem'),
+    }),
+    character: Object.freeze({
+      spriteRatio: ratio(Number(character.spriteRatio), 'character.spriteRatio'),
+      statsRatio: ratio(Number(character.statsRatio), 'character.statsRatio'),
+      minWidth: String(character.minWidth || '0'),
+    }),
+    equipment: Object.freeze({
+      groupLabel: String(equipment.groupLabel || DEFAULTS.equipment.groupLabel),
+      slotOrder: Object.freeze([...equipment.slotOrder]),
+    }),
+    responsive: Object.freeze({
+      breakpoint: positive(Number(responsive.breakpoint), 'responsive.breakpoint'),
+      phone: Object.freeze({
+        minWidth: String(phone.minWidth || '0'),
+        characterRatio: ratio(Number(phone.characterRatio), 'responsive.phone.characterRatio'),
+        equipmentRatio: ratio(Number(phone.equipmentRatio), 'responsive.phone.equipmentRatio'),
+      }),
+    }),
+  });
+}
+
+/** Put the authored armament group before the two hand sockets. */
+function orderArmourySlots(slots, layout) {
+  const order = new Map(layout.equipment.slotOrder.map((id, index) => [id, index]));
+  const rank = (slot) => {
+    if (order.has(slot.id)) return order.get(slot.id);
+    if (slot.hand === 'right' && order.has('rightHand')) return order.get('rightHand');
+    if (slot.hand === 'left' && order.has('leftHand')) return order.get('leftHand');
+    return 99;
+  };
+  return [...(slots || [])].slice().sort((a, b) => {
+    const ai = rank(a);
+    const bi = rank(b);
+    return (ai ?? 99) - (bi ?? 99) || (a.order || 0) - (b.order || 0);
+  });
+}
+
+
+Object.assign(module.exports, { normalizeArmouryLayout, orderArmourySlots });
 
 },
 "src/model/registries.js": function (module, exports, require) {
@@ -35505,7 +35820,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'c093df8453';
+const SOURCE = '00acfa27e6';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35539,7 +35854,7 @@ const SOURCE = 'c093df8453';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1114';
+const ORDINAL = '1120';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43859,7 +44174,7 @@ Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFr
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState, slotHand } = require("src/model/loadout.js");
+const { canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces } = require("src/model/loadout.js");
 
 
 
@@ -43877,6 +44192,7 @@ const { statProjection } = require("src/model/statProjection.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { normalizeArmouryLayout, orderArmourySlots } = require("src/model/armouryLayout.js");
 
 const CFG = () => balance.equipment;
 
@@ -43933,9 +44249,9 @@ function cellKey(row) {
 // one key here plus its rule in ui.css: the DOM builder below already obeys
 // `figure` on both branches, so the table really is the only decider.
 const LAYOUTS = {
-  'figure:1|slots:flank': buildFlank, // 'grid'   — the person, kit hanging off them
-  'figure:1|slots:list': buildList, // 'hybrid' — the rack with the figure beside it
-  'figure:0|slots:list': buildList, // 'rack'   — the list, no figure
+  'figure:1|slots:flank': buildArmoury, // Grid keeps the shared shell
+  'figure:1|slots:list': buildArmoury, // Hybrid keeps the shared shell
+  'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
 };
 
 /** Every declared view id, in authored order. The one enumeration. */
@@ -44119,34 +44435,25 @@ function opensCollapsed(regionId, stored) {
 // above true: adding `figure:0|slots:flank` to LAYOUTS is one key and one rule
 // in ui.css, because nothing here would have to change.
 
-function buildFlank(L, ui) {
-  // The figure in the middle with its kit hanging off it, hands on the side they
-  // are actually held: the sprite carries the right-hand armament at screen
-  // right, so the Right Hand column is the right one.
-  const cols = { l: document.createElement('div'), r: document.createElement('div') };
-  cols.l.className = 'ag-col';
-  cols.r.className = 'ag-col';
-  ui.blocks.forEach(({ slot, el: b }, i) => {
-    const id = slot.id.toLowerCase();
-    const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
-    cols[side].appendChild(b);
-  });
-  ui.left.appendChild(cols.l);
-  if (L.figure) ui.left.appendChild(ui.figure());
-  ui.left.appendChild(cols.r);
-  ui.right.appendChild(ui.picker());
-}
+function buildArmoury(L, ui) {
+  // Grid, Rack, and Hybrid are presentation names for the same authored shell.
+  // The view selector remains available for saved preferences and probes, but
+  // no view is allowed to hide the character or move hand sockets into a flank.
+  const character = ui.character();
+  ui.left.appendChild(character);
 
-function buildList(L, ui) {
-  // One column of slots beside the figure — or without it, when the row says
-  // `figure: false`. The id is not consulted: 'rack' is simply the row that
-  // asks for no figure.
-  if (L.figure) ui.left.appendChild(ui.figure());
-  const slotWrap = document.createElement('div');
-  slotWrap.className = 'equip-slots';
-  for (const b of ui.blocks) slotWrap.appendChild(b.el);
-  ui.right.appendChild(slotWrap);
-  ui.right.appendChild(ui.picker());
+  const equipment = document.createElement('section');
+  equipment.className = 'armoury-equipment';
+  equipment.innerHTML = `<header class="armoury-equipment-head"><h3>${esc(ui.layout.equipment.groupLabel)}</h3>`
+    + '<p>Choose a socket, then compare what you carry.</p></header>';
+  const slots = document.createElement('div');
+  slots.className = 'equip-slots';
+  const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
+  const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
+  for (const slot of ordered) slots.appendChild(byId.get(slot.id));
+  equipment.appendChild(slots);
+  equipment.appendChild(ui.picker());
+  ui.right.appendChild(equipment);
 }
 
 /**
@@ -44335,6 +44642,7 @@ function mountEquipment(host, {
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
+  const layout = normalizeArmouryLayout(eq.armouryUi && eq.armouryUi.layout);
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
@@ -44914,6 +45222,102 @@ function mountEquipment(host, {
     return box;
   }
 
+  function characterPowerEntries() {
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const role = (id, label) => {
+      const row = surface.roles.find((candidate) => candidate.role === id);
+      const value = row ? row.receipt.value : 0;
+      const formula = row
+        ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
+        : 'No armament receipt is active.';
+      return {
+        key: id,
+        kind: 'power',
+        disclosure: 'face',
+        face: { label, value: String(value) },
+        reveal: { title: label, sense: `${label} after the current loadout.`, lines: [formula] },
+      };
+    };
+    return [role('attack', 'Strike power'), role('guard', 'Guard / defense'), role('technique', 'Technique power')];
+  }
+
+  function attributeEntries(projection) {
+    const pieces = equippedPieces(registries, run.loadout, run.class);
+    return projection.attributes.map((row) => {
+      const bonuses = pieces.flatMap((piece) => (piece.mods || [])
+        .filter((mod) => mod.toLowerCase().includes(row.id.slice(0, 3)))
+        .map((mod) => `${piece.name}: ${mod}`));
+      return {
+        key: row.id,
+        kind: 'attribute',
+        disclosure: 'face',
+        face: { label: row.shortLabel || row.label, value: String(row.value) },
+        reveal: {
+          title: row.label,
+          sense: 'Base value plus current equipment and relic bonuses.',
+          lines: [`Base ${row.value}`, ...(bonuses.length ? bonuses : ['No direct item bonus authored.'])],
+        },
+      };
+    });
+  }
+
+  function relicEntries() {
+    return (run.relics || []).map((id) => {
+      const relic = registries.relics.get(id);
+      return {
+        key: id,
+        kind: 'relic',
+        disclosure: 'face',
+        face: { label: relic.name, value: 'Equipped' },
+        reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.'] },
+      };
+    });
+  }
+
+  function characterStatsPanel() {
+    const box = document.createElement('section');
+    box.className = 'armoury-character-stats';
+    const cls = registries.classes.get(run.class);
+    const projection = statProjection(registries, run);
+    box.innerHTML = `<header class="character-summary"><h3>${esc(cls.name)}</h3>`
+      + `<p>${esc(cls.description || '')}</p><span>Level ${Number(run.level || 1)}</span></header>`;
+
+    const powers = document.createElement('section');
+    powers.className = 'character-power-cards';
+    mountDisclosure(powers, characterPowerEntries(), { moreLabel: 'more powers' });
+    box.appendChild(powers);
+
+    const attributes = document.createElement('section');
+    attributes.className = 'character-attributes';
+    attributes.innerHTML = '<h4>Attributes</h4>';
+    const attributeHost = document.createElement('div');
+    mountDisclosure(attributeHost, attributeEntries(projection), { moreLabel: 'more attributes' });
+    attributes.appendChild(attributeHost);
+    box.appendChild(attributes);
+
+    const relics = document.createElement('section');
+    relics.className = 'character-relics';
+    relics.innerHTML = `<h4>Relics <span>${(run.relics || []).length}</span></h4>`;
+    const relicHost = document.createElement('div');
+    const entries = relicEntries();
+    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics' });
+    else relicHost.innerHTML = '<p class="ep-hint">No relics equipped.</p>';
+    relics.appendChild(relicHost);
+    box.appendChild(relics);
+    return box;
+  }
+
+  function characterPanel() {
+    const panel = document.createElement('section');
+    panel.className = 'armoury-character';
+    const sprite = document.createElement('div');
+    sprite.className = 'armoury-sprite-pane';
+    sprite.appendChild(figureFor(registries, run, cz));
+    panel.appendChild(sprite);
+    panel.appendChild(characterStatsPanel());
+    return panel;
+  }
+
   function commit() {
     // Every loadout mutation lands here, so this is the one wire for the
     // growth chain's talisman source (model/flaskgrowth.js): a worn growth
@@ -45007,7 +45411,7 @@ function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-composition="character-equipment">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views" data-surface="armouryView">
@@ -45023,6 +45427,17 @@ function mountEquipment(host, {
         <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
+
+    const panel = wrap.querySelector('.armoury');
+    panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
+      ? 'phone' : 'desktop';
+    panel.style.setProperty('--armoury-character-ratio', `${layout.shell.characterRatio}fr`);
+    panel.style.setProperty('--armoury-equipment-ratio', `${layout.shell.equipmentRatio}fr`);
+    panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
+    panel.style.setProperty('--armoury-sprite-ratio', String(layout.character.spriteRatio));
+    panel.style.setProperty('--armoury-stats-ratio', String(layout.character.statsRatio));
+    panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
+    panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -45057,7 +45472,9 @@ function mountEquipment(host, {
     if (build) {
       build(L, {
         left, right, blocks,
+        layout,
         figure: () => figureFor(registries, run, cz),
+        character: () => characterPanel(),
         picker: () => pickerBlock(),
       });
     } else {

@@ -5,5 +5,33 @@ export const armouryUi = {
   "equippedTag": {
     "useCustomColor": true,
     "customColor": "#7FD47F"
+  },
+  "layout": {
+    "shell": {
+      "characterRatio": 0.64,
+      "equipmentRatio": 0.36,
+      "gapRem": 1.6
+    },
+    "character": {
+      "spriteRatio": 0.6,
+      "statsRatio": 0.4,
+      "minWidth": "0"
+    },
+    "equipment": {
+      "groupLabel": "Armaments",
+      "slotOrder": [
+        "armaments",
+        "rightHand",
+        "leftHand"
+      ]
+    },
+    "responsive": {
+      "breakpoint": 760,
+      "phone": {
+        "minWidth": "0",
+        "characterRatio": 0.46,
+        "equipmentRatio": 0.54
+      }
+    }
   }
 };

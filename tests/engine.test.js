@@ -67,6 +67,7 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
+import { normalizeArmouryLayout } from '../src/model/armouryLayout.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -5231,6 +5232,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
     eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
     eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
+  });
+
+  test('71. Armoury layout is authored, stable, and responsive', () => {
+    const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
+    eq(layout.shell.characterRatio, 0.64, 'character pane owns the authored 64% desktop share');
+    eq(layout.shell.equipmentRatio, 0.36, 'equipment pane owns the authored 36% desktop share');
+    eq(layout.character.spriteRatio, 0.6, 'sprite owns the authored 60% character height');
+    eq(layout.character.statsRatio, 0.4, 'stats own the authored 40% character height');
+    eq(layout.equipment.slotOrder.join(','), 'armaments,rightHand,leftHand', 'equipment order is the authored armaments group then right and left hand');
+    eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
+    assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
   });
 
   const passed = results.filter((r) => r.ok).length;
