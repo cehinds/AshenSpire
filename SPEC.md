@@ -27,7 +27,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
-A **run**: pick 1 of 3 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from ~75 class cards + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
+A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from that class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
 
 ---
 
@@ -201,6 +201,26 @@ Every dynamic number is a JSON formula object evaluated by `model/formulas.js`. 
 
 Op set (closed): `add`, `mul` (nestable), `percentMaxHp {of, pct, min?, max?}`, `missingHp {of, max?}`, `stacks {status, of, per?}`, `energySpent {per}`, `blockOf {of}`, `hpOf {of}`, `cardsPlayedThisTurn {per}`. Every evaluation floors its final result (StS integer math). The **same evaluator** computes card-preview numbers for the UI (§3.13, §4.2).
 
+**Approved configurable character defaults.** These are the shipped defaults, not engine
+constants. Every base, coefficient, divisor, rounding rule, reference maximum and flat-bonus
+fold is authored in content data; Settings/debug overrides layer over that data rather than
+adding a second formula in UI or engine code. The run snapshots the resolved formula rules at
+birth, so later tuning applies to new runs and never silently re-stats an in-progress save.
+
+| Output | Default formula | Meaning |
+|---|---|---|
+| Maximum HP | `30 + 2 × CON + flat bonuses` | Flat bonuses are the declared relic/equipment/run folds, not class-id branches. |
+| Opening hand / draw | `4 + floor(INT / 10)` | One value owns both the opening hand and cards drawn per turn. |
+| Defense | `-6 + DEX` | The data-owned base value used by the basic guard/defense profile. |
+| Actions / turn | `2 + floor(DEX / 10)` | The player-facing Actions value; engine naming may migrate separately. |
+| Strike | `-6 + STR` | The data-owned base value used by the basic physical strike profile. |
+| Magic | `-6 + WIS` | The data-owned base value used by the basic magic profile. |
+
+The defaults above are independently configurable rows. “Configurable” never means parsing
+formula strings or letting a screen recompute them: the structured formula table remains the
+one authority, uses the shared floor rule, and is validated/snapshotted through the existing
+model door.
+
 ### 3.6 Trigger DSL and predicates
 
 Relics, powers, statuses, stances, and enemy boss phases all hook the engine through one declarative form, wired by `triggers.js` at combat start:
@@ -338,6 +358,19 @@ id only (§3.3).
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
   re-stamped deck rather than being thrown away.
+- **This tuning/Rogue addition is additive and save-safe.** The new creation mode gets a new
+  stable id; `standard` and `pointbuy` remain valid and keep their old validation rules. Rogue
+  adds ids and does not rename or delete any existing class, card, relic, kit, outfit or asset
+  id. Adding those definitions alone does not justify a run- or profile-schema bump.
+- A run already carrying `attributeMode`, attributes, a flask capacity ledger, level receipts,
+  equipment-profile rules or a `derivedStatRuleSnapshot` keeps those persisted facts. New
+  default presets, formulas, flask allocations and level prices are read at new-run creation;
+  they do not rewrite an in-progress run on load. Existing definition ids may still receive
+  ordinary live content tuning under the content-version rule above.
+- If implementation discovers genuinely new persisted state, the field is optional for older
+  saves and deterministically migrated (or receives an explicit schema migration) before any
+  current save is written. A missing new field may never make an otherwise valid current save
+  archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
 - **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
   `base` (born), `grown` (possession door), `granted` (moment door) — and
   `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`
@@ -535,17 +568,50 @@ Enemy definition shape (content file):
 
 ## 5. Content specification
 
-### 5.1 Classes
+### 5.1 Classes, creation presets, and levels
 
-| | Vagabond | Astrologer | Prophet |
-|---|---|---|---|
-| Milestone | **M1** | M3 | M3 |
-| Max HP | 78 | 66 | 72 |
-| Identity | Weapon arts: stances, Bleed, Poise damage | Sorcery combos: "Glintstone" (2nd+ spell each turn is empowered), scaling Powers | HP-as-resource, Scarlet Rot, healing synergy |
-| Starting relic | **Tarnished Medallion**: at combat start, gain 1 Poise damage on your first attack each combat → (real text finalized in content) | **Glintstone Shard**: first Power each combat costs 1 less | **Gold Figurine**: healing above max HP converts to Block (max 10) |
-| Starting deck | 5× Strike, 4× Defend, 1× Bloodflame Slash | 5× Strike, 4× Defend, 1× Glintstone Pebble | 5× Strike, 4× Defend, 1× Urgent Heal |
+**New default creation mode.** Add a new stable mode id, `tuned`, and make it the default for
+new runs. Its configurable fixed total is 53 across STR / DEX / CON / WIS / INT; the mode row
+owns its total and allocation bounds. This is a new mode, not a mutation or rename of
+`standard` or `pointbuy`, because saved runs persist the mode id and both older modes must
+continue to validate exactly as authored.
 
-(Astrologer/Prophet card pools are designed in M3; their identities above are contractual so M1/M2 systems — stances, Rot, heal triggers — get engine support early.)
+The `tuned` opening presets are contractual and each sums to 53:
+
+| Class | STR / DEX / CON / WIS / INT | Starting HP/Mana flask allocation |
+|---|---|---|
+| Reaver | `13 / 11 / 11 / 8 / 10` | `3 / 1` |
+| Starseer | `11 / 11 / 8 / 13 / 10` | `2 / 2` |
+| Herald | `12 / 11 / 8 / 12 / 10` | `3 / 1` |
+| Rogue | `11 / 13 / 10 / 9 / 10` | `3 / 1` |
+
+The preset is an editor opening position, not a lock: players may redistribute the fixed
+total within the mode's data-authored bounds. Starting derived values come only from the
+formulas in §3.5; classes do not carry a second hidden HP/Actions/hand formula.
+
+**Level curve.** A fresh run starts at displayed level 1. A purchase increments the displayed
+level by one and grants exactly 1 configurable attribute point by default. Price purchase
+`n` (zero-based) as `firstCost + costStep × n`, with `firstCost = 800` and `costStep = 200`.
+Therefore five purchases cost `800 + 1000 + 1200 + 1400 + 1600 = 6000` and produce level 6.
+The starting level, first cost, step, points per level and any maximum are content data; the
+worked level-6 result is a curve receipt, not a second hard-coded total or an implied cap.
+
+**Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
+
+- 39 authored Rogue cards, of which exactly 36 are in its ordinary reward pool, all with
+  upgrades and validation-clean player text;
+- one class signature card and one starter relic, both reachable in a new Rogue run;
+- two starting equipment kits and four Rogue outfits/armour sets, including one free baseline
+  of each required kind and the same unlock/discovery rules as the existing classes;
+- five stage/tint class sprites plus the equipment/body/armament art needed for every authored
+  Rogue kit and outfit, with ordinary missing-art refusal/fallback behavior;
+- class presets, flask allocation, rewards, draft/custom-run, history, co-op and compendium
+  participation derived from the registries rather than new Rogue-only branches.
+
+Rogue mechanics should compose the existing effect, formula, trigger, status, equipment and
+resource vocabularies. A new opcode/predicate is allowed only when the approved class identity
+cannot be expressed by those primitives, and then it is a separately specified closed-set
+extension with validation and engine tests—not imperative per-card code.
 
 ### 5.2 Vagabond card pool — M1 set (24 cards + upgrades)
 
@@ -627,22 +693,37 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 
 ### 5.5 Flasks (potions)
 
-3 slots (`balance.flaskSlots`). Found from combats (~35% drop, decaying like StS's potion chance: −10% per drop, +10% per miss), shops, events — **and refilled at every grace** (§5.5.1).
+The Crimson/Azure charge pool's shared capacity is 4 (`balance.flaskCapacity`). Utility
+potions remain separate inventory entries sized by `balance.flaskSlots`; increasing one does
+not silently increase the other. Utility potions are found from combats, shops and events,
+while Crimson/Azure charges refill at every grace (§5.5.1).
 
 **Kind.** Every flask has a `kind` from the closed set `FLASK_KINDS` (`hp`, `mana`, `utility`, `model/schemas.js`). It is **derived, not authored** (`model/gracerefill.js` `flaskKindOf`): `heal` is `hp`, the real `restoreMana` opcode is `mana`, everything else is `utility`, and an explicit `kind:` overrides an ambiguous entry.
 
 #### 5.5.1 The grace refill
 
-> Constantine, 2026-08-08: *"at every grace all characters should restore 3 hp flasks, and 3 mana flasks (this should be configurable in teh debug settings and be data driven)"*.
+The earlier “3 HP and 3 Mana” vessel reading is superseded by the approved shared pool of 4.
+It remains history, not a second implementable mode.
 
 **The grace is the Shrine of Emberlight** — this game has no separate `grace` node type and does not invent one.
 
 - **Automatic, on arrival, before the Rest/Smith choice.** A run that comes to smith is refilled exactly like a run that comes to rest. Co-op refills every living member at `enterShrine`.
-- **Data driven.** `balance.graceRefill` is a table of `{ kind, count, flaskId? }` rows. A row names a KIND; the kind resolves to its first authored member (`flaskId` overrides which one). Adding a refilled kind is a row plus one word in `FLASK_KINDS`; adding a second HP flask is neither.
-- **A top-up, not a grant.** A grace brings you **up to** `count` of the kind — arriving with two Crimson Flasks gets you one. Therefore idempotent: a re-mounted shrine cannot double-pour.
-- **Configurable in the debug settings.** Settings ▸ Advanced carries **one chip row per table row**, generated from the table, with the ladder `0 … balance.flaskSlots` derived from the carry cap. Nothing about those rows is authored in `settings.js`.
-- **Both authored rows bind.** Crimson Flask supplies the HP row and Azure Flask supplies the Mana row. The shared inventory is data-sized to six slots so a fresh character can hold the authored 3+3 allocation; utility flasks are preserved, so an occupied belt produces a visible shortfall instead of deleting inventory.
-- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus `node tools/gracerefill.mjs --selftest`): a kind outside the closed set · two rows for one kind · a non-numeric, negative or fractional count · a count above the carry cap · a `flaskId` override that dangles or is of another kind · **and the aggregate** — satisfiable rows summing past `balance.flaskSlots`, which names `balance.flaskSlots` as the fix.
+- **Data driven.** Capacity, each class's starting split and the set of reallocatable charge
+  kinds are content rows. Screens read those rows; no screen owns a copied 4, 3/1 or 2/2.
+- **A fill, not a grant.** A grace fills the run's currently allocated HP and Mana vessels up
+  to their maxima. Re-mounting the shrine is idempotent and can never grow capacity.
+- **Free allocation.** At a grace the player may redistribute all 4 capacity between HP and
+  Mana at no cinder, action or item cost. Every split whose non-negative integers sum to 4 is
+  legal; reallocating is a committed run choice, and current charges are bounded by the new
+  per-kind maxima. Utility potions are untouched.
+- **Class openings.** Reaver, Herald and Rogue start `3 HP / 1 Mana`; Starseer starts `2 HP /
+  2 Mana`. These are presets over the same freely reallocatable pool, not class caps.
+- **Configurable in debug settings.** Debug controls edit the same capacity/allocation data
+  domain and show its lawful range; they do not author an independent ladder or refill count.
+- **Refusals** (`graceRefillRefusals`, run from `validateContent` at boot; corpus
+  `node tools/gracerefill.mjs --selftest`): unknown/duplicate kind, malformed capacity or
+  allocation, negative/fractional count, a split that does not sum to capacity, dangling or
+  wrong-kind override, and any refill that would silently alter utility inventory.
 - **Balance boundary:** the old no-Mana simulation is stale. This merged preview is for watching and mechanical validation; a Mana-aware A/B balance run remains a release gate.
 
 #### 5.5.2 The growth chain — how the maximum grows
@@ -657,7 +738,12 @@ Relic behavior uses the trigger DSL (§3.6) — the same declarative form as pow
 - **Declared ahead of content, on purpose:** `questEvent` rows validate but report **NOT BINDING** (no run event history exists yet — the moment door is the live mechanism); any `flaskSeed` row refuses at boot (no seed item vocabulary exists; the word is reserved, not invented). `talisman` rows refuse until the first talisman piece is authored, then bind with no code change.
 - **The optional hard cap** `balance.flaskGrowthMax` arms an aggregate refusal only when authored — the unlock ceiling is Constantine's number to author (D19's *"future unlocks for larger total amount"*), never invented here.
 - **Refusals** (`flaskGrowthRefusals`, run from `validateContent` at boot; corpus `node tools/flaskgrowth.mjs --selftest`): unknown source · non-charge kind · negative, zero or fractional amount · duplicate grant · dangling relic/event/talisman ref · the two-door collision · any seed row · cap malformed or exceeded.
-- **THE C1 SEAM — DECIDED: POOL.** Constantine, 2026-08-13: *"3 total (with future unlocks for larger total amount)"* (family record D19, C1 — CLOSED: POOL). Capacity is one reallocatable pool; dev as shipped stands; the vessel reading (3 each, from D17 message 6 as first recorded) is discharged by his own word and is history, not an alternative. The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth` alone — the one-named-seam property is kept because it is what made the answer cost one function and zero rows. **The overflow rule is load-bearing**: reallocate a grown charge away, then lose the source — removal takes from the row's kind first and overflows to the other, currents bounded; gated in the corpus, both edges, observed red first.
+- **THE C1 SEAM — DECIDED: POOL.** Capacity is one freely reallocatable pool; its approved
+  new-run default is 4. The older 3-total and 3-each readings are superseded history, not
+  alternatives. The binding of a kind-delta into stored capacity stays in `syncFlaskGrowth`
+  alone. **The overflow rule is load-bearing**: reallocate a grown charge away, then lose the
+  source—removal takes from the row's kind first and overflows to the other, currents bounded;
+  gated in the corpus, both edges, observed red first.
 - **Live rows ship under D19's parenthesis** (*"future unlocks for larger total amount"*). The rows and their numbers live in `balance.flaskGrowth` alone — read them there or run `node tools/flaskgrowth.mjs`; this spec deliberately does not restate them (a row copied into prose is a number nothing syncs). PROVISIONAL: the M3 balance pass owns the weights. The relic's tooltip sentence is **derived** from its row (`flaskGrowthClause`), so a retune retunes the tooltip. Law 0's falsifier is proven both ways in the corpus: fictional relic + row, zero code, the maximum grows; and the live plant re-derives its expectations from the shipped table itself.
 
 | Flask | Effect |
@@ -723,9 +809,73 @@ Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► 
 
 Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
 
-### 7.2 Combat layout (1280×720 reference)
+### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
-- **Top bar:** class portrait, HP bar (`current/max`), rune count, flask slots ×3, relic strip (icons, hover for text), deck button, settings.
+- **.NET-inspired application and Component Model contract.** Architecture follows Clean
+  Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
+  Application Interfaces define ports; Application Services orchestrate use cases; Infrastructure
+  implements browser storage, audio, network, and other platform adapters; Presentation Models are
+  immutable contracts analogous to C# records; Presentation ViewModels project domain snapshots
+  into screen/card compositions and named commands; Views are thin full-screen hosts; Components
+  are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
+  composition root. The existing paths migrate incrementally: `src/model/` is Domain,
+  `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
+  `src/ui/screens/` is Views, and `src/ui/components/` plus `src/ui/behaviors/` are reusable
+  presentation implementation. Every reusable UI component receives an immutable Component
+  Model that names its semantic component id and variant, owns only serializable presentation
+  properties, declares named behaviors, and recursively composes child Component Models. Screen
+  ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
+  declared commands to callbacks. Shared primitives such as panels, metadata fields, meters, trays,
+  slots, action controls, and hotkey badges are composed rather than redefined. Component Models
+  never own mutable simulation state or import engine rules: ViewModels project current domain state
+  into model properties. A migrated surface has one ViewModel composition and one renderer, never a
+  model path beside a hand-written fallback.
+- **Shared Presentation primitives.** The public primitive Component Model ids are `panel`,
+  `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`, and `item-slot`. Specialized
+  models compose these primitives and may add semantic variants; they do not clone their record
+  shape, accessibility contract, token ownership, or behavior vocabulary.
+- **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
+  screen-specific markup. The shared composition is `shared-run-hud`, containing
+  `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
+  `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
+  `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
+  `armoury-control`, `quick-menu-control`, `crimson-flask-control`, `azure-flask-control`,
+  `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
+  `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
+  `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
+  its screen supplies state and callbacks. UI components never own simulation state.
+- **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
+  character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
+  Those five metadata items share one data-owned font size, one horizontal baseline, and one
+  vertically centred row; no item may stagger above or below another. When width is insufficient,
+  the right trail progressively hides Source, then Seed, then Build; Act and Floor remain visible
+  longest. At the smallest supported width, Act/Floor compact from current/total to their current
+  values (`ACT 1 · FLOOR 1`) before they may touch centred Cinders. There is no duplicate Act/Floor
+  line beneath the character name. Neither screen hand-writes a second HUD.
+- **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
+  HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
+  then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
+  The two panels have equal outer height and the flask row aligns with the bottom of SP within
+  one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
+  Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
+  scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
+  narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
+  The Vitals and Quick Access component-panel background opacity is data-owned and defaults to
+  0%. The Vitals shell and its resource-card frames have no visible border or background at the
+  default; the resource troughs and labels remain visible and their invisible reference frames do
+  not visually size the panel. Refillable HP/Mana
+  flasks are controls, not utility potions. The map's `− ⊙ + ?` controls remain the board's
+  separate lower control group. Utility potion tiles are packed from the Quick Access right edge
+  toward the left, so the tray's visible right edge is flush with that panel.
+- **Responsive combat composition.** `battlefield-stage` vertically centres player and enemy
+  combatant frames at every supported shape rather than bottom-aligning them. Narrow layouts keep
+  larger, accessible player cards in the horizontal `player-hand-tray` without colliding with the
+  combatants or `combat-action-rail`. The shared HUD and combat composition are verified at
+  1440×860, 1200×730, 844×390, 390×844, and 320×640.
+- **Resource-bar length is data-scaled, not a cap.** The default reference maxima are HP 200,
+  MP 50, SP 50. A bar's fill remains `current / maximum`; its visual length compares that
+  maximum with the data-owned reference and obeys the shared viewport cap. A character may
+  exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
 - **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red bar, only when >0), status icon row, and **intent icon + number above the head**.
 - **Player zone (lower left):** stance icon, status row, Block shield badge overlapping HP.
 - **Hand:** bottom center, fanned, max 10; hover raises card ×1.5 with full text.
@@ -853,8 +1003,8 @@ Build: map gen + map screen, rewards (cards/runes/flasks/relics), 16 relics, 7 f
 **Accept when:** a complete seeded Act-1 run works end-to-end; reload restores exactly; same seed twice → identical map, rewards, and shuffles; abandoning mid-combat restarts that combat.
 
 ### M3 — Content pass
-Build: Astrologer + Prophet pools (~50 cards each + starters), Acts 2–3 (rosters, elites, 2 bosses incl. phase mechanics and the heal-on-hit final boss), events to 10, relics to 40, colorless pool, balance pass (target: experienced-player win rate ~35–50% at v1 tuning; instrument run history to check).
-**Accept when:** all 3 classes can complete 3-act runs; every card/relic/event reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
+Build: Reaver, Starseer, Herald and the full-parity Rogue slice (§5.1), Acts 2–3 (rosters, elites, 2 bosses incl. phase mechanics and the heal-on-hit final boss), events to 10, relics to 40, colorless pool, balance pass (target: experienced-player win rate ~35–50% at v1 tuning; instrument run history to check).
+**Accept when:** all 4 classes can complete 3-act runs; every class owns its complete card/equipment/art slice; every card/relic/event is reachable; no unbeatable-by-construction encounters (elite HP vs. average deck DPS sanity table included in the balance notes); `scripts.js` budget still < 5%.
 
 ### M4 — Polish
 Build: fx pass (floating numbers, shake, transitions), run-history screen, keyboard shortcuts, first-run tooltip overlay (≤4 callouts), sfx hook wiring, asset pass replacing placeholders (CREDITS.md complete), performance check (60 fps on a mid-range laptop; no per-frame allocations in fx loops).

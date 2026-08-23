@@ -374,6 +374,50 @@
         "body_reaver_warden.webp"
       ]
     },
+    "rogue/default": {
+      "fields": {
+        "leather": "3C2E25",
+        "plate": "303A35",
+        "plateLt": "52665D",
+        "under": "1D211F"
+      },
+      "files": [
+        "body_rogue_default.webp"
+      ]
+    },
+    "rogue/duelist": {
+      "fields": {
+        "leather": "43362C",
+        "plate": "46515A",
+        "plateLt": "78909A",
+        "under": "25282A"
+      },
+      "files": [
+        "body_rogue_duelist.webp"
+      ]
+    },
+    "rogue/nightveil": {
+      "fields": {
+        "leather": "211F25",
+        "plate": "20272A",
+        "plateLt": "3B4B4A",
+        "under": "151719"
+      },
+      "files": [
+        "body_rogue_nightveil.webp"
+      ]
+    },
+    "rogue/shadow": {
+      "fields": {
+        "leather": "2A2430",
+        "plate": "292136",
+        "plateLt": "534066",
+        "under": "17131F"
+      },
+      "files": [
+        "body_rogue_shadow.webp"
+      ]
+    },
     "starseer/astral": {
       "fields": {
         "plate": "4E1747",
@@ -415,37 +459,56 @@
     "method": {
       "alphaMin": 0.9,
       "averaging": "mean of sRGB over opaque pixels, THEN convert to Oklab",
+      "capabilities": "supports: is this pair separated at all, in lightness. does NOT support: any hue claim below chroma 0.03, any claim about WHICH pair is closest (the whole-figure mean disagrees with a per-pixel measure of the same images in 2 of 3 classes: probe D7b), or any claim that a repaint happened (probe D8: a total hue inversion of a shipped asset reads as 0.44x the tightest real pair).",
+      "colorspaceNote": "body_lab applies to_srgb() to values that are already sRGB-encoded (double gamma). Reproduced to 0.04% on all three classes: probe checks D1a/D1b. Chroma here is low by a median of 27.6% vs what the browser shows, range 18.9-51.8% across the twelve figures \u2014 systematic but NOT uniform, which is why one figure crosses the chroma guard on the encode alone (D2b). Numbers in this block describe a desaturated picture, not the game's.",
+      "colorspaceSuspect": true,
+      "gate": "bash tools/palette-check.sh",
       "note": "measures the WHOLE figure, so shared unpainted surfaces (the reaver's always-gold cape) dilute it; a masked render is the correct instrument and is not built",
       "sampleStride": "every 4th pixel (16 floats)",
       "source": "rendered pixels of body_<class>_<set>.webp",
-      "space": "Oklab (CIE76-style euclidean)"
+      "space": "Oklab (CIE76-style euclidean)",
+      "spriteFilterBoundary": "The armour figure is composited by playerSprite() into .combatant.player > .sprite, and CSS filters that subtree in real game states: .combatant.dead is grayscale(1) (styles/combat.css), and coop .player.down / .coop-pc.dead are grayscale(1) (styles/ui.css). Under grayscale(1) two armour sets are IDENTICAL by construction - chroma is zero and every number here is unreachable. This tool measures the decoded .webp, one transform EARLIER than the delivered pixel, so it is silent about every filtered state. A boundary, not a defect: a dead combatant SHOULD read as drained. What nobody has measured is whether set identity survives the states that are not meant to drain it."
     },
     "tightestPairChannels": {
       "herald": {
-        "dC": 0.0071279002346633855,
-        "dE": 0.04209807335894399,
-        "dHueDeg": 11.735123063316152,
-        "dL": 0.04078736682785744,
+        "dC": 0.0071410358735895865,
+        "dE": 0.04222720860003957,
+        "dHueDeg": 11.71722361572128,
+        "dL": 0.04091937193423567,
+        "hueVerdict": "VALID",
         "pair": [
           "ossuary",
           "pilgrim"
         ]
       },
       "reaver": {
-        "dC": 0.013445657028693443,
-        "dE": 0.02118072594909954,
-        "dHueDeg": 5.65757605281199,
-        "dL": 0.015692832688279812,
+        "dC": 0.01349629146421006,
+        "dE": 0.02110383465959087,
+        "dHueDeg": 5.709715208316595,
+        "dL": 0.015532392506002468,
+        "hueVerdict": "VALID",
         "pair": [
           "default",
           "warden"
         ]
       },
+      "rogue": {
+        "dC": 0.009445505055860386,
+        "dE": 0.014962953275426447,
+        "dHueDeg": 16.109359674032333,
+        "dL": 0.0004997608149597266,
+        "hueVerdict": "VALID",
+        "pair": [
+          "nightveil",
+          "shadow"
+        ]
+      },
       "starseer": {
-        "dC": 0.010462450619982893,
-        "dE": 0.03536709343313372,
-        "dHueDeg": 133.04928092274295,
-        "dL": 0.0259601785831306,
+        "dC": 0.010495513393609508,
+        "dE": 0.03543040270888798,
+        "dHueDeg": null,
+        "dL": 0.025977645811370742,
+        "hueVerdict": "HUE_INVALID chroma 0.0077 below guard 0.03",
         "pair": [
           "default",
           "eclipse"
@@ -453,9 +516,10 @@
       }
     },
     "withinClassMin": {
-      "herald": 0.04209807335894399,
-      "reaver": 0.02118072594909954,
-      "starseer": 0.03536709343313372
+      "herald": 0.04222720860003957,
+      "reaver": 0.02110383465959087,
+      "rogue": 0.014962953275426447,
+      "starseer": 0.03543040270888798
     }
   }
 }

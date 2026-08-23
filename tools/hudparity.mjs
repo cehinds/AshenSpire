@@ -4,7 +4,7 @@
 // The rendered check on E9 / #254.
 //
 // HIS WORDS, 2026-08-15 (#254): "I'd like the hud to look the same both combat
-// and map". HIS RULING, 2026-08-22: the upper references are 500 HP / 50 MP /
+// and map". HIS RULING, 2026-08-23: the upper references are 200 HP / 50 MP /
 // 50 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
 // either one alone and still show the player two different HUDs.
 //
@@ -46,7 +46,7 @@
 //                  that stops carrying `domainMax` (the wire from his ruling to
 //                  the render) goes red here even though both screens still
 //                  agree with each other.
-//   P3R REFERENCE  the reference table IS 500 HP / 50 MP / 50 SP. This is THE
+//   P3R REFERENCE  the reference table IS 200 HP / 50 MP / 50 SP. This is THE
 //                  ONE PLACE his numbers are typed in this tool, deliberately:
 //                  P3 alone would stay green if the constant were edited,
 //                  because it reads the same constant the render reads. If he
@@ -69,7 +69,7 @@
 //   · LOW  — `?shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1`: the bottom of his
 //            own stated band ("a min of 10"). These short troughs are the edge
 //            that proves an absolute pixel floor does not override percentage.
-//   · HIGH — `?shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50`: AT the
+//   · HIGH — `?shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50`: AT the
 //            reference. Trough 100 %, fill partial. Nothing above it exists —
 //            `lengthPct` clamps at 100 — so this is the ceiling, not a large
 //            sample.
@@ -105,16 +105,18 @@
 // WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
 //   · THE TWO TOP ROWS SHARE THEIR GEOMETRY: resource host, Armoury, Menu. The
 //     screens still carry different secondary chrome below that row. P4 holds
-//     percentage authority at 1440x860, 390x844 and 320x640; P6 holds both controls
-//     wholly inside the viewport.
+//     bar-percentage authority at all four declared shapes; P6 holds both controls
+//     wholly inside the viewport. Shared-shell available-width authority belongs
+//     to `node tools/hud-potion-followup.mjs --browser`, which proves the authored
+//     82 percent and its applied geometry rather than duplicating it here.
 //   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
 //     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
 //     own comment since before this change. Out of E9's scope, still there,
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
-//   · WHETHER 500/50 IS A GOOD SCALE. It is his ruling, made with the cost in
+//   · WHETHER 200/50 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
-//   · Headless Chromium, three shapes, one text size, no accent theme, no
+//   · Headless Chromium, four shapes, one text size, no accent theme, no
 //     colourblind palette. The runtime platform is printed in the boundary.
 //   · NOT WIRED INTO ci.yml — see the PR. Between hand-runs, SOP 2's silence
 //     guard makes this `unknown`, not green.
@@ -148,7 +150,7 @@ const valuesOf = (flag) => {
 // else in this file reads the reference out of the tree so it cannot drift from
 // the render, and that is precisely why one line has to say what the number is
 // supposed to BE.
-const HIS_REFERENCE = Object.freeze({ hp: 500, pool: 50 });
+const HIS_REFERENCE = Object.freeze({ hp: 200, pool: 50 });
 
 // ROWS WHOSE READER LEGITIMATELY REFUSES OFF THE BATTLEFIELD. Not a waiver
 // list — a statement about model/resources.js's refusal path, which returns
@@ -169,7 +171,7 @@ const ALL_SHAPES = [
 const ALL_POSES = [
   { tag: 'shipped', q: '' },
   { tag: 'low', q: '&shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1' },
-  { tag: 'high', q: '&shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50' },
+  { tag: 'high', q: '&shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50' },
 ];
 const SCREENS = [
   { tag: 'map', shot: 'map', ready: '.mapscreen' },
@@ -208,7 +210,6 @@ if (wantPoses) {
 }
 const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
 const POSES = wantPoses ? ALL_POSES.filter((p) => wantPoses.includes(p.tag)) : ALL_POSES;
-const HIS_MAX_VIEWPORT_PCT = 40;
 
 // THE LATCH. `bad` never goes down; nothing reads it to decide whether to keep
 // going. Every exit path below closes the browser and the server, prints the
@@ -236,6 +237,14 @@ const READ = `(() => {
     const unitBox = unitEl ? unitEl.getBoundingClientRect() : null;
     const frameEl = unitEl ? unitEl.querySelector(':scope > .rescard-frame') : null;
     const frameBox = frameEl ? frameEl.getBoundingClientRect() : null;
+    const frameStyle = frameEl ? getComputedStyle(frameEl) : null;
+    const frameBorder = frameStyle ? (parseFloat(frameStyle.borderLeftWidth) || 0)
+      + (parseFloat(frameStyle.borderRightWidth) || 0)
+      + (parseFloat(frameStyle.borderTopWidth) || 0)
+      + (parseFloat(frameStyle.borderBottomWidth) || 0) : 0;
+    const frameBackground = frameStyle ? frameStyle.backgroundColor : '';
+    const framePainted = !!frameStyle && frameBorder > 0
+      || !!frameStyle && !(/transparent|\/\s*0\)?$/.test(frameBackground));
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -254,6 +263,7 @@ const READ = `(() => {
       frame: frameBox ? {
         left: frameBox.left, top: frameBox.top, right: frameBox.right, bottom: frameBox.bottom,
         width: frameBox.width, height: frameBox.height, padAfterBar: frameBox.right - b.right,
+        border: frameStyle ? frameStyle.border : '', background: frameBackground, painted: framePainted,
       } : null,
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
@@ -284,18 +294,12 @@ const READ = `(() => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
     }),
-    hostBox: (() => {
-      const el = document.querySelector('.topbar .hud-top .resbars-host');
-      const b = el ? el.getBoundingClientRect() : null;
-      return b ? { left: b.left, right: b.right, width: b.width } : null;
-    })(),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
     },
-    configuredCap: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-max-vw').trim(),
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
     legacyHpbars: document.querySelectorAll('.topbar .hpbar').length,
@@ -392,19 +396,12 @@ function judgeCell(cell, mapR, comR, refTable) {
     return;
   }
 
-  // P8 SHARED TOP-ROW COMPOSITION — one data value caps the resource reference
-  // track. Cinders alone owns the true centre; Floor owns the right metadata.
-  // The 40 is his ruling, held independently from the app config so moving the
-  // config cannot move the expectation with it.
+  // P8 SHARED TOP-ROW COMPOSITION — Cinders alone owns the true centre; Floor
+  // owns the right metadata, and visible resource cards must not overlap it.
+  // Shared-shell width authority belongs to hud-potion-followup's config and
+  // applied-geometry receipts; duplicating that verdict here made the gates
+  // disagree after the approved 82-percent design replaced the old host cap.
   for (const [screen, read] of [['map', mapR], ['combat', comR]]) {
-    const capPx = read.vp.w * HIS_MAX_VIEWPORT_PCT / 100;
-    if (read.configuredCap !== `${HIS_MAX_VIEWPORT_PCT}vw`) {
-      fail(`FINDING P8/top-row ${cell} ${screen} configured cap=${JSON.stringify(read.configuredCap)} — expected the one authored ${HIS_MAX_VIEWPORT_PCT}vw HUD cap.`);
-    } else if (!read.hostBox || read.hostBox.width > capPx + 1) {
-      fail(`FINDING P8/top-row ${cell} ${screen} resource host=${read.hostBox ? read.hostBox.width.toFixed(2) : 'MISSING'} px, viewport cap=${capPx.toFixed(2)} px — shared HUD exceeds ${HIS_MAX_VIEWPORT_PCT}% viewport.`);
-    } else {
-      ok(`P8/top-row ${cell} ${screen} — resource host ${read.hostBox.width.toFixed(2)} px <= ${HIS_MAX_VIEWPORT_PCT}% viewport (${capPx.toFixed(2)} px)`);
-    }
     const receiptFindings = p8ReceiptFindings(read);
     const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
     if (receiptFindings.length) {
@@ -412,7 +409,7 @@ function judgeCell(cell, mapR, comR, refTable) {
     } else {
       ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
     }
-    const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame
+    const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
       && bar.frame.bottom > read.centerMeta.top + PX_TOL && bar.frame.top < read.centerMeta.bottom - PX_TOL) : [];
     if (!read.centerMeta || frameOverlaps.length) {
@@ -555,21 +552,18 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
-    // P7 VISIBLE CARD — the full reference track is geometry only. The visible
-    // bordered card must stop just after the scaled trough instead of drawing a
-    // full-width empty box that makes every maximum look identical.
+    // P7 INVISIBLE REFERENCE FRAME — the reference frame may remain in the DOM
+    // for measurement, but the shared Vitals design does not paint a card around
+    // the longest resource. The trough and label remain the visible geometry.
     for (const [who, b] of [['map', m], ['combat', c]]) {
       if (!b.frame) {
         fail(`FINDING P7/card ${tag} ${who} — no .rescard-frame; the full reference track is still the visible bordered card.`);
         continue;
       }
-      const pad = b.frame.padAfterBar;
-      if (pad < 2 || pad > 12) {
-        fail(`FINDING P7/card ${tag} ${who} right-padding=${pad.toFixed(2)} px — the visible card must end after the scaled trough with only small right padding.`);
-      } else if (askM < 99 && b.frame.width >= b.unitWidth - 1) {
-        fail(`FINDING P7/card ${tag} ${who} frame=${b.frame.width.toFixed(2)} px reference=${b.unitWidth.toFixed(2)} px — the full reference track is visible instead of remaining invisible.`);
+      if (b.frame.painted) {
+        fail(`FINDING P7/card ${tag} ${who} — .rescard-frame still paints ${b.frame.border} ${b.frame.background}; the Vitals reference frame must be invisible.`);
       } else {
-        ok(`P7/card ${tag} ${who} — frame ${b.frame.width.toFixed(2)} px of ${b.unitWidth.toFixed(2)} px reference; ${pad.toFixed(2)} px after bar`);
+        ok(`P7/card ${tag} ${who} — reference frame retained for measurement but transparent and borderless`);
       }
     }
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
@@ -652,13 +646,14 @@ function boundary() {
   console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
   console.log('  "green wasn\'t clearance" shipped as infrastructure:');
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
-  console.log('    differs below that row, but P4 refuses any absolute-width override of the requested');
-  console.log('    percentage. The sweep includes the 320x640 narrow edge.');
+  console.log('    differs below that row. P4 holds bar percentages; the sweep includes the 320x640 narrow edge.');
+  console.log('    Shared-shell 82% available-width authority and applied geometry belong to');
+  console.log('    `node tools/hud-potion-followup.mjs --browser`, not a duplicate host cap here.');
   console.log('  · P1 holds top-HUD HP/MP/SP equality. Combat poise is dynamic on the player character card;');
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
-  console.log('  · WHETHER 500/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
+  console.log('  · WHETHER 200/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
   console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');
   if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
@@ -901,13 +896,12 @@ async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const plants = [
     {
-      // The cap is data, but the acceptance number is independent. Moving the
-      // sole app authority must turn P8 red rather than moving its goalpost.
-      name: 'the configurable shared HUD cap moves from 40 to 60 percent',
-      file: 'src/content/balance.js',
-      find: 'main: { scaleByMax: true, maxViewportPct: 40 },',
-      replace: 'main: { scaleByMax: true, maxViewportPct: 60 },',
-      expectRed: /FINDING P8\/top-row .*configured cap="60vw"/,
+      // Width authority lives in hud-potion-followup. This browser plant keeps
+      // hudparity's own centred-receipt geometry independently discriminating.
+      name: 'the shared Cinders receipt shifts off the viewport centre',
+      file: 'styles/combat.css',
+      append: '\n.topbar.combat-hud.shared-hud .hud-center { transform: translateX(40px); }\n',
+      expectRed: /FINDING P8\/top-row .*cinders-centre=/,
     },
     {
       name: 'the shared HUD drops Cinders',
@@ -951,7 +945,7 @@ async function selftest() {
       // reaches Cinders; move the visible frames across BOTH current axes.
       name: 'visible resource cards paint through the centred Cinders receipt',
       file: 'styles/combat.css',
-      append: ".rescard-frame { transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
+      append: ".rescard-frame { background: #120f0c; border: 1px solid #4c3b1f; transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
       expectRed: /FINDING P8\/no-overlap .*resourceFrames=\[/,
     },
     {
@@ -1040,10 +1034,10 @@ async function selftest() {
     {
       // 4 — HIS NUMBER MOVES. Both screens agree, the wire is intact, and the
       // scale is not the one he ruled. Only the typed copy can see this.
-      name: 'the reference is quietly changed from 500 to 200',
+      name: 'the reference is quietly changed from 200 to 321',
       file: 'src/content/resources.js',
-      find: '  hp: 500,',
-      replace: '  hp: 200,',
+      find: '  hp: 200,',
+      replace: '  hp: 321,',
       expectRed: /FINDING P3R\/reference/,
     },
     {

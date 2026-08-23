@@ -793,6 +793,43 @@ export const statuses = [
     tooltip: 'At the start of your next turn: gain 4 Block per stack.',
   },
   {
+    id: 'prepared', name: 'Prepared', icon: '◈', stackMode: 'unique', decay: 'perTurnEnd',
+    tooltip: 'Your next setup payoff is empowered. Expires at turn end.',
+  },
+  {
+    id: 'venom', name: 'Venom', icon: '☠', stackMode: 'add', decay: 'perTurnEnd',
+    hooks: [{ on: 'ownerTurnStart', do: [{ op: 'loseHp', target: 'owner', amount: { f: 'stacks', status: 'venom', of: 'owner' } }] }],
+    tooltip: 'At turn start, lose HP equal to Venom. 1 stack expires each turn.',
+  },
+  {
+    id: 'afterimage', name: 'Afterimage', icon: '〽', stackMode: 'add', decay: 'none',
+    hooks: [{ on: 'cardPlayed', if: { p: 'everyNthCardThisCombat', n: 3 }, do: [{ op: 'block', target: 'owner', amount: { f: 'mul', args: [3, { f: 'stacks', status: 'afterimage', of: 'owner' }] } }] }],
+    tooltip: 'Every third card played each combat grants 3 Block per stack.',
+  },
+  {
+    id: 'deadlyTempo', name: 'Deadly Tempo', icon: '♬', stackMode: 'add', decay: 'none',
+    hooks: [{ on: 'ownerTurnStart', do: [
+      { op: 'applyStatus', target: 'owner', status: 'prepared', stacks: { f: 'add', args: [1] } },
+      { op: 'draw', amount: { f: 'stacks', status: 'deadlyTempo', of: 'owner' } },
+    ] }],
+    tooltip: 'At turn start, become Prepared and draw 1 card per stack.',
+  },
+  {
+    id: 'opportunist', name: 'Opportunist', icon: '⌁', stackMode: 'add', decay: 'none',
+    hooks: [{ on: 'enemyStaggered', do: [
+      { op: 'applyStatus', target: 'owner', status: 'prepared', stacks: { f: 'add', args: [1] } },
+      { op: 'draw', amount: { f: 'stacks', status: 'opportunist', of: 'owner' } },
+    ] }],
+    tooltip: 'When an enemy staggers, become Prepared and draw 1 card per stack.',
+  },
+  {
+    id: 'envenom', name: 'Envenom', icon: '♜', stackMode: 'add', decay: 'none',
+    hooks: [{ on: 'damageDealt', if: { p: 'all', preds: [{ p: 'eventSourceIsOwner' }, { p: 'eventIsAttack' }] }, do: [
+      { op: 'applyStatus', status: 'venom', stacks: { f: 'stacks', status: 'envenom', of: 'owner' } },
+    ] }],
+    tooltip: 'Your attacks apply 1 Venom per stack.',
+  },
+  {
     // Custom Climb "Glass Cannon" modifier — applied to the player at combat
     // start (both directions at once). Pure data over existing modifier keys.
     id: 'glassCannon',
