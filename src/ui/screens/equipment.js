@@ -916,16 +916,17 @@ export function mountEquipment(host, {
       // two nodes in step across every redraw. The word and the piece already
       // sit in this scope; naming the control here is one home, not two.
       // `aria-label` overrides content, so carry the conditional HOLD hint into
-      // the accessible name instead of silently removing the instruction.
+      // the accessible name instead of silently removing the instruction. A
+      // sealed grip cannot arm a hold, so it must not promise one either.
+      const act = entryAct.get(entry.key);
       grip.setAttribute('aria-label',
-        `${verb} ${entry.face.label}${gripMs > 0 ? ' — hold' : ''}`);
+        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);
       // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
       // Nested inside the face the grip's aborted click would bubble into the
       // unfold path and only `stopPropagation` would stand between them — which
       // is keeping two gestures apart by a promise instead of by structure.
       // Sibling means an aborted hold has no path to the fold at all.
       face.insertAdjacentElement('afterend', grip);
-      const act = entryAct.get(entry.key);
       if (!act) { sealChip(grip); continue; }
       // THE LIFT AFTER A COMMIT, AND IT IS A MEASUREMENT, NOT A PRECAUTION.
       // Driven with real CDP touch at 1200x730: the hold fires AT FULL (that is

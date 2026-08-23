@@ -163,6 +163,7 @@ const CODES = new Set([
   'A9.name',         // a grip does not name its piece in the accessibility tree
   'A9.collide',      // two grips in one picker share an accessible name
   'A9.hold',         // an armed grip's accessible name does not say that it requires a hold
+  'A9.sealedhold',   // a sealed grip claims a hold gesture it cannot arm
   'A9.blind',        // no picker opened, so no grip name was read at all
 ]);
 // NO CODE FOR THE BOUNDARY PLANT, DELIBERATELY. A code in this set is a finding
@@ -204,7 +205,8 @@ if (process.argv.includes('--selftest')) {
   // NOT CAUGHT, which is the whole reason GATE lives up here too.
   const WHOSE = '          if (e.pointerId !== pointerId) return;';
   const DOWN = "        const down = (e) => { if (e.pointerId === pointerId) off(); };";
-  const LABEL = "        `${verb} ${entry.face.label}${gripMs > 0 ? ' — hold' : ''}`);";
+  const LABEL = "        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);";
+  const RELEASE_END = "      onEnd: () => { if (armed) stop('idle'); return true; },";
   // The cancel teardown, which is HYGIENE ON TOP OF `WHOSE` and not a second
   // guard for a second case: a cancelled pointer dispatches no click, so the
   // eater is torn down rather than left inert. A plant that wants the cancel
@@ -449,6 +451,15 @@ if (process.argv.includes('--selftest')) {
         expectRed: redRe('A7.multitail'),
       },
       {
+        // The below-full overlap control must read AFTER A lifts. This plant
+        // commits at that boundary; a pre-lift sample cannot see it.
+        name: 'an overlapping below-full hold commits when pointer A releases',
+        edits: [{ file: 'src/ui/components/holdconfirm.js',
+          find: RELEASE_END,
+          replace: "      onEnd: () => { if (armed) { stop('idle'); onConfirm(ev); } return true; }, /* planted: release commits */" }],
+        expectRed: redRe('A7.multiabort'),
+      },
+      {
         // CODEX, 2026-08-22 (P2b). The grip loses its accessible name and
         // nothing else changes: it still equips, still holds, still meets the
         // tap floor, still reads `Equip` on screen. Every other check in this
@@ -467,6 +478,13 @@ if (process.argv.includes('--selftest')) {
           find: LABEL,
           replace: '        `${verb} ${entry.face.label}`); /* planted: HOLD is hidden from assistive tech */' }],
         expectRed: redRe('A9.hold'),
+      },
+      {
+        name: 'a sealed grip claims the hold instruction even though it cannot arm',
+        edits: [{ file: 'src/ui/screens/equipment.js',
+          find: LABEL,
+          replace: "        `${verb} ${entry.face.label}${gripMs > 0 ? ' — hold' : ''}`); /* planted: sealed claims hold */" }],
+        expectRed: redRe('A9.sealedhold'),
       },
       {
         // CODEX, 2026-08-22. `draw()` drains the grips; a CLOSE runs no draw.
@@ -601,8 +619,9 @@ function finish(code, why = null) {
     console.log('  six open/close cycles on the map mount; it says nothing about any other listener kind.');
     console.log('  A9 READS THE ACCESSIBILITY TREE (Accessibility.getFullAXTree), which is a different tree');
     console.log('  from the DOM — it is the whole reason data-hold-for does not answer P2b. It covers the');
-    console.log('  GRIPS ONLY, at two edges (one candidate, and eight with ?shotStorage=full filled through');
-    console.log('  addToStorage). It does NOT cover the in-card control: the fold is an accordion — all eight');
+    console.log('  GRIPS ONLY, at three edges: one armed candidate, eight armed candidates filled through');
+    console.log('  addToStorage, and the sealed in-combat picker. It does NOT cover the in-card control:');
+    console.log('  the fold is an accordion — all eight');
     console.log('  faces clicked left aria-expanded true on exactly one — so at most one such control is in');
     console.log('  the tree at a time and it has no sibling to collide with. NO SCREEN READER WAS RUN: this');
     console.log('  is the name Chromium computes, not what NVDA or VoiceOver announces from it.');
@@ -1604,9 +1623,10 @@ async function main() {
           await wait(80);
           await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, S);
           await wait(350);
+          const m2 = await slotM();
           const clicks = JSON.parse(await ev('JSON.stringify(window.__a7multi || [])'));
           await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false, maxTouchPoints: 1 }, S);
-          console.log(`      ${edge.say}: slot "${m0}" → "${m1}"; clicks after A lifted ${JSON.stringify(clicks)}`);
+          console.log(`      ${edge.say}: slot "${m0}" → before lift "${m1}" → after lift "${m2}"; clicks after A lifted ${JSON.stringify(clicks)}`);
           if (edge.commits) {
             ok(m1 !== m0, m1 !== m0
               ? `A7 the original pointer committed before the overlap ("${m0}" → "${m1}")`
@@ -1615,9 +1635,9 @@ async function main() {
               ? 'A7 another pointerdown did not disarm the original pointer\'s owed lift eater'
               : red('A7.multitail', `pointer A leaked ${clicks.length} click(s) after pointer B landed — ${JSON.stringify(clicks)}`));
           } else {
-            ok(m1 === m0, m1 === m0
+            ok(m2 === m0, m2 === m0
               ? `A7 the below-full overlap stayed an abort (slot "${m0}")`
-              : red('A7.multiabort', `the below-full overlap committed (slot "${m0}" → "${m1}")`));
+              : red('A7.multiabort', `the below-full overlap committed by release (slot "${m0}" → "${m2}")`));
           }
         }
       }
@@ -1702,7 +1722,7 @@ async function main() {
     // exactly ONE, and a folded card's `.ep-equip` is absent from the AX tree
     // altogether. At most one in-card control exists at a time, inside the card
     // whose face carries the name — no sibling, no collision, nothing to name.
-    console.log('\n  A9 · every grip names its piece  (map mount, ACCESSIBILITY TREE, both edges)');
+    console.log('\n  A9 · every grip names its piece  (ACCESSIBILITY TREE, armed + sealed edges)');
     {
       await cdp.send('DOM.enable', {}, S);
       await cdp.send('Accessibility.enable', {}, S);
@@ -1721,20 +1741,24 @@ async function main() {
           for (let i = 0; i < (node.attributes || []).length; i += 2) attrs[node.attributes[i]] = node.attributes[i + 1];
           out.push({ name: ax && ax.name ? String(ax.name.value) : '',
             role: ax && ax.role ? ax.role.value : null,
-            holdMs: Number(attrs['data-hold-ms'] || 0) });
+            holdMs: Number(attrs['data-hold-ms'] || 0),
+            disabled: attrs['aria-disabled'] === 'true' });
         }
         return out;
       };
       // Every edge in one walk: the bag-full run gives the main hand EIGHT
-      // candidates and other slots ONE, so both ends enter by the same door.
-      for (const edge of [{ q: '?shot=map&shotStorage=full', say: 'bag FULL (max edge)' },
-        { q: '?shot=map', say: 'fresh run (empty edge)' }]) {
+      // candidates and other slots ONE, so both armed ends enter by the same
+      // door. Combat supplies the sealed edge: the same grips are visible but
+      // canEquip refuses every act, so none may claim a hold it cannot arm.
+      for (const edge of [{ q: '?shot=map&shotStorage=full', say: 'bag FULL (max edge)', open: '#open-armoury' },
+        { q: '?shot=map', say: 'fresh run (empty edge)', open: '#open-armoury' },
+        { q: '?shot=combat', say: 'combat (sealed edge)', open: '#combat-armoury' }]) {
         await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
-        await until("!!document.querySelector('#open-armoury')", 'map');
+        await until(`!!document.querySelector(${JSON.stringify(edge.open)})`, `${edge.say} entry`);
         await wait(700);
         const cells = Number(await ev("document.querySelectorAll('.armoury-overlay .equip-slot .es-cell').length")) || 0;
         void cells;
-        await ev("document.querySelector('#open-armoury').click()");
+        await ev(`document.querySelector(${JSON.stringify(edge.open)}).click()`);
         await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
         await wait(450);
         const slotCount = Number(await ev(`document.querySelectorAll('.armoury-overlay .equip-slot .es-cell:not(.locked)').length`));
@@ -1758,6 +1782,7 @@ async function main() {
             return !piece || !n.toLowerCase().includes(piece.toLowerCase());
           }).length;
           const missingHold = grips.filter((g) => g.holdMs > 0 && !/\bhold\b/i.test(g.name)).length;
+          const sealedHold = grips.filter((g) => g.disabled && /\bhold\b/i.test(g.name)).length;
           seen++;
           console.log(`      ${edge.say} · slot ${i}: ${names.length} grip(s) · pieces ${JSON.stringify(pieces)}`);
           console.log(`          AX names ${JSON.stringify(names)}`);
@@ -1772,11 +1797,14 @@ async function main() {
           ok(missingHold === 0, missingHold === 0
             ? `A9 every armed grip exposes its hold requirement (${names.length} candidate(s))`
             : red('A9.hold', `${edge.say} slot ${i}: ${missingHold} armed grip(s) omit the hold requirement from their accessible name — ${JSON.stringify(names)}`));
+          ok(sealedHold === 0, sealedHold === 0
+            ? `A9 sealed grips do not claim a hold they cannot arm (${names.length} candidate(s))`
+            : red('A9.sealedhold', `${edge.say} slot ${i}: ${sealedHold} sealed grip(s) claim a hold they cannot arm — ${JSON.stringify(names)}`));
           // Back to a clean panel: each slot's picker is read on its own draw.
           await cdp.send('Page.navigate', { url: `${base}${edge.q}` }, S);
-          await until("!!document.querySelector('#open-armoury')", 'map');
+          await until(`!!document.querySelector(${JSON.stringify(edge.open)})`, `${edge.say} entry`);
           await wait(650);
-          await ev("document.querySelector('#open-armoury').click()");
+          await ev(`document.querySelector(${JSON.stringify(edge.open)}).click()`);
           await until("!!document.querySelector('.armoury-overlay')", 'armoury', 8000);
           await wait(400);
         }
