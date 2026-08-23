@@ -76,7 +76,9 @@ const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 73
 const INLINE_REFUSED = [
   // `!` and `?` alongside the letters: an HTML comment and a processing instruction
   // are hidden by GitHub and PRINTED BY `esc()`, which is the worse direction.
-  [/<[a-zA-Z/!?][^>]*>/, 'raw HTML'],
+  // Refuse the opener immediately: comments and tags can close on a later line,
+  // while receipt prose is projected one authored line at a time.
+  [/<[a-zA-Z/!?]/, 'raw HTML'],
 ];
 // THE BRACKETED FORMS ARE COUNTED, NOT PATTERN-MATCHED, AND THAT IS THE WHOLE POINT.
 //
@@ -918,6 +920,12 @@ async function selftest() {
       name: 'HTML comment in prose — hidden by GitHub, PRINTED to the player', file: 'CHANGELOG.md',
       find: '). Docs only.',
       replace: '). Docs only. Note.<!-- maintainer note -->',
+      expect: 'prose contains raw HTML',
+    },
+    {
+      name: 'HTML comment opener whose close is on the following line', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Note.<!-- maintainer note\n-->',
       expect: 'prose contains raw HTML',
     },
     {
