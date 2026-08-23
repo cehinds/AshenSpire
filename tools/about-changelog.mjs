@@ -363,7 +363,6 @@ function bracketLabels(text) {
     const close = matchingBracket(text, i, '[', ']');
     if (close < 0) continue;
     labels.push(text.slice(i + 1, close));
-    i = close;
   }
   return labels;
 }
@@ -875,6 +874,12 @@ async function selftest() {
       name: 'shortcut definition with an escaped closing bracket', file: 'CHANGELOG.md',
       find: '). Docs only.',
       replace: '). Docs only. See [foo\\]bar] for the rest.\n\n[foo\\]bar]: /docs',
+      expect: 'prose contains a shortcut reference link',
+    },
+    {
+      name: 'defined shortcut nested inside literal outer brackets', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [outer [docs]] for the rest.\n\n[docs]: /guide',
       expect: 'prose contains a shortcut reference link',
     },
     {
