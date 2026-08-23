@@ -77,15 +77,15 @@ Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
 
 ## Menu components
 
-| Component ID | View or renderer | Purpose |
-|---|---|---|
-| `quick-menu-panel` | `quicknav.js` | Contextual dropdown opened from the HUD. |
-| `quick-menu-caption` | `quicknav.js` | Active Quick Menu variant/status caption. |
-| `quick-menu-row` | `quicknav.js` + `uiContent.js` | One contextual destination or action. |
-| `menu-overlay` | `overlay.js` | Full in-run tabbed menu. |
-| `menu-tab-strip` | `overlay.js` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
-| `menu-tab` | `overlay.js` + `uiContent.js` | One declared tab control. |
-| `menu-panel` | `overlay.js` | Content host for the selected tab. |
+| Component ID | Model | Renderer | Purpose |
+|---|---|---|---|
+| `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Contextual dropdown opened from the HUD. |
+| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Active Quick Menu variant/status caption. |
+| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination or action. |
+| `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | Full in-run tabbed menu. |
+| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
+| `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
+| `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
 
 ```text
 quick-menu-panel
@@ -100,23 +100,23 @@ menu-overlay
 
 ## Armoury components
 
-| Component ID | View or renderer | Purpose |
-|---|---|---|
-| `armoury-overlay` | `equipment.js` | Modal veil and Armoury focus scope. |
-| `armoury-panel` | `equipment.js` | Complete responsive Armoury surface. |
-| `armoury-header` | `equipment.js` | Title, view switcher, and close action. |
-| `armoury-view-switcher` | `equipment.js` | Grid/Rack/Hybrid selector. |
-| `armoury-body` | `equipment.js` | Figure and equipment-slot workspace. |
-| `armoury-figure` | `equipment.js` + `assets.js` | Layered equipped character figure. |
-| `equipment-slot` | `equipment.js` | One named equipment socket. |
-| `equipment-set-cell` | `equipment.js` | One active, empty, or locked set cell. |
-| `armoury-inventory` | `equipment.js` | Shared carried-item inventory. |
-| `inventory-item-card` | `equipment.js` | Collapsed carried-item summary. |
-| `inventory-detail-card` | `equipment.js` | Expanded item art, tags, mods, and action. |
-| `equipment-comparison` | `equipmentReceipts.js` | Before/after equipment receipt. |
-| `armoury-stats-panel` | `equipment.js` | Attributes and derived resources. |
-| `armoury-card-strip` | `equipment.js` + `card.js` | Live card rewrites from equipment. |
-| `armoury-region-header` | `equipment.js` | Fold control and region item count. |
+| Component ID | Model | Renderer | Purpose |
+|---|---|---|---|
+| `armoury-overlay` | `armouryOverlayModel` | `armouryComponents.renderArmouryOverlay` | Modal veil and Armoury focus scope. |
+| `armoury-panel` | `armouryPanelModel` | `armouryComponents.renderArmouryPanel` | Complete responsive Armoury surface. |
+| `armoury-header` | `armouryHeaderModel` | `armouryComponents.renderArmouryPanel` | Title, view switcher, and close action. |
+| `armoury-view-switcher` | `armouryViewSwitcherModel` | `armouryComponents.renderArmouryPanel` | Grid/Rack/Hybrid selector. |
+| `armoury-body` | `armouryBodyModel` | `armouryComponents.renderArmouryPanel` | Figure and equipment-slot workspace. |
+| `armoury-figure` | semantic child model | `equipment.js` + `assets.js` | Layered equipped character figure. |
+| `equipment-slot` | `equipmentSlotModel` | `armouryComponents.renderEquipmentSlot` | One named equipment socket. |
+| `equipment-set-cell` | `equipmentSetCellModel` | `armouryComponents.renderEquipmentSetCell` | One active, empty, or locked set cell. |
+| `armoury-inventory` | `armouryInventoryModel` | `armouryComponents.renderArmouryPanel` | Shared carried-item inventory. |
+| `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Collapsed carried-item summary. |
+| `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded item art, tags, mods, and action. |
+| `equipment-comparison` | semantic child model | `equipmentReceipts.js` | Before/after equipment receipt. |
+| `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` | Attributes and derived resources. |
+| `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` | Live card rewrites from equipment. |
+| `armoury-region-header` | semantic child model | `equipment.js` | Fold control and region item count. |
 
 ```text
 armoury-overlay

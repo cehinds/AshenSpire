@@ -97,6 +97,40 @@ Map and Combat create the same `RunHudViewModel` and render it through the same
 View. Screen-specific state is projected into properties; no alternate markup
 path is retained.
 
+## Implemented aggregates: Menu and Armoury
+
+The in-run menu and Armoury now use the same three-part presentation boundary:
+
+```text
+Screen host / controller
+   ├─ projects immutable Component Models from display data
+   ├─ asks renderer components for DOM
+   └─ binds domain commands and lifecycle callbacks
+```
+
+```text
+MenuModels.js                         ArmouryModels.js
+├─ QuickMenuPanelModel               ├─ ArmouryOverlayModel
+│  ├─ QuickMenuCaptionModel          │  └─ ArmouryPanelModel
+│  └─ QuickMenuRowModel × N          │     ├─ ArmouryHeaderModel
+└─ MenuOverlayModel                  │     │  └─ ArmouryViewSwitcherModel
+   ├─ MenuTabStripModel              │     ├─ ArmouryBodyModel
+   │  └─ MenuTabModel × N            │     ├─ ArmouryInventoryModel
+   └─ MenuPanelModel                 │     ├─ ArmouryStatsPanelModel
+                                     │     └─ ArmouryCardStripModel
+                                     ├─ EquipmentSlotModel
+                                     │  └─ EquipmentSetCellModel × N
+                                     ├─ InventoryItemCardModel
+                                     └─ InventoryDetailCardModel
+```
+
+`menuComponents.js` and `armouryComponents.js` own markup, semantic component
+markers, and accessibility attributes. `quicknav.js`, `overlay.js`, and
+`equipment.js` remain screen hosts: they own lifecycles and translate semantic
+commands into the existing callbacks, but no longer author the extracted
+component markup. Presentation Models import neither the DOM nor simulation
+state, and all properties remain serializable and deeply frozen.
+
 ## Migration order
 
 1. Contracts, validators, renderer registry, and behavior binder.

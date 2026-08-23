@@ -40,7 +40,11 @@ export function receipt() {
       'QuickAccessPanelModel', 'InventoryBeltModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
+    menuModels: read('src/ui/models/MenuModels.js'),
+    armouryModels: read('src/ui/models/ArmouryModels.js'),
     hud: read('src/ui/components/hudmeta.js'),
+    menuComponents: read('src/ui/components/menuComponents.js'),
+    armouryComponents: read('src/ui/components/armouryComponents.js'),
     frame: read('src/ui/components/combatantFrame.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
@@ -85,8 +89,8 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel)
-      || /\b(run|combat)\s*=/.test(r.hud + r.frame + r.hudModels + r.hudViewModel)) {
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
+      || /\b(run|combat)\s*=/.test(r.hud + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
@@ -116,15 +120,15 @@ export function findings(r) {
       || !/UI\.healthDamageIndicator/.test(r.fx)) {
     bad.push('C8 combat composition lacks stable Battlefield/Frame/Hand/Action references');
   }
-  if (!/UI\.quickMenuPanel/.test(r.quicknav)
-      || !/UI\.quickMenuRow/.test(r.quicknav)
-      || !/UI\.menuOverlay/.test(r.overlay)
-      || !/UI\.menuTab/.test(r.overlay)
-      || !/UI\.menuPanel/.test(r.overlay)
-      || !/UI\.armouryOverlay/.test(r.equipment)
-      || !/UI\.armouryPanel/.test(r.equipment)
-      || !/UI\.equipmentSlot/.test(r.equipment)
-      || !/UI\.armouryInventory/.test(r.equipment)
+  if (!/UI\.quickMenuPanel/.test(r.menuModels)
+      || !/UI\.quickMenuRow/.test(r.menuModels)
+      || !/UI\.menuOverlay/.test(r.menuModels)
+      || !/UI\.menuTab/.test(r.menuModels)
+      || !/UI\.menuPanel/.test(r.menuModels)
+      || !/UI\.armouryOverlay/.test(r.armouryModels)
+      || !/UI\.armouryPanel/.test(r.armouryModels)
+      || !/UI\.equipmentSlot/.test(r.armouryModels)
+      || !/UI\.armouryInventory/.test(r.armouryModels)
       || !/UI\.equipmentComparison/.test(r.equipment)) {
     bad.push('C8 menu and Armoury composition lacks stable component references');
   }
@@ -163,6 +167,25 @@ export function findings(r) {
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
     bad.push('C13 shared HUD no longer follows the immutable MVVM Component Model composition');
   }
+  const presentationModels = r.menuModels + r.armouryModels;
+  if (!/export function quickMenuPanelModel/.test(r.menuModels)
+      || !/export function menuOverlayModel/.test(r.menuModels)
+      || !/export function armouryPanelModel/.test(r.armouryModels)
+      || !/export function equipmentSlotModel/.test(r.armouryModels)
+      || !/export function inventoryItemCardModel/.test(r.armouryModels)
+      || !/export function renderQuickMenu/.test(r.menuComponents)
+      || !/export function renderMenuOverlay/.test(r.menuComponents)
+      || !/export function renderArmouryPanel/.test(r.armouryComponents)
+      || !/export function renderEquipmentSlot/.test(r.armouryComponents)
+      || !/export function renderEquipmentSetCell/.test(r.armouryComponents)
+      || !/export function renderInventoryItemCard/.test(r.armouryComponents)
+      || !/quickMenuPanelModel\([\s\S]*renderQuickMenu\(/.test(r.quicknav)
+      || !/menuOverlayModel\([\s\S]*renderMenuOverlay\(/.test(r.overlay)
+      || !/armouryPanelModel\([\s\S]*renderArmouryPanel\(/.test(r.equipment)
+      || !/equipmentSlotModel\([\s\S]*renderEquipmentSlot\(/.test(r.equipment)
+      || /\b(document|window)\b|innerHTML|createElement/.test(presentationModels)) {
+    bad.push('C14 Menu and Armoury no longer compose immutable models into renderer components');
+  }
   return bad;
 }
 
@@ -182,11 +205,12 @@ function selftest() {
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
     ['let metadata grid into rows', 'C12 ', (r) => ({ ...r, css: r.css.replace('display: inline-flex;', 'display: inline-grid;') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace('return Object.freeze({\n    component,', 'return ({\n    component,') })],
+    ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 13/13 reusable component contracts hold');
+  else console.log('PASS clean source: 14/14 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -202,5 +226,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 13/13 reusable component contracts hold');
+  else console.log('ui-components: OK — 14/14 reusable component contracts hold');
 }

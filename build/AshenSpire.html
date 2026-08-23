@@ -37270,7 +37270,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '92a0329777';
+const SOURCE = '0c401eb8db';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -37304,7 +37304,7 @@ const SOURCE = '92a0329777';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1158';
+const ORDINAL = '1168';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39233,6 +39233,14 @@ const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { armouryOverlayModel, armouryPanelModel, inventoryItemCardModel, inventoryDetailCardModel, equipmentSetCellModel, equipmentSlotModel } = require("src/ui/models/ArmouryModels.js");
+
+
+
+const { renderArmouryOverlay, renderArmouryPanel, renderInventoryItemCard, renderInventoryDetailCard, renderEquipmentSlot } = require("src/ui/components/armouryComponents.js");
+
+
+
 
 const CFG = () => balance.equipment;
 
@@ -39606,57 +39614,28 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
 }
 
 function inventoryFace(row, { selected = false, draggable = false } = {}) {
-  const el = document.createElement('span');
-  el.className = `inventory-face${selected ? ' on' : ''}`;
-  markUiComponent(el, UI.inventoryItemCard, row.category);
-  el.dataset.inventoryItem = row.key;
-  el.dataset.itemId = row.id;
-  el.dataset.itemCategory = row.category;
-  el.dataset.itemCount = String(row.count);
-  el.draggable = draggable;
-  const equipped = row.equippedLabels.length
-    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
-      ? 'Equipped'
-      : `Equipped: ${row.equippedLabels.join(' / ')}`)
-    : '';
-  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
-    + `<span class="inventory-category">${esc(row.category)}</span>`
-    + `<span class="inventory-count">×${row.count}</span>`
-    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
-  return el;
+  return renderInventoryItemCard(inventoryItemCardModel(row, { selected, draggable }));
 }
 
 function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
-  const el = document.createElement('div');
-  el.className = 'inventory-detail';
-  markUiComponent(el, UI.inventoryDetailCard, row.category);
   const item = row.item;
-  let art = '';
+  let art;
   if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
-    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+    art = { kind: 'image', value: thumbSrc(item) };
   } else if (item.artAsset) {
-    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+    art = { kind: 'image', value: assetUrl(item.artAsset) };
   } else {
-    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+    art = { kind: 'glyph', value: item.icon || '◆' };
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
     : (item.blurb || item.textTemplate || 'No additional information.');
-  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
   const mods = modSummary(registries, item);
-  el.innerHTML = `<div class="inventory-model">${art}</div>`
-    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
-    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
-    + `<p>${esc(description)}</p>`
-    + (mods.length ? `<p class="inventory-mods">${mods.map(esc).join(' · ')}</p>` : '')
-    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
-    + (instruction ? `<p class="inventory-instruction">${esc(instruction)}</p>` : '')
-    + (comparison ? renderCandidateComparison(comparison, { expanded: true }) : '')
-    + '</div>';
-  if (action) el.querySelector('.inventory-information').appendChild(action);
-  const image = el.querySelector('img');
-  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
-  return el;
+  const model = inventoryDetailCardModel({ row, art, description, mods, instruction });
+  return renderInventoryDetailCard(model, {
+    comparisonHtml: comparison ? renderCandidateComparison(comparison, { expanded: true }) : '',
+    action,
+  });
 }
 
 /**
@@ -39777,11 +39756,18 @@ function mountEquipment(host, {
   // mount — so paint order and DOM order agree everywhere I could reach. If a
   // future screen opens one over the other, the focus cursor will drive the
   // panel underneath. Named here because the class is what makes it possible.
-  const wrap = document.createElement('div');
-  wrap.className = 'modal-veil armoury-overlay';
-  markUiComponent(wrap, UI.armouryOverlay);
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
-  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
+  const initialPanelModel = armouryPanelModel({
+    view,
+    views: IDS,
+    layout: viewLayout(view),
+    picking: false,
+    notice: '',
+  });
+  const wrap = renderArmouryOverlay(armouryOverlayModel({
+    panel: initialPanelModel,
+    equippedTagColor: customEquippedTagColor,
+  }));
   host.appendChild(wrap);
 
   // One teardown home for the listener this mount owns outside its subtree.
@@ -39898,63 +39884,42 @@ function mountEquipment(host, {
   }
 
   function slotBlock(slot) {
-    const box = document.createElement('div');
-    box.className = 'equip-slot';
-    markUiComponent(box, UI.equipmentSlot, slot.id);
     const rule = canSwap(registries, slot.id, { inCombat });
-    box.innerHTML =
-      `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
-      // The badge word comes from the verdict it belongs to (#98). It was the
-      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
-      // the one word a player reads had no home and nothing could compare it to
-      // canEquip's sentence — which is exactly how the two came to share it.
-      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
-      `</div><div class="es-sets"></div>`;
-    const sets = box.querySelector('.es-sets');
-
-    // THE LADDER (#90). `open` · `next` · `hidden`, derived from two integers
-    // against the cell's index — never written on a cell. The model owns the
-    // arithmetic (setCellState); this loop only draws what it is told, which is
-    // why there is no state here that the model cannot produce.
     const opened = openedSets(registries, slot, ladderCtx());
     const visible = visibleSets(registries, slot, ladderCtx());
-
-    (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
-      const state = setCellState(i, opened, visible);
+    const plans = [];
+    (run.loadout.sets[slot.id] || []).forEach((itemId, index) => {
+      const state = setCellState(index, opened, visible);
       if (state === 'hidden') return;
-      if (state === 'next') {
-        // THE ONE REFUSAL LEFT IN THIS SCREEN once the picker holds only what
-        // you own. Its words are the RUNG'S OWN — `name` and `hint` from
-        // unlocks.csv — because a reason invented here would be a sentence with
-        // no author and no home. visibleSets() only shows this cell when a rung
-        // exists, so refuses() can never be handed an empty reason.
-        const rung = rungFor(registries, slot, i);
-        const cell = document.createElement('button');
-        cell.type = 'button';
-        cell.className = 'es-cell locked';
-        markUiComponent(cell, UI.equipmentSetCell, `${slot.id}-locked`);
-        cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
-        refuses(cell, () => rung.hint);
-        sets.appendChild(cell);
-        return;
-      }
-      const active = (run.loadout.active[slot.id] || 0) === i;
-      const piece = itemId
-        ? (slot.kinds.includes('armor')
-          ? (eq.armour || []).find((o) => o.classId === run.class && o.id === itemId)
-          : (eq.armaments || []).find((a) => a.id === itemId))
-        : null;
-      const cell = document.createElement('button');
-      cell.type = 'button';
-      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
-      markUiComponent(cell, UI.equipmentSetCell, slot.id);
-      cell.title = piece ? piece.name : 'Empty';
-      cell.innerHTML = piece
-        ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
-        : `<span class="es-empty">＋</span>`;
-      const im = cell.querySelector('img');
-      if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+      const active = (run.loadout.active[slot.id] || 0) === index;
+      const piece = state === 'next' || !itemId
+        ? null
+        : (slot.kinds.includes('armor')
+          ? (eq.armour || []).find((outfit) => outfit.classId === run.class && outfit.id === itemId)
+          : (eq.armaments || []).find((armament) => armament.id === itemId));
+      const rung = state === 'next' ? rungFor(registries, slot, index) : null;
+      plans.push({
+        index, state, active, piece, rung,
+        model: equipmentSetCellModel({
+          slotId: slot.id,
+          index,
+          state,
+          active,
+          piece: piece ? { id: piece.id, name: piece.name, image: thumbSrc(piece) } : null,
+          rung,
+        }),
+      });
+    });
+    const model = equipmentSlotModel({ slotId: slot.id, label: slot.label, rule, cells: plans.map((plan) => plan.model) });
+    const rendered = renderEquipmentSlot(model);
 
+    for (const { model: cellModel, element: cell } of rendered.cells) {
+      const plan = plans.find((candidate) => candidate.index === cellModel.properties.index);
+      const { index, state, active, piece, rung } = plan;
+      if (state === 'next') {
+        refuses(cell, () => rung.hint);
+        continue;
+      }
       cell.addEventListener('dragover', (ev) => {
         const dragged = (eq.armaments || []).find((candidate) => candidate.id === draggingItemId)
           || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === draggingItemId);
@@ -39972,8 +39937,8 @@ function mountEquipment(host, {
           || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === pieceId);
         if (!dragged || !fitsSlot(slot, dragged)) return;
         ev.preventDefault();
-        picking = { slotId: slot.id, setIndex: i };
-        applyEquipmentChange(slot.id, i, pieceId, `Equip ${dragged.name} to ${slot.label}`);
+        picking = { slotId: slot.id, setIndex: index };
+        applyEquipmentChange(slot.id, index, pieceId, `Equip ${dragged.name} to ${slot.label}`);
       });
 
       cell.addEventListener('click', () => {
@@ -39985,11 +39950,11 @@ function mountEquipment(host, {
             // In combat the swap is the engine's to allow or refuse — it may
             // say no because the energy isn't there, and the player should be
             // told that in the panel rather than in the console.
-            const refused = onSwap(slot.id, i);
+            const refused = onSwap(slot.id, index);
             if (refused) { notice = refused; draw(); }
             return;
           }
-          cycleSet(registries, run.loadout, slot.id, i, { meta, inCombat });
+          cycleSet(registries, run.loadout, slot.id, index, { meta, inCombat });
           sfx.play('cardPlay');
           commit();
         } else {
@@ -40001,13 +39966,12 @@ function mountEquipment(host, {
           // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
           // separated: the panel opens and shows you everything you own, and the
           // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
-          picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
+          picking = picking && picking.slotId === slot.id && picking.setIndex === index ? null : { slotId: slot.id, setIndex: index };
           draw();
         }
       });
-      sets.appendChild(cell);
-    });
-    return box;
+    }
+    return rendered.element;
   }
 
   function pickerBlock() {
@@ -40374,32 +40338,9 @@ function mountEquipment(host, {
     // host names the set, each control names its member, so an instrument can
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
-    wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
-        <header class="armoury-head">
-          <h2>ARMOURY</h2>
-          <div class="armoury-views" data-surface="armouryView">
-            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
-          </div>
-          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
-        </header>
-        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
-        <div class="armoury-body">
-          <div class="armoury-left"></div>
-          <div class="armoury-right"></div>
-        </div>
-        <section class="armoury-inventory"></section>
-        <div class="armoury-strip"></div>
-      </div>`;
-
-    markUiComponent(wrap.querySelector('.armoury'), UI.armouryPanel, view);
-    markUiComponent(wrap.querySelector('.armoury-head'), UI.armouryHeader);
-    markUiComponent(wrap.querySelector('.armoury-views'), UI.armouryViewSwitcher);
-    markUiComponent(wrap.querySelector('.armoury-body'), UI.armouryBody, view);
-    markUiComponent(wrap.querySelector('.armoury-inventory'), UI.armouryInventory);
-
-    const left = wrap.querySelector('.armoury-left');
-    const right = wrap.querySelector('.armoury-right');
+    const panelModel = armouryPanelModel({ view, views: IDS, layout: L, picking: !!picking, notice });
+    const rendered = renderArmouryPanel(panelModel, wrap);
+    const { left, right } = rendered;
     const blocks = eq.slots
       // A slot with nothing that fits it isn't a slot yet: Talisman is declared
       // in equipSlots.csv but has no pieces authored, and three empty squares
@@ -40443,18 +40384,18 @@ function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
-    const inventory = wrap.querySelector('.armoury-inventory');
+    const inventory = rendered.inventory;
     if (inventory) inventory.appendChild(inventoryBlock());
-    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
-    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
+    rendered.strip.appendChild(statsComparison());
+    rendered.strip.appendChild(cardStrip());
 
     notice = '';
     dressRegions();
     wrap.querySelectorAll('.equip-candidate-comparison').forEach((comparison) => (
       markUiComponent(comparison, UI.equipmentComparison)
     ));
-    wrap.querySelector('.armoury-close').addEventListener('click', close);
-    for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
+    rendered.close.addEventListener('click', close);
+    for (const b of rendered.viewButtons) {
       b.addEventListener('click', () => {
         view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });
@@ -41383,6 +41324,400 @@ function mountFlaskActionMenu(anchor, { def, plan, onAction, onCancel, wireActio
 
 
 Object.assign(module.exports, { closeFlaskActionMenu, flaskIdentityHtml, flaskPresentation, mountFlaskActionMenu });
+
+},
+"src/ui/models/ArmouryModels.js": function (module, exports, require) {
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function armouryViewSwitcherModel({ views, activeView }) {
+  return componentModel(UI.armouryViewSwitcher, {
+    variant: activeView,
+    properties: { views: views.map((id) => ({ id, active: id === activeView })) },
+    accessibility: { role: 'tablist', label: 'Armoury view' },
+    behaviors: views.map((id) => behaviorModel(`select-armoury-${id}`, {
+      event: 'click',
+      command: 'select-armoury-view',
+      payload: { id },
+    })),
+  });
+}
+
+function armouryHeaderModel({ views, activeView }) {
+  return componentModel(UI.armouryHeader, {
+    properties: { title: 'ARMOURY' },
+    behaviors: [behaviorModel('close-armoury', { event: 'click', command: 'close-armoury' })],
+    children: [armouryViewSwitcherModel({ views, activeView })],
+  });
+}
+
+function armouryBodyModel({ view, figure, slots }) {
+  return componentModel(UI.armouryBody, {
+    variant: view,
+    properties: { view, figure: !!figure, slots },
+  });
+}
+
+function armouryInventoryModel() {
+  return componentModel(UI.armouryInventory, {
+    accessibility: { role: 'region', label: 'Inventory' },
+  });
+}
+
+function armouryStatsPanelModel() {
+  return componentModel(UI.armouryStatsPanel, {
+    accessibility: { role: 'region', label: 'Attributes and resources' },
+  });
+}
+
+function armouryCardStripModel() {
+  return componentModel(UI.armouryCardStrip, {
+    accessibility: { role: 'region', label: 'Equipment cards' },
+  });
+}
+
+function armouryPanelModel({ view, views, layout, picking = false, notice = '' }) {
+  return componentModel(UI.armouryPanel, {
+    variant: view,
+    properties: {
+      view,
+      picking: !!picking,
+      notice,
+      figure: !!layout?.figure,
+      slots: layout?.slots || 'none',
+    },
+    accessibility: { role: 'dialog', label: 'Armoury', modal: true },
+    children: [
+      armouryHeaderModel({ views, activeView: view }),
+      armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
+      armouryInventoryModel(),
+      armouryStatsPanelModel(),
+      armouryCardStripModel(),
+    ],
+  });
+}
+
+function armouryOverlayModel({ panel, equippedTagColor = '' }) {
+  return componentModel(UI.armouryOverlay, {
+    properties: { equippedTagColor },
+    accessibility: { role: 'presentation' },
+    children: [panel],
+  });
+}
+
+function equipmentSetCellModel({ slotId, index, state, active = false, piece = null, rung = null }) {
+  return componentModel(UI.equipmentSetCell, {
+    variant: state === 'next' ? `${slotId}-locked` : slotId,
+    properties: {
+      slotId,
+      index,
+      state,
+      active,
+      piece: piece ? { id: piece.id, name: piece.name, image: piece.image || '' } : null,
+      rung: rung ? { name: rung.name, hint: rung.hint } : null,
+    },
+    behaviors: [behaviorModel(`activate-${slotId}-${index}`, {
+      event: 'click',
+      command: 'activate-equipment-set',
+      payload: { slotId, index },
+    })],
+  });
+}
+
+function equipmentSlotModel({ slotId, label, rule, cells }) {
+  return componentModel(UI.equipmentSlot, {
+    variant: slotId,
+    properties: { slotId, label, rule: { ok: !!rule.ok, word: rule.word || '', reason: rule.reason || '' } },
+    children: cells,
+  });
+}
+
+function inventoryItemCardModel(row, { selected = false, draggable = false } = {}) {
+  return componentModel(UI.inventoryItemCard, {
+    variant: row.category,
+    properties: {
+      key: row.key,
+      id: row.id,
+      name: row.name,
+      category: row.category,
+      count: row.count,
+      equippedLabels: [...row.equippedLabels],
+      selected,
+      draggable,
+    },
+    behaviors: [behaviorModel(`inspect-${row.key}`, {
+      event: 'click',
+      command: 'inspect-inventory-item',
+      payload: { key: row.key, id: row.id },
+    })],
+  });
+}
+
+function inventoryDetailCardModel({ row, art, description, mods, instruction = '' }) {
+  return componentModel(UI.inventoryDetailCard, {
+    variant: row.category,
+    properties: {
+      name: row.item.name,
+      category: row.category,
+      rarity: row.item.rarity || 'standard',
+      count: row.count,
+      description,
+      tags: [...(row.item.tags || [])],
+      mods: [...mods],
+      instruction,
+      art,
+      fallbackIcon: row.item.icon || '◆',
+    },
+  });
+}
+
+
+Object.assign(module.exports, { armouryPanelModel, armouryOverlayModel, equipmentSetCellModel, equipmentSlotModel, inventoryItemCardModel, inventoryDetailCardModel });
+
+},
+"src/ui/models/BehaviorModel.js": function (module, exports, require) {
+function frozenRecord(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(frozenRecord));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, child] of Object.entries(value)) out[key] = frozenRecord(child);
+    return Object.freeze(out);
+  }
+  return value;
+}
+
+function behaviorModel(name, {
+  event = 'mount',
+  command = name,
+  policy = '',
+  payload = {},
+} = {}) {
+  if (typeof name !== 'string' || !name) throw new Error('Behavior name is required');
+  if (typeof event !== 'string' || !event) throw new Error(`${name} event is required`);
+  if (typeof command !== 'string' || !command) throw new Error(`${name} command is required`);
+  return Object.freeze({ name, event, command, policy, payload: frozenRecord(payload) });
+}
+
+function isBehaviorModel(value) {
+  return !!value && typeof value === 'object'
+    && typeof value.name === 'string' && !!value.name
+    && typeof value.event === 'string' && !!value.event
+    && typeof value.command === 'string' && !!value.command;
+}
+
+
+Object.assign(module.exports, { behaviorModel, isBehaviorModel });
+
+},
+"src/ui/models/ComponentModel.js": function (module, exports, require) {
+const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
+const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
+
+function freezeValue(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
+  if (value && typeof value === 'object') {
+    const frozen = {};
+    for (const [key, child] of Object.entries(value)) frozen[key] = freezeValue(child);
+    return Object.freeze(frozen);
+  }
+  return value;
+}
+
+function serializable(value) {
+  if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(serializable);
+  return typeof value === 'object'
+    && Object.getPrototypeOf(value) === Object.prototype
+    && Object.values(value).every(serializable);
+}
+
+// Immutable presentation record. It intentionally cannot carry callbacks or
+// mutable domain objects; behavior names are resolved later by a View host.
+function componentModel(component, {
+  variant = '',
+  properties = {},
+  tokens = {},
+  accessibility = {},
+  behaviors = [],
+  children = [],
+} = {}) {
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component model: ${component}`);
+  if (typeof variant !== 'string') throw new Error(`${component} variant must be a string`);
+  if (!serializable(properties)) throw new Error(`${component} properties must be serializable`);
+  if (!serializable(tokens)) throw new Error(`${component} tokens must be serializable`);
+  if (!serializable(accessibility)) throw new Error(`${component} accessibility must be serializable`);
+  if (!Array.isArray(behaviors) || behaviors.some((behavior) => !isBehaviorModel(behavior))) {
+    throw new Error(`${component} behaviors must be Behavior Models`);
+  }
+  if (!Array.isArray(children) || children.some((child) => !isComponentModel(child))) {
+    throw new Error(`${component} children must be Component Models`);
+  }
+  return Object.freeze({
+    component,
+    variant,
+    properties: freezeValue(properties),
+    tokens: freezeValue(tokens),
+    accessibility: freezeValue(accessibility),
+    behaviors: Object.freeze([...behaviors]),
+    children: Object.freeze([...children]),
+  });
+}
+
+function isComponentModel(value) {
+  return !!value && typeof value === 'object' && isUiComponentId(value.component)
+    && Array.isArray(value.behaviors) && Array.isArray(value.children);
+}
+
+function childModel(parent, component, variant = null) {
+  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
+  const child = parent.children.find((candidate) => candidate.component === component
+    && (variant == null || candidate.variant === variant));
+  if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
+  return child;
+}
+
+
+Object.assign(module.exports, { componentModel, isComponentModel, childModel });
+
+},
+"src/ui/components/armouryComponents.js": function (module, exports, require) {
+const { childModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { markUiComponent } = require("src/ui/components/uiComponents.js");
+
+function renderArmouryOverlay(model) {
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-veil armoury-overlay';
+  markUiComponent(wrap, model.component, model.variant);
+  wrap.style.setProperty('--equip-equipped-tag-color', model.properties.equippedTagColor || 'var(--gold)');
+  return wrap;
+}
+
+function renderArmouryPanel(model, wrap) {
+  const header = childModel(model, UI.armouryHeader);
+  const switcher = childModel(header, UI.armouryViewSwitcher);
+  const body = childModel(model, UI.armouryBody);
+  const inventory = childModel(model, UI.armouryInventory);
+  wrap.innerHTML = `
+    <div class="armoury${model.properties.picking ? ' picking' : ''}" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
+      <header class="armoury-head">
+        <h2>${esc(header.properties.title)}</h2>
+        <div class="armoury-views" data-surface="armouryView" role="tablist" aria-label="${esc(switcher.accessibility.label)}">
+          ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.id)}</button>`).join('')}
+        </div>
+        <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+      </header>
+      ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
+      <div class="armoury-body">
+        <div class="armoury-left"></div>
+        <div class="armoury-right"></div>
+      </div>
+      <section class="armoury-inventory" role="region" aria-label="${esc(inventory.accessibility.label)}"></section>
+      <div class="armoury-strip"></div>
+    </div>`;
+  const panel = wrap.querySelector('.armoury');
+  markUiComponent(panel, model.component, model.variant);
+  markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);
+  markUiComponent(wrap.querySelector('.armoury-views'), switcher.component, switcher.variant);
+  markUiComponent(wrap.querySelector('.armoury-body'), body.component, body.variant);
+  markUiComponent(wrap.querySelector('.armoury-inventory'), inventory.component, inventory.variant);
+  return {
+    panel,
+    left: wrap.querySelector('.armoury-left'),
+    right: wrap.querySelector('.armoury-right'),
+    inventory: wrap.querySelector('.armoury-inventory'),
+    strip: wrap.querySelector('.armoury-strip'),
+    close: wrap.querySelector('.armoury-close'),
+    viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
+  };
+}
+
+function renderInventoryItemCard(model) {
+  const row = model.properties;
+  const element = document.createElement('span');
+  element.className = `inventory-face${row.selected ? ' on' : ''}`;
+  element.dataset.inventoryItem = row.key;
+  element.dataset.itemId = row.id;
+  element.dataset.itemCategory = row.category;
+  element.dataset.itemCount = String(row.count);
+  element.draggable = row.draggable;
+  const equipped = row.equippedLabels.length
+    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
+      ? 'Equipped'
+      : `Equipped: ${row.equippedLabels.join(' / ')}`)
+    : '';
+  element.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + `<span class="inventory-category">${esc(row.category)}</span>`
+    + `<span class="inventory-count">×${row.count}</span>`
+    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
+  markUiComponent(element, model.component, model.variant);
+  return element;
+}
+
+function renderInventoryDetailCard(model, { comparisonHtml = '', action = null } = {}) {
+  const detail = model.properties;
+  const element = document.createElement('div');
+  element.className = 'inventory-detail';
+  const art = detail.art.kind === 'image'
+    ? `<img src="${esc(detail.art.value)}" alt="">`
+    : `<span aria-hidden="true">${esc(detail.art.value)}</span>`;
+  element.innerHTML = `<div class="inventory-model">${art}</div>`
+    + `<div class="inventory-information"><h4>${esc(detail.name)}</h4>`
+    + `<p class="inventory-kind">${esc(detail.category)} · ${esc(detail.rarity)} · ${detail.count} owned</p>`
+    + `<p>${esc(detail.description)}</p>`
+    + (detail.mods.length ? `<p class="inventory-mods">${detail.mods.map(esc).join(' · ')}</p>` : '')
+    + (detail.tags.length ? `<div class="inventory-tags">${detail.tags.map((tag) => `<em>${esc(tag)}</em>`).join('')}</div>` : '')
+    + (detail.instruction ? `<p class="inventory-instruction">${esc(detail.instruction)}</p>` : '')
+    + comparisonHtml
+    + '</div>';
+  markUiComponent(element, model.component, model.variant);
+  if (action) element.querySelector('.inventory-information').appendChild(action);
+  const image = element.querySelector('img');
+  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: detail.fallbackIcon })));
+  return element;
+}
+
+function renderEquipmentSlot(model) {
+  const slot = model.properties;
+  const element = document.createElement('div');
+  element.className = 'equip-slot';
+  element.innerHTML = `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>`
+    + (slot.rule.ok ? '' : `<span class="es-sealed" title="${esc(slot.rule.reason)}">${esc(slot.rule.word)}</span>`)
+    + '</div><div class="es-sets"></div>';
+  markUiComponent(element, model.component, model.variant);
+  const sets = element.querySelector('.es-sets');
+  const cells = model.children.map((cellModel) => {
+    const cell = renderEquipmentSetCell(cellModel);
+    sets.appendChild(cell);
+    return { model: cellModel, element: cell };
+  });
+  return { element, cells };
+}
+
+function renderEquipmentSetCell(model) {
+  const cellData = model.properties;
+  const element = document.createElement('button');
+  element.type = 'button';
+  if (cellData.state === 'next') {
+    element.className = 'es-cell locked';
+    element.innerHTML = `<span class="es-lock">🔒</span><span>${esc(cellData.rung.name)}</span>`;
+  } else {
+    element.className = `es-cell${cellData.active ? ' on' : ''}${cellData.piece ? '' : ' empty'}`;
+    element.title = cellData.piece ? cellData.piece.name : 'Empty';
+    element.innerHTML = cellData.piece
+      ? `<img src="${esc(cellData.piece.image)}" alt=""><span>${esc(cellData.piece.name)}</span>`
+      : '<span class="es-empty">＋</span>';
+    const image = element.querySelector('img');
+    if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })));
+  }
+  markUiComponent(element, model.component, model.variant);
+  return element;
+}
+
+
+Object.assign(module.exports, { renderArmouryOverlay, renderArmouryPanel, renderInventoryItemCard, renderInventoryDetailCard, renderEquipmentSlot, renderEquipmentSetCell });
 
 },
 "src/ui/screens/customRun.js": function (module, exports, require) {
@@ -42512,11 +42847,12 @@ Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 // would have put the list off-screen on exactly the shape it is for.
 
 const { viewportLocalBox, placeAnchored } = require("src/ui/fx.js");
-const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
+const { hideTooltip } = require("src/ui/components/tooltip.js");
 const { menuRows } = require("src/ui/uiContent.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { quickMenuPanelModel } = require("src/ui/models/MenuModels.js");
+const { renderQuickMenu } = require("src/ui/components/menuComponents.js");
 
 // The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -42604,58 +42940,18 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
     .filter((r) => typeof actions[r.act] === 'function');
   if (!rows.length) return null;
 
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil qn-veil';
-  const panel = document.createElement('div');
-  panel.className = 'qn-panel';
-  markUiComponent(panel, UI.quickMenuPanel, context);
-  // #78 — the house convention for a navigable set: the host names the set, each
-  // control names its member. `menuAct` was the one registered set that did NOT
-  // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
-  // the one missing from the convention meant to catch sets like it*). It is
-  // also the only place the ORPHAN edge is observable: an act declared in
-  // MENU_ACTS that no context implements never appears here, and the difference
-  // between declared and drawn is exactly the defect. `data-act` / `data-tab`
-  // stay — they are behaviour, not enumeration, and something may read them.
-  panel.dataset.surface = 'menuAct';
-
-  // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
-  // outlives the memory of switching it on becomes a bug report — so the list
-  // says, every single time it opens, that it is a test, which variant is
-  // running, and where the way back is. It is a header, not a row: Save and
-  // Save & Quit are the last two rows, always (his constraint, fixed by hand).
-  const cap = document.createElement('div');
-  cap.className = 'qn-cap';
-  markUiComponent(cap, UI.quickMenuCaption, mode);
-  cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
-  panel.appendChild(cap);
-
-  for (const r of rows) {
-    if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
-    const b = document.createElement('button');
-    b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
-    markUiComponent(b, UI.quickMenuRow, r.act);
-    b.dataset.act = r.act;
-    b.dataset.member = r.act;
-    if (r.tab) b.dataset.tab = r.tab;
-    b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
-      + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');
-    // Law 3 clause 4: the tooltip fires for hover AND for the pad/keyboard focus
-    // cursor. `title=` alone is what the topbar has today, and touch and pad
-    // players never see it.
-    if (r.tip) attachTooltip(b, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.tip)}`);
-    b.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const fn = actions[r.act];
-      // A row that gives feedback in place (Save) keeps the list open and says
-      // so; everything else is a navigation and the list has done its job.
-      const inPlace = fn(r.tab, b);
+  const model = quickMenuPanelModel({
+    context,
+    mode,
+    caption: `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`,
+    rows,
+  });
+  const { veil, panel } = renderQuickMenu(model, {
+    onActivate: (row, button) => {
+      const inPlace = actions[row.act](row.tab, button);
       if (inPlace !== 'keep') closeQuickNav();
-    });
-    panel.appendChild(b);
-  }
-
-  veil.appendChild(panel);
+    },
+  });
   document.body.appendChild(veil);
   openVeil = veil;
   position(anchorEl, panel);
@@ -42708,6 +43004,190 @@ function position(anchorEl, panel) {
 
 
 Object.assign(module.exports, { setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, openQuickNav });
+
+},
+"src/ui/models/MenuModels.js": function (module, exports, require) {
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function quickMenuCaptionModel({ mode, label }) {
+  return componentModel(UI.quickMenuCaption, {
+    variant: mode,
+    properties: { label },
+  });
+}
+
+function quickMenuRowModel(row) {
+  return componentModel(UI.quickMenuRow, {
+    variant: row.act,
+    properties: {
+      act: row.act,
+      tab: row.tab || '',
+      icon: row.icon || '',
+      label: row.label || '',
+      badge: row.badge || '',
+      tip: row.tip || '',
+      tone: row.tone || '',
+      active: !!row.on,
+      separatorBefore: !!row.sep,
+    },
+    accessibility: { role: 'menuitem', label: row.label || row.act },
+    behaviors: [behaviorModel(`activate-${row.act}`, {
+      event: 'click',
+      command: 'activate-menu-row',
+      payload: { act: row.act, tab: row.tab || '' },
+    })],
+  });
+}
+
+function quickMenuPanelModel({ context, mode, caption, rows }) {
+  return componentModel(UI.quickMenuPanel, {
+    variant: context,
+    properties: { context, mode },
+    accessibility: { role: 'menu', label: 'Quick menu' },
+    children: [quickMenuCaptionModel({ mode, label: caption }), ...rows.map(quickMenuRowModel)],
+  });
+}
+
+function menuTabModel(tab, active = false) {
+  return componentModel(UI.menuTab, {
+    variant: tab.id,
+    properties: { id: tab.id, label: tab.label, active },
+    accessibility: { role: 'tab', label: tab.label, selected: active },
+    behaviors: [behaviorModel(`select-${tab.id}`, {
+      event: 'click',
+      command: 'select-menu-tab',
+      payload: { id: tab.id },
+    })],
+  });
+}
+
+function menuTabStripModel({ tabs, activeId = '', folded = false }) {
+  return componentModel(UI.menuTabStrip, {
+    variant: folded ? 'folded' : 'visible',
+    properties: { folded },
+    accessibility: { role: 'tablist', label: 'Run menu' },
+    children: tabs.map((tab) => menuTabModel(tab, tab.id === activeId)),
+  });
+}
+
+function menuPanelModel(id = '') {
+  return componentModel(UI.menuPanel, {
+    variant: id,
+    properties: { id },
+    accessibility: { role: 'tabpanel', label: id || 'Menu panel' },
+  });
+}
+
+function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored = false }) {
+  return componentModel(UI.menuOverlay, {
+    variant: folded ? 'folded' : (mirrored ? 'mirrored' : 'tabs'),
+    properties: { folded, mirrored, activeId },
+    accessibility: { role: 'dialog', label: 'Run menu', modal: true },
+    behaviors: [behaviorModel('close-menu', { event: 'click', command: 'close-menu' })],
+    children: [
+      menuTabStripModel({ tabs, activeId, folded }),
+      menuPanelModel(activeId),
+    ],
+  });
+}
+
+
+Object.assign(module.exports, { quickMenuPanelModel, menuOverlayModel });
+
+},
+"src/ui/components/menuComponents.js": function (module, exports, require) {
+const { childModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
+const { markUiComponent } = require("src/ui/components/uiComponents.js");
+
+function renderQuickMenu(model, { onActivate }) {
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil qn-veil';
+  const panel = document.createElement('div');
+  panel.className = 'qn-panel';
+  panel.dataset.surface = 'menuAct';
+  panel.setAttribute('role', model.accessibility.role);
+  panel.setAttribute('aria-label', model.accessibility.label);
+  markUiComponent(panel, model.component, model.variant);
+
+  const captionModel = childModel(model, UI.quickMenuCaption);
+  const caption = document.createElement('div');
+  caption.className = 'qn-cap';
+  caption.textContent = captionModel.properties.label;
+  markUiComponent(caption, captionModel.component, captionModel.variant);
+  panel.appendChild(caption);
+
+  for (const rowModel of model.children.filter((child) => child.component === UI.quickMenuRow)) {
+    const row = rowModel.properties;
+    if (row.separatorBefore) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
+    const button = document.createElement('button');
+    button.className = `qn-row${row.tone ? ` ${row.tone}` : ''}${row.active ? ' on' : ''}`;
+    button.dataset.act = row.act;
+    button.dataset.member = row.act;
+    if (row.tab) button.dataset.tab = row.tab;
+    button.innerHTML = `<span class="qn-ic">${esc(row.icon)}</span><span class="qn-label">${esc(row.label)}</span>`
+      + (row.badge ? `<span class="qn-badge">${esc(row.badge)}</span>` : '');
+    markUiComponent(button, rowModel.component, rowModel.variant);
+    if (row.tip) attachTooltip(button, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      onActivate(row, button);
+    });
+    panel.appendChild(button);
+  }
+  veil.appendChild(panel);
+  return { veil, panel };
+}
+
+function renderMenuOverlay(model) {
+  const stripModel = childModel(model, UI.menuTabStrip);
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil';
+  veil.innerHTML = `
+    <div class="modal overlay-modal" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
+      <div class="overlay-head">
+        <div class="overlay-tabs" data-surface="overlayTab"${model.properties.folded ? ' hidden' : ''} role="tablist" aria-label="${esc(stripModel.accessibility.label)}">
+          ${stripModel.children.map((tab) => `<button class="ov-tab${tab.properties.active ? ' on' : ''}" data-member="${esc(tab.properties.id)}" role="tab" aria-selected="${tab.properties.active ? 'true' : 'false'}">${esc(tab.properties.label)}</button>`).join('')}
+        </div>
+        ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
+        <div class="overlay-actions">
+          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
+          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="overlay-body" role="tabpanel"></div>
+    </div>`;
+  const overlay = veil.querySelector('.overlay-modal');
+  const strip = veil.querySelector('.overlay-tabs');
+  const body = veil.querySelector('.overlay-body');
+  markUiComponent(overlay, model.component, model.variant);
+  markUiComponent(strip, stripModel.component, stripModel.variant);
+  stripModel.children.forEach((tabModel, index) => {
+    markUiComponent(veil.querySelectorAll('.ov-tab')[index], tabModel.component, tabModel.variant);
+  });
+  markUiComponent(body, UI.menuPanel, model.properties.activeId);
+  return { veil, overlay, strip, body };
+}
+
+function updateMenuSelection(root, tabs, id) {
+  root.querySelectorAll('.ov-tab').forEach((button) => {
+    const active = button.dataset.member === id;
+    button.classList.toggle('on', active);
+    button.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  const switcher = root.querySelector('#ov-switch');
+  if (switcher) switcher.textContent = `${tabs.find((tab) => tab.id === id)?.label || id} \u25be`;
+  const body = root.querySelector('.overlay-body');
+  body.innerHTML = '';
+  markUiComponent(body, UI.menuPanel, id);
+  return body;
+}
+
+
+Object.assign(module.exports, { renderQuickMenu, renderMenuOverlay, updateMenuSelection });
 
 },
 "src/ui/components/mapboard.js": function (module, exports, require) {
@@ -44508,111 +44988,6 @@ const hudShellHtml = sharedRunHudHtml;
 
 
 Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
-
-},
-"src/ui/models/ComponentModel.js": function (module, exports, require) {
-const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
-const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
-
-function freezeValue(value) {
-  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
-  if (value && typeof value === 'object') {
-    const frozen = {};
-    for (const [key, child] of Object.entries(value)) frozen[key] = freezeValue(child);
-    return Object.freeze(frozen);
-  }
-  return value;
-}
-
-function serializable(value) {
-  if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return true;
-  if (Array.isArray(value)) return value.every(serializable);
-  return typeof value === 'object'
-    && Object.getPrototypeOf(value) === Object.prototype
-    && Object.values(value).every(serializable);
-}
-
-// Immutable presentation record. It intentionally cannot carry callbacks or
-// mutable domain objects; behavior names are resolved later by a View host.
-function componentModel(component, {
-  variant = '',
-  properties = {},
-  tokens = {},
-  accessibility = {},
-  behaviors = [],
-  children = [],
-} = {}) {
-  if (!isUiComponentId(component)) throw new Error(`Unknown UI component model: ${component}`);
-  if (typeof variant !== 'string') throw new Error(`${component} variant must be a string`);
-  if (!serializable(properties)) throw new Error(`${component} properties must be serializable`);
-  if (!serializable(tokens)) throw new Error(`${component} tokens must be serializable`);
-  if (!serializable(accessibility)) throw new Error(`${component} accessibility must be serializable`);
-  if (!Array.isArray(behaviors) || behaviors.some((behavior) => !isBehaviorModel(behavior))) {
-    throw new Error(`${component} behaviors must be Behavior Models`);
-  }
-  if (!Array.isArray(children) || children.some((child) => !isComponentModel(child))) {
-    throw new Error(`${component} children must be Component Models`);
-  }
-  return Object.freeze({
-    component,
-    variant,
-    properties: freezeValue(properties),
-    tokens: freezeValue(tokens),
-    accessibility: freezeValue(accessibility),
-    behaviors: Object.freeze([...behaviors]),
-    children: Object.freeze([...children]),
-  });
-}
-
-function isComponentModel(value) {
-  return !!value && typeof value === 'object' && isUiComponentId(value.component)
-    && Array.isArray(value.behaviors) && Array.isArray(value.children);
-}
-
-function childModel(parent, component, variant = null) {
-  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
-  const child = parent.children.find((candidate) => candidate.component === component
-    && (variant == null || candidate.variant === variant));
-  if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
-  return child;
-}
-
-
-Object.assign(module.exports, { componentModel, isComponentModel, childModel });
-
-},
-"src/ui/models/BehaviorModel.js": function (module, exports, require) {
-function frozenRecord(value) {
-  if (Array.isArray(value)) return Object.freeze(value.map(frozenRecord));
-  if (value && typeof value === 'object') {
-    const out = {};
-    for (const [key, child] of Object.entries(value)) out[key] = frozenRecord(child);
-    return Object.freeze(out);
-  }
-  return value;
-}
-
-function behaviorModel(name, {
-  event = 'mount',
-  command = name,
-  policy = '',
-  payload = {},
-} = {}) {
-  if (typeof name !== 'string' || !name) throw new Error('Behavior name is required');
-  if (typeof event !== 'string' || !event) throw new Error(`${name} event is required`);
-  if (typeof command !== 'string' || !command) throw new Error(`${name} command is required`);
-  return Object.freeze({ name, event, command, policy, payload: frozenRecord(payload) });
-}
-
-function isBehaviorModel(value) {
-  return !!value && typeof value === 'object'
-    && typeof value.name === 'string' && !!value.name
-    && typeof value.event === 'string' && !!value.event
-    && typeof value.command === 'string' && !!value.command;
-}
-
-
-Object.assign(module.exports, { behaviorModel, isBehaviorModel });
 
 },
 "src/ui/viewModels/RunHudViewModel.js": function (module, exports, require) {
@@ -52542,7 +52917,8 @@ const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { closeFlaskActionMenu, flaskIdentityHtml } = require("src/ui/components/flask.js");
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { menuOverlayModel } = require("src/ui/models/MenuModels.js");
+const { renderMenuOverlay, updateMenuSelection } = require("src/ui/components/menuComponents.js");
 
 let openVeil = null;
 let escHandler = null;
@@ -52748,29 +53124,11 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   const folded = quickNavFolds();
   const mirrored = quickNavMode() === 'mirror';
 
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.innerHTML = `
-    <div class="modal overlay-modal">
-      <div class="overlay-head">
-        <div class="overlay-tabs" data-surface="overlayTab"${folded ? ' hidden' : ''}>
-          ${TABS.map((t) => `<button class="ov-tab" data-member="${t.id}">${esc(t.label)}</button>`).join('')}
-        </div>
-        ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
-        <div class="overlay-actions">
-          ${mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
-          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
-        </div>
-      </div>
-      <div class="overlay-body"></div>
-    </div>`;
+  const initialId = TABS.some((tab) => tab.id === initialTab) ? initialTab : 'deck';
+  const model = menuOverlayModel({ tabs: TABS, activeId: initialId, folded, mirrored });
+  const { veil, body } = renderMenuOverlay(model);
   document.body.appendChild(veil);
   openVeil = veil;
-
-  const body = veil.querySelector('.overlay-body');
-  markUiComponent(veil.querySelector('.overlay-modal'), UI.menuOverlay);
-  markUiComponent(veil.querySelector('.overlay-tabs'), UI.menuTabStrip);
-  veil.querySelectorAll('.ov-tab').forEach((tab) => markUiComponent(tab, UI.menuTab, tab.dataset.member));
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
@@ -52795,14 +53153,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
 
   function selectTab(id) {
     currentTab = id;
-    veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.member === id));
-    const sw = veil.querySelector('#ov-switch');
-    if (sw) {
-      const t = TABS.find((x) => x.id === id);
-      sw.textContent = `${t ? t.label : id} \u25be`;
-    }
-    body.innerHTML = '';
-    markUiComponent(body, UI.menuPanel, id);
+    updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
@@ -52868,7 +53219,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   };
   addEventListener('keydown', escHandler, true);
 
-  selectTab(TABS.some((t) => t.id === initialTab) ? initialTab : 'deck');
+  selectTab(initialId);
 
   // Smart default (keyboard/gamepad): land on the active tab so arrows can move
   // to its content or across tabs, rather than leaving focus nowhere.

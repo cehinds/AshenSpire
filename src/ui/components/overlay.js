@@ -15,7 +15,8 @@ import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
 import { closeFlaskActionMenu, flaskIdentityHtml } from './flask.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { menuOverlayModel } from '../models/MenuModels.js';
+import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -221,29 +222,11 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   const folded = quickNavFolds();
   const mirrored = quickNavMode() === 'mirror';
 
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil';
-  veil.innerHTML = `
-    <div class="modal overlay-modal">
-      <div class="overlay-head">
-        <div class="overlay-tabs" data-surface="overlayTab"${folded ? ' hidden' : ''}>
-          ${TABS.map((t) => `<button class="ov-tab" data-member="${t.id}">${esc(t.label)}</button>`).join('')}
-        </div>
-        ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
-        <div class="overlay-actions">
-          ${mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
-          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
-        </div>
-      </div>
-      <div class="overlay-body"></div>
-    </div>`;
+  const initialId = TABS.some((tab) => tab.id === initialTab) ? initialTab : 'deck';
+  const model = menuOverlayModel({ tabs: TABS, activeId: initialId, folded, mirrored });
+  const { veil, body } = renderMenuOverlay(model);
   document.body.appendChild(veil);
   openVeil = veil;
-
-  const body = veil.querySelector('.overlay-body');
-  markUiComponent(veil.querySelector('.overlay-modal'), UI.menuOverlay);
-  markUiComponent(veil.querySelector('.overlay-tabs'), UI.menuTabStrip);
-  veil.querySelectorAll('.ov-tab').forEach((tab) => markUiComponent(tab, UI.menuTab, tab.dataset.member));
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
@@ -268,14 +251,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
 
   function selectTab(id) {
     currentTab = id;
-    veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.member === id));
-    const sw = veil.querySelector('#ov-switch');
-    if (sw) {
-      const t = TABS.find((x) => x.id === id);
-      sw.textContent = `${t ? t.label : id} \u25be`;
-    }
-    body.innerHTML = '';
-    markUiComponent(body, UI.menuPanel, id);
+    updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
@@ -341,7 +317,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   };
   addEventListener('keydown', escHandler, true);
 
-  selectTab(TABS.some((t) => t.id === initialTab) ? initialTab : 'deck');
+  selectTab(initialId);
 
   // Smart default (keyboard/gamepad): land on the active tab so arrows can move
   // to its content or across tabs, rather than leaving focus nowhere.
