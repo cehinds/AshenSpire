@@ -105,8 +105,10 @@
 // WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
 //   · THE TWO TOP ROWS SHARE THEIR GEOMETRY: resource host, Armoury, Menu. The
 //     screens still carry different secondary chrome below that row. P4 holds
-//     percentage authority at 1440x860, 390x844 and 320x640; P6 holds both controls
-//     wholly inside the viewport.
+//     bar-percentage authority at all four declared shapes; P6 holds both controls
+//     wholly inside the viewport. Shared-shell available-width authority belongs
+//     to `node tools/hud-potion-followup.mjs --browser`, which proves the authored
+//     82 percent and its applied geometry rather than duplicating it here.
 //   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
 //     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
@@ -114,7 +116,7 @@
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
 //   · WHETHER 200/50 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
-//   · Headless Chromium, three shapes, one text size, no accent theme, no
+//   · Headless Chromium, four shapes, one text size, no accent theme, no
 //     colourblind palette. The runtime platform is printed in the boundary.
 //   · NOT WIRED INTO ci.yml — see the PR. Between hand-runs, SOP 2's silence
 //     guard makes this `unknown`, not green.
@@ -208,7 +210,6 @@ if (wantPoses) {
 }
 const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
 const POSES = wantPoses ? ALL_POSES.filter((p) => wantPoses.includes(p.tag)) : ALL_POSES;
-const HIS_MAX_VIEWPORT_PCT = 40;
 
 // THE LATCH. `bad` never goes down; nothing reads it to decide whether to keep
 // going. Every exit path below closes the browser and the server, prints the
@@ -284,18 +285,12 @@ const READ = `(() => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
     }),
-    hostBox: (() => {
-      const el = document.querySelector('.topbar .hud-top .resbars-host');
-      const b = el ? el.getBoundingClientRect() : null;
-      return b ? { left: b.left, right: b.right, width: b.width } : null;
-    })(),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
     },
-    configuredCap: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-max-vw').trim(),
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
     legacyHpbars: document.querySelectorAll('.topbar .hpbar').length,
@@ -392,19 +387,12 @@ function judgeCell(cell, mapR, comR, refTable) {
     return;
   }
 
-  // P8 SHARED TOP-ROW COMPOSITION — one data value caps the resource reference
-  // track. Cinders alone owns the true centre; Floor owns the right metadata.
-  // The 40 is his ruling, held independently from the app config so moving the
-  // config cannot move the expectation with it.
+  // P8 SHARED TOP-ROW COMPOSITION — Cinders alone owns the true centre; Floor
+  // owns the right metadata, and visible resource cards must not overlap it.
+  // Shared-shell width authority belongs to hud-potion-followup's config and
+  // applied-geometry receipts; duplicating that verdict here made the gates
+  // disagree after the approved 82-percent design replaced the old host cap.
   for (const [screen, read] of [['map', mapR], ['combat', comR]]) {
-    const capPx = read.vp.w * HIS_MAX_VIEWPORT_PCT / 100;
-    if (read.configuredCap !== `${HIS_MAX_VIEWPORT_PCT}vw`) {
-      fail(`FINDING P8/top-row ${cell} ${screen} configured cap=${JSON.stringify(read.configuredCap)} — expected the one authored ${HIS_MAX_VIEWPORT_PCT}vw HUD cap.`);
-    } else if (!read.hostBox || read.hostBox.width > capPx + 1) {
-      fail(`FINDING P8/top-row ${cell} ${screen} resource host=${read.hostBox ? read.hostBox.width.toFixed(2) : 'MISSING'} px, viewport cap=${capPx.toFixed(2)} px — shared HUD exceeds ${HIS_MAX_VIEWPORT_PCT}% viewport.`);
-    } else {
-      ok(`P8/top-row ${cell} ${screen} — resource host ${read.hostBox.width.toFixed(2)} px <= ${HIS_MAX_VIEWPORT_PCT}% viewport (${capPx.toFixed(2)} px)`);
-    }
     const receiptFindings = p8ReceiptFindings(read);
     const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
     if (receiptFindings.length) {
@@ -652,8 +640,9 @@ function boundary() {
   console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
   console.log('  "green wasn\'t clearance" shipped as infrastructure:');
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
-  console.log('    differs below that row, but P4 refuses any absolute-width override of the requested');
-  console.log('    percentage. The sweep includes the 320x640 narrow edge.');
+  console.log('    differs below that row. P4 holds bar percentages; the sweep includes the 320x640 narrow edge.');
+  console.log('    Shared-shell 82% available-width authority and applied geometry belong to');
+  console.log('    `node tools/hud-potion-followup.mjs --browser`, not a duplicate host cap here.');
   console.log('  · P1 holds top-HUD HP/MP/SP equality. Combat poise is dynamic on the player character card;');
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
@@ -901,13 +890,12 @@ async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const plants = [
     {
-      // The cap is data, but the acceptance number is independent. Moving the
-      // sole app authority must turn P8 red rather than moving its goalpost.
-      name: 'the configurable shared HUD cap moves from 40 to 60 percent',
-      file: 'src/content/balance.js',
-      find: 'main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },',
-      replace: 'main: { scaleByMax: true, maxViewportPct: 60, availableWidthPct: 82 },',
-      expectRed: /FINDING P8\/top-row .*configured cap="60vw"/,
+      // Width authority lives in hud-potion-followup. This browser plant keeps
+      // hudparity's own centred-receipt geometry independently discriminating.
+      name: 'the shared Cinders receipt shifts off the viewport centre',
+      file: 'styles/combat.css',
+      append: '\n.topbar.combat-hud.shared-hud .hud-center { transform: translateX(40px); }\n',
+      expectRed: /FINDING P8\/top-row .*cinders-centre=/,
     },
     {
       name: 'the shared HUD drops Cinders',
