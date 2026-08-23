@@ -3201,10 +3201,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    shape asymmetry is the armament itself (14.9-16.0% on the armed class
    sprites) — and that is precisely the thing that must move.
 
-   EXACTLY ONE MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
+   ONE GLOBAL MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
    and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
    mirroring both selectors would cancel to identity on the combat board — the
-   screen that started this. The second rule is what keeps the count at one.
+   screen that started this. The second rule keeps the figure orientation at
+   one; an individual weapon layer may add its own socket correction when a
+   player swaps a type-default armament across hands.
 
    REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
    and body art is re-rendered from corrected producers. Leaving both in place

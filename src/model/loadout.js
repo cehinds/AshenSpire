@@ -939,7 +939,8 @@ export function equippedPieces(registries, loadout, classId) {
 }
 
 /**
- * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
+ * figureSpec(registries, loadout, classId) →
+ *   { armourId, rightId, leftId, rightMirror, leftMirror }
  *
  * What the sprite layers should be, derived rather than stored. Slots declare
  * their own `kinds`, so this finds the armour slot by what it accepts instead
@@ -952,10 +953,19 @@ export function equippedPieces(registries, loadout, classId) {
  * winning: two weapons equipped, one weapon on the figure, no error anywhere
  * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
  * that field gates equipping (fitsSlot), which is a different question.
+ *
+ * The current full-frame art is authored at the sword socket for every
+ * non-shield and at the off-hand socket for shields. The figure itself is
+ * mirrored for the viewer, so a slot swap needs a per-layer mirror flag too:
+ * `rightMirror` / `leftMirror` move the art onto the socket the slot names.
+ * Those flags disappear when the producer is re-rendered from slot-neutral art.
  */
 export function figureSpec(registries, loadout, classId) {
   const slots = (registries.equipment || {}).slots || [];
-  const spec = { armourId: 'default', rightId: null, leftId: null };
+  const spec = {
+    armourId: 'default', rightId: null, leftId: null,
+    rightMirror: false, leftMirror: false,
+  };
   if (!loadout) return spec;
   for (const slot of slots) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
@@ -965,8 +975,13 @@ export function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
-    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
+    if (hand === 'right') {
+      spec.rightId = piece.artKey || piece.id;
+      spec.rightMirror = piece.kind === 'shield';
+    } else if (hand === 'left') {
+      spec.leftId = piece.artKey || piece.id;
+      spec.leftMirror = piece.kind !== 'shield';
+    }
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }
