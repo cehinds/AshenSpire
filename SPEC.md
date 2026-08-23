@@ -811,6 +811,19 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
+- **.NET-inspired Component Model contract.** UI architecture follows a small MVVM-shaped split:
+  `src/model/` owns domain rules; `src/ui/models/` owns immutable presentation contracts analogous
+  to C# records; `src/ui/viewModels/` projects domain snapshots into screen/card compositions;
+  `src/ui/components/` renders those models; `src/ui/behaviors/` binds named commands and lifecycle;
+  and `src/ui/screens/` is a thin host. Every reusable UI component receives an immutable Component
+  Model that names its semantic component id and variant, owns only serializable presentation
+  properties, declares named behaviors, and recursively composes child Component Models. Screen
+  ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
+  declared commands to callbacks. Shared primitives such as panels, metadata fields, meters, trays,
+  slots, action controls, and hotkey badges are composed rather than redefined. Component Models
+  never own mutable simulation state or import engine rules: ViewModels project current domain state
+  into model properties. A migrated surface has one ViewModel composition and one renderer, never a
+  model path beside a hand-written fallback.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
   `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
