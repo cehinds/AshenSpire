@@ -11,6 +11,7 @@
 //   node tools/contrast-audit.mjs --selftest      → plant a real palette token
 //                                                   below AA, require the gate to
 //                                                   name it, revert, re-prove clean
+//   node tools/contrast-audit.mjs --source-selftest → selector plants; no browser
 //   node tools/contrast-audit.mjs --gated-only    → render only the profiles the
 //                                                   gate judges (used by --selftest)
 //   node tools/contrast-audit.mjs --artifact FILE → measure a built standalone
@@ -109,9 +110,10 @@ const TARGETS = [
   // high contrast brightens. Same difference trick, on border-color.
   { screen: '', sel: '.slot-new', label: '  ↳ its gold ring', prop: 'border-color', box: true },
   { screen: '', sel: '#settings', label: '  ↳ its ring', prop: 'border-color', box: true },
-  { screen: 'map', sel: '.map-header .mh-prog', label: 'Act/Floor' },
+  { screen: 'map', sel: '.map-header .hud-act', label: 'Act' },
+  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },
   { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },
-  { screen: 'map', sel: '.map-header #map-legend', label: 'topbar ? button' },
+  { screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' },
   { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
   // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
   // to plan a run. Non-text (WCAG 1.4.11 → 3.0 floor), SVG, so the ink property
@@ -585,6 +587,52 @@ const args = process.argv.slice(2);
 const arg = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
 const onlyProfile = arg('--profile', null);
 
+// Selector ownership moves with the rendered component. This browser-free
+// discriminator prevents a removed wrapper from turning the pixel gate BLIND.
+const selectorContract = (source) => {
+  const bad = [];
+  const targetBlock = /const TARGETS = \[[\s\S]*?\n\];/.exec(source)?.[0] || '';
+  const wanted = [
+    ["{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", 'S1 current Act metadata selector missing'],
+    ["{ screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' }", 'S2 current Floor metadata selector missing'],
+    ["{ screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' }", 'S3 current Seed metadata selector missing'],
+    ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
+  ];
+  for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
+  if (targetBlock.includes("sel: '.map-header .mh-prog'")) bad.push('S5 removed combined progress selector returned');
+  if (targetBlock.includes("sel: '.map-header #map-legend'")) bad.push('S6 removed map-header legend selector returned');
+  return bad;
+};
+
+if (args.includes('--source-selftest')) {
+  const clean = readFileSync(fileURLToPath(import.meta.url), 'utf8');
+  const plants = [
+    {
+      name: 'Act metadata points back at removed combined progress', expected: 'S1 ',
+      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
+    },
+    {
+      name: 'Floor metadata target disappears', expected: 'S2 ',
+      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' }", ''),
+    },
+    {
+      name: 'legend points back at removed map-header parent', expected: 'S4 ',
+      source: clean.replace("{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: 'map', sel: '.map-header #map-legend', label: 'map ? button' }"),
+    },
+  ];
+  let failures = 0;
+  const cleanBad = selectorContract(clean);
+  if (cleanBad.length) { failures++; console.log(`FAIL clean — ${cleanBad.join('; ')}`); }
+  else console.log('PASS clean — all current map contrast targets are owned');
+  for (const plant of plants) {
+    const got = selectorContract(plant.source);
+    if (got.some((line) => line.startsWith(plant.expected))) console.log(`RED  ${plant.name} — ${got.join('; ')}`);
+    else { failures++; console.log(`MISS ${plant.name} — ${got.join('; ') || 'no finding'}`); }
+  }
+  console.log(failures ? `contrast-audit --source-selftest: ${failures} failure(s)` : `contrast-audit --source-selftest: OK — ${plants.length}/${plants.length} plants discriminated`);
+  process.exit(failures ? 1 : 0);
+}
+
 // ---- --selftest ---------------------------------------------------------------
 // THE KNOWN-BAD IS A REAL PALETTE EDIT, AND IT ENTERS WHERE A PALETTE ENTERS.
 //
@@ -599,8 +647,8 @@ const onlyProfile = arg('--profile', null);
 // `--muted` under `body.hi-contrast` is the token chosen because highContrast
 // DEFAULTS TRUE: it is what a first-boot player receives, so dimming it is a
 // change to the shipped default palette and lands in the `default` profile the
-// gate judges. Three targets ride it (Act/Floor, SEED, keyboard hint) and all
-// three sit comfortably above the floor at 6.33/6.33/6.79 on a healthy tree —
+// gate judges. Four targets ride it (Act, Floor, SEED, keyboard hint) and all
+// four sit comfortably above the floor on a healthy tree —
 // so a red here cannot be the tree's standing state leaking in.
 //
 // The child is spawned rather than re-entered in-process: this file measures on
@@ -618,7 +666,8 @@ if (args.includes('--selftest')) {
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
       expectRows: [
-        { label: 'Act/Floor', profile: 'default' },
+        { label: 'Act', profile: 'default' },
+        { label: 'Floor', profile: 'default' },
         { label: 'SEED', profile: 'default' },
         { label: 'keyboard hint', profile: 'default' },
       ],

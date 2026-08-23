@@ -231,7 +231,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'mh-flask';
+    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
+    // unified-cursor exception in input.js. Keep utility flasks reachable by
+    // keyboard/gamepad Confirm as well as pointer click.
+    el.className = 'mh-flask flask-slot';
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {

@@ -65,6 +65,7 @@
 //
 //   node tools/flaskbox.mjs
 //   node tools/flaskbox.mjs --selftest      (same-door known-bads, doorplant.mjs)
+//   node tools/flaskbox.mjs --source-selftest (focus/surface contracts; no browser)
 
 // A NOTE ON THIS ORDINARY-LOOKING IMPORT, because it was not ordinary for two
 // hours and the record should say who fixed it. At dev = b83bda1 `browser.mjs`
@@ -87,10 +88,72 @@
 // too, and it is still the open finding.
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 import { launchBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
+const sourceContract = ({ map, input, css, tool }) => {
+  const bad = [];
+  const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
+  if (!map.includes("el.className = 'mh-flask flask-slot';")) {
+    bad.push('F1 map utility flask is not a unified-cursor flask-slot');
+  }
+  if (!input.includes("el.matches('.flask-slot')")) {
+    bad.push('F2 input focus no longer exempts flask-slot controls from topbar chrome');
+  }
+  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(el, {')) {
+    bad.push('F3 map utility flask lost its inspect/drop action menu');
+  }
+  if (!css.includes('.topbar .relic.flask-slot,\n.topbar .mh-flask {')) {
+    bad.push('F4 map utility flask no longer shares the topbar control box');
+  }
+  if (!surfaceBlock.includes("{ name: 'map topbar', sel: '.topbar .mh-flask', door: 'map-after-shop' }")) {
+    bad.push('F5 flaskbox no longer measures the current map topbar surface');
+  }
+  return bad;
+};
+
+if (process.argv.includes('--source-selftest')) {
+  const clean = {
+    map: readFileSync(join(ROOT, 'src/ui/screens/map.js'), 'utf8'),
+    input: readFileSync(join(ROOT, 'src/ui/input.js'), 'utf8'),
+    css: readFileSync(join(ROOT, 'styles/ui.css'), 'utf8'),
+    tool: readFileSync(fileURLToPath(import.meta.url), 'utf8'),
+  };
+  const plants = [
+    {
+      name: 'map utility flask loses its topbar focus exception',
+      expected: 'F1 ',
+      mutate: (s) => ({ ...s, map: s.map.replace("el.className = 'mh-flask flask-slot';", "el.className = 'mh-flask';") }),
+    },
+    {
+      name: 'map utility flask loses inspect/drop',
+      expected: 'F3 ',
+      mutate: (s) => ({ ...s, map: s.map.replace('canDrop: true', 'canDrop: false') }),
+    },
+    {
+      name: 'flaskbox points back at the removed map sub-strip',
+      expected: 'F5 ',
+      mutate: (s) => ({ ...s, tool: s.tool.replace(
+        "  { name: 'combat topbar', sel: '.combat .flask-slot', door: 'combat' },\n  { name: 'map topbar', sel: '.topbar .mh-flask', door: 'map-after-shop' },",
+        "  { name: 'combat topbar', sel: '.combat .flask-slot', door: 'combat' },\n  { name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },"
+      ) }),
+    },
+  ];
+  let failures = 0;
+  const cleanBad = sourceContract(clean);
+  if (cleanBad.length) { failures++; console.log(`FAIL clean — ${cleanBad.join('; ')}`); }
+  else console.log('PASS clean — map flask remains focusable, actionable, boxed, and measured');
+  for (const plant of plants) {
+    const got = sourceContract(plant.mutate(clean));
+    if (got.some((line) => line.startsWith(plant.expected))) console.log(`RED  ${plant.name} — ${got.join('; ')}`);
+    else { failures++; console.log(`MISS ${plant.name} — ${got.join('; ') || 'no finding'}`); }
+  }
+  console.log(failures ? `flaskbox --source-selftest: ${failures} failure(s)` : `flaskbox --source-selftest: OK — ${plants.length}/${plants.length} plants discriminated`);
+  process.exit(failures ? 1 : 0);
+}
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -127,7 +190,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the map flask leaves the shared box and takes base.css button padding back',
         edits: [{
           file: 'styles/ui.css',
-          find: '.topbar .relic.flask-slot,\n.map-substrip .mh-flask {',
+          find: '.topbar .relic.flask-slot,\n.topbar .mh-flask {',
           replace: '.topbar .relic.flask-slot {',
         }],
         expectRed: /BAD\s+B3 .*different heights/,
@@ -179,8 +242,8 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/screens/map.js',
-          find: "    el.className = 'mh-flask';",
-          replace: "    el.className = 'mh-flask-planted-away';",
+          find: "    el.className = 'mh-flask flask-slot';",
+          replace: "    el.className = 'mh-flask-planted-away flask-slot';",
         }],
         expectRed: /BAD\s+B3 .*of 3 declared surfaces were reached/,
       },
@@ -198,7 +261,7 @@ const SHAPES = [
 // co-op, so co-op is listed by the selector its own screen writes.
 const SURFACES = [
   { name: 'combat topbar', sel: '.combat .flask-slot', door: 'combat' },
-  { name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },
+  { name: 'map topbar', sel: '.topbar .mh-flask', door: 'map-after-shop' },
   { name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
 ];
 
