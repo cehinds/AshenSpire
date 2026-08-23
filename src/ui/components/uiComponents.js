@@ -1,6 +1,6 @@
 // View helpers for the stable ids owned by Presentation Models.
-import { UI_COMPONENTS, isUiComponentId } from '../models/UiComponentId.js';
-export { UI_COMPONENTS } from '../models/UiComponentId.js';
+import { UI_COMPONENTS as COMPONENT_IDS, isUiComponentId } from '../models/UiComponentId.js';
+export const UI_COMPONENTS = COMPONENT_IDS;
 
 export function uiComponentAttrs(component, variant = '') {
   if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
