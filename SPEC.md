@@ -861,9 +861,12 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
   narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
   The Vitals and Quick Access component-panel background opacity is data-owned and defaults to
-  0%, while their borders, contents, and accessible hit areas remain visible. Refillable HP/Mana
+  0%. The Vitals shell and its resource-card frames have no visible border or background at the
+  default; the resource troughs and labels remain visible and their invisible reference frames do
+  not visually size the panel. Refillable HP/Mana
   flasks are controls, not utility potions. The map's `− ⊙ + ?` controls remain the board's
-  separate lower control group.
+  separate lower control group. Utility potion tiles are packed from the Quick Access right edge
+  toward the left, so the tray's visible right edge is flush with that panel.
 - **Responsive combat composition.** `battlefield-stage` vertically centres player and enemy
   combatant frames at every supported shape rather than bottom-aligning them. Narrow layouts keep
   larger, accessible player cards in the horizontal `player-hand-tray` without colliding with the
