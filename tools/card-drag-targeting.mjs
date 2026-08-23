@@ -153,6 +153,11 @@ function printBoundary() {
   console.log('        wrote a FATAL with its own success line and verdict.mjs read that as a green.');
   console.log('        NOT PLANTED IN THIS CORPUS, run by hand both ways instead: the init deaths die');
   console.log('        before any source file is read, and the async one needs serve.mjs mutated.');
+  console.log('  THE CDP TRANSPORT HAS ITS OWN BOUND: every command rejects after 15 seconds, and a');
+  console.log('        close or post-open socket error poisons the connection and rejects every pending');
+  console.log('        command. `--cdp-selftest` is browser-free: a mock socket closes, errors and stays');
+  console.log('        silent while the real pending-map/listener/timer code must reject within an outer');
+  console.log('        deadline. It proves control flow, not a real Chromium connection or network.');
   console.log('  ONE PLANT IN THIS CORPUS WAS INTERMITTENT AND IS NOT ANY MORE, and the number is');
   console.log('        here because the first explanation for it was wrong. "the read is abandoned only');
   console.log('        when open" reported UNCAUGHT twice; at 725ca10a I blamed a loaded box, re-ran it');
@@ -320,8 +325,16 @@ process.on('uncaughtException', (e) => {
   finish(2, why);
 });
 
+const cdpSelftestOnly = process.argv.includes('--cdp-selftest');
+if (cdpSelftestOnly) {
+  const code = await cdpTransportSelftest();
+  printBoundary();
+  raiseExitCode(code);
+}
+
 if (process.argv.includes('--selftest')) {
   selfcheckExitCodeFloor();
+  const cdpSelftestCode = await cdpTransportSelftest();
   const { doorSelftest } = await import('./doorplant.mjs');
   // EVERY exit path, this one included: `printBoundary` is a hoisted function
   // declaration precisely so this branch — which returns above main() — can
@@ -500,7 +513,7 @@ if (process.argv.includes('--selftest')) {
   // here was ALSO doing control flow — it is what kept the module from falling
   // through into main() — so the fall-through is now guarded explicitly at the
   // call site instead of by a side effect of exiting.
-  raiseExitCode(selftestCode);
+  raiseExitCode(Math.max(cdpSelftestCode, selftestCode));
 }
 
 const BROWSERS = [
@@ -530,25 +543,177 @@ const TEXT_SIZES = ['S', 'M', 'L', 'XL'];
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-function connectCdp(wsUrl) {
+function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
+  let poisoned = null;
+  let readyDone = false;
+  let readyResolve;
+  let readyReject;
+
+  const ready = new Promise((res, rej) => { readyResolve = res; readyReject = rej; });
+  const poison = (error) => {
+    poisoned = poisoned || error;
+    if (!readyDone) {
+      readyDone = true;
+      readyReject(poisoned);
+    }
+    for (const { rej, timer } of pending.values()) {
+      clearTimeout(timer);
+      rej(poisoned);
+    }
+    pending.clear();
+  };
+
+  ws.addEventListener('open', () => {
+    if (readyDone) return;
+    readyDone = true;
+    readyResolve();
+  });
+  ws.addEventListener('close', () => poison(new Error('CDP WebSocket closed before pending commands completed')));
+  ws.addEventListener('error', () => poison(new Error('CDP WebSocket error before pending commands completed')));
   ws.addEventListener('message', (ev) => {
-    const msg = JSON.parse(ev.data);
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch {
+      poison(new Error('CDP WebSocket returned a non-JSON message'));
+      return;
+    }
     if (!msg.id || !pending.has(msg.id)) return;
-    const { res, rej } = pending.get(msg.id); pending.delete(msg.id);
+    const { res, rej, timer } = pending.get(msg.id); pending.delete(msg.id); clearTimeout(timer);
     if (msg.error) rej(new Error(msg.error.message)); else res(msg.result);
   });
   return {
-    ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
+    ready,
     send(method, params = {}, sessionId) {
+      if (poisoned) return Promise.reject(poisoned);
+      if (ws.readyState !== WebSocket.OPEN) {
+        return Promise.reject(new Error(`CDP WebSocket is not open for ${method} (state ${ws.readyState})`));
+      }
       const id = nextId++;
       return new Promise((res, rej) => {
-        pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          rej(new Error(`CDP command ${method} exceeded ${sendTimeoutMs} ms`));
+        }, sendTimeoutMs);
+        pending.set(id, { res, rej, timer });
+        try {
+          ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        } catch (error) {
+          clearTimeout(timer);
+          pending.delete(id);
+          rej(error);
+        }
       });
     },
-    close: () => ws.close(),
+    close: () => { try { ws.close(); } catch { /* already poisoned or closed */ } },
   };
+}
+
+// Browser-free transport regression. The old connectCdp left both promises
+// below pending forever: a socket close/error rejected nothing, and a healthy
+// socket that never answered had no command deadline. The mock is only the
+// transport boundary; connectCdp itself runs whole, including its real pending
+// map, message parser, close/error listeners and timers. Each await has an
+// independent outer bound, so reverting the inner rejection cannot hang the
+// selftest that exists to detect it.
+async function cdpTransportSelftest() {
+  const NativeWebSocket = globalThis.WebSocket;
+  let failures = 0;
+  let assertions = 0;
+  const check = (value, label, detail = '') => {
+    assertions++;
+    console.log(`  ${value ? 'PASS' : 'FAIL'} CDP ${label}${detail ? ` — ${detail}` : ''}`);
+    if (!value) failures++;
+  };
+  const settleWithin = async (promise, ms = 200) => {
+    let timer;
+    const outer = new Promise((resolveOuter) => { timer = setTimeout(() => resolveOuter({ kind: 'outer-timeout' }), ms); });
+    try {
+      return await Promise.race([
+        promise.then((value) => ({ kind: 'resolved', value }), (error) => ({ kind: 'rejected', error })),
+        outer,
+      ]);
+    } finally { clearTimeout(timer); }
+  };
+
+  class FakeWebSocket {
+    static OPEN = 1;
+    static instances = [];
+    constructor() {
+      this.readyState = 0;
+      this.listeners = new Map();
+      this.sent = [];
+      FakeWebSocket.instances.push(this);
+    }
+    addEventListener(type, listener) {
+      const list = this.listeners.get(type) || [];
+      list.push(listener);
+      this.listeners.set(type, list);
+    }
+    emit(type, event = {}) { for (const listener of this.listeners.get(type) || []) listener(event); }
+    open() { this.readyState = FakeWebSocket.OPEN; this.emit('open'); }
+    send(payload) { this.sent.push(payload); }
+    close() { this.readyState = 3; this.emit('close'); }
+  }
+
+  console.log('CDP transport selftest — browser-free close/error poisoning and no-reply deadline');
+  try {
+    globalThis.WebSocket = FakeWebSocket;
+
+    const closed = connectCdp('ws://close', { sendTimeoutMs: 500 });
+    const closeSocket = FakeWebSocket.instances.at(-1);
+    closeSocket.open();
+    await closed.ready;
+    const closePending = closed.send('Runtime.evaluate');
+    closeSocket.close();
+    const closeResult = await settleWithin(closePending);
+    check(closeResult.kind === 'rejected' && /closed before pending commands/.test(closeResult.error?.message || ''),
+      'close rejects every pending command', closeResult.kind);
+    const sentBeforePoison = closeSocket.sent.length;
+    const afterClose = await settleWithin(closed.send('Page.enable'));
+    check(afterClose.kind === 'rejected' && /closed before pending commands/.test(afterClose.error?.message || '')
+      && closeSocket.sent.length === sentBeforePoison,
+    'closed socket stays poisoned and future sends reject without writing', afterClose.kind);
+
+    const errored = connectCdp('ws://error', { sendTimeoutMs: 500 });
+    const errorSocket = FakeWebSocket.instances.at(-1);
+    errorSocket.open();
+    await errored.ready;
+    const errorPending = errored.send('Target.createTarget');
+    errorSocket.emit('error');
+    const errorResult = await settleWithin(errorPending);
+    check(errorResult.kind === 'rejected' && /error before pending commands/.test(errorResult.error?.message || ''),
+      'post-open socket error rejects every pending command', errorResult.kind);
+
+    const silent = connectCdp('ws://silent', { sendTimeoutMs: 40 });
+    const silentSocket = FakeWebSocket.instances.at(-1);
+    silentSocket.open();
+    await silent.ready;
+    const started = Date.now();
+    const silentResult = await settleWithin(silent.send('Page.captureScreenshot'), 250);
+    const elapsed = Date.now() - started;
+    check(silentResult.kind === 'rejected' && /Page\.captureScreenshot exceeded 40 ms/.test(silentResult.error?.message || '')
+      && elapsed >= 30 && elapsed < 250,
+    'a no-reply command rejects at its own bound', `${silentResult.kind} after ${elapsed} ms`);
+
+    const replied = connectCdp('ws://reply', { sendTimeoutMs: 100 });
+    const replySocket = FakeWebSocket.instances.at(-1);
+    replySocket.open();
+    await replied.ready;
+    const replyPending = replied.send('Page.enable');
+    const replyId = JSON.parse(replySocket.sent.at(-1)).id;
+    replySocket.emit('message', { data: JSON.stringify({ id: replyId, result: { enabled: true } }) });
+    const replyResult = await settleWithin(replyPending);
+    check(replyResult.kind === 'resolved' && replyResult.value?.enabled === true,
+      'a real reply still resolves and clears its deadline', replyResult.kind);
+    replied.close();
+  } catch (error) {
+    failures++;
+    console.error(`  FAIL CDP selftest harness — ${error && error.stack ? error.stack : error}`);
+  } finally {
+    globalThis.WebSocket = NativeWebSocket;
+  }
+  console.log(`CDP transport selftest: ${failures ? 'RED' : 'GREEN'} — ${assertions - failures}/${assertions} checks passed`);
+  return failures ? 1 : 0;
 }
 
 async function main() {
@@ -1142,6 +1307,6 @@ async function main() {
 // print ("PASS — card drag targeting and approved hand paging hold at every
 // measured shape") matched no row and was refused, exit 3. It is one of the ~40
 // D103 named and left to "whoever wraps next"; this is that wrap.
-if (!process.argv.includes('--selftest')) {
+if (!process.argv.includes('--selftest') && !cdpSelftestOnly) {
   main().then(() => finish(fails ? 1 : 0)).catch((e) => finish(2, e.message));
 }
