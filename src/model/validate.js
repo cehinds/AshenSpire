@@ -409,7 +409,15 @@ export function validateContent(bundle) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
   }
 
-  for (const problem of characterCreationProblems(b)) {
+  const dependencySafeBundle = {
+    ...b,
+    equipment: {
+      ...(equipment && typeof equipment === 'object' && !Array.isArray(equipment) ? equipment : {}),
+      armaments: Array.isArray(equipment && equipment.armaments) ? equipment.armaments : [],
+      armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
+    },
+  };
+  for (const problem of characterCreationProblems(dependencySafeBundle)) {
     const split = problem.indexOf(':');
     err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
   }
@@ -766,7 +774,7 @@ export function validateContent(bundle) {
   // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
   // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
-  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
+  for (const e of flaskGrowthRefusals(dependencySafeBundle)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {

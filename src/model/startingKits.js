@@ -1,6 +1,6 @@
 // Starting-kit discovery: one data table, one eligibility gate, one profile receipt.
 
-import { classCreationConfig, resolveCreationHands } from './characterCreation.js';
+import { classCreationConfig } from './characterCreation.js';
 
 export const PROGRESSION_MODES = Object.freeze(['normal', 'custom', 'debug', 'showcase']);
 export const UNDISCOVERED_PRESENTATIONS = Object.freeze(['hidden', 'silhouette']);
@@ -144,20 +144,29 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
       || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
       throw new Error('run creationArmourGrant is malformed');
     }
-    resolveStartingArmour(registries, run.class, armourGrant.id, meta);
+    if (!armourRows(registries, run.class).some((piece) => piece && piece.id === armourGrant.id)) {
+      throw new Error(`run creationArmourGrant names unknown armour '${armourGrant.id}'`);
+    }
   }
-  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   if (run.startingKitSnapshot.customized === true) {
-    if (run.startingKitSnapshot.id !== row.id || run.startingKitSnapshot.classId !== row.classId) {
+    if (run.startingKitSnapshot.id !== run.startingKitId || run.startingKitSnapshot.classId !== run.class) {
       throw new Error(`startingKitId '${run.startingKitId}' disagrees with customized startingKitSnapshot identity`);
     }
-    const hands = resolveCreationHands(registries, run.class, run.startingKitSnapshot, row);
-    if (hands.leftHand !== (run.startingKitSnapshot.leftHand || null)
-      || hands.rightHand !== (run.startingKitSnapshot.rightHand || null)) {
-      throw new Error(`startingKitId '${run.startingKitId}' has a malformed customized startingKitSnapshot`);
+    const hands = ['leftHand', 'rightHand'].map((slotId) => [slotId, run.startingKitSnapshot[slotId] || null]);
+    if (hands[0][1] && hands[0][1] === hands[1][1]) {
+      throw new Error(`startingKitId '${run.startingKitId}' duplicates armament '${hands[0][1]}' across both hands`);
+    }
+    for (const [slotId, pieceId] of hands) {
+      if (!pieceId) continue;
+      const piece = armament(registries, pieceId);
+      if (!piece) throw new Error(`startingKitId '${run.startingKitId}' names unknown armament '${pieceId}'`);
+      if (!fitsKitSlot(slot(registries, slotId), piece)) {
+        throw new Error(`startingKitId '${run.startingKitId}' armament '${pieceId}' does not fit ${slotId}`);
+      }
     }
     return run;
   }
+  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   const expected = startingKitSnapshot(row);
   if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
     throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);

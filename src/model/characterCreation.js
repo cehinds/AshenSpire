@@ -17,16 +17,20 @@ export function characterCreationProblems(source) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
     return problems;
   }
-  const classes = source && source.classes && typeof source.classes.ids === 'function'
+  const rawClasses = source && source.classes;
+  const classes = rawClasses && typeof rawClasses.ids === 'function'
     ? source.classes.ids().map((id) => source.classes.get(id))
-    : (source && source.classes) || [];
+    : (Array.isArray(rawClasses) ? rawClasses : []);
   const equipment = (source && source.equipment) || {};
-  const relics = source && source.relics && typeof source.relics.ids === 'function'
+  const rawRelics = source && source.relics;
+  const relics = rawRelics && typeof rawRelics.ids === 'function'
     ? source.relics.ids()
-    : ((source && source.relics) || []).filter((row) => row && typeof row === 'object').map((row) => row.id);
+    : (Array.isArray(rawRelics) ? rawRelics : []).filter((row) => row && typeof row === 'object').map((row) => row.id);
   const classIds = new Set(classes.filter((row) => row && typeof row === 'object').map((row) => row.id));
   const relicIds = new Set(relics);
-  const armamentIds = new Set((equipment.armaments || [])
+  const armaments = Array.isArray(equipment.armaments) ? equipment.armaments : [];
+  const armour = Array.isArray(equipment.armour) ? equipment.armour : [];
+  const armamentIds = new Set(armaments
     .filter((row) => row && typeof row === 'object')
     .map((row) => row.id));
   for (const [classId, row] of Object.entries(cfg.classes)) {
@@ -49,7 +53,7 @@ export function characterCreationProblems(source) {
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
     const configuredRelicIds = Array.isArray(row.relicIds) ? row.relicIds : [];
     for (const id of armourIds) {
-      if (!(equipment.armour || []).some((piece) => piece && piece.classId === classId && piece.id === id)) {
+      if (!armour.some((piece) => piece && piece.classId === classId && piece.id === id)) {
         problems.push(`${path}.armourIds: unknown armour '${id}' for '${classId}'`);
       }
     }

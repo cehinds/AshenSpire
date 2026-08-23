@@ -17370,7 +17370,15 @@ function validateContent(bundle) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
   }
 
-  for (const problem of characterCreationProblems(b)) {
+  const dependencySafeBundle = {
+    ...b,
+    equipment: {
+      ...(equipment && typeof equipment === 'object' && !Array.isArray(equipment) ? equipment : {}),
+      armaments: Array.isArray(equipment && equipment.armaments) ? equipment.armaments : [],
+      armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
+    },
+  };
+  for (const problem of characterCreationProblems(dependencySafeBundle)) {
     const split = problem.indexOf(':');
     err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
   }
@@ -17727,7 +17735,7 @@ function validateContent(bundle) {
   // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
   // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
-  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
+  for (const e of flaskGrowthRefusals(dependencySafeBundle)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {
@@ -23545,7 +23553,7 @@ Object.assign(module.exports, { DERIVED_STAT_IDS, DERIVED_STAT_ROUNDING, DERIVED
 "src/model/startingKits.js": function (module, exports, require) {
 // Starting-kit discovery: one data table, one eligibility gate, one profile receipt.
 
-const { classCreationConfig, resolveCreationHands } = require("src/model/characterCreation.js");
+const { classCreationConfig } = require("src/model/characterCreation.js");
 
 const PROGRESSION_MODES = Object.freeze(['normal', 'custom', 'debug', 'showcase']);
 const UNDISCOVERED_PRESENTATIONS = Object.freeze(['hidden', 'silhouette']);
@@ -23689,20 +23697,29 @@ function validateRunStartingKit(run, registries, meta = {}, { legacy = false } =
       || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
       throw new Error('run creationArmourGrant is malformed');
     }
-    resolveStartingArmour(registries, run.class, armourGrant.id, meta);
+    if (!armourRows(registries, run.class).some((piece) => piece && piece.id === armourGrant.id)) {
+      throw new Error(`run creationArmourGrant names unknown armour '${armourGrant.id}'`);
+    }
   }
-  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   if (run.startingKitSnapshot.customized === true) {
-    if (run.startingKitSnapshot.id !== row.id || run.startingKitSnapshot.classId !== row.classId) {
+    if (run.startingKitSnapshot.id !== run.startingKitId || run.startingKitSnapshot.classId !== run.class) {
       throw new Error(`startingKitId '${run.startingKitId}' disagrees with customized startingKitSnapshot identity`);
     }
-    const hands = resolveCreationHands(registries, run.class, run.startingKitSnapshot, row);
-    if (hands.leftHand !== (run.startingKitSnapshot.leftHand || null)
-      || hands.rightHand !== (run.startingKitSnapshot.rightHand || null)) {
-      throw new Error(`startingKitId '${run.startingKitId}' has a malformed customized startingKitSnapshot`);
+    const hands = ['leftHand', 'rightHand'].map((slotId) => [slotId, run.startingKitSnapshot[slotId] || null]);
+    if (hands[0][1] && hands[0][1] === hands[1][1]) {
+      throw new Error(`startingKitId '${run.startingKitId}' duplicates armament '${hands[0][1]}' across both hands`);
+    }
+    for (const [slotId, pieceId] of hands) {
+      if (!pieceId) continue;
+      const piece = armament(registries, pieceId);
+      if (!piece) throw new Error(`startingKitId '${run.startingKitId}' names unknown armament '${pieceId}'`);
+      if (!fitsKitSlot(slot(registries, slotId), piece)) {
+        throw new Error(`startingKitId '${run.startingKitId}' armament '${pieceId}' does not fit ${slotId}`);
+      }
     }
     return run;
   }
+  const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   const expected = startingKitSnapshot(row);
   if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
     throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);
@@ -23811,16 +23828,20 @@ function characterCreationProblems(source) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
     return problems;
   }
-  const classes = source && source.classes && typeof source.classes.ids === 'function'
+  const rawClasses = source && source.classes;
+  const classes = rawClasses && typeof rawClasses.ids === 'function'
     ? source.classes.ids().map((id) => source.classes.get(id))
-    : (source && source.classes) || [];
+    : (Array.isArray(rawClasses) ? rawClasses : []);
   const equipment = (source && source.equipment) || {};
-  const relics = source && source.relics && typeof source.relics.ids === 'function'
+  const rawRelics = source && source.relics;
+  const relics = rawRelics && typeof rawRelics.ids === 'function'
     ? source.relics.ids()
-    : ((source && source.relics) || []).filter((row) => row && typeof row === 'object').map((row) => row.id);
+    : (Array.isArray(rawRelics) ? rawRelics : []).filter((row) => row && typeof row === 'object').map((row) => row.id);
   const classIds = new Set(classes.filter((row) => row && typeof row === 'object').map((row) => row.id));
   const relicIds = new Set(relics);
-  const armamentIds = new Set((equipment.armaments || [])
+  const armaments = Array.isArray(equipment.armaments) ? equipment.armaments : [];
+  const armour = Array.isArray(equipment.armour) ? equipment.armour : [];
+  const armamentIds = new Set(armaments
     .filter((row) => row && typeof row === 'object')
     .map((row) => row.id));
   for (const [classId, row] of Object.entries(cfg.classes)) {
@@ -23843,7 +23864,7 @@ function characterCreationProblems(source) {
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
     const configuredRelicIds = Array.isArray(row.relicIds) ? row.relicIds : [];
     for (const id of armourIds) {
-      if (!(equipment.armour || []).some((piece) => piece && piece.classId === classId && piece.id === id)) {
+      if (!armour.some((piece) => piece && piece.classId === classId && piece.id === id)) {
         problems.push(`${path}.armourIds: unknown armour '${id}' for '${classId}'`);
       }
     }
@@ -35905,7 +35926,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '76691dcb34';
+const SOURCE = '69eb2556eb';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35939,7 +35960,7 @@ const SOURCE = '76691dcb34';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1124';
+const ORDINAL = '1125';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

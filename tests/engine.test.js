@@ -837,6 +837,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
 
+    const customized = createRunState({
+      seed: 0xc315, classId: 'reaver', registries: REG,
+      startingHands: { leftHand: 'greatsword', rightHand: 'roundShield' },
+      startingArmourId: 'vigil',
+    });
+    customized.contentVersion = 'before-roster-update';
+    const updatedBundle = {
+      ...contentBundle,
+      version: 'after-roster-update',
+      characterCreation: structuredClone(contentBundle.characterCreation),
+    };
+    updatedBundle.characterCreation.classes.reaver.handIds = updatedBundle.characterCreation.classes.reaver.handIds
+      .filter((id) => id !== 'greatsword');
+    updatedBundle.characterCreation.classes.reaver.armourIds = updatedBundle.characterCreation.classes.reaver.armourIds
+      .filter((id) => id !== 'vigil');
+    const updatedRegistries = createRegistries(updatedBundle);
+    storage.setItem(RUN_KEY, serializeRun(customized));
+    const rosterMigrated = saves.loadRun(updatedRegistries);
+    assert(rosterMigrated != null && rosterMigrated.startingKitSnapshot.leftHand === 'greatsword',
+      'a customized saved hand survives removal from the current creation roster when the equipment still exists');
+    assert(ownership(updatedRegistries, { meta: {}, loadout: rosterMigrated.loadout })
+      .has(updatedRegistries.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil')),
+    'a persisted creation armour grant survives removal from the current creation roster when the equipment still exists');
+    eq(rosterMigrated.contentVersion, updatedRegistries.contentVersion,
+      'the compatible customized save reaches the content-version re-stamp');
+
     // The old contract allowed one owned armament id in several hand sets and
     // in storage at once. The shared Inventory contract migrates that shape at
     // the real load door: keep the active occurrence, clear the rest, and never
@@ -5358,6 +5384,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const dependencyValidation = validateContent(malformedDependency);
       assert(!dependencyValidation.ok,
         `a null ${label} dependency row returns validation errors instead of throwing`);
+    }
+
+    for (const field of ['armaments', 'armour']) {
+      const malformedTable = {
+        ...contentBundle,
+        equipment: { ...contentBundle.equipment, [field]: {} },
+      };
+      const tableValidation = validateContent(malformedTable);
+      assert(!tableValidation.ok && tableValidation.errors.some((error) => error.path.includes(`equipment.${field}`)),
+        `a non-array ${field} dependency table returns its schema error instead of throwing`);
     }
 
     const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
