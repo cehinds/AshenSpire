@@ -89,7 +89,7 @@
 //     no threshold, so there is nothing to sample either side of.
 //   · P5's `PX_TOL` IS a threshold, and its unit is one CSS pixel. MEASURED,
 //     not asserted: plant 6 clamps a full-track trough and the run reports
-//     1.813 px off; a clean run reports at most 0.305 px over all 6 cells (both
+//     1.813 px off; a clean run reports at most 0.305 px over all 9 cells (both
 //     figures are printed in the runs' own `P5/ink` lines). At PX_TOL = 1 the
 //     first is RED and the second GREEN; move the threshold ONE PIXEL up to 2
 //     and the plant goes green, ONE PIXEL down to 0 and the clean run goes red.
@@ -111,15 +111,10 @@
 // (tools/doorplant.mjs) and runs this tool WHOLE from the copy.
 //
 // WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
-//   · THE TWO TRACKS ARE NOT THE SAME WIDTH, and this tool does not ask them
-//     to be. Measured at 8b5c030 + this change: the map's HP track is 1306.9 px
-//     against combat's 1097.8 at 1440x860, and 276.5 against 116.0 at 390x844,
-//     because the two headers carry different chrome (the map's bar row is a
-//     full line; combat's shares its line with two buttons). So the same
-//     character's bar is the same FRACTION on both screens and a different
-//     NUMBER OF PIXELS. Making the two tracks equal is a header-layout act on
-//     a screen with its own reachability gates (tools/mapreach.mjs), and it is
-//     NOT DONE and NOT OWNED.
+//   · THE TWO TOP ROWS SHARE THEIR GEOMETRY: resource host, Armoury, Menu. The
+//     screens still carry different secondary chrome below that row. P4 holds
+//     floor agreement at 1440x860, 390x844 and 320x640; P6 holds both controls
+//     wholly inside the viewport.
 //   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
 //     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
@@ -127,8 +122,8 @@
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
 //   · WHETHER 500/50 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
-//   · Linux headless Chromium, two shapes, one text size, no accent theme, no
-//     colourblind palette. Windows and macOS are `unknown` here as everywhere.
+//   · Headless Chromium, three shapes, one text size, no accent theme, no
+//     colourblind palette. The runtime platform is printed in the boundary.
 //   · NOT WIRED INTO ci.yml — see the PR. Between hand-runs, SOP 2's silence
 //     guard makes this `unknown`, not green.
 //
@@ -147,6 +142,15 @@ import { launchBrowser, resolveBrowser } from './browser.mjs';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
+const valuesOf = (flag) => {
+  const values = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] !== flag) continue;
+    const value = args[i + 1];
+    values.push(value && !value.startsWith('--') ? value : '');
+  }
+  return values;
+};
 
 // HIS RULING, TYPED ONCE, HERE, ON PURPOSE. See P3R in the header: everything
 // else in this file reads the reference out of the tree so it cannot drift from
@@ -167,6 +171,7 @@ const PX_TOL = 1.0;
 const ALL_SHAPES = [
   { tag: '1440x860', w: 1440, h: 860, d: 1, mobile: false },
   { tag: '390x844', w: 390, h: 844, d: 3, mobile: true },
+  { tag: '320x640', w: 320, h: 640, d: 3, mobile: true },
 ];
 // THE POSES ARE THE EDGES, AND THE MIDDLE ONE IS THE SHIPPED GAME.
 const ALL_POSES = [
@@ -183,14 +188,32 @@ const SCREENS = [
 // in a sensible time. DECLARED, never implied: both flags print in the header
 // of every run that uses them, and P0 counts against the narrowed declaration
 // rather than pretending the full one was measured.
-const onlyShape = argOf('--only-shape');
+const selectorErrors = [];
+const shapeValues = valuesOf('--only-shape');
+const poseValues = valuesOf('--only-pose');
+if (shapeValues.length > 1) selectorErrors.push(`--only-shape was supplied ${shapeValues.length} times; supply it once`);
+if (poseValues.length > 1) selectorErrors.push(`--only-pose was supplied ${poseValues.length} times; supply it once`);
+const onlyShape = shapeValues[0] || null;
 // A COMMA LIST, not a single tag: the corpus needs two poses at once (the
 // shipped one carries the floored cells, the `high` one carries the 100 %
 // troughs the PX_TOL plant bites), and a flag that can only name one would have
 // forced two corpora or a plant aimed at whatever the single pose happened to
 // reach. Still declared in the header of every run that uses it.
-const onlyPose = argOf('--only-pose');
+const onlyPose = poseValues[0] || null;
 const wantPoses = onlyPose ? onlyPose.split(',').map((x) => x.trim()).filter(Boolean) : null;
+const shapeTags = new Set(ALL_SHAPES.map((s) => s.tag));
+const poseTags = new Set(ALL_POSES.map((p) => p.tag));
+if (shapeValues.length && !onlyShape) selectorErrors.push('--only-shape requires a non-empty value');
+if (onlyShape && !shapeTags.has(onlyShape)) {
+  selectorErrors.push(`unknown --only-shape ${JSON.stringify(onlyShape)}; choose ${JSON.stringify([...shapeTags])}`);
+}
+if (poseValues.length && (!onlyPose || !wantPoses?.length)) selectorErrors.push('--only-pose requires a non-empty comma list');
+if (wantPoses) {
+  const duplicates = [...new Set(wantPoses.filter((tag, i) => wantPoses.indexOf(tag) !== i))];
+  const unknown = [...new Set(wantPoses.filter((tag) => !poseTags.has(tag)))];
+  if (duplicates.length) selectorErrors.push(`duplicate --only-pose value(s) ${JSON.stringify(duplicates)}`);
+  if (unknown.length) selectorErrors.push(`unknown --only-pose value(s) ${JSON.stringify(unknown)}; choose ${JSON.stringify([...poseTags])}`);
+}
 const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
 const POSES = wantPoses ? ALL_POSES.filter((p) => wantPoses.includes(p.tag)) : ALL_POSES;
 
@@ -236,6 +259,10 @@ const READ = `(() => {
   }
   return {
     bars,
+    topButtons: [...document.querySelectorAll('.topbar .hud-top .topbar-btn')].map((el) => {
+      const b = el.getBoundingClientRect();
+      return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
+    }),
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
     legacyHpbars: document.querySelectorAll('.topbar .hpbar').length,
@@ -244,22 +271,47 @@ const READ = `(() => {
   };
 })()`;
 
-function connectCdp(wsUrl) {
+function connectCdp(wsUrl, { sendTimeoutMs = 15000 } = {}) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
+  let closedError = null;
+  const rejectPending = (error) => {
+    closedError = closedError || error;
+    for (const { rej, timer } of pending.values()) {
+      clearTimeout(timer);
+      rej(closedError);
+    }
+    pending.clear();
+  };
   ws.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
     if (m.id && pending.has(m.id)) {
-      const { res, rej } = pending.get(m.id); pending.delete(m.id);
+      const { res, rej, timer } = pending.get(m.id); pending.delete(m.id); clearTimeout(timer);
       if (m.error) rej(new Error(m.error.message)); else res(m.result);
     }
   });
+  ws.addEventListener('close', () => rejectPending(new Error('CDP WebSocket closed before pending commands completed')));
+  ws.addEventListener('error', () => rejectPending(new Error('CDP WebSocket error before pending commands completed')));
   return {
     ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
     send(method, params = {}, sessionId) {
+      if (closedError) return Promise.reject(closedError);
+      if (ws.readyState !== WebSocket.OPEN) {
+        return Promise.reject(new Error(`CDP WebSocket is not open for ${method} (state ${ws.readyState})`));
+      }
       const id = nextId++;
       return new Promise((res, rej) => {
-        pending.set(id, { res, rej });
-        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          rej(new Error(`CDP command ${method} exceeded ${sendTimeoutMs} ms`));
+        }, sendTimeoutMs);
+        pending.set(id, { res, rej, timer });
+        try {
+          ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        } catch (error) {
+          clearTimeout(timer);
+          pending.delete(id);
+          rej(error);
+        }
       });
     },
     close: () => { try { ws.close(); } catch { /* already gone */ } },
@@ -312,6 +364,24 @@ function judgeCell(cell, mapR, comR, refTable) {
   }
   ok(`P0/population ${cell} — map ${mapR.bars.length} bar(s), combat ${comR.bars.length} bar(s)`);
 
+  if (mapR.hosts !== 1 || comR.hosts !== 1) {
+    fail(`FINDING P6/one-renderer cell=${cell} host count map=${mapR.hosts} combat=${comR.hosts} — each top bar `
+      + 'must mount exactly one resource-bar host. A second host is a second HUD even when both use the shared renderer.');
+  } else {
+    ok(`P6/one-renderer ${cell} — exactly one resource-bar host on each screen`);
+  }
+
+  for (const [screen, read] of [['map', mapR], ['combat', comR]]) {
+    const clipped = read.topButtons.filter((b) => b.left < -0.5 || b.right > read.vp.w + 0.5
+      || b.top < -0.5 || b.bottom > read.vp.h + 0.5);
+    if (read.topButtons.length !== 2 || clipped.length) {
+      fail(`FINDING P6/one-renderer cell=${cell} screen=${screen} top-row buttons=${JSON.stringify(read.topButtons)} `
+        + `viewport=${read.vp.w}x${read.vp.h} — the shared HUD row must keep Armoury and Menu present and wholly inside the viewport.`);
+    } else {
+      ok(`P6/one-renderer ${cell} ${screen} — Armoury and Menu are whole inside the viewport`);
+    }
+  }
+
   const unmarked = mapR.bars.filter((b) => !b.id || b.cur == null || b.max == null || b.role !== 'img' || !b.aria);
   if (unmarked.length) {
     fail(`FINDING P6/one-renderer cell=${cell} — ${unmarked.length} map bar(s) carry no machine-readable home `
@@ -324,20 +394,24 @@ function judgeCell(cell, mapR, comR, refTable) {
   // ---- P1 ROWS ------------------------------------------------------------
   const mapIds = mapR.bars.map((b) => b.id);
   const comIds = comR.bars.map((b) => b.id);
+  const duplicatesOf = (ids) => [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
+  const duplicateMap = duplicatesOf(mapIds);
+  const duplicateCombat = duplicatesOf(comIds);
   const missing = comIds.filter((id) => !mapIds.includes(id) && !OFF_BATTLEFIELD_ABSENT.has(id));
   const extra = mapIds.filter((id) => !comIds.includes(id));
   const excused = comIds.filter((id) => !mapIds.includes(id) && OFF_BATTLEFIELD_ABSENT.has(id));
-  if (missing.length || extra.length) {
+  if (duplicateMap.length || duplicateCombat.length || missing.length || extra.length) {
     fail(`FINDING P1/rows cell=${cell} map=${JSON.stringify(mapIds)} combat=${JSON.stringify(comIds)} `
+      + `duplicates map=${JSON.stringify(duplicateMap)} combat=${JSON.stringify(duplicateCombat)} `
       + `missing-from-map=${JSON.stringify(missing)} extra-on-map=${JSON.stringify(extra)} — the two screens no longer `
-      + 'draw the same row set. Only rows whose reader refuses off the battlefield may differ, and that set is '
+      + 'draw exactly one copy of the same rows. Only rows whose reader refuses off the battlefield may differ, and that set is '
       + `${JSON.stringify([...OFF_BATTLEFIELD_ABSENT])}.`);
   } else {
     ok(`P1/rows ${cell} — map ${JSON.stringify(mapIds)}; combat adds ${JSON.stringify(excused)} (reader refuses off the battlefield)`);
   }
 
   // ---- per shared row -----------------------------------------------------
-  for (const id of mapIds.filter((x) => comIds.includes(x))) {
+  for (const id of [...new Set(mapIds.filter((x) => comIds.includes(x)))]) {
     const m = mapR.bars.find((b) => b.id === id);
     const c = comR.bars.find((b) => b.id === id);
     const tag = `${cell} ${id}`;
@@ -476,16 +550,15 @@ function boundary() {
   console.log('');
   console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
   console.log('  "green wasn\'t clearance" shipped as infrastructure:');
-  console.log('  · THE TWO TRACKS ARE NOT THE SAME WIDTH and this tool does not ask them to be. The same');
-  console.log('    character\'s bar is the same FRACTION on both screens and a different number of PIXELS,');
-  console.log('    because the two headers carry different chrome. Equalising them is a header-layout act,');
-  console.log('    NOT DONE and NOT OWNED.');
+  console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
+  console.log('    differs below that row, but P4 refuses any shape where the shared plan reaches different');
+  console.log('    floor semantics on the two screens. The sweep includes the 320x640 narrow edge.');
   console.log('  · POISE IS ABSENT ON THE MAP BY DESIGN (no meter off the battlefield). If that ever becomes');
   console.log('    wrong, P1 excuses it and will not say so.');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
   console.log('  · WHETHER 500/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
-  console.log('  · Linux headless Chromium, one text size, default accent, no colourblind palette.');
+  console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');
   if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
   console.log('');
@@ -493,6 +566,14 @@ function boundary() {
 
 async function main() {
   if (args.includes('--selftest')) return selftest();
+
+  if (selectorErrors.length) {
+    for (const error of selectorErrors) fail(`FINDING P0/selector — ${error}. A narrowed run may not silently `
+      + 'discard requested cases or declare an empty population.');
+    boundary();
+    console.error(`hudparity: FAIL — ${bad} invalid selector finding(s); no browser work was started`);
+    process.exit(1);
+  }
 
   // THE REFERENCE COMES OUT OF THE TREE, NOT OUT OF THIS FILE. See P3.
   const { HUD_REFERENCE_MAX } = await import(pathToFileURL(join(ROOT, 'src/content/resources.js')).href);
@@ -667,7 +748,7 @@ function closeServer(s) {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// SEVEN PLANTS, and each one is aimed at THIS TOOL'S SUBJECT rather than at a
+// FOURTEEN PLANTS/CLI EDGES, and each one is aimed at THIS TOOL'S SUBJECT rather than at a
 // symptom near it. The question asked of every plant was: if the thing this
 // check guards were deleted, would this go red? The subject is "the two screens
 // draw the same character at the same proportions, at his reference".
@@ -683,6 +764,23 @@ async function selftest() {
       find: '          <div class="resbars-host"></div>',
       replace: '          <div class="bar hpbar"><div class="fill" style="width:50%"></div><div class="label">HP</div></div>',
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
+    },
+    {
+      // A SECOND COPY OF THE SHARED RENDERER. Membership-only comparison used
+      // to print this literal doubled HUD inside its own green P1 line.
+      name: 'the map mounts the shared resource HUD twice',
+      file: 'src/ui/screens/map.js',
+      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      replace: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));\n    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      expectRed: /FINDING P1\/rows .*duplicates map=/,
+    },
+    {
+      // THE SHARED TOP-ROW CONTROLS LEAVE THE VIEWPORT. The bars can still
+      // agree while the player-facing HUD is no longer usable.
+      name: 'the map top-row controls are pushed outside the viewport',
+      file: 'styles/map.css',
+      append: '.map-header .hud-top .topbar-btn { transform: translateX(1000px); }',
+      expectRed: /FINDING P6\/one-renderer .*screen=map top-row buttons=/,
     },
     {
       // 2 — THE SHARED RENDERER, THE MAP'S OWN CEILING. The map keeps
@@ -763,14 +861,25 @@ async function selftest() {
       replace: "const resHost = app.querySelector('.map-header .resbars-host-gone');",
       expectRed: /FINDING P0\/population .*rendered NO main-HUD bars|FINDING P0\/population .*mapBars=0/,
     },
+    {
+      // A SOCKET DROPS BETWEEN TWO REAL CDP COMMANDS. The next send must reject
+      // within its own bound, then the tool must print its boundary and exit
+      // nonzero instead of leaving a promise in `pending` forever.
+      name: 'the CDP socket drops between screen navigations',
+      file: 'tools/hudparity.mjs',
+      find: "          await cdp.send('Page.navigate', { url: 'about:blank' }, S);",
+      replace: "          await cdp.send('Page.navigate', { url: 'about:blank' }, S);\n          cdp.close();",
+      expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
+    },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: eight whole-tool browser runs (seven
-  // plants plus the clean re-run) is eight browser boots. The population is ONE
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: ten file-byte plants plus the clean
+  // re-run are eleven browser boots. The four argv plants below start no browser.
+  // The door population is ONE
   // shape and TWO poses — 390x844, shipped and high — and the pair is chosen,
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside
   // FLOORED MP and SP with their dash (P4) and poise present in combat and
   // absent on the map (P1), and `high` is the only cell where every trough asks
-  // for its whole track, which is what plant 6 needs to bite. Either alone
+  // for its whole track, which is what the PX_TOL plant needs to bite. Either alone
   // leaves a plant with nowhere to land. The DOOR is unnarrowed, which is the
   // axis the corpus is about.
   const code = await doorSelftest({
@@ -779,12 +888,36 @@ async function selftest() {
     plants,
     timeoutMs: 420000,
   });
+  // CLI selectors enter through argv, so these plants use that same door rather
+  // than mutating source bytes. Every bad selector must fail before a browser
+  // starts, and both the typo-only and mixed-valid-invalid shapes are held.
+  const { spawnSync } = await import('node:child_process');
+  const selectorCases = [
+    { name: 'typo-only shape selector', args: ['--only-shape', '1440x680', '--only-pose', 'shipped'] },
+    { name: 'mixed valid and invalid pose selector', args: ['--only-shape', '390x844', '--only-pose', 'shipped,typo'] },
+    { name: 'repeated shape selector flag', args: ['--only-shape', '390x844', '--only-shape', '1440x860'] },
+    { name: 'duplicate pose selector value', args: ['--only-shape', '390x844', '--only-pose', 'shipped,shipped'] },
+  ];
+  let selectorFailed = 0;
+  for (const edge of selectorCases) {
+    const run = spawnSync(process.execPath, [join(ROOT, 'tools/hudparity.mjs'), ...edge.args], {
+      cwd: ROOT, encoding: 'utf8', timeout: 10000, maxBuffer: 4 * 1024 * 1024,
+    });
+    const output = `${run.stdout || ''}\n${run.stderr || ''}`;
+    if (run.status !== 0 && /FINDING P0\/selector/.test(output) && /BOUNDARY/.test(output)) {
+      console.log(`  CAUGHT  "${edge.name}" -> argv — exit ${run.status}; selector red and boundary printed`);
+    } else {
+      selectorFailed++;
+      console.error(`  UNCAUGHT  "${edge.name}" -> argv — exit ${run.status}; expected selector red and boundary`);
+    }
+  }
   // THE COUNTED VERDICT LINE, and the count is DERIVED from the corpus rather
   // than typed — `plants observed red` is one of tools/verdict.mjs's known
   // nouns, so this line survives readVerdict and a run that catches fewer
   // plants prints no verdict at all rather than a smaller confident one.
-  if (code === 0) console.log(`hudparity --selftest: OK — ${plants.length}/${plants.length} plants observed red`);
-  process.exit(code);
+  const total = plants.length + selectorCases.length;
+  if (code === 0 && selectorFailed === 0) console.log(`hudparity --selftest: OK — ${total}/${total} plants observed red`);
+  process.exit(code || selectorFailed ? 1 : 0);
 }
 
 main().catch((e) => {
