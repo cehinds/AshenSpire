@@ -341,7 +341,12 @@ async function shutdown() {
   live.cdp = null; live.dropBrowser = null; live.server = null;
   try { cdp?.close(); } catch { /* the socket may already be gone — that is the case we are in */ }
   try { await dropBrowser?.(); } catch { /* browser.mjs prints its own removal failures by name */ }
-  try { await server?.close?.(); } catch { /* nothing left to serve */ }
+  try {
+    // `serve()` returns a record; the Node HTTP server is its `server` member.
+    // Wait for its close callback so the event loop can drain without the
+    // three-second forced-exit backstop becoming the normal shutdown path.
+    if (server?.server) await new Promise((resolveClose) => server.server.close(resolveClose));
+  } catch { /* nothing left to serve */ }
 }
 
 /**
@@ -1285,15 +1290,20 @@ async function selftest() {
   // continuously, and a reader that always drains is the one consumer this
   // defect cannot reach. See `pipedOutputPlant`.
   const flushCode = await pipedOutputPlant();
-  const total = code || flushCode;
+  const flushUnknown = flushCode === null;
+  const flushLabel = flushUnknown ? 'UNKNOWN' : (flushCode ? 'RED' : 'green');
+  const total = code || (flushUnknown ? 2 : flushCode);
   // DOORPLANT'S OWN VERDICT LINE COVERS PLANTS 1-14 AND IS PRINTED BEFORE PLANT
   // 15 RUNS. Left as it is — it is that harness's line about its own corpus —
   // and closed here instead, because a run that printed `SELFTEST GREEN` and
   // then failed plant 15 would be a tool contradicting itself in its own output,
   // which is the whole complaint this file makes about everything else.
-  if (total) {
+  if (code || (!flushUnknown && flushCode)) {
     console.error(`displayfirst: SELFTEST RED — plants 1-14 (doorplant, above) ${code ? 'RED' : 'green'}, `
-      + `plant 15 the piped consumer ${flushCode ? 'RED' : 'green'}. The line above covers 1-14 only.`);
+      + `plant 15 the piped consumer ${flushLabel}. The line above covers 1-14 only.`);
+  } else if (flushUnknown) {
+    console.error('displayfirst: SELFTEST UNKNOWN — plants 1-14 were green, but plant 15 the piped consumer '
+      + 'was not run on this platform. This is not a green verdict.');
   } else {
     console.log('displayfirst: SELFTEST GREEN — 17 file-byte plants (doorplant, above) AND plant 15, '
       + 'the piped consumer, which the line above does not cover.');
@@ -1353,7 +1363,7 @@ async function pipedOutputPlant() {
   if (process.platform === 'win32') {
     unk('plant 15 — NOT RUN on win32: the door is a POSIX shell pipeline. Declared, not skipped '
       + 'quietly; on Windows the drain behaviour of this exit path is `unknown`.');
-    return 0;
+    return null;
   }
 
   const dir = mkdtempSync(join(tmpdir(), 'flushdoor-'));
