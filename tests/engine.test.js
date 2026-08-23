@@ -5320,6 +5320,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
     assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
       'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
+
+    const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    missingBaselineHands.characterCreation.classes.reaver.handIds = ['greatsword', 'buckler'];
+    const baselineHandValidation = validateContent(missingBaselineHands);
+    assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
+      e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
+    'a hand roster that omits the baseline kit is refused by armament id before customization boots');
   });
 
   const passed = results.filter((r) => r.ok).length;

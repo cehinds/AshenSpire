@@ -162,6 +162,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('character');
   await click('#cz-statedit .se-mode', 1);
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
+  await click('.cc-stat-overlay [data-stat-done]');
+  const modalRefusal = await evaluate(`(() => {
+    const done = document.querySelector('.cc-stat-overlay [data-stat-done]');
+    const tip = document.querySelector('#tooltip');
+    return { open: !!done, disabled: done?.getAttribute('aria-disabled'), refusal: done?.dataset.refusal || '', tip: tip?.textContent || '', shown: tip?.style.display };
+  })()`);
+  assert(modalRefusal.open && modalRefusal.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.refusal)
+    && modalRefusal.shown === 'block' && /Greatsword needs strength 12.*have 11/.test(modalRefusal.tip),
+  `${width}x${height}: Assign Points Done explains the current equipment refusal`);
   await click('.cc-stat-overlay [aria-label="Decrease Dexterity"]');
   await click('.cc-stat-overlay [aria-label="Increase Strength"]');
   await click('.cc-stat-overlay [data-stat-done]');
@@ -235,11 +244,58 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await cdp.send('Target.closeTarget', { targetId });
 }
 
+async function checkCatalog(width, height, screenshotName) {
+  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+  await cdp.send('Page.enable', {}, sessionId);
+  await cdp.send('Runtime.enable', {}, sessionId);
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width, height, deviceScaleFactor: 1, mobile: width < 700,
+  }, sessionId);
+  const evaluate = async (expression) => {
+    const result = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
+    if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || result.exceptionDetails.text || 'evaluation failed');
+    return result.result.value;
+  };
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=components` }, sessionId);
+  const started = Date.now();
+  while (Date.now() - started < 15000 && !(await evaluate(`!!document.querySelector('.component-catalog')`).catch(() => false))) await wait(100);
+  const receipt = await evaluate(`(() => {
+    const root = document.querySelector('.component-catalog');
+    const items = [...root.querySelectorAll('[data-catalog-component]')];
+    return {
+      keys: items.map((item) => item.dataset.catalogComponent),
+      visible: items.every((item) => { const r=item.getBoundingClientRect(); return r.width>0 && r.height>0 && getComputedStyle(item).display!=='none'; }),
+      controls: {
+        classes: root.querySelectorAll('.cz-class').length,
+        stats: root.querySelectorAll('.cc-primary-stat').length,
+        keepsakes: root.querySelectorAll('.cz-keepsake').length,
+        armour: root.querySelectorAll('#cz-armours .equip-chip').length,
+        left: root.querySelectorAll('#cz-left-hand .equip-chip').length,
+        right: root.querySelectorAll('#cz-right-hand .equip-chip').length,
+        relics: root.querySelectorAll('.cc-relic-card').length,
+        seed: root.querySelectorAll('#seed-input').length,
+      },
+      overflow: root.scrollWidth > root.clientWidth + 1,
+    };
+  })()`);
+  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed', `${width}x${height}: component catalog shows all four live creation sections`);
+  assert(receipt.controls.classes >= 2 && receipt.controls.stats === 5 && receipt.controls.keepsakes >= 2
+    && receipt.controls.armour >= 2 && receipt.controls.left >= 2 && receipt.controls.right >= 2
+    && receipt.controls.relics >= 2 && receipt.controls.seed === 1 && !receipt.overflow,
+  `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
+  const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+  writeFileSync(join(OUT, screenshotName), Buffer.from(shot.data, 'base64'));
+  await cdp.send('Target.closeTarget', { targetId });
+}
+
 try {
   await exercise(1440, 900, 'character-creation-after-desktop.png', 'equipment', {
     schemaVersion: 2, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], unlocked: ['winAsReaver'],
   });
   await exercise(390, 844, 'character-creation-after-mobile.png', 'character');
+  await checkCatalog(1440, 900, 'character-creation-component-catalog-desktop.png');
+  await checkCatalog(390, 844, 'character-creation-component-catalog-mobile.png');
 } catch (error) {
   failures += 1;
   console.error(`FAIL browser harness: ${error.stack || error.message}`);

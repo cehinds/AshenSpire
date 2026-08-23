@@ -19,7 +19,7 @@ import {
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
 
-export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
+export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
   const state = {
     classId: firstClass.id,
@@ -41,9 +41,10 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   let updateStartRefusal = () => {};
 
   app.innerHTML = `
-    <div class="screen customize">
+    <div class="screen customize${catalog ? ' component-catalog' : ''}">
       <div class="cz-scroll">
-        <h2 class="cz-title">PREPARE YOUR FORSAKEN</h2>
+        <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
+        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every character-creation section and selector state.</p>' : ''}
         <div class="cz-flow cz-disc">
           <section id="cz-class-panel" class="cz-stage">
             <div id="cz-classes" class="class-row"></div>
@@ -257,9 +258,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
         row.append(minus, number, plus); rows.appendChild(row);
       }
       const done = overlay.querySelector('[data-stat-done]');
-      const problem = statsProblem();
-      done.setAttribute('aria-disabled', problem ? 'true' : 'false');
-      if (problem) done.dataset.refusal = problem;
+      refusesWhen(done, statsProblem, 'Apply these stats');
       done.addEventListener('click', () => {
         if (statsProblem()) return;
         previewAttributes = { ...state.attributes };
@@ -392,15 +391,38 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     } },
     { key: 'seed', label: 'SEED', node: panels.seed, value: () => $('#seed-input').value.trim() || '—' },
   ];
-  const fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
-    key: row.key, kind: 'pick', disclosure: 'face',
-    face: { label: row.label, value: row.value() },
-    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
-  refreshFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
-  fold.open('class');
+  let fold = null;
+  if (catalog) {
+    const flow = $('.cz-flow');
+    const fragment = document.createDocumentFragment();
+    for (const row of sectionRows) {
+      const article = document.createElement('article');
+      article.className = 'cc-catalog-item';
+      article.dataset.catalogComponent = row.key;
+      const headingId = `cc-catalog-${row.key}`;
+      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>LIVE COMPONENT</span></header>`;
+      row.node.setAttribute('aria-labelledby', headingId);
+      article.appendChild(row.node);
+      fragment.appendChild(article);
+    }
+    flow.replaceChildren(fragment);
+  } else {
+    fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
+      key: row.key, kind: 'pick', disclosure: 'face',
+      face: { label: row.label, value: row.value() },
+      reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
+    })));
+    refreshFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
+    fold.open('class');
+  }
 
   app.querySelectorAll('.cz-next').forEach((button) => button.addEventListener('click', () => {
+    if (catalog) {
+      const target = app.querySelector(`[data-catalog-component="${button.dataset.next}"]`);
+      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      focusElement(target?.querySelector('button, input'));
+      return;
+    }
     fold.open(button.dataset.next);
     const target = app.querySelector(`[data-face="${button.dataset.next}"]`);
     if (target) focusElement(target);

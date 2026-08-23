@@ -53,6 +53,12 @@ export function characterCreationProblems(source) {
     }
     for (const id of handIds) if (!armamentIds.has(id)) problems.push(`${path}.handIds: unknown armament '${id}'`);
     for (const id of configuredRelicIds) if (!relicIds.has(id)) problems.push(`${path}.relicIds: unknown relic '${id}'`);
+    const baselineKit = (Array.isArray(equipment.startingKits) ? equipment.startingKits : [])
+      .find((candidate) => candidate && candidate.classId === classId && candidate.baseline === true);
+    for (const slotId of ['leftHand', 'rightHand']) {
+      const id = baselineKit && baselineKit[slotId];
+      if (id && !handIds.includes(id)) problems.push(`${path}.handIds: must include baseline ${slotId} armament '${id}'`);
+    }
     const cls = classes.find((candidate) => candidate.id === classId);
     if (cls && !configuredRelicIds.includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
   }
