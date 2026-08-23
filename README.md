@@ -2,7 +2,7 @@
 
 A single-player roguelike deckbuilder for the browser. Mechanically faithful to **Slay the Spire**, thematically inspired by (but legally distinct from) **Elden Ring**. Built with vanilla ES-module JavaScript, HTML, and CSS — no framework, no build step.
 
-> **Status: feature-complete core loop.** Three classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
+> **Status: feature-complete core loop.** Four classes, three acts, three bosses, seeded and save-resumable end to end. See [DEVELOPER.md](DEVELOPER.md) to run and extend it.
 
 ## Play the current development build
 
@@ -53,8 +53,8 @@ by `node tools/about-changelog.mjs`.
 ## UI component library
 
 Use the [AshenSpire component catalog](docs/component-catalog.html) for the
-stable component IDs, model/factory names, renderers, reuse surfaces, and visual
-miniatures. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
+stable component IDs, model/factory names, renderers, reuse surfaces, and a
+distinct visual miniature for every component. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
 chat-friendly reference. Any merge or PR that changes a UI element or component
 must update the catalog when needed and include this catalog link in its summary.
 
@@ -88,6 +88,8 @@ No install, no framework, no build step for the source.
 ## What is this?
 
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
+- **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
+- **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.
@@ -104,7 +106,7 @@ Full design: **[SPEC.md](SPEC.md)** (rules, schemas, numbers) and **[docs/GDD.md
 |---|---|---|
 | **M1** | Combat vertical slice — Reaver class, 24 cards, Act 1 enemies + elite + boss, full combat UI | **shipped** |
 | **M2** | The run — map generation, rewards, relics, flasks, shops, events, save/continue, seeds | **shipped** |
-| **M3** | Content — Starseer & Herald classes, Acts 2–3, full relic/event pools, balance pass | **core content shipped**: 3 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) & win-rate tuning await playtest telemetry (M4) |
+| **M3** | Content — Rogue, Starseer & Herald classes, Acts 2–3, full relic/event pools, balance pass | **core content shipped**: 4 classes, 3 acts, 40 relics, 10 events, ~30 cards/class + colorless, first balance pass ([BALANCE.md](docs/BALANCE.md)). Deeper pools (~50) & win-rate tuning await playtest telemetry (M4) |
 | **M4** | Polish — fx, run history, keyboard shortcuts, asset pass | **shipped**: fx, customization, run-history + win-rate telemetry, keyboard shortcuts (1–9 / E / Esc), first-run tutorial, sfx hooks, DEVELOPER.md walkthroughs + perf notes, placeholder art tuned across all acts. Bundling real external art/audio is a deliberate v1 deferral (SPEC §11 non-goal) — the generated-placeholder system is the shipped visual style |
 
 Acceptance criteria per milestone are in [SPEC.md §9](SPEC.md).
