@@ -3614,6 +3614,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   grid-column: 1;
   width: min(100%, var(--hud-resource-available-vw));
   min-width: 0;
+  /* The Vitals shell is a layout host, not a visible card. Resource troughs
+     retain their own readable geometry without a large border around the
+     longest pool. */
+  border: 0;
+  padding: 0;
+}
+.topbar.combat-hud.shared-hud .hud-vitals-panel .rescard-frame {
+  /* Keep the semantic reference frame for measurement, but never paint a
+     background or outline that implies the panel scales to HP. */
+  background: transparent;
+  border: 0;
 }
 .topbar.combat-hud.shared-hud .resbars-host {
   width: 100%;
@@ -3673,7 +3684,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-potions {
-  justify-content: flex-end;
+  /* RTL flex-start packs the first tile against the right edge and grows the
+     tray toward the left as more utility potions arrive. */
+  justify-content: flex-start;
   flex-direction: row;
   overflow-x: auto;
   direction: rtl;
@@ -36383,7 +36396,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '89a156c17b';
+const SOURCE = 'b737803b20';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36417,7 +36430,7 @@ const SOURCE = '89a156c17b';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1117';
+const ORDINAL = '1121';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
