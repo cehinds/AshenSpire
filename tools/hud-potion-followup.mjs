@@ -25,11 +25,12 @@ const sourceReceipt = () => ({
 export function sourceFindings(s) {
   const bad = [];
   if (!/main:\s*\{\s*scaleByMax:\s*true,\s*maxViewportPct:\s*40,\s*availableWidthPct:\s*82\s*\}/.test(s.balance)
-      || !s.main.includes("setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)")) {
+      || !s.main.includes("setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)")
+      || !s.main.includes("setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`)")) {
     bad.push('S1 available-width authority is not authored at 82 and projected to the CSS variable');
   }
-  if (!s.css.includes('width: var(--hud-resource-available-pct);')) {
-    bad.push('S2 the left HUD stack no longer consumes the configurable available-width percentage');
+  if (!/\.hud-vitals-panel\s*\{[^}]*width:\s*min\(100%, var\(--hud-resource-available-vw\)\);/.test(s.css)) {
+    bad.push('S2 the Vitals panel no longer consumes the configurable viewport-width cap');
   }
   if (!/id:\s*'flask1'[\s\S]*?defKey:\s*'f'/.test(s.input)
       || !/id:\s*'flask2'[\s\S]*?defKey:\s*'g'/.test(s.input)
@@ -40,12 +41,13 @@ export function sourceFindings(s) {
       || !s.combat.includes('appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);')) {
     bad.push('S4 the first utility potion no longer follows Health/Mana into the H slot');
   }
-  if (!/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{\s*justify-content:\s*flex-end;\s*flex-direction:\s*row;\s*\}/.test(s.css)
+  if (!/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{[^}]*justify-content:\s*flex-end;[^}]*flex-direction:\s*row;[^}]*direction:\s*rtl;/.test(s.css)
       || !/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{\s*grid-column:\s*2;\s*\}/.test(s.css)) {
     bad.push('S5 utility potions are no longer right-anchored in the second HUD track');
   }
-  if (!/\.hud-potions,\s*\n\.topbar\.combat-hud\.shared-hud \.hud-relics\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/.test(s.css)) {
-    bad.push('S6 utility growth no longer uses the flex row that adds cards to the left');
+  if (!/\.hud-potions,\s*\n\.topbar\.combat-hud\.shared-hud \.hud-relics\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/.test(s.css)
+      || !/\.hud-potions\s*>\s*\*\s*\{[^}]*flex:\s*0 0 auto;/.test(s.css)) {
+    bad.push('S6 utility growth no longer uses one non-wrapping horizontal tray');
   }
   if (!/\.hud-control-grid :is\(\.topbar-btn, \.flask-slot\)\s*\{[^}]*width:\s*var\(--tap-floor\);\s*height:\s*var\(--tap-floor\);/.test(s.css)) {
     bad.push('S7 the wide primary grid no longer gives all four cards one tap-floor size');
@@ -76,8 +78,8 @@ export function receiptFindings(r) {
       || r.utilityGrowth.after.count !== r.utilityGrowth.before.count + 2) {
     bad.push(`B5 utility right edge/count moved ${JSON.stringify(r.utilityGrowth)}`);
   }
-  if (!(r.utilityGrowth.after.left < r.utilityGrowth.before.left - 1)) {
-    bad.push(`B6 utility growth did not move left ${JSON.stringify(r.utilityGrowth)}`);
+  if (!(r.utilityGrowth.after.scrollWidth > r.utilityGrowth.before.scrollWidth + 1)) {
+    bad.push(`B6 utility growth did not extend the right-anchored tray leftward ${JSON.stringify(r.utilityGrowth)}`);
   }
   const cardShape = r.primaryCards[0];
   if (r.viewportWidth < 1000 || r.primaryCards.length !== 4 || !cardShape
@@ -92,7 +94,10 @@ function runSourceSelftest() {
   const clean = sourceReceipt();
   const plants = [
     ['82 percent changes to 81', 'S1 ', (s) => ({ ...s, balance: s.balance.replace('availableWidthPct: 82', 'availableWidthPct: 81') })],
-    ['left stack stops consuming the percentage', 'S2 ', (s) => ({ ...s, css: s.css.replace('width: var(--hud-resource-available-pct);', 'width: 100%;') })],
+    ['Vitals stops consuming the viewport cap', 'S2 ', (s) => ({ ...s, css: s.css.replace(
+      /(\.topbar\.combat-hud\.shared-hud \.hud-vitals-panel \{[\s\S]*?)width: min\(100%, var\(--hud-resource-available-vw\)\);/,
+      '$1width: 100%;',
+    ) })],
     ['Health moves off F', 'S3 ', (s) => ({ ...s, input: s.input.replace("defKey: 'f'", "defKey: 'x'") })],
     ['first utility moves off H', 'S4 ', (s) => ({ ...s, input: s.input.replace("defKey: 'h'", "defKey: 'x'") })],
     ['utility row anchors left', 'S5 ', (s) => ({ ...s, css: s.css.replace('justify-content: flex-end;\n  flex-direction: row;', 'justify-content: flex-start;\n  flex-direction: row;') })],
@@ -127,8 +132,8 @@ function cleanBrowserReceipt() {
     chargeKeys: ['F', 'G'],
     utilityKeys: ['H'],
     utilityGrowth: {
-      before: { left: 1050, right: 1094, count: 1 },
-      after: { left: 954, right: 1094, count: 3 },
+      before: { left: 1050, right: 1094, count: 1, scrollWidth: 44 },
+      after: { left: 1050, right: 1094, count: 3, scrollWidth: 132 },
     },
     primaryCards: Array.from({ length: 4 }, () => ({ width: 44, height: 44 })),
     chargeCountScreenPx: 14,
@@ -143,7 +148,7 @@ function runReceiptSelftest() {
     ['Health and Mana swap keys', 'B3 ', (r) => ({ ...r, chargeKeys: ['G', 'F'] })],
     ['first utility loses H', 'B4 ', (r) => ({ ...r, utilityKeys: [] })],
     ['utility right edge moves', 'B5 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, right: 1140 } } })],
-    ['utility grows right', 'B6 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, left: 1050 } } })],
+    ['utility tray stops extending', 'B6 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, scrollWidth: r.utilityGrowth.before.scrollWidth } } })],
     ['one of four primary cards shrinks', 'B7 ', (r) => ({ ...r, primaryCards: r.primaryCards.map((box, i) => i === 3 ? { width: 40, height: 44 } : box) })],
     ['wide charge count stays small', 'B8 ', (r) => ({ ...r, chargeCountScreenPx: 10 })],
   ];
@@ -206,17 +211,16 @@ const BROWSER_READ = `(() => {
   const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
   const box = (el) => { const r = el.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height }; };
   const row = document.querySelector('.topbar.shared-hud .hud-resource-row');
-  const left = document.querySelector('.topbar.shared-hud .hud-left-stack');
+  const left = document.querySelector('.topbar.shared-hud .hud-vitals-panel');
   const controls = document.querySelector('.topbar.shared-hud .hud-control-grid');
   const gap = parseFloat(getComputedStyle(row).columnGap) * zoom;
   const rowBox = box(row), leftBox = box(left), controlBox = box(controls);
-  const leftTrackWidth = controlBox.left - rowBox.left - gap;
   const host = document.querySelector('.topbar.shared-hud .hud-potions');
   const utility = [...host.querySelectorAll(':scope > .flask-slot')];
-  const beforeBox = box(host);
+  const beforeBox = { ...box(host), scrollWidth: host.scrollWidth };
   const clones = [];
   for (let i = 0; i < 2; i++) { const clone = utility[0].cloneNode(true); clone.removeAttribute('data-flask-hotkey-slot'); host.appendChild(clone); clones.push(clone); }
-  const afterBox = box(host);
+  const afterBox = { ...box(host), scrollWidth: host.scrollWidth };
   const afterCount = host.querySelectorAll(':scope > .flask-slot').length;
   clones.forEach((clone) => clone.remove());
   const primary = [...document.querySelectorAll('.topbar.shared-hud .hud-control-grid .topbar-btn, .topbar.shared-hud .hud-control-grid .hud-charge-flasks > .flask-slot')].map(box);
@@ -224,7 +228,7 @@ const BROWSER_READ = `(() => {
   return {
     viewportWidth: window.innerWidth,
     configuredAvailablePct: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-available-pct').trim(),
-    appliedAvailablePct: leftTrackWidth > 0 ? leftBox.width / leftTrackWidth * 100 : null,
+    appliedAvailablePct: leftBox.width / window.innerWidth * 100,
     chargeKeys: [...document.querySelectorAll('.topbar.shared-hud .hud-charge-flasks > .flask-slot .flask-key')].map((el) => el.textContent.trim().toUpperCase()),
     utilityKeys: utility.slice(0, 1).map((el) => (el.querySelector('.flask-key') || {}).textContent || '').map((v) => v.trim().toUpperCase()).filter(Boolean),
     utilityGrowth: { before: { ...beforeBox, count: utility.length }, after: { ...afterBox, count: afterCount } },

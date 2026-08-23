@@ -41,6 +41,7 @@ import { hudShellHtml } from '../components/hudmeta.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -192,6 +193,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'relic';
+    markUiComponent(el, UI.relicSlot);
     el.textContent = def.icon || '◆';
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
@@ -206,6 +208,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     el.type = 'button';
     el.className = 'relic flask-slot flask-charge';
     el.dataset.flaskKind = kind;
+    markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
     el.setAttribute('aria-disabled', String(current <= 0));
     el.appendChild(flaskPresentation(def, { showName: false }));
     const count = document.createElement('b');
@@ -235,6 +238,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     // unified-cursor exception in input.js. Keep utility flasks reachable by
     // keyboard/gamepad Confirm as well as pointer click.
     el.className = 'mh-flask flask-slot';
+    markUiComponent(el, UI.potionControl);
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {

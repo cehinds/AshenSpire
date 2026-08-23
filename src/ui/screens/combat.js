@@ -33,6 +33,8 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
+import { combatantFrame } from '../components/combatantFrame.js';
+import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -70,12 +72,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         },
       })}
       <div class="${backdropClass(run.actNumber)}"></div>
-      <div class="field">
+      <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
       </div>
       <div class="hand-area">
-        <div class="hand-overlay" data-paging="false">
+        <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
           <button class="hand-page hand-prev" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
           <!-- The strip itself — cards, fan, key hints, the inspect hold, the
@@ -91,7 +93,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         <!-- One grid owns every persistent combat action destination. Keeping
              the optional Exhaust cell in that same grid means revealing it
              cannot shift, cover, or steal a standing control's hit box. -->
-        <div class="combat-action-row" role="group" aria-label="Combat actions">
+        <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
           <div class="energy-orb"></div>
           <button class="end-turn">END TURN</button>
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -433,6 +435,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const el = document.createElement('div');
       el.className = 'relic';
       el.dataset.relicId = rid;
+      markUiComponent(el, UI.relicSlot);
       el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
@@ -458,6 +461,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const el = document.createElement('button');
       el.className = 'relic flask-slot flask-charge';
       el.type = 'button';
+      markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
       el.setAttribute('aria-disabled', String(current <= 0));
       el.appendChild(flaskPresentation(def, { showName: false }));
       const count = document.createElement('b');
@@ -474,6 +478,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'relic flask-slot';
+      markUiComponent(el, UI.potionControl);
       el.dataset.flaskSlot = String(slot);
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
@@ -644,9 +649,25 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const zone = $('.player-zone');
     zone.innerHTML = '';
     const p = combat.player;
-    const box = document.createElement('div');
-    box.className = `combatant player${selfArm ? ' armed' : ''}`;
-    box.dataset.eid = 'player';
+    const trailing = [];
+    if (p.stanceId) {
+      const st = registries.stances.get(p.stanceId);
+      const chip = document.createElement('div');
+      chip.className = `stance-chip ${p.stanceId}`;
+      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
+      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
+      trailing.push(chip);
+    }
+    trailing.push(statusRow(p));
+    const box = combatantFrame({
+      role: 'player',
+      entityId: 'player',
+      classNames: selfArm ? ['armed'] : [],
+      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
+      blockBadge: blockBadge(p),
+      meters: meterBars(p),
+      trailing,
+    });
     // When a self/buff card is armed, the player is a confirmable target.
     if (selfArm) {
       box.dataset.focusable = '';
@@ -655,22 +676,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         if (selfArm) playCard(selfArm, null);
       });
     }
-    const sprite = document.createElement('div');
-    sprite.className = 'sprite';
-    sprite.appendChild(playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)));
-    const badge = blockBadge(p);
-    if (badge) sprite.appendChild(badge);
-    box.appendChild(sprite);
-    box.appendChild(meterBars(p));
-    if (p.stanceId) {
-      const st = registries.stances.get(p.stanceId);
-      const chip = document.createElement('div');
-      chip.className = `stance-chip ${p.stanceId}`;
-      chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
-      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
-      box.appendChild(chip);
-    }
-    box.appendChild(statusRow(p));
     zone.appendChild(box);
   }
 
@@ -691,10 +696,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const box = document.createElement('div');
-      box.className = `combatant enemy${dv(enemy).alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
-      box.dataset.eid = enemy.id;
-      if (enemy.alive) box.appendChild(intentEl(enemy));
+      const leading = [];
+      if (enemy.alive) leading.push(intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -702,21 +705,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           const kh = document.createElement('span');
           kh.className = 'enemy-key';
           kh.textContent = idx + 1;
-          box.appendChild(kh);
+          leading.push(kh);
         }
       }
-      const sprite = document.createElement('div');
-      sprite.className = 'sprite';
-      sprite.appendChild(enemySprite(def));
-      const badge = blockBadge(enemy);
-      if (badge) sprite.appendChild(badge);
-      box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'nm';
       nm.textContent = def.name;
-      box.appendChild(nm);
-      box.appendChild(meterBars(enemy));
-      box.appendChild(statusRow(enemy));
+      const box = combatantFrame({
+        role: 'enemy',
+        entityId: enemy.id,
+        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
+        leading,
+        sprite: enemySprite(def),
+        blockBadge: blockBadge(enemy),
+        name: nm,
+        meters: meterBars(enemy),
+        trailing: [statusRow(enemy)],
+      });
       if (enemy.alive) {
         box.addEventListener('click', () => {
           if (selected) playCard(selected, enemy.id);

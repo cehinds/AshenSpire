@@ -46,14 +46,14 @@ const edit = (root, rel, fn) => {
   writeFileSync(p, fn(readFileSync(p, 'utf8')), 'utf8');
 };
 
-const OWNER_PLACEMENT = '          ${buildStampHtml(place)}';
-const COMBAT_REMOVAL = "          ${place === 'combat' ? '' : buildStampHtml(place)}";
+const OWNER_PLACEMENT = '    ${buildStampHtml(place, { split: true, seed })}';
+const COMBAT_REMOVAL = "    ${place === 'combat' ? '' : buildStampHtml(place, { split: true, seed })}";
 
 function sourceFindingsFrom(owner, combat) {
   const findings = [];
   if (!/^import \{ buildStampHtml \} from '\.\/buildstamp\.js';$/m.test(owner)
       || !owner.split(/\r?\n/).includes(OWNER_PLACEMENT)) {
-    findings.push('owner-placement: hudmeta does not unconditionally emit buildStampHtml(place)');
+    findings.push('owner-placement: hudmeta does not unconditionally emit the split build stamp');
   }
   if (!/^import \{ hudShellHtml \} from '\.\.\/components\/hudmeta\.js';$/m.test(combat)
       || !/\$\{hudShellHtml\(\{/.test(combat)) {

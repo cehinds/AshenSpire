@@ -43,6 +43,9 @@
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
+  --hud-control-visual: calc(32px / var(--ui-zoom, 1));
+  --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
   display: grid;
   gap: calc(5px / var(--ui-zoom, 1));
@@ -54,6 +57,7 @@
   align-items: center;
   gap: 1rem;
   min-width: 0;
+  container: run-header / inline-size;
 }
 .topbar.combat-hud.shared-hud .hud-identity {
   display: flex;
@@ -61,21 +65,10 @@
   gap: 0.8rem;
   min-width: 0;
 }
-.topbar.combat-hud.shared-hud .hud-identity-copy {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.topbar.combat-hud.shared-hud .hud-identity-copy .nm,
-.topbar.combat-hud.shared-hud .hud-context {
+.topbar.combat-hud.shared-hud .hud-identity .nm {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.topbar.combat-hud.shared-hud .hud-context {
-  color: var(--muted);
-  font-size: 1rem;
-  letter-spacing: 0.08em;
 }
 .topbar.combat-hud.shared-hud .hud-center {
   display: flex;
@@ -90,36 +83,76 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem 0.8rem;
   min-width: 0;
+  overflow: hidden;
   color: var(--muted);
   font-size: 1rem;
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  font: inherit;
+  letter-spacing: inherit;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before {
+  content: '· SEED ' attr(data-seed);
+  grid-column: 2;
+  margin-inline: 0.8rem;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number { grid-column: 1; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number::before { content: '·'; margin-right: 0.8rem; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-source { grid-column: 3; }
+
+@container run-header (max-width: 720px) {
+  .hud-run-meta .build-source { display: none; }
+  .hud-identity .portrait { width: 36px; height: 36px; font-size: 18px; }
+}
+@container run-header (max-width: 520px) {
+  .hud-run-meta .build-stamp[data-seed]::before { display: none; }
+  .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
+}
+@container run-header (max-width: 340px) {
+  .hud-run-meta .build-number { display: none; }
+}
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) var(--hud-quick-panel-size);
+  justify-content: space-between;
   gap: 1rem;
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
 .topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
-.topbar.combat-hud.shared-hud .hud-bottom:has(.hud-potions:empty) { display: none; }
-.topbar.combat-hud.shared-hud .hud-left-stack {
+.topbar.combat-hud.shared-hud .hud-vitals-panel,
+.topbar.combat-hud.shared-hud .hud-control-grid {
+  box-sizing: border-box;
+  height: var(--hud-quick-panel-size);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(8px / var(--ui-zoom, 1));
+  background: color-mix(in srgb, var(--panel) 74%, transparent);
+  padding: var(--hud-panel-pad);
+}
+.topbar.combat-hud.shared-hud .hud-vitals-panel {
   grid-column: 1;
-  display: grid;
-  align-content: space-between;
-  gap: var(--hud-control-gap);
-  width: var(--hud-resource-available-pct);
+  width: min(100%, var(--hud-resource-available-vw));
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .resbars-host {
   width: 100%;
+  height: 100%;
   max-width: 100%;
   min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host > .resbars {
+  height: 100%;
+  justify-content: space-between;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 2;
@@ -146,24 +179,43 @@
   box-sizing: border-box;
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
-  padding: 0;
+  padding: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid .topbar-btn > span,
+.topbar.combat-hud.shared-hud .hud-control-grid .flask-identity {
+  box-sizing: border-box;
+  width: var(--hud-control-visual);
+  height: var(--hud-control-visual);
+  border: 1px solid var(--line-soft);
+  border-radius: calc(7px / var(--ui-zoom, 1));
+  background: var(--panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .topbar.combat-hud.shared-hud .hud-potions,
 .topbar.combat-hud.shared-hud .hud-relics {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
+  min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-potions {
   justify-content: flex-end;
   flex-direction: row;
+  overflow-x: auto;
+  direction: rtl;
+  scrollbar-width: thin;
 }
 .topbar.combat-hud.shared-hud .hud-relics {
   justify-content: flex-start;
   margin-left: 0;
+  width: min(100%, var(--hud-resource-available-vw));
+  overflow-x: auto;
 }
 .topbar.combat-hud.shared-hud .hud-potions { grid-column: 2; }
+.topbar.combat-hud.shared-hud .hud-potions > * { direction: ltr; flex: 0 0 auto; }
 
 /* Utility potions read as relic-sized chips below the primary controls while
    their real button retains the global tap floor. The flex row is end-anchored:
@@ -439,12 +491,12 @@
 .field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
-  width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
-  padding-bottom: 2.6rem; gap: 0.6rem;
+  width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding-block: 0.6rem; gap: 0.6rem;
 }
 .enemy-row {
-  flex: 1; display: flex; align-items: flex-end; justify-content: space-evenly;
-  padding-bottom: 2.6rem; gap: 1rem;
+  flex: 1; display: flex; align-items: center; justify-content: space-evenly;
+  padding-block: 0.6rem; gap: 1rem;
 }
 
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
@@ -1059,7 +1111,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 }
 :root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
-:root[data-composition='short-wide'] .enemy-row { padding-bottom: 0.4rem; }
+:root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
 :root[data-composition='short-wide'] .combatant .intent {
   margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
@@ -1145,18 +1197,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
-  /* Keep Cinders in the true centre column. Progress/build moves to its own
-     wrapped line, while resources and controls keep their left/right tracks. */
+  /* Keep the reusable header on one row. Container queries above progressively
+     remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
-    row-gap: calc(4px / var(--ui-zoom, 1));
+    gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-run-meta {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: stretch;
-    justify-content: center;
-  }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-context { display: none; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
@@ -1183,12 +1228,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
-  :root[data-layout='narrow'] .player-zone { width: 32%; padding-bottom: 1.2rem; }
+  :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   /* The player sprite is sized from balance.ui.spriteTiers and does not know
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
-  :root[data-layout='narrow'] .enemy-row { padding-bottom: 1.2rem; gap: 0.4rem; }
+  :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
   :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
   :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
   :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
