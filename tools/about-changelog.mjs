@@ -38,7 +38,12 @@ const DESKTOP = Object.freeze({ tag: 'desktop-1200x730', width: 1200, height: 73
 //
 // BOUNDARY: a flattener, not a Markdown parser. It knows emphasis and code spans;
 // it does not know tables, block constructs or nested emphasis and claims nothing
-// about them. REMOVAL: deleted the day Settings → About renders Markdown itself,
+// about them. AND IT CLAIMS NOTHING ABSOLUTE ABOUT THE ONES IT DOES KNOW: four
+// heads running, each closed the form it was blocked on and left the CLAIM
+// absolute, and the claim went false again on the next spelling — the fourth time
+// on a form the third fix had just created. REFUSAL_SCOPE now names a SUBSET and
+// says forms outside it reach the player. That sentence is true after the next
+// finding instead of false after each one, and it is the fix. REMOVAL: deleted the day Settings → About renders Markdown itself,
 // at which point this is a second copy of that renderer's job.
 //
 // THE REFUSAL DOES NOT COVER EVERY FORM, AND THIS COMMENT SAID IT DID.
@@ -167,30 +172,45 @@ export function findBracketedRefusal(raw) {
 // list reaches src/content/changelog.generated.js verbatim and is rendered to the
 // player as text by `esc()` in src/ui/screens/about.js.
 export const REFUSAL_SCOPE = [
-  'about-changelog REFUSES ONE SCANNED SHAPE — A SUBSET OF THE LINK SPELLINGS, NOT',
-  '  `inline link` ENTIRE. The subset: an unescaped `[` OUTSIDE A CODE SPAN whose',
-  '  matching `]` is found by COUNTING depth (any depth), followed immediately by',
-  '  `](` + a destination that is paren-balanced or angle-delimited `<…>`, EMPTY',
-  '  included — image, inline link — or by `][label]` — full and collapsed reference',
-  '  link. Not bracket-shaped, also refused: shortcut reference on a defined label ·',
+  'about-changelog RECOGNISES A NAMED SUBSET AND REFUSES IT. IT IS NOT A MARKDOWN',
+  '  PARSER AND MAKES NO ABSOLUTE CLAIM ABOUT ANY CommonMark CONSTRUCT.',
+  'THE SUBSET IT RECOGNISES: an unescaped `[` outside a code span, whose matching',
+  '  `]` is found by COUNTING depth (any depth, backslash escapes skipped), followed',
+  '  IMMEDIATELY by `](` + a destination that is paren-balanced or angle-delimited',
+  '  `<…>`, EMPTY included — image, inline link — or by `][label]` — full and',
+  '  collapsed reference link. Also refused, not bracket-counted: a shortcut',
+  '  reference whose label matches a link-reference DEFINITION FOUND ON ONE LINE ·',
   '  raw HTML, comment and processing instruction (`<letter`, `</`, `<!`, `<?`).',
-  'A LINK SPELLING OUTSIDE THAT SHAPE IS NOT REFUSED AND SHIPS TO THE PLAYER',
-  '  VERBATIM. This line names the predicate, not a completeness claim: the lists',
-  '  below are what has been MEASURED outside it, never all of it.',
+  'ANY FORM OUTSIDE THAT SUBSET REACHES THE PLAYER — verbatim if it is not',
+  '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
+  '  LINK AND CODE-SPAN SPELLINGS THIS TOOL HAS NOT BEEN SHOWN. The list below is',
+  '  what has been MEASURED outside the subset. IT IS NOT A COMPLETENESS CLAIM AND',
+  '  MUST NOT BE READ AS ONE — four of its entries were found on the day it was',
+  '  written, one of them in the fix that was closing the entry above it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
   '  span delimited by a backtick run of ANY length.',
-  'OPEN, MEASURED, NOT FIXED: emphasis INSIDE a code span is stripped — `` `**b**` ``',
-  '  ships as `b` where GitHub shows the asterisks · non-ASCII label case folding',
-  '  (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities · backslash escapes · a bare',
-  '  URL GitHub autolinks. None of them is present in CHANGELOG.md today.',
+  'OPEN, MEASURED, NOT FIXED — each reaches the player:',
+  '  · emphasis INSIDE a code span is stripped: `` `**b**` `` ships as `b`, where',
+  '    GitHub shows the asterisks.',
+  '  · a PADDED code span keeps its padding: `` ` foo ` `` ships as `  foo  `,',
+  '    where CommonMark strips one leading and one trailing space. The in-game text',
+  '    silently differs from the rendered Markdown.',
+  '  · a link-reference DEFINITION whose destination sits on the line after the',
+  '    colon is never collected, so the shortcut that uses it is not refused and',
+  '    ships as literal brackets.',
+  '  · non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML',
+  '    entities · backslash escapes · a bare URL GitHub autolinks.',
+  '  None of them is present in CHANGELOG.md today.',
   'IT SCANS, IT DOES NOT PARSE, AND THAT CUTS BOTH WAYS — the half this line used to',
-  '  leave out. Code spans are masked (backtick-run matched, the flattener\'s own',
-  '  regex) before EVERY scan. OVER-FIRES, harmless: `a <b and b> c` reads as raw',
-  '  HTML; `](<` is taken as an angle destination whether or not a link follows.',
-  '  UNDER-FIRES, NOT harmless: the mask is itself a scan, so wherever a real',
-  '  parser\'s code-span or escape boundaries differ from this one\'s, the form is',
-  '  invisible here and SHIPS. The measured members are the OPEN list above;',
-  '  neither direction is bounded by this tool.',
+  '  leave out. OVER-FIRES, harmless, the author is told and rewrites: `a <b and b>',
+  '  c` reads as raw HTML · `](<` is taken as an angle destination whether or not a',
+  '  link follows · a defined label inside a code span is refused.',
+  'UNDER-FIRES, AND THEY ARE NOT HARMLESS: an unrecognised form reaches the player,',
+  '  and where the flatten then removes a delimiter the RESULT IS A CORRUPTION —',
+  '  words the author did not write, not the author\'s words with syntax attached.',
+  '  ``[the `]` guide](/guide)`` did exactly that before the code-span mask, and the',
+  '  mask itself opened a second one for an hour. Neither direction is bounded by',
+  '  this tool, and this line is the only place that says so.',
 ].join('\n');
 export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
@@ -231,10 +251,21 @@ export function flattenInline(text, where, labels = new Set()) {
   if (bracketed) {
     throw new Error(`${where}: prose contains ${bracketed}, which the in-game changelog cannot render — write it in words`);
   }
-  // The mask is applied to EVERY refusal scan, not only the bracket one, because
-  // "inside a code span" is one fact about the text and a rule that held for one
-  // scanner and not the others would be the same disagreement in a new place.
-  // `` `<b>` `` and `` `[docs]` `` are code on GitHub and are code here.
+  // The mask runs before the bracket scan and the raw-HTML scan. IT DOES NOT RUN
+  // BEFORE THE SHORTCUT SCAN, AND THAT IS A REVERT OF MY OWN ONE-WORD CHANGE.
+  //
+  // I widened it there at a356320 on the argument that "inside a code span" is one
+  // fact about the text. It introduced a CORRUPTION within the hour: the defined
+  // labels are collected from the AUTHORED line, the use was being read off the
+  // MASKED line, so `[the `guide`]` against `[the `guide`]: /docs` compared
+  // "the `guide`" to "the xxxxxxx", missed, shipped, and the flattener then emitted
+  // `[the guide]` — brackets in Settings → About that the author did not write.
+  //
+  // Measured both sides: refused at 5bb82f2, shipped at a356320. MY REGRESSION, and
+  // reverted rather than declared, because the alternative was to declare a hole I
+  // had opened myself in the same head that closed one. What comes back with it is
+  // the pre-existing OVER-fire — a defined label inside a code span is refused — and
+  // that is the safe direction and was already the standing state.
   const masked = maskCodeSpans(text);
   for (const [pattern, what] of INLINE_REFUSED) {
     if (pattern.test(masked)) {
@@ -242,7 +273,7 @@ export function flattenInline(text, where, labels = new Set()) {
     }
   }
   if (labels.size) {
-    for (const [, label] of masked.matchAll(/\[([^\][]+)\]/g)) {
+    for (const [, label] of text.matchAll(/\[([^\][]+)\]/g)) {
       if (labels.has(normalizeLinkLabel(label))) {
         throw new Error(`${where}: prose contains a shortcut reference link, which the in-game changelog cannot render — write it in words`);
       }
@@ -681,6 +712,17 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. See [link](<(a>) for the rest.',
       expect: 'prose contains a link',
+    },
+    // MY OWN REGRESSION, PLANTED SO IT CANNOT COME BACK QUIETLY. I widened the
+    // code-span mask onto the shortcut scan at a356320 and it shipped `[the guide]`
+    // — brackets the author did not write — within the hour. Reverted; this is the
+    // plant the revert did not have. Read `masked` instead of `text` in the shortcut
+    // loop and exactly this one goes MISS.
+    {
+      name: 'shortcut link whose DEFINED LABEL contains a code span', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [the `guide`] for the rest.\n\n[the `guide`]: https://example.invalid/guide',
+      expect: 'prose contains a shortcut reference link',
     },
     {
       name: 'missing title Settings route', file: 'src/ui/screens/title.js',
