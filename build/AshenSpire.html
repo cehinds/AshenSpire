@@ -3485,16 +3485,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
 }
-/* `.topbar` is SHARED SKIN — the map header wears it too (styles/map.css:223,
-   src/ui/screens/map.js:239) and is still a single row of its own items. Only
-   the COMBAT HUD is the two-row shape he specified, so the restructure is
-   scoped to `.combat-hud` and the map is untouched by it. Checked, not assumed:
-   the map header is the only other `.topbar` in the tree. */
+/* `.topbar` is SHARED SKIN and `.combat-hud` is the shared two-row HUD frame.
+   Combat and the map both put resource bars + Armoury + Menu in `.hud-top`, so
+   the same plan resolves against the same track at every viewport. Their
+   secondary chrome differs only in `.hud-bottom`; it cannot change bar ink. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
 }
-/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+/* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
    map.css overrode the width to 15rem — a typed constant standing where a
@@ -4927,41 +4926,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
-/* ---------- horizontal map header (matches the combat top bar) ---------- */
-/* Reuses .topbar/.portrait/.who/.relics from combat.css; these rules add
-   the map-specific stats, wrapping, and the legend popover. Items are flex so
-   they reflow as customization toggles hide/show them. */
+/* ---------- map header — the combat HUD frame with map chrome below ---------- */
+/* Reuses `.topbar.combat-hud`, `.hud-top` and `.hud-bottom` from combat.css.
+   The top row is deliberately identical to combat — resource host, Armoury,
+   Menu — so one plan cannot cross the 16 px floor on only one screen. The map's
+   portrait, progress, seed, build stamp and legend live in the bottom row. */
 .map-header {
-  height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
+  height: auto; min-height: 5.2rem; position: relative;
 }
-/* THE BAR TRACK IS DERIVED, NOT TYPED (E9 / #254). What was here was
-   `.map-header .hpbar { width: 15rem }` — the map's own hand-written health bar
-   at a hand-typed length, beside a combat HUD whose track is `flex: 1` off the
-   row. Two renderers and two tracks for one grammar; the same character read at
-   two proportions depending on the screen, and nothing could see it because each
-   was internally consistent on its own.
-   Now the `.who` column GROWS and the host fills it, so the track is the header
-   width minus the portrait, the stats and the buttons — derived by the browser,
-   exactly as `.topbar.combat-hud .resbars-host` is. Nothing types a ceiling, so
-   a bar cannot lie about a maximum on this screen either.
-   `100%` is a flex BASIS on a header that ALREADY wraps (`flex-wrap: wrap`
-   above), so it costs no new structure: the bar column takes a line of its own
-   and the portrait, stats and buttons flow onto the next one — the same
-   two-band shape the combat HUD has. MEASURED, and this is why it is 100%
-   rather than a column share: at `1 1 16rem` the map's HP track came out
-   385.6 px against combat's 1090.8 at 1440x860, and 69.1 against 116.1 at
-   390x844 — where 18 % of 69.1 is 12.4 px, UNDER the 16 px minimum-width floor.
-   The floor then fired on the map and not in combat for the same character, so
-   one screen drew a dashed stub and the other a proportional bar. Same plan,
-   same renderer, different ink. A track this narrow is what re-introduces the
-   divergence the shared renderer just removed. */
-.map-header .who { flex: 1 1 100%; min-width: 0; }
-.map-header .resbars-host { width: 100%; min-width: 0; }
+.map-header .who { min-width: 0; }
 .map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
 .map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
-.map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }
 
 /* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
    a divider, then relic chips; wraps to more rows as they accumulate. */
@@ -35208,7 +35185,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '302cf21ff4';
+const SOURCE = '330e036906';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35242,7 +35219,7 @@ const SOURCE = '302cf21ff4';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1029';
+const ORDINAL = '1031';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -35269,7 +35246,7 @@ const ORDINAL = '1029';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-22';
+const BUILT = '2026-08-23';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -38796,31 +38773,28 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <header class="topbar map-header">
-        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
-          <!-- E9 / #254 - ONE HUD. This used to be a hand-written
-               div.bar.hpbar with its own percentage fill and its own 15rem
-               CSS track: a SECOND renderer for the one grammar combat draws
-               through ui/components/resbars.js. Two renderers meant the same
-               character's health read at two different proportions depending
-               on which screen you were looking at, and no instrument could
-               see it because each was internally consistent. The host is
-               empty here and filled below by the same call combat.js and
-               coop.js make. (No backticks in this block: it lives inside a
-               template literal, and one closed it early - the game's own
-               validation banner caught that, not a test.) -->
+      <header class="topbar combat-hud map-header">
+        <!-- E9 / #254 - ONE HUD. The entire top row now has the same structure
+             as combat: the shared resource host, Armoury, Menu. This used to be
+             a hand-written div.bar.hpbar at its own 15rem width; its first E9
+             replacement reused the renderer but gave the map a full-width row,
+             so 320x640 could still show a solid proportional pool while combat
+             showed the same pool as a dashed floored stub. Same plan, different
+             truth. Sharing the row geometry removes that last second HUD.
+             (No backticks here: this block lives inside a template literal.) -->
+        <div class="hud-top">
           <div class="resbars-host"></div>
-        </div>
-        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
-        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        ${buildStampHtml('map')}
-        <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+        </div>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+          <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
+          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('map')}
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
@@ -48323,6 +48297,26 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 
 const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-317",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The reward menu is written down, in the README and the changelog",
+    "detail": "Docs only.",
+    "build": "0.4.0.1000",
+    "pullRequest": 317,
+    "url": "https://github.com/cehinds/AshenSpire/pull/317"
+  },
+  {
+    "id": "pr-316",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The Armoury opens on your figure, and CARDS is one click away",
+    "detail": "The card strip now arrives folded by default, on every shape, so the character you dressed is whole the moment the panel opens instead of being squeezed into a scrolling sliver by the cards beneath it. One click on CARDS opens the strip, another folds it again, and outside a fight whatever you leave it on is what the Armoury gives you next time — it arrives the way you left it. The Armoury you open mid-fight keeps no such memory: it starts folded every time, whatever you did to it last. On a phone nothing changes: that view never showed the figure and already opened folded.",
+    "build": "0.4.0.0983",
+    "pullRequest": 316,
+    "url": "https://github.com/cehinds/AshenSpire/pull/316"
+  },
+  {
     "id": "pr-305",
     "date": "2026-08-21",
     "group": "2026-08-21",
@@ -48331,6 +48325,16 @@ const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.0947",
     "pullRequest": 305,
     "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
+  {
+    "id": "pr-292",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Stat points and a starting-armour choice at creation",
+    "detail": "Two more rows on the creation screen, and both stay open where the six pickers fold. STARTING ARMOUR offers your class's own set plus every set you have earned — a new profile sees one, and each prize won becomes another way to begin. STAT POINTS hands you ten to place across the five stats: they arrive laid along your class's grain, dropping a stat gives its points back, and nothing goes below 8 or above 15 at creation. BEGIN THE CLIMB waits while points are unspent, and if an allocation starves your starting kit it says which stat and how much it needs.",
+    "build": "0.4.0.0946",
+    "pullRequest": 292,
+    "url": "https://github.com/cehinds/AshenSpire/pull/292"
   },
   {
     "id": "pr-296",
@@ -48346,8 +48350,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-290",
     "date": "2026-08-21",
     "group": "2026-08-21",
-    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
-    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "summary": "Rewards are a menu you open, not a handful you're handed",
+    "detail": "Cinders, cards, flasks, armaments and relics arrive as rows, and nothing is applied until you take it — so you can look before you collect, and Back leaves the menu exactly as you found it. A reward with nowhere to go — a full flask belt, a full armament bag — says so on its own row before you tap it, and it is the only kind of row that offers Skip. Continue is always pressable and says what it will do; Settings → Advanced → Reward collection decides which: Auto (the default) takes everything you did not skip, picking a card for you, while Manual means done — only what you chose comes along. Continue is a press-and-hold on mouse, touch, keyboard, and pad.",
     "build": "0.4.0.0929",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
@@ -48587,7 +48591,7 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-17",
     "group": "2026-08-17",
     "summary": "The verified current build lives at the repository root",
-    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "detail": "AshenSpire.html at the root is the same bytes as dist/, checked by tools/verify-shipped.mjs.",
     "build": "0.4.0.0788",
     "pullRequest": 186,
     "url": "https://github.com/cehinds/AshenSpire/pull/186"
