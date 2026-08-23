@@ -24,6 +24,7 @@ import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
+import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
@@ -1252,6 +1253,34 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 18. M2 run systems ---------------------------------------------------------------
   test('18. run systems: deterministic rewards, flask pity, relic passives, event opcodes, Physick', () => {
+    eq(REG.balance.flaskCapacity, 4, 'Crimson/Azure share the approved global capacity of four');
+    eq(REG.balance.flaskSlots, 3, 'utility flask inventory remains an independent three-slot system');
+    eq(
+      ['reaver', 'starseer', 'herald'].map((id) => {
+        const a = REG.classes.get(id).startingFlaskAllocation;
+        return `${a.hp}/${a.mana}`;
+      }).join('|'),
+      '3/1|2/2|3/1',
+      'the three class allocations consume all four charges exactly as approved',
+    );
+    const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
+    reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 4 });
+    eq(`${freeAllocation.flaskCharges.hp}/${freeAllocation.flaskCharges.mana}/${freeAllocation.flaskCharges.capacity}`, '0/4/4', 'all four charges may be freely reallocated');
+    const flaskStore = createMemoryStorage();
+    freeAllocation.seedString = 'FLASK4';
+    createSaveManager(flaskStore).saveRun(freeAllocation);
+    const flaskBack = createSaveManager(flaskStore).loadRun(REG);
+    assert(flaskBack !== null, 'a freely allocated four-charge run survives the real save door');
+    eq(`${flaskBack.flaskCharges.hp}/${flaskBack.flaskCharges.mana}/${flaskBack.flaskCharges.base}`, '0/4/4', 'save keeps allocation and the capacity ledger');
+    const oldCapacityRun = structuredClone(freeAllocation);
+    oldCapacityRun.flaskCharges = {
+      capacity: 3, base: 3, hp: 2, mana: 1, hpCurrent: 2, manaCurrent: 1,
+      grown: { hp: 0, mana: 0 }, granted: 0,
+    };
+    createSaveManager(flaskStore).saveRun(oldCapacityRun);
+    const oldCapacityBack = createSaveManager(flaskStore).loadRun(REG);
+    assert(oldCapacityBack !== null, 'an existing three-charge save remains valid after the live default becomes four');
+    eq(`${oldCapacityBack.flaskCharges.capacity}/${oldCapacityBack.flaskCharges.base}`, '3/3', 'old capacity ledger remains authoritative');
     // Same seed → identical roll bundle (SPEC §3.11 stream promise).
     const rollAll = () => {
       const r = createRng(0xaa11);
@@ -1335,8 +1364,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'oldCinder').effects);
     eq(rn.cinders, 50, 'Old Cinder grants 50 cinders');
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'travelersFlask').effects);
-    eq(rn.flaskCharges.capacity, 4, "Traveler's Flask raises fixed charge capacity");
-    eq(rn.flaskCharges.hp, 3, "Traveler's Flask allocates the added charge to Crimson");
+    eq(rn.flaskCharges.capacity, 5, "Traveler's Flask raises fixed charge capacity");
+    eq(rn.flaskCharges.hp, 4, "Traveler's Flask allocates the added charge to Crimson");
     executeRunEffects({ run: rn, registries: REG, rng: createRng(11) }, KEEPSAKES.find((k) => k.id === 'whetstoneMemory').effects);
     assert(rn.deck.some((c) => c.cardId === 'strike' && c.upgraded), 'Whetstone Memory upgrades a Strike');
   });
