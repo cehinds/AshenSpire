@@ -60,3 +60,10 @@ shared-run-hud
 
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
+
+## Merge/PR rule
+
+Any UI element or component change should link this catalog in the merge or PR
+summary. If the change alters a stable ID, model/factory, renderer, composition,
+or reuse surface, update this catalog and the matching visual miniature before
+the merge.
