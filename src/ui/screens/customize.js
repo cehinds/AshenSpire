@@ -348,7 +348,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     for (const hand of ['leftHand', 'rightHand']) {
       const box = $(`#cz-${hand === 'leftHand' ? 'left' : 'right'}-hand`);
       box.innerHTML = '';
-      for (const piece of creationHandChoices(registries, state.classId)) {
+      for (const piece of creationHandChoices(registries, state.classId, hand)) {
         const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
         button.dataset.hand = hand; button.dataset.armamentId = piece.id;
         button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');

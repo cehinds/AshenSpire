@@ -95,9 +95,18 @@ export function creationArmourChoices(registries, classId) {
   return ids.map((id) => (registries.equipment.armour || []).find((row) => row.classId === classId && row.id === id));
 }
 
-export function creationHandChoices(registries, classId) {
+function fitsCreationHandSlot(registries, slotId, piece) {
+  if (!slotId) return true;
+  const slot = (registries.equipment.slots || []).find((row) => row.id === slotId);
+  if (!slot || !piece || !(slot.kinds || []).includes(piece.kind)) return false;
+  return !piece.hand || piece.hand === 'either' || piece.hand === slot.hand;
+}
+
+export function creationHandChoices(registries, classId, slotId = null) {
   const ids = classCreationConfig(registries, classId).handIds;
-  return ids.map((id) => (registries.equipment.armaments || []).find((row) => row.id === id));
+  return ids
+    .map((id) => (registries.equipment.armaments || []).find((row) => row.id === id))
+    .filter((piece) => fitsCreationHandSlot(registries, slotId, piece));
 }
 
 export function creationRelicChoices(registries, classId) {
@@ -118,7 +127,12 @@ export function resolveCreationHands(registries, classId, requested, fallback) {
   const allowed = new Set(classCreationConfig(registries, classId).handIds);
   const result = { leftHand: requested.leftHand || null, rightHand: requested.rightHand || null };
   if (result.leftHand && result.leftHand === result.rightHand) throw new Error(`starting armament '${result.leftHand}' cannot occupy both hands`);
-  for (const [hand, id] of Object.entries(result)) if (id && !allowed.has(id)) throw new Error(`${hand}: starting armament '${id}' is unavailable to class '${classId}'`);
+  for (const [hand, id] of Object.entries(result)) {
+    if (!id) continue;
+    if (!allowed.has(id)) throw new Error(`${hand}: starting armament '${id}' is unavailable to class '${classId}'`);
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
+    if (!fitsCreationHandSlot(registries, hand, piece)) throw new Error(`${hand}: starting armament '${id}' does not fit this hand`);
+  }
   return result;
 }
 

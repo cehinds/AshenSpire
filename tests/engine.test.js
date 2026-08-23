@@ -70,7 +70,7 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
-  creationRelicChoices, selectStartingHand,
+  creationRelicChoices, selectStartingHand, resolveCreationHands,
 } from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
@@ -5291,6 +5291,27 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
     eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
     eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
+
+    const sideSpecific = createRegistries({
+      ...contentBundle,
+      equipment: {
+        ...contentBundle.equipment,
+        armaments: contentBundle.equipment.armaments.map((piece) => (
+          piece.id === 'buckler' ? { ...piece, hand: 'left' } : piece
+        )),
+      },
+    });
+    assert(creationHandChoices(sideSpecific, 'reaver', 'leftHand').some((piece) => piece.id === 'buckler'),
+      'a side-specific armament is offered for its eligible creation hand');
+    assert(!creationHandChoices(sideSpecific, 'reaver', 'rightHand').some((piece) => piece.id === 'buckler'),
+      'a side-specific armament is not offered for an incompatible creation hand');
+    eq(resolveCreationHands(sideSpecific, 'reaver', { leftHand: 'buckler', rightHand: null }, {}).leftHand, 'buckler',
+      'creation hand resolution accepts a side-specific armament in its eligible slot');
+    let wrongHandError = '';
+    try { resolveCreationHands(sideSpecific, 'reaver', { leftHand: null, rightHand: 'buckler' }, {}); }
+    catch (error) { wrongHandError = error.message; }
+    assert(/rightHand.*buckler.*does not fit/.test(wrongHandError),
+      'creation hand resolution rejects a side-specific armament in the wrong slot');
 
     const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
     eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
