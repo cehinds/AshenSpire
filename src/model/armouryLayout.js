@@ -6,7 +6,7 @@
 
 const DEFAULTS = Object.freeze({
   shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
-  character: { spriteRatio: 0.6, statsRatio: 0.4, minWidth: '0' },
+  character: { spriteRatio: 0.38, statsRatio: 0.62, statsPaneRatio: 0.6, minWidth: '0' },
   equipment: { groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armaments', 'rightHand', 'leftHand'] },
   combatPower: {
     groupLabel: 'Combat Power',
@@ -17,9 +17,9 @@ const DEFAULTS = Object.freeze({
     ],
   },
   viewModes: {
-    grid: { label: 'Stats', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
-    rack: { label: 'Equipment', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
-    hybrid: { label: 'Hybrid', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
+    grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
+    rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
+    hybrid: { label: 'Hybrid', pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
   },
   responsive: {
     breakpoint: 760,
@@ -77,6 +77,12 @@ export function normalizeArmouryLayout(source = {}) {
     || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
     throw new Error('armouryUi.layout.combatPower.cards must declare three labelled power cards');
   }
+  const paneValues = new Set(['character', 'inventory', 'both']);
+  for (const [id, mode] of Object.entries(viewModes)) {
+    if (!mode || !paneValues.has(mode.pane)) {
+      throw new Error(`armouryUi.layout.viewModes.${id}.pane must be character, inventory, or both`);
+    }
+  }
 
   return Object.freeze({
     shell: Object.freeze({
@@ -87,6 +93,7 @@ export function normalizeArmouryLayout(source = {}) {
     character: Object.freeze({
       spriteRatio: ratio(Number(character.spriteRatio), 'character.spriteRatio'),
       statsRatio: ratio(Number(character.statsRatio), 'character.statsRatio'),
+      statsPaneRatio: ratio(Number(character.statsPaneRatio), 'character.statsPaneRatio'),
       minWidth: String(character.minWidth || '0'),
     }),
     equipment: Object.freeze({
@@ -102,6 +109,7 @@ export function normalizeArmouryLayout(source = {}) {
     }),
     viewModes: Object.freeze(Object.fromEntries(Object.entries(viewModes).map(([id, mode]) => [id, Object.freeze({
       label: String(mode.label || id),
+      pane: String(mode.pane),
       character: String(mode.character || 'folded'),
       armaments: String(mode.armaments || 'folded'),
       inventory: String(mode.inventory || 'folded'),

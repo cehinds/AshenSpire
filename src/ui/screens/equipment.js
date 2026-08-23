@@ -3,11 +3,9 @@
 // Three views of the same loadout, because the two obvious layouts are both
 // right for different things and neither should have to win:
 //
-//   grid    the figure in the middle, slots as squares around it — you are
-//           looking at a PERSON, and the kit hangs off them
-//   rack    a dense two-column armament rack — you are looking at a LIST, and
-//           you want to compare eight shields quickly
-//   hybrid  the rack, with the figure and its slot squares alongside
+//   grid    the full-width Character surface — summary/sprite left, stats right
+//   rack    the full-width Inventory surface — armaments left, inventory right
+//   hybrid  the shared 40/60 character and armaments shell
 //
 // The panel builds itself from registries.equipment.slots, so a new row in
 // equipSlots.csv appears here with no change to this file. The card strip at
@@ -279,11 +277,9 @@ export function opensCollapsed(regionId, stored, mode = null) {
 // in ui.css, because nothing here would have to change.
 
 function buildArmoury(L, ui) {
-  // Grid, Rack, and Hybrid are presentation names for the same authored shell.
-  // The view selector remains available for saved preferences and probes, but
-  // no view is allowed to hide the character or move hand sockets into a flank.
-  const character = ui.character();
-  ui.left.appendChild(character);
+  // Character is a character-only surface. Inventory is the Skyrim-like
+  // equipment/inventory split. Hybrid is the authored 40/60 shell.
+  if (ui.viewMode.pane === 'character' || ui.viewMode.pane === 'both') ui.left.appendChild(ui.character());
 
   const equipment = document.createElement('section');
   equipment.className = 'armoury-equipment';
@@ -295,15 +291,43 @@ function buildArmoury(L, ui) {
   slots.className = 'equip-slots armoury-slot-cards';
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
+  const summaryRows = ordered.map((slot) => ({ slot, item: ui.slotSummary(slot) }));
+  const summaryDetails = document.createElement('details');
+  summaryDetails.className = 'armoury-summary-card';
+  summaryDetails.dataset.component = 'armoury.armamentsSummary';
+  summaryDetails.open = ui.viewMode.armaments === 'expanded';
+  const summary = document.createElement('summary');
+  const equippedCount = summaryRows.filter(({ item }) => item.name !== 'Empty socket').length;
+  summary.innerHTML = `<span class="armoury-summary-label">Armaments summary</span>`
+    + `<span class="armoury-summary-count">${equippedCount}/${summaryRows.length} equipped</span>`
+    + `<span class="armoury-summary-hint">${summaryDetails.open ? 'Hide details' : 'Show details'}</span>`;
+  attachTooltip(summary, () => `<div class="tt-title">Armaments summary</div><p>Review the equipped armour and hand sockets before choosing a row.</p>`);
+  summaryDetails.addEventListener('toggle', () => {
+    const hint = summary.querySelector('.armoury-summary-hint');
+    if (hint) hint.textContent = summaryDetails.open ? 'Hide details' : 'Show details';
+  });
+  const summaryList = document.createElement('ul');
+  summaryList.className = 'armoury-summary-list';
+  for (const { slot, item } of summaryRows) {
+    const row = document.createElement('li');
+    row.innerHTML = `<span>${esc(slot.label)}</span><strong>${esc(item.name)}</strong><em>${esc(item.bonus)}</em>`;
+    summaryList.appendChild(row);
+  }
+  summaryDetails.append(summary, summaryList);
+  slots.appendChild(summaryDetails);
   for (const slot of ordered) {
     const details = document.createElement('details');
     details.className = 'armoury-slot-card';
     details.dataset.component = 'armoury.armamentSubcard';
     details.open = ui.viewMode.armaments === 'expanded';
+    const summaryItem = ui.slotSummary(slot);
     const summary = document.createElement('summary');
     summary.innerHTML = `<span class="armoury-slot-card-label">${esc(slot.label)}</span>`
+      + `<span class="armoury-slot-card-item">${esc(summaryItem.name)}</span>`
+      + `<span class="armoury-slot-card-bonus">${esc(summaryItem.bonus)}</span>`
+      + `<span class="armoury-slot-card-weight">${esc(summaryItem.weight)}</span>`
       + `<span class="armoury-slot-card-hint">${details.open ? 'Hide details' : 'Show details'}</span>`;
-    attachTooltip(summary, () => `<div class="tt-title">${esc(slot.label)}</div><p>Click to ${details.open ? 'fold' : 'expand'} this armament socket.</p>`);
+    attachTooltip(summary, () => `<div class="tt-title">${esc(`${slot.label}: ${summaryItem.name}`)}</div><p>${esc(summaryItem.instruction)}</p>`);
     details.addEventListener('toggle', () => {
       const hint = summary.querySelector('.armoury-slot-card-hint');
       if (hint) hint.textContent = details.open ? 'Hide details' : 'Show details';
@@ -313,7 +337,8 @@ function buildArmoury(L, ui) {
   }
   equipment.appendChild(slots);
   equipment.appendChild(ui.picker());
-  ui.right.appendChild(equipment);
+  if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
+  if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
 }
 
 /**
@@ -548,7 +573,7 @@ export function mountEquipment(host, {
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
   let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
-  const viewMode = () => layout.viewModes[view] || { label: view, character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
+  const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
   // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
@@ -1143,10 +1168,7 @@ export function mountEquipment(host, {
   function characterStatsPanel() {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
-    const cls = registries.classes.get(run.class);
     const projection = statProjection(registries, run);
-    box.innerHTML = `<header class="character-summary"><p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
-      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p></header>`;
 
     const powers = document.createElement('section');
     powers.className = 'character-power-cards';
@@ -1178,9 +1200,35 @@ export function mountEquipment(host, {
     return box;
   }
 
+  function characterSummaryPanel() {
+    const cls = registries.classes.get(run.class);
+    const box = document.createElement('header');
+    box.className = 'character-summary';
+    box.innerHTML = `<p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
+      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p>`;
+    return box;
+  }
+
+  function slotSummary(slot) {
+    const setIndex = run.loadout.active?.[slot.id] || 0;
+    const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
+    const item = slot.kinds.includes('armor')
+      ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
+      : (eq.armaments || []).find((piece) => piece.id === itemId);
+    const bonus = item ? modSummary(registries, item).slice(0, 2).join(' · ') || 'No combat bonus authored' : 'Empty socket';
+    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
+    return {
+      name: item ? item.name : 'Empty socket',
+      bonus,
+      weight,
+      instruction: item ? 'Click to expand the equipped item and socket details.' : 'Click to expand this empty socket.',
+    };
+  }
+
   function characterPanel() {
     const panel = document.createElement('section');
     panel.className = 'armoury-character';
+    panel.appendChild(characterSummaryPanel());
     const sprite = document.createElement('div');
     sprite.className = 'armoury-sprite-pane';
     sprite.appendChild(figureFor(registries, run, cz));
@@ -1282,7 +1330,7 @@ export function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-view-mode="${esc(viewMode().label)}" data-character-state="${esc(viewMode().character)}" data-composition="character-equipment">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-view-mode="${esc(viewMode().label)}" data-pane="${esc(viewMode().pane)}" data-character-state="${esc(viewMode().character)}" data-composition="character-equipment">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views" data-surface="armouryView">
@@ -1291,11 +1339,13 @@ export function mountEquipment(host, {
           <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
         </header>
         ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
-        <div class="armoury-body">
-          <div class="armoury-left"></div>
-          <div class="armoury-right"></div>
+        <div class="armoury-content">
+          <div class="armoury-body">
+            <div class="armoury-left"></div>
+            <div class="armoury-right"></div>
+          </div>
+          <section class="armoury-inventory"></section>
         </div>
-        <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
 
@@ -1307,6 +1357,8 @@ export function mountEquipment(host, {
     panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
     panel.style.setProperty('--armoury-sprite-ratio', `${layout.character.spriteRatio}fr`);
     panel.style.setProperty('--armoury-stats-ratio', `${layout.character.statsRatio}fr`);
+    panel.style.setProperty('--armoury-stats-pane-ratio', `${layout.character.statsPaneRatio}fr`);
+    panel.style.setProperty('--armoury-summary-pane-ratio', `${1 - layout.character.statsPaneRatio}fr`);
     panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
     panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
 
@@ -1345,6 +1397,7 @@ export function mountEquipment(host, {
         left, right, blocks,
         layout,
         viewMode: viewMode(),
+        slotSummary,
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
         picker: () => pickerBlock(),
@@ -1371,7 +1424,7 @@ export function mountEquipment(host, {
         view = b.dataset.member;
         // A view is a presentation preset, not a second saved preference.
         // Explicit per-region choices still win; untouched regions adopt the
-        // newly selected Stats/Equipment/Hybrid defaults.
+        // newly selected Character/Inventory/Hybrid defaults.
         for (const region of contextRegions()) {
           if (!(storedFolds && typeof storedFolds[region.id] === 'boolean')) {
             folded.set(region.id, opensCollapsed(region.id, null, viewMode()));

@@ -10,8 +10,9 @@
       "gapRem": 1.6
     },
     "character": {
-      "spriteRatio": 0.6,
-      "statsRatio": 0.4,
+      "spriteRatio": 0.38,
+      "statsRatio": 0.62,
+      "statsPaneRatio": 0.6,
       "minWidth": "0"
     },
     "equipment": {
@@ -28,9 +29,9 @@
       ]
     },
     "viewModes": {
-      "grid": { "label": "Stats", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
-      "rack": { "label": "Equipment", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
-      "hybrid": { "label": "Hybrid", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "folded" }
+      "grid": { "label": "Character", "pane": "character", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
+      "rack": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
+      "hybrid": { "label": "Hybrid", "pane": "both", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "folded" }
     },
     "responsive": {
       "breakpoint": 760,

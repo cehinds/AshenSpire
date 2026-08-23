@@ -13,8 +13,9 @@ export const armouryUi = {
       "gapRem": 1.6
     },
     "character": {
-      "spriteRatio": 0.6,
-      "statsRatio": 0.4,
+      "spriteRatio": 0.38,
+      "statsRatio": 0.62,
+      "statsPaneRatio": 0.6,
       "minWidth": "0"
     },
     "equipment": {
@@ -51,14 +52,16 @@ export const armouryUi = {
     },
     "viewModes": {
       "grid": {
-        "label": "Stats",
+        "label": "Character",
+        "pane": "character",
         "character": "expanded",
         "armaments": "folded",
         "inventory": "folded",
         "cards": "expanded"
       },
       "rack": {
-        "label": "Equipment",
+        "label": "Inventory",
+        "pane": "inventory",
         "character": "folded",
         "armaments": "expanded",
         "inventory": "expanded",
@@ -66,6 +69,7 @@ export const armouryUi = {
       },
       "hybrid": {
         "label": "Hybrid",
+        "pane": "both",
         "character": "folded",
         "armaments": "folded",
         "inventory": "folded",
