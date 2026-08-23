@@ -203,6 +203,30 @@ let finished = false;
 let liveCdp = null;
 let liveBrowser = null;
 let liveServed = null;
+
+// EXIT CODES ONLY RISE. browser.mjs owns strict profile cleanup and reports a
+// failure by setting exit 3 during closeEverything(); a later successful run
+// must not erase that independent failure. The same floor keeps an async fatal
+// latched while the module-scope --selftest branch finishes normally.
+function raiseExitCode(code) {
+  process.exitCode = Math.max(Number(process.exitCode) || 0, code);
+}
+
+function selfcheckExitCodeFloor() {
+  const before = process.exitCode;
+  try {
+    process.exitCode = 3;
+    raiseExitCode(0);
+    if (process.exitCode !== 3) throw new Error('strict cleanup exit 3 was lowered by success');
+    process.exitCode = 2;
+    raiseExitCode(0);
+    if (process.exitCode !== 2) throw new Error('fatal exit 2 was lowered by selftest success');
+  } finally {
+    process.exitCode = before;
+  }
+  console.log('exit-code floor self-check: strict cleanup 3 and fatal 2 preserved');
+}
+
 async function closeEverything() {
   const cdp = liveCdp; const browser = liveBrowser; const served = liveServed;
   liveCdp = null; liveBrowser = null; liveServed = null;
@@ -221,7 +245,7 @@ function finish(code, why = null) {
   // wrong count. A late death still RAISES the exit code; it never reprints.
   if (finished) {
     if (why) console.error(`card-drag-targeting: ${why}`);
-    if (code > (process.exitCode || 0)) process.exitCode = code;
+    raiseExitCode(code);
     return;
   }
   finished = true;
@@ -248,7 +272,7 @@ function finish(code, why = null) {
   // stub, false of the set. The run that breaks the pattern is the evidence.)
   // `verdict.mjs` called each of them SILENCE, exit 3. With `process.exitCode`
   // and natural shutdown: 40 of 40 intact.
-  process.exitCode = code;
+  raiseExitCode(code);
 }
 
 // THE FIX AND THE HOLE IN ONE COMMIT, AGAIN — and that is why the net is here
@@ -297,6 +321,7 @@ process.on('uncaughtException', (e) => {
 });
 
 if (process.argv.includes('--selftest')) {
+  selfcheckExitCodeFloor();
   const { doorSelftest } = await import('./doorplant.mjs');
   // EVERY exit path, this one included: `printBoundary` is a hoisted function
   // declaration precisely so this branch — which returns above main() — can
@@ -475,7 +500,7 @@ if (process.argv.includes('--selftest')) {
   // here was ALSO doing control flow — it is what kept the module from falling
   // through into main() — so the fall-through is now guarded explicitly at the
   // call site instead of by a side effect of exiting.
-  process.exitCode = selftestCode;
+  raiseExitCode(selftestCode);
 }
 
 const BROWSERS = [
