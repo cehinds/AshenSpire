@@ -11,7 +11,7 @@ import { createRunState } from '../../model/state.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
-import { equipmentRequirementReceipt, previewCompatibleHands } from '../../model/loadout.js';
+import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
   creationHandChoices, creationRelicChoices,
   selectStartingHand,
@@ -126,21 +126,18 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
   }
   function statsProblem() {
-    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
-    const remaining = remainingPoints();
-    if (remaining !== 0) return remaining > 0
-      ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
-      : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
-    if (problems.length) return problems[0].msg;
-    for (const pieceId of Object.values(state.startingHands).filter(Boolean)) {
-      const piece = registries.equipment.armaments.find((row) => row.id === pieceId);
-      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
-      if (!receipt.ok) {
-        const failed = receipt.failures[0];
-        return `${piece.name} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
-      }
+    let attributes = classAttributePreset(registries, state.classId, state.attributeMode);
+    if (state.attributeMode === POINTBUY && state.attributes) {
+      const remaining = remainingPoints();
+      if (remaining !== 0) return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
+      const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+      if (problems.length) return problems[0].msg;
+      attributes = state.attributes;
     }
+    const rejected = startingHandsRequirementFailure(registries, state.startingHands, attributes);
+    if (rejected) return `${rejected.piece.name} needs ${rejected.failure.attributeId} ${rejected.failure.required} — you have ${rejected.failure.actual}.`;
     return null;
   }
 

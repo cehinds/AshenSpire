@@ -58,7 +58,7 @@ import {
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
-  previewCompatibleHands,
+  previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
 import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
@@ -5270,6 +5270,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       startingHands: previewHands,
     });
     eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
+
+    const standardMismatch = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    standardMismatch.characterCreation.classes.herald.handIds.push('dagger');
+    const standardRosterValidation = validateContent(standardMismatch);
+    assert(standardRosterValidation.ok, 'a valid roster may expose an armament above the Standard preset');
+    const standardMismatchRegistries = createRegistries(standardMismatch);
+    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'standard');
+    const standardFailure = startingHandsRequirementFailure(standardMismatchRegistries, { leftHand: 'dagger' }, heraldStandard);
+    assert(standardFailure && standardFailure.piece.id === 'dagger'
+      && standardFailure.failure.attributeId === 'dexterity'
+      && standardFailure.failure.required === 11 && standardFailure.failure.actual === 10,
+    'Standard mode reports a selected hand requirement before Begin can throw');
 
     const selected = createRunState({
       seed: 69, classId: 'reaver', registries: REG,

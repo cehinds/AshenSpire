@@ -135,6 +135,17 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}) 
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
 
+/** First selected-hand requirement failure, shared by every creation mode. */
+export function startingHandsRequirementFailure(registries, hands = {}, attributes = {}) {
+  for (const pieceId of Object.values(hands).filter(Boolean)) {
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+    if (!piece) throw new Error(`unknown starting armament '${pieceId}'`);
+    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    if (!receipt.ok) return { piece, failure: receipt.failures[0] };
+  }
+  return null;
+}
+
 /**
  * A total hand snapshot for character-creation stat previews. The player's
  * actual choices stay untouched so the refusal can name an incompatible item;

@@ -24446,6 +24446,17 @@ function equipmentRequirementReceipt(registries, piece, attributes = {}) {
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
 
+/** First selected-hand requirement failure, shared by every creation mode. */
+function startingHandsRequirementFailure(registries, hands = {}, attributes = {}) {
+  for (const pieceId of Object.values(hands).filter(Boolean)) {
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+    if (!piece) throw new Error(`unknown starting armament '${pieceId}'`);
+    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    if (!receipt.ok) return { piece, failure: receipt.failures[0] };
+  }
+  return null;
+}
+
 /**
  * A total hand snapshot for character-creation stat previews. The player's
  * actual choices stay untouched so the refusal can name an incompatible item;
@@ -26196,7 +26207,7 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, startingHandsRequirementFailure, previewCompatibleHands, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/relicModifiers.js": function (module, exports, require) {
@@ -35875,7 +35886,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e4817a98ee';
+const SOURCE = '19844e3ff1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35909,7 +35920,7 @@ const SOURCE = 'e4817a98ee';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1122';
+const ORDINAL = '1123';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -36248,7 +36259,7 @@ const { createRunState } = require("src/model/state.js");
 const { statProjection, playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
 const { startingKitViews, startingArmourViews } = require("src/model/startingKits.js");
 const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } = require("src/model/attributes.js");
-const { equipmentRequirementReceipt, previewCompatibleHands } = require("src/model/loadout.js");
+const { previewCompatibleHands, startingHandsRequirementFailure } = require("src/model/loadout.js");
 const { creationHandChoices, creationRelicChoices, selectStartingHand } = require("src/model/characterCreation.js");
 
 
@@ -36363,21 +36374,18 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
   }
   function statsProblem() {
-    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
-    const remaining = remainingPoints();
-    if (remaining !== 0) return remaining > 0
-      ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
-      : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
-    if (problems.length) return problems[0].msg;
-    for (const pieceId of Object.values(state.startingHands).filter(Boolean)) {
-      const piece = registries.equipment.armaments.find((row) => row.id === pieceId);
-      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
-      if (!receipt.ok) {
-        const failed = receipt.failures[0];
-        return `${piece.name} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
-      }
+    let attributes = classAttributePreset(registries, state.classId, state.attributeMode);
+    if (state.attributeMode === POINTBUY && state.attributes) {
+      const remaining = remainingPoints();
+      if (remaining !== 0) return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
+      const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+      if (problems.length) return problems[0].msg;
+      attributes = state.attributes;
     }
+    const rejected = startingHandsRequirementFailure(registries, state.startingHands, attributes);
+    if (rejected) return `${rejected.piece.name} needs ${rejected.failure.attributeId} ${rejected.failure.required} — you have ${rejected.failure.actual}.`;
     return null;
   }
 
