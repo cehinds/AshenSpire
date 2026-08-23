@@ -206,6 +206,7 @@ if (process.argv.includes('--selftest')) {
   const WHOSE = '          if (e.pointerId !== pointerId) return;';
   const DOWN = "        const down = (e) => { if (e.pointerId === pointerId) off(); };";
   const LABEL = "        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);";
+  const HOLD_EVENT = '    const ev = origin.ev;';
   const RELEASE_END = "      onEnd: () => { if (armed) stop('idle'); return true; },";
   // The cancel teardown, which is HYGIENE ON TOP OF `WHOSE` and not a second
   // guard for a second case: a cancelled pointer dispatches no click, so the
@@ -452,11 +453,19 @@ if (process.argv.includes('--selftest')) {
       },
       {
         // The below-full overlap control must read AFTER A lifts. This plant
-        // commits at that boundary; a pre-lift sample cannot see it.
+        // commits at that boundary; a pre-lift sample cannot see it. The
+        // overlap flag is armed by a DIFFERENT pointerdown, so the plant leaves
+        // the ordinary A6 mouse/touch aborts intact and reaches only its own
+        // A7 edge instead of failing earlier for the wrong reason.
         name: 'an overlapping below-full hold commits when pointer A releases',
-        edits: [{ file: 'src/ui/components/holdconfirm.js',
-          find: RELEASE_END,
-          replace: "      onEnd: () => { if (armed) { stop('idle'); onConfirm(ev); } return true; }, /* planted: release commits */" }],
+        edits: [
+          { file: 'src/ui/components/holdconfirm.js',
+            find: HOLD_EVENT,
+            replace: "    const ev = origin.ev;\n    let overlapped = false;\n    const markOverlap = (e) => { if (e.pointerId !== ev.pointerId) overlapped = true; };\n    addEventListener('pointerdown', markOverlap, true); /* planted: remember another pointer */" },
+          { file: 'src/ui/components/holdconfirm.js',
+            find: RELEASE_END,
+            replace: "      onEnd: () => { removeEventListener('pointerdown', markOverlap, true); if (armed) { stop('idle'); if (overlapped) onConfirm(ev); } return true; }, /* planted: overlap makes release commit */" },
+        ],
         expectRed: redRe('A7.multiabort'),
       },
       {

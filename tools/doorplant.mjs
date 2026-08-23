@@ -137,7 +137,11 @@ export async function doorSelftest({ tool, plants, args = [], timeoutMs = 300000
       for (const e of edits) {
         const target = join(root, e.file);
         const bytes = readFileSync(target, 'utf8');
-        pristine.set(target, bytes);
+        // A defect can require two edits in one file. Preserve the bytes from
+        // before the FIRST edit; overwriting this entry after the second edit
+        // makes restore() retain half the plant and poisons every later edge,
+        // including the supposedly clean baseline.
+        if (!pristine.has(target)) pristine.set(target, bytes);
         if (e.append != null) { writeFileSync(target, `${bytes}\n${e.append}\n`); continue; }
         if (!bytes.includes(e.find)) { drifted = e.file; break; }
         // `all` replaces EVERY occurrence. A one-shot replace on a token that
