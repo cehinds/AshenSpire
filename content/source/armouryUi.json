@@ -5,8 +5,8 @@
   },
   "layout": {
     "shell": {
-      "characterRatio": 0.64,
-      "equipmentRatio": 0.36,
+      "characterRatio": 0.4,
+      "equipmentRatio": 0.6,
       "gapRem": 1.6
     },
     "character": {
@@ -16,14 +16,28 @@
     },
     "equipment": {
       "groupLabel": "Armaments",
+      "outerBorder": false,
       "slotOrder": ["armaments", "rightHand", "leftHand"]
+    },
+    "combatPower": {
+      "groupLabel": "Combat Power",
+      "cards": [
+        { "id": "strike", "role": "attack", "label": "Strike", "fullLabel": "Strike Power" },
+        { "id": "potency", "role": "technique", "label": "Potency", "fullLabel": "Technique Potency" },
+        { "id": "defense", "role": "guard", "label": "Defense", "fullLabel": "Guard / Defense" }
+      ]
+    },
+    "viewModes": {
+      "grid": { "label": "Stats", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
+      "rack": { "label": "Equipment", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
+      "hybrid": { "label": "Hybrid", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "folded" }
     },
     "responsive": {
       "breakpoint": 760,
       "phone": {
         "minWidth": "0",
-        "characterRatio": 0.46,
-        "equipmentRatio": 0.54
+        "characterRatio": 0.4,
+        "equipmentRatio": 0.6
       }
     }
   }

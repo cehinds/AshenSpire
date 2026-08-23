@@ -261,9 +261,10 @@ export function contextRegions() {
  * nothing consults is the next reader's false lead, and mountEquipment is its one
  * caller.
  */
-export function opensCollapsed(regionId, stored) {
+export function opensCollapsed(regionId, stored, mode = null) {
   const s = stored && stored[regionId];
   if (typeof s === 'boolean') return s;
+  if (mode && typeof mode[regionId] === 'string') return mode[regionId] !== 'expanded';
   return true;
 }
 
@@ -286,13 +287,30 @@ function buildArmoury(L, ui) {
 
   const equipment = document.createElement('section');
   equipment.className = 'armoury-equipment';
+  equipment.dataset.component = 'armoury.armamentsCard';
+  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
   equipment.innerHTML = `<header class="armoury-equipment-head"><h3>${esc(ui.layout.equipment.groupLabel)}</h3>`
     + '<p>Choose a socket, then compare what you carry.</p></header>';
   const slots = document.createElement('div');
-  slots.className = 'equip-slots';
+  slots.className = 'equip-slots armoury-slot-cards';
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
-  for (const slot of ordered) slots.appendChild(byId.get(slot.id));
+  for (const slot of ordered) {
+    const details = document.createElement('details');
+    details.className = 'armoury-slot-card';
+    details.dataset.component = 'armoury.armamentSubcard';
+    details.open = ui.viewMode.armaments === 'expanded';
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span class="armoury-slot-card-label">${esc(slot.label)}</span>`
+      + `<span class="armoury-slot-card-hint">${details.open ? 'Hide details' : 'Show details'}</span>`;
+    attachTooltip(summary, () => `<div class="tt-title">${esc(slot.label)}</div><p>Click to ${details.open ? 'fold' : 'expand'} this armament socket.</p>`);
+    details.addEventListener('toggle', () => {
+      const hint = summary.querySelector('.armoury-slot-card-hint');
+      if (hint) hint.textContent = details.open ? 'Hide details' : 'Show details';
+    });
+    details.append(summary, byId.get(slot.id));
+    slots.appendChild(details);
+  }
   equipment.appendChild(slots);
   equipment.appendChild(ui.picker());
   ui.right.appendChild(equipment);
@@ -530,6 +548,7 @@ export function mountEquipment(host, {
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
   let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  const viewMode = () => layout.viewModes[view] || { label: view, character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
   // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
@@ -541,7 +560,7 @@ export function mountEquipment(host, {
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
   const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
-  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -1066,21 +1085,26 @@ export function mountEquipment(host, {
 
   function characterPowerEntries() {
     const surface = equipmentSurfaceReceipt(registries, run);
-    const role = (id, label) => {
-      const row = surface.roles.find((candidate) => candidate.role === id);
+    const role = (card) => {
+      const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
         ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
+      const face = document.createElement('span');
+      face.className = 'combat-power-face';
+      face.innerHTML = `<span class="combat-power-label">${esc(card.label)}</span>`
+        + `<span class="combat-power-bonus">${esc(row ? `+${row.receipt.rarityBonus} gear` : '—')}</span>`
+        + `<strong class="combat-power-value">${esc(String(value))}</strong>`;
       return {
-        key: id,
+        key: card.id,
         kind: 'power',
         disclosure: 'face',
-        face: { label, value: String(value) },
-        reveal: { title: label, sense: `${label} after the current loadout.`, lines: [formula] },
+        face: { label: card.fullLabel, value: String(value), node: face },
+        reveal: { title: card.fullLabel, sense: `${card.fullLabel}. Tap to expand the calculation.`, lines: [formula] },
       };
     };
-    return [role('attack', 'Strike power'), role('guard', 'Guard / defense'), role('technique', 'Technique power')];
+    return layout.combatPower.cards.map(role);
   }
 
   function attributeEntries(projection) {
@@ -1121,11 +1145,16 @@ export function mountEquipment(host, {
     box.className = 'armoury-character-stats';
     const cls = registries.classes.get(run.class);
     const projection = statProjection(registries, run);
-    box.innerHTML = `<header class="character-summary"><h3>${esc(cls.name)}</h3>`
-      + `<p>${esc(cls.description || '')}</p><span>Level ${Number(run.level || 1)}</span></header>`;
+    box.innerHTML = `<header class="character-summary"><p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
+      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p></header>`;
 
     const powers = document.createElement('section');
     powers.className = 'character-power-cards';
+    powers.dataset.component = 'armoury.combatPowerGroup';
+    const powerHeading = document.createElement('h4');
+    powerHeading.className = 'character-power-heading';
+    powerHeading.textContent = layout.combatPower.groupLabel;
+    box.appendChild(powerHeading);
     mountDisclosure(powers, characterPowerEntries(), { moreLabel: 'more powers' });
     box.appendChild(powers);
 
@@ -1253,11 +1282,11 @@ export function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-composition="character-equipment">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-view-mode="${esc(viewMode().label)}" data-composition="character-equipment">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views" data-surface="armouryView">
-            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc((layout.viewModes[v] && layout.viewModes[v].label) || v)}</button>`).join('')}
           </div>
           <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
         </header>
@@ -1276,8 +1305,8 @@ export function mountEquipment(host, {
     panel.style.setProperty('--armoury-character-ratio', `${layout.shell.characterRatio}fr`);
     panel.style.setProperty('--armoury-equipment-ratio', `${layout.shell.equipmentRatio}fr`);
     panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
-    panel.style.setProperty('--armoury-sprite-ratio', String(layout.character.spriteRatio));
-    panel.style.setProperty('--armoury-stats-ratio', String(layout.character.statsRatio));
+    panel.style.setProperty('--armoury-sprite-ratio', `${layout.character.spriteRatio}fr`);
+    panel.style.setProperty('--armoury-stats-ratio', `${layout.character.statsRatio}fr`);
     panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
     panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
 
@@ -1315,6 +1344,7 @@ export function mountEquipment(host, {
       build(L, {
         left, right, blocks,
         layout,
+        viewMode: viewMode(),
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
         picker: () => pickerBlock(),
@@ -1339,6 +1369,14 @@ export function mountEquipment(host, {
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         view = b.dataset.member;
+        // A view is a presentation preset, not a second saved preference.
+        // Explicit per-region choices still win; untouched regions adopt the
+        // newly selected Stats/Equipment/Hybrid defaults.
+        for (const region of contextRegions()) {
+          if (!(storedFolds && typeof storedFolds[region.id] === 'boolean')) {
+            folded.set(region.id, opensCollapsed(region.id, null, viewMode()));
+          }
+        }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });

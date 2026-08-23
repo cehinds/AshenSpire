@@ -5236,11 +5236,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   test('71. Armoury layout is authored, stable, and responsive', () => {
     const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
-    eq(layout.shell.characterRatio, 0.64, 'character pane owns the authored 64% desktop share');
-    eq(layout.shell.equipmentRatio, 0.36, 'equipment pane owns the authored 36% desktop share');
+    eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
+    eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
     eq(layout.character.spriteRatio, 0.6, 'sprite owns the authored 60% character height');
     eq(layout.character.statsRatio, 0.4, 'stats own the authored 40% character height');
     eq(layout.equipment.slotOrder.join(','), 'armaments,rightHand,leftHand', 'equipment order is the authored armaments group then right and left hand');
+    eq(layout.combatPower.cards.map((card) => card.id).join(','), 'strike,potency,defense', 'Combat Power cards are authored in vertical display order');
+    eq(layout.viewModes.rack.label, 'Equipment', 'the equipment view has a player-facing authored label');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
   });

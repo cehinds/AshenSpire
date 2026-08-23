@@ -5,12 +5,25 @@
 // and never embeds a second set of layout numbers.
 
 const DEFAULTS = Object.freeze({
-  shell: { characterRatio: 0.64, equipmentRatio: 0.36, gapRem: 1.6 },
+  shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
   character: { spriteRatio: 0.6, statsRatio: 0.4, minWidth: '0' },
-  equipment: { groupLabel: 'Armaments', slotOrder: ['armaments', 'rightHand', 'leftHand'] },
+  equipment: { groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armaments', 'rightHand', 'leftHand'] },
+  combatPower: {
+    groupLabel: 'Combat Power',
+    cards: [
+      { id: 'strike', role: 'attack', label: 'Strike', fullLabel: 'Strike Power' },
+      { id: 'potency', role: 'technique', label: 'Potency', fullLabel: 'Technique Potency' },
+      { id: 'defense', role: 'guard', label: 'Defense', fullLabel: 'Guard / Defense' },
+    ],
+  },
+  viewModes: {
+    grid: { label: 'Stats', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
+    rack: { label: 'Equipment', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
+    hybrid: { label: 'Hybrid', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
+  },
   responsive: {
     breakpoint: 760,
-    phone: { minWidth: '0', characterRatio: 0.46, equipmentRatio: 0.54 },
+    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6 },
   },
 });
 
@@ -37,6 +50,8 @@ export function normalizeArmouryLayout(source = {}) {
   const shell = { ...DEFAULTS.shell, ...(raw.shell || {}) };
   const character = { ...DEFAULTS.character, ...(raw.character || {}) };
   const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
+  const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
+  const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
   const responsive = { ...DEFAULTS.responsive, ...(raw.responsive || {}) };
   const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
 
@@ -58,6 +73,10 @@ export function normalizeArmouryLayout(source = {}) {
     || !equipment.slotOrder.includes('leftHand')) {
     throw new Error('armouryUi.layout.equipment.slotOrder must start with armaments and include rightHand and leftHand');
   }
+  if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== 3
+    || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
+    throw new Error('armouryUi.layout.combatPower.cards must declare three labelled power cards');
+  }
 
   return Object.freeze({
     shell: Object.freeze({
@@ -72,8 +91,22 @@ export function normalizeArmouryLayout(source = {}) {
     }),
     equipment: Object.freeze({
       groupLabel: String(equipment.groupLabel || DEFAULTS.equipment.groupLabel),
+      outerBorder: equipment.outerBorder !== false,
       slotOrder: Object.freeze([...equipment.slotOrder]),
     }),
+    combatPower: Object.freeze({
+      groupLabel: String(combatPower.groupLabel || DEFAULTS.combatPower.groupLabel),
+      cards: Object.freeze(combatPower.cards.map((card) => Object.freeze({
+        id: String(card.id), role: String(card.role), label: String(card.label), fullLabel: String(card.fullLabel),
+      }))),
+    }),
+    viewModes: Object.freeze(Object.fromEntries(Object.entries(viewModes).map(([id, mode]) => [id, Object.freeze({
+      label: String(mode.label || id),
+      character: String(mode.character || 'folded'),
+      armaments: String(mode.armaments || 'folded'),
+      inventory: String(mode.inventory || 'folded'),
+      cards: String(mode.cards || 'folded'),
+    })]))),
     responsive: Object.freeze({
       breakpoint: positive(Number(responsive.breakpoint), 'responsive.breakpoint'),
       phone: Object.freeze({

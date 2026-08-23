@@ -3575,8 +3575,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(10, 8, 6, 0.26);
 }
 .armoury-sprite-pane .armoury-figure {
-  width: min(100%, 30rem);
-  height: 100%;
+  width: min(88%, 30rem);
+  height: 88%;
   max-height: 100%;
   min-width: 0;
 }
@@ -3593,18 +3593,30 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--line-soft);
 }
+.character-summary .character-kicker {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 .character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
 .character-summary span { color: var(--muted); white-space: nowrap; }
 .character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
 .character-power-cards,
 .character-attributes,
 .character-relics { margin-top: 0.7rem; }
+.character-power-heading { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0.7rem 0 0; }
 .character-attributes h4,
 .character-relics h4 { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .character-relics h4 span { color: var(--muted); margin-left: 0.35rem; }
 .character-power-cards .disc-faces,
 .character-attributes .disc-faces,
 .character-relics .disc-faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
+.character-power-cards .disc-faces { grid-template-columns: 1fr; }
+.character-relics .disc-faces { grid-template-columns: 1fr; }
 .character-power-cards .disc-face,
 .character-attributes .disc-face,
 .character-relics .disc-face {
@@ -3621,10 +3633,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-relics .disc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .character-power-cards .disc-value,
 .character-attributes .disc-value { margin-left: auto; color: var(--gold); }
+.combat-power-face { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 0.45rem; width: 100%; min-width: 0; text-align: left; }
+.combat-power-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combat-power-bonus { color: var(--muted); font-size: 0.8em; white-space: nowrap; }
+.combat-power-value { color: var(--gold); white-space: nowrap; }
 .character-power-cards .disc-reveal,
 .character-attributes .disc-reveal,
 .character-relics .disc-reveal { grid-column: 1 / -1; }
 .armoury-equipment { min-width: 0; }
+.armoury-equipment[data-outer-border='off'] { border: 0; }
 .armoury-equipment-head {
   display: flex;
   align-items: baseline;
@@ -3667,6 +3684,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   white-space: nowrap;
 }
 .armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
+.armoury-slot-card { width: 100%; min-width: 0; border-top: 1px solid var(--line-soft); }
+.armoury-slot-card summary { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; padding: 0.55rem 0.2rem; color: var(--parchment); cursor: pointer; list-style: none; }
+.armoury-slot-card summary::-webkit-details-marker { display: none; }
+.armoury-slot-card summary::before { content: '▸'; color: var(--gold); margin-right: 0.45rem; }
+.armoury-slot-card[open] summary::before { content: '▾'; }
+.armoury-slot-card-label { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-slot-card-hint { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+.armoury-slot-card > .equip-slot { margin: 0 0 0.6rem; }
+.armoury[data-view-mode='Stats'] .armoury-body,
+.armoury[data-view-mode='Equipment'] .armoury-body { flex: 1 1 65%; min-height: 0; }
+.armoury[data-view-mode='Stats'] .armoury-strip[data-collapsed='0'],
+.armoury[data-view-mode='Equipment'] .armoury-inventory[data-collapsed='0'] { flex: 0 0 35%; min-height: 0; overflow: auto; }
 
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-body {
   grid-template-columns: minmax(0, var(--armoury-phone-character-ratio)) minmax(0, var(--armoury-phone-equipment-ratio));
@@ -3685,6 +3714,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell { min-height: 4.7rem; padding: 0.15rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell img { height: 2.5rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary .character-kicker { display: block; font-size: 0.68rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .combat-power-bonus { display: none; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
@@ -16492,8 +16523,8 @@ const armouryUi = {
   },
   "layout": {
     "shell": {
-      "characterRatio": 0.64,
-      "equipmentRatio": 0.36,
+      "characterRatio": 0.4,
+      "equipmentRatio": 0.6,
       "gapRem": 1.6
     },
     "character": {
@@ -16503,18 +16534,65 @@ const armouryUi = {
     },
     "equipment": {
       "groupLabel": "Armaments",
+      "outerBorder": false,
       "slotOrder": [
         "armaments",
         "rightHand",
         "leftHand"
       ]
     },
+    "combatPower": {
+      "groupLabel": "Combat Power",
+      "cards": [
+        {
+          "id": "strike",
+          "role": "attack",
+          "label": "Strike",
+          "fullLabel": "Strike Power"
+        },
+        {
+          "id": "potency",
+          "role": "technique",
+          "label": "Potency",
+          "fullLabel": "Technique Potency"
+        },
+        {
+          "id": "defense",
+          "role": "guard",
+          "label": "Defense",
+          "fullLabel": "Guard / Defense"
+        }
+      ]
+    },
+    "viewModes": {
+      "grid": {
+        "label": "Stats",
+        "character": "expanded",
+        "armaments": "folded",
+        "inventory": "folded",
+        "cards": "expanded"
+      },
+      "rack": {
+        "label": "Equipment",
+        "character": "folded",
+        "armaments": "expanded",
+        "inventory": "expanded",
+        "cards": "folded"
+      },
+      "hybrid": {
+        "label": "Hybrid",
+        "character": "folded",
+        "armaments": "folded",
+        "inventory": "folded",
+        "cards": "folded"
+      }
+    },
     "responsive": {
       "breakpoint": 760,
       "phone": {
         "minWidth": "0",
-        "characterRatio": 0.46,
-        "equipmentRatio": 0.54
+        "characterRatio": 0.4,
+        "equipmentRatio": 0.6
       }
     }
   }
@@ -23839,12 +23917,25 @@ Object.assign(module.exports, { armouryUiProblems, equippedTagColor });
 // and never embeds a second set of layout numbers.
 
 const DEFAULTS = Object.freeze({
-  shell: { characterRatio: 0.64, equipmentRatio: 0.36, gapRem: 1.6 },
+  shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
   character: { spriteRatio: 0.6, statsRatio: 0.4, minWidth: '0' },
-  equipment: { groupLabel: 'Armaments', slotOrder: ['armaments', 'rightHand', 'leftHand'] },
+  equipment: { groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armaments', 'rightHand', 'leftHand'] },
+  combatPower: {
+    groupLabel: 'Combat Power',
+    cards: [
+      { id: 'strike', role: 'attack', label: 'Strike', fullLabel: 'Strike Power' },
+      { id: 'potency', role: 'technique', label: 'Potency', fullLabel: 'Technique Potency' },
+      { id: 'defense', role: 'guard', label: 'Defense', fullLabel: 'Guard / Defense' },
+    ],
+  },
+  viewModes: {
+    grid: { label: 'Stats', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
+    rack: { label: 'Equipment', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
+    hybrid: { label: 'Hybrid', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
+  },
   responsive: {
     breakpoint: 760,
-    phone: { minWidth: '0', characterRatio: 0.46, equipmentRatio: 0.54 },
+    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6 },
   },
 });
 
@@ -23871,6 +23962,8 @@ function normalizeArmouryLayout(source = {}) {
   const shell = { ...DEFAULTS.shell, ...(raw.shell || {}) };
   const character = { ...DEFAULTS.character, ...(raw.character || {}) };
   const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
+  const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
+  const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
   const responsive = { ...DEFAULTS.responsive, ...(raw.responsive || {}) };
   const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
 
@@ -23892,6 +23985,10 @@ function normalizeArmouryLayout(source = {}) {
     || !equipment.slotOrder.includes('leftHand')) {
     throw new Error('armouryUi.layout.equipment.slotOrder must start with armaments and include rightHand and leftHand');
   }
+  if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== 3
+    || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
+    throw new Error('armouryUi.layout.combatPower.cards must declare three labelled power cards');
+  }
 
   return Object.freeze({
     shell: Object.freeze({
@@ -23906,8 +24003,22 @@ function normalizeArmouryLayout(source = {}) {
     }),
     equipment: Object.freeze({
       groupLabel: String(equipment.groupLabel || DEFAULTS.equipment.groupLabel),
+      outerBorder: equipment.outerBorder !== false,
       slotOrder: Object.freeze([...equipment.slotOrder]),
     }),
+    combatPower: Object.freeze({
+      groupLabel: String(combatPower.groupLabel || DEFAULTS.combatPower.groupLabel),
+      cards: Object.freeze(combatPower.cards.map((card) => Object.freeze({
+        id: String(card.id), role: String(card.role), label: String(card.label), fullLabel: String(card.fullLabel),
+      }))),
+    }),
+    viewModes: Object.freeze(Object.fromEntries(Object.entries(viewModes).map(([id, mode]) => [id, Object.freeze({
+      label: String(mode.label || id),
+      character: String(mode.character || 'folded'),
+      armaments: String(mode.armaments || 'folded'),
+      inventory: String(mode.inventory || 'folded'),
+      cards: String(mode.cards || 'folded'),
+    })]))),
     responsive: Object.freeze({
       breakpoint: positive(Number(responsive.breakpoint), 'responsive.breakpoint'),
       phone: Object.freeze({
@@ -35820,7 +35931,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '00acfa27e6';
+const SOURCE = '71b37ad365';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35854,7 +35965,7 @@ const SOURCE = '00acfa27e6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1120';
+const ORDINAL = '1126';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -44419,9 +44530,10 @@ function contextRegions() {
  * nothing consults is the next reader's false lead, and mountEquipment is its one
  * caller.
  */
-function opensCollapsed(regionId, stored) {
+function opensCollapsed(regionId, stored, mode = null) {
   const s = stored && stored[regionId];
   if (typeof s === 'boolean') return s;
+  if (mode && typeof mode[regionId] === 'string') return mode[regionId] !== 'expanded';
   return true;
 }
 
@@ -44444,13 +44556,30 @@ function buildArmoury(L, ui) {
 
   const equipment = document.createElement('section');
   equipment.className = 'armoury-equipment';
+  equipment.dataset.component = 'armoury.armamentsCard';
+  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
   equipment.innerHTML = `<header class="armoury-equipment-head"><h3>${esc(ui.layout.equipment.groupLabel)}</h3>`
     + '<p>Choose a socket, then compare what you carry.</p></header>';
   const slots = document.createElement('div');
-  slots.className = 'equip-slots';
+  slots.className = 'equip-slots armoury-slot-cards';
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
-  for (const slot of ordered) slots.appendChild(byId.get(slot.id));
+  for (const slot of ordered) {
+    const details = document.createElement('details');
+    details.className = 'armoury-slot-card';
+    details.dataset.component = 'armoury.armamentSubcard';
+    details.open = ui.viewMode.armaments === 'expanded';
+    const summary = document.createElement('summary');
+    summary.innerHTML = `<span class="armoury-slot-card-label">${esc(slot.label)}</span>`
+      + `<span class="armoury-slot-card-hint">${details.open ? 'Hide details' : 'Show details'}</span>`;
+    attachTooltip(summary, () => `<div class="tt-title">${esc(slot.label)}</div><p>Click to ${details.open ? 'fold' : 'expand'} this armament socket.</p>`);
+    details.addEventListener('toggle', () => {
+      const hint = summary.querySelector('.armoury-slot-card-hint');
+      if (hint) hint.textContent = details.open ? 'Hide details' : 'Show details';
+    });
+    details.append(summary, byId.get(slot.id));
+    slots.appendChild(details);
+  }
   equipment.appendChild(slots);
   equipment.appendChild(ui.picker());
   ui.right.appendChild(equipment);
@@ -44688,6 +44817,7 @@ function mountEquipment(host, {
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
   let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  const viewMode = () => layout.viewModes[view] || { label: view, character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
   // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
@@ -44699,7 +44829,7 @@ function mountEquipment(host, {
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
   const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
-  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds)]));
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
 
@@ -45224,21 +45354,26 @@ function mountEquipment(host, {
 
   function characterPowerEntries() {
     const surface = equipmentSurfaceReceipt(registries, run);
-    const role = (id, label) => {
-      const row = surface.roles.find((candidate) => candidate.role === id);
+    const role = (card) => {
+      const row = surface.roles.find((candidate) => candidate.role === card.role);
       const value = row ? row.receipt.value : 0;
       const formula = row
         ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
         : 'No armament receipt is active.';
+      const face = document.createElement('span');
+      face.className = 'combat-power-face';
+      face.innerHTML = `<span class="combat-power-label">${esc(card.label)}</span>`
+        + `<span class="combat-power-bonus">${esc(row ? `+${row.receipt.rarityBonus} gear` : '—')}</span>`
+        + `<strong class="combat-power-value">${esc(String(value))}</strong>`;
       return {
-        key: id,
+        key: card.id,
         kind: 'power',
         disclosure: 'face',
-        face: { label, value: String(value) },
-        reveal: { title: label, sense: `${label} after the current loadout.`, lines: [formula] },
+        face: { label: card.fullLabel, value: String(value), node: face },
+        reveal: { title: card.fullLabel, sense: `${card.fullLabel}. Tap to expand the calculation.`, lines: [formula] },
       };
     };
-    return [role('attack', 'Strike power'), role('guard', 'Guard / defense'), role('technique', 'Technique power')];
+    return layout.combatPower.cards.map(role);
   }
 
   function attributeEntries(projection) {
@@ -45279,11 +45414,16 @@ function mountEquipment(host, {
     box.className = 'armoury-character-stats';
     const cls = registries.classes.get(run.class);
     const projection = statProjection(registries, run);
-    box.innerHTML = `<header class="character-summary"><h3>${esc(cls.name)}</h3>`
-      + `<p>${esc(cls.description || '')}</p><span>Level ${Number(run.level || 1)}</span></header>`;
+    box.innerHTML = `<header class="character-summary"><p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
+      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p></header>`;
 
     const powers = document.createElement('section');
     powers.className = 'character-power-cards';
+    powers.dataset.component = 'armoury.combatPowerGroup';
+    const powerHeading = document.createElement('h4');
+    powerHeading.className = 'character-power-heading';
+    powerHeading.textContent = layout.combatPower.groupLabel;
+    box.appendChild(powerHeading);
     mountDisclosure(powers, characterPowerEntries(), { moreLabel: 'more powers' });
     box.appendChild(powers);
 
@@ -45411,11 +45551,11 @@ function mountEquipment(host, {
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
     wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-composition="character-equipment">
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-view-mode="${esc(viewMode().label)}" data-composition="character-equipment">
         <header class="armoury-head">
           <h2>ARMOURY</h2>
           <div class="armoury-views" data-surface="armouryView">
-            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc((layout.viewModes[v] && layout.viewModes[v].label) || v)}</button>`).join('')}
           </div>
           <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
         </header>
@@ -45434,8 +45574,8 @@ function mountEquipment(host, {
     panel.style.setProperty('--armoury-character-ratio', `${layout.shell.characterRatio}fr`);
     panel.style.setProperty('--armoury-equipment-ratio', `${layout.shell.equipmentRatio}fr`);
     panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
-    panel.style.setProperty('--armoury-sprite-ratio', String(layout.character.spriteRatio));
-    panel.style.setProperty('--armoury-stats-ratio', String(layout.character.statsRatio));
+    panel.style.setProperty('--armoury-sprite-ratio', `${layout.character.spriteRatio}fr`);
+    panel.style.setProperty('--armoury-stats-ratio', `${layout.character.statsRatio}fr`);
     panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
     panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
 
@@ -45473,6 +45613,7 @@ function mountEquipment(host, {
       build(L, {
         left, right, blocks,
         layout,
+        viewMode: viewMode(),
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
         picker: () => pickerBlock(),
@@ -45497,6 +45638,14 @@ function mountEquipment(host, {
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
         view = b.dataset.member;
+        // A view is a presentation preset, not a second saved preference.
+        // Explicit per-region choices still win; untouched regions adopt the
+        // newly selected Stats/Equipment/Hybrid defaults.
+        for (const region of contextRegions()) {
+          if (!(storedFolds && typeof storedFolds[region.id] === 'boolean')) {
+            folded.set(region.id, opensCollapsed(region.id, null, viewMode()));
+          }
+        }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });

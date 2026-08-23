@@ -3272,8 +3272,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: rgba(10, 8, 6, 0.26);
 }
 .armoury-sprite-pane .armoury-figure {
-  width: min(100%, 30rem);
-  height: 100%;
+  width: min(88%, 30rem);
+  height: 88%;
   max-height: 100%;
   min-width: 0;
 }
@@ -3290,18 +3290,30 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--line-soft);
 }
+.character-summary .character-kicker {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 .character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
 .character-summary span { color: var(--muted); white-space: nowrap; }
 .character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
 .character-power-cards,
 .character-attributes,
 .character-relics { margin-top: 0.7rem; }
+.character-power-heading { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0.7rem 0 0; }
 .character-attributes h4,
 .character-relics h4 { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
 .character-relics h4 span { color: var(--muted); margin-left: 0.35rem; }
 .character-power-cards .disc-faces,
 .character-attributes .disc-faces,
 .character-relics .disc-faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
+.character-power-cards .disc-faces { grid-template-columns: 1fr; }
+.character-relics .disc-faces { grid-template-columns: 1fr; }
 .character-power-cards .disc-face,
 .character-attributes .disc-face,
 .character-relics .disc-face {
@@ -3318,10 +3330,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-relics .disc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .character-power-cards .disc-value,
 .character-attributes .disc-value { margin-left: auto; color: var(--gold); }
+.combat-power-face { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 0.45rem; width: 100%; min-width: 0; text-align: left; }
+.combat-power-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combat-power-bonus { color: var(--muted); font-size: 0.8em; white-space: nowrap; }
+.combat-power-value { color: var(--gold); white-space: nowrap; }
 .character-power-cards .disc-reveal,
 .character-attributes .disc-reveal,
 .character-relics .disc-reveal { grid-column: 1 / -1; }
 .armoury-equipment { min-width: 0; }
+.armoury-equipment[data-outer-border='off'] { border: 0; }
 .armoury-equipment-head {
   display: flex;
   align-items: baseline;
@@ -3364,6 +3381,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   white-space: nowrap;
 }
 .armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
+.armoury-slot-card { width: 100%; min-width: 0; border-top: 1px solid var(--line-soft); }
+.armoury-slot-card summary { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; padding: 0.55rem 0.2rem; color: var(--parchment); cursor: pointer; list-style: none; }
+.armoury-slot-card summary::-webkit-details-marker { display: none; }
+.armoury-slot-card summary::before { content: '▸'; color: var(--gold); margin-right: 0.45rem; }
+.armoury-slot-card[open] summary::before { content: '▾'; }
+.armoury-slot-card-label { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-slot-card-hint { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+.armoury-slot-card > .equip-slot { margin: 0 0 0.6rem; }
+.armoury[data-view-mode='Stats'] .armoury-body,
+.armoury[data-view-mode='Equipment'] .armoury-body { flex: 1 1 65%; min-height: 0; }
+.armoury[data-view-mode='Stats'] .armoury-strip[data-collapsed='0'],
+.armoury[data-view-mode='Equipment'] .armoury-inventory[data-collapsed='0'] { flex: 0 0 35%; min-height: 0; overflow: auto; }
 
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-body {
   grid-template-columns: minmax(0, var(--armoury-phone-character-ratio)) minmax(0, var(--armoury-phone-equipment-ratio));
@@ -3382,6 +3411,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell { min-height: 4.7rem; padding: 0.15rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .es-cell img { height: 2.5rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary .character-kicker { display: block; font-size: 0.68rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .combat-power-bonus { display: none; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
