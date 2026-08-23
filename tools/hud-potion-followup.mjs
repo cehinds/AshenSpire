@@ -41,9 +41,9 @@ export function sourceFindings(s) {
       || !s.combat.includes('appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);')) {
     bad.push('S4 the first utility potion no longer follows Health/Mana into the H slot');
   }
-  if (!/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{[^}]*justify-content:\s*flex-end;[^}]*flex-direction:\s*row;[^}]*direction:\s*rtl;/.test(s.css)
+  if (!/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{[^}]*justify-content:\s*flex-start;[^}]*flex-direction:\s*row;[^}]*direction:\s*rtl;/.test(s.css)
       || !/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{\s*grid-column:\s*2;\s*\}/.test(s.css)) {
-    bad.push('S5 utility potions are no longer right-anchored in the second HUD track');
+    bad.push('S5 utility potions no longer pack from the Quick Access right edge');
   }
   if (!/\.hud-potions,\s*\n\.topbar\.combat-hud\.shared-hud \.hud-relics\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/.test(s.css)
       || !/\.hud-potions\s*>\s*\*\s*\{[^}]*flex:\s*0 0 auto;/.test(s.css)) {
@@ -54,6 +54,10 @@ export function sourceFindings(s) {
   }
   if (!/:root:not\(\[data-layout='narrow'\]\) \.topbar\.combat-hud\.shared-hud \.flask-charge-count\s*\{\s*font-size:\s*calc\(14px \/ var\(--ui-zoom, 1\)\);\s*\}/.test(s.css)) {
     bad.push('S8 the wide HUD charge count no longer scales to 14 screen pixels');
+  }
+  if (!/\.topbar\.combat-hud\.shared-hud \.hud-vitals-panel\s*\{[^}]*border:\s*0;[^}]*padding:\s*0;/.test(s.css)
+      || !/\.topbar\.combat-hud\.shared-hud \.hud-vitals-panel \.rescard-frame\s*\{[^}]*background:\s*transparent;[^}]*border:\s*0;/.test(s.css)) {
+    bad.push('S9 Vitals still paints a bordered/scaled container around the resource stack');
   }
   return bad;
 }
@@ -87,6 +91,13 @@ export function receiptFindings(r) {
     bad.push(`B7 wide primary grid is not four equal cards ${JSON.stringify(r.primaryCards)}`);
   }
   if (!near(r.chargeCountScreenPx, 14, 0.35)) bad.push(`B8 wide charge count is ${r.chargeCountScreenPx}px, expected 14px`);
+  if (!r.vitalsShell || r.vitalsShell.border !== '0px none' || r.vitalsShell.background !== 'transparent'
+      || !Array.isArray(r.resourceFrames) || r.resourceFrames.some((frame) => frame.border !== '0px none' || frame.background !== 'transparent')) {
+    bad.push(`B9 Vitals still paints a shell/resource frame ${JSON.stringify({ vitalsShell: r.vitalsShell, resourceFrames: r.resourceFrames })}`);
+  }
+  if (!near(r.utilityRightEdge, r.quickRightEdge)) {
+    bad.push(`B10 potion right edge ${r.utilityRightEdge}px is not flush with Quick Access ${r.quickRightEdge}px`);
+  }
   return bad;
 }
 
@@ -100,7 +111,7 @@ function runSourceSelftest() {
     ) })],
     ['Health moves off F', 'S3 ', (s) => ({ ...s, input: s.input.replace("defKey: 'f'", "defKey: 'x'") })],
     ['first utility moves off H', 'S4 ', (s) => ({ ...s, input: s.input.replace("defKey: 'h'", "defKey: 'x'") })],
-    ['utility row anchors left', 'S5 ', (s) => ({ ...s, css: s.css.replace('justify-content: flex-end;\n  flex-direction: row;', 'justify-content: flex-start;\n  flex-direction: row;') })],
+    ['utility row anchors left', 'S5 ', (s) => ({ ...s, css: s.css.replace('justify-content: flex-start;\n  flex-direction: row;', 'justify-content: flex-end;\n  flex-direction: row;') })],
     ['utility row stops flex growth', 'S6 ', (s) => ({ ...s, css: s.css.replace(
       /(\.topbar\.combat-hud\.shared-hud \.hud-potions,\r?\n\.topbar\.combat-hud\.shared-hud \.hud-relics \{\r?\n  )display: flex;/,
       '$1display: grid;',
@@ -110,11 +121,12 @@ function runSourceSelftest() {
       '$1width: 40px; height: var(--tap-floor);',
     ) })],
     ['wide charge count stays at narrow size', 'S8 ', (s) => ({ ...s, css: s.css.replace('font-size: calc(14px / var(--ui-zoom, 1));', 'font-size: calc(10px / var(--ui-zoom, 1));') })],
+    ['Vitals restores its visible container', 'S9 ', (s) => ({ ...s, css: s.css.replace('border: 0;\n  padding: 0;', 'border: 1px solid var(--line-soft);\n  padding: var(--hud-panel-pad);') })],
   ];
   let failed = 0;
   const cleanBad = sourceFindings(clean);
   if (cleanBad.length) { failed++; console.error(`FAIL clean source — ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source — eight approved seams present');
+  else console.log('PASS clean source — nine approved seams present');
   for (const [name, own, mutate] of plants) {
     const got = sourceFindings(mutate(clean));
     if (got.some((line) => line.startsWith(own))) console.log(`RED  ${name} — ${got.find((line) => line.startsWith(own))}`);
@@ -132,11 +144,19 @@ function cleanBrowserReceipt() {
     chargeKeys: ['F', 'G'],
     utilityKeys: ['H'],
     utilityGrowth: {
-      before: { left: 1050, right: 1094, count: 1, scrollWidth: 44 },
-      after: { left: 1050, right: 1094, count: 3, scrollWidth: 132 },
+      before: { left: 1050, right: 1140, count: 1, scrollWidth: 44 },
+      after: { left: 1008, right: 1140, count: 3, scrollWidth: 132 },
     },
     primaryCards: Array.from({ length: 4 }, () => ({ width: 44, height: 44 })),
     chargeCountScreenPx: 14,
+    vitalsShell: { border: '0px none', background: 'transparent' },
+    resourceFrames: [
+      { border: '0px none', background: 'transparent' },
+      { border: '0px none', background: 'transparent' },
+      { border: '0px none', background: 'transparent' },
+    ],
+    utilityRightEdge: 1140,
+    quickRightEdge: 1140,
   };
 }
 
@@ -147,15 +167,17 @@ function runReceiptSelftest() {
     ['applied percentage ignores config', 'B2 ', (r) => ({ ...r, appliedAvailablePct: 100 })],
     ['Health and Mana swap keys', 'B3 ', (r) => ({ ...r, chargeKeys: ['G', 'F'] })],
     ['first utility loses H', 'B4 ', (r) => ({ ...r, utilityKeys: [] })],
-    ['utility right edge moves', 'B5 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, right: 1140 } } })],
+    ['utility right edge moves', 'B5 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, right: 1100 } } })],
     ['utility tray stops extending', 'B6 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, scrollWidth: r.utilityGrowth.before.scrollWidth } } })],
     ['one of four primary cards shrinks', 'B7 ', (r) => ({ ...r, primaryCards: r.primaryCards.map((box, i) => i === 3 ? { width: 40, height: 44 } : box) })],
     ['wide charge count stays small', 'B8 ', (r) => ({ ...r, chargeCountScreenPx: 10 })],
+    ['Vitals shell becomes visible', 'B9 ', (r) => ({ ...r, vitalsShell: { border: '1px solid', background: 'rgb(18, 15, 12)' } })],
+    ['potion right edge drifts', 'B10 ', (r) => ({ ...r, utilityRightEdge: 1120 })],
   ];
   let failed = 0;
   const cleanBad = receiptFindings(clean);
   if (cleanBad.length) { failed++; console.error(`FAIL clean receipt — ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean receipt — eight browser contracts hold');
+  else console.log('PASS clean receipt — ten browser contracts hold');
   for (const [name, own, mutate] of plants) {
     const got = receiptFindings(mutate(structuredClone(clean)));
     if (got.some((line) => line.startsWith(own))) console.log(`RED  ${name} — ${got.find((line) => line.startsWith(own))}`);
@@ -234,6 +256,22 @@ const BROWSER_READ = `(() => {
     utilityGrowth: { before: { ...beforeBox, count: utility.length }, after: { ...afterBox, count: afterCount } },
     primaryCards: primary,
     chargeCountScreenPx: chargeCount ? parseFloat(getComputedStyle(chargeCount).fontSize) * zoom : null,
+    vitalsShell: (() => {
+      const style = getComputedStyle(left);
+      return {
+        border: style.borderTopWidth + ' ' + style.borderTopStyle,
+        background: /transparent|\/\s*0\)?$/.test(style.backgroundColor) ? 'transparent' : style.backgroundColor,
+      };
+    })(),
+    resourceFrames: [...left.querySelectorAll('.rescard-frame')].map((frame) => {
+      const style = getComputedStyle(frame);
+      return {
+        border: style.borderTopWidth + ' ' + style.borderTopStyle,
+        background: /transparent|\/\s*0\)?$/.test(style.backgroundColor) ? 'transparent' : style.backgroundColor,
+      };
+    }),
+    utilityRightEdge: utility.length ? Math.max(...utility.map((el) => box(el).right)) : box(host).right,
+    quickRightEdge: controlBox.right,
   };
 })()`;
 
@@ -282,7 +320,7 @@ async function runBrowserDoor() {
       bad.forEach((line) => console.error(`FINDING ${line}`));
       process.exitCode = 1;
     } else {
-      console.log('hud-potion-followup: OK — 8/8 checks passed.');
+      console.log('hud-potion-followup: OK — 10/10 checks passed.');
     }
   } catch (error) {
     console.error(`hud-potion-followup: HARNESS — ${error.stack || error}`);
@@ -304,6 +342,6 @@ else {
     console.log(`hud-potion-followup: ${findings.length} failure(s)`);
     process.exitCode = 1;
   } else {
-    console.log('hud-potion-followup: OK — 8 checks passed');
+    console.log('hud-potion-followup: OK — 10 checks passed');
   }
 }

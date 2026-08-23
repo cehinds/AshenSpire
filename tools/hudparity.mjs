@@ -237,6 +237,14 @@ const READ = `(() => {
     const unitBox = unitEl ? unitEl.getBoundingClientRect() : null;
     const frameEl = unitEl ? unitEl.querySelector(':scope > .rescard-frame') : null;
     const frameBox = frameEl ? frameEl.getBoundingClientRect() : null;
+    const frameStyle = frameEl ? getComputedStyle(frameEl) : null;
+    const frameBorder = frameStyle ? (parseFloat(frameStyle.borderLeftWidth) || 0)
+      + (parseFloat(frameStyle.borderRightWidth) || 0)
+      + (parseFloat(frameStyle.borderTopWidth) || 0)
+      + (parseFloat(frameStyle.borderBottomWidth) || 0) : 0;
+    const frameBackground = frameStyle ? frameStyle.backgroundColor : '';
+    const framePainted = !!frameStyle && frameBorder > 0
+      || !!frameStyle && !(/transparent|\/\s*0\)?$/.test(frameBackground));
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -255,6 +263,7 @@ const READ = `(() => {
       frame: frameBox ? {
         left: frameBox.left, top: frameBox.top, right: frameBox.right, bottom: frameBox.bottom,
         width: frameBox.width, height: frameBox.height, padAfterBar: frameBox.right - b.right,
+        border: frameStyle ? frameStyle.border : '', background: frameBackground, painted: framePainted,
       } : null,
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
@@ -400,7 +409,7 @@ function judgeCell(cell, mapR, comR, refTable) {
     } else {
       ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
     }
-    const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame
+    const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
       && bar.frame.bottom > read.centerMeta.top + PX_TOL && bar.frame.top < read.centerMeta.bottom - PX_TOL) : [];
     if (!read.centerMeta || frameOverlaps.length) {
@@ -543,21 +552,18 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
-    // P7 VISIBLE CARD — the full reference track is geometry only. The visible
-    // bordered card must stop just after the scaled trough instead of drawing a
-    // full-width empty box that makes every maximum look identical.
+    // P7 INVISIBLE REFERENCE FRAME — the reference frame may remain in the DOM
+    // for measurement, but the shared Vitals design does not paint a card around
+    // the longest resource. The trough and label remain the visible geometry.
     for (const [who, b] of [['map', m], ['combat', c]]) {
       if (!b.frame) {
         fail(`FINDING P7/card ${tag} ${who} — no .rescard-frame; the full reference track is still the visible bordered card.`);
         continue;
       }
-      const pad = b.frame.padAfterBar;
-      if (pad < 2 || pad > 12) {
-        fail(`FINDING P7/card ${tag} ${who} right-padding=${pad.toFixed(2)} px — the visible card must end after the scaled trough with only small right padding.`);
-      } else if (askM < 99 && b.frame.width >= b.unitWidth - 1) {
-        fail(`FINDING P7/card ${tag} ${who} frame=${b.frame.width.toFixed(2)} px reference=${b.unitWidth.toFixed(2)} px — the full reference track is visible instead of remaining invisible.`);
+      if (b.frame.painted) {
+        fail(`FINDING P7/card ${tag} ${who} — .rescard-frame still paints ${b.frame.border} ${b.frame.background}; the Vitals reference frame must be invisible.`);
       } else {
-        ok(`P7/card ${tag} ${who} — frame ${b.frame.width.toFixed(2)} px of ${b.unitWidth.toFixed(2)} px reference; ${pad.toFixed(2)} px after bar`);
+        ok(`P7/card ${tag} ${who} — reference frame retained for measurement but transparent and borderless`);
       }
     }
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
@@ -939,7 +945,7 @@ async function selftest() {
       // reaches Cinders; move the visible frames across BOTH current axes.
       name: 'visible resource cards paint through the centred Cinders receipt',
       file: 'styles/combat.css',
-      append: ".rescard-frame { transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
+      append: ".rescard-frame { background: #120f0c; border: 1px solid #4c3b1f; transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
       expectRed: /FINDING P8\/no-overlap .*resourceFrames=\[/,
     },
     {
