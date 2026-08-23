@@ -71,6 +71,7 @@ import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 // at the top of this file still holds.
 import { nearestShrine, shrineLane, litNodes } from '../src/model/mapknowledge.js';
 import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/model/levelup.js';
+import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 // The one UI import in this suite, and it is deliberate: `settingOn` is where a
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
@@ -1974,6 +1975,121 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const healed = saves.loadRun(REG);
     assert(healed && healed.loadout, 'a pre-equipment save loads with a fresh loadout');
     eq(healed.loadout.sets.rightHand[0], 'straightSword', 'the healed loadout restores the class-authored starting weapon');
+  });
+
+  test('28s. equipment authors HP, Mana, and Stamina pools without healing saves or swaps', () => {
+    for (const [id, mod] of [
+      ['towerShield', 'self.maxHp=+10'],
+      ['blightRod', 'self.maxMana=+1'],
+      ['twinblade', 'self.maxStamina=+1'],
+    ]) {
+      assert(REG.equipment.armaments.find((piece) => piece.id === id)?.mods.includes(mod), `${id} authors ${mod} in generated content`);
+    }
+    const poolFields = {
+      ...REG.equipment.modFields,
+      maxMana: { field: 'maxMana', scope: 'run', apply: 'maxMana', label: 'Max Mana' },
+      maxStamina: { field: 'maxStamina', scope: 'run', apply: 'maxStamina', label: 'Max Stamina' },
+    };
+    const probe = {
+      id: 'poolProbe', name: 'Pool Probe', kind: 'weapon', hand: 'right', rarity: 'rare',
+      tags: [], mods: ['self.maxHp=+10', 'self.maxMana=+1', 'self.maxStamina=+1'], unlock: '', dropWeight: 1,
+    };
+    const POOL_REG = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        modFields: poolFields,
+        armaments: [...REG.equipment.armaments, probe],
+      },
+    };
+    eq(validateEquipment(POOL_REG).join('; '), '', 'all three pool applies are accepted by the closed vocabulary');
+
+    const run = createRunState({ seed: 0x281, classId: 'reaver', registries: POOL_REG });
+    const base = { hp: run.maxHp, mana: run.maxMana, stamina: run.maxStamina };
+    run.hp -= 7;
+    run.mana = Math.max(0, run.mana - 1);
+    run.stamina = Math.max(0, run.stamina - 1);
+    run.loadout.sets.rightHand[1] = probe.id;
+    assert(cycleSet(POOL_REG, run.loadout, 'rightHand', 1, { meta: {}, inCombat: false }), 'the probe set becomes active');
+    stampDeck(POOL_REG, run);
+    eq(JSON.stringify(runMods(POOL_REG, run.loadout, run.class)), JSON.stringify({
+      maxHp: 10, maxMana: 1, maxStamina: 1, swapCostDelta: 0, startStatuses: [],
+    }), 'runMods exposes every authored pool bonus');
+    eq(run.maxHp, base.hp + 10, 'camp equip adds 10 maximum HP');
+    eq(run.maxHp - run.hp, 7, 'camp equip carries the absolute HP deficit');
+    eq(run.maxMana, base.mana + 1, 'camp equip adds 1 maximum Mana');
+    eq(run.maxMana - run.mana, 1, 'camp equip carries the absolute Mana deficit');
+    eq(run.maxStamina, base.stamina + 1, 'camp equip adds 1 maximum Stamina');
+    eq(run.maxStamina - run.stamina, 1, 'camp equip carries the absolute Stamina deficit');
+
+    const shown = equipmentSurfaceReceipt(POOL_REG, run, {
+      candidate: { slotId: 'rightHand', setIndex: 0, pieceId: 'straightSword' },
+    }).candidate.resourceChanges;
+    for (const [id, amount] of [['maxHp', 10], ['maxMana', 1], ['maxStamina', 1]]) {
+      const row = shown.find((entry) => entry.id === id);
+      assert(row && row.after === row.before - amount, `${id} candidate receipt reports its exact delta`);
+    }
+
+    cycleSet(POOL_REG, run.loadout, 'rightHand', 0, { meta: {}, inCombat: false });
+    stampDeck(POOL_REG, run);
+    const combat = createCombat({
+      registries: POOL_REG, rng: createRng(0x282),
+      player: {
+        classId: run.class, attributes: run.attributes,
+        maxHp: run.maxHp, hp: run.maxHp - 7,
+        maxMana: run.maxMana, mana: Math.max(0, run.maxMana - 1),
+        maxStamina: run.maxStamina, stamina: Math.max(0, run.maxStamina - 1),
+        energyMax: run.energyMax, drawPerTurn: run.drawPerTurn, deck: run.deck,
+        relicIds: [], loadout: run.loadout, equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+        equipmentPoolDeficits: run.equipmentPoolDeficits,
+      },
+      enemyIds: ['fellWarden'],
+    });
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(combat.player.maxHp, base.hp + 10, 'combat swap moves maximum HP');
+    eq(combat.player.maxHp - combat.player.hp, 7, 'combat swap carries HP deficit');
+    eq(combat.player.maxMana, base.mana + 1, 'combat swap moves maximum Mana');
+    eq(combat.player.maxMana - combat.player.mana, 1, 'combat swap carries Mana deficit');
+    eq(combat.player.maxStamina, base.stamina + 1, 'combat swap moves maximum Stamina');
+    eq(combat.player.maxStamina - combat.player.stamina, 1, 'combat swap carries Stamina deficit');
+    combat.player.mana = 0;
+    combat.player.energy = REG.balance.equipment.swapCost;
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+    eq(combat.player.maxMana, base.mana, 'swapping away removes the Mana bonus');
+    eq(combat.player.mana, 0, 'swapping away carries spent Mana beyond the smaller vessel');
+    combat.player.energy = REG.balance.equipment.swapCost;
+    dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    eq(combat.player.mana, 0, 'swapping back cannot refill spent Mana');
+
+    const OLD_REG = {
+      ...REG,
+      equipment: {
+        ...REG.equipment,
+        armaments: [...REG.equipment.armaments, { ...probe, mods: [] }],
+      },
+    };
+    const old = createRunState({ seed: 0x283, classId: 'reaver', registries: OLD_REG });
+    old.loadout.sets.rightHand[0] = probe.id;
+    stampDeck(OLD_REG, old);
+    const oldNumbers = { maxHp: old.maxHp, hp: old.maxHp - 9, maxMana: old.maxMana, mana: 0, maxStamina: old.maxStamina, stamina: 0 };
+    Object.assign(old, oldNumbers, { schemaVersion: 4 });
+    delete old.equipmentPoolBonuses;
+    delete old.equipmentPoolDeficits;
+    const changed = POOL_REG;
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, JSON.stringify(old));
+    const loaded = createSaveManager(storage).loadRun(changed);
+    assert(loaded, 'a schema-v4 equipped save survives the new live bonus');
+    for (const [key, value] of Object.entries(oldNumbers)) eq(loaded[key], value, `${key} keeps its old-save number`);
+    eq(JSON.stringify(loaded.equipmentPoolBonuses), JSON.stringify({ maxHp: 0, maxMana: 0, maxStamina: 0 }),
+      'migration records the old equipment bonuses, not the changed CSV');
+    loaded.loadout.sets.rightHand[0] = 'straightSword';
+    stampDeck(changed, loaded);
+    loaded.loadout.sets.rightHand[0] = probe.id;
+    stampDeck(changed, loaded);
+    eq(loaded.maxHp, oldNumbers.maxHp + 10, 'the next real equip mutation adopts the live bonus');
+    eq(loaded.maxMana, oldNumbers.maxMana + 1, 'the next real equip mutation adopts live Mana');
+    eq(loaded.maxStamina, oldNumbers.maxStamina + 1, 'the next real equip mutation adopts live Stamina');
   });
 
   // ---- 28p. the swap PRICE: three rules, three measured numbers -----------

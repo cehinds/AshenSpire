@@ -889,6 +889,8 @@ export function mountEquipment(host, {
     const rm = runMods(registries, run.loadout, run.class);
     const bits = [];
     if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
+    if (rm.maxMana) bits.push(`Max Mana ${rm.maxMana > 0 ? '+' : ''}${rm.maxMana}`);
+    if (rm.maxStamina) bits.push(`Max Stamina ${rm.maxStamina > 0 ? '+' : ''}${rm.maxStamina}`);
     for (const s of rm.startStatuses) bits.push(`${registries.statuses.get(s.status).name} ${s.stacks}`);
     const tags = loadoutTags(registries, run.loadout, run.class);
     const foot = document.createElement('div');
