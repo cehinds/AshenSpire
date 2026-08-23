@@ -811,11 +811,34 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
-- **One shared HUD component on Map and Combat.** Top row: character/run identity left,
-  Cinders centred, Act/Floor/Seed/Build/Source right. Resource row: the unchanged HP/MP/SP
-  stack and Relics on the left; an equal-card 2×2 control grid on the right (Armoury/Menu,
-  then HP/Mana flasks). The HUD bottom row owns utility potions; the map's `− ⊙ + ?` controls
-  remain the board's separate lower control group. Neither screen hand-writes a second HUD.
+- **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
+  screen-specific markup. The shared composition is `shared-run-hud`, containing
+  `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
+  `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
+  `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
+  `armoury-control`, `quick-menu-control`, `crimson-flask-control`, `azure-flask-control`,
+  `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
+  `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
+  `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
+  its screen supplies state and callbacks. UI components never own simulation state.
+- **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
+  character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
+  It never wraps into a second row. When width is insufficient, the right trail progressively
+  hides Source, then Seed, then Build; Act and Floor remain visible longest. There is no duplicate
+  Act/Floor line beneath the character name. Neither screen hand-writes a second HUD.
+- **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
+  HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
+  then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
+  The two panels have equal outer height and the flask row aligns with the bottom of SP within
+  one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
+  Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
+  scrolls left. Refillable HP/Mana flasks are controls, not utility potions. The map's `− ⊙ + ?`
+  controls remain the board's separate lower control group.
+- **Responsive combat composition.** `battlefield-stage` vertically centres player and enemy
+  combatant frames at every supported shape rather than bottom-aligning them. Narrow layouts keep
+  larger, accessible player cards in the horizontal `player-hand-tray` without colliding with the
+  combatants or `combat-action-rail`. The shared HUD and combat composition are verified at
+  1440×860, 1200×730, 844×390, 390×844, and 320×640.
 - **Resource-bar length is data-scaled, not a cap.** The default reference maxima are HP 200,
   MP 50, SP 50. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
