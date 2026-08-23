@@ -823,17 +823,23 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   its screen supplies state and callbacks. UI components never own simulation state.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
-  It never wraps into a second row. When width is insufficient, the right trail progressively
-  hides Source, then Seed, then Build; Act and Floor remain visible longest. There is no duplicate
-  Act/Floor line beneath the character name. Neither screen hand-writes a second HUD.
+  Those five metadata items share one data-owned font size, one horizontal baseline, and one
+  vertically centred row; no item may stagger above or below another. When width is insufficient,
+  the right trail progressively hides Source, then Seed, then Build; Act and Floor remain visible
+  longest. There is no duplicate Act/Floor line beneath the character name. Neither screen
+  hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
   then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
   The two panels have equal outer height and the flask row aligns with the bottom of SP within
   one CSS pixel. `inventory-belt` places Relics beneath Vitals and utility Potions beneath Quick
   Access on the same row. Utility potions form one right-anchored horizontal tray that grows or
-  scrolls left. Refillable HP/Mana flasks are controls, not utility potions. The map's `− ⊙ + ?`
-  controls remain the board's separate lower control group.
+  scrolls left. Relic and Potion trays share one vertically centred baseline and one data-owned
+  narrow item gap (default 2 px); utility potion tiles remain the same size as relic tiles.
+  The Vitals and Quick Access component-panel background opacity is data-owned and defaults to
+  0%, while their borders, contents, and accessible hit areas remain visible. Refillable HP/Mana
+  flasks are controls, not utility potions. The map's `− ⊙ + ?` controls remain the board's
+  separate lower control group.
 - **Responsive combat composition.** `battlefield-stage` vertically centres player and enemy
   combatant frames at every supported shape rather than bottom-aligning them. Narrow layouts keep
   larger, accessible player cards in the horizontal `player-hand-tray` without colliding with the
