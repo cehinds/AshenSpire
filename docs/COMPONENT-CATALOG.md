@@ -75,6 +75,24 @@ primary-row gap, a 2 px Quick Access card gap, and a 2 px vertical vital-row
 gap. These are data-owned in `balance.ui.hudPresentation`, projected once by
 `src/main.js`, and consumed by the shared Map/Combat stylesheet.
 
+### Data-driven presentation tokens
+
+| Setting | Default | Runtime projection | What it controls |
+|---|---:|---|---|
+| `componentBackgroundOpacityPct` | `0` | `--hud-component-background-opacity` | Shared component-card background opacity. |
+| `metadataFontPx` | `11` | `--hud-metadata-font-px` | One font size for Act, Floor, Build, Seed, and Source. |
+| `beltItemGapPx` | `2` | `--hud-belt-item-gap-px` | Uniform relic/potion slot spacing. |
+| `portraitScale` | `0.7` | `--hud-portrait-scale` | Portrait-badge size without changing identity semantics. |
+| `primaryRowGapPx` | `8` | `--hud-primary-row-gap-px` | Gap between Vitals and Quick Access. |
+| `controlGapPx` | `2` | `--hud-control-gap-px` | Gap inside the Quick Access 2×2 control grid. |
+| `resourceRowGapPx` | `2` | `--hud-resource-row-gap-px` | Vertical spacing between HP, MP, and SP. |
+| `cindersMaxWidthPct` | `30` | `--hud-cinders-max-width` | Maximum centered Cinders track width in viewport units. |
+| `metadataMaxWidthPct` | `30` | `--hud-metadata-max-width` | Maximum right metadata-trail width in viewport units. |
+| `metadataShowTotals` | `false` | `data-hud-metadata-show-totals` | Whether Act/Floor include their `/ total` values. |
+
+Changing these defaults is a data edit. `src/main.js` validates and projects
+them; Map and Combat then consume the same runtime values through the shared HUD.
+
 ### Run-header layout contract
 
 ```text

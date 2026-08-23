@@ -35,6 +35,14 @@
     button.copy { margin-top:11px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); padding:5px 8px; cursor:pointer; }
     button.copy:hover { border-color:var(--gold); }
     .catalog-footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; padding-top:16px; font-size:12px; }
+    .token-panel { margin:18px 0 24px; padding:16px; border:1px solid #483b29; border-radius:10px; background:color-mix(in srgb,var(--panel) 88%,transparent); }
+    .token-panel h2 { margin:0 0 5px; }
+    .token-panel p { margin:0 0 12px; color:var(--muted); }
+    .token-table-wrap { overflow-x:auto; }
+    .token-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .token-table th,.token-table td { padding:7px 9px; border-top:1px solid #3d3022; text-align:left; vertical-align:top; }
+    .token-table th { color:var(--muted); font-weight:600; }
+    .token-table code { color:#e9d59d; }
     /* Miniature visual language: deliberately schematic, not a second implementation. */
     .mini { width:min(250px,100%); min-height:70px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .mini-header { width:100%; border:1px solid var(--line); padding:9px; display:grid; grid-template-columns:1.3fr .7fr 1.4fr; gap:7px; font:10px ui-monospace,monospace; color:var(--muted); }
@@ -58,6 +66,25 @@
   <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><span class="count" id="count"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
+  <section class="token-panel" aria-labelledby="token-heading">
+    <h2 id="token-heading">Data-driven HUD tokens</h2>
+    <p>Defaults live in <code>balance.ui.hudPresentation</code>; <code>src/main.js</code> validates and projects them once for the shared Map/Combat HUD.</p>
+    <div class="token-table-wrap"><table class="token-table">
+      <thead><tr><th>Setting</th><th>Default</th><th>Runtime projection</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>componentBackgroundOpacityPct</code></td><td>0</td><td><code>--hud-component-background-opacity</code></td><td>Component-card background opacity</td></tr>
+        <tr><td><code>metadataFontPx</code></td><td>11</td><td><code>--hud-metadata-font-px</code></td><td>Shared metadata font size</td></tr>
+        <tr><td><code>beltItemGapPx</code></td><td>2</td><td><code>--hud-belt-item-gap-px</code></td><td>Relic/potion slot spacing</td></tr>
+        <tr><td><code>portraitScale</code></td><td>0.7</td><td><code>--hud-portrait-scale</code></td><td>Portrait-badge scale</td></tr>
+        <tr><td><code>primaryRowGapPx</code></td><td>8</td><td><code>--hud-primary-row-gap-px</code></td><td>Vitals/Quick Access gap</td></tr>
+        <tr><td><code>controlGapPx</code></td><td>2</td><td><code>--hud-control-gap-px</code></td><td>Quick Access grid gap</td></tr>
+        <tr><td><code>resourceRowGapPx</code></td><td>2</td><td><code>--hud-resource-row-gap-px</code></td><td>HP/MP/SP vertical gap</td></tr>
+        <tr><td><code>cindersMaxWidthPct</code></td><td>30</td><td><code>--hud-cinders-max-width</code></td><td>Centered Cinders track cap</td></tr>
+        <tr><td><code>metadataMaxWidthPct</code></td><td>30</td><td><code>--hud-metadata-max-width</code></td><td>Right metadata-trail cap</td></tr>
+        <tr><td><code>metadataShowTotals</code></td><td>false</td><td><code>data-hud-metadata-show-totals</code></td><td>Act/Floor total visibility</td></tr>
+      </tbody>
+    </table></div>
+  </section>
   <section class="grid" id="grid" aria-live="polite"></section>
   <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
 </main>
