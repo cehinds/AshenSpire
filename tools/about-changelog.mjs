@@ -317,7 +317,7 @@ export const REFUSAL_SCOPE = [
 ].join('\n');
 export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
-const LINK_DEFINITION = /^ {0,3}\[([^\]]+)\]:\s*\S/;
+// The label is bracket-scanned because an escaped `]` is content, not its end.
 // CommonMark §link-reference-definitions, "matching link labels": two labels match
 // when their NORMALIZED forms are equal — case folded, outer whitespace stripped,
 // and CONSECUTIVE INTERNAL spaces, tabs and line endings COLLAPSED TO ONE SPACE.
@@ -344,8 +344,24 @@ export function normalizeLinkLabel(label) {
 export function linkDefinitionLabels(markdown) {
   const labels = new Set();
   for (const line of markdown.split(/\r?\n/)) {
-    const match = line.match(LINK_DEFINITION);
-    if (match) labels.add(normalizeLinkLabel(match[1]));
+    const start = line.search(/^ {0,3}\[/);
+    if (start < 0) continue;
+    const open = line.indexOf('[', start);
+    const close = matchingBracket(line, open, '[', ']');
+    if (close < 0 || line[close + 1] !== ':' || !/^\s*\S/.test(line.slice(close + 2))) continue;
+    labels.add(normalizeLinkLabel(line.slice(open + 1, close)));
+  }
+  return labels;
+}
+function bracketLabels(text) {
+  const labels = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] !== '[') continue;
+    const close = matchingBracket(text, i, '[', ']');
+    if (close < 0) continue;
+    labels.push(text.slice(i + 1, close));
+    i = close;
   }
   return labels;
 }
@@ -380,11 +396,11 @@ function consumeRun(run, count, fromEnd, removed) {
   }
   run.remaining -= count;
 }
-function flattenDelimiters(text, marker) {
+function flattenEmphasis(text) {
   const removed = new Set();
   const escaped = new Set();
   for (let i = 0; i < text.length; i++) {
-    if (text[i] !== marker) continue;
+    if (text[i] !== '*' && text[i] !== '_') continue;
     // CommonMark consumes the active escape and renders the marker literally.
     // Leaving the slash in the projection would expose syntax; treating the marker
     // as a delimiter would delete the character the author meant the player to see.
@@ -401,7 +417,8 @@ function flattenDelimiters(text, marker) {
   }
   const runs = [];
   for (let i = 0; i < text.length; i++) {
-    if (text[i] !== marker || escaped.has(i)) continue;
+    if ((text[i] !== '*' && text[i] !== '_') || escaped.has(i)) continue;
+    const marker = text[i];
     const start = i;
     while (text[i + 1] === marker && !escaped.has(i + 1)) i++;
     const length = i - start + 1;
@@ -412,7 +429,7 @@ function flattenDelimiters(text, marker) {
     const canClose = marker === '_'
       ? right && (!left || afterPunctuation)
       : right;
-    runs.push({ start, length, remaining: length, canOpen, canClose });
+    runs.push({ marker, start, length, remaining: length, canOpen, canClose });
   }
   const openers = [];
   for (const closer of runs) {
@@ -420,7 +437,8 @@ function flattenDelimiters(text, marker) {
       while (closer.remaining) {
         let openerIndex = -1;
         for (let i = openers.length - 1; i >= 0; i--) {
-          if (openers[i].remaining && !breaksRuleOfThree(openers[i], closer)) {
+          if (openers[i].marker === closer.marker
+            && openers[i].remaining && !breaksRuleOfThree(openers[i], closer)) {
             openerIndex = i;
             break;
           }
@@ -430,6 +448,10 @@ function flattenDelimiters(text, marker) {
         const count = opener.remaining >= 2 && closer.remaining >= 2 ? 2 : 1;
         consumeRun(opener, count, true, removed);
         consumeRun(closer, count, false, removed);
+        // A delimiter opened inside the emphasis that just closed cannot later
+        // pair across that closing boundary. Keeping it would turn crossing
+        // `*`/`_` runs into nested emphasis that CommonMark never rendered.
+        openers.splice(openerIndex + 1);
         if (!opener.remaining) openers.splice(openerIndex, 1);
       }
     }
@@ -466,7 +488,7 @@ export function flattenInline(text, where, labels = new Set()) {
     }
   }
   if (labels.size) {
-    for (const [, label] of text.matchAll(/\[([^\][]+)\]/g)) {
+    for (const label of bracketLabels(text)) {
       if (labels.has(normalizeLinkLabel(label))) {
         throw new Error(`${where}: prose contains a shortcut reference link, which the in-game changelog cannot render — write it in words`);
       }
@@ -478,7 +500,7 @@ export function flattenInline(text, where, labels = new Set()) {
   // A code span opens and closes with a run of exactly the same length. The shared
   // scanner carries that length without cutting a longer run short; escaped opening
   // backticks stay literal, while backslashes inside an opened span remain content.
-  return flattenCodeSpans(flattenDelimiters(flattenDelimiters(text, '*'), '_'));
+  return flattenCodeSpans(flattenEmphasis(text));
 }
 
 export function parseChangelog(markdown) {
@@ -752,6 +774,8 @@ async function selftest() {
     if (full.detail !== 'Supports [keyboard][gamepad] input.') throw new Error(`rewrote it to: ${full.detail}`);
     const [collapsed] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Supports [keyboard][] input.\n');
     if (collapsed.detail !== 'Supports [keyboard][] input.') throw new Error(`rewrote the collapsed form to: ${collapsed.detail}`);
+    const [escapedLabel] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Supports [guide][foo\\]bar] input.\n');
+    if (escapedLabel.detail !== 'Supports [guide][foo\\]bar] input.') throw new Error(`rewrote the escaped-label form to: ${escapedLabel.detail}`);
     console.log('PASS a reference-style shape with NO definition is prose, not a link');
   } catch (error) { console.error(`FAIL undefined reference shape refused or altered: ${error.message}`); process.exitCode = 1; }
   // Underscores have stricter delimiter rules than asterisks: intraword runs
@@ -775,6 +799,11 @@ async function selftest() {
     console.log('PASS intraword asterisk emphasis flattens and non-flanking edges stay literal');
   } catch (error) { console.error(`FAIL asterisk flanking: ${error.message}`); process.exitCode = 1; }
   try {
+    const [crossing] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Reads *foo _bar* baz_ exactly.\n');
+    if (crossing.detail !== 'Reads foo _bar baz_ exactly.') throw new Error(`rewrote it to: ${crossing.detail}`);
+    console.log('PASS emphasis markers cannot pair across another marker boundary');
+  } catch (error) { console.error(`FAIL crossing emphasis: ${error.message}`); process.exitCode = 1; }
+  try {
     const [escaped] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps \\*literal\\* and flattens \\**adjacent** plus \\__under__ correctly.\n');
     if (escaped.detail !== 'Keeps *literal* and flattens *adjacent* plus _under_ correctly.') throw new Error(`rewrote it to: ${escaped.detail}`);
     const parity = flattenInline('\\\\**bold**', 'backslash parity positive');
@@ -792,6 +821,12 @@ async function selftest() {
   // the file rather than from a string handed to the parser. All three of these
   // reached the projection at exit 0 before 2026-08-22.
   const treePlants = [
+    {
+      name: 'crossing emphasis delimiters preserve the unmatched marker pair', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads *foo _bar* baz_ here.',
+      write: { detail: 'Docs only. It reads foo _bar baz_ here.' },
+    },
     {
       name: 'backslash-escaped asterisks survive as literal characters', file: 'CHANGELOG.md',
       find: '). Docs only.',
@@ -827,6 +862,18 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. See [the guide][docs] for the rest.\n\n[docs]: https://example.invalid/guide',
       expect: 'prose contains a reference-style link',
+    },
+    {
+      name: 'reference definition with an escaped closing bracket', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [guide][foo\\]bar] for the rest.\n\n[foo\\]bar]: /docs',
+      expect: 'prose contains a reference-style link',
+    },
+    {
+      name: 'shortcut definition with an escaped closing bracket', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [foo\\]bar] for the rest.\n\n[foo\\]bar]: /docs',
+      expect: 'prose contains a shortcut reference link',
     },
     {
       name: 'collapsed reference link in prose', file: 'CHANGELOG.md',
