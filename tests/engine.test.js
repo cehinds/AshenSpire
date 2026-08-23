@@ -1574,23 +1574,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
     // THE TROUGH IS MEASURED AGAINST HIS REFERENCE, NOT AGAINST THE POPULATION.
-    // E9 / #254: Constantine ruled 500 HP / 50 MP / 50 SP, and the row carries
+    // E9 / #254: Constantine ruled 200 HP / 20 MP / 20 SP, and the row carries
     // it as `domainMax` (Law 0 clause 3 — an override is data). Before that
     // ruling this pair asserted `lengthPct === 100` at the largest WIS-derived
     // maxMana, which was a claim about the DERIVED ceiling and is now false by
     // his word rather than by a defect. Both numbers below are DERIVED FROM THE
     // CONSTANT, never typed, so moving the reference moves the test with it.
-    eq(domains.main.mana, HUD_REFERENCE_MAX.pool, 'the mana ceiling is his reference, not the derived population');
+    eq(domains.main.mana, HUD_REFERENCE_MAX.mana, 'the mana ceiling is his reference, not the derived population');
     const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.pool) * 100,
+    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.mana) * 100,
       'the largest WIS-derived maxMana takes its share of the reference, not the whole track');
     // AND THE OTHER SIDE OF THE SAME LINE: a pool standing AT the reference
     // fills the track whole. Without this cell the assertion above is one
     // number with nothing on the far side of it and could not tell a wrong
     // reference from a right one.
-    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.pool, mana: HUD_REFERENCE_MAX.pool };
+    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.mana, mana: HUD_REFERENCE_MAX.mana };
     const full = resourceBarPlan(REG, 'main', atRef, atRef, domains).find((b) => b.id === 'mana');
     eq(full.lengthPct, 100, 'a pool AT the reference fills its track');
   });
@@ -4327,7 +4327,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '46/3/5', 'tuned HP/actions/hand formulas reach the run');
     eq(`${REG.balance.levelUp.firstCost}/${REG.balance.levelUp.costStep}`, '800/200', 'five level purchases cost 6000 through the authored ramp');
-    eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.pool}`, '200/50', 'HUD references are authored as 200/50/50');
+    eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.scalingStat}/${tunedProfiles.unarmedAttack.pointsPerTier}`, '-6/strength/1', 'physical Strike is -6 + STR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');

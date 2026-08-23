@@ -142,7 +142,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   //     screen's. HP, then Mana, then Stamina — the map does
   //     not get its own list and cannot drift from combat's.
   //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
-  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     reference table (HUD_REFERENCE_MAX, his 200/20/20), so each pool's length
   //     means the same thing on both screens.
   //   · The `run` IS the view and the entity here, exactly as it is in
   //     tools/hybridstats.mjs — the readers take current/max off it and a row

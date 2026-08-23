@@ -9586,7 +9586,7 @@ Object.assign(module.exports, { stances });
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
-//              his 200/50, one home. Poise omits it and stays derived.
+//              his 200/20/20, one home. Poise omits it and stays derived.
 //   band       OPTIONAL for other surfaces/content. The canonical main HUD does
 //              not use it: HP, MP and SP each own a vertical row, in that order.
 //
@@ -9609,7 +9609,7 @@ Object.assign(module.exports, { stances });
 /**
  * THE REFERENCE SCALE — HIS RULING, 2026-08-22, AND IT LIVES HERE ALONE.
  *
- * Constantine: **200 HP / 50 MP / 50 SP**. A bar's
+ * Constantine: **200 HP / 20 MP / 20 SP**. A bar's
  * TROUGH is `scale(max) / scale(reference)` of its track, so these two numbers
  * are the whole of what a full bar looks like. Change them here and nowhere
  * else: the rows below point at them, `resourceDomains()` reads the row, and no
@@ -9624,8 +9624,10 @@ Object.assign(module.exports, { stances });
 const HUD_REFERENCE_MAX = Object.freeze({
   /** Health's upper reference. His number. */
   hp: 200,
-  /** Every pool's upper reference — Mana and Stamina share it. His number. */
-  pool: 50,
+  /** Mana's upper reference. Its own data-driven ceiling. */
+  mana: 20,
+  /** Stamina's upper reference. Its own data-driven ceiling. */
+  stamina: 20,
 });
 
 const resources = [
@@ -9638,7 +9640,7 @@ const resources = [
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
-    domainMax: HUD_REFERENCE_MAX.pool,
+    domainMax: HUD_REFERENCE_MAX.stamina,
   },
   {
     id: 'mana',
@@ -9649,7 +9651,7 @@ const resources = [
     order: 20,
     surfaces: ['main'],
     source: 'mana',
-    domainMax: HUD_REFERENCE_MAX.pool,
+    domainMax: HUD_REFERENCE_MAX.mana,
   },
   {
     id: 'hp',
@@ -22500,11 +22502,12 @@ function populationsFor(registries) {
  * resourceLabelCeilings(registries) → { [surfaceId]: { [rowId]: number } }
  *
  * THE WIDEST NUMBER A PLATE CAN EVER PRINT, and it is NOT the trough's
- * reference. These were one field until 2026-08-22 and his 500/50 ruling
+ * reference. These were one field until 2026-08-22 and his 200/20/20 ruling
  * (E9 / #254) pulled them apart:
  *
  *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
- *     above anything the content can reach. `domainMax`, 500 for HP.
+ *     above anything the content can reach. `domainMax`, 200 for HP and 20
+ *     for each current pool.
  *   · the PLATE reserves the width of the widest LABEL it will ever draw, so
  *     the track cannot move when a digit is gained mid-run (resbars.js's
  *     `--plate-reserve-*`, and the reason it exists is measured there). The
@@ -36656,7 +36659,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '93015fb139';
+const SOURCE = '40cfb3cb0f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36690,7 +36693,7 @@ const SOURCE = '93015fb139';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1116';
+const ORDINAL = '1144';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40314,7 +40317,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   //     screen's. HP, then Mana, then Stamina — the map does
   //     not get its own list and cannot drift from combat's.
   //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
-  //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
+  //     reference table (HUD_REFERENCE_MAX, his 200/20/20), so each pool's length
   //     means the same thing on both screens.
   //   · The `run` IS the view and the entity here, exactly as it is in
   //     tools/hybridstats.mjs — the readers take current/max off it and a row
@@ -43516,7 +43519,7 @@ function hybridUnit(bar, tooltipExtra) {
   //
   // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
   // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
-  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+  // set — 200 HP, 20 MP, 20 SP — an upper mark far above anything the content can
   // reach. The plate must reserve the widest LABEL it can ever draw, which is
   // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
   // the reference put three digits where two will ever print and crushed the

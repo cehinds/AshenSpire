@@ -21,7 +21,7 @@
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
 //              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
-//              his 200/50, one home. Poise omits it and stays derived.
+//              his 200/20/20, one home. Poise omits it and stays derived.
 //   band       OPTIONAL for other surfaces/content. The canonical main HUD does
 //              not use it: HP, MP and SP each own a vertical row, in that order.
 //
@@ -44,7 +44,7 @@
 /**
  * THE REFERENCE SCALE — HIS RULING, 2026-08-22, AND IT LIVES HERE ALONE.
  *
- * Constantine: **200 HP / 50 MP / 50 SP**. A bar's
+ * Constantine: **200 HP / 20 MP / 20 SP**. A bar's
  * TROUGH is `scale(max) / scale(reference)` of its track, so these two numbers
  * are the whole of what a full bar looks like. Change them here and nowhere
  * else: the rows below point at them, `resourceDomains()` reads the row, and no
@@ -59,8 +59,10 @@
 export const HUD_REFERENCE_MAX = Object.freeze({
   /** Health's upper reference. His number. */
   hp: 200,
-  /** Every pool's upper reference — Mana and Stamina share it. His number. */
-  pool: 50,
+  /** Mana's upper reference. Its own data-driven ceiling. */
+  mana: 20,
+  /** Stamina's upper reference. Its own data-driven ceiling. */
+  stamina: 20,
 });
 
 export const resources = [
@@ -73,7 +75,7 @@ export const resources = [
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
-    domainMax: HUD_REFERENCE_MAX.pool,
+    domainMax: HUD_REFERENCE_MAX.stamina,
   },
   {
     id: 'mana',
@@ -84,7 +86,7 @@ export const resources = [
     order: 20,
     surfaces: ['main'],
     source: 'mana',
-    domainMax: HUD_REFERENCE_MAX.pool,
+    domainMax: HUD_REFERENCE_MAX.mana,
   },
   {
     id: 'hp',
