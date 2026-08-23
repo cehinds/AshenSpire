@@ -1285,6 +1285,7 @@ async function selftest() {
     plants,
     timeoutMs: 300000,
   });
+  const filePlantCount = plants.length;
   // THE FIFTEENTH KNOWN-BAD IS NOT A FILE EDIT, so it cannot live in the array
   // above: doorplant runs the tool with `spawnSync`, which drains both pipes
   // continuously, and a reader that always drains is the one consumer this
@@ -1292,21 +1293,32 @@ async function selftest() {
   const flushCode = await pipedOutputPlant();
   const flushUnknown = flushCode === null;
   const flushLabel = flushUnknown ? 'UNKNOWN' : (flushCode ? 'RED' : 'green');
-  const total = code || (flushUnknown ? 2 : flushCode);
-  // DOORPLANT'S OWN VERDICT LINE COVERS PLANTS 1-14 AND IS PRINTED BEFORE PLANT
-  // 15 RUNS. Left as it is — it is that harness's line about its own corpus —
+  // SERVER TEARDOWN IS A THIRD EXIT-DOOR CLAIM. It is browser-free and compares
+  // this exact tool with a mutant whose one server-close line is removed; see
+  // `serverClosePlant`. The two processes print the same UNKNOWN verdict and
+  // exit 2 if the three-second forced-exit backstop is allowed to decide, so the
+  // plant requires the fixed process to drain before an earlier outer deadline
+  // while the mutant is still alive at that deadline.
+  const serverCloseCode = await serverClosePlant();
+  const serverCloseLabel = serverCloseCode ? 'RED' : 'green';
+  const total = code || serverCloseCode || (flushUnknown ? 2 : flushCode);
+  // DOORPLANT'S OWN VERDICT LINE COVERS THE WHOLE FILE-BYTE CORPUS AND IS
+  // PRINTED BEFORE THE TWO EXIT-DOOR PLANTS RUN. Left as it is — it is that
+  // harness's line about its own corpus —
   // and closed here instead, because a run that printed `SELFTEST GREEN` and
-  // then failed plant 15 would be a tool contradicting itself in its own output,
+  // then failed either exit-door plant would be a tool contradicting itself,
   // which is the whole complaint this file makes about everything else.
-  if (code || (!flushUnknown && flushCode)) {
-    console.error(`displayfirst: SELFTEST RED — plants 1-14 (doorplant, above) ${code ? 'RED' : 'green'}, `
-      + `plant 15 the piped consumer ${flushLabel}. The line above covers 1-14 only.`);
+  if (code || serverCloseCode || (!flushUnknown && flushCode)) {
+    console.error(`displayfirst: SELFTEST RED — ${filePlantCount} file-byte plants (doorplant, above) ${code ? 'RED' : 'green'}, `
+      + `plant 15 the piped consumer ${flushLabel}, server-close regression ${serverCloseLabel}. `
+      + `The doorplant line above covers the ${filePlantCount} file-byte plants only.`);
   } else if (flushUnknown) {
-    console.error('displayfirst: SELFTEST UNKNOWN — plants 1-14 were green, but plant 15 the piped consumer '
-      + 'was not run on this platform. This is not a green verdict.');
+    console.error(`displayfirst: SELFTEST UNKNOWN — ${filePlantCount} file-byte plants and the server-close `
+      + 'regression were green, but plant 15 the piped consumer was not run on this platform. '
+      + 'This is not a green verdict.');
   } else {
-    console.log('displayfirst: SELFTEST GREEN — 17 file-byte plants (doorplant, above) AND plant 15, '
-      + 'the piped consumer, which the line above does not cover.');
+    console.log(`displayfirst: SELFTEST GREEN — ${filePlantCount} file-byte plants (doorplant, above), `
+      + 'plant 15 the piped consumer, and the browser-free server-close regression.');
   }
   // The corpus run is an exit path too, so it prints the boundary like every
   // other one. doorplant owns the verdict line here; this owns the limits.
@@ -1451,6 +1463,93 @@ async function pipedOutputPlant() {
     }
     console.log(`  CAUGHT  "the terminal line survives a full pipe" -> ${FLUSH_RUNS}/${FLUSH_RUNS} `
       + 'repetitions, mutant truncated every time, fixed whole every time.');
+    return 0;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SERVER-CLOSE REGRESSION — WHY THE BACKSTOP IS NOT THE TEST.
+//
+// Removing shutdown()'s `server.server.close(...)` does not change the terminal
+// line or exit code: the live HTTP server keeps Node open until
+// forceExitAfterDrain() calls process.exit(2) three seconds later. That is the
+// exact false green the routed review found — a backstop hiding a teardown
+// regression while every string assertion still passes.
+//
+// THE DOOR is the whole real tool in a copied tools/ tree. browser.mjs is
+// replaced only at its boundary so resolveBrowser() returns null: main() still
+// opens the real tools/serve.mjs HTTP server, takes its real no-browser shutdown
+// path, prints its real UNKNOWN line, and returns through finish(). No Chrome is
+// launched. The fixed copy must exit 2 before SERVER_CLOSE_DEADLINE_MS; the
+// exact one-line mutant must still be alive when that earlier outer deadline
+// kills it. Waiting for the mutant's three-second backstop would make fixed and
+// mutant look identical, which is the defect this plant exists to prevent.
+// ---------------------------------------------------------------------------
+const SERVER_CLOSE_DEADLINE_MS = 2000;
+
+async function serverClosePlant() {
+  const { mkdtempSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+
+  console.log('');
+  console.log(`  server-close regression — fixed-vs-mutant, browser-free, ${SERVER_CLOSE_DEADLINE_MS} ms outer deadline`);
+  const dir = mkdtempSync(join(tmpdir(), 'displayfirst-server-close-'));
+  try {
+    cpSync(join(ROOT, 'tools'), join(dir, 'tools'), {
+      recursive: true,
+      filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.png$/.test(src),
+    });
+    const tool = join(dir, 'tools', 'displayfirst.mjs');
+    const real = readFileSync(tool, 'utf8');
+    const FIND_CLOSE = '    if (server?.server) await new Promise((resolveClose) => server.server.close(resolveClose));';
+    if (real.split(FIND_CLOSE).length !== 2) {
+      fail('server-close regression: PLANT SITE DRIFTED — shutdown() no longer carries the exact awaited '
+        + 'server.server.close callback exactly once, so the teardown mutant could not be built unambiguously.');
+      return 1;
+    }
+    writeFileSync(join(dir, 'tools', 'displayfirst.MUTANT.mjs'), real.replace(FIND_CLOSE,
+      '    /* planted: HTTP server deliberately left open; only the three-second backstop can exit */'));
+    writeFileSync(join(dir, 'tools', 'browser.mjs'), [
+      '// Browser boundary for the server-close regression: no browser is launched.',
+      'export function resolveBrowser() { return null; }',
+      "export async function launchBrowser() { throw new Error('server-close regression must not launch a browser'); }",
+      '',
+    ].join('\n'));
+
+    const run = (name) => {
+      const started = Date.now();
+      const result = spawnSync(process.execPath, [join('tools', name),
+        '--only-shape', '1440x860', '--only-text', 'M', '--port', '0'], {
+        cwd: dir,
+        encoding: 'utf8',
+        timeout: SERVER_CLOSE_DEADLINE_MS,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      return { ...result, elapsed: Date.now() - started, output: `${result.stdout || ''}\n${result.stderr || ''}` };
+    };
+
+    const fixed = run('displayfirst.mjs');
+    const mutant = run('displayfirst.MUTANT.mjs');
+    const fixedWhole = fixed.status === 2
+      && /displayfirst: UNKNOWN — nothing was measured \(no Chrome\/Chromium found\)\./.test(fixed.output)
+      && !fixed.error;
+    const mutantHeld = mutant.status === null && mutant.error && mutant.error.code === 'ETIMEDOUT';
+    if (!fixedWhole) {
+      fail(`server-close regression: FIXED TOOL DID NOT DRAIN — status=${fixed.status}, error=${fixed.error?.code || 'none'}, `
+        + `elapsed=${fixed.elapsed} ms. Expected exit 2 with the complete UNKNOWN line before the outer deadline.`);
+      return 1;
+    }
+    if (!mutantHeld) {
+      fail(`server-close regression: MUTANT WAS NOT DISTINGUISHED — status=${mutant.status}, `
+        + `error=${mutant.error?.code || 'none'}, elapsed=${mutant.elapsed} ms. Removing server.close must leave `
+        + 'the real HTTP server alive past the outer deadline; an ordinary exit means the backstop can hide a reversion.');
+      return 1;
+    }
+    console.log(`  CAUGHT  fixed exited 2 with its complete UNKNOWN line in ${fixed.elapsed} ms; mutant still held `
+      + `the HTTP server at ${mutant.elapsed} ms and was killed before the three-second backstop.`);
     return 0;
   } finally {
     rmSync(dir, { recursive: true, force: true });
