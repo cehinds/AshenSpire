@@ -2191,12 +2191,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
-.inventory-detail { display: grid; grid-template-columns: minmax(8rem, 28%) 1fr; gap: 1rem; align-items: start; }
+.inventory-detail { display: grid; grid-template-columns: minmax(5rem, 18%) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .inventory-model {
-  min-height: 9rem; display: grid; place-items: center;
+  min-height: 7rem; display: grid; place-items: center;
   border: 1px solid var(--line-soft); background: rgba(10, 8, 6, 0.35); font-size: 4rem;
 }
-.inventory-model img { width: 100%; height: 10rem; object-fit: contain; }
+.inventory-model img { width: 100%; height: 7rem; object-fit: contain; }
 .inventory-information { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
 .inventory-information h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
 .inventory-information p { line-height: 1.45; }
@@ -2206,6 +2206,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px;
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
+.inventory-information .equip-candidate-comparison { margin-left: 0; }
+.inventory-instruction { color: var(--muted); font-style: italic; }
+.inventory-face[draggable='true'] { cursor: grab; }
+.inventory-face.dragging { cursor: grabbing; opacity: 0.55; }
+.es-cell.drop-ready { border-color: var(--grace); box-shadow: 0 0 0 2px rgba(120, 210, 140, 0.28); }
 
 /* "un equip in red". `.danger` is this file's existing word for red (see
    `.subtle.danger` above) and it is reused rather than joined by a second
@@ -2487,9 +2492,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .inventory-face { grid-template-columns: minmax(0, 1fr) auto auto; }
 :root[data-layout='narrow'] .inventory-equipped { grid-column: 1 / -1; justify-self: start; }
-:root[data-layout='narrow'] .inventory-detail { grid-template-columns: 1fr; }
-:root[data-layout='narrow'] .inventory-model { min-height: 7rem; }
-:root[data-layout='narrow'] .inventory-model img { height: 8rem; }
+:root[data-layout='narrow'] .inventory-detail { grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr); gap: 0.7rem; }
+:root[data-layout='narrow'] .inventory-model { min-height: 5.5rem; }
+:root[data-layout='narrow'] .inventory-model img { height: 5.5rem; }
 /* The figure has a fixed authored width in a ROW; in a column that width is just
    a cap, and 100% lets it use the phone. Height stays authored so the sprite
    keeps its proportions.

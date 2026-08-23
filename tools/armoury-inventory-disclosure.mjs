@@ -149,15 +149,23 @@ async function main() {
         const face = document.querySelector('[data-region="inventory"] .disc-face');
         if (!face) return null;
         face.click();
+        const reveal = document.querySelector('[data-region="inventory"] .disc-reveal:not([hidden])');
+        const model = reveal?.querySelector('.inventory-model');
+        const revealRect = reveal?.getBoundingClientRect();
+        const modelRect = model?.getBoundingClientRect();
         return {
           open: face.getAttribute('aria-expanded'),
           panels: document.querySelectorAll('[data-region="inventory"] .disc-face[aria-expanded="true"]').length,
-          model: !!document.querySelector('[data-region="inventory"] .inventory-model'),
+          model: !!model,
           information: !!document.querySelector('[data-region="inventory"] .inventory-information'),
+          comparison: !!reveal?.querySelector('.equip-candidate-comparison'),
+          modelShare: revealRect?.width && modelRect?.width ? modelRect.width / revealRect.width : null,
         };
       })()`);
       check(firstToggle?.open === 'true' && firstToggle.panels === 1 && firstToggle.model && firstToggle.information,
         'an Inventory item opens one model-and-information panel');
+      check(firstToggle?.comparison && firstToggle.modelShare <= 0.22,
+        `expanded equipment Inventory matches selector data with a narrow model (${firstToggle?.modelShare == null ? 'absent' : `${Math.round(firstToggle.modelShare * 100)}%`})`);
       await screenshot('desktop-inventory-expanded');
       const closed = await evaluate(`(() => {
         const face = document.querySelector('[data-region="inventory"] .disc-face');
@@ -171,20 +179,26 @@ async function main() {
       const slot = [...document.querySelectorAll('.equip-slot')].find((element) => element.querySelector('.es-label')?.textContent === 'Right Hand');
       slot?.querySelector('.es-cell.on')?.click();
     })()`);
-    await until("!!document.querySelector('.ep-list .disc-face')", 'hand item cards');
+    await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'hand item cards');
     const collapsedCards = await evaluate(`(() => ({
-      faces: document.querySelectorAll('.ep-list .disc-face').length,
-      outsideActions: document.querySelectorAll('.ep-list > [data-act], .ep-list > .disc-faces > [data-act]').length,
-      visibleActions: [...document.querySelectorAll('.ep-list [data-act]')].filter((element) => element.offsetParent !== null).length,
+      faces: document.querySelectorAll('.equip-picker .ep-list .disc-face').length,
+      outsideActions: document.querySelectorAll('.equip-picker .ep-list > [data-act], .equip-picker .ep-list > .disc-faces > [data-act]').length,
+      visibleActions: [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length,
+      inventoryPresent: !!document.querySelector('[data-region="inventory"]'),
+      sharedFaces: document.querySelectorAll('.equip-picker .inventory-face').length,
+      legacyFaces: document.querySelectorAll('.equip-picker .equip-chip.as-face').length,
     }))()`);
     check(collapsedCards.faces > 0, `selected hand draws folded item cards (${collapsedCards.faces})`);
+    check(collapsedCards.inventoryPresent, 'Inventory remains available while a slot is selected');
+    check(collapsedCards.sharedFaces === collapsedCards.faces && collapsedCards.legacyFaces === 0,
+      `slot selection reuses the Inventory card face (${collapsedCards.sharedFaces}/${collapsedCards.faces}, legacy ${collapsedCards.legacyFaces})`);
     check(collapsedCards.outsideActions === 0 && collapsedCards.visibleActions === 0,
       `collapsed item cards expose no action controls (outside ${collapsedCards.outsideActions}, visible ${collapsedCards.visibleActions})`);
 
     const expandedCard = await evaluate(`(() => {
-      const face = document.querySelector('.ep-list .disc-face');
+      const face = document.querySelector('.equip-picker .ep-list .disc-face');
       face.click();
-      const visible = [...document.querySelectorAll('.ep-list [data-act]')].filter((element) => element.offsetParent !== null);
+      const visible = [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null);
       return {
         open: face.getAttribute('aria-expanded'),
         actions: visible.length,
@@ -197,7 +211,7 @@ async function main() {
     check(expandedCard.attackAfter === 5,
       `an equipped card previews its Unequip result (${expandedCard.attackAfter}, expected unarmed attack 5)`);
     const actionReach = await evaluate(`(() => {
-      const action = document.querySelector('.ep-list [data-act]');
+      const action = document.querySelector('.equip-picker .ep-list [data-act]');
       action?.scrollIntoView({ block: 'center' });
       const rect = action?.getBoundingClientRect();
       return {
@@ -209,10 +223,33 @@ async function main() {
       'the expanded card action can be scrolled into the viewport without leaving its reveal');
     await screenshot('desktop-card-expanded');
     const afterRefold = await evaluate(`(() => {
-      document.querySelector('.ep-list .disc-face')?.click();
-      return [...document.querySelectorAll('.ep-list [data-act]')].filter((element) => element.offsetParent !== null).length;
+      document.querySelector('.equip-picker .ep-list .disc-face')?.click();
+      return [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length;
     })()`);
     check(afterRefold === 0, 'refolding the item hides its action again');
+
+    const drag = await evaluate(`(() => {
+      const fold = document.querySelector('[data-fold=inventory]');
+      if (fold?.getAttribute('aria-expanded') === 'false') fold.click();
+      const source = [...document.querySelectorAll('[data-region=inventory] [data-inventory-item]')]
+        .find((element) => element.dataset.itemId === 'straightSword');
+      const leftSlot = [...document.querySelectorAll('.equip-slot')]
+        .find((element) => element.querySelector('.es-label')?.textContent === 'Left Hand');
+      const target = leftSlot?.querySelector('.es-cell.on');
+      if (!source || !target) return null;
+      const data = new DataTransfer();
+      source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: data }));
+      target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: data }));
+      target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
+      source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: data }));
+      const slotTitle = (label) => [...document.querySelectorAll('.equip-slot')]
+        .find((element) => element.querySelector('.es-label')?.textContent === label)
+        ?.querySelector('.es-cell.on')?.title || null;
+      return { draggable: source.draggable, left: slotTitle('Left Hand'), right: slotTitle('Right Hand') };
+    })()`);
+    check(drag?.draggable, 'equipment Inventory rows publish a native drag source');
+    check(drag?.left === 'Straight Sword' && drag?.right === 'Empty',
+      `dragging Inventory to Left Hand performs the one-object move (${drag?.left || 'no left'} / ${drag?.right || 'no right'})`);
 
     if (TAKE_SHOTS) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {

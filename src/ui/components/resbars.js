@@ -1,4 +1,6 @@
 // src/ui/components/resbars.js — the ONE renderer for every resource bar.
+
+import { anchorLocalBox } from '../fx.js';
 //
 // It knows nothing about health, poise, stamina or mana. It is handed a plan
 // (model/resources.js resourceBarPlan) and draws it. That is the whole point:
@@ -16,9 +18,9 @@
 // F2-resource-stamina.png):
 //
 //   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
-//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
-//             `band` sit side by side on one line (F2's Mana+Stamina row);
-//             a bar with no band takes a line alone (F1's Health row). The
+//             ("HP 86/86") to the LEFT of a pill trough. The canonical main
+//             HUD gives HP, MP and SP one vertical line each, in that order.
+//             Generic band support remains for other authored surfaces. The
 //             trough's track is its unit's remaining width, derived by flex —
 //             nothing types a ceiling, so a bar cannot overflow its cell
 //             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
@@ -29,6 +31,32 @@
 // track is unit minus plate, derived; the trough is a percentage of that.
 
 import { attachTooltip, esc } from './tooltip.js';
+
+const cardFrameObservers = new Map();
+let detachedFrameCleanup = null;
+
+function observeCardFrames(wrap) {
+  if (typeof ResizeObserver === 'undefined') return;
+  const observer = new ResizeObserver(() => syncCardFrames(wrap));
+  observer.observe(wrap);
+  cardFrameObservers.set(wrap, observer);
+  wrap._cardFrameObserver = observer;
+
+  if (!detachedFrameCleanup && typeof MutationObserver !== 'undefined') {
+    detachedFrameCleanup = new MutationObserver(() => {
+      for (const [candidate, candidateObserver] of cardFrameObservers) {
+        if (candidate.isConnected) continue;
+        candidateObserver.disconnect();
+        cardFrameObservers.delete(candidate);
+      }
+      if (!cardFrameObservers.size) {
+        detachedFrameCleanup.disconnect();
+        detachedFrameCleanup = null;
+      }
+    });
+    detachedFrameCleanup.observe(document.documentElement, { childList: true, subtree: true });
+  }
+}
 
 /**
  * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
@@ -41,8 +69,9 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
   if ((surface || 'main') === 'main') {
-    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
-    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // THE HYBRID LINES. Main-HUD content currently supplies no bands: HP, MP
+    // and SP each own one vertical line. Generic consecutive band support stays
+    // available for another authored surface. Consecutive-only is deliberate:
     // the plan is already in `order` order, and a band split across the stack
     // would be a row author asking for two contradictory things at once —
     // rendering it as two lines keeps the order authoritative.
@@ -52,6 +81,11 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
       for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
       wrap.appendChild(line);
     }
+    // The full unit is the invisible reference track. The bordered card behind
+    // its plate + trough ends just after the scaled trough. A ResizeObserver
+    // keeps that visual frame aligned when the viewport or UI scale changes.
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
+    observeCardFrames(wrap);
   } else {
     for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
   }
@@ -74,6 +108,11 @@ function hybridUnit(bar, tooltipExtra) {
   unit.className = 'resunit';
   unit.dataset.res = bar.id;
 
+  const frame = document.createElement('div');
+  frame.className = 'rescard-frame';
+  frame.setAttribute('aria-hidden', 'true');
+  unit.appendChild(frame);
+
   // THE PLATE. The label lives BESIDE the trough now, not inside it — the
   // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
   // short trough can no longer collide with its own words. The three variants
@@ -94,7 +133,18 @@ function hybridUnit(bar, tooltipExtra) {
   // reservation applied while only the glyph shows would steal track for a
   // label that is not there); the CSS applies each var in the same container
   // window that shows its variant.
-  const digits = String(Math.trunc(Math.max(bar.max, bar.domain || bar.max, 1))).length;
+  //
+  // THE CEILING IS `labelMax`, NOT `domain`, AND THE DIFFERENCE IS THE WHOLE
+  // POINT (E9 / #254, 2026-08-22). `domain` is now the REFERENCE his ruling
+  // set — 500 HP, 50 pools — an upper mark far above anything the content can
+  // reach. The plate must reserve the widest LABEL it can ever draw, which is
+  // set by the largest max the CONTENT can produce (96, 4, 4). Reserving from
+  // the reference put three digits where two will ever print and crushed the
+  // banded pool cells to 5.81 px at 320x640, clipping "◆ 2/2" — measured, and
+  // the derivation of `labelMax` is in model/resources.js resourceLabelCeilings.
+  // The fallback chain keeps a legacy plan (no labelMax) rendering as before.
+  const ceiling = Number.isFinite(bar.labelMax) ? bar.labelMax : (bar.domain || bar.max);
+  const digits = String(Math.trunc(Math.max(bar.max, ceiling, 1))).length;
   const plate = document.createElement('div');
   plate.className = 'resplate';
   plate.style.setProperty('--plate-reserve-full', `${bar.name.length + 2 * digits + 2.5}ch`);
@@ -112,6 +162,20 @@ function hybridUnit(bar, tooltipExtra) {
 
   attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
   return unit;
+}
+
+/** Align the visible card to the scaled trough; the unit stays full-width. */
+function syncCardFrames(root) {
+  const RIGHT_PAD = 6;
+  for (const unit of root.querySelectorAll('.resunit')) {
+    const frame = unit.querySelector(':scope > .rescard-frame');
+    const bar = unit.querySelector('.restrack > .resbar');
+    if (!frame || !bar) continue;
+    const unitBox = anchorLocalBox(unit, unit);
+    const barBox = anchorLocalBox(unit, bar);
+    const width = Math.min(unitBox.width, Math.max(0, barBox.left + barBox.width + RIGHT_PAD));
+    frame.style.width = `${width}px`;
+  }
 }
 
 /** The under-model strip bar: trough with the label inside (unchanged shape). */
@@ -145,13 +209,9 @@ function troughEl(bar) {
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
 
-  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
-  // flooring; whether the floor FIRED is a rendered fact (it depends on the
-  // track, the zoom and the floor together), so it is stamped after layout by
-  // markFlooredBars() rather than guessed at here. A floored trough is drawn
-  // DASHED — the broken-axis mark — because two different maxima below the
-  // floor render the same length, and a bar that is no longer to scale must
-  // not look like one that is.
+  // There is deliberately no absolute minimum width. `width` remains the
+  // rendered max/reference percentage even when the result is only a few
+  // pixels wide; a floor would make different maxima draw the same length.
   const fill = document.createElement('div');
   fill.className = 'fill';
   fill.style.width = `${bar.pct.toFixed(2)}%`;
@@ -161,35 +221,6 @@ function troughEl(bar) {
 
 function tooltipHtml(bar, tooltipExtra) {
   const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-  // The tooltip is the floor of legibility for this bar: whatever the plate is
-  // too narrow to print, this always says. Including the maximum, which is the
-  // number a floored bar has stopped encoding.
+  // Whatever the plate is too narrow to print, the tooltip always says.
   return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
-}
-
-/**
- * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
- * clause caught, by MEASURING the rendered trough against the floor.
- *
- * Called after layout. A bar is floored when its rendered width is wider than
- * the width its own lengthPct asked for — which is precisely what `min-width`
- * winning looks like, and it needs no second copy of the floor's value.
- *
- * The track each percentage resolves against is the bar's own CONTAINING BLOCK
- * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
- * per bar rather than passed in, because since the hybrid two bars on one line
- * no longer share a track and a single passed-in width would be wrong for one
- * of them. The old second parameter is accepted and ignored.
- */
-export function markFlooredBars(root) {
-  const bars = root.querySelectorAll('.resbar');
-  for (const el of bars) {
-    const asked = parseFloat(el.style.width); // percent
-    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
-    if (!Number.isFinite(asked) || !trackW) continue;
-    const wanted = (asked / 100) * trackW;
-    const got = el.getBoundingClientRect().width;
-    if (got > wanted + 0.5) el.dataset.floored = '1';
-    else delete el.dataset.floored;
-  }
 }

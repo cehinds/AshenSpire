@@ -405,12 +405,14 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   return dropArtOnError(el);
 }
 
-function inventoryFace(row) {
+function inventoryFace(row, { selected = false, draggable = false } = {}) {
   const el = document.createElement('span');
-  el.className = 'inventory-face';
+  el.className = `inventory-face${selected ? ' on' : ''}`;
   el.dataset.inventoryItem = row.key;
+  el.dataset.itemId = row.id;
   el.dataset.itemCategory = row.category;
   el.dataset.itemCount = String(row.count);
+  el.draggable = draggable;
   const equipped = row.equippedLabels.length
     ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
       ? 'Equipped'
@@ -423,7 +425,7 @@ function inventoryFace(row) {
   return el;
 }
 
-function inventoryReveal(registries, row) {
+function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
   const el = document.createElement('div');
   el.className = 'inventory-detail';
   const item = row.item;
@@ -439,12 +441,17 @@ function inventoryReveal(registries, row) {
     ? relicText(item, registries)
     : (item.blurb || item.textTemplate || 'No additional information.');
   const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
+  const mods = modSummary(registries, item);
   el.innerHTML = `<div class="inventory-model">${art}</div>`
     + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
     + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
     + `<p>${esc(description)}</p>`
+    + (mods.length ? `<p class="inventory-mods">${mods.map(esc).join(' · ')}</p>` : '')
     + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
+    + (instruction ? `<p class="inventory-instruction">${esc(instruction)}</p>` : '')
+    + (comparison ? renderCandidateComparison(comparison, { expanded: true }) : '')
     + '</div>';
+  if (action) el.querySelector('.inventory-information').appendChild(action);
   const image = el.querySelector('img');
   if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
   return el;
@@ -623,6 +630,7 @@ export function mountEquipment(host, {
   // moves ids between storage and sets while this panel is open.
   const owned = () => ownership(registries, { meta, loadout: run.loadout });
   const ladderCtx = () => ({ meta, loadout: run.loadout });
+  let draggingItemId = null;
 
   /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
   function authoredFor(slot) {
@@ -638,6 +646,52 @@ export function mountEquipment(host, {
     // the second half of that same sentence.
     const mine = owned();
     return authoredFor(slot).filter((p) => mine.has(p));
+  }
+
+  /** One mutation path for picker buttons and Inventory drag/drop. */
+  function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
+    const changed = equipPiece(
+      registries, run.loadout, slotId, setIndex, pieceId, owned(),
+      { inCombat, attributes: run.attributes }
+    );
+    if (!changed) {
+      notice = `${actionLabel} was refused. The loadout was not changed.`;
+      draw();
+      return false;
+    }
+    sfx.play('cardPlay');
+    commit();
+    return true;
+  }
+
+  function equipmentRowFor(piece) {
+    return inventoryRows(registries, run, meta).find((row) => row.item === piece) || null;
+  }
+
+  function comparisonFor(slotId, setIndex, pieceId) {
+    return equipmentSurfaceReceipt(registries, run, {
+      candidate: { slotId, setIndex, pieceId },
+      meta,
+    }).candidate;
+  }
+
+  /** Prefer what an item is equipped in, then the selected slot, then its first fit. */
+  function inventoryTarget(row) {
+    if (!row || !row.item || !['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) return null;
+    const slots = (eq.slots || []).filter((slot) => fitsSlot(slot, row.item));
+    if (!slots.length) return null;
+    for (const slot of slots) {
+      const index = (run.loadout.sets[slot.id] || []).findIndex((id) => id === row.id);
+      if (index >= 0) return { slot, setIndex: index, pieceId: null, equipped: true };
+    }
+    const selected = picking && slots.find((slot) => slot.id === picking.slotId);
+    const slot = selected || slots[0];
+    return {
+      slot,
+      setIndex: selected ? picking.setIndex : (run.loadout.active[slot.id] || 0),
+      pieceId: row.id,
+      equipped: false,
+    };
   }
 
   function slotBlock(slot) {
@@ -694,6 +748,27 @@ export function mountEquipment(host, {
         : `<span class="es-empty">＋</span>`;
       const im = cell.querySelector('img');
       if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+
+      cell.addEventListener('dragover', (ev) => {
+        const dragged = (eq.armaments || []).find((candidate) => candidate.id === draggingItemId)
+          || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === draggingItemId);
+        if (!dragged || !fitsSlot(slot, dragged)) return;
+        ev.preventDefault();
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+        cell.classList.add('drop-ready');
+      });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drop-ready'));
+      cell.addEventListener('drop', (ev) => {
+        cell.classList.remove('drop-ready');
+        const pieceId = (ev.dataTransfer && (ev.dataTransfer.getData('application/x-ashenspire-item')
+          || ev.dataTransfer.getData('text/plain'))) || draggingItemId;
+        const dragged = (eq.armaments || []).find((candidate) => candidate.id === pieceId)
+          || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === pieceId);
+        if (!dragged || !fitsSlot(slot, dragged)) return;
+        ev.preventDefault();
+        picking = { slotId: slot.id, setIndex: i };
+        applyEquipmentChange(slot.id, i, pieceId, `Equip ${dragged.name} to ${slot.label}`);
+      });
 
       cell.addEventListener('click', () => {
         // Clicking a set you're not in switches to it; clicking the one you're
@@ -819,20 +894,14 @@ export function mountEquipment(host, {
       const actionLabel = equipped
         ? 'Unequip'
         : `${moving ? 'Move' : 'Equip'} to ${slot.label}`;
-      const body = document.createElement('div');
-      body.className = 'ep-body';
       // `meta` is handed over because the swap-price rows are priced with the
       // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
       // price them with the shipping default and read as plausible — the row
       // carries the rule it used (`ruleId`) so that stays readable either way.
-      const comparison = equipmentSurfaceReceipt(registries, run, {
-        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: candidatePieceId },
-        meta,
-      }).candidate;
+      const comparison = comparisonFor(picking.slotId, picking.setIndex, candidatePieceId);
       const transition = equipTransitionReceipt(
         registries, run.loadout, picking.slotId, picking.setIndex, candidatePieceId
       );
-      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison, { expanded: true }));
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -847,23 +916,14 @@ export function mountEquipment(host, {
       // One visible action, inside the open card. The 2026-08-23 correction
       // removed the always-visible hold shortcut so a folded item is one row,
       // not a row followed by a second action-shaped row.
-      const act = () => {
-        const changed = equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
-          candidatePieceId, owned(), { inCombat, attributes: run.attributes });
-        if (!changed) {
-          notice = `${actionLabel} was refused. The loadout was not changed.`;
-          draw();
-          return;
-        }
-        sfx.play('cardPlay');
-        commit();
-      };
+      const act = () => applyEquipmentChange(picking.slotId, picking.setIndex, candidatePieceId, actionLabel);
       if (!seal.ok) sealChip(btn);
       else if (!transition.ok) {
         btn.classList.add('locked');
         refuses(btn, () => transition.reason);
       } else btn.addEventListener('click', act);
-      body.appendChild(btn);
+
+      const row = equipmentRowFor(piece);
 
       return {
         key: piece.id,
@@ -873,13 +933,14 @@ export function mountEquipment(host, {
         actionLabel,
         face: {
           label: piece.name,
-          node: pieceFace(registries, piece, {
-            selected: equipped,
-            equippedLabel: hands.length ? `Equipped: ${hands.join(' / ')}` : '',
-          }),
+          node: inventoryFace(row, { selected: equipped }),
         },
         reveal: {
-          node: body,
+          node: inventoryReveal(registries, row, {
+            comparison,
+            action: btn,
+            instruction: `Compare this item for ${slot.label}.`,
+          }),
           sense: equipped
             ? 'Equipped. Press to unequip.'
             : moving
@@ -918,16 +979,40 @@ export function mountEquipment(host, {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list';
     const rows = inventoryRows(registries, run, meta);
-    const entries = rows.map((row) => ({
-      key: row.key,
-      kind: 'item',
-      disclosure: 'face',
-      face: { label: row.name, node: inventoryFace(row) },
-      reveal: {
-        node: inventoryReveal(registries, row),
-        sense: `${row.name}. ${row.category}. ${row.count} owned.`,
-      },
-    }));
+    const entries = rows.map((row) => {
+      const target = inventoryTarget(row);
+      const draggable = !!target;
+      const face = inventoryFace(row, { draggable });
+      if (draggable) {
+        face.addEventListener('dragstart', (ev) => {
+          draggingItemId = row.id;
+          face.classList.add('dragging');
+          if (ev.dataTransfer) {
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('application/x-ashenspire-item', row.id);
+            ev.dataTransfer.setData('text/plain', row.id);
+          }
+        });
+        face.addEventListener('dragend', () => {
+          draggingItemId = null;
+          face.classList.remove('dragging');
+          for (const cell of wrap.querySelectorAll('.es-cell.drop-ready')) cell.classList.remove('drop-ready');
+        });
+      }
+      return {
+        key: row.key,
+        kind: 'item',
+        disclosure: 'face',
+        face: { label: row.name, node: face },
+        reveal: {
+          node: inventoryReveal(registries, row, {
+            comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
+            instruction: target ? 'Drag this item onto a compatible slot, or select a slot to use its action button.' : '',
+          }),
+          sense: `${row.name}. ${row.category}. ${row.count} owned.`,
+        },
+      };
+    });
     mountDisclosure(box, entries, { moreLabel: 'more items' });
     box.dataset.inventoryCount = String(inventoryItemCount(rows));
     if (!entries.length) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">Inventory is empty.</p>');
@@ -1092,7 +1177,7 @@ export function mountEquipment(host, {
           <div class="armoury-left"></div>
           <div class="armoury-right"></div>
         </div>
-        ${picking ? '' : '<section class="armoury-inventory"></section>'}
+        <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
 

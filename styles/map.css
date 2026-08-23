@@ -314,19 +314,19 @@
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
-/* ---------- horizontal map header (matches the combat top bar) ---------- */
-/* Reuses .topbar/.portrait/.who/.hpbar/.relics from combat.css; these rules add
-   the map-specific stats, wrapping, and the legend popover. Items are flex so
-   they reflow as customization toggles hide/show them. */
+/* ---------- map header — the combat HUD frame with map chrome below ---------- */
+/* Reuses `.topbar.combat-hud`, `.hud-top` and `.hud-bottom` from combat.css.
+   The top row is deliberately identical to combat — resource host, Armoury,
+   Menu — so one plan cannot cross the 16 px floor on only one screen. The map's
+   portrait, progress, seed, build stamp and legend live in the bottom row. */
 .map-header {
-  height: auto; min-height: 5.2rem; flex-wrap: wrap; row-gap: 0.6rem; position: relative;
+  height: auto; min-height: 5.2rem; position: relative;
 }
-.map-header .hpbar { width: 15rem; }
+.map-header .who { min-width: 0; }
 .map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
 .map-header .cinders { color: var(--gold); }
 .map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
-.map-header .mh-actions { margin-left: auto; display: flex; gap: 0.8rem; }
 
 /* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
    a divider, then relic chips; wraps to more rows as they accumulate. */
@@ -361,7 +361,9 @@
 /* Customization (body classes set by applyDisplaySettings) — the bar flexes. */
 body.map-compact .map-header { min-height: 4.2rem; gap: 1rem; padding: 0 1rem; }
 body.map-compact .map-header .nm { display: none; }
-body.map-compact .map-header .hpbar { width: 12rem; height: 1.2rem; }
+/* (compact drops the name; the bar track re-derives itself from the narrower
+   row with no rule of its own — the 12rem `.hpbar` override that used to sit
+   here was the second typed track and went with the first.) */
 body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
 body.map-compact .map-substrip { padding: 0.2rem 1rem; }
 body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }

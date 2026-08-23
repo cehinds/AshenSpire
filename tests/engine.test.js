@@ -24,6 +24,7 @@ import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
+import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import {
   rollEncounter,
@@ -1542,10 +1543,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const atZero = resourceBarPlan(REG, 'main', zero, zero, domains).find((b) => b.id === 'mana');
     eq(atZero.cur, 0, 'zero edge is a real empty mana plan');
     eq(atZero.pct, 0, 'zero edge has zero fill');
+    // THE TROUGH IS MEASURED AGAINST HIS REFERENCE, NOT AGAINST THE POPULATION.
+    // E9 / #254: Constantine ruled 500 HP / 50 MP / 50 SP, and the row carries
+    // it as `domainMax` (Law 0 clause 3 — an override is data). Before that
+    // ruling this pair asserted `lengthPct === 100` at the largest WIS-derived
+    // maxMana, which was a claim about the DERIVED ceiling and is now false by
+    // his word rather than by a defect. Both numbers below are DERIVED FROM THE
+    // CONSTANT, never typed, so moving the reference moves the test with it.
+    eq(domains.main.mana, HUD_REFERENCE_MAX.pool, 'the mana ceiling is his reference, not the derived population');
     const star = { maxHp: 82, hp: 82, maxMana: 4, mana: 4 };
     const atMax = resourceBarPlan(REG, 'main', star, star, domains).find((b) => b.id === 'mana');
     eq(atMax.pct, 100, 'max edge fills the mana trough');
-    eq(atMax.lengthPct, 100, 'largest legal WIS-derived maxMana fills the derived row track');
+    eq(atMax.lengthPct, (4 / HUD_REFERENCE_MAX.pool) * 100,
+      'the largest WIS-derived maxMana takes its share of the reference, not the whole track');
+    // AND THE OTHER SIDE OF THE SAME LINE: a pool standing AT the reference
+    // fills the track whole. Without this cell the assertion above is one
+    // number with nothing on the far side of it and could not tell a wrong
+    // reference from a right one.
+    const atRef = { maxHp: 82, hp: 82, maxMana: HUD_REFERENCE_MAX.pool, mana: HUD_REFERENCE_MAX.pool };
+    const full = resourceBarPlan(REG, 'main', atRef, atRef, domains).find((b) => b.id === 'mana');
+    eq(full.lengthPct, 100, 'a pool AT the reference fills its track');
   });
 
   // ---- 21. M3 phase 2: Acts II–III mechanics ------------------------------------------------
