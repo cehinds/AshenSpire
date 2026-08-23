@@ -3574,8 +3574,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
    label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
    (two half-width units side by side). The BEHAVIOUR under it is unchanged
-   and stays the table's: trough length = lengthPct of its derived track,
-   16 px floor, dashed when floored.
+   and stays the table's: trough length = lengthPct of its derived track.
    The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
    provenance is their justification — they are deliberately not --panel
    (#241d15) / --line-soft (#4a4034), which the approved plate is darker and
@@ -3618,6 +3617,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .resbars[data-surface='main'] .resbar {
   height: calc(11px / var(--ui-zoom, 1));
   border-radius: calc(6px / var(--ui-zoom, 1));
+  /* A physical border imposes a two-pixel border-box minimum, which overrides
+     1-4 % troughs on narrow screens. Draw the same rim as an inset shadow so
+     the element's measured width remains the requested percentage. */
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 /* "poise (very skinny bar)" on the MAIN surface. The rule above outranks bare
    .resbar-skinny (two classes + an attribute vs one class), so without this
@@ -3664,39 +3668,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   container-type: inline-size;
   flex-shrink: 0;
 
-  /* ---- THE MINIMUM-WIDTH CLAUSE ----
-     His rule ("length scales with max") is right and needs a floor under it.
-     Marina rendered maxMana = 2 at 48 px and watched the label collide with
-     itself; below that the failure gets worse, not better — at a 4-poise mob on
-     a 9.4rem strip the trough asks for 11 px, which is narrower than its own
-     two 1 px borders plus a legible fill.
-
-     WHY A FLOOR IS LEGITIMATE AND NOT A CHEAT. The bar's claim is "you can read
-     the maximum off the length". Below the floor nobody can read a length
-     difference anyway, so preserving the encoding there costs legibility and
-     buys no information. What is NOT legitimate is a floored bar that still
-     looks to scale — two different maxima render identically down there, and
-     that is a lie unless the bar admits it. So:
-
-     THE FLOOR IS MARKED. A floored trough is drawn DASHED — the broken-axis
-     mark, the same grammar a chart uses for a truncated scale — and its exact
-     maximum is always in the tooltip. The bar stops encoding and says so.
-
-     16 px, in px under zoom because a minimum perceivable bar length must not
-     track the Text-size control (Law 2 rule 3, Law 4 clause 3).
-
-     MEASURED, not chosen by eye. `node tools/hudbars.mjs --floor` renders a
-     half-empty bar at each candidate and reports the FILL, at 390x844:
-         floor  8 -> fill 3 px   (thinner than the corner radius; reads as noise)
-         floor 10 -> fill 4 px       floor 12 -> fill  5 px
-         floor 14 -> fill 6 px       floor 16 -> fill  7 px
-         floor 20 -> fill 9 px       floor 32 -> fill 15 px
-     14 is the smallest that clears 6 px. 16 ships, one step above it, because
-     the fill is also the thing that must survive a rounded corner and a 1 px
-     border on a real screen and that margin is not free. If --floor and this
-     number ever disagree, --floor is right and this is a stale copy. */
-  --resbar-min: calc(16px / var(--ui-zoom, 1));
-  min-width: var(--resbar-min);
+  /* No absolute minimum width: the trough is the max/reference percentage.
+     A floor would turn different maxima into the same length, contradicting
+     the percentage encoding chosen for E9 / #254. The plate and tooltip keep
+     the exact value readable when the resulting trough is very short. */
+  min-width: 0;
 }
 .resbar > .fill { background: var(--res-tint, var(--muted)); }
 /* "poise (very skinny bar)" — his words, and skinny is a row's `weight`, so a
@@ -3704,9 +3680,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .resbar-skinny { height: calc(5px / var(--ui-zoom, 1)); }
 .resbar.full > .fill { animation: pulse-gold 600ms infinite alternate; }
 .reduced-motion .resbar.full > .fill { animation: none; }
-
-/* The broken-axis mark: this trough is at its floor and no longer to scale. */
-.resbar[data-floored] { border-style: dashed; }
 
 /* ---- LABEL DEGRADATION, BY MEASURED FIT ----
    Three variants ride in the DOM; the container query picks the widest that
@@ -9329,17 +9302,13 @@ Object.assign(module.exports, { stances });
  *   So at 500/50 a FULL bar is:
  *     level 1     74/500 = 14.8 % of its track   ~15 %
  *     end-game    94/500 = 18.8 % of its track   ~19 %
- *     a full MP/SP pool  4/50 =  8 % of a half-unit track — BELOW the 16 px
- *     minimum-width floor at 390x844, so it renders AT the floor and DASHED
- *     (the broken-axis mark, styles/combat.css `--resbar-min`): the trough
- *     stops encoding the maximum and says so, and the plate beside it prints
- *     `MP 4/4` regardless. That is the existing pattern for a bar too thin to
- *     read; nothing here softens the scale to avoid it.
+ *     a full MP/SP pool  4/50 =  8 % of a half-unit track. The trough remains
+ *     exactly 8 % even on a phone; the plate beside it prints `MP 4/4` and the
+ *     tooltip carries the same exact value when the trough is too short to read.
  *
- * He was shown these numbers and reaffirmed 500/50. THIS COMMENT IS THE PRICE
- * TAG, NOT AN ARGUMENT — the ruling is made. It is written down because the
- * numbers may move again and the next person to move them should not have to
- * re-derive what they buy.
+ * He was shown these numbers and reaffirmed 500/50, then ruled that the shared
+ * HUD keeps percentage widths rather than replacing short percentages with an
+ * absolute pixel floor. THIS COMMENT IS THE PRICE TAG, NOT AN ARGUMENT.
  *
  * REMOVAL CONDITION (SOP 1's corollary): deleted the day the trough stops
  * encoding a maximum, or the day max-HP progression reaches this band and the
@@ -21443,7 +21412,7 @@ function resourceLabelCeilings(registries) {
  *
  * ONE function, both HUDs. A bar is:
  *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, domain,
- *     labelMax, floored }
+ *     labelMax }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -21467,9 +21436,6 @@ function resourceLabelCeilings(registries) {
  *                closed the conflict my 2026-08-13 log carried as open — the
  *                shipped derivation was already per-resource, so his answer
  *                ratified the default: zero code moved here. — Freja)
- *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
- *                is no longer to scale and says so in its own trough.
- *
  * A row whose reader returns null is ABSENT from the plan. Not zero-length,
  * not an empty trough: absent.
  */
@@ -35185,7 +35151,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '330e036906';
+const SOURCE = 'b73ed4db45';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35219,7 +35185,7 @@ const SOURCE = '330e036906';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1031';
+const ORDINAL = '1066';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38712,7 +38678,7 @@ const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/f
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
-const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
+const { resourceBars } = require("src/ui/components/resbars.js");
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -38778,9 +38744,8 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
              as combat: the shared resource host, Armoury, Menu. This used to be
              a hand-written div.bar.hpbar at its own 15rem width; its first E9
              replacement reused the renderer but gave the map a full-width row,
-             so 320x640 could still show a solid proportional pool while combat
-             showed the same pool as a dashed floored stub. Same plan, different
-             truth. Sharing the row geometry removes that last second HUD.
+             so 320x640 could still show a different physical length for the
+             same percentage. Sharing the row geometry removes that last second HUD.
              (No backticks here: this block lives inside a template literal.) -->
         <div class="hud-top">
           <div class="resbars-host"></div>
@@ -38828,15 +38793,12 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   //     meter, and the refusal path is the right answer rather than a bar with
   //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
   //     which excuses exactly this one row and reds on any other difference.
-  //   · markFlooredBars() runs here for the same reason it runs in combat: the
-  //     minimum-width floor is a RENDERED fact, and a floored trough must wear
-  //     the dashed broken-axis mark on this screen too or the map would show a
-  //     bar that is no longer to scale and does not say so.
+  //   · the shared component writes the exact max/reference percentage; there
+  //     is no screen-specific floor or post-layout correction.
   const resHost = app.querySelector('.map-header .resbars-host');
   if (resHost) {
     const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
     resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
-    markFlooredBars(resHost);
   }
 
   // ---- THE BOARD -------------------------------------------------------
@@ -41529,13 +41491,9 @@ function troughEl(bar) {
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
 
-  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
-  // flooring; whether the floor FIRED is a rendered fact (it depends on the
-  // track, the zoom and the floor together), so it is stamped after layout by
-  // markFlooredBars() rather than guessed at here. A floored trough is drawn
-  // DASHED — the broken-axis mark — because two different maxima below the
-  // floor render the same length, and a bar that is no longer to scale must
-  // not look like one that is.
+  // There is deliberately no absolute minimum width. `width` remains the
+  // rendered max/reference percentage even when the result is only a few
+  // pixels wide; a floor would make different maxima draw the same length.
   const fill = document.createElement('div');
   fill.className = 'fill';
   fill.style.width = `${bar.pct.toFixed(2)}%`;
@@ -41545,41 +41503,12 @@ function troughEl(bar) {
 
 function tooltipHtml(bar, tooltipExtra) {
   const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-  // The tooltip is the floor of legibility for this bar: whatever the plate is
-  // too narrow to print, this always says. Including the maximum, which is the
-  // number a floored bar has stopped encoding.
+  // Whatever the plate is too narrow to print, the tooltip always says.
   return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
 }
 
-/**
- * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
- * clause caught, by MEASURING the rendered trough against the floor.
- *
- * Called after layout. A bar is floored when its rendered width is wider than
- * the width its own lengthPct asked for — which is precisely what `min-width`
- * winning looks like, and it needs no second copy of the floor's value.
- *
- * The track each percentage resolves against is the bar's own CONTAINING BLOCK
- * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
- * per bar rather than passed in, because since the hybrid two bars on one line
- * no longer share a track and a single passed-in width would be wrong for one
- * of them. The old second parameter is accepted and ignored.
- */
-function markFlooredBars(root) {
-  const bars = root.querySelectorAll('.resbar');
-  for (const el of bars) {
-    const asked = parseFloat(el.style.width); // percent
-    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
-    if (!Number.isFinite(asked) || !trackW) continue;
-    const wanted = (asked / 100) * trackW;
-    const got = el.getBoundingClientRect().width;
-    if (got > wanted + 0.5) el.dataset.floored = '1';
-    else delete el.dataset.floored;
-  }
-}
 
-
-Object.assign(module.exports, { resourceBars, markFlooredBars });
+Object.assign(module.exports, { resourceBars });
 
 },
 "src/ui/screens/combat.js": function (module, exports, require) {
@@ -41609,7 +41538,7 @@ const { dlog } = require("src/ui/debuglog.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { figureSpec } = require("src/model/loadout.js");
 const { trackGesture } = require("src/ui/gesture.js");
-const { resourceBars, markFlooredBars } = require("src/ui/components/resbars.js");
+const { resourceBars } = require("src/ui/components/resbars.js");
 const { renderArcaneExposure } = require("src/ui/components/arcaneExposure.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
@@ -42019,7 +41948,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
     host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
-    markFlooredBars(host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {

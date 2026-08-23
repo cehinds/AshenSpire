@@ -24,7 +24,7 @@
 //
 // So this file asserts the thing neither screen's own check can: that the two
 // screens AGREE. It is not a second copy of hudbars.mjs — that tool asks
-// whether ONE HUD's lengths track their maxima (monotonic, linear, floored,
+// whether ONE HUD's lengths track their maxima (monotonic, linear,
 // capped). This asks whether TWO HUDs give the same answer about one character,
 // and the gap between those questions is exactly where this defect lived.
 //
@@ -56,13 +56,10 @@
 //                  because it reads the same constant the render reads. If he
 //                  moves the reference, this line moves with it, by hand, in
 //                  the same act — which is the point.
-//   P4 SAME FLOOR  the two screens agree, per row, on whether the minimum-width
-//                  floor fired; AND every floored trough carries the DASHED
-//                  border. A floored bar has stopped encoding its maximum, and
-//                  one that does not say so is a bar that looks to scale and is
-//                  not — which at 500/50 is not hypothetical: a full MP pool is
-//                  4 % of its track and floors on a phone.
-//   P5 INK         on each screen, an unfloored trough renders within PX_TOL of
+//   P4 PERCENTAGE  no absolute minimum width overrides the requested percentage
+//                  on either screen. The canonical combat component owns this;
+//                  the map inherits the same rule by mounting that component.
+//   P5 INK         on each screen, a trough renders within PX_TOL of
 //                  `ask% x track`, and its fill within PX_TOL of
 //                  `fill% x trough content`. P2 says the two screens ask for
 //                  the same thing; this says the ask arrived as ink.
@@ -74,9 +71,8 @@
 // BOTH EDGES, named because the gate requires it, and they are edges of the
 // TROUGH's domain (0 .. reference), which is the quantity this change moves:
 //   · LOW  — `?shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1`: the bottom of his
-//            own stated band ("a min of 10"). Every pool is at or under the
-//            minimum-width floor, so this is the edge where the floor and its
-//            dashed mark are the whole of what the player sees.
+//            own stated band ("a min of 10"). These short troughs are the edge
+//            that proves an absolute pixel floor does not override percentage.
 //   · HIGH — `?shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50`: AT the
 //            reference. Trough 100 %, fill partial. Nothing above it exists —
 //            `lengthPct` clamps at 100 — so this is the ceiling, not a large
@@ -85,7 +81,7 @@
 //            the only one a player can actually reach.
 //
 // THE THRESHOLD'S OWN NEIGHBOURHOOD (Charter 2b), and the honest version of it:
-//   · P2, P3, P3R, P1, P4's agreement clause and P6 compare EXACTLY. They have
+//   · P2, P3, P3R, P1, P4 and P6 compare EXACTLY. They have
 //     no threshold, so there is nothing to sample either side of.
 //   · P5's `PX_TOL` IS a threshold, and its unit is one CSS pixel. MEASURED,
 //     not asserted: plant 6 clamps a full-track trough and the run reports
@@ -95,9 +91,6 @@
 //     and the plant goes green, ONE PIXEL down to 0 and the clean run goes red.
 //     A cell on each side, adjacent in the threshold's own unit, both entering
 //     by the same door as every other input.
-//   · THE FLOOR ITSELF (16 px) IS NOT THIS TOOL'S THRESHOLD and is not sampled
-//     here: it is styles/combat.css's, and tools/hudbars.mjs A6/A6W owns it.
-//     This tool asks only whether the two screens AGREE about it.
 //
 // THE DOOR: the SOURCE TREE over http in headless Chromium (tools/serve.mjs).
 // Both screens are reached by their own `?shot=` state, the pools are posed
@@ -113,7 +106,7 @@
 // WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
 //   · THE TWO TOP ROWS SHARE THEIR GEOMETRY: resource host, Armoury, Menu. The
 //     screens still carry different secondary chrome below that row. P4 holds
-//     floor agreement at 1440x860, 390x844 and 320x640; P6 holds both controls
+//     percentage authority at 1440x860, 390x844 and 320x640; P6 holds both controls
 //     wholly inside the viewport.
 //   · THE UNDER-MODEL SURFACE IS UNTOUCHED. `src/ui/screens/coop.js`
 //     `meterBars()` still hand-writes `.bar.hpbar` for the co-op combatant
@@ -252,6 +245,7 @@ const READ = `(() => {
       trough: b.width, fill: fb ? fb.width : null,
       track: track ? track.width : null,
       inset: bl + br,
+      minWidth: cs.minWidth,
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
         && cs.borderBottomStyle === 'dashed' && cs.borderLeftStyle === 'dashed',
@@ -494,35 +488,19 @@ function judgeCell(cell, mapR, comR, refTable) {
       }
     }
 
-    // P4 SAME FLOOR STATE, AND THE MARK.
-    if (m.floored !== c.floored) {
-      fail(`FINDING P4/floor ${tag} floored map=${m.floored} combat=${c.floored} `
-        + `(trough map ${m.trough.toFixed(2)} px of track ${m.track.toFixed(2)}, combat ${c.trough.toFixed(2)} of ${c.track.toFixed(2)}) `
-        + '— the minimum-width floor fired on one screen and not the other, so one draws a dashed stub that has '
-        + 'stopped encoding the maximum and the other draws a bar that still does. Same character, two claims.');
-    } else {
-      ok(`P4/floor ${tag} — both screens floored=${m.floored}`);
-    }
+    // P4 PERCENTAGE AUTHORITY — no absolute width floor may override the ask.
     for (const [who, b] of [['map', m], ['combat', c]]) {
-      if (!b.floored) continue;
-      if (!b.dashed) {
-        fail(`FINDING P4/floor ${tag} ${who} floored=true but border-style is not dashed — the broken-axis mark is `
-          + 'gone. A floored trough is no longer to scale; without the dash it looks exactly like one that is, and '
-          + 'two different maxima below the floor draw the same length.');
+      const minWidth = parseFloat(b.minWidth);
+      if (b.floored || b.dashed || (Number.isFinite(minWidth) && minWidth > 0.01)) {
+        fail(`FINDING P4/percentage ${tag} ${who} min-width=${b.minWidth} floored=${b.floored} dashed=${b.dashed} `
+          + '— an absolute-width override is replacing the max/reference percentage. Different maxima must not collapse to one pixel floor.');
       } else {
-        ok(`P4/floor ${tag} ${who} — floored and DASHED (the broken-axis mark)`);
+        ok(`P4/percentage ${tag} ${who} — min-width 0, no floor stamp, solid percentage trough`);
       }
     }
 
     // P5 INK — the ask arrived as pixels.
     for (const [who, b] of [['map', m], ['combat', c]]) {
-      if (b.floored) {
-        // A floored trough is deliberately WIDER than its ask. That is the
-        // floor doing its job, P4 has already judged it, and re-judging it
-        // here as a miss would be this tool marking its own subject wrong.
-        ok(`P5/ink ${tag} ${who} — floored, so the ask is deliberately not the ink (P4 owns this cell)`);
-        continue;
-      }
       const wantTrough = (parseFloat(b.askTrough) / 100) * b.track;
       const dT = Math.abs(b.trough - wantTrough);
       if (dT > PX_TOL) {
@@ -551,8 +529,8 @@ function boundary() {
   console.log('BOUNDARY — printed every run, green or red, because a gate that prints only PASS is');
   console.log('  "green wasn\'t clearance" shipped as infrastructure:');
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
-  console.log('    differs below that row, but P4 refuses any shape where the shared plan reaches different');
-  console.log('    floor semantics on the two screens. The sweep includes the 320x640 narrow edge.');
+  console.log('    differs below that row, but P4 refuses any absolute-width override of the requested');
+  console.log('    percentage. The sweep includes the 320x640 narrow edge.');
   console.log('  · POISE IS ABSENT ON THE MAP BY DESIGN (no meter off the battlefield). If that ever becomes');
   console.log('    wrong, P1 excuses it and will not say so.');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
@@ -815,15 +793,13 @@ async function selftest() {
       expectRed: /FINDING P3R\/reference/,
     },
     {
-      // 5 — THE FLOOR LOSES ITS MARK. At 500/50 a full MP pool is 4 % of its
-      // track and floors on a phone, so this is the shipped case, not an
-      // exotic one: without the dash the picture claims a scale it stopped
-      // keeping.
-      name: 'the broken-axis mark is deleted, so a floored trough looks to scale',
+      // 5 — AN ABSOLUTE FLOOR OVERRIDES THE PERCENTAGE. This is the pre-decision
+      // shape that collapsed several maxima to the same 16 px trough.
+      name: 'an absolute minimum width overrides the requested percentage',
       file: 'styles/combat.css',
-      find: '.resbar[data-floored] { border-style: dashed; }',
-      replace: '.resbar[data-floored] { border-style: solid; }',
-      expectRed: /FINDING P4\/floor .*border-style is not dashed/,
+      find: '  min-width: 0;',
+      replace: '  min-width: 16px;',
+      expectRed: /FINDING P4\/percentage .*min-width=16px/,
     },
     {
       // 6 — THE NEIGHBOURHOOD OF PX_TOL. A stray clamp takes exactly 2 px off

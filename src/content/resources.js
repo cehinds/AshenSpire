@@ -66,17 +66,13 @@
  *   So at 500/50 a FULL bar is:
  *     level 1     74/500 = 14.8 % of its track   ~15 %
  *     end-game    94/500 = 18.8 % of its track   ~19 %
- *     a full MP/SP pool  4/50 =  8 % of a half-unit track — BELOW the 16 px
- *     minimum-width floor at 390x844, so it renders AT the floor and DASHED
- *     (the broken-axis mark, styles/combat.css `--resbar-min`): the trough
- *     stops encoding the maximum and says so, and the plate beside it prints
- *     `MP 4/4` regardless. That is the existing pattern for a bar too thin to
- *     read; nothing here softens the scale to avoid it.
+ *     a full MP/SP pool  4/50 =  8 % of a half-unit track. The trough remains
+ *     exactly 8 % even on a phone; the plate beside it prints `MP 4/4` and the
+ *     tooltip carries the same exact value when the trough is too short to read.
  *
- * He was shown these numbers and reaffirmed 500/50. THIS COMMENT IS THE PRICE
- * TAG, NOT AN ARGUMENT — the ruling is made. It is written down because the
- * numbers may move again and the next person to move them should not have to
- * re-derive what they buy.
+ * He was shown these numbers and reaffirmed 500/50, then ruled that the shared
+ * HUD keeps percentage widths rather than replacing short percentages with an
+ * absolute pixel floor. THIS COMMENT IS THE PRICE TAG, NOT AN ARGUMENT.
  *
  * REMOVAL CONDITION (SOP 1's corollary): deleted the day the trough stops
  * encoding a maximum, or the day max-HP progression reaches this band and the

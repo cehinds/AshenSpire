@@ -105,8 +105,7 @@
    24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
    label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
    (two half-width units side by side). The BEHAVIOUR under it is unchanged
-   and stays the table's: trough length = lengthPct of its derived track,
-   16 px floor, dashed when floored.
+   and stays the table's: trough length = lengthPct of its derived track.
    The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
    provenance is their justification — they are deliberately not --panel
    (#241d15) / --line-soft (#4a4034), which the approved plate is darker and
@@ -149,6 +148,11 @@
 .resbars[data-surface='main'] .resbar {
   height: calc(11px / var(--ui-zoom, 1));
   border-radius: calc(6px / var(--ui-zoom, 1));
+  /* A physical border imposes a two-pixel border-box minimum, which overrides
+     1-4 % troughs on narrow screens. Draw the same rim as an inset shadow so
+     the element's measured width remains the requested percentage. */
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 /* "poise (very skinny bar)" on the MAIN surface. The rule above outranks bare
    .resbar-skinny (two classes + an attribute vs one class), so without this
@@ -195,39 +199,11 @@
   container-type: inline-size;
   flex-shrink: 0;
 
-  /* ---- THE MINIMUM-WIDTH CLAUSE ----
-     His rule ("length scales with max") is right and needs a floor under it.
-     Marina rendered maxMana = 2 at 48 px and watched the label collide with
-     itself; below that the failure gets worse, not better — at a 4-poise mob on
-     a 9.4rem strip the trough asks for 11 px, which is narrower than its own
-     two 1 px borders plus a legible fill.
-
-     WHY A FLOOR IS LEGITIMATE AND NOT A CHEAT. The bar's claim is "you can read
-     the maximum off the length". Below the floor nobody can read a length
-     difference anyway, so preserving the encoding there costs legibility and
-     buys no information. What is NOT legitimate is a floored bar that still
-     looks to scale — two different maxima render identically down there, and
-     that is a lie unless the bar admits it. So:
-
-     THE FLOOR IS MARKED. A floored trough is drawn DASHED — the broken-axis
-     mark, the same grammar a chart uses for a truncated scale — and its exact
-     maximum is always in the tooltip. The bar stops encoding and says so.
-
-     16 px, in px under zoom because a minimum perceivable bar length must not
-     track the Text-size control (Law 2 rule 3, Law 4 clause 3).
-
-     MEASURED, not chosen by eye. `node tools/hudbars.mjs --floor` renders a
-     half-empty bar at each candidate and reports the FILL, at 390x844:
-         floor  8 -> fill 3 px   (thinner than the corner radius; reads as noise)
-         floor 10 -> fill 4 px       floor 12 -> fill  5 px
-         floor 14 -> fill 6 px       floor 16 -> fill  7 px
-         floor 20 -> fill 9 px       floor 32 -> fill 15 px
-     14 is the smallest that clears 6 px. 16 ships, one step above it, because
-     the fill is also the thing that must survive a rounded corner and a 1 px
-     border on a real screen and that margin is not free. If --floor and this
-     number ever disagree, --floor is right and this is a stale copy. */
-  --resbar-min: calc(16px / var(--ui-zoom, 1));
-  min-width: var(--resbar-min);
+  /* No absolute minimum width: the trough is the max/reference percentage.
+     A floor would turn different maxima into the same length, contradicting
+     the percentage encoding chosen for E9 / #254. The plate and tooltip keep
+     the exact value readable when the resulting trough is very short. */
+  min-width: 0;
 }
 .resbar > .fill { background: var(--res-tint, var(--muted)); }
 /* "poise (very skinny bar)" — his words, and skinny is a row's `weight`, so a
@@ -235,9 +211,6 @@
 .resbar-skinny { height: calc(5px / var(--ui-zoom, 1)); }
 .resbar.full > .fill { animation: pulse-gold 600ms infinite alternate; }
 .reduced-motion .resbar.full > .fill { animation: none; }
-
-/* The broken-axis mark: this trough is at its floor and no longer to scale. */
-.resbar[data-floored] { border-style: dashed; }
 
 /* ---- LABEL DEGRADATION, BY MEASURED FIT ----
    Three variants ride in the DOM; the container query picks the widest that

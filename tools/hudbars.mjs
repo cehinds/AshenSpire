@@ -343,6 +343,7 @@ const READ = `(() => {
       visibleLabel: vis.length ? vis.map((s) => s.textContent.trim()).join(' ') : '',
       cur: el.dataset.cur != null ? Number(el.dataset.cur) : null,
       max: el.dataset.max != null ? Number(el.dataset.max) : null,
+      asked: parseFloat(el.style.width),
       floored: el.dataset.floored === '1',
       dashed: getComputedStyle(el).borderTopStyle === 'dashed',
       labelW: n(labelW),
@@ -479,8 +480,9 @@ async function sweepResource(b, href, [w, h], resId, door, domain) {
   return points;
 }
 
-// A2, one resource at one shape: constant px-per-point against the resource's
-// OWN derived domain, over the points that are neither floored nor above it.
+// A2, one resource at one shape: constant percentage-points-per-stat-point
+// against the resource's OWN domain. The containing track may change when a
+// synthetic sweep crosses a label digit, but the inline percentage must not.
 // The at-domain point is ON the line (max/domain is exactly 100 %) and stays
 // in; the floor and the over-domain clamp are the two named exceptions, and
 // both are exclusions this function prints rather than performs silently.
@@ -494,20 +496,20 @@ function judgeResourceProportion(tag, resId, points, domain) {
     notes.push(`A2 ${tag}: ${resId} — only ${usable.length} usable point(s) of ${points.length} (domain ${domain}, ${excluded} floored/over-domain); linearity is not claimable at this shape`);
     return usable.length;
   }
-  const ratios = usable.map((p) => p.w / p.max);
+  const ratios = usable.map((p) => p.asked / p.max);
   const lo = Math.min(...ratios), hi = Math.max(...ratios);
   const spread = (hi - lo) / hi;
   if (spread > 0.03) {
-    fail('A2', `${tag}: ${resId} PROPORTION — px-per-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread) against its OWN domain ${domain}. `
+    fail('A2', `${tag}: ${resId} PROPORTION — percentage-points-per-stat-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread) against its OWN domain ${domain}. `
       + `Per-resource linearity is the ruled shape (D19 C6); if the transpose scale was deliberately curved, this assertion changes with it.`);
   } else {
-    notes.push(`A2 ${tag}: ${resId} PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} px per point of ITS OWN max (domain ${domain}, ${usable.length} points, spread ${(spread * 100).toFixed(1)} %)`);
+    notes.push(`A2 ${tag}: ${resId} PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} percentage points per stat point (domain ${domain}, ${usable.length} points, spread ${(spread * 100).toFixed(1)} %)`);
   }
   return usable.length;
 }
 
 // A2X — the cross-resource negative control the per-resource ruling demands.
-//   (a) hp and mana, standing at DIFFERENT maxes, must render DIFFERENT px
+//   (a) hp and mana, standing at DIFFERENT maxes, must ask DIFFERENT percentage
 //       per point. The dead shared-rate alternative says they must not differ;
 //       per resource says they must. Floored bars are excluded — a floored
 //       length encodes nothing. A shape with no unfloored pair says so by
@@ -530,15 +532,15 @@ function judgeCrossResource(tag, hpRows, manaPoints, domains) {
   } else {
     hadPairs = true;
     const worst = pairs.reduce((a, p) => {
-      const hpRate = p.hp.w / p.hp.max, manaRate = p.mana.w / p.mana.max;
+      const hpRate = p.hp.asked / p.hp.max, manaRate = p.mana.asked / p.mana.max;
       const rel = Math.abs(hpRate - manaRate) / Math.max(hpRate, manaRate);
       return rel < a.rel ? { rel, p, hpRate, manaRate } : a;
     }, { rel: Infinity });
     if (worst.rel < 0.25) {
-      fail('A2X', `${tag}: hp at max ${worst.p.hp.max} renders ${worst.hpRate.toFixed(3)} px/pt and mana at max ${worst.p.mana.max} renders ${worst.manaRate.toFixed(3)} px/pt — `
+      fail('A2X', `${tag}: hp at max ${worst.p.hp.max} asks ${worst.hpRate.toFixed(3)} pct-pt/stat and mana at max ${worst.p.mana.max} asks ${worst.manaRate.toFixed(3)} pct-pt/stat — `
         + `only ${(worst.rel * 100).toFixed(1)} % apart. Two pools at different maxes sharing a rate is the SHARED scale, which is dead by his word (D19 C6).`);
     } else {
-      notes.push(`A2X ${tag}: CROSS-RESOURCE ok — hp ${worst.hpRate.toFixed(3)} px/pt vs mana ${worst.manaRate.toFixed(3)} px/pt (${pairs.length} pairs; rates differ ≥ ${(worst.rel * 100).toFixed(0)} %), which per-resource requires and a shared rate forbids`);
+      notes.push(`A2X ${tag}: CROSS-RESOURCE ok — hp ${worst.hpRate.toFixed(3)} vs mana ${worst.manaRate.toFixed(3)} percentage-points/stat (${pairs.length} pairs; rates differ ≥ ${(worst.rel * 100).toFixed(0)} %), which per-resource requires and a shared rate forbids`);
     }
   }
   const atDomain = manaPoints.find((p) => p.max === domains.mana);
@@ -858,33 +860,21 @@ function judge(shape, rows, hpDomain) {
   }
   if (!fails.some((f) => f.startsWith('A5'))) notes.push(`A5 ${tag}: TAP FLOOR ok — ${rows[0].btns.length} top-row buttons at/above ${rows[0].floor} px`);
 
-  // ---- A6 a floored bar wears the broken-axis mark --------------------------
+  // ---- A6 the percentage is authoritative -----------------------------------
   for (const r of rows) {
     for (const bar of r.bars) {
-      if (bar.floored && !bar.dashed) {
-        fail('A6', `${tag}: at max ${r.max} the "${bar.id}" bar is at its minimum width but is drawn solid — a bar that has stopped being to scale must say so`);
+      if (bar.floored || bar.dashed) {
+        fail('A6', `${tag}: at max ${r.max} the "${bar.id}" bar carries floored=${bar.floored}, dashed=${bar.dashed} — an absolute floor has replaced the max/reference percentage`);
       }
     }
   }
 }
 
-// ---- A6W THE FLOOR IS ALIVE (development.md, *The wake condition*; Freja
-// 2026-08-14). A6 above is one-sided by construction: it fires only on a bar
-// OBSERVED floored — so the day the floor itself dies (--resbar-min renamed,
-// min-width lost to a cleanup, markFlooredBars unhooked, the dashed rule
-// outranked), no bar is ever floored, A6 goes vacuously green, and the
-// broken-axis mark quietly stops existing. Absence never fails a test written
-// to expect absence: the refusal needs a red on its WAKE, not only on its
-// firing shape. Two poses per shape, through the same ?shot doors the sweeps
-// use:
-//   · max 2 — the to-scale width is a sliver and the floor MUST catch it:
-//     the token resolves, min-width wins, data-floored is stamped, the dash
-//     draws. Each organ failing is named separately, because each dies to a
-//     different class of cleanup.
-//   · the default pose — hp far above the floor: the stamp must be absent
-//     and the border solid, or the mark lies about a truncation that is not
-//     happening (the reverse edge; a dash that always shows says nothing).
-async function judgeFloorAlive(b, href, [w, h]) {
+// ---- A6P THE PERCENTAGE OWNS EVEN THE LOW EDGE. The max-2 pose makes the
+// requested trough only a fraction of the track. It must still render at that
+// percentage: an absolute floor would collapse several different maxima to one
+// length and recreate the eight REDs this decision closes.
+async function judgePercentageAuthority(b, href, [w, h]) {
   const tag = `${w}x${h}`;
   const PROBE = `(() => {
     const n = (v) => Math.round(v * 100) / 100;
@@ -892,16 +882,8 @@ async function judgeFloorAlive(b, href, [w, h]) {
     if (!el) return { missing: true };
     const cellW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
     const asked = parseFloat(el.style.width);
-    // The floor, MEASURED off a probe resolving the same token min-width
-    // uses, inside the bar's own scope — never parsed out of the stylesheet.
-    // Fallback 0px: an unresolved token measures 0 and is reported as dead.
-    const p = document.createElement('div');
-    p.style.cssText = 'position:absolute;left:-9999px;top:0;height:1px;padding:0;border:0;width:var(--resbar-min, 0px)';
-    el.appendChild(p);
-    const floor = n(p.getBoundingClientRect().width);
-    p.remove();
     return {
-      floor,
+      minWidth: getComputedStyle(el).minWidth,
       wanted: n((asked / 100) * cellW),
       got: n(el.getBoundingClientRect().width),
       floored: el.dataset.floored === '1',
@@ -913,26 +895,13 @@ async function judgeFloorAlive(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ shotMaxHp=2');
   await wait(320);
   const low = await b.ev(PROBE);
-  if (low.missing) { fail('A6W', `${tag}: no hp resbar at the floored pose — the wake has no subject`); return; }
-  if (!(low.floor > 4)) {
-    fail('A6W', `${tag}: --resbar-min resolves to ${low.floor} px — the floor token is dead (renamed, unset, or scoped away); no bar can ever be floored again and A6 is vacuously green from here on`);
-  } else if (low.wanted >= low.floor - 0.5) {
-    fail('A6W', `${tag}: the max-2 pose wants ${low.wanted} px against a ${low.floor} px floor — the pose no longer forces flooring (domain or track moved); re-derive the pose, do not let this clause go quiet`);
-  } else {
-    if (low.got < low.floor - 0.5) fail('A6W', `${tag}: at max 2 the hp bar rendered ${low.got} px below the ${low.floor} px floor — min-width no longer wins; the floor is dead while its token still resolves`);
-    if (!low.floored) fail('A6W', `${tag}: at max 2 the hp bar sits at the floor (${low.got} px for a wanted ${low.wanted} px) with no data-floored stamp — markFlooredBars is not seeing it, so the dash can never fire`);
-    if (!low.dashed) fail('A6W', `${tag}: at max 2 the hp bar is floored and drawn SOLID — the broken-axis mark is dead (rule deleted or lost the cascade); a bar that has stopped being to scale no longer says so`);
-  }
-  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat` }, b.S);
-  await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ default');
-  await wait(320);
-  const high = await b.ev(PROBE);
-  if (!high.missing && high.wanted > high.floor + 2) {
-    if (high.floored) fail('A6W', `${tag}: the default pose (wanted ${high.wanted} px, floor ${high.floor} px) is stamped data-floored — the stamp lies about unfloored bars`);
-    if (high.dashed) fail('A6W', `${tag}: the default pose wears the dash while ${high.wanted} px above the floor — the mark claims a truncation that is not happening`);
-  }
-  if (!fails.some((f) => f.startsWith(`A6W  ${tag}`))) {
-    notes.push(`A6W ${tag}: FLOOR ALIVE ok — token ${low.floor} px, max-2 pose floored+dashed (wanted ${low.wanted} px → got ${low.got} px), default pose solid and unstamped`);
+  if (low.missing) { fail('A6P', `${tag}: no hp resbar at the low percentage pose — the check has no subject`); return; }
+  const minWidth = parseFloat(low.minWidth);
+  if (Number.isFinite(minWidth) && minWidth > 0.01) fail('A6P', `${tag}: max-2 pose has min-width ${low.minWidth} — an absolute floor can override percentage`);
+  if (Math.abs(low.got - low.wanted) > 0.75) fail('A6P', `${tag}: max-2 pose rendered ${low.got} px for a ${low.wanted} px percentage ask`);
+  if (low.floored || low.dashed) fail('A6P', `${tag}: max-2 pose carries floored=${low.floored}, dashed=${low.dashed} — percentage is not authoritative`);
+  if (!fails.some((f) => f.startsWith(`A6P  ${tag}`))) {
+    notes.push(`A6P ${tag}: PERCENTAGE AUTHORITY ok — max-2 rendered ${low.got} px for ${low.wanted} px ask, min-width ${low.minWidth}`);
   }
 }
 
@@ -1319,7 +1288,7 @@ async function main() {
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
       judge(shape, rows, domains ? domains.hp : null);
-      await judgeFloorAlive(b, href, shape);
+      await judgePercentageAuthority(b, href, shape);
       if (domains) {
         const tag = `${shape[0]}x${shape[1]}`;
         let manaPoints = [];

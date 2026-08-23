@@ -156,13 +156,9 @@ function troughEl(bar) {
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `${bar.name} ${bar.cur} of ${bar.max}`);
 
-  // THE MINIMUM-WIDTH CLAUSE — `min-width: var(--resbar-min)` in CSS does the
-  // flooring; whether the floor FIRED is a rendered fact (it depends on the
-  // track, the zoom and the floor together), so it is stamped after layout by
-  // markFlooredBars() rather than guessed at here. A floored trough is drawn
-  // DASHED — the broken-axis mark — because two different maxima below the
-  // floor render the same length, and a bar that is no longer to scale must
-  // not look like one that is.
+  // There is deliberately no absolute minimum width. `width` remains the
+  // rendered max/reference percentage even when the result is only a few
+  // pixels wide; a floor would make different maxima draw the same length.
   const fill = document.createElement('div');
   fill.className = 'fill';
   fill.style.width = `${bar.pct.toFixed(2)}%`;
@@ -172,35 +168,6 @@ function troughEl(bar) {
 
 function tooltipHtml(bar, tooltipExtra) {
   const extra = (tooltipExtra && tooltipExtra(bar)) || '';
-  // The tooltip is the floor of legibility for this bar: whatever the plate is
-  // too narrow to print, this always says. Including the maximum, which is the
-  // number a floored bar has stopped encoding.
+  // Whatever the plate is too narrow to print, the tooltip always says.
   return `<div class="tt-title">${esc(bar.name)}</div>${bar.cur} / ${bar.max}. ${extra}`;
-}
-
-/**
- * markFlooredBars(root) — stamp `data-floored` on every bar the minimum-width
- * clause caught, by MEASURING the rendered trough against the floor.
- *
- * Called after layout. A bar is floored when its rendered width is wider than
- * the width its own lengthPct asked for — which is precisely what `min-width`
- * winning looks like, and it needs no second copy of the floor's value.
- *
- * The track each percentage resolves against is the bar's own CONTAINING BLOCK
- * (`.restrack` on the hybrid HUD, the strip on the model surface) — measured
- * per bar rather than passed in, because since the hybrid two bars on one line
- * no longer share a track and a single passed-in width would be wrong for one
- * of them. The old second parameter is accepted and ignored.
- */
-export function markFlooredBars(root) {
-  const bars = root.querySelectorAll('.resbar');
-  for (const el of bars) {
-    const asked = parseFloat(el.style.width); // percent
-    const trackW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
-    if (!Number.isFinite(asked) || !trackW) continue;
-    const wanted = (asked / 100) * trackW;
-    const got = el.getBoundingClientRect().width;
-    if (got > wanted + 0.5) el.dataset.floored = '1';
-    else delete el.dataset.floored;
-  }
 }

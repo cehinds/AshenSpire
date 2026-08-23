@@ -39,7 +39,7 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { resourceBars, markFlooredBars } from '../components/resbars.js';
+import { resourceBars } from '../components/resbars.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -105,9 +105,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
              as combat: the shared resource host, Armoury, Menu. This used to be
              a hand-written div.bar.hpbar at its own 15rem width; its first E9
              replacement reused the renderer but gave the map a full-width row,
-             so 320x640 could still show a solid proportional pool while combat
-             showed the same pool as a dashed floored stub. Same plan, different
-             truth. Sharing the row geometry removes that last second HUD.
+             so 320x640 could still show a different physical length for the
+             same percentage. Sharing the row geometry removes that last second HUD.
              (No backticks here: this block lives inside a template literal.) -->
         <div class="hud-top">
           <div class="resbars-host"></div>
@@ -155,15 +154,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   //     meter, and the refusal path is the right answer rather than a bar with
   //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
   //     which excuses exactly this one row and reds on any other difference.
-  //   · markFlooredBars() runs here for the same reason it runs in combat: the
-  //     minimum-width floor is a RENDERED fact, and a floored trough must wear
-  //     the dashed broken-axis mark on this screen too or the map would show a
-  //     bar that is no longer to scale and does not say so.
+  //   · the shared component writes the exact max/reference percentage; there
+  //     is no screen-specific floor or post-layout correction.
   const resHost = app.querySelector('.map-header .resbars-host');
   if (resHost) {
     const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
     resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
-    markFlooredBars(resHost);
   }
 
   // ---- THE BOARD -------------------------------------------------------

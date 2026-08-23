@@ -218,7 +218,7 @@ export function resourceLabelCeilings(registries) {
  *
  * ONE function, both HUDs. A bar is:
  *   { id, name, glyph, tint, weight, band, cur, max, pct, lengthPct, domain,
- *     labelMax, floored }
+ *     labelMax }
  *
  *   pct        — the FILL inside the trough (cur/max). The old bars' only job.
  *   lengthPct  — the TROUGH's own length, as a fraction of the row track, and
@@ -242,9 +242,6 @@ export function resourceLabelCeilings(registries) {
  *                closed the conflict my 2026-08-13 log carried as open — the
  *                shipped derivation was already per-resource, so his answer
  *                ratified the default: zero code moved here. — Freja)
- *   floored    — the minimum-width clause fired; see resbars.css. A floored bar
- *                is no longer to scale and says so in its own trough.
- *
  * A row whose reader returns null is ABSENT from the plan. Not zero-length,
  * not an empty trough: absent.
  */
