@@ -207,11 +207,10 @@ export const REFUSAL_SCOPE = [
   '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
   '  LINK AND CODE-SPAN SPELLINGS THIS TOOL HAS NOT BEEN SHOWN. The list below is',
   '  what has been MEASURED outside the subset. IT IS NOT A COMPLETENESS CLAIM AND',
-  '  MUST NOT BE READ AS ONE — SIX of its entries were found on the day it was',
-  '  written, SEVEN FORMS ACROSS SIX HEADS, each one arriving after a fix: one was',
-  '  made BY the fix closing the entry above it, and two arrived after this',
-  '  sentence stopped claiming a construct. THAT IS THE EVIDENCE FOR THIS SENTENCE',
-  '  AND NOT AGAINST IT — the list will keep growing and the line will stay true.',
+  '  MUST NOT BE READ AS ONE — FIVE of its entries were found on the day it was',
+  '  written: one in the fix that was closing the entry above it, and one MINUTES',
+  '  AFTER this sentence stopped claiming a construct. That is the evidence for',
+  '  the sentence, not against it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
   '  span delimited by a backtick run of ANY length.',
   'OPEN, MEASURED, NOT FIXED — each reaches the player:',
@@ -228,10 +227,6 @@ export const REFUSAL_SCOPE = [
   '    BALANCED title paren is refused. The subset above says "paren-balanced",',
   '    and this is what falls outside it — found minutes after that line was',
   '    written, which is the line\'s own point, not a hole in it.',
-  '  · INTRAWORD `__` is flattened and it CORRUPTS IDENTIFIERS: `foo__bar__baz`',
-  '    ships as `foobarbaz`, where CommonMark leaves it literal — underscore',
-  '    emphasis cannot open or close inside a word. Standalone `__bold__` is a',
-  '    correct flatten; only the intraword case is wrong.',
   '  · non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML',
   '    entities · backslash escapes · a bare URL GitHub autolinks.',
   '  None of them is present in CHANGELOG.md today.',
@@ -314,7 +309,12 @@ export function flattenInline(text, where, labels = new Set()) {
     }
   }
   return text
-    .replace(/(\*\*|__)(?=\S)([\s\S]*?\S)\1/g, '$2')
+    .replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '$1')
+    // Unlike `**`, a `__` run cannot open or close strong emphasis inside a
+    // Unicode word. Keeping letters, numbers and adjacent underscores outside
+    // both delimiters preserves identifiers such as `foo__bar__baz`, while the
+    // lazy body still lets `__foo__bar__baz__` flatten only its valid outer pair.
+    .replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}_])/gu, '$1')
     .replace(/(?<![\w*])\*(?=\S)([^*]*?\S)\*(?!\w)/g, '$1')
     .replace(/(?<![\w_])_(?=\S)([^_]*?\S)_(?!\w)/g, '$1')
     // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
@@ -603,6 +603,13 @@ async function selftest() {
     if (collapsed.detail !== 'Supports [keyboard][] input.') throw new Error(`rewrote the collapsed form to: ${collapsed.detail}`);
     console.log('PASS a reference-style shape with NO definition is prose, not a link');
   } catch (error) { console.error(`FAIL undefined reference shape refused or altered: ${error.message}`); process.exitCode = 1; }
+  // Double underscores have stricter delimiter rules than double asterisks:
+  // intraword runs are literal, while a standalone pair still means strong.
+  try {
+    const [underscores] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps foo__bar__baz, but flattens __bold__.\n');
+    if (underscores.detail !== 'Keeps foo__bar__baz, but flattens bold.') throw new Error(`rewrote it to: ${underscores.detail}`);
+    console.log('PASS intraword double underscores stay literal while standalone strong flattens');
+  } catch (error) { console.error(`FAIL double-underscore flanking: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
