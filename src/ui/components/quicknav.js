@@ -41,6 +41,7 @@ import { attachTooltip, esc, hideTooltip } from './tooltip.js';
 import { menuRows } from '../uiContent.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -132,6 +133,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
   veil.className = 'modal-veil qn-veil';
   const panel = document.createElement('div');
   panel.className = 'qn-panel';
+  markUiComponent(panel, UI.quickMenuPanel, context);
   // #78 — the house convention for a navigable set: the host names the set, each
   // control names its member. `menuAct` was the one registered set that did NOT
   // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
@@ -149,6 +151,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
   // Save & Quit are the last two rows, always (his constraint, fixed by hand).
   const cap = document.createElement('div');
   cap.className = 'qn-cap';
+  markUiComponent(cap, UI.quickMenuCaption, mode);
   cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
   panel.appendChild(cap);
 
@@ -156,6 +159,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
     if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
     const b = document.createElement('button');
     b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
+    markUiComponent(b, UI.quickMenuRow, r.act);
     b.dataset.act = r.act;
     b.dataset.member = r.act;
     if (r.tab) b.dataset.tab = r.tab;

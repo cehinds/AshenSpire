@@ -75,6 +75,65 @@ shared-run-hud
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
 
+## Menu components
+
+| Component ID | View or renderer | Purpose |
+|---|---|---|
+| `quick-menu-panel` | `quicknav.js` | Contextual dropdown opened from the HUD. |
+| `quick-menu-caption` | `quicknav.js` | Active Quick Menu variant/status caption. |
+| `quick-menu-row` | `quicknav.js` + `uiContent.js` | One contextual destination or action. |
+| `menu-overlay` | `overlay.js` | Full in-run tabbed menu. |
+| `menu-tab-strip` | `overlay.js` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
+| `menu-tab` | `overlay.js` + `uiContent.js` | One declared tab control. |
+| `menu-panel` | `overlay.js` | Content host for the selected tab. |
+
+```text
+quick-menu-panel
+├─ quick-menu-caption
+└─ quick-menu-row × N
+
+menu-overlay
+├─ menu-tab-strip
+│  └─ menu-tab × N
+└─ menu-panel
+```
+
+## Armoury components
+
+| Component ID | View or renderer | Purpose |
+|---|---|---|
+| `armoury-overlay` | `equipment.js` | Modal veil and Armoury focus scope. |
+| `armoury-panel` | `equipment.js` | Complete responsive Armoury surface. |
+| `armoury-header` | `equipment.js` | Title, view switcher, and close action. |
+| `armoury-view-switcher` | `equipment.js` | Grid/Rack/Hybrid selector. |
+| `armoury-body` | `equipment.js` | Figure and equipment-slot workspace. |
+| `armoury-figure` | `equipment.js` + `assets.js` | Layered equipped character figure. |
+| `equipment-slot` | `equipment.js` | One named equipment socket. |
+| `equipment-set-cell` | `equipment.js` | One active, empty, or locked set cell. |
+| `armoury-inventory` | `equipment.js` | Shared carried-item inventory. |
+| `inventory-item-card` | `equipment.js` | Collapsed carried-item summary. |
+| `inventory-detail-card` | `equipment.js` | Expanded item art, tags, mods, and action. |
+| `equipment-comparison` | `equipmentReceipts.js` | Before/after equipment receipt. |
+| `armoury-stats-panel` | `equipment.js` | Attributes and derived resources. |
+| `armoury-card-strip` | `equipment.js` + `card.js` | Live card rewrites from equipment. |
+| `armoury-region-header` | `equipment.js` | Fold control and region item count. |
+
+```text
+armoury-overlay
+└─ armoury-panel
+   ├─ armoury-header ── armoury-view-switcher
+   ├─ armoury-body
+   │  ├─ armoury-figure
+   │  └─ equipment-slot × N ── equipment-set-cell × N
+   ├─ armoury-inventory
+   │  ├─ armoury-region-header
+   │  ├─ inventory-item-card × N
+   │  ├─ inventory-detail-card
+   │  └─ equipment-comparison
+   ├─ armoury-stats-panel
+   └─ armoury-card-strip
+```
+
 ### Combatant card detail
 
 ```text

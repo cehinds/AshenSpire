@@ -34,6 +34,7 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
 const CFG = () => balance.equipment;
 
@@ -315,6 +316,7 @@ function buildList(L, ui) {
 function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
+  markUiComponent(el, UI.armouryFigure);
   const reacts = CFG().spriteReacts;
   if (reacts === 'none') {
     el.appendChild(playerSprite(cz, run.class));
@@ -408,6 +410,7 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
 function inventoryFace(row, { selected = false, draggable = false } = {}) {
   const el = document.createElement('span');
   el.className = `inventory-face${selected ? ' on' : ''}`;
+  markUiComponent(el, UI.inventoryItemCard, row.category);
   el.dataset.inventoryItem = row.key;
   el.dataset.itemId = row.id;
   el.dataset.itemCategory = row.category;
@@ -428,6 +431,7 @@ function inventoryFace(row, { selected = false, draggable = false } = {}) {
 function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
   const el = document.createElement('div');
   el.className = 'inventory-detail';
+  markUiComponent(el, UI.inventoryDetailCard, row.category);
   const item = row.item;
   let art = '';
   if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
@@ -577,6 +581,7 @@ export function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
   wrap.className = 'modal-veil armoury-overlay';
+  markUiComponent(wrap, UI.armouryOverlay);
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
   wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
@@ -697,6 +702,7 @@ export function mountEquipment(host, {
   function slotBlock(slot) {
     const box = document.createElement('div');
     box.className = 'equip-slot';
+    markUiComponent(box, UI.equipmentSlot, slot.id);
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
       `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
@@ -728,6 +734,7 @@ export function mountEquipment(host, {
         const cell = document.createElement('button');
         cell.type = 'button';
         cell.className = 'es-cell locked';
+        markUiComponent(cell, UI.equipmentSetCell, `${slot.id}-locked`);
         cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
         refuses(cell, () => rung.hint);
         sets.appendChild(cell);
@@ -742,6 +749,7 @@ export function mountEquipment(host, {
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      markUiComponent(cell, UI.equipmentSetCell, slot.id);
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
         ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
@@ -1023,6 +1031,7 @@ export function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
+    markUiComponent(box, UI.armouryCardStrip);
     const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
     for (const inst of run.deck || []) {
@@ -1067,6 +1076,7 @@ export function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const box = document.createElement('section');
     box.className = 'armoury-stats';
+    markUiComponent(box, UI.armouryStatsPanel);
     box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
       + `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
       + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
@@ -1121,6 +1131,7 @@ export function mountEquipment(host, {
 
       const head = document.createElement('div');
       head.className = 'region-head';
+      markUiComponent(head, UI.armouryRegionHeader, r.id);
       const n = r.count(el);
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -1183,6 +1194,12 @@ export function mountEquipment(host, {
         <div class="armoury-strip"></div>
       </div>`;
 
+    markUiComponent(wrap.querySelector('.armoury'), UI.armouryPanel, view);
+    markUiComponent(wrap.querySelector('.armoury-head'), UI.armouryHeader);
+    markUiComponent(wrap.querySelector('.armoury-views'), UI.armouryViewSwitcher);
+    markUiComponent(wrap.querySelector('.armoury-body'), UI.armouryBody, view);
+    markUiComponent(wrap.querySelector('.armoury-inventory'), UI.armouryInventory);
+
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
     const blocks = eq.slots
@@ -1235,6 +1252,9 @@ export function mountEquipment(host, {
 
     notice = '';
     dressRegions();
+    wrap.querySelectorAll('.equip-candidate-comparison').forEach((comparison) => (
+      markUiComponent(comparison, UI.equipmentComparison)
+    ));
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {

@@ -852,6 +852,15 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and
   residual HP loss cannot be visually conflated. These are independently referenceable
   components; the catalog may expand other components later without declaring them leaves.
+- **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
+  composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
+  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, and `menu-panel`. The equipment
+  family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
+  `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
+  `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
+  `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
+  `armoury-region-header`. These ids describe the existing data-driven Quick Menu and Armoury
+  structures; they do not create a parallel menu or equipment implementation.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
   The center Cinders track and right metadata trail are each capped at 30% of the

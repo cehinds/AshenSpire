@@ -22,6 +22,12 @@ const REQUIRED_IDS = Object.freeze([
   'health-status-bar', 'poise-status-bar', 'proc-status-bar', 'arcane-exposure-bar',
   'status-effect-tray', 'tooltip', 'damage-feedback', 'guarded-damage-indicator',
   'health-damage-indicator',
+  'quick-menu-panel', 'quick-menu-caption', 'quick-menu-row', 'menu-overlay',
+  'menu-tab-strip', 'menu-tab', 'menu-panel', 'armoury-overlay', 'armoury-panel',
+  'armoury-header', 'armoury-view-switcher', 'armoury-body', 'armoury-figure',
+  'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
+  'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
+  'armoury-card-strip', 'armoury-region-header',
 ]);
 
 export function receipt() {
@@ -45,6 +51,9 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
+    quicknav: read('src/ui/components/quicknav.js'),
+    overlay: read('src/ui/components/overlay.js'),
+    equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     spec: read('SPEC.md'),
   };
@@ -106,6 +115,18 @@ export function findings(r) {
       || !/UI\.guardedDamageIndicator/.test(r.fx)
       || !/UI\.healthDamageIndicator/.test(r.fx)) {
     bad.push('C8 combat composition lacks stable Battlefield/Frame/Hand/Action references');
+  }
+  if (!/UI\.quickMenuPanel/.test(r.quicknav)
+      || !/UI\.quickMenuRow/.test(r.quicknav)
+      || !/UI\.menuOverlay/.test(r.overlay)
+      || !/UI\.menuTab/.test(r.overlay)
+      || !/UI\.menuPanel/.test(r.overlay)
+      || !/UI\.armouryOverlay/.test(r.equipment)
+      || !/UI\.armouryPanel/.test(r.equipment)
+      || !/UI\.equipmentSlot/.test(r.equipment)
+      || !/UI\.armouryInventory/.test(r.equipment)
+      || !/UI\.equipmentComparison/.test(r.equipment)) {
+    bad.push('C8 menu and Armoury composition lacks stable component references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
       || !/\n\.enemy-row\s*\{[^}]*align-items:\s*center;/.test(r.css)) {

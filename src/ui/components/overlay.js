@@ -15,6 +15,7 @@ import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
 import { closeFlaskActionMenu, flaskIdentityHtml } from './flask.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let openVeil = null;
 let escHandler = null;
@@ -240,6 +241,9 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   openVeil = veil;
 
   const body = veil.querySelector('.overlay-body');
+  markUiComponent(veil.querySelector('.overlay-modal'), UI.menuOverlay);
+  markUiComponent(veil.querySelector('.overlay-tabs'), UI.menuTabStrip);
+  veil.querySelectorAll('.ov-tab').forEach((tab) => markUiComponent(tab, UI.menuTab, tab.dataset.member));
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
@@ -271,6 +275,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       sw.textContent = `${t ? t.label : id} \u25be`;
     }
     body.innerHTML = '';
+    markUiComponent(body, UI.menuPanel, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.

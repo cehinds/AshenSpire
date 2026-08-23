@@ -33828,6 +33828,13 @@ const UI_COMPONENTS = Object.freeze({
   hotkeyBadge: 'hotkey-badge',
   armouryControl: 'armoury-control',
   quickMenuControl: 'quick-menu-control',
+  quickMenuPanel: 'quick-menu-panel',
+  quickMenuCaption: 'quick-menu-caption',
+  quickMenuRow: 'quick-menu-row',
+  menuOverlay: 'menu-overlay',
+  menuTabStrip: 'menu-tab-strip',
+  menuTab: 'menu-tab',
+  menuPanel: 'menu-panel',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
@@ -33837,6 +33844,21 @@ const UI_COMPONENTS = Object.freeze({
   relicSlot: 'relic-slot',
   potionTray: 'potion-tray',
   potionControl: 'potion-control',
+  armouryOverlay: 'armoury-overlay',
+  armouryPanel: 'armoury-panel',
+  armouryHeader: 'armoury-header',
+  armouryViewSwitcher: 'armoury-view-switcher',
+  armouryBody: 'armoury-body',
+  armouryFigure: 'armoury-figure',
+  equipmentSlot: 'equipment-slot',
+  equipmentSetCell: 'equipment-set-cell',
+  armouryInventory: 'armoury-inventory',
+  inventoryItemCard: 'inventory-item-card',
+  inventoryDetailCard: 'inventory-detail-card',
+  equipmentComparison: 'equipment-comparison',
+  armouryStatsPanel: 'armoury-stats-panel',
+  armouryCardStrip: 'armoury-card-strip',
+  armouryRegionHeader: 'armoury-region-header',
   battlefieldStage: 'battlefield-stage',
   combatantFrame: 'combatant-frame',
   playerCombatantFrame: 'player-combatant-frame',
@@ -36797,7 +36819,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '63a95d4b60';
+const SOURCE = '75eabf79a0';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36831,7 +36853,7 @@ const SOURCE = '63a95d4b60';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1154';
+const ORDINAL = '1155';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40951,6 +40973,7 @@ const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.j
 const { menuRows } = require("src/ui/uiContent.js");
 const { isEngaged, focusFirst } = require("src/ui/input.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 // The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -41042,6 +41065,7 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
   veil.className = 'modal-veil qn-veil';
   const panel = document.createElement('div');
   panel.className = 'qn-panel';
+  markUiComponent(panel, UI.quickMenuPanel, context);
   // #78 — the house convention for a navigable set: the host names the set, each
   // control names its member. `menuAct` was the one registered set that did NOT
   // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
@@ -41059,6 +41083,7 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
   // Save & Quit are the last two rows, always (his constraint, fixed by hand).
   const cap = document.createElement('div');
   cap.className = 'qn-cap';
+  markUiComponent(cap, UI.quickMenuCaption, mode);
   cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
   panel.appendChild(cap);
 
@@ -41066,6 +41091,7 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
     if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
     const b = document.createElement('button');
     b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
+    markUiComponent(b, UI.quickMenuRow, r.act);
     b.dataset.act = r.act;
     b.dataset.member = r.act;
     if (r.tab) b.dataset.tab = r.tab;
@@ -45554,6 +45580,7 @@ const { statProjection } = require("src/model/statProjection.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 const CFG = () => balance.equipment;
 
@@ -45835,6 +45862,7 @@ function buildList(L, ui) {
 function figureFor(registries, run, cz) {
   const el = document.createElement('div');
   el.className = 'armoury-figure';
+  markUiComponent(el, UI.armouryFigure);
   const reacts = CFG().spriteReacts;
   if (reacts === 'none') {
     el.appendChild(playerSprite(cz, run.class));
@@ -45928,6 +45956,7 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
 function inventoryFace(row, { selected = false, draggable = false } = {}) {
   const el = document.createElement('span');
   el.className = `inventory-face${selected ? ' on' : ''}`;
+  markUiComponent(el, UI.inventoryItemCard, row.category);
   el.dataset.inventoryItem = row.key;
   el.dataset.itemId = row.id;
   el.dataset.itemCategory = row.category;
@@ -45948,6 +45977,7 @@ function inventoryFace(row, { selected = false, draggable = false } = {}) {
 function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
   const el = document.createElement('div');
   el.className = 'inventory-detail';
+  markUiComponent(el, UI.inventoryDetailCard, row.category);
   const item = row.item;
   let art = '';
   if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
@@ -46097,6 +46127,7 @@ function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
   wrap.className = 'modal-veil armoury-overlay';
+  markUiComponent(wrap, UI.armouryOverlay);
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
   wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
@@ -46217,6 +46248,7 @@ function mountEquipment(host, {
   function slotBlock(slot) {
     const box = document.createElement('div');
     box.className = 'equip-slot';
+    markUiComponent(box, UI.equipmentSlot, slot.id);
     const rule = canSwap(registries, slot.id, { inCombat });
     box.innerHTML =
       `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
@@ -46248,6 +46280,7 @@ function mountEquipment(host, {
         const cell = document.createElement('button');
         cell.type = 'button';
         cell.className = 'es-cell locked';
+        markUiComponent(cell, UI.equipmentSetCell, `${slot.id}-locked`);
         cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
         refuses(cell, () => rung.hint);
         sets.appendChild(cell);
@@ -46262,6 +46295,7 @@ function mountEquipment(host, {
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      markUiComponent(cell, UI.equipmentSetCell, slot.id);
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
         ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
@@ -46543,6 +46577,7 @@ function mountEquipment(host, {
   function cardStrip() {
     const box = document.createElement('div');
     box.className = 'equip-cards';
+    markUiComponent(box, UI.armouryCardStrip);
     const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
     for (const inst of run.deck || []) {
@@ -46587,6 +46622,7 @@ function mountEquipment(host, {
     const projection = statProjection(registries, run);
     const box = document.createElement('section');
     box.className = 'armoury-stats';
+    markUiComponent(box, UI.armouryStatsPanel);
     box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
       + `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
       + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
@@ -46641,6 +46677,7 @@ function mountEquipment(host, {
 
       const head = document.createElement('div');
       head.className = 'region-head';
+      markUiComponent(head, UI.armouryRegionHeader, r.id);
       const n = r.count(el);
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -46703,6 +46740,12 @@ function mountEquipment(host, {
         <div class="armoury-strip"></div>
       </div>`;
 
+    markUiComponent(wrap.querySelector('.armoury'), UI.armouryPanel, view);
+    markUiComponent(wrap.querySelector('.armoury-head'), UI.armouryHeader);
+    markUiComponent(wrap.querySelector('.armoury-views'), UI.armouryViewSwitcher);
+    markUiComponent(wrap.querySelector('.armoury-body'), UI.armouryBody, view);
+    markUiComponent(wrap.querySelector('.armoury-inventory'), UI.armouryInventory);
+
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
     const blocks = eq.slots
@@ -46755,6 +46798,9 @@ function mountEquipment(host, {
 
     notice = '';
     dressRegions();
+    wrap.querySelectorAll('.equip-candidate-comparison').forEach((comparison) => (
+      markUiComponent(comparison, UI.equipmentComparison)
+    ));
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
@@ -52530,6 +52576,7 @@ const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { closeFlaskActionMenu, flaskIdentityHtml } = require("src/ui/components/flask.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 let openVeil = null;
 let escHandler = null;
@@ -52755,6 +52802,9 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   openVeil = veil;
 
   const body = veil.querySelector('.overlay-body');
+  markUiComponent(veil.querySelector('.overlay-modal'), UI.menuOverlay);
+  markUiComponent(veil.querySelector('.overlay-tabs'), UI.menuTabStrip);
+  veil.querySelectorAll('.ov-tab').forEach((tab) => markUiComponent(tab, UI.menuTab, tab.dataset.member));
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
@@ -52786,6 +52836,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
       sw.textContent = `${t ? t.label : id} \u25be`;
     }
     body.innerHTML = '';
+    markUiComponent(body, UI.menuPanel, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
