@@ -1256,12 +1256,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(REG.balance.flaskCapacity, 4, 'Crimson/Azure share the approved global capacity of four');
     eq(REG.balance.flaskSlots, 3, 'utility flask inventory remains an independent three-slot system');
     eq(
-      ['reaver', 'starseer', 'herald'].map((id) => {
+      ['reaver', 'starseer', 'rogue', 'herald'].map((id) => {
         const a = REG.classes.get(id).startingFlaskAllocation;
         return `${a.hp}/${a.mana}`;
       }).join('|'),
-      '3/1|2/2|3/1',
-      'the three class allocations consume all four charges exactly as approved',
+      '3/1|2/2|3/1|3/1',
+      'all four class allocations consume all four charges exactly as approved',
     );
     const freeAllocation = createRunState({ seed: 0xf1a5, classId: 'reaver', registries: REG });
     reallocateFlaskCharges(freeAllocation.flaskCharges, { hp: 0, mana: 4 });
@@ -1372,7 +1372,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
   // ---- 20. M3 phase 1: Starseer + Herald class mechanics ---------------------------------
   test('20. Starstone combos, Starstone Shard, blood economy, Gold Figurine — all pure data', () => {
-    eq(REG.classes.size, 3, 'three playable classes registered');
+    eq(REG.classes.size, 4, 'four playable classes registered');
+    eq(REG.classes.ids().join(','), 'reaver,starseer,rogue,herald', 'the four registered classes include Rogue in authored order');
 
     // Starstone: 1st spell plain, 2nd spell empowered, charge fades at turn end.
     const a = makeCombat({ deck: Array(5).fill('starstonePebble'), enemies: ['tGiant'], mana: 3, maxMana: 3 });
@@ -4012,13 +4013,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!!standard, 'the default mode resolves');
     eq(standard.id, 'tuned', 'new runs select the save-safe tuned mode');
     eq(`${standard.baseline}/${standard.bonusPool}/${standard.minimum}/${standard.maximum}`, '10/3/8/15', 'tuned creation bounds author the fixed total of 53');
+    eq(classes.length, 4, 'four playable classes participate in the creation product');
+    eq(classes.map((c) => c.id).join(','), 'reaver,starseer,rogue,herald', 'the creation product includes Rogue in authored order');
     eq(
       classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.standard[c.id][a.id]).join('/')).join('|'),
-      '13/10/12/10/10|10/11/10/10/14|10/10/12/13/10',
-      'all three standard class presets are exact in the authored attribute order'
+      '13/10/12/10/10|10/11/10/10/14|10/15/10/10/10|10/10/12/13/10',
+      'all four standard class presets are exact in the authored attribute order'
+    );
+    eq(
+      classes.map((c) => attrs.map((a) => contentBundle.attributeRules.presets.tuned[c.id][a.id]).join('/')).join('|'),
+      '13/11/11/8/10|11/11/8/13/10|11/13/10/9/10|12/11/8/12/10',
+      'all four tuned class presets are exact in the authored attribute order'
     );
 
-    // The product is derived from its three axes. This is not a three-class
+    // The product is derived from its three axes. This is not a fixed-class
     // snapshot: every mode/class/stat cell in whatever content ships is walked.
     let cells = 0;
     for (const mode of modes) {
@@ -4082,6 +4090,14 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.scalingStat}/${tunedProfiles.staffMagicAttack.pointsPerTier}`, '-6/wisdom/1', 'magic Strike is -6 + WIS');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.scalingStat}/${tunedProfiles.unarmedGuard.pointsPerTier}`, '-6/dexterity/1', 'Defend is -6 + DEX');
     eq([0, 1, 2, 3, 4].reduce((sum, i) => sum + levelCost(REG, i), 0), 6000, 'five purchases cost 6000 and end at displayed level 6');
+    const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
+    eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 }), 'Rogue copies the exact approved tuned preset');
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'tuned/50/3/5', 'Rogue tuned stats reach the HP, action, and hand formulas');
+    eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
+    const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
+    const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
+    eq(`${rogueAttack.profileId}/${rogueAttack.profileReceipt.base}/${rogueAttack.profileReceipt.sourceStat}/${rogueAttack.profileReceipt.points}/${rogueAttack.profileReceipt.value}`, 'daggerPierceAttack/-6/strength/11/5', 'Rogue dagger Strike is stamped from the tuned physical profile');
+    eq(`${rogueGuard.profileId}/${rogueGuard.profileReceipt.base}/${rogueGuard.profileReceipt.sourceStat}/${rogueGuard.profileReceipt.points}/${rogueGuard.profileReceipt.value}`, 'shieldGuard/-6/dexterity/13/7', 'Rogue buckler Defend is stamped from the tuned defense profile');
     const star = createRunState({ seed: 50, classId: 'starseer', registries: REG });
     eq(star.attributes.intelligence, 10, 'the approved Starseer preset keeps INT 10');
     eq(star.startingKitId, 'starseerBaseline', 'its baseline ash staff is grandfathered at initial creation');
@@ -4150,6 +4166,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     mutant.attributeRules.presets.testMode = {
       reaver: { strength: 10, dexterity: 7, constitution: 7, wisdom: 7, intelligence: 7 },
       starseer: { strength: 7, dexterity: 8, constitution: 7, wisdom: 7, intelligence: 9 },
+      rogue: { strength: 7, dexterity: 10, constitution: 7, wisdom: 7, intelligence: 7 },
       herald: { strength: 7, dexterity: 7, constitution: 8, wisdom: 9, intelligence: 7 },
     };
     assert(validateContent(mutant).ok, 'mutant content remains valid after every derived input changes');
@@ -4287,7 +4304,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   });
 
   test('50d. tuned HP is 30 + 2 × CON + flat bonuses at every legal edge', () => {
-    for (const [classId, con, flat] of [['reaver', 11, 10], ['starseer', 8, 0], ['herald', 8, 0]]) {
+    for (const [classId, con, flat] of [['reaver', 11, 10], ['starseer', 8, 0], ['rogue', 10, 0], ['herald', 8, 0]]) {
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved tuned CON preset`);
