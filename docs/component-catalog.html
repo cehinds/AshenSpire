@@ -51,8 +51,15 @@
     .track { height:11px; border:1px solid #675638; border-radius:99px; overflow:hidden; } .fill { height:100%; width:68%; background:var(--red); } .blue { background:var(--blue); width:38%; } .green { background:var(--green); width:48%; }
     .mini-quick { display:grid; grid-template-columns:repeat(2,44px); gap:5px; } .mini-btn,.mini-slot { height:38px; width:38px; border:1px solid #725d35; border-radius:7px; display:grid; place-items:center; color:var(--gold); background:#15110e; }
     .mini-belt { display:flex; gap:3px; } .mini-belt .mini-slot { width:31px; height:31px; font-size:13px; }
-    .mini-combat { align-items:end; } .fighter { text-align:center; } .fighter .head { width:30px; height:30px; border:2px solid var(--gold); border-radius:50%; margin:auto; } .fighter .hp { width:62px; height:7px; background:var(--red); border-radius:5px; margin-top:5px; } .fighter small { color:var(--muted); font-size:9px; }
-    .mini-hand { align-items:end; } .card { width:37px; height:54px; border:1px solid #b29242; border-radius:5px; background:linear-gradient(#33281c,#17120f); transform:rotate(-8deg); } .card:nth-child(2){transform:translateY(-7px)} .card:nth-child(3){transform:rotate(8deg)}
+    .mini-combat { align-items:end; } .fighter { text-align:center; } .fighter .head { width:30px; height:30px; border:2px solid var(--gold); border-radius:50%; margin:auto; } .fighter .hp { width:62px; height:7px; background:var(--red); border-radius:5px; margin:4px auto 0; } .fighter small { color:var(--muted); font-size:9px; }
+    .mini-hand { display:flex; justify-content:center; align-items:end; min-width:155px; height:70px; margin-bottom:12px; padding-top:9px; }
+    .card { width:40px; height:58px; border:1px solid #b29242; border-radius:5px; background:linear-gradient(#33281c,#17120f); box-shadow:0 3px 7px #0009; transform-origin:50% 110%; }
+    .mini-hand .card + .card { margin-left:-15px; }
+    .mini-hand .card:nth-child(1){transform:translateY(10px) rotate(-22deg)}
+    .mini-hand .card:nth-child(2){transform:translateY(3px) rotate(-11deg)}
+    .mini-hand .card:nth-child(3){transform:translateY(0)}
+    .mini-hand .card:nth-child(4){transform:translateY(3px) rotate(11deg)}
+    .mini-hand .card:nth-child(5){transform:translateY(10px) rotate(22deg)}
     .mini-rail { display:flex; gap:6px; } .mini-rail .mini-btn { width:43px; height:27px; }
     .mini-panel { width:145px; height:65px; border:1px dashed #887044; border-radius:7px; display:grid; place-items:center; color:var(--muted); font-size:10px; text-align:center; }
     .mini-label { color:var(--muted); font:9px ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
@@ -64,7 +71,14 @@
     .single-meter { width:205px; }
     .panel-parts { display:grid; grid-template-columns:1fr 74px; gap:8px; width:100%; align-items:center; }
     .transparent-panel { width:100%; min-height:72px; border:1px dashed #887044; border-radius:7px; padding:7px; background:transparent; }
-    .stage { width:100%; height:78px; display:flex; align-items:end; justify-content:space-around; border-bottom:1px solid #6a5738; background:linear-gradient(transparent,#211a13); }
+    .stage { width:100%; height:88px; display:flex; align-items:end; justify-content:space-around; border-bottom:1px solid #6a5738; background:linear-gradient(transparent,#211a13); }
+    .combat-card { width:58px; min-height:64px; padding:5px 4px; border:1px solid #8b7859; border-radius:6px; display:grid; place-items:center; align-content:center; gap:3px; box-shadow:0 4px 9px #0008; color:#fff; font:9px ui-monospace,monospace; }
+    .combat-card strong { font-size:16px; line-height:1; }
+    .combat-card .card-hp { width:46px; height:6px; border:1px solid #dfb3ae; border-radius:9px; background:linear-gradient(90deg,#d65b50 72%,#351b1a 72%); }
+    .combat-card.player { background:linear-gradient(155deg,#2c5b8d,#172b45); border-color:#6ba2d8; }
+    .combat-card.enemy { background:linear-gradient(155deg,#873e3a,#421d1b); border-color:#d06a60; }
+    .combat-card.neutral { background:linear-gradient(155deg,#66563e,#2b241b); border-color:#b89a62; }
+    .combat-card.large { width:76px; min-height:82px; }
     .intent { display:inline-block; margin-bottom:4px; padding:1px 4px; border:1px solid var(--red); border-radius:4px; color:#f2b0a8; font:9px ui-monospace,monospace; }
     .status-row { display:flex; justify-content:center; gap:3px; margin-top:4px; color:var(--muted); font-size:9px; }
     .rail-wide { width:100%; justify-content:space-between; }
@@ -131,11 +145,11 @@ const V = {
   relicSlot:'<div class="mini mini-stack"><div class="mini-slot">🏅</div><div class="mini-label">one relic slot</div></div>',
   potionTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">🟢</div><div class="mini-slot">🔴</div><div class="mini-slot slot-empty">+</div></div><div class="mini-label">potion tray · right anchored</div></div>',
   potionControl:'<div class="mini mini-stack"><div class="mini-slot key-demo">🟢<span class="key">H</span></div><div class="mini-label">utility potion</div></div>',
-  battlefieldStage:'<div class="mini"><div class="stage"><div class="fighter"><div class="head">⚔</div><small>PLAYER</small></div><div class="fighter"><div class="intent">7 DMG</div><div class="head">☠</div><small>ENEMY</small></div><div class="fighter"><div class="intent">3×2</div><div class="head">◆</div><small>ENEMY</small></div></div></div>',
-  combatantFrame:'<div class="mini mini-combat"><div class="fighter"><div class="intent">INTENT</div><div class="head">◎</div><div class="hp"></div><div class="status-row"><span>HP</span><span>STATUS</span></div><small>COMBATANT</small></div></div>',
-  playerFrame:'<div class="mini mini-combat"><div class="fighter"><div class="head" style="border-color:var(--gold)">⚔</div><div class="hp"></div><div class="status-row"><span>SP 2/2</span></div><small>PLAYER</small></div></div>',
-  enemyFrame:'<div class="mini mini-combat"><div class="fighter"><div class="intent">⚔ 7</div><div class="head" style="border-color:var(--red)">☠</div><div class="hp"></div><div class="status-row"><span>POISE 3</span></div><small>ENEMY</small></div></div>',
-  playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">player hand tray</div></div>',
+  battlefieldStage:'<div class="mini"><div class="stage"><div class="combat-card player"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">7 DMG</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">3×2</span><strong>◆</strong><span>ENEMY</span><span class="card-hp"></span></div></div></div>',
+  combatantFrame:'<div class="mini mini-stack"><div class="combat-card neutral large"><span class="intent">INTENT</span><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">shared card frame</div></div>',
+  playerFrame:'<div class="mini mini-stack"><div class="combat-card player large"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span><span>SP 2/2</span></div><div class="mini-label">player card · blue</div></div>',
+  enemyFrame:'<div class="mini mini-stack"><div class="combat-card enemy large"><span class="intent">⚔ 7</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span><span>POISE 3</span></div><div class="mini-label">enemy card · red</div></div>',
+  playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
   actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>'
 };
 const C = [
