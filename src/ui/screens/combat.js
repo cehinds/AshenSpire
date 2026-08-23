@@ -526,6 +526,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function statusRow(entity) {
     const row = document.createElement('div');
     row.className = 'statuses';
+    markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
@@ -597,6 +598,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
+    for (const bar of plan) {
+      const el = bars.querySelector(`[data-res="${bar.id}"]`);
+      if (!el) continue;
+      if (bar.id === 'hp') markUiComponent(el, UI.healthStatusBar, entity.kind);
+      if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
+    }
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
@@ -621,6 +628,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         const def = registries.statuses.get(sid);
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
+        markUiComponent(bar, UI.procStatusBar, sid);
         bar.dataset.status = sid;
         // S2: an active resistance dims the meter — the state reads without
         // opening a tooltip.
@@ -641,6 +649,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
+    markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
     attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
@@ -685,6 +694,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const el = document.createElement('div');
     const badge = intentBadge(iv);
     el.className = `intent ${badge.cls}`;
+    markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
     attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;

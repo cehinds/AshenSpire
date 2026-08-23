@@ -84,6 +84,20 @@
     .rail-wide { width:100%; justify-content:space-between; }
     .split-belt { width:100%; display:flex; justify-content:space-between; align-items:center; }
     .slot-empty { color:#6e604d; border-style:dashed; }
+    .background-swatch { width:175px; height:72px; border:1px solid #8b7859; border-radius:8px; display:grid; place-items:center; background:color-mix(in srgb,var(--panel2) 72%,transparent); box-shadow:inset 0 0 24px #0008; }
+    .tooltip-demo { max-width:190px; padding:8px 10px; border:1px solid #90784d; border-radius:6px; background:#241d16; box-shadow:0 5px 14px #000b; color:var(--muted); font-size:10px; }
+    .tooltip-demo b { display:block; color:var(--gold); margin-bottom:3px; }
+    .damage-pair { display:flex; gap:14px; align-items:center; font:700 28px Georgia,serif; text-shadow:0 2px 4px #000; }
+    .damage-direct { color:#ff8f6b; } .damage-guard { color:#8fc4dd; }
+    .meter-demo { width:190px; display:grid; gap:4px; }
+    .meter-demo .track { height:10px; }
+    .sprite-demo { width:58px; height:72px; display:grid; place-items:center; border:1px solid #766444; border-radius:28px 28px 8px 8px; background:linear-gradient(#786a5a,#282019); color:var(--gold); font-size:25px; }
+    .nameplate-demo { padding:5px 12px; border-bottom:1px solid var(--gold); color:var(--ink); font:700 11px Georgia,serif; letter-spacing:.06em; }
+    .status-icons { display:flex; gap:4px; } .status-icons span { width:27px; height:27px; display:grid; place-items:center; border:1px solid #816d48; border-radius:5px; background:#17120e; }
+    .block-demo { width:40px; height:45px; display:grid; place-items:center; clip-path:polygon(50% 0,95% 18%,84% 78%,50% 100%,16% 78%,5% 18%); background:#467794; color:white; font-weight:700; }
+    .composition { margin-top:9px; padding:8px; border:1px solid #4f412e; border-radius:6px; background:#100d0a; }
+    .composition strong { display:block; margin-bottom:5px; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+    .composition code { display:inline-block; margin:2px 3px 2px 0; padding:2px 5px; border:1px solid #5c4c31; border-radius:4px; color:#e9d59d; font-size:10px; }
   </style>
 </head>
 <body>
@@ -129,6 +143,7 @@ const V = {
   metadataField:'<div class="mini mini-stack"><div class="mini-panel" style="height:38px;width:92px">FLOOR 6</div><div class="mini-label">one metadata field</div></div>',
   primaryRow:'<div class="mini panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div>',
   panel:'<div class="mini"><div class="transparent-panel"><div class="mini-label">panel boundary</div><div style="margin-top:15px;text-align:center">composable content</div></div></div>',
+  componentBackground:'<div class="mini mini-stack"><div class="background-swatch"><span class="mini-label">background layer<br>opacity · tint · border</span></div></div>',
   vitalsPanel:'<div class="mini"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div></div>',
   resourceMeter:'<div class="mini"><div class="mini-bars single-meter"><div class="mini-bar">HP 62/62<div class="track"><div class="fill"></div></div></div></div></div>',
   quickPanel:'<div class="mini mini-stack"><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div><div class="mini-label">quick access 2 × 2</div></div>',
@@ -149,6 +164,19 @@ const V = {
   combatantFrame:'<div class="mini mini-stack"><div class="combat-card neutral large"><span class="intent">INTENT</span><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">shared card frame</div></div>',
   playerFrame:'<div class="mini mini-stack"><div class="combat-card player large"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span><span>SP 2/2</span></div><div class="mini-label">player card · blue</div></div>',
   enemyFrame:'<div class="mini mini-stack"><div class="combat-card enemy large"><span class="intent">⚔ 7</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span><span>POISE 3</span></div><div class="mini-label">enemy card · red</div></div>',
+  combatantSprite:'<div class="mini mini-stack"><div class="sprite-demo">⚔</div><div class="mini-label">combatant sprite</div></div>',
+  combatantNameplate:'<div class="mini mini-stack"><div class="nameplate-demo">WANDERING SOLDIER</div><div class="mini-label">combatant nameplate</div></div>',
+  intentIndicator:'<div class="mini mini-stack"><div class="intent" style="font-size:16px">⚔ 7</div><div class="mini-label">enemy intent</div></div>',
+  blockBadge:'<div class="mini mini-stack"><div class="block-demo">12</div><div class="mini-label">guard / block</div></div>',
+  healthStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">HP 22 / 22</div><div class="track"><div class="fill" style="width:100%"></div></div></div></div>',
+  poiseStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">POISE 3 / 8</div><div class="track"><div class="fill" style="width:38%;background:#c9a227"></div></div></div></div>',
+  procStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">🩸 BLEED 6 / 12</div><div class="track"><div class="fill" style="width:50%;background:#8f2f29"></div></div></div></div>',
+  arcaneExposureBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">✧ ARCANE EXPOSURE 4 / 8</div><div class="track"><div class="fill blue" style="width:50%"></div></div></div></div>',
+  statusEffectTray:'<div class="mini mini-stack"><div class="status-icons"><span>🩸</span><span>❄</span><span>☠</span></div><div class="mini-label">status effect tray</div></div>',
+  tooltip:'<div class="mini"><div class="tooltip-demo"><b>Poise</b>3 / 8 — fill it to Stagger.</div></div>',
+  damageFeedback:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span><span class="damage-direct">−4</span></div><div class="mini-label">one hit · two channels</div></div>',
+  guardedDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span></div><div class="mini-label">damage absorbed by guard</div></div>',
+  healthDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-direct">−12</span></div><div class="mini-label">damage reaching health</div></div>',
   playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
   actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>'
 };
@@ -163,6 +191,7 @@ const C = [
  ['metadata-field','metadataFieldModel','hudmeta metadata spans','primitive','Map + Combat','One prioritized metadata field.','metadataField'],
  ['primary-hud-row','componentModel composition','hudmeta.primaryHudRowHtml','hud','Map + Combat','Vitals and Quick Access row.','primaryRow'],
  ['panel','panelModel child','shared panel frame','primitive','HUD panels','Common panel semantic/frame component.','panel'],
+ ['component-background','componentModel child','panel + combatant CSS','primitive','Panels + combat cards','Reusable opacity, tint, border, and backing layer.','componentBackground'],
  ['vitals-panel','vitalsPanelModel','hudmeta.vitalsPanelHtml','hud','Map + Combat','HP, MP, and SP panel.','vitalsPanel'],
  ['resource-meter','componentModel child','resbars.resourceBars','hud','HUD + combat cards','Data-driven resource trough/fill.','resourceMeter'],
  ['quick-access-panel','quickAccessPanelModel','hudmeta.quickAccessPanelHtml','hud','Map + Combat','Armoury, menu, and charge flasks.','quickPanel'],
@@ -183,11 +212,31 @@ const C = [
  ['combatant-frame','combatantFrame','combatantFrame.js','combat','Combat','Shared combatant card geometry.','combatantFrame'],
  ['player-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Player combatant card.','playerFrame'],
  ['enemy-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Enemy combatant card.','enemyFrame'],
+ ['combatant-sprite','combatantFrame child','combatantFrame.js + assets.js','combat','Combat cards','Rendered player or enemy figure.','combatantSprite'],
+ ['combatant-nameplate','combatantFrame child','combatantFrame.js','combat','Combat cards','Combatant name label.','combatantNameplate'],
+ ['intent-indicator','componentModel semantic ID','combat.js + uiContent.js','combat','Enemy combat cards','Telegraphed enemy action and amount.','intentIndicator'],
+ ['block-badge','componentModel semantic ID','combat.js','combat','Combat cards','Current Guard/Block value over the sprite.','blockBadge'],
+ ['health-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant HP bar.','healthStatusBar'],
+ ['poise-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant Poise bar.','poiseStatusBar'],
+ ['proc-status-bar','componentModel semantic ID','combat.js','combat','Enemy combat cards','Individual threshold buildup bar such as Bleed.','procStatusBar'],
+ ['arcane-exposure-bar','componentModel semantic ID','arcaneExposure.js','combat','Enemy combat cards','Individual Arcane Exposure meter.','arcaneExposureBar'],
+ ['status-effect-tray','componentModel semantic ID','combat.js','combat','Combat cards','Row of active status icons and stacks.','statusEffectTray'],
+ ['tooltip','componentModel semantic ID','tooltip.js','primitive','All interactive surfaces','Shared contextual explanation surface.','tooltip'],
+ ['damage-feedback','componentModel semantic ID','fx.js','combat','Combat feedback','One hit receipt composed from Guard and HP channels.','damageFeedback'],
+ ['guarded-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Amount absorbed by Guard.','guardedDamage'],
+ ['health-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Residual damage applied to HP.','healthDamage'],
  ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
  ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
 ].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
+const COMPOSITION = Object.freeze({
+  'battlefield-stage':['component-background','player-combatant-frame','enemy-combatant-frame × N'],
+  'combatant-frame':['component-background','combatant-sprite','combatant-nameplate','health-status-bar','poise-status-bar','proc-status-bar','arcane-exposure-bar','status-effect-tray','intent-indicator','block-badge'],
+  'player-combatant-frame':['combatant-frame'],
+  'enemy-combatant-frame':['combatant-frame','intent-indicator'],
+  'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
+});
 const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
-function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>`<article data-group="${c.group}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl><div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><button class="copy" data-copy="${c.id}">Copy component ID</button></div></article>`).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard?.writeText(b.dataset.copy); const old=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=old,900);}); }
+function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><button class="copy" data-copy="${c.id}">Copy component ID</button></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard?.writeText(b.dataset.copy); const old=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=old,900);}); }
 search.oninput=render; group.onchange=render; render();
 </script>
 </body>

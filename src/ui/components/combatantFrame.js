@@ -25,6 +25,7 @@ export function combatantFrame({
   frame.className = ['combatant', role, ...classNames.filter(Boolean)].join(' ');
   frame.dataset.eid = entityId;
   markUiComponent(frame, UI.combatantFrame, role);
+  frame.dataset.uiBackgroundComponent = UI.componentBackground;
   frame.dataset.uiRoleComponent = role === 'player'
     ? UI.playerCombatantFrame
     : UI.enemyCombatantFrame;
@@ -33,11 +34,15 @@ export function combatantFrame({
 
   const spriteHost = document.createElement('div');
   spriteHost.className = 'sprite';
+  markUiComponent(spriteHost, UI.combatantSprite, role);
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   frame.appendChild(spriteHost);
 
-  if (name) frame.appendChild(name);
+  if (name) {
+    markUiComponent(name, UI.combatantNameplate, role);
+    frame.appendChild(name);
+  }
   if (meters) frame.appendChild(meters);
   appendAll(frame, trailing);
   return frame;

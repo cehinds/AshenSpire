@@ -19,6 +19,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `metadata-field` | `metadataFieldModel` | `hudmeta` metadata spans | Map + Combat | One prioritized metadata field. |
 | `primary-hud-row` | `componentModel` composition | `primaryHudRowHtml` | Map + Combat | Vitals and Quick Access row. |
 | `panel` | `panelModel` child | Shared panel frame | HUD panels | Common panel semantic/frame component. |
+| `component-background` | `componentModel` child | Panel + combatant CSS | Panels + combat cards | Reusable opacity, tint, border, and backing layer. |
 | `vitals-panel` | `vitalsPanelModel` | `vitalsPanelHtml` | Map + Combat | HP, MP, and SP panel. |
 | `resource-meter` | `componentModel` child | `resbars.resourceBars` | HUD + combat cards | Data-driven resource trough/fill. |
 | `quick-access-panel` | `quickAccessPanelModel` | `quickAccessPanelHtml` | Map + Combat | Armoury, menu, and charge flasks. |
@@ -39,6 +40,19 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` | Combat | Shared combatant card geometry. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
+| `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
+| `combatant-nameplate` | `combatantFrame` child | `combatantFrame.js` | Combat cards | Combatant name label. |
+| `intent-indicator` | semantic component | `combat.js` + `uiContent.js` | Enemy cards | Telegraphed enemy action and amount. |
+| `block-badge` | semantic component | `combat.js` | Combat cards | Current Guard/Block over the sprite. |
+| `health-status-bar` | `resourceMeter` variant | `resbars.js` | Combat cards | Individual combatant HP bar. |
+| `poise-status-bar` | `resourceMeter` variant | `resbars.js` | Combat cards | Individual combatant Poise bar. |
+| `proc-status-bar` | semantic component | `combat.js` | Enemy cards | Individual Bleed/Frost/Insanity buildup bar. |
+| `arcane-exposure-bar` | semantic component | `arcaneExposure.js` | Enemy cards | Individual Arcane Exposure meter. |
+| `status-effect-tray` | semantic component | `combat.js` | Combat cards | Active status icons and stacks. |
+| `tooltip` | semantic component | `tooltip.js` | All interactive surfaces | Shared contextual explanation. |
+| `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
+| `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
+| `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Player card hand. |
 | `combat-action-rail` | `componentModel` | `combat.js` | Combat | End-turn/action controls. |
 
@@ -60,6 +74,31 @@ shared-run-hud
 
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
+
+### Combatant card detail
+
+```text
+combatant-frame
+├─ component-background
+├─ intent-indicator                 enemy variant
+├─ combatant-sprite
+│  └─ block-badge                   when Guard > 0
+├─ combatant-nameplate
+├─ health-status-bar
+├─ poise-status-bar
+├─ proc-status-bar × 0..2           Bleed/Frost/Insanity buildup
+├─ arcane-exposure-bar              enemy, when available
+└─ status-effect-tray
+
+damage-feedback
+├─ guarded-damage-indicator         Guard absorbed
+└─ health-damage-indicator          residual HP loss
+```
+
+`tooltip` is a shared overlay used by these parts and by controls throughout the
+game. The catalog expands this combatant family because its pieces have distinct
+behavior and visual meaning; this does not declare that every other catalog item
+is indivisible.
 
 ## Merge/PR rule
 

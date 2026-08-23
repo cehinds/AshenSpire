@@ -17,7 +17,11 @@ const REQUIRED_IDS = Object.freeze([
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
   'player-hand-tray', 'combat-action-rail', 'metadata-field', 'panel',
-  'action-control', 'hotkey-badge', 'item-tray', 'item-slot',
+  'component-background', 'action-control', 'hotkey-badge', 'item-tray', 'item-slot',
+  'combatant-sprite', 'combatant-nameplate', 'intent-indicator', 'block-badge',
+  'health-status-bar', 'poise-status-bar', 'proc-status-bar', 'arcane-exposure-bar',
+  'status-effect-tray', 'tooltip', 'damage-feedback', 'guarded-damage-indicator',
+  'health-damage-indicator',
 ]);
 
 export function receipt() {
@@ -32,6 +36,9 @@ export function receipt() {
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     hud: read('src/ui/components/hudmeta.js'),
     frame: read('src/ui/components/combatantFrame.js'),
+    tooltip: read('src/ui/components/tooltip.js'),
+    exposure: read('src/ui/components/arcaneExposure.js'),
+    fx: read('src/ui/fx.js'),
     buildstamp: read('src/ui/components/buildstamp.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
@@ -85,7 +92,19 @@ export function findings(r) {
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.combat)
-      || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)) {
+      || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
+      || !/UI\.combatantSprite/.test(r.frame)
+      || !/UI\.combatantNameplate/.test(r.frame)
+      || !/UI\.healthStatusBar/.test(r.combat)
+      || !/UI\.poiseStatusBar/.test(r.combat)
+      || !/UI\.procStatusBar/.test(r.combat)
+      || !/UI\.statusEffectTray/.test(r.combat)
+      || !/UI\.intentIndicator/.test(r.combat)
+      || !/UI\.blockBadge/.test(r.combat)
+      || !/UI\.arcaneExposureBar/.test(r.exposure)
+      || !/UI\.tooltip/.test(r.tooltip)
+      || !/UI\.guardedDamageIndicator/.test(r.fx)
+      || !/UI\.healthDamageIndicator/.test(r.fx)) {
     bad.push('C8 combat composition lacks stable Battlefield/Frame/Hand/Action references');
   }
   if (!/\n\.player-zone\s*\{[^}]*justify-content:\s*center;/.test(r.css)
@@ -119,6 +138,7 @@ export function findings(r) {
       || !/export function behaviorModel/.test(r.behaviorModel)
       || !/export function runHudViewModel/.test(r.hudViewModel)
       || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
+      || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
     bad.push('C13 shared HUD no longer follows the immutable MVVM Component Model composition');
   }

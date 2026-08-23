@@ -32487,6 +32487,7 @@ Object.assign(module.exports, { mountTitle });
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
 const { placeAnchored } = require("src/ui/fx.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 let tipEl = null;
 let showTimer = null;
@@ -32555,6 +32556,7 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;
@@ -32774,6 +32776,7 @@ Object.assign(module.exports, { attachTooltip, stickTooltip, showTooltipAt, hide
 
 const { sfx } = require("src/ui/sfx.js");
 const { dlog } = require("src/ui/debuglog.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 const STEP_MS = 80;
 
@@ -33064,6 +33067,11 @@ function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
+  const feedbackComponent = /\bblk\b/.test(cls)
+    ? UI.guardedDamageIndicator
+    : (/\bdmg\b/.test(cls) ? UI.healthDamageIndicator : UI.damageFeedback);
+  markUiComponent(el, feedbackComponent);
+  el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
@@ -33773,6 +33781,91 @@ function openDebugLog() {
 
 
 Object.assign(module.exports, { dlog, getEntries, failureBanner, logText, openDebugLog });
+
+},
+"src/ui/components/uiComponents.js": function (module, exports, require) {
+// View helpers for the stable ids owned by Presentation Models.
+const { UI_COMPONENTS: COMPONENT_IDS, isUiComponentId } = require("src/ui/models/UiComponentId.js");
+const UI_COMPONENTS = COMPONENT_IDS;
+
+function uiComponentAttrs(component, variant = '') {
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
+  return `data-ui-component="${component}"${variant ? ` data-ui-variant="${variant}"` : ''}`;
+}
+
+function markUiComponent(element, component, variant = '') {
+  if (!element) throw new Error(`Cannot mark missing UI component: ${component}`);
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
+  element.dataset.uiComponent = component;
+  if (variant) element.dataset.uiVariant = variant;
+  return element;
+}
+
+
+Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent });
+
+},
+"src/ui/models/UiComponentId.js": function (module, exports, require) {
+// Presentation component identifiers. This is the UI equivalent of a small
+// enum: Component Models and Views share the names without either owning the
+// other's implementation.
+const UI_COMPONENTS = Object.freeze({
+  sharedRunHud: 'shared-run-hud',
+  runHeaderStrip: 'run-header-strip',
+  identityCluster: 'identity-cluster',
+  portraitBadge: 'portrait-badge',
+  characterTitle: 'character-title',
+  cindersCounter: 'cinders-counter',
+  buildMetadataTrail: 'build-metadata-trail',
+  metadataField: 'metadata-field',
+  primaryHudRow: 'primary-hud-row',
+  panel: 'panel',
+  componentBackground: 'component-background',
+  vitalsPanel: 'vitals-panel',
+  resourceMeter: 'resource-meter',
+  quickAccessPanel: 'quick-access-panel',
+  actionControl: 'action-control',
+  hotkeyBadge: 'hotkey-badge',
+  armouryControl: 'armoury-control',
+  quickMenuControl: 'quick-menu-control',
+  crimsonFlaskControl: 'crimson-flask-control',
+  azureFlaskControl: 'azure-flask-control',
+  inventoryBelt: 'inventory-belt',
+  itemTray: 'item-tray',
+  itemSlot: 'item-slot',
+  relicTray: 'relic-tray',
+  relicSlot: 'relic-slot',
+  potionTray: 'potion-tray',
+  potionControl: 'potion-control',
+  battlefieldStage: 'battlefield-stage',
+  combatantFrame: 'combatant-frame',
+  playerCombatantFrame: 'player-combatant-frame',
+  enemyCombatantFrame: 'enemy-combatant-frame',
+  combatantSprite: 'combatant-sprite',
+  combatantNameplate: 'combatant-nameplate',
+  intentIndicator: 'intent-indicator',
+  blockBadge: 'block-badge',
+  healthStatusBar: 'health-status-bar',
+  poiseStatusBar: 'poise-status-bar',
+  procStatusBar: 'proc-status-bar',
+  arcaneExposureBar: 'arcane-exposure-bar',
+  statusEffectTray: 'status-effect-tray',
+  tooltip: 'tooltip',
+  damageFeedback: 'damage-feedback',
+  guardedDamageIndicator: 'guarded-damage-indicator',
+  healthDamageIndicator: 'health-damage-indicator',
+  playerHandTray: 'player-hand-tray',
+  combatActionRail: 'combat-action-rail',
+});
+
+const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));
+
+function isUiComponentId(component) {
+  return KNOWN_COMPONENTS.has(component);
+}
+
+
+Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
 
 },
 "src/ui/components/holdconfirm.js": function (module, exports, require) {
@@ -36704,7 +36797,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e185195ba3';
+const SOURCE = '63a95d4b60';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36738,7 +36831,7 @@ const SOURCE = 'e185195ba3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1151';
+const ORDINAL = '1154';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -43049,77 +43142,6 @@ const hudShellHtml = sharedRunHudHtml;
 Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
 
 },
-"src/ui/components/uiComponents.js": function (module, exports, require) {
-// View helpers for the stable ids owned by Presentation Models.
-const { UI_COMPONENTS: COMPONENT_IDS, isUiComponentId } = require("src/ui/models/UiComponentId.js");
-const UI_COMPONENTS = COMPONENT_IDS;
-
-function uiComponentAttrs(component, variant = '') {
-  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
-  return `data-ui-component="${component}"${variant ? ` data-ui-variant="${variant}"` : ''}`;
-}
-
-function markUiComponent(element, component, variant = '') {
-  if (!element) throw new Error(`Cannot mark missing UI component: ${component}`);
-  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
-  element.dataset.uiComponent = component;
-  if (variant) element.dataset.uiVariant = variant;
-  return element;
-}
-
-
-Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent });
-
-},
-"src/ui/models/UiComponentId.js": function (module, exports, require) {
-// Presentation component identifiers. This is the UI equivalent of a small
-// enum: Component Models and Views share the names without either owning the
-// other's implementation.
-const UI_COMPONENTS = Object.freeze({
-  sharedRunHud: 'shared-run-hud',
-  runHeaderStrip: 'run-header-strip',
-  identityCluster: 'identity-cluster',
-  portraitBadge: 'portrait-badge',
-  characterTitle: 'character-title',
-  cindersCounter: 'cinders-counter',
-  buildMetadataTrail: 'build-metadata-trail',
-  metadataField: 'metadata-field',
-  primaryHudRow: 'primary-hud-row',
-  panel: 'panel',
-  vitalsPanel: 'vitals-panel',
-  resourceMeter: 'resource-meter',
-  quickAccessPanel: 'quick-access-panel',
-  actionControl: 'action-control',
-  hotkeyBadge: 'hotkey-badge',
-  armouryControl: 'armoury-control',
-  quickMenuControl: 'quick-menu-control',
-  crimsonFlaskControl: 'crimson-flask-control',
-  azureFlaskControl: 'azure-flask-control',
-  inventoryBelt: 'inventory-belt',
-  itemTray: 'item-tray',
-  itemSlot: 'item-slot',
-  relicTray: 'relic-tray',
-  relicSlot: 'relic-slot',
-  potionTray: 'potion-tray',
-  potionControl: 'potion-control',
-  battlefieldStage: 'battlefield-stage',
-  combatantFrame: 'combatant-frame',
-  playerCombatantFrame: 'player-combatant-frame',
-  enemyCombatantFrame: 'enemy-combatant-frame',
-  playerHandTray: 'player-hand-tray',
-  combatActionRail: 'combat-action-rail',
-});
-
-const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));
-
-function isUiComponentId(component) {
-  return KNOWN_COMPONENTS.has(component);
-}
-
-
-Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
-
-},
 "src/ui/models/ComponentModel.js": function (module, exports, require) {
 const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
 const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
@@ -43347,7 +43369,10 @@ function itemTrayModel(component, kind, behavior) {
 function panelModel(component, variant, children) {
   return componentModel(component, {
     variant,
-    children: [componentModel(UI.panel, { variant }), ...children],
+    children: [componentModel(UI.panel, {
+      variant,
+      children: [componentModel(UI.componentBackground, { variant })],
+    }), ...children],
   });
 }
 
@@ -44186,6 +44211,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   function statusRow(entity) {
     const row = document.createElement('div');
     row.className = 'statuses';
+    markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
@@ -44257,6 +44283,12 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
+    for (const bar of plan) {
+      const el = bars.querySelector(`[data-res="${bar.id}"]`);
+      if (!el) continue;
+      if (bar.id === 'hp') markUiComponent(el, UI.healthStatusBar, entity.kind);
+      if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
+    }
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
@@ -44281,6 +44313,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         const def = registries.statuses.get(sid);
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
+        markUiComponent(bar, UI.procStatusBar, sid);
         bar.dataset.status = sid;
         // S2: an active resistance dims the meter — the state reads without
         // opening a tooltip.
@@ -44301,6 +44334,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
+    markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
     attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
@@ -44345,6 +44379,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     const el = document.createElement('div');
     const badge = intentBadge(iv);
     el.className = `intent ${badge.cls}`;
+    markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
     attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
@@ -46843,6 +46878,7 @@ Object.assign(module.exports, { inventoryRows, inventoryItemCount });
 // It never derives carriers, applies damage, or mutates a meter.
 
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 const EVENT_TYPES = new Set(['arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak']);
 
@@ -46902,10 +46938,12 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
     el.setAttribute('role', 'img');
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
     el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
+    markUiComponent(el, UI.arcaneExposureBar, 'immune');
     attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
+  markUiComponent(el, UI.arcaneExposureBar, receipt.locked ? 'locked' : 'active');
   el.setAttribute('role', 'img');
   el.setAttribute('aria-label', `${receipt.label}: ${receipt.value} of ${receipt.threshold}${receipt.locked ? ', locked' : ''}`);
   el.innerHTML = `<div class="arcane-exposure-head"><span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span class="arcane-exposure-label">${esc(receipt.label)}</span><strong>${receipt.value} / ${receipt.threshold}</strong>${receipt.locked ? '<em>Locked</em>' : ''}</div>`
@@ -47247,6 +47285,7 @@ function combatantFrame({
   frame.className = ['combatant', role, ...classNames.filter(Boolean)].join(' ');
   frame.dataset.eid = entityId;
   markUiComponent(frame, UI.combatantFrame, role);
+  frame.dataset.uiBackgroundComponent = UI.componentBackground;
   frame.dataset.uiRoleComponent = role === 'player'
     ? UI.playerCombatantFrame
     : UI.enemyCombatantFrame;
@@ -47255,11 +47294,15 @@ function combatantFrame({
 
   const spriteHost = document.createElement('div');
   spriteHost.className = 'sprite';
+  markUiComponent(spriteHost, UI.combatantSprite, role);
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
   frame.appendChild(spriteHost);
 
-  if (name) frame.appendChild(name);
+  if (name) {
+    markUiComponent(name, UI.combatantNameplate, role);
+    frame.appendChild(name);
+  }
   if (meters) frame.appendChild(meters);
   appendAll(frame, trailing);
   return frame;

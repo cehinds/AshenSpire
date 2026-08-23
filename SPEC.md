@@ -831,7 +831,8 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   into model properties. A migrated surface has one ViewModel composition and one renderer, never a
   model path beside a hand-written fallback.
 - **Shared Presentation primitives.** The public primitive Component Model ids are `panel`,
-  `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`, and `item-slot`. Specialized
+  `component-background`, `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`,
+  `item-slot`, and `tooltip`. Specialized
   models compose these primitives and may add semantic variants; they do not clone their record
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
@@ -844,6 +845,13 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
+- **Combatant Component Model.** `combatant-frame` may compose `component-background`,
+  `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
+  `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and
+  `status-effect-tray`. Combat hit feedback is `damage-feedback`, with distinct
+  `guarded-damage-indicator` and `health-damage-indicator` channels so absorbed Guard and
+  residual HP loss cannot be visually conflated. These are independently referenceable
+  components; the catalog may expand other components later without declaring them leaves.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
   The center Cinders track and right metadata trail are each capped at 30% of the
