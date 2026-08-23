@@ -289,16 +289,22 @@ function delimiterFlanking(text, index, length) {
     right: !beforeSpace && (!beforePunctuation || afterSpace || afterPunctuation),
   };
 }
-function flattenSingleAsterisk(text) {
+function flattenAsterisk(text, length) {
+  const delimiter = '*'.repeat(length);
   const openers = [];
   const removed = new Set();
   for (let i = 0; i < text.length; i++) {
-    if (text[i] !== '*' || text[i - 1] === '*' || text[i + 1] === '*') continue;
-    const { left, right } = delimiterFlanking(text, i, 1);
+    if (text.slice(i, i + length) !== delimiter
+      || text[i - 1] === '*' || text[i + length] === '*') continue;
+    const { left, right } = delimiterFlanking(text, i, length);
     if (right && openers.length) {
-      removed.add(openers.pop());
-      removed.add(i);
+      const opener = openers.pop();
+      for (let offset = 0; offset < length; offset++) {
+        removed.add(opener + offset);
+        removed.add(i + offset);
+      }
     } else if (left) openers.push(i);
+    i += length - 1;
   }
   let flattened = '';
   for (let i = 0; i < text.length; i++) if (!removed.has(i)) flattened += text[i];
@@ -337,7 +343,7 @@ export function flattenInline(text, where, labels = new Set()) {
       }
     }
   }
-  return flattenSingleAsterisk(text.replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '$1'))
+  return flattenAsterisk(flattenAsterisk(text, 2), 1)
     // Unlike `**`, a `__` run cannot open or close strong emphasis inside a
     // Unicode word. Keeping letters, numbers and adjacent underscores outside
     // both delimiters preserves identifiers such as `foo__bar__baz`, while the
@@ -638,12 +644,12 @@ async function selftest() {
     if (underscores.detail !== 'Keeps foo__bar__baz and café_mode_écran, but flattens bold and emphasis.') throw new Error(`rewrote it to: ${underscores.detail}`);
     console.log('PASS intraword underscores stay literal while standalone emphasis flattens');
   } catch (error) { console.error(`FAIL underscore flanking: ${error.message}`); process.exitCode = 1; }
-  // Asterisks may delimit intraword emphasis, but a punctuation edge still has
-  // to be left- or right-flanking rather than merely non-whitespace.
+  // Asterisks may delimit intraword emphasis, but punctuation edges still have
+  // to be left- or right-flanking for both ordinary and strong emphasis.
   try {
-    const [asterisks] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Flattens foo*bar*baz; keeps a*"quoted"*.\n');
-    if (asterisks.detail !== 'Flattens foobarbaz; keeps a*"quoted"*.') throw new Error(`rewrote it to: ${asterisks.detail}`);
-    console.log('PASS intraword asterisk emphasis flattens and a non-flanking edge stays literal');
+    const [asterisks] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Flattens foo*bar*baz and foo**strong**baz; keeps a*"quoted"* and a**"strong"**.\n');
+    if (asterisks.detail !== 'Flattens foobarbaz and foostrongbaz; keeps a*"quoted"* and a**"strong"**.') throw new Error(`rewrote it to: ${asterisks.detail}`);
+    console.log('PASS intraword asterisk emphasis flattens and non-flanking edges stay literal');
   } catch (error) { console.error(`FAIL asterisk flanking: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
