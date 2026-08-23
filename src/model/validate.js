@@ -41,6 +41,7 @@ import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
+import { characterCreationProblems } from './characterCreation.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -86,6 +87,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
   'derivedStatRules',
+  'characterCreation',
 ]);
 
 /**
@@ -405,6 +407,24 @@ export function validateContent(bundle) {
     for (const problem of startingKitProblems(kitRegistries)) err('equipment.startingKits', problem);
   } catch (error) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
+  }
+
+  const dependencySafeBundle = {
+    ...b,
+    equipment: {
+      ...(equipment && typeof equipment === 'object' && !Array.isArray(equipment) ? equipment : {}),
+      armaments: Array.isArray(equipment && equipment.armaments) ? equipment.armaments : [],
+      armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
+    },
+  };
+  for (const problem of characterCreationProblems(dependencySafeBundle)) {
+    const split = problem.indexOf(':');
+    err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
+  }
+  const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
+  for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
+    if (!keepsake || typeof keepsake !== 'object' || Array.isArray(keepsake) || !Array.isArray(keepsake.effects)) continue;
+    validateEffects(keepsake.effects, `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
   }
 
   // ---- schema walks --------------------------------------------------------
@@ -754,7 +774,7 @@ export function validateContent(bundle) {
   // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
   // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
-  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
+  for (const e of flaskGrowthRefusals(dependencySafeBundle)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {

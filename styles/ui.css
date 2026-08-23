@@ -1167,6 +1167,77 @@ button.rs-reset {
 .cz-keepsake .ks-icon { font-size: 2.2rem; }
 .cz-keepsake p { font-size: 1.1rem; color: var(--muted); }
 
+/* Character creation redesign: one themed section at a time. The four faces
+   keep the route compact; the open stage owns the richer layout. */
+.cz-flow { width: min(72rem, 100%); }
+.cz-flow > .disc-faces { width: 100%; }
+.cz-flow .disc-reveal { padding: 1.2rem; background: color-mix(in srgb, var(--panel) 88%, transparent); }
+.cz-stage { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; }
+.cz-stage .class-row { justify-content: center; }
+.cz-next { align-self: flex-end; min-height: var(--tap-floor); }
+
+.cc-character-grid {
+  display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 18rem);
+  gap: 2rem; align-items: center;
+}
+.cc-character-grid[data-sprite-side='left'] .cc-preview-side { grid-column: 1; grid-row: 1; }
+.cc-character-grid[data-sprite-side='left'] .cc-stats-side { grid-column: 2; grid-row: 1; }
+.cc-stats-side, .cc-preview-side { min-width: 0; }
+.cc-preview-side { display: flex; justify-content: center; }
+.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.8rem; }
+.cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
+.cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
+.cc-derived {
+  display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin-top: 0.8rem;
+  color: var(--parchment); font-variant-numeric: tabular-nums;
+}
+.cc-derived span { white-space: nowrap; }
+.cc-derived b { color: var(--muted); font-weight: 600; }
+.cc-appearance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
+.cc-appearance > :last-child { grid-column: 1 / -1; }
+.cc-appearance .cz-opts { flex-wrap: wrap; }
+.cc-appearance #cz-styles .cz-opt { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cz-keepsake small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 1rem; }
+
+.cc-equip-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.cc-card-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.cc-card-selectors .equip-chip { width: 100%; }
+.cc-relic-card {
+  display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
+  min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
+  color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 3px; cursor: pointer;
+}
+.cc-relic-card > span { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
+.cc-relic-card small { color: var(--muted); }
+.cc-relic-card:hover { border-color: var(--line-soft); }
+.cc-relic-card.chosen { border-color: var(--gold); background: var(--bg); }
+.cc-move-note, .cc-seed-note { margin: 0; color: var(--muted); font-size: 1.05rem; }
+
+.cc-stat-overlay { z-index: 1300; }
+.cc-stat-modal { width: min(34rem, calc(100% - 2rem)); }
+.cc-allocation-rows { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0; }
+.cc-allocation-rows .se-row { justify-content: center; }
+.cc-stat-actions { display: flex; justify-content: flex-end; gap: 0.8rem; }
+.cc-stat-actions button { min-height: var(--tap-floor); }
+.cc-stat-actions [aria-disabled='true'] { opacity: 0.45; }
+
+/* The component catalogue is a dev-only ?shot=components reach state. It moves
+   the real creation panels into specimen folios; it does not copy their markup
+   or grow a second renderer that could drift from the player-facing screen. */
+.component-catalog .cz-scroll { gap: 1rem; }
+.cc-catalog-intro { width: min(72rem, 100%); margin: 0; color: var(--muted); font-size: 1.05rem; }
+.component-catalog .cz-flow { display: flex; flex-direction: column; gap: 1.3rem; }
+.cc-catalog-item {
+  display: flex; flex-direction: column; gap: 1rem; padding: 1.2rem;
+  border: 1px solid var(--line-soft); border-top-color: var(--gold);
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+}
+.cc-catalog-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--line-soft); padding-bottom: 0.65rem; }
+.cc-catalog-head h3 { margin: 0; color: var(--gold); font-size: 1.15rem; letter-spacing: 0.2em; }
+.cc-catalog-head span { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.14em; }
+.component-catalog .cz-stage { padding: 0.2rem; }
+
 /* ---------- D26 — the short form: FACE, then REVEAL ------------------------
    Constantine: "just the starting stats, starting armaments selection , and
    then the ability to expand by clicking, with tool tips."
@@ -2512,6 +2583,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   flex-direction: column; align-items: center; gap: 1.8rem; width: 100%;
 }
 :root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
+:root[data-layout='narrow'] .cz-flow { width: 100%; }
+:root[data-layout='narrow'] .cc-character-grid { display: flex; flex-direction: column; gap: 1.2rem; }
+:root[data-layout='narrow'] .cc-character-grid .cc-preview-side { order: -1; }
+:root[data-layout='narrow'] .cc-stats-side { width: 100%; }
+:root[data-layout='narrow'] .cc-appearance { grid-template-columns: 1fr; }
+:root[data-layout='narrow'] .cc-appearance > :last-child { grid-column: auto; }
+:root[data-layout='narrow'] .cc-card-selectors { grid-template-columns: 1fr; }
+:root[data-layout='narrow'] .cz-scroll { padding: 1.5rem 1rem 1rem; }
+:root[data-layout='narrow'] .cz-flow .disc-reveal { padding: 0.8rem; }
 /* ---------- EldenSpire#29 slice 3 — the orphaned class card -----------------
    Sunna, 2026-08-01, naming a thing that had never been put in front of anyone:
    three cards wrapped 2-then-1 and the lone card was centred under the pair.

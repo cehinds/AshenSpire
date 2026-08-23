@@ -22,7 +22,7 @@ import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -42,7 +42,7 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
-import { startingArmourViews, resolveStartingArmour } from '../src/model/startingKits.js';
+import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
@@ -58,6 +58,7 @@ import {
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
+  previewCompatibleHands, startingHandsRequirementFailure,
 } from '../src/model/loadout.js';
 import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
@@ -67,6 +68,10 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
+import {
+  characterCreationProblems, creationArmourChoices, creationHandChoices,
+  creationRelicChoices, selectStartingHand, resolveCreationHands,
+} from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -831,6 +836,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const migrated = saves.loadRun(REG);
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
+
+    const customized = createRunState({
+      seed: 0xc315, classId: 'reaver', registries: REG,
+      startingHands: { leftHand: 'greatsword', rightHand: 'roundShield' },
+      startingArmourId: 'vigil',
+    });
+    customized.contentVersion = 'before-roster-update';
+    const updatedBundle = {
+      ...contentBundle,
+      version: 'after-roster-update',
+      characterCreation: structuredClone(contentBundle.characterCreation),
+    };
+    updatedBundle.characterCreation.classes.reaver.handIds = updatedBundle.characterCreation.classes.reaver.handIds
+      .filter((id) => id !== 'greatsword');
+    updatedBundle.characterCreation.classes.reaver.armourIds = updatedBundle.characterCreation.classes.reaver.armourIds
+      .filter((id) => id !== 'vigil');
+    const updatedRegistries = createRegistries(updatedBundle);
+    storage.setItem(RUN_KEY, serializeRun(customized));
+    const rosterMigrated = saves.loadRun(updatedRegistries);
+    assert(rosterMigrated != null && rosterMigrated.startingKitSnapshot.leftHand === 'greatsword',
+      'a customized saved hand survives removal from the current creation roster when the equipment still exists');
+    assert(ownership(updatedRegistries, { meta: {}, loadout: rosterMigrated.loadout })
+      .has(updatedRegistries.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil')),
+    'a persisted creation armour grant survives removal from the current creation roster when the equipment still exists');
+    eq(rosterMigrated.contentVersion, updatedRegistries.contentVersion,
+      'the compatible customized save reaches the content-version re-stamp');
 
     // The old contract allowed one owned armament id in several hand sets and
     // in storage at once. The shared Inventory contract migrates that shape at
@@ -5176,22 +5207,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.attributeMode, 'pointbuy', 'the run records the mode');
     eq(run.attributes.strength, 15, 'and the allocation, not the preset');
 
-    // STARTING ARMOUR. Eligibility = the free set + what the profile EARNED.
+    // STARTING ARMOUR. The JSON creation roster ships two immediately; earned
+    // sets may widen that list without becoming a second UI-only roster.
     const fresh = startingArmourViews(REG, 'reaver', {});
-    eq(fresh.length, 1, 'a fresh profile starts with exactly the free set');
+    eq(fresh.length, 2, 'a fresh profile starts with both JSON-authored choices');
     eq(fresh[0].free, true, 'and it is the free one');
-    const vigilUnlock = outfits.find((o) => o.id === 'vigil' && o.classId === 'reaver').unlock;
-    const veteran = { unlocked: [vigilUnlock] };
+    assert(fresh.some((v) => v.id === 'vigil'), 'the alternate authored starting set is available by name');
+    const oathUnlock = outfits.find((o) => o.id === 'oathsworn' && o.classId === 'reaver').unlock;
+    const veteran = { unlocked: [oathUnlock] };
     const views = startingArmourViews(REG, 'reaver', veteran);
-    eq(views.length, 2, 'an earned prize becomes a starting choice');
-    assert(views.some((v) => v.id === 'vigil'), 'and it is the earned set by name');
+    eq(views.length, 3, 'an earned prize becomes an additional starting choice');
+    assert(views.some((v) => v.id === 'oathsworn'), 'and it is the earned set by name');
     // Resolution, both edges: the earned set resolves; the unearned refuses BY
     // NAME; a foreign class refuses; absent falls to the free set (yesterday's
     // behaviour for every caller that never heard of the parameter).
-    eq(resolveStartingArmour(REG, 'reaver', 'vigil', veteran).id, 'vigil', 'earned resolves');
+    eq(resolveStartingArmour(REG, 'reaver', 'vigil', {}).id, 'vigil', 'JSON-authored alternate resolves without progression');
     let threw = null;
-    try { resolveStartingArmour(REG, 'reaver', 'vigil', {}); } catch (e) { threw = String(e.message); }
-    assert(threw && threw.includes('vigil'), `unearned refuses BY NAME — got ${threw}`);
+    try { resolveStartingArmour(REG, 'reaver', 'warden', {}); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('warden'), `unconfigured and unearned set refuses BY NAME — got ${threw}`);
     threw = null;
     try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
     assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
@@ -5199,6 +5232,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // And the run WEARS the choice: the loadout row is the persisted home.
     const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
+    const vigil = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'vigil');
+    const defaultArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id === 'default');
+    assert(equipPiece(REG, worn.loadout, 'armor', 0, defaultArmour.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the creation armour can be switched away from');
+    assert(ownership(REG, { meta: {}, loadout: worn.loadout }).has(vigil),
+      'a JSON-authored creation armour remains owned after switching away');
+    assert(equipPiece(REG, worn.loadout, 'armor', 0, vigil.id,
+      ownership(REG, { meta: {}, loadout: worn.loadout }), AT_CAMP), 'the granted creation armour can be equipped again');
+    const wornRestored = deserializeRun(serializeRun(worn));
+    validateRunStartingKit(wornRestored, REG, {});
+    assert(ownership(REG, { meta: {}, loadout: wornRestored.loadout }).has(vigil),
+      'the creation armour grant remains owned across the save boundary');
     const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
   });
@@ -5231,6 +5276,153 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
     eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
     eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
+  });
+
+  test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
+    eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
+    eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
+    for (const classId of REG.classes.ids()) {
+      assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
+      assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
+      assert(creationRelicChoices(REG, classId).length >= 2, `${classId} ships at least two relic choices`);
+    }
+
+    const moved = selectStartingHand({ leftHand: 'roundShield', rightHand: 'straightSword' }, 'leftHand', 'straightSword');
+    eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
+    eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
+    eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
+
+    const sideSpecific = createRegistries({
+      ...contentBundle,
+      equipment: {
+        ...contentBundle.equipment,
+        armaments: contentBundle.equipment.armaments.map((piece) => (
+          piece.id === 'buckler' ? { ...piece, hand: 'left' } : piece
+        )),
+      },
+    });
+    assert(creationHandChoices(sideSpecific, 'reaver', 'leftHand').some((piece) => piece.id === 'buckler'),
+      'a side-specific armament is offered for its eligible creation hand');
+    assert(!creationHandChoices(sideSpecific, 'reaver', 'rightHand').some((piece) => piece.id === 'buckler'),
+      'a side-specific armament is not offered for an incompatible creation hand');
+    eq(resolveCreationHands(sideSpecific, 'reaver', { leftHand: 'buckler', rightHand: null }, {}).leftHand, 'buckler',
+      'creation hand resolution accepts a side-specific armament in its eligible slot');
+    let wrongHandError = '';
+    try { resolveCreationHands(sideSpecific, 'reaver', { leftHand: null, rightHand: 'buckler' }, {}); }
+    catch (error) { wrongHandError = error.message; }
+    assert(/rightHand.*buckler.*does not fit/.test(wrongHandError),
+      'creation hand resolution rejects a side-specific armament in the wrong slot');
+
+    const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
+      'the incompatible preview fixture is still a valid point-buy allocation');
+    const requestedHands = { leftHand: 'roundShield', rightHand: 'greatsword' };
+    const previewHands = previewCompatibleHands(REG, requestedHands, lowStrength);
+    eq(previewHands.leftHand, 'roundShield', 'preview keeps a compatible selected hand');
+    eq(previewHands.rightHand, null, 'preview omits an incompatible selected hand instead of throwing');
+    eq(requestedHands.rightHand, 'greatsword', 'preview compatibility never mutates the player selection used by the refusal');
+    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 12, dexterity: 14 });
+    eq(correctedHands.rightHand, 'greatsword', 'preview restores the selected hand when the allocation meets its requirement');
+    const previewRun = createRunState({
+      seed: 71, classId: 'reaver', registries: REG,
+      attributeMode: 'pointbuy', attributes: lowStrength,
+      startingHands: previewHands,
+    });
+    eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
+
+    const standardMismatch = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    standardMismatch.characterCreation.classes.herald.handIds.push('dagger');
+    const standardRosterValidation = validateContent(standardMismatch);
+    assert(standardRosterValidation.ok, 'a valid roster may expose an armament above the Standard preset');
+    const standardMismatchRegistries = createRegistries(standardMismatch);
+    const heraldStandard = classAttributePreset(standardMismatchRegistries, 'herald', 'standard');
+    const standardFailure = startingHandsRequirementFailure(standardMismatchRegistries, { leftHand: 'dagger' }, heraldStandard);
+    assert(standardFailure && standardFailure.piece.id === 'dagger'
+      && standardFailure.failure.attributeId === 'dexterity'
+      && standardFailure.failure.required === 11 && standardFailure.failure.actual === 10,
+    'Standard mode reports a selected hand requirement before Begin can throw');
+
+    const selected = createRunState({
+      seed: 69, classId: 'reaver', registries: REG,
+      startingHands: { leftHand: 'straightSword', rightHand: 'roundShield' },
+      startingArmourId: 'vigil', startingRelicId: 'goldenSprout',
+    });
+    eq(selected.loadout.sets.leftHand[0], 'straightSword', 'Begin consumes the selected left hand');
+    eq(selected.loadout.sets.rightHand[0], 'roundShield', 'Begin consumes the selected right hand');
+    eq(selected.loadout.sets.armor[0], 'vigil', 'Begin consumes the selected armour');
+    eq(selected.relics[0], 'goldenSprout', 'Begin consumes the selected relic');
+    assert(selected.startingKitSnapshot.customized === true, 'the customized starting hands persist explicitly');
+    const restored = deserializeRun(serializeRun(selected));
+    validateRunStartingKit(restored, REG, {});
+    eq(restored.startingKitSnapshot.leftHand, 'straightSword', 'customized hands survive the save boundary');
+
+    const malformed = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformed.characterCreation.spritePreviewSide = 'above';
+    malformed.characterCreation.classes.reaver.handIds = ['missingArmament'];
+    const validation = validateContent(malformed);
+    assert(!validation.ok && validation.errors.some((e) => e.path.includes('characterCreation.spritePreviewSide')),
+      'an invalid sprite side fails by its JSON path');
+    assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
+      'a short/dangling hand roster fails by its JSON path');
+
+    const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedKeepsakes.characterCreation.keepsakes = {};
+    const keepsakeValidation = validateContent(malformedKeepsakes);
+    assert(!keepsakeValidation.ok && keepsakeValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
+      'a non-array keepsake roster reports its JSON path instead of throwing');
+
+    const malformedClass = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedClass.characterCreation.classes.reaver = null;
+    const classValidation = validateContent(malformedClass);
+    assert(!classValidation.ok && classValidation.errors.some((e) => e.path.includes('characterCreation.classes.reaver')),
+      'a null class roster reports its JSON path instead of throwing');
+
+    const malformedChoices = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    for (const field of ['armourIds', 'handIds', 'relicIds']) malformedChoices.characterCreation.classes.reaver[field] = {};
+    const choiceValidation = validateContent(malformedChoices);
+    for (const field of ['armourIds', 'handIds', 'relicIds']) {
+      assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
+        `a non-array ${field} roster reports its JSON path instead of throwing`);
+    }
+
+    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
+    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
+    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
+    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
+      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
+
+    for (const [label, mutate] of [
+      ['class', (bundle) => { bundle.classes[0] = null; }],
+      ['armament', (bundle) => { bundle.equipment.armaments[0] = null; }],
+    ]) {
+      const malformedDependency = {
+        ...contentBundle,
+        classes: [...contentBundle.classes],
+        equipment: { ...contentBundle.equipment, armaments: [...contentBundle.equipment.armaments] },
+      };
+      mutate(malformedDependency);
+      const dependencyValidation = validateContent(malformedDependency);
+      assert(!dependencyValidation.ok,
+        `a null ${label} dependency row returns validation errors instead of throwing`);
+    }
+
+    for (const field of ['armaments', 'armour']) {
+      const malformedTable = {
+        ...contentBundle,
+        equipment: { ...contentBundle.equipment, [field]: {} },
+      };
+      const tableValidation = validateContent(malformedTable);
+      assert(!tableValidation.ok && tableValidation.errors.some((error) => error.path.includes(`equipment.${field}`)),
+        `a non-array ${field} dependency table returns its schema error instead of throwing`);
+    }
+
+    const missingBaselineHands = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    missingBaselineHands.characterCreation.classes.reaver.handIds = ['greatsword', 'buckler'];
+    const baselineHandValidation = validateContent(missingBaselineHands);
+    assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
+      e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
+    'a hand roster that omits the baseline kit is refused by armament id before customization boots');
   });
 
   const passed = results.filter((r) => r.ok).length;

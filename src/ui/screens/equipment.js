@@ -382,7 +382,7 @@ function dropArtOnError(el) {
   return el;
 }
 
-function pieceChip(registries, piece, { selected }) {
+export function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
   el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';

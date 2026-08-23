@@ -20,6 +20,7 @@ import {
   deriveStat,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
+import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
@@ -65,7 +66,9 @@ export function createRunState({
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
   startingKitId = undefined,
+  startingHands = undefined,
   startingArmourId = undefined,
+  startingRelicId = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -76,7 +79,10 @@ export function createRunState({
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
   const idGen = createIdGen('rc');
-  const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit);
+  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
+  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
   // what createLoadout always chose. The loadout row is the persisted home;
@@ -129,7 +135,7 @@ export function createRunState({
     cinders: registries.balance.startingCinders || 0,
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
-    relics: [classDef.startingRelic],
+    relics: [startingRelic.id],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),

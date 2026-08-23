@@ -37,6 +37,7 @@ import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
+import { characterCreation } from './generated/characterCreation.js';
 
 const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards];
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
@@ -96,6 +97,7 @@ export const contentBundle = {
   // row it guards against (retiredNames.js says why in full).
   attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
+  characterCreation,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):
