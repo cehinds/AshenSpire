@@ -596,6 +596,36 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (vocabTree.code !== 0 || !vocabTreeV.text) zoomExtra++;
   else zoomPassed++;
 
+  // 70/71 — module URL/filesystem path conversions use node:url (#13).
+  // 70 proves the two required known-bads through the real scanner and runs
+  // both from a working directory containing spaces. 71 scans tools/ + tests/.
+  const runUrlPath = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+
+  const urlPathSelf = runUrlPath(['--selftest']);
+  const urlPathSelfV = quote(urlPathSelf.out);
+  console.log(
+    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  70. the URL/path check catches both known-bads from a spaced working directory` +
+      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
+  );
+  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const urlPathTree = runUrlPath([]);
+  const urlPathTreeV = quote(urlPathTree.out);
+  console.log(
+    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  71. module URL/filesystem path conversions use the platform API` +
+      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
+      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
+  );
+  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
+  else zoomPassed++;
+
   // 67/68 — DOES A GATE ACTUALLY RUN ITS INSTRUMENTS, AND DOES IT LISTEN?
   //
   // Same two-line shape as every pair above, and here for a measured reason.
@@ -806,6 +836,12 @@ console.log('          modify you. They prove that vocabulary has one typed home
 console.log('          content doors accept the same words, and that a relic resource grant');
 console.log('          reaches max HP by one road with one answer at creation and at load.');
 console.log('          They are SILENT on the other modifier vocabularies this game carries —');
+console.log('          70–71 guard module URL/path conversion shapes in tools/ and tests/:');
+console.log('          actual dynamic file:// templates/concats and same-file static URL');
+console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
+console.log('          or bounded local-alias forms. Ambiguous lexical/alias flow fails closed.');
+console.log('          They prove both fixtures fail from a spaced working directory; they do');
+console.log('          not cover cross-module flow or platform-API semantic correctness.');
 console.log('          64-65 ARE ABOUT THE SUITE ITSELF, not the game: no two tests wear the same');
 console.log('          number. A CONSISTENCY check — it proves the declared labels do not collide,');
 console.log('          never that any label is the right one, and it reads only the two declared');
