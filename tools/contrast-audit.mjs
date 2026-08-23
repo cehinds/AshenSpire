@@ -146,11 +146,10 @@ const TARGETS = [
     sel: '.map-node:not(.elite):not(.boss):not(.visited):not(.current):not(.reachable) circle:not(.node-halo)',
     label: 'map node body (fill vs bg)', prop: 'fill', box: true, shrink: 0.5, median: true,
   },
-  { screen: 'combat', sel: '.topbar .fight-label', label: 'fight label (combat)' },
-  // The combat HUD is two rows now (D10 wave 4) and the hero name sits directly
-  // in the bottom row — `.who` is the MAP header's wrapper and combat has none.
-  // Re-pointed rather than left to match nothing: a probe whose selector has no
-  // referent reports a clean sheet about a thing it never looked at.
+  // The shared map/combat HUD replaced the old fight label with one centered
+  // Cinders owner. Keep the pixel gate on the current visible status instead of
+  // allowing a removed selector to turn the gate blind.
+  { screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' },
   { screen: 'combat', sel: '.topbar .nm', label: 'hero name (combat)' },
   { screen: 'combat', sel: '.resbar .label', label: 'resource bar label (combat)' },
   { screen: 'combat', sel: 'CTAG:Blood', label: 'Blood card tag (label only)' },
@@ -219,20 +218,6 @@ const KNOWN_BELOW = [
     fix: 'Either the CSV colours become semantic token NAMES that the accessibility '
        + 'layers can override, or that column is deleted and the tag inherits. Also the '
        + 'size: .ctag is 0.8rem, which is 6.8px at UI size S.',
-  },
-  {
-    label: 'fight label (combat)', profile: 'default', render: 2.47, floor: 4.5,
-    why: 'Not a palette problem — an OCCLUSION bug, and high contrast cannot fix a veil. '
-       + '.backdrop in styles/combat.css is `position:absolute; inset:0; z-index:0` inside '
-       + '.combat with `opacity:0.55`, and .topbar carries no z-index at all — so the act '
-       + 'art plate paints ON TOP OF the top bar. .field was given `z-index:1` to escape '
-       + 'exactly this; the top bar was forgotten. Solving the overlay algebra from the '
-       + 'captured pixels gives a ~55%-opaque rgb(60,52,40) veil, which matches '
-       + '.backdrop\'s own opacity. It costs the hero name 9.59 points of its declared '
-       + '11.15, and the hero name then clears AA by 0.005.',
-    fix: 'One declaration — a z-index on .topbar above the backdrop. Held back because it '
-       + 'is a visible change to the combat screen that was not what got approved, and it '
-       + 'deserves its own card and its own before/after.',
   },
 ];
 
@@ -597,6 +582,7 @@ const selectorContract = (source) => {
     ["{ screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' }", 'S2 current Floor metadata selector missing'],
     ["{ screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' }", 'S3 current Seed metadata selector missing'],
     ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
+    ["{ screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
   if (targetBlock.includes("sel: '.map-header .mh-prog'")) bad.push('S5 removed combined progress selector returned');
@@ -618,6 +604,10 @@ if (args.includes('--source-selftest')) {
     {
       name: 'legend points back at removed map-header parent', expected: 'S4 ',
       source: clean.replace("{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", "{ screen: 'map', sel: '.map-header #map-legend', label: 'map ? button' }"),
+    },
+    {
+      name: 'combat Cinders points back at removed fight label', expected: 'S7 ',
+      source: clean.replace("{ screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' }", "{ screen: 'combat', sel: '.topbar .fight-label', label: 'Cinders (combat)' }"),
     },
   ];
   let failures = 0;
