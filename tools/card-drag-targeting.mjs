@@ -663,11 +663,15 @@ async function cdpTransportSelftest() {
     const closeSocket = FakeWebSocket.instances.at(-1);
     closeSocket.open();
     await closed.ready;
-    const closePending = closed.send('Runtime.evaluate');
+    // TWO SIMULTANEOUS SENDS, LOAD-BEARING: a broken reject-all loop that only
+    // rejects its first entry makes one promise look healthy and strands the
+    // other forever. A one-pending test cannot distinguish that mutant.
+    const closePending = [closed.send('Runtime.evaluate'), closed.send('Page.enable')];
     closeSocket.close();
-    const closeResult = await settleWithin(closePending);
-    check(closeResult.kind === 'rejected' && /closed before pending commands/.test(closeResult.error?.message || ''),
-      'close rejects every pending command', closeResult.kind);
+    const closeResults = await Promise.all(closePending.map((promise) => settleWithin(promise)));
+    check(closeResults.length === 2 && closeResults.every((result) => result.kind === 'rejected'
+      && /closed before pending commands/.test(result.error?.message || '')),
+      'close rejects all simultaneous pending commands', closeResults.map((result) => result.kind).join(','));
     const sentBeforePoison = closeSocket.sent.length;
     const afterClose = await settleWithin(closed.send('Page.enable'));
     check(afterClose.kind === 'rejected' && /closed before pending commands/.test(afterClose.error?.message || '')
@@ -678,11 +682,17 @@ async function cdpTransportSelftest() {
     const errorSocket = FakeWebSocket.instances.at(-1);
     errorSocket.open();
     await errored.ready;
-    const errorPending = errored.send('Target.createTarget');
+    const errorPending = [errored.send('Target.createTarget'), errored.send('Target.attachToTarget')];
     errorSocket.emit('error');
-    const errorResult = await settleWithin(errorPending);
-    check(errorResult.kind === 'rejected' && /error before pending commands/.test(errorResult.error?.message || ''),
-      'post-open socket error rejects every pending command', errorResult.kind);
+    const errorResults = await Promise.all(errorPending.map((promise) => settleWithin(promise)));
+    check(errorResults.length === 2 && errorResults.every((result) => result.kind === 'rejected'
+      && /error before pending commands/.test(result.error?.message || '')),
+      'post-open socket error rejects all simultaneous pending commands', errorResults.map((result) => result.kind).join(','));
+    const errorSentBeforePoison = errorSocket.sent.length;
+    const afterError = await settleWithin(errored.send('Runtime.enable'));
+    check(afterError.kind === 'rejected' && /error before pending commands/.test(afterError.error?.message || '')
+      && errorSocket.sent.length === errorSentBeforePoison,
+      'errored socket stays poisoned and future sends reject without writing', afterError.kind);
 
     const silent = connectCdp('ws://silent', { sendTimeoutMs: 40 });
     const silentSocket = FakeWebSocket.instances.at(-1);
