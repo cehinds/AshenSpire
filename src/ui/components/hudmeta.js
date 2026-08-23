@@ -26,10 +26,6 @@ export function hudShellHtml({
   const context = identity.context
     ? `<span class="hud-context">${esc(identity.context)}</span>`
     : '';
-  const legend = controls.legendId
-    ? `<button class="topbar-btn hud-meta-action" id="${esc(controls.legendId)}" title="Map legend">?</button>`
-    : '';
-
   return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}">
     <div class="hud-top">
       <div class="hud-info-row">
@@ -48,7 +44,6 @@ export function hudShellHtml({
           <span class="hud-floor">${esc(floorText)}</span>
           <span class="hud-seed mh-seed" title="Run seed">SEED ${esc(seed)}</span>
           ${buildStampHtml(place)}
-          ${legend}
         </div>
       </div>
       <div class="hud-resource-row">

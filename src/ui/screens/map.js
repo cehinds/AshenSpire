@@ -123,7 +123,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           armouryId: 'open-armoury',
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
-          legendId: 'map-legend',
         },
         overlayHtml: legendHtml,
       })}
@@ -172,6 +171,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // green — this was only ever visible to an eye.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
     act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
       current: run.mapNodeId || null,

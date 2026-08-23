@@ -118,6 +118,11 @@
 }
 .topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
+/* These are one paired action group, so their icon glyphs do not get to choose
+   two subtly different boxes. Keep both square at the shared ergonomic floor. */
+.topbar.combat-hud.shared-hud .hud-actions .topbar-btn {
+  width: var(--tap-floor); height: var(--tap-floor);
+}
 .topbar.combat-hud.shared-hud .hud-charge-flasks,
 .topbar.combat-hud.shared-hud .hud-potions,
 .topbar.combat-hud.shared-hud .hud-relics {
