@@ -316,7 +316,7 @@ export function flattenInline(text, where, labels = new Set()) {
     // lazy body still lets `__foo__bar__baz__` flatten only its valid outer pair.
     .replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}_])/gu, '$1')
     .replace(/(?<![\w*])\*(?=\S)([^*]*?\S)\*(?!\w)/g, '$1')
-    .replace(/(?<![\w_])_(?=\S)([^_]*?\S)_(?!\w)/g, '$1')
+    .replace(/(?<![\p{L}\p{N}_])_(?=\S)([^_]*?\S)_(?![\p{L}\p{N}_])/gu, '$1')
     // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
     // DELIMITER. CommonMark: a run of N backticks opens, and the span ends at the
     // next run of EXACTLY N. `` `([^`]+)` `` matched the INNER pair of ``` ``foo`` ```
@@ -603,13 +603,14 @@ async function selftest() {
     if (collapsed.detail !== 'Supports [keyboard][] input.') throw new Error(`rewrote the collapsed form to: ${collapsed.detail}`);
     console.log('PASS a reference-style shape with NO definition is prose, not a link');
   } catch (error) { console.error(`FAIL undefined reference shape refused or altered: ${error.message}`); process.exitCode = 1; }
-  // Double underscores have stricter delimiter rules than double asterisks:
-  // intraword runs are literal, while a standalone pair still means strong.
+  // Underscores have stricter delimiter rules than asterisks: intraword runs
+  // are literal, including around non-ASCII letters, while standalone pairs
+  // still mean emphasis or strong emphasis.
   try {
-    const [underscores] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps foo__bar__baz, but flattens __bold__.\n');
-    if (underscores.detail !== 'Keeps foo__bar__baz, but flattens bold.') throw new Error(`rewrote it to: ${underscores.detail}`);
-    console.log('PASS intraword double underscores stay literal while standalone strong flattens');
-  } catch (error) { console.error(`FAIL double-underscore flanking: ${error.message}`); process.exitCode = 1; }
+    const [underscores] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps foo__bar__baz and café_mode_écran, but flattens __bold__ and _emphasis_.\n');
+    if (underscores.detail !== 'Keeps foo__bar__baz and café_mode_écran, but flattens bold and emphasis.') throw new Error(`rewrote it to: ${underscores.detail}`);
+    console.log('PASS intraword underscores stay literal while standalone emphasis flattens');
+  } catch (error) { console.error(`FAIL underscore flanking: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
