@@ -33,6 +33,7 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudCenterHtml } from '../components/hudmeta.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -51,20 +52,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
             max size filling up the full top row, with the menu and armament
             buttons at the end of that row, at the bottom of the hud should be
             the other hud items."
-           Top row: the bar stack + the two buttons, nothing else. The stack is
-           flex:1 with min-width:0, so ITS TRACK IS DERIVED — row width minus the
-           buttons, minus padding and gaps. No width is typed anywhere, which is
-           what lets a bar's length be an honest statement about a maximum. -->
+           Top row: the bar stack, centred floor/cinder receipt, and two buttons.
+           The stack cap comes from balance.ui.hudBars.main.maxViewportPct via
+           one root CSS variable, so map and combat share the same configurable
+           reference geometry without a duplicated number. -->
       <header class="topbar combat-hud">
         <div class="hud-top">
           <div class="resbars-host"></div>
-          <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
+            <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
           <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
           <div class="flasks" style="display:flex;gap:6px"></div>
           <div class="relics"></div>
           <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>

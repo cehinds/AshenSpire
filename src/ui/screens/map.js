@@ -38,6 +38,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudCenterHtml } from '../components/hudmeta.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 
@@ -110,14 +111,16 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
              (No backticks here: this block lives inside a template literal.) -->
         <div class="hud-top">
           <div class="resbars-host"></div>
-          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+            <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
           <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
-          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
           ${buildStampHtml('map')}
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
@@ -142,7 +145,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // the identical call combat.js:435 and coop.js:460 make. So:
   //
   //   · WHICH rows appear is content/resources.js's business, not this
-  //     screen's. HP, then the Mana/Stamina band, then poise — the map does
+  //     screen's. HP, then Mana, then Stamina — the map does
   //     not get its own list and cannot drift from combat's.
   //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
   //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length

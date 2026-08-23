@@ -4,7 +4,7 @@
 
 /* ---------- top bar: TWO ROWS (D10 wave 4) ----------
    Row 1 — the resource bar stack, then the armament and menu buttons.
-   Row 2 — "the other hud items": portrait, name, cinders, flasks, relics.
+   Row 2 — "the other hud items": portrait, name, flasks, relics.
 
    Law 4, and this block is CONVERTED rather than carried: the old
    `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
@@ -34,14 +34,26 @@
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
-   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
-   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
-   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
-   exactly the row he means by "filling up the full top row", at any width, any
-   zoom, and after a third button is ever added. */
-.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
-.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+/* THE TOP ROW. The bar reference track is capped by the single data value
+   balance.ui.hudBars.main.maxViewportPct, projected by main.js to a viewport
+   custom property and divided back through UI zoom here. Floor + cinders sit
+   at the viewport centre; the action buttons remain at the far edge. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
+.topbar.combat-hud .resbars-host {
+  flex: 0 1 calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud .hud-center {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+  color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
+  letter-spacing: 0.08em; white-space: nowrap;
+}
+.topbar.combat-hud .hud-cinders { color: var(--gold); }
+.topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;

@@ -204,6 +204,7 @@ if (wantPoses) {
 }
 const SHAPES = onlyShape ? ALL_SHAPES.filter((s) => s.tag === onlyShape) : ALL_SHAPES;
 const POSES = wantPoses ? ALL_POSES.filter((p) => wantPoses.includes(p.tag)) : ALL_POSES;
+const HIS_MAX_VIEWPORT_PCT = 40;
 
 // THE LATCH. `bad` never goes down; nothing reads it to decide whether to keep
 // going. Every exit path below closes the browser and the server, prints the
@@ -261,6 +262,21 @@ const READ = `(() => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
     }),
+    hostBox: (() => {
+      const el = document.querySelector('.topbar .hud-top .resbars-host');
+      const b = el ? el.getBoundingClientRect() : null;
+      return b ? { left: b.left, right: b.right, width: b.width } : null;
+    })(),
+    meta: (() => {
+      const el = document.querySelector('.topbar .hud-top .hud-center');
+      const b = el ? el.getBoundingClientRect() : null;
+      return b ? {
+        left: b.left, right: b.right, width: b.width, center: (b.left + b.right) / 2,
+        cinders: el.querySelectorAll('.hud-cinders').length,
+        floor: el.querySelectorAll('.hud-floor').length,
+      } : null;
+    })(),
+    configuredCap: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-max-vw').trim(),
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
     legacyHpbars: document.querySelectorAll('.topbar .hpbar').length,
@@ -334,6 +350,27 @@ function judgeCell(cell, mapR, comR, refTable) {
     fail(`FINDING P0/population cell=${cell} map=${mapR ? 'read' : 'MISSING'} combat=${comR ? 'read' : 'MISSING'} `
       + '— one screen was never read, so nothing below it is evidence about agreement.');
     return;
+  }
+
+  // P8 SHARED TOP-ROW COMPOSITION — one data value caps the resource reference
+  // track, while cinders + floor sit at the viewport centre on both screens.
+  // The 40 is his ruling, held independently from the app config so moving the
+  // config cannot move the expectation with it.
+  for (const [screen, read] of [['map', mapR], ['combat', comR]]) {
+    const capPx = read.vp.w * HIS_MAX_VIEWPORT_PCT / 100;
+    if (read.configuredCap !== `${HIS_MAX_VIEWPORT_PCT}vw`) {
+      fail(`FINDING P8/top-row ${cell} ${screen} configured cap=${JSON.stringify(read.configuredCap)} — expected the one authored ${HIS_MAX_VIEWPORT_PCT}vw HUD cap.`);
+    } else if (!read.hostBox || read.hostBox.width > capPx + 1) {
+      fail(`FINDING P8/top-row ${cell} ${screen} resource host=${read.hostBox ? read.hostBox.width.toFixed(2) : 'MISSING'} px, viewport cap=${capPx.toFixed(2)} px — shared HUD exceeds ${HIS_MAX_VIEWPORT_PCT}% viewport.`);
+    } else {
+      ok(`P8/top-row ${cell} ${screen} — resource host ${read.hostBox.width.toFixed(2)} px <= ${HIS_MAX_VIEWPORT_PCT}% viewport (${capPx.toFixed(2)} px)`);
+    }
+    const centreMiss = read.meta ? Math.abs(read.meta.center - read.vp.w / 2) : Infinity;
+    if (!read.meta || read.meta.cinders !== 1 || read.meta.floor !== 1 || centreMiss > 1) {
+      fail(`FINDING P8/top-row ${cell} ${screen} meta=${JSON.stringify(read.meta)} viewportCentre=${(read.vp.w / 2).toFixed(2)} — exactly one cinder and one floor receipt must be centred in the top row.`);
+    } else {
+      ok(`P8/top-row ${cell} ${screen} — cinders + floor centred (miss ${centreMiss.toFixed(2)} px)`);
+    }
   }
   // ---- P6 ONE RENDERER, AND IT RUNS BEFORE P0'S RETURN --------------------
   //
@@ -769,6 +806,23 @@ async function selftest() {
   const { doorSelftest } = await import('./doorplant.mjs');
   const plants = [
     {
+      // The cap is data, but the acceptance number is independent. Moving the
+      // sole app authority must turn P8 red rather than moving its goalpost.
+      name: 'the configurable shared HUD cap moves from 40 to 60 percent',
+      file: 'src/content/balance.js',
+      find: 'main: { scaleByMax: true, maxViewportPct: 40 },',
+      replace: 'main: { scaleByMax: true, maxViewportPct: 60 },',
+      expectRed: /FINDING P8\/top-row .*configured cap="60vw"/,
+    },
+    {
+      // Both screens must carry the same centred floor/cinder receipt.
+      name: 'the map drops the centred floor and cinder receipt',
+      file: 'src/ui/screens/map.js',
+      find: '          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}',
+      replace: '          <!-- centred HUD receipt removed by plant -->',
+      expectRed: /FINDING P8\/top-row .* map meta=null/,
+    },
+    {
       // 1 — THE SECOND RENDERER COMES BACK. The literal `git revert` of this
       // change's core edit: the map hand-writes its own health bar again.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
@@ -855,8 +909,8 @@ async function selftest() {
       // shape that collapsed several maxima to the same 16 px trough.
       name: 'an absolute minimum width overrides the requested percentage',
       file: 'styles/combat.css',
-      find: '  min-width: 0;',
-      replace: '  min-width: 16px;',
+      find: '  flex: 1 1 0; min-width: 0;',
+      replace: '  flex: 1 1 0; min-width: 16px;',
       expectRed: /FINDING P4\/percentage .*min-width=16px/,
     },
     {

@@ -3473,7 +3473,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 /* ---------- top bar: TWO ROWS (D10 wave 4) ----------
    Row 1 — the resource bar stack, then the armament and menu buttons.
-   Row 2 — "the other hud items": portrait, name, cinders, flasks, relics.
+   Row 2 — "the other hud items": portrait, name, flasks, relics.
 
    Law 4, and this block is CONVERTED rather than carried: the old
    `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
@@ -3503,14 +3503,26 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-/* THE TOP ROW, AND THE WHOLE OF HIS SCALING RULE IS THIS ONE LINE OF LAYOUT.
-   `.resbars-host` is `flex: 1; min-width: 0`; the two buttons are
-   `flex-shrink: 0`. So the bar track = row width − padding − buttons − gaps,
-   DERIVED by the browser. Nothing types a ceiling; a bar asking for 100 % gets
-   exactly the row he means by "filling up the full top row", at any width, any
-   zoom, and after a third button is ever added. */
-.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; }
-.topbar.combat-hud .resbars-host { flex: 1 1 auto; min-width: 0; }
+/* THE TOP ROW. The bar reference track is capped by the single data value
+   balance.ui.hudBars.main.maxViewportPct, projected by main.js to a viewport
+   custom property and divided back through UI zoom here. Floor + cinders sit
+   at the viewport centre; the action buttons remain at the far edge. */
+.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
+.topbar.combat-hud .resbars-host {
+  flex: 0 1 calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud .hud-center {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+  color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
+  letter-spacing: 0.08em; white-space: nowrap;
+}
+.topbar.combat-hud .hud-cinders { color: var(--gold); }
+.topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
+.topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;
@@ -5245,6 +5257,11 @@ initInput({ getSettings: () => saves.loadMeta().settings || {} });
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
 const UI = registries.balance.ui;
+const hudMaxViewportPct = Number(UI.hudBars?.main?.maxViewportPct);
+if (!Number.isFinite(hudMaxViewportPct) || hudMaxViewportPct <= 0 || hudMaxViewportPct > 100) {
+  throw new Error(`balance.ui.hudBars.main.maxViewportPct must be in (0, 100], got ${JSON.stringify(UI.hudBars?.main?.maxViewportPct)}`);
+}
+document.documentElement.style.setProperty('--hud-resource-max-vw', `${hudMaxViewportPct}vw`);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -7645,7 +7662,10 @@ const balance = {
     //
     // Flipping either boolean is a one-number data edit and needs no code.
     hudBars: {
-      main: { scaleByMax: true },
+      // The shared map/combat resource reference track may occupy at most this
+      // share of the visual viewport. main.js projects it to one CSS variable;
+      // the stylesheet carries no second numeric copy.
+      main: { scaleByMax: true, maxViewportPct: 40 },
       model: { scaleByMax: false },
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
@@ -35152,7 +35172,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9f7ea6fcb7';
+const SOURCE = 'f1b9b42c64';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35186,7 +35206,7 @@ const SOURCE = '9f7ea6fcb7';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1074';
+const ORDINAL = '1075';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38678,6 +38698,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { hudCenterHtml } = require("src/ui/components/hudmeta.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 
@@ -38750,14 +38771,16 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
              (No backticks here: this block lives inside a template literal.) -->
         <div class="hud-top">
           <div class="resbars-host"></div>
-          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+            <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
           <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
-          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
           ${buildStampHtml('map')}
           <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
@@ -38782,7 +38805,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // the identical call combat.js:435 and coop.js:460 make. So:
   //
   //   · WHICH rows appear is content/resources.js's business, not this
-  //     screen's. HP, then the Mana/Stamina band, then poise — the map does
+  //     screen's. HP, then Mana, then Stamina — the map does
   //     not get its own list and cannot drift from combat's.
   //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
   //     reference table (HUD_REFERENCE_MAX, his 500/50), so a pool's length
@@ -41333,6 +41356,22 @@ function flaskActionPlan({
 Object.assign(module.exports, { flaskActionPlan });
 
 },
+"src/ui/components/hudmeta.js": function (module, exports, require) {
+// Shared top-row progress receipt for map and combat.
+const { esc } = require("src/ui/components/tooltip.js");
+
+function hudCenterHtml({ cinders, floor, floorTotal = null }) {
+  const floorText = floorTotal == null ? `FLOOR ${floor}` : `FLOOR ${floor} / ${floorTotal}`;
+  return `<div class="hud-center" role="status" aria-label="${esc(`${floorText}; ${cinders} cinders`)}">
+    <span class="hud-floor">${esc(floorText)}</span>
+    <span class="hud-cinders">⛁ ${esc(cinders)}</span>
+  </div>`;
+}
+
+
+Object.assign(module.exports, { hudCenterHtml });
+
+},
 "src/ui/components/resbars.js": function (module, exports, require) {
 // src/ui/components/resbars.js — the ONE renderer for every resource bar.
 
@@ -41601,6 +41640,7 @@ const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/f
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { hudCenterHtml } = require("src/ui/components/hudmeta.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -41619,20 +41659,22 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
             max size filling up the full top row, with the menu and armament
             buttons at the end of that row, at the bottom of the hud should be
             the other hud items."
-           Top row: the bar stack + the two buttons, nothing else. The stack is
-           flex:1 with min-width:0, so ITS TRACK IS DERIVED — row width minus the
-           buttons, minus padding and gaps. No width is typed anywhere, which is
-           what lets a bar's length be an honest statement about a maximum. -->
+           Top row: the bar stack, centred floor/cinder receipt, and two buttons.
+           The stack cap comes from balance.ui.hudBars.main.maxViewportPct via
+           one root CSS variable, so map and combat share the same configurable
+           reference geometry without a duplicated number. -->
       <header class="topbar combat-hud">
         <div class="hud-top">
           <div class="resbars-host"></div>
-          <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
+            <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
           <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
           <div class="flasks" style="display:flex;gap:6px"></div>
           <div class="relics"></div>
           <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
