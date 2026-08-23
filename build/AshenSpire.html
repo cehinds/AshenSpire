@@ -3555,26 +3555,27 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: calc(var(--hud-metadata-font-px) / var(--ui-zoom, 1));
+  line-height: 1;
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
-  display: inline-grid;
-  grid-template-columns: auto auto auto;
+  display: inline-flex;
   align-items: center;
+  flex-wrap: nowrap;
   font: inherit;
   letter-spacing: inherit;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before {
   content: '· SEED ' attr(data-seed);
-  grid-column: 2;
+  order: 2;
   margin-inline: 0.8rem;
 }
-.topbar.combat-hud.shared-hud .hud-run-meta .build-number { grid-column: 1; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number { order: 1; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-number::before { content: '·'; margin-right: 0.8rem; }
-.topbar.combat-hud.shared-hud .hud-run-meta .build-source { grid-column: 3; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-source { order: 3; }
 
 @container run-header (max-width: 720px) {
   .hud-run-meta .build-source { display: none; }
@@ -3584,8 +3585,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
   .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
 }
-@container run-header (max-width: 340px) {
+@container run-header (max-width: 430px) {
   .hud-run-meta .build-number { display: none; }
+}
+@media (max-width: 350px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
@@ -3596,14 +3600,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
-.topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
+.topbar.combat-hud.shared-hud .hud-bottom { align-items: center; }
 .topbar.combat-hud.shared-hud .hud-vitals-panel,
 .topbar.combat-hud.shared-hud .hud-control-grid {
   box-sizing: border-box;
   height: var(--hud-quick-panel-size);
   border: 1px solid var(--line-soft);
   border-radius: calc(8px / var(--ui-zoom, 1));
-  background: color-mix(in srgb, var(--panel) 74%, transparent);
+  background: color-mix(in srgb, var(--panel) var(--hud-component-background-opacity), transparent);
   padding: var(--hud-panel-pad);
 }
 .topbar.combat-hud.shared-hud .hud-vitals-panel {
@@ -3665,7 +3669,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 0.5rem;
+  gap: calc(var(--hud-belt-item-gap-px) / var(--ui-zoom, 1));
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-potions {
@@ -3688,8 +3692,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    their real button retains the global tap floor. The flex row is end-anchored:
    adding a potion moves its left edge, never the HUD's right edge. */
 .topbar.combat-hud.shared-hud .hud-potions .flask-slot {
-  width: var(--tap-floor); height: var(--tap-floor);
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: var(--hud-utility-visual-size); height: var(--hud-utility-visual-size);
+  min-width: var(--hud-utility-visual-size); min-height: var(--hud-utility-visual-size);
   padding: 0; border: 0; background: transparent;
 }
 .topbar.combat-hud.shared-hud .hud-potions .flask-identity {
@@ -5424,6 +5428,17 @@ if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAv
 }
 document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
 document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
+const HUD_PRESENTATION = UI.hudPresentation || {};
+const projectHudToken = (key, min, max, cssName, unit) => {
+  const value = Number(HUD_PRESENTATION[key]);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`balance.ui.hudPresentation.${key} must be in [${min}, ${max}], got ${JSON.stringify(HUD_PRESENTATION[key])}`);
+  }
+  document.documentElement.style.setProperty(cssName, `${value}${unit}`);
+};
+projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
+projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
+projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -7837,6 +7852,15 @@ const balance = {
       // second breakpoint. Co-op still consumes maxViewportPct below.
       main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },
       model: { scaleByMax: false },
+    },
+    // Shared HUD presentation tokens. These are screen-pixel intentions;
+    // main.js projects them through --ui-zoom so Map and Combat consume the
+    // same answer. Component backgrounds are transparent by current design,
+    // while borders and the contents inside each panel remain visible.
+    hudPresentation: {
+      componentBackgroundOpacityPct: 0,
+      metadataFontPx: 11,
+      beltItemGapPx: 2,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -18274,6 +18298,21 @@ function validateContent(bundle) {
   // through a real boot; observed red at b277ec2 before this block existed.
   if (b.balance && b.balance.ui) {
     const ui = b.balance.ui;
+    const hp = ui.hudPresentation;
+    if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, and beltItemGapPx');
+    } else {
+      for (const [key, min, max] of [
+        ['componentBackgroundOpacityPct', 0, 100],
+        ['metadataFontPx', 8, 24],
+        ['beltItemGapPx', 0, 12],
+      ]) {
+        const value = hp[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
@@ -36344,7 +36383,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '93a1ac2067';
+const SOURCE = '89a156c17b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36378,7 +36417,7 @@ const SOURCE = '93a1ac2067';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1108';
+const ORDINAL = '1117';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39893,6 +39932,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
@@ -39959,7 +39999,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: this is the same component combat mounts. -->
-      ${hudShellHtml({
+      ${hudShellHtml(runHudViewModel({
         place: 'map',
         headerClass: 'map-header',
         cinders: run.cinders,
@@ -39981,7 +40021,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
           menuHint: actionHint('menu'),
         },
         overlayHtml: legendHtml,
-      })}
+      }))}
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
@@ -42582,95 +42622,94 @@ Object.assign(module.exports, { flaskActionPlan });
 
 },
 "src/ui/components/hudmeta.js": function (module, exports, require) {
-// Reusable Map/Combat HUD assets. Each exported function owns one named DOM
-// component; sharedRunHudHtml composes them without taking ownership of run
-// state or screen callbacks.
+// Reusable Map/Combat HUD Views. Structure is rendered from immutable
+// Presentation Models; this module owns DOM, not domain projection or commands.
 const { esc } = require("src/ui/components/tooltip.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
+const { childModel } = require("src/ui/models/ComponentModel.js");
 
-function progressText(value, total, label) {
-  return total == null ? `${label} ${value}` : `${label} ${value} / ${total}`;
+function progressHtml(value, total, label) {
+  return `${esc(label)} ${esc(value)}`
+    + (total == null ? '' : `<span class="hud-progress-total"> / ${esc(total)}</span>`);
 }
 
-function identityClusterHtml(identity) {
-  return `<div class="hud-identity" ${uiComponentAttrs(UI.identityCluster)}>
-    <div class="portrait" ${uiComponentAttrs(UI.portraitBadge)} style="border-color:${esc(identity.tint)}">${esc(identity.glyph)}</div>
-    <span class="nm" ${uiComponentAttrs(UI.characterTitle)}>${esc(identity.name)} · ${esc(identity.classLabel)}</span>
+function identityClusterHtml(model) {
+  const portrait = childModel(model, UI.portraitBadge).properties;
+  const title = childModel(model, UI.characterTitle).properties;
+  return `<div class="hud-identity" ${uiComponentAttrs(model.component, model.variant)}>
+    <div class="portrait" ${uiComponentAttrs(UI.portraitBadge)} style="border-color:${esc(portrait.tint)}">${esc(portrait.glyph)}</div>
+    <span class="nm" ${uiComponentAttrs(UI.characterTitle)}>${esc(title.name)} · ${esc(title.classLabel)}</span>
   </div>`;
 }
 
-function cindersCounterHtml(cinders) {
-  return `<div class="hud-center" ${uiComponentAttrs(UI.cindersCounter)} role="status" aria-label="${esc(`${cinders} cinders`)}">
-    <span class="hud-cinders">⛁ ${esc(cinders)}</span>
+function cindersCounterHtml(model) {
+  return `<div class="hud-center" ${uiComponentAttrs(model.component, model.variant)} role="status" aria-live="${esc(model.accessibility.live)}" aria-label="${esc(model.accessibility.label)}">
+    <span class="hud-cinders">⛁ ${esc(model.properties.value)}</span>
   </div>`;
 }
 
-function buildMetadataTrailHtml({ place, act, actTotal, floor, floorTotal, seed }) {
-  return `<div class="hud-run-meta" ${uiComponentAttrs(UI.buildMetadataTrail)}>
-    <span class="hud-act">${esc(progressText(act, actTotal, 'ACT'))}</span>
-    <span class="hud-floor">${esc(progressText(floor, floorTotal, 'FLOOR'))}</span>
-    ${buildStampHtml(place, { split: true, seed })}
+function buildMetadataTrailHtml(model) {
+  const act = childModel(model, UI.metadataField, 'act').properties;
+  const floor = childModel(model, UI.metadataField, 'floor').properties;
+  return `<div class="hud-run-meta" ${uiComponentAttrs(model.component, model.variant)}>
+    <span class="hud-act" ${uiComponentAttrs(UI.metadataField, 'act')}>${progressHtml(act.value, act.total, act.label)}</span>
+    <span class="hud-floor" ${uiComponentAttrs(UI.metadataField, 'floor')}>${progressHtml(floor.value, floor.total, floor.label)}</span>
+    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}
   </div>`;
 }
 
-function runHeaderStripHtml({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }) {
-  return `<div class="hud-info-row" ${uiComponentAttrs(UI.runHeaderStrip)}>
-    ${identityClusterHtml(identity)}
-    ${cindersCounterHtml(cinders)}
-    ${buildMetadataTrailHtml({ place, act, actTotal, floor, floorTotal, seed })}
+function runHeaderStripHtml(model) {
+  return `<div class="hud-info-row" ${uiComponentAttrs(model.component, model.variant)}>
+    ${identityClusterHtml(childModel(model, UI.identityCluster))}
+    ${cindersCounterHtml(childModel(model, UI.cindersCounter))}
+    ${buildMetadataTrailHtml(childModel(model, UI.buildMetadataTrail))}
   </div>`;
 }
 
-function vitalsPanelHtml() {
-  return `<section class="hud-vitals-panel" ${uiComponentAttrs(UI.vitalsPanel)} aria-label="Health, mana, and stamina">
-    <div class="resbars-host" ${uiComponentAttrs(UI.resourceMeter)}></div>
+function vitalsPanelHtml(model) {
+  const meter = childModel(model, UI.resourceMeter);
+  return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
+    <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
 }
 
-function quickAccessPanelHtml(controls) {
-  return `<section class="hud-control-grid" ${uiComponentAttrs(UI.quickAccessPanel)} aria-label="Quick access">
+function quickAccessPanelHtml(model) {
+  const armoury = childModel(model, UI.armouryControl);
+  const menu = childModel(model, UI.quickMenuControl);
+  return `<section class="hud-control-grid" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions">
-      <button class="topbar-btn" ${uiComponentAttrs(UI.armouryControl)} id="${esc(controls.armouryId)}" title="Armoury" aria-label="Armoury"><span aria-hidden="true">⚒</span></button>
-      <button class="topbar-btn" ${uiComponentAttrs(UI.quickMenuControl)} id="${esc(controls.menuId)}" data-action-hint="menu"
-        title="${esc(controls.menuHint)}" aria-label="${esc(controls.menuHint)}"><span aria-hidden="true">☰</span></button>
+      <button class="topbar-btn" ${uiComponentAttrs(armoury.component, armoury.variant)} id="${esc(armoury.properties.id)}" title="${esc(armoury.accessibility.hint)}" aria-label="${esc(armoury.accessibility.label)}"><span aria-hidden="true">${esc(armoury.properties.glyph)}</span></button>
+      <button class="topbar-btn" ${uiComponentAttrs(menu.component, menu.variant)} id="${esc(menu.properties.id)}" data-action-hint="menu"
+        title="${esc(menu.accessibility.hint)}" aria-label="${esc(menu.accessibility.label)}"><span aria-hidden="true">${esc(menu.properties.glyph)}</span></button>
     </div>
     <div class="flasks hud-charge-flasks" aria-label="Healing and mana flasks"></div>
   </section>`;
 }
 
-function primaryHudRowHtml(controls) {
-  return `<div class="hud-resource-row" ${uiComponentAttrs(UI.primaryHudRow)}>
-    ${vitalsPanelHtml()}
-    ${quickAccessPanelHtml(controls)}
+function primaryHudRowHtml(model) {
+  return `<div class="hud-resource-row" ${uiComponentAttrs(model.component, model.variant)}>
+    ${vitalsPanelHtml(childModel(model, UI.vitalsPanel))}
+    ${quickAccessPanelHtml(childModel(model, UI.quickAccessPanel))}
   </div>`;
 }
 
-function inventoryBeltHtml(place) {
-  return `<div class="hud-bottom" ${uiComponentAttrs(UI.inventoryBelt)}>
-    <div class="relics hud-relics" ${uiComponentAttrs(UI.relicTray)} aria-label="Relics"></div>
-    <div class="hud-potions${place === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(UI.potionTray)} aria-label="Potions"></div>
+function inventoryBeltHtml(model) {
+  const relics = childModel(model, UI.relicTray);
+  const potions = childModel(model, UI.potionTray);
+  return `<div class="hud-bottom" ${uiComponentAttrs(model.component, model.variant)}>
+    <div class="relics hud-relics" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>
+    <div class="hud-potions${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
   </div>`;
 }
 
-function sharedRunHudHtml({
-  place,
-  headerClass = '',
-  cinders,
-  act,
-  actTotal = null,
-  floor,
-  floorTotal = null,
-  seed,
-  identity,
-  controls,
-  overlayHtml = '',
-} = {}) {
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(UI.sharedRunHud, place)}>
+function sharedRunHudHtml(model) {
+  const { place, headerClass, overlayHtml } = model.properties;
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top">
-      ${runHeaderStripHtml({ place, cinders, act, actTotal, floor, floorTotal, seed, identity })}
-      ${primaryHudRowHtml(controls)}
-      ${inventoryBeltHtml(place)}
+      ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
+      ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
+      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
     ${overlayHtml}
   </header>`;
@@ -42685,8 +42724,31 @@ Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMe
 
 },
 "src/ui/components/uiComponents.js": function (module, exports, require) {
-// Stable public names for reusable DOM UI assets. Screens may select a
-// component by this semantic id, but never duplicate its structure.
+// View helpers for the stable ids owned by Presentation Models.
+const { UI_COMPONENTS: COMPONENT_IDS, isUiComponentId } = require("src/ui/models/UiComponentId.js");
+const UI_COMPONENTS = COMPONENT_IDS;
+
+function uiComponentAttrs(component, variant = '') {
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
+  return `data-ui-component="${component}"${variant ? ` data-ui-variant="${variant}"` : ''}`;
+}
+
+function markUiComponent(element, component, variant = '') {
+  if (!element) throw new Error(`Cannot mark missing UI component: ${component}`);
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component: ${component}`);
+  element.dataset.uiComponent = component;
+  if (variant) element.dataset.uiVariant = variant;
+  return element;
+}
+
+
+Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent });
+
+},
+"src/ui/models/UiComponentId.js": function (module, exports, require) {
+// Presentation component identifiers. This is the UI equivalent of a small
+// enum: Component Models and Views share the names without either owning the
+// other's implementation.
 const UI_COMPONENTS = Object.freeze({
   sharedRunHud: 'shared-run-hud',
   runHeaderStrip: 'run-header-strip',
@@ -42695,15 +42757,21 @@ const UI_COMPONENTS = Object.freeze({
   characterTitle: 'character-title',
   cindersCounter: 'cinders-counter',
   buildMetadataTrail: 'build-metadata-trail',
+  metadataField: 'metadata-field',
   primaryHudRow: 'primary-hud-row',
+  panel: 'panel',
   vitalsPanel: 'vitals-panel',
   resourceMeter: 'resource-meter',
   quickAccessPanel: 'quick-access-panel',
+  actionControl: 'action-control',
+  hotkeyBadge: 'hotkey-badge',
   armouryControl: 'armoury-control',
   quickMenuControl: 'quick-menu-control',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
+  itemTray: 'item-tray',
+  itemSlot: 'item-slot',
   relicTray: 'relic-tray',
   relicSlot: 'relic-slot',
   potionTray: 'potion-tray',
@@ -42718,21 +42786,317 @@ const UI_COMPONENTS = Object.freeze({
 
 const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));
 
-function uiComponentAttrs(component, variant = '') {
-  if (!KNOWN_COMPONENTS.has(component)) throw new Error(`Unknown UI component: ${component}`);
-  return `data-ui-component="${component}"${variant ? ` data-ui-variant="${variant}"` : ''}`;
-}
-
-function markUiComponent(element, component, variant = '') {
-  if (!element) throw new Error(`Cannot mark missing UI component: ${component}`);
-  if (!KNOWN_COMPONENTS.has(component)) throw new Error(`Unknown UI component: ${component}`);
-  element.dataset.uiComponent = component;
-  if (variant) element.dataset.uiVariant = variant;
-  return element;
+function isUiComponentId(component) {
+  return KNOWN_COMPONENTS.has(component);
 }
 
 
-Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent });
+Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
+
+},
+"src/ui/models/ComponentModel.js": function (module, exports, require) {
+const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
+const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
+
+function freezeValue(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
+  if (value && typeof value === 'object') {
+    const frozen = {};
+    for (const [key, child] of Object.entries(value)) frozen[key] = freezeValue(child);
+    return Object.freeze(frozen);
+  }
+  return value;
+}
+
+function serializable(value) {
+  if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(serializable);
+  return typeof value === 'object'
+    && Object.getPrototypeOf(value) === Object.prototype
+    && Object.values(value).every(serializable);
+}
+
+// Immutable presentation record. It intentionally cannot carry callbacks or
+// mutable domain objects; behavior names are resolved later by a View host.
+function componentModel(component, {
+  variant = '',
+  properties = {},
+  tokens = {},
+  accessibility = {},
+  behaviors = [],
+  children = [],
+} = {}) {
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component model: ${component}`);
+  if (typeof variant !== 'string') throw new Error(`${component} variant must be a string`);
+  if (!serializable(properties)) throw new Error(`${component} properties must be serializable`);
+  if (!serializable(tokens)) throw new Error(`${component} tokens must be serializable`);
+  if (!serializable(accessibility)) throw new Error(`${component} accessibility must be serializable`);
+  if (!Array.isArray(behaviors) || behaviors.some((behavior) => !isBehaviorModel(behavior))) {
+    throw new Error(`${component} behaviors must be Behavior Models`);
+  }
+  if (!Array.isArray(children) || children.some((child) => !isComponentModel(child))) {
+    throw new Error(`${component} children must be Component Models`);
+  }
+  return Object.freeze({
+    component,
+    variant,
+    properties: freezeValue(properties),
+    tokens: freezeValue(tokens),
+    accessibility: freezeValue(accessibility),
+    behaviors: Object.freeze([...behaviors]),
+    children: Object.freeze([...children]),
+  });
+}
+
+function isComponentModel(value) {
+  return !!value && typeof value === 'object' && isUiComponentId(value.component)
+    && Array.isArray(value.behaviors) && Array.isArray(value.children);
+}
+
+function childModel(parent, component, variant = null) {
+  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
+  const child = parent.children.find((candidate) => candidate.component === component
+    && (variant == null || candidate.variant === variant));
+  if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
+  return child;
+}
+
+
+Object.assign(module.exports, { componentModel, isComponentModel, childModel });
+
+},
+"src/ui/models/BehaviorModel.js": function (module, exports, require) {
+function frozenRecord(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(frozenRecord));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, child] of Object.entries(value)) out[key] = frozenRecord(child);
+    return Object.freeze(out);
+  }
+  return value;
+}
+
+function behaviorModel(name, {
+  event = 'mount',
+  command = name,
+  policy = '',
+  payload = {},
+} = {}) {
+  if (typeof name !== 'string' || !name) throw new Error('Behavior name is required');
+  if (typeof event !== 'string' || !event) throw new Error(`${name} event is required`);
+  if (typeof command !== 'string' || !command) throw new Error(`${name} command is required`);
+  return Object.freeze({ name, event, command, policy, payload: frozenRecord(payload) });
+}
+
+function isBehaviorModel(value) {
+  return !!value && typeof value === 'object'
+    && typeof value.name === 'string' && !!value.name
+    && typeof value.event === 'string' && !!value.event
+    && typeof value.command === 'string' && !!value.command;
+}
+
+
+Object.assign(module.exports, { behaviorModel, isBehaviorModel });
+
+},
+"src/ui/viewModels/RunHudViewModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+const { runHeaderModel } = require("src/ui/models/RunHeaderModel.js");
+const { vitalsPanelModel } = require("src/ui/models/VitalsPanelModel.js");
+const { quickAccessPanelModel } = require("src/ui/models/QuickAccessPanelModel.js");
+const { inventoryBeltModel } = require("src/ui/models/InventoryBeltModel.js");
+
+// Presentation projection only: callers provide a domain snapshot and command
+// ids; the result is a frozen tree with no callbacks or mutable run objects.
+function runHudViewModel({
+  place,
+  headerClass = '',
+  cinders,
+  act,
+  actTotal = null,
+  floor,
+  floorTotal = null,
+  seed,
+  identity,
+  controls,
+  overlayHtml = '',
+} = {}) {
+  return componentModel(UI.sharedRunHud, {
+    variant: place,
+    properties: { place, headerClass, overlayHtml },
+    children: [
+      runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
+      componentModel(UI.primaryHudRow, {
+        children: [vitalsPanelModel(), quickAccessPanelModel(controls)],
+      }),
+      inventoryBeltModel(place),
+    ],
+  });
+}
+
+
+Object.assign(module.exports, { runHudViewModel });
+
+},
+"src/ui/models/RunHeaderModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { metadataFieldModel } = require("src/ui/models/HudPrimitiveModels.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function identityClusterModel(identity) {
+  return componentModel(UI.identityCluster, {
+    properties: { name: identity.name, classLabel: identity.classLabel },
+    children: [
+      componentModel(UI.portraitBadge, { properties: { glyph: identity.glyph, tint: identity.tint } }),
+      componentModel(UI.characterTitle, { properties: { name: identity.name, classLabel: identity.classLabel } }),
+    ],
+  });
+}
+
+function cindersCounterModel(cinders) {
+  return componentModel(UI.cindersCounter, {
+    properties: { value: cinders, accessibleLabel: `${cinders} cinders` },
+    accessibility: { label: `${cinders} cinders`, live: 'polite' },
+  });
+}
+
+function buildMetadataTrailModel({ place, act, actTotal, floor, floorTotal, seed }) {
+  return componentModel(UI.buildMetadataTrail, {
+    properties: { place, seed },
+    children: [
+      metadataFieldModel('act', 'ACT', act, actTotal),
+      metadataFieldModel('floor', 'FLOOR', floor, floorTotal),
+      metadataFieldModel('build', 'BUILD', null),
+      metadataFieldModel('seed', 'SEED', seed),
+      metadataFieldModel('source', 'SOURCE', null),
+    ],
+  });
+}
+
+function runHeaderModel(input) {
+  return componentModel(UI.runHeaderStrip, {
+    children: [
+      identityClusterModel(input.identity),
+      cindersCounterModel(input.cinders),
+      buildMetadataTrailModel(input),
+    ],
+  });
+}
+
+
+Object.assign(module.exports, { identityClusterModel, cindersCounterModel, buildMetadataTrailModel, runHeaderModel });
+
+},
+"src/ui/models/HudPrimitiveModels.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function metadataFieldModel(kind, label, value, total = null) {
+  return componentModel(UI.metadataField, {
+    variant: kind,
+    properties: { label, value, total },
+  });
+}
+
+function actionControlModel(component, { id, label, glyph, hint, command }) {
+  return componentModel(component, {
+    properties: { id, label, glyph, hint },
+    accessibility: { label, hint },
+    behaviors: [behaviorModel(command, { event: 'activate', command })],
+    children: [componentModel(UI.actionControl, { variant: command, properties: { label } })],
+  });
+}
+
+function itemTrayModel(component, kind, behavior) {
+  return componentModel(component, {
+    variant: kind,
+    accessibility: { label: `${kind}s` },
+    behaviors: [behaviorModel(behavior)],
+    children: [componentModel(UI.itemTray, { variant: kind })],
+  });
+}
+
+function panelModel(component, variant, children) {
+  return componentModel(component, {
+    variant,
+    children: [componentModel(UI.panel, { variant }), ...children],
+  });
+}
+
+
+Object.assign(module.exports, { metadataFieldModel, actionControlModel, itemTrayModel, panelModel });
+
+},
+"src/ui/models/VitalsPanelModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { panelModel } = require("src/ui/models/HudPrimitiveModels.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function vitalsPanelModel() {
+  return panelModel(UI.vitalsPanel, 'vitals', [
+    componentModel(UI.resourceMeter, {
+      variant: 'main',
+      accessibility: { label: 'Health, mana, and stamina' },
+      behaviors: [behaviorModel('mount-resource-meters')],
+    }),
+  ]);
+}
+
+
+Object.assign(module.exports, { vitalsPanelModel });
+
+},
+"src/ui/models/QuickAccessPanelModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { actionControlModel, panelModel } = require("src/ui/models/HudPrimitiveModels.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function quickAccessPanelModel(controls) {
+  return panelModel(UI.quickAccessPanel, 'quick-access', [
+    actionControlModel(UI.armouryControl, {
+      id: controls.armouryId,
+      label: 'Armoury',
+      glyph: '⚒',
+      hint: 'Armoury',
+      command: 'open-armoury',
+    }),
+    actionControlModel(UI.quickMenuControl, {
+      id: controls.menuId,
+      label: 'Quick menu',
+      glyph: '☰',
+      hint: controls.menuHint,
+      command: 'open-quick-menu',
+    }),
+    componentModel(UI.crimsonFlaskControl, { variant: 'hp', behaviors: [behaviorModel('mount-charge-flask', { payload: { kind: 'hp' } })] }),
+    componentModel(UI.azureFlaskControl, { variant: 'mana', behaviors: [behaviorModel('mount-charge-flask', { payload: { kind: 'mana' } })] }),
+  ]);
+}
+
+
+Object.assign(module.exports, { quickAccessPanelModel });
+
+},
+"src/ui/models/InventoryBeltModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { itemTrayModel } = require("src/ui/models/HudPrimitiveModels.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function inventoryBeltModel(place) {
+  return componentModel(UI.inventoryBelt, {
+    variant: place,
+    children: [
+      itemTrayModel(UI.relicTray, 'relic', 'mount-relic-items'),
+      itemTrayModel(UI.potionTray, 'potion', 'mount-potion-items'),
+    ],
+  });
+}
+
+
+Object.assign(module.exports, { inventoryBeltModel });
 
 },
 "src/ui/components/resbars.js": function (module, exports, require) {
@@ -43003,6 +43367,7 @@ const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/f
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { combatantFrame } = require("src/ui/components/combatantFrame.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 
@@ -43020,7 +43385,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     <div class="combat">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
-      ${hudShellHtml({
+      ${hudShellHtml(runHudViewModel({
         place: 'combat',
         cinders: run.cinders,
         act: run.actNumber,
@@ -43040,7 +43405,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-      })}
+      }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
