@@ -946,19 +946,23 @@ async function selftest() {
     },
     {
       // The centre can remain mathematically exact while visible resource ink
-      // paints through it. Move only the resource host to isolate that defect.
+      // paints through it. Since the shared shell split metadata and resources
+      // into successive rows, crossing only the horizontal axis no longer
+      // reaches Cinders; move the visible frames across BOTH current axes.
       name: 'visible resource cards paint through the centred Cinders receipt',
       file: 'styles/combat.css',
-      append: ".resbars-host { transform:translateX(45vw); }",
+      append: ".rescard-frame { transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
       expectRed: /FINDING P8\/no-overlap .*resourceFrames=\[/,
     },
     {
       // 1 — THE SECOND RENDERER COMES BACK. The literal `git revert` of this
-      // change's core edit: the map hand-writes its own health bar again.
+      // change's core edit: the map replaces its shared-renderer mount with a
+      // hand-written health bar. The host now lives in hudmeta.js; map.js owns
+      // the current seam where content is mounted into it.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
       file: 'src/ui/screens/map.js',
-      find: '          <div class="resbars-host"></div>',
-      replace: '          <div class="bar hpbar"><div class="fill" style="width:50%"></div><div class="label">HP</div></div>',
+      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      replace: "    resHost.innerHTML = '<div class=\"bar hpbar\"><div class=\"fill\" style=\"width:50%\"></div><div class=\"label\">HP</div></div>';",
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
     },
     {
