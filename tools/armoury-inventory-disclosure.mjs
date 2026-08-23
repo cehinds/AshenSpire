@@ -231,25 +231,45 @@ async function main() {
     const drag = await evaluate(`(() => {
       const fold = document.querySelector('[data-fold=inventory]');
       if (fold?.getAttribute('aria-expanded') === 'false') fold.click();
-      const source = [...document.querySelectorAll('[data-region=inventory] [data-inventory-item]')]
-        .find((element) => element.dataset.itemId === 'straightSword');
-      const leftSlot = [...document.querySelectorAll('.equip-slot')]
-        .find((element) => element.querySelector('.es-label')?.textContent === 'Left Hand');
-      const target = leftSlot?.querySelector('.es-cell.on');
-      if (!source || !target) return null;
-      const data = new DataTransfer();
-      source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: data }));
-      target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: data }));
-      target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
-      source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: data }));
+      const dragItem = (id, label) => {
+        const source = [...document.querySelectorAll('[data-region=inventory] [data-inventory-item]')]
+          .find((element) => element.dataset.itemId === id);
+        const slot = [...document.querySelectorAll('.equip-slot')]
+          .find((element) => element.querySelector('.es-label')?.textContent === label);
+        const target = slot?.querySelector('.es-cell.on');
+        if (!source || !target) return false;
+        const data = new DataTransfer();
+        source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: data }));
+        target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: data }));
+        target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
+        source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: data }));
+        return true;
+      };
+      const swordMoved = dragItem('straightSword', 'Left Hand');
+      const shieldMoved = dragItem('roundShield', 'Right Hand');
       const slotTitle = (label) => [...document.querySelectorAll('.equip-slot')]
         .find((element) => element.querySelector('.es-label')?.textContent === label)
         ?.querySelector('.es-cell.on')?.title || null;
-      return { draggable: source.draggable, left: slotTitle('Left Hand'), right: slotTitle('Right Hand') };
+      const layers = [...document.querySelectorAll('.armoury-figure .equipped-figure > img')]
+        .map((element) => ({
+          z: element.style.zIndex || '',
+          transform: element.style.transform || 'none',
+        }));
+      return {
+        draggable: !!document.querySelector('[data-region=inventory] [data-inventory-item]')?.draggable,
+        swordMoved,
+        shieldMoved,
+        left: slotTitle('Left Hand'),
+        right: slotTitle('Right Hand'),
+        swordMirror: layers.find((layer) => layer.z === '2')?.transform || null,
+        shieldMirror: layers.find((layer) => layer.z === '3')?.transform || null,
+      };
     })()`);
     check(drag?.draggable, 'equipment Inventory rows publish a native drag source');
-    check(drag?.left === 'Straight Sword' && drag?.right === 'Empty',
-      `dragging Inventory to Left Hand performs the one-object move (${drag?.left || 'no left'} / ${drag?.right || 'no right'})`);
+    check(drag?.swordMoved && drag?.shieldMoved && drag?.left === 'Straight Sword' && drag?.right === 'Round Shield',
+      `dragging Inventory swaps the exact slot occupants (${drag?.left || 'no left'} / ${drag?.right || 'no right'})`);
+    check(drag?.swordMirror === 'scaleX(-1)' && drag?.shieldMirror === 'scaleX(-1)',
+      `swapped armaments mirror per socket instead of following type (${drag?.swordMirror || 'none'} / ${drag?.shieldMirror || 'none'})`);
 
     if (TAKE_SHOTS) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {

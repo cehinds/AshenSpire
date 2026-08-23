@@ -213,42 +213,46 @@ export function classSprite(classId, tint, sigil, tintId, style) {
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId }) → element | null.
+ * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
+ * → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
  * each held armament stacked over it. All of them are rendered on one shared
  * camera and canvas (tools/equipment-blender.py), which is what lets them be
- * absolutely positioned on top of each other and simply line up.
+ * absolutely positioned on top of each other and simply line up. The art is
+ * currently authored at type-default sockets; the mirror flags are the
+ * temporary per-slot correction until those layers are re-rendered neutral.
  *
  * Layering is why this is affordable at all: 12 armour sets × 24 armaments ×
  * 24 off-hands pre-rendered is six figures' worth of combinations, while one
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-export function equippedFigure({ classId, armourId, rightId, leftId }) {
+export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
   el.style.cssText = 'position:relative;width:100%;height:100%;';
-  const layer = (src, z) => {
+  const layer = (src, z, mirror = false) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = '';
     img.style.cssText =
-      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};`;
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};` +
+      (mirror ? 'transform:scaleX(-1);' : '');
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
   return el;
 }
 
 /**
  * playerSprite(customization, classId, equip?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId }) it composites the layered
+ * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
 export function playerSprite(customization = {}, classId, equip = null) {

@@ -2260,6 +2260,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(both.leftId, 'straightSword', 'the piece in the left slot is drawn in the left hand');
     eq(both.rightId, 'greatsword', 'the piece in the right slot is drawn in the right hand');
 
+    // The full-frame weapon art was authored with blades on the default sword
+    // socket and shields on the default off-hand socket.  A slot swap must
+    // correct that baked position per layer, or the figure still follows the
+    // weapon category even though the loadout facts are right.
+    eq(both.leftMirror, true, 'a blade moved to the left slot is mirrored onto that socket');
+    eq(both.rightMirror, false, 'a blade in the right slot keeps its authored socket');
+
+    run.loadout.sets.leftHand[0] = 'straightSword';
+    run.loadout.sets.rightHand[0] = 'roundShield';
+    const swapped = figureSpec(REG, run.loadout, 'reaver');
+    eq(swapped.leftId, 'straightSword', 'the swapped sword remains in the left slot');
+    eq(swapped.rightId, 'roundShield', 'the swapped shield remains in the right slot');
+    eq(swapped.leftMirror, true, 'the swapped sword is mirrored onto the left socket');
+    eq(swapped.rightMirror, true, 'the swapped shield is mirrored onto the right socket');
+
     // 'either' is still a real word: the dagger goes in either hand and is drawn
     // in the one it is in, not in the one its row prefers.
     run.loadout.sets.leftHand[0] = 'dagger';

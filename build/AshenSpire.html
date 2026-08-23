@@ -3504,10 +3504,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    shape asymmetry is the armament itself (14.9-16.0% on the armed class
    sprites) — and that is precisely the thing that must move.
 
-   EXACTLY ONE MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
+   ONE GLOBAL MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
    and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
    mirroring both selectors would cancel to identity on the combat board — the
-   screen that started this. The second rule is what keeps the count at one.
+   screen that started this. The second rule keeps the figure orientation at
+   one; an individual weapon layer may add its own socket correction when a
+   player swaps a type-default armament across hands.
 
    REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
    and body art is re-rendered from corrected producers. Leaving both in place
@@ -24904,7 +24906,8 @@ function equippedPieces(registries, loadout, classId) {
 }
 
 /**
- * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
+ * figureSpec(registries, loadout, classId) →
+ *   { armourId, rightId, leftId, rightMirror, leftMirror }
  *
  * What the sprite layers should be, derived rather than stored. Slots declare
  * their own `kinds`, so this finds the armour slot by what it accepts instead
@@ -24917,10 +24920,19 @@ function equippedPieces(registries, loadout, classId) {
  * winning: two weapons equipped, one weapon on the figure, no error anywhere
  * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
  * that field gates equipping (fitsSlot), which is a different question.
+ *
+ * The current full-frame art is authored at the sword socket for every
+ * non-shield and at the off-hand socket for shields. The figure itself is
+ * mirrored for the viewer, so a slot swap needs a per-layer mirror flag too:
+ * `rightMirror` / `leftMirror` move the art onto the socket the slot names.
+ * Those flags disappear when the producer is re-rendered from slot-neutral art.
  */
 function figureSpec(registries, loadout, classId) {
   const slots = (registries.equipment || {}).slots || [];
-  const spec = { armourId: 'default', rightId: null, leftId: null };
+  const spec = {
+    armourId: 'default', rightId: null, leftId: null,
+    rightMirror: false, leftMirror: false,
+  };
   if (!loadout) return spec;
   for (const slot of slots) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
@@ -24930,8 +24942,13 @@ function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
-    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
+    if (hand === 'right') {
+      spec.rightId = piece.artKey || piece.id;
+      spec.rightMirror = piece.kind === 'shield';
+    } else if (hand === 'left') {
+      spec.leftId = piece.artKey || piece.id;
+      spec.leftMirror = piece.kind !== 'shield';
+    }
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }
@@ -35488,7 +35505,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a3a7f1f9a6';
+const SOURCE = 'c093df8453';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35522,7 +35539,7 @@ const SOURCE = 'a3a7f1f9a6';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1095';
+const ORDINAL = '1114';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -36790,42 +36807,46 @@ function classSprite(classId, tint, sigil, tintId, style) {
  * class has one), else the chosen sigil glyph in a tinted panel.
  */
 /**
- * equippedFigure({ classId, armourId, rightId, leftId }) → element | null.
+ * equippedFigure({ classId, armourId, rightId, leftId, rightMirror, leftMirror })
+ * → element | null.
  *
  * The figure as LAYERS: a bare-handed body in the armour set's palette, with
  * each held armament stacked over it. All of them are rendered on one shared
  * camera and canvas (tools/equipment-blender.py), which is what lets them be
- * absolutely positioned on top of each other and simply line up.
+ * absolutely positioned on top of each other and simply line up. The art is
+ * currently authored at type-default sockets; the mirror flags are the
+ * temporary per-slot correction until those layers are re-rendered neutral.
  *
  * Layering is why this is affordable at all: 12 armour sets × 24 armaments ×
  * 24 off-hands pre-rendered is six figures' worth of combinations, while one
  * PNG per piece is 36 files. Any layer that fails to load just removes itself,
  * so a missing asset degrades to a plainer figure rather than a broken one.
  */
-function equippedFigure({ classId, armourId, rightId, leftId }) {
+function equippedFigure({ classId, armourId, rightId, leftId, rightMirror = false, leftMirror = false }) {
   if (!SPRITE_CLASSES.includes(classId)) return null;
   const el = document.createElement('div');
   el.className = 'equipped-figure';
   el.style.cssText = 'position:relative;width:100%;height:100%;';
-  const layer = (src, z) => {
+  const layer = (src, z, mirror = false) => {
     const img = document.createElement('img');
     img.src = src;
     img.alt = '';
     img.style.cssText =
-      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};`;
+      `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};` +
+      (mirror ? 'transform:scaleX(-1);' : '');
     img.addEventListener('error', () => img.remove());
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourId || 'default'}.webp`), 1);
-  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2);
-  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3);
+  if (leftId) layer(assetUrl(`assets/equipment/weapon_${leftId}.webp`), 2, leftMirror);
+  if (rightId) layer(assetUrl(`assets/equipment/weapon_${rightId}.webp`), 3, rightMirror);
   return el;
 }
 
 /**
  * playerSprite(customization, classId, equip?) — the player's figure.
  *
- * With `equip` ({ armourId, rightId, leftId }) it composites the layered
+ * With `equip` ({ armourId, rightId, leftId, rightMirror, leftMirror }) it composites the layered
  * equipment figure; without it, the single rendered class PNG as before.
  */
 function playerSprite(customization = {}, classId, equip = null) {
