@@ -811,11 +811,17 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
-- **.NET-inspired Component Model contract.** UI architecture follows a small MVVM-shaped split:
-  `src/model/` owns domain rules; `src/ui/models/` owns immutable presentation contracts analogous
-  to C# records; `src/ui/viewModels/` projects domain snapshots into screen/card compositions;
-  `src/ui/components/` renders those models; `src/ui/behaviors/` binds named commands and lifecycle;
-  and `src/ui/screens/` is a thin host. Every reusable UI component receives an immutable Component
+- **.NET-inspired application and Component Model contract.** Architecture follows Clean
+  Architecture with an MVVM-shaped presentation layer. Domain Models own pure game state and rules;
+  Application Interfaces define ports; Application Services orchestrate use cases; Infrastructure
+  implements browser storage, audio, network, and other platform adapters; Presentation Models are
+  immutable contracts analogous to C# records; Presentation ViewModels project domain snapshots
+  into screen/card compositions and named commands; Views are thin full-screen hosts; Components
+  are reusable renderers; Behaviors bind interactions and lifecycle; and `main.js` trends toward a
+  composition root. The existing paths migrate incrementally: `src/model/` is Domain,
+  `src/ui/models/` and `src/ui/viewModels/` are Presentation models and projections,
+  `src/ui/screens/` is Views, and `src/ui/components/` plus `src/ui/behaviors/` are reusable
+  presentation implementation. Every reusable UI component receives an immutable Component
   Model that names its semantic component id and variant, owns only serializable presentation
   properties, declares named behaviors, and recursively composes child Component Models. Screen
   ViewModels compose those records; renderers translate them to DOM, and behavior adapters connect
@@ -824,6 +830,10 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   never own mutable simulation state or import engine rules: ViewModels project current domain state
   into model properties. A migrated surface has one ViewModel composition and one renderer, never a
   model path beside a hand-written fallback.
+- **Shared Presentation primitives.** The public primitive Component Model ids are `panel`,
+  `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`, and `item-slot`. Specialized
+  models compose these primitives and may add semantic variants; they do not clone their record
+  shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
   `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
