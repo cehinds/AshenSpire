@@ -19,7 +19,7 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-23
 
-- **Map and combat now share the same three-row HUD** ([#327](https://github.com/cehinds/AshenSpire/pull/327), `0.4.0.1083`). Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.
+- **Map and combat now share the same three-row HUD** ([#327](https://github.com/cehinds/AshenSpire/pull/327), `0.4.0.1084`). Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.
 
 ## 2026-08-22
 
