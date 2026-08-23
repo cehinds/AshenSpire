@@ -275,6 +275,35 @@ export function linkDefinitionLabels(markdown) {
   }
   return labels;
 }
+const UNICODE_WHITESPACE = /\p{White_Space}/u;
+const UNICODE_PUNCTUATION = /[\p{P}\p{S}]/u;
+function delimiterFlanking(text, index, length) {
+  const before = Array.from(text.slice(0, index)).at(-1);
+  const after = Array.from(text.slice(index + length))[0];
+  const beforeSpace = before === undefined || UNICODE_WHITESPACE.test(before);
+  const afterSpace = after === undefined || UNICODE_WHITESPACE.test(after);
+  const beforePunctuation = before !== undefined && UNICODE_PUNCTUATION.test(before);
+  const afterPunctuation = after !== undefined && UNICODE_PUNCTUATION.test(after);
+  return {
+    left: !afterSpace && (!afterPunctuation || beforeSpace || beforePunctuation),
+    right: !beforeSpace && (!beforePunctuation || afterSpace || afterPunctuation),
+  };
+}
+function flattenSingleAsterisk(text) {
+  const openers = [];
+  const removed = new Set();
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '*' || text[i - 1] === '*' || text[i + 1] === '*') continue;
+    const { left, right } = delimiterFlanking(text, i, 1);
+    if (right && openers.length) {
+      removed.add(openers.pop());
+      removed.add(i);
+    } else if (left) openers.push(i);
+  }
+  let flattened = '';
+  for (let i = 0; i < text.length; i++) if (!removed.has(i)) flattened += text[i];
+  return flattened;
+}
 export function flattenInline(text, where, labels = new Set()) {
   const bracketed = findBracketedRefusal(text, labels);
   if (bracketed) {
@@ -308,14 +337,12 @@ export function flattenInline(text, where, labels = new Set()) {
       }
     }
   }
-  return text
-    .replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '$1')
+  return flattenSingleAsterisk(text.replace(/\*\*(?=\S)([\s\S]*?\S)\*\*/g, '$1'))
     // Unlike `**`, a `__` run cannot open or close strong emphasis inside a
     // Unicode word. Keeping letters, numbers and adjacent underscores outside
     // both delimiters preserves identifiers such as `foo__bar__baz`, while the
     // lazy body still lets `__foo__bar__baz__` flatten only its valid outer pair.
     .replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}_])/gu, '$1')
-    .replace(/(?<![\w*])\*(?=\S)([^*]*?\S)\*(?!\w)/g, '$1')
     .replace(/(?<![\p{L}\p{N}_])_(?=\S)([^_]*?\S)_(?![\p{L}\p{N}_])/gu, '$1')
     // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
     // DELIMITER. CommonMark: a run of N backticks opens, and the span ends at the
@@ -611,6 +638,13 @@ async function selftest() {
     if (underscores.detail !== 'Keeps foo__bar__baz and café_mode_écran, but flattens bold and emphasis.') throw new Error(`rewrote it to: ${underscores.detail}`);
     console.log('PASS intraword underscores stay literal while standalone emphasis flattens');
   } catch (error) { console.error(`FAIL underscore flanking: ${error.message}`); process.exitCode = 1; }
+  // Asterisks may delimit intraword emphasis, but a punctuation edge still has
+  // to be left- or right-flanking rather than merely non-whitespace.
+  try {
+    const [asterisks] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Flattens foo*bar*baz; keeps a*"quoted"*.\n');
+    if (asterisks.detail !== 'Flattens foobarbaz; keeps a*"quoted"*.') throw new Error(`rewrote it to: ${asterisks.detail}`);
+    console.log('PASS intraword asterisk emphasis flattens and a non-flanking edge stays literal');
+  } catch (error) { console.error(`FAIL asterisk flanking: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
