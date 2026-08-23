@@ -837,11 +837,93 @@ function unwrapAssigned(tokens, start, end, urls, isAlias) {
   return after === end ? result : null;
 }
 
-function containingPlatformCall(tokens, index) {
+function platformImportBindings(tokens) {
+  const named = new Set();
+  const namespaces = new Set();
+  for (let start = 0; start < tokens.length; start++) {
+    if (tokens[start].value !== 'import' || tokens[start + 1]?.value === '(' || tokens[start + 1]?.value === '.') continue;
+    let end = start + 1;
+    while (end < tokens.length && tokens[end].value !== ';') end++;
+    let from = -1;
+    for (let i = start + 1; i < end; i++) {
+      if (tokens[i].value === 'from') { from = i; break; }
+    }
+    if (from < 0 || tokens[from + 1]?.type !== 'string' || !['node:url', 'url'].includes(tokens[from + 1].value)) continue;
+
+    const clauseStart = start + 1;
+    if (tokens[clauseStart]?.type === 'identifier' && tokens[clauseStart].value !== 'type') {
+      namespaces.add(tokens[clauseStart].value);
+    }
+    for (let i = clauseStart; i < from; i++) {
+      if (tokens[i].value === '*' && tokens[i + 1]?.value === 'as' && tokens[i + 2]?.type === 'identifier') {
+        namespaces.add(tokens[i + 2].value);
+      }
+      if (tokens[i].value !== '{') continue;
+      const close = findClose(tokens, i, '{', '}');
+      if (close < 0 || close > from) break;
+      const separators = [i, ...topLevelIndexes(tokens, i + 1, close, ','), close];
+      for (let entry = 0; entry + 1 < separators.length; entry++) {
+        const entryStart = separators[entry] + 1;
+        const entryEnd = separators[entry + 1];
+        if (tokens[entryStart]?.value !== 'fileURLToPath') continue;
+        const as = topLevelIndexes(tokens, entryStart + 1, entryEnd, 'as')[0];
+        const binding = as === undefined ? tokens[entryStart] : tokens[as + 1];
+        if (binding?.type === 'identifier') named.add(binding.value);
+      }
+      i = close;
+    }
+  }
+  return { named, namespaces };
+}
+
+function activeScopeOwnersAt(tokens, index, parameters) {
+  const braces = [];
+  const owners = [];
+  for (let i = 0; i < index; i++) {
+    if (tokens[i].value === '{') {
+      const scope = tokens[i].blockOpen === 'statement' || parameters.atBrace.has(i);
+      braces.push(scope ? i : -1);
+      if (scope) owners.push(i);
+    } else if (tokens[i].value === '}') {
+      const owner = braces.pop();
+      if (owner !== -1 && owner !== undefined) owners.pop();
+    }
+  }
+  return owners;
+}
+
+function platformConsumerCalls(tokens, parameters, seeds, loops) {
+  const imports = platformImportBindings(tokens);
+  const calls = new Set();
+  const callOpenAfter = (end) => tokens[end]?.value === '(' ? end :
+    tokens[end]?.value === '?.' && tokens[end + 1]?.value === '(' ? end + 1 : -1;
+  const shadowed = (name, index) => {
+    if (parameters.expressionRanges.some((range) => index >= range.start && index < range.end && range.names.has(name))) return true;
+    if (loops.ranges.some((range) => index >= range.start && index < range.end && range.aliases.has(name))) return true;
+    return activeScopeOwnersAt(tokens, index, parameters).some((owner) =>
+      seeds.get(owner)?.has(name) || parameters.atBrace.get(owner)?.has(name));
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    if (token.type !== 'identifier') continue;
+    if (imports.named.has(token.value) && !['.', '?.'].includes(tokens[i - 1]?.value) && !shadowed(token.value, i)) {
+      const open = callOpenAfter(i + 1);
+      if (open >= 0) calls.add(open);
+    }
+    if (!imports.namespaces.has(token.value) || shadowed(token.value, i)) continue;
+    const member = memberAccessAt(tokens, i + 1);
+    if (!member?.static || member.name !== 'fileURLToPath') continue;
+    const open = callOpenAfter(member.end);
+    if (open >= 0) calls.add(open);
+  }
+  return calls;
+}
+
+function containingPlatformCall(tokens, index, platformCalls) {
   for (let open = index - 1; open >= 0; open--) {
     if (tokens[open].value !== '(') continue;
-    const callee = tokens[open - 1]?.value === '?.' ? tokens[open - 2] : tokens[open - 1];
-    if (callee?.value !== 'fileURLToPath') continue;
+    if (!platformCalls.has(open)) continue;
     const close = findClose(tokens, open);
     if (close >= index) return { open, close };
   }
@@ -859,8 +941,8 @@ function consumedByCall(tokens, index, ownOpen) {
   return false;
 }
 
-function isPlatformConsumerAt(tokens, index) {
-  const call = containingPlatformCall(tokens, index);
+function isPlatformConsumerAt(tokens, index, platformCalls) {
+  const call = containingPlatformCall(tokens, index, platformCalls);
   if (!call) return false;
   const comma = topLevelIndexes(tokens, call.open + 1, call.close, ',')[0] ?? call.close;
   let start = call.open + 1;
@@ -869,21 +951,21 @@ function isPlatformConsumerAt(tokens, index) {
   return start === index && end === index + 1;
 }
 
-function analyzeAssigned(tokens, start, urls, isAlias) {
+function analyzeAssigned(tokens, start, urls, isAlias, platformCalls) {
   const end = expressionEnd(tokens, start);
   const exact = unwrapAssigned(tokens, start, end, urls, isAlias);
   if (exact) return exact;
   for (const url of urls.values()) {
     if (url.start < start || url.close >= end) continue;
     if (!accessAfterExpression(tokens, url.start, url.close) &&
-        !containingPlatformCall(tokens, url.start) && !consumedByCall(tokens, url.start, url.start + 2)) {
+        !containingPlatformCall(tokens, url.start, platformCalls) && !consumedByCall(tokens, url.start, url.start + 2)) {
       return { kind: 'ambiguous', index: url.start };
     }
   }
   return null;
 }
 
-function ternaryJoinAt(tokens, assignment, urls, isAlias) {
+function ternaryJoinAt(tokens, assignment, urls, isAlias, platformCalls) {
   const findMarker = (from, marker) => {
     const stack = [];
     const opening = { ')': '(', ']': '[', '}': '{' };
@@ -917,8 +999,8 @@ function ternaryJoinAt(tokens, assignment, urls, isAlias) {
   const thenName = tokens[thenAssignments[0] - 1].value;
   const elseName = tokens[assignment - 1].value;
   if (thenName !== elseName) return null;
-  const thenValue = analyzeAssigned(tokens, thenAssignments[0] + 1, urls, isAlias);
-  const elseValue = analyzeAssigned(tokens, assignment + 1, urls, isAlias);
+  const thenValue = analyzeAssigned(tokens, thenAssignments[0] + 1, urls, isAlias, platformCalls);
+  const elseValue = analyzeAssigned(tokens, assignment + 1, urls, isAlias, platformCalls);
   return {
     value: Boolean((thenValue && thenValue.kind !== 'ambiguous') || (elseValue && elseValue.kind !== 'ambiguous')),
     ambiguity: thenValue?.kind === 'ambiguous' ? thenValue.index : elseValue?.kind === 'ambiguous' ? elseValue.index : -1,
@@ -926,7 +1008,7 @@ function ternaryJoinAt(tokens, assignment, urls, isAlias) {
   };
 }
 
-function analyzeLoopIterable(tokens, start, end, urls, isAlias) {
+function analyzeLoopIterable(tokens, start, end, urls, isAlias, platformCalls) {
   while (tokens[start]?.value === '(' && findClose(tokens, start) === end - 1) { start++; end--; }
   if (tokens[start]?.value !== '[' || findClose(tokens, start, '[', ']') !== end - 1) {
     return unwrapAssigned(tokens, start, end, urls, isAlias);
@@ -940,7 +1022,7 @@ function analyzeLoopIterable(tokens, start, end, urls, isAlias) {
     for (const url of urls.values()) {
       if (url.start < elementStart || url.close >= elementEnd) continue;
       if (!accessAfterExpression(tokens, url.start, url.close) &&
-          !containingPlatformCall(tokens, url.start)) {
+          !containingPlatformCall(tokens, url.start, platformCalls)) {
         return { kind: 'ambiguous', index: url.start };
       }
     }
@@ -956,6 +1038,7 @@ function findPathnameMisuses(tokens, errors) {
   const declarations = collectDeclarationBindings(tokens);
   const loops = loopAliasRanges(tokens, declarations);
   const seeds = declarationSeeds(tokens, parameters, declarations, loops.bindingToRange);
+  const platformCalls = platformConsumerCalls(tokens, parameters, seeds, loops);
   const scopes = [{ aliases: new Map(seeds.get(-1)), functionScope: true, conditional: false }];
   const scopeBraces = [];
   const loopIterableAliases = new Set();
@@ -1032,7 +1115,7 @@ function findPathnameMisuses(tokens, errors) {
 
     const loop = loops.ranges.find((range) => range.operator === i);
     if (loop && ['of', 'in'].includes(token.value)) {
-      const assigned = token.value === 'of' ? analyzeLoopIterable(tokens, i + 1, loop.close, urls, isAlias) : null;
+      const assigned = token.value === 'of' ? analyzeLoopIterable(tokens, i + 1, loop.close, urls, isAlias, platformCalls) : null;
       if (assigned?.kind === 'ambiguous') add(assigned.index, 'ambiguous module URL alias flow');
       if (assigned?.kind === 'alias') loopIterableAliases.add(assigned.index);
       const sourceMayBeUrl = Boolean(assigned && assigned.kind !== 'ambiguous');
@@ -1053,8 +1136,8 @@ function findPathnameMisuses(tokens, errors) {
         declarationKindAt(tokens, i);
       const logicalAssignment = ['&&=', '||=', '??='].includes(token.value);
       const expressionFunctionWrite = parameters.expressionRanges.some((range) => i >= range.start && i < range.end);
-      const assigned = token.value === '=' || logicalAssignment ? analyzeAssigned(tokens, i + 1, urls, isAlias) : null;
-      const ternaryJoin = token.value === '=' ? ternaryJoinAt(tokens, i, urls, isAlias) : null;
+      const assigned = token.value === '=' || logicalAssignment ? analyzeAssigned(tokens, i + 1, urls, isAlias, platformCalls) : null;
+      const ternaryJoin = token.value === '=' ? ternaryJoinAt(tokens, i, urls, isAlias, platformCalls) : null;
       const conditionalWrite = ternaryJoin?.conditional ??
         (logicalAssignment || expressionFunctionWrite || (!declaration && conditionalAssignmentAt(tokens, i)));
       const bareLhs = lhs?.type === 'identifier' && !['.', '?.', ']'].includes(tokens[i - 2]?.value);
@@ -1099,7 +1182,7 @@ function findPathnameMisuses(tokens, errors) {
     const isAssignmentRhs = ASSIGNMENTS.has(previous?.value) && tokens[i - 2]?.type === 'identifier' &&
       !['.', '?.', ']'].includes(tokens[i - 3]?.value);
     const isStaticNonPathMember = memberAccessAt(tokens, i + 1)?.static;
-    const isPlatformConsumer = isPlatformConsumerAt(tokens, i);
+    const isPlatformConsumer = isPlatformConsumerAt(tokens, i, platformCalls);
     if (!isAssignmentRhs && !isStaticNonPathMember && !isPlatformConsumer && !ASSIGNMENTS.has(next?.value)) {
       add(i, 'ambiguous module URL alias flow');
     }
@@ -1213,7 +1296,7 @@ function report(root = ROOT) {
   }
   console.log(`RESULT: scanned ${result.files} JavaScript module(s) under tools/ and tests/; ${result.findings.length} unconverted module URL/filesystem path site(s).`);
   console.log(`EXCLUDED: ${KNOWN_BAD} is the deliberate known-bad corpus; --selftest proves both fixtures.`);
-  console.log('BOUNDARY: token-aware scan catches actual dynamic file:// template/concatenation constructs and same-file static new URL(..., import.meta.url) pathname conversions through direct, grouped, optional, bracket, destructuring, and bounded local-alias forms. Ambiguous lexical or alias flow fails closed; cross-module flow and platform-API semantic correctness remain outside this guard.');
+  console.log('BOUNDARY: token-aware scan catches actual dynamic file:// template/concatenation constructs and same-file static new URL(..., import.meta.url) pathname conversions through direct, grouped, optional, bracket, destructuring, and bounded local-alias forms. Platform consumers resolve through unshadowed node:url/url imports, including aliases and namespace members. Ambiguous lexical or alias flow fails closed; cross-module flow and platform-API semantic correctness remain outside this guard.');
   return result.files ? (result.findings.length ? 1 : 0) : 2;
 }
 
@@ -1232,6 +1315,9 @@ function selftest() {
     console.log(`${ok ? 'PASS' : 'FAIL'}  ${label}${detail ? ` — ${detail}` : ''}`);
     if (!ok) failures++;
   };
+  const scanCase = (source) => scanSource(/\bfrom\s*['"](?:node:)?url['"]/.test(source)
+    ? source
+    : `import{fileURLToPath}from'node:url';${source}`);
 
   const clean = collect(ROOT);
   say(clean.findings.length === 0, 'clean tree has no hand-rolled conversion', clean.findings.map((finding) => `${finding.path}:${finding.line}`).join(', '));
@@ -1250,8 +1336,8 @@ function selftest() {
   say(/return\s+\/\\\)\/\.source/.test(pathFixtureSource),
     'handrolled_path fixture keeps a regex parenthesis after a return keyword');
   const retiredStatementMatcher = /new\s+URL\s*\([^;]*import\.meta\.url[^;]*\)\s*\.pathname/g;
-  const pathnameCount = (source) => scanSource(source).findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
-  const fileUrlCount = (source) => scanSource(source).findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
+  const pathnameCount = (source) => scanCase(source).findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
+  const fileUrlCount = (source) => scanCase(source).findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
   say(!retiredStatementMatcher.test(pathFixtureSource) && pathnameCount(pathFixtureSource) === 1,
     'semicolon-in-string fixture defeats the retired matcher and is caught structurally');
   const fileUrlCases = [
@@ -1321,7 +1407,7 @@ function selftest() {
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expectedPath, expectedFile] of matrix) {
       const converted = source.replace(/\n/g, eol);
-      const findings = scanSource(converted).findings;
+      const findings = scanCase(converted).findings;
       const actualPath = findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
       const actualFile = findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
       const other = findings.length - actualPath - actualFile;
@@ -1342,7 +1428,7 @@ function selftest() {
   const ambiguityResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source] of ambiguityCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol)).findings;
       ambiguityResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', count: findings.filter((finding) => finding.kind === 'ambiguous module URL alias flow').length, total: findings.length });
     }
   }
@@ -1377,6 +1463,16 @@ function selftest() {
     ['grouped platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath((u))", 0, 0, 0],
     ['option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:true})", 0, 0, 0],
     ['grouped option-bearing platform consumer', "const u=new URL('./x',import.meta.url);fileURLToPath(((u)),{windows:true})", 0, 0, 0],
+    ['aliased node:url platform consumer', "import{fileURLToPath as toPath}from'node:url';const u=new URL('./x',import.meta.url);toPath(u)", 0, 0, 0],
+    ['optional aliased node:url platform consumer', "import{fileURLToPath as toPath}from'node:url';const u=new URL('./x',import.meta.url);toPath?.(u)", 0, 0, 0],
+    ['namespace node:url platform consumer', "import*as nodeUrl from'node:url';const u=new URL('./x',import.meta.url);nodeUrl.fileURLToPath(u)", 0, 0, 0],
+    ['namespace bracket node:url platform consumer', "import*as nodeUrl from'node:url';const u=new URL('./x',import.meta.url);nodeUrl['fileURLToPath'](u)", 0, 0, 0],
+    ['default node:url platform consumer', "import nodeUrl from'node:url';const u=new URL('./x',import.meta.url);nodeUrl.fileURLToPath(u)", 0, 0, 0],
+    ['legacy url alias platform consumer', "import{fileURLToPath as toPath}from'url';const u=new URL('./x',import.meta.url);toPath(u)", 0, 0, 0],
+    ['unrelated local fileURLToPath is not trusted', "import{fileURLToPath as platformFileURLToPath}from'node:url';function fileURLToPath(value){return value}const u=new URL('./x',import.meta.url);fileURLToPath(u)", 0, 0, 1],
+    ['unrelated namespace fileURLToPath is not trusted', "const nodeUrl=platformValue;const u=new URL('./x',import.meta.url);nodeUrl.fileURLToPath(u)", 0, 0, 1],
+    ['shadowed node:url alias is not trusted', "import{fileURLToPath as toPath}from'node:url';function f(toPath){const u=new URL('./x',import.meta.url);toPath(u)}", 0, 0, 1],
+    ['shadowed node:url namespace is not trusted', "import*as nodeUrl from'node:url';{const nodeUrl=platformValue;const u=new URL('./x',import.meta.url);nodeUrl.fileURLToPath(u)}", 0, 0, 1],
     ['platform options alias escape fails closed', "const u=new URL('./x',import.meta.url);fileURLToPath(u,{windows:u})", 0, 0, 1],
     ['direct URL call consumer control', "const data=readFileSync(new URL('./x',import.meta.url),'utf8')", 0, 0, 0],
     ['var alias survives nested block', "function f(ok){if(ok){var u=new URL('./x',import.meta.url)}return u.pathname}", 1, 0, 0],
@@ -1556,7 +1652,7 @@ function selftest() {
   const blockerResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expectedPath, expectedFile, expectedAmbiguous] of blockerCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol)).findings;
       const actualPath = findings.filter((finding) => finding.kind === 'URL pathname used as a filesystem path').length;
       const actualFile = findings.filter((finding) => finding.kind === 'hand-rolled file URL').length;
       const actualAmbiguous = findings.filter((finding) => finding.kind === 'ambiguous module URL alias flow').length;
@@ -1633,7 +1729,7 @@ function selftest() {
   const reviewResults = [];
   for (const eol of ['\n', '\r\n']) {
     for (const [label, source, expected] of reviewCases) {
-      const findings = scanSource(source.replace(/\n/g, eol)).findings;
+      const findings = scanCase(source.replace(/\n/g, eol)).findings;
       reviewResults.push({ label, eol: eol === '\n' ? 'LF' : 'CRLF', expected, actual: findings.length });
     }
   }
