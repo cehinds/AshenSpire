@@ -17,6 +17,10 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-08-23
+
+- **Map and combat now share the same three-row HUD** ([#327](https://github.com/cehinds/AshenSpire/pull/327), `0.4.0.1091`). Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.
+
 ## 2026-08-22
 
 - **Map and combat share one compact player HUD** ([#323](https://github.com/cehinds/AshenSpire/pull/323), `0.4.0.1078`). HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.

@@ -2974,13 +2974,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    real-browser measurements at Text M and XL.
 
    WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
-   flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads
+   flask-slot`, `.topbar .relic` sizes it, and combat.css loads
    AFTER ui.css — so `.topbar .flask-slot` ties on specificity and loses on
    order. `.relic.flask-slot` states the real thing: when an element is both,
-   the flask rule governs the box. combat.js is untouched on purpose — Sten is
-   live in that file's `useFlask` wiring tonight. */
+   the flask rule governs the box. The map's utility-potion button uses
+   `.mh-flask` inside this same topbar and reaches the same rule below. */
 .topbar .relic.flask-slot,
-.map-substrip .mh-flask {
+.topbar .mh-flask {
   min-height: var(--tap-floor);
   min-width: var(--tap-floor);
   width: auto;
@@ -2994,9 +2994,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   border-radius: 6px;
   background: var(--panel);
   border: 1px solid var(--gold);
-  /* IT OPENS A MENU. map.css said `cursor: default` on a <button> that mounts
-     the flask action menu — the one hint a mouse player gets, saying the
-     opposite of the truth. */
+  /* It opens the shared flask action menu on both screens. */
   cursor: pointer;
 }
 

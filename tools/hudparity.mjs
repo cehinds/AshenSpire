@@ -98,6 +98,9 @@
 // P3 is that it comes from the same file the render reads.
 // `--selftest` plants its known-bads as file bytes in a copied real tree
 // (tools/doorplant.mjs) and runs this tool WHOLE from the copy.
+// `--p8-selftest` is the non-browser discriminator for the receipt predicate:
+// it feeds clean and planted page-read shapes through the same pure judge P8
+// uses after Chromium returns its boxes.
 //
 // WHAT IT DOES NOT COVER — the boundary, printed every run, not a to-do list:
 //   · THE TWO TOP ROWS SHARE THEIR GEOMETRY: resource host, Armoury, Menu. The
@@ -257,6 +260,16 @@ const READ = `(() => {
         && cs.borderBottomStyle === 'dashed' && cs.borderLeftStyle === 'dashed',
     });
   }
+  const receiptBox = (selector) => {
+    const el = document.querySelector(selector);
+    const b = el ? el.getBoundingClientRect() : null;
+    return b ? {
+      left: b.left, top: b.top, right: b.right, bottom: b.bottom,
+      width: b.width, height: b.height, center: (b.left + b.right) / 2,
+      cinders: el.querySelectorAll('.hud-cinders').length,
+      floor: el.querySelectorAll('.hud-floor').length,
+    } : null;
+  };
   return {
     bars,
     lines: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
@@ -276,16 +289,12 @@ const READ = `(() => {
       const b = el ? el.getBoundingClientRect() : null;
       return b ? { left: b.left, right: b.right, width: b.width } : null;
     })(),
-    meta: (() => {
-      const el = document.querySelector('.topbar .hud-top .hud-center');
-      const b = el ? el.getBoundingClientRect() : null;
-      return b ? {
-        left: b.left, top: b.top, right: b.right, bottom: b.bottom,
-        width: b.width, height: b.height, center: (b.left + b.right) / 2,
-        cinders: el.querySelectorAll('.hud-cinders').length,
-        floor: el.querySelectorAll('.hud-floor').length,
-      } : null;
-    })(),
+    centerMeta: receiptBox('.topbar .hud-top .hud-center'),
+    runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
+    receiptTotals: {
+      cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
+      floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
+    },
     configuredCap: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-max-vw').trim(),
     // THE SECOND RENDERER'S CENSUS. Scoped to .topbar because that is where the
     // duplicate lived; the under-model strips are named in the boundary.
@@ -350,6 +359,27 @@ function referenceFor(id, table) {
   return null;
 }
 
+/** Pure receipt contract over the browser read; shared by rendered P8 and its
+ * non-browser discriminator. Geometry still comes from Chromium in a real run. */
+function p8ReceiptFindings(read) {
+  const findings = [];
+  const center = read.centerMeta;
+  const right = read.runMeta;
+  const totals = read.receiptTotals || { cinders: 0, floor: 0 };
+  if (totals.cinders !== 1) findings.push(`cinders-count=${totals.cinders}`);
+  else if (!center || center.cinders !== 1 || center.floor !== 0 || !right || right.cinders !== 0) {
+    findings.push(`cinders-placement center=${center ? `${center.cinders}/${center.floor}` : 'MISSING'} right=${right ? right.cinders : 'MISSING'}`);
+  }
+  if (center && Math.abs(center.center - read.vp.w / 2) > 1) {
+    findings.push(`cinders-centre=${center.center.toFixed(2)} viewport=${(read.vp.w / 2).toFixed(2)}`);
+  }
+  if (totals.floor !== 1) findings.push(`floor-count=${totals.floor}`);
+  else if (!right || right.floor !== 1 || right.cinders !== 0 || !center || center.floor !== 0) {
+    findings.push(`floor-placement center=${center ? center.floor : 'MISSING'} right=${right ? `${right.floor}/${right.cinders}` : 'MISSING'}`);
+  }
+  return findings;
+}
+
 /**
  * Judge one cell: the map read against the combat read.
  * Every branch either fails or counts a check; nothing falls through silently.
@@ -363,7 +393,7 @@ function judgeCell(cell, mapR, comR, refTable) {
   }
 
   // P8 SHARED TOP-ROW COMPOSITION — one data value caps the resource reference
-  // track, while cinders + floor sit at the viewport centre on both screens.
+  // track. Cinders alone owns the true centre; Floor owns the right metadata.
   // The 40 is his ruling, held independently from the app config so moving the
   // config cannot move the expectation with it.
   for (const [screen, read] of [['map', mapR], ['combat', comR]]) {
@@ -375,20 +405,21 @@ function judgeCell(cell, mapR, comR, refTable) {
     } else {
       ok(`P8/top-row ${cell} ${screen} — resource host ${read.hostBox.width.toFixed(2)} px <= ${HIS_MAX_VIEWPORT_PCT}% viewport (${capPx.toFixed(2)} px)`);
     }
-    const centreMiss = read.meta ? Math.abs(read.meta.center - read.vp.w / 2) : Infinity;
-    if (!read.meta || read.meta.cinders !== 1 || read.meta.floor !== 1 || centreMiss > 1) {
-      fail(`FINDING P8/top-row ${cell} ${screen} meta=${JSON.stringify(read.meta)} viewportCentre=${(read.vp.w / 2).toFixed(2)} — exactly one cinder and one floor receipt must be centred in the top row.`);
+    const receiptFindings = p8ReceiptFindings(read);
+    const centreMiss = read.centerMeta ? Math.abs(read.centerMeta.center - read.vp.w / 2) : Infinity;
+    if (receiptFindings.length) {
+      fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
     } else {
-      ok(`P8/top-row ${cell} ${screen} — cinders + floor centred (miss ${centreMiss.toFixed(2)} px)`);
+      ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
     }
-    const frameOverlaps = read.meta ? read.bars.filter((bar) => bar.frame
-      && bar.frame.right > read.meta.left + PX_TOL && bar.frame.left < read.meta.right - PX_TOL
-      && bar.frame.bottom > read.meta.top + PX_TOL && bar.frame.top < read.meta.bottom - PX_TOL) : [];
-    if (!read.meta || frameOverlaps.length) {
-      fail(`FINDING P8/no-overlap ${cell} ${screen} meta=${JSON.stringify(read.meta)} `
-        + `resourceFrames=${JSON.stringify(frameOverlaps.map((bar) => ({ id: bar.id, frame: bar.frame })))} — visible resource cards must reserve the truly centred Floor/Cinders ink; the invisible reference track grants no overlap waiver.`);
+    const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame
+      && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
+      && bar.frame.bottom > read.centerMeta.top + PX_TOL && bar.frame.top < read.centerMeta.bottom - PX_TOL) : [];
+    if (!read.centerMeta || frameOverlaps.length) {
+      fail(`FINDING P8/no-overlap ${cell} ${screen} center=${JSON.stringify(read.centerMeta)} `
+        + `resourceFrames=${JSON.stringify(frameOverlaps.map((bar) => ({ id: bar.id, frame: bar.frame })))} — visible resource cards must reserve the truly centred Cinders ink; the invisible reference track grants no overlap waiver.`);
     } else {
-      ok(`P8/no-overlap ${cell} ${screen} — no visible resource card intersects centred Floor/Cinders`);
+      ok(`P8/no-overlap ${cell} ${screen} — no visible resource card intersects centred Cinders`);
     }
   }
   // ---- P6 ONE RENDERER, AND IT RUNS BEFORE P0'S RETURN --------------------
@@ -635,6 +666,7 @@ function boundary() {
 }
 
 async function main() {
+  if (args.includes('--p8-selftest')) return p8Selftest();
   if (args.includes('--selftest')) return selftest();
 
   if (selectorErrors.length) {
@@ -816,9 +848,51 @@ function closeServer(s) {
 }
 
 // ---------------------------------------------------------------------------
+// --p8-selftest — focused non-browser discriminator for the receipt contract.
+// The real reader still owns DOM selection and geometry; these plants prove the
+// pure acceptance predicate refuses each wrong population/placement by name.
+function p8Selftest() {
+  const clean = () => ({
+    vp: { w: 1000, h: 700 },
+    centerMeta: { left: 480, right: 520, top: 10, bottom: 40, width: 40, height: 30, center: 500, cinders: 1, floor: 0 },
+    runMeta: { left: 760, right: 990, top: 10, bottom: 40, width: 230, height: 30, center: 875, cinders: 0, floor: 1 },
+    receiptTotals: { cinders: 1, floor: 1 },
+  });
+  const plants = [
+    ['missing Cinders', 'cinders-count=0', (r) => { r.centerMeta.cinders = 0; r.receiptTotals.cinders = 0; }],
+    ['duplicate Cinders', 'cinders-count=2', (r) => { r.centerMeta.cinders = 2; r.receiptTotals.cinders = 2; }],
+    ['Cinders moved into right metadata', 'cinders-placement', (r) => { r.centerMeta.cinders = 0; r.runMeta.cinders = 1; }],
+    ['Cinders container moved off centre', 'cinders-centre', (r) => { r.centerMeta.center = 540; }],
+    ['missing Floor', 'floor-count=0', (r) => { r.runMeta.floor = 0; r.receiptTotals.floor = 0; }],
+    ['Floor moved into the centre', 'floor-placement', (r) => { r.runMeta.floor = 0; r.centerMeta.floor = 1; }],
+  ];
+  let failed = 0;
+  const cleanFindings = p8ReceiptFindings(clean());
+  if (cleanFindings.length) {
+    failed++;
+    console.error(`FAIL clean receipt shape rejected: ${JSON.stringify(cleanFindings)}`);
+  } else console.log('  PASS clean — one centred Cinders and one right-metadata Floor');
+  for (const [name, expected, plant] of plants) {
+    const read = clean();
+    plant(read);
+    const findings = p8ReceiptFindings(read);
+    const caught = findings.some((finding) => finding.startsWith(expected));
+    if (!caught) {
+      failed++;
+      console.error(`  FAIL ${name} — expected ${expected}, got ${JSON.stringify(findings)}`);
+    } else console.log(`  RED  ${name} — caught by ${findings.find((finding) => finding.startsWith(expected))}`);
+  }
+  if (failed) {
+    console.error(`hudparity --p8-selftest: RED — ${failed}/${plants.length + 1} cases failed`);
+    process.exitCode = 1;
+  } else {
+    console.log(`hudparity --p8-selftest: OK — ${plants.length + 1}/${plants.length + 1} clean/plant cases discriminated`);
+  }
+}
+
 // --selftest — the same-door known-bad corpus.
 //
-// FOURTEEN PLANTS/CLI EDGES, and each one is aimed at THIS TOOL'S SUBJECT rather than at a
+// Every plant/CLI edge is aimed at THIS TOOL'S SUBJECT rather than at a
 // symptom near it. The question asked of every plant was: if the thing this
 // check guards were deleted, would this go red? The subject is "the two screens
 // draw the same character at the same proportions, at his reference".
@@ -836,28 +910,59 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .*configured cap="60vw"/,
     },
     {
-      // Both screens must carry the same centred floor/cinder receipt.
-      name: 'the map drops the centred floor and cinder receipt',
-      file: 'src/ui/screens/map.js',
-      find: '          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}',
-      replace: '          <!-- centred HUD receipt removed by plant -->',
-      expectRed: /FINDING P8\/top-row .* map meta=null/,
+      name: 'the shared HUD drops Cinders',
+      file: 'src/ui/components/hudmeta.js',
+      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
+      replace: '          <!-- Cinders removed by plant -->',
+      expectRed: /FINDING P8\/top-row .*cinders-count=0/,
+    },
+    {
+      name: 'the shared HUD duplicates Cinders',
+      file: 'src/ui/components/hudmeta.js',
+      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>',
+      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span><span class="hud-cinders">⛁ ${esc(cinders)}</span>',
+      expectRed: /FINDING P8\/top-row .*cinders-count=2/,
+    },
+    {
+      name: 'Cinders moves from the centre into right metadata',
+      file: 'src/ui/components/hudmeta.js',
+      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
+      replace: '          <span>⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act hud-cinders">${esc(actText)}</span>',
+      expectRed: /FINDING P8\/top-row .*cinders-placement/,
+    },
+    {
+      name: 'the shared HUD drops Floor',
+      file: 'src/ui/components/hudmeta.js',
+      find: '          <span class="hud-floor">${esc(floorText)}</span>',
+      replace: '          <!-- Floor removed by plant -->',
+      expectRed: /FINDING P8\/top-row .*floor-count=0/,
+    },
+    {
+      name: 'Floor moves from right metadata into the centre',
+      file: 'src/ui/components/hudmeta.js',
+      find: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>',
+      replace: '          <span class="hud-cinders">⛁ ${esc(cinders)}</span>\n          <span class="hud-floor">${esc(floorText)}</span>\n        </div>\n        <div class="hud-run-meta">\n          <span class="hud-act">${esc(actText)}</span>',
+      expectRed: /FINDING P8\/top-row .*floor-placement/,
     },
     {
       // The centre can remain mathematically exact while visible resource ink
-      // paints through it. Move only the resource host to isolate that defect.
-      name: 'visible resource cards paint through the centred Floor and Cinders receipt',
+      // paints through it. Since the shared shell split metadata and resources
+      // into successive rows, crossing only the horizontal axis no longer
+      // reaches Cinders; move the visible frames across BOTH current axes.
+      name: 'visible resource cards paint through the centred Cinders receipt',
       file: 'styles/combat.css',
-      append: ".resbars-host { transform:translateX(45vw); }",
+      append: ".rescard-frame { transform: translate(45vw, calc(-1 * var(--tap-floor))); }",
       expectRed: /FINDING P8\/no-overlap .*resourceFrames=\[/,
     },
     {
       // 1 — THE SECOND RENDERER COMES BACK. The literal `git revert` of this
-      // change's core edit: the map hand-writes its own health bar again.
+      // change's core edit: the map replaces its shared-renderer mount with a
+      // hand-written health bar. The host now lives in hudmeta.js; map.js owns
+      // the current seam where content is mounted into it.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
       file: 'src/ui/screens/map.js',
-      find: '          <div class="resbars-host"></div>',
-      replace: '          <div class="bar hpbar"><div class="fill" style="width:50%"></div><div class="label">HP</div></div>',
+      find: "    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));",
+      replace: "    resHost.innerHTML = '<div class=\"bar hpbar\"><div class=\"fill\" style=\"width:50%\"></div><div class=\"label\">HP</div></div>';",
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
     },
     {
@@ -997,8 +1102,8 @@ async function selftest() {
       expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
     },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen file-byte plants plus the
-  // clean re-run are eighteen browser boots. The four argv plants below start no browser.
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: every file-byte plant and the clean
+  // re-run boot a browser. The four argv plants below start no browser.
   // The door population is ONE
   // shape and TWO poses — 844x340, shipped and high — and the pair is chosen,
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside
