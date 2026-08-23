@@ -1276,17 +1276,31 @@ function scanSource(source) {
 }
 
 export function collect(root = ROOT, { dirs = SCAN_DIRS, excludeKnownBad = true } = {}) {
-  const files = dirs.flatMap((dir) => walk(resolve(root, dir)));
+  const discovered = dirs.flatMap((dir) => walk(resolve(root, dir)));
   const findings = [];
-  for (const file of files) {
+  const excluded = [];
+  let files = 0;
+  for (const file of discovered) {
     const rel = slash(relative(root, file));
-    if (rel === SELF || (excludeKnownBad && rel.startsWith(KNOWN_BAD))) continue;
+    if (rel === SELF) {
+      excluded.push({ path: rel, reason: 'scanner self' });
+      continue;
+    }
+    if (excludeKnownBad && rel.startsWith(KNOWN_BAD)) {
+      excluded.push({ path: rel, reason: 'known-bad corpus' });
+      continue;
+    }
+    files++;
     const code = readFileSync(file, 'utf8');
     for (const match of scanSource(code).findings) {
       findings.push({ path: rel, line: lineAt(code, match.index), kind: match.kind });
     }
   }
-  return { files: files.length, findings };
+  return { files, discovered: discovered.length, excluded, findings };
+}
+
+function reportCode(result) {
+  return result.files ? (result.findings.length ? 1 : 0) : 2;
 }
 
 function report(root = ROOT) {
@@ -1294,10 +1308,10 @@ function report(root = ROOT) {
   for (const finding of result.findings) {
     console.log(`FINDING ${finding.path}:${finding.line} — ${finding.kind}`);
   }
-  console.log(`RESULT: scanned ${result.files} JavaScript module(s) under tools/ and tests/; ${result.findings.length} unconverted module URL/filesystem path site(s).`);
-  console.log(`EXCLUDED: ${KNOWN_BAD} is the deliberate known-bad corpus; --selftest proves both fixtures.`);
+  console.log(`RESULT: scanned ${result.files} of ${result.discovered} discovered JavaScript module(s) under tools/ and tests/; ${result.findings.length} unconverted module URL/filesystem path site(s).`);
+  console.log(`EXCLUDED: ${result.excluded.length ? result.excluded.map((entry) => `${entry.path} [${entry.reason}]`).join(', ') : 'none'}. The known-bad corpus is exercised by --selftest.`);
   console.log('BOUNDARY: token-aware scan catches actual dynamic file:// template/concatenation constructs and same-file static new URL(..., import.meta.url) pathname conversions through direct, grouped, optional, bracket, destructuring, and bounded local-alias forms. Platform consumers resolve through unshadowed node:url/url imports, including aliases and namespace members. Ambiguous lexical or alias flow fails closed; cross-module flow and platform-API semantic correctness remain outside this guard.');
-  return result.files ? (result.findings.length ? 1 : 0) : 2;
+  return reportCode(result);
 }
 
 function runFixture(file, cwd) {
@@ -1754,6 +1768,26 @@ function selftest() {
   say(tokenCapFindings.some((finding) => finding.kind.includes('token count exceeds')) &&
       tokenCapFindings.some((finding) => finding.kind.includes('alias work exceeds')),
     'token and alias-work caps fail closed on bounded scanner work');
+
+  const excludedOnlyRoot = mkdtempSync(join(tmpdir(), 'urlpath excluded population '));
+  const excludedSelf = join(excludedOnlyRoot, SELF);
+  const excludedFixtures = join(excludedOnlyRoot, KNOWN_BAD);
+  mkdirSync(dirname(excludedSelf), { recursive: true });
+  mkdirSync(excludedFixtures, { recursive: true });
+  copyFileSync(join(ROOT, SELF), excludedSelf);
+  copyFileSync(join(fixtureRoot, 'handrolled_url.mjs'), join(excludedFixtures, 'handrolled_url.mjs'));
+  copyFileSync(join(fixtureRoot, 'handrolled_path.mjs'), join(excludedFixtures, 'handrolled_path.mjs'));
+  try {
+    const excludedOnly = collect(excludedOnlyRoot);
+    const exclusions = excludedOnly.excluded || [];
+    say(excludedOnly.files === 0 && reportCode(excludedOnly) === 2 && exclusions.length === 3 &&
+        exclusions.some((entry) => entry.path === SELF && entry.reason === 'scanner self') &&
+        exclusions.filter((entry) => entry.reason === 'known-bad corpus').length === 2,
+      'an all-excluded tree reports zero scanned modules, names every exclusion, and refuses a verdict',
+      `scanned=${excludedOnly.files} excluded=${exclusions.length} exit=${reportCode(excludedOnly)}`);
+  } finally {
+    rmSync(excludedOnlyRoot, { recursive: true, force: true });
+  }
 
   const temp = mkdtempSync(join(tmpdir(), 'urlpath working dir '));
   const spaced = join(temp, 'repo with spaces');
