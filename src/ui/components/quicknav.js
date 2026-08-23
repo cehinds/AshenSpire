@@ -37,11 +37,12 @@
 // would have put the list off-screen on exactly the shape it is for.
 
 import { viewportLocalBox, placeAnchored } from '../fx.js';
-import { attachTooltip, esc, hideTooltip } from './tooltip.js';
+import { hideTooltip } from './tooltip.js';
 import { menuRows } from '../uiContent.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { closeFlaskActionMenu } from './flask.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
+import { quickMenuPanelModel } from '../models/MenuModels.js';
+import { renderQuickMenu } from './menuComponents.js';
 
 // The experiment's own state, set from applyDisplaySettings (main.js) the same
 // way input.js is handed its bindings — so screens never have to thread `meta`
@@ -129,58 +130,18 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
     .filter((r) => typeof actions[r.act] === 'function');
   if (!rows.length) return null;
 
-  const veil = document.createElement('div');
-  veil.className = 'modal-veil qn-veil';
-  const panel = document.createElement('div');
-  panel.className = 'qn-panel';
-  markUiComponent(panel, UI.quickMenuPanel, context);
-  // #78 — the house convention for a navigable set: the host names the set, each
-  // control names its member. `menuAct` was the one registered set that did NOT
-  // mark itself (Vira: *the fourth set, the one she called the worst-behaved, is
-  // the one missing from the convention meant to catch sets like it*). It is
-  // also the only place the ORPHAN edge is observable: an act declared in
-  // MENU_ACTS that no context implements never appears here, and the difference
-  // between declared and drawn is exactly the defect. `data-act` / `data-tab`
-  // stay — they are behaviour, not enumeration, and something may read them.
-  panel.dataset.surface = 'menuAct';
-
-  // THE CAPTION IS THE POINT OF SHIPPING THIS AT ALL. An experiment that
-  // outlives the memory of switching it on becomes a bug report — so the list
-  // says, every single time it opens, that it is a test, which variant is
-  // running, and where the way back is. It is a header, not a row: Save and
-  // Save & Quit are the last two rows, always (his constraint, fixed by hand).
-  const cap = document.createElement('div');
-  cap.className = 'qn-cap';
-  markUiComponent(cap, UI.quickMenuCaption, mode);
-  cap.textContent = `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`;
-  panel.appendChild(cap);
-
-  for (const r of rows) {
-    if (r.sep) panel.appendChild(Object.assign(document.createElement('div'), { className: 'qn-sep' }));
-    const b = document.createElement('button');
-    b.className = `qn-row${r.tone ? ` ${r.tone}` : ''}${r.on ? ' on' : ''}`;
-    markUiComponent(b, UI.quickMenuRow, r.act);
-    b.dataset.act = r.act;
-    b.dataset.member = r.act;
-    if (r.tab) b.dataset.tab = r.tab;
-    b.innerHTML = `<span class="qn-ic">${esc(r.icon)}</span><span class="qn-label">${esc(r.label)}</span>`
-      + (r.badge ? `<span class="qn-badge">${esc(r.badge)}</span>` : '');
-    // Law 3 clause 4: the tooltip fires for hover AND for the pad/keyboard focus
-    // cursor. `title=` alone is what the topbar has today, and touch and pad
-    // players never see it.
-    if (r.tip) attachTooltip(b, () => `<div class="tt-title">${esc(r.label)}</div>${esc(r.tip)}`);
-    b.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const fn = actions[r.act];
-      // A row that gives feedback in place (Save) keeps the list open and says
-      // so; everything else is a navigation and the list has done its job.
-      const inPlace = fn(r.tab, b);
+  const model = quickMenuPanelModel({
+    context,
+    mode,
+    caption: `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`,
+    rows,
+  });
+  const { veil, panel } = renderQuickMenu(model, {
+    onActivate: (row, button) => {
+      const inPlace = actions[row.act](row.tab, button);
       if (inPlace !== 'keep') closeQuickNav();
-    });
-    panel.appendChild(b);
-  }
-
-  veil.appendChild(panel);
+    },
+  });
   document.body.appendChild(veil);
   openVeil = veil;
   position(anchorEl, panel);

@@ -35,6 +35,14 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+import {
+  armouryOverlayModel, armouryPanelModel, inventoryItemCardModel, inventoryDetailCardModel,
+  equipmentSetCellModel, equipmentSlotModel,
+} from '../models/ArmouryModels.js';
+import {
+  renderArmouryOverlay, renderArmouryPanel, renderInventoryItemCard, renderInventoryDetailCard,
+  renderEquipmentSlot,
+} from '../components/armouryComponents.js';
 
 const CFG = () => balance.equipment;
 
@@ -408,57 +416,28 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
 }
 
 function inventoryFace(row, { selected = false, draggable = false } = {}) {
-  const el = document.createElement('span');
-  el.className = `inventory-face${selected ? ' on' : ''}`;
-  markUiComponent(el, UI.inventoryItemCard, row.category);
-  el.dataset.inventoryItem = row.key;
-  el.dataset.itemId = row.id;
-  el.dataset.itemCategory = row.category;
-  el.dataset.itemCount = String(row.count);
-  el.draggable = draggable;
-  const equipped = row.equippedLabels.length
-    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
-      ? 'Equipped'
-      : `Equipped: ${row.equippedLabels.join(' / ')}`)
-    : '';
-  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
-    + `<span class="inventory-category">${esc(row.category)}</span>`
-    + `<span class="inventory-count">×${row.count}</span>`
-    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
-  return el;
+  return renderInventoryItemCard(inventoryItemCardModel(row, { selected, draggable }));
 }
 
 function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
-  const el = document.createElement('div');
-  el.className = 'inventory-detail';
-  markUiComponent(el, UI.inventoryDetailCard, row.category);
   const item = row.item;
-  let art = '';
+  let art;
   if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
-    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+    art = { kind: 'image', value: thumbSrc(item) };
   } else if (item.artAsset) {
-    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+    art = { kind: 'image', value: assetUrl(item.artAsset) };
   } else {
-    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+    art = { kind: 'glyph', value: item.icon || '◆' };
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
     : (item.blurb || item.textTemplate || 'No additional information.');
-  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
   const mods = modSummary(registries, item);
-  el.innerHTML = `<div class="inventory-model">${art}</div>`
-    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
-    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
-    + `<p>${esc(description)}</p>`
-    + (mods.length ? `<p class="inventory-mods">${mods.map(esc).join(' · ')}</p>` : '')
-    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
-    + (instruction ? `<p class="inventory-instruction">${esc(instruction)}</p>` : '')
-    + (comparison ? renderCandidateComparison(comparison, { expanded: true }) : '')
-    + '</div>';
-  if (action) el.querySelector('.inventory-information').appendChild(action);
-  const image = el.querySelector('img');
-  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
-  return el;
+  const model = inventoryDetailCardModel({ row, art, description, mods, instruction });
+  return renderInventoryDetailCard(model, {
+    comparisonHtml: comparison ? renderCandidateComparison(comparison, { expanded: true }) : '',
+    action,
+  });
 }
 
 /**
@@ -579,11 +558,18 @@ export function mountEquipment(host, {
   // mount — so paint order and DOM order agree everywhere I could reach. If a
   // future screen opens one over the other, the focus cursor will drive the
   // panel underneath. Named here because the class is what makes it possible.
-  const wrap = document.createElement('div');
-  wrap.className = 'modal-veil armoury-overlay';
-  markUiComponent(wrap, UI.armouryOverlay);
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
-  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
+  const initialPanelModel = armouryPanelModel({
+    view,
+    views: IDS,
+    layout: viewLayout(view),
+    picking: false,
+    notice: '',
+  });
+  const wrap = renderArmouryOverlay(armouryOverlayModel({
+    panel: initialPanelModel,
+    equippedTagColor: customEquippedTagColor,
+  }));
   host.appendChild(wrap);
 
   // One teardown home for the listener this mount owns outside its subtree.
@@ -700,63 +686,42 @@ export function mountEquipment(host, {
   }
 
   function slotBlock(slot) {
-    const box = document.createElement('div');
-    box.className = 'equip-slot';
-    markUiComponent(box, UI.equipmentSlot, slot.id);
     const rule = canSwap(registries, slot.id, { inCombat });
-    box.innerHTML =
-      `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
-      // The badge word comes from the verdict it belongs to (#98). It was the
-      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
-      // the one word a player reads had no home and nothing could compare it to
-      // canEquip's sentence — which is exactly how the two came to share it.
-      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
-      `</div><div class="es-sets"></div>`;
-    const sets = box.querySelector('.es-sets');
-
-    // THE LADDER (#90). `open` · `next` · `hidden`, derived from two integers
-    // against the cell's index — never written on a cell. The model owns the
-    // arithmetic (setCellState); this loop only draws what it is told, which is
-    // why there is no state here that the model cannot produce.
     const opened = openedSets(registries, slot, ladderCtx());
     const visible = visibleSets(registries, slot, ladderCtx());
-
-    (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
-      const state = setCellState(i, opened, visible);
+    const plans = [];
+    (run.loadout.sets[slot.id] || []).forEach((itemId, index) => {
+      const state = setCellState(index, opened, visible);
       if (state === 'hidden') return;
-      if (state === 'next') {
-        // THE ONE REFUSAL LEFT IN THIS SCREEN once the picker holds only what
-        // you own. Its words are the RUNG'S OWN — `name` and `hint` from
-        // unlocks.csv — because a reason invented here would be a sentence with
-        // no author and no home. visibleSets() only shows this cell when a rung
-        // exists, so refuses() can never be handed an empty reason.
-        const rung = rungFor(registries, slot, i);
-        const cell = document.createElement('button');
-        cell.type = 'button';
-        cell.className = 'es-cell locked';
-        markUiComponent(cell, UI.equipmentSetCell, `${slot.id}-locked`);
-        cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
-        refuses(cell, () => rung.hint);
-        sets.appendChild(cell);
-        return;
-      }
-      const active = (run.loadout.active[slot.id] || 0) === i;
-      const piece = itemId
-        ? (slot.kinds.includes('armor')
-          ? (eq.armour || []).find((o) => o.classId === run.class && o.id === itemId)
-          : (eq.armaments || []).find((a) => a.id === itemId))
-        : null;
-      const cell = document.createElement('button');
-      cell.type = 'button';
-      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
-      markUiComponent(cell, UI.equipmentSetCell, slot.id);
-      cell.title = piece ? piece.name : 'Empty';
-      cell.innerHTML = piece
-        ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
-        : `<span class="es-empty">＋</span>`;
-      const im = cell.querySelector('img');
-      if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+      const active = (run.loadout.active[slot.id] || 0) === index;
+      const piece = state === 'next' || !itemId
+        ? null
+        : (slot.kinds.includes('armor')
+          ? (eq.armour || []).find((outfit) => outfit.classId === run.class && outfit.id === itemId)
+          : (eq.armaments || []).find((armament) => armament.id === itemId));
+      const rung = state === 'next' ? rungFor(registries, slot, index) : null;
+      plans.push({
+        index, state, active, piece, rung,
+        model: equipmentSetCellModel({
+          slotId: slot.id,
+          index,
+          state,
+          active,
+          piece: piece ? { id: piece.id, name: piece.name, image: thumbSrc(piece) } : null,
+          rung,
+        }),
+      });
+    });
+    const model = equipmentSlotModel({ slotId: slot.id, label: slot.label, rule, cells: plans.map((plan) => plan.model) });
+    const rendered = renderEquipmentSlot(model);
 
+    for (const { model: cellModel, element: cell } of rendered.cells) {
+      const plan = plans.find((candidate) => candidate.index === cellModel.properties.index);
+      const { index, state, active, piece, rung } = plan;
+      if (state === 'next') {
+        refuses(cell, () => rung.hint);
+        continue;
+      }
       cell.addEventListener('dragover', (ev) => {
         const dragged = (eq.armaments || []).find((candidate) => candidate.id === draggingItemId)
           || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === draggingItemId);
@@ -774,8 +739,8 @@ export function mountEquipment(host, {
           || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === pieceId);
         if (!dragged || !fitsSlot(slot, dragged)) return;
         ev.preventDefault();
-        picking = { slotId: slot.id, setIndex: i };
-        applyEquipmentChange(slot.id, i, pieceId, `Equip ${dragged.name} to ${slot.label}`);
+        picking = { slotId: slot.id, setIndex: index };
+        applyEquipmentChange(slot.id, index, pieceId, `Equip ${dragged.name} to ${slot.label}`);
       });
 
       cell.addEventListener('click', () => {
@@ -787,11 +752,11 @@ export function mountEquipment(host, {
             // In combat the swap is the engine's to allow or refuse — it may
             // say no because the energy isn't there, and the player should be
             // told that in the panel rather than in the console.
-            const refused = onSwap(slot.id, i);
+            const refused = onSwap(slot.id, index);
             if (refused) { notice = refused; draw(); }
             return;
           }
-          cycleSet(registries, run.loadout, slot.id, i, { meta, inCombat });
+          cycleSet(registries, run.loadout, slot.id, index, { meta, inCombat });
           sfx.play('cardPlay');
           commit();
         } else {
@@ -803,13 +768,12 @@ export function mountEquipment(host, {
           // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
           // separated: the panel opens and shows you everything you own, and the
           // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
-          picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
+          picking = picking && picking.slotId === slot.id && picking.setIndex === index ? null : { slotId: slot.id, setIndex: index };
           draw();
         }
       });
-      sets.appendChild(cell);
-    });
-    return box;
+    }
+    return rendered.element;
   }
 
   function pickerBlock() {
@@ -1176,32 +1140,9 @@ export function mountEquipment(host, {
     // host names the set, each control names its member, so an instrument can
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
-    wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
-        <header class="armoury-head">
-          <h2>ARMOURY</h2>
-          <div class="armoury-views" data-surface="armouryView">
-            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
-          </div>
-          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
-        </header>
-        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
-        <div class="armoury-body">
-          <div class="armoury-left"></div>
-          <div class="armoury-right"></div>
-        </div>
-        <section class="armoury-inventory"></section>
-        <div class="armoury-strip"></div>
-      </div>`;
-
-    markUiComponent(wrap.querySelector('.armoury'), UI.armouryPanel, view);
-    markUiComponent(wrap.querySelector('.armoury-head'), UI.armouryHeader);
-    markUiComponent(wrap.querySelector('.armoury-views'), UI.armouryViewSwitcher);
-    markUiComponent(wrap.querySelector('.armoury-body'), UI.armouryBody, view);
-    markUiComponent(wrap.querySelector('.armoury-inventory'), UI.armouryInventory);
-
-    const left = wrap.querySelector('.armoury-left');
-    const right = wrap.querySelector('.armoury-right');
+    const panelModel = armouryPanelModel({ view, views: IDS, layout: L, picking: !!picking, notice });
+    const rendered = renderArmouryPanel(panelModel, wrap);
+    const { left, right } = rendered;
     const blocks = eq.slots
       // A slot with nothing that fits it isn't a slot yet: Talisman is declared
       // in equipSlots.csv but has no pieces authored, and three empty squares
@@ -1245,18 +1186,18 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
-    const inventory = wrap.querySelector('.armoury-inventory');
+    const inventory = rendered.inventory;
     if (inventory) inventory.appendChild(inventoryBlock());
-    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
-    wrap.querySelector('.armoury-strip').appendChild(cardStrip());
+    rendered.strip.appendChild(statsComparison());
+    rendered.strip.appendChild(cardStrip());
 
     notice = '';
     dressRegions();
     wrap.querySelectorAll('.equip-candidate-comparison').forEach((comparison) => (
       markUiComponent(comparison, UI.equipmentComparison)
     ));
-    wrap.querySelector('.armoury-close').addEventListener('click', close);
-    for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
+    rendered.close.addEventListener('click', close);
+    for (const b of rendered.viewButtons) {
       b.addEventListener('click', () => {
         view = b.dataset.member;
         if (onChange) onChange(run.loadout, { equipView: view });

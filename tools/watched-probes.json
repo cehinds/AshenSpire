@@ -335,7 +335,7 @@
   {
    "id": "A2",
    "by": "Bjorn",
-   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/screens/equipment.js (the locked cell the ladder produces)",
+   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the locked cell the ladder produces)",
    "anchors": [
     "fitsSlot",
     "es-cell locked"
@@ -490,7 +490,7 @@
   {
    "id": "A9",
    "by": "Bjorn",
-   "read": "src/ui/components/refusal.js · src/ui/screens/equipment.js (.es-sealed) · the locked cell's own tooltip",
+   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js (.es-sealed) · the locked cell's own tooltip",
    "anchors": [
     "es-sealed"
    ],

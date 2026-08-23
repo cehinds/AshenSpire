@@ -860,7 +860,11 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
   `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
   `armoury-region-header`. These ids describe the existing data-driven Quick Menu and Armoury
-  structures; they do not create a parallel menu or equipment implementation.
+  structures; they do not create a parallel menu or equipment implementation. Menu records are
+  constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records are
+  constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
+  commands and lifecycle callbacks, while presentation models remain immutable, serializable,
+  and DOM-free.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
   The center Cinders track and right metadata trail are each capped at 30% of the
