@@ -35,7 +35,7 @@ plant('empty environment override uses the home-library default', async (root) =
 
   const result = invoke(['install'], {
     cwd: caller,
-    env: { ...process.env, HOME: home, CONSTANTINE_PROMPT_LIBRARY: '' },
+    env: { ...process.env, HOME: home, USERPROFILE: home, CONSTANTINE_PROMPT_LIBRARY: '' },
   });
 
   assert(result.status === 0, result.stderr || `install exited ${result.status}`);
