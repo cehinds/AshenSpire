@@ -212,7 +212,8 @@ export const REFUSAL_SCOPE = [
   '  AFTER this sentence stopped claiming a construct. That is the evidence for',
   '  the sentence, not against it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
-  '  span delimited by a backtick run of ANY length.',
+  '  span delimited by a backtick run of ANY length · a backslash-escaped asterisk',
+  '  into the literal asterisk CommonMark shows.',
   'OPEN, MEASURED, NOT FIXED — each reaches the player:',
   '  · emphasis INSIDE a code span is stripped: `` `**b**` `` ships as `b`, where',
   '    GitHub shows the asterisks.',
@@ -228,7 +229,8 @@ export const REFUSAL_SCOPE = [
   '    and this is what falls outside it — found minutes after that line was',
   '    written, which is the line\'s own point, not a hole in it.',
   '  · non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML',
-  '    entities · backslash escapes · a bare URL GitHub autolinks.',
+  '    entities · backslash escapes other than the measured asterisk form above ·',
+  '    a bare URL GitHub autolinks.',
   '  None of them is present in CHANGELOG.md today.',
   'IT SCANS, IT DOES NOT PARSE, AND THAT CUTS BOTH WAYS — the half this line used to',
   '  leave out. OVER-FIRES, harmless, the author is told and rewrites: `a <b and b>',
@@ -289,6 +291,11 @@ function delimiterFlanking(text, index, length) {
     right: !beforeSpace && (!beforePunctuation || afterSpace || afterPunctuation),
   };
 }
+function activeBackslashEscape(text, index) {
+  let count = 0;
+  for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) count++;
+  return count % 2 === 1 ? index - 1 : -1;
+}
 function flattenAsterisk(text, length) {
   const delimiter = '*'.repeat(length);
   const openers = [];
@@ -296,6 +303,15 @@ function flattenAsterisk(text, length) {
   for (let i = 0; i < text.length; i++) {
     if (text.slice(i, i + length) !== delimiter
       || text[i - 1] === '*' || text[i + length] === '*') continue;
+    // CommonMark consumes the active escape and renders the asterisk literally.
+    // Leaving the slash in the projection would expose syntax; treating the star
+    // as a delimiter would delete the character the author meant the player to see.
+    const escape = activeBackslashEscape(text, i);
+    if (escape >= 0) {
+      removed.add(escape);
+      i += length - 1;
+      continue;
+    }
     const { left, right } = delimiterFlanking(text, i, length);
     if (right && openers.length) {
       const opener = openers.pop();
@@ -651,12 +667,23 @@ async function selftest() {
     if (asterisks.detail !== 'Flattens foobarbaz and foostrongbaz; keeps a*"quoted"* and a**"strong"**.') throw new Error(`rewrote it to: ${asterisks.detail}`);
     console.log('PASS intraword asterisk emphasis flattens and non-flanking edges stay literal');
   } catch (error) { console.error(`FAIL asterisk flanking: ${error.message}`); process.exitCode = 1; }
+  try {
+    const [escaped] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps \\*literal\\* asterisks.\n');
+    if (escaped.detail !== 'Keeps *literal* asterisks.') throw new Error(`rewrote it to: ${escaped.detail}`);
+    console.log('PASS backslash-escaped asterisks render literally without exposing the escape');
+  } catch (error) { console.error(`FAIL escaped asterisks: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
   // the file rather than from a string handed to the parser. All three of these
   // reached the projection at exit 0 before 2026-08-22.
   const treePlants = [
+    {
+      name: 'backslash-escaped asterisks survive as literal characters', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads \\*literal\\* here.',
+      write: { detail: 'Docs only. It reads *literal* here.' },
+    },
     {
       name: 'reference-style link in prose', file: 'CHANGELOG.md',
       find: '). Docs only.',
