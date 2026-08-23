@@ -9,11 +9,11 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
-import { startingKitViews } from '../../model/startingKits.js';
+import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
-import { equipmentRequirementReceipt } from '../../model/loadout.js';
+import { equipmentRequirementReceipt, previewCompatibleHands } from '../../model/loadout.js';
 import {
-  creationArmourChoices, creationHandChoices, creationRelicChoices,
+  creationHandChoices, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
@@ -100,6 +100,11 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     return views.find((row) => row.baseline) || views.find((row) => row.available) || views[0];
   }
 
+  function armourChoices() {
+    return startingArmourViews(registries, state.classId, meta).map((view) =>
+      registries.equipment.armour.find((row) => row.classId === state.classId && row.id === view.id));
+  }
+
   function resetAttributes() {
     state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
     previewAttributes = { ...state.attributes };
@@ -109,7 +114,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const kit = baseKit();
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
-    state.startingArmourId = creationArmourChoices(registries, state.classId)[0].id;
+    state.startingArmourId = armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
     if (state.attributeMode === POINTBUY) resetAttributes();
   }
@@ -139,10 +144,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   }
 
   function previewRun() {
+    const attributes = state.attributeMode === POINTBUY && previewAttributes
+      ? previewAttributes
+      : classAttributePreset(registries, state.classId, state.attributeMode);
     return createRunState({
       seed: 0, classId: state.classId, registries,
       startingKitId: state.startingKitId,
-      startingHands: state.startingHands,
+      startingHands: previewCompatibleHands(registries, state.startingHands, attributes),
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
@@ -334,7 +342,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   function renderEquipment() {
     const armourBox = $('#cz-armours');
     armourBox.innerHTML = '';
-    for (const piece of creationArmourChoices(registries, state.classId)) {
+    for (const piece of armourChoices()) {
       const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
       button.dataset.startingArmourId = piece.id;
       button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');

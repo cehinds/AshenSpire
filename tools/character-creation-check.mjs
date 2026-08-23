@@ -67,7 +67,7 @@ const assert = (condition, message) => {
   else { failures += 1; console.log(`FAIL ${message}`); }
 };
 
-async function exercise(width, height, screenshotName, screenshotSection) {
+async function exercise(width, height, screenshotName, screenshotSection, profileMeta = null) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
@@ -111,7 +111,17 @@ async function exercise(width, height, screenshotName, screenshotSection) {
     return root.scrollWidth<=root.clientWidth+1 && scrollers.every(e=>e.scrollWidth<=e.clientWidth+1);
   })()`);
 
-  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/?shot=customize` }, sessionId);
+  if (profileMeta) {
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', {
+      source: `localStorage.clear(); localStorage.setItem('sote_meta_v1', ${JSON.stringify(JSON.stringify(profileMeta))});`,
+    }, sessionId);
+  }
+
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
+  if (profileMeta) {
+    await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
+    await click('.slot-new');
+  }
   await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
   await wait(250);
   const arrival = await evaluate(`(() => ({
@@ -121,6 +131,44 @@ async function exercise(width, height, screenshotName, screenshotSection) {
   assert(JSON.stringify(arrival.labels) === JSON.stringify(['CLASS', 'CHARACTER', 'STARTING EQUIP', 'SEED']), `${width}x${height}: sections are in the requested order`);
   assert(JSON.stringify(arrival.open) === JSON.stringify(['class']), `${width}x${height}: exactly Class opens on arrival`);
   assert(await noOverflow(), `${width}x${height}: Class has no horizontal overflow`);
+
+  if ((profileMeta && profileMeta.unlocked || []).includes('winAsReaver')) {
+    await open('equipment');
+    assert(await evaluate(`!!document.querySelector('#cz-armours [data-starting-armour-id="oathsworn"]')`), `${width}x${height}: profile-earned armour appears beside JSON defaults`);
+    await click('#cz-armours [data-starting-armour-id="oathsworn"]');
+    await open('character');
+    await open('equipment');
+    assert((await evaluate(`document.querySelector('#cz-armours [data-starting-armour-id="oathsworn"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: profile-earned armour selection persists through section changes`);
+  }
+
+  await open('character');
+  await click('#cz-statedit .se-mode', 1);
+  await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
+  for (let i = 0; i < 3; i += 1) {
+    await click('.cc-stat-overlay [aria-label="Decrease Strength"]');
+    await click('.cc-stat-overlay [aria-label="Increase Dexterity"]');
+  }
+  await click('.cc-stat-overlay [data-stat-done]');
+  await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
+  await open('equipment');
+  const errorsBeforeIncompatiblePick = errors.length;
+  await click('#cz-right-hand [data-armament-id="greatsword"]');
+  const incompatible = await evaluate(`(() => {
+    const begin = document.querySelector('#cz-start');
+    return { disabled: begin.getAttribute('aria-disabled'), refusal: begin.dataset.refusal || '' };
+  })()`);
+  assert(errors.length === errorsBeforeIncompatiblePick, `${width}x${height}: incompatible hand selection keeps the live preview total`);
+  assert(incompatible.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(incompatible.refusal), `${width}x${height}: Begin recomputes the current equipment requirement refusal`);
+  await open('character');
+  await click('#cz-statedit .se-mode', 1);
+  await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
+  await click('.cc-stat-overlay [aria-label="Decrease Dexterity"]');
+  await click('.cc-stat-overlay [aria-label="Increase Strength"]');
+  await click('.cc-stat-overlay [data-stat-done]');
+  await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay close');
+  assert((await evaluate(`document.querySelector('#cz-start').hasAttribute('aria-disabled')`)) === false, `${width}x${height}: correcting stats clears the equipment refusal`);
+
+  await open('class');
 
   await click('.cz-class[data-class="starseer"]');
   assert((await evaluate(`document.querySelector('[data-face="class"] .disc-value').textContent`)) === 'Starseer', `${width}x${height}: class selector updates its receipt`);
@@ -188,7 +236,9 @@ async function exercise(width, height, screenshotName, screenshotSection) {
 }
 
 try {
-  await exercise(1440, 900, 'character-creation-after-desktop.png', 'equipment');
+  await exercise(1440, 900, 'character-creation-after-desktop.png', 'equipment', {
+    schemaVersion: 2, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], unlocked: ['winAsReaver'],
+  });
   await exercise(390, 844, 'character-creation-after-mobile.png', 'character');
 } catch (error) {
   failures += 1;

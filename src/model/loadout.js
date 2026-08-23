@@ -135,6 +135,26 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}) 
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
 }
 
+/**
+ * A total hand snapshot for character-creation stat previews. The player's
+ * actual choices stay untouched so the refusal can name an incompatible item;
+ * only pieces the preview run cannot legally equip are omitted from the
+ * temporary loadout used to derive its displayed stats.
+ */
+export function previewCompatibleHands(registries, hands = {}, attributes = {}) {
+  const next = {
+    leftHand: hands.leftHand || null,
+    rightHand: hands.rightHand || null,
+  };
+  for (const hand of ['leftHand', 'rightHand']) {
+    const id = next[hand];
+    if (!id) continue;
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
+    if (piece && !equipmentRequirementReceipt(registries, piece, attributes).ok) next[hand] = null;
+  }
+  return next;
+}
+
 /** Resolve whether a card fits an equipped weapon without class-id branches. */
 export function cardEquipmentCompatibility(registries, { cardId, classId, pieceId } = {}) {
   const card = registries.cards.get(cardId);

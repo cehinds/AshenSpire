@@ -58,6 +58,7 @@ import {
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
   swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
+  previewCompatibleHands,
 } from '../src/model/loadout.js';
 import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
 import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
@@ -5252,6 +5253,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
     eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
     eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
+
+    const lowStrength = { strength: 11, dexterity: 15, constitution: 14, wisdom: 10, intelligence: 10 };
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', lowStrength).length, 0,
+      'the incompatible preview fixture is still a valid point-buy allocation');
+    const requestedHands = { leftHand: 'roundShield', rightHand: 'greatsword' };
+    const previewHands = previewCompatibleHands(REG, requestedHands, lowStrength);
+    eq(previewHands.leftHand, 'roundShield', 'preview keeps a compatible selected hand');
+    eq(previewHands.rightHand, null, 'preview omits an incompatible selected hand instead of throwing');
+    eq(requestedHands.rightHand, 'greatsword', 'preview compatibility never mutates the player selection used by the refusal');
+    const correctedHands = previewCompatibleHands(REG, requestedHands, { ...lowStrength, strength: 12, dexterity: 14 });
+    eq(correctedHands.rightHand, 'greatsword', 'preview restores the selected hand when the allocation meets its requirement');
+    const previewRun = createRunState({
+      seed: 71, classId: 'reaver', registries: REG,
+      attributeMode: 'pointbuy', attributes: lowStrength,
+      startingHands: previewHands,
+    });
+    eq(previewRun.attributes.strength, 11, 'a valid-but-incompatible selection still produces a live stat preview');
 
     const selected = createRunState({
       seed: 69, classId: 'reaver', registries: REG,
