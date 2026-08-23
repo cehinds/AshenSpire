@@ -1504,14 +1504,30 @@ async function serverClosePlant() {
     });
     const tool = join(dir, 'tools', 'displayfirst.mjs');
     const real = readFileSync(tool, 'utf8');
-    const FIND_CLOSE = '    if (server?.server) await new Promise((resolveClose) => server.server.close(resolveClose));';
+    // A MULTI-LINE SITE ASSEMBLED FROM ROWS. A one-line literal appears once in
+    // shutdown() and once inside its own quoted declaration here, so counting
+    // that string reports two sites before the plant even runs. The assembled
+    // block is present contiguously only in production code; its rows are split
+    // by this array syntax here. This is the same anti-self-match shape the
+    // piped-output plant above uses for its newline-bearing anchors.
+    const FIND_CLOSE = [
+      '    // `serve()` returns a record; the Node HTTP server is its `server` member.',
+      '    // Wait for its close callback so the event loop can drain without the',
+      '    // three-second forced-exit backstop becoming the normal shutdown path.',
+      '    if (server?.server) await new Promise((resolveClose) => server.server.close(resolveClose));',
+    ].join('\n');
+    const MUTANT_CLOSE = [
+      '    // `serve()` returns a record; the Node HTTP server is its `server` member.',
+      '    // Wait for its close callback so the event loop can drain without the',
+      '    // three-second forced-exit backstop becoming the normal shutdown path.',
+      '    /* planted: HTTP server deliberately left open; only the three-second backstop can exit */',
+    ].join('\n');
     if (real.split(FIND_CLOSE).length !== 2) {
-      fail('server-close regression: PLANT SITE DRIFTED — shutdown() no longer carries the exact awaited '
-        + 'server.server.close callback exactly once, so the teardown mutant could not be built unambiguously.');
+      fail('server-close regression: PLANT SITE DRIFTED — shutdown() no longer carries its complete awaited '
+        + 'server-close block exactly once, so the teardown mutant could not be built unambiguously.');
       return 1;
     }
-    writeFileSync(join(dir, 'tools', 'displayfirst.MUTANT.mjs'), real.replace(FIND_CLOSE,
-      '    /* planted: HTTP server deliberately left open; only the three-second backstop can exit */'));
+    writeFileSync(join(dir, 'tools', 'displayfirst.MUTANT.mjs'), real.replace(FIND_CLOSE, MUTANT_CLOSE));
     writeFileSync(join(dir, 'tools', 'browser.mjs'), [
       '// Browser boundary for the server-close regression: no browser is launched.',
       'export function resolveBrowser() { return null; }',
