@@ -19,18 +19,7 @@ export const relics = [
     rarity: 'starter',
     passives: {
       modifiers: [
-        { tag: 'resource.flat', resource: 'hp', amount: 2 },
-        {
-          tag: 'resource.attributeTier',
-          resource: 'hp',
-          sourceStat: 'constitution',
-          // NO `pointsPerTier` — it said 5, which is derivedStatRules' own tier
-          // size written a second time. The row means "+1 HP per TIER of CON";
-          // what a tier is belongs to the rule it folds into. At the shipping
-          // tier size this changes no number (tests 57 and 60c), and stating it
-          // again is still legal if a relic ever wants its own granularity.
-          amountPerTier: 1,
-        },
+        { tag: 'resource.flat', resource: 'hp', amount: 10 },
       ],
     },
     icon: '🏅',
@@ -42,7 +31,7 @@ export const relics = [
         do: [{ op: 'poiseDamage', amount: 4 }],
       },
     ],
-    textTemplate: 'Max HP +{hpFlat}, plus +{hpPerTier} per completed CON tier. Your first attack each combat also deals {poiseDamage} Poise damage.',
+    textTemplate: 'Max HP +{hpFlat}. Your first attack each combat also deals {poiseDamage} Poise damage.',
     flavor: 'Its face is worn smooth, but it still remembers being gold.',
   },
 
@@ -71,6 +60,23 @@ export const relics = [
     ],
     textTemplate: 'Mana +{manaFlat}. Magic damage +{magicDamageFlat}. Begin each combat with Starstone Charge and restore {restoreMana} Mana.',
     flavor: 'A chip of someone else’s genius. It still hums.',
+  },
+  {
+    id: 'cutpursesCoin',
+    name: "Cutpurse's Coin",
+    rarity: 'starter',
+    passives: { modifiers: [] },
+    icon: '🪙',
+    triggers: [
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'prepared', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'damageDealt', once: true,
+        if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
+        do: [{ op: 'applyStatus', status: 'venom', stacks: 2 }],
+      },
+    ],
+    textTemplate: 'Begin each combat Prepared. Your first attack each combat applies {venom} Venom.',
+    flavor: 'One face buys silence. The other buys speed.',
   },
   {
     // SPEC §5.1's overheal-to-block needs overflow math no trigger can see;

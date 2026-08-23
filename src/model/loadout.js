@@ -76,7 +76,27 @@ export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
 // `apply` is a WORD, not a row: it means teaching a consumer something, and the
 // validator goes red until one has been taught (Law 0 clause 2).
 export const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale', 'status']);
-export const RUN_MOD_APPLIES = Object.freeze(['maxHp', 'startStatus', 'swapCost']);
+export const EQUIPMENT_POOL_FIELDS = Object.freeze(['maxHp', 'maxMana', 'maxStamina']);
+export const RUN_MOD_APPLIES = Object.freeze([...EQUIPMENT_POOL_FIELDS, 'startStatus', 'swapCost']);
+const EQUIPMENT_POOL_CURRENT = Object.freeze({ maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' });
+
+/** Move one maximum while retaining deficit that may exceed the smaller vessel. */
+export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = undefined) {
+  const currentField = EQUIPMENT_POOL_CURRENT[maxField];
+  if (!currentField || !Number.isFinite(holder[maxField]) || !Number.isFinite(holder[currentField])) {
+    throw new Error(`moveEquipmentPool requires finite ${maxField}/${currentField}`);
+  }
+  const oldMax = holder[maxField];
+  const observedDeficit = Math.max(0, oldMax - holder[currentField]);
+  const priorDeficit = Number.isInteger(carriedDeficit) && carriedDeficit >= 0 ? carriedDeficit : observedDeficit;
+  // A hidden deficit can be larger than a temporarily shrunken vessel. Account
+  // for spending/healing since the prior equipment move before resizing again.
+  const representedDeficit = Math.min(priorDeficit, oldMax);
+  const deficit = Math.max(0, priorDeficit + observedDeficit - representedDeficit);
+  holder[maxField] = nextMax;
+  holder[currentField] = Math.max(0, nextMax - deficit);
+  return deficit;
+}
 
 /**
  * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
@@ -835,7 +855,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   for (const profile of registries.equipment.basicCardProfiles || []) {
     const rule = snapshot.profiles[profile.id];
     if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
     if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
     if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
     if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
@@ -891,6 +911,7 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
   const raw = rule.baseValue + tier.value + rarityBonus;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
   return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
 }
 
@@ -1043,7 +1064,8 @@ function cardForTarget(eq, target, classId) {
 }
 
 /**
- * runMods(registries, loadout, classId) → { maxHp, swapCostDelta, startStatuses }
+ * runMods(registries, loadout, classId)
+ *   → { maxHp, maxMana, maxStamina, swapCostDelta, startStatuses }
  * The `self.*` half of the vocabulary: things a piece does to you rather than
  * to a card. startStatuses are handed straight to createCombat's existing
  * playerStatuses hook, so the engine needs no equipment code to honour them.
@@ -1064,15 +1086,15 @@ function cardForTarget(eq, target, classId) {
 export function runMods(registries, loadout, classId) {
   const fields = (registries.equipment || {}).modFields || {};
   const stacks = new Map();
-  let maxHp = 0;
+  const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
-      if (spec.apply === 'maxHp') {
-        maxHp = mod.mode === 'add' ? maxHp + mod.value : mod.value;
+      if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
+        pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
         swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
       } else if (spec.apply === 'startStatus') {
@@ -1082,49 +1104,85 @@ export function runMods(registries, loadout, classId) {
     }
   }
   return {
-    maxHp,
+    ...pools,
     swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
   };
 }
 
 /**
- * Reconcile the run's HP pool after an out-of-combat loadout mutation.
- * The derived snapshot, equipment rows, and permanent adjustment remain the
- * authorities; current HP keeps the same absolute deficit as the vessel grows
- * or shrinks. Partial combat stamping records do not carry these fields and are
- * deliberately ignored.
+ * Reconcile all run pools after an out-of-combat loadout mutation. The derived
+ * snapshot, persisted equipment contribution, and HP adjustment remain the
+ * authorities; each current pool keeps its absolute deficit as its vessel
+ * grows or shrinks. Partial combat stamping records are deliberately ignored.
  */
-export function reconcileRunLoadoutHp(registries, run) {
+export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses = false } = {}) {
   if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
-    || !Number.isFinite(run.maxHp) || !Number.isFinite(run.hp)) return null;
+    || !EQUIPMENT_POOL_FIELDS.every((maxField) => {
+      const currentField = maxField === 'maxHp' ? 'hp' : maxField.slice(3).toLowerCase();
+      return Number.isFinite(run[maxField]) && Number.isFinite(run[currentField]);
+    })) return null;
   if (!Number.isInteger(run.maxHpAdjustment)) {
     throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
   }
   const classDef = registries.classes.get(run.class);
+  const liveMods = runMods(registries, run.loadout, run.class);
+  const priorBonuses = run.equipmentPoolBonuses || Object.fromEntries(
+    EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]),
+  );
+  const bonuses = adoptEquipmentBonuses
+    ? Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]))
+    : priorBonuses;
+  const results = {};
+  const applyPool = (maxField, currentField, derivedValue, equipmentBonus, nextMax, adjustment = 0) => {
+    const was = run[maxField];
+    const deficit = moveEquipmentPool(run, maxField, nextMax, run.equipmentPoolDeficits && run.equipmentPoolDeficits[currentField]);
+    results[maxField] = { derived: derivedValue, equipmentBonus, adjustment, max: nextMax, deficit, was };
+  };
+
+  // Keep this named composition explicit: three independent instruments pin
+  // the exact HP addends at creation and load. Mana/Stamina use the same
+  // persisted-equipment rule below without weakening that historical witness.
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
     attributes: run.attributes,
     classDef,
   });
-  const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  const equipmentBonus = bonuses.maxHp;
+  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
+  applyPool('maxHp', 'hp', derived.value, equipmentBonus, nextMax, run.maxHpAdjustment);
+  for (const [maxField, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina']]) {
+    const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
+      attributes: run.attributes,
+      classDef,
+    });
+    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
+    applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
+  }
+  run.equipmentPoolBonuses = { ...bonuses };
+  run.equipmentPoolDeficits = Object.fromEntries(
+    EQUIPMENT_POOL_FIELDS.map((field) => [EQUIPMENT_POOL_CURRENT[field], results[field].deficit]),
+  );
   // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
   // ends with stampDeck(), which begins with this call. That is why Sten's
   // planted double-count went green: whatever the earlier writers put in the
   // field, this one replaced it, and nothing recorded the replacement. It still
   // replaces it. It no longer does so silently.
-  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
-  const deficit = Math.max(0, run.maxHp - run.hp);
   note(run, {
     kind: 'overwrite',
     field: 'maxHp',
     site: 'loadout.js:reconcileRunLoadoutHp',
-    was: run.maxHp,
-    now: nextMax,
-    why: `max-HP home 3 of 3 and the last writer at the door — derived ${derived.value} + equipment ${equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${deficit} carried`,
+    was: results.maxHp.was,
+    now: results.maxHp.max,
+    why: `max-HP home 3 of 3 and the last writer at the door — derived ${results.maxHp.derived} + equipment ${results.maxHp.equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${results.maxHp.deficit} carried`,
   });
-  run.maxHp = nextMax;
-  run.hp = Math.max(0, nextMax - deficit);
-  return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };
+  return {
+    derived: results.maxHp.derived,
+    equipmentBonus: results.maxHp.equipmentBonus,
+    adjustment: run.maxHpAdjustment,
+    maxHp: results.maxHp.max,
+    deficit: results.maxHp.deficit,
+    pools: results,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1246,8 +1304,8 @@ export function applyCardMods(def, mods, opts = {}) {
  * Re-stamping is idempotent, so calling it after every swap is safe. Pass
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
-export function stampDeck(registries, run, cards) {
-  reconcileRunLoadoutHp(registries, run);
+export function stampDeck(registries, run, cards, { adoptEquipmentBonuses = true } = {}) {
+  reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));

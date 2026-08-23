@@ -50,6 +50,14 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 The About changelog is checked through the real title → Settings → About route
 by `node tools/about-changelog.mjs`.
 
+## UI component library
+
+Use the [AshenSpire component catalog](docs/component-catalog.html) for the
+stable component IDs, model/factory names, renderers, reuse surfaces, and visual
+miniatures. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
+chat-friendly reference. Any merge or PR that changes a UI element or component
+must update the catalog when needed and include this catalog link in its summary.
+
 More: the three [class sprites](docs/preview/class-sprites.svg).
 
 ## Playing

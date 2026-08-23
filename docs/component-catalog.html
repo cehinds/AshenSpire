@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AshenSpire · Component Catalog</title>
+  <style>
+    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 48rem); color:var(--ink); font:14px/1.45 ui-sans-serif,system-ui,sans-serif; }
+    main { width:min(1500px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
+    header { display:flex; justify-content:space-between; gap:24px; align-items:end; border-bottom:1px solid var(--line); padding-bottom:20px; }
+    h1 { margin:0; font:700 clamp(24px,4vw,42px)/1.1 Georgia,serif; letter-spacing:.03em; }
+    h1 span { color:var(--gold); }
+    .lede { max-width:720px; color:var(--muted); margin:10px 0 0; }
+    .meta { text-align:right; color:var(--muted); font-size:12px; }
+    .meta a { color:var(--gold); }
+    .tools { display:flex; flex-wrap:wrap; gap:10px; padding:18px 0; position:sticky; top:0; z-index:2; background:color-mix(in srgb,var(--bg) 92%,transparent); backdrop-filter:blur(8px); }
+    input, select { border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); padding:9px 11px; }
+    input { flex:1 1 260px; }
+    .count { color:var(--muted); align-self:center; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:14px; }
+    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; }
+    article:hover { border-color:var(--gold); transform:translateY(-2px); }
+    article[hidden] { display:none; }
+    .visual { min-height:112px; display:grid; place-items:center; padding:14px; background:#0c0b09; border-bottom:1px solid #3d3022; }
+    .body { padding:13px 14px 15px; }
+    .id { color:var(--gold); font:12px ui-monospace,SFMono-Regular,Consolas,monospace; }
+    h2 { margin:5px 0 7px; font:700 18px Georgia,serif; }
+    dl { display:grid; grid-template-columns:70px 1fr; gap:4px 8px; margin:0; font-size:12px; }
+    dt { color:var(--muted); } dd { margin:0; }
+    dd code { color:#e9d59d; }
+    .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:11px; }
+    .chip { border:1px solid #5c4c31; border-radius:999px; padding:2px 7px; color:var(--muted); font-size:11px; }
+    button.copy { margin-top:11px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); padding:5px 8px; cursor:pointer; }
+    button.copy:hover { border-color:var(--gold); }
+    .catalog-footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; padding-top:16px; font-size:12px; }
+    /* Miniature visual language: deliberately schematic, not a second implementation. */
+    .mini { width:min(250px,100%); min-height:70px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .mini-header { width:100%; border:1px solid var(--line); padding:9px; display:grid; grid-template-columns:1.3fr .7fr 1.4fr; gap:7px; font:10px ui-monospace,monospace; color:var(--muted); }
+    .mini-header b { color:var(--ink); } .mini-header i { color:var(--gold); font-style:normal; text-align:center; }
+    .mini-bars { width:100%; display:grid; gap:5px; } .mini-bar { display:grid; grid-template-columns:34px 1fr; gap:5px; align-items:center; font:10px ui-monospace,monospace; }
+    .track { height:11px; border:1px solid #675638; border-radius:99px; overflow:hidden; } .fill { height:100%; width:68%; background:var(--red); } .blue { background:var(--blue); width:38%; } .green { background:var(--green); width:48%; }
+    .mini-quick { display:grid; grid-template-columns:repeat(2,44px); gap:5px; } .mini-btn,.mini-slot { height:38px; width:38px; border:1px solid #725d35; border-radius:7px; display:grid; place-items:center; color:var(--gold); background:#15110e; }
+    .mini-belt { display:flex; gap:3px; } .mini-belt .mini-slot { width:31px; height:31px; font-size:13px; }
+    .mini-combat { align-items:end; } .fighter { text-align:center; } .fighter .head { width:30px; height:30px; border:2px solid var(--gold); border-radius:50%; margin:auto; } .fighter .hp { width:62px; height:7px; background:var(--red); border-radius:5px; margin-top:5px; } .fighter small { color:var(--muted); font-size:9px; }
+    .mini-hand { align-items:end; } .card { width:37px; height:54px; border:1px solid #b29242; border-radius:5px; background:linear-gradient(#33281c,#17120f); transform:rotate(-8deg); } .card:nth-child(2){transform:translateY(-7px)} .card:nth-child(3){transform:rotate(8deg)}
+    .mini-rail { display:flex; gap:6px; } .mini-rail .mini-btn { width:43px; height:27px; }
+    .mini-panel { width:145px; height:65px; border:1px dashed #887044; border-radius:7px; display:grid; place-items:center; color:var(--muted); font-size:10px; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1>Ashen<span>Spire</span> component catalog</h1><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p></div>
+    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
+  </header>
+  <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><span class="count" id="count"></span></div>
+  <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
+  <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
+  <section class="grid" id="grid" aria-live="polite"></section>
+  <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
+</main>
+<script>
+const V = {
+  header:'<div class="mini"><div class="mini-header"><b>◎ NAME · CLASS</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1 · BUILD</span></div></div>',
+  identity:'<div class="mini"><div class="fighter"><div class="head">◎</div><small>NAME · CLASS</small></div></div>',
+  cinders:'<div class="mini"><div class="mini-panel">⛁ 42 CINDERS</div></div>',
+  field:'<div class="mini"><div class="mini-panel">ACT 1 · FLOOR 1</div></div>',
+  bars:'<div class="mini"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div></div>',
+  quick:'<div class="mini"><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div>',
+  belt:'<div class="mini"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div>',
+  combat:'<div class="mini mini-combat"><div class="fighter"><div class="head">⚔</div><div class="hp"></div><small>PLAYER</small></div><div class="fighter"><div class="head">☠</div><div class="hp"></div><small>ENEMY</small></div></div>',
+  hand:'<div class="mini mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div></div>',
+  rail:'<div class="mini mini-rail"><div class="mini-btn">END</div><div class="mini-btn">◎</div><div class="mini-btn">?</div></div>',
+  primitive:'<div class="mini"><div class="mini-panel">semantic component<br>+ variant + behavior</div></div>'
+};
+const C = [
+ ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Shared composition of header, resources, controls, and belt.','header'],
+ ['run-header-strip','runHeaderModel','hudmeta.runHeaderStripHtml','hud','Map + Combat','Identity, cinders, and prioritized metadata.','header'],
+ ['identity-cluster','identityClusterModel','hudmeta.identityClusterHtml','hud','Map + Combat','Character identity cluster.','identity'],
+ ['portrait-badge','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Character glyph/badge.','identity'],
+ ['character-title','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Name and class label.','identity'],
+ ['cinders-counter','cindersCounterModel','hudmeta.cindersCounterHtml','hud','Map + Combat','Live cinders count.','cinders'],
+ ['build-metadata-trail','buildMetadataTrailModel','hudmeta.buildMetadataTrailHtml','hud','Map + Combat','Act, floor, seed, build, and source.','field'],
+ ['metadata-field','metadataFieldModel','hudmeta metadata spans','primitive','Map + Combat','One prioritized metadata field.','field'],
+ ['primary-hud-row','componentModel composition','hudmeta.primaryHudRowHtml','hud','Map + Combat','Vitals and Quick Access row.','quick'],
+ ['panel','panelModel child','shared panel frame','primitive','HUD panels','Common panel semantic/frame component.','primitive'],
+ ['vitals-panel','vitalsPanelModel','hudmeta.vitalsPanelHtml','hud','Map + Combat','HP, MP, and SP panel.','bars'],
+ ['resource-meter','componentModel child','resbars.resourceBars','hud','HUD + combat cards','Data-driven resource trough/fill.','bars'],
+ ['quick-access-panel','quickAccessPanelModel','hudmeta.quickAccessPanelHtml','hud','Map + Combat','Armoury, menu, and charge flasks.','quick'],
+ ['action-control','actionControlModel child','hudmeta quick access','primitive','HUD controls','Shared activation semantics.','quick'],
+ ['hotkey-badge','componentModel semantic ID','view-owned','primitive','HUD controls','Configurable key hint badge.','primitive'],
+ ['armoury-control','actionControlModel','quick access view','hud','Map + Combat','Opens Armoury.','quick'],
+ ['quick-menu-control','actionControlModel','quick access view','hud','Map + Combat','Opens Quick Menu.','quick'],
+ ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','quick'],
+ ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','quick'],
+ ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','belt'],
+ ['item-tray','itemTrayModel child','belt view','primitive','Inventory','Shared horizontal tray behavior.','belt'],
+ ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','belt'],
+ ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','belt'],
+ ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','belt'],
+ ['potion-tray','itemTrayModel','belt view','inventory','Map + Combat','Utility potion tray, right anchored.','belt'],
+ ['potion-control','componentModel semantic ID','item view','primitive','Inventory','Individual utility potion control.','belt'],
+ ['battlefield-stage','componentModel','combat.js','combat','Combat','Combat scene/stage host.','combat'],
+ ['combatant-frame','combatantFrame','combatantFrame.js','combat','Combat','Shared combatant card geometry.','combat'],
+ ['player-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Player combatant card.','combat'],
+ ['enemy-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Enemy combatant card.','combat'],
+ ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','hand'],
+ ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','rail']
+].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
+const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
+function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>`<article data-group="${c.group}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl><div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><button class="copy" data-copy="${c.id}">Copy component ID</button></div></article>`).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard?.writeText(b.dataset.copy); const old=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=old,900);}); }
+search.oninput=render; group.onchange=render; render();
+</script>
+</body>
+</html>

@@ -451,6 +451,17 @@ export function validateContent(bundle) {
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  const equipmentProfileIds = new Set((((b.equipment || {}).basicCardProfiles) || []).map((row) => row && row.id));
+  for (const mode of b.creationModes || []) {
+    for (const [profileId, patch] of Object.entries((mode && mode.equipmentProfiles) || {})) {
+      const path = `creationModes.${mode.id}.equipmentProfiles.${profileId}`;
+      if (!equipmentProfileIds.has(profileId)) err(path, `unknown equipment profile '${profileId}'`);
+      if (patch.baseValue !== undefined && !Number.isFinite(patch.baseValue)) err(`${path}.baseValue`, 'must be finite');
+      if (patch.pointsPerTier !== undefined && (!Number.isFinite(patch.pointsPerTier) || patch.pointsPerTier <= 0)) err(`${path}.pointsPerTier`, 'must be finite and > 0');
+      if (patch.gainPerTier !== undefined && !Number.isFinite(patch.gainPerTier)) err(`${path}.gainPerTier`, 'must be finite');
+      if (patch.cap !== undefined && patch.cap !== null && (!Number.isFinite(patch.cap) || patch.cap < 0)) err(`${path}.cap`, 'must be null or finite and >= 0');
+    }
+  }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp', 'hpPerConTier'],
@@ -684,6 +695,30 @@ export function validateContent(bundle) {
   // through a real boot; observed red at b277ec2 before this block existed.
   if (b.balance && b.balance.ui) {
     const ui = b.balance.ui;
+    const hp = ui.hudPresentation;
+    if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
+    } else {
+      for (const [key, min, max] of [
+        ['componentBackgroundOpacityPct', 0, 100],
+        ['metadataFontPx', 8, 24],
+        ['beltItemGapPx', 0, 12],
+        ['portraitScale', 0.5, 1],
+        ['primaryRowGapPx', 0, 24],
+        ['controlGapPx', 0, 12],
+        ['resourceRowGapPx', 0, 12],
+        ['cindersMaxWidthPct', 20, 40],
+        ['metadataMaxWidthPct', 20, 40],
+      ]) {
+        const value = hp[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof hp.metadataShowTotals !== 'boolean') {
+        err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
