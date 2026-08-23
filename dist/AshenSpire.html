@@ -35245,7 +35245,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '454144ddf2';
+const SOURCE = '1e7e0a3d2d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35279,7 +35279,7 @@ const SOURCE = '454144ddf2';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1084';
+const ORDINAL = '1090';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38964,7 +38964,10 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'mh-flask';
+    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
+    // unified-cursor exception in input.js. Keep utility flasks reachable by
+    // keyboard/gamepad Confirm as well as pointer click.
+    el.className = 'mh-flask flask-slot';
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {
@@ -48472,7 +48475,7 @@ const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-08-23",
     "summary": "Map and combat now share the same three-row HUD",
     "detail": "Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.",
-    "build": "0.4.0.1084",
+    "build": "0.4.0.1085",
     "pullRequest": 327,
     "url": "https://github.com/cehinds/AshenSpire/pull/327"
   },
