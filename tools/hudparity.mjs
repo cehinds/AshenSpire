@@ -4,7 +4,7 @@
 // The rendered check on E9 / #254.
 //
 // HIS WORDS, 2026-08-15 (#254): "I'd like the hud to look the same both combat
-// and map". HIS RULING, 2026-08-22: the upper references are 500 HP / 50 MP /
+// and map". HIS RULING, 2026-08-23: the upper references are 200 HP / 50 MP /
 // 50 SP. Two halves of one ask, and they are INDEPENDENT — a repo can honour
 // either one alone and still show the player two different HUDs.
 //
@@ -46,7 +46,7 @@
 //                  that stops carrying `domainMax` (the wire from his ruling to
 //                  the render) goes red here even though both screens still
 //                  agree with each other.
-//   P3R REFERENCE  the reference table IS 500 HP / 50 MP / 50 SP. This is THE
+//   P3R REFERENCE  the reference table IS 200 HP / 50 MP / 50 SP. This is THE
 //                  ONE PLACE his numbers are typed in this tool, deliberately:
 //                  P3 alone would stay green if the constant were edited,
 //                  because it reads the same constant the render reads. If he
@@ -69,7 +69,7 @@
 //   · LOW  — `?shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1`: the bottom of his
 //            own stated band ("a min of 10"). These short troughs are the edge
 //            that proves an absolute pixel floor does not override percentage.
-//   · HIGH — `?shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50`: AT the
+//   · HIGH — `?shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50`: AT the
 //            reference. Trough 100 %, fill partial. Nothing above it exists —
 //            `lengthPct` clamps at 100 — so this is the ceiling, not a large
 //            sample.
@@ -112,7 +112,7 @@
 //     strips — a THIRD renderer for this grammar, named in styles/combat.css's
 //     own comment since before this change. Out of E9's scope, still there,
 //     and this tool's P6 census is scoped to `.topbar` so it will not catch it.
-//   · WHETHER 500/50 IS A GOOD SCALE. It is his ruling, made with the cost in
+//   · WHETHER 200/50 IS A GOOD SCALE. It is his ruling, made with the cost in
 //     front of him. This tool holds the number; it has no opinion about it.
 //   · Headless Chromium, three shapes, one text size, no accent theme, no
 //     colourblind palette. The runtime platform is printed in the boundary.
@@ -148,7 +148,7 @@ const valuesOf = (flag) => {
 // else in this file reads the reference out of the tree so it cannot drift from
 // the render, and that is precisely why one line has to say what the number is
 // supposed to BE.
-const HIS_REFERENCE = Object.freeze({ hp: 500, pool: 50 });
+const HIS_REFERENCE = Object.freeze({ hp: 200, pool: 50 });
 
 // ROWS WHOSE READER LEGITIMATELY REFUSES OFF THE BATTLEFIELD. Not a waiver
 // list — a statement about model/resources.js's refusal path, which returns
@@ -169,7 +169,7 @@ const ALL_SHAPES = [
 const ALL_POSES = [
   { tag: 'shipped', q: '' },
   { tag: 'low', q: '&shotMaxHp=10&shotMaxMana=1&shotMaxStamina=1' },
-  { tag: 'high', q: '&shotMaxHp=500&shotMaxMana=50&shotMaxStamina=50' },
+  { tag: 'high', q: '&shotMaxHp=200&shotMaxMana=50&shotMaxStamina=50' },
 ];
 const SCREENS = [
   { tag: 'map', shot: 'map', ready: '.mapscreen' },
@@ -658,7 +658,7 @@ function boundary() {
   console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
-  console.log('  · WHETHER 500/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
+  console.log('  · WHETHER 200/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
   console.log(`  · Headless Chromium on ${process.platform}, one text size, default accent, no colourblind palette.`);
   console.log('  · NOT WIRED INTO ci.yml — between hand-runs SOP 2\'s silence guard makes this `unknown`.');
   if (unknown) console.log(`  · ${unknown} check(s) resolved UNKNOWN in this run and counted toward nothing.`);
@@ -905,8 +905,8 @@ async function selftest() {
       // sole app authority must turn P8 red rather than moving its goalpost.
       name: 'the configurable shared HUD cap moves from 40 to 60 percent',
       file: 'src/content/balance.js',
-      find: 'main: { scaleByMax: true, maxViewportPct: 40 },',
-      replace: 'main: { scaleByMax: true, maxViewportPct: 60 },',
+      find: 'main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },',
+      replace: 'main: { scaleByMax: true, maxViewportPct: 60, availableWidthPct: 82 },',
       expectRed: /FINDING P8\/top-row .*configured cap="60vw"/,
     },
     {
@@ -1040,10 +1040,10 @@ async function selftest() {
     {
       // 4 — HIS NUMBER MOVES. Both screens agree, the wire is intact, and the
       // scale is not the one he ruled. Only the typed copy can see this.
-      name: 'the reference is quietly changed from 500 to 200',
+      name: 'the reference is quietly changed from 200 to 321',
       file: 'src/content/resources.js',
-      find: '  hp: 500,',
-      replace: '  hp: 200,',
+      find: '  hp: 200,',
+      replace: '  hp: 321,',
       expectRed: /FINDING P3R\/reference/,
     },
     {
