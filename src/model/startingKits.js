@@ -1,5 +1,7 @@
 // Starting-kit discovery: one data table, one eligibility gate, one profile receipt.
 
+import { classCreationConfig, resolveCreationHands } from './characterCreation.js';
+
 export const PROGRESSION_MODES = Object.freeze(['normal', 'custom', 'debug', 'showcase']);
 export const UNDISCOVERED_PRESENTATIONS = Object.freeze(['hidden', 'silhouette']);
 
@@ -122,6 +124,7 @@ export function startingKitSnapshot(kit) {
     classId: kit.classId,
     rightHand: kit.rightHand || null,
     leftHand: kit.leftHand || null,
+    ...(kit.customized ? { customized: true } : {}),
   });
 }
 
@@ -136,6 +139,17 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
   if (typeof run.startingKitId !== 'string') throw new Error('run startingKitId is required');
   if (!run.startingKitSnapshot || typeof run.startingKitSnapshot !== 'object') throw new Error('run startingKitSnapshot is required');
   const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
+  if (run.startingKitSnapshot.customized === true) {
+    if (run.startingKitSnapshot.id !== row.id || run.startingKitSnapshot.classId !== row.classId) {
+      throw new Error(`startingKitId '${run.startingKitId}' disagrees with customized startingKitSnapshot identity`);
+    }
+    const hands = resolveCreationHands(registries, run.class, run.startingKitSnapshot, row);
+    if (hands.leftHand !== (run.startingKitSnapshot.leftHand || null)
+      || hands.rightHand !== (run.startingKitSnapshot.rightHand || null)) {
+      throw new Error(`startingKitId '${run.startingKitId}' has a malformed customized startingKitSnapshot`);
+    }
+    return run;
+  }
   const expected = startingKitSnapshot(row);
   if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
     throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);
@@ -163,16 +177,17 @@ function armourRows(registries, classId) {
   return (((registries || {}).equipment || {}).armour || []).filter((o) => o.classId === classId);
 }
 
-function armourIsStartingEligible(row, meta) {
+function armourIsStartingEligible(row, meta, registries, classId) {
   if (!row) return false;
   if (row.unlock === '') return true;
+  if ((classCreationConfig(registries, classId).armourIds || []).includes(row.id)) return true;
   return new Set((meta && meta.unlocked) || []).has(row.unlock);
 }
 
 /** The sets this profile may begin in, authoring order, free set first-eligible. */
 export function startingArmourViews(registries, classId, meta = {}) {
   return armourRows(registries, classId)
-    .filter((row) => armourIsStartingEligible(row, meta))
+    .filter((row) => armourIsStartingEligible(row, meta, registries, classId))
     .map((row) => ({ id: row.id, label: row.name, blurb: row.blurb, free: row.unlock === '' }));
 }
 
@@ -192,7 +207,7 @@ export function resolveStartingArmour(registries, classId, requestedId, meta = {
   }
   const row = rows.find((entry) => entry.id === requestedId);
   if (!row) throw new Error(`starting armour '${requestedId}' is unavailable to class '${classId}'`);
-  if (!armourIsStartingEligible(row, meta)) throw new Error(`starting armour '${requestedId}' is not unlocked`);
+  if (!armourIsStartingEligible(row, meta, registries, classId)) throw new Error(`starting armour '${requestedId}' is not unlocked`);
   return row;
 }
 

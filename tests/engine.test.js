@@ -22,7 +22,7 @@ import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
-import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun } from '../src/model/state.js';
+import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
 import { executeRunEffects } from '../src/engine/actions.js';
@@ -42,7 +42,7 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
-import { startingArmourViews, resolveStartingArmour } from '../src/model/startingKits.js';
+import { startingArmourViews, resolveStartingArmour, validateRunStartingKit } from '../src/model/startingKits.js';
 import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
@@ -67,6 +67,10 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
+import {
+  characterCreationProblems, creationArmourChoices, creationHandChoices,
+  creationRelicChoices, selectStartingHand,
+} from '../src/model/characterCreation.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -5176,22 +5180,24 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(run.attributeMode, 'pointbuy', 'the run records the mode');
     eq(run.attributes.strength, 15, 'and the allocation, not the preset');
 
-    // STARTING ARMOUR. Eligibility = the free set + what the profile EARNED.
+    // STARTING ARMOUR. The JSON creation roster ships two immediately; earned
+    // sets may widen that list without becoming a second UI-only roster.
     const fresh = startingArmourViews(REG, 'reaver', {});
-    eq(fresh.length, 1, 'a fresh profile starts with exactly the free set');
+    eq(fresh.length, 2, 'a fresh profile starts with both JSON-authored choices');
     eq(fresh[0].free, true, 'and it is the free one');
-    const vigilUnlock = outfits.find((o) => o.id === 'vigil' && o.classId === 'reaver').unlock;
-    const veteran = { unlocked: [vigilUnlock] };
+    assert(fresh.some((v) => v.id === 'vigil'), 'the alternate authored starting set is available by name');
+    const oathUnlock = outfits.find((o) => o.id === 'oathsworn' && o.classId === 'reaver').unlock;
+    const veteran = { unlocked: [oathUnlock] };
     const views = startingArmourViews(REG, 'reaver', veteran);
-    eq(views.length, 2, 'an earned prize becomes a starting choice');
-    assert(views.some((v) => v.id === 'vigil'), 'and it is the earned set by name');
+    eq(views.length, 3, 'an earned prize becomes an additional starting choice');
+    assert(views.some((v) => v.id === 'oathsworn'), 'and it is the earned set by name');
     // Resolution, both edges: the earned set resolves; the unearned refuses BY
     // NAME; a foreign class refuses; absent falls to the free set (yesterday's
     // behaviour for every caller that never heard of the parameter).
-    eq(resolveStartingArmour(REG, 'reaver', 'vigil', veteran).id, 'vigil', 'earned resolves');
+    eq(resolveStartingArmour(REG, 'reaver', 'vigil', {}).id, 'vigil', 'JSON-authored alternate resolves without progression');
     let threw = null;
-    try { resolveStartingArmour(REG, 'reaver', 'vigil', {}); } catch (e) { threw = String(e.message); }
-    assert(threw && threw.includes('vigil'), `unearned refuses BY NAME — got ${threw}`);
+    try { resolveStartingArmour(REG, 'reaver', 'warden', {}); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('warden'), `unconfigured and unearned set refuses BY NAME — got ${threw}`);
     threw = null;
     try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
     assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
@@ -5231,6 +5237,44 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
     eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
     eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
+  });
+
+  test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
+    eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
+    eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
+    for (const classId of REG.classes.ids()) {
+      assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
+      assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
+      assert(creationRelicChoices(REG, classId).length >= 2, `${classId} ships at least two relic choices`);
+    }
+
+    const moved = selectStartingHand({ leftHand: 'roundShield', rightHand: 'straightSword' }, 'leftHand', 'straightSword');
+    eq(moved.leftHand, 'straightSword', 'selecting an occupied armament places it in the requested hand');
+    eq(moved.rightHand, null, 'and clears the other hand instead of duplicating it');
+    eq(Object.values(moved).filter((id) => id === 'straightSword').length, 1, 'one armament occupies exactly one starting hand');
+
+    const selected = createRunState({
+      seed: 69, classId: 'reaver', registries: REG,
+      startingHands: { leftHand: 'straightSword', rightHand: 'roundShield' },
+      startingArmourId: 'vigil', startingRelicId: 'goldenSprout',
+    });
+    eq(selected.loadout.sets.leftHand[0], 'straightSword', 'Begin consumes the selected left hand');
+    eq(selected.loadout.sets.rightHand[0], 'roundShield', 'Begin consumes the selected right hand');
+    eq(selected.loadout.sets.armor[0], 'vigil', 'Begin consumes the selected armour');
+    eq(selected.relics[0], 'goldenSprout', 'Begin consumes the selected relic');
+    assert(selected.startingKitSnapshot.customized === true, 'the customized starting hands persist explicitly');
+    const restored = deserializeRun(serializeRun(selected));
+    validateRunStartingKit(restored, REG, {});
+    eq(restored.startingKitSnapshot.leftHand, 'straightSword', 'customized hands survive the save boundary');
+
+    const malformed = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformed.characterCreation.spritePreviewSide = 'above';
+    malformed.characterCreation.classes.reaver.handIds = ['missingArmament'];
+    const validation = validateContent(malformed);
+    assert(!validation.ok && validation.errors.some((e) => e.path.includes('characterCreation.spritePreviewSide')),
+      'an invalid sprite side fails by its JSON path');
+    assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
+      'a short/dangling hand roster fails by its JSON path');
   });
 
   const passed = results.filter((r) => r.ok).length;

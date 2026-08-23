@@ -41,6 +41,7 @@ import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
+import { characterCreationProblems } from './characterCreation.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -86,6 +87,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
   'derivedStatRules',
+  'characterCreation',
 ]);
 
 /**
@@ -405,6 +407,14 @@ export function validateContent(bundle) {
     for (const problem of startingKitProblems(kitRegistries)) err('equipment.startingKits', problem);
   } catch (error) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
+  }
+
+  for (const problem of characterCreationProblems(b)) {
+    const split = problem.indexOf(':');
+    err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
+  }
+  for (const keepsake of (b.characterCreation && b.characterCreation.keepsakes) || []) {
+    validateEffects(keepsake.effects || [], `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
   }
 
   // ---- schema walks --------------------------------------------------------
