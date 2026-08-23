@@ -826,8 +826,9 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   Those five metadata items share one data-owned font size, one horizontal baseline, and one
   vertically centred row; no item may stagger above or below another. When width is insufficient,
   the right trail progressively hides Source, then Seed, then Build; Act and Floor remain visible
-  longest. There is no duplicate Act/Floor line beneath the character name. Neither screen
-  hand-writes a second HUD.
+  longest. At the smallest supported width, Act/Floor compact from current/total to their current
+  values (`ACT 1 · FLOOR 1`) before they may touch centred Cinders. There is no duplicate Act/Floor
+  line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
   then HP/Mana flasks. Its visible tiles are 30–32 px inside at least 44 px accessible hit areas.
