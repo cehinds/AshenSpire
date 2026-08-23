@@ -16,16 +16,15 @@
   background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
 }
-/* `.topbar` is SHARED SKIN — the map header wears it too (styles/map.css:223,
-   src/ui/screens/map.js:239) and is still a single row of its own items. Only
-   the COMBAT HUD is the two-row shape he specified, so the restructure is
-   scoped to `.combat-hud` and the map is untouched by it. Checked, not assumed:
-   the map header is the only other `.topbar` in the tree. */
+/* `.topbar` is SHARED SKIN and `.combat-hud` is the shared two-row HUD frame.
+   Combat and the map both put resource bars + Armoury + Menu in `.hud-top`, so
+   the same plan resolves against the same track at every viewport. Their
+   secondary chrome differs only in `.hud-bottom`; it cannot change bar ink. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
 }
-/* Kept for the map header, which still draws a .who column. THE `.hpbar` PAIR
+/* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
    map.css overrode the width to 15rem — a typed constant standing where a

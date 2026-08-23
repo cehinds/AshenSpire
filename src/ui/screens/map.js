@@ -100,31 +100,28 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <header class="topbar map-header">
-        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-        <div class="who">
-          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
-          <!-- E9 / #254 - ONE HUD. This used to be a hand-written
-               div.bar.hpbar with its own percentage fill and its own 15rem
-               CSS track: a SECOND renderer for the one grammar combat draws
-               through ui/components/resbars.js. Two renderers meant the same
-               character's health read at two different proportions depending
-               on which screen you were looking at, and no instrument could
-               see it because each was internally consistent. The host is
-               empty here and filled below by the same call combat.js and
-               coop.js make. (No backticks in this block: it lives inside a
-               template literal, and one closed it early - the game's own
-               validation banner caught that, not a test.) -->
+      <header class="topbar combat-hud map-header">
+        <!-- E9 / #254 - ONE HUD. The entire top row now has the same structure
+             as combat: the shared resource host, Armoury, Menu. This used to be
+             a hand-written div.bar.hpbar at its own 15rem width; its first E9
+             replacement reused the renderer but gave the map a full-width row,
+             so 320x640 could still show a solid proportional pool while combat
+             showed the same pool as a dashed floored stub. Same plan, different
+             truth. Sharing the row geometry removes that last second HUD.
+             (No backticks here: this block lives inside a template literal.) -->
+        <div class="hud-top">
           <div class="resbars-host"></div>
-        </div>
-        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
-        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
-        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-        ${buildStampHtml('map')}
-        <div class="mh-actions">
           <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
           <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+        </div>
+        <div class="hud-bottom">
+          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+          <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
+          <span class="mh-stat cinders">⛁ ${run.cinders}</span>
+          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+          ${buildStampHtml('map')}
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
         </div>
         <div class="map-legend-pop" hidden>
           ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
