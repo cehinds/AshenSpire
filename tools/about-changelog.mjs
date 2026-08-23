@@ -119,10 +119,22 @@ function backslashRunLength(text, index) {
   for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) count++;
   return count;
 }
+function insideLinkDestination(text, index) {
+  for (let i = 0; i < index; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] !== '[') continue;
+    const labelEnd = matchingBracket(text, i, '[', ']');
+    if (labelEnd < 0 || text[labelEnd + 1] !== '(') continue;
+    const destinationEnd = matchingBracket(text, labelEnd + 1, '(', ')');
+    if (labelEnd + 1 < index && destinationEnd >= index) return true;
+  }
+  return false;
+}
 function codeSpanRanges(text) {
   const spans = [];
   for (let i = 0; i < text.length; i++) {
-    if (text[i] !== '`' || backslashRunLength(text, i) % 2 === 1) continue;
+    if (text[i] !== '`' || backslashRunLength(text, i) % 2 === 1
+      || insideLinkDestination(text, i)) continue;
     let openerEnd = i + 1;
     while (text[openerEnd] === '`') openerEnd++;
     const length = openerEnd - i;
@@ -1011,6 +1023,12 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. It reads `arr[0](x)` here.',
       write: { detail: 'Docs only. It reads arr[0](x) here.' },
+    },
+    {
+      name: 'a code span cannot open inside a bare link destination', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [x](foo`)` for the rest.',
+      expect: 'prose contains a link',
     },
     // Same block, second form. A destination in `<…>` need not balance its parens,
     // so `matchingBracket` returned -1 and the link rule never ran. The report that
