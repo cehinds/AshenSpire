@@ -909,8 +909,8 @@ async function selftest() {
       // shape that collapsed several maxima to the same 16 px trough.
       name: 'an absolute minimum width overrides the requested percentage',
       file: 'styles/combat.css',
-      find: '  flex: 1 1 0; min-width: 0;',
-      replace: '  flex: 1 1 0; min-width: 16px;',
+      find: '  min-width: 0;\n}\n.resbar > .fill',
+      replace: '  min-width: 16px;\n}\n.resbar > .fill',
       expectRed: /FINDING P4\/percentage .*min-width=16px/,
     },
     {
