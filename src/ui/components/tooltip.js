@@ -1,6 +1,7 @@
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
 import { placeAnchored } from '../fx.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let tipEl = null;
 let showTimer = null;
@@ -69,6 +70,7 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;

@@ -164,7 +164,7 @@ const PLANTS = [
     mutate: (b) => { b.balance.flaskCapacity = 0; } },
   { name: 'class allocation above capacity',
     expect: /startingFlaskAllocation/,
-    mutate: (b) => { b.classes[0].startingFlaskAllocation = { hp: 3, mana: 1 }; } },
+    mutate: (b) => { b.classes[0].startingFlaskAllocation = { hp: 4, mana: 1 }; } },
   { name: 'fractional class allocation',
     expect: /startingFlaskAllocation/,
     mutate: (b) => { b.classes[0].startingFlaskAllocation = { hp: 1.5, mana: 1.5 }; } },

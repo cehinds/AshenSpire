@@ -151,5 +151,35 @@ export const unlocks = [
     "param": 2,
     "reveal": "listed",
     "hint": "Win two runs."
+  },
+  {
+    "id": "winAsRogue",
+    "kind": "outfit",
+    "ref": "duelist",
+    "name": "Duelist Jerkin",
+    "condition": "winAsClass",
+    "param": "rogue",
+    "reveal": "listed",
+    "hint": "Win a run as the Rogue."
+  },
+  {
+    "id": "rogueBeatWarden",
+    "kind": "outfit",
+    "ref": "nightveil",
+    "name": "Nightveil Coat",
+    "condition": "beatBoss",
+    "param": "fellWarden",
+    "reveal": "listed",
+    "hint": "Defeat the Fell Warden."
+  },
+  {
+    "id": "rogueReachCrown",
+    "kind": "outfit",
+    "ref": "shadow",
+    "name": "Shadow Mantle",
+    "condition": "reachAct",
+    "param": 3,
+    "reveal": "listed",
+    "hint": "Reach the Ashen Crown."
   }
 ];

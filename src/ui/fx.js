@@ -6,6 +6,7 @@
 
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 
 const STEP_MS = 80;
 
@@ -296,6 +297,11 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
+  const feedbackComponent = /\bblk\b/.test(cls)
+    ? UI.guardedDamageIndicator
+    : (/\bdmg\b/.test(cls) ? UI.healthDamageIndicator : UI.damageFeedback);
+  markUiComponent(el, feedbackComponent);
+  el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and

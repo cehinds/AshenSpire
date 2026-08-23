@@ -19,6 +19,10 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-23
 
+- **Character creation now owns one shared Inventory and validates every starting hand** ([#329](https://github.com/cehinds/AshenSpire/pull/329), `0.4.0.1126`). Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.
+
+- **Swapped armaments now remain attached to their actual hand sockets** ([#328](https://github.com/cehinds/AshenSpire/pull/328), `0.4.0.1114`). The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.
+
 - **Map and combat now share the same three-row HUD** ([#327](https://github.com/cehinds/AshenSpire/pull/327), `0.4.0.1091`). Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.
 
 ## 2026-08-22
