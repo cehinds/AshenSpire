@@ -108,14 +108,86 @@ const INLINE_REFUSED = [
 // `--write` exit 0. A declared limit that names only the safe direction is worse
 // than an undeclared one: it tells the reader which way not to look.
 //
-// So one mask closes both directions at once, and it is DELIBERATELY THE SAME
-// REGEX THE FLATTENER USES — 1b's lesson, one home: two transforms meant to agree
-// and written twice will disagree, and that is how the previous gap was opened by
-// the commit that closed the one before it. The mask is length-preserving, so every
-// index the scanners compute still points at the real character.
-export const CODE_SPAN = /(?<!`)(`+)(?!`)([\s\S]*?)(?<!`)\1(?!`)/g;
+// So one mask closes both directions at once, and it DELIBERATELY reads the same
+// span scanner the flattener uses — 1b's lesson, one home: two transforms meant to
+// agree and written twice will disagree. The mask is length-preserving, so every
+// index the refusal scanners compute still points at the real character.
+function backslashRunLength(text, index) {
+  let count = 0;
+  for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) count++;
+  return count;
+}
+function codeSpanRanges(text) {
+  const spans = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '`' || backslashRunLength(text, i) % 2 === 1) continue;
+    let openerEnd = i + 1;
+    while (text[openerEnd] === '`') openerEnd++;
+    const length = openerEnd - i;
+    let closerStart = -1;
+    let closerEnd = -1;
+    for (let j = openerEnd; j < text.length;) {
+      if (text[j] !== '`') {
+        j++;
+        continue;
+      }
+      let end = j + 1;
+      while (text[end] === '`') end++;
+      if (end - j === length) {
+        closerStart = j;
+        closerEnd = end;
+        break;
+      }
+      j = end;
+    }
+    if (closerStart < 0) {
+      i = openerEnd - 1;
+      continue;
+    }
+    spans.push({ start: i, contentStart: openerEnd, contentEnd: closerStart, end: closerEnd });
+    i = closerEnd - 1;
+  }
+  return spans;
+}
 export function maskCodeSpans(text) {
-  return text.replace(CODE_SPAN, (span) => 'x'.repeat(span.length));
+  let masked = '';
+  let cursor = 0;
+  for (const span of codeSpanRanges(text)) {
+    masked += text.slice(cursor, span.start);
+    masked += 'x'.repeat(span.end - span.start);
+    cursor = span.end;
+  }
+  return masked + text.slice(cursor);
+}
+function flattenEscapedBackticks(text) {
+  let flattened = '';
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== '\\') {
+      flattened += text[i];
+      continue;
+    }
+    const start = i;
+    while (text[i + 1] === '\\') i++;
+    const length = i - start + 1;
+    if (text[i + 1] !== '`') {
+      flattened += '\\'.repeat(length);
+      continue;
+    }
+    flattened += '\\'.repeat(Math.floor(length / 2));
+    flattened += '`';
+    i++;
+  }
+  return flattened;
+}
+function flattenCodeSpans(text) {
+  let flattened = '';
+  let cursor = 0;
+  for (const span of codeSpanRanges(text)) {
+    flattened += flattenEscapedBackticks(text.slice(cursor, span.start));
+    flattened += text.slice(span.contentStart, span.contentEnd);
+    cursor = span.end;
+  }
+  return flattened + flattenEscapedBackticks(text.slice(cursor));
 }
 // A DESTINATION IN ANGLE BRACKETS IS NOT PAREN-BALANCED, AND THAT IS THE WHOLE
 // SPELLING. CommonMark lets `[a](<...>)` hold unbalanced parens because the `<>`
@@ -213,7 +285,7 @@ export const REFUSAL_SCOPE = [
   '  the sentence, not against it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
   '  span delimited by a backtick run of ANY length · a backslash-escaped emphasis',
-  '  marker into the literal marker CommonMark shows.',
+  '  marker or backtick into the literal marker CommonMark shows.',
   'OPEN, MEASURED, NOT FIXED — each reaches the player:',
   '  · emphasis INSIDE a code span is stripped: `` `**b**` `` ships as `b`, where',
   '    GitHub shows the asterisks.',
@@ -229,7 +301,7 @@ export const REFUSAL_SCOPE = [
   '    and this is what falls outside it — found minutes after that line was',
   '    written, which is the line\'s own point, not a hole in it.',
   '  · non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML',
-  '    entities · backslash escapes other than the measured emphasis forms above ·',
+  '    entities · backslash escapes other than the measured delimiter forms above ·',
   '    a bare URL GitHub autolinks.',
   '  None of them is present in CHANGELOG.md today.',
   'IT SCANS, IT DOES NOT PARSE, AND THAT CUTS BOTH WAYS — the half this line used to',
@@ -292,11 +364,6 @@ function delimiterFlanking(text, index, length) {
     beforePunctuation,
     afterPunctuation,
   };
-}
-function backslashRunLength(text, index) {
-  let count = 0;
-  for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) count++;
-  return count;
 }
 function breaksRuleOfThree(opener, closer) {
   return (opener.canClose || closer.canOpen)
@@ -408,18 +475,10 @@ export function flattenInline(text, where, labels = new Set()) {
   // Underscore uses the same Unicode flanking facts with its stricter intraword
   // open/close rule; this keeps letters, marks and format characters literal
   // without maintaining an inevitably incomplete list of "word" categories.
-  return flattenDelimiters(flattenDelimiters(text, '*'), '_')
-    // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
-    // DELIMITER. CommonMark: a run of N backticks opens, and the span ends at the
-    // next run of EXACTLY N. `` `([^`]+)` `` matched the INNER pair of ``` ``foo`` ```
-    // and left the outer backticks standing, so a two-backtick span became a
-    // ONE-backtick span in the projection — literal backticks reaching the player,
-    // which is the defect this whole change exists to stop. Measured 2026-08-22 by
-    // Codex and by Bjorn at the real door. The run length is now carried by a
-    // backreference, and the lookarounds keep the run from being cut short at either
-    // end. A backtick that is part of the span's CONTENT survives, as it must:
-    // ``` ``a`b`` ``` is the text ``a`b`` on GitHub too.
-    .replace(CODE_SPAN, '$2');
+  // A code span opens and closes with a run of exactly the same length. The shared
+  // scanner carries that length without cutting a longer run short; escaped opening
+  // backticks stay literal, while backslashes inside an opened span remain content.
+  return flattenCodeSpans(flattenDelimiters(flattenDelimiters(text, '*'), '_'));
 }
 
 export function parseChangelog(markdown) {
@@ -722,6 +781,11 @@ async function selftest() {
     if (parity !== '\\bold') throw new Error(`even escape parity rewrote to: ${JSON.stringify(parity)}`);
     console.log('PASS escaped markers stay literal while adjacent run characters still delimit');
   } catch (error) { console.error(`FAIL escaped asterisks: ${error.message}`); process.exitCode = 1; }
+  try {
+    const [ticks] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps \\`literal\\` backticks.\n');
+    if (ticks.detail !== 'Keeps `literal` backticks.') throw new Error(`rewrote it to: ${ticks.detail}`);
+    console.log('PASS escaped backticks stay literal instead of opening a code span');
+  } catch (error) { console.error(`FAIL escaped backticks: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
@@ -751,6 +815,12 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. It reads \\\\**bold** here.',
       write: { detail: 'Docs only. It reads \\bold here.' },
+    },
+    {
+      name: 'backslash-escaped backticks survive as literal characters', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads \\`literal\\` here.',
+      write: { detail: 'Docs only. It reads `literal` here.' },
     },
     {
       name: 'reference-style link in prose', file: 'CHANGELOG.md',
