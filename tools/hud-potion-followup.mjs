@@ -1,94 +1,305 @@
 #!/usr/bin/env node
-// Focused, browser-free contract for the approved shared-HUD potion follow-up.
-// It checks the configuration and source wiring. Rendered geometry remains a
-// separate Chrome gate; this tool cannot claim pixels it never measured.
+// tools/hud-potion-followup.mjs — the exact approved shared-HUD follow-up.
+//
+// Source checks hold the authored seams. The browser door reads the resulting
+// geometry and key labels at 1200x730. `--source-selftest` and
+// `--receipt-selftest` are browser-free discriminators. The preserved default
+// source gate stays browser-free; `--browser` is the explicit rendered door.
+
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { launchBrowser, resolveBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const read = (path) => readFileSync(join(ROOT, path), 'utf8');
+const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
 
-export function hudPotionFindings({ balance, main, css, combat }) {
-  const findings = [];
-  const pct = /availableWidthPct:\s*(\d+(?:\.\d+)?)/.exec(balance);
-  if (!pct || Number(pct[1]) < 80 || Number(pct[1]) > 85) {
-    findings.push('H1 availableWidthPct is not configured in the approved 80-85 range');
-  }
-  if (!main.includes("setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)")) {
-    findings.push('H2 main does not project the configured available-width percentage');
-  }
-  if (!css.includes('width: var(--hud-resource-available-pct);')
-      || !css.includes(".topbar.combat-hud.shared-hud .resbars-host {\n  width: 100%;\n  max-width: 100%;")) {
-    findings.push('H3 shared HP/MP/SP host does not consume the available-width token');
-  }
-  if (!css.includes('grid-template-rows: repeat(2, var(--tap-floor));')
-      || !css.includes('width: var(--tap-floor); height: var(--tap-floor);')) {
-    findings.push('H4 Armoury/Menu/Health/Mana are not four equal non-stretching tap-floor cells');
-  }
-  if (!combat.includes('el.dataset.flaskHotkeySlot = String(hotkeySlot);')
-      || !combat.includes('appendFlaskHotkey(el, hotkeySlot);')
-      || !combat.includes('.flask-slot[data-flask-hotkey-slot="${slot}"]')) {
-    findings.push('H5 charge controls are not wired to the visible rebindable flask hotkeys');
-  }
-  if (!css.includes('.hud-potions .flask-identity {')
-      || !css.includes('width: var(--hud-utility-visual-size);')
-      || !css.includes('flex-direction: row;')) {
-    findings.push('H6 utility potions do not use a relic-sized visual anchored to grow left');
-  }
-  if (!css.includes(":root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count")) {
-    findings.push('H7 charge counts do not scale from the existing wide-layout state');
-  }
-  if (!css.includes('--hud-utility-visual-size: 2.6rem;')) {
-    findings.push('H8 utility potion size has no single shared relic-size token');
-  }
-  return findings;
-}
-
-const files = {
+const sourceReceipt = () => ({
   balance: read('src/content/balance.js'),
   main: read('src/main.js'),
-  css: read('styles/combat.css'),
+  input: read('src/ui/input.js'),
   combat: read('src/ui/screens/combat.js'),
-};
+  css: read('styles/combat.css'),
+});
 
-if (process.argv.includes('--selftest')) {
-  const plants = [
-    ['H1 ', 'balance', 'availableWidthPct: 82', 'availableWidthPct: 70'],
-    ['H2 ', 'main', "setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)", "setProperty('--hud-resource-width', `${hudAvailableWidthPct}%`)"],
-    ['H3 ', 'css', 'width: var(--hud-resource-available-pct);', 'width: 79%;'],
-    ['H4 ', 'css', 'grid-template-rows: repeat(2, var(--tap-floor));', 'grid-template-rows: repeat(2, minmax(var(--tap-floor), 1fr));'],
-    ['H5 ', 'combat', 'el.dataset.flaskHotkeySlot = String(hotkeySlot);', 'el.dataset.flaskVisualSlot = String(hotkeySlot);'],
-    ['H6 ', 'css', '.hud-potions .flask-identity {', '.hud-potions .potion-identity {'],
-    ['H7 ', 'css', ":root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count", ":root[data-layout='narrow'] .topbar.combat-hud.shared-hud .flask-charge-count"],
-    ['H8 ', 'css', '--hud-utility-visual-size: 2.6rem;', '--hud-utility-size-copy: 2.6rem;'],
-  ];
-  let failures = 0;
-  if (hudPotionFindings(files).length) {
-    failures++;
-    console.log('FAIL clean HUD potion contract is not green');
+export function sourceFindings(s) {
+  const bad = [];
+  if (!/main:\s*\{\s*scaleByMax:\s*true,\s*maxViewportPct:\s*40,\s*availableWidthPct:\s*82\s*\}/.test(s.balance)
+      || !s.main.includes("setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`)")) {
+    bad.push('S1 available-width authority is not authored at 82 and projected to the CSS variable');
   }
-  for (const [expected, file, find, replace] of plants) {
-    if (!files[file].includes(find)) {
-      failures++;
-      console.log(`FAIL ${expected.trim()} plant site drifted`);
-      continue;
-    }
-    const planted = { ...files, [file]: files[file].replace(find, replace) };
-    const got = hudPotionFindings(planted);
-    if (got.some((finding) => finding.startsWith(expected))) console.log(`RED  ${expected.trim()} discriminator fired`);
-    else {
-      failures++;
-      console.log(`MISS ${expected.trim()} — ${got.join('; ') || 'no finding'}`);
-    }
+  if (!s.css.includes('width: var(--hud-resource-available-pct);')) {
+    bad.push('S2 the left HUD stack no longer consumes the configurable available-width percentage');
   }
-  if (!failures) console.log(`hud-potion-followup selftest: ${plants.length} checks passed`);
-  else console.log(`hud-potion-followup selftest: ${failures} failure(s)`);
-  process.exit(failures ? 1 : 0);
+  if (!/id:\s*'flask1'[\s\S]*?defKey:\s*'f'/.test(s.input)
+      || !/id:\s*'flask2'[\s\S]*?defKey:\s*'g'/.test(s.input)
+      || !s.combat.includes('appendFlaskHotkey(el, hotkeySlot);')) {
+    bad.push('S3 Health and Mana no longer own the F/G hotkey slots');
+  }
+  if (!/id:\s*'flask3'[\s\S]*?defKey:\s*'h'/.test(s.input)
+      || !s.combat.includes('appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);')) {
+    bad.push('S4 the first utility potion no longer follows Health/Mana into the H slot');
+  }
+  if (!/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{\s*justify-content:\s*flex-end;\s*flex-direction:\s*row;\s*\}/.test(s.css)
+      || !/\.topbar\.combat-hud\.shared-hud \.hud-potions\s*\{\s*grid-column:\s*2;\s*\}/.test(s.css)) {
+    bad.push('S5 utility potions are no longer right-anchored in the second HUD track');
+  }
+  if (!/\.hud-potions,\s*\n\.topbar\.combat-hud\.shared-hud \.hud-relics\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;/.test(s.css)) {
+    bad.push('S6 utility growth no longer uses the flex row that adds cards to the left');
+  }
+  if (!/\.hud-control-grid :is\(\.topbar-btn, \.flask-slot\)\s*\{[^}]*width:\s*var\(--tap-floor\);\s*height:\s*var\(--tap-floor\);/.test(s.css)) {
+    bad.push('S7 the wide primary grid no longer gives all four cards one tap-floor size');
+  }
+  if (!/:root:not\(\[data-layout='narrow'\]\) \.topbar\.combat-hud\.shared-hud \.flask-charge-count\s*\{\s*font-size:\s*calc\(14px \/ var\(--ui-zoom, 1\)\);\s*\}/.test(s.css)) {
+    bad.push('S8 the wide HUD charge count no longer scales to 14 screen pixels');
+  }
+  return bad;
 }
 
-const findings = hudPotionFindings(files);
-for (const finding of findings) console.log(`FAIL ${finding}`);
-if (!findings.length) console.log('hud-potion-followup: 8 checks passed');
-else console.log(`hud-potion-followup: ${findings.length} failure(s)`);
-process.exit(findings.length ? 1 : 0);
+// Compatibility door for the existing focused gate and any importer that
+// still supplies its original four-file receipt. The input table is added at
+// the reader, not made a new caller obligation.
+export function hudPotionFindings({ balance, main, css, combat, input = read('src/ui/input.js') }) {
+  return sourceFindings({ balance, main, css, combat, input });
+}
+
+const near = (a, b, tolerance = 0.75) => Number.isFinite(a) && Math.abs(a - b) <= tolerance;
+
+export function receiptFindings(r) {
+  const bad = [];
+  if (r.configuredAvailablePct !== '82%') bad.push(`B1 configured available width is ${JSON.stringify(r.configuredAvailablePct)}, expected 82%`);
+  if (!near(r.appliedAvailablePct, 82, 0.35)) bad.push(`B2 applied available width is ${r.appliedAvailablePct}, expected 82%`);
+  if (JSON.stringify(r.chargeKeys) !== JSON.stringify(['F', 'G'])) bad.push(`B3 Health/Mana keys are ${JSON.stringify(r.chargeKeys)}, expected ["F","G"]`);
+  if (JSON.stringify(r.utilityKeys) !== JSON.stringify(['H'])) bad.push(`B4 first utility key is ${JSON.stringify(r.utilityKeys)}, expected ["H"]`);
+  if (!near(r.utilityGrowth.before.right, r.utilityGrowth.after.right)
+      || r.utilityGrowth.before.count < 1
+      || r.utilityGrowth.after.count !== r.utilityGrowth.before.count + 2) {
+    bad.push(`B5 utility right edge/count moved ${JSON.stringify(r.utilityGrowth)}`);
+  }
+  if (!(r.utilityGrowth.after.left < r.utilityGrowth.before.left - 1)) {
+    bad.push(`B6 utility growth did not move left ${JSON.stringify(r.utilityGrowth)}`);
+  }
+  const cardShape = r.primaryCards[0];
+  if (r.viewportWidth < 1000 || r.primaryCards.length !== 4 || !cardShape
+      || r.primaryCards.some((box) => !near(box.width, cardShape.width) || !near(box.height, cardShape.height))) {
+    bad.push(`B7 wide primary grid is not four equal cards ${JSON.stringify(r.primaryCards)}`);
+  }
+  if (!near(r.chargeCountScreenPx, 14, 0.35)) bad.push(`B8 wide charge count is ${r.chargeCountScreenPx}px, expected 14px`);
+  return bad;
+}
+
+function runSourceSelftest() {
+  const clean = sourceReceipt();
+  const plants = [
+    ['82 percent changes to 81', 'S1 ', (s) => ({ ...s, balance: s.balance.replace('availableWidthPct: 82', 'availableWidthPct: 81') })],
+    ['left stack stops consuming the percentage', 'S2 ', (s) => ({ ...s, css: s.css.replace('width: var(--hud-resource-available-pct);', 'width: 100%;') })],
+    ['Health moves off F', 'S3 ', (s) => ({ ...s, input: s.input.replace("defKey: 'f'", "defKey: 'x'") })],
+    ['first utility moves off H', 'S4 ', (s) => ({ ...s, input: s.input.replace("defKey: 'h'", "defKey: 'x'") })],
+    ['utility row anchors left', 'S5 ', (s) => ({ ...s, css: s.css.replace('justify-content: flex-end;\n  flex-direction: row;', 'justify-content: flex-start;\n  flex-direction: row;') })],
+    ['utility row stops flex growth', 'S6 ', (s) => ({ ...s, css: s.css.replace(
+      /(\.topbar\.combat-hud\.shared-hud \.hud-potions,\r?\n\.topbar\.combat-hud\.shared-hud \.hud-relics \{\r?\n  )display: flex;/,
+      '$1display: grid;',
+    ) })],
+    ['one primary card gets a fixed width', 'S7 ', (s) => ({ ...s, css: s.css.replace(
+      /(\.topbar\.combat-hud\.shared-hud \.hud-control-grid :is\(\.topbar-btn, \.flask-slot\) \{\r?\n  box-sizing: border-box;\r?\n  )width: var\(--tap-floor\); height: var\(--tap-floor\);/,
+      '$1width: 40px; height: var(--tap-floor);',
+    ) })],
+    ['wide charge count stays at narrow size', 'S8 ', (s) => ({ ...s, css: s.css.replace('font-size: calc(14px / var(--ui-zoom, 1));', 'font-size: calc(10px / var(--ui-zoom, 1));') })],
+  ];
+  let failed = 0;
+  const cleanBad = sourceFindings(clean);
+  if (cleanBad.length) { failed++; console.error(`FAIL clean source — ${cleanBad.join('; ')}`); }
+  else console.log('PASS clean source — eight approved seams present');
+  for (const [name, own, mutate] of plants) {
+    const got = sourceFindings(mutate(clean));
+    if (got.some((line) => line.startsWith(own))) console.log(`RED  ${name} — ${got.find((line) => line.startsWith(own))}`);
+    else { failed++; console.error(`MISS ${name} — ${got.join('; ') || 'no finding'}`); }
+  }
+  if (failed) process.exitCode = 1;
+  else console.log(`hud-potion-followup --source-selftest: OK — ${plants.length}/${plants.length} plants observed red`);
+}
+
+function cleanBrowserReceipt() {
+  return {
+    viewportWidth: 1200,
+    configuredAvailablePct: '82%',
+    appliedAvailablePct: 82,
+    chargeKeys: ['F', 'G'],
+    utilityKeys: ['H'],
+    utilityGrowth: {
+      before: { left: 1050, right: 1094, count: 1 },
+      after: { left: 954, right: 1094, count: 3 },
+    },
+    primaryCards: Array.from({ length: 4 }, () => ({ width: 44, height: 44 })),
+    chargeCountScreenPx: 14,
+  };
+}
+
+function runReceiptSelftest() {
+  const clean = cleanBrowserReceipt();
+  const plants = [
+    ['configured percentage moves', 'B1 ', (r) => ({ ...r, configuredAvailablePct: '81%' })],
+    ['applied percentage ignores config', 'B2 ', (r) => ({ ...r, appliedAvailablePct: 100 })],
+    ['Health and Mana swap keys', 'B3 ', (r) => ({ ...r, chargeKeys: ['G', 'F'] })],
+    ['first utility loses H', 'B4 ', (r) => ({ ...r, utilityKeys: [] })],
+    ['utility right edge moves', 'B5 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, right: 1140 } } })],
+    ['utility grows right', 'B6 ', (r) => ({ ...r, utilityGrowth: { ...r.utilityGrowth, after: { ...r.utilityGrowth.after, left: 1050 } } })],
+    ['one of four primary cards shrinks', 'B7 ', (r) => ({ ...r, primaryCards: r.primaryCards.map((box, i) => i === 3 ? { width: 40, height: 44 } : box) })],
+    ['wide charge count stays small', 'B8 ', (r) => ({ ...r, chargeCountScreenPx: 10 })],
+  ];
+  let failed = 0;
+  const cleanBad = receiptFindings(clean);
+  if (cleanBad.length) { failed++; console.error(`FAIL clean receipt — ${cleanBad.join('; ')}`); }
+  else console.log('PASS clean receipt — eight browser contracts hold');
+  for (const [name, own, mutate] of plants) {
+    const got = receiptFindings(mutate(structuredClone(clean)));
+    if (got.some((line) => line.startsWith(own))) console.log(`RED  ${name} — ${got.find((line) => line.startsWith(own))}`);
+    else { failed++; console.error(`MISS ${name} — ${got.join('; ') || 'no finding'}`); }
+  }
+  if (failed) process.exitCode = 1;
+  else console.log(`hud-potion-followup --receipt-selftest: OK — ${plants.length}/${plants.length} plants observed red`);
+}
+
+function connectCdp(wsUrl, timeoutMs = 15000) {
+  const ws = new WebSocket(wsUrl);
+  let nextId = 1;
+  const pending = new Map();
+  let closed = null;
+  const rejectAll = (error) => {
+    closed = closed || error;
+    for (const { reject, timer } of pending.values()) { clearTimeout(timer); reject(closed); }
+    pending.clear();
+  };
+  ws.addEventListener('message', (event) => {
+    const message = JSON.parse(event.data);
+    const row = pending.get(message.id);
+    if (!row) return;
+    pending.delete(message.id); clearTimeout(row.timer);
+    if (message.error) row.reject(new Error(message.error.message)); else row.resolve(message.result);
+  });
+  ws.addEventListener('close', () => rejectAll(new Error('CDP WebSocket closed')));
+  ws.addEventListener('error', () => rejectAll(new Error('CDP WebSocket error')));
+  return {
+    ready: new Promise((resolveReady, rejectReady) => {
+      ws.addEventListener('open', resolveReady, { once: true });
+      ws.addEventListener('error', rejectReady, { once: true });
+    }),
+    send(method, params = {}, sessionId) {
+      if (closed) return Promise.reject(closed);
+      const id = nextId++;
+      return new Promise((resolveSend, rejectSend) => {
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          rejectSend(new Error(`CDP timeout ${method}`));
+        }, timeoutMs);
+        pending.set(id, { resolve: resolveSend, reject: rejectSend, timer });
+        ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
+      });
+    },
+    close() { rejectAll(new Error('CDP WebSocket closed by tool')); ws.close(); },
+  };
+}
+
+const wait = (ms) => new Promise((resolveWait) => setTimeout(resolveWait, ms));
+
+const BROWSER_READ = `(() => {
+  const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
+  const box = (el) => { const r = el.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height }; };
+  const row = document.querySelector('.topbar.shared-hud .hud-resource-row');
+  const left = document.querySelector('.topbar.shared-hud .hud-left-stack');
+  const controls = document.querySelector('.topbar.shared-hud .hud-control-grid');
+  const gap = parseFloat(getComputedStyle(row).columnGap) * zoom;
+  const rowBox = box(row), leftBox = box(left), controlBox = box(controls);
+  const leftTrackWidth = controlBox.left - rowBox.left - gap;
+  const host = document.querySelector('.topbar.shared-hud .hud-potions');
+  const utility = [...host.querySelectorAll(':scope > .flask-slot')];
+  const beforeBox = box(host);
+  const clones = [];
+  for (let i = 0; i < 2; i++) { const clone = utility[0].cloneNode(true); clone.removeAttribute('data-flask-hotkey-slot'); host.appendChild(clone); clones.push(clone); }
+  const afterBox = box(host);
+  const afterCount = host.querySelectorAll(':scope > .flask-slot').length;
+  clones.forEach((clone) => clone.remove());
+  const primary = [...document.querySelectorAll('.topbar.shared-hud .hud-control-grid .topbar-btn, .topbar.shared-hud .hud-control-grid .hud-charge-flasks > .flask-slot')].map(box);
+  const chargeCount = document.querySelector('.topbar.shared-hud .flask-charge-count');
+  return {
+    viewportWidth: window.innerWidth,
+    configuredAvailablePct: getComputedStyle(document.documentElement).getPropertyValue('--hud-resource-available-pct').trim(),
+    appliedAvailablePct: leftTrackWidth > 0 ? leftBox.width / leftTrackWidth * 100 : null,
+    chargeKeys: [...document.querySelectorAll('.topbar.shared-hud .hud-charge-flasks > .flask-slot .flask-key')].map((el) => el.textContent.trim().toUpperCase()),
+    utilityKeys: utility.slice(0, 1).map((el) => (el.querySelector('.flask-key') || {}).textContent || '').map((v) => v.trim().toUpperCase()).filter(Boolean),
+    utilityGrowth: { before: { ...beforeBox, count: utility.length }, after: { ...afterBox, count: afterCount } },
+    primaryCards: primary,
+    chargeCountScreenPx: chargeCount ? parseFloat(getComputedStyle(chargeCount).fontSize) * zoom : null,
+  };
+})()`;
+
+async function runBrowserDoor() {
+  const sourceBad = sourceFindings(sourceReceipt());
+  if (sourceBad.length) {
+    sourceBad.forEach((line) => console.error(`FINDING ${line}`));
+    process.exitCode = 1;
+    return;
+  }
+  const browserPath = resolveBrowser();
+  if (!browserPath) {
+    console.error('hud-potion-followup: UNKNOWN — no Chrome/Chromium found');
+    process.exitCode = 2;
+    return;
+  }
+  const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')).href);
+  const served = await serve({ root: ROOT, port: 8481, open: false });
+  let launched = null;
+  let cdp = null;
+  try {
+    launched = await launchBrowser({ prefix: 'hud-potion-followup-', browser: browserPath, timeoutMs: 15000 });
+    cdp = connectCdp(launched.wsUrl);
+    await cdp.ready;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, sessionId);
+    await cdp.send('Runtime.enable', {}, sessionId);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false }, sessionId);
+    await cdp.send('Page.navigate', { url: `http://localhost:${served.port}/?shot=combat` }, sessionId);
+    const evaluate = async (expression) => {
+      const result = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId);
+      if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description || 'browser receipt threw');
+      return result.result.value;
+    };
+    const started = Date.now();
+    let reached = false;
+    while (Date.now() - started < 20000) {
+      if (await evaluate("document.querySelectorAll('.topbar.shared-hud .hud-charge-flasks .flask-slot').length === 2 && document.querySelectorAll('.topbar.shared-hud .hud-potions .flask-slot').length >= 1").catch(() => false)) { reached = true; break; }
+      await wait(150);
+    }
+    if (!reached) throw new Error('timeout waiting for two charge flasks and at least one utility potion');
+    const receipt = await evaluate(BROWSER_READ);
+    const bad = receiptFindings(receipt);
+    if (bad.length) {
+      bad.forEach((line) => console.error(`FINDING ${line}`));
+      process.exitCode = 1;
+    } else {
+      console.log('hud-potion-followup: OK — 8/8 checks passed.');
+    }
+  } catch (error) {
+    console.error(`hud-potion-followup: HARNESS — ${error.stack || error}`);
+    process.exitCode = 2;
+  } finally {
+    if (cdp) cdp.close();
+    if (launched) await launched.close();
+    await new Promise((resolveClose) => served.server.close(resolveClose));
+  }
+}
+
+if (process.argv.includes('--selftest') || process.argv.includes('--source-selftest')) runSourceSelftest();
+else if (process.argv.includes('--receipt-selftest')) runReceiptSelftest();
+else if (process.argv.includes('--browser')) await runBrowserDoor();
+else {
+  const findings = sourceFindings(sourceReceipt());
+  findings.forEach((finding) => console.error(`FAIL ${finding}`));
+  if (findings.length) {
+    console.log(`hud-potion-followup: ${findings.length} failure(s)`);
+    process.exitCode = 1;
+  } else {
+    console.log('hud-potion-followup: OK — 8 checks passed');
+  }
+}
