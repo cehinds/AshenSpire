@@ -158,6 +158,7 @@ const PX_TOL = 1.0;
 
 const ALL_SHAPES = [
   { tag: '1440x860', w: 1440, h: 860, d: 1, mobile: false },
+  { tag: '844x340', w: 844, h: 340, d: 1, mobile: false },
   { tag: '390x844', w: 390, h: 844, d: 3, mobile: true },
   { tag: '320x640', w: 320, h: 640, d: 3, mobile: true },
 ];
@@ -258,6 +259,11 @@ const READ = `(() => {
     lines: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
       .map((line) => [...line.querySelectorAll(':scope > .resunit .resbar')]
         .map((bar) => bar.dataset.res || null)),
+    lineBoxes: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
+      .map((line) => {
+        const b = line.getBoundingClientRect();
+        return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height };
+      }),
     topButtons: [...document.querySelectorAll('.topbar .hud-top .topbar-btn')].map((el) => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
@@ -449,11 +455,13 @@ function judgeCell(cell, mapR, comR, refTable) {
   for (const [screen, read, ids] of [['map', mapR, mapIds], ['combat', comR, comIds]]) {
     const flat = read.lines.flat();
     const onePerLine = read.lines.every((line) => line.length === 1);
-    if (!onePerLine || JSON.stringify(flat) !== JSON.stringify(ids)) {
-      fail(`FINDING P1V/vertical cell=${cell} screen=${screen} lines=${JSON.stringify(read.lines)} rows=${JSON.stringify(ids)} `
+    const renderedVertical = read.lineBoxes.length === read.lines.length
+      && read.lineBoxes.every((box, i, boxes) => i === 0 || box.top > boxes[i - 1].top + PX_TOL);
+    if (!onePerLine || JSON.stringify(flat) !== JSON.stringify(ids) || !renderedVertical) {
+      fail(`FINDING P1V/vertical cell=${cell} screen=${screen} lines=${JSON.stringify(read.lines)} boxes=${JSON.stringify(read.lineBoxes)} rows=${JSON.stringify(ids)} `
         + '— the canonical HUD must stack HP, MP, SP vertically, one resource per row; MP must be above SP, never beside it.');
     } else {
-      ok(`P1V/vertical ${cell} ${screen} — ${JSON.stringify(read.lines)}; one resource per row`);
+      ok(`P1V/vertical ${cell} ${screen} — ${JSON.stringify(read.lines)}; one rendered resource row below the prior row`);
     }
   }
 
@@ -856,6 +864,14 @@ async function selftest() {
       expectRed: /FINDING P1V\/vertical .*\[\["hp"\],\["mana","stamina"\]\]/,
     },
     {
+      // The supported short-wide composition must not turn three DOM rows into
+      // three rendered columns. The reader measures their real screen boxes.
+      name: 'short-wide lays the three resource rows out as columns',
+      file: 'styles/combat.css',
+      append: ":root[data-composition='short-wide'] .resbars[data-surface='main'] { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }",
+      expectRed: /FINDING P1V\/vertical cell=844x340\/.*boxes=/,
+    },
+    {
       // A SECOND COPY OF THE SHARED RENDERER. Membership-only comparison used
       // to print this literal doubled HUD inside its own green P1 line.
       name: 'the map mounts the shared resource HUD twice',
@@ -960,19 +976,18 @@ async function selftest() {
       expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
     },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: ten file-byte plants plus the clean
-  // re-run are eleven browser boots. The four argv plants below start no browser.
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: sixteen file-byte plants plus the
+  // clean re-run are seventeen browser boots. The four argv plants below start no browser.
   // The door population is ONE
-  // shape and TWO poses — 390x844, shipped and high — and the pair is chosen,
+  // shape and TWO poses — 844x340, shipped and high — and the pair is chosen,
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside
-  // FLOORED MP and SP with their dash (P4) and poise present in combat and
-  // absent on the map (P1), and `high` is the only cell where every trough asks
+  // FLOORED MP and SP with their dash (P4), and `high` is the only cell where every trough asks
   // for its whole track, which is what the PX_TOL plant needs to bite. Either alone
   // leaves a plant with nowhere to land. The DOOR is unnarrowed, which is the
   // axis the corpus is about.
   const code = await doorSelftest({
     tool: 'hudparity.mjs',
-    args: ['--only-shape', '390x844', '--only-pose', 'shipped,high', '--port', '8478'],
+    args: ['--only-shape', '844x340', '--only-pose', 'shipped,high', '--port', '8478'],
     plants,
     timeoutMs: 420000,
   });

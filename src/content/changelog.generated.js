@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-323",
+    "date": "2026-08-22",
+    "group": "2026-08-22",
+    "summary": "Map and combat share one compact player HUD",
+    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders.",
+    "build": "0.4.0.1077",
+    "pullRequest": 323,
+    "url": "https://github.com/cehinds/AshenSpire/pull/323"
+  },
+  {
     "id": "pr-317",
     "date": "2026-08-21",
     "group": "2026-08-21",

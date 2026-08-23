@@ -152,11 +152,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   //     means the same thing on both screens.
   //   · The `run` IS the view and the entity here, exactly as it is in
   //     tools/hybridstats.mjs — the readers take current/max off it and a row
-  //     whose reader returns null is ABSENT, never a lying 0/0 trough. That is
-  //     why POISE does not draw on the map: outside a fight there is no poise
-  //     meter, and the refusal path is the right answer rather than a bar with
-  //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
-  //     which excuses exactly this one row and reds on any other difference.
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. Poise is
+  //     model-surface-only on the combat character card, so it never enters
+  //     this shared main-surface plan on either screen.
   //   · the shared component writes the exact max/reference percentage; there
   //     is no screen-specific floor or post-layout correction.
   const resHost = app.querySelector('.map-header .resbars-host');

@@ -4354,14 +4354,6 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   gap: calc(2px / var(--ui-zoom, 1));
   padding-block: calc(3px / var(--ui-zoom, 1));
 }
-:root[data-composition='short-wide'] .resbars[data-surface='main'] {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.7fr) minmax(0, 1fr);
-  align-items: center; gap: calc(5px / var(--ui-zoom, 1));
-}
-:root[data-composition='short-wide'] .resbars[data-surface='main'] .resline {
-  width: auto; min-width: 0;
-}
 :root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
   flex-wrap: nowrap; overflow: hidden;
 }
@@ -35172,7 +35164,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f1b9b42c64';
+const SOURCE = '977c4ecf5d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35206,7 +35198,7 @@ const SOURCE = 'f1b9b42c64';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1075';
+const ORDINAL = '1077';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38812,11 +38804,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   //     means the same thing on both screens.
   //   · The `run` IS the view and the entity here, exactly as it is in
   //     tools/hybridstats.mjs — the readers take current/max off it and a row
-  //     whose reader returns null is ABSENT, never a lying 0/0 trough. That is
-  //     why POISE does not draw on the map: outside a fight there is no poise
-  //     meter, and the refusal path is the right answer rather than a bar with
-  //     nothing behind it. Measured and held by tools/hudparity.mjs P1,
-  //     which excuses exactly this one row and reds on any other difference.
+  //     whose reader returns null is ABSENT, never a lying 0/0 trough. Poise is
+  //     model-surface-only on the combat character card, so it never enters
+  //     this shared main-surface plan on either screen.
   //   · the shared component writes the exact max/reference percentage; there
   //     is no screen-specific floor or post-layout correction.
   const resHost = app.querySelector('.map-header .resbars-host');
@@ -42030,16 +42020,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
-    // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
-    // poise. Which rows those are is content/resources.js's business, not this
-    // screen's: this call is the whole of the main HUD's meter code and it did
-    // not change when the player's poise vessel woke (2026-08-14) — the meter
-    // arrived on the entity (engine/combat.js stamps it from the equipment
-    // threshold receipt) and the existing row simply started reading it.
-    // "Poise (very skinny bar) under the health bar", his words (D10.4). The
-    // vessel is REAL-BUT-EMPTY: cur is 0 because nothing deals Poise damage
-    // to players yet; the refusal path still guards the zero-threshold case
-    // (no meter → ABSENT, never a lying 0/0 trough).
+    // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
+    // content/resources.js's business, not this screen's. Player Poise belongs
+    // only on the combat character card's model surface; it is deliberately
+    // absent from this shared map/combat top HUD.
     const host = $('.topbar .resbars-host');
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
@@ -48320,6 +48304,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-323",
+    "date": "2026-08-22",
+    "group": "2026-08-22",
+    "summary": "Map and combat share one compact player HUD",
+    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders.",
+    "build": "0.4.0.1077",
+    "pullRequest": 323,
+    "url": "https://github.com/cehinds/AshenSpire/pull/323"
+  },
   {
     "id": "pr-317",
     "date": "2026-08-21",

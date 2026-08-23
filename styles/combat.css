@@ -885,14 +885,6 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   gap: calc(2px / var(--ui-zoom, 1));
   padding-block: calc(3px / var(--ui-zoom, 1));
 }
-:root[data-composition='short-wide'] .resbars[data-surface='main'] {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.7fr) minmax(0, 1fr);
-  align-items: center; gap: calc(5px / var(--ui-zoom, 1));
-}
-:root[data-composition='short-wide'] .resbars[data-surface='main'] .resline {
-  width: auto; min-width: 0;
-}
 :root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
   flex-wrap: nowrap; overflow: hidden;
 }

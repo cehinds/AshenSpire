@@ -423,16 +423,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
-    // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
-    // poise. Which rows those are is content/resources.js's business, not this
-    // screen's: this call is the whole of the main HUD's meter code and it did
-    // not change when the player's poise vessel woke (2026-08-14) — the meter
-    // arrived on the entity (engine/combat.js stamps it from the equipment
-    // threshold receipt) and the existing row simply started reading it.
-    // "Poise (very skinny bar) under the health bar", his words (D10.4). The
-    // vessel is REAL-BUT-EMPTY: cur is 0 because nothing deals Poise damage
-    // to players yet; the refusal path still guards the zero-threshold case
-    // (no meter → ABSENT, never a lying 0/0 trough).
+    // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
+    // content/resources.js's business, not this screen's. Player Poise belongs
+    // only on the combat character card's model surface; it is deliberately
+    // absent from this shared map/combat top HUD.
     const host = $('.topbar .resbars-host');
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
