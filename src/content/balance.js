@@ -252,6 +252,15 @@ export const balance = {
       main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },
       model: { scaleByMax: false },
     },
+    // Shared HUD presentation tokens. These are screen-pixel intentions;
+    // main.js projects them through --ui-zoom so Map and Combat consume the
+    // same answer. Component backgrounds are transparent by current design,
+    // while borders and the contents inside each panel remain visible.
+    hudPresentation: {
+      componentBackgroundOpacityPct: 0,
+      metadataFontPx: 11,
+      beltItemGapPx: 2,
+    },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
       gold: { hex: '#c9a227', rgb: '201, 162, 39' },

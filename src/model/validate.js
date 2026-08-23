@@ -691,6 +691,21 @@ export function validateContent(bundle) {
   // through a real boot; observed red at b277ec2 before this block existed.
   if (b.balance && b.balance.ui) {
     const ui = b.balance.ui;
+    const hp = ui.hudPresentation;
+    if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, and beltItemGapPx');
+    } else {
+      for (const [key, min, max] of [
+        ['componentBackgroundOpacityPct', 0, 100],
+        ['metadataFontPx', 8, 24],
+        ['beltItemGapPx', 0, 12],
+      ]) {
+        const value = hp[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)

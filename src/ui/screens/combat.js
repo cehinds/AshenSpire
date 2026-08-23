@@ -33,6 +33,7 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
+import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 
@@ -50,7 +51,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     <div class="combat">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
-      ${hudShellHtml({
+      ${hudShellHtml(runHudViewModel({
         place: 'combat',
         cinders: run.cinders,
         act: run.actNumber,
@@ -70,7 +71,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-      })}
+      }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>

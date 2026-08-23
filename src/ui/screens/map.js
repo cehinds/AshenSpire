@@ -38,6 +38,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
+import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -104,7 +105,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: this is the same component combat mounts. -->
-      ${hudShellHtml({
+      ${hudShellHtml(runHudViewModel({
         place: 'map',
         headerClass: 'map-header',
         cinders: run.cinders,
@@ -126,7 +127,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           menuHint: actionHint('menu'),
         },
         overlayHtml: legendHtml,
-      })}
+      }))}
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 

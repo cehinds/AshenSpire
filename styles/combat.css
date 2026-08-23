@@ -88,26 +88,27 @@
   min-width: 0;
   overflow: hidden;
   color: var(--muted);
-  font-size: 1rem;
+  font-size: calc(var(--hud-metadata-font-px) / var(--ui-zoom, 1));
+  line-height: 1;
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
-  display: inline-grid;
-  grid-template-columns: auto auto auto;
+  display: inline-flex;
   align-items: center;
+  flex-wrap: nowrap;
   font: inherit;
   letter-spacing: inherit;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before {
   content: '· SEED ' attr(data-seed);
-  grid-column: 2;
+  order: 2;
   margin-inline: 0.8rem;
 }
-.topbar.combat-hud.shared-hud .hud-run-meta .build-number { grid-column: 1; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-number { order: 1; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-number::before { content: '·'; margin-right: 0.8rem; }
-.topbar.combat-hud.shared-hud .hud-run-meta .build-source { grid-column: 3; }
+.topbar.combat-hud.shared-hud .hud-run-meta .build-source { order: 3; }
 
 @container run-header (max-width: 720px) {
   .hud-run-meta .build-source { display: none; }
@@ -117,8 +118,11 @@
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
   .hud-identity .portrait { width: 28px; height: 28px; font-size: 15px; }
 }
-@container run-header (max-width: 340px) {
+@container run-header (max-width: 430px) {
   .hud-run-meta .build-number { display: none; }
+}
+@media (max-width: 350px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
@@ -129,14 +133,14 @@
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
-.topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
+.topbar.combat-hud.shared-hud .hud-bottom { align-items: center; }
 .topbar.combat-hud.shared-hud .hud-vitals-panel,
 .topbar.combat-hud.shared-hud .hud-control-grid {
   box-sizing: border-box;
   height: var(--hud-quick-panel-size);
   border: 1px solid var(--line-soft);
   border-radius: calc(8px / var(--ui-zoom, 1));
-  background: color-mix(in srgb, var(--panel) 74%, transparent);
+  background: color-mix(in srgb, var(--panel) var(--hud-component-background-opacity), transparent);
   padding: var(--hud-panel-pad);
 }
 .topbar.combat-hud.shared-hud .hud-vitals-panel {
@@ -198,7 +202,7 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 0.5rem;
+  gap: calc(var(--hud-belt-item-gap-px) / var(--ui-zoom, 1));
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-potions {
@@ -221,8 +225,8 @@
    their real button retains the global tap floor. The flex row is end-anchored:
    adding a potion moves its left edge, never the HUD's right edge. */
 .topbar.combat-hud.shared-hud .hud-potions .flask-slot {
-  width: var(--tap-floor); height: var(--tap-floor);
-  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  width: var(--hud-utility-visual-size); height: var(--hud-utility-visual-size);
+  min-width: var(--hud-utility-visual-size); min-height: var(--hud-utility-visual-size);
   padding: 0; border: 0; background: transparent;
 }
 .topbar.combat-hud.shared-hud .hud-potions .flask-identity {

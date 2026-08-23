@@ -238,6 +238,17 @@ if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAv
 }
 document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
 document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
+const HUD_PRESENTATION = UI.hudPresentation || {};
+const projectHudToken = (key, min, max, cssName, unit) => {
+  const value = Number(HUD_PRESENTATION[key]);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`balance.ui.hudPresentation.${key} must be in [${min}, ${max}], got ${JSON.stringify(HUD_PRESENTATION[key])}`);
+  }
+  document.documentElement.style.setProperty(cssName, `${value}${unit}`);
+};
+projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
+projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
+projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
