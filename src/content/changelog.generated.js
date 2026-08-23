@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-327",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Map and combat now share the same three-row HUD",
+    "detail": "Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.",
+    "build": "0.4.0.1091",
+    "pullRequest": 327,
+    "url": "https://github.com/cehinds/AshenSpire/pull/327"
+  },
+  {
     "id": "pr-323",
     "date": "2026-08-22",
     "group": "2026-08-22",

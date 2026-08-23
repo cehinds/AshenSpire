@@ -3223,13 +3223,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    real-browser measurements at Text M and XL.
 
    WHY THE SELECTOR CARRIES `.relic`. combat.js gives the slot `relic
-   flask-slot`, `.topbar .relic` (combat.css:60) sizes it, and combat.css loads
+   flask-slot`, `.topbar .relic` sizes it, and combat.css loads
    AFTER ui.css — so `.topbar .flask-slot` ties on specificity and loses on
    order. `.relic.flask-slot` states the real thing: when an element is both,
-   the flask rule governs the box. combat.js is untouched on purpose — Sten is
-   live in that file's `useFlask` wiring tonight. */
+   the flask rule governs the box. The map's utility-potion button uses
+   `.mh-flask` inside this same topbar and reaches the same rule below. */
 .topbar .relic.flask-slot,
-.map-substrip .mh-flask {
+.topbar .mh-flask {
   min-height: var(--tap-floor);
   min-width: var(--tap-floor);
   width: auto;
@@ -3243,9 +3243,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   border-radius: 6px;
   background: var(--panel);
   border: 1px solid var(--gold);
-  /* IT OPENS A MENU. map.css said `cursor: default` on a <button> that mounts
-     the flask action menu — the one hint a mouse player gets, saying the
-     opposite of the truth. */
+  /* It opens the shared flask action menu on both screens. */
   cursor: pointer;
 }
 
@@ -3471,9 +3469,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 .combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-/* ---------- top bar: TWO ROWS (D10 wave 4) ----------
-   Row 1 — the resource bar stack, then the armament and menu buttons.
-   Row 2 — "the other hud items": portrait, name, flasks, relics.
+/* ---------- shared map/combat HUD: THREE ROWS ----------
+   TOP — character/run identity left, Cinders truly centred, progress/build right.
+   RESOURCE — HP/MP/SP + relics left; an equal-cell 2x2 action grid right.
+   BOTTOM — carried potions below the grid's healing + mana cards.
 
    Law 4, and this block is CONVERTED rather than carried: the old
    `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
@@ -3485,10 +3484,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
 }
-/* `.topbar` is SHARED SKIN and `.combat-hud` is the shared two-row HUD frame.
-   Combat and the map both put resource bars + Armoury + Menu in `.hud-top`, so
-   the same plan resolves against the same track at every viewport. Their
-   secondary chrome differs only in `.hud-bottom`; it cannot change bar ink. */
+/* `.topbar` is shared skin. `hudShellHtml` owns the solo map/combat frame; co-op
+   keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
@@ -3503,26 +3500,132 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-/* THE TOP ROW. The bar reference track is capped by the single data value
-   balance.ui.hudBars.main.maxViewportPct, projected by main.js to a viewport
-   custom property and divided back through UI zoom here. Floor + cinders sit
-   at the viewport centre; the action buttons remain at the far edge. */
-.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
-.topbar.combat-hud .resbars-host {
+/* Co-op's compact one-row header remains outside the shared shell. */
+.topbar.combat-hud:not(.shared-hud) .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
+.topbar.combat-hud:not(.shared-hud) .resbars-host {
   flex: 0 1 calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   min-width: 0;
 }
-.topbar.combat-hud .hud-center {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+.topbar.combat-hud.shared-hud .hud-top {
+  --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  display: grid;
+  gap: calc(5px / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity-copy .nm,
+.topbar.combat-hud.shared-hud .hud-context {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar.combat-hud.shared-hud .hud-context {
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+.topbar.combat-hud.shared-hud .hud-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
   letter-spacing: 0.08em; white-space: nowrap;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
+.topbar.combat-hud.shared-hud .hud-run-meta {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-resource-row,
+.topbar.combat-hud.shared-hud .hud-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1))) minmax(0, 1fr) auto;
+  gap: 1rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
+.topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
+.topbar.combat-hud.shared-hud .hud-bottom:has(.hud-potions:empty) { display: none; }
+.topbar.combat-hud.shared-hud .hud-left-stack {
+  grid-column: 1;
+  display: grid;
+  align-content: space-between;
+  gap: var(--hud-control-gap);
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host {
+  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid {
+  grid-column: 3;
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-floor));
+  grid-template-rows: repeat(2, minmax(var(--tap-floor), 1fr));
+  gap: var(--hud-control-gap);
+  align-self: stretch;
+}
 .topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
+/* The two semantic row hosts span the same columns, so Armoury/Menu/Health/Mana
+   are four equal cards without discarding either host's accessible grouping.
+   Both rows share the left stack's total height; the cards fill those cells
+   without changing any HP/MP/SP card dimension. */
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.hud-actions, .hud-charge-flasks) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-floor));
+  gap: var(--hud-control-gap);
+  margin-left: 0;
+}
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  box-sizing: border-box;
+  width: 100%; height: 100%;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0;
+}
+.topbar.combat-hud.shared-hud .hud-potions,
+.topbar.combat-hud.shared-hud .hud-relics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.topbar.combat-hud.shared-hud .hud-potions { justify-content: flex-end; }
+.topbar.combat-hud.shared-hud .hud-relics {
+  justify-content: flex-start;
+  margin-left: 0;
+}
+.topbar.combat-hud.shared-hud .hud-potions { grid-column: 3; }
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;
@@ -3531,10 +3634,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .combat.coop .topbar.combat-hud .resbars-host { min-width: 10rem; }
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
-.topbar.combat-hud .hud-bottom {
-  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
-  row-gap: calc(4px / var(--ui-zoom, 1));
-}
 .topbar .portrait {
   width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
@@ -4354,9 +4453,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   gap: calc(2px / var(--ui-zoom, 1));
   padding-block: calc(3px / var(--ui-zoom, 1));
 }
-:root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
-  flex-wrap: nowrap; overflow: hidden;
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(2px / var(--ui-zoom, 1));
 }
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-info-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-resource-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
 :root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
 :root[data-composition='short-wide'] .hand .card {
   width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
@@ -4472,17 +4574,21 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
-  /* Floor + Cinders stays truly viewport-centred. On the narrow shape it owns
-     the first ink row; the resource cards and actions reserve one measured
-     text line beneath it instead of painting through the absolute centre. */
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-top {
-    padding-top: calc(16px / var(--ui-zoom, 1));
+  /* Keep Cinders in the true centre column. Progress/build moves to its own
+     wrapped line, while resources and controls keep their left/right tracks. */
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
+    row-gap: calc(4px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-center { top: 0; }
-  /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
-     than pushing the seed label off the side; the fight label is hidden below
-     for the reason its own comment gives. */
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-bottom { gap: 0.8rem; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-run-meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    justify-content: center;
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-context { display: none; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
   :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
     grid-template-columns: minmax(0, 1fr) auto;
   }
@@ -4918,41 +5024,15 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    you are reading past — the fog map has far fewer of them, so they carry more. */
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
-/* ---------- map header — the combat HUD frame with map chrome below ---------- */
-/* Reuses `.topbar.combat-hud`, `.hud-top` and `.hud-bottom` from combat.css.
-   The top row is deliberately identical to combat — resource host, Armoury,
-   Menu — so one plan cannot cross the 16 px floor on only one screen. The map's
-   portrait, progress, seed, build stamp and legend live in the bottom row. */
+/* ---------- map header — the shared three-row HUD shell --------------------- */
+/* `hudShellHtml` owns the same row structure on map and combat. This file only
+   adds map-specific progress tone, legend placement and Display toggles. */
 .map-header {
   height: auto; min-height: 5.2rem; position: relative;
 }
-.map-header .who { min-width: 0; }
-.map-header .mh-stat { color: var(--parchment); font-size: 1.2rem; white-space: nowrap; }
-.map-header .cinders { color: var(--gold); }
-.map-header .mh-prog { color: var(--muted); letter-spacing: 0.04em; }
+.map-header .hud-act,
+.map-header .hud-floor { color: var(--muted); letter-spacing: 0.04em; }
 .map-header .mh-seed { color: var(--muted); font-family: monospace; font-size: 1.1rem; }
-
-/* Relic + flask sub-strip: a slim full-width row under the main bar. Flasks,
-   a divider, then relic chips; wraps to more rows as they accumulate. */
-.map-substrip {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; row-gap: 0.4rem;
-  padding: 0.4rem 1.4rem; background: var(--panel); border-bottom: 1px solid var(--line);
-  flex-shrink: 0;
-}
-.map-substrip[hidden] { display: none; }
-.map-substrip .mh-flasks { display: flex; gap: 0.5rem; font-size: 1.5rem; line-height: 1; }
-/* THE FLASK'S BOX IS NOT HERE — one home, `.relic.flask-slot, .map-substrip
-   .mh-flask` in ui.css beside `.flask-identity`, so the same flask is the same
-   control on the map as in the topbar. This line used to be the ONLY rule
-   `.mh-flask` had, and it declared `cursor: default` on a <button> that mounts
-   the flask action menu (map.js:170-193) — the one hint a mouse player gets,
-   saying the opposite of the truth. Deleted rather than moved. */
-.map-substrip .mh-div { width: 1px; align-self: stretch; min-height: 1.6rem; background: var(--line); margin: 0 0.4rem; }
-.map-substrip .mh-relics { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.map-substrip .relic {
-  width: 2.2rem; height: 2.2rem; border-radius: 5px; background: var(--bg-raise);
-  border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
-}
 .map-legend-pop {
   position: absolute; top: calc(100% + 0.4rem); right: 1.2rem; z-index: 20;
   background: var(--bg-raise); border: 1px solid var(--gold); border-radius: 8px;
@@ -4968,15 +5048,9 @@ body.map-compact .map-header .nm { display: none; }
 /* (compact drops the name; the bar track re-derives itself from the narrower
    row with no rule of its own — the 12rem `.hpbar` override that used to sit
    here was the second typed track and went with the first.) */
-body.map-compact .map-header .mh-stat { font-size: 1.1rem; }
-body.map-compact .map-substrip { padding: 0.2rem 1rem; }
-body.map-compact .map-substrip .relic { width: 1.9rem; height: 1.9rem; font-size: 1.1rem; }
+body.map-compact .map-header .hud-run-meta { font-size: 1.1rem; }
 body.hide-header-seed .map-header .mh-seed { display: none; }
-/* Relics toggle hides the relic chips (and divider) in the sub-strip; when there
-   are also no flasks, the whole strip collapses so there's no empty bar. */
-body.hide-header-relics .map-substrip .mh-relics,
-body.hide-header-relics .map-substrip .mh-div { display: none; }
-body.hide-header-relics .map-substrip.no-flasks { display: none; }
+body.hide-header-relics .map-header .hud-relics { display: none; }
 
 /* PROTOTYPE -> shipped (EldenSpire#23): the act map at a portrait phone's
    width. The narrow design baseline gives the app 433 local px instead of 629,
@@ -35171,7 +35245,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dd3f7f3e0c';
+const SOURCE = '48b13347d9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35205,7 +35279,7 @@ const SOURCE = 'dd3f7f3e0c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1078';
+const ORDINAL = '1091';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38696,10 +38770,10 @@ const { mountMapBoard } = require("src/ui/components/mapboard.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
-const { buildStampHtml } = require("src/ui/components/buildstamp.js");
-const { hudCenterHtml } = require("src/ui/components/hudmeta.js");
+const { hudShellHtml } = require("src/ui/components/hudmeta.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
+const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -38744,8 +38818,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
-  const hasRelics = run.relics.length > 0;
-  const hasFlasks = run.flasks.length > 0;
   const atEntrance = !run.mapNodeId;
   const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
   const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
@@ -38757,42 +38829,36 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         </span>
       </div>`
     : '';
+  const legendHtml = `<div class="map-legend-pop" hidden>
+    ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+  </div>`;
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <header class="topbar combat-hud map-header">
-        <!-- E9 / #254 - ONE HUD. The entire top row now has the same structure
-             as combat: the shared resource host, Armoury, Menu. This used to be
-             a hand-written div.bar.hpbar at its own 15rem width; its first E9
-             replacement reused the renderer but gave the map a full-width row,
-             so 320x640 could still show a different physical length for the
-             same percentage. Sharing the row geometry removes that last second HUD.
-             (No backticks here: this block lives inside a template literal.) -->
-        <div class="hud-top">
-          <div class="resbars-host"></div>
-          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}
-          <div class="hud-actions">
-            <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-            <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
-          </div>
-        </div>
-        <div class="hud-bottom">
-          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-          <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
-          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`}</span>
-          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-          ${buildStampHtml('map')}
-          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-        </div>
-        <div class="map-legend-pop" hidden>
-          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-        </div>
-      </header>
-      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
-        <div class="mh-flasks"></div>
-        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
-        <div class="relics mh-relics"></div>
-      </div>
+      <!-- ONE HUD SHELL: this is the same component combat mounts. -->
+      ${hudShellHtml({
+        place: 'map',
+        headerClass: 'map-header',
+        cinders: run.cinders,
+        act: run.actNumber,
+        actTotal: run.actNumber > 3 ? null : 3,
+        floor: run.floor,
+        floorTotal: map.floors,
+        seed: run.seedString,
+        identity: {
+          name: heroName,
+          classLabel: className.toUpperCase(),
+          glyph: cz.glyph || classGlyph(run.class),
+          tint: tintCss(cz.tint),
+          context: actTitle(run.actNumber),
+        },
+        controls: {
+          armouryId: 'open-armoury',
+          menuId: 'open-menu',
+          menuHint: actionHint('menu'),
+        },
+        overlayHtml: legendHtml,
+      })}
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
@@ -38838,6 +38904,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // green — this was only ever visible to an eye.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
     act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
+    showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
       current: run.mapNodeId || null,
@@ -38853,7 +38920,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     chromeHtml: hintBarHtml('map'),
   });
 
-  const strip = app.querySelector('.mh-relics');
+  const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
@@ -38863,12 +38930,44 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     strip.appendChild(el);
   }
 
-  const flaskWrap = app.querySelector('.mh-flasks');
+  const chargeWrap = app.querySelector('.hud-charge-flasks');
+  for (const kind of CHARGE_FLASK_KINDS) {
+    const def = chargeFlaskDefinition(registries, kind);
+    if (!def) continue;
+    const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'relic flask-slot flask-charge';
+    el.dataset.flaskKind = kind;
+    el.setAttribute('aria-disabled', String(current <= 0));
+    el.appendChild(flaskPresentation(def, { showName: false }));
+    const count = document.createElement('b');
+    count.className = 'flask-charge-count';
+    count.textContent = String(current);
+    el.appendChild(count);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Healing and mana flasks can only be used in combat',
+        canDrop: false,
+        dropReason: 'Charge flasks stay with the run',
+      });
+      mountFlaskActionMenu(el, { def, plan, onCancel: () => {}, onAction: () => {} });
+    });
+    chargeWrap.appendChild(el);
+  }
+
+  const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'mh-flask';
+    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
+    // unified-cursor exception in input.js. Keep utility flasks reachable by
+    // keyboard/gamepad Confirm as well as pointer click.
+    el.className = 'mh-flask flask-slot';
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {
@@ -39798,7 +39897,7 @@ function indexNodes(nodes) {
 }
 
 /**
- * mountMapBoard(host, { act, viewer, chromeHtml }) → board
+ * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
  *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
@@ -39824,6 +39923,8 @@ function indexNodes(nodes) {
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
  * of the viewport, so once the zoom bar stopped floating the two claimed one
  * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
+ * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
+ * omits it because that screen has no matching legend popover.
  *
  * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
  * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
@@ -39831,7 +39932,7 @@ function indexNodes(nodes) {
  * and a second listener living in here would be the third thing stepping the
  * zoom twice.
  */
-function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
+function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendControl = false }) {
   const byId = indexNodes(act.nodes);
   const nodes = Object.values(byId);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -39996,7 +40097,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
          cannot disagree. Still no backticks. -->
     <p class="map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
-         These three buttons used to be the last child of .map-scroll,
+         The zoom controls used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
          canvas. WHICH piece is a coincidence of shape x map zoom x pan offset x
          seed, and at 412x915 the coincidence was two map nodes a player could
@@ -40007,6 +40108,7 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
       <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
       <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
       <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
+      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');
@@ -41354,19 +41456,78 @@ Object.assign(module.exports, { flaskActionPlan });
 
 },
 "src/ui/components/hudmeta.js": function (module, exports, require) {
-// Shared top-row progress receipt for map and combat.
+// Shared map/combat HUD shell. Screens supply state and wire the controls; this
+// component owns the row order and every placement hook so the two surfaces
+// cannot drift into different HUDs again.
 const { esc } = require("src/ui/components/tooltip.js");
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 
-function hudCenterHtml({ cinders, floor, floorTotal = null }) {
-  const floorText = floorTotal == null ? `FLOOR ${floor}` : `FLOOR ${floor} / ${floorTotal}`;
-  return `<div class="hud-center" role="status" aria-label="${esc(`${floorText}; ${cinders} cinders`)}">
-    <span class="hud-floor">${esc(floorText)}</span>
-    <span class="hud-cinders">⛁ ${esc(cinders)}</span>
-  </div>`;
+function progressText(value, total, label) {
+  return total == null ? `${label} ${value}` : `${label} ${value} / ${total}`;
+}
+
+function hudShellHtml({
+  place,
+  headerClass = '',
+  cinders,
+  act,
+  actTotal = null,
+  floor,
+  floorTotal = null,
+  seed,
+  identity,
+  controls,
+  overlayHtml = '',
+} = {}) {
+  const actText = progressText(act, actTotal, 'ACT');
+  const floorText = progressText(floor, floorTotal, 'FLOOR');
+  const context = identity.context
+    ? `<span class="hud-context">${esc(identity.context)}</span>`
+    : '';
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}">
+    <div class="hud-top">
+      <div class="hud-info-row">
+        <div class="hud-identity">
+          <div class="portrait" style="border-color:${esc(identity.tint)}">${esc(identity.glyph)}</div>
+          <div class="hud-identity-copy">
+            <span class="nm">${esc(identity.name)} · ${esc(identity.classLabel)}</span>
+            ${context}
+          </div>
+        </div>
+        <div class="hud-center" role="status" aria-label="${esc(`${cinders} cinders`)}">
+          <span class="hud-cinders">⛁ ${esc(cinders)}</span>
+        </div>
+        <div class="hud-run-meta">
+          <span class="hud-act">${esc(actText)}</span>
+          <span class="hud-floor">${esc(floorText)}</span>
+          <span class="hud-seed mh-seed" title="Run seed">SEED ${esc(seed)}</span>
+          ${buildStampHtml(place)}
+        </div>
+      </div>
+      <div class="hud-resource-row">
+        <div class="hud-left-stack">
+          <div class="resbars-host"></div>
+          <div class="relics hud-relics" aria-label="Relics"></div>
+        </div>
+        <div class="hud-control-grid">
+          <div class="hud-actions">
+            <button class="topbar-btn" id="${esc(controls.armouryId)}" title="Armoury">⚒</button>
+            <button class="topbar-btn" id="${esc(controls.menuId)}" data-action-hint="menu"
+              title="${esc(controls.menuHint)}" aria-label="${esc(controls.menuHint)}">☰</button>
+          </div>
+          <div class="flasks hud-charge-flasks" aria-label="Healing and mana flasks"></div>
+        </div>
+      </div>
+      <div class="hud-bottom">
+        <div class="hud-potions${place === 'map' ? ' mh-flasks' : ''}" aria-label="Potions"></div>
+      </div>
+    </div>
+    ${overlayHtml}
+  </header>`;
 }
 
 
-Object.assign(module.exports, { hudCenterHtml });
+Object.assign(module.exports, { hudShellHtml });
 
 },
 "src/ui/components/resbars.js": function (module, exports, require) {
@@ -41636,8 +41797,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
-const { buildStampHtml } = require("src/ui/components/buildstamp.js");
-const { hudCenterHtml } = require("src/ui/components/hudmeta.js");
+const { hudShellHtml } = require("src/ui/components/hudmeta.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -41651,33 +41811,29 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let endTurnBeat = null;
   app.innerHTML = `
     <div class="combat">
-      <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
-           "the size of those bars to scale depending on max value ... with the
-            max size filling up the full top row, with the menu and armament
-            buttons at the end of that row, at the bottom of the hud should be
-            the other hud items."
-           Top row: the bar stack, centred floor/cinder receipt, and two buttons.
-           The stack cap comes from balance.ui.hudBars.main.maxViewportPct via
-           one root CSS variable, so map and combat share the same configurable
-           reference geometry without a duplicated number. -->
-      <header class="topbar combat-hud">
-        <div class="hud-top">
-          <div class="resbars-host"></div>
-          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor })}
-          <div class="hud-actions">
-            <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-            <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
-          </div>
-        </div>
-        <div class="hud-bottom">
-          <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
-          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <div class="flasks" style="display:flex;gap:6px"></div>
-          <div class="relics"></div>
-          <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
-          ${buildStampHtml('combat')}
-        </div>
-      </header>
+      <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
+           screen owns row order, placement hooks, or a second copy of chrome. -->
+      ${hudShellHtml({
+        place: 'combat',
+        cinders: run.cinders,
+        act: run.actNumber,
+        actTotal: run.actNumber > 3 ? null : 3,
+        floor: run.floor,
+        floorTotal: run.mapGraph?.floors ?? null,
+        seed: run.seedString,
+        identity: {
+          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
+          classLabel: registries.classes.get(run.class).name.toUpperCase(),
+          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
+          tint: tintCss(run.customization && run.customization.tint),
+          context: label,
+        },
+        controls: {
+          armouryId: 'combat-armoury',
+          menuId: 'combat-menu',
+          menuHint: actionHint('menu'),
+        },
+      })}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field">
         <div class="player-zone"></div>
@@ -42048,8 +42204,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     }
     // Flask selection is inert. Every slot opens one shared action plan; only
     // its explicit Use row may spend a charge or enter targeting mode.
-    const flasks = $('.topbar .flasks');
-    flasks.innerHTML = '';
+    const chargeFlasks = $('.topbar .hud-charge-flasks');
+    const potions = $('.topbar .hud-potions');
+    chargeFlasks.innerHTML = '';
+    potions.innerHTML = '';
     for (const kind of CHARGE_FLASK_KINDS) {
       const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
@@ -42064,7 +42222,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       el.appendChild(count);
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
-      flasks.appendChild(el);
+      chargeFlasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
@@ -42090,7 +42248,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
         + '<br><i>Open actions to Use or Inspect.</i>');
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
-      flasks.appendChild(el);
+      potions.appendChild(el);
     });
   }
 
@@ -48311,6 +48469,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-327",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Map and combat now share the same three-row HUD",
+    "detail": "Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.",
+    "build": "0.4.0.1091",
+    "pullRequest": 327,
+    "url": "https://github.com/cehinds/AshenSpire/pull/327"
+  },
   {
     "id": "pr-323",
     "date": "2026-08-22",

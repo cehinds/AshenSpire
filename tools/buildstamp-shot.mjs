@@ -47,6 +47,7 @@
 // Usage:
 //   node tools/buildstamp-shot.mjs [--root DIR] [--out DIR]
 //   node tools/buildstamp-shot.mjs --selftest     the known-bad corpus
+//   node tools/buildstamp-shot.mjs --source-selftest  shared-owner discriminator; no browser
 //
 // BOUNDARY: this proves the stamp puts pixels inside its own box, at two
 // viewport shapes, in one browser, on the SOURCE tree this server serves. It
@@ -266,6 +267,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
   // tool that hangs instead of ruling is the silent bucket in a new coat.
   if (args.includes('--selftest')) {
     const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs')], { stdio: 'inherit' });
+    process.exit(r.status == null ? 2 : r.status);
+  }
+  if (args.includes('--source-selftest')) {
+    const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs'), '--source-selftest'], { stdio: 'inherit' });
     process.exit(r.status == null ? 2 : r.status);
   }
 
