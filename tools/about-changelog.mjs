@@ -293,7 +293,8 @@ export const REFUSAL_SCOPE = [
   '  collapsed reference link — BUT ONLY WHERE THE REFERENCE LABEL MATCHES A',
   '  link-reference DEFINITION IN THE FILE, because `[a][b]` with nothing defined',
   '  is ordinary prose and GitHub renders it literally. Also refused, not',
-  '  bracket-counted: a shortcut reference on a DEFINITION FOUND ON ONE LINE ·',
+  '  bracket-counted: a shortcut reference on a DEFINITION FOUND ON ONE LINE',
+  '  OUTSIDE A TOP-LEVEL FENCED CODE BLOCK ·',
   '  raw HTML, comment and processing instruction (`<letter`, `</`, `<!`, `<?`).',
   'ANY FORM OUTSIDE THAT SUBSET REACHES THE PLAYER — verbatim if it is not',
   '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
@@ -361,9 +362,32 @@ export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 export function normalizeLinkLabel(label) {
   return label.replace(/[ \t\r\n]+/g, ' ').trim().toLowerCase();
 }
+function fencedCodeDelimiter(line) {
+  const match = line.match(/^ {0,3}(`{3,}|~{3,})(.*)$/);
+  if (!match) return null;
+  return { marker: match[1][0], length: match[1].length, tail: match[2] };
+}
 export function linkDefinitionLabels(markdown) {
   const labels = new Set();
+  let fence = null;
   for (const line of markdown.split(/\r?\n/)) {
+    // This collector only accepts physical definitions indented 0–3 spaces, so
+    // top-level fences are the matching block context it must exclude. A closer
+    // uses the same marker and at least the opener's run length; a backtick info
+    // string cannot itself contain a backtick. Those are the CommonMark fence
+    // facts needed to keep examples from becoming definitions here.
+    const delimiter = fencedCodeDelimiter(line);
+    if (fence) {
+      if (delimiter
+        && delimiter.marker === fence.marker
+        && delimiter.length >= fence.length
+        && /^[ \t]*$/.test(delimiter.tail)) fence = null;
+      continue;
+    }
+    if (delimiter && !(delimiter.marker === '`' && delimiter.tail.includes('`'))) {
+      fence = delimiter;
+      continue;
+    }
     const start = line.search(/^ {0,3}\[/);
     if (start < 0) continue;
     const open = line.indexOf('[', start);
@@ -1041,6 +1065,24 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. See [x](<#foo(`>)` for the rest.',
       expect: 'prose contains a link',
+    },
+    {
+      name: 'a link definition inside a fenced code block is only an example', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Keeps [docs] literal.\n\n   ```text\n[docs]: /guide\n````',
+      write: { detail: 'Docs only. Keeps [docs] literal.' },
+    },
+    {
+      name: 'a definition inside a tilde fence is only an example', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. Keeps [more] literal.\n\n~~~text\n[more]: /more\n~~~~',
+      write: { detail: 'Docs only. Keeps [more] literal.' },
+    },
+    {
+      name: 'a real definition after a closed fence is still collected', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. See [docs].\n\n```text\n[example]: /example\n```\n\n[docs]: /guide',
+      expect: 'prose contains a shortcut reference link',
     },
     // Same block, second form. A destination in `<…>` need not balance its parens,
     // so `matchingBracket` returned -1 and the link rule never ran. The report that
