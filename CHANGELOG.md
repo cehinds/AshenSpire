@@ -17,7 +17,13 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-08-22
+
+- **Map and combat share one compact player HUD** ([#323](https://github.com/cehinds/AshenSpire/pull/323), `0.4.0.1078`). HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.
+
 ## 2026-08-21
+
+- **The reward menu is written down, in the README and the changelog** ([#317](https://github.com/cehinds/AshenSpire/pull/317), `0.4.0.1000`). Docs only.
 
 - **The Armoury opens on your figure, and CARDS is one click away** ([#316](https://github.com/cehinds/AshenSpire/pull/316), `0.4.0.0983`). The card strip now arrives folded by default, on every shape, so the character you dressed is whole the moment the panel opens instead of being squeezed into a scrolling sliver by the cards beneath it. One click on CARDS opens the strip, another folds it again, and outside a fight whatever you leave it on is what the Armoury gives you next time — it arrives the way you left it. The Armoury you open mid-fight keeps no such memory: it starts folded every time, whatever you did to it last. On a phone nothing changes: that view never showed the figure and already opened folded.
 
@@ -27,7 +33,7 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 - **Your own music obeys the game's mix** ([#296](https://github.com/cehinds/AshenSpire/pull/296), `0.4.0.0930`). Point the game at a folder of your own tracks and a shrine now plays quieter than a boss, the way the built-in score always did — each context's level is one number, read in one place, for played-in files and the internal score alike.
 
-- **Rewards wait for a deliberate hold and leave untouched choices alone** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0929`). Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.
+- **Rewards are a menu you open, not a handful you're handed** ([#290](https://github.com/cehinds/AshenSpire/pull/290), `0.4.0.0929`). Cinders, cards, flasks, armaments and relics arrive as rows, and nothing is applied until you take it — so you can look before you collect, and Back leaves the menu exactly as you found it. A reward with nowhere to go — a full flask belt, a full armament bag — says so on its own row before you tap it, and it is the only kind of row that offers Skip. Continue is always pressable and says what it will do; **Settings → Advanced → Reward collection** decides which: Auto (the default) takes everything you did not skip, picking a card for you, while Manual means done — only what you chose comes along. Continue is a press-and-hold on mouse, touch, keyboard, and pad.
 
 ## 2026-08-20 — fifteen merges · 0.4.0.0850 → 0.4.0.0912
 

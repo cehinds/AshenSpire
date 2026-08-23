@@ -243,7 +243,10 @@ export const balance = {
     //
     // Flipping either boolean is a one-number data edit and needs no code.
     hudBars: {
-      main: { scaleByMax: true },
+      // The shared map/combat resource reference track may occupy at most this
+      // share of the visual viewport. main.js projects it to one CSS variable;
+      // the stylesheet carries no second numeric copy.
+      main: { scaleByMax: true, maxViewportPct: 40 },
       model: { scaleByMax: false },
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).

@@ -24,7 +24,7 @@ import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { figureSpec } from '../../model/loadout.js';
 import { trackGesture } from '../gesture.js';
-import { resourceBars, markFlooredBars } from '../components/resbars.js';
+import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { beatArmer } from '../components/holdconfirm.js';
@@ -33,6 +33,7 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudCenterHtml } from '../components/hudmeta.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -51,20 +52,22 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
             max size filling up the full top row, with the menu and armament
             buttons at the end of that row, at the bottom of the hud should be
             the other hud items."
-           Top row: the bar stack + the two buttons, nothing else. The stack is
-           flex:1 with min-width:0, so ITS TRACK IS DERIVED — row width minus the
-           buttons, minus padding and gaps. No width is typed anywhere, which is
-           what lets a bar's length be an honest statement about a maximum. -->
+           Top row: the bar stack, centred floor/cinder receipt, and two buttons.
+           The stack cap comes from balance.ui.hudBars.main.maxViewportPct via
+           one root CSS variable, so map and combat share the same configurable
+           reference geometry without a duplicated number. -->
       <header class="topbar combat-hud">
         <div class="hud-top">
           <div class="resbars-host"></div>
-          <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-          <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor })}
+          <div class="hud-actions">
+            <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
+            <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+          </div>
         </div>
         <div class="hud-bottom">
           <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
           <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <span class="cinders" style="color:var(--gold);font-size:13px">⛁ ${run.cinders}</span>
           <div class="flasks" style="display:flex;gap:6px"></div>
           <div class="relics"></div>
           <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
@@ -420,21 +423,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function renderTopbar() {
     const p = combat.player;
     const pv = dv(p);
-    // THE MAIN HUD BAR STACK — health, then whatever rows sit under it, then
-    // poise. Which rows those are is content/resources.js's business, not this
-    // screen's: this call is the whole of the main HUD's meter code and it did
-    // not change when the player's poise vessel woke (2026-08-14) — the meter
-    // arrived on the entity (engine/combat.js stamps it from the equipment
-    // threshold receipt) and the existing row simply started reading it.
-    // "Poise (very skinny bar) under the health bar", his words (D10.4). The
-    // vessel is REAL-BUT-EMPTY: cur is 0 because nothing deals Poise damage
-    // to players yet; the refusal path still guards the zero-threshold case
-    // (no meter → ABSENT, never a lying 0/0 trough).
+    // THE MAIN HUD BAR STACK — HP, MP, SP, vertically. Which rows appear is
+    // content/resources.js's business, not this screen's. Player Poise belongs
+    // only on the combat character card's model surface; it is deliberately
+    // absent from this shared map/combat top HUD.
     const host = $('.topbar .resbars-host');
     host.innerHTML = '';
     const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
     host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
-    markFlooredBars(host);
     const relics = $('.topbar .relics');
     relics.innerHTML = '';
     for (const rid of p.relicIds) {
