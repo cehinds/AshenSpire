@@ -88,9 +88,10 @@ const INLINE_REFUSED = [
 // (`[a](/x(y))`).
 //
 // BOUNDARY, and it is a real one: this is a SCANNER, NOT A PARSER. It does not know
-// code spans, so `` `arr[0](x)` `` is refused even though GitHub renders it as code
-// — an over-fire, in the safe direction, and it is printed in REFUSAL_SCOPE rather
-// than left for the author to discover.
+// code spans while it counts brackets, so `` `arr[0](x)` `` is refused even though
+// GitHub renders it as code, while `[the `]` guide](/guide)` walks past the scanner
+// and is rewritten by the later code-span flattener. Both directions are printed in
+// REFUSAL_SCOPE rather than leaving the unsafe half for the author to discover.
 function matchingBracket(text, start, open, close) {
   let depth = 0;
   for (let i = start; i < text.length; i++) {
@@ -116,22 +117,29 @@ export function findBracketedRefusal(text) {
   }
   return null;
 }
-// WHAT THIS TOOL REFUSES, AND WHAT IT LETS THROUGH. Printed on every exit path, so
-// no green from here can be read as wider than it is. Anything not on the refused
-// list reaches src/content/changelog.generated.js verbatim and is rendered to the
-// player as text by `esc()` in src/ui/screens/about.js.
+// WHAT THIS SCANNER REFUSES, FLATTENS, AND STILL DOES NOT RECOGNISE. Printed on
+// every exit path, so no green from here can be read as wider than it is. A form
+// outside the recognised subset may reach src/content/changelog.generated.js
+// verbatim or may be rewritten by a later flattener; `esc()` in
+// src/ui/screens/about.js renders either result as player-visible text.
 export const REFUSAL_SCOPE = [
-  'about-changelog REFUSES: image · inline link · full and collapsed reference link —',
-  '  all three with an EMPTY destination or a NESTED-BRACKET label, at any depth ·',
-  '  shortcut reference on a defined label · raw HTML, comment and processing',
-  '  instruction (`<letter`, `</`, `<!`, `<?`).',
+  'about-changelog REFUSES ONLY THESE SCANNER-RECOGNIZED SHAPES:',
+  '  image · inline link · full and collapsed reference link when their brackets and',
+  '  balanced-parenthesis destination delimiters are visible as plain text · shortcut',
+  '  reference with a flat label matching a defined label after lower-case/space',
+  '  normalization · tag-shaped raw HTML, comment and processing instruction',
+  '  (`<letter`, `</`, `<!`, `<?`).',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
   '  span delimited by a backtick run of ANY length.',
-  'A FORM ON NEITHER LIST SHIPS TO THE PLAYER VERBATIM. Open, measured, not fixed:',
-  '  non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities ·',
-  '  backslash escapes · a bare URL GitHub autolinks. None is present in CHANGELOG.md today.',
-  'IT SCANS, IT DOES NOT PARSE: a link or a `<tag`-shaped span inside a code span is',
-  '  refused too, and `a <b and b> c` reads as raw HTML. Over-fire, in the safe direction.',
+  'A FORM OUTSIDE THE SCANNER-RECOGNIZED SUBSET MAY SHIP VERBATIM OR BE REWRITTEN.',
+  'Known under-fire: a code span containing `]` in a link label can pass and be',
+  '  rewritten; an angle-bracket link destination can pass. Neither is present in',
+  '  CHANGELOG.md today.',
+  'Known over-fire: a link or a `<tag`-shaped span inside a code span is refused,',
+  '  and `a <b and b> c` reads as raw HTML.',
+  'Other open forms, absent from CHANGELOG.md today: non-ASCII label case folding',
+  '  (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML entities · backslash escapes · a bare',
+  '  URL GitHub autolinks.',
 ].join('\n');
 export function printRefusalScope() { console.log(REFUSAL_SCOPE); }
 // A link-reference definition: `[label]: https://…`, up to three spaces indented.
@@ -463,6 +471,35 @@ async function selftest() {
     if (gap.detail !== 'The row reads [no reward] (and stops).') throw new Error(`rewrote it to: ${gap.detail}`);
     console.log('PASS a bracketed phrase and a separated parenthesis is not read as a link');
   } catch (error) { console.error(`FAIL separated bracket and parenthesis refused or altered: ${error.message}`); process.exitCode = 1; }
+  // Expiring boundary checks: these known CommonMark spellings currently walk past
+  // the scanner. Green requires the runtime scope to say so. If a future parser
+  // starts refusing either form, the declaration becomes stale and this check goes
+  // red until the obsolete limitation is removed in the same act.
+  const scopeBoundaryCases = [
+    {
+      name: 'code-span content hides a link-label delimiter',
+      markdown: '# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). See [the `]` guide](/guide).\n',
+      marker: 'a code span containing `]` in a link label can pass',
+    },
+    {
+      name: 'angle-bracket link destination is outside the scanner subset',
+      markdown: '# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). See [the guide](<#foo(and(bar)>).\n',
+      marker: 'an angle-bracket link destination can pass',
+    },
+  ];
+  for (const boundary of scopeBoundaryCases) {
+    let accepted = false;
+    try { parseChangelog(boundary.markdown); accepted = true; } catch { /* expected after a future fix */ }
+    if (!accepted) {
+      console.error(`FAIL stale scanner boundary: ${boundary.name} is now refused`);
+      process.exitCode = 1;
+    } else if (!REFUSAL_SCOPE.includes(boundary.marker)) {
+      console.error(`FAIL undeclared scanner boundary: ${boundary.name}`);
+      process.exitCode = 1;
+    } else {
+      console.log(`BOUNDARY aligned: ${boundary.name}`);
+    }
+  }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
