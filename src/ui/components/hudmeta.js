@@ -47,8 +47,11 @@ export function hudShellHtml({
         </div>
       </div>
       <div class="hud-resource-row">
-        <div class="resbars-host"></div>
-        <div class="hud-control-stack">
+        <div class="hud-left-stack">
+          <div class="resbars-host"></div>
+          <div class="relics hud-relics" aria-label="Relics"></div>
+        </div>
+        <div class="hud-control-grid">
           <div class="hud-actions">
             <button class="topbar-btn" id="${esc(controls.armouryId)}" title="Armoury">⚒</button>
             <button class="topbar-btn" id="${esc(controls.menuId)}" data-action-hint="menu"
@@ -58,7 +61,6 @@ export function hudShellHtml({
         </div>
       </div>
       <div class="hud-bottom">
-        <div class="relics hud-relics" aria-label="Relics"></div>
         <div class="hud-potions${place === 'map' ? ' mh-flasks' : ''}" aria-label="Potions"></div>
       </div>
     </div>

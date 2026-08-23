@@ -4,8 +4,8 @@
 
 /* ---------- shared map/combat HUD: THREE ROWS ----------
    TOP — character/run identity left, Cinders truly centred, progress/build right.
-   RESOURCE — HP/MP/SP left, Armoury/Menu right, healing + mana below them.
-   BOTTOM — relics below SP, carried potions below the charge flasks.
+   RESOURCE — HP/MP/SP + relics left; an equal-cell 2x2 action grid right.
+   BOTTOM — carried potions below the grid's healing + mana cards.
 
    Law 4, and this block is CONVERTED rather than carried: the old
    `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
@@ -42,6 +42,7 @@
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-top {
+  --hud-control-gap: calc(4px / var(--ui-zoom, 1));
   display: grid;
   gap: calc(5px / var(--ui-zoom, 1));
   min-width: 0;
@@ -100,30 +101,51 @@
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;
   grid-template-columns: minmax(0, calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1))) minmax(0, 1fr) auto;
-  align-items: start;
   gap: 1rem;
   min-width: 0;
 }
-.topbar.combat-hud.shared-hud .resbars-host {
+.topbar.combat-hud.shared-hud .hud-resource-row { align-items: stretch; }
+.topbar.combat-hud.shared-hud .hud-bottom { align-items: start; }
+.topbar.combat-hud.shared-hud .hud-bottom:has(.hud-potions:empty) { display: none; }
+.topbar.combat-hud.shared-hud .hud-left-stack {
   grid-column: 1;
+  display: grid;
+  align-content: space-between;
+  gap: var(--hud-control-gap);
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host {
   width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   min-width: 0;
 }
-.topbar.combat-hud.shared-hud .hud-control-stack {
+.topbar.combat-hud.shared-hud .hud-control-grid {
   grid-column: 3;
   display: grid;
-  justify-items: end;
-  gap: calc(4px / var(--ui-zoom, 1));
+  grid-template-columns: repeat(2, var(--tap-floor));
+  grid-template-rows: repeat(2, minmax(var(--tap-floor), 1fr));
+  gap: var(--hud-control-gap);
+  align-self: stretch;
 }
 .topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
-/* These are one paired action group, so their icon glyphs do not get to choose
-   two subtly different boxes. Keep both square at the shared ergonomic floor. */
-.topbar.combat-hud.shared-hud .hud-actions .topbar-btn {
-  width: var(--tap-floor); height: var(--tap-floor);
+/* The two semantic row hosts span the same columns, so Armoury/Menu/Health/Mana
+   are four equal cards without discarding either host's accessible grouping.
+   Both rows share the left stack's total height; the cards fill those cells
+   without changing any HP/MP/SP card dimension. */
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.hud-actions, .hud-charge-flasks) {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-floor));
+  gap: var(--hud-control-gap);
+  margin-left: 0;
 }
-.topbar.combat-hud.shared-hud .hud-charge-flasks,
+.topbar.combat-hud.shared-hud .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  box-sizing: border-box;
+  width: 100%; height: 100%;
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0;
+}
 .topbar.combat-hud.shared-hud .hud-potions,
 .topbar.combat-hud.shared-hud .hud-relics {
   display: flex;
@@ -131,10 +153,8 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.topbar.combat-hud.shared-hud .hud-charge-flasks,
 .topbar.combat-hud.shared-hud .hud-potions { justify-content: flex-end; }
 .topbar.combat-hud.shared-hud .hud-relics {
-  grid-column: 1;
   justify-content: flex-start;
   margin-left: 0;
 }
@@ -1099,9 +1119,9 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     justify-content: center;
   }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-context { display: none; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: 0.5rem; }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-actions { gap: 0.5rem; }
   :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
     grid-template-columns: minmax(0, 1fr) auto;
   }
