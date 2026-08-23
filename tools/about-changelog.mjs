@@ -150,7 +150,23 @@ function matchingBracket(text, start, open, close) {
   }
   return -1;
 }
-export function findBracketedRefusal(raw) {
+// A REFERENCE LINK IS ONLY A LINK IF ITS LABEL IS DEFINED, AND THIS BRANCH USED TO
+// SKIP THAT QUESTION. `Supports [keyboard][gamepad] input` — no definition anywhere
+// in the file — renders LITERALLY on GitHub and reads fine in About, and the tool
+// REFUSED it. That is not a leak and no scope line excuses it: it is a false RED
+// that stops a receipt author writing correct English. YOU CANNOT DECLARE YOUR WAY
+// OUT OF REFUSING HONEST INPUT.
+//
+// Codex's finding, and the fix is the machinery the SHORTCUT path has had since
+// 1caf887 — consult the collected definition labels — so nothing new is parsed.
+// The full form `[text][label]` is looked up on `label`; the COLLAPSED form
+// `[text][]` on the link text, which is what CommonMark does.
+//
+// The lookup reads the label out of the AUTHORED text, never the mask. That is the
+// :246 lesson from an hour earlier: the definitions are collected from the authored
+// line, so comparing a masked use against an authored definition silently misses.
+// The mask is length-preserving, so the same indices address both.
+export function findBracketedRefusal(raw, labels = new Set()) {
   const text = maskCodeSpans(raw);
   for (let i = 0; i < text.length; i++) {
     if (text[i] === '\\') { i++; continue; }
@@ -161,8 +177,12 @@ export function findBracketedRefusal(raw) {
       && (matchingBracket(text, label + 1, '(', ')') >= 0 || angleDestination(text, label + 1))) {
       return text[i - 1] === '!' ? 'an image' : 'a link';
     }
-    if (text[label + 1] === '[' && matchingBracket(text, label + 1, '[', ']') >= 0) {
-      return 'a reference-style link';
+    if (text[label + 1] === '[') {
+      const close = matchingBracket(text, label + 1, '[', ']');
+      if (close >= 0) {
+        const reference = raw.slice(label + 2, close) || raw.slice(i + 1, label);
+        if (labels.has(normalizeLinkLabel(reference))) return 'a reference-style link';
+      }
     }
   }
   return null;
@@ -178,8 +198,10 @@ export const REFUSAL_SCOPE = [
   '  `]` is found by COUNTING depth (any depth, backslash escapes skipped), followed',
   '  IMMEDIATELY by `](` + a destination that is paren-balanced or angle-delimited',
   '  `<…>`, EMPTY included — image, inline link — or by `][label]` — full and',
-  '  collapsed reference link. Also refused, not bracket-counted: a shortcut',
-  '  reference whose label matches a link-reference DEFINITION FOUND ON ONE LINE ·',
+  '  collapsed reference link — BUT ONLY WHERE THE REFERENCE LABEL MATCHES A',
+  '  link-reference DEFINITION IN THE FILE, because `[a][b]` with nothing defined',
+  '  is ordinary prose and GitHub renders it literally. Also refused, not',
+  '  bracket-counted: a shortcut reference on a DEFINITION FOUND ON ONE LINE ·',
   '  raw HTML, comment and processing instruction (`<letter`, `</`, `<!`, `<?`).',
   'ANY FORM OUTSIDE THAT SUBSET REACHES THE PLAYER — verbatim if it is not',
   '  recognised, or imperfectly flattened if it is. THAT INCLUDES FURTHER CommonMark',
@@ -254,7 +276,7 @@ export function linkDefinitionLabels(markdown) {
   return labels;
 }
 export function flattenInline(text, where, labels = new Set()) {
-  const bracketed = findBracketedRefusal(text);
+  const bracketed = findBracketedRefusal(text, labels);
   if (bracketed) {
     throw new Error(`${where}: prose contains ${bracketed}, which the in-game changelog cannot render — write it in words`);
   }
@@ -565,6 +587,17 @@ async function selftest() {
     if (gap.detail !== 'The row reads [no reward] (and stops).') throw new Error(`rewrote it to: ${gap.detail}`);
     console.log('PASS a bracketed phrase and a separated parenthesis is not read as a link');
   } catch (error) { console.error(`FAIL separated bracket and parenthesis refused or altered: ${error.message}`); process.exitCode = 1; }
+  // A reference-style SHAPE with NO definition behind it is ordinary English and
+  // GitHub renders it literally. This is the positive that guards the narrowing —
+  // the three reference PLANTS all supply a definition, so they would still be
+  // caught by a branch that refused unconditionally, and only this can tell.
+  try {
+    const [full] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Supports [keyboard][gamepad] input.\n');
+    if (full.detail !== 'Supports [keyboard][gamepad] input.') throw new Error(`rewrote it to: ${full.detail}`);
+    const [collapsed] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Supports [keyboard][] input.\n');
+    if (collapsed.detail !== 'Supports [keyboard][] input.') throw new Error(`rewrote the collapsed form to: ${collapsed.detail}`);
+    console.log('PASS a reference-style shape with NO definition is prose, not a link');
+  } catch (error) { console.error(`FAIL undefined reference shape refused or altered: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
   // by a child process through `--probe-source`, so the refusal is exercised from
