@@ -1354,6 +1354,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentPoolDeficits: run.equipmentPoolDeficits,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1461,9 +1462,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  for (const field of ['hp', 'mana', 'stamina']) {
+    run[field] = combat.player[field];
+    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
+    run[maxField] = combat.player[maxField];
+  }
+  run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
-  stampDeck(registries, run);
+  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -1475,9 +1482,6 @@ function onCombatEnd(result, combat, enc) {
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
 
-  run.hp = combat.player.hp;
-  run.mana = combat.player.mana;
-  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 

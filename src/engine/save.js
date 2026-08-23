@@ -452,7 +452,9 @@ export function createSaveManager(storage) {
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        if (needsEquipmentStamp || needsCarrierStamp) stampDeck(registries, run);
+        if (needsEquipmentStamp || needsCarrierStamp) {
+          stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false });
+        }
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {
