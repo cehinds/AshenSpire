@@ -40,6 +40,7 @@ import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
+import { armouryUiProblems } from './equipmentUi.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -281,6 +282,9 @@ export function validateContent(bundle) {
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
     err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
   } else {
+    for (const problem of armouryUiProblems(equipment.armouryUi)) {
+      err(problem.path, problem.message);
+    }
     // Player Poise is authored on every equipment row even though it has no
     // combat consumer yet. Missing data must not silently normalize to zero:
     // the receipt is truthful only when every worn source says its number.

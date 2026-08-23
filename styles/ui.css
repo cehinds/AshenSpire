@@ -2141,10 +2141,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
 .ec-name { font-size: 1.3rem; }
 .ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
-.ec-tags { display: flex; gap: 0.3rem; }
+.ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .ec-tags em, .ef-tags em {
   font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
   color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+}
+.ec-tags .ec-equipped {
+  color: var(--equip-equipped-tag-color, var(--gold));
+  border-color: var(--equip-equipped-tag-color, var(--line-soft));
 }
 .ef-tags em.none { color: var(--muted); border-color: var(--line); }
 .ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
@@ -2157,12 +2161,51 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    face-shaped card the box the button-shaped one already had, and hand the
    face's own padding back to the card so the two spellings look identical —
    they are one markup (pieceChipHtml) and they must not become two looks. */
-.ep-list .disc-faces { flex-direction: column; gap: 0.5rem; }
+.ep-list .disc-faces { flex-direction: column; gap: 0; }
 .ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
-.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face { border-color: var(--gold); }
-.ep-list .disc-reveal { width: 100%; }
+.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
+.ep-list .disc-face[data-reveal='open'] .inventory-face {
+  border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
+}
+.ep-list .disc-reveal {
+  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 3px 3px;
+}
 .ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* The no-slot Inventory uses the same one-face/one-reveal disclosure as the
+   hand picker. Its folded grammar is deliberately text-only: name, category,
+   count, and an equipped tag when applicable. */
+.inventory-face {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center; gap: 0.7rem; width: 100%; min-height: var(--tap-floor);
+  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: rgba(10, 8, 6, 0.32); color: var(--parchment);
+}
+.inventory-name { min-width: 0; font-size: 1.2rem; }
+.inventory-category, .inventory-count {
+  color: var(--muted); font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.inventory-equipped {
+  color: var(--equip-equipped-tag-color, var(--gold));
+  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
+  padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
+}
+.inventory-detail { display: grid; grid-template-columns: minmax(8rem, 28%) 1fr; gap: 1rem; align-items: start; }
+.inventory-model {
+  min-height: 9rem; display: grid; place-items: center;
+  border: 1px solid var(--line-soft); background: rgba(10, 8, 6, 0.35); font-size: 4rem;
+}
+.inventory-model img { width: 100%; height: 10rem; object-fit: contain; }
+.inventory-information { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
+.inventory-information h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+.inventory-information p { line-height: 1.45; }
+.inventory-kind { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.95rem; }
+.inventory-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.inventory-tags em {
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px;
+  padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
+}
 
 /* "un equip in red". `.danger` is this file's existing word for red (see
    `.subtle.danger` above) and it is reused rather than joined by a second
@@ -2181,43 +2224,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
-/* THE GRIP — the second element of Constantine's two-element ruling
-   (2026-08-21). It carries the hold and nothing else; the card above it keeps
-   its click and the `.ep-equip` inside the opened pane keeps its click.
-
-   IT IS THIN AND IT IS DASHED ON PURPOSE. This picker opens into a strip about
-   125 px tall on the shape this tree photographs (1200x730), so every row this
-   list gains is a row the player has to scroll for. The grip is the least ink
-   that can still be a target: one line, no card art, dashed so it reads as a
-   handle rather than as a second item.
-
-   THE FILL IS NOT DEFINED HERE. `armHold` adds `.beat-hold`, and that rule
-   (further up this file) already owns the progress paint, the `--hold` width
-   and the `.hold-hint` word. A second fill here would be the second copy. */
-.ep-hold {
-  /* A HOLD TARGET BELOW THE TAP FLOOR IS NOT A HOLD TARGET. The grip drew at
-     19 px tall on its own text — 43% of `--tap-floor` — and a press-and-hold is
-     the most thumb-shaped gesture in this game. This is the line that makes the
-     ink cost real (24 px per candidate becomes 49), and it is the right side of
-     that trade: a target a thumb misses is a control that does not exist. */
-  min-height: var(--tap-floor);
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 0.3rem 0.8rem;
-  border: 1px dashed var(--line-soft);
-  background: none;
-  color: var(--muted);
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-.ep-hold:hover { border-color: var(--gold); color: var(--parchment); }
-.ep-hold.danger { border-color: var(--blood); color: var(--ember); }
-.ep-hold.locked { opacity: 0.45; cursor: not-allowed; }
-
+.armoury-inventory,
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
@@ -2478,6 +2485,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
+:root[data-layout='narrow'] .inventory-face { grid-template-columns: minmax(0, 1fr) auto auto; }
+:root[data-layout='narrow'] .inventory-equipped { grid-column: 1 / -1; justify-self: start; }
+:root[data-layout='narrow'] .inventory-detail { grid-template-columns: 1fr; }
+:root[data-layout='narrow'] .inventory-model { min-height: 7rem; }
+:root[data-layout='narrow'] .inventory-model img { height: 8rem; }
 /* The figure has a fixed authored width in a ROW; in a column that width is just
    a cap, and 100% lets it use the phone. Height stays authored so the sprite
    keeps its proportions.

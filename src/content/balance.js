@@ -704,7 +704,7 @@ export const balance = {
     },
     roleSources: {
       attack: [{ slot: 'rightHand' }],
-      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
       technique: [{ slot: 'rightHand' }],
     },
     unarmedProfiles: {

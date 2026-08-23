@@ -17,11 +17,13 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
-  ownership, openedSets, visibleSets, rungFor, setCellState,
+  canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  ownership, openedSets, visibleSets, rungFor, setCellState, slotHand,
 } from '../../model/loadout.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
-import { renderCard } from '../components/card.js';
+import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
+import { equippedTagColor } from '../../model/equipmentUi.js';
+import { renderCard, relicText } from '../components/card.js';
 import { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
@@ -32,7 +34,6 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
 
 const CFG = () => balance.equipment;
 
@@ -163,6 +164,14 @@ const REGIONS = [
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory',
+    sel: '.armoury-inventory',
+    count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
+      .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
+    unit: 'item',
   },
   {
     id: 'cards',
@@ -382,11 +391,63 @@ function pieceChip(registries, piece, { selected }) {
 }
 
 /** The same card as phrasing content, for use INSIDE the disclosure face. */
-function pieceFace(registries, piece, { selected }) {
+function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   const el = document.createElement('span');
   el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.innerHTML = pieceChipHtml(registries, piece);
+  if (equippedLabel) {
+    const tags = el.querySelector('.ec-tags');
+    const badge = document.createElement('em');
+    badge.className = 'ec-equipped';
+    badge.textContent = equippedLabel;
+    tags.appendChild(badge);
+  }
   return dropArtOnError(el);
+}
+
+function inventoryFace(row) {
+  const el = document.createElement('span');
+  el.className = 'inventory-face';
+  el.dataset.inventoryItem = row.key;
+  el.dataset.itemCategory = row.category;
+  el.dataset.itemCount = String(row.count);
+  const equipped = row.equippedLabels.length
+    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
+      ? 'Equipped'
+      : `Equipped: ${row.equippedLabels.join(' / ')}`)
+    : '';
+  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + `<span class="inventory-category">${esc(row.category)}</span>`
+    + `<span class="inventory-count">×${row.count}</span>`
+    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
+  return el;
+}
+
+function inventoryReveal(registries, row) {
+  const el = document.createElement('div');
+  el.className = 'inventory-detail';
+  const item = row.item;
+  let art = '';
+  if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
+    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+  } else if (item.artAsset) {
+    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+  } else {
+    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+  }
+  const description = row.category === 'Relic'
+    ? relicText(item, registries)
+    : (item.blurb || item.textTemplate || 'No additional information.');
+  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
+  el.innerHTML = `<div class="inventory-model">${art}</div>`
+    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
+    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
+    + `<p>${esc(description)}</p>`
+    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
+    + '</div>';
+  const image = el.querySelector('img');
+  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
+  return el;
 }
 
 /**
@@ -423,17 +484,6 @@ export function mountEquipment(host, {
   // below reads `inCombat` — a second name for the same fact is the defect this
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
-  // EVERY ARMED GRIP, SO EVERY ARMED GRIP CAN BE PUT DOWN. `armHold` adds a
-  // window-level keydown listener (its Escape abort) that only `disarm()`
-  // removes, and `draw()` below replaces the whole subtree — so without this
-  // list every equip would leave one live listener per candidate behind,
-  // forever, and nothing on the page would look wrong. A graceful leak.
-  //
-  // MEASURED, NOT ASSERTED, because a counterfactual in a comment is a claim.
-  // `getEventListeners(window).keydown` over seven picker opens on the map
-  // mount: 3 with no grip, 4 with one — and with this line removed, 3 -> 13.
-  // With it, back to 3. Flat.
-  const heldGrips = [];
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -520,27 +570,14 @@ export function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
   wrap.className = 'modal-veil armoury-overlay';
+  const customEquippedTagColor = equippedTagColor(eq.armouryUi);
+  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
 
-  // ONE TEARDOWN HOME, AND THAT IS THE WHOLE FIX. Everything this mount arms
-  // OUTSIDE its own subtree is put down HERE, because `close()` is the only act
-  // every exit path runs — the ✕, the backdrop tap, Escape, and a caller's own
-  // `close()`. `draw()` drains the grips too, and must: it replaces the subtree
-  // they are bound to. But a close runs NO draw, so the last render's grips were
-  // dying with their elements and keeping their listeners.
-  //
-  // MEASURED, BOTH HALVES, `getEventListeners` over six open→picker→close-by-✕
-  // cycles, map mount, 1200x730, real Chromium over browser.mjs's CDP path:
-  //   window   keydown  3 → 4,5,6,7,8,9   ONE PER CYCLE — every grip `armHold`
-  //            armed and only `draw()` drained. MINE, and Codex found it.
-  //   document keydown  0 → 1,2,3,4,5,6   the Escape handler below, which
-  //            removed itself on the Escape path only. NOT MINE: the same probe
-  //            against dev 3926a68, where no grip exists, reads 0 → 1..6 too.
-  //            Repaired in the same act because it is the same disease and this
-  //            is now the one place that answers it.
-  // After this, both are flat at 3 and 0 — A8 below is that measurement as a check.
+  // One teardown home for the listener this mount owns outside its subtree.
+  // The 2026-08-23 disclosure correction removed the hold grips and their
+  // window listeners; Escape still has to leave through every close road.
   const close = () => {
-    while (heldGrips.length) heldGrips.pop()();
     document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
@@ -716,7 +753,7 @@ export function mountEquipment(host, {
     // each repeating it is a wall, and the chips still answer a tap individually
     // through refuses(), which is the property that actually failed on his phone.
     const seal = canEquip(registries, picking.slotId, { inCombat });
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+    box.innerHTML = '<h4>Inventory</h4>'
       + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
       + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
@@ -770,10 +807,18 @@ export function mountEquipment(host, {
     // ("the card should be the button for compare and stats"). The face opens;
     // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
-    // The hold and the button must run the SAME closure — see `act` below.
-    const entryAct = new Map();
+    const equippedHands = (pieceId) => eq.slots
+      .filter((candidate) => slotHand(candidate))
+      .filter((candidate) => (run.loadout.sets[candidate.id] || []).some((id) => id === pieceId))
+      .map((candidate) => candidate.label);
     const entries = eligible(slot).map((piece) => {
       const equipped = piece.id === current;
+      const hands = [...new Set(equippedHands(piece.id))];
+      const moving = !equipped && hands.length > 0;
+      const candidatePieceId = equipped ? null : piece.id;
+      const actionLabel = equipped
+        ? 'Unequip'
+        : `${moving ? 'Move' : 'Equip'} to ${slot.label}`;
       const body = document.createElement('div');
       body.className = 'ep-body';
       // `meta` is handed over because the swap-price rows are priced with the
@@ -781,10 +826,13 @@ export function mountEquipment(host, {
       // price them with the shipping default and read as plausible — the row
       // carries the rule it used (`ruleId`) so that stays readable either way.
       const comparison = equipmentSurfaceReceipt(registries, run, {
-        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: candidatePieceId },
         meta,
       }).candidate;
-      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      const transition = equipTransitionReceipt(
+        registries, run.loadout, picking.slotId, picking.setIndex, candidatePieceId
+      );
+      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison, { expanded: true }));
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -795,293 +843,57 @@ export function mountEquipment(host, {
       // Unequip in the ordinary colour satisfies half his sentence.
       btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
       btn.dataset.act = equipped ? 'unequip' : 'equip';
-      btn.textContent = equipped ? 'Unequip' : 'Equip';
-      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
-      // a hold on the card AND a button in the opened pane; two copies of
-      // `equipPiece(...)` is two chances for the roads to disagree about what
-      // "equip" means, which is the second copy this seat exists to refuse.
+      btn.textContent = actionLabel;
+      // One visible action, inside the open card. The 2026-08-23 correction
+      // removed the always-visible hold shortcut so a folded item is one row,
+      // not a row followed by a second action-shaped row.
       const act = () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
-          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+        const changed = equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+          candidatePieceId, owned(), { inCombat, attributes: run.attributes });
+        if (!changed) {
+          notice = `${actionLabel} was refused. The loadout was not changed.`;
+          draw();
+          return;
+        }
         sfx.play('cardPlay');
         commit();
       };
-      if (seal.ok) btn.addEventListener('click', act);
-      else sealChip(btn);
+      if (!seal.ok) sealChip(btn);
+      else if (!transition.ok) {
+        btn.classList.add('locked');
+        refuses(btn, () => transition.reason);
+      } else btn.addEventListener('click', act);
       body.appendChild(btn);
-      entryAct.set(piece.id, seal.ok ? act : null);
 
       return {
         key: piece.id,
         kind: 'item',
         disclosure: 'face',
         equipped,
-        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
-        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+        actionLabel,
+        face: {
+          label: piece.name,
+          node: pieceFace(registries, piece, {
+            selected: equipped,
+            equippedLabel: hands.length ? `Equipped: ${hands.join(' / ')}` : '',
+          }),
+        },
+        reveal: {
+          node: body,
+          sense: equipped
+            ? 'Equipped. Press to unequip.'
+            : moving
+              ? `Equipped in ${hands.join(' / ')}. Press to move to ${slot.label}.`
+              : `Press to compare and equip to ${slot.label}.`,
+        },
       };
     });
 
     const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
-
-    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
-    //
-    //   "press and hold on army card to equip, but aLso have an equip button
-    //    when card is expanded (unfolded). click unfolds the card and records
-    //    it when clicked again or clicked off the card"
-    //
-    // click        → unfold          (Sunna's renderer already does this)
-    // click again  → refold          (her toggle already does this)
-    // click off    → refold          (NEW, below — nothing did this)
-    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
-    //
-    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
-    // click also commits, that is one line and the reading is stated rather
-    // than buried.
-    //
-    // ---- HIS RULING: TWO ELEMENTS (Constantine, 2026-08-21) --------------
-    //
-    // He was given three roads and took the one that costs a control. What was
-    // MEASURED at #304 and put in front of him stands and is not softened here:
-    //
-    //   `armHold` cannot serve both gestures on ONE element, by design —
-    //     "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 —
-    //      the early release IS the abort, so the click it generates must die
-    //      here rather than become a second door."
-    //   Arming the FACE was tried and measured: the card stopped unfolding and
-    //     A5's refold checks went red behind it.
-    //   Arming the in-card EQUIP BUTTON was measured too: its click dies, so
-    //     the hold becomes the ONLY road to equipping, and anyone who cannot
-    //     perform a hold loses the act.
-    //
-    // BOTH OF THOSE ARE "TWO ELEMENTS" AND HIS OWN FOUR RULES EXCLUDE BOTH.
-    // He asked for click-unfolds-the-card AND for the in-card button to stay.
-    // So the second element is a THIRD control that carries neither existing
-    // click: a grip under each card. The card keeps its click, the button keeps
-    // its click, and the grip holds nothing but the hold. That is the only
-    // arrangement his four sentences leave standing, and it is stated here
-    // rather than derived silently, because the cost — one more control per
-    // candidate, in a picker that opens into a ~125 px strip — is his to carry
-    // and he was told the number.
-    //
-    // WHY `armHold` AND NOT `beatArmer`. The beat table (model/secondbeat.js)
-    // rules on COMMITS — what a mis-press writes that cannot be taken back —
-    // and equipping is reversible by equipping the other thing. `beatOf` would
-    // answer `none` and arm nothing. This hold is not a safety step; it is a
-    // SHORTCUT past the unfold, the same shape as `armInspect`, which is a
-    // neighbour of that table and deliberately not a row in it. Adding an
-    // `equipPiece` row to make this legal would be teaching the table to say
-    // "hold" about something it correctly considers free.
-    //
-    // ONE DIAL, NOT A NUMBER. `holdMs` is the player's own Hold-to-confirm
-    // setting; `off` (0) means the pre-hold behaviour byte for byte, so the
-    // grip becomes a plain one-tap Equip and NOTHING is lost at that setting.
-    const gripMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
-    for (const entry of entries) {
-      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
-      if (!face) continue;
-      const grip = document.createElement('button');
-      grip.type = 'button';
-      // Same two channels as the in-card button: the word and `.danger`.
-      grip.className = entry.equipped ? 'ep-hold danger' : 'ep-hold';
-      grip.dataset.holdFor = entry.key;
-      grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
-      const verb = entry.equipped ? 'Unequip' : 'Equip';
-      grip.textContent = verb;
-      // WHICH PIECE THIS GRIP IS FOR, IN THE ACCESSIBILITY TREE. Codex found
-      // it and it is a defect of HIS RULING, not a nicety: D97 puts a SECOND
-      // control on every candidate, and until this line every one of them was
-      // named `Equip`. MEASURED, at ?shot=map&shotStorage=full (the bag filled
-      // through addToStorage, the real writer), main-hand, 1200x730, off
-      // `Accessibility.getFullAXTree`:
-      //
-      //   8 grips · AX names ["Unequip HOLD","Equip HOLD" x7] · 6 collisions
-      //
-      // A screen reader reads "Equip HOLD, button" seven times and a voice
-      // user has nothing to say. `data-hold-for` carries the id and IS NOT IN
-      // THAT TREE — also measured, not assumed. Two elements per candidate is
-      // his call and it ships; two elements where the new one has no name is a
-      // WORSE reader experience than the one control it joined, which is not
-      // what he ruled on.
-      //
-      // ONLY THE GRIP, AND THAT IS A MEASUREMENT TOO. The in-card `.ep-equip`
-      // is absent from the AX tree while folded, and the fold is an ACCORDION —
-      // clicking all eight faces left `aria-expanded="true"` on exactly ONE. So
-      // at most one in-card control exists at a time, inside the card whose
-      // face carries the name, and it has no sibling to be confused with. A
-      // second aria-label there would be a name nothing can collide with.
-      //
-      // `aria-label` and not `aria-labelledby`: the grip is a SIBLING of the
-      // face by construction (see the note below — that is rule 1's safety),
-      // so pointing at the face would mean minting an id for it and keeping
-      // two nodes in step across every redraw. The word and the piece already
-      // sit in this scope; naming the control here is one home, not two.
-      // `aria-label` overrides content, so carry the conditional HOLD hint into
-      // the accessible name instead of silently removing the instruction. A
-      // sealed grip cannot arm a hold, so it must not promise one either.
-      const act = entryAct.get(entry.key);
-      grip.setAttribute('aria-label',
-        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);
-      // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
-      // Nested inside the face the grip's aborted click would bubble into the
-      // unfold path and only `stopPropagation` would stand between them — which
-      // is keeping two gestures apart by a promise instead of by structure.
-      // Sibling means an aborted hold has no path to the fold at all.
-      face.insertAdjacentElement('afterend', grip);
-      if (!act) { sealChip(grip); continue; }
-      // THE LIFT AFTER A COMMIT, AND IT IS A MEASUREMENT, NOT A PRECAUTION.
-      // Driven with real CDP touch at 1200x730: the hold fires AT FULL (that is
-      // armHold's design — the player feels it land with the thumb still down),
-      // `commit()` redraws this whole subtree, and the finger then lifts over
-      // whatever now occupies that pixel. Chrome dispatches the click to THAT
-      // element. Measured target: `BUTTON.es-cell on` — the release silently
-      // re-opened a slot picker the player never asked for.
-      //
-      // Rule 1's own swallow cannot reach this: it lives on the grip, and the
-      // grip no longer exists by the time the click is dispatched. THAT IS AN
-      // `armHold` FINDING, NOT AN ARMOURY ONE — any caller whose `onConfirm`
-      // rebuilds its own element loses the swallow, and combat's End Turn has
-      // the same shape. Flagged to the holdconfirm seat on the PR; fixed HERE
-      // only because this is the caller that has it today.
-      //
-      // NO TIMER, so there is no stale swallow to eat a later real tap (Vira's
-      // F3, which this tree has already paid for once).
-      //
-      // THE EATER EATS ONE CLICK AND IT IS THE ONE ITS OWN POINTER MAKES —
-      // AND THAT ONE PREDICATE IS THE WHOLE FIX FOR THREE FINDINGS.
-      //
-      // It was armed on *a hold completed* and released by *the next
-      // pointerdown*, and neither half is about the click it exists to eat. So
-      // the same defect was found three times, one road at a time, by three
-      // different readers: a held Confirm KEY commits with no lift (A7.swallow)
-      // · a MOUSE release over the element `act()` just removed makes no click
-      // (A7.mouseswallow, Codex P2a) · a touch or pen that reaches full and is
-      // then CANCELLED never lifts at all (A7.cancelswallow). Every one of them
-      // left a window click-capture listener standing, and the next activation
-      // ANYWHERE — the Grid tab, one Enter — paid for it.
-      //
-      // TWO SPECIAL CASES WERE THE WRONG SHAPE OF ANSWER and both are gone:
-      // `ev.pointerType !== 'mouse'` is DELETED. The question was never *which
-      // device* — it is *whose lift is this click*, and the event answers it.
-      // Measured, Chromium 141, 1200x730, browser.mjs CDP path:
-      //     touch tap, element present   pointerdown id 2  -> click id 2
-      //     touch tap, element REMOVED   pointerdown id 3  -> click id 3 (DIV)
-      //     touch CANCELLED after 900 ms pointerdown id 4  -> NO CLICK AT ALL
-      //     mouse press/release          pointerdown id 1  -> click id 1
-      // A REAL click is a PointerEvent in this engine and carries the
-      // pointerId of the gesture that produced it. A trailing lift therefore
-      // identifies itself, and a cancelled finger cannot forge one because
-      // there is no click at all.
-      //
-      // AND THE SYNTHETIC ACTIVATIONS CANNOT FORGE ONE EITHER — measured for
-      // BOTH forms this tree actually uses, because they differ and I had the
-      // wrong one written here first:
-      //     input.js:509  new MouseEvent('click')  -> MouseEvent, NO pointerId
-      //                                                property at all
-      //     input.js:844  el.click()               -> PointerEvent, id -1
-      // `undefined !== 4` and `-1 !== 4`. input.js's keyboard and pad road is
-      // the FIRST of those, which is the one A7.swallow drives.
-      //
-      // AND DELETING THE DEVICE GATE REMOVES A BET ON THE BROWSER. That gate
-      // rested on "a mouse over a removed element makes no click" — true today
-      // (A7.premise watches it), and the day it stops being true the gate turns
-      // silently back into the defect it replaced. The identity check needs no
-      // such premise: if a mouse ever does dispatch that click, it carries id 1
-      // and is eaten, which is the behaviour we want either way.
-      //
-      // WHAT IS LEFT OF THE ROAD GATE IS SCOPE, NOT A CASE: `ev.type ===
-      // 'pointerdown'` at the call site is "this gesture had a pointer at all".
-      // A held key, a held pad button and the synthetic `detail === 0` click
-      // reach `onConfirm` with no pointer behind them and no lift owed.
-      //
-      // AND THE CANCEL TEARS THE EATER DOWN rather than merely starving it.
-      // Measured above: a cancelled pointer dispatches NO click, so the eater
-      // has nothing left to wait for and goes now instead of at some later
-      // pointerdown. The identity check already makes it harmless; this makes
-      // it absent, which is the difference between a quiet listener and none.
-      //
-      // BOUNDARY, STATED POSITIVELY. On the MOUSE road the eater still arms and
-      // is fed nothing, so one window click-capture listener lives from the
-      // hold to the next `pointerdown` — inert (id 1 matches no other click),
-      // not free. PEN IS STILL NOT DRIVEN: it now needs no device assumption at
-      // all, which is strictly better than the gate it replaces, but no pen
-      // event has been dispatched at this ref.
-      const eatTheLift = (pointerId) => {
-        const off = () => {
-          removeEventListener('click', eat, true);
-          removeEventListener('pointerdown', down, true);
-          removeEventListener('pointercancel', gone, true);
-        };
-        // WHOSE LIFT IS THIS. Anything else — a synthetic activation click, a
-        // later real tap, another finger — is not this gesture's and is none of
-        // this eater's business.
-        const eat = (e) => {
-          if (e.pointerId !== pointerId) return;
-          e.stopPropagation(); e.preventDefault(); off();
-        };
-        // Another pointer is not this gesture. Keep this eater until its own
-        // pointer clicks, cancels, or begins a later gesture with the same id.
-        const down = (e) => { if (e.pointerId === pointerId) off(); };
-        // THIS GESTURE ENDED WITHOUT LIFTING. No click is coming; go now.
-        const gone = (e) => { if (e.pointerId === pointerId) off(); };
-        addEventListener('click', eat, true);
-        addEventListener('pointerdown', down, true);
-        addEventListener('pointercancel', gone, true);
-      };
-      // THE THREE ROADS, WATCHED FAILING BEFORE THEY WERE CLOSED. Kept as a
-      // record of what was measured, not as a second copy of the reasoning —
-      // that is the block above, and it has one home.
-      //
-      //   KEY (A7.swallow). Real `Input.dispatchKeyEvent` through input.js's
-      //   own road, map mount, 1200x730: cursor walked onto the grip with real
-      //   ArrowDown, Enter held 900 ms of a 600 ms dial -> committed, slot
-      //   "Straight Sword" -> "＋". Then one ordinary Enter on the Grid view
-      //   tab -> `data-view` "hybrid" -> "hybrid". THE TAB DID NOTHING.
-      //   MOUSE (A7.mouseswallow, Codex P2a). Same shape with a 900 ms mouse
-      //   hold in front of it: window click-capture listeners NET +1 after the
-      //   lift, ZERO clicks dispatched, and the next Enter -> "hybrid" ->
-      //   "hybrid" again. A6 CANNOT SEE THIS: it reads [] after a mouse lift
-      //   whether an eater is armed or not.
-      //   CANCEL (A7.cancelswallow). Touch held 900 ms of a 600 ms dial, then
-      //   `Input.dispatchTouchEvent touchCancel`: slot "Straight Sword" -> "＋"
-      //   (fire-at-full, so the eater armed), no click ever dispatched, and the
-      //   next Enter -> "hybrid" -> "hybrid". BOTH EDGES of the cancel are
-      //   driven — cancelled BELOW full is the abort and must not commit, and
-      //   it was already green, because an abort never reaches `onConfirm`.
-      //
-      // A6.tail COULD NEVER HAVE CAUGHT THE MOUSE ONE and its comment said
-      // otherwise. It reads [] on the mouse road whether the eater is armed or
-      // not — the plant proves it, naming the TOUCH lift with the swallow
-      // removed entirely. One zero came from the eater and one from the
-      // browser; the comment credited both to the eater. Corrected in place.
-      // A7 owns the mouse and cancel roads.
-      //
-      // `ev.type === 'pointerdown'` is exactly and only the fire-at-full of a
-      // POINTER press: `armPress` hands `begin` the pointerdown itself as the
-      // origin event, and no other road can produce that type here. A source
-      // flag would be a second copy of a fact the event already carries.
-      //
-      // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
-      // a second `equipPiece(...)` here is two chances to disagree about what
-      // "equip" means, which is the copy this seat exists to refuse.
-      heldGrips.push(armHold(grip, {
-        ms: gripMs,
-        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(ev.pointerId); act(); },
-        id: 'equipPiece',
-      }));
-    }
-    //
-    // THE IN-CARD BUTTON STAYS AND IS NOT A FALLBACK. It is the road for
-    // anyone who cannot perform a hold at all. (#304's body said a hold has no
-    // keyboard or pad equivalent; THAT WAS WRONG and it is corrected here —
-    // `armPress` (ui/gesture.js, S7, 2026-08-17) runs the same timer for a held
-    // Confirm key and a held Confirm pad button. What has no equivalent is a
-    // hold for a hand that cannot hold, on any input.)
-    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
-    // Armoury already owns a veil that closes the whole panel on an outside
-    // click, and a second document-level listener would race it — press outside
-    // everything and you would get a refold AND a close, from two homes.
-    // `.ep-list` is the whole card region, so this fires for a press anywhere
-    // else in the picker and nowhere else.
+    // The 2026-08-23 correction removes the always-visible hold strip.
+    // The face owns disclosure only; the single action remains inside the
+    // adopted reveal node and therefore exists on glass only while open.
+    // Clicking the title again is mountDisclosure's ordinary refold.
     box.addEventListener('click', (ev) => {
       if (!ev.target.closest('.ep-list')) fold.close();
     });
@@ -1098,6 +910,27 @@ export function mountEquipment(host, {
       list.insertAdjacentHTML('beforeend',
         '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
     }
+    return box;
+  }
+
+  /** The no-selection shelf: all currently usable item kinds, folded by row. */
+  function inventoryBlock() {
+    const box = document.createElement('div');
+    box.className = 'inventory-list ep-list';
+    const rows = inventoryRows(registries, run, meta);
+    const entries = rows.map((row) => ({
+      key: row.key,
+      kind: 'item',
+      disclosure: 'face',
+      face: { label: row.name, node: inventoryFace(row) },
+      reveal: {
+        node: inventoryReveal(registries, row),
+        sense: `${row.name}. ${row.category}. ${row.count} owned.`,
+      },
+    }));
+    mountDisclosure(box, entries, { moreLabel: 'more items' });
+    box.dataset.inventoryCount = String(inventoryItemCount(rows));
+    if (!entries.length) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">Inventory is empty.</p>');
     return box;
   }
 
@@ -1229,6 +1062,10 @@ export function mountEquipment(host, {
         // for every other region. One fact, one home.
         if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
         draw();
+        // draw() replaces the activated header. Put keyboard/gamepad focus on
+        // its replacement so expanding a region does not throw the player out
+        // of the control they just used.
+        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
       });
       head.appendChild(btn);
       el.insertBefore(head, el.firstChild);
@@ -1236,8 +1073,6 @@ export function mountEquipment(host, {
   }
 
   function draw() {
-    // The previous render's grips die BEFORE their elements do — see heldGrips.
-    while (heldGrips.length) heldGrips.pop()();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
@@ -1257,6 +1092,7 @@ export function mountEquipment(host, {
           <div class="armoury-left"></div>
           <div class="armoury-right"></div>
         </div>
+        ${picking ? '' : '<section class="armoury-inventory"></section>'}
         <div class="armoury-strip"></div>
       </div>`;
 
@@ -1305,6 +1141,8 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    const inventory = wrap.querySelector('.armoury-inventory');
+    if (inventory) inventory.appendChild(inventoryBlock());
     wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 

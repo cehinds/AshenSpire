@@ -1,12 +1,13 @@
 // src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
 //
-// Five spreadsheets feed this file and nothing else does:
+// Authored CSV/JSON content feeds this file and nothing else does:
 //
 //   content/source/weapons.csv       every armament (weapon / shield / staff)
 //   content/source/outfits.csv       every armour set (an outfit IS a set)
 //   content/source/equipSlots.csv    what you can wear, and when you may swap
 //   content/source/equipMods.csv     what a mod string is allowed to say
 //   content/source/equipTargets.csv  which card each mod prefix rewrites
+//   content/source/armouryUi.json     Armoury-only presentation choices
 //
 // This module only NORMALISES them — the CSV compiler coerces a single value
 // to a string and a pipe-separated one to an array, so every list-shaped
@@ -25,6 +26,7 @@ import { startingKits } from './generated/startingKits.js';
 import { equipmentRequirements } from './generated/equipmentRequirements.js';
 import { cardEquipmentExceptions } from './generated/cardEquipmentExceptions.js';
 import { cardTagging } from './generated/cardTagging.js';
+import { armouryUi } from './generated/armouryUi.js';
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -128,3 +130,6 @@ export const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({
 
 /** Raw authored card tag ids, carried into registries for compatibility checks. */
 export const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
+
+/** Armoury-only presentation choices authored in JSON. */
+export const ARMOURY_UI = { ...armouryUi };

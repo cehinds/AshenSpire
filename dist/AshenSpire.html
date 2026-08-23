@@ -2444,10 +2444,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ec-art { grid-row: 1 / 3; width: 3.6rem; height: 3.6rem; object-fit: contain; }
 .ec-name { font-size: 1.3rem; }
 .ec-mods { grid-column: 2 / 4; font-size: 1.05rem; color: var(--muted); }
-.ec-tags { display: flex; gap: 0.3rem; }
+.ec-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .ec-tags em, .ef-tags em {
   font-style: normal; font-size: 0.95rem; letter-spacing: 0.5px; text-transform: uppercase;
   color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px; padding: 0 0.4rem;
+}
+.ec-tags .ec-equipped {
+  color: var(--equip-equipped-tag-color, var(--gold));
+  border-color: var(--equip-equipped-tag-color, var(--line-soft));
 }
 .ef-tags em.none { color: var(--muted); border-color: var(--line); }
 .ec-lock { grid-column: 1 / 4; font-size: 1rem; color: var(--muted); font-style: italic; }
@@ -2460,12 +2464,51 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    face-shaped card the box the button-shaped one already had, and hand the
    face's own padding back to the card so the two spellings look identical —
    they are one markup (pieceChipHtml) and they must not become two looks. */
-.ep-list .disc-faces { flex-direction: column; gap: 0.5rem; }
+.ep-list .disc-faces { flex-direction: column; gap: 0; }
 .ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
-.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face { border-color: var(--gold); }
-.ep-list .disc-reveal { width: 100%; }
+.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
+.ep-list .disc-face[data-reveal='open'] .inventory-face {
+  border-color: var(--gold); border-bottom-color: transparent; border-radius: 3px 3px 0 0;
+}
+.ep-list .disc-reveal {
+  width: 100%; border-color: var(--gold); border-top: 0; border-radius: 0 0 3px 3px;
+}
 .ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* The no-slot Inventory uses the same one-face/one-reveal disclosure as the
+   hand picker. Its folded grammar is deliberately text-only: name, category,
+   count, and an equipped tag when applicable. */
+.inventory-face {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center; gap: 0.7rem; width: 100%; min-height: var(--tap-floor);
+  padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
+  background: rgba(10, 8, 6, 0.32); color: var(--parchment);
+}
+.inventory-name { min-width: 0; font-size: 1.2rem; }
+.inventory-category, .inventory-count {
+  color: var(--muted); font-size: 1rem; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.inventory-equipped {
+  color: var(--equip-equipped-tag-color, var(--gold));
+  border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
+  padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
+}
+.inventory-detail { display: grid; grid-template-columns: minmax(8rem, 28%) 1fr; gap: 1rem; align-items: start; }
+.inventory-model {
+  min-height: 9rem; display: grid; place-items: center;
+  border: 1px solid var(--line-soft); background: rgba(10, 8, 6, 0.35); font-size: 4rem;
+}
+.inventory-model img { width: 100%; height: 10rem; object-fit: contain; }
+.inventory-information { display: flex; flex-direction: column; gap: 0.55rem; min-width: 0; }
+.inventory-information h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+.inventory-information p { line-height: 1.45; }
+.inventory-kind { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.95rem; }
+.inventory-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.inventory-tags em {
+  color: var(--gold); border: 1px solid var(--line-soft); border-radius: 2px;
+  padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
+}
 
 /* "un equip in red". `.danger` is this file's existing word for red (see
    `.subtle.danger` above) and it is reused rather than joined by a second
@@ -2484,43 +2527,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
-/* THE GRIP — the second element of Constantine's two-element ruling
-   (2026-08-21). It carries the hold and nothing else; the card above it keeps
-   its click and the `.ep-equip` inside the opened pane keeps its click.
-
-   IT IS THIN AND IT IS DASHED ON PURPOSE. This picker opens into a strip about
-   125 px tall on the shape this tree photographs (1200x730), so every row this
-   list gains is a row the player has to scroll for. The grip is the least ink
-   that can still be a target: one line, no card art, dashed so it reads as a
-   handle rather than as a second item.
-
-   THE FILL IS NOT DEFINED HERE. `armHold` adds `.beat-hold`, and that rule
-   (further up this file) already owns the progress paint, the `--hold` width
-   and the `.hold-hint` word. A second fill here would be the second copy. */
-.ep-hold {
-  /* A HOLD TARGET BELOW THE TAP FLOOR IS NOT A HOLD TARGET. The grip drew at
-     19 px tall on its own text — 43% of `--tap-floor` — and a press-and-hold is
-     the most thumb-shaped gesture in this game. This is the line that makes the
-     ink cost real (24 px per candidate becomes 49), and it is the right side of
-     that trade: a target a thumb misses is a control that does not exist. */
-  min-height: var(--tap-floor);
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  padding: 0.3rem 0.8rem;
-  border: 1px dashed var(--line-soft);
-  background: none;
-  color: var(--muted);
-  font-size: 1.05rem;
-  letter-spacing: 0.08em;
-  cursor: pointer;
-}
-.ep-hold:hover { border-color: var(--gold); color: var(--parchment); }
-.ep-hold.danger { border-color: var(--blood); color: var(--ember); }
-.ep-hold.locked { opacity: 0.45; cursor: not-allowed; }
-
+.armoury-inventory,
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
@@ -2781,6 +2788,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
+:root[data-layout='narrow'] .inventory-face { grid-template-columns: minmax(0, 1fr) auto auto; }
+:root[data-layout='narrow'] .inventory-equipped { grid-column: 1 / -1; justify-self: start; }
+:root[data-layout='narrow'] .inventory-detail { grid-template-columns: 1fr; }
+:root[data-layout='narrow'] .inventory-model { min-height: 7rem; }
+:root[data-layout='narrow'] .inventory-model img { height: 8rem; }
 /* The figure has a fixed authored width in a ROW; in a column that width is just
    a cap, and 100% lets it use the phone. Height stays authored so the sprite
    keeps its proportions.
@@ -7348,7 +7360,7 @@ const { cardTags } = require("src/content/generated/cardTags.js");
 const { scripts } = require("src/content/scripts.js");
 const { SFX_RECIPES } = require("src/content/sfx.js");
 const { SCALES, BEDS } = require("src/content/music.js");
-const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS, EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING } = require("src/content/equipment.js");
+const { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS, EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI } = require("src/content/equipment.js");
 
 
 
@@ -7403,6 +7415,7 @@ const contentBundle = {
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    armouryUi: ARMOURY_UI,
   },
   unlocks,
   // The card-tag registry rides the bundle so effect `tags` and
@@ -8131,7 +8144,7 @@ const balance = {
     },
     roleSources: {
       attack: [{ slot: 'rightHand' }],
-      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
       technique: [{ slot: 'rightHand' }],
     },
     unarmedProfiles: {
@@ -13989,13 +14002,14 @@ Object.assign(module.exports, { MUSIC_MANIFEST, SCALES, BEDS });
 "src/content/equipment.js": function (module, exports, require) {
 // src/content/equipment.js — armaments, armour, slots, and the mod vocabulary.
 //
-// Five spreadsheets feed this file and nothing else does:
+// Authored CSV/JSON content feeds this file and nothing else does:
 //
 //   content/source/weapons.csv       every armament (weapon / shield / staff)
 //   content/source/outfits.csv       every armour set (an outfit IS a set)
 //   content/source/equipSlots.csv    what you can wear, and when you may swap
 //   content/source/equipMods.csv     what a mod string is allowed to say
 //   content/source/equipTargets.csv  which card each mod prefix rewrites
+//   content/source/armouryUi.json     Armoury-only presentation choices
 //
 // This module only NORMALISES them — the CSV compiler coerces a single value
 // to a string and a pipe-separated one to an array, so every list-shaped
@@ -14014,6 +14028,7 @@ const { startingKits } = require("src/content/generated/startingKits.js");
 const { equipmentRequirements } = require("src/content/generated/equipmentRequirements.js");
 const { cardEquipmentExceptions } = require("src/content/generated/cardEquipmentExceptions.js");
 const { cardTagging } = require("src/content/generated/cardTagging.js");
+const { armouryUi } = require("src/content/generated/armouryUi.js");
 
 /** '' → [], 'a' → ['a'], ['a','b'] → ['a','b']. */
 function list(v) {
@@ -14118,8 +14133,11 @@ const CARD_EQUIPMENT_EXCEPTIONS = cardEquipmentExceptions.map((row) => ({ ...row
 /** Raw authored card tag ids, carried into registries for compatibility checks. */
 const CARD_EQUIPMENT_TAGGING = cardTagging.map((row) => ({ ...row, tags: list(row.tags) }));
 
+/** Armoury-only presentation choices authored in JSON. */
+const ARMOURY_UI = { ...armouryUi };
 
-Object.assign(module.exports, { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, armamentById, slotById, armourForClass, startingArmour, armourById, armamentsForSlot, cardForTarget, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS, EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING });
+
+Object.assign(module.exports, { ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, armamentById, slotById, armourForClass, startingArmour, armourById, armamentsForSlot, cardForTarget, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS, EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI });
 
 },
 "src/content/generated/weapons.js": function (module, exports, require) {
@@ -14131,7 +14149,7 @@ const weapons = [
     "id": "straightSword",
     "name": "Straight Sword",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "common",
     "geom": "sword",
     "scale": 1,
@@ -14155,7 +14173,7 @@ const weapons = [
     "id": "greatsword",
     "name": "Greatsword",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "colossal",
     "scale": 1,
@@ -14208,7 +14226,7 @@ const weapons = [
     "id": "shortbow",
     "name": "Shortbow",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "common",
     "geom": "dagger",
     "scale": 1,
@@ -14233,7 +14251,7 @@ const weapons = [
     "id": "katana",
     "name": "Katana",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "curved",
     "scale": 1,
@@ -14261,7 +14279,7 @@ const weapons = [
     "id": "halberd",
     "name": "Halberd",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "polearm",
     "scale": 1,
@@ -14289,7 +14307,7 @@ const weapons = [
     "id": "warhammer",
     "name": "Warhammer",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "hammer",
     "scale": 1,
@@ -14313,7 +14331,7 @@ const weapons = [
     "id": "twinblade",
     "name": "Twinblade",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "rare",
     "geom": "twin",
     "scale": 1,
@@ -14340,7 +14358,7 @@ const weapons = [
     "id": "battleaxe",
     "name": "Battleaxe",
     "kind": "weapon",
-    "hand": "right",
+    "hand": "either",
     "rarity": "common",
     "geom": "axe",
     "scale": 1,
@@ -14367,7 +14385,7 @@ const weapons = [
     "id": "buckler",
     "name": "Buckler",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "common",
     "geom": "round",
     "scale": 0.8,
@@ -14391,7 +14409,7 @@ const weapons = [
     "id": "kiteShield",
     "name": "Kite Shield",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "common",
     "geom": "kite",
     "scale": 1,
@@ -14415,7 +14433,7 @@ const weapons = [
     "id": "towerShield",
     "name": "Tower Shield",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "rare",
     "geom": "tower",
     "scale": 1,
@@ -14442,7 +14460,7 @@ const weapons = [
     "id": "roundShield",
     "name": "Round Shield",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "common",
     "geom": "round",
     "scale": 1,
@@ -14466,7 +14484,7 @@ const weapons = [
     "id": "spikedShield",
     "name": "Spiked Shield",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "spiked",
     "scale": 1,
@@ -14493,7 +14511,7 @@ const weapons = [
     "id": "lantern",
     "name": "Lantern",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "common",
     "geom": "lantern",
     "scale": 0.85,
@@ -14517,7 +14535,7 @@ const weapons = [
     "id": "torch",
     "name": "Torch",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "common",
     "geom": "torch",
     "scale": 0.9,
@@ -14538,7 +14556,7 @@ const weapons = [
     "id": "parryDagger",
     "name": "Parrying Dagger",
     "kind": "shield",
-    "hand": "left",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "dagger",
     "scale": 0.85,
@@ -14565,7 +14583,7 @@ const weapons = [
     "id": "ashStaff",
     "name": "Ash Staff",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "common",
     "geom": "staffOrb",
     "scale": 1,
@@ -14589,7 +14607,7 @@ const weapons = [
     "id": "starstoneStaff",
     "name": "Starstone Staff",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "staffCrystal",
     "scale": 1,
@@ -14614,7 +14632,7 @@ const weapons = [
     "id": "boneSceptre",
     "name": "Bone Sceptre",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "staffSkull",
     "scale": 1,
@@ -14641,7 +14659,7 @@ const weapons = [
     "id": "emberlightSceptre",
     "name": "Emberlight Sceptre",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "rare",
     "geom": "staffFlame",
     "scale": 1,
@@ -14665,7 +14683,7 @@ const weapons = [
     "id": "goldboughBranch",
     "name": "Goldbough Branch",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "rare",
     "geom": "staffBranch",
     "scale": 1,
@@ -14692,7 +14710,7 @@ const weapons = [
     "id": "blightRod",
     "name": "Blight Rod",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "uncommon",
     "geom": "staffOrb",
     "scale": 0.95,
@@ -14713,7 +14731,7 @@ const weapons = [
     "id": "gorefireBrand",
     "name": "Gorefire Brand",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "rare",
     "geom": "staffFlame",
     "scale": 0.95,
@@ -14740,7 +14758,7 @@ const weapons = [
     "id": "wyrmhornStaff",
     "name": "Wyrmhorn Staff",
     "kind": "staff",
-    "hand": "right",
+    "hand": "either",
     "rarity": "rare",
     "geom": "staffHorn",
     "scale": 1,
@@ -15004,6 +15022,7 @@ const equipSlots = [
     "label": "Right Hand",
     "kinds": [
       "weapon",
+      "shield",
       "staff"
     ],
     "hand": "right",
@@ -15011,21 +15030,22 @@ const equipSlots = [
     "swap": "combat",
     "storage": true,
     "order": 1,
-    "blurb": "Your main armament. Rewrites Strike."
+    "blurb": "Your active right-hand armament. Rewrites Strike."
   },
   {
     "id": "leftHand",
     "label": "Left Hand",
     "kinds": [
+      "weapon",
       "shield",
-      "weapon"
+      "staff"
     ],
     "hand": "left",
     "sets": 3,
     "swap": "combat",
     "storage": true,
     "order": 2,
-    "blurb": "Off-hand. Rewrites Defend."
+    "blurb": "Your active left-hand armament. Rewrites Defend."
   },
   {
     "id": "armor",
@@ -16139,6 +16159,21 @@ const cardTagging = [
 Object.assign(module.exports, { cardTagging });
 
 },
+"src/content/generated/armouryUi.js": function (module, exports, require) {
+// GENERATED by tools/content-build.mjs from content/source/armouryUi.json
+// Do not edit by hand — edit the source file and re-run the build.
+
+const armouryUi = {
+  "equippedTag": {
+    "useCustomColor": true,
+    "customColor": "#7FD47F"
+  }
+};
+
+
+Object.assign(module.exports, { armouryUi });
+
+},
 "src/content/generated/unlocks.js": function (module, exports, require) {
 // GENERATED by tools/content-build.mjs from content/source/unlocks.csv
 // Do not edit by hand — edit the source file and re-run the build.
@@ -16628,6 +16663,7 @@ const { FORMULA_OPS, FORMULA_OF, isFormula } = require("src/model/formulas.js");
 const { attributeContentProblems } = require("src/model/attributes.js");
 const { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } = require("src/model/derivedStats.js");
 const { startingKitProblems } = require("src/model/startingKits.js");
+const { armouryUiProblems } = require("src/model/equipmentUi.js");
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -16869,6 +16905,9 @@ function validateContent(bundle) {
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
     err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
   } else {
+    for (const problem of armouryUiProblems(equipment.armouryUi)) {
+      err(problem.path, problem.message);
+    }
     // Player Poise is authored on every equipment row even though it has no
     // combat consumer yet. Missing data must not silently normalize to zero:
     // the receipt is truthful only when every worn source says its number.
@@ -23326,6 +23365,60 @@ function recordArmamentDiscovery(meta, pieceId, {
 Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, startingKitPieceIds, startingKitProblems, kitIsDiscovered, startingKitViews, resolveStartingKit, startingKitSnapshot, validateRunStartingKit, startingArmourViews, resolveStartingArmour, recordArmamentDiscovery });
 
 },
+"src/model/equipmentUi.js": function (module, exports, require) {
+// src/model/equipmentUi.js — validation and resolution for Armoury UI data.
+//
+// The authored source is content/source/armouryUi.json. The UI asks this module
+// whether the equipped badge uses its custom colour; it never reads a raw JSON
+// field and invents its own fallback. `null` means "use the current motif".
+
+const HEX_COLOUR = /^#[0-9a-f]{6}$/i;
+
+function armouryUiProblems(config) {
+  const problems = [];
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    return [{ path: 'equipment.armouryUi', message: 'must be an object' }];
+  }
+  for (const key of Object.keys(config)) {
+    if (key !== 'equippedTag') {
+      problems.push({ path: `equipment.armouryUi.${key}`, message: 'Unknown field' });
+    }
+  }
+  const tag = config.equippedTag;
+  if (!tag || typeof tag !== 'object' || Array.isArray(tag)) {
+    problems.push({ path: 'equipment.armouryUi.equippedTag', message: 'must be an object' });
+    return problems;
+  }
+  for (const key of Object.keys(tag)) {
+    if (!['useCustomColor', 'customColor'].includes(key)) {
+      problems.push({ path: `equipment.armouryUi.equippedTag.${key}`, message: 'Unknown field' });
+    }
+  }
+  if (typeof tag.useCustomColor !== 'boolean') {
+    problems.push({
+      path: 'equipment.armouryUi.equippedTag.useCustomColor',
+      message: 'must be true or false',
+    });
+  }
+  if (typeof tag.customColor !== 'string' || !HEX_COLOUR.test(tag.customColor)) {
+    problems.push({
+      path: 'equipment.armouryUi.equippedTag.customColor',
+      message: `must be a six-digit hex colour such as #7FD47F — got ${JSON.stringify(tag.customColor)}`,
+    });
+  }
+  return problems;
+}
+
+/** A custom CSS colour, or null when the equipped tag follows the motif. */
+function equippedTagColor(config) {
+  if (armouryUiProblems(config).length) return null;
+  return config.equippedTag.useCustomColor ? config.equippedTag.customColor : null;
+}
+
+
+Object.assign(module.exports, { armouryUiProblems, equippedTagColor });
+
+},
 "src/model/registries.js": function (module, exports, require) {
 // src/model/registries.js — typed id → definition registries, deep-frozen (SPEC §3.3)
 //
@@ -23981,15 +24074,16 @@ function validateEquipment(registries) {
       problems.push(`${piece.id}: hand '${h}' is not one of ${HANDS.join('|')}|either`);
     }
   }
-  // A slot holding pieces that name a hand must name one itself. Without this,
-  // a slot authored with an empty `hand` takes a weapon and draws it nowhere —
-  // wrong, reasonable-looking, and silent (Law 0 clause 5).
+  // A carried hand slot must name its location even when every shipped piece
+  // is side-neutral. Without this, a slot authored with an empty `hand` takes
+  // an armament and draws it nowhere — wrong, reasonable-looking, and silent.
   for (const slot of eq.slots || []) {
     if (slotHand(slot)) continue;
-    const handed = pieces.filter((p) => (slot.kinds || []).includes(p.kind) && pieceHand(p));
-    if (handed.length) {
+    const held = pieces.filter((p) => (slot.kinds || []).includes(p.kind));
+    const handed = held.filter((p) => pieceHand(p));
+    if ((slot.storage && held.length) || handed.length) {
       problems.push(
-        `slot '${slot.id}' accepts ${handed.length} piece(s) that name a hand (e.g. '${handed[0].id}') ` +
+        `slot '${slot.id}' accepts ${held.length} held piece(s) (e.g. '${held[0].id}') ` +
         `but names no hand itself — set hand=${HANDS.join('|')} on that row in equipSlots.csv`
       );
     }
@@ -25333,6 +25427,106 @@ function carriedIds(loadout) {
 }
 
 /**
+ * Normalize saves written while one owned armament could occupy several hand
+ * sets. Keep an active occurrence when one exists (slot order breaks ties),
+ * clear the others, and remove an equipped survivor from shared Inventory.
+ * Returns a receipt for the load-door ledger; an empty array means no change.
+ */
+function normalizeArmamentLocations(registries, loadout) {
+  if (!loadout || !loadout.sets) return [];
+  const eq = (registries || {}).equipment || {};
+  const handSlots = (eq.slots || []).filter((slot) => slotHand(slot));
+  const armamentIds = new Set((eq.armaments || []).map((piece) => piece.id));
+  const occurrences = new Map();
+  for (const slot of handSlots) {
+    const ids = loadout.sets[slot.id] || [];
+    for (let setIndex = 0; setIndex < ids.length; setIndex++) {
+      const id = ids[setIndex];
+      if (!id || !armamentIds.has(id)) continue;
+      const rows = occurrences.get(id) || [];
+      rows.push({ slotId: slot.id, setIndex, active: setIndex === ((loadout.active || {})[slot.id] || 0) });
+      occurrences.set(id, rows);
+    }
+  }
+
+  const changes = [];
+  const storage = [...new Set(loadout.storage || [])];
+  for (const [id, rows] of occurrences) {
+    const kept = rows.find((row) => row.active) || rows[0];
+    const cleared = rows.filter((row) => row !== kept);
+    for (const row of cleared) loadout.sets[row.slotId][row.setIndex] = null;
+    const removedFromStorage = storage.includes(id);
+    if (removedFromStorage) storage.splice(storage.indexOf(id), 1);
+    if (cleared.length || removedFromStorage) changes.push({ id, kept, cleared, removedFromStorage });
+  }
+  if (storage.length !== (loadout.storage || []).length || changes.length) loadout.storage = storage;
+  return changes;
+}
+
+/**
+ * Apply the storage/location half of an equipment mutation. Both the real
+ * mutation and comparison preview call this function, so a preview cannot
+ * invent a duplicate object the committed action would move away.
+ */
+function equipTransitionPlan(registries, loadout, slotId, setIndex, itemId) {
+  const ids = ((loadout || {}).sets || {})[slotId];
+  const eq = (registries || {}).equipment || {};
+  const slot = (eq.slots || []).find((candidate) => candidate.id === slotId);
+  if (!slot || !ids || setIndex < 0 || setIndex >= ids.length) {
+    return { ok: false, reason: 'That equipment location is no longer available.' };
+  }
+
+  const previousId = ids[setIndex] || null;
+  if (!slotHand(slot)) {
+    return { ok: true, slot, ids, previousId, nextStorage: loadout.storage || [], storesPrevious: false };
+  }
+
+  const cap = Number.isInteger(((registries.balance || {}).equipment || {}).storageSlots)
+    ? registries.balance.equipment.storageSlots
+    : 8;
+  const nextStorage = [...new Set(loadout.storage || [])].filter((id) => id !== itemId);
+  const storesPrevious = previousId && previousId !== itemId && !nextStorage.includes(previousId);
+  if (storesPrevious && nextStorage.length >= cap) {
+    return {
+      ok: false,
+      reason: `Inventory is full (${nextStorage.length}/${cap}). Make room before ${itemId ? 'moving this item' : 'unequipping this item'}.`,
+    };
+  }
+  return { ok: true, slot, ids, previousId, nextStorage, storesPrevious };
+}
+
+/** A mutation-free capacity verdict for the Armoury's action feedback. */
+function equipTransitionReceipt(registries, loadout, slotId, setIndex, itemId) {
+  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
+  return { ok: plan.ok, reason: plan.reason || '' };
+}
+
+function applyEquipTransition(registries, loadout, slotId, setIndex, itemId) {
+  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
+  if (!plan.ok) return false;
+  const { slot, ids, nextStorage, previousId, storesPrevious } = plan;
+  if (!slotHand(slot)) {
+    ids[setIndex] = itemId || null;
+    return true;
+  }
+
+  const eq = (registries || {}).equipment || {};
+  const handSlotIds = new Set((eq.slots || []).filter((candidate) => slotHand(candidate)).map((candidate) => candidate.id));
+  if (itemId) {
+    for (const [otherSlotId, otherIds] of Object.entries(loadout.sets || {})) {
+      if (!handSlotIds.has(otherSlotId)) continue;
+      for (let i = 0; i < otherIds.length; i++) {
+        if (otherIds[i] === itemId && (otherSlotId !== slotId || i !== setIndex)) otherIds[i] = null;
+      }
+    }
+  }
+  if (storesPrevious) nextStorage.push(previousId);
+  loadout.storage = nextStorage;
+  ids[setIndex] = itemId || null;
+  return true;
+}
+
+/**
  * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
@@ -25394,13 +25588,10 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   // loosened canEquip's own check is a real second gate rather than an echo.
   const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
   if (!seal.ok) return false;
-  if (!itemId) {
-    ids[setIndex] = null;
-    return true;
-  }
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;
+  if (!itemId) return applyEquipTransition(registries, loadout, slotId, setIndex, null);
   // Armour ids repeat across classes; the class gate is armourById's, and this
   // one only asks whether the piece may live in this slot at all.
   const piece = slot.kinds.includes('armor')
@@ -25417,12 +25608,11 @@ function equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) {
   }
   if (!owned.has(piece)) return false;
   if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
-  ids[setIndex] = itemId;
-  return true;
+  return applyEquipTransition(registries, loadout, slotId, setIndex, itemId);
 }
 
 
-Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, equipPiece });
+Object.assign(module.exports, { parseMod, HANDS, EQUIPMENT_ROLES, CARD_MOD_APPLIES, RUN_MOD_APPLIES, slotHand, pieceHand, fitsSlot, equipmentRequirementReceipt, cardEquipmentCompatibility, validateEquipment, fromDropPool, OWNERSHIP_GATES, ownership, SLOT_RUNG_KIND, slotRungs, openedSets, visibleSets, rungFor, setCellState, createLoadout, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRoleSource, equipmentKitPlan, equipmentKitReceipt, startingDeckRefs, equippedIn, equippedPieces, figureSpec, loadoutTags, loadoutSignature, cardMods, runMods, reconcileRunLoadoutHp, applyCardMods, stampDeck, canSwap, SWAP_COST_BASES, swapCostRules, resolveSwapCostRule, swapCostFor, SEALED_MID_FIGHT, canEquip, cycleSet, addToStorage, carriedIds, normalizeArmamentLocations, equipTransitionReceipt, applyEquipTransition, equipPiece });
 
 },
 "src/model/relicModifiers.js": function (module, exports, require) {
@@ -30015,7 +30205,7 @@ Object.assign(module.exports, { rollEncounter, rollRuneReward, rollCardRewardIds
 //      for lost.
 
 const { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } = require("src/model/state.js");
-const { createLoadout, stampDeck } = require("src/model/loadout.js");
+const { createLoadout, normalizeArmamentLocations, stampDeck } = require("src/model/loadout.js");
 const { normalizeRunAttributes } = require("src/model/attributes.js");
 const { validateRunStartingKit } = require("src/model/startingKits.js");
 const { openLedger, closeLedger, note, readLedger } = require("src/model/healLedger.js");
@@ -30432,6 +30622,17 @@ function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
+      if (armamentLocationChanges.length) {
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'loadout.armamentLocations',
+          was: armamentLocationChanges,
+          now: { sets: run.loadout.sets, storage: run.loadout.storage },
+          why: 'the shared Inventory contract keeps each owned armament in one hand location or in Inventory, never both',
         });
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that
@@ -35084,7 +35285,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'ca1c5e7282';
+const SOURCE = '0e30dbcb29';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35118,7 +35319,7 @@ const SOURCE = 'ca1c5e7282';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1040';
+const ORDINAL = '1081';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -37682,7 +37883,8 @@ Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 // and the Armoury render this receipt; neither screen redoes kit, requirement,
 // resource, or inert player-Poise arithmetic.
 
-const { equipmentKitReceipt, equipmentRequirementReceipt, equippedIn, equippedPieces, parseMod, resolveSwapCostRule, runMods, swapCostFor } = require("src/model/loadout.js");
+const { equipmentKitReceipt, equipmentRequirementReceipt, applyEquipTransition, equippedIn, equippedPieces, parseMod, resolveSwapCostRule, runMods, swapCostFor } = require("src/model/loadout.js");
+
 
 
 
@@ -37950,8 +38152,8 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
     throw new Error(`${slot.id}: comparison set ${setIndex} does not exist`);
   }
   const beforePiece = equippedIn(registries, run.loadout, run.class, slot.id);
-  loadout.sets[slot.id][setIndex] = piece ? piece.id : null;
-  loadout.active[slot.id] = setIndex;
+  const transitioned = applyEquipTransition(registries, loadout, slot.id, setIndex, piece ? piece.id : null);
+  if (transitioned) loadout.active[slot.id] = setIndex;
   const comparedRun = { ...run, loadout };
   const afterRoles = rolesFor(registries, comparedRun);
   const beforeByRole = new Map(beforeRoles.map((row) => [row.role, row]));
@@ -38054,7 +38256,7 @@ function renderRoleCopies(surface) {
     + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
 }
 
-function renderCandidateComparison(candidate) {
+function renderCandidateComparison(candidate, { expanded = false } = {}) {
   const requirements = candidate.requirement ? renderEquipmentRequirements([candidate.requirement]) : renderEquipmentRequirements([]);
   const roleRows = candidate.roles.map((row) => `<li data-role="${esc(row.role)}"><b>${esc(row.beforeName)} → ${esc(row.afterName)}</b> <span>${row.beforeValue} → <strong>${row.afterValue}</strong></span><small>${esc(row.afterSchool)}${row.afterTags.length ? ` · ${row.afterTags.map(esc).join(' · ')}` : ''}</small></li>`).join('');
   const effects = candidate.addedEffects.length
@@ -38067,7 +38269,7 @@ function renderCandidateComparison(candidate) {
     // `swapPriceChanges`). Absent on every row that has nothing to decline.
     ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong>${row.note ? `<small>${esc(row.note)}</small>` : ''}</li>`).join('')
     : '<li class="equip-resource-change none">No resource changes.</li>';
-  return `<details class="equip-candidate-comparison"><summary>Compare cards and receipts</summary>`
+  return `<details class="equip-candidate-comparison"${expanded ? ' open' : ''}><summary>Compare cards and receipts</summary>`
     + `<ul class="equip-card-changes">${roleRows}</ul>${requirements}`
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`
@@ -43068,12 +43270,14 @@ Object.assign(module.exports, { friendlyTargetMode, friendlyTargetPlan, assertFr
 
 const { balance } = require("src/content/balance.js");
 const { resolveCard } = require("src/model/registries.js");
-const { canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState } = require("src/model/loadout.js");
+const { canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec, ownership, openedSets, visibleSets, rungFor, setCellState, slotHand } = require("src/model/loadout.js");
 
 
 
 const { equipmentSurfaceReceipt } = require("src/model/equipmentPresentation.js");
-const { renderCard } = require("src/ui/components/card.js");
+const { inventoryRows, inventoryItemCount } = require("src/model/inventoryPresentation.js");
+const { equippedTagColor } = require("src/model/equipmentUi.js");
+const { renderCard, relicText } = require("src/ui/components/card.js");
 const { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } = require("src/ui/components/equipmentReceipts.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { refuses } = require("src/ui/components/refusal.js");
@@ -43084,7 +43288,6 @@ const { statProjection } = require("src/model/statProjection.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
-const { armHold, holdMs } = require("src/ui/components/holdconfirm.js");
 
 const CFG = () => balance.equipment;
 
@@ -43215,6 +43418,14 @@ const REGIONS = [
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory',
+    sel: '.armoury-inventory',
+    count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
+      .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
+    unit: 'item',
   },
   {
     id: 'cards',
@@ -43434,11 +43645,63 @@ function pieceChip(registries, piece, { selected }) {
 }
 
 /** The same card as phrasing content, for use INSIDE the disclosure face. */
-function pieceFace(registries, piece, { selected }) {
+function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   const el = document.createElement('span');
   el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.innerHTML = pieceChipHtml(registries, piece);
+  if (equippedLabel) {
+    const tags = el.querySelector('.ec-tags');
+    const badge = document.createElement('em');
+    badge.className = 'ec-equipped';
+    badge.textContent = equippedLabel;
+    tags.appendChild(badge);
+  }
   return dropArtOnError(el);
+}
+
+function inventoryFace(row) {
+  const el = document.createElement('span');
+  el.className = 'inventory-face';
+  el.dataset.inventoryItem = row.key;
+  el.dataset.itemCategory = row.category;
+  el.dataset.itemCount = String(row.count);
+  const equipped = row.equippedLabels.length
+    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
+      ? 'Equipped'
+      : `Equipped: ${row.equippedLabels.join(' / ')}`)
+    : '';
+  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + `<span class="inventory-category">${esc(row.category)}</span>`
+    + `<span class="inventory-count">×${row.count}</span>`
+    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
+  return el;
+}
+
+function inventoryReveal(registries, row) {
+  const el = document.createElement('div');
+  el.className = 'inventory-detail';
+  const item = row.item;
+  let art = '';
+  if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
+    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+  } else if (item.artAsset) {
+    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+  } else {
+    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+  }
+  const description = row.category === 'Relic'
+    ? relicText(item, registries)
+    : (item.blurb || item.textTemplate || 'No additional information.');
+  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
+  el.innerHTML = `<div class="inventory-model">${art}</div>`
+    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
+    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
+    + `<p>${esc(description)}</p>`
+    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
+    + '</div>';
+  const image = el.querySelector('img');
+  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
+  return el;
 }
 
 /**
@@ -43475,17 +43738,6 @@ function mountEquipment(host, {
   // below reads `inCombat` — a second name for the same fact is the defect this
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
-  // EVERY ARMED GRIP, SO EVERY ARMED GRIP CAN BE PUT DOWN. `armHold` adds a
-  // window-level keydown listener (its Escape abort) that only `disarm()`
-  // removes, and `draw()` below replaces the whole subtree — so without this
-  // list every equip would leave one live listener per candidate behind,
-  // forever, and nothing on the page would look wrong. A graceful leak.
-  //
-  // MEASURED, NOT ASSERTED, because a counterfactual in a comment is a claim.
-  // `getEventListeners(window).keydown` over seven picker opens on the map
-  // mount: 3 with no grip, 4 with one — and with this line removed, 3 -> 13.
-  // With it, back to 3. Flat.
-  const heldGrips = [];
   const eq = registries.equipment;
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
@@ -43572,27 +43824,14 @@ function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
   wrap.className = 'modal-veil armoury-overlay';
+  const customEquippedTagColor = equippedTagColor(eq.armouryUi);
+  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
 
-  // ONE TEARDOWN HOME, AND THAT IS THE WHOLE FIX. Everything this mount arms
-  // OUTSIDE its own subtree is put down HERE, because `close()` is the only act
-  // every exit path runs — the ✕, the backdrop tap, Escape, and a caller's own
-  // `close()`. `draw()` drains the grips too, and must: it replaces the subtree
-  // they are bound to. But a close runs NO draw, so the last render's grips were
-  // dying with their elements and keeping their listeners.
-  //
-  // MEASURED, BOTH HALVES, `getEventListeners` over six open→picker→close-by-✕
-  // cycles, map mount, 1200x730, real Chromium over browser.mjs's CDP path:
-  //   window   keydown  3 → 4,5,6,7,8,9   ONE PER CYCLE — every grip `armHold`
-  //            armed and only `draw()` drained. MINE, and Codex found it.
-  //   document keydown  0 → 1,2,3,4,5,6   the Escape handler below, which
-  //            removed itself on the Escape path only. NOT MINE: the same probe
-  //            against dev 3926a68, where no grip exists, reads 0 → 1..6 too.
-  //            Repaired in the same act because it is the same disease and this
-  //            is now the one place that answers it.
-  // After this, both are flat at 3 and 0 — A8 below is that measurement as a check.
+  // One teardown home for the listener this mount owns outside its subtree.
+  // The 2026-08-23 disclosure correction removed the hold grips and their
+  // window listeners; Escape still has to leave through every close road.
   const close = () => {
-    while (heldGrips.length) heldGrips.pop()();
     document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
@@ -43768,7 +44007,7 @@ function mountEquipment(host, {
     // each repeating it is a wall, and the chips still answer a tap individually
     // through refuses(), which is the property that actually failed on his phone.
     const seal = canEquip(registries, picking.slotId, { inCombat });
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+    box.innerHTML = '<h4>Inventory</h4>'
       + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
       + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
@@ -43822,10 +44061,18 @@ function mountEquipment(host, {
     // ("the card should be the button for compare and stats"). The face opens;
     // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
-    // The hold and the button must run the SAME closure — see `act` below.
-    const entryAct = new Map();
+    const equippedHands = (pieceId) => eq.slots
+      .filter((candidate) => slotHand(candidate))
+      .filter((candidate) => (run.loadout.sets[candidate.id] || []).some((id) => id === pieceId))
+      .map((candidate) => candidate.label);
     const entries = eligible(slot).map((piece) => {
       const equipped = piece.id === current;
+      const hands = [...new Set(equippedHands(piece.id))];
+      const moving = !equipped && hands.length > 0;
+      const candidatePieceId = equipped ? null : piece.id;
+      const actionLabel = equipped
+        ? 'Unequip'
+        : `${moving ? 'Move' : 'Equip'} to ${slot.label}`;
       const body = document.createElement('div');
       body.className = 'ep-body';
       // `meta` is handed over because the swap-price rows are priced with the
@@ -43833,10 +44080,13 @@ function mountEquipment(host, {
       // price them with the shipping default and read as plausible — the row
       // carries the rule it used (`ruleId`) so that stays readable either way.
       const comparison = equipmentSurfaceReceipt(registries, run, {
-        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: candidatePieceId },
         meta,
       }).candidate;
-      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      const transition = equipTransitionReceipt(
+        registries, run.loadout, picking.slotId, picking.setIndex, candidatePieceId
+      );
+      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison, { expanded: true }));
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -43847,293 +44097,57 @@ function mountEquipment(host, {
       // Unequip in the ordinary colour satisfies half his sentence.
       btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
       btn.dataset.act = equipped ? 'unequip' : 'equip';
-      btn.textContent = equipped ? 'Unequip' : 'Equip';
-      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
-      // a hold on the card AND a button in the opened pane; two copies of
-      // `equipPiece(...)` is two chances for the roads to disagree about what
-      // "equip" means, which is the second copy this seat exists to refuse.
+      btn.textContent = actionLabel;
+      // One visible action, inside the open card. The 2026-08-23 correction
+      // removed the always-visible hold shortcut so a folded item is one row,
+      // not a row followed by a second action-shaped row.
       const act = () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
-          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
+        const changed = equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
+          candidatePieceId, owned(), { inCombat, attributes: run.attributes });
+        if (!changed) {
+          notice = `${actionLabel} was refused. The loadout was not changed.`;
+          draw();
+          return;
+        }
         sfx.play('cardPlay');
         commit();
       };
-      if (seal.ok) btn.addEventListener('click', act);
-      else sealChip(btn);
+      if (!seal.ok) sealChip(btn);
+      else if (!transition.ok) {
+        btn.classList.add('locked');
+        refuses(btn, () => transition.reason);
+      } else btn.addEventListener('click', act);
       body.appendChild(btn);
-      entryAct.set(piece.id, seal.ok ? act : null);
 
       return {
         key: piece.id,
         kind: 'item',
         disclosure: 'face',
         equipped,
-        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
-        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+        actionLabel,
+        face: {
+          label: piece.name,
+          node: pieceFace(registries, piece, {
+            selected: equipped,
+            equippedLabel: hands.length ? `Equipped: ${hands.join(' / ')}` : '',
+          }),
+        },
+        reveal: {
+          node: body,
+          sense: equipped
+            ? 'Equipped. Press to unequip.'
+            : moving
+              ? `Equipped in ${hands.join(' / ')}. Press to move to ${slot.label}.`
+              : `Press to compare and equip to ${slot.label}.`,
+        },
       };
     });
 
     const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
-
-    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
-    //
-    //   "press and hold on army card to equip, but aLso have an equip button
-    //    when card is expanded (unfolded). click unfolds the card and records
-    //    it when clicked again or clicked off the card"
-    //
-    // click        → unfold          (Sunna's renderer already does this)
-    // click again  → refold          (her toggle already does this)
-    // click off    → refold          (NEW, below — nothing did this)
-    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
-    //
-    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
-    // click also commits, that is one line and the reading is stated rather
-    // than buried.
-    //
-    // ---- HIS RULING: TWO ELEMENTS (Constantine, 2026-08-21) --------------
-    //
-    // He was given three roads and took the one that costs a control. What was
-    // MEASURED at #304 and put in front of him stands and is not softened here:
-    //
-    //   `armHold` cannot serve both gestures on ONE element, by design —
-    //     "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 —
-    //      the early release IS the abort, so the click it generates must die
-    //      here rather than become a second door."
-    //   Arming the FACE was tried and measured: the card stopped unfolding and
-    //     A5's refold checks went red behind it.
-    //   Arming the in-card EQUIP BUTTON was measured too: its click dies, so
-    //     the hold becomes the ONLY road to equipping, and anyone who cannot
-    //     perform a hold loses the act.
-    //
-    // BOTH OF THOSE ARE "TWO ELEMENTS" AND HIS OWN FOUR RULES EXCLUDE BOTH.
-    // He asked for click-unfolds-the-card AND for the in-card button to stay.
-    // So the second element is a THIRD control that carries neither existing
-    // click: a grip under each card. The card keeps its click, the button keeps
-    // its click, and the grip holds nothing but the hold. That is the only
-    // arrangement his four sentences leave standing, and it is stated here
-    // rather than derived silently, because the cost — one more control per
-    // candidate, in a picker that opens into a ~125 px strip — is his to carry
-    // and he was told the number.
-    //
-    // WHY `armHold` AND NOT `beatArmer`. The beat table (model/secondbeat.js)
-    // rules on COMMITS — what a mis-press writes that cannot be taken back —
-    // and equipping is reversible by equipping the other thing. `beatOf` would
-    // answer `none` and arm nothing. This hold is not a safety step; it is a
-    // SHORTCUT past the unfold, the same shape as `armInspect`, which is a
-    // neighbour of that table and deliberately not a row in it. Adding an
-    // `equipPiece` row to make this legal would be teaching the table to say
-    // "hold" about something it correctly considers free.
-    //
-    // ONE DIAL, NOT A NUMBER. `holdMs` is the player's own Hold-to-confirm
-    // setting; `off` (0) means the pre-hold behaviour byte for byte, so the
-    // grip becomes a plain one-tap Equip and NOTHING is lost at that setting.
-    const gripMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
-    for (const entry of entries) {
-      const face = list.querySelector(`[data-face="${CSS.escape(entry.key)}"]`);
-      if (!face) continue;
-      const grip = document.createElement('button');
-      grip.type = 'button';
-      // Same two channels as the in-card button: the word and `.danger`.
-      grip.className = entry.equipped ? 'ep-hold danger' : 'ep-hold';
-      grip.dataset.holdFor = entry.key;
-      grip.dataset.act = entry.equipped ? 'unequip' : 'equip';
-      const verb = entry.equipped ? 'Unequip' : 'Equip';
-      grip.textContent = verb;
-      // WHICH PIECE THIS GRIP IS FOR, IN THE ACCESSIBILITY TREE. Codex found
-      // it and it is a defect of HIS RULING, not a nicety: D97 puts a SECOND
-      // control on every candidate, and until this line every one of them was
-      // named `Equip`. MEASURED, at ?shot=map&shotStorage=full (the bag filled
-      // through addToStorage, the real writer), main-hand, 1200x730, off
-      // `Accessibility.getFullAXTree`:
-      //
-      //   8 grips · AX names ["Unequip HOLD","Equip HOLD" x7] · 6 collisions
-      //
-      // A screen reader reads "Equip HOLD, button" seven times and a voice
-      // user has nothing to say. `data-hold-for` carries the id and IS NOT IN
-      // THAT TREE — also measured, not assumed. Two elements per candidate is
-      // his call and it ships; two elements where the new one has no name is a
-      // WORSE reader experience than the one control it joined, which is not
-      // what he ruled on.
-      //
-      // ONLY THE GRIP, AND THAT IS A MEASUREMENT TOO. The in-card `.ep-equip`
-      // is absent from the AX tree while folded, and the fold is an ACCORDION —
-      // clicking all eight faces left `aria-expanded="true"` on exactly ONE. So
-      // at most one in-card control exists at a time, inside the card whose
-      // face carries the name, and it has no sibling to be confused with. A
-      // second aria-label there would be a name nothing can collide with.
-      //
-      // `aria-label` and not `aria-labelledby`: the grip is a SIBLING of the
-      // face by construction (see the note below — that is rule 1's safety),
-      // so pointing at the face would mean minting an id for it and keeping
-      // two nodes in step across every redraw. The word and the piece already
-      // sit in this scope; naming the control here is one home, not two.
-      // `aria-label` overrides content, so carry the conditional HOLD hint into
-      // the accessible name instead of silently removing the instruction. A
-      // sealed grip cannot arm a hold, so it must not promise one either.
-      const act = entryAct.get(entry.key);
-      grip.setAttribute('aria-label',
-        `${verb} ${entry.face.label}${act && gripMs > 0 ? ' — hold' : ''}`);
-      // A SIBLING, NOT A CHILD, and that is the whole of rule 1's safety here.
-      // Nested inside the face the grip's aborted click would bubble into the
-      // unfold path and only `stopPropagation` would stand between them — which
-      // is keeping two gestures apart by a promise instead of by structure.
-      // Sibling means an aborted hold has no path to the fold at all.
-      face.insertAdjacentElement('afterend', grip);
-      if (!act) { sealChip(grip); continue; }
-      // THE LIFT AFTER A COMMIT, AND IT IS A MEASUREMENT, NOT A PRECAUTION.
-      // Driven with real CDP touch at 1200x730: the hold fires AT FULL (that is
-      // armHold's design — the player feels it land with the thumb still down),
-      // `commit()` redraws this whole subtree, and the finger then lifts over
-      // whatever now occupies that pixel. Chrome dispatches the click to THAT
-      // element. Measured target: `BUTTON.es-cell on` — the release silently
-      // re-opened a slot picker the player never asked for.
-      //
-      // Rule 1's own swallow cannot reach this: it lives on the grip, and the
-      // grip no longer exists by the time the click is dispatched. THAT IS AN
-      // `armHold` FINDING, NOT AN ARMOURY ONE — any caller whose `onConfirm`
-      // rebuilds its own element loses the swallow, and combat's End Turn has
-      // the same shape. Flagged to the holdconfirm seat on the PR; fixed HERE
-      // only because this is the caller that has it today.
-      //
-      // NO TIMER, so there is no stale swallow to eat a later real tap (Vira's
-      // F3, which this tree has already paid for once).
-      //
-      // THE EATER EATS ONE CLICK AND IT IS THE ONE ITS OWN POINTER MAKES —
-      // AND THAT ONE PREDICATE IS THE WHOLE FIX FOR THREE FINDINGS.
-      //
-      // It was armed on *a hold completed* and released by *the next
-      // pointerdown*, and neither half is about the click it exists to eat. So
-      // the same defect was found three times, one road at a time, by three
-      // different readers: a held Confirm KEY commits with no lift (A7.swallow)
-      // · a MOUSE release over the element `act()` just removed makes no click
-      // (A7.mouseswallow, Codex P2a) · a touch or pen that reaches full and is
-      // then CANCELLED never lifts at all (A7.cancelswallow). Every one of them
-      // left a window click-capture listener standing, and the next activation
-      // ANYWHERE — the Grid tab, one Enter — paid for it.
-      //
-      // TWO SPECIAL CASES WERE THE WRONG SHAPE OF ANSWER and both are gone:
-      // `ev.pointerType !== 'mouse'` is DELETED. The question was never *which
-      // device* — it is *whose lift is this click*, and the event answers it.
-      // Measured, Chromium 141, 1200x730, browser.mjs CDP path:
-      //     touch tap, element present   pointerdown id 2  -> click id 2
-      //     touch tap, element REMOVED   pointerdown id 3  -> click id 3 (DIV)
-      //     touch CANCELLED after 900 ms pointerdown id 4  -> NO CLICK AT ALL
-      //     mouse press/release          pointerdown id 1  -> click id 1
-      // A REAL click is a PointerEvent in this engine and carries the
-      // pointerId of the gesture that produced it. A trailing lift therefore
-      // identifies itself, and a cancelled finger cannot forge one because
-      // there is no click at all.
-      //
-      // AND THE SYNTHETIC ACTIVATIONS CANNOT FORGE ONE EITHER — measured for
-      // BOTH forms this tree actually uses, because they differ and I had the
-      // wrong one written here first:
-      //     input.js:509  new MouseEvent('click')  -> MouseEvent, NO pointerId
-      //                                                property at all
-      //     input.js:844  el.click()               -> PointerEvent, id -1
-      // `undefined !== 4` and `-1 !== 4`. input.js's keyboard and pad road is
-      // the FIRST of those, which is the one A7.swallow drives.
-      //
-      // AND DELETING THE DEVICE GATE REMOVES A BET ON THE BROWSER. That gate
-      // rested on "a mouse over a removed element makes no click" — true today
-      // (A7.premise watches it), and the day it stops being true the gate turns
-      // silently back into the defect it replaced. The identity check needs no
-      // such premise: if a mouse ever does dispatch that click, it carries id 1
-      // and is eaten, which is the behaviour we want either way.
-      //
-      // WHAT IS LEFT OF THE ROAD GATE IS SCOPE, NOT A CASE: `ev.type ===
-      // 'pointerdown'` at the call site is "this gesture had a pointer at all".
-      // A held key, a held pad button and the synthetic `detail === 0` click
-      // reach `onConfirm` with no pointer behind them and no lift owed.
-      //
-      // AND THE CANCEL TEARS THE EATER DOWN rather than merely starving it.
-      // Measured above: a cancelled pointer dispatches NO click, so the eater
-      // has nothing left to wait for and goes now instead of at some later
-      // pointerdown. The identity check already makes it harmless; this makes
-      // it absent, which is the difference between a quiet listener and none.
-      //
-      // BOUNDARY, STATED POSITIVELY. On the MOUSE road the eater still arms and
-      // is fed nothing, so one window click-capture listener lives from the
-      // hold to the next `pointerdown` — inert (id 1 matches no other click),
-      // not free. PEN IS STILL NOT DRIVEN: it now needs no device assumption at
-      // all, which is strictly better than the gate it replaces, but no pen
-      // event has been dispatched at this ref.
-      const eatTheLift = (pointerId) => {
-        const off = () => {
-          removeEventListener('click', eat, true);
-          removeEventListener('pointerdown', down, true);
-          removeEventListener('pointercancel', gone, true);
-        };
-        // WHOSE LIFT IS THIS. Anything else — a synthetic activation click, a
-        // later real tap, another finger — is not this gesture's and is none of
-        // this eater's business.
-        const eat = (e) => {
-          if (e.pointerId !== pointerId) return;
-          e.stopPropagation(); e.preventDefault(); off();
-        };
-        // Another pointer is not this gesture. Keep this eater until its own
-        // pointer clicks, cancels, or begins a later gesture with the same id.
-        const down = (e) => { if (e.pointerId === pointerId) off(); };
-        // THIS GESTURE ENDED WITHOUT LIFTING. No click is coming; go now.
-        const gone = (e) => { if (e.pointerId === pointerId) off(); };
-        addEventListener('click', eat, true);
-        addEventListener('pointerdown', down, true);
-        addEventListener('pointercancel', gone, true);
-      };
-      // THE THREE ROADS, WATCHED FAILING BEFORE THEY WERE CLOSED. Kept as a
-      // record of what was measured, not as a second copy of the reasoning —
-      // that is the block above, and it has one home.
-      //
-      //   KEY (A7.swallow). Real `Input.dispatchKeyEvent` through input.js's
-      //   own road, map mount, 1200x730: cursor walked onto the grip with real
-      //   ArrowDown, Enter held 900 ms of a 600 ms dial -> committed, slot
-      //   "Straight Sword" -> "＋". Then one ordinary Enter on the Grid view
-      //   tab -> `data-view` "hybrid" -> "hybrid". THE TAB DID NOTHING.
-      //   MOUSE (A7.mouseswallow, Codex P2a). Same shape with a 900 ms mouse
-      //   hold in front of it: window click-capture listeners NET +1 after the
-      //   lift, ZERO clicks dispatched, and the next Enter -> "hybrid" ->
-      //   "hybrid" again. A6 CANNOT SEE THIS: it reads [] after a mouse lift
-      //   whether an eater is armed or not.
-      //   CANCEL (A7.cancelswallow). Touch held 900 ms of a 600 ms dial, then
-      //   `Input.dispatchTouchEvent touchCancel`: slot "Straight Sword" -> "＋"
-      //   (fire-at-full, so the eater armed), no click ever dispatched, and the
-      //   next Enter -> "hybrid" -> "hybrid". BOTH EDGES of the cancel are
-      //   driven — cancelled BELOW full is the abort and must not commit, and
-      //   it was already green, because an abort never reaches `onConfirm`.
-      //
-      // A6.tail COULD NEVER HAVE CAUGHT THE MOUSE ONE and its comment said
-      // otherwise. It reads [] on the mouse road whether the eater is armed or
-      // not — the plant proves it, naming the TOUCH lift with the swallow
-      // removed entirely. One zero came from the eater and one from the
-      // browser; the comment credited both to the eater. Corrected in place.
-      // A7 owns the mouse and cancel roads.
-      //
-      // `ev.type === 'pointerdown'` is exactly and only the fire-at-full of a
-      // POINTER press: `armPress` hands `begin` the pointerdown itself as the
-      // origin event, and no other road can produce that type here. A source
-      // flag would be a second copy of a fact the event already carries.
-      //
-      // THE SAME CLOSURE THE BUTTON RUNS. Two roads, one act, written once —
-      // a second `equipPiece(...)` here is two chances to disagree about what
-      // "equip" means, which is the copy this seat exists to refuse.
-      heldGrips.push(armHold(grip, {
-        ms: gripMs,
-        onConfirm: (ev) => { if (ev && ev.type === 'pointerdown') eatTheLift(ev.pointerId); act(); },
-        id: 'equipPiece',
-      }));
-    }
-    //
-    // THE IN-CARD BUTTON STAYS AND IS NOT A FALLBACK. It is the road for
-    // anyone who cannot perform a hold at all. (#304's body said a hold has no
-    // keyboard or pad equivalent; THAT WAS WRONG and it is corrected here —
-    // `armPress` (ui/gesture.js, S7, 2026-08-17) runs the same timer for a held
-    // Confirm key and a held Confirm pad button. What has no equivalent is a
-    // hold for a hand that cannot hold, on any input.)
-    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
-    // Armoury already owns a veil that closes the whole panel on an outside
-    // click, and a second document-level listener would race it — press outside
-    // everything and you would get a refold AND a close, from two homes.
-    // `.ep-list` is the whole card region, so this fires for a press anywhere
-    // else in the picker and nowhere else.
+    // The 2026-08-23 correction removes the always-visible hold strip.
+    // The face owns disclosure only; the single action remains inside the
+    // adopted reveal node and therefore exists on glass only while open.
+    // Clicking the title again is mountDisclosure's ordinary refold.
     box.addEventListener('click', (ev) => {
       if (!ev.target.closest('.ep-list')) fold.close();
     });
@@ -44150,6 +44164,27 @@ function mountEquipment(host, {
       list.insertAdjacentHTML('beforeend',
         '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
     }
+    return box;
+  }
+
+  /** The no-selection shelf: all currently usable item kinds, folded by row. */
+  function inventoryBlock() {
+    const box = document.createElement('div');
+    box.className = 'inventory-list ep-list';
+    const rows = inventoryRows(registries, run, meta);
+    const entries = rows.map((row) => ({
+      key: row.key,
+      kind: 'item',
+      disclosure: 'face',
+      face: { label: row.name, node: inventoryFace(row) },
+      reveal: {
+        node: inventoryReveal(registries, row),
+        sense: `${row.name}. ${row.category}. ${row.count} owned.`,
+      },
+    }));
+    mountDisclosure(box, entries, { moreLabel: 'more items' });
+    box.dataset.inventoryCount = String(inventoryItemCount(rows));
+    if (!entries.length) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">Inventory is empty.</p>');
     return box;
   }
 
@@ -44281,6 +44316,10 @@ function mountEquipment(host, {
         // for every other region. One fact, one home.
         if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
         draw();
+        // draw() replaces the activated header. Put keyboard/gamepad focus on
+        // its replacement so expanding a region does not throw the player out
+        // of the control they just used.
+        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
       });
       head.appendChild(btn);
       el.insertBefore(head, el.firstChild);
@@ -44288,8 +44327,6 @@ function mountEquipment(host, {
   }
 
   function draw() {
-    // The previous render's grips die BEFORE their elements do — see heldGrips.
-    while (heldGrips.length) heldGrips.pop()();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
@@ -44309,6 +44346,7 @@ function mountEquipment(host, {
           <div class="armoury-left"></div>
           <div class="armoury-right"></div>
         </div>
+        ${picking ? '' : '<section class="armoury-inventory"></section>'}
         <div class="armoury-strip"></div>
       </div>`;
 
@@ -44357,6 +44395,8 @@ function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    const inventory = wrap.querySelector('.armoury-inventory');
+    if (inventory) inventory.appendChild(inventoryBlock());
     wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
@@ -44385,6 +44425,99 @@ function mountEquipment(host, {
 
 
 Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, mountEquipment });
+
+},
+"src/model/inventoryPresentation.js": function (module, exports, require) {
+// src/model/inventoryPresentation.js — the Armoury's unified inventory read model.
+// Pure and headless: the UI draws these rows but does not decide ownership,
+// quantities, categories, or equipped locations.
+
+const { ownership, slotHand } = require("src/model/loadout.js");
+
+const ARMAMENT_CATEGORIES = Object.freeze({
+  weapon: 'Weapon',
+  shield: 'Shield',
+  staff: 'Staff',
+});
+
+function equipmentLocations(registries, run) {
+  const locations = new Map();
+  for (const slot of ((registries || {}).equipment || {}).slots || []) {
+    const ids = (((run || {}).loadout || {}).sets || {})[slot.id] || [];
+    for (const id of ids) {
+      if (!id) continue;
+      const labels = locations.get(id) || [];
+      const label = slot.label || slotHand(slot);
+      if (label && !labels.includes(label)) labels.push(label);
+      locations.set(id, labels);
+    }
+  }
+  return locations;
+}
+
+function countedRows(ids, registry, category, { equipped = false } = {}) {
+  const counts = new Map();
+  for (const id of ids || []) counts.set(id, (counts.get(id) || 0) + 1);
+  return [...counts].map(([id, count]) => {
+    const item = registry && registry.get(id);
+    if (!item) return null;
+    return {
+      key: `${category.toLowerCase()}:${id}`,
+      id,
+      name: item.name,
+      category,
+      count,
+      equippedLabels: equipped ? ['Equipped'] : [],
+      item,
+    };
+  }).filter(Boolean);
+}
+
+/**
+ * inventoryRows(registries, run, meta) → every item the current run can use.
+ * Equipment follows the same ownership predicate as the hand picker. Relics
+ * are active while held; potions are carried consumables and stack by id.
+ */
+function inventoryRows(registries, run, meta = {}) {
+  const equipment = (registries || {}).equipment || {};
+  const mine = ownership(registries, { meta, loadout: run && run.loadout });
+  const locations = equipmentLocations(registries, run);
+  const rows = [];
+
+  for (const item of (equipment.armour || []).filter((piece) => piece.classId === run.class && mine.has(piece))) {
+    rows.push({
+      key: `armour:${item.classId}:${item.id}`,
+      id: item.id,
+      name: item.name,
+      category: 'Armour',
+      count: 1,
+      equippedLabels: locations.get(item.id) || [],
+      item,
+    });
+  }
+  for (const item of (equipment.armaments || []).filter((piece) => mine.has(piece))) {
+    rows.push({
+      key: `armament:${item.id}`,
+      id: item.id,
+      name: item.name,
+      category: ARMAMENT_CATEGORIES[item.kind] || 'Armament',
+      count: 1,
+      equippedLabels: locations.get(item.id) || [],
+      item,
+    });
+  }
+
+  rows.push(...countedRows(run.relics || [], registries.relics, 'Relic', { equipped: true }));
+  rows.push(...countedRows((run.flasks || []).map((entry) => entry.flaskId), registries.flasks, 'Potion'));
+  return rows;
+}
+
+function inventoryItemCount(rows) {
+  return (rows || []).reduce((sum, row) => sum + (Number.isInteger(row.count) && row.count > 0 ? row.count : 0), 0);
+}
+
+
+Object.assign(module.exports, { inventoryRows, inventoryItemCount });
 
 },
 "src/ui/components/resbars.js": function (module, exports, require) {
