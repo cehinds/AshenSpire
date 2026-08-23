@@ -28,7 +28,7 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createLoadout, stampDeck } from '../model/loadout.js';
+import { createLoadout, normalizeArmamentLocations, stampDeck } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
@@ -445,6 +445,17 @@ export function createSaveManager(storage) {
           was: undefined,
           now: { sets: run.loadout.sets },
           why: `absent in the save: refilled with the class starting loadout for '${run.class}' — whatever this player was wearing is not recoverable from this file`,
+        });
+      }
+      const armamentLocationChanges = normalizeArmamentLocations(registries, run.loadout);
+      if (armamentLocationChanges.length) {
+        note(run, {
+          kind: 'overwrite',
+          site: 'save.js:loadRun',
+          field: 'loadout.armamentLocations',
+          was: armamentLocationChanges,
+          now: { sets: run.loadout.sets, storage: run.loadout.storage },
+          why: 'the shared Inventory contract keeps each owned armament in one hand location or in Inventory, never both',
         });
       }
       // One migration door for HP, Mana, Stamina, Energy and Draw. A run that

@@ -17,11 +17,13 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
-  ownership, openedSets, visibleSets, rungFor, setCellState,
+  canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  ownership, openedSets, visibleSets, rungFor, setCellState, slotHand,
 } from '../../model/loadout.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
-import { renderCard } from '../components/card.js';
+import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
+import { equippedTagColor } from '../../model/equipmentUi.js';
+import { renderCard, relicText } from '../components/card.js';
 import { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
@@ -32,7 +34,6 @@ import { statProjection } from '../../model/statProjection.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
-import { armHold, holdMs } from '../components/holdconfirm.js';
 
 const CFG = () => balance.equipment;
 
@@ -163,6 +164,14 @@ const REGIONS = [
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
+  },
+  {
+    id: 'inventory',
+    label: 'Inventory',
+    sel: '.armoury-inventory',
+    count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
+      .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
+    unit: 'item',
   },
   {
     id: 'cards',
@@ -382,11 +391,70 @@ function pieceChip(registries, piece, { selected }) {
 }
 
 /** The same card as phrasing content, for use INSIDE the disclosure face. */
-function pieceFace(registries, piece, { selected }) {
+function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   const el = document.createElement('span');
   el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.innerHTML = pieceChipHtml(registries, piece);
+  if (equippedLabel) {
+    const tags = el.querySelector('.ec-tags');
+    const badge = document.createElement('em');
+    badge.className = 'ec-equipped';
+    badge.textContent = equippedLabel;
+    tags.appendChild(badge);
+  }
   return dropArtOnError(el);
+}
+
+function inventoryFace(row, { selected = false, draggable = false } = {}) {
+  const el = document.createElement('span');
+  el.className = `inventory-face${selected ? ' on' : ''}`;
+  el.dataset.inventoryItem = row.key;
+  el.dataset.itemId = row.id;
+  el.dataset.itemCategory = row.category;
+  el.dataset.itemCount = String(row.count);
+  el.draggable = draggable;
+  const equipped = row.equippedLabels.length
+    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
+      ? 'Equipped'
+      : `Equipped: ${row.equippedLabels.join(' / ')}`)
+    : '';
+  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
+    + `<span class="inventory-category">${esc(row.category)}</span>`
+    + `<span class="inventory-count">×${row.count}</span>`
+    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '');
+  return el;
+}
+
+function inventoryReveal(registries, row, { comparison = null, action = null, instruction = '' } = {}) {
+  const el = document.createElement('div');
+  el.className = 'inventory-detail';
+  const item = row.item;
+  let art = '';
+  if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
+    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+  } else if (item.artAsset) {
+    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+  } else {
+    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+  }
+  const description = row.category === 'Relic'
+    ? relicText(item, registries)
+    : (item.blurb || item.textTemplate || 'No additional information.');
+  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
+  const mods = modSummary(registries, item);
+  el.innerHTML = `<div class="inventory-model">${art}</div>`
+    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
+    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
+    + `<p>${esc(description)}</p>`
+    + (mods.length ? `<p class="inventory-mods">${mods.map(esc).join(' · ')}</p>` : '')
+    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
+    + (instruction ? `<p class="inventory-instruction">${esc(instruction)}</p>` : '')
+    + (comparison ? renderCandidateComparison(comparison, { expanded: true }) : '')
+    + '</div>';
+  if (action) el.querySelector('.inventory-information').appendChild(action);
+  const image = el.querySelector('img');
+  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
+  return el;
 }
 
 /**
@@ -509,9 +577,15 @@ export function mountEquipment(host, {
   // panel underneath. Named here because the class is what makes it possible.
   const wrap = document.createElement('div');
   wrap.className = 'modal-veil armoury-overlay';
+  const customEquippedTagColor = equippedTagColor(eq.armouryUi);
+  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
   host.appendChild(wrap);
 
+  // One teardown home for the listener this mount owns outside its subtree.
+  // The 2026-08-23 disclosure correction removed the hold grips and their
+  // window listeners; Escape still has to leave through every close road.
   const close = () => {
+    document.removeEventListener('keydown', onKey);
     wrap.remove();
     if (onClose) onClose();
   };
@@ -556,6 +630,7 @@ export function mountEquipment(host, {
   // moves ids between storage and sets while this panel is open.
   const owned = () => ownership(registries, { meta, loadout: run.loadout });
   const ladderCtx = () => ({ meta, loadout: run.loadout });
+  let draggingItemId = null;
 
   /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
   function authoredFor(slot) {
@@ -571,6 +646,52 @@ export function mountEquipment(host, {
     // the second half of that same sentence.
     const mine = owned();
     return authoredFor(slot).filter((p) => mine.has(p));
+  }
+
+  /** One mutation path for picker buttons and Inventory drag/drop. */
+  function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
+    const changed = equipPiece(
+      registries, run.loadout, slotId, setIndex, pieceId, owned(),
+      { inCombat, attributes: run.attributes }
+    );
+    if (!changed) {
+      notice = `${actionLabel} was refused. The loadout was not changed.`;
+      draw();
+      return false;
+    }
+    sfx.play('cardPlay');
+    commit();
+    return true;
+  }
+
+  function equipmentRowFor(piece) {
+    return inventoryRows(registries, run, meta).find((row) => row.item === piece) || null;
+  }
+
+  function comparisonFor(slotId, setIndex, pieceId) {
+    return equipmentSurfaceReceipt(registries, run, {
+      candidate: { slotId, setIndex, pieceId },
+      meta,
+    }).candidate;
+  }
+
+  /** Prefer what an item is equipped in, then the selected slot, then its first fit. */
+  function inventoryTarget(row) {
+    if (!row || !row.item || !['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) return null;
+    const slots = (eq.slots || []).filter((slot) => fitsSlot(slot, row.item));
+    if (!slots.length) return null;
+    for (const slot of slots) {
+      const index = (run.loadout.sets[slot.id] || []).findIndex((id) => id === row.id);
+      if (index >= 0) return { slot, setIndex: index, pieceId: null, equipped: true };
+    }
+    const selected = picking && slots.find((slot) => slot.id === picking.slotId);
+    const slot = selected || slots[0];
+    return {
+      slot,
+      setIndex: selected ? picking.setIndex : (run.loadout.active[slot.id] || 0),
+      pieceId: row.id,
+      equipped: false,
+    };
   }
 
   function slotBlock(slot) {
@@ -627,6 +748,27 @@ export function mountEquipment(host, {
         : `<span class="es-empty">＋</span>`;
       const im = cell.querySelector('img');
       if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
+
+      cell.addEventListener('dragover', (ev) => {
+        const dragged = (eq.armaments || []).find((candidate) => candidate.id === draggingItemId)
+          || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === draggingItemId);
+        if (!dragged || !fitsSlot(slot, dragged)) return;
+        ev.preventDefault();
+        if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
+        cell.classList.add('drop-ready');
+      });
+      cell.addEventListener('dragleave', () => cell.classList.remove('drop-ready'));
+      cell.addEventListener('drop', (ev) => {
+        cell.classList.remove('drop-ready');
+        const pieceId = (ev.dataTransfer && (ev.dataTransfer.getData('application/x-ashenspire-item')
+          || ev.dataTransfer.getData('text/plain'))) || draggingItemId;
+        const dragged = (eq.armaments || []).find((candidate) => candidate.id === pieceId)
+          || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === pieceId);
+        if (!dragged || !fitsSlot(slot, dragged)) return;
+        ev.preventDefault();
+        picking = { slotId: slot.id, setIndex: i };
+        applyEquipmentChange(slot.id, i, pieceId, `Equip ${dragged.name} to ${slot.label}`);
+      });
 
       cell.addEventListener('click', () => {
         // Clicking a set you're not in switches to it; clicking the one you're
@@ -686,7 +828,7 @@ export function mountEquipment(host, {
     // each repeating it is a wall, and the chips still answer a tap individually
     // through refuses(), which is the property that actually failed on his phone.
     const seal = canEquip(registries, picking.slotId, { inCombat });
-    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+    box.innerHTML = '<h4>Inventory</h4>'
       + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
       + '<div class="ep-list"></div>';
     const list = box.querySelector('.ep-list');
@@ -740,21 +882,26 @@ export function mountEquipment(host, {
     // ("the card should be the button for compare and stats"). The face opens;
     // the ACT inside it refuses, with the model's own sentence.
     const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
-    // The hold and the button must run the SAME closure — see `act` below.
-    const entryAct = new Map();
+    const equippedHands = (pieceId) => eq.slots
+      .filter((candidate) => slotHand(candidate))
+      .filter((candidate) => (run.loadout.sets[candidate.id] || []).some((id) => id === pieceId))
+      .map((candidate) => candidate.label);
     const entries = eligible(slot).map((piece) => {
       const equipped = piece.id === current;
-      const body = document.createElement('div');
-      body.className = 'ep-body';
+      const hands = [...new Set(equippedHands(piece.id))];
+      const moving = !equipped && hands.length > 0;
+      const candidatePieceId = equipped ? null : piece.id;
+      const actionLabel = equipped
+        ? 'Unequip'
+        : `${moving ? 'Move' : 'Equip'} to ${slot.label}`;
       // `meta` is handed over because the swap-price rows are priced with the
       // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
       // price them with the shipping default and read as plausible — the row
       // carries the rule it used (`ruleId`) so that stays readable either way.
-      const comparison = equipmentSurfaceReceipt(registries, run, {
-        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
-        meta,
-      }).candidate;
-      body.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      const comparison = comparisonFor(picking.slotId, picking.setIndex, candidatePieceId);
+      const transition = equipTransitionReceipt(
+        registries, run.loadout, picking.slotId, picking.setIndex, candidatePieceId
+      );
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -765,80 +912,49 @@ export function mountEquipment(host, {
       // Unequip in the ordinary colour satisfies half his sentence.
       btn.className = equipped ? 'ep-equip danger' : 'ep-equip';
       btn.dataset.act = equipped ? 'unequip' : 'equip';
-      btn.textContent = equipped ? 'Unequip' : 'Equip';
-      // ONE ACT, TWO ROADS — and the act is written once. Constantine asked for
-      // a hold on the card AND a button in the opened pane; two copies of
-      // `equipPiece(...)` is two chances for the roads to disagree about what
-      // "equip" means, which is the second copy this seat exists to refuse.
-      const act = () => {
-        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex,
-          equipped ? null : piece.id, owned(), { inCombat, attributes: run.attributes });
-        sfx.play('cardPlay');
-        commit();
-      };
-      if (seal.ok) btn.addEventListener('click', act);
-      else sealChip(btn);
-      body.appendChild(btn);
-      entryAct.set(piece.id, seal.ok ? act : null);
+      btn.textContent = actionLabel;
+      // One visible action, inside the open card. The 2026-08-23 correction
+      // removed the always-visible hold shortcut so a folded item is one row,
+      // not a row followed by a second action-shaped row.
+      const act = () => applyEquipmentChange(picking.slotId, picking.setIndex, candidatePieceId, actionLabel);
+      if (!seal.ok) sealChip(btn);
+      else if (!transition.ok) {
+        btn.classList.add('locked');
+        refuses(btn, () => transition.reason);
+      } else btn.addEventListener('click', act);
+
+      const row = equipmentRowFor(piece);
 
       return {
         key: piece.id,
         kind: 'item',
         disclosure: 'face',
         equipped,
-        face: { label: piece.name, node: pieceFace(registries, piece, { selected: equipped }) },
-        reveal: { node: body, sense: equipped ? 'Equipped. Press to unequip.' : 'Press to compare and equip.' },
+        actionLabel,
+        face: {
+          label: piece.name,
+          node: inventoryFace(row, { selected: equipped }),
+        },
+        reveal: {
+          node: inventoryReveal(registries, row, {
+            comparison,
+            action: btn,
+            instruction: `Compare this item for ${slot.label}.`,
+          }),
+          sense: equipped
+            ? 'Equipped. Press to unequip.'
+            : moving
+              ? `Equipped in ${hands.join(' / ')}. Press to move to ${slot.label}.`
+              : `Press to compare and equip to ${slot.label}.`,
+        },
       };
     });
 
     const fold = mountDisclosure(list, entries, { moreLabel: 'more' });
-
-    // ---- HIS FOUR RULES FOR THE CARD (2026-08-21) -------------------------
-    //
-    //   "press and hold on army card to equip, but aLso have an equip button
-    //    when card is expanded (unfolded). click unfolds the card and records
-    //    it when clicked again or clicked off the card"
-    //
-    // click        → unfold          (Sunna's renderer already does this)
-    // click again  → refold          (her toggle already does this)
-    // click off    → refold          (NEW, below — nothing did this)
-    // press+hold   → equip           (NEW, below — armHold, the tree's gesture)
-    //
-    // "records it" is read as RECLOSES it. Flagged on the PR: if he meant the
-    // click also commits, that is one line and the reading is stated rather
-    // than buried.
-    //
-    // ---- THE HOLD IS NOT ARMED, AND THAT IS A FINDING, NOT AN OMISSION ----
-    //
-    // He asked for BOTH: "press and hold on army card to equip" AND "click
-    // unfolds the card". `armHold` (components/holdconfirm.js) is this tree's
-    // one hold gesture and it cannot serve both on ONE element, by design:
-    //
-    //   "A pointer click never commits WHEN A HOLD WAS ARMED. See rule 1 — the
-    //    early release IS the abort, so the click it generates must die here
-    //    rather than become a second door."
-    //
-    // Measured, not read: arming the face made a short click do NOTHING — the
-    // card stopped unfolding, and A5's refold checks went red behind it. Rule 1
-    // is not incidental; it exists so a released-too-early hold can never
-    // become a second way to fire the thing it was guarding.
-    //
-    // SO THE CONFLICT IS REAL AND IT IS A RULING, NOT A PATCH. Making the early
-    // release unfold a pane is exactly the "second door" rule 1 forbids, and
-    // whether the Armoury card is safe enough to be the exception is not this
-    // file's call — it is the holdconfirm seat's, and Constantine's if they
-    // disagree. `armHold`/`holdMs` stay imported for the moment it is ruled.
-    //
-    // WHAT SHIPS MEANWHILE IS HIS ITEM 3, AND IT IS THE ACCESSIBLE ROAD ANYWAY:
-    // the equip button inside the unfolded pane. A press-and-hold has no
-    // keyboard or pad equivalent at all, so the button was always going to be
-    // the only door for those players — which is why it is not a fallback here.
-    // CLICK OFF THE CARD REFOLDS IT. Bound to the picker, not the document: the
-    // Armoury already owns a veil that closes the whole panel on an outside
-    // click, and a second document-level listener would race it — press outside
-    // everything and you would get a refold AND a close, from two homes.
-    // `.ep-list` is the whole card region, so this fires for a press anywhere
-    // else in the picker and nowhere else.
+    // The 2026-08-23 correction removes the always-visible hold strip.
+    // The face owns disclosure only; the single action remains inside the
+    // adopted reveal node and therefore exists on glass only while open.
+    // Clicking the title again is mountDisclosure's ordinary refold.
     box.addEventListener('click', (ev) => {
       if (!ev.target.closest('.ep-list')) fold.close();
     });
@@ -855,6 +971,51 @@ export function mountEquipment(host, {
       list.insertAdjacentHTML('beforeend',
         '<p class="ep-hint">Nothing you are carrying fits this slot yet.</p>');
     }
+    return box;
+  }
+
+  /** The no-selection shelf: all currently usable item kinds, folded by row. */
+  function inventoryBlock() {
+    const box = document.createElement('div');
+    box.className = 'inventory-list ep-list';
+    const rows = inventoryRows(registries, run, meta);
+    const entries = rows.map((row) => {
+      const target = inventoryTarget(row);
+      const draggable = !!target;
+      const face = inventoryFace(row, { draggable });
+      if (draggable) {
+        face.addEventListener('dragstart', (ev) => {
+          draggingItemId = row.id;
+          face.classList.add('dragging');
+          if (ev.dataTransfer) {
+            ev.dataTransfer.effectAllowed = 'move';
+            ev.dataTransfer.setData('application/x-ashenspire-item', row.id);
+            ev.dataTransfer.setData('text/plain', row.id);
+          }
+        });
+        face.addEventListener('dragend', () => {
+          draggingItemId = null;
+          face.classList.remove('dragging');
+          for (const cell of wrap.querySelectorAll('.es-cell.drop-ready')) cell.classList.remove('drop-ready');
+        });
+      }
+      return {
+        key: row.key,
+        kind: 'item',
+        disclosure: 'face',
+        face: { label: row.name, node: face },
+        reveal: {
+          node: inventoryReveal(registries, row, {
+            comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
+            instruction: target ? 'Drag this item onto a compatible slot, or select a slot to use its action button.' : '',
+          }),
+          sense: `${row.name}. ${row.category}. ${row.count} owned.`,
+        },
+      };
+    });
+    mountDisclosure(box, entries, { moreLabel: 'more items' });
+    box.dataset.inventoryCount = String(inventoryItemCount(rows));
+    if (!entries.length) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">Inventory is empty.</p>');
     return box;
   }
 
@@ -986,6 +1147,10 @@ export function mountEquipment(host, {
         // for every other region. One fact, one home.
         if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
         draw();
+        // draw() replaces the activated header. Put keyboard/gamepad focus on
+        // its replacement so expanding a region does not throw the player out
+        // of the control they just used.
+        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
       });
       head.appendChild(btn);
       el.insertBefore(head, el.firstChild);
@@ -1012,6 +1177,7 @@ export function mountEquipment(host, {
           <div class="armoury-left"></div>
           <div class="armoury-right"></div>
         </div>
+        <section class="armoury-inventory"></section>
         <div class="armoury-strip"></div>
       </div>`;
 
@@ -1060,6 +1226,8 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
+    const inventory = wrap.querySelector('.armoury-inventory');
+    if (inventory) inventory.appendChild(inventoryBlock());
     wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
 
@@ -1075,8 +1243,10 @@ export function mountEquipment(host, {
     }
   }
 
+  // The removal moved INTO `close()` — see the block there. Leaving a copy here
+  // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+    if (e.key === 'Escape') close();
   };
   document.addEventListener('keydown', onKey);
 

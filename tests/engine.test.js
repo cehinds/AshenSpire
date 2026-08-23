@@ -57,13 +57,16 @@ import {
   figureSpec, fitsSlot, slotHand, pieceHand,
   ownership, fromDropPool, OWNERSHIP_GATES, slotRungs, openedSets, visibleSets, rungFor, setCellState,
   SLOT_RUNG_KIND, createLoadout, cycleSet, canSwap, canEquip,
-  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES,
+  swapCostFor, resolveSwapCostRule, SWAP_COST_BASES, RUN_MOD_APPLIES, equipmentRoleSource, equipTransitionReceipt,
 } from '../src/model/loadout.js';
+import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
+import { inventoryRows, inventoryItemCount } from '../src/model/inventoryPresentation.js';
 import {
   UNLOCK_CONDITIONS, REVEAL_MODES, PRESENT_STATES, emptyProgress, recordProgress, evaluateUnlocks,
   unlockView, revealState, pieceReveal,
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
+import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
 // The shrine lane and the level: both of Constantine's 2026-08-16 shrine asks
 // that a headless suite can reach. `mapknowledge.js` is pure by design (its own
 // header says so) and `levelup.js` touches no DOM, so the "no DOM access" rule
@@ -828,6 +831,25 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const migrated = saves.loadRun(REG);
     assert(migrated != null, 'compatible save survives content patch');
     eq(migrated.contentVersion, REG.contentVersion, 'contentVersion re-stamped');
+
+    // The old contract allowed one owned armament id in several hand sets and
+    // in storage at once. The shared Inventory contract migrates that shape at
+    // the real load door: keep the active occurrence, clear the rest, and never
+    // leave an equipped object duplicated in Inventory.
+    const duplicateStorage = createMemoryStorage();
+    const duplicateRun = createRunState({ seed: 0xd315, classId: 'reaver', registries: REG });
+    duplicateRun.loadout.sets.leftHand[1] = 'straightSword';
+    duplicateRun.loadout.storage.push('straightSword');
+    duplicateStorage.setItem(RUN_KEY, serializeRun(duplicateRun));
+    const duplicateSaves = createSaveManager(duplicateStorage);
+    const normalized = duplicateSaves.loadRun(REG);
+    assert(normalized != null, 'a legacy duplicate armament is normalized rather than archived');
+    eq(Object.values(normalized.loadout.sets).flat().filter((id) => id === 'straightSword').length, 1,
+      'the normalized save keeps exactly one equipped Straight Sword');
+    eq(normalized.loadout.sets.rightHand[0], 'straightSword', 'the active equipped occurrence survives normalization');
+    eq(normalized.loadout.storage.includes('straightSword'), false, 'the equipped survivor is removed from shared Inventory');
+    assert((duplicateSaves.runStatus().ledger.entries || [])
+      .some((entry) => entry.field === 'loadout.armamentLocations'), 'the load ledger names the normalization');
 
     // Parseable but malformed body (right schemaVersion, broken shape) → refused
     // and archived, instead of loading and exploding later mid-run.
@@ -1799,9 +1821,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       assert(String(w.geom).length > 0, `${w.id}: names a geometry archetype`);
       checkTags(w.tags, w.id);
       checkMods(w.mods, w.id);
-      // Shields belong in the off hand; staves are cast from the right.
-      if (w.kind === 'shield') assert(w.hand !== 'right', `${w.id}: a shield is not right-hand-only`);
-      if (w.kind === 'staff') eq(w.hand, 'right', `${w.id}: staves are right-handed`);
+      eq(w.hand, 'either', `${w.id}: every armament is side-neutral; its slot records the equipped hand`);
     }
 
     // Armour: four sets per class, exactly one of them unlocked from the start.
@@ -2253,7 +2273,17 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'leftHand')), 'left', 'the left slot knows it is the left hand');
     eq(slotHand(REG.equipment.slots.find((s) => s.id === 'armor')), null, 'armour is worn, not held');
     eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'dagger')), null, "'either' constrains nothing");
-    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), 'right', 'a right-handed weapon says so');
+    eq(pieceHand(REG.equipment.armaments.find((a) => a.id === 'greatsword')), null, 'a greatsword is side-neutral');
+    assert(REG.equipment.armaments.every((piece) => pieceHand(piece) === null), 'every shipped armament may be held in either hand');
+    const rightHandSlot = REG.equipment.slots.find((slot) => slot.id === 'rightHand');
+    const leftHandSlot = REG.equipment.slots.find((slot) => slot.id === 'leftHand');
+    let eitherHandChecks = 0;
+    for (const armament of REG.equipment.armaments) {
+      assert(fitsSlot(rightHandSlot, armament), `${armament.id}: fits the right hand`);
+      assert(fitsSlot(leftHandSlot, armament), `${armament.id}: fits the left hand`);
+      eitherHandChecks += 2;
+    }
+    eq(eitherHandChecks, REG.equipment.armaments.length * 2, 'every shipped armament was checked against both hands');
 
     // The other edge of the same defect, on a slot the real table does not have
     // yet: a slot that is NOT a hand is not a hand. A carried talisman used to
@@ -2277,16 +2307,87 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(drawn.leftId, null, 'and the talisman is drawn in no hand at all');
 
     // ---- the gate is on the mutation, not on the screen -------------------
+    eq(equippedTagColor(REG.equipment.armouryUi), '#7FD47F', 'the authored equipped tag uses its custom green');
+    eq(equippedTagColor({ equippedTag: { useCustomColor: false, customColor: '#7FD47F' } }), null,
+      'turning custom colour off delegates the equipped tag to the motif');
+    assert(armouryUiProblems({ equippedTag: { useCustomColor: true, customColor: 'green' } })
+      .some((problem) => problem.path.endsWith('customColor')), 'an invalid JSON colour fails by field name');
+
     const fresh = createRunState({ seed: 4, classId: 'reaver', registries: REG });
-    assert(!equipPiece(REG, fresh.loadout, 'leftHand', 0, 'greatsword', OWNS_EVERYTHING, AT_CAMP), 'the left hand refuses a right-handed weapon');
-    eq(fresh.loadout.sets.leftHand[0], 'roundShield', 'and a refusal leaves the authored starting shield exactly as it found it');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'a left-hand piece goes in');
-    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), "an 'either' piece goes in the left hand");
-    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'dagger', OWNS_EVERYTHING, AT_CAMP), '…and in the right hand');
-    assert(!equipPiece(REG, fresh.loadout, 'rightHand', 0, 'buckler', OWNS_EVERYTHING, AT_CAMP), 'the kind gate still holds too');
-    eq(fresh.loadout.sets.rightHand[0], 'dagger', 'and that refusal changed nothing either');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
+      'the starting sword moves freely into the left hand');
+    eq(fresh.loadout.sets.rightHand[0], null, 'moving the sword clears its old right-hand location');
+    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'and places it in the left hand');
+    eq(fresh.loadout.storage.filter((id) => id === 'roundShield').length, 1, 'the displaced shield returns to inventory once');
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP),
+      'the shield can move freely into the right hand');
+    eq(fresh.loadout.sets.rightHand[0], 'roundShield', 'the right hand now holds the shield');
+    eq(fresh.loadout.sets.leftHand[0], 'straightSword', 'the sword remains in the left hand');
+    eq(fresh.loadout.storage.includes('roundShield'), false, 'an equipped shield is no longer duplicated in storage');
+    eq(equipmentRoleSource(REG, fresh.loadout, fresh.class, 'guard').piece.id, 'straightSword',
+      'the left-hand sword supplies the Defend profile');
+
+    const staffRun = createRunState({ seed: 5, classId: 'herald', registries: REG });
+    assert(equipPiece(REG, staffRun.loadout, 'leftHand', 0, 'boneSceptre', OWNS_EVERYTHING, AT_CAMP),
+      'a staff moves from right to left');
+    eq(equipmentRoleSource(REG, staffRun.loadout, staffRun.class, 'guard').piece.id, 'boneSceptre',
+      'the left-hand staff supplies the Defend profile');
+
+    const shieldRun = createRunState({ seed: 6, classId: 'reaver', registries: REG });
+    assert(equipPiece(REG, shieldRun.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the starting shield returns to Inventory');
+    assert(equipPiece(REG, shieldRun.loadout, 'rightHand', 0, 'roundShield', OWNS_EVERYTHING, AT_CAMP), 'the shield equips in the right hand');
+    eq(equipmentRoleSource(REG, shieldRun.loadout, shieldRun.class, 'guard').piece.id, 'roundShield',
+      'a right-hand shield still supplies its guard profile when the left hand is bare');
+
+    const previewRun = createRunState({ seed: 7, classId: 'reaver', registries: REG });
+    const preview = equipmentSurfaceReceipt(REG, previewRun, {
+      candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'straightSword' },
+    }).candidate;
+    const actualRun = structuredClone(previewRun);
+    assert(equipPiece(REG, actualRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
+      'the previewed cross-hand move can be committed');
+    const actualRoles = equipmentSurfaceReceipt(REG, actualRun).roles;
+    eq(JSON.stringify(preview.roles.map((row) => [row.role, row.afterName, row.afterValue])),
+      JSON.stringify(actualRoles.map((row) => [row.role, row.profile.displayName, row.receipt.value])),
+      'cross-hand comparison after-values match the actual one-object transition');
+
+    const armourRun = createRunState({ seed: 8, classId: 'reaver', registries: REG });
+    const alternateArmour = REG.equipment.armour.find((piece) => piece.classId === 'reaver' && piece.id !== armourRun.loadout.sets.armor[0]);
+    const armourStorageBefore = JSON.stringify(armourRun.loadout.storage);
+    assert(equipPiece(REG, armourRun.loadout, 'armor', 0, alternateArmour.id, OWNS_EVERYTHING, AT_CAMP), 'armour can still be changed');
+    eq(JSON.stringify(armourRun.loadout.storage), armourStorageBefore, 'changing armour never writes to armament Inventory');
+
+    const cap = REG.balance.equipment.storageSlots;
+    const fullRun = createRunState({ seed: 9, classId: 'reaver', registries: REG });
+    fullRun.loadout.storage = REG.equipment.armaments
+      .map((piece) => piece.id)
+      .filter((id) => !['straightSword', 'roundShield'].includes(id))
+      .slice(0, cap);
+    const fullBefore = JSON.stringify(fullRun.loadout);
+    const fullUnequip = equipTransitionReceipt(REG, fullRun.loadout, 'rightHand', 0, null);
+    eq(fullUnequip.ok, false, 'the capacity receipt refuses the full-Inventory unequip before mutation');
+    assert(fullUnequip.reason.includes(`Inventory is full (${cap}/${cap})`), 'the capacity receipt gives the UI its exact full-Inventory reason');
+    assert(!equipPiece(REG, fullRun.loadout, 'rightHand', 0, null, OWNS_EVERYTHING, AT_CAMP),
+      'unequip refuses atomically when shared Inventory is full');
+    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory unequip changes nothing');
+    assert(!equipPiece(REG, fullRun.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP),
+      'a cross-hand move refuses when its displaced item cannot return to Inventory');
+    eq(JSON.stringify(fullRun.loadout), fullBefore, 'a refused full-Inventory move changes nothing');
+
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'a dagger goes in a left-hand rack set');
+    assert(equipPiece(REG, fresh.loadout, 'rightHand', 1, 'dagger', OWNS_EVERYTHING, AT_CAMP), 'the same dagger moves to a right-hand rack set');
+    eq(fresh.loadout.sets.leftHand[1], null, 'moving the dagger clears its old rack location');
+    eq(Object.values(fresh.loadout.sets).flat().filter((id) => id === 'dagger').length, 1,
+      'one carried armament is equipped in exactly one location');
+
     assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'clearing a slot is always allowed');
     eq(fresh.loadout.sets.leftHand[0], null, 'and it clears');
+    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'unequipping returns the old left-hand piece to storage once');
+    assert(ownership(REG, { meta: {}, loadout: fresh.loadout }).has(REG.equipment.armaments.find((p) => p.id === 'straightSword')),
+      'the unequipped left-hand piece remains owned');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, 'straightSword', OWNS_EVERYTHING, AT_CAMP), 'the returned left-hand piece can be equipped again');
+    assert(equipPiece(REG, fresh.loadout, 'leftHand', 0, null, OWNS_EVERYTHING, AT_CAMP), 'the repeated unequip still succeeds');
+    eq(fresh.loadout.storage.filter((id) => id === 'straightSword').length, 1, 'repeated unequip does not duplicate storage');
 
     // The picker offers exactly what the mutation accepts. Not a claim about
     // the screen — a claim that the two questions have ONE answer, which is
@@ -2337,9 +2438,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'a hand slot that names no hand fails, naming the slot and a piece it would swallow');
     assert(check((e) => { slotRow(e, 'leftHand').hand = 'sideways'; }).includes('is not one of left|right'),
       'a hand outside the closed set fails and prints the legal values');
-    assert(check((e) => { armRow(e, 'ashStaff').hand = 'left'; }).includes("no slot can hold 'ashStaff'"),
+    assert(check((e) => { armRow(e, 'ashStaff').kind = 'wand'; }).includes("no slot can hold 'ashStaff'"),
       'a piece no slot can hold fails by its own id');
-    assert(check((e) => { slotRow(e, 'leftHand').kinds = ['staff']; }).includes("slot 'leftHand' can hold nothing"),
+    assert(check((e) => {
+      slotRow(e, 'leftHand').kinds = ['staff'];
+      e.armaments.filter((piece) => piece.kind === 'staff').forEach((piece) => { piece.hand = 'right'; });
+    }).includes("slot 'leftHand' can hold nothing"),
       'a slot whose every matching piece names the other hand fails as an empty result set');
   });
 
@@ -2509,8 +2613,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // profile with nothing found is offered — i.e. the kit it is wearing.
     const kitRight = rightPool.filter((p) => none.has(p)).map((p) => p.id);
     eq(basicTag, '', 'the universal-shelf tag ships OFF — his 2026-08-21 kill');
-    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'straightSword',
-      'a fresh reaver is offered exactly the weapon it is WEARING — kit, not category');
+    eq(kitRight.join(','), 'straightSword,roundShield',
+      'the unified hand inventory offers exactly both equipped starting armaments — kit, not category');
 
     // ---- 1b. …and the TAG is still the mechanism, observed both ways -------
     // A knob read but never watched to change the outcome has not been built —
@@ -2912,7 +3016,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // the count above would be green for the wrong reason.
     let tookAll = 0;
     for (const piece of pool) {
-      if (equipPiece(REG, rich, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
+      const campProbe = createLoadout(REG, 'reaver');
+      if (equipPiece(REG, campProbe, 'rightHand', 0, piece.id, OWNS_EVERYTHING, AT_CAMP)) tookAll += 1;
     }
     eq(tookAll, pool.length, `and every one of them goes in at camp — the control group`);
 
@@ -3040,7 +3145,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const dominated = [];
     for (const a of arms) {
       for (const b of arms) {
-        if (a === b || a.kind !== b.kind || a.hand !== b.hand) continue;
+        if (a === b || a.kind !== b.kind) continue;
+        // Profiles are mechanics, not flavour: a dagger's multi-hit carrier and
+        // a bow's ranged carrier are not comparable to a plain blade by mods
+        // alone. The old hand split accidentally kept those pairs apart; now
+        // that every armament is side-neutral, the real mechanical boundary is
+        // the three card profiles the piece selects.
+        if (a.attackProfile !== b.attackProfile
+          || a.guardProfile !== b.guardProfile
+          || a.techniqueProfile !== b.techniqueProfile) continue;
         if (RARITY[b.rarity] > RARITY[a.rarity]) continue; // b must be as cheap or cheaper
         // NO tag exemption. I first wrote one — "a tag `a` carries that `b`
         // lacks is a reason to keep `a`" — reasoning that it should tighten the
@@ -5073,6 +5186,36 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
     const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
     eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
+  });
+
+  test('70. unified Inventory derives equipment, relics, potion stacks, and equipped tags', () => {
+    const run = createRunState({ seed: 0x315, classId: 'reaver', registries: REG });
+    run.flasks = [
+      { flaskId: 'crimsonFlask' },
+      { flaskId: 'crimsonFlask' },
+      { flaskId: 'azureFlask' },
+    ];
+    const rows = inventoryRows(REG, run, {});
+
+    eq(rows.some((row) => row.category === 'Armour'), true, 'the current armour is present');
+    eq(rows.some((row) => row.category === 'Weapon'), true, 'weapons are present');
+    eq(rows.some((row) => row.category === 'Shield'), true, 'shields are present');
+    eq(rows.some((row) => row.category === 'Relic'), true, 'relics are present');
+    eq(rows.some((row) => row.category === 'Potion'), true, 'potions are present');
+
+    const sword = rows.find((row) => row.id === 'straightSword');
+    const shield = rows.find((row) => row.id === 'roundShield');
+    const armour = rows.find((row) => row.category === 'Armour');
+    assert(sword.equippedLabels.includes('Right Hand'), 'the sword reports its equipped hand');
+    assert(shield.equippedLabels.includes('Left Hand'), 'the shield reports its equipped hand');
+    assert(armour.equippedLabels.includes('Armour'), 'the worn set reports its equipped slot');
+    assert(rows.find((row) => row.category === 'Relic').equippedLabels.includes('Equipped'), 'held relics are active equipment');
+
+    const crimson = rows.find((row) => row.id === 'crimsonFlask');
+    eq(crimson.count, 2, 'duplicate potions collapse into one row with a count');
+    eq(crimson.equippedLabels.length, 0, 'carried potions do not claim to be equipped');
+    eq(inventoryItemCount(rows), rows.reduce((sum, row) => sum + row.count, 0), 'the Inventory header count is the summed quantity');
+    eq(inventoryItemCount([]), 0, 'the empty Inventory count is zero');
   });
 
   const passed = results.filter((r) => r.ok).length;

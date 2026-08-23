@@ -7,6 +7,7 @@ export const equipSlots = [
     "label": "Right Hand",
     "kinds": [
       "weapon",
+      "shield",
       "staff"
     ],
     "hand": "right",
@@ -14,21 +15,22 @@ export const equipSlots = [
     "swap": "combat",
     "storage": true,
     "order": 1,
-    "blurb": "Your main armament. Rewrites Strike."
+    "blurb": "Your active right-hand armament. Rewrites Strike."
   },
   {
     "id": "leftHand",
     "label": "Left Hand",
     "kinds": [
+      "weapon",
       "shield",
-      "weapon"
+      "staff"
     ],
     "hand": "left",
     "sets": 3,
     "swap": "combat",
     "storage": true,
     "order": 2,
-    "blurb": "Off-hand. Rewrites Defend."
+    "blurb": "Your active left-hand armament. Rewrites Defend."
   },
   {
     "id": "armor",
