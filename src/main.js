@@ -34,7 +34,6 @@ import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
-import { KEEPSAKES } from './content/keepsakes.js';
 import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
@@ -715,7 +714,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -766,7 +765,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
     profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
@@ -780,7 +779,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   rng = createRng(seed);
 
   // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = KEEPSAKES.find((k) => k.id === keepsakeId);
+  const keepsake = (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
   if (keepsake && keepsake.effects.length) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
@@ -1172,15 +1171,16 @@ function finishRun(victory) {
   return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
 }
 
-function showCustomize(slot = 1) {
+function showCustomize(slot = 1, catalog = false) {
   mountCustomize(app, {
     registries,
     meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
-    defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),
+    defaultSeedString: shotState === 'customize' || shotState === 'components' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
+    catalog,
   });
 }
 
@@ -2298,13 +2298,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
-} else if (shotState === 'customize') {
+} else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
   // it cannot reach, so customize went unexamined for the whole week combat
   // was measured three times over. A seed is passed rather than randomised so
   // the seed field photographs the same on every run.
-  showCustomize(1);
+  showCustomize(1, shotState === 'components');
 } else {
   showTitle();
 }

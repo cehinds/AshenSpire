@@ -322,6 +322,16 @@ editing a line — a second copy of a fact nothing keeps in sync. The plants, wh
 each is aimed at, and what the green does NOT cover are printed by `--selftest`
 itself; read them there.
 
+### Character-creation component catalog
+
+Open `?shot=components` on a served checkout to see the Class, Character,
+Starting Equip, and Seed sections together as interactive reference specimens.
+The catalog moves the production panels into labeled folios; it does not keep a
+second copy of their markup or content. Select **Assign Points** to inspect its
+live dialog and refusal states. `node tools/character-creation-check.mjs`
+verifies the catalog at desktop and 390×844 mobile sizes alongside the player
+flow.
+
 ## Standalone build (`build/AshenSpire.html`)
 
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —

@@ -1603,10 +1603,10 @@
   {
    "id": "F2",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (.cz-stats details, #cz-stat-projection from shortLabels) · src/content/attributes.js (wisdom/WIS, intelligence/INT born; zero faith/arcane in that file)",
+   "read": "src/ui/screens/customize.js (#cz-primary-stats renders the content-owned shortLabel for each primary stat) · src/content/attributes.js (wisdom/WIS, intelligence/INT born; zero faith/arcane in that file)",
    "anchors": [
-    "cz-stat-projection",
-    "cz-stats"
+    "cz-primary-stats",
+    "shortLabel"
    ],
    "screen": "customize › ATTRIBUTES & RESOURCES — WIS and INT where Faith and Arcane would have been",
    "reach": [
@@ -1620,26 +1620,26 @@
      "ms": 800
     },
     {
-     "op": "js",
+     "op": "click",
      "ms": 400,
-     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
+     "sel": "[data-face='character']"
     }
    ],
-   "focus": "#cz-stat-projection",
+   "focus": "#cz-primary-stats",
    "expect": {
     "present": {
-     "the stat projection": "#cz-stat-projection"
+     "the primary stat stack": "#cz-primary-stats"
     },
     "measure": {
-     "line": "document.getElementById('cz-stat-projection').innerText.replace(/\\s+/g,' ')"
+     "line": "document.getElementById('cz-primary-stats').innerText.replace(/\\s+/g,' ')"
     },
     "wrong": [
      {
-      "js": "!/WIS/.test(document.getElementById('cz-stat-projection').innerText)||!/INT/.test(document.getElementById('cz-stat-projection').innerText)",
+      "js": "!/WIS/.test(document.getElementById('cz-primary-stats').innerText)||!/INT/.test(document.getElementById('cz-primary-stats').innerText)",
       "why": "WIS or INT missing from the stat line — the rename did not reach the screen"
      },
      {
-      "js": "/\\bFAI\\b|\\bARC\\b/.test(document.getElementById('cz-stat-projection').innerText)",
+      "js": "/\\bFAI\\b|\\bARC\\b/.test(document.getElementById('cz-primary-stats').innerText)",
       "why": "a dead attribute name is still on the screen"
      }
     ],
@@ -1926,12 +1926,12 @@
   {
    "id": "F1",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-stat-projection prints 'HP <base> + <t> tier × <g> = <total>') · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
+   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
    "anchors": [
-    "cz-stat-projection",
+    "cz-derived",
     "pointsPerTier"
    ],
-   "screen": "customize › ATTRIBUTES & RESOURCES — the HP-from-Vigour derivation, printed",
+   "screen": "customize › CHARACTER — the HP-from-Vigour derivation beside the primary stat stack",
    "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",
    "reach": [
     {
@@ -1944,23 +1944,23 @@
      "ms": 800
     },
     {
-     "op": "js",
+     "op": "click",
      "ms": 400,
-     "code": "const d=document.querySelector('.cz-stats'); if(!d) return 'no .cz-stats details'; d.open=true; return true;"
+     "sel": "[data-face='character']"
     }
    ],
-   "focus": "#cz-stat-projection",
+   "focus": "#cz-derived",
    "expect": {
     "present": {
-     "the printed derivation": "#cz-stat-projection"
+     "the paired derived resources": "#cz-derived"
     },
     "measure": {
-     "vig": "(document.getElementById('cz-stat-projection').innerText.match(/VIG\\s*(\\d+)/)||[])[1]",
-     "hpLine": "(document.getElementById('cz-stat-projection').innerText.match(/HP[^=]*=\\s*\\d+/)||['none'])[0].replace(/\\s+/g,' ')"
+     "vig": "((document.querySelector('#cz-primary-stats [data-stat=vigour] .disc-value')||{}).textContent||'').trim()",
+     "hpLine": "(()=>{const e=document.querySelector('#cz-derived [data-stat=hp]');return e?('HP '+e.dataset.formula):'none';})()"
     },
     "wrong": [
      {
-      "js": "(()=>{const t=document.getElementById('cz-stat-projection').innerText;const vig=+(t.match(/VIG\\s*(\\d+)/)||[])[1];const m=t.match(/HP\\s*(\\d+)[^=]*=\\s*(\\d+)/);if(!m||!vig)return 'could not parse the line';return (+m[2] - +m[1]) !== vig;})()",
+      "js": "(()=>{const v=document.querySelector('#cz-primary-stats [data-stat=vigour] .disc-value');const h=document.querySelector('#cz-derived [data-stat=hp]');const vig=+(v&&v.textContent);const m=h&&h.dataset.formula.match(/^(\\d+)[^=]*=\\s*(\\d+)/);if(!m||!vig)return 'could not parse the projection metadata';return (+m[2] - +m[1]) !== vig;})()",
       "why": "HIS RULE IS PER POINT AND THE SCREEN PRINTS PER TIER. 'vigour shoudl be 1 hp point per' (D17, recorded as overruling the +8) — at VIG 12 the line reads 'HP 84 + 2 tier × 1 = 86': +2, not +12. The rule shipped is 1 per 5-point tier (derivedStats.js pointsPerTier 5). The ledger's F1 evidence is #163 — the RENAME commit, F2's subject: one row's evidence borrowed by the row beside it, the same shape as M7/M2 on 08-08"
      }
     ],
