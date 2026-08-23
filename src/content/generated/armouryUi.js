@@ -27,6 +27,21 @@ export const armouryUi = {
         "leftHand"
       ]
     },
+    "inventorySplit": {
+      "defaultArmamentsRatio": 0.6,
+      "minimumArmamentsRatio": 0.3,
+      "maximumArmamentsRatio": 0.8,
+      "snapRatios": [
+        0.4,
+        0.5,
+        0.6,
+        0.7
+      ],
+      "snapTolerance": 0.035,
+      "compactItemsBelowPx": 520,
+      "foldSubcardsBelowPx": 420,
+      "foldGroupsBelowPx": 260
+    },
     "combatPower": {
       "groupLabel": "Combat Power",
       "cards": [
@@ -67,7 +82,7 @@ export const armouryUi = {
         "label": "Inventory",
         "pane": "inventory",
         "character": "folded",
-        "armaments": "folded",
+        "armaments": "expanded",
         "inventory": "expanded",
         "cards": "folded"
       },

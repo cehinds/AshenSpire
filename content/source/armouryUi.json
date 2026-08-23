@@ -20,6 +20,16 @@
       "outerBorder": false,
       "slotOrder": ["armor", "rightHand", "leftHand"]
     },
+    "inventorySplit": {
+      "defaultArmamentsRatio": 0.6,
+      "minimumArmamentsRatio": 0.3,
+      "maximumArmamentsRatio": 0.8,
+      "snapRatios": [0.4, 0.5, 0.6, 0.7],
+      "snapTolerance": 0.035,
+      "compactItemsBelowPx": 520,
+      "foldSubcardsBelowPx": 420,
+      "foldGroupsBelowPx": 260
+    },
     "combatPower": {
       "groupLabel": "Combat Power",
       "cards": [
@@ -34,7 +44,7 @@
     },
     "viewModes": {
       "grid": { "label": "Character", "pane": "character", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
-      "rack": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "folded", "inventory": "expanded", "cards": "folded" },
+      "rack": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
       "hybrid": { "label": "Hybrid", "pane": "both", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "folded" }
     },
     "responsive": {

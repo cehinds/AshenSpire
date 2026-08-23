@@ -15,18 +15,27 @@ single place that constructs it.
 | `armoury.characterPane` | Left character pane | `.armoury-character` | `src/ui/screens/equipment.js` |
 | `armoury.spritePane` | Shrink-to-fit sprite pane | `.armoury-sprite-pane` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.characterSummary` | Name, class, level | `.character-summary` | `src/ui/screens/equipment.js` |
-| `armoury.combatPowerGroup` | Vertical Combat Power group | `.character-power-cards` | `src/ui/screens/equipment.js` |
-| `armoury.combatPowerCard` | Strike / Potency / Defense card | `.character-power-cards .disc-face` | `src/ui/components/disclosure.js` |
-| `armoury.attributesCard` | Folded attributes group | `.character-attributes` | `src/ui/screens/equipment.js` |
+| `armoury.combatPowerCard` | Foldable Combat Power group with summary values | `.character-info-card.combatPowerCard` | `src/ui/screens/equipment.js` |
+| `armoury.combatPowerGroup` | Vertical Strike / Potency / Defense detail group | `.character-power-cards` | `src/ui/screens/equipment.js` |
+| `armoury.combatPowerMetric` | One Strike / Potency / Defense detail card | `.character-power-cards .disc-face` | `src/ui/components/disclosure.js` |
+| `armoury.attributesCard` | Foldable Attributes group with summary values | `.character-info-card.attributesCard` | `src/ui/screens/equipment.js` |
 | `armoury.attributeCard` | Expandable attribute card | `.character-attributes .disc-face` | `src/ui/components/disclosure.js` |
-| `armoury.relicsCard` | Folded relic group | `.character-relics` | `src/ui/screens/equipment.js` |
+| `armoury.relicsCard` | Foldable Relics group with count and name summary | `.character-info-card.relicsCard` | `src/ui/screens/equipment.js` |
 | `armoury.equipmentPane` | Vertical armaments pane (left in Inventory, right in Hybrid) | `.armoury-equipment` | `src/ui/screens/equipment.js` |
 | `armoury.armamentsHeader` | Armaments group header | `.armoury-equipment-head` | `src/ui/screens/equipment.js` |
 | `armoury.armamentsCard` | Armaments group containing only foldable socket rows | `.armoury-equipment[data-component="armoury.armamentsCard"]` | `src/ui/screens/equipment.js` |
-| `armoury.armamentSubcard` | Foldable socket subcard | `.armoury-slot-card` | `src/ui/screens/equipment.js` |
+| `armoury.socketGroupCard` | Procedurally rendered equipment group | `.armoury-slot-group` | `src/ui/screens/equipment.js` |
+| `armoury.positionStrip` | Visible loadout-position icon strip | `.armoury-position-strip` | `src/ui/screens/equipment.js` |
+| `armoury.positionIcon` | Active, available, empty, or locked position | `.armoury-position-strip .es-cell` | `src/ui/screens/equipment.js` |
+| `armoury.loadoutPositionSubcard` | Full-detail card for one unlocked position | `.armoury-position-card` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.armamentSubcard` | Compatibility alias for a position subcard | `.armoury-position-card` | `src/ui/screens/equipment.js` |
+| `armoury.armamentItemCard` | Expanded equipped-item card | `.armoury-armament-item` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.armamentIdentityPane` | 30% name, sprite, tags, value, and weight pane | `.armoury-armament-identity` | `src/ui/screens/equipment.js` + `styles/ui.css` |
+| `armoury.armamentDetailPane` | 65% lore, type, effects, bonuses, value, weight, and tag descriptions pane | `.armoury-armament-details` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.socketCard` | Right/Left Hand and Armour socket cards | `.armoury-equipment .equip-slot` | `src/ui/screens/equipment.js` |
 | `armoury.socketSet` | Socket loadout cells | `.armoury-equipment .es-sets` | `src/ui/screens/equipment.js` |
 | `armoury.inventoryCard` | Unified Inventory panel | `.armoury-inventory` | `src/ui/screens/equipment.js` |
+| `armoury.paneSplitter` | Draggable/keyboard pane resizer with snapping | `.armoury-pane-splitter` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.itemCard` | Folded inventory/picker item | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
 | `armoury.itemReveal` | Model, description, comparison, action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
 | `armoury.cardsCard` | Folded equipment-card panel with list/grid toggle | `.armoury-strip` | `src/ui/screens/equipment.js` |
@@ -47,8 +56,14 @@ Proportions and order are authored in
 - desktop: character `40%`, equipment `60%`;
 - character: summary header, sprite `38%`, stats `62%` (the sprite is reduced
   by about 20% from the prior `48%` allocation so folded stats remain in view);
-- equipment order: `Armaments` header, `Armour`, `Right Hand`, `Left Hand`, then
-  any additional authored sockets; there is no separate armament summary row;
+- equipment groups and their position counts iterate from `equipSlots.csv`;
+  names and counts are content rather than renderer branches. Each group header
+  contains every visible position icon, including the next locked rung. Every
+  unlocked position receives a vertical subcard using the `30%` identity/art
+  and `65%` detail panes;
+- Inventory pane widths are player-resizable. Snap ratios, saved default,
+  compact-density boundary, and group/subcard fold boundaries are authored in
+  `armouryUi.json` rather than embedded in the renderer;
 - cards: list by default, grid columns authored as `4`, with the presentation
   toggle in the Cards tray header; only cards with an equipment source appear;
   phone grid columns are separately authored as `2`;
@@ -59,10 +74,15 @@ their authored labels are now `Character`, `Inventory`, and `Hybrid`. Character
 renders only the full-width character pane, with summary/sprite left and Combat
 Power, Attributes, and Relics right; the Cards tray remains open. Inventory
 renders the equivalent full-width split with Armaments left and the Inventory
-card right; Hybrid keeps the two panes split and the supporting trays folded.
-The visible
-secondary bonus line on Combat Power cards is suppressed at the phone width,
-while the shared tooltip retains the full label and action.
+card right. A draggable divider changes their widths and persists the selected
+ratio. Narrow panes compact rows first, fold position subcards next, and fold
+whole equipment groups at the smallest authored threshold. Hybrid keeps the two
+panes split and the supporting trays folded.
+Combat Power, Attributes, and Relics are independent vertical disclosure cards.
+Their folded headers retain their summary values; their expanded bodies expose
+the existing nested calculation cards. The visible secondary bonus line on
+Combat Power metrics is suppressed at the phone width, while the shared tooltip
+retains the full label and action.
 
 Armament summaries reserve a load-weight field for each item. Current weapon
 and armour source rows do not yet author carried-load values, so the UI displays
@@ -82,9 +102,11 @@ These captures are the visual reference for the current component contract:
 - [Cards list — 1440×900](preview-armoury-cards-list-1440x900.png)
 - [Expanded card — 1440×900](preview-armoury-card-expanded-1440x900.png)
 - [Cards grid — 1440×900](preview-armoury-cards-grid-1440x900.png)
-- [Hybrid phone view — 390×844](preview-armoury-phone-390x844.png)
+- [Compact Inventory view — 390×844](preview-armoury-phone-390x844.png)
 
 The captures show the shared `armoury.shell`, `armoury.characterPane`,
 `armoury.spritePane`, `armoury.combatPowerGroup`,
-`armoury.armamentsCard`, `armoury.armamentSubcard`, and the folded Inventory
-and Cards region components together, at the sizes that matter for review.
+`armoury.socketGroupCard`, `armoury.positionStrip`,
+`armoury.loadoutPositionSubcard`, `armoury.paneSplitter`, and the folded
+Inventory and Cards region components together, at the sizes that matter for
+review.

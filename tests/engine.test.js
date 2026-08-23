@@ -68,7 +68,7 @@ import {
 } from '../src/model/unlocks.js';
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
-import { normalizeArmouryLayout } from '../src/model/armouryLayout.js';
+import { normalizeArmouryLayout, orderArmourySlots } from '../src/model/armouryLayout.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
@@ -5442,8 +5442,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
     eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
     eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
-    eq(layout.viewModes.rack.armaments, 'folded', 'Inventory keeps each armament subcard folded until selected');
+    eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory auto-expands every full-width armament item card');
     eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
+    eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
+    eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
+    eq(orderArmourySlots([
+      { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
+    ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
   });

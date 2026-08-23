@@ -3389,9 +3389,35 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-right { display: none; }
 .armoury[data-composition='character-equipment'][data-pane='character'] .armoury-left,
 .armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-left { grid-column: 1; }
-.armoury[data-pane='inventory'] .armoury-content { display: grid; grid-template-columns: minmax(0, var(--armoury-equipment-ratio)) minmax(0, var(--armoury-character-ratio)); gap: var(--armoury-gap); }
+.armoury[data-pane='inventory'] .armoury-content {
+  display: grid;
+  grid-template-columns: minmax(0, var(--armoury-armaments-pane-width)) 0.7rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
 .armoury[data-pane='inventory'] .armoury-body { grid-column: 1; grid-row: 1; min-height: 0; flex: initial; }
-.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 2; grid-row: 1; min-height: 0; overflow-y: auto; flex: initial; }
+.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 3; grid-row: 1; min-height: 0; overflow-y: auto; flex: initial; }
+.armoury-pane-splitter { display: none; }
+.armoury[data-pane='inventory'] .armoury-pane-splitter {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-width: 0.7rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 0.28rem;
+  background: var(--line-soft);
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter:hover::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter:focus-visible::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter.dragging::before {
+  background: var(--gold);
+  box-shadow: 0 0 0.5rem rgba(201, 162, 39, 0.55);
+}
 /* The legacy flank rule hid its picker when Grid was not active. The shared
    shell keeps the vertical socket pane present in every view, so its explicit
    composition selector must win that older convenience rule. */
@@ -3455,18 +3481,48 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
 .character-summary span { color: var(--muted); white-space: nowrap; }
 .character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
+.character-info-card {
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: rgba(32, 27, 20, 0.82);
+}
+.character-info-card > summary {
+  display: grid;
+  grid-template-columns: 0.8rem auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.62rem 0.7rem;
+  color: var(--parchment);
+  cursor: pointer;
+  list-style: none;
+}
+.character-info-card > summary::-webkit-details-marker { display: none; }
+.character-info-card > summary::before { content: '▸'; color: var(--gold); }
+.character-info-card[open] > summary::before { content: '▾'; }
+.character-info-label {
+  color: var(--gold);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.character-info-summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.character-info-card > :not(summary) { padding: 0 0.55rem 0.55rem; }
 .character-power-cards,
 .character-attributes,
-.character-relics { margin-top: 0.7rem; }
-.character-power-heading { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0.7rem 0 0; }
-.character-attributes h4,
-.character-relics h4 { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.character-relics h4 span { color: var(--muted); margin-left: 0.35rem; }
+.character-relics { margin-top: 0; }
 .character-power-cards .disc-faces,
 .character-attributes .disc-faces,
-.character-relics .disc-faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
-.character-power-cards .disc-faces { grid-template-columns: 1fr; }
-.character-relics .disc-faces { grid-template-columns: 1fr; }
+.character-relics .disc-faces { display: grid; grid-template-columns: 1fr; gap: 0.35rem; }
 .character-power-cards .disc-face,
 .character-attributes .disc-face,
 .character-relics .disc-face {
@@ -3490,7 +3546,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-power-cards .disc-reveal,
 .character-attributes .disc-reveal,
 .character-relics .disc-reveal { grid-column: 1 / -1; }
-.armoury-equipment { min-width: 0; }
+.armoury-equipment { width: 100%; min-width: 0; flex: 1 1 auto; }
 .armoury-equipment[data-outer-border='off'] { border: 0; }
 .armoury-equipment-head {
   display: flex;
@@ -3512,20 +3568,46 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 100%;
   margin-top: 0.8rem;
 }
+.armoury-slot-group {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line-soft);
+  background: rgba(20, 17, 13, 0.76);
+}
+.armoury-slot-group > summary.equip-slot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  list-style: none;
+}
+.armoury-slot-group > summary::-webkit-details-marker { display: none; }
+.armoury-slot-group > summary::before { content: '▸'; color: var(--gold); }
+.armoury-slot-group[open] > summary::before { content: '▾'; }
+.armoury-slot-group-label { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-slot-group-active { min-width: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.armoury-slot-group > summary .es-sealed { grid-column: 3; grid-row: 1; }
+.armoury-slot-group > summary .armoury-position-strip { grid-column: 1 / -1; }
+.armoury-position-list { display: flex; flex-direction: column; gap: 0.55rem; padding: 0 0.55rem 0.55rem; }
 .armoury[data-composition='character-equipment'] .equip-slot {
   width: 100%;
   min-width: 0;
 }
 .armoury[data-composition='character-equipment'] .es-sets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
   gap: 0.45rem;
 }
 .armoury[data-composition='character-equipment'] .es-cell {
   width: auto;
   min-width: 0;
   height: auto;
-  min-height: 5.4rem;
+  min-height: clamp(3.8rem, 8vw, 5.4rem);
 }
 .armoury[data-composition='character-equipment'] .es-cell span {
   max-width: 100%;
@@ -3535,17 +3617,89 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
 .armoury[data-composition='character-equipment'] .equip-picker[data-empty] { display: none; }
-.armoury-slot-card { width: 100%; min-width: 0; border-top: 1px solid var(--line-soft); }
-.armoury-slot-card summary { display: grid; grid-template-columns: 0.8rem minmax(5.5rem, 0.7fr) minmax(7rem, 1fr) minmax(8rem, 1.4fr) auto auto; align-items: baseline; gap: 0.55rem; padding: 0.55rem 0.2rem; color: var(--parchment); cursor: pointer; list-style: none; }
+.armoury-slot-card { width: 100%; min-width: 0; border: 1px solid var(--line-soft); background: rgba(24, 20, 15, 0.78); }
+.armoury-slot-card > summary { display: grid; grid-template-columns: 0.8rem minmax(5.5rem, 0.7fr) minmax(7rem, 1fr) minmax(8rem, 1.4fr) auto auto; align-items: baseline; gap: 0.55rem; padding: 0.62rem 0.7rem; color: var(--parchment); cursor: pointer; list-style: none; }
 .armoury-slot-card summary::-webkit-details-marker { display: none; }
-.armoury-slot-card summary::before { content: '▸'; color: var(--gold); margin-right: 0.45rem; }
-.armoury-slot-card[open] summary::before { content: '▾'; }
+.armoury-slot-card > summary::before { content: '▸'; color: var(--gold); }
+.armoury-slot-card[open] > summary::before { content: '▾'; }
 .armoury-slot-card-label { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
 .armoury-slot-card-item { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .armoury-slot-card-bonus { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .armoury-slot-card-weight { color: var(--muted); white-space: nowrap; font-size: 0.8rem; }
 .armoury-slot-card-hint { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
-.armoury-slot-card > .equip-slot { margin: 0 0 0.6rem; }
+.armoury-armament-item {
+  display: grid;
+  grid-template-columns: minmax(10rem, 30%) minmax(0, 65%);
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border-top: 1px solid var(--line-soft);
+  background: rgba(13, 11, 9, 0.36);
+}
+.armoury-armament-identity,
+.armoury-armament-details { min-width: 0; }
+.armoury-armament-identity {
+  display: grid;
+  grid-template-rows: auto minmax(8rem, 1fr) auto;
+  gap: 0.65rem;
+}
+.armoury-armament-identity header h4,
+.armoury-armament-details h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.08rem; }
+.armoury-armament-identity header p { margin-top: 0.15rem; color: var(--muted); font-size: 0.82rem; }
+.armoury-armament-art {
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: rgba(8, 7, 6, 0.72);
+}
+.armoury-armament-art img { width: 100%; height: 100%; max-height: 11rem; object-fit: contain; }
+.armoury-armament-art > span { color: var(--gold); font-size: 2.8rem; }
+.armoury-armament-identity footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.5rem; }
+.armoury-armament-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; min-width: 0; }
+.armoury-armament-tags em { padding: 0.06rem 0.25rem; border: 1px solid var(--line-soft); color: var(--gold); font-size: 0.72rem; font-style: normal; text-transform: uppercase; }
+.armoury-armament-value { color: var(--muted); font-size: 0.72rem; text-align: right; white-space: nowrap; }
+.armoury-armament-details { padding: 0.15rem 0.1rem; }
+.armoury-armament-lore { margin: 0.3rem 0 0.75rem; color: var(--muted); font-style: italic; line-height: 1.35; }
+.armoury-armament-details dl { display: grid; gap: 0.38rem; margin: 0; }
+.armoury-armament-details dl > div { display: grid; grid-template-columns: minmax(6rem, 0.34fr) minmax(0, 1fr); gap: 0.55rem; padding-bottom: 0.28rem; border-bottom: 1px solid rgba(133, 113, 69, 0.26); }
+.armoury-armament-details dt { color: var(--gold); font-weight: 700; }
+.armoury-armament-details dd { margin: 0; color: var(--parchment); text-align: right; }
+.armoury-armament-tag-details { display: grid; gap: 0.25rem; margin-top: 0.55rem; }
+.armoury-armament-tag-details p { display: grid; grid-template-columns: minmax(5rem, 0.25fr) minmax(0, 1fr); gap: 0.55rem; margin: 0; }
+.armoury-armament-tag-details strong { color: var(--gold); }
+.armoury-armament-tag-details span { color: var(--muted); text-align: right; }
+.armoury-armament-empty { grid-column: 1 / -1; margin: 0; padding: 1rem; color: var(--muted); }
+.armoury-slot-card > .armoury-slot-controls { margin: 0 0.8rem 0.8rem; padding-top: 0.7rem; border-top: 1px solid var(--line-soft); }
+.armoury-slot-card > .armoury-slot-controls .es-head { margin-bottom: 0.45rem; }
+.armoury[data-armament-density='compact'] .armoury-slot-group > summary.equip-slot {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.45rem;
+  padding: 0.42rem;
+}
+.armoury[data-armament-density='compact'] .armoury-slot-group-active { font-size: 0.78rem; text-align: right; }
+.armoury[data-armament-density='compact'] .armoury-position-strip { grid-template-columns: repeat(auto-fit, minmax(2.35rem, 1fr)); gap: 0.25rem; }
+.armoury[data-armament-density='compact'] .es-cell { min-height: 3.2rem; padding: 0.12rem; }
+.armoury[data-armament-density='compact'] .es-cell img { height: 1.8rem; }
+.armoury[data-armament-density='compact'] .es-cell span:not(.es-lock):not(.es-empty) { display: none; }
+.armoury[data-armament-density='compact'] .armoury-position-card > summary { grid-template-columns: 0.7rem minmax(0, 1fr) auto; padding: 0.45rem; }
+.armoury[data-armament-density='compact'] .armoury-slot-card-bonus,
+.armoury[data-armament-density='compact'] .armoury-slot-card-weight,
+.armoury[data-armament-density='compact'] .armoury-slot-card-hint { display: none; }
+.armoury[data-armament-density='compact'] .armoury-armament-item { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; padding: 0.55rem; }
+.armoury[data-inventory-density='compact'] .armoury-inventory { padding: 0.55rem; }
+.armoury[data-inventory-density='compact'] .inventory-face {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.18rem;
+  min-height: 2.7rem;
+  padding: 0.42rem 0.5rem;
+}
+.armoury[data-inventory-density='compact'] .inventory-name { font-size: 0.92rem; line-height: 1.05; }
+.armoury[data-inventory-density='compact'] .inventory-category,
+.armoury[data-inventory-density='compact'] .inventory-count { display: none; }
+.armoury[data-inventory-density='compact'] .inventory-equipped { justify-self: start; padding-inline: 0.2rem; font-size: 0.62rem; line-height: 1.05; }
 .armoury[data-view-mode='Character'] .armoury-body { flex: 1 1 75%; min-height: 0; }
 .armoury[data-view-mode='Character'] .armoury-strip[data-collapsed='0'] { flex: 0 0 25%; min-height: 0; overflow: auto; }
 .armoury[data-view-mode='Inventory'] .armoury-body { flex: 1 1 65%; min-height: 0; }
@@ -3556,7 +3710,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   gap: 0.7rem;
   padding: 0.7rem;
 }
-.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content { grid-template-columns: minmax(0, var(--armoury-phone-equipment-ratio)) minmax(0, var(--armoury-phone-character-ratio)); gap: 0.7rem; }
+.armoury[data-composition='character-equipment'][data-pane='inventory'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content {
+  grid-template-columns: minmax(0, var(--armoury-armaments-pane-width)) 0.55rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head { gap: 0.5rem; padding: 0.7rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head h2 { font-size: 1.3rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views { gap: 0.2rem; }
@@ -3567,10 +3727,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-pane='character'][data-responsive='phone'] .armoury-sprite-pane,
 .armoury[data-pane='character'][data-responsive='phone'] .armoury-character-stats { grid-column: 1; grid-row: auto; }
 .armoury[data-character-state='folded'] .armoury-character-stats { padding: 0; }
-.armoury[data-character-state='folded'] .character-power-heading,
-.armoury[data-character-state='folded'] .character-power-cards,
-.armoury[data-character-state='folded'] .character-attributes,
-.armoury[data-character-state='folded'] .character-relics { margin-top: 0.35rem; }
+.armoury[data-character-state='folded'] .character-info-card { margin-top: 0.35rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-sprite-pane { min-height: 8rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head { display: block; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head p { margin-top: 0.2rem; text-align: left; }
@@ -3580,9 +3737,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary .character-kicker { display: block; font-size: 0.68rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .combat-power-bonus { display: none; }
-.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card summary { grid-template-columns: 0.8rem minmax(4.2rem, 0.7fr) minmax(0, 1fr) auto; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card > summary { grid-template-columns: 0.8rem minmax(4.2rem, 0.7fr) minmax(0, 1fr) auto; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card-bonus,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card-weight { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-item { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; padding: 0.6rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-identity { grid-template-rows: auto minmax(5rem, 7rem) auto; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-art { min-height: 5rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-art img { max-height: 6.5rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dl > div,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details p { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dd,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details span { text-align: left; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-info-summary { font-size: 0.78rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] { --armoury-card-grid-columns: 2; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] .armoury-card-row summary {
   grid-template-columns: 0.8rem 1.7rem minmax(0, 1fr) auto;

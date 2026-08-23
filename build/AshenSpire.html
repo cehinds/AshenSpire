@@ -3692,9 +3692,35 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-right { display: none; }
 .armoury[data-composition='character-equipment'][data-pane='character'] .armoury-left,
 .armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-left { grid-column: 1; }
-.armoury[data-pane='inventory'] .armoury-content { display: grid; grid-template-columns: minmax(0, var(--armoury-equipment-ratio)) minmax(0, var(--armoury-character-ratio)); gap: var(--armoury-gap); }
+.armoury[data-pane='inventory'] .armoury-content {
+  display: grid;
+  grid-template-columns: minmax(0, var(--armoury-armaments-pane-width)) 0.7rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
 .armoury[data-pane='inventory'] .armoury-body { grid-column: 1; grid-row: 1; min-height: 0; flex: initial; }
-.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 2; grid-row: 1; min-height: 0; overflow-y: auto; flex: initial; }
+.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 3; grid-row: 1; min-height: 0; overflow-y: auto; flex: initial; }
+.armoury-pane-splitter { display: none; }
+.armoury[data-pane='inventory'] .armoury-pane-splitter {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-width: 0.7rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 0.28rem;
+  background: var(--line-soft);
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter:hover::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter:focus-visible::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter.dragging::before {
+  background: var(--gold);
+  box-shadow: 0 0 0.5rem rgba(201, 162, 39, 0.55);
+}
 /* The legacy flank rule hid its picker when Grid was not active. The shared
    shell keeps the vertical socket pane present in every view, so its explicit
    composition selector must win that older convenience rule. */
@@ -3758,18 +3784,48 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
 .character-summary span { color: var(--muted); white-space: nowrap; }
 .character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
+.character-info-card {
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: rgba(32, 27, 20, 0.82);
+}
+.character-info-card > summary {
+  display: grid;
+  grid-template-columns: 0.8rem auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.62rem 0.7rem;
+  color: var(--parchment);
+  cursor: pointer;
+  list-style: none;
+}
+.character-info-card > summary::-webkit-details-marker { display: none; }
+.character-info-card > summary::before { content: '▸'; color: var(--gold); }
+.character-info-card[open] > summary::before { content: '▾'; }
+.character-info-label {
+  color: var(--gold);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.character-info-summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.character-info-card > :not(summary) { padding: 0 0.55rem 0.55rem; }
 .character-power-cards,
 .character-attributes,
-.character-relics { margin-top: 0.7rem; }
-.character-power-heading { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; margin: 0.7rem 0 0; }
-.character-attributes h4,
-.character-relics h4 { color: var(--gold); font-size: 1rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.character-relics h4 span { color: var(--muted); margin-left: 0.35rem; }
+.character-relics { margin-top: 0; }
 .character-power-cards .disc-faces,
 .character-attributes .disc-faces,
-.character-relics .disc-faces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.35rem; }
-.character-power-cards .disc-faces { grid-template-columns: 1fr; }
-.character-relics .disc-faces { grid-template-columns: 1fr; }
+.character-relics .disc-faces { display: grid; grid-template-columns: 1fr; gap: 0.35rem; }
 .character-power-cards .disc-face,
 .character-attributes .disc-face,
 .character-relics .disc-face {
@@ -3793,7 +3849,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .character-power-cards .disc-reveal,
 .character-attributes .disc-reveal,
 .character-relics .disc-reveal { grid-column: 1 / -1; }
-.armoury-equipment { min-width: 0; }
+.armoury-equipment { width: 100%; min-width: 0; flex: 1 1 auto; }
 .armoury-equipment[data-outer-border='off'] { border: 0; }
 .armoury-equipment-head {
   display: flex;
@@ -3815,20 +3871,46 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: 100%;
   margin-top: 0.8rem;
 }
+.armoury-slot-group {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line-soft);
+  background: rgba(20, 17, 13, 0.76);
+}
+.armoury-slot-group > summary.equip-slot {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem 0.7rem;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  list-style: none;
+}
+.armoury-slot-group > summary::-webkit-details-marker { display: none; }
+.armoury-slot-group > summary::before { content: '▸'; color: var(--gold); }
+.armoury-slot-group[open] > summary::before { content: '▾'; }
+.armoury-slot-group-label { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-slot-group-active { min-width: 0; overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.armoury-slot-group > summary .es-sealed { grid-column: 3; grid-row: 1; }
+.armoury-slot-group > summary .armoury-position-strip { grid-column: 1 / -1; }
+.armoury-position-list { display: flex; flex-direction: column; gap: 0.55rem; padding: 0 0.55rem 0.55rem; }
 .armoury[data-composition='character-equipment'] .equip-slot {
   width: 100%;
   min-width: 0;
 }
 .armoury[data-composition='character-equipment'] .es-sets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(3.25rem, 1fr));
   gap: 0.45rem;
 }
 .armoury[data-composition='character-equipment'] .es-cell {
   width: auto;
   min-width: 0;
   height: auto;
-  min-height: 5.4rem;
+  min-height: clamp(3.8rem, 8vw, 5.4rem);
 }
 .armoury[data-composition='character-equipment'] .es-cell span {
   max-width: 100%;
@@ -3838,17 +3920,89 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
 .armoury[data-composition='character-equipment'] .equip-picker[data-empty] { display: none; }
-.armoury-slot-card { width: 100%; min-width: 0; border-top: 1px solid var(--line-soft); }
-.armoury-slot-card summary { display: grid; grid-template-columns: 0.8rem minmax(5.5rem, 0.7fr) minmax(7rem, 1fr) minmax(8rem, 1.4fr) auto auto; align-items: baseline; gap: 0.55rem; padding: 0.55rem 0.2rem; color: var(--parchment); cursor: pointer; list-style: none; }
+.armoury-slot-card { width: 100%; min-width: 0; border: 1px solid var(--line-soft); background: rgba(24, 20, 15, 0.78); }
+.armoury-slot-card > summary { display: grid; grid-template-columns: 0.8rem minmax(5.5rem, 0.7fr) minmax(7rem, 1fr) minmax(8rem, 1.4fr) auto auto; align-items: baseline; gap: 0.55rem; padding: 0.62rem 0.7rem; color: var(--parchment); cursor: pointer; list-style: none; }
 .armoury-slot-card summary::-webkit-details-marker { display: none; }
-.armoury-slot-card summary::before { content: '▸'; color: var(--gold); margin-right: 0.45rem; }
-.armoury-slot-card[open] summary::before { content: '▾'; }
+.armoury-slot-card > summary::before { content: '▸'; color: var(--gold); }
+.armoury-slot-card[open] > summary::before { content: '▾'; }
 .armoury-slot-card-label { font-family: var(--font-display); letter-spacing: 0.08em; text-transform: uppercase; }
 .armoury-slot-card-item { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .armoury-slot-card-bonus { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .armoury-slot-card-weight { color: var(--muted); white-space: nowrap; font-size: 0.8rem; }
 .armoury-slot-card-hint { color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
-.armoury-slot-card > .equip-slot { margin: 0 0 0.6rem; }
+.armoury-armament-item {
+  display: grid;
+  grid-template-columns: minmax(10rem, 30%) minmax(0, 65%);
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding: 0.8rem;
+  border-top: 1px solid var(--line-soft);
+  background: rgba(13, 11, 9, 0.36);
+}
+.armoury-armament-identity,
+.armoury-armament-details { min-width: 0; }
+.armoury-armament-identity {
+  display: grid;
+  grid-template-rows: auto minmax(8rem, 1fr) auto;
+  gap: 0.65rem;
+}
+.armoury-armament-identity header h4,
+.armoury-armament-details h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.08rem; }
+.armoury-armament-identity header p { margin-top: 0.15rem; color: var(--muted); font-size: 0.82rem; }
+.armoury-armament-art {
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: rgba(8, 7, 6, 0.72);
+}
+.armoury-armament-art img { width: 100%; height: 100%; max-height: 11rem; object-fit: contain; }
+.armoury-armament-art > span { color: var(--gold); font-size: 2.8rem; }
+.armoury-armament-identity footer { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.5rem; }
+.armoury-armament-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; min-width: 0; }
+.armoury-armament-tags em { padding: 0.06rem 0.25rem; border: 1px solid var(--line-soft); color: var(--gold); font-size: 0.72rem; font-style: normal; text-transform: uppercase; }
+.armoury-armament-value { color: var(--muted); font-size: 0.72rem; text-align: right; white-space: nowrap; }
+.armoury-armament-details { padding: 0.15rem 0.1rem; }
+.armoury-armament-lore { margin: 0.3rem 0 0.75rem; color: var(--muted); font-style: italic; line-height: 1.35; }
+.armoury-armament-details dl { display: grid; gap: 0.38rem; margin: 0; }
+.armoury-armament-details dl > div { display: grid; grid-template-columns: minmax(6rem, 0.34fr) minmax(0, 1fr); gap: 0.55rem; padding-bottom: 0.28rem; border-bottom: 1px solid rgba(133, 113, 69, 0.26); }
+.armoury-armament-details dt { color: var(--gold); font-weight: 700; }
+.armoury-armament-details dd { margin: 0; color: var(--parchment); text-align: right; }
+.armoury-armament-tag-details { display: grid; gap: 0.25rem; margin-top: 0.55rem; }
+.armoury-armament-tag-details p { display: grid; grid-template-columns: minmax(5rem, 0.25fr) minmax(0, 1fr); gap: 0.55rem; margin: 0; }
+.armoury-armament-tag-details strong { color: var(--gold); }
+.armoury-armament-tag-details span { color: var(--muted); text-align: right; }
+.armoury-armament-empty { grid-column: 1 / -1; margin: 0; padding: 1rem; color: var(--muted); }
+.armoury-slot-card > .armoury-slot-controls { margin: 0 0.8rem 0.8rem; padding-top: 0.7rem; border-top: 1px solid var(--line-soft); }
+.armoury-slot-card > .armoury-slot-controls .es-head { margin-bottom: 0.45rem; }
+.armoury[data-armament-density='compact'] .armoury-slot-group > summary.equip-slot {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 0.45rem;
+  padding: 0.42rem;
+}
+.armoury[data-armament-density='compact'] .armoury-slot-group-active { font-size: 0.78rem; text-align: right; }
+.armoury[data-armament-density='compact'] .armoury-position-strip { grid-template-columns: repeat(auto-fit, minmax(2.35rem, 1fr)); gap: 0.25rem; }
+.armoury[data-armament-density='compact'] .es-cell { min-height: 3.2rem; padding: 0.12rem; }
+.armoury[data-armament-density='compact'] .es-cell img { height: 1.8rem; }
+.armoury[data-armament-density='compact'] .es-cell span:not(.es-lock):not(.es-empty) { display: none; }
+.armoury[data-armament-density='compact'] .armoury-position-card > summary { grid-template-columns: 0.7rem minmax(0, 1fr) auto; padding: 0.45rem; }
+.armoury[data-armament-density='compact'] .armoury-slot-card-bonus,
+.armoury[data-armament-density='compact'] .armoury-slot-card-weight,
+.armoury[data-armament-density='compact'] .armoury-slot-card-hint { display: none; }
+.armoury[data-armament-density='compact'] .armoury-armament-item { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; padding: 0.55rem; }
+.armoury[data-inventory-density='compact'] .armoury-inventory { padding: 0.55rem; }
+.armoury[data-inventory-density='compact'] .inventory-face {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.18rem;
+  min-height: 2.7rem;
+  padding: 0.42rem 0.5rem;
+}
+.armoury[data-inventory-density='compact'] .inventory-name { font-size: 0.92rem; line-height: 1.05; }
+.armoury[data-inventory-density='compact'] .inventory-category,
+.armoury[data-inventory-density='compact'] .inventory-count { display: none; }
+.armoury[data-inventory-density='compact'] .inventory-equipped { justify-self: start; padding-inline: 0.2rem; font-size: 0.62rem; line-height: 1.05; }
 .armoury[data-view-mode='Character'] .armoury-body { flex: 1 1 75%; min-height: 0; }
 .armoury[data-view-mode='Character'] .armoury-strip[data-collapsed='0'] { flex: 0 0 25%; min-height: 0; overflow: auto; }
 .armoury[data-view-mode='Inventory'] .armoury-body { flex: 1 1 65%; min-height: 0; }
@@ -3859,7 +4013,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   gap: 0.7rem;
   padding: 0.7rem;
 }
-.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content { grid-template-columns: minmax(0, var(--armoury-phone-equipment-ratio)) minmax(0, var(--armoury-phone-character-ratio)); gap: 0.7rem; }
+.armoury[data-composition='character-equipment'][data-pane='inventory'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content {
+  grid-template-columns: minmax(0, var(--armoury-armaments-pane-width)) 0.55rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head { gap: 0.5rem; padding: 0.7rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head h2 { font-size: 1.3rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views { gap: 0.2rem; }
@@ -3870,10 +4030,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-pane='character'][data-responsive='phone'] .armoury-sprite-pane,
 .armoury[data-pane='character'][data-responsive='phone'] .armoury-character-stats { grid-column: 1; grid-row: auto; }
 .armoury[data-character-state='folded'] .armoury-character-stats { padding: 0; }
-.armoury[data-character-state='folded'] .character-power-heading,
-.armoury[data-character-state='folded'] .character-power-cards,
-.armoury[data-character-state='folded'] .character-attributes,
-.armoury[data-character-state='folded'] .character-relics { margin-top: 0.35rem; }
+.armoury[data-character-state='folded'] .character-info-card { margin-top: 0.35rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-sprite-pane { min-height: 8rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head { display: block; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head p { margin-top: 0.2rem; text-align: left; }
@@ -3883,9 +4040,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary .character-kicker { display: block; font-size: 0.68rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .combat-power-bonus { display: none; }
-.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card summary { grid-template-columns: 0.8rem minmax(4.2rem, 0.7fr) minmax(0, 1fr) auto; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card > summary { grid-template-columns: 0.8rem minmax(4.2rem, 0.7fr) minmax(0, 1fr) auto; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card-bonus,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-slot-card-weight { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-item { grid-template-columns: minmax(0, 1fr); gap: 0.7rem; padding: 0.6rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-identity { grid-template-rows: auto minmax(5rem, 7rem) auto; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-art { min-height: 5rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-art img { max-height: 6.5rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dl > div,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details p { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dd,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details span { text-align: left; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-info-summary { font-size: 0.78rem; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] { --armoury-card-grid-columns: 2; }
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] .armoury-card-row summary {
   grid-template-columns: 0.8rem 1.7rem minmax(0, 1fr) auto;
@@ -15554,6 +15720,7 @@ const equipSlots = [
   {
     "id": "rightHand",
     "label": "Right Hand",
+    "positionLabel": "Right Hand Slot {n}",
     "kinds": [
       "weapon",
       "shield",
@@ -15569,6 +15736,7 @@ const equipSlots = [
   {
     "id": "leftHand",
     "label": "Left Hand",
+    "positionLabel": "Left Hand Slot {n}",
     "kinds": [
       "weapon",
       "shield",
@@ -15584,6 +15752,7 @@ const equipSlots = [
   {
     "id": "armor",
     "label": "Armour",
+    "positionLabel": "Armour Slot {n}",
     "kinds": "armor",
     "hand": "",
     "sets": 1,
@@ -15595,6 +15764,7 @@ const equipSlots = [
   {
     "id": "talisman",
     "label": "Talisman",
+    "positionLabel": "Talisman Slot {n}",
     "kinds": "talisman",
     "hand": "",
     "sets": 3,
@@ -16723,6 +16893,21 @@ const armouryUi = {
         "leftHand"
       ]
     },
+    "inventorySplit": {
+      "defaultArmamentsRatio": 0.6,
+      "minimumArmamentsRatio": 0.3,
+      "maximumArmamentsRatio": 0.8,
+      "snapRatios": [
+        0.4,
+        0.5,
+        0.6,
+        0.7
+      ],
+      "snapTolerance": 0.035,
+      "compactItemsBelowPx": 520,
+      "foldSubcardsBelowPx": 420,
+      "foldGroupsBelowPx": 260
+    },
     "combatPower": {
       "groupLabel": "Combat Power",
       "cards": [
@@ -16763,7 +16948,7 @@ const armouryUi = {
         "label": "Inventory",
         "pane": "inventory",
         "character": "folded",
-        "armaments": "folded",
+        "armaments": "expanded",
         "inventory": "expanded",
         "cards": "folded"
       },
@@ -24416,6 +24601,16 @@ const DEFAULTS = Object.freeze({
   shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
   character: { spriteRatio: 0.38, statsRatio: 0.62, statsPaneRatio: 0.6, minWidth: '0' },
   equipment: { groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armor', 'rightHand', 'leftHand'] },
+  inventorySplit: {
+    defaultArmamentsRatio: 0.6,
+    minimumArmamentsRatio: 0.3,
+    maximumArmamentsRatio: 0.8,
+    snapRatios: [0.4, 0.5, 0.6, 0.7],
+    snapTolerance: 0.035,
+    compactItemsBelowPx: 520,
+    foldSubcardsBelowPx: 420,
+    foldGroupsBelowPx: 260,
+  },
   combatPower: {
     groupLabel: 'Combat Power',
     cards: [
@@ -24427,7 +24622,7 @@ const DEFAULTS = Object.freeze({
   cards: { defaultView: 'list', gridColumns: 4 },
   viewModes: {
     grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
-    rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'folded', inventory: 'expanded', cards: 'folded' },
+    rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
     hybrid: { label: 'Hybrid', pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' },
   },
   responsive: {
@@ -24459,6 +24654,7 @@ function normalizeArmouryLayout(source = {}) {
   const shell = { ...DEFAULTS.shell, ...(raw.shell || {}) };
   const character = { ...DEFAULTS.character, ...(raw.character || {}) };
   const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
+  const inventorySplit = { ...DEFAULTS.inventorySplit, ...(raw.inventorySplit || {}) };
   const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
   const cards = { ...DEFAULTS.cards, ...(raw.cards || {}) };
   const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
@@ -24477,11 +24673,16 @@ function normalizeArmouryLayout(source = {}) {
   if (Math.abs(phoneTotal - 1) > 0.0001) {
     throw new Error(`armouryUi.layout.responsive.phone ratios must total 1 (got ${phoneTotal})`);
   }
-  if (!Array.isArray(equipment.slotOrder) || equipment.slotOrder.length < 3
-    || equipment.slotOrder[0] !== 'armor'
-    || !equipment.slotOrder.includes('rightHand')
-    || !equipment.slotOrder.includes('leftHand')) {
-    throw new Error('armouryUi.layout.equipment.slotOrder must start with armor and include rightHand and leftHand');
+  if (!Array.isArray(equipment.slotOrder) || new Set(equipment.slotOrder).size !== equipment.slotOrder.length
+    || equipment.slotOrder.some((id) => typeof id !== 'string' || !id)) {
+    throw new Error('armouryUi.layout.equipment.slotOrder must contain unique non-empty slot ids');
+  }
+  if (!Array.isArray(inventorySplit.snapRatios) || !inventorySplit.snapRatios.length
+    || inventorySplit.snapRatios.some((value) => !Number.isFinite(Number(value)) || Number(value) <= 0 || Number(value) >= 1)) {
+    throw new Error('armouryUi.layout.inventorySplit.snapRatios must contain ratios between 0 and 1');
+  }
+  if (Number(inventorySplit.minimumArmamentsRatio) >= Number(inventorySplit.maximumArmamentsRatio)) {
+    throw new Error('armouryUi.layout.inventorySplit minimum ratio must be below its maximum ratio');
   }
   if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== 3
     || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
@@ -24520,6 +24721,16 @@ function normalizeArmouryLayout(source = {}) {
       outerBorder: equipment.outerBorder !== false,
       slotOrder: Object.freeze([...equipment.slotOrder]),
     }),
+    inventorySplit: Object.freeze({
+      defaultArmamentsRatio: ratio(Number(inventorySplit.defaultArmamentsRatio), 'inventorySplit.defaultArmamentsRatio'),
+      minimumArmamentsRatio: ratio(Number(inventorySplit.minimumArmamentsRatio), 'inventorySplit.minimumArmamentsRatio'),
+      maximumArmamentsRatio: ratio(Number(inventorySplit.maximumArmamentsRatio), 'inventorySplit.maximumArmamentsRatio'),
+      snapRatios: Object.freeze(inventorySplit.snapRatios.map((value) => ratio(Number(value), 'inventorySplit.snapRatios'))),
+      snapTolerance: ratio(Number(inventorySplit.snapTolerance), 'inventorySplit.snapTolerance'),
+      compactItemsBelowPx: positive(Number(inventorySplit.compactItemsBelowPx), 'inventorySplit.compactItemsBelowPx'),
+      foldSubcardsBelowPx: positive(Number(inventorySplit.foldSubcardsBelowPx), 'inventorySplit.foldSubcardsBelowPx'),
+      foldGroupsBelowPx: positive(Number(inventorySplit.foldGroupsBelowPx), 'inventorySplit.foldGroupsBelowPx'),
+    }),
     combatPower: Object.freeze({
       groupLabel: String(combatPower.groupLabel || DEFAULTS.combatPower.groupLabel),
       cards: Object.freeze(combatPower.cards.map((card) => Object.freeze({
@@ -24547,19 +24758,13 @@ function normalizeArmouryLayout(source = {}) {
   });
 }
 
-/** Put the authored armament group before the two hand sockets. */
+/** Order every authored equipment group without assigning meaning to its id. */
 function orderArmourySlots(slots, layout) {
   const order = new Map(layout.equipment.slotOrder.map((id, index) => [id, index]));
-  const rank = (slot) => {
-    if (order.has(slot.id)) return order.get(slot.id);
-    if (slot.hand === 'right' && order.has('rightHand')) return order.get('rightHand');
-    if (slot.hand === 'left' && order.has('leftHand')) return order.get('leftHand');
-    return 99;
-  };
   return [...(slots || [])].slice().sort((a, b) => {
-    const ai = rank(a);
-    const bi = rank(b);
-    return (ai ?? 99) - (bi ?? 99) || (a.order || 0) - (b.order || 0);
+    const ai = order.has(a.id) ? order.get(a.id) : Number.MAX_SAFE_INTEGER;
+    const bi = order.has(b.id) ? order.get(b.id) : Number.MAX_SAFE_INTEGER;
+    return ai - bi || (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id));
   });
 }
 
@@ -36495,7 +36700,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '7cf3c18ba7';
+const SOURCE = '8c28308031';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36529,7 +36734,7 @@ const SOURCE = '7cf3c18ba7';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1130';
+const ORDINAL = '1136';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38696,28 +38901,55 @@ function buildArmoury(L, ui) {
   equipment.innerHTML = `<header class="armoury-equipment-head"><h3>${esc(ui.layout.equipment.groupLabel)}</h3></header>`;
   attachTooltip(equipment.querySelector('h3'), () => '<div class="tt-title">Armaments</div><p>Expand a socket to inspect or change its equipped item.</p>');
   const slots = document.createElement('div');
-  slots.className = 'equip-slots armoury-slot-cards';
+  slots.className = 'equip-slots armoury-slot-groups';
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const byId = new Map(ui.blocks.map((block) => [block.slot.id, block.el]));
   for (const slot of ordered) {
-    const details = document.createElement('details');
-    details.className = 'armoury-slot-card';
-    details.dataset.component = 'armoury.armamentSubcard';
-    details.open = ui.viewMode.armaments === 'expanded';
-    const summaryItem = ui.slotSummary(slot);
-    const summary = document.createElement('summary');
-    summary.innerHTML = `<span class="armoury-slot-card-label">${esc(slot.label)}</span>`
-      + `<span class="armoury-slot-card-item">${esc(summaryItem.name)}</span>`
-      + `<span class="armoury-slot-card-bonus">${esc(summaryItem.bonus)}</span>`
-      + `<span class="armoury-slot-card-weight">${esc(summaryItem.weight)}</span>`
-      + `<span class="armoury-slot-card-hint">${details.open ? 'Hide details' : 'Show details'}</span>`;
-    attachTooltip(summary, () => `<div class="tt-title">${esc(`${slot.label}: ${summaryItem.name}`)}</div><p>${esc(summaryItem.instruction)}</p>`);
-    details.addEventListener('toggle', () => {
-      const hint = summary.querySelector('.armoury-slot-card-hint');
-      if (hint) hint.textContent = details.open ? 'Hide details' : 'Show details';
-    });
-    details.append(summary, byId.get(slot.id));
-    slots.appendChild(details);
+    const group = document.createElement('details');
+    group.className = 'armoury-slot-group';
+    group.dataset.component = 'armoury.socketGroupCard';
+    group.dataset.slotGroup = slot.id;
+    group.open = ui.viewMode.armaments === 'expanded';
+
+    const activeSummary = ui.slotSummary(slot);
+    const groupSummary = document.createElement('summary');
+    groupSummary.className = 'equip-slot';
+    groupSummary.innerHTML = `<span class="armoury-slot-group-label">${esc(slot.label)}</span>`
+      + `<span class="armoury-slot-group-active">${esc(activeSummary.name)}</span>`;
+    const controls = byId.get(slot.id);
+    const sealed = controls.querySelector('.es-sealed');
+    const setStrip = controls.querySelector('.es-sets');
+    setStrip.classList.add('armoury-position-strip');
+    setStrip.dataset.component = 'armoury.positionStrip';
+    if (sealed) groupSummary.appendChild(sealed);
+    groupSummary.appendChild(setStrip);
+    attachTooltip(groupSummary, () => `<div class="tt-title">${esc(slot.label)}</div><p>${esc(slot.blurb || 'Expand this equipment group to inspect its unlocked loadout positions.')}</p>`);
+
+    const positions = document.createElement('div');
+    positions.className = 'armoury-position-list';
+    for (const position of ui.positions(slot)) {
+      if (position.state !== 'open') continue;
+      const card = document.createElement('details');
+      card.className = 'armoury-slot-card armoury-position-card';
+      card.dataset.component = 'armoury.loadoutPositionSubcard';
+      card.dataset.slotPosition = `${slot.id}:${position.index}`;
+      card.open = ui.viewMode.armaments === 'expanded';
+      const head = document.createElement('summary');
+      head.innerHTML = `<span class="armoury-slot-card-label">${esc(position.label)}</span>`
+        + `<span class="armoury-slot-card-item">${esc(position.summary.name)}</span>`
+        + `<span class="armoury-slot-card-bonus">${esc(position.summary.bonus)}</span>`
+        + `<span class="armoury-slot-card-weight">${esc(position.summary.weight)}</span>`
+        + `<span class="armoury-slot-card-hint">${card.open ? 'Hide details' : 'Show details'}</span>`;
+      attachTooltip(head, () => `<div class="tt-title">${esc(`${position.label}: ${position.summary.name}`)}</div><p>${esc(position.summary.instruction)}</p>`);
+      card.addEventListener('toggle', () => {
+        const hint = head.querySelector('.armoury-slot-card-hint');
+        if (hint) hint.textContent = card.open ? 'Hide details' : 'Show details';
+      });
+      card.append(head, ui.armamentDetail(slot, position.summary));
+      positions.appendChild(card);
+    }
+    group.append(groupSummary, positions);
+    slots.appendChild(group);
   }
   equipment.appendChild(slots);
   equipment.appendChild(ui.picker());
@@ -38973,6 +39205,14 @@ function mountEquipment(host, {
   let cardView = layout.cards.defaultView;
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
+  const clampPaneRatio = (value) => Math.min(
+    layout.inventorySplit.maximumArmamentsRatio,
+    Math.max(layout.inventorySplit.minimumArmamentsRatio, Number(value)),
+  );
+  const savedPaneRatio = meta.settings && Number(meta.settings.armouryPaneRatio);
+  let paneRatio = clampPaneRatio(Number.isFinite(savedPaneRatio)
+    ? savedPaneRatio : layout.inventorySplit.defaultArmamentsRatio);
+  let paneObserver = null;
 
   // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
   // carries four files away, for the same reason. This panel mounts on <body>,
@@ -39008,6 +39248,7 @@ function mountEquipment(host, {
   // window listeners; Escape still has to leave through every close road.
   const close = () => {
     document.removeEventListener('keydown', onKey);
+    if (paneObserver) paneObserver.disconnect();
     wrap.remove();
     if (onClose) onClose();
   };
@@ -39150,7 +39391,9 @@ function mountEquipment(host, {
         const cell = document.createElement('button');
         cell.type = 'button';
         cell.className = 'es-cell locked';
+        cell.dataset.component = 'armoury.positionIcon';
         cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
+        cell.addEventListener('click', (event) => event.stopPropagation());
         refuses(cell, () => rung.hint);
         sets.appendChild(cell);
         return;
@@ -39164,6 +39407,7 @@ function mountEquipment(host, {
       const cell = document.createElement('button');
       cell.type = 'button';
       cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      cell.dataset.component = 'armoury.positionIcon';
       cell.title = piece ? piece.name : 'Empty';
       cell.innerHTML = piece
         ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
@@ -39192,7 +39436,8 @@ function mountEquipment(host, {
         applyEquipmentChange(slot.id, i, pieceId, `Equip ${dragged.name} to ${slot.label}`);
       });
 
-      cell.addEventListener('click', () => {
+      cell.addEventListener('click', (event) => {
+        event.stopPropagation();
         // Clicking a set you're not in switches to it; clicking the one you're
         // already in opens the picker. Same square, two jobs, no extra chrome.
         if (!active) {
@@ -39594,34 +39839,59 @@ function mountEquipment(host, {
     const box = document.createElement('section');
     box.className = 'armoury-character-stats';
     const projection = statProjection(registries, run);
+    const expanded = viewMode().character === 'expanded';
+
+    function informationCard({ id, label, summary, body }) {
+      const card = document.createElement('details');
+      card.className = `character-info-card ${id}`;
+      card.dataset.component = `armoury.${id}`;
+      card.open = expanded;
+      const head = document.createElement('summary');
+      head.innerHTML = `<span class="character-info-label">${esc(label)}</span>`
+        + `<span class="character-info-summary">${esc(summary)}</span>`;
+      attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
+      card.append(head, body);
+      return card;
+    }
 
     const powers = document.createElement('section');
     powers.className = 'character-power-cards';
     powers.dataset.component = 'armoury.combatPowerGroup';
-    const powerHeading = document.createElement('h4');
-    powerHeading.className = 'character-power-heading';
-    powerHeading.textContent = layout.combatPower.groupLabel;
-    box.appendChild(powerHeading);
-    mountDisclosure(powers, characterPowerEntries(), { moreLabel: 'more powers' });
-    box.appendChild(powers);
+    const powerEntries = characterPowerEntries();
+    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers' });
+    box.appendChild(informationCard({
+      id: 'combatPowerCard',
+      label: layout.combatPower.groupLabel,
+      summary: powerEntries.map((entry) => `${entry.face.node?.querySelector('.combat-power-label')?.textContent || entry.face.label} ${entry.face.value}`).join(' · '),
+      body: powers,
+    }));
 
     const attributes = document.createElement('section');
     attributes.className = 'character-attributes';
-    attributes.innerHTML = '<h4>Attributes</h4>';
     const attributeHost = document.createElement('div');
-    mountDisclosure(attributeHost, attributeEntries(projection), { moreLabel: 'more attributes' });
+    const attributeRows = attributeEntries(projection);
+    mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes' });
     attributes.appendChild(attributeHost);
-    box.appendChild(attributes);
+    box.appendChild(informationCard({
+      id: 'attributesCard',
+      label: 'Attributes',
+      summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
+      body: attributes,
+    }));
 
     const relics = document.createElement('section');
     relics.className = 'character-relics';
-    relics.innerHTML = `<h4>Relics <span>${(run.relics || []).length}</span></h4>`;
     const relicHost = document.createElement('div');
     const entries = relicEntries();
     if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics' });
     else relicHost.innerHTML = '<p class="ep-hint">No relics equipped.</p>';
     relics.appendChild(relicHost);
-    box.appendChild(relics);
+    box.appendChild(informationCard({
+      id: 'relicsCard',
+      label: 'Relics',
+      summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
+      body: relics,
+    }));
     return box;
   }
 
@@ -39634,20 +39904,90 @@ function mountEquipment(host, {
     return box;
   }
 
-  function slotSummary(slot) {
-    const setIndex = run.loadout.active?.[slot.id] || 0;
+  function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
     const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
     const item = slot.kinds.includes('armor')
       ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
       : (eq.armaments || []).find((piece) => piece.id === itemId);
-    const bonus = item ? modSummary(registries, item).slice(0, 2).join(' · ') || 'No combat bonus authored' : 'Empty socket';
+    const surface = equipmentSurfaceReceipt(registries, run);
+    const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
+    const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
+    const roleBonuses = item && isActive
+      ? surface.roles
+        .filter((row) => row.piece?.id === item.id)
+        .map((row) => `${roleLabels.get(row.role) || row.role} ${row.receipt.value}`)
+      : [];
+    const authoredBonuses = item ? modSummary(registries, item) : [];
+    const poise = item && Number.isFinite(Number(item.poiseThreshold)) ? `Poise ${Number(item.poiseThreshold)}` : '';
+    const bonus = item
+      ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
+      : 'Empty socket';
     const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
     return {
+      item,
       name: item ? item.name : 'Empty socket',
+      category: item ? (slot.kinds.includes('armor') ? 'Armour' : `${item.kind || 'Armament'}`.replace(/^./, (c) => c.toUpperCase())) : 'Empty',
       bonus,
       weight,
       instruction: item ? 'Click to expand the equipped item and socket details.' : 'Click to expand this empty socket.',
     };
+  }
+
+  function slotPositions(slot) {
+    const opened = openedSets(registries, slot, ladderCtx());
+    const visible = visibleSets(registries, slot, ladderCtx());
+    return (run.loadout.sets[slot.id] || []).map((itemId, index) => ({
+      index,
+      itemId,
+      state: setCellState(index, opened, visible),
+      label: String(slot.positionLabel || `${slot.label} Slot {n}`).replace('{n}', String(index + 1)),
+      summary: slotSummary(slot, index),
+    }));
+  }
+
+  function armamentDetail(slot, summaryItem) {
+    const card = document.createElement('article');
+    card.className = 'armoury-armament-item';
+    card.dataset.component = 'armoury.armamentItemCard';
+    const item = summaryItem.item;
+    if (!item) {
+      card.innerHTML = '<p class="armoury-armament-empty">No item is equipped in this socket.</p>';
+      return card;
+    }
+
+    const tags = Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []);
+    const tagRows = tags.map((tagId) => {
+      const tag = (registries.tags || []).find((row) => row.id === tagId);
+      return { id: tagId, label: tag?.label || tagId, description: tag?.blurb || 'Equipment classification.' };
+    });
+    const mods = modSummary(registries, item);
+    const value = item.value != null ? String(item.value) : '—';
+    const weight = item.weight != null ? String(item.weight) : '—';
+
+    const identity = document.createElement('section');
+    identity.className = 'armoury-armament-identity';
+    identity.dataset.component = 'armoury.armamentIdentityPane';
+    identity.innerHTML = `<header><h4>${esc(item.name)}</h4><p>${esc(summaryItem.category)} · ${esc(summaryItem.bonus)}</p></header>`
+      + `<div class="armoury-armament-art"><img src="${esc(thumbSrc(item))}" alt=""></div>`
+      + `<footer><span class="armoury-armament-tags">${tagRows.map((tag) => `<em>${esc(tag.label)}</em>`).join('') || '<em>Untagged</em>'}</span>`
+      + `<span class="armoury-armament-value">Value ${esc(value)} · Weight ${esc(weight)}</span></footer>`;
+    const image = identity.querySelector('img');
+    image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
+
+    const detail = document.createElement('section');
+    detail.className = 'armoury-armament-details';
+    detail.dataset.component = 'armoury.armamentDetailPane';
+    detail.innerHTML = `<h4>${esc(item.name)}</h4>`
+      + `<p class="armoury-armament-lore">${esc(item.blurb || 'No lore text authored.')}</p>`
+      + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
+      + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
+      + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
+      + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
+      + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
+      + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
+    card.append(identity, detail);
+    attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
+    return card;
   }
 
   function characterPanel() {
@@ -39774,6 +40114,7 @@ function mountEquipment(host, {
   }
 
   function draw() {
+    if (paneObserver) paneObserver.disconnect();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
@@ -39794,6 +40135,7 @@ function mountEquipment(host, {
             <div class="armoury-left"></div>
             <div class="armoury-right"></div>
           </div>
+          <div class="armoury-pane-splitter" data-component="armoury.paneSplitter" role="separator" aria-label="Resize Armaments and Inventory panes" aria-orientation="vertical" tabindex="0"></div>
           <section class="armoury-inventory"></section>
         </div>
         <div class="armoury-strip"></div>
@@ -39812,6 +40154,13 @@ function mountEquipment(host, {
     panel.style.setProperty('--armoury-summary-pane-ratio', `${1 - layout.character.statsPaneRatio}fr`);
     panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
     panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
+    const applyPaneRatio = () => {
+      panel.style.setProperty('--armoury-armaments-pane-width', `${paneRatio}fr`);
+      panel.style.setProperty('--armoury-inventory-pane-width', `${1 - paneRatio}fr`);
+      const splitter = panel.querySelector('.armoury-pane-splitter');
+      if (splitter) splitter.setAttribute('aria-valuenow', String(Math.round(paneRatio * 100)));
+    };
+    applyPaneRatio();
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -39849,6 +40198,8 @@ function mountEquipment(host, {
         layout,
         viewMode: viewMode(),
         slotSummary,
+        positions: slotPositions,
+        armamentDetail,
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
         picker: () => pickerBlock(),
@@ -39866,6 +40217,95 @@ function mountEquipment(host, {
     if (inventory) inventory.appendChild(inventoryBlock());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
     wrap.querySelector('.armoury-stats-tray').appendChild(statsComparison());
+
+    const applyPaneDensity = () => {
+      const equipmentPane = panel.querySelector('.armoury-equipment');
+      const inventoryPane = panel.querySelector('.armoury-inventory');
+      if (!equipmentPane || viewMode().pane !== 'inventory') return;
+      const equipmentWidth = equipmentPane.getBoundingClientRect().width;
+      const inventoryWidth = inventoryPane ? inventoryPane.getBoundingClientRect().width : 0;
+      panel.dataset.armamentDensity = equipmentWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
+      panel.dataset.inventoryDensity = inventoryWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
+      const groups = panel.querySelectorAll('.armoury-slot-group');
+      const cards = panel.querySelectorAll('.armoury-position-card');
+      if (equipmentWidth < layout.inventorySplit.foldGroupsBelowPx) {
+        for (const group of groups) {
+          if (group.open) group.dataset.autoFolded = '1';
+          group.open = false;
+        }
+        for (const card of cards) {
+          if (card.open) card.dataset.autoFolded = '1';
+          card.open = false;
+        }
+      } else {
+        for (const group of groups) {
+          if (group.dataset.autoFolded === '1') group.open = true;
+          delete group.dataset.autoFolded;
+        }
+        if (equipmentWidth < layout.inventorySplit.foldSubcardsBelowPx) {
+          for (const card of cards) {
+            if (card.open) card.dataset.autoFolded = '1';
+            card.open = false;
+          }
+        } else {
+          for (const card of cards) {
+            if (card.dataset.autoFolded === '1') card.open = true;
+            delete card.dataset.autoFolded;
+          }
+        }
+      }
+    };
+
+    const splitter = panel.querySelector('.armoury-pane-splitter');
+    if (splitter) {
+      const snap = (raw) => {
+        const bounded = clampPaneRatio(raw);
+        const nearest = layout.inventorySplit.snapRatios.reduce((best, value) => (
+          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
+        ), layout.inventorySplit.snapRatios[0]);
+        return Math.abs(nearest - bounded) <= layout.inventorySplit.snapTolerance ? nearest : bounded;
+      };
+      const setFromClientX = (clientX) => {
+        const content = panel.querySelector('.armoury-content');
+        const rect = content.getBoundingClientRect();
+        paneRatio = snap((clientX - rect.left) / Math.max(1, rect.width));
+        applyPaneRatio();
+        applyPaneDensity();
+      };
+      splitter.addEventListener('pointerdown', (event) => {
+        splitter.setPointerCapture(event.pointerId);
+        splitter.classList.add('dragging');
+        setFromClientX(event.clientX);
+      });
+      splitter.addEventListener('pointermove', (event) => {
+        if (!splitter.hasPointerCapture(event.pointerId)) return;
+        setFromClientX(event.clientX);
+      });
+      const finishResize = (event) => {
+        if (splitter.hasPointerCapture(event.pointerId)) splitter.releasePointerCapture(event.pointerId);
+        splitter.classList.remove('dragging');
+        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
+      };
+      splitter.addEventListener('pointerup', finishResize);
+      splitter.addEventListener('pointercancel', finishResize);
+      splitter.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+        event.preventDefault();
+        if (event.key === 'Home') paneRatio = layout.inventorySplit.minimumArmamentsRatio;
+        else if (event.key === 'End') paneRatio = layout.inventorySplit.maximumArmamentsRatio;
+        else paneRatio = snap(paneRatio + (event.key === 'ArrowRight' ? 0.05 : -0.05));
+        applyPaneRatio();
+        applyPaneDensity();
+        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
+      });
+      attachTooltip(splitter, () => '<div class="tt-title">Resize panes</div><p>Drag left or right. The divider snaps to the authored width stops.</p>');
+    }
+    applyPaneDensity();
+    if (typeof ResizeObserver !== 'undefined') {
+      paneObserver = new ResizeObserver(applyPaneDensity);
+      const content = panel.querySelector('.armoury-content');
+      if (content) paneObserver.observe(content);
+    }
 
     notice = '';
     dressRegions();
