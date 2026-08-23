@@ -415,7 +415,8 @@ export function validateContent(bundle) {
   }
   const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
   for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
-    validateEffects(keepsake.effects || [], `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
+    if (!keepsake || typeof keepsake !== 'object' || Array.isArray(keepsake) || !Array.isArray(keepsake.effects)) continue;
+    validateEffects(keepsake.effects, `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
   }
 
   // ---- schema walks --------------------------------------------------------

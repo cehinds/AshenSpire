@@ -5305,6 +5305,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const classValidation = validateContent(malformedClass);
     assert(!classValidation.ok && classValidation.errors.some((e) => e.path.includes('characterCreation.classes.reaver')),
       'a null class roster reports its JSON path instead of throwing');
+
+    const malformedChoices = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    for (const field of ['armourIds', 'handIds', 'relicIds']) malformedChoices.characterCreation.classes.reaver[field] = {};
+    const choiceValidation = validateContent(malformedChoices);
+    for (const field of ['armourIds', 'handIds', 'relicIds']) {
+      assert(!choiceValidation.ok && choiceValidation.errors.some((e) => e.path.includes(`characterCreation.classes.reaver.${field}`)),
+        `a non-array ${field} roster reports its JSON path instead of throwing`);
+    }
+
+    const malformedKeepsakeRows = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedKeepsakeRows.characterCreation.keepsakes[0] = null;
+    malformedKeepsakeRows.characterCreation.keepsakes[1].effects = {};
+    const keepsakeRowValidation = validateContent(malformedKeepsakeRows);
+    assert(!keepsakeRowValidation.ok && keepsakeRowValidation.errors.some((e) => e.path.includes('characterCreation.keepsakes')),
+      'null and malformed keepsake rows report their JSON paths instead of throwing during effect validation');
   });
 
   const passed = results.filter((r) => r.ok).length;

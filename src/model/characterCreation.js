@@ -36,22 +36,25 @@ export function characterCreationProblems(source) {
     }
     for (const key of Object.keys(row)) if (!CLASS_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
     for (const field of CLASS_FIELDS) {
-      const values = row && row[field];
+      const values = row[field];
       if (!Array.isArray(values) || values.length < 2) {
         problems.push(`${path}.${field}: must contain at least two choices`);
         continue;
       }
       if (new Set(values).size !== values.length) problems.push(`${path}.${field}: contains duplicate ids`);
     }
-    for (const id of (row && row.armourIds) || []) {
+    const armourIds = Array.isArray(row.armourIds) ? row.armourIds : [];
+    const handIds = Array.isArray(row.handIds) ? row.handIds : [];
+    const configuredRelicIds = Array.isArray(row.relicIds) ? row.relicIds : [];
+    for (const id of armourIds) {
       if (!(equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id)) {
         problems.push(`${path}.armourIds: unknown armour '${id}' for '${classId}'`);
       }
     }
-    for (const id of (row && row.handIds) || []) if (!armamentIds.has(id)) problems.push(`${path}.handIds: unknown armament '${id}'`);
-    for (const id of (row && row.relicIds) || []) if (!relicIds.has(id)) problems.push(`${path}.relicIds: unknown relic '${id}'`);
+    for (const id of handIds) if (!armamentIds.has(id)) problems.push(`${path}.handIds: unknown armament '${id}'`);
+    for (const id of configuredRelicIds) if (!relicIds.has(id)) problems.push(`${path}.relicIds: unknown relic '${id}'`);
     const cls = classes.find((candidate) => candidate.id === classId);
-    if (cls && !(row.relicIds || []).includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
+    if (cls && !configuredRelicIds.includes(cls.startingRelic)) problems.push(`${path}.relicIds: must include class starting relic '${cls.startingRelic}'`);
   }
   for (const classId of classIds) if (!cfg.classes[classId]) problems.push(`characterCreation.classes: missing class '${classId}'`);
   const keepsakes = cfg.keepsakes;
