@@ -612,6 +612,10 @@ function finish(code, why = null) {
     console.log('  must commit AND must leave the next activation alive). PEN IS NOT DRIVEN AND NOT');
     console.log('  MEASURED: the fix makes no device assumption at all now — the eater eats the click that');
     console.log('  carries its own gesture\'s pointerId — but no pen event has been dispatched at this ref.');
+    console.log('  THE MULTI-POINTER OVERLAP IS A MIXED INPUT PROBE: pointer A is real CDP touch, while');
+    console.log('  pointer B is injected with window.dispatchEvent(new PointerEvent(...)). Two real CDP');
+    console.log('  touches suppress A\'s click in this harness, so A7 does NOT prove a two-real-finger');
+    console.log('  gesture; it proves the post-release final-state check for this A-real/B-synthetic edge.');
     console.log('  ON THE MOUSE ROAD THE EATER ARMS AND IS NEVER FED, so one window click-capture listener');
     console.log('  stands from the hold to the next pointerdown: INERT, not absent, and nothing here counts');
     console.log('  listeners of that kind (A8 counts keydown only).');
