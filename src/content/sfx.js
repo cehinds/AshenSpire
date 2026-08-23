@@ -49,7 +49,7 @@ export const SFX_MANIFEST = {
 // the content-build reachability check both consume this list; neither guesses
 // that every row before an underscore is intended as a composed-id family.
 export const SFX_FAMILY_IDS = Object.freeze([
-  'procBurst', 'beat', 'holdTick', 'holdCommit',
+  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake',
 ]);
 
 // Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
@@ -214,6 +214,16 @@ export const SFX_RECIPES = {
   ],
   buy: [
     { kind: 'tone', type: 'triangle', freq: 700, to: 1050, dur: 0.16, peak: 0.35 },
+  ],
+  // REWARD COLLECTION (E11). A FAMILY row — the reward menu composes
+  // `rewardTake_<kind>` per collected row (rewardTake_cinders, rewardTake_card,
+  // rewardTake_flask, rewardTake_armament, rewardTake_relic) and resolution
+  // falls through exact → this family → default, the procBurst shape (#71).
+  // Authoring a per-kind flourish later is ONE exact row here, zero code.
+  // The gesture: a short upward settle — receipt, not fanfare; `victory`
+  // already owns the fanfare and fires once at the screen, not per row.
+  rewardTake: [
+    { kind: 'tone', type: 'sine', freq: 520, to: 780, dur: 0.14, peak: 0.3 },
   ],
   nodeTravel: [
     { kind: 'tone', type: 'triangle', freq: 300, to: 460, dur: 0.14, peak: 0.3 },

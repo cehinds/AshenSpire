@@ -827,6 +827,53 @@ button.rs-reset {
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
+/* THE REWARD MENU (E11/#256) — rows are `.class-pick` cards (the B9 uniform
+   card-button pattern; input.js already focuses `.class-pick:not(.locked)`),
+   so this block styles only what is NEW here: the menu's wrap, the NEW chip,
+   and the Skip control's tap floor. Law 4 clause 4 on Skip: a fixed ergonomic
+   floor (--tap-floor) plus intrinsic growth — never a text-unit multiple. */
+.reward-menu { flex-wrap: wrap; justify-content: center; }
+/* Box geometry in px, NEW WRITES under Law 4 clause 3 (the ratchet): these are
+   boxes, not letters — .class-pick's own 19rem is pre-existing debt, not
+   license. The glyph stays in text units: it is a typographic mark. */
+.reward-menu .reward-kind { width: 256px; padding: 19px; }
+.reward-menu .reward-kind .glyph { font-size: 3rem; margin-bottom: 8px; }
+.chip.reward-new { color: var(--gold); border-color: var(--gold); }
+/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
+   chooser set only `data-new`, which no stylesheet or renderer consumed, so
+   the unseen card looked identical to its neighbours). The chip dress is
+   restated here because `.chip` styling is scoped to `.class-pick` and this
+   badge lives inside `.card` — its named container (position: relative,
+   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
+   box); the label keeps its text unit. pointer-events: none — the badge marks
+   the card, the CARD takes the tap. */
+.card .card-badge-new {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--gold); border: 1px solid var(--gold); border-radius: 8px;
+  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  pointer-events: none; z-index: 2;
+}
+.reward-skip {
+  display: block; width: fit-content; margin-left: auto; align-self: center; flex: 0 0 auto;
+  min-height: calc(var(--tap-floor, 44px) + 1px); min-width: var(--tap-floor, 44px); height: auto;
+}
+:root:not([data-layout='narrow']) .reward-menu .reward-kind:has(.reward-skip) {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px;
+}
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .glyph { grid-column: 1 / -1; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .cp-body { grid-column: 1; grid-row: 2; }
+:root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
+  grid-column: 2; grid-row: 2; position: relative; left: 2px;
+}
+/* Receive feedback: a taken row settles — border flashes gold and the card
+   relaxes. Runs once on the state flip (data-state="taken" is re-rendered). */
+.reward-kind[data-state='taken'] { animation: reward-took 420ms ease-out; }
+@keyframes reward-took {
+  0% { border-color: var(--gold); transform: scale(1.04); }
+  100% { border-color: var(--line-soft); transform: scale(1); }
+}
+
 /* EldenSpire#23 — Sunna's withhold. The reward screen is the first thing a
    portrait player meets after every fight, and it only became reachable at all
    because this branch fixed the fight. At 390x844 three cards need 417.6px in a
@@ -1069,13 +1116,42 @@ button.rs-reset {
   border: 2px solid var(--line-soft); display: flex; align-items: center; justify-content: center;
   font-size: 2rem; cursor: pointer; transition: transform 120ms, border-color 120ms;
 }
-#cz-kits button.cz-opt {
-  /* Starting kits carry words and commit a run-defining choice. The generic
+#cz-kits button.cz-opt,
+#cz-armours button.cz-opt {
+  /* Starting kits and starting armour carry words and commit a run-defining choice. The generic
      sigil tile's 4rem square shrinks with body zoom; this specific interactive
      row uses the on-glass floor and grows around its authored label. */
   width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
+
+/* ---- E5 (#250): the stat-point editor -------------------------------------
+   Every NUMBER on this surface is written by customize.js from the creation
+   mode row (pool, floor, ceiling); this block is geometry only. Steppers sit
+   on the tap floor (base.css --tap-floor) because a thumb is the instrument;
+   aria-disabled dims without removing focus — an unfocusable control is
+   unaskable, the same ruling the BEGIN button carries. */
+.cz-statedit { display: flex; flex-direction: column; gap: 0.6rem; max-width: 24rem; }
+.se-modes { display: flex; gap: 0.8rem; }
+.se-modes .cz-opt.se-mode {
+  width: auto; min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
+  padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
+}
+.se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
+.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
+.se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-step {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  border-radius: 9px; background: var(--panel); border: 2px solid var(--line-soft);
+  color: var(--parchment); font-size: 1.4rem; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 120ms, border-color 120ms;
+}
+.se-step:hover { transform: translateY(-1px); border-color: var(--parchment); }
+.se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+.se-step[aria-disabled='true']:hover { transform: none; border-color: var(--line-soft); }
 .cz-opt:hover { transform: translateY(-2px); }
 .cz-opt.chosen { border-color: var(--parchment); }
 .cz-opt.tint.chosen { outline: 2px solid var(--parchment); outline-offset: 2px; }
@@ -1115,6 +1191,11 @@ button.rs-reset {
    the two headings that separate the tiers. */
 .cz-brief .cz-label { margin: 0.7rem 0 0.2rem; }
 .cz-disc { width: 100%; }
+/* E2 (#247): the merchant's bars ride the same fold vocabulary as the
+   creation column (shop.js, THE BARS). The cap is the remove grid's own
+   900px — the widest thing a bar folds — so the bars and their shelves
+   agree on an edge instead of each choosing one. */
+.shop-bars { max-width: 900px; }
 .disc-faces { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: stretch; }
 .disc-face {
   display: flex; align-items: center; justify-content: center; gap: 0.5rem;
@@ -1132,11 +1213,14 @@ button.rs-reset {
 /* The armament and relic faces carry names rather than numbers, so they read
    as rows rather than chips — one per line, on every shape. */
 .disc-armament, .disc-relic { flex: 1 1 100%; justify-content: space-between; }
-/* A FOLDED PICKER (MR-151) reads as a ROW, not a chip: the label on the left,
-   the current choice on the right, full width — so the four folded rows of
-   `.cz-fields` stack the way the six unfolded ones did, and the answer to
-   "what did I pick?" is on the same line as the question. Same `.disc-face`
-   floor, same tap, same panel; only the reveal's contents differ. */
+/* A FOLDED PICKER (MR-151; the whole column since E4 / #249) reads as a ROW,
+   not a chip: the label on the left, the current choice on the right, full
+   width — so the six folded sections of `.cz-fields` stack as uniform cards,
+   which is his sketch (`<icon> <option name>`, one per line), and the answer
+   to "what did I pick?" is on the same line as the question. Same
+   `.disc-face` floor, same tap, same panel; only the reveal's contents
+   differ. Full-width faces also mean every face owns its line, so the panel
+   (a row of the same wrap) always lands DIRECTLY under the tapped face. */
 .disc-pick { flex: 1 1 100%; justify-content: space-between; }
 /* The picker inside a fold WRAPS. Out in `.cz-fields` these rows had the
    column's full 560 px; inside the panel they have that less the panel's own
@@ -1144,6 +1228,13 @@ button.rs-reset {
    the side (Law 5). `.cz-opts` is shared with the lobby, so the wrap is
    scoped to the fold rather than granted to every option row in the game. */
 .disc-reveal .cz-opts { flex-wrap: wrap; row-gap: 0.8rem; }
+/* The class tiles and keepsake tiles wrap inside the panel for the same Law 5
+   reason (E4): out in `.cz-fields` they had the column's full width, inside
+   the panel they have that less the panel's own padding, and a row that
+   cannot wrap answers the loss by running off the side. Narrow layout keeps
+   its own column shape for `.class-row` (further down), which wins by
+   specificity, so this is the WIDE shape's wrap only. */
+.disc-reveal .class-row { flex-wrap: wrap; row-gap: 1.2rem; }
 .disc-more { border-style: dashed; }
 /* ONE panel, under the LINE THE TAPPED FACE IS ON: the entry the player asked
    about. The sentence is the authored one, the list is derived, and the RECEIPT
@@ -2060,6 +2151,36 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-chip.rarity-rare { border-left: 3px solid var(--gold); }
 .equip-chip.rarity-uncommon { border-left: 3px solid var(--frost); }
 
+/* ---- the Armoury item pane: the card IS the control (Constantine, 2026-08-21)
+   The card is mounted as the FACE of Sunna's disclosure, so it is a <span>
+   inside her <button> rather than a button of its own. These rules give the
+   face-shaped card the box the button-shaped one already had, and hand the
+   face's own padding back to the card so the two spellings look identical —
+   they are one markup (pieceChipHtml) and they must not become two looks. */
+.ep-list .disc-faces { flex-direction: column; gap: 0.5rem; }
+.ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
+.ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
+.ep-list .disc-face[data-reveal='open'] .equip-chip.as-face { border-color: var(--gold); }
+.ep-list .disc-reveal { width: 100%; }
+.ep-body { display: flex; flex-direction: column; gap: 0.5rem; }
+
+/* "un equip in red". `.danger` is this file's existing word for red (see
+   `.subtle.danger` above) and it is reused rather than joined by a second
+   spelling — a second red is a second home for one decision. */
+.ep-equip {
+  align-self: flex-start;
+  padding: 0.45rem 1.1rem;
+  border: 1px solid var(--line-soft);
+  background: var(--bg);
+  color: var(--parchment);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.ep-equip:hover { border-color: var(--gold); }
+.ep-equip.danger { border-color: var(--blood); color: var(--ember); }
+.ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
+.ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
+
 .armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
@@ -2084,6 +2205,39 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .player-poise-receipt span, .player-poise-receipt small { color: var(--muted); }
 .player-poise-receipt ul { display: flex; gap: 0.35rem 0.8rem; flex-wrap: wrap; margin: 0; padding: 0; list-style: none; }
 .player-poise-receipt p { margin: 0; color: var(--muted); }
+
+/* ---------- ATTRIBUTES & RESOURCES — a label and its value are a PAIR --------
+   Both screens that print `model/statProjection` — the Armoury strip and the
+   creation screen's `#cz-stat-projection` — shipped these two blocks with NO
+   RULE AT ALL, so every separator was whatever the markup happened to leave
+   behind: zero. Measured at dev 3bafb25, 1440x860 and 390x844, by reading the
+   rendered text runs rather than the source:
+
+     STR 13DEX 10CON 12WIS 10INT 10
+     Draw / turn and opening hand3 + 2 tier x 1 = 5The current engine uses this…
+
+   Sunna read that off a screenshot she was taking of something else (#305) and
+   handed it over rather than banking it.
+
+   THIS IS MR-76 ONE BLOCK OVER — "printed with 0px between them and read as one
+   word", the same sentence `.equip-resource-change small` above already carries.
+   So nothing is invented here: the derived row copies `.equip-role-receipts >
+   div`, which has the identical <b>/<span>/<small> shape and lives in this same
+   strip, and the attribute row copies `.player-poise-receipt ul` — a wrapping
+   row of chips, which is what a phone needs at 390 where a nowrap row would run
+   off the side. One home, because the two screens print one read model. */
+.statproj-attributes { display: flex; flex-wrap: wrap; gap: 0.2rem 1.1rem; }
+.statproj-derived {
+  display: grid; gap: 0.35rem;
+  /* BOUNDED, and the bound is the point. `.equip-role-receipts` gets its width
+     from `flex: 1 1 28rem`; this block has no flex parent, so an unbounded
+     1fr/2fr split put `Mana` and its formula ~400 px apart across empty panel
+     at 1440 — separated, and still not a pair you can read at a glance. */
+  max-width: 44rem;
+}
+.statproj-derived > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.1rem 0.8rem; }
+.statproj-derived span, .statproj-derived small { color: var(--muted); }
+.statproj-derived small { grid-column: 2; }
 .arcane-exposure-meter, .arcane-exposure-immune {
   min-width: 7.2rem; max-width: 100%; box-sizing: border-box;
   overflow-wrap: anywhere; color: var(--frost); font-size: 0.92rem;
@@ -2904,11 +3058,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    itself 26px taller than the viewport. `data-short` is the layout decider's
    existing answer; this selector measures nothing and creates no breakpoint.
    Keep every sentence and only compress chrome/spacing, so the fallback remains
-   wholly readable at the first height where the game must refuse again. */
+   wholly readable at the first height where the game must refuse again.
+
+   AND THE 44px GLYPH WAS STILL 17px TOO MANY — measured, not argued (Sten,
+   2026-08-21, `uprightgate --text XL` at dev 68d8011): at 844x339 Text XL the
+   card read top -8.47 bottom 347.47 in a 339px viewport, on all three surfaces,
+   while this block's paragraph above promised readability. So below the compact
+   floor the glyph goes entirely: it is `aria-hidden` decoration whose message
+   ("turn") the heading already carries in words, and at the one height where it
+   competes with a sentence for pixels, the sentence wins (every mark
+   load-bearing or gone). Chrome removed, not type shrunk — Law 4 untouched. */
 :root[data-short='true'] .upright-veil { padding: 12px 24px; }
-:root[data-short='true'] .upright-glyph { height: 44px; margin-bottom: 6px; }
-:root[data-short='true'] .upright-phone { width: 26px; height: 40px; }
-:root[data-short='true'] .upright-veil[data-advice='resize'] .upright-phone { width: 44px; height: 30px; }
+:root[data-short='true'] .upright-glyph { display: none; }
 :root[data-short='true'] .upright-veil h2 { margin-bottom: 8px; }
 :root[data-short='true'] .upright-say { margin-bottom: 6px; }
 :root[data-short='true'] .upright-hint { margin-top: 8px; }
@@ -2951,3 +3112,52 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    the stack rather than floated into a corner — a corner is where a watermark
    goes, and this is meant to be read. */
 .title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }
+
+/* ---------------------------------------------------------------------------
+   THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
+
+   Constantine, 2026-08-21: "the right hand and left hand weapons are on the
+   wrong side on the character model in all views armory, character creation and
+   combat. the sword shows on my right side of the screen, but on the left side
+   of the character since it's facing the player."
+
+   He is right, and it is measurable: tools/hand-side-probe.mjs reads the
+   alpha-weighted ink centroid of every handed armament against the body's own
+   ink centre and finds 23 of 24 drawn into the model's opposite hand. (The
+   denominator is every hand=left|right row in weapons.csv with its asset derived
+   as artKey || id, the runtime's own rule -- src/model/loadout.js:962.)
+
+   WHY THE CORRECTION IS HERE AND NOT IN THE ART. The side is not decided at
+   runtime by anything — `equippedFigure` stacks full-frame pre-rendered layers,
+   and THREE independent producers all place the main armament at world x=+0.62,
+   which the shared camera (at y=-8, looking toward +Y) puts on the VIEWER'S
+   RIGHT: tools/equipment-blender.py (`RX, LX = 0.62, -0.52`),
+   tools/sprites-blender.py (the same positions, by its own comment), and the
+   inline CLASS_SVG fallbacks (the Starseer staff at x=80 of a 110 viewBox).
+   One convention, backwards, in three places. Correcting it at the source means
+   re-rendering every armament and body in Blender, which is the RIGHT fix and
+   is carded; this rule is what makes the screen true until that runs.
+
+   WHY A MIRROR IS SAFE HERE, MEASURED RATHER THAN ASSUMED. A scaleX flip also
+   flips the art, so it is only honest if the art is symmetric. Measured on the
+   silhouette (alpha, mirrored against itself): body_reaver 0.3%, body_starseer
+   0.2%, body_herald 0.0% mismatched. The bodies are symmetric IN SHAPE. A first
+   pass measured 19-38% and nearly cost this fix — that number was COLOUR, and
+   the scene's three key lights are rotated off-axis (z -28/146/35 degrees), so
+   it was reading the lighting, not the geometry. What flipping actually changes
+   is which side the key light falls on, which no player can name. The one real
+   shape asymmetry is the armament itself (14.9-16.0% on the armed class
+   sprites) — and that is precisely the thing that must move.
+
+   EXACTLY ONE MIRROR PER FIGURE. `.equipped-figure` appears BARE in the Armoury
+   and NESTED inside `.class-sprite` from combat (playerSprite wraps it), so
+   mirroring both selectors would cancel to identity on the combat board — the
+   screen that started this. The second rule is what keeps the count at one.
+
+   REMOVAL CONDITION (SOP 1's corollary): delete this block the day the armament
+   and body art is re-rendered from corrected producers. Leaving both in place
+   double-flips and restores the bug wearing a fix's clothes.
+   --------------------------------------------------------------------------- */
+.class-sprite,
+.equipped-figure { transform: scaleX(-1); }
+.class-sprite .equipped-figure { transform: none; }

@@ -767,7 +767,7 @@ export function setCellState(index, opened, visible) {
  * every new run with no change here. You start bare-handed in your class's one
  * unlocked armour set — the run is meant to arm you.
  */
-export function createLoadout(registries, classId, startingKit = null) {
+export function createLoadout(registries, classId, startingKit = null, startingArmour = null) {
   const eq = registries.equipment || {};
   const sets = {};
   const active = {};
@@ -775,7 +775,12 @@ export function createLoadout(registries, classId, startingKit = null) {
     sets[slot.id] = new Array(Math.max(1, slot.sets)).fill(null);
     active[slot.id] = 0;
   }
-  const starting = (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
+  // `startingArmour` is a RESOLVED row (model/startingKits.js
+  // resolveStartingArmour — class-checked, eligibility-checked), never a bare
+  // id: an id validated here would be a second decider for one question.
+  // Absent, the class's free set — byte-for-byte the old behaviour.
+  const starting = startingArmour
+    || (eq.armour || []).find((o) => o.classId === classId && o.unlock === '');
   if (starting && sets.armor) sets.armor[0] = starting.id;
   const kit = startingKit || (eq.startingKits || []).find((row) => row.classId === classId && row.baseline === true);
   for (const [slotId, pieceId] of Object.entries({ rightHand: kit && kit.rightHand, leftHand: kit && kit.leftHand })) {

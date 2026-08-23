@@ -14,6 +14,8 @@ import {
   computeTokenBindings,
 } from '../src/model/validate.js';
 import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from '../src/model/floorplan.js';
+import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
+import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
@@ -39,6 +41,8 @@ import {
 } from '../src/content/customMods.js';
 import { createCoopCombat, playCard as playCoopCard } from '../src/engine/coopCombat.js';
 import { statProjection } from '../src/model/statProjection.js';
+import { startingArmourViews, resolveStartingArmour } from '../src/model/startingKits.js';
+import { attributeAllocationProblems, classAttributePreset, allocationTotal } from '../src/model/attributes.js';
 import { deriveStat, resolveDerivedStatRules } from '../src/model/derivedStats.js';
 import { outfits } from '../src/content/generated/outfits.js';
 import { unlocks } from '../src/content/generated/unlocks.js';
@@ -69,7 +73,7 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -2123,16 +2127,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // ---- the shelf's own three, same standard (A7) -------------------------
     oneProblem(bend({ basicTag: 'starter' }), 'starter', 'a basicTag no armament carries');
+    // `bend({ basicTag: 'basic' })`, not `bend({})`, since 2026-08-21: the
+    // shipped tag is now '' (he killed the universal shelf), so a registry bent
+    // with the shipped value has NO everybody's-rows and this refusal has
+    // nothing to refuse. THE VALIDATOR IS UNCHANGED AND STILL RIGHT — what
+    // moved is the config, so the test turns the concept back on to exercise
+    // it. A check that quietly passed on an empty population would be the
+    // vacuous green this file exists to refuse.
     const withEarnedBasic = {
-      ...bend({}),
+      ...bend({ basicTag: 'basic' }),
       equipment: {
         ...REG.equipment,
         armaments: REG.equipment.armaments.map((a) => (a.id === 'straightSword' ? { ...a, unlock: 'winAsReaver' } : a)),
       },
     };
     oneProblem(withEarnedBasic, 'straightSword', 'a row that is both everybody\'s and earned');
+    // Same reason as `withEarnedBasic` above: the shipped tag is '' since his
+    // 2026-08-21 kill, so the concept has to be turned on for its own refusal
+    // to have anything to refuse.
     const basicArmour = {
-      ...bend({}),
+      ...bend({ basicTag: 'basic' }),
       equipment: {
         ...REG.equipment,
         armour: REG.equipment.armour.map((o) => (o.id === 'default' && o.classId === 'reaver'
@@ -2466,26 +2480,66 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // A catalogue would still fail here.
     const fresh = createLoadout(REG, 'reaver');
     const none = ownership(REG, { meta: {}, loadout: fresh });
+    // KILLED BY HIM, 2026-08-21 — the THIRD instruction this sub-check has
+    // served, and all three are kept above and here rather than overwritten:
+    //   "kill 3 basic weapons on self unless it's a starting kit armory weapon
+    //    shown on character creation."
+    // `basicTag` now ships as '' and the universal shelf is off. The exemption
+    // he wanted is THE STARTING KIT, and it needs no rule — the kit is WORN, so
+    // `carriedIds(loadout)` already holds it. That is what this line now proves.
     const basicTag = REG.balance.equipment.basicTag;
-    const basicsRight = rightPool.filter((p) => (p.tags || []).includes(basicTag)).map((p) => p.id);
-    assert(basicsRight.length > 0 && basicsRight.length < rightPool.length,
-      `the basics are a FEW of the pool, not none and not all (${basicsRight.length} of ${rightPool.length})`);
-    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), basicsRight.join(','),
-      `a fresh profile is offered exactly the '${basicTag}' rows (${basicsRight.join(', ')}) of ${rightPool.length} armaments`);
+    // The shelf's floor, DERIVED from the model rather than typed: what a fresh
+    // profile with nothing found is offered — i.e. the kit it is wearing.
+    const kitRight = rightPool.filter((p) => none.has(p)).map((p) => p.id);
+    eq(basicTag, '', 'the universal-shelf tag ships OFF — his 2026-08-21 kill');
+    eq(rightPool.filter((p) => none.has(p)).map((p) => p.id).join(','), 'straightSword',
+      'a fresh reaver is offered exactly the weapon it is WEARING — kit, not category');
 
-    // ---- 1b. …and the TAG is the mechanism, observed both ways -------------
-    // A knob read but never watched to change the outcome has not been built.
-    // Same registries, same profile, `basicTag` cleared: the shelf goes back to
-    // the pre-A7 number, which is the measurement the line above used to be.
-    const noBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: '' } } };
-    eq(rightPool.filter((p) => ownership(noBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id).join(','), 'straightSword',
-      'with basicTag cleared a fresh profile is offered 0 again — the tag, not a hard-coded list');
+    // ---- 1b. …and the TAG is still the mechanism, observed both ways -------
+    // A knob read but never watched to change the outcome has not been built —
+    // and that is as true of a knob turned OFF as of one turned on. The
+    // direction is simply reversed now: putting 'basic' back must WIDEN the
+    // shelf past the kit, which is exactly what he asked to stop happening.
+    const withBasics = { ...REG, balance: { ...REG.balance, equipment: { ...REG.balance.equipment, basicTag: 'basic' } } };
+    const widened = rightPool.filter((p) => ownership(withBasics, { meta: {}, loadout: fresh }).has(p)).map((p) => p.id);
+    assert(widened.length > 1 && widened.includes('straightSword'),
+      `restoring basicTag widens the shelf past the kit (${widened.join(', ')}) — the tag, not a hard-coded list`);
 
     // ---- 2. …and what it finds, it is offered, and ONLY that --------------
-    const two = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    //
+    // RE-SCOPED BY HIM, NOT BY US (Viki, 2026-08-21) — AND THE TWO INSTRUCTIONS
+    // THIS TEST NOW SITS BETWEEN ARE BOTH KEPT HERE, because a test that quietly
+    // changed sides would hide the only thing a reader needs to know:
+    //
+    //   2026-08-08  "everything else is PROFILE SPECIFIC but maybe a few basic
+    //                weapons become available for all."
+    //   2026-08-21  "it should only show armory you actually PICKED UP MID RUN."
+    //
+    // Those are opposite ends of ONE dial — `balance.equipment.persistence` —
+    // and the later, explicit one is what ships: 'perRun'. THE CLAIM THIS
+    // SUB-CHECK DEFENDS IS UNCHANGED (what you found is offered, and ONLY that);
+    // what moved is WHERE "found" lives, from the profile to the run. So the
+    // dagger arrives the way a player actually gets one now — in the loadout,
+    // picked up this climb — instead of in `meta.found`.
+    //
+    // FLAGGED, NOT SETTLED: this is a design reversal and it is his to confirm
+    // or reverse in one line. If he wants the profile shelf back, `persistence`
+    // goes to 'both' and THIS SUB-CHECK IS THE ONE THAT MUST BE PUT BACK — which
+    // is why the old form is written above rather than deleted from history.
+    const picked = { ...fresh, storage: [...(fresh.storage || []), 'dagger'] };
+    const two = ownership(REG, { meta: {}, loadout: picked });
     const offered = rightPool.filter((p) => two.has(p)).map((p) => p.id);
-    eq(offered.join(','), [...basicsRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
-      'one weapon found is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+    eq(offered.join(','), [...kitRight, 'dagger'].sort((a, b) => rightPool.findIndex((p) => p.id === a) - rightPool.findIndex((p) => p.id === b)).join(','),
+      'one weapon PICKED UP THIS RUN is one option ADDED to the basics — his "starting weapon and a scimitar" case, plus the few that are everybody\'s');
+
+    // ---- 2b. …and the profile no longer widens the shelf on its own -------
+    // The direction the re-scope CREATES, and it is the half a flipped dial
+    // would otherwise change in silence: a piece found in an earlier climb, with
+    // nothing carried this run, is NOT offered. Without this line, moving
+    // `persistence` back to 'both' passes every check in this file.
+    const profileOnly = ownership(REG, { meta: { found: ['dagger'] }, loadout: fresh });
+    eq(rightPool.filter((p) => profileOnly.has(p)).map((p) => p.id).join(','), kitRight.join(','),
+      'a piece found in an EARLIER run is not offered in this one — the shelf is the run\'s (persistence: perRun)');
 
     // ---- 3. the OTHER direction: the sandbox still opens everything --------
     // requireFound did not change meaning; turning it off still means everything
@@ -4814,6 +4868,194 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.capped, true, 'a cap of zero caps a fresh run');
     eq(c.blockedBy, 'cap', 'and the cap is the reason, not the empty purse');
     eq(c.offerable, false, 'either block closes the offer');
+  });
+
+  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
+    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
+    // the first option in the display". Order on the screen IS array order in
+    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
+    // sequence — so this reads through the same door the renderer uses, not a
+    // copy of the table.
+    const display = categoryHandler('Display').rows;
+    eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
+    eq(display.filter((r) => r.key === 'fullscreen').length, 1,
+      'and it appears exactly once — the row MOVED, it was not copied');
+    // The other edge: a move re-orders, it must not shrink. The row that held
+    // first place is still filed, just no longer first.
+    const sprites = display.findIndex((r) => r.key === 'useSprites');
+    assert(sprites > 0, 'Character sprites is still a Display row, behind Fullscreen');
+    // And the toggle kept its shape in transit: same type, same label, so the
+    // renderer draws the same control in the new seat.
+    const fs = display[0];
+    eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
+    eq(fs.label, 'Fullscreen', 'same label');
+  });
+
+  test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
+    // Constantine, 2026-08-15: "the reward should start with an initial menu of
+    // reward types (card, potion, armament)". His answer on the page: Continue
+    // is ALWAYS pressable and a setting decides what it means — auto-collect ON
+    // takes everything, picking at random where there is a choice; OFF gives
+    // only what was chosen, no nagging.
+    //
+    // THE ROWS ARE DERIVED FROM THE OFFER (Law 0: the entry describes, the
+    // machinery derives) — a kind absent from the rewards object has no row,
+    // and a new reward field is one ORDER entry, not a screen redesign.
+
+    // EDGE 1 — THE EMPTY OFFER: no rows, and Continue still resolves.
+    let plan = rewardPlan({}, { flaskSlotsFree: 1 });
+    eq(plan.rows.length, 0, 'an empty offer derives an empty menu');
+    let res = resolveContinue(plan, {}, 'auto', () => 0);
+    eq(res.take.length, 0, 'auto-collect over nothing takes nothing');
+
+    // EDGE 2 — EVERY KIND AT ONCE (the boss shape plus a flask): five rows,
+    // in the declared order, each naming its kind.
+    const offer = {
+      cinders: 32,
+      cardIds: ['stomp', 'executioner', 'crimsonCleave'],
+      flaskId: 'crimsonFlask',
+      relicId: 'forsakenMedallion',
+      armamentId: 'greatsword',
+    };
+    const continueBeat = beatFor('rewardContinue');
+    eq(continueBeat.form, 'hold', 'reward Continue is registered in the shared second-beat table as a hold');
+    eq(continueBeat.surface, 'reward', 'the census can route the registered action to the reward surface');
+    plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
+    eq(plan.rows.length, 5, 'five reward kinds derive five rows');
+    eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),
+      'rows come out in the one declared order');
+    const cardRow = plan.rows.find((r) => r.kind === 'card');
+    eq(cardRow.choice, true, 'a multi-card offer is a CHOICE row — it opens, it does not just apply');
+
+    // THE FLASK BLOCK IS DERIVED, NOT DISCOVERED AT APPLY TIME: zero free
+    // slots make the row blocked with a TOKEN reason (the levelUpPlan
+    // precedent — a label switches on a word, never on two numbers).
+    const full = rewardPlan(offer, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
+    eq(full.rows.find((r) => r.kind === 'flask').blockedBy, 'slots', 'a full belt blocks the flask row by name');
+    eq(plan.rows.find((r) => r.kind === 'flask').blockedBy, null, 'a free slot does not');
+
+    // THE BAG'S CAP IS DERIVED THE SAME WAY (the b6b7df0 review's P1: the
+    // ninth piece against an 8-slot cap rendered takeable and poisoned
+    // meta.found). Adjacent cells — one free slot leaves the row takeable,
+    // zero blocks it by name — and auto refuses it the way it refuses a
+    // full belt.
+    const bagFull = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 0 });
+    eq(bagFull.rows.find((r) => r.kind === 'armament').blockedBy, 'storage', 'a full bag blocks the armament row by name');
+    eq(plan.rows.find((r) => r.kind === 'armament').blockedBy, null, 'a free slot does not');
+    res = resolveContinue(bagFull, {}, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'armament'), false, 'auto does not force a piece into a full bag');
+    eq(res.leave.find((l) => l.kind === 'armament').blockedBy, 'storage', 'the leave list carries the reason');
+    // An UNSTATED fact reads as no room — conservative, so a caller that
+    // forgets the fact gets a visible block, never a silent over-grant.
+    eq(rewardPlan(offer, { flaskSlotsFree: 1 }).rows.find((r) => r.kind === 'armament').blockedBy, 'storage',
+      'an unstated bag fact blocks rather than silently over-granting');
+
+    // AUTO takes everything not explicitly skipped — and picks the card by the
+    // SEEDED rng handed in, never its own randomness.
+    res = resolveContinue(plan, {}, 'auto', (n) => 2 % n);
+    eq(res.take.length, 5, 'auto over five pending rows takes five');
+    eq(res.take.find((t) => t.kind === 'card').cardId, 'crimsonCleave', 'the choice is made by the injected pick');
+
+    // A SKIP IS RESPECTED BY AUTO — his deck-discipline affordance survives
+    // the setting: skip the card, Continue, and the deck gains nothing.
+    res = resolveContinue(plan, { card: 'skipped' }, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'card'), false, 'auto never overrides an explicit skip');
+    eq(res.take.length, 4, 'the other four still come');
+
+    // MANUAL takes only what was taken: everything pending is LEFT, and that
+    // is the no-nagging contract — Continue works, it just means "done".
+    res = resolveContinue(plan, { cinders: 'taken' }, 'manual', () => 0);
+    eq(res.take.length, 0, 'manual adds nothing at Continue — taken rows were applied when tapped');
+    eq(res.leave.length, 4, 'and what was never chosen is left, named');
+
+    // A BLOCKED ROW IS NEVER TAKEN, whatever the mode — auto-collect refusing
+    // a full belt is the same sentence at the same seam as the tap refusing.
+    res = resolveContinue(full, {}, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'flask'), false, 'auto does not force a flask into a full belt');
+    eq(res.leave.find((l) => l.kind === 'flask').blockedBy, 'slots', 'the leave list carries the reason');
+
+    // THE SINGLE-CARD OFFER IS NOT A CHOICE — one card auto-takes as itself.
+    const one = rewardPlan({ cardIds: ['stomp'] }, { flaskSlotsFree: 1 });
+    res = resolveContinue(one, {}, 'auto', () => 0);
+    eq(res.take.find((t) => t.kind === 'card').cardId, 'stomp', 'a one-card row needs no pick');
+
+    // 'NEW' IS DERIVED FROM WHAT THE PROFILE HAS HELD, with the possessions
+    // handed in — the marker never invents a store it was not given.
+    const seen = { cards: new Set(['stomp']), relics: new Set(), flasks: new Set(['crimsonFlask']), armaments: new Set() };
+    const marks = unseenIds(offer, seen);
+    eq(marks.cards.includes('stomp'), false, 'a held card is not new');
+    eq(marks.cards.includes('executioner'), true, 'an unheld card is');
+    eq(marks.relics.includes('forsakenMedallion'), true, 'an unheld relic is new');
+    eq(marks.flasks.length, 0, 'a held flask kind is not');
+  });
+
+  test('66. E5: stat points and starting armour at creation — his numbers, both edges', () => {
+    // Constantine, from the card (#250): "10 points, configurable; points come
+    // back out when a stat is dropped; floor 8, ceiling 15 at creation, both
+    // customizable; the floor is the reclaim limit; 15 caps CREATION, not the
+    // character." Read from the mode row, never retyped elsewhere.
+    const mode = REG.creationModes.all().find((m) => m.id === 'pointbuy');
+    assert(mode, 'the pointbuy creation mode exists');
+    eq(mode.bonusPool, 10, 'ten points');
+    eq(mode.minimum, 8, 'floor 8 — the reclaim limit');
+    eq(mode.maximum, 15, 'ceiling 15 at creation');
+    eq(mode.belowBaseline, 'allow', 'a stat may be dropped below baseline — that is the reclaim');
+    // standard is UNTOUCHED: its fixedTotal is what every existing save is
+    // validated against at the load door, and save.js archives what fails there.
+    const std = REG.creationModes.all().find((m) => m.id === 'standard');
+    eq(std.bonusPool, 5, 'standard pool unchanged');
+    eq(std.minimum, 10, 'standard floor unchanged');
+    eq(allocationTotal(REG, 'pointbuy'), 60, 'pointbuy fixed total = 5x10 baseline + the 10-point pool');
+
+    // The allocation gate, both edges at every boundary his sentence names.
+    const legal = { strength: 15, dexterity: 8, constitution: 15, wisdom: 12, intelligence: 10 };
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', legal).length, 0,
+      'floor 8 and ceiling 15 are both LEGAL cells, and dropped points respend elsewhere');
+    const belowFloor = { ...legal, dexterity: 7, wisdom: 13 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', belowFloor).length > 0, '7 is below the reclaim limit');
+    const overCeil = { ...legal, strength: 16, wisdom: 11 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', overCeil).length > 0, '16 is over the creation cap');
+    const unspent = { ...legal, wisdom: 11 };
+    assert(attributeAllocationProblems(REG, 'reaver', 'pointbuy', unspent).length > 0, 'an unspent point refuses — fixedTotal');
+    // "15 caps CREATION, not the character": with levelled points granted, the
+    // same machinery raises the ceiling — the clause shipped before this mode.
+    eq(attributeAllocationProblems(REG, 'reaver', 'pointbuy', { ...legal, strength: 16 }, 'attributes', 1).length, 0,
+      'one levelled point lifts the ceiling to 16 and pays for itself in the total');
+    // Presets are complete and legal for the new mode (the content gate).
+    for (const classId of REG.classes.ids()) {
+      eq(attributeAllocationProblems(REG, classId, 'pointbuy', classAttributePreset(REG, classId, 'pointbuy')).length, 0,
+        `pointbuy preset for '${classId}' is a legal allocation`);
+    }
+    // And a run actually carries a pointbuy allocation through creation.
+    const run = createRunState({ seed: 1, classId: 'reaver', registries: REG, attributeMode: 'pointbuy', attributes: legal });
+    eq(run.attributeMode, 'pointbuy', 'the run records the mode');
+    eq(run.attributes.strength, 15, 'and the allocation, not the preset');
+
+    // STARTING ARMOUR. Eligibility = the free set + what the profile EARNED.
+    const fresh = startingArmourViews(REG, 'reaver', {});
+    eq(fresh.length, 1, 'a fresh profile starts with exactly the free set');
+    eq(fresh[0].free, true, 'and it is the free one');
+    const vigilUnlock = outfits.find((o) => o.id === 'vigil' && o.classId === 'reaver').unlock;
+    const veteran = { unlocked: [vigilUnlock] };
+    const views = startingArmourViews(REG, 'reaver', veteran);
+    eq(views.length, 2, 'an earned prize becomes a starting choice');
+    assert(views.some((v) => v.id === 'vigil'), 'and it is the earned set by name');
+    // Resolution, both edges: the earned set resolves; the unearned refuses BY
+    // NAME; a foreign class refuses; absent falls to the free set (yesterday's
+    // behaviour for every caller that never heard of the parameter).
+    eq(resolveStartingArmour(REG, 'reaver', 'vigil', veteran).id, 'vigil', 'earned resolves');
+    let threw = null;
+    try { resolveStartingArmour(REG, 'reaver', 'vigil', {}); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('vigil'), `unearned refuses BY NAME — got ${threw}`);
+    threw = null;
+    try { resolveStartingArmour(REG, 'starseer', 'vigil', veteran); } catch (e) { threw = String(e.message); }
+    assert(threw && threw.includes('starseer'), `another class's set refuses and names the class — got ${threw}`);
+    eq(resolveStartingArmour(REG, 'reaver', undefined, {}).id, 'default', 'absent means the free set');
+    // And the run WEARS the choice: the loadout row is the persisted home.
+    const worn = createRunState({ seed: 1, classId: 'reaver', registries: REG, startingArmourId: 'vigil', profileMeta: veteran });
+    eq(worn.loadout.sets.armor[0], 'vigil', 'the run begins in the chosen set');
+    const plain = createRunState({ seed: 1, classId: 'reaver', registries: REG });
+    eq(plain.loadout.sets.armor[0], 'default', 'and without a choice, in the free set — unchanged');
   });
 
   const passed = results.filter((r) => r.ok).length;

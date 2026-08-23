@@ -74,11 +74,30 @@
 // this whole tool from the copy — same door as every number above.
 //
 // Sunna Falk, 2026-08-18.
+//
+// ── THE WAIVER, added 2026-08-21 by Bjorn (#295) ────────────────────────────
+//   node tools/hintstrip.mjs
+//   node tools/hintstrip.mjs --selftest
+//   node tools/hintstrip.mjs --waive "H2 <cell>,H2 <cell>" --waive-card 295
+//
+// The third form lands this gate in REPORTING mode for findings that are already
+// known and already carded, so a NEW gate can enter a list without a live defect
+// blocking every other lane while its fix is designed. Everything is still
+// measured and printed; only these exact findings stop failing the job.
+//
+// IT IS NOT `|| true`, AND THE DIFFERENCE IS ONE MACHINE-CHECKED SENTENCE:
+// **a waiver fails when its defect disappears.** Waive something that is no
+// longer there and this exits 1 telling you to delete the waiver. So the excuse
+// cannot outlive the defect — which is precisely how `axisfit`'s "reported,
+// never asserted" went quiet over a live bug (Law 5's enforcement note). The
+// full reasoning, the four outcomes, and why this does not breach ci.yml's
+// own "nothing here is to be relaxed" are at the waiver's code, near the bottom.
+// Exit: 0 waived exactly · 1 a new finding OR a stale waiver · 2 unknown.
 
 import { resolve, dirname, join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -94,6 +113,13 @@ const FAN_LIFT_PROP = (() => {
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  // THE WAIVER THREADING IS GONE, AND SO IS THE REASON FOR IT. It used to
+  // forward --waive into the corpus because doorplant finishes on an UNPLANTED
+  // copy that must come back green, and the tree carried #295's two findings —
+  // so without it the clean edge was red for the TREE's state rather than the
+  // corpus's. #295's layout half has landed: the clean copy is green on its own
+  // merits now, which is the stronger state and needs no excuse. Every plant is
+  // still red by its own named finding.
   process.exit(await doorSelftest({
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
@@ -111,14 +137,30 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H2 /,
       },
       {
-        // THE STRIP IS AT THE BOTTOM AND THE CARDS ARE ON IT. Pinned to the
-        // bottom of the VIEWPORT, so it reserves no height and the hand does not
-        // move — "at the bottom" satisfied while "not overlapped" is not. H1.
-        name: 'the strip is at the bottom but pinned, so it reserves nothing and the cards lie on it',
+        // THE CARDS ARE ON THE STRIP. Same defect class as before — "at the
+        // bottom" satisfied while "not overlapped" is not, caught by H1 — but
+        // AIMED AT A DIFFERENT RULE, and the move is recorded rather than
+        // silently re-pointed.
+        //
+        // ⚠ THIS PLANT'S PREMISE MOVED WHEN #295's LAYOUT HALF LANDED, AND THE
+        // HARNESS SAID SO BEFORE I DID. It used to pin the strip to the viewport
+        // bottom so it reserved no height and the hand did not move. The strip no
+        // longer reserves that band at all — `--action-row-drop` does — so the
+        // old edit stopped producing H1 and produced H2 instead: the harness
+        // returned RED-FOR-WRONG-REASON, which is not a catch (SOP 14 §3). A red
+        // for the wrong reason would have read as a pass to anyone counting
+        // colours.
+        //
+        // What now decides whether a card lands on the strip is the strip's own
+        // block padding: with it, the strip is the tallest item in a
+        // bottom-anchored row and the row grows UPWARD into the hand. That is
+        // the live causal path, so that is where the plant points. 93.2 px2 of
+        // card on the strip at Text S.
+        name: 'the strip pads itself back into a pill and the row grows up into the hand, so a card lies on it',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  position: static; top: auto; bottom: auto; transform: none;',
-          replace: '  position: fixed; top: auto; bottom: 0.6rem; transform: translateX(-50%);',
+          file: 'styles/combat.css',
+          find: '  margin: 0; max-width: 100%; padding-block: 0;',
+          replace: '  margin: 0; max-width: 100%;',
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -137,11 +179,25 @@ if (process.argv.includes('--selftest')) {
         // THE SILENT CLIP COMES BACK. nowrap + overflow:hidden, which is how a
         // label wider than `E` used to vanish without a mark. H3 catches it
         // ONLY under the wide label, which is why H4 is not a courtesy.
+        //
+        // ⚠ RE-AIMED FOR THE SAME REASON AS THE PLANT ABOVE, and it went UNCAUGHT
+        // first — the harness's word, not a guess. It used to edit ui.css's
+        // `.hint-bar.hint-combat`. #295's layout half added
+        // `.combat-action-row > .hint-bar.hint-combat`, which is one class more
+        // specific and re-declares `max-width`, so the planted narrow width was
+        // simply overridden and nothing clipped. The plant still armed, still
+        // ran, and tested a causal path the code no longer had.
+        //
+        // THIS IS MY OWN #314 LESSON ARRIVING A SECOND TIME, FROM THE OTHER SIDE:
+        // there I blinded a plant by adding a BRANCH around the line it watched;
+        // here I blinded one by adding a more specific RULE over the declaration
+        // it watched. Both are ways to make a check stop being exercised without
+        // touching the check. It does not fail — it goes quiet.
         name: 'the strip clips instead of wrapping, so a wide rebound label disappears',
         edits: [{
-          file: 'styles/ui.css',
-          find: '  align-self: center; margin: 0 auto 0.6rem; max-width: 96%;',
-          replace: '  align-self: center; margin: 0 auto 0.6rem; max-width: 20rem; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
+          file: 'styles/combat.css',
+          find: '  margin: 0; max-width: 100%; padding-block: 0;',
+          replace: '  margin: 0; max-width: 20rem; padding-block: 0; flex-wrap: nowrap !important; white-space: nowrap !important; overflow: hidden !important;',
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -205,7 +261,8 @@ const columnOverflows = [];
 let checks = 0;
 const ok = (id, cell, msg) => { checks++; console.log(`  ok   ${id} ${cell} — ${msg}`); };
 const bad = (id, cell, msg) => { checks++; findings.push(`${id} ${cell}`); console.log(`  BAD  ${id} ${cell} — ${msg}`); };
-const unk = (id, cell, msg) => { console.log(`  unk  ${id} ${cell} — ${msg}`); };
+let unknowns = 0;
+const unk = (id, cell, msg) => { unknowns++; console.log(`  unk  ${id} ${cell} — ${msg}`); };
 
 const READ = (prop) => `(() => {
   const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
@@ -373,8 +430,30 @@ async function main() {
   console.log(`      into LOCAL px ONCE before comparison; text size set through the game's own settings`);
   console.log(`      door; the wide label written through the game's own rebind store, never into the DOM.`);
   console.log(`      ${FAN_LIFT_PROP} read out of src/ui/components/hand.js, not typed here.`);
+  // BROWSER RESOLUTION THROUGH browser.mjs's SINGLE HOME, and an absent browser
+  // is `unknown`, NOT a verdict.
+  //
+  // Both halves are required by the act that wired this tool into a gate list
+  // (#295), and neither is a tidy-up. It used to read `process.env.CHROME ||
+  // '/usr/bin/chromium'` — a second copy of the candidate list, one entry long.
+  // On the runner this gate now lives on (ci.yml `browser-guard`, ubuntu-latest)
+  // `/usr/bin/chromium` DOES NOT EXIST and `/usr/bin/google-chrome` does, so the
+  // wired step would have thrown, exited 1, and reported "the hint strip is
+  // broken" when the truth was "no browser was found". That is run 1 of this
+  // workflow repeating itself one tool later — ci.yml's own `browser-guard`
+  // header records it, and shotguard-probe's answer is the house rule: an
+  // unavailable instrument resolves to exit 2 (`unknown`, which blocks), never
+  // to a claim about the subject. This tool now does the same.
+  const browserPath = resolveBrowser();
+  if (!browserPath) {
+    console.error('hintstrip: UNKNOWN — no Chrome/Chromium found (tried $CHROME, $CHROME_PATH and the usual paths).');
+    console.error('           Exit 2, not 1: nothing was measured, so this is not a verdict about the strip.');
+    await s.close?.();
+    process.exit(2);
+  }
+  console.log(`      browser: ${browserPath}`);
   const { wsUrl, close: dropBrowser } = await launchBrowser({
-    prefix: 'hintstrip-', browser: process.env.CHROME || '/usr/bin/chromium', timeoutMs: 15000,
+    prefix: 'hintstrip-', browser: browserPath, timeoutMs: 15000,
   });
   const cdp = connectCdp(wsUrl); await cdp.ready;
 
@@ -463,6 +542,105 @@ async function main() {
     console.log('  every cell fitting. A card is OWED for it and was not filed.');
     console.log('');
   }
+
+  // ⚠ WHAT THE EXIT STATUS ITSELF REFUSES TO CLAIM. UNCONDITIONAL, green or
+  // red, on the same ground as everything else this tool prints unprompted: a
+  // narrowed claim that is only narrow in a PR body is a general claim in
+  // practice (Marina, D104, applied to myself here rather than waiting to be
+  // told twice).
+  //
+  // FOUND BY MY OWN PLANT, AND REPRODUCED BY VIKI NON-AUTHOR. Remove the
+  // `--action-row-drop` reservation and the strip goes off the viewport at all
+  // four wide cells; H5 degrades from `ok` to `unknown`; the check count falls
+  // 22 -> 18; and THIS TOOL PRINTS `OK` AND EXITS 0. H0 asserts the cells it
+  // REACHED, which is still 8 of 8 — nothing asserts the number of checks
+  // actually MADE, so four assertions can become four non-assertions with no
+  // effect on `$?`. A regression that converts greens to unknowns is invisible
+  // to anyone reading the exit code, which is what a gate list reads.
+  //
+  // NOT CLOSED HERE, AND THE REASON IS A REAL CONFLICT RATHER THAN BUDGET. The
+  // obvious fix — a floor on `checks`, or making `unknown` block the way the
+  // no-browser path already does (exit 2) — would turn this gate RED on Law 4
+  // clause 4's pre-existing column debt, which is exactly what H5's `unknown`
+  // branch was built to refuse to score, and which is not this lane's to pay.
+  // Choosing between "an unknown blocks" and "an unknown is not this tool's
+  // verdict" is a design call with an owner, not a tidy-up. Stated instead, so
+  // the number is in front of a reader every run.
+  console.log(`⚠ ${unknowns} verdict(s) resolved to \`unknown\` this run and are counted in NEITHER`);
+  console.log(`  \`${checks} check(s)\` NOR the findings — so a cell that DEGRADES from a green to an`);
+  console.log('  `unknown` shrinks this tool\'s denominator and leaves its EXIT STATUS UNCHANGED.');
+  console.log('  4 of them are the narrow layout, where the strip does not render and nothing is');
+  console.log('  measurable by design. THE REST ARE NOT BY DESIGN. A check that stops being');
+  console.log('  EXERCISED does not fail — it goes quiet, and this tool cannot presently say so.');
+  console.log('  A card is OWED: does an `unknown` block, or is it not this tool\'s verdict?');
+  console.log('');
+  // ── THE WAIVER ────────────────────────────────────────────────────────────
+  // `--waive "<id>,<id>" --waive-card <n>` lands this gate in REPORTING mode for
+  // findings that are already known and already carded. Every finding is still
+  // measured, printed and named; what changes is only whether these exact ones
+  // fail the job.
+  //
+  // ⚠ READ THIS BEFORE DECIDING IT IS THE THING ci.yml FORBIDS. That comment
+  // forbids relaxing a check so a red goes away WHILE THE DEFECT STAYS. The
+  // property that separates this from `|| true` is one line and it is machine-
+  // checked in both directions:
+  //
+  //     A WAIVER FAILS WHEN ITS DEFECT DISAPPEARS.
+  //
+  // Waive a finding that is no longer there and this exits 1 and tells you to
+  // delete the waiver. So the excuse CANNOT outlive the defect — which is
+  // exactly how `axisfit`'s "reported, never asserted" went quiet over a live
+  // bug (Law 5's enforcement note), and I wrote that one. `|| true` and
+  // `continue-on-error` sever the verdict from the tree permanently and
+  // silently; this stays welded to it, and the weld is what makes the carve-out
+  // not a loophole.
+  //
+  // The four outcomes, and only the first is green:
+  //   findings == waived           → 0, printed as WAIVED with its card
+  //   a finding NOT waived         → 1, it is new and nobody has judged it
+  //   a waived finding is GONE     → 1, DELETE THE WAIVER (the anti-decay edge)
+  //   the instrument cannot run    → 2, unknown, unchanged and still blocking
+  //
+  // The waiver lives in the workflow step, beside the card number, so it appears
+  // in the diff that introduces it and in the diff that removes it. It is not a
+  // file, because a file is a second home for a fact with a two-week life.
+  const waiveArg = (() => { const i = process.argv.indexOf('--waive'); return i >= 0 ? process.argv[i + 1] : null; })();
+  const waiveCard = (() => { const i = process.argv.indexOf('--waive-card'); return i >= 0 ? process.argv[i + 1] : null; })();
+  const waived = waiveArg ? waiveArg.split(',').map((x) => x.trim()).filter(Boolean) : [];
+
+  if (waived.length) {
+    const unwaived = findings.filter((f) => !waived.includes(f));
+    const vanished = waived.filter((w) => !findings.includes(w));
+    console.log('');
+    console.log(`WAIVER: ${waived.length} known finding(s)${waiveCard ? `, carded as #${waiveCard}` : ' — NO CARD NAMED, which is a defect in the step, not in the strip'}`);
+    for (const w of waived) console.log(`  waived   ${w}${findings.includes(w) ? '' : '   ← NOT PRESENT'}`);
+    if (vanished.length) {
+      console.log('');
+      console.log(`hintstrip: WAIVER STALE — ${vanished.length} waived finding(s) are GONE: ${vanished.join(', ')}`);
+      console.log('           The defect this step was allowed to report has been fixed. DELETE THE WAIVER from');
+      console.log('           the workflow step and this gate goes blocking again. A waiver that outlives its');
+      console.log('           defect is the silence this whole card exists to catch, so it fails rather than');
+      console.log('           congratulating anyone.');
+      process.exit(1);
+    }
+    if (unwaived.length) {
+      console.log('');
+      console.log(`hintstrip: ${unwaived.length} NEW finding(s) outside the waiver — ${unwaived.join(', ')}`);
+      console.log('           These are not the known defect and nobody has judged them. BLOCKING.');
+      process.exit(1);
+    }
+    console.log('');
+    console.log(`hintstrip: REPORTING — ${findings.length} finding(s) over ${checks} check(s), all waived under #${waiveCard || '?'}`);
+    console.log(`           ${findings.join(', ')}`);
+    console.log('           THE DEFECT IS REAL AND IS NOT FIXED. This step is not blocking because the finding');
+    console.log('           is known and carded, and it will start blocking again the moment the finding');
+    console.log('           changes in either direction — a new one appears, or this one is fixed.');
+    console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');
+    console.log('          gamepad, the co-op board, or the map strip, and it is silent about whether any chip');
+    console.log('          DOES anything when pressed — that is the strip\'s interactivity, not its layout.');
+    process.exit(0);
+  }
+
   if (findings.length) {
     console.log(`hintstrip: ${findings.length} finding(s) over ${checks} check(s) — ${findings.join(', ')}`);
     console.log('BOUNDARY: measured on the SOURCE tree at two shapes and three text sizes. It has not seen a');

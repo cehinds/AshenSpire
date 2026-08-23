@@ -416,7 +416,10 @@ async function selftest() {
     console.error('  If the comparator was "improved" to a locale-aware one, this is that.');
     return 1;
   }
-  console.log('\ndirorder --selftest: OK — the order 40c5b21 shipped is not the order this comparator produces.');
+  // #12: a countless verdict cannot distinguish a full corpus from an empty
+  // one. The claim is unchanged — the order 40c5b21 shipped is not the order
+  // this comparator produces — it now says how many cases carried it.
+  console.log(`\ndirorder --selftest: OK — ${cases.length} checks passed.`);
   return 0;
 }
 

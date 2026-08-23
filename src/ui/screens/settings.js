@@ -77,6 +77,14 @@ function graceRefillRows() {
 }
 
 const ROWS = [
+  // FIRST BY HIS SENTENCE, NOT BY ACCIDENT (E3 / #248, 2026-08-15): "the full
+  // screen option toggle should be the first option in the display". Order on
+  // the screen IS order in this array — categoryHandler() filters without
+  // sorting — so first place is held here, at the one home, and test 61 holds
+  // the seat. The row itself is unchanged: same key, type, label, note; it
+  // MOVED here from below the map-header rows.
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen (also toggles with F11 in most browsers).' },
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
@@ -179,8 +187,8 @@ const ROWS = [
     note: 'Show your relic icons in the map header bar.' },
   { cat: 'Display', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
     note: 'Show the run seed in the map header bar.' },
-  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+  // (The Fullscreen row lived here until E3 moved it to the head of the array —
+  // his ordering, see the comment at the top of ROWS.)
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
   //   "rotating to horizontal should work again. I hate that it tells me to
@@ -300,6 +308,14 @@ const ROWS = [
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
   { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
+  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
+  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
+  // settingOn so the default's polarity has one home, here. ONE ROW, appended
+  // on purpose while another seat serializes this file for E3 — named in the
+  // E2 claim (#247) so the touch is on the record, not smuggled.
+  { cat: 'Advanced', key: 'shopSell', def: true, label: 'Merchant buys back',
+    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -331,6 +347,23 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
+  // ALWAYS pressable and a setting decides what it means — auto-collect ON
+  // takes everything, picking at random where there is a choice; OFF gives
+  // only what was chosen, no nagging." The meanings live in
+  // model/rewardplan.js resolveContinue (test 61); this row only picks the
+  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
+  // what an interaction MEANS, tried by playing.
+  //
+  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
+  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
+  // it shipped one PR behind the dial because this file was under E3's live
+  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
+  // released that claim ("manual has a reader and no writer a player can
+  // reach").
+  { cat: 'Advanced', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
+    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN

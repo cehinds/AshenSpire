@@ -283,8 +283,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     for (const m of misses) console.log(`  · ${m}`);
     process.exit(1);
   }
-  console.log(`buildstamp-shot: OK — ${rows.length}/${SHOTS.length * SHAPES.length} placements photographed, `
-    + `${places.size} distinct surfaces (${[...places].join(', ')}), each reading "${expected}",`);
+  // #12: the counted claim terminates the line; the surfaces and the stamp
+  // text are commentary and print below it.
+  console.log(`buildstamp-shot: OK — ${rows.length}/${SHOTS.length * SHAPES.length} placements photographed`);
+  console.log(`  ${places.size} distinct surfaces (${[...places].join(', ')}), each reading "${expected}",`);
   console.log('  each with pixels of its own inside its own box at both shapes.');
   console.log(`  photographs: ${out}/buildstamp-<place>-<shape>.png (+ -crop.png, the box the ink test judged)`);
   console.log('');

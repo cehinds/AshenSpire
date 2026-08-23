@@ -206,7 +206,9 @@ export async function selftest() {
     console.log(`buildstamp-shot --selftest: RED — ${failures} of ${PLANTS.length} known-bads walked through the gate.`);
     return 1;
   }
-  console.log(`buildstamp-shot --selftest: OK — ${PLANTS.length}/${PLANTS.length} observed red, each named by the failure it should`);
+  // #12: counted claim, terminated; the sentence about naming goes below.
+  console.log(`buildstamp-shot --selftest: OK — ${PLANTS.length}/${PLANTS.length} plants observed red`);
+  console.log('  each named by the failure it should have caught.');
   console.log('  produce, planted as real stylesheet and module edits in a real served tree.');
   console.log('');
   console.log('BOUNDARY: four of these six are invisible to any DOM-presence predicate, which is the');

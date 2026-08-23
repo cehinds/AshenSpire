@@ -15,6 +15,84 @@ node tests/run-node.mjs        # CI-style, exits 1 on failure
 # or open tests/index.html in a browser — same suite, green/red list
 ```
 
+## The CI door: a tool's silence is not its success (#12)
+
+Every CI step that runs a checker is wrapped:
+
+```
+node tools/verdict.mjs -- node tools/verify-shipped.mjs
+```
+
+`verdict.mjs` refuses two greens CI used to accept, because CI reads exit codes
+only: a tool that **exits 0 printing nothing** (its `main()` never ran on that
+platform) and a tool whose verdict **counts zero** ("OK — 0 checks passed").
+Exit codes are distinct on purpose — `3` is silence, `1` is a real failure or a
+zero-work green, `4` is a child killed by a signal, and **`2` is *the harness
+could not run*** — because those need different fixes.
+
+**A harness death is not a finding.** An unhandled throw or rejection in a Node
+child exits `1`, which is the same code as *a check ran and failed* — so the door
+merged the two states it exists to keep apart, for the commonest instrument death
+in this tree. It now answers **`2` (HARNESS could not run)** when a child exits
+exactly `1` and its output carries Node's fatal-exception signature: a stack
+frame together with the `Node.js vX.Y.Z` trailer Node prints only on the uncaught
+path. Nothing else moves — `2`, `4` and any other code were already distinct.
+**The boundary is the tell, not the word "Error":** a tool that catches its own
+error and deliberately exits `1` is a finding and stays `1`, even if it prints a
+stack; a non-Node harness that dies unhandled has no trailer and is read as a
+finding. Both edges are planted in `--selftest`.
+
+**So a tool that CI trusts must print a counted verdict.** The accepted forms
+are a closed table at the top of `verdict.mjs` (`N checks passed`, `PASS — n/m`,
+`GREEN (n/m)`, `n passed, m failed`, `N caught`, `n of m … ran`, `OK — N/N …`).
+
+**The verdict line ENDS at its counted claim** (a closing `.` aside). Anything
+trailing — prose, a semicolon, an extra clause — is unrecognised grammar and is
+refused by name; print commentary on its own line. That is a contract rather
+than prose to interpret, and it is deliberate: satisfying "accept *no failures*,
+reject *errors occurred*, reject *one check failed*" is natural-language
+understanding, which is unbounded, and every loss there is either a lie accepted
+or an honest tool called a liar. **The cost is bounded and was paid in the same
+commit: six summary lines in this repo carried trailing prose and each was a
+one-line correction.**
+
+**The line must state an unqualified success**, and the door proves it: a ratio
+must be whole (`PASS — 1/27` is refused), a suite must report zero failures
+(`1 passed, 4 failed` is refused), a negated line is never a verdict (`NOT PASS
+— 1/10`), and **two verdict lines are ambiguous** — a tool that says `9 checks
+passed` and later `0 checks passed` must not be readable as either. An unknown
+grammar is silence, loudly, with the tool named.
+
+**Wrapper flags are read only before the `--`.** `verdict -- node tool.mjs
+--selftest` runs the *tool's* self-test; the separator is required.
+
+Adding a grammar row is a contract change and ships with a plant in
+`node tools/verdict.mjs --selftest`, which runs first in CI so the door is never
+trusted unwatched. The two known-bads the contract requires live at
+`tests/fixtures/verdict/silent_exit_zero.mjs` (prints nothing, exits 0) and
+`tests/fixtures/verdict/vacuous_green.mjs` (well-formed verdict counting zero);
+the assertion must fail on both.
+
+**A step that never runs never reaches the door**, so `node
+tools/workflow-lint.mjs` reads `.github/workflows/*.yml` as text and refuses a
+step with no `run:`/`uses:`, and any **duplicate key at any mapping level** —
+top-level keys, job IDs, job keys, step keys, `with:` blocks. YAML resolves
+duplicates last-wins silently, and a parser has thrown that evidence away
+before you can check it.
+
+**It reads a CLOSED set of YAML forms, and an unknown form is refused by name**
+— file, line, and the text — never treated as "nothing here". That is the same
+call `verdict.mjs` makes about a grammar it does not speak, and it is the safe
+direction: an unknown form silently skipped is how a duplicate key gets through
+a duplicate-key checker. **The cost is stated rather than discovered: the day
+someone writes a legal form this linter has not learned, CI goes red until it
+learns it.** Anchors, aliases and tags (`&a`, `*a`, `!tag`) are refused on
+purpose — an alias can expand into a mapping whose keys the linter would never
+see. **Whether this should instead be a real YAML parse is an open dependency
+question for Constantine** (this tree has no dependencies, and `linkcheck.mjs`
+enforces that by refusing bare specifiers); the refusal is what makes the gap
+loud in the meantime.
+
 ## The four layers (dependencies point down only)
 
 ```
