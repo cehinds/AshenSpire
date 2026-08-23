@@ -212,8 +212,8 @@ export const REFUSAL_SCOPE = [
   '  AFTER this sentence stopped claiming a construct. That is the evidence for',
   '  the sentence, not against it.',
   'about-changelog FLATTENS: **bold** · __bold__ · *emphasis* · _emphasis_ · a code',
-  '  span delimited by a backtick run of ANY length · a backslash-escaped asterisk',
-  '  into the literal asterisk CommonMark shows.',
+  '  span delimited by a backtick run of ANY length · a backslash-escaped emphasis',
+  '  marker into the literal marker CommonMark shows.',
   'OPEN, MEASURED, NOT FIXED — each reaches the player:',
   '  · emphasis INSIDE a code span is stripped: `` `**b**` `` ships as `b`, where',
   '    GitHub shows the asterisks.',
@@ -229,7 +229,7 @@ export const REFUSAL_SCOPE = [
   '    and this is what falls outside it — found minutes after that line was',
   '    written, which is the line\'s own point, not a hole in it.',
   '  · non-ASCII label case folding (`[SS]` vs `[ß]:`) · `~~strike~~` · HTML',
-  '    entities · backslash escapes other than the measured asterisk form above ·',
+  '    entities · backslash escapes other than the measured emphasis forms above ·',
   '    a bare URL GitHub autolinks.',
   '  None of them is present in CHANGELOG.md today.',
   'IT SCANS, IT DOES NOT PARSE, AND THAT CUTS BOTH WAYS — the half this line used to',
@@ -289,38 +289,84 @@ function delimiterFlanking(text, index, length) {
   return {
     left: !afterSpace && (!afterPunctuation || beforeSpace || beforePunctuation),
     right: !beforeSpace && (!beforePunctuation || afterSpace || afterPunctuation),
+    beforePunctuation,
+    afterPunctuation,
   };
 }
-function activeBackslashEscape(text, index) {
+function backslashRunLength(text, index) {
   let count = 0;
   for (let i = index - 1; i >= 0 && text[i] === '\\'; i--) count++;
-  return count % 2 === 1 ? index - 1 : -1;
+  return count;
 }
-function flattenAsterisk(text, length) {
-  const delimiter = '*'.repeat(length);
-  const openers = [];
+function breaksRuleOfThree(opener, closer) {
+  return (opener.canClose || closer.canOpen)
+    && (opener.remaining + closer.remaining) % 3 === 0
+    && (opener.remaining % 3 !== 0 || closer.remaining % 3 !== 0);
+}
+function consumeRun(run, count, fromEnd, removed) {
+  const step = fromEnd ? -1 : 1;
+  let i = fromEnd ? run.start + run.length - 1 : run.start;
+  for (let consumed = 0; consumed < count; i += step) {
+    if (removed.has(i)) continue;
+    removed.add(i);
+    consumed++;
+  }
+  run.remaining -= count;
+}
+function flattenDelimiters(text, marker) {
   const removed = new Set();
+  const escaped = new Set();
   for (let i = 0; i < text.length; i++) {
-    if (text.slice(i, i + length) !== delimiter
-      || text[i - 1] === '*' || text[i + length] === '*') continue;
-    // CommonMark consumes the active escape and renders the asterisk literally.
-    // Leaving the slash in the projection would expose syntax; treating the star
+    if (text[i] !== marker) continue;
+    // CommonMark consumes the active escape and renders the marker literally.
+    // Leaving the slash in the projection would expose syntax; treating the marker
     // as a delimiter would delete the character the author meant the player to see.
-    const escape = activeBackslashEscape(text, i);
-    if (escape >= 0) {
-      removed.add(escape);
-      i += length - 1;
-      continue;
-    }
-    const { left, right } = delimiterFlanking(text, i, length);
-    if (right && openers.length) {
-      const opener = openers.pop();
-      for (let offset = 0; offset < length; offset++) {
-        removed.add(opener + offset);
-        removed.add(i + offset);
+    const backslashes = backslashRunLength(text, i);
+    if (backslashes) {
+      // Each pair renders as one literal slash; an odd final slash escapes the
+      // marker. Remove the consumed half now so later delimiter matching sees
+      // the same literal-vs-active marker boundary CommonMark does.
+      for (let offset = 0; offset < Math.ceil(backslashes / 2); offset++) {
+        removed.add(i - backslashes + offset);
       }
-    } else if (left) openers.push(i);
-    i += length - 1;
+      if (backslashes % 2 === 1) escaped.add(i);
+    }
+  }
+  const runs = [];
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] !== marker || escaped.has(i)) continue;
+    const start = i;
+    while (text[i + 1] === marker && !escaped.has(i + 1)) i++;
+    const length = i - start + 1;
+    const { left, right, beforePunctuation, afterPunctuation } = delimiterFlanking(text, start, length);
+    const canOpen = marker === '_'
+      ? left && (!right || beforePunctuation)
+      : left;
+    const canClose = marker === '_'
+      ? right && (!left || afterPunctuation)
+      : right;
+    runs.push({ start, length, remaining: length, canOpen, canClose });
+  }
+  const openers = [];
+  for (const closer of runs) {
+    if (closer.canClose) {
+      while (closer.remaining) {
+        let openerIndex = -1;
+        for (let i = openers.length - 1; i >= 0; i--) {
+          if (openers[i].remaining && !breaksRuleOfThree(openers[i], closer)) {
+            openerIndex = i;
+            break;
+          }
+        }
+        if (openerIndex < 0) break;
+        const opener = openers[openerIndex];
+        const count = opener.remaining >= 2 && closer.remaining >= 2 ? 2 : 1;
+        consumeRun(opener, count, true, removed);
+        consumeRun(closer, count, false, removed);
+        if (!opener.remaining) openers.splice(openerIndex, 1);
+      }
+    }
+    if (closer.canOpen && closer.remaining) openers.push(closer);
   }
   let flattened = '';
   for (let i = 0; i < text.length; i++) if (!removed.has(i)) flattened += text[i];
@@ -359,13 +405,10 @@ export function flattenInline(text, where, labels = new Set()) {
       }
     }
   }
-  return flattenAsterisk(flattenAsterisk(text, 2), 1)
-    // Unlike `**`, a `__` run cannot open or close strong emphasis inside a
-    // Unicode word. Keeping letters, numbers and adjacent underscores outside
-    // both delimiters preserves identifiers such as `foo__bar__baz`, while the
-    // lazy body still lets `__foo__bar__baz__` flatten only its valid outer pair.
-    .replace(/(?<![\p{L}\p{N}_])__(?=\S)([\s\S]*?\S)__(?![\p{L}\p{N}_])/gu, '$1')
-    .replace(/(?<![\p{L}\p{N}_])_(?=\S)([^_]*?\S)_(?![\p{L}\p{N}_])/gu, '$1')
+  // Underscore uses the same Unicode flanking facts with its stricter intraword
+  // open/close rule; this keeps letters, marks and format characters literal
+  // without maintaining an inevitably incomplete list of "word" categories.
+  return flattenDelimiters(flattenDelimiters(text, '*'), '_')
     // A CODE SPAN IS DELIMITED BY A BACKTICK STRING, AND ITS LENGTH IS PART OF THE
     // DELIMITER. CommonMark: a run of N backticks opens, and the span ends at the
     // next run of EXACTLY N. `` `([^`]+)` `` matched the INNER pair of ``` ``foo`` ```
@@ -660,6 +703,11 @@ async function selftest() {
     if (underscores.detail !== 'Keeps foo__bar__baz and café_mode_écran, but flattens bold and emphasis.') throw new Error(`rewrote it to: ${underscores.detail}`);
     console.log('PASS intraword underscores stay literal while standalone emphasis flattens');
   } catch (error) { console.error(`FAIL underscore flanking: ${error.message}`); process.exitCode = 1; }
+  try {
+    const [marks] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps e\u0301_mode\u0301_ and a\u200d_mode\u200d_ as decomposed identifiers.\n');
+    if (marks.detail !== 'Keeps e\u0301_mode\u0301_ and a\u200d_mode\u200d_ as decomposed identifiers.') throw new Error(`rewrote it to: ${marks.detail}`);
+    console.log('PASS non-punctuation Unicode neighbours keep intraword underscores literal');
+  } catch (error) { console.error(`FAIL combining-mark underscore flanking: ${error.message}`); process.exitCode = 1; }
   // Asterisks may delimit intraword emphasis, but punctuation edges still have
   // to be left- or right-flanking for both ordinary and strong emphasis.
   try {
@@ -668,9 +716,11 @@ async function selftest() {
     console.log('PASS intraword asterisk emphasis flattens and non-flanking edges stay literal');
   } catch (error) { console.error(`FAIL asterisk flanking: ${error.message}`); process.exitCode = 1; }
   try {
-    const [escaped] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps \\*literal\\* asterisks.\n');
-    if (escaped.detail !== 'Keeps *literal* asterisks.') throw new Error(`rewrote it to: ${escaped.detail}`);
-    console.log('PASS backslash-escaped asterisks render literally without exposing the escape');
+    const [escaped] = parseChangelog('# T\n\n## 2026-08-20\n\n- **S** ([#1](https://github.com/cehinds/AshenSpire/pull/1), `0.4.0.1`). Keeps \\*literal\\* and flattens \\**adjacent** plus \\__under__ correctly.\n');
+    if (escaped.detail !== 'Keeps *literal* and flattens *adjacent* plus _under_ correctly.') throw new Error(`rewrote it to: ${escaped.detail}`);
+    const parity = flattenInline('\\\\**bold**', 'backslash parity positive');
+    if (parity !== '\\bold') throw new Error(`even escape parity rewrote to: ${JSON.stringify(parity)}`);
+    console.log('PASS escaped markers stay literal while adjacent run characters still delimit');
   } catch (error) { console.error(`FAIL escaped asterisks: ${error.message}`); process.exitCode = 1; }
   const total = parserPlants.length + modelPlants.length;
   // Same door as the UI plants below: a real CHANGELOG.md in a copied tree, read
@@ -683,6 +733,24 @@ async function selftest() {
       find: '). Docs only.',
       replace: '). Docs only. It reads \\*literal\\* here.',
       write: { detail: 'Docs only. It reads *literal* here.' },
+    },
+    {
+      name: 'only the escaped star is withheld from an adjacent delimiter run', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads \\**literal** here.',
+      write: { detail: 'Docs only. It reads *literal* here.' },
+    },
+    {
+      name: 'only the escaped underscore is withheld from an adjacent delimiter run', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads \\__literal__ here.',
+      write: { detail: 'Docs only. It reads _literal_ here.' },
+    },
+    {
+      name: 'backslash pairs collapse before an active emphasis delimiter', file: 'CHANGELOG.md',
+      find: '). Docs only.',
+      replace: '). Docs only. It reads \\\\**bold** here.',
+      write: { detail: 'Docs only. It reads \\bold here.' },
     },
     {
       name: 'reference-style link in prose', file: 'CHANGELOG.md',
