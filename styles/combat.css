@@ -2,9 +2,10 @@
 
 .combat { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 
-/* ---------- top bar: TWO ROWS (D10 wave 4) ----------
-   Row 1 — the resource bar stack, then the armament and menu buttons.
-   Row 2 — "the other hud items": portrait, name, flasks, relics.
+/* ---------- shared map/combat HUD: THREE ROWS ----------
+   TOP — character/run identity left, Cinders truly centred, progress/build right.
+   RESOURCE — HP/MP/SP left, Armoury/Menu right, healing + mana below them.
+   BOTTOM — relics below SP, carried potions below the charge flasks.
 
    Law 4, and this block is CONVERTED rather than carried: the old
    `height: 5.2rem` made the whole HUD's box answer the Text-size control. The
@@ -16,10 +17,8 @@
   background: var(--bg-raise); border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 1.6rem; padding: 0 1.6rem; flex-shrink: 0;
 }
-/* `.topbar` is SHARED SKIN and `.combat-hud` is the shared two-row HUD frame.
-   Combat and the map both put resource bars + Armoury + Menu in `.hud-top`, so
-   the same plan resolves against the same track at every viewport. Their
-   secondary chrome differs only in `.hud-bottom`; it cannot change bar ink. */
+/* `.topbar` is shared skin. `hudShellHtml` owns the solo map/combat frame; co-op
+   keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
@@ -34,26 +33,107 @@
    waiting for its second copy, and `grep hpbar styles/` should land a reader
    on the under-model strip, which is the only place the class still lives. */
 .topbar .who { display: flex; flex-direction: column; gap: 0.3rem; }
-/* THE TOP ROW. The bar reference track is capped by the single data value
-   balance.ui.hudBars.main.maxViewportPct, projected by main.js to a viewport
-   custom property and divided back through UI zoom here. Floor + cinders sit
-   at the viewport centre; the action buttons remain at the far edge. */
-.topbar.combat-hud .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
-.topbar.combat-hud .resbars-host {
+/* Co-op's compact one-row header remains outside the shared shell. */
+.topbar.combat-hud:not(.shared-hud) .hud-top { display: flex; align-items: center; gap: 1rem; position: relative; }
+.topbar.combat-hud:not(.shared-hud) .resbars-host {
   flex: 0 1 calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
   min-width: 0;
 }
-.topbar.combat-hud .hud-center {
-  position: absolute; left: 50%; transform: translateX(-50%);
-  display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+.topbar.combat-hud.shared-hud .hud-top {
+  display: grid;
+  gap: calc(5px / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-info-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-identity-copy .nm,
+.topbar.combat-hud.shared-hud .hud-context {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar.combat-hud.shared-hud .hud-context {
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+.topbar.combat-hud.shared-hud .hud-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
   letter-spacing: 0.08em; white-space: nowrap;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
+.topbar.combat-hud.shared-hud .hud-run-meta {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+}
+.topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-resource-row,
+.topbar.combat-hud.shared-hud .hud-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1))) minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .resbars-host {
+  grid-column: 1;
+  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud .hud-control-stack {
+  grid-column: 3;
+  display: grid;
+  justify-items: end;
+  gap: calc(4px / var(--ui-zoom, 1));
+}
 .topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
+.topbar.combat-hud.shared-hud .hud-charge-flasks,
+.topbar.combat-hud.shared-hud .hud-potions,
+.topbar.combat-hud.shared-hud .hud-relics {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.topbar.combat-hud.shared-hud .hud-charge-flasks,
+.topbar.combat-hud.shared-hud .hud-potions { justify-content: flex-end; }
+.topbar.combat-hud.shared-hud .hud-relics {
+  grid-column: 1;
+  justify-content: flex-start;
+  margin-left: 0;
+}
+.topbar.combat-hud.shared-hud .hud-potions { grid-column: 3; }
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;
@@ -62,10 +142,6 @@
 .combat.coop .topbar.combat-hud .resbars-host { min-width: 10rem; }
 .combat.coop .topbar.combat-hud .fight-label { margin-left: 0; align-self: center; }
 .combat.coop .topbar.combat-hud .coop-leave { align-self: start; }
-.topbar.combat-hud .hud-bottom {
-  display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
-  row-gap: calc(4px / var(--ui-zoom, 1));
-}
 .topbar .portrait {
   width: 3.8rem; height: 3.8rem; border-radius: 50%; background: var(--panel);
   border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 2rem;
@@ -885,9 +961,12 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   gap: calc(2px / var(--ui-zoom, 1));
   padding-block: calc(3px / var(--ui-zoom, 1));
 }
-:root[data-composition='short-wide'] .topbar.combat-hud .hud-bottom {
-  flex-wrap: nowrap; overflow: hidden;
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(2px / var(--ui-zoom, 1));
 }
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-info-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-resource-row,
+:root[data-composition='short-wide'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
 :root[data-composition='short-wide'] .hand { padding-bottom: 2rem; }
 :root[data-composition='short-wide'] .hand .card {
   width: 8rem; height: 10rem; margin: 0 -0.8rem; padding: 1.3rem 0.3rem 0.3rem;
@@ -1003,17 +1082,21 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
-  /* Floor + Cinders stays truly viewport-centred. On the narrow shape it owns
-     the first ink row; the resource cards and actions reserve one measured
-     text line beneath it instead of painting through the absolute centre. */
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-top {
-    padding-top: calc(16px / var(--ui-zoom, 1));
+  /* Keep Cinders in the true centre column. Progress/build moves to its own
+     wrapped line, while resources and controls keep their left/right tracks. */
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
+    row-gap: calc(4px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-center { top: 0; }
-  /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
-     than pushing the seed label off the side; the fight label is hidden below
-     for the reason its own comment gives. */
-  :root[data-layout='narrow'] .topbar.combat-hud .hud-bottom { gap: 0.8rem; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-run-meta {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    justify-content: center;
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-context { display: none; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row,
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-bottom { gap: 0.5rem; }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-actions { gap: 0.5rem; }
   :root[data-layout='narrow'] .combat.coop .topbar.combat-hud .hud-top {
     grid-template-columns: minmax(0, 1fr) auto;
   }

@@ -37,10 +37,10 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
-import { buildStampHtml } from '../components/buildstamp.js';
-import { hudCenterHtml } from '../components/hudmeta.js';
+import { hudShellHtml } from '../components/hudmeta.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
+import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -85,8 +85,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const cz = run.customization || {};
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
-  const hasRelics = run.relics.length > 0;
-  const hasFlasks = run.flasks.length > 0;
   const atEntrance = !run.mapNodeId;
   const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
   const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
@@ -98,42 +96,37 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         </span>
       </div>`
     : '';
+  const legendHtml = `<div class="map-legend-pop" hidden>
+    ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+  </div>`;
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <header class="topbar combat-hud map-header">
-        <!-- E9 / #254 - ONE HUD. The entire top row now has the same structure
-             as combat: the shared resource host, Armoury, Menu. This used to be
-             a hand-written div.bar.hpbar at its own 15rem width; its first E9
-             replacement reused the renderer but gave the map a full-width row,
-             so 320x640 could still show a different physical length for the
-             same percentage. Sharing the row geometry removes that last second HUD.
-             (No backticks here: this block lives inside a template literal.) -->
-        <div class="hud-top">
-          <div class="resbars-host"></div>
-          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor, floorTotal: map.floors })}
-          <div class="hud-actions">
-            <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
-            <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
-          </div>
-        </div>
-        <div class="hud-bottom">
-          <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
-          <div class="who"><span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span></div>
-          <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`}</span>
-          <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
-          ${buildStampHtml('map')}
-          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
-        </div>
-        <div class="map-legend-pop" hidden>
-          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-        </div>
-      </header>
-      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
-        <div class="mh-flasks"></div>
-        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
-        <div class="relics mh-relics"></div>
-      </div>
+      <!-- ONE HUD SHELL: this is the same component combat mounts. -->
+      ${hudShellHtml({
+        place: 'map',
+        headerClass: 'map-header',
+        cinders: run.cinders,
+        act: run.actNumber,
+        actTotal: run.actNumber > 3 ? null : 3,
+        floor: run.floor,
+        floorTotal: map.floors,
+        seed: run.seedString,
+        identity: {
+          name: heroName,
+          classLabel: className.toUpperCase(),
+          glyph: cz.glyph || classGlyph(run.class),
+          tint: tintCss(cz.tint),
+          context: actTitle(run.actNumber),
+        },
+        controls: {
+          armouryId: 'open-armoury',
+          menuId: 'open-menu',
+          menuHint: actionHint('menu'),
+          legendId: 'map-legend',
+        },
+        overlayHtml: legendHtml,
+      })}
     </div>`;
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
@@ -194,7 +187,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     chromeHtml: hintBarHtml('map'),
   });
 
-  const strip = app.querySelector('.mh-relics');
+  const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
@@ -204,7 +197,36 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     strip.appendChild(el);
   }
 
-  const flaskWrap = app.querySelector('.mh-flasks');
+  const chargeWrap = app.querySelector('.hud-charge-flasks');
+  for (const kind of CHARGE_FLASK_KINDS) {
+    const def = chargeFlaskDefinition(registries, kind);
+    if (!def) continue;
+    const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'relic flask-slot flask-charge';
+    el.dataset.flaskKind = kind;
+    el.setAttribute('aria-disabled', String(current <= 0));
+    el.appendChild(flaskPresentation(def, { showName: false }));
+    const count = document.createElement('b');
+    count.className = 'flask-charge-count';
+    count.textContent = String(current);
+    el.appendChild(count);
+    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
+    el.addEventListener('click', () => {
+      const plan = flaskActionPlan({
+        context: 'run',
+        canUse: false,
+        useReason: 'Healing and mana flasks can only be used in combat',
+        canDrop: false,
+        dropReason: 'Charge flasks stay with the run',
+      });
+      mountFlaskActionMenu(el, { def, plan, onCancel: () => {}, onAction: () => {} });
+    });
+    chargeWrap.appendChild(el);
+  }
+
+  const flaskWrap = app.querySelector('.hud-potions');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('button');

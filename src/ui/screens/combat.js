@@ -32,8 +32,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
-import { buildStampHtml } from '../components/buildstamp.js';
-import { hudCenterHtml } from '../components/hudmeta.js';
+import { hudShellHtml } from '../components/hudmeta.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -47,33 +46,29 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let endTurnBeat = null;
   app.innerHTML = `
     <div class="combat">
-      <!-- THE MAIN HUD, TWO ROWS, HIS ASSIGNMENT (D10 wave 4):
-           "the size of those bars to scale depending on max value ... with the
-            max size filling up the full top row, with the menu and armament
-            buttons at the end of that row, at the bottom of the hud should be
-            the other hud items."
-           Top row: the bar stack, centred floor/cinder receipt, and two buttons.
-           The stack cap comes from balance.ui.hudBars.main.maxViewportPct via
-           one root CSS variable, so map and combat share the same configurable
-           reference geometry without a duplicated number. -->
-      <header class="topbar combat-hud">
-        <div class="hud-top">
-          <div class="resbars-host"></div>
-          ${hudCenterHtml({ cinders: run.cinders, floor: run.floor })}
-          <div class="hud-actions">
-            <button class="topbar-btn" id="combat-armoury" title="Armaments">⚒</button>
-            <button class="topbar-btn" id="combat-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
-          </div>
-        </div>
-        <div class="hud-bottom">
-          <div class="portrait" style="border-color:${tintCss(run.customization && run.customization.tint)}">${esc((run.customization && run.customization.glyph) || classGlyph(run.class))}</div>
-          <span class="nm">${esc(((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase())} · ${esc(registries.classes.get(run.class).name.toUpperCase())}</span>
-          <div class="flasks" style="display:flex;gap:6px"></div>
-          <div class="relics"></div>
-          <span class="fight-label">${esc(label)} · SEED ${esc(run.seedString)}</span>
-          ${buildStampHtml('combat')}
-        </div>
-      </header>
+      <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
+           screen owns row order, placement hooks, or a second copy of chrome. -->
+      ${hudShellHtml({
+        place: 'combat',
+        cinders: run.cinders,
+        act: run.actNumber,
+        actTotal: run.actNumber > 3 ? null : 3,
+        floor: run.floor,
+        floorTotal: run.mapGraph?.floors ?? null,
+        seed: run.seedString,
+        identity: {
+          name: ((run.customization && run.customization.name) || registries.classes.get(run.class).name).toUpperCase(),
+          classLabel: registries.classes.get(run.class).name.toUpperCase(),
+          glyph: (run.customization && run.customization.glyph) || classGlyph(run.class),
+          tint: tintCss(run.customization && run.customization.tint),
+          context: label,
+        },
+        controls: {
+          armouryId: 'combat-armoury',
+          menuId: 'combat-menu',
+          menuHint: actionHint('menu'),
+        },
+      })}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field">
         <div class="player-zone"></div>
@@ -444,8 +439,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     }
     // Flask selection is inert. Every slot opens one shared action plan; only
     // its explicit Use row may spend a charge or enter targeting mode.
-    const flasks = $('.topbar .flasks');
-    flasks.innerHTML = '';
+    const chargeFlasks = $('.topbar .hud-charge-flasks');
+    const potions = $('.topbar .hud-potions');
+    chargeFlasks.innerHTML = '';
+    potions.innerHTML = '';
     for (const kind of CHARGE_FLASK_KINDS) {
       const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
@@ -460,7 +457,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.appendChild(count);
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
-      flasks.appendChild(el);
+      chargeFlasks.appendChild(el);
     }
     p.flasks.forEach((f, slot) => {
       const def = registries.flasks.get(f.flaskId);
@@ -486,7 +483,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`
         + '<br><i>Open actions to Use or Inspect.</i>');
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
-      flasks.appendChild(el);
+      potions.appendChild(el);
     });
   }
 
