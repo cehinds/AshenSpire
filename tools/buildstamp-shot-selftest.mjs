@@ -46,8 +46,8 @@ const edit = (root, rel, fn) => {
   writeFileSync(p, fn(readFileSync(p, 'utf8')), 'utf8');
 };
 
-const OWNER_PLACEMENT = '    ${buildStampHtml(place, { split: true, seed })}';
-const COMBAT_REMOVAL = "    ${place === 'combat' ? '' : buildStampHtml(place, { split: true, seed })}";
+const OWNER_PLACEMENT = '    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}';
+const COMBAT_REMOVAL = "    ${model.properties.place === 'combat' ? '' : buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}";
 
 function sourceFindingsFrom(owner, combat) {
   const findings = [];
@@ -56,7 +56,8 @@ function sourceFindingsFrom(owner, combat) {
     findings.push('owner-placement: hudmeta does not unconditionally emit the split build stamp');
   }
   if (!/^import \{ hudShellHtml \} from '\.\.\/components\/hudmeta\.js';$/m.test(combat)
-      || !/\$\{hudShellHtml\(\{/.test(combat)) {
+      || !/^import \{ runHudViewModel \} from '\.\.\/viewModels\/RunHudViewModel\.js';$/m.test(combat)
+      || !/\$\{hudShellHtml\(runHudViewModel\(\{/.test(combat)) {
     findings.push('combat-consumer: combat does not import and mount hudShellHtml');
   }
   return findings;
