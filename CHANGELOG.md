@@ -19,7 +19,7 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-22
 
-- **Map and combat share one compact player HUD** ([#323](https://github.com/cehinds/AshenSpire/pull/323), `0.4.0.1077`). HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders.
+- **Map and combat share one compact player HUD** ([#323](https://github.com/cehinds/AshenSpire/pull/323), `0.4.0.1078`). HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.
 
 ## 2026-08-21
 

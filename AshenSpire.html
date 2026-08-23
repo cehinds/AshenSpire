@@ -4472,6 +4472,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
+  /* Floor + Cinders stays truly viewport-centred. On the narrow shape it owns
+     the first ink row; the resource cards and actions reserve one measured
+     text line beneath it instead of painting through the absolute centre. */
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-top {
+    padding-top: calc(16px / var(--ui-zoom, 1));
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-center { top: 0; }
   /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
      than pushing the seed label off the side; the fight label is hidden below
      for the reason its own comment gives. */
@@ -35164,7 +35171,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '977c4ecf5d';
+const SOURCE = 'dd3f7f3e0c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -35198,7 +35205,7 @@ const SOURCE = '977c4ecf5d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1077';
+const ORDINAL = '1078';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -48309,8 +48316,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-22",
     "group": "2026-08-22",
     "summary": "Map and combat share one compact player HUD",
-    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders.",
-    "build": "0.4.0.1077",
+    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.",
+    "build": "0.4.0.1078",
     "pullRequest": 323,
     "url": "https://github.com/cehinds/AshenSpire/pull/323"
   },

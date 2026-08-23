@@ -248,7 +248,10 @@ const READ = `(() => {
       inset: bl + br,
       minWidth: cs.minWidth,
       unitWidth: unitBox ? unitBox.width : null,
-      frame: frameBox ? { width: frameBox.width, right: frameBox.right, padAfterBar: frameBox.right - b.right } : null,
+      frame: frameBox ? {
+        left: frameBox.left, top: frameBox.top, right: frameBox.right, bottom: frameBox.bottom,
+        width: frameBox.width, height: frameBox.height, padAfterBar: frameBox.right - b.right,
+      } : null,
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
         && cs.borderBottomStyle === 'dashed' && cs.borderLeftStyle === 'dashed',
@@ -277,7 +280,8 @@ const READ = `(() => {
       const el = document.querySelector('.topbar .hud-top .hud-center');
       const b = el ? el.getBoundingClientRect() : null;
       return b ? {
-        left: b.left, right: b.right, width: b.width, center: (b.left + b.right) / 2,
+        left: b.left, top: b.top, right: b.right, bottom: b.bottom,
+        width: b.width, height: b.height, center: (b.left + b.right) / 2,
         cinders: el.querySelectorAll('.hud-cinders').length,
         floor: el.querySelectorAll('.hud-floor').length,
       } : null;
@@ -376,6 +380,15 @@ function judgeCell(cell, mapR, comR, refTable) {
       fail(`FINDING P8/top-row ${cell} ${screen} meta=${JSON.stringify(read.meta)} viewportCentre=${(read.vp.w / 2).toFixed(2)} — exactly one cinder and one floor receipt must be centred in the top row.`);
     } else {
       ok(`P8/top-row ${cell} ${screen} — cinders + floor centred (miss ${centreMiss.toFixed(2)} px)`);
+    }
+    const frameOverlaps = read.meta ? read.bars.filter((bar) => bar.frame
+      && bar.frame.right > read.meta.left + PX_TOL && bar.frame.left < read.meta.right - PX_TOL
+      && bar.frame.bottom > read.meta.top + PX_TOL && bar.frame.top < read.meta.bottom - PX_TOL) : [];
+    if (!read.meta || frameOverlaps.length) {
+      fail(`FINDING P8/no-overlap ${cell} ${screen} meta=${JSON.stringify(read.meta)} `
+        + `resourceFrames=${JSON.stringify(frameOverlaps.map((bar) => ({ id: bar.id, frame: bar.frame })))} — visible resource cards must reserve the truly centred Floor/Cinders ink; the invisible reference track grants no overlap waiver.`);
+    } else {
+      ok(`P8/no-overlap ${cell} ${screen} — no visible resource card intersects centred Floor/Cinders`);
     }
   }
   // ---- P6 ONE RENDERER, AND IT RUNS BEFORE P0'S RETURN --------------------
@@ -831,6 +844,14 @@ async function selftest() {
       expectRed: /FINDING P8\/top-row .* map meta=null/,
     },
     {
+      // The centre can remain mathematically exact while visible resource ink
+      // paints through it. Move only the resource host to isolate that defect.
+      name: 'visible resource cards paint through the centred Floor and Cinders receipt',
+      file: 'styles/combat.css',
+      append: ".resbars-host { transform:translateX(45vw); }",
+      expectRed: /FINDING P8\/no-overlap .*resourceFrames=\[/,
+    },
+    {
       // 1 — THE SECOND RENDERER COMES BACK. The literal `git revert` of this
       // change's core edit: the map hand-writes its own health bar again.
       name: 'the map hand-writes its own .hpbar again (the pre-E9 shape)',
@@ -976,8 +997,8 @@ async function selftest() {
       expectRed: /FINDING P0\/population — the run threw and stopped early: Error: CDP WebSocket/,
     },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: sixteen file-byte plants plus the
-  // clean re-run are seventeen browser boots. The four argv plants below start no browser.
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen file-byte plants plus the
+  // clean re-run are eighteen browser boots. The four argv plants below start no browser.
   // The door population is ONE
   // shape and TWO poses — 844x340, shipped and high — and the pair is chosen,
   // not defaulted: `shipped` is the only cell carrying unfloored HP beside

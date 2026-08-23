@@ -1003,6 +1003,13 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .topbar.combat-hud {
     flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
   }
+  /* Floor + Cinders stays truly viewport-centred. On the narrow shape it owns
+     the first ink row; the resource cards and actions reserve one measured
+     text line beneath it instead of painting through the absolute centre. */
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-top {
+    padding-top: calc(16px / var(--ui-zoom, 1));
+  }
+  :root[data-layout='narrow'] .topbar.combat-hud .hud-center { top: 0; }
   /* Law 5 clause 4 — the bottom row spends HEIGHT, not width. It wraps rather
      than pushing the seed label off the side; the fight label is hidden below
      for the reason its own comment gives. */
