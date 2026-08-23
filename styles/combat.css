@@ -43,6 +43,7 @@
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(4px / var(--ui-zoom, 1));
+  --hud-utility-visual-size: 2.6rem;
   display: grid;
   gap: calc(5px / var(--ui-zoom, 1));
   min-width: 0;
@@ -100,7 +101,7 @@
 .topbar.combat-hud.shared-hud .hud-resource-row,
 .topbar.combat-hud.shared-hud .hud-bottom {
   display: grid;
-  grid-template-columns: minmax(0, calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1))) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 1rem;
   min-width: 0;
 }
@@ -112,20 +113,21 @@
   display: grid;
   align-content: space-between;
   gap: var(--hud-control-gap);
+  width: var(--hud-resource-available-pct);
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .resbars-host {
-  width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
-  max-width: calc(var(--hud-resource-max-vw) / var(--ui-zoom, 1));
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
 }
 .topbar.combat-hud.shared-hud .hud-control-grid {
-  grid-column: 3;
+  grid-column: 2;
   display: grid;
   grid-template-columns: repeat(2, var(--tap-floor));
-  grid-template-rows: repeat(2, minmax(var(--tap-floor), 1fr));
+  grid-template-rows: repeat(2, var(--tap-floor));
   gap: var(--hud-control-gap);
-  align-self: stretch;
+  align-self: start;
 }
 .topbar.combat-hud .hud-actions { margin-left: auto; display: flex; align-items: center; gap: 1rem; }
 .topbar.combat-hud .hud-actions .topbar-btn { margin-left: 0; }
@@ -142,7 +144,7 @@
 }
 .topbar.combat-hud.shared-hud .hud-control-grid :is(.topbar-btn, .flask-slot) {
   box-sizing: border-box;
-  width: 100%; height: 100%;
+  width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
   padding: 0;
 }
@@ -153,12 +155,48 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.topbar.combat-hud.shared-hud .hud-potions { justify-content: flex-end; }
+.topbar.combat-hud.shared-hud .hud-potions {
+  justify-content: flex-end;
+  flex-direction: row;
+}
 .topbar.combat-hud.shared-hud .hud-relics {
   justify-content: flex-start;
   margin-left: 0;
 }
-.topbar.combat-hud.shared-hud .hud-potions { grid-column: 3; }
+.topbar.combat-hud.shared-hud .hud-potions { grid-column: 2; }
+
+/* Utility potions read as relic-sized chips below the primary controls while
+   their real button retains the global tap floor. The flex row is end-anchored:
+   adding a potion moves its left edge, never the HUD's right edge. */
+.topbar.combat-hud.shared-hud .hud-potions .flask-slot {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud .hud-potions .flask-identity {
+  width: var(--hud-utility-visual-size);
+  height: var(--hud-utility-visual-size);
+  justify-content: center;
+  border: 1px solid var(--gold);
+  border-radius: 6px;
+  background: var(--panel);
+}
+.topbar.combat-hud.shared-hud .hud-potions .flask-art {
+  width: 72%; height: 72%;
+}
+
+.topbar.combat-hud.shared-hud .flask-charge { position: relative; }
+.topbar.combat-hud.shared-hud .flask-charge-count {
+  position: absolute; top: 2px; right: 3px;
+  min-width: 1.2em; padding-inline: 0.15em;
+  border-radius: 999px;
+  background: #120f0c; color: var(--parchment);
+  font-size: calc(10px / var(--ui-zoom, 1)); line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+:root:not([data-layout='narrow']) .topbar.combat-hud.shared-hud .flask-charge-count {
+  font-size: calc(14px / var(--ui-zoom, 1));
+}
 .combat.coop .topbar.combat-hud .hud-top {
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) auto auto;

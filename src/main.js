@@ -232,6 +232,11 @@ if (!Number.isFinite(hudMaxViewportPct) || hudMaxViewportPct <= 0 || hudMaxViewp
   throw new Error(`balance.ui.hudBars.main.maxViewportPct must be in (0, 100], got ${JSON.stringify(UI.hudBars?.main?.maxViewportPct)}`);
 }
 document.documentElement.style.setProperty('--hud-resource-max-vw', `${hudMaxViewportPct}vw`);
+const hudAvailableWidthPct = Number(UI.hudBars?.main?.availableWidthPct);
+if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAvailableWidthPct > 85) {
+  throw new Error(`balance.ui.hudBars.main.availableWidthPct must be in [80, 85], got ${JSON.stringify(UI.hudBars?.main?.availableWidthPct)}`);
+}
+document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads

@@ -246,7 +246,11 @@ export const balance = {
       // The shared map/combat resource reference track may occupy at most this
       // share of the visual viewport. main.js projects it to one CSS variable;
       // the stylesheet carries no second numeric copy.
-      main: { scaleByMax: true, maxViewportPct: 40 },
+      // The shared solo HUD uses this share of the room left after its action
+      // cells. The old 40vw cap typed a viewport answer before those controls
+      // had taken their space; 82% keeps a deliberate gutter without making a
+      // second breakpoint. Co-op still consumes maxViewportPct below.
+      main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },
       model: { scaleByMax: false },
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).

@@ -443,7 +443,16 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const potions = $('.topbar .hud-potions');
     chargeFlasks.innerHTML = '';
     potions.innerHTML = '';
-    for (const kind of CHARGE_FLASK_KINDS) {
+    const appendFlaskHotkey = (el, hotkeySlot) => {
+      if (hotkeySlot >= 3) return;
+      el.dataset.flaskHotkeySlot = String(hotkeySlot);
+      const kb = document.createElement('span');
+      kb.className = 'flask-key';
+      const id = `flask${hotkeySlot + 1}`;
+      kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
+      el.appendChild(kb);
+    };
+    for (const [hotkeySlot, kind] of CHARGE_FLASK_KINDS.entries()) {
       const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       const el = document.createElement('button');
@@ -455,6 +464,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       count.className = 'flask-charge-count';
       count.textContent = String(current);
       el.appendChild(count);
+      appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
       chargeFlasks.appendChild(el);
@@ -468,14 +478,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
       el.appendChild(flaskPresentation(def, { showName: false }));
-      // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
-      if (slot < 3) {
-        const kb = document.createElement('span');
-        kb.className = 'flask-key';
-        const id = `flask${slot + 1}`;
-        kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
-        el.appendChild(kb);
-      }
+      // Health and Mana own the first two HUD flask shortcuts. The first
+      // carried potion receives the third; every remaining potion stays
+      // reachable through ordinary spatial focus.
+      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);
       // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
       // by the machinery from the table, so the sentence a player reads and the
       // gesture the button actually wants cannot drift — and the icon is far too
@@ -1100,11 +1106,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys select a slot and open its menu; they never auto-use.
+    // Flask keys activate the numbered visible HUD control; they never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-slot="${slot}"]`);
+        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
         if (slotEl) slotEl.click();
         return;
       }
