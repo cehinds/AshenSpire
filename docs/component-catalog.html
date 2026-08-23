@@ -57,6 +57,7 @@
   </header>
   <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><span class="count" id="count"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
+  <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
   <section class="grid" id="grid" aria-live="polite"></section>
   <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
 </main>

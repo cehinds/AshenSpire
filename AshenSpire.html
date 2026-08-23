@@ -3576,7 +3576,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Three negotiating tracks: identity, centered Cinders, and metadata.
+     Cinders and metadata are each capped by data-owned viewport widths; the
+     side tracks still flex so the three components influence one another. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--hud-cinders-max-width)) minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
   min-width: 0;
@@ -3599,10 +3602,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   justify-content: center;
   color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
   letter-spacing: 0.08em; white-space: nowrap;
+  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
 .topbar.combat-hud.shared-hud .hud-run-meta {
   justify-self: end;
+  width: min(100%, var(--hud-metadata-max-width));
+  max-width: var(--hud-metadata-max-width);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -3616,6 +3622,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: inline; }
+:root[data-hud-metadata-show-totals='false'] .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
   display: inline-flex;
@@ -5517,6 +5525,12 @@ projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
 projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
 projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
 projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
+projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
+if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
+  throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
+}
+document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -7947,6 +7961,12 @@ const balance = {
       primaryRowGapPx: 8,
       controlGapPx: 2,
       resourceRowGapPx: 2,
+      // Header columns negotiate inside one grid: the center Cinders track and
+      // right metadata trail each cap at 30% of the viewport. Act/Floor show
+      // their current values by default; totals remain an opt-in.
+      cindersMaxWidthPct: 30,
+      metadataMaxWidthPct: 30,
+      metadataShowTotals: false,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -18414,7 +18434,7 @@ function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, and resourceRowGapPx');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
@@ -18424,11 +18444,16 @@ function validateContent(bundle) {
         ['primaryRowGapPx', 0, 24],
         ['controlGapPx', 0, 12],
         ['resourceRowGapPx', 0, 12],
+        ['cindersMaxWidthPct', 20, 40],
+        ['metadataMaxWidthPct', 20, 40],
       ]) {
         const value = hp[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
           err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
         }
+      }
+      if (typeof hp.metadataShowTotals !== 'boolean') {
+        err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
       }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
@@ -36679,7 +36704,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '1ebc72ce22';
+const SOURCE = '98e4a11de9';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -36713,7 +36738,7 @@ const SOURCE = '1ebc72ce22';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1147';
+const ORDINAL = '1148';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

@@ -74,3 +74,18 @@ The catalog's shared HUD currently uses a 70% portrait-badge scale, an 8 px
 primary-row gap, a 2 px Quick Access card gap, and a 2 px vertical vital-row
 gap. These are data-owned in `balance.ui.hudPresentation`, projected once by
 `src/main.js`, and consumed by the shared Map/Combat stylesheet.
+
+### Run-header layout contract
+
+```text
+┌──────────────────────────── run-header-strip ────────────────────────────┐
+│ identity-cluster      cinders-counter       build-metadata-trail          │
+│ [◎ NAME · CLASS]          ⛁ 42              ACT 1 · FLOOR 1 · BUILD …    │
+│      flexible             ≤ 30vw              ≤ 30vw; hides rightmost     │
+└───────────────────────────────────────────────────────────────────────────┘
+```
+
+The three columns negotiate inside one grid. `cinders-counter` stays centered;
+`build-metadata-trail` is capped and progressively hides Source, Seed, then
+Build. `metadataShowTotals` is false by default, so only current Act/Floor are
+shown.

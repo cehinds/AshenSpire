@@ -846,11 +846,14 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   its screen supplies state and callbacks. UI components never own simulation state.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
   character identity left, Cinders truly centred, and Act/Floor/Build/Seed/Source right.
+  The center Cinders track and right metadata trail are each capped at 30% of the
+  viewport by data-owned settings; the three tracks negotiate rather than overlap.
   Those five metadata items share one data-owned font size, one horizontal baseline, and one
   vertically centred row; no item may stagger above or below another. When width is insufficient,
   the right trail progressively hides Source, then Seed, then Build; Act and Floor remain visible
-  longest. At the smallest supported width, Act/Floor compact from current/total to their current
-  values (`ACT 1 · FLOOR 1`) before they may touch centred Cinders. There is no duplicate Act/Floor
+  longest. `metadataShowTotals` defaults to false, so Act/Floor show current values (`ACT 1 · FLOOR 1`)
+  rather than totals; enabling it is a data-only setting. At the smallest supported width, the
+  right trail progressively hides Source, then Seed, then Build before it may touch centred Cinders. There is no duplicate Act/Floor
   line beneath the character name. Neither screen hand-writes a second HUD.
 - **Primary and inventory geometry.** `vitals-panel` is one outer card containing the unchanged
   HP/MP/SP stack. `quick-access-panel` is one outer square containing a 2×2 grid: Armoury/Menu,
@@ -873,7 +876,7 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   combatants or `combat-action-rail`. The shared HUD and combat composition are verified at
   1440×860, 1200×730, 844×390, 390×844, and 320×640.
 - **Resource-bar length is data-scaled, not a cap.** The default reference maxima are HP 200,
-  MP 50, SP 50. A bar's fill remains `current / maximum`; its visual length compares that
+  MP 20, SP 20. A bar's fill remains `current / maximum`; its visual length compares that
   maximum with the data-owned reference and obeys the shared viewport cap. A character may
   exceed a reference—it lengthens only to the layout cap and never clamps gameplay state.
 - **Enemy row (upper right 60%):** up to 5 enemies; each shows sprite/placeholder, name, HP bar, **Poise meter** (thin amber bar under HP), **Bleed meter** (thin red bar, only when >0), status icon row, and **intent icon + number above the head**.

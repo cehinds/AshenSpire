@@ -697,7 +697,7 @@ export function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, and resourceRowGapPx');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
@@ -707,11 +707,16 @@ export function validateContent(bundle) {
         ['primaryRowGapPx', 0, 24],
         ['controlGapPx', 0, 12],
         ['resourceRowGapPx', 0, 12],
+        ['cindersMaxWidthPct', 20, 40],
+        ['metadataMaxWidthPct', 20, 40],
       ]) {
         const value = hp[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
           err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
         }
+      }
+      if (typeof hp.metadataShowTotals !== 'boolean') {
+        err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
       }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');

@@ -53,7 +53,10 @@
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* Three negotiating tracks: identity, centered Cinders, and metadata.
+     Cinders and metadata are each capped by data-owned viewport widths; the
+     side tracks still flex so the three components influence one another. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--hud-cinders-max-width)) minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
   min-width: 0;
@@ -76,10 +79,13 @@
   justify-content: center;
   color: var(--muted); font-size: calc(11px / var(--ui-zoom, 1));
   letter-spacing: 0.08em; white-space: nowrap;
+  min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;
 }
 .topbar.combat-hud .hud-cinders { color: var(--gold); }
 .topbar.combat-hud.shared-hud .hud-run-meta {
   justify-self: end;
+  width: min(100%, var(--hud-metadata-max-width));
+  max-width: var(--hud-metadata-max-width);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -93,6 +99,8 @@
   letter-spacing: 0.06em;
 }
 .topbar.combat-hud.shared-hud .hud-run-meta > span { white-space: nowrap; }
+.topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: inline; }
+:root[data-hud-metadata-show-totals='false'] .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: '·'; margin-right: 0.8rem; }
 .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed] {
   display: inline-flex;

@@ -267,6 +267,12 @@ export const balance = {
       primaryRowGapPx: 8,
       controlGapPx: 2,
       resourceRowGapPx: 2,
+      // Header columns negotiate inside one grid: the center Cinders track and
+      // right metadata trail each cap at 30% of the viewport. Act/Floor show
+      // their current values by default; totals remain an opt-in.
+      cindersMaxWidthPct: 30,
+      metadataMaxWidthPct: 30,
+      metadataShowTotals: false,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
