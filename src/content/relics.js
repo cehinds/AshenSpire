@@ -62,6 +62,23 @@ export const relics = [
     flavor: 'A chip of someone else’s genius. It still hums.',
   },
   {
+    id: 'cutpursesCoin',
+    name: "Cutpurse's Coin",
+    rarity: 'starter',
+    passives: { modifiers: [] },
+    icon: '🪙',
+    triggers: [
+      { on: 'combatStart', do: [{ op: 'applyStatus', target: 'owner', status: 'prepared', stacks: { f: 'add', args: [1] } }] },
+      {
+        on: 'damageDealt', once: true,
+        if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
+        do: [{ op: 'applyStatus', status: 'venom', stacks: 2 }],
+      },
+    ],
+    textTemplate: 'Begin each combat Prepared. Your first attack each combat applies {venom} Venom.',
+    flavor: 'One face buys silence. The other buys speed.',
+  },
+  {
     // SPEC §5.1's overheal-to-block needs overflow math no trigger can see;
     // the shipped design keeps the fantasy: every heal armors you — including
     // "wasted" heals at full HP, which become pure Block.

@@ -122,6 +122,18 @@ const CLASS_SVG = {
       <circle cx="29" cy="52" r="1.7" fill="${t}"/>
       <circle cx="40" cy="96" r="1.5" fill="${t}"/>
     </svg>`,
+  // Rogue — light leathers, lowered hood, paired short blades.
+  rogue: (t, sigil) => `
+    <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">
+      <ellipse cx="55" cy="133" rx="25" ry="5" fill="rgba(0,0,0,.45)"/>
+      <path d="M38 58 L31 130 L79 130 L72 58 Q55 51 38 58Z" fill="#202725"/>
+      <path d="M39 58 Q55 52 71 58 L67 82 L43 82Z" fill="#35433f"/>
+      <path d="M42 42 Q55 20 68 42 L66 59 Q55 66 44 59Z" fill="#1b211f" stroke="${t}" stroke-width="1.3"/>
+      <path d="M45 48 Q55 43 65 48" fill="none" stroke="${t}" stroke-width="1.2"/>
+      <path d="M31 72 L48 112" stroke="#c0b7a7" stroke-width="4"/><path d="M79 72 L62 112" stroke="#c0b7a7" stroke-width="4"/>
+      <path d="M27 68 L36 76 M83 68 L74 76" stroke="${t}" stroke-width="3"/>
+      ${sigilMedallion(55, 78, t, sigil, 4)}
+    </svg>`,
   // Herald — hooded pilgrim, halo, prayer beads at the waist.
   herald: (t, sigil) => `
     <svg viewBox="0 0 110 140" xmlns="http://www.w3.org/2000/svg" width="110" height="140">

@@ -101,16 +101,19 @@ export const attributeRules = {
       reaver: { strength: 13, dexterity: 11, constitution: 11, wisdom: 8, intelligence: 10 },
       starseer: { strength: 11, dexterity: 11, constitution: 8, wisdom: 13, intelligence: 10 },
       herald: { strength: 12, dexterity: 11, constitution: 8, wisdom: 12, intelligence: 10 },
+      rogue: { strength: 11, dexterity: 13, constitution: 10, wisdom: 9, intelligence: 10 },
     },
     standard: {
       reaver: { strength: 13, dexterity: 10, constitution: 12, wisdom: 10, intelligence: 10 },
       starseer: { strength: 10, dexterity: 11, constitution: 10, wisdom: 10, intelligence: 14 },
       herald: { strength: 10, dexterity: 10, constitution: 12, wisdom: 13, intelligence: 10 },
+      rogue: { strength: 10, dexterity: 15, constitution: 10, wisdom: 10, intelligence: 10 },
     },
     pointbuy: {
       reaver: { strength: 14, dexterity: 10, constitution: 14, wisdom: 11, intelligence: 11 },
       starseer: { strength: 10, dexterity: 12, constitution: 11, wisdom: 12, intelligence: 15 },
       herald: { strength: 10, dexterity: 10, constitution: 13, wisdom: 15, intelligence: 12 },
+      rogue: { strength: 10, dexterity: 15, constitution: 12, wisdom: 10, intelligence: 13 },
     },
   },
 };
