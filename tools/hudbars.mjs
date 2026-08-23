@@ -459,7 +459,7 @@ async function sweepShape(b, href, [w, h], sweep) {
 // ~tens) is sampled at six spread values that INCLUDE the domain itself, so
 // every resource's sweep stands at its own ceiling at least once — nothing
 // invents a maximum past it.
-const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina', poise: 'shotMaxPoise' });
+const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina' });
 function sweepValues(domain) {
   if (domain <= 6) return Array.from({ length: domain }, (_, i) => i + 1);
   const vals = new Set();
@@ -569,8 +569,10 @@ const READ_VESSEL = `(() => {
   const main = document.querySelector('.combat .topbar .resbars-host');
   const player = window.__combat && window.__combat.player;
   return {
-    poise: grab(main && main.querySelector('.resbar[data-res="poise"]')),
-    hp: grab(main && main.querySelector('.resbar[data-res="hp"]')),
+    poiseTop: grab(main && main.querySelector('.resbar[data-res="poise"]')),
+    hpTop: grab(main && main.querySelector('.resbar[data-res="hp"]')),
+    poiseModel: grab(document.querySelector('.combatant.player .meters .resbar[data-res="poise"]')),
+    hpModel: grab(document.querySelector('.combatant.player .meters .resbar[data-res="hp"]')),
     meter: player && player.poiseMeter ? { value: player.poiseMeter.value, max: player.poiseMeter.max } : null,
     modelRows: [...document.querySelectorAll('.combatant.player .meters .resbar')].map((el) => el.dataset.res),
   };
@@ -582,21 +584,24 @@ async function judgePlayerVessel(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} (A11)`);
   await wait(320);
   const r = await b.ev(READ_VESSEL);
-  // (a) present on the main HUD, DOM agreeing with the entity, empty, skinny.
+  // (a) absent from the top HUD; present dynamically on the player card,
+  // agreeing with the entity, empty, skinny.
   if (!r.meter) {
     fail('A11', `${tag}: the posed player entity carries NO poiseMeter — the model seat this vessel reads is absent`);
-  } else if (!r.poise) {
-    fail('A11', `${tag}: player poiseMeter is {${r.meter.value}/${r.meter.max}} but the main HUD renders NO poise bar — "poise (very skinny bar) under the health bar" is his layout, twice asked (D10.4, D17 q5)`);
+  } else if (r.poiseTop) {
+    fail('A11', `${tag}: top HUD renders poise ${r.poiseTop.cur}/${r.poiseTop.max} — the canonical top stack is HP, MP, SP only`);
+  } else if (!r.poiseModel) {
+    fail('A11', `${tag}: player poiseMeter is {${r.meter.value}/${r.meter.max}} but the player character card renders NO dynamic poise bar`);
   } else {
-    if (r.poise.max !== r.meter.max || r.poise.cur !== r.meter.value) {
-      fail('A11', `${tag}: DOM says poise ${r.poise.cur}/${r.poise.max}, the entity says ${r.meter.value}/${r.meter.max} — the bar is not reading the model seat`);
+    if (r.poiseModel.max !== r.meter.max || r.poiseModel.cur !== r.meter.value) {
+      fail('A11', `${tag}: player card says poise ${r.poiseModel.cur}/${r.poiseModel.max}, the entity says ${r.meter.value}/${r.meter.max} — the bar is not reading the model seat`);
     }
-    if (r.poise.cur !== 0) {
-      fail('A11', `${tag}: poise cur is ${r.poise.cur} — nothing writes player poise build-up yet; a non-zero value here means a writer landed and this assertion must MOVE with the mechanics, not be relaxed`);
+    if (r.poiseModel.cur !== 0) {
+      fail('A11', `${tag}: poise cur is ${r.poiseModel.cur} — nothing writes player poise build-up yet; a non-zero value here means a writer landed and this assertion must MOVE with the mechanics, not be relaxed`);
     }
-    if (!r.hp) fail('A11', `${tag}: no hp bar beside the poise vessel — the pose itself is broken`);
-    else if (!(r.poise.h < r.hp.h)) {
-      fail('A11', `${tag}: poise trough renders ${r.poise.h} px tall against hp's ${r.hp.h} px — "very skinny" is not a rendered fact here (the main-surface height rule outranks .resbar-skinny by specificity; only this measurement can claim it)`);
+    if (!r.hpModel) fail('A11', `${tag}: player character card has poise but no hp bar — the card is broken`);
+    else if (!(r.poiseModel.h < r.hpModel.h)) {
+      fail('A11', `${tag}: player-card poise trough renders ${r.poiseModel.h} px tall against hp's ${r.hpModel.h} px — "very skinny" is not a rendered fact`);
     }
   }
   // (b) the under-model strip: exactly hp and poise, his sentence.
@@ -609,11 +614,11 @@ async function judgePlayerVessel(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} shotMaxPoise=0 (A11)`);
   await wait(320);
   const z = await b.ev(READ_VESSEL);
-  if (z.poise) fail('A11', `${tag}: at threshold 0 the main HUD still renders a poise bar (${z.poise.cur}/${z.poise.max}) — a zero-threshold player has no vessel; drawing one is the empty-trough lie the refusal exists to prevent`);
+  if (z.poiseTop || z.poiseModel) fail('A11', `${tag}: at threshold 0 a poise bar still renders in top HUD or player card — a zero-threshold player has no vessel`);
   if (z.meter) fail('A11', `${tag}: at threshold 0 the entity still carries a poiseMeter {${z.meter.value}/${z.meter.max}} — the refusal must live in the model, not the paint`);
-  if (!z.hp) fail('A11', `${tag}: hp vanished with the poise vessel at shotMaxPoise=0 — the refusal took the wrong bar with it`);
+  if (!z.hpTop || !z.hpModel) fail('A11', `${tag}: hp vanished with the poise vessel at shotMaxPoise=0 — the refusal took the wrong bar with it`);
   if (!fails.some((f) => f.startsWith('A11') && f.includes(tag))) {
-    notes.push(`A11 ${tag}: PLAYER VESSEL ok — poise ${r.poise.cur}/${r.poise.max} = entity {${r.meter.value}/${r.meter.max}}, trough ${r.poise.h} px < hp ${r.hp.h} px, model strip [${rows.join('+')}], and threshold 0 renders ABSENT with hp standing`);
+    notes.push(`A11 ${tag}: PLAYER CARD VESSEL ok — top HUD [hp+mana+stamina], poise ${r.poiseModel.cur}/${r.poiseModel.max} = entity {${r.meter.value}/${r.meter.max}}, player-card strip [${rows.join('+')}], and threshold 0 renders poise ABSENT with hp standing`);
   }
 }
 
@@ -1293,12 +1298,8 @@ async function main() {
         const tag = `${shape[0]}x${shape[1]}`;
         let manaPoints = [];
         for (const [resId, door] of Object.entries(RESOURCE_DOORS)) {
-          // Seed 0 FIRST: a door whose resource never sweeps (no derived
-          // domain — e.g. this tool against a tree from before that resource
-          // reached the model) must land in the fewer-than-two-points RED
-          // below, never in silence. The pre-poise tree is the live known-bad:
-          // RESOURCE_DOORS names poise, the old model derives no poise domain,
-          // and without this seed the loop's `continue` was a quiet green.
+          // Seed 0 FIRST: a named main-HUD resource whose domain disappears
+          // must land in the fewer-than-two-points RED below, never in silence.
           usableByResource[resId] = usableByResource[resId] || 0;
           if (!Number.isFinite(domains[resId]) || domains[resId] <= 0) continue;
           const points = await sweepResource(b, href, shape, resId, door, domains[resId]);
@@ -1306,16 +1307,6 @@ async function main() {
           console.log(`    ${resId} sweep: ${points.map((p) => `${p.max}→${p.w}px${p.floored ? ' (floored)' : ''}`).join('  ')}`);
           const usable = judgeResourceProportion(tag, resId, points, domains[resId]);
           usableByResource[resId] = Math.max(usableByResource[resId], usable);
-          // A11 (d) — poise AT its own domain fills its own cell: A2X (b)'s
-          // clause, poise's copy, measured from the sweep's own at-domain
-          // point (sweepValues always includes the domain).
-          if (resId === 'poise') {
-            const atDomain = points.find((p) => p.max === domains[resId]);
-            if (!atDomain) fail('A11', `${tag}: the poise sweep never stood AT its own domain ${domains[resId]} — the fills-own-cell clause was not measured`);
-            else if (Math.abs(atDomain.w - atDomain.cellW) > 1.0) {
-              fail('A11', `${tag}: poise at its OWN domain ${domains[resId]} rendered ${atDomain.w} px of its ${atDomain.cellW} px cell${atDomain.floored ? ' (floored)' : ''} — a resource at 100 % of its own ceiling must fill its own cell`);
-            } else notes.push(`A11 ${tag}: POISE AT-OWN-DOMAIN ok — max ${domains[resId]} fills its ${atDomain.cellW} px cell exactly`);
-          }
         }
         crossPairsAnywhere = judgeCrossResource(tag, rows, manaPoints, domains) || crossPairsAnywhere;
         await judgePlayerVessel(b, href, shape);

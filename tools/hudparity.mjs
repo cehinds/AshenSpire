@@ -33,12 +33,8 @@
 //                  declared cell count was reached. An empty HUD and a matching
 //                  HUD look identical to a check that only hunts for
 //                  mismatches, and they mean the opposite.
-//   P1 ROWS        the map draws the SAME ROW SET as combat, minus only the
-//                  rows whose reader legitimately refuses off the battlefield.
-//                  That set is exactly {poise}: outside a fight there is no
-//                  poise meter, and model/resources.js's refusal path makes the
-//                  bar ABSENT rather than a lying 0/0 trough. Any OTHER
-//                  difference is red, in either direction.
+//   P1 ROWS        both top HUDs draw exactly HP, MP and SP. Combat poise stays
+//                  on the player character card and must not enter this set.
 //   P2 SAME ASK    for every shared row, the two screens ask for the SAME
 //                  trough percentage and the SAME fill percentage, and report
 //                  the same cur/max. EXACT equality, no tolerance: these are
@@ -155,7 +151,6 @@ const HIS_REFERENCE = Object.freeze({ hp: 500, pool: 50 });
 // list — a statement about model/resources.js's refusal path, which returns
 // null when there is no meter and makes the bar ABSENT. A row added here
 // without that property would be this tool lying for the screen.
-const OFF_BATTLEFIELD_ABSENT = new Set(['poise']);
 
 // ONE CSS PIXEL. P5's tolerance and the only threshold in this file; its
 // neighbourhood is plant 6 (a 2 px nudge) against a clean run at <= 0.05 px.
@@ -232,6 +227,10 @@ const READ = `(() => {
     const fillEl = el.querySelector('.fill');
     const fb = fillEl ? fillEl.getBoundingClientRect() : null;
     const track = el.parentElement ? el.parentElement.getBoundingClientRect() : null;
+    const unitEl = el.closest('.resunit');
+    const unitBox = unitEl ? unitEl.getBoundingClientRect() : null;
+    const frameEl = unitEl ? unitEl.querySelector(':scope > .rescard-frame') : null;
+    const frameBox = frameEl ? frameEl.getBoundingClientRect() : null;
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -246,6 +245,8 @@ const READ = `(() => {
       track: track ? track.width : null,
       inset: bl + br,
       minWidth: cs.minWidth,
+      unitWidth: unitBox ? unitBox.width : null,
+      frame: frameBox ? { width: frameBox.width, right: frameBox.right, padAfterBar: frameBox.right - b.right } : null,
       floored: el.dataset.floored === '1',
       dashed: cs.borderTopStyle === 'dashed' && cs.borderRightStyle === 'dashed'
         && cs.borderBottomStyle === 'dashed' && cs.borderLeftStyle === 'dashed',
@@ -253,6 +254,9 @@ const READ = `(() => {
   }
   return {
     bars,
+    lines: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
+      .map((line) => [...line.querySelectorAll(':scope > .resunit .resbar')]
+        .map((bar) => bar.dataset.res || null)),
     topButtons: [...document.querySelectorAll('.topbar .hud-top .topbar-btn')].map((el) => {
       const b = el.getBoundingClientRect();
       return { id: el.id || null, left: b.left, right: b.right, top: b.top, bottom: b.bottom, width: b.width, height: b.height };
@@ -391,17 +395,29 @@ function judgeCell(cell, mapR, comR, refTable) {
   const duplicatesOf = (ids) => [...new Set(ids.filter((id, i) => ids.indexOf(id) !== i))];
   const duplicateMap = duplicatesOf(mapIds);
   const duplicateCombat = duplicatesOf(comIds);
-  const missing = comIds.filter((id) => !mapIds.includes(id) && !OFF_BATTLEFIELD_ABSENT.has(id));
+  const missing = comIds.filter((id) => !mapIds.includes(id));
   const extra = mapIds.filter((id) => !comIds.includes(id));
-  const excused = comIds.filter((id) => !mapIds.includes(id) && OFF_BATTLEFIELD_ABSENT.has(id));
   if (duplicateMap.length || duplicateCombat.length || missing.length || extra.length) {
     fail(`FINDING P1/rows cell=${cell} map=${JSON.stringify(mapIds)} combat=${JSON.stringify(comIds)} `
       + `duplicates map=${JSON.stringify(duplicateMap)} combat=${JSON.stringify(duplicateCombat)} `
       + `missing-from-map=${JSON.stringify(missing)} extra-on-map=${JSON.stringify(extra)} — the two screens no longer `
-      + 'draw exactly one copy of the same rows. Only rows whose reader refuses off the battlefield may differ, and that set is '
-      + `${JSON.stringify([...OFF_BATTLEFIELD_ABSENT])}.`);
+      + 'draw exactly one copy of the same top-HUD rows. Poise belongs on the combat player card, not here.');
   } else {
-    ok(`P1/rows ${cell} — map ${JSON.stringify(mapIds)}; combat adds ${JSON.stringify(excused)} (reader refuses off the battlefield)`);
+    ok(`P1/rows ${cell} — map and combat both ${JSON.stringify(mapIds)}`);
+  }
+
+  // P1V VERTICAL ORDER — each resource owns one row. The flattened order is
+  // already held above; this closes the structural gap where MP and SP kept the
+  // right sequence while sharing one horizontal band.
+  for (const [screen, read, ids] of [['map', mapR, mapIds], ['combat', comR, comIds]]) {
+    const flat = read.lines.flat();
+    const onePerLine = read.lines.every((line) => line.length === 1);
+    if (!onePerLine || JSON.stringify(flat) !== JSON.stringify(ids)) {
+      fail(`FINDING P1V/vertical cell=${cell} screen=${screen} lines=${JSON.stringify(read.lines)} rows=${JSON.stringify(ids)} `
+        + '— the canonical HUD must stack HP, MP, SP vertically, one resource per row; MP must be above SP, never beside it.');
+    } else {
+      ok(`P1V/vertical ${cell} ${screen} — ${JSON.stringify(read.lines)}; one resource per row`);
+    }
   }
 
   // ---- per shared row -----------------------------------------------------
@@ -447,6 +463,24 @@ function judgeCell(cell, mapR, comR, refTable) {
         fail(`FINDING P2B/readable ${tag} ${who} asked trough=${b.askTrough} fill=${b.askFill} — the renderer wrote `
           + 'a width this tool cannot read as a plain percentage. The trough length IS the claim about the maximum; '
           + 'a length nothing can read back is not a claim anyone can check.');
+      }
+    }
+
+    // P7 VISIBLE CARD — the full reference track is geometry only. The visible
+    // bordered card must stop just after the scaled trough instead of drawing a
+    // full-width empty box that makes every maximum look identical.
+    for (const [who, b] of [['map', m], ['combat', c]]) {
+      if (!b.frame) {
+        fail(`FINDING P7/card ${tag} ${who} — no .rescard-frame; the full reference track is still the visible bordered card.`);
+        continue;
+      }
+      const pad = b.frame.padAfterBar;
+      if (pad < 2 || pad > 12) {
+        fail(`FINDING P7/card ${tag} ${who} right-padding=${pad.toFixed(2)} px — the visible card must end after the scaled trough with only small right padding.`);
+      } else if (askM < 99 && b.frame.width >= b.unitWidth - 1) {
+        fail(`FINDING P7/card ${tag} ${who} frame=${b.frame.width.toFixed(2)} px reference=${b.unitWidth.toFixed(2)} px — the full reference track is visible instead of remaining invisible.`);
+      } else {
+        ok(`P7/card ${tag} ${who} — frame ${b.frame.width.toFixed(2)} px of ${b.unitWidth.toFixed(2)} px reference; ${pad.toFixed(2)} px after bar`);
       }
     }
     if (readable) ok(`P2B/readable ${tag} — both asks are plain percentages`);
@@ -531,8 +565,8 @@ function boundary() {
   console.log('  · THE MAP AND COMBAT TRACKS SHARE THE SAME TOP-ROW GEOMETRY. Their secondary chrome still');
   console.log('    differs below that row, but P4 refuses any absolute-width override of the requested');
   console.log('    percentage. The sweep includes the 320x640 narrow edge.');
-  console.log('  · POISE IS ABSENT ON THE MAP BY DESIGN (no meter off the battlefield). If that ever becomes');
-  console.log('    wrong, P1 excuses it and will not say so.');
+  console.log('  · P1 holds top-HUD HP/MP/SP equality. Combat poise is dynamic on the player character card;');
+  console.log('    this tool does not judge that model-surface placement (hudbars A11 does).');
   console.log('  · coop.js meterBars() still hand-writes .bar.hpbar for the under-model strips — a THIRD');
   console.log('    renderer for this grammar. Out of scope here; P6 is scoped to .topbar and cannot see it.');
   console.log('  · WHETHER 500/50 IS A GOOD SCALE IS NOT ASSERTED. It is his ruling; this holds the number.');
@@ -742,6 +776,30 @@ async function selftest() {
       find: '          <div class="resbars-host"></div>',
       replace: '          <div class="bar hpbar"><div class="fill" style="width:50%"></div><div class="label">HP</div></div>',
       expectRed: /FINDING P6\/one-renderer .*\.topbar \.hpbar count/,
+    },
+    {
+      // Poise belongs on the combat player card, not in the canonical top HUD.
+      name: 'poise returns to the combat top HUD',
+      file: 'src/content/resources.js',
+      find: "    surfaces: ['model'],\n    source: 'poise',",
+      replace: "    surfaces: ['main', 'model'],\n    source: 'poise',",
+      expectRed: /FINDING P1\/rows .*missing-from-map=\["poise"\]/,
+    },
+    {
+      // The reference track may remain full width only if it is invisible.
+      name: 'the visible card frame is removed, exposing the full reference track',
+      file: 'src/ui/components/resbars.js',
+      find: '  unit.appendChild(frame);',
+      replace: '  /* card frame removed by plant */',
+      expectRed: /FINDING P7\/card .*no \.rescard-frame/,
+    },
+    {
+      // MP and SP must not silently return to their former horizontal band.
+      name: 'the shared renderer groups SP beside MP again',
+      file: 'src/ui/components/resbars.js',
+      find: '    if (bar.band && prev && prev[0].band === bar.band) prev.push(bar);',
+      replace: "    if (bar.id === 'stamina' && prev) prev.push(bar);",
+      expectRed: /FINDING P1V\/vertical .*\[\["hp"\],\["mana","stamina"\]\]/,
     },
     {
       // A SECOND COPY OF THE SHARED RENDERER. Membership-only comparison used

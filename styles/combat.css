@@ -104,7 +104,7 @@
    hybrid-confirmation/output/owners/F1-resource-health.png (unit anatomy:
    24 px unit, 1 px warm border #4c3b1f, ground #120f0c, 9 px pill trough,
    label on the plate LEFT of the trough) and F2-resource-mana/-stamina.png
-   (two half-width units side by side). The BEHAVIOUR under it is unchanged
+   (now one vertical unit each, by the 2026-08-22 E9 ruling). The BEHAVIOUR under it is unchanged
    and stays the table's: trough length = lengthPct of its derived track.
    The ground and border hexes are SAMPLED FROM THE OWNER PIXELS, and that
    provenance is their justification — they are deliberately not --panel
@@ -115,23 +115,31 @@
 .resbars[data-surface='main'] { align-items: stretch; }
 .resline { display: flex; width: 100%; gap: calc(5px / var(--ui-zoom, 1)); }
 .resunit {
-  /* Equal cells by flex, so two banded pools split their line evenly and a
-     solo bar takes it whole — nothing types a width (Law 2 by construction). */
+  /* A solo resource takes the full line; generic authored bands still split a
+     line evenly — nothing types a width (Law 2 by construction). */
   flex: 1 1 0; min-width: 0;
-  display: flex; align-items: center;
+  position: relative; display: flex; align-items: center;
   gap: calc(6px / var(--ui-zoom, 1));
   /* Chrome geometry: px under zoom (Law 4 clause 3). 24 px is the owner
      unit height — a floor the label's own glyphs may push past (clause 4). */
   min-height: calc(24px / var(--ui-zoom, 1));
   padding: 0 calc(7px / var(--ui-zoom, 1));
-  background: #120f0c;            /* owner pixel, F1-resource-health.png */
-  border: 1px solid #4c3b1f;      /* owner pixel, unit border */
+  background: transparent;
+  border: 0;
   border-radius: calc(6px / var(--ui-zoom, 1));
   /* The unit is the label's container: its width is set by flex, never by its
      own content, so "does the word fit" is answerable here (a query on the
      auto-sized plate would be circular). */
   container-type: inline-size;
 }
+.rescard-frame {
+  position: absolute; z-index: 0; left: 0; top: 0; bottom: 0;
+  background: #120f0c;            /* owner pixel, F1-resource-health.png */
+  border: 1px solid #4c3b1f;      /* owner pixel, unit border */
+  border-radius: calc(6px / var(--ui-zoom, 1));
+  pointer-events: none;
+}
+.resplate, .restrack { position: relative; z-index: 1; }
 .resplate {
   flex: none; white-space: nowrap;
   font-size: calc(11px / var(--ui-zoom, 1)); line-height: 1;

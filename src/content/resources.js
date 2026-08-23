@@ -13,7 +13,8 @@
 //   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
 //   order      top-to-bottom within a surface; HP, Mana, Stamina, then Poise
 //   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
-//              main HUD = health, then mana/stamina under it, then poise;
+//              main HUD = health, then mana, then stamina. Poise is NOT in the
+//              top HUD; in combat it remains on the player character card.
 //              under the character models = "really just health and poise"
 //   source     WHICH RESOURCE, from the closed set in model/resources.js.
 //              A source with no reader is refused at boot, by name.
@@ -21,13 +22,8 @@
 //              Omit it and the ceiling is derived from the content itself.
 //              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
 //              his 500/50, one home. Poise omits it and stays derived.
-//   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
-//              line of the HUD; a row with no band gets a line of its own.
-//              The approved hybrid (2026-08-13) puts Mana and Stamina beside
-//              each other under Health — that layout is this one word, so a
-//              future pool joins their line by writing `band: 'pools'`, not
-//              by editing CSS. Grouping is per surface, after the surface
-//              filter, in `order` order.
+//   band       OPTIONAL for other surfaces/content. The canonical main HUD does
+//              not use it: HP, MP and SP each own a vertical row, in that order.
 //
 // Mana and Stamina are persisted derived pools. Their formulas and ruleset
 // version remain authoritative in derivedStats; this table only describes how
@@ -98,7 +94,6 @@ export const resources = [
     surfaces: ['main'],
     source: 'stamina',
     domainMax: HUD_REFERENCE_MAX.pool,
-    band: 'pools',
   },
   {
     id: 'mana',
@@ -110,7 +105,6 @@ export const resources = [
     surfaces: ['main'],
     source: 'mana',
     domainMax: HUD_REFERENCE_MAX.pool,
-    band: 'pools',
   },
   {
     id: 'hp',
@@ -129,10 +123,9 @@ export const resources = [
     glyph: '◈',
     tint: 'var(--gold)',
     weight: 'skinny',
-    // Last of the stack on the main HUD — under health, and under stamina and
-    // mana whenever those arrive, because their `order` will sit between.
+    // Combat-only dynamic meter on the player character card; never top HUD.
     order: 90,
-    surfaces: ['main', 'model'],
+    surfaces: ['model'],
     source: 'poise',
   },
 ];

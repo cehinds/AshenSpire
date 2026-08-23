@@ -1,4 +1,6 @@
 // src/ui/components/resbars.js — the ONE renderer for every resource bar.
+
+import { anchorLocalBox } from '../fx.js';
 //
 // It knows nothing about health, poise, stamina or mana. It is handed a plan
 // (model/resources.js resourceBarPlan) and draws it. That is the whole point:
@@ -16,9 +18,9 @@
 // F2-resource-stamina.png):
 //
 //   'main'  — the HYBRID shape. Each bar is a bordered UNIT: a label plate
-//             ("HP 86/86") to the LEFT of a pill trough. Bars sharing a row's
-//             `band` sit side by side on one line (F2's Mana+Stamina row);
-//             a bar with no band takes a line alone (F1's Health row). The
+//             ("HP 86/86") to the LEFT of a pill trough. The canonical main
+//             HUD gives HP, MP and SP one vertical line each, in that order.
+//             Generic band support remains for other authored surfaces. The
 //             trough's track is its unit's remaining width, derived by flex —
 //             nothing types a ceiling, so a bar cannot overflow its cell
 //             (Law 2 by construction; tools/hudbars.mjs measures it anyway).
@@ -41,8 +43,9 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
   if ((surface || 'main') === 'main') {
-    // THE HYBRID LINES. Consecutive plan bars with the same truthy band share
-    // a line; everything else lines alone. Consecutive-only is deliberate:
+    // THE HYBRID LINES. Main-HUD content currently supplies no bands: HP, MP
+    // and SP each own one vertical line. Generic consecutive band support stays
+    // available for another authored surface. Consecutive-only is deliberate:
     // the plan is already in `order` order, and a band split across the stack
     // would be a row author asking for two contradictory things at once —
     // rendering it as two lines keeps the order authoritative.
@@ -51,6 +54,15 @@ export function resourceBars(plan, { surface, tooltipExtra } = {}) {
       line.className = 'resline';
       for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
       wrap.appendChild(line);
+    }
+    // The full unit is the invisible reference track. The bordered card behind
+    // its plate + trough ends just after the scaled trough. A ResizeObserver
+    // keeps that visual frame aligned when the viewport or UI scale changes.
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(() => syncCardFrames(wrap));
+      observer.observe(wrap);
+      wrap._cardFrameObserver = observer;
     }
   } else {
     for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
@@ -73,6 +85,11 @@ function hybridUnit(bar, tooltipExtra) {
   const unit = document.createElement('div');
   unit.className = 'resunit';
   unit.dataset.res = bar.id;
+
+  const frame = document.createElement('div');
+  frame.className = 'rescard-frame';
+  frame.setAttribute('aria-hidden', 'true');
+  unit.appendChild(frame);
 
   // THE PLATE. The label lives BESIDE the trough now, not inside it — the
   // owner pixels put "HP 86/86" on the unit's ground, left of the pill — so a
@@ -123,6 +140,20 @@ function hybridUnit(bar, tooltipExtra) {
 
   attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
   return unit;
+}
+
+/** Align the visible card to the scaled trough; the unit stays full-width. */
+function syncCardFrames(root) {
+  const RIGHT_PAD = 6;
+  for (const unit of root.querySelectorAll('.resunit')) {
+    const frame = unit.querySelector(':scope > .rescard-frame');
+    const bar = unit.querySelector('.restrack > .resbar');
+    if (!frame || !bar) continue;
+    const unitBox = anchorLocalBox(unit, unit);
+    const barBox = anchorLocalBox(unit, bar);
+    const width = Math.min(unitBox.width, Math.max(0, barBox.left + barBox.width + RIGHT_PAD));
+    frame.style.width = `${width}px`;
+  }
 }
 
 /** The under-model strip bar: trough with the label inside (unchanged shape). */
