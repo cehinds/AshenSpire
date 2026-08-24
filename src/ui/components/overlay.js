@@ -1,7 +1,7 @@
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
-// One overlay hosts every in-run menu as a tab: Deck, Relics & Flasks, Stats
-// (run telemetry), and Settings. Opened from a button or hotkey on the map and
+// One overlay hosts every in-run menu as a tab: Deck, Stats (run telemetry),
+// Settings, and Controls. Equipment and carried items live in Armoury. Opened from a button or hotkey on the map and
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
@@ -9,12 +9,11 @@ import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { relicText } from './card.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
-import { closeFlaskActionMenu, flaskIdentityHtml } from './flask.js';
+import { closeFlaskActionMenu } from './flask.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 
@@ -39,7 +38,6 @@ let escHandler = null;
 // they can live at module scope where the check can see them.
 const PANELS = {
   deck: (host, ctx) => renderDeck(host, ctx),
-  relics: (host, ctx) => renderRelics(host, ctx),
   stats: (host, ctx) => renderStats(host, ctx),
   save: (host, ctx) => renderSave(host, ctx),
   settings: (host, ctx) => renderSettings(host, {
@@ -73,43 +71,6 @@ function renderDeck(container, ctx) {
     for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
   }
   container.appendChild(grid);
-}
-
-function renderRelics(container, ctx) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ov-relics';
-  const rTitle = document.createElement('h3');
-  rTitle.className = 'set-cat';
-  rTitle.textContent = `Relics (${ctx.run.relics.length})`;
-  wrap.appendChild(rTitle);
-  const rGrid = document.createElement('div');
-  rGrid.className = 'ov-relic-grid';
-  for (const rid of ctx.run.relics) {
-    const def = ctx.registries.relics.get(rid);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
-    rGrid.appendChild(el);
-  }
-  if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
-  wrap.appendChild(rGrid);
-
-  const fTitle = document.createElement('h3');
-  fTitle.className = 'set-cat';
-  fTitle.textContent = `Flasks (${ctx.run.flasks.length})`;
-  wrap.appendChild(fTitle);
-  const fGrid = document.createElement('div');
-  fGrid.className = 'ov-relic-grid';
-  for (const f of ctx.run.flasks) {
-    const def = ctx.registries.flasks.get(f.flaskId);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
-    fGrid.appendChild(el);
-  }
-  if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
-  wrap.appendChild(fGrid);
-  container.appendChild(wrap);
 }
 
 // Save tab: save to the current slot, save-and-quit to title, or quit the app.

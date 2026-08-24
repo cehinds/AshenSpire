@@ -72,9 +72,9 @@ import { serve } from './serve.mjs';
 // the copy: same serve.mjs, same browser, same hit-test.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  const selftestCode = await doorSelftest({
     tool: 'screenreach.mjs',
-    args: ['--only', '390x844'],
+    args: ['--only', '390x650'],
     timeoutMs: 600000,
     plants: [
       {
@@ -101,8 +101,53 @@ if (process.argv.includes('--selftest')) {
         append: '.screen::after { content: ""; position: fixed; inset: 0; z-index: 9000; background: transparent; }',
         expectRed: /^\s*title\s.*[1-9]\d* COVERED/m,
       },
+      {
+        name: 'Shrine cards lose the shared body wrapper and split into narrow sibling columns',
+        file: 'src/ui/screens/rest.js',
+        find: '<div class="cp-body">',
+        replace: '<div>',
+        all: true,
+        expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
+      },
+      {
+        name: 'the narrow combatant frame gains a large vertical gap and crosses a HUD band',
+        file: 'styles/combat.css',
+        find: ":root[data-layout='narrow'] .combatant { gap: 0; }",
+        replace: ":root[data-layout='narrow'] .combatant { gap: 4rem; }",
+        expectRed: /frame paints under the HUD/,
+      },
+      {
+        name: 'Settings cleanup watches the shared connected panel instead of its own render',
+        file: 'src/ui/screens/settings.js',
+        find: 'if (lifecycleSentinel.isConnected) return;',
+        replace: 'if (container.isConnected) return;',
+        expectRed: /Settings revisit leaked listeners/,
+      },
+      {
+        name: 'the fullscreen switch loses its accessible name',
+        file: 'src/ui/screens/settings.js',
+        find: ' aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"',
+        replace: ' aria-describedby="set-${r.key}-status"',
+        expectRed: /fullscreen switch lacks an accessible name or description/,
+      },
+      {
+        name: 'the fullscreen lifecycle listener calls a synchronizer outside its scope',
+        file: 'src/ui/screens/settings.js',
+        find: 'const onFullscreenChange = () => syncFullscreen();',
+        replace: 'const onFullscreenChange = () => missingFullscreenSynchronizer();',
+        expectRed: /fullscreen lifecycle event threw/,
+      },
+      {
+        name: 'the preserved R shortcut returns to the removed Relics tab',
+        file: 'src/ui/screens/map.js',
+        find: "if (onArmoury) onArmoury();",
+        replace: "if (onMenu) onMenu('relics');",
+        expectRed: /equipment shortcut did not open Armoury/,
+      },
     ],
-  }));
+  });
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
+  process.exit(selftestCode);
 }
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -120,6 +165,48 @@ const BROWSERS = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
 ].filter(Boolean);
 
+const SETTINGS_CYCLE = `(async () => {
+  const types = ['resize', 'fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror'];
+  const live = new Map(types.map((type) => [type, new Set()]));
+  const wrap = (target) => {
+    const add = target.addEventListener.bind(target);
+    const remove = target.removeEventListener.bind(target);
+    target.addEventListener = (type, listener, options) => {
+      if (live.has(type)) live.get(type).add(listener);
+      return add(type, listener, options);
+    };
+    target.removeEventListener = (type, listener, options) => {
+      if (live.has(type)) live.get(type).delete(listener);
+      return remove(type, listener, options);
+    };
+  };
+  wrap(window); wrap(document);
+  const lifecycleErrors = [];
+  const recordLifecycleError = (event) => lifecycleErrors.push(event.message || String(event.error || 'unknown error'));
+  window.addEventListener('error', recordLifecycleError);
+  const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
+  document.querySelector('#open-menu')?.click(); await pause();
+  const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
+  tab('settings')?.click(); await pause();
+  const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
+  const described = fullscreen?.getAttribute('aria-describedby');
+  window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
+    && described && document.getElementById(described));
+  document.dispatchEvent(new Event('fullscreenchange'));
+  document.dispatchEvent(new Event('fullscreenerror'));
+  await pause();
+  window.__fullscreenLifecycleErrors = lifecycleErrors;
+  window.removeEventListener('error', recordLifecycleError);
+  tab('deck')?.click(); await pause();
+  tab('settings')?.click(); await pause();
+  tab('deck')?.click(); await pause();
+  window.__settingsListenerBalance = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
+  document.querySelector('#ov-close')?.click(); await pause();
+  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); await pause();
+  window.__armouryShortcutOpened = !!document.querySelector('.armoury-overlay');
+  return true;
+})()`;
+
 // Every screen that can be reached without playing the game. `boss` holds a
 // splash deliberately covering the board, so its controls ARE covered by
 // design and it is listed with `overlay: true` rather than left out — a screen
@@ -127,7 +214,10 @@ const BROWSERS = [
 const SCREENS = [
   { name: 'title', q: '', ready: `!!document.querySelector('#app button')` },
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
+  { name: 'menu-cycle', q: '?shot=map', ready: `!!document.querySelector('.map-node')`, setup: SETTINGS_CYCLE,
+    overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
   { name: 'combat', q: '?shot=combat', ready: `!!document.querySelector('.combat .hand .card')` },
+  { name: 'combat-xl', q: '?shot=combat&shotArcane=matrix&shotSettings=%7B%22textSize%22%3A%22xl%22%2C%22uprightGate%22%3Afalse%7D', ready: `!!document.querySelectorAll('.enemy-row .intent').length` },
   { name: 'death', q: '?shot=death', ready: `!!document.querySelector('#app button')` },
   // EldenSpire#29 slice 1. Added the day the state existed. This file's own
   // boundary has said since it was written that customize/shop/rest/rewards
@@ -157,6 +247,9 @@ const SCREENS = [
 const SHAPES = [
   { w: 1200, h: 730, d: 1, mobile: false, tag: 'desktop' }, // NON-REGRESSION EDGE
   { w: 390, h: 844, d: 3, mobile: true, tag: 'portrait' },
+  // Safari's visible game viewport after browser chrome is materially shorter
+  // than the device screen; this is the iPhone edge that exposed HUD overlap.
+  { w: 390, h: 650, d: 3, mobile: true, tag: 'safari-like' },
   { w: 360, h: 640, d: 2, mobile: true, tag: 'portrait' },
   { w: 844, h: 390, d: 3, mobile: true, tag: 'landscape' },
 ];
@@ -251,8 +344,40 @@ const PROBE = `(() => {
     }
     covered.push(name(c) + '  <-  ' + name(hit));
   }
+  const visual = [];
+  // The shared class-pick narrow composition expects one cp-body text
+  // column beside its glyph. Shrine cards used the component class without the
+  // component body, so every direct child became a new flex column: no literal
+  // viewport overflow, but the flask name, stepper and Level-up buttons were
+  // squeezed into unusable ribbons. Assert the component boundary, not a magic
+  // width that happens to fit today's copy.
+  if (document.querySelector('#flask-reallocate')) {
+    const bare = [...document.querySelectorAll('.screen > .class-row > .class-pick')]
+      .filter((card) => !card.querySelector(':scope > .cp-body'));
+    if (bare.length) visual.push('Shrine choice cards missing their shared .cp-body composition: ' + bare.length);
+  }
+  // A tall enemy can be centred through the flexible battlefield boundary.
+  // Its complete receipt still has to remain between the two interaction bands;
+  // checking only the intent would miss meters or statuses painting under hand.
+  if (document.querySelector('.combat')) {
+    const hud = document.querySelector('.combat-hud')?.getBoundingClientRect();
+    const hand = document.querySelector('.hand-area')?.getBoundingClientRect();
+    for (const frame of document.querySelectorAll('.enemy-row .combatant')) {
+      const r = frame.getBoundingClientRect();
+      const label = frame.querySelector('.nm')?.textContent?.trim() || frame.dataset.eid || 'enemy';
+      if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
+      if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+    }
+  }
+  if (window.__settingsListenerBalance) {
+    const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
+    if (leaks.length) visual.push('Settings revisit leaked listeners: ' + leaks.map(([type, count]) => type + '=' + count).join(', '));
+    if (!window.__fullscreenA11y) visual.push('fullscreen switch lacks an accessible name or description');
+    if (window.__fullscreenLifecycleErrors?.length) visual.push('fullscreen lifecycle event threw: ' + window.__fullscreenLifecycleErrors[0]);
+    if (!window.__armouryShortcutOpened) visual.push('equipment shortcut did not open Armoury');
+  }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
-           covered, scrolledOut: scrolledOut.length };
+           covered, scrolledOut: scrolledOut.length, visual };
 })()`;
 
 function connectCdp(wsUrl) {
@@ -325,11 +450,14 @@ async function main() {
       while (Date.now() - t0 < 12000) { if (await evalIn(sc.ready).catch(() => false)) { up = true; break; } await wait(150); }
       if (!up) { console.log(`    ${sc.name.padEnd(8)} DID NOT MOUNT — never a pass`); fails.push(`${shape} ${sc.name}: screen would not mount`); continue; }
       await wait(900); // auto-zoom re-flexes on a 150ms debounce plus a boot re-apply
+      if (sc.setup) await evalIn(sc.setup);
       const r = await evalIn(PROBE);
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
       if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
+      for (const finding of r.visual) console.log(`               ✗ ${finding}`);
+      if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
     }
   }
 
@@ -352,23 +480,23 @@ async function main() {
   // naming customize in its first clause while sweeping it in the next. A
   // boundary that lies about its own scope is worse than none.
   console.log(`\n  BOUNDARY — Linux headless Chromium only; emulation is not a phone. Only the
-  screens with a ?shot= state are reached: ${SCREENS.map((s) => s.name).join(', ')}.
-  REWARDS, the DRAFT and every overlay still have NO ?shot= and are covered
-  here or anywhere by nothing. Neither is a second-beat surface today
+  screens with a ?shot= state plus the declared menu-cycle setup are reached:
+  ${SCREENS.map((s) => s.name).join(', ')}.
+  REWARDS and the DRAFT still have no direct state or declared setup here. Neither is a second-beat surface today
   (rewardPick and draftPick are declared 'none' in src/model/secondbeat.js), so
   what is unmeasured there is their reach, not a confirm step.
   Reachability at rest only: nothing is pressed, legibility is not judged, and a
   control that appears only mid-interaction cannot be seen.
 
   AND THE SHAPE LIST IS NOT THE OTHER TOOL'S. This runs 1200x730, 390x844,
-  360x640, 844x390; tools/mobilefit.mjs runs nine, and neither list is a
-  superset. A defect can live in the gap, and one does: Sunna swept nine widths
+  Safari-like 390x650, 360x640 and 844x390; tools/mobilefit.mjs runs nine, and
+  neither list is a superset. A defect can live in the gap, and one does: Sunna swept nine widths
   by hand and found a covered map node at 412x915 — a shape THIS TOOL DOES NOT
   TEST — that dev does not have. Closing the gap is a card, not a silent edit,
   because adding that shape turns this red on a finding she carried without
   blocking.`);
 
-  console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : 'PASS — no covered controls'}`);
+  console.log(`\n  ${fails.length ? `FAIL — ${fails.length}` : `screenreach: OK — ${shapesRun * SCREENS.length} checks passed`}`);
   for (const f of fails) console.log(`    - ${f}`);
   cdp.close(); await dropBrowser(); if (server) server.close();
   process.exit(fails.length ? 1 : 0);

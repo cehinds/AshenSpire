@@ -84,7 +84,7 @@ const ROWS = [
   // the seat. The row itself is unchanged: same key, type, label, note; it
   // MOVED here from below the map-header rows.
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+    note: 'Fill the screen when this browser allows it.' },
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
@@ -564,7 +564,7 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
-function rowHtml(settings, r) {
+export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
@@ -653,10 +653,14 @@ function rowHtml(settings, r) {
       </div>`;
   }
   // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
-  const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
+  const capability = r.type === 'action' ? fullscreenCapability(doc) : null;
+  const on = r.type === 'action' ? isFullscreen(doc) : valueOf(settings, r);
+  const actionNote = capability && !capability.supported
+    ? 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.'
+    : r.note;
   return `<div class="set-row">
-      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
+      <div><b>${r.label}</b><p class="set-note"${r.type === 'action' ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"` : ''}>${actionNote}</p></div>
+      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"${capability && !capability.supported ? ' disabled aria-disabled="true"' : ''}>
         <span class="knob"></span>
       </button>
     </div>`;
@@ -1059,16 +1063,35 @@ function anchorPressed(container, btn, wasAt) {
   }
 }
 
-function isFullscreen() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+export function fullscreenCapability(doc = globalThis.document) {
+  const root = doc && doc.documentElement;
+  const request = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
+  const enabled = doc && (doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled);
+  return {
+    supported: !!(root && request && exit && enabled !== false),
+    request,
+    exit,
+  };
 }
 
-function toggleFullscreen() {
-  const el = document.documentElement;
-  if (isFullscreen()) {
-    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
-  } else {
-    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+export function isFullscreen(doc = globalThis.document) {
+  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
+}
+
+export async function toggleFullscreen(doc = globalThis.document) {
+  const capability = fullscreenCapability(doc);
+  if (!capability.supported) return { ok: false, reason: 'unsupported' };
+  try {
+    if (isFullscreen(doc)) await capability.exit.call(doc);
+    else await capability.request.call(doc.documentElement);
+    return { ok: true, reason: '' };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'refused',
+      error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
+    };
   }
 }
 
@@ -1096,7 +1119,7 @@ function categoryHtml(cat, settings, saves) {
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
-  return h.rows.map((r) => rowHtml(settings, r)).join('');
+  return h.rows.map((r) => settingsRowHtml(settings, r)).join('');
 }
 
 /**
@@ -1160,10 +1183,36 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
     }
   } else {
-    html = ROWS.map((r) => rowHtml(settings, r)).join('');
+    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
+  // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
+  // belongs to this render, so clearing Settings for Deck disconnects it and
+  // releases listeners even while the shared container remains on the page.
+  const lifecycleSentinel = document.createComment('settings-render-lifecycle');
+  container.appendChild(lifecycleSentinel);
+
+  // Fullscreen events belong to this complete Settings render, not to whichever
+  // category panel happens to be wired. Escape and browser refusals can arrive
+  // after the Display controls have been replaced, so the document listeners
+  // below need a synchronizer in their own lifecycle scope.
+  const syncFullscreen = (message = '') => {
+    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
+    if (!btn) return;
+    const capability = fullscreenCapability();
+    const on = isFullscreen();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = !capability.supported;
+    btn.setAttribute('aria-disabled', String(!capability.supported));
+    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
+    if (status) {
+      status.textContent = message || (capability.supported
+        ? 'Fill the screen when this browser allows it.'
+        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
+    }
+  };
 
   // ---- everything below wires ONE PANEL'S controls -------------------------
   // It used to run once over the whole column, because the whole column was on
@@ -1288,15 +1337,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
-        toggleFullscreen();
-        // Reflect the new state shortly after the API resolves.
-        setTimeout(() => {
-          const on = isFullscreen();
-          btn.classList.toggle('on', on);
-          btn.setAttribute('aria-checked', String(on));
-        }, 60);
+        const result = await toggleFullscreen();
+        syncFullscreen(result.ok || result.reason === 'unsupported'
+          ? ''
+          : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
       const now = !btn.classList.contains('on');
@@ -1320,12 +1366,22 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // collect four handlers that all write the same number.
   const onResize = () => refreshApplied(container, settings);
   window.addEventListener('resize', onResize);
+  const onFullscreenChange = () => syncFullscreen();
+  const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  document.addEventListener('fullscreenerror', onFullscreenError);
+  document.addEventListener('webkitfullscreenerror', onFullscreenError);
   // The settings container is rebuilt on every open, so the listener is dropped
   // with it rather than accumulating one per visit. Same observer releases the
   // bumpers if this strip took them.
   const obs = new MutationObserver(() => {
-    if (container.isConnected) return;
+    if (lifecycleSentinel.isConnected) return;
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.removeEventListener('fullscreenerror', onFullscreenError);
+    document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });

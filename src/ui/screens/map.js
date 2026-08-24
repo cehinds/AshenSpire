@@ -324,7 +324,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Deck, relics, stats, settings and saving.'
+      ? 'Deck, stats, settings, controls and saving.'
       : 'Everywhere you can go from here.')}`);
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
@@ -347,7 +347,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
       if (onMenu) onMenu('deck');
     } else if (matchAction(ev, 'relics')) {
-      if (onMenu) onMenu('relics');
+      if (onArmoury) onArmoury();
     } else if (matchAction(ev, 'stats')) {
       if (onMenu) onMenu('stats');
     } else if (ev.key === '+' || ev.key === '=') {

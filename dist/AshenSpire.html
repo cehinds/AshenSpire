@@ -5780,8 +5780,17 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
   :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
-  :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
-  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
+  /* The complete combatant frame compacts as one component on phones. Intent,
+     art, name, meters and statuses therefore keep their order and stay inside
+     the flexible battlefield instead of painting beneath either fixed HUD. */
+  :root[data-layout='narrow'] .combatant { gap: 0; }
+  :root[data-layout='narrow'] .combatant .intent {
+    margin-bottom: 0; padding: 0 0.5rem; font-size: 1rem;
+  }
+  :root[data-layout='narrow'] .combatant .intent .ic { font-size: 1rem; }
+  :root[data-layout='narrow'] .combatant .nm { font-size: 0.95rem; }
+  :root[data-layout='narrow'] .combatant .meters { width: 8rem; gap: 0; }
+  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; gap: 0.15rem; }
   :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
 
   /* ---- hand + controls: the actual reflow ----
@@ -37055,8 +37064,9 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
-// The deck/relics/stats actions jump the in-run overlay straight to that tab
-// (StS2-style dedicated zone keys) instead of only the generic Menu.
+// The Deck and Stats actions jump the in-run overlay straight to those tabs.
+// The stable legacy `relics` action id now opens Armoury, preserving existing
+// bindings while giving equipment and carried items one canonical destination.
 const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
@@ -37065,7 +37075,7 @@ const ACTIONS = [
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
   { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4 },
   { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
@@ -37092,7 +37102,7 @@ function actionShort(id) {
 // A tabbed surface registers its own set here while it is open; the pad poller
 // and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
 // preference to whatever they are globally bound to. That preference is the
-// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// whole clause: the defaults already SPEND LB/RB on Armoury and Stats
 // (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
 // bindings race and the winner is whoever notices first.
 //
@@ -37896,7 +37906,7 @@ function pollPads() {
       }
       // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
       // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
-      // Relics/Stats. Without this line the defaults win and the law is prose.
+      // Armoury/Stats. Without this line the defaults win and the law is prose.
       if (tabRingButton(i)) continue;
       const a = actionForButton(i);
       // Remember WHICH button opened the press so its own release closes it —
@@ -38288,7 +38298,6 @@ function actPlate(actNumber, plates) {
 // is the screen that does.
 const MENU_TABS = [
   { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
   { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
   { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
@@ -38308,7 +38317,6 @@ const MENU = {
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
     { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     ...TAIL,
@@ -38316,14 +38324,13 @@ const MENU = {
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
-      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+      tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
     { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
       tip: 'What is still to come, shuffled for viewing.' },
     { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
       tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     ...TAIL,
@@ -38335,7 +38342,6 @@ const MENU = {
     { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
       tip: 'Back to the screen behind this one.' },
     { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     { act: 'tab', tab: 'controls', band: 'body' },
@@ -38876,7 +38882,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '261bc73a9d';
+const SOURCE = '3e9f7f9d1c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -38910,7 +38916,7 @@ const SOURCE = '261bc73a9d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1240';
+const ORDINAL = '1251';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -45997,7 +46003,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Deck, relics, stats, settings and saving.'
+      ? 'Deck, stats, settings, controls and saving.'
       : 'Everywhere you can go from here.')}`);
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
@@ -46020,7 +46026,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
       if (onMenu) onMenu('deck');
     } else if (matchAction(ev, 'relics')) {
-      if (onMenu) onMenu('relics');
+      if (onArmoury) onArmoury();
     } else if (matchAction(ev, 'stats')) {
       if (onMenu) onMenu('stats');
     } else if (ev.key === '+' || ev.key === '=') {
@@ -49978,12 +49984,19 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     if (veilIsOpen()) return;
 
     // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
-    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['relics', 'relics'], ['stats', 'stats']]) {
+    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['stats', 'stats']]) {
       if (matchAction(ev, id)) {
         ev.preventDefault();
         if (onMenu) onMenu(tab);
         return;
       }
+    }
+    // Keep the established R / pad binding, but route it to the one equipment
+    // destination. The button owns the combat swap rules; this is only a click.
+    if (matchAction(ev, 'relics')) {
+      ev.preventDefault();
+      $('#combat-armoury').click();
+      return;
     }
 
     if (ev.key === 'Escape') {
@@ -50286,14 +50299,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   }
 
   // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
-  // MENU table. Note the label: the ⚒ glyph is "Armoury" on the map and
-  // "Armaments" here, and it was ALREADY context-specific before anyone asked.
+  // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Deck, relics, stats, settings and saving.'
+        ? 'Deck, stats, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
 
@@ -51813,16 +51825,21 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       <div class="class-row">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
-          <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          <div class="cp-body">
+            <h3>Rest</h3>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          </div>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
-          <h3>Smith</h3>
-          <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          <div class="cp-body">
+            <h3>Smith</h3>
+            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          </div>
         </div>
         <div class="class-pick" id="flask-reallocate">
           <div class="glyph">⚗</div>
+          <div class="cp-body">
           <h3>Reallocate Flask Charges</h3>
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
@@ -51857,6 +51874,7 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
               </div>`).join('')}
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
+          </div>
         </div>
         <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
@@ -51884,12 +51902,14 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
              data-cost="${level.cost}"
              data-short="${level.short}">
           <div class="glyph">✦</div>
+          <div class="cp-body">
           <h3>Level up</h3>
           <p>${level.capped
             ? `You have taken every level this climb allows (${level.levelsTaken}).`
             : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
           <div class="flask-allocation-controls">
             ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          </div>
           </div>
         </div>
       </div>
@@ -52658,7 +52678,7 @@ const ROWS = [
   // the seat. The row itself is unchanged: same key, type, label, note; it
   // MOVED here from below the map-header rows.
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+    note: 'Fill the screen when this browser allows it.' },
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
@@ -53138,7 +53158,7 @@ function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
-function rowHtml(settings, r) {
+function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
@@ -53227,10 +53247,14 @@ function rowHtml(settings, r) {
       </div>`;
   }
   // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
-  const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
+  const capability = r.type === 'action' ? fullscreenCapability(doc) : null;
+  const on = r.type === 'action' ? isFullscreen(doc) : valueOf(settings, r);
+  const actionNote = capability && !capability.supported
+    ? 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.'
+    : r.note;
   return `<div class="set-row">
-      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
+      <div><b>${r.label}</b><p class="set-note"${r.type === 'action' ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"` : ''}>${actionNote}</p></div>
+      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}"${capability && !capability.supported ? ' disabled aria-disabled="true"' : ''}>
         <span class="knob"></span>
       </button>
     </div>`;
@@ -53633,16 +53657,35 @@ function anchorPressed(container, btn, wasAt) {
   }
 }
 
-function isFullscreen() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+function fullscreenCapability(doc = globalThis.document) {
+  const root = doc && doc.documentElement;
+  const request = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
+  const enabled = doc && (doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled);
+  return {
+    supported: !!(root && request && exit && enabled !== false),
+    request,
+    exit,
+  };
 }
 
-function toggleFullscreen() {
-  const el = document.documentElement;
-  if (isFullscreen()) {
-    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
-  } else {
-    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+function isFullscreen(doc = globalThis.document) {
+  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
+}
+
+async function toggleFullscreen(doc = globalThis.document) {
+  const capability = fullscreenCapability(doc);
+  if (!capability.supported) return { ok: false, reason: 'unsupported' };
+  try {
+    if (isFullscreen(doc)) await capability.exit.call(doc);
+    else await capability.request.call(doc.documentElement);
+    return { ok: true, reason: '' };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'refused',
+      error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
+    };
   }
 }
 
@@ -53670,7 +53713,7 @@ function categoryHtml(cat, settings, saves) {
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
-  return h.rows.map((r) => rowHtml(settings, r)).join('');
+  return h.rows.map((r) => settingsRowHtml(settings, r)).join('');
 }
 
 /**
@@ -53734,10 +53777,36 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
     }
   } else {
-    html = ROWS.map((r) => rowHtml(settings, r)).join('');
+    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
+  // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
+  // belongs to this render, so clearing Settings for Deck disconnects it and
+  // releases listeners even while the shared container remains on the page.
+  const lifecycleSentinel = document.createComment('settings-render-lifecycle');
+  container.appendChild(lifecycleSentinel);
+
+  // Fullscreen events belong to this complete Settings render, not to whichever
+  // category panel happens to be wired. Escape and browser refusals can arrive
+  // after the Display controls have been replaced, so the document listeners
+  // below need a synchronizer in their own lifecycle scope.
+  const syncFullscreen = (message = '') => {
+    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
+    if (!btn) return;
+    const capability = fullscreenCapability();
+    const on = isFullscreen();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = !capability.supported;
+    btn.setAttribute('aria-disabled', String(!capability.supported));
+    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
+    if (status) {
+      status.textContent = message || (capability.supported
+        ? 'Fill the screen when this browser allows it.'
+        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
+    }
+  };
 
   // ---- everything below wires ONE PANEL'S controls -------------------------
   // It used to run once over the whole column, because the whole column was on
@@ -53862,15 +53931,12 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
-        toggleFullscreen();
-        // Reflect the new state shortly after the API resolves.
-        setTimeout(() => {
-          const on = isFullscreen();
-          btn.classList.toggle('on', on);
-          btn.setAttribute('aria-checked', String(on));
-        }, 60);
+        const result = await toggleFullscreen();
+        syncFullscreen(result.ok || result.reason === 'unsupported'
+          ? ''
+          : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
         return;
       }
       const now = !btn.classList.contains('on');
@@ -53894,12 +53960,22 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   // collect four handlers that all write the same number.
   const onResize = () => refreshApplied(container, settings);
   window.addEventListener('resize', onResize);
+  const onFullscreenChange = () => syncFullscreen();
+  const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  document.addEventListener('fullscreenerror', onFullscreenError);
+  document.addEventListener('webkitfullscreenerror', onFullscreenError);
   // The settings container is rebuilt on every open, so the listener is dropped
   // with it rather than accumulating one per visit. Same observer releases the
   // bumpers if this strip took them.
   const obs = new MutationObserver(() => {
-    if (container.isConnected) return;
+    if (lifecycleSentinel.isConnected) return;
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.removeEventListener('fullscreenerror', onFullscreenError);
+    document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });
@@ -54007,7 +54083,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -56382,8 +56458,8 @@ Object.assign(module.exports, { mountCompendium });
 "src/ui/components/overlay.js": function (module, exports, require) {
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
-// One overlay hosts every in-run menu as a tab: Deck, Relics & Flasks, Stats
-// (run telemetry), and Settings. Opened from a button or hotkey on the map and
+// One overlay hosts every in-run menu as a tab: Deck, Stats (run telemetry),
+// Settings, and Controls. Equipment and carried items live in Armoury. Opened from a button or hotkey on the map and
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
@@ -56391,12 +56467,11 @@ const { renderCard } = require("src/ui/components/card.js");
 const { renderSettings } = require("src/ui/screens/settings.js");
 const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
-const { relicText } = require("src/ui/components/card.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
 const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 const { statProjection } = require("src/model/statProjection.js");
-const { closeFlaskActionMenu, flaskIdentityHtml } = require("src/ui/components/flask.js");
+const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { menuOverlayModel } = require("src/ui/models/MenuModels.js");
 const { renderMenuOverlay, updateMenuSelection } = require("src/ui/components/menuComponents.js");
 
@@ -56421,7 +56496,6 @@ let escHandler = null;
 // they can live at module scope where the check can see them.
 const PANELS = {
   deck: (host, ctx) => renderDeck(host, ctx),
-  relics: (host, ctx) => renderRelics(host, ctx),
   stats: (host, ctx) => renderStats(host, ctx),
   save: (host, ctx) => renderSave(host, ctx),
   settings: (host, ctx) => renderSettings(host, {
@@ -56455,43 +56529,6 @@ function renderDeck(container, ctx) {
     for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
   }
   container.appendChild(grid);
-}
-
-function renderRelics(container, ctx) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ov-relics';
-  const rTitle = document.createElement('h3');
-  rTitle.className = 'set-cat';
-  rTitle.textContent = `Relics (${ctx.run.relics.length})`;
-  wrap.appendChild(rTitle);
-  const rGrid = document.createElement('div');
-  rGrid.className = 'ov-relic-grid';
-  for (const rid of ctx.run.relics) {
-    const def = ctx.registries.relics.get(rid);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
-    rGrid.appendChild(el);
-  }
-  if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
-  wrap.appendChild(rGrid);
-
-  const fTitle = document.createElement('h3');
-  fTitle.className = 'set-cat';
-  fTitle.textContent = `Flasks (${ctx.run.flasks.length})`;
-  wrap.appendChild(fTitle);
-  const fGrid = document.createElement('div');
-  fGrid.className = 'ov-relic-grid';
-  for (const f of ctx.run.flasks) {
-    const def = ctx.registries.flasks.get(f.flaskId);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
-    fGrid.appendChild(el);
-  }
-  if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
-  wrap.appendChild(fGrid);
-  container.appendChild(wrap);
 }
 
 // Save tab: save to the current slot, save-and-quit to title, or quit the app.
