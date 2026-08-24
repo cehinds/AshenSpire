@@ -113,6 +113,23 @@ Rules that keep this honest:
 3. **Every number a player sees comes from the engine** (`previewCard` /
    `previewIntent`). The UI never does math.
 
+### UI models, components, and screen hosts
+
+The detailed contract and migration sequence live in
+[docs/COMPONENT-MODEL-ARCHITECTURE.md](docs/COMPONENT-MODEL-ARCHITECTURE.md).
+For migrated slices, keep these responsibilities separate:
+
+- `src/ui/models/` owns immutable, serializable, DOM-free presentation records.
+- `src/ui/components/` renders those records and owns semantic markup and
+  accessibility attributes.
+- `src/ui/screens/` projects game state, owns lifecycle, and translates semantic
+  commands into domain actions. It does not duplicate extracted markup.
+- `src/ui/behaviors/` owns reusable interaction binding when a migrated slice
+  needs it; callbacks do not live inside models.
+
+Menu and Armoury are the reference implementations. Keep public entry points
+compatible while migrating a vertical slice; do not bulk-move unrelated code.
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js
@@ -321,6 +338,16 @@ named them while the corpus stood at ten, and the count rotted without anyone
 editing a line — a second copy of a fact nothing keeps in sync. The plants, what
 each is aimed at, and what the green does NOT cover are printed by `--selftest`
 itself; read them there.
+
+### Character-creation component catalog
+
+Open `?shot=components` on a served checkout to see the Class, Character,
+Starting Equip, and Seed sections together as interactive reference specimens.
+The catalog moves the production panels into labeled folios; it does not keep a
+second copy of their markup or content. Select **Assign Points** to inspect its
+live dialog and refusal states. `node tools/character-creation-check.mjs`
+verifies the catalog at desktop and 390×844 mobile sizes alongside the player
+flow.
 
 ## Standalone build (`build/AshenSpire.html`)
 

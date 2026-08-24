@@ -162,10 +162,25 @@ const PLANTS = [
     plant: (root) => edit(root, 'tools/bundle.mjs', (t) => `${t}\n// planted bundler semantic change\n`),
   },
   {
-    name: 'a named consumer stops deriving (combat prints no stamp)',
+    name: 'the shared HUD owner stops deriving the build stamp',
+    row: 'C THREE CONSUMERS',
+    plant: (root) => edit(root, 'src/ui/components/hudmeta.js',
+      (t) => t.replace(
+        '${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}',
+        '${""}',
+      )),
+  },
+  {
+    name: 'map stops mounting the shared stamp owner',
+    row: 'C THREE CONSUMERS',
+    plant: (root) => edit(root, 'src/ui/screens/map.js',
+      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
+  },
+  {
+    name: 'combat stops mounting the shared stamp owner',
     row: 'C THREE CONSUMERS',
     plant: (root) => edit(root, 'src/ui/screens/combat.js',
-      (t) => t.replace(/^.*buildStampHtml.*$/gm, '')),
+      (t) => t.replace('${hudShellHtml(runHudViewModel({', '${(() => "")(runHudViewModel({')),
   },
   {
     name: 'the build grows an input outside the digest\'s roots',
@@ -229,7 +244,7 @@ function fresh() {
 // THE TRACEABILITY CORPUS — a second door, and it needed one
 // ---------------------------------------------------------------------------
 //
-// The seven plants above all enter at `check(root)`, which reads FILES. `--which`
+// The file plants above all enter at `check(root)`, which reads FILES. `--which`
 // reads HISTORY, and no file plant can reach it: the defect lives in the shape of
 // the commit graph, not in any byte of any tree. So this corpus builds a real git
 // repository with a real merge in it and enters at `whichCommits()` — the same

@@ -40,6 +40,8 @@ import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
 import { attributeContentProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
 import { startingKitProblems } from './startingKits.js';
+import { armouryUiProblems } from './equipmentUi.js';
+import { characterCreationProblems } from './characterCreation.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -85,6 +87,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'tags', // card/effect tag registry — one vocabulary, two carriers (#61)
   'attributeRules',
   'derivedStatRules',
+  'characterCreation',
 ]);
 
 /**
@@ -281,6 +284,9 @@ export function validateContent(bundle) {
   } else if (!Array.isArray(equipment.basicCardProfiles)) {
     err('equipment.basicCardProfiles', 'Missing required basicCardProfiles array');
   } else {
+    for (const problem of armouryUiProblems(equipment.armouryUi)) {
+      err(problem.path, problem.message);
+    }
     // Player Poise is authored on every equipment row even though it has no
     // combat consumer yet. Missing data must not silently normalize to zero:
     // the receipt is truthful only when every worn source says its number.
@@ -403,6 +409,24 @@ export function validateContent(bundle) {
     err('equipment.startingKits', error && error.message ? error.message : 'starting-kit validation failed');
   }
 
+  const dependencySafeBundle = {
+    ...b,
+    equipment: {
+      ...(equipment && typeof equipment === 'object' && !Array.isArray(equipment) ? equipment : {}),
+      armaments: Array.isArray(equipment && equipment.armaments) ? equipment.armaments : [],
+      armour: Array.isArray(equipment && equipment.armour) ? equipment.armour : [],
+    },
+  };
+  for (const problem of characterCreationProblems(dependencySafeBundle)) {
+    const split = problem.indexOf(':');
+    err(split >= 0 ? problem.slice(0, split) : 'characterCreation', split >= 0 ? problem.slice(split + 1).trim() : problem);
+  }
+  const creationKeepsakes = b.characterCreation && b.characterCreation.keepsakes;
+  for (const keepsake of Array.isArray(creationKeepsakes) ? creationKeepsakes : []) {
+    if (!keepsake || typeof keepsake !== 'object' || Array.isArray(keepsake) || !Array.isArray(keepsake.effects)) continue;
+    validateEffects(keepsake.effects, `characterCreation.keepsakes.${keepsake.id || '?'}.effects`, vctx);
+  }
+
   // ---- schema walks --------------------------------------------------------
   const typeToSchema = {
     attributes: SCHEMAS.attribute,
@@ -447,6 +471,17 @@ export function validateContent(bundle) {
   }
   walkSchema(b.attributeRules, SCHEMAS.attributeRules, 'attributeRules', vctx);
   for (const problem of attributeContentProblems(b)) err(problem.path, problem.msg);
+  const equipmentProfileIds = new Set((((b.equipment || {}).basicCardProfiles) || []).map((row) => row && row.id));
+  for (const mode of b.creationModes || []) {
+    for (const [profileId, patch] of Object.entries((mode && mode.equipmentProfiles) || {})) {
+      const path = `creationModes.${mode.id}.equipmentProfiles.${profileId}`;
+      if (!equipmentProfileIds.has(profileId)) err(path, `unknown equipment profile '${profileId}'`);
+      if (patch.baseValue !== undefined && !Number.isFinite(patch.baseValue)) err(`${path}.baseValue`, 'must be finite');
+      if (patch.pointsPerTier !== undefined && (!Number.isFinite(patch.pointsPerTier) || patch.pointsPerTier <= 0)) err(`${path}.pointsPerTier`, 'must be finite and > 0');
+      if (patch.gainPerTier !== undefined && !Number.isFinite(patch.gainPerTier)) err(`${path}.gainPerTier`, 'must be finite');
+      if (patch.cap !== undefined && patch.cap !== null && (!Number.isFinite(patch.cap) || patch.cap < 0)) err(`${path}.cap`, 'must be null or finite and >= 0');
+    }
+  }
   for (const problem of derivedStatRuleProblems(b.derivedStatRules, {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp', 'hpPerConTier'],
@@ -680,6 +715,30 @@ export function validateContent(bundle) {
   // through a real boot; observed red at b277ec2 before this block existed.
   if (b.balance && b.balance.ui) {
     const ui = b.balance.ui;
+    const hp = ui.hudPresentation;
+    if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
+    } else {
+      for (const [key, min, max] of [
+        ['componentBackgroundOpacityPct', 0, 100],
+        ['metadataFontPx', 8, 24],
+        ['beltItemGapPx', 0, 12],
+        ['portraitScale', 0.5, 1],
+        ['primaryRowGapPx', 0, 24],
+        ['controlGapPx', 0, 12],
+        ['resourceRowGapPx', 0, 12],
+        ['cindersMaxWidthPct', 20, 40],
+        ['metadataMaxWidthPct', 20, 40],
+      ]) {
+        const value = hp[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudPresentation.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof hp.metadataShowTotals !== 'boolean') {
+        err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
@@ -750,7 +809,7 @@ export function validateContent(bundle) {
   // The growth chain (balance.flaskGrowth) — same refusal shape, same door.
   // Its corpus is `node tools/flaskgrowth.mjs --selftest`, which plants each
   // refusal into the real bundle and watches this call go red.
-  for (const e of flaskGrowthRefusals(b)) err(e.key, e.msg);
+  for (const e of flaskGrowthRefusals(dependencySafeBundle)) err(e.key, e.msg);
 
   // balance.poise is engine-consulted data: { growthMult?, onFill? } (see ENGINE-API.md)
   if (b.balance && b.balance.poise) {

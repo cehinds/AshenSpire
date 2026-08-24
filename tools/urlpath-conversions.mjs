@@ -192,6 +192,7 @@ function blockKind(tokens) {
   const previous = tokens.at(-1);
   if (!previous || previous.value === ';' || previous.blockClose === 'statement') return 'statement';
   if (['else', 'try', 'finally', 'do'].includes(previous.value)) return 'statement';
+  if (previous.value === 'static') return 'statement';
   const classIndex = headerKeywordBefore(tokens, 'class');
   if (classIndex >= 0) return declarationContextAt(tokens, classIndex) ? 'statement' : 'expression';
   if (previous.value === '=>') return 'expression';
@@ -839,6 +840,50 @@ function unwrapAssigned(tokens, start, end, urls, isAlias) {
 
 const PLATFORM_BINDING_CACHE = new WeakMap();
 
+function platformBindingVisibility(tokens, candidates, importBindingIndexes) {
+  const parameters = parameterScopes(tokens);
+  const declarations = collectDeclarationBindings(tokens);
+  const loops = loopAliasRanges(tokens, declarations);
+  const seeds = declarationSeeds(tokens, parameters, declarations, loops.bindingToRange);
+  const ranges = new Map([...candidates].map((name) => [name, []]));
+  const addRange = (name, start, end) => {
+    if (ranges.has(name) && end >= start) ranges.get(name).push({ start, end });
+  };
+  const braceEnd = (brace) => {
+    const close = findClose(tokens, brace, '{', '}');
+    return close < 0 ? tokens.length : close;
+  };
+
+  for (const [owner, bindings] of seeds) {
+    const start = owner < 0 ? 0 : owner + 1;
+    const end = owner < 0 ? tokens.length : braceEnd(owner);
+    for (const name of bindings.keys()) addRange(name, start, end);
+  }
+  for (const [brace, names] of parameters.atBrace) {
+    for (const name of names) addRange(name, brace + 1, braceEnd(brace));
+  }
+  for (const range of parameters.expressionRanges) {
+    for (const name of range.names) addRange(name, range.start, range.end);
+  }
+  for (const range of loops.ranges) {
+    for (const name of range.aliases.keys()) addRange(name, range.start, range.end);
+  }
+
+  const shadowedAt = (name, index) => (ranges.get(name) || [])
+    .some((range) => index >= range.start && index < range.end);
+  const reassigned = new Set();
+  for (let i = 0; i < tokens.length; i++) {
+    const name = tokens[i].value;
+    if (!candidates.has(name) || importBindingIndexes.has(i) || shadowedAt(name, i)) continue;
+    const previous = tokens[i - 1];
+    const next = tokens[i + 1];
+    const assignmentTarget = ASSIGNMENTS.has(next?.value) && !['.', '?.', ']'].includes(previous?.value);
+    const updateTarget = ['++', '--'].includes(next?.value) || ['++', '--'].includes(previous?.value);
+    if (assignmentTarget || updateTarget) reassigned.add(name);
+  }
+  return (name, index) => !reassigned.has(name) && !shadowedAt(name, index);
+}
+
 function nodeUrlPlatformBindings(tokens) {
   const cached = PLATFORM_BINDING_CACHE.get(tokens);
   if (cached) return cached;
@@ -867,32 +912,8 @@ function nodeUrlPlatformBindings(tokens) {
     }
   }
 
-  // An imported converter that is shadowed or reassigned is not the imported
-  // converter at every call site. Conservatively stop trusting that spelling
-  // for the file; alias-use analysis then fails closed instead of blessing a
-  // local function merely because it shares the platform API's name.
-  if (direct.size || namespaces.size) {
-    const parameters = parameterScopes(tokens);
-    const declarations = collectDeclarationBindings(tokens);
-    const unsafe = new Set();
-    const candidates = new Set([...direct, ...namespaces]);
-    for (let i = 0; i < tokens.length; i++) {
-      const name = tokens[i].value;
-      if (!candidates.has(name) || importBindingIndexes.has(i)) continue;
-      const previous = tokens[i - 1];
-      const next = tokens[i + 1];
-      const assignmentTarget = ASSIGNMENTS.has(next?.value) && !['.', '?.', ']'].includes(previous?.value);
-      const updateTarget = ['++', '--'].includes(next?.value) || ['++', '--'].includes(previous?.value);
-      if (declarations.has(i) || parameters.parameterIndexes.has(i) ||
-          parameters.declarationNameIndexes.has(i) ||
-          ['function', 'class'].includes(previous?.value) || assignmentTarget || updateTarget) {
-        unsafe.add(name);
-      }
-    }
-    for (const name of unsafe) { direct.delete(name); namespaces.delete(name); }
-  }
-
-  const result = { direct, namespaces };
+  const visibleAt = platformBindingVisibility(tokens, new Set([...direct, ...namespaces]), importBindingIndexes);
+  const result = { direct, namespaces, visibleAt };
   PLATFORM_BINDING_CACHE.set(tokens, result);
   return result;
 }
@@ -902,11 +923,12 @@ function isNodeUrlPlatformCallAt(tokens, open) {
   let callee = open - 1;
   if (tokens[callee]?.value === '?.') callee--;
   if (tokens[callee]?.type === 'identifier') {
-    if (bindings.direct.has(tokens[callee].value)) return true;
+    if (bindings.direct.has(tokens[callee].value) && bindings.visibleAt(tokens[callee].value, callee)) return true;
     const separator = tokens[callee - 1];
     const receiver = tokens[callee - 2];
     return tokens[callee].value === 'fileURLToPath' && ['.', '?.'].includes(separator?.value) &&
-      receiver?.type === 'identifier' && bindings.namespaces.has(receiver.value);
+      receiver?.type === 'identifier' && bindings.namespaces.has(receiver.value) &&
+      bindings.visibleAt(receiver.value, callee - 2);
   }
   if (tokens[callee]?.value !== ']') return false;
   const bracket = findOpenBackward(tokens, callee, '[', ']');
@@ -914,7 +936,8 @@ function isNodeUrlPlatformCallAt(tokens, open) {
       tokens[bracket + 1].value !== 'fileURLToPath') return false;
   let receiver = bracket - 1;
   if (tokens[receiver]?.value === '?.') receiver--;
-  return tokens[receiver]?.type === 'identifier' && bindings.namespaces.has(tokens[receiver].value);
+  return tokens[receiver]?.type === 'identifier' && bindings.namespaces.has(tokens[receiver].value) &&
+    bindings.visibleAt(tokens[receiver].value, receiver);
 }
 
 function containingPlatformCall(tokens, index) {
@@ -1610,6 +1633,8 @@ function selftest() {
     ['unrelated class accessor name stays clean', "const u=new URL('./x',import.meta.url);class X{get u(){return 1}}fileURLToPath(u)", 0, 0, 0],
     ['unrelated static class method name stays clean', "const u=new URL('./x',import.meta.url);class X{static u(){}}fileURLToPath(u)", 0, 0, 0],
     ['unrelated class field name stays clean', "const u=new URL('./x',import.meta.url);class X{u=1}fileURLToPath(u)", 0, 0, 0],
+    ['sibling class static block cannot shadow an earlier URL use', "const u=new URL('./x',import.meta.url);class X{static{u.pathname}static{const u=platformValue}}fileURLToPath(u)", 1, 0, 0],
+    ['same class static block lexical binding shadows its whole block', "const u=new URL('./x',import.meta.url);class X{static{u.pathname;const u=platformValue}}fileURLToPath(u)", 0, 0, 0],
     ['computed class method key alias remains fail closed', "const u=new URL('./x',import.meta.url);class X{[u](){}}fileURLToPath(u)", 0, 0, 1],
     ['conditional direct URL receiver pathname is caught', "(ok?new URL('./x',import.meta.url):platformValue).pathname", 1, 0, 0],
     ['logical direct URL receiver pathname is caught', "(ok&&new URL('./x',import.meta.url)).pathname", 1, 0, 0],
@@ -1670,6 +1695,12 @@ function selftest() {
       "function fileURLToPath(value){return value}const u=new URL('./x',import.meta.url);fileURLToPath(u)", 1],
     ['shadowed node:url alias is not trusted',
       "import {fileURLToPath as toPath} from 'node:url';\nfunction f(toPath){const u=new URL('./x',import.meta.url);toPath(u)}", 1],
+    ['nested parameter shadow does not hide the outer node:url alias',
+      "import {fileURLToPath as toPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);function f(toPath){}toPath(u)", 0],
+    ['nested lexical shadow does not hide the outer node:url alias',
+      "import {fileURLToPath as toPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);{const toPath=local;void toPath}toPath(u)", 0],
+    ['shadowed call remains fail closed while the outer node:url alias remains trusted',
+      "import {fileURLToPath as toPath} from 'node:url';\nconst u=new URL('./x',import.meta.url);function f(toPath){toPath(u)}toPath(u)", 1],
   ];
   const platformBindingResults = [];
   for (const eol of ['\n', '\r\n']) {

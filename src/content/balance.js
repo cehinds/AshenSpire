@@ -16,10 +16,9 @@ export const balance = {
   handMax: 10,
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
-  flaskCapacity: 3,
-  // PROVISIONAL — the first live unlock rung of D19's parenthesis
-  // ("3 total (with future unlocks for larger total amount)", Constantine,
-  // 2026-08-13; C1 — CLOSED: POOL). The seed grows the vessel: Golden Sprout
+  flaskCapacity: 4,
+  // The approved base is four; future unlocks may still grow the total. The
+  // first live growth rung is data: Golden Sprout
   // is the Golden Seed homage, and carrying it grows the pool by one Crimson
   // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
   // the number, and a retune is this row, nothing else: the tooltip clause
@@ -135,8 +134,8 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 20,
-    costStep: 4,
+    firstCost: 800,
+    costStep: 200,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -243,8 +242,37 @@ export const balance = {
     //
     // Flipping either boolean is a one-number data edit and needs no code.
     hudBars: {
-      main: { scaleByMax: true },
+      // The shared map/combat resource reference track may occupy at most this
+      // share of the visual viewport. main.js projects it to one CSS variable;
+      // the stylesheet carries no second numeric copy.
+      // The shared solo HUD uses this share of the room left after its action
+      // cells. The old 40vw cap typed a viewport answer before those controls
+      // had taken their space; 82% keeps a deliberate gutter without making a
+      // second breakpoint. Co-op still consumes maxViewportPct below.
+      main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },
       model: { scaleByMax: false },
+    },
+    // Shared HUD presentation tokens. These are screen-pixel intentions;
+    // main.js projects them through --ui-zoom so Map and Combat consume the
+    // same answer. Component backgrounds are transparent by current design,
+    // while borders and the contents inside each panel remain visible.
+    hudPresentation: {
+      componentBackgroundOpacityPct: 0,
+      metadataFontPx: 11,
+      beltItemGapPx: 2,
+      // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
+      // legacy badge; the primary row, control grid, and vital rows each own
+      // their own gap so responsive layouts do not hide a second copy.
+      portraitScale: 0.7,
+      primaryRowGapPx: 8,
+      controlGapPx: 2,
+      resourceRowGapPx: 2,
+      // Header columns negotiate inside one grid: the center Cinders track and
+      // right metadata trail each cap at 30% of the viewport. Act/Floor show
+      // their current values by default; totals remain an opt-in.
+      cindersMaxWidthPct: 30,
+      metadataMaxWidthPct: 30,
+      metadataShowTotals: false,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -509,13 +537,15 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // The durations: 600 ms is the default because a long-press people already
-    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
-    // just past reflex without becoming a chore. `short` is for players who
-    // find the wait irritating, `long` for hands that need the room. `off` is
-    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
+    // `off` is the default: a card class may advertise the capability without
+    // silently changing anybody's controls. If the player enables the dial,
+    // `normal` is 600 ms because a long-press people already know is ~400-500
+    // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
+    // without becoming a chore. `short` is for players who find the wait
+    // irritating, `long` for hands that need the room. `off` is 0 and means
+    // the pre-hold behaviour, byte for byte: one tap commits.
     holdConfirm: {
-      def: 'normal',
+      def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
@@ -704,7 +734,7 @@ export const balance = {
     },
     roleSources: {
       attack: [{ slot: 'rightHand' }],
-      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
       technique: [{ slot: 'rightHand' }],
     },
     unarmedProfiles: {

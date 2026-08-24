@@ -65,6 +65,7 @@
 //
 //   node tools/flaskbox.mjs
 //   node tools/flaskbox.mjs --selftest      (same-door known-bads, doorplant.mjs)
+//   node tools/flaskbox.mjs --source-selftest (focus/surface contracts; no browser)
 
 // A NOTE ON THIS ORDINARY-LOOKING IMPORT, because it was not ordinary for two
 // hours and the record should say who fixed it. At dev = b83bda1 `browser.mjs`
@@ -86,11 +87,73 @@
 // number is a claim that those benches have now been RUN — her commit says so
 // too, and it is still the open finding.
 import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 
 import { launchBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+
+const sourceContract = ({ map, input, css, tool }) => {
+  const bad = [];
+  const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
+  if (!map.includes("el.className = 'mh-flask flask-slot';")) {
+    bad.push('F1 map utility flask is not a unified-cursor flask-slot');
+  }
+  if (!input.includes("el.matches('.flask-slot')")) {
+    bad.push('F2 input focus no longer exempts flask-slot controls from topbar chrome');
+  }
+  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(el, {')) {
+    bad.push('F3 map utility flask lost its inspect/drop action menu');
+  }
+  if (!css.includes('.topbar .relic.flask-slot,\n.topbar .mh-flask {')) {
+    bad.push('F4 map utility flask no longer shares the topbar control box');
+  }
+  if (!surfaceBlock.includes("{ group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' }")) {
+    bad.push('F5 flaskbox no longer measures the current map topbar surface');
+  }
+  return bad;
+};
+
+if (process.argv.includes('--source-selftest')) {
+  const clean = {
+    map: readFileSync(join(ROOT, 'src/ui/screens/map.js'), 'utf8'),
+    input: readFileSync(join(ROOT, 'src/ui/input.js'), 'utf8'),
+    css: readFileSync(join(ROOT, 'styles/ui.css'), 'utf8'),
+    tool: readFileSync(fileURLToPath(import.meta.url), 'utf8'),
+  };
+  const plants = [
+    {
+      name: 'map utility flask loses its topbar focus exception',
+      expected: 'F1 ',
+      mutate: (s) => ({ ...s, map: s.map.replace("el.className = 'mh-flask flask-slot';", "el.className = 'mh-flask';") }),
+    },
+    {
+      name: 'map utility flask loses inspect/drop',
+      expected: 'F3 ',
+      mutate: (s) => ({ ...s, map: s.map.replace('canDrop: true', 'canDrop: false') }),
+    },
+    {
+      name: 'flaskbox points back at the removed map sub-strip',
+      expected: 'F5 ',
+      mutate: (s) => ({ ...s, tool: s.tool.replace(
+        "  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },\n  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },",
+        "  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },\n  { group: 'utility', name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },"
+      ) }),
+    },
+  ];
+  let failures = 0;
+  const cleanBad = sourceContract(clean);
+  if (cleanBad.length) { failures++; console.log(`FAIL clean — ${cleanBad.join('; ')}`); }
+  else console.log('PASS clean — map flask remains focusable, actionable, boxed, and measured');
+  for (const plant of plants) {
+    const got = sourceContract(plant.mutate(clean));
+    if (got.some((line) => line.startsWith(plant.expected))) console.log(`RED  ${plant.name} — ${got.join('; ')}`);
+    else { failures++; console.log(`MISS ${plant.name} — ${got.join('; ') || 'no finding'}`); }
+  }
+  console.log(failures ? `flaskbox --source-selftest: ${failures} failure(s)` : `flaskbox --source-selftest: OK — ${plants.length}/${plants.length} plants discriminated`);
+  process.exit(failures ? 1 : 0);
+}
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -127,7 +190,7 @@ if (process.argv.includes('--selftest')) {
         name: 'the map flask leaves the shared box and takes base.css button padding back',
         edits: [{
           file: 'styles/ui.css',
-          find: '.topbar .relic.flask-slot,\n.map-substrip .mh-flask {',
+          find: '.topbar .relic.flask-slot,\n.topbar .mh-flask {',
           replace: '.topbar .relic.flask-slot {',
         }],
         expectRed: /BAD\s+B3 .*different heights/,
@@ -179,10 +242,10 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/screens/map.js',
-          find: "    el.className = 'mh-flask';",
-          replace: "    el.className = 'mh-flask-planted-away';",
+          find: "    el.className = 'mh-flask flask-slot';",
+          replace: "    el.className = 'mh-flask-planted-away flask-slot';",
         }],
-        expectRed: /BAD\s+B3 .*of 3 declared surfaces were reached/,
+        expectRed: /BAD\s+B3 .*declared utility surfaces were reached/,
       },
     ],
   }));
@@ -197,9 +260,11 @@ const SHAPES = [
 // `.flask-charge` is a subset of `.flask-slot` in combat and its own class in
 // co-op, so co-op is listed by the selector its own screen writes.
 const SURFACES = [
-  { name: 'combat topbar', sel: '.combat .flask-slot', door: 'combat' },
-  { name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },
-  { name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
+  { group: 'charge', name: 'combat charge', sel: '.combat .hud-charge-flasks .flask-slot', door: 'combat' },
+  { group: 'charge', name: 'map charge', sel: '.topbar .hud-charge-flasks .flask-slot', door: 'map-after-shop' },
+  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },
+  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },
+  { group: 'utility', name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
 ];
 
 const findings = [];
@@ -241,7 +306,7 @@ function connectCdp(wsUrl) {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  const { serve } = await import(join(ROOT, 'tools/serve.mjs'));
+  const { serve } = await import(pathToFileURL(join(ROOT, 'tools/serve.mjs')).href);
   const s = await serve({ root: ROOT, port: 8296, open: false });
   const base = `http://localhost:${s.port}/`;
   console.log(`flaskbox — ${base} (root ${ROOT})`);
@@ -331,10 +396,13 @@ async function main() {
       else if (clipped.length) bad('B2', shape, `${surface.name}: ${clipped.length} control(s) clip their own content (scroll size exceeds client size)`);
       else ok('B2', shape, `${surface.name}: every child inside its own box, nothing clipped (${rows.reduce((n, r) => n + r.kids.length, 0)} children)`);
 
-      heights.set(surface.name, rows.map((r) => +r.box.h.toFixed(1)));
+      heights.set(surface.name, { group: surface.group, values: rows.map((r) => +r.box.h.toFixed(1)) });
     }
 
-    // B3 — one box. No threshold: three surfaces, one answer.
+    // B3 — one box per semantic control kind. Charge flasks intentionally share
+    // the larger two-by-two action-card height; utility potions intentionally
+    // share the relic-sized row. Each kind must still be identical everywhere
+    // it appears, without flattening those two distinct user-approved roles.
     //
     // THE DENOMINATOR IS ASSERTED, and this closes a hole I shipped in the first
     // version of this file eight hours ago and named in my own report: it went
@@ -344,11 +412,14 @@ async function main() {
     // already names in its own header, reproduced by me in a new tool the same
     // night I read it. The count SURFACES declares is the count that must be
     // reached; anything less is red, whatever the survivors agreed about.
-    const seen = [...heights.entries()];
-    const all = [...new Set(seen.flatMap(([, hs]) => hs))];
-    if (seen.length !== SURFACES.length) bad('B3', shape, `${seen.length} of ${SURFACES.length} declared surfaces were reached (${seen.map(([n]) => n).join(', ') || 'none'}) — a smaller confident number is the worse failure. Missing: ${SURFACES.map((x) => x.name).filter((n) => !heights.has(n)).join(', ')}`);
-    else if (all.length === 1) ok('B3', shape, `the flask control is ${all[0]} px on all ${seen.length} of ${SURFACES.length} declared surfaces (${seen.map(([n]) => n).join(', ')})`);
-    else bad('B3', shape, `the same flask is ${all.length} different heights: ${seen.map(([n, hs]) => `${n} ${[...new Set(hs)].join('/')}`).join(', ')}. One item, one box — a flask that changes size when the screen changes is the defect this tool exists for`);
+    for (const group of ['charge', 'utility']) {
+      const declared = SURFACES.filter((surface) => surface.group === group);
+      const seen = [...heights.entries()].filter(([, row]) => row.group === group);
+      const all = [...new Set(seen.flatMap(([, row]) => row.values))];
+      if (seen.length !== declared.length) bad('B3', shape, `${seen.length} of ${declared.length} declared ${group} surfaces were reached (${seen.map(([n]) => n).join(', ') || 'none'}) — a smaller confident number is the worse failure. Missing: ${declared.map((x) => x.name).filter((n) => !heights.has(n)).join(', ')}`);
+      else if (all.length === 1) ok('B3', shape, `the ${group} flask control is ${all[0]} px on all ${seen.length} declared surfaces (${seen.map(([n]) => n).join(', ')})`);
+      else bad('B3', shape, `the same ${group} flask is ${all.length} different heights: ${seen.map(([n, row]) => `${n} ${[...new Set(row.values)].join('/')}`).join(', ')}. One item, one box — a flask that changes size when the screen changes is the defect this tool exists for`);
+    }
 
     // ---- B4 — E10: THE ASSIGNMENT IS AN INCREMENT, AND THE TOTAL HOLDS ------
     // His words: "I don't like how the flask assignments are separate buttons

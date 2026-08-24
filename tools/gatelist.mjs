@@ -365,7 +365,10 @@ function isCommandForm(said, tool) {
 // composite actions or `uses:`-with-args would read as "no run payloads", which
 // G3 turns into exit 2, not a green.
 function readWorkflow(text) {
-  const lines = text.split('\n');
+  // The workflow is checked out as CRLF on Windows. Normalise at the parser
+  // boundary so the end-anchored structural matcher sees the same lines on
+  // every platform and a checkout policy cannot turn a real gate into UNKNOWN.
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const payloads = [];
   // a step begins at `- name:` / `- uses:` / `- run:`; scan its block for
   // continue-on-error so a swallowed status at the YAML level is visible too.
@@ -590,6 +593,10 @@ const ONLY_BROWSER = args.includes('--browser');
 
 if (args.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  // Plant anchors are byte-for-byte by design. Derive each file's native EOL
+  // so the same corpus arms in LF clones and CRLF Windows checkouts.
+  const workflowEol = readSource('.github/workflows/ci.yml', null).includes('\r\n') ? '\r\n' : '\n';
+  const toolEol = readSource('tools/gatelist.mjs', null).includes('\r\n') ? '\r\n' : '\n';
   const PLANTS = [
       {
         // ⚠ PLANT 1 — THE ONE I PERSONALLY OWE. A real invocation moved into an
@@ -709,8 +716,8 @@ if (args.includes('--selftest')) {
           // another file, and nothing but this drift report checks that the two
           // still agree. That is the defect this whole tool is about, sitting
           // inside its own selftest — declared, not quietly fixed.
-          find: '        run: node tools/hintstrip.mjs\n',
-          replace: '        run: echo node tools/hintstrip.mjs\n',
+          find: `        run: node tools/hintstrip.mjs${workflowEol}`,
+          replace: `        run: echo node tools/hintstrip.mjs${workflowEol}`,
         }],
         expectRed: /BAD\s+G1 /,
       },
@@ -759,8 +766,8 @@ if (args.includes('--selftest')) {
         name: 'a WRAPPED invocation is swallowed, and the red must name the tool the wrapper fronts',
         edits: [{
           file: '.github/workflows/ci.yml',
-          find: '        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
-          replace: '        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs || true\n',
+          find: `        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs${workflowEol}`,
+          replace: `        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs || true${workflowEol}`,
         }],
         expectRed: /BAD\s+G4 [^\n]*tools\/workflow-lint\.mjs/,
       },
@@ -786,13 +793,13 @@ if (args.includes('--selftest')) {
             // copy of a line that lives 500 lines up in this same file, so an
             // unanchored match would hit THIS definition first if the two ever
             // swap order. Anchored to column 0, it can only match the real one.
-            find: "\nconst DELEGATING = new Set(['tools/verdict.mjs']);\n",
-            replace: "\nconst DELEGATING = new Set([]);\nWRAPPERS.add('tools/verdict.mjs');\nWRAPPERS.add('verdict.mjs');\n",
+            find: `${toolEol}const DELEGATING = new Set(['tools/verdict.mjs']);${toolEol}`,
+            replace: `${toolEol}const DELEGATING = new Set([]);${toolEol}WRAPPERS.add('tools/verdict.mjs');${toolEol}WRAPPERS.add('verdict.mjs');${toolEol}`,
           },
           {
             file: '.github/workflows/ci.yml',
-            find: '      - name: Every workflow step actually runs a command\n        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
-            replace: '      - name: Every workflow step actually runs a command\n        run: |\n          echo running node tools/workflow-lint.mjs\n          node tools/verdict.mjs -- node tools/workflow-lint.mjs\n',
+            find: `      - name: Every workflow step actually runs a command${workflowEol}        run: node tools/verdict.mjs -- node tools/workflow-lint.mjs${workflowEol}`,
+            replace: `      - name: Every workflow step actually runs a command${workflowEol}        run: |${workflowEol}          echo running node tools/workflow-lint.mjs${workflowEol}          node tools/verdict.mjs -- node tools/workflow-lint.mjs${workflowEol}`,
           },
         ],
         expectRed: /BAD\s+G1 [^\n]*tools\/workflow-lint\.mjs/,

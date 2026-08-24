@@ -713,6 +713,31 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (numsSelf.code !== 0 || !numsSelfV.text) zoomExtra++;
   else zoomPassed++;
 
+  // 69 — THE PROBE CORPUS'S OWN DERIVATIONS. Bjorn, 2026-08-22. `tools/watched.mjs`
+  // is one of the 131 tools `gatelist` counts as executed by no declared gate
+  // list, so its floors reached no automated run at all — and the floor added
+  // today is the one that catches a probe still citing code that has moved.
+  // Wiring it here is the whole point: a floor nobody runs is the defect it was
+  // built to catch, one level up. `--check-reads` needs no browser, no ledger and
+  // no bundle, which is why this door and not the full audit is the one CI can
+  // afford to hold.
+  const runReads = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/watched.mjs', '--check-reads', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const reads = runReads([]);
+  const readsV = quote(reads.out);
+  console.log(
+    `${reads.code === 0 && readsV.text ? 'PASS' : 'FAIL'}  69. every watched-probe still reads a file that exists and an anchor still in it` +
+      ` — ${readsV.text || `watched --check-reads (exit ${reads.code}): ${readsV.why}`}` +
+      ` (\`node tools/watched.mjs --check-reads\` for the derived file:line of every anchor)`
+  );
+  if (reads.code !== 0 || !readsV.text) zoomExtra++;
+  else zoomPassed++;
+
   const numsTree = runNums([]);
   const numsTreeV = quote(numsTree.out);
   console.log(
@@ -723,9 +748,9 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
   else zoomPassed++;
 
-  // 69/70 — module URL/filesystem path conversions use node:url (#13).
-  // 69 proves the two required known-bads through the real scanner and runs
-  // both from a working directory containing spaces. 70 scans tools/ + tests/.
+  // 73/74 — module URL/filesystem path conversions use node:url (#13).
+  // 73 proves the two required known-bads through the real scanner and runs
+  // both from a working directory containing spaces. 74 scans tools/ + tests/.
   // These numbers follow the suite's own 64/65 uniqueness gate and the 67/68
   // gate-list pair; tools/testnumbers.mjs is the authority that verifies them.
   const runUrlPath = (args) => {
@@ -739,7 +764,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const urlPathSelf = runUrlPath(['--selftest']);
   const urlPathSelfV = quote(urlPathSelf.out);
   console.log(
-    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  69. the URL/path check catches both known-bads from a spaced working directory` +
+    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
       ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
   );
   if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
@@ -748,7 +773,7 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   const urlPathTree = runUrlPath([]);
   const urlPathTreeV = quote(urlPathTree.out);
   console.log(
-    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  70. module URL/filesystem path conversions use the platform API` +
+    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
       ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
       ` (\`node tools/urlpath-conversions.mjs\` names each site)`
   );
@@ -818,7 +843,7 @@ console.log('          number. A CONSISTENCY check — it proves the declared la
 console.log('          never that any label is the right one, and it reads only the two declared');
 console.log('          test sources, so a third test file or a number composed at runtime is');
 console.log('          invisible to it.');
-console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
+console.log("          equipment's `self.maxHp/maxMana/maxStamina=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 console.log('          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
 console.log('          prove that every STEP naming an instrument invokes it (or states what goes');
@@ -832,11 +857,19 @@ console.log('          nothing about instruments a person starts at a terminal, 
 console.log('          gate that lives only in a PR body. The census of which tools sit in no list');
 console.log('          is REPORTED by that tool and asserted by nobody — that disposition is a');
 console.log('          design call with real costs, and it is not this suite\'s to make.');
-console.log('          69–70 guard module URL/path conversion shapes in tools/ and tests/:');
+console.log('          73–74 guard module URL/path conversion shapes in tools/ and tests/:');
 console.log('          actual dynamic file:// templates/concats and same-file static URL');
 console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
 console.log('          or bounded local-alias forms. A platform consumer is trusted only through');
 console.log('          its static node:url import; ambiguous lexical, binding, or alias flow fails');
 console.log('          closed. They prove both fixtures fail from a spaced working directory;');
 console.log('          they do not cover cross-module flow or platform-API semantic correctness.');
+console.log('          69 IS A CONSISTENCY CHECK OVER A CITATION, NOT A CORRECTNESS ONE. It proves');
+console.log('          every watched-probe still names a file that exists and an anchor literal');
+console.log('          still in it — it CANNOT tell whether that anchor identifies the right thing,');
+console.log('          and an anchor picked loose enough to survive any edit greens here forever.');
+console.log('          `by` in tools/watched-probes.json names who picked it. It also runs only the');
+console.log('          READ door of tools/watched.mjs: nothing in this suite opens the build, drives');
+console.log('          a probe, or photographs a control, so `watched` as a VERDICT is still');
+console.log('          unwatched by CI — only the derivations behind it are.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

@@ -3,6 +3,46 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-329",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Character creation now owns one shared Inventory and validates every starting hand",
+    "detail": "Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.",
+    "build": "0.4.0.1126",
+    "pullRequest": 329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/329"
+  },
+  {
+    "id": "pr-328",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Swapped armaments now remain attached to their actual hand sockets",
+    "detail": "The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.",
+    "build": "0.4.0.1114",
+    "pullRequest": 328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/328"
+  },
+  {
+    "id": "pr-327",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Map and combat now share the same three-row HUD",
+    "detail": "Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.",
+    "build": "0.4.0.1091",
+    "pullRequest": 327,
+    "url": "https://github.com/cehinds/AshenSpire/pull/327"
+  },
+  {
+    "id": "pr-323",
+    "date": "2026-08-22",
+    "group": "2026-08-22",
+    "summary": "Map and combat share one compact player HUD",
+    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.",
+    "build": "0.4.0.1078",
+    "pullRequest": 323,
+    "url": "https://github.com/cehinds/AshenSpire/pull/323"
+  },
+  {
     "id": "pr-317",
     "date": "2026-08-21",
     "group": "2026-08-21",

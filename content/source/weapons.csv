@@ -5,7 +5,8 @@
 # one armament: how it looks (geom + scale + palette), what it grants (tags),
 # and how it rewrites your starting cards (mods).
 #
-# hand   right | left | either   (staves are right; shields left; daggers either)
+# hand   right | left | either   (all shipped armaments are `either`; the slot
+#        records where the player actually equipped one)
 #
 # tags   free-form characteristics, pipe-separated. Two of them are read by the
 #        rules rather than only by flavour, and neither is a new column:
@@ -21,28 +22,28 @@
 # mods   card rewrites, pipe-separated:  strike.damage=3|strike.hits=2|self.strength=+2
 #        '=' replaces, '+/-' adjusts. Empty = no card change.
 id,name,kind,hand,rarity,geom,scale,metal,accent,tags,attackProfile,guardProfile,techniqueProfile,mods,unlock,blurb,dropWeight,artKey,poiseThreshold
-straightSword,Straight Sword,weapon,right,common,sword,1.00,B8B0A0,C9A227,blade|basic,bladeAttack,weaponGuard,weaponTechnique,,,"Honest steel. It asks nothing clever of you.",10,,5
-greatsword,Greatsword,weapon,right,uncommon,colossal,1.00,B8B0A0,C9A227,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care.",7,,8
+straightSword,Straight Sword,weapon,either,common,sword,1.00,B8B0A0,C9A227,blade|basic,bladeAttack,weaponGuard,weaponTechnique,,,"Honest steel. It asks nothing clever of you.",10,,5
+greatsword,Greatsword,weapon,either,uncommon,colossal,1.00,B8B0A0,C9A227,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+4|strike.cost=+1|strike.poise=+3,,"Slow, and it does not care.",7,,8
 dagger,Dagger,weapon,either,common,dagger,1.00,C0B8A6,C9A227,blade|pierce|flourish,daggerPierceAttack,weaponGuard,weaponTechnique,strike.hits=2,,"Two cuts where one would do.",10,,3
-shortbow,Shortbow,weapon,right,common,dagger,1.00,C0B8A6,C9A227,pierce|ranged|precision,bowPierceAttack,weaponGuard,bowTechnique,,,"A compact bow represented by a generic armament silhouette in this slice.",10,dagger,2
-katana,Katana,weapon,right,uncommon,curved,1.00,C6BEAC,C9502E,blade|blood|flourish,bladeAttack,weaponGuard,weaponTechnique,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge.",7,,5
-halberd,Halberd,weapon,right,uncommon,polearm,1.00,A8A090,C9A227,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1|strike.poise=+4,,"Reach enough to keep the dead at arm's length.",7,,7
-warhammer,Warhammer,weapon,right,uncommon,hammer,1.00,8E8678,C9A227,heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+2|strike.poise=+6,,"Poise is a fiction. This is the argument.",7,,9
-twinblade,Twinblade,weapon,right,rare,twin,1.00,C0B8A6,7FA8C9,blade|flourish,bladeAttack,weaponGuard,weaponTechnique,strike.damage=2|strike.hits=3,,"Both ends are the business end.",4,,5
-battleaxe,Battleaxe,weapon,right,common,axe,1.00,A8A090,C9502E,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1,,"It was a woodcutter's once.",10,,7
-buckler,Buckler,shield,left,common,round,0.80,8E8678,C9A227,guard|flourish,,shieldGuard,,defend.block=+2,,"Small enough to be quick with.",10,,4
-kiteShield,Kite Shield,shield,left,common,kite,1.00,8E8678,C9A227,guard,,shieldGuard,,defend.block=+3|strike.damage=-1,,"A wall you can carry. Your arm knows it.",10,,8
-towerShield,Tower Shield,shield,left,rare,tower,1.00,7E766A,C9A227,guard|heavy,,shieldGuard,,defend.block=+6|strike.damage=-2,,"You will not be moved. You will not move.",4,,12
-roundShield,Round Shield,shield,left,common,round,1.00,8E8678,7FA8C9,guard|basic,,shieldGuard,,defend.block=+2,,"Plain, round, and enough.",10,,7
-spikedShield,Spiked Shield,shield,left,uncommon,spiked,1.00,8E8678,C9502E,guard|blade,,shieldGuard,,defend.block=+2|strike.damage=+1,,"Defence with an opinion.",7,,8
-lantern,Lantern,shield,left,common,lantern,0.85,6B5D45,C9A227,guard,,shieldGuard,,defend.block=+1|self.regen=+1,,"Light enough to see what is coming.",10,,2
-torch,Torch,shield,left,common,torch,0.90,6B5D45,C9502E,gorefire,,shieldGuard,,strike.burn=+2,,"Fire remembers what steel forgets.",10,,2
-parryDagger,Parrying Dagger,shield,left,uncommon,dagger,0.85,C0B8A6,7FA8C9,guard|flourish,,shieldGuard,,defend.block=+1|strike.poise=+2,,"Held wrong on purpose.",7,,3
-ashStaff,Ash Staff,staff,right,common,staffOrb,1.00,6B5D45,C9A227,ritual|basic,staffMagicAttack,staffGuard,staffTechnique,power.potency=+1,,"Grey wood, warm at the grip.",10,,3
-starstoneStaff,Starstone Staff,staff,right,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,starstone,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2|strike.damage=-1|strike.frost=+2,,"The stone hums before you do.",7,,3
-boneSceptre,Bone Sceptre,staff,right,uncommon,staffSkull,1.00,B8AE98,B5541C,ritual|blight,sceptreArcaneAttack,sceptreGuard,staffTechnique,power.potency=+1|strike.blight=+2,,"Someone knelt for this once.",7,,4
-emberlightSceptre,Emberlight Sceptre,staff,right,rare,staffFlame,1.00,6B5D45,C9A227,ritual|oath,sceptreArcaneAttack,,staffTechnique,power.potency=+3,,"It keeps a little of the guiding flame.",4,,4
-goldboughBranch,Goldbough Branch,staff,right,rare,staffBranch,1.00,6B5D45,C9A227,ritual|oath,sceptreArcaneAttack,,staffTechnique,power.potency=+2|self.regen=+1,,"Cut, and still growing.",4,,4
-blightRod,Blight Rod,staff,right,uncommon,staffOrb,0.95,4B3522,B5541C,blight,sceptreArcaneAttack,,staffTechnique,strike.blight=+3,,"Wet to the touch. It should not be.",7,,3
-gorefireBrand,Gorefire Brand,staff,right,rare,staffFlame,0.95,4B3522,C9502E,gorefire|blood,sceptreArcaneAttack,,staffTechnique,strike.burn=+2|strike.bleed=+1,,"Blood takes to flame more readily than wood.",4,,3
-wyrmhornStaff,Wyrmhorn Staff,staff,right,rare,staffHorn,1.00,B8AE98,C9A227,ritual|heavy,sceptreArcaneAttack,,staffTechnique,power.potency=+2|strike.poise=+2|strike.insanity=+2,,"Taken from something that objected.",4,,5
+shortbow,Shortbow,weapon,either,common,dagger,1.00,C0B8A6,C9A227,pierce|ranged|precision,bowPierceAttack,weaponGuard,bowTechnique,,,"A compact bow represented by a generic armament silhouette in this slice.",10,dagger,2
+katana,Katana,weapon,either,uncommon,curved,1.00,C6BEAC,C9502E,blade|blood|flourish,bladeAttack,weaponGuard,weaponTechnique,strike.damage=-1|strike.bleed=+2,,"A long curve, and a long grudge.",7,,5
+halberd,Halberd,weapon,either,uncommon,polearm,1.00,A8A090,C9A227,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1|strike.poise=+4,,"Reach enough to keep the dead at arm's length.",7,,7
+warhammer,Warhammer,weapon,either,uncommon,hammer,1.00,8E8678,C9A227,heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+2|strike.poise=+6,,"Poise is a fiction. This is the argument.",7,,9
+twinblade,Twinblade,weapon,either,rare,twin,1.00,C0B8A6,7FA8C9,blade|flourish,bladeAttack,weaponGuard,weaponTechnique,strike.damage=2|strike.hits=3|self.maxStamina=+1,,"Both ends are the business end.",4,,5
+battleaxe,Battleaxe,weapon,either,common,axe,1.00,A8A090,C9502E,blade|heavy,bladeAttack,weaponGuard,weaponTechnique,strike.damage=+3|strike.cost=+1,,"It was a woodcutter's once.",10,,7
+buckler,Buckler,shield,either,common,round,0.80,8E8678,C9A227,guard|flourish,,shieldGuard,,defend.block=+2,,"Small enough to be quick with.",10,,4
+kiteShield,Kite Shield,shield,either,common,kite,1.00,8E8678,C9A227,guard,,shieldGuard,,defend.block=+3|strike.damage=-1,,"A wall you can carry. Your arm knows it.",10,,8
+towerShield,Tower Shield,shield,either,rare,tower,1.00,7E766A,C9A227,guard|heavy,,shieldGuard,,defend.block=+6|strike.damage=-2|self.maxHp=+10,,"You will not be moved. You will not move.",4,,12
+roundShield,Round Shield,shield,either,common,round,1.00,8E8678,7FA8C9,guard|basic,,shieldGuard,,defend.block=+2,,"Plain, round, and enough.",10,,7
+spikedShield,Spiked Shield,shield,either,uncommon,spiked,1.00,8E8678,C9502E,guard|blade,,shieldGuard,,defend.block=+2|strike.damage=+1,,"Defence with an opinion.",7,,8
+lantern,Lantern,shield,either,common,lantern,0.85,6B5D45,C9A227,guard,,shieldGuard,,defend.block=+1|self.regen=+1,,"Light enough to see what is coming.",10,,2
+torch,Torch,shield,either,common,torch,0.90,6B5D45,C9502E,gorefire,,shieldGuard,,strike.burn=+2,,"Fire remembers what steel forgets.",10,,2
+parryDagger,Parrying Dagger,shield,either,uncommon,dagger,0.85,C0B8A6,7FA8C9,guard|flourish,,shieldGuard,,defend.block=+1|strike.poise=+2,,"Held wrong on purpose.",7,,3
+ashStaff,Ash Staff,staff,either,common,staffOrb,1.00,6B5D45,C9A227,ritual|basic,staffMagicAttack,staffGuard,staffTechnique,power.potency=+1,,"Grey wood, warm at the grip.",10,,3
+starstoneStaff,Starstone Staff,staff,either,uncommon,staffCrystal,1.00,6B5D45,7FA8C9,starstone,staffMagicAttack,staffGuard,staffTechnique,power.potency=+2|strike.damage=-1|strike.frost=+2,,"The stone hums before you do.",7,,3
+boneSceptre,Bone Sceptre,staff,either,uncommon,staffSkull,1.00,B8AE98,B5541C,ritual|blight,sceptreArcaneAttack,sceptreGuard,staffTechnique,power.potency=+1|strike.blight=+2,,"Someone knelt for this once.",7,,4
+emberlightSceptre,Emberlight Sceptre,staff,either,rare,staffFlame,1.00,6B5D45,C9A227,ritual|oath,sceptreArcaneAttack,,staffTechnique,power.potency=+3,,"It keeps a little of the guiding flame.",4,,4
+goldboughBranch,Goldbough Branch,staff,either,rare,staffBranch,1.00,6B5D45,C9A227,ritual|oath,sceptreArcaneAttack,,staffTechnique,power.potency=+2|self.regen=+1,,"Cut, and still growing.",4,,4
+blightRod,Blight Rod,staff,either,uncommon,staffOrb,0.95,4B3522,B5541C,blight,sceptreArcaneAttack,,staffTechnique,strike.blight=+3|self.maxMana=+1,,"Wet to the touch. It should not be.",7,,3
+gorefireBrand,Gorefire Brand,staff,either,rare,staffFlame,0.95,4B3522,C9502E,gorefire|blood,sceptreArcaneAttack,,staffTechnique,strike.burn=+2|strike.bleed=+1,,"Blood takes to flame more readily than wood.",4,,3
+wyrmhornStaff,Wyrmhorn Staff,staff,either,rare,staffHorn,1.00,B8AE98,C9A227,ritual|heavy,sceptreArcaneAttack,,staffTechnique,power.potency=+2|strike.poise=+2|strike.insanity=+2,,"Taken from something that objected.",4,,5

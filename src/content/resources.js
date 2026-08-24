@@ -13,19 +13,17 @@
 //   weight     'normal' | 'skinny'  — "poise (very skinny bar)", his words
 //   order      top-to-bottom within a surface; HP, Mana, Stamina, then Poise
 //   surfaces   ['main'] | ['model'] | both — HIS two-HUD split, as data:
-//              main HUD = health, then mana/stamina under it, then poise;
+//              main HUD = health, then mana, then stamina. Poise is NOT in the
+//              top HUD; in combat it remains on the player character card.
 //              under the character models = "really just health and poise"
 //   source     WHICH RESOURCE, from the closed set in model/resources.js.
 //              A source with no reader is refused at boot, by name.
 //   domainMax  OPTIONAL override of the derived ceiling (Law 0 clause 3).
 //              Omit it and the ceiling is derived from the content itself.
-//   band       OPTIONAL. Rows that share a band render SIDE BY SIDE on one
-//              line of the HUD; a row with no band gets a line of its own.
-//              The approved hybrid (2026-08-13) puts Mana and Stamina beside
-//              each other under Health — that layout is this one word, so a
-//              future pool joins their line by writing `band: 'pools'`, not
-//              by editing CSS. Grouping is per surface, after the surface
-//              filter, in `order` order.
+//              HP, Mana and Stamina set it from HUD_REFERENCE_MAX below —
+//              his 200/20/20, one home. Poise omits it and stays derived.
+//   band       OPTIONAL for other surfaces/content. The canonical main HUD does
+//              not use it: HP, MP and SP each own a vertical row, in that order.
 //
 // Mana and Stamina are persisted derived pools. Their formulas and ruleset
 // version remain authoritative in derivedStats; this table only describes how
@@ -43,6 +41,30 @@
 // SEAM, stated not hidden: MP and SP are still raw hexes with NO cb-safe
 // swap of their own — whether #315c9b / #4d7a45 hold under deuteranopia is
 // a call for the Player-experience seat, not silently mine.
+/**
+ * THE REFERENCE SCALE — HIS RULING, 2026-08-22, AND IT LIVES HERE ALONE.
+ *
+ * Constantine: **200 HP / 20 MP / 20 SP**. A bar's
+ * TROUGH is `scale(max) / scale(reference)` of its track, so these two numbers
+ * are the whole of what a full bar looks like. Change them here and nowhere
+ * else: the rows below point at them, `resourceDomains()` reads the row, and no
+ * render path types a ceiling.
+ *
+ * REMOVAL CONDITION (SOP 1's corollary): deleted the day the trough stops
+ * encoding a maximum, or the day max-HP progression reaches this band and the
+ * reference becomes the derived ceiling again (drop `domainMax` from the rows
+ * and `resourceDomains()` derives from content, which is what it does today for
+ * poise).
+ */
+export const HUD_REFERENCE_MAX = Object.freeze({
+  /** Health's upper reference. His number. */
+  hp: 200,
+  /** Mana's upper reference. Its own data-driven ceiling. */
+  mana: 20,
+  /** Stamina's upper reference. Its own data-driven ceiling. */
+  stamina: 20,
+});
+
 export const resources = [
   {
     id: 'stamina',
@@ -53,7 +75,7 @@ export const resources = [
     order: 30,
     surfaces: ['main'],
     source: 'stamina',
-    band: 'pools',
+    domainMax: HUD_REFERENCE_MAX.stamina,
   },
   {
     id: 'mana',
@@ -64,7 +86,7 @@ export const resources = [
     order: 20,
     surfaces: ['main'],
     source: 'mana',
-    band: 'pools',
+    domainMax: HUD_REFERENCE_MAX.mana,
   },
   {
     id: 'hp',
@@ -75,6 +97,7 @@ export const resources = [
     order: 10,
     surfaces: ['main', 'model'],
     source: 'hp',
+    domainMax: HUD_REFERENCE_MAX.hp,
   },
   {
     id: 'poise',
@@ -82,10 +105,9 @@ export const resources = [
     glyph: '◈',
     tint: 'var(--gold)',
     weight: 'skinny',
-    // Last of the stack on the main HUD — under health, and under stamina and
-    // mana whenever those arrive, because their `order` will sit between.
+    // Combat-only dynamic meter on the player character card; never top HUD.
     order: 90,
-    surfaces: ['main', 'model'],
+    surfaces: ['model'],
     source: 'poise',
   },
 ];

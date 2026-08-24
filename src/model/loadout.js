@@ -76,7 +76,27 @@ export const EQUIPMENT_ROLES = Object.freeze(['attack', 'guard', 'technique']);
 // `apply` is a WORD, not a row: it means teaching a consumer something, and the
 // validator goes red until one has been taught (Law 0 clause 2).
 export const CARD_MOD_APPLIES = Object.freeze(['amount', 'hits', 'cost', 'scale', 'status']);
-export const RUN_MOD_APPLIES = Object.freeze(['maxHp', 'startStatus', 'swapCost']);
+export const EQUIPMENT_POOL_FIELDS = Object.freeze(['maxHp', 'maxMana', 'maxStamina']);
+export const RUN_MOD_APPLIES = Object.freeze([...EQUIPMENT_POOL_FIELDS, 'startStatus', 'swapCost']);
+const EQUIPMENT_POOL_CURRENT = Object.freeze({ maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' });
+
+/** Move one maximum while retaining deficit that may exceed the smaller vessel. */
+export function moveEquipmentPool(holder, maxField, nextMax, carriedDeficit = undefined) {
+  const currentField = EQUIPMENT_POOL_CURRENT[maxField];
+  if (!currentField || !Number.isFinite(holder[maxField]) || !Number.isFinite(holder[currentField])) {
+    throw new Error(`moveEquipmentPool requires finite ${maxField}/${currentField}`);
+  }
+  const oldMax = holder[maxField];
+  const observedDeficit = Math.max(0, oldMax - holder[currentField]);
+  const priorDeficit = Number.isInteger(carriedDeficit) && carriedDeficit >= 0 ? carriedDeficit : observedDeficit;
+  // A hidden deficit can be larger than a temporarily shrunken vessel. Account
+  // for spending/healing since the prior equipment move before resizing again.
+  const representedDeficit = Math.min(priorDeficit, oldMax);
+  const deficit = Math.max(0, priorDeficit + observedDeficit - representedDeficit);
+  holder[maxField] = nextMax;
+  holder[currentField] = Math.max(0, nextMax - deficit);
+  return deficit;
+}
 
 /**
  * slotHand(slot) → 'left' | 'right' | null — WHERE A SLOT IS.
@@ -133,6 +153,37 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}) 
     if (!Number.isFinite(actual) || actual < required) failures.push(row);
   }
   return { itemId: piece.id, requirements, failures, ok: failures.length === 0 };
+}
+
+/** First selected-hand requirement failure, shared by every creation mode. */
+export function startingHandsRequirementFailure(registries, hands = {}, attributes = {}) {
+  for (const pieceId of Object.values(hands).filter(Boolean)) {
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+    if (!piece) throw new Error(`unknown starting armament '${pieceId}'`);
+    const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+    if (!receipt.ok) return { piece, failure: receipt.failures[0] };
+  }
+  return null;
+}
+
+/**
+ * A total hand snapshot for character-creation stat previews. The player's
+ * actual choices stay untouched so the refusal can name an incompatible item;
+ * only pieces the preview run cannot legally equip are omitted from the
+ * temporary loadout used to derive its displayed stats.
+ */
+export function previewCompatibleHands(registries, hands = {}, attributes = {}) {
+  const next = {
+    leftHand: hands.leftHand || null,
+    rightHand: hands.rightHand || null,
+  };
+  for (const hand of ['leftHand', 'rightHand']) {
+    const id = next[hand];
+    if (!id) continue;
+    const piece = (registries.equipment.armaments || []).find((row) => row.id === id);
+    if (piece && !equipmentRequirementReceipt(registries, piece, attributes).ok) next[hand] = null;
+  }
+  return next;
 }
 
 /** Resolve whether a card fits an equipped weapon without class-id branches. */
@@ -312,15 +363,16 @@ export function validateEquipment(registries) {
       problems.push(`${piece.id}: hand '${h}' is not one of ${HANDS.join('|')}|either`);
     }
   }
-  // A slot holding pieces that name a hand must name one itself. Without this,
-  // a slot authored with an empty `hand` takes a weapon and draws it nowhere —
-  // wrong, reasonable-looking, and silent (Law 0 clause 5).
+  // A carried hand slot must name its location even when every shipped piece
+  // is side-neutral. Without this, a slot authored with an empty `hand` takes
+  // an armament and draws it nowhere — wrong, reasonable-looking, and silent.
   for (const slot of eq.slots || []) {
     if (slotHand(slot)) continue;
-    const handed = pieces.filter((p) => (slot.kinds || []).includes(p.kind) && pieceHand(p));
-    if (handed.length) {
+    const held = pieces.filter((p) => (slot.kinds || []).includes(p.kind));
+    const handed = held.filter((p) => pieceHand(p));
+    if ((slot.storage && held.length) || handed.length) {
       problems.push(
-        `slot '${slot.id}' accepts ${handed.length} piece(s) that name a hand (e.g. '${handed[0].id}') ` +
+        `slot '${slot.id}' accepts ${held.length} held piece(s) (e.g. '${held[0].id}') ` +
         `but names no hand itself — set hand=${HANDS.join('|')} on that row in equipSlots.csv`
       );
     }
@@ -612,6 +664,7 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'perRun' ? meta.found || [] : []),
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
+  const creationArmourGrant = loadout && loadout.creationArmourGrant;
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -631,6 +684,9 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
   const isBasic = (piece) => !!basicTag && (piece.tags || []).includes(basicTag);
   const why = (piece) => {
     if (!piece) return 'unearned';
+    if (creationArmourGrant
+      && creationArmourGrant.classId === piece.classId
+      && creationArmourGrant.id === piece.id) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }
@@ -787,7 +843,12 @@ export function createLoadout(registries, classId, startingKit = null, startingA
     if (!pieceId) continue;
     if (sets[slotId]) sets[slotId][0] = pieceId;
   }
-  return { sets, active, storage: [] };
+  return {
+    sets,
+    active,
+    storage: [],
+    creationArmourGrant: starting ? { classId, id: starting.id } : null,
+  };
 }
 
 function profileById(registries, id) {
@@ -834,7 +895,7 @@ export function restoreEquipmentProfileRuleSnapshot(snapshot, registries) {
   for (const profile of registries.equipment.basicCardProfiles || []) {
     const rule = snapshot.profiles[profile.id];
     if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
-    if (!Number.isFinite(rule.baseValue) || rule.baseValue < 0) throw new Error(`${profile.id}.baseValue must be finite and non-negative`);
+    if (!Number.isFinite(rule.baseValue)) throw new Error(`${profile.id}.baseValue must be finite`);
     if (!registries.attributes.has(rule.scalingStat)) throw new Error(`${profile.id}.scalingStat '${rule.scalingStat}' is unknown`);
     if (!Number.isFinite(rule.pointsPerTier) || rule.pointsPerTier <= 0) throw new Error(`${profile.id}.pointsPerTier must be > 0`);
     if (!['floor', 'ceil', 'round'].includes(rule.rounding)) throw new Error(`${profile.id}.rounding '${rule.rounding}' is unknown`);
@@ -890,6 +951,7 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
   const raw = rule.baseValue + tier.value + rarityBonus;
   const value = Number.isFinite(rule.cap) ? Math.min(rule.cap, raw) : raw;
+  if (!Number.isFinite(value) || value < 0) throw new Error(`${profile.id}: resolved equipment profile value must be finite and non-negative (got ${value})`);
   return { role: row.role, profileId: profile.id, pieceId: row.piece && row.piece.id, base: rule.baseValue, rarity, rarityBonus, ...tier, raw, cap: rule.cap, value };
 }
 
@@ -938,7 +1000,8 @@ export function equippedPieces(registries, loadout, classId) {
 }
 
 /**
- * figureSpec(registries, loadout, classId) → { armourId, rightId, leftId }
+ * figureSpec(registries, loadout, classId) →
+ *   { armourId, rightId, leftId, rightMirror, leftMirror }
  *
  * What the sprite layers should be, derived rather than stored. Slots declare
  * their own `kinds`, so this finds the armour slot by what it accepts instead
@@ -951,10 +1014,19 @@ export function equippedPieces(registries, loadout, classId) {
  * winning: two weapons equipped, one weapon on the figure, no error anywhere
  * (Bjorn photographed it on `dev`, 2026-08-07). Nothing here reads piece.hand;
  * that field gates equipping (fitsSlot), which is a different question.
+ *
+ * The current full-frame art is authored at the sword socket for every
+ * non-shield and at the off-hand socket for shields. The figure itself is
+ * mirrored for the viewer, so a slot swap needs a per-layer mirror flag too:
+ * `rightMirror` / `leftMirror` move the art onto the socket the slot names.
+ * Those flags disappear when the producer is re-rendered from slot-neutral art.
  */
 export function figureSpec(registries, loadout, classId) {
   const slots = (registries.equipment || {}).slots || [];
-  const spec = { armourId: 'default', rightId: null, leftId: null };
+  const spec = {
+    armourId: 'default', rightId: null, leftId: null,
+    rightMirror: false, leftMirror: false,
+  };
   if (!loadout) return spec;
   for (const slot of slots) {
     const piece = equippedIn(registries, loadout, classId, slot.id);
@@ -964,8 +1036,13 @@ export function figureSpec(registries, loadout, classId) {
       continue;
     }
     const hand = slotHand(slot);
-    if (hand === 'right') spec.rightId = piece.artKey || piece.id;
-    else if (hand === 'left') spec.leftId = piece.artKey || piece.id;
+    if (hand === 'right') {
+      spec.rightId = piece.artKey || piece.id;
+      spec.rightMirror = piece.kind === 'shield';
+    } else if (hand === 'left') {
+      spec.leftId = piece.artKey || piece.id;
+      spec.leftMirror = piece.kind !== 'shield';
+    }
     // No hand: this slot is not held (a talisman), so there is nothing to draw
     // in a hand for it. It used to land in the right hand as a weapon layer.
   }
@@ -1027,7 +1104,8 @@ function cardForTarget(eq, target, classId) {
 }
 
 /**
- * runMods(registries, loadout, classId) → { maxHp, swapCostDelta, startStatuses }
+ * runMods(registries, loadout, classId)
+ *   → { maxHp, maxMana, maxStamina, swapCostDelta, startStatuses }
  * The `self.*` half of the vocabulary: things a piece does to you rather than
  * to a card. startStatuses are handed straight to createCombat's existing
  * playerStatuses hook, so the engine needs no equipment code to honour them.
@@ -1048,15 +1126,15 @@ function cardForTarget(eq, target, classId) {
 export function runMods(registries, loadout, classId) {
   const fields = (registries.equipment || {}).modFields || {};
   const stacks = new Map();
-  let maxHp = 0;
+  const pools = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, 0]));
   let swapCostDelta = 0;
   for (const piece of equippedPieces(registries, loadout, classId)) {
     for (const raw of piece.mods || []) {
       const mod = parseMod(raw);
       const spec = mod && fields[mod.field];
       if (!spec || spec.scope !== 'run') continue;
-      if (spec.apply === 'maxHp') {
-        maxHp = mod.mode === 'add' ? maxHp + mod.value : mod.value;
+      if (EQUIPMENT_POOL_FIELDS.includes(spec.apply)) {
+        pools[spec.apply] = mod.mode === 'add' ? pools[spec.apply] + mod.value : mod.value;
       } else if (spec.apply === 'swapCost') {
         swapCostDelta = mod.mode === 'add' ? swapCostDelta + mod.value : mod.value;
       } else if (spec.apply === 'startStatus') {
@@ -1066,49 +1144,85 @@ export function runMods(registries, loadout, classId) {
     }
   }
   return {
-    maxHp,
+    ...pools,
     swapCostDelta,
     startStatuses: [...stacks].filter(([, n]) => n > 0).map(([status, n]) => ({ status, stacks: n })),
   };
 }
 
 /**
- * Reconcile the run's HP pool after an out-of-combat loadout mutation.
- * The derived snapshot, equipment rows, and permanent adjustment remain the
- * authorities; current HP keeps the same absolute deficit as the vessel grows
- * or shrinks. Partial combat stamping records do not carry these fields and are
- * deliberately ignored.
+ * Reconcile all run pools after an out-of-combat loadout mutation. The derived
+ * snapshot, persisted equipment contribution, and HP adjustment remain the
+ * authorities; each current pool keeps its absolute deficit as its vessel
+ * grows or shrinks. Partial combat stamping records are deliberately ignored.
  */
-export function reconcileRunLoadoutHp(registries, run) {
+export function reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses = false } = {}) {
   if (!run || !run.derivedStatRuleSnapshot || !run.derivedStatRuleSnapshot.rules
-    || !Number.isFinite(run.maxHp) || !Number.isFinite(run.hp)) return null;
+    || !EQUIPMENT_POOL_FIELDS.every((maxField) => {
+      const currentField = maxField === 'maxHp' ? 'hp' : maxField.slice(3).toLowerCase();
+      return Number.isFinite(run[maxField]) && Number.isFinite(run[currentField]);
+    })) return null;
   if (!Number.isInteger(run.maxHpAdjustment)) {
     throw new Error('reconcileRunLoadoutHp requires integer maxHpAdjustment');
   }
   const classDef = registries.classes.get(run.class);
+  const liveMods = runMods(registries, run.loadout, run.class);
+  const priorBonuses = run.equipmentPoolBonuses || Object.fromEntries(
+    EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]),
+  );
+  const bonuses = adoptEquipmentBonuses
+    ? Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveMods[field]]))
+    : priorBonuses;
+  const results = {};
+  const applyPool = (maxField, currentField, derivedValue, equipmentBonus, nextMax, adjustment = 0) => {
+    const was = run[maxField];
+    const deficit = moveEquipmentPool(run, maxField, nextMax, run.equipmentPoolDeficits && run.equipmentPoolDeficits[currentField]);
+    results[maxField] = { derived: derivedValue, equipmentBonus, adjustment, max: nextMax, deficit, was };
+  };
+
+  // Keep this named composition explicit: three independent instruments pin
+  // the exact HP addends at creation and load. Mana/Stamina use the same
+  // persisted-equipment rule below without weakening that historical witness.
   const derived = deriveStat(run.derivedStatRuleSnapshot.rules, 'hp', {
     attributes: run.attributes,
     classDef,
   });
-  const equipmentBonus = runMods(registries, run.loadout, run.class).maxHp;
+  const equipmentBonus = bonuses.maxHp;
+  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
+  applyPool('maxHp', 'hp', derived.value, equipmentBonus, nextMax, run.maxHpAdjustment);
+  for (const [maxField, statId] of [['maxMana', 'mana'], ['maxStamina', 'stamina']]) {
+    const poolDerived = deriveStat(run.derivedStatRuleSnapshot.rules, statId, {
+      attributes: run.attributes,
+      classDef,
+    });
+    const poolMax = Math.max(0, poolDerived.value + bonuses[maxField]);
+    applyPool(maxField, statId, poolDerived.value, bonuses[maxField], poolMax);
+  }
+  run.equipmentPoolBonuses = { ...bonuses };
+  run.equipmentPoolDeficits = Object.fromEntries(
+    EQUIPMENT_POOL_FIELDS.map((field) => [EQUIPMENT_POOL_CURRENT[field], results[field].deficit]),
+  );
   // MAX-HP HOME 3 of 3, and THE LAST WRITER AT RUN CREATION — createRunState
   // ends with stampDeck(), which begins with this call. That is why Sten's
   // planted double-count went green: whatever the earlier writers put in the
   // field, this one replaced it, and nothing recorded the replacement. It still
   // replaces it. It no longer does so silently.
-  const nextMax = Math.max(1, derived.value + equipmentBonus + run.maxHpAdjustment);
-  const deficit = Math.max(0, run.maxHp - run.hp);
   note(run, {
     kind: 'overwrite',
     field: 'maxHp',
     site: 'loadout.js:reconcileRunLoadoutHp',
-    was: run.maxHp,
-    now: nextMax,
-    why: `max-HP home 3 of 3 and the last writer at the door — derived ${derived.value} + equipment ${equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${deficit} carried`,
+    was: results.maxHp.was,
+    now: results.maxHp.max,
+    why: `max-HP home 3 of 3 and the last writer at the door — derived ${results.maxHp.derived} + equipment ${results.maxHp.equipmentBonus} + adjustment ${run.maxHpAdjustment}; deficit ${results.maxHp.deficit} carried`,
   });
-  run.maxHp = nextMax;
-  run.hp = Math.max(0, nextMax - deficit);
-  return { derived: derived.value, equipmentBonus, adjustment: run.maxHpAdjustment, maxHp: nextMax, deficit };
+  return {
+    derived: results.maxHp.derived,
+    equipmentBonus: results.maxHp.equipmentBonus,
+    adjustment: run.maxHpAdjustment,
+    maxHp: results.maxHp.max,
+    deficit: results.maxHp.deficit,
+    pools: results,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -1230,8 +1344,8 @@ export function applyCardMods(def, mods, opts = {}) {
  * Re-stamping is idempotent, so calling it after every swap is safe. Pass
  * `cards` to stamp a hand mid-combat; it defaults to the run deck.
  */
-export function stampDeck(registries, run, cards) {
-  reconcileRunLoadoutHp(registries, run);
+export function stampDeck(registries, run, cards, { adoptEquipmentBonuses = true } = {}) {
+  reconcileRunLoadoutHp(registries, run, { adoptEquipmentBonuses });
   const list = cards || run.deck || [];
   if (!run.attributes) throw new Error('stampDeck requires authoritative run attributes for equipment role projection');
   const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
@@ -1664,6 +1778,106 @@ export function carriedIds(loadout) {
 }
 
 /**
+ * Normalize saves written while one owned armament could occupy several hand
+ * sets. Keep an active occurrence when one exists (slot order breaks ties),
+ * clear the others, and remove an equipped survivor from shared Inventory.
+ * Returns a receipt for the load-door ledger; an empty array means no change.
+ */
+export function normalizeArmamentLocations(registries, loadout) {
+  if (!loadout || !loadout.sets) return [];
+  const eq = (registries || {}).equipment || {};
+  const handSlots = (eq.slots || []).filter((slot) => slotHand(slot));
+  const armamentIds = new Set((eq.armaments || []).map((piece) => piece.id));
+  const occurrences = new Map();
+  for (const slot of handSlots) {
+    const ids = loadout.sets[slot.id] || [];
+    for (let setIndex = 0; setIndex < ids.length; setIndex++) {
+      const id = ids[setIndex];
+      if (!id || !armamentIds.has(id)) continue;
+      const rows = occurrences.get(id) || [];
+      rows.push({ slotId: slot.id, setIndex, active: setIndex === ((loadout.active || {})[slot.id] || 0) });
+      occurrences.set(id, rows);
+    }
+  }
+
+  const changes = [];
+  const storage = [...new Set(loadout.storage || [])];
+  for (const [id, rows] of occurrences) {
+    const kept = rows.find((row) => row.active) || rows[0];
+    const cleared = rows.filter((row) => row !== kept);
+    for (const row of cleared) loadout.sets[row.slotId][row.setIndex] = null;
+    const removedFromStorage = storage.includes(id);
+    if (removedFromStorage) storage.splice(storage.indexOf(id), 1);
+    if (cleared.length || removedFromStorage) changes.push({ id, kept, cleared, removedFromStorage });
+  }
+  if (storage.length !== (loadout.storage || []).length || changes.length) loadout.storage = storage;
+  return changes;
+}
+
+/**
+ * Apply the storage/location half of an equipment mutation. Both the real
+ * mutation and comparison preview call this function, so a preview cannot
+ * invent a duplicate object the committed action would move away.
+ */
+function equipTransitionPlan(registries, loadout, slotId, setIndex, itemId) {
+  const ids = ((loadout || {}).sets || {})[slotId];
+  const eq = (registries || {}).equipment || {};
+  const slot = (eq.slots || []).find((candidate) => candidate.id === slotId);
+  if (!slot || !ids || setIndex < 0 || setIndex >= ids.length) {
+    return { ok: false, reason: 'That equipment location is no longer available.' };
+  }
+
+  const previousId = ids[setIndex] || null;
+  if (!slotHand(slot)) {
+    return { ok: true, slot, ids, previousId, nextStorage: loadout.storage || [], storesPrevious: false };
+  }
+
+  const cap = Number.isInteger(((registries.balance || {}).equipment || {}).storageSlots)
+    ? registries.balance.equipment.storageSlots
+    : 8;
+  const nextStorage = [...new Set(loadout.storage || [])].filter((id) => id !== itemId);
+  const storesPrevious = previousId && previousId !== itemId && !nextStorage.includes(previousId);
+  if (storesPrevious && nextStorage.length >= cap) {
+    return {
+      ok: false,
+      reason: `Inventory is full (${nextStorage.length}/${cap}). Make room before ${itemId ? 'moving this item' : 'unequipping this item'}.`,
+    };
+  }
+  return { ok: true, slot, ids, previousId, nextStorage, storesPrevious };
+}
+
+/** A mutation-free capacity verdict for the Armoury's action feedback. */
+export function equipTransitionReceipt(registries, loadout, slotId, setIndex, itemId) {
+  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
+  return { ok: plan.ok, reason: plan.reason || '' };
+}
+
+export function applyEquipTransition(registries, loadout, slotId, setIndex, itemId) {
+  const plan = equipTransitionPlan(registries, loadout, slotId, setIndex, itemId);
+  if (!plan.ok) return false;
+  const { slot, ids, nextStorage, previousId, storesPrevious } = plan;
+  if (!slotHand(slot)) {
+    ids[setIndex] = itemId || null;
+    return true;
+  }
+
+  const eq = (registries || {}).equipment || {};
+  const handSlotIds = new Set((eq.slots || []).filter((candidate) => slotHand(candidate)).map((candidate) => candidate.id));
+  if (itemId) {
+    for (const [otherSlotId, otherIds] of Object.entries(loadout.sets || {})) {
+      if (!handSlotIds.has(otherSlotId)) continue;
+      for (let i = 0; i < otherIds.length; i++) {
+        if (otherIds[i] === itemId && (otherSlotId !== slotId || i !== setIndex)) otherIds[i] = null;
+      }
+    }
+  }
+  if (storesPrevious) nextStorage.push(previousId);
+  loadout.storage = nextStorage;
+  ids[setIndex] = itemId || null;
+  return true;
+}
+
+/**
  * equipPiece(registries, loadout, slotId, setIndex, itemId, owned, ctx) → boolean.
  * Put a piece id into a specific set of a slot; `null` clears it.
  *
@@ -1725,13 +1939,10 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   // loosened canEquip's own check is a real second gate rather than an echo.
   const seal = canEquip(registries, slotId, { inCombat: ctx.inCombat });
   if (!seal.ok) return false;
-  if (!itemId) {
-    ids[setIndex] = null;
-    return true;
-  }
   const eq = (registries || {}).equipment || {};
   const slot = (eq.slots || []).find((s) => s.id === slotId);
   if (!slot) return false;
+  if (!itemId) return applyEquipTransition(registries, loadout, slotId, setIndex, null);
   // Armour ids repeat across classes; the class gate is armourById's, and this
   // one only asks whether the piece may live in this slot at all.
   const piece = slot.kinds.includes('armor')
@@ -1748,6 +1959,5 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
   }
   if (!owned.has(piece)) return false;
   if (!equipmentRequirementReceipt(registries, piece, ctx.attributes).ok) return false;
-  ids[setIndex] = itemId;
-  return true;
+  return applyEquipTransition(registries, loadout, slotId, setIndex, itemId);
 }
