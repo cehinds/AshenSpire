@@ -321,6 +321,31 @@ jobs:
   # as a pass. It exits 1 only when a check actually RAN and failed. Those two were
   # the same exit code until run 1 of this workflow taught me otherwise.
   # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # #319 / #248 owns a separate job so an unrelated browser probe cannot fail
+  # first and silently skip this exact-head verdict. CI remains manual at the
+  # workflow boundary above. The clean edge measures eight cells (two doors,
+  # two shapes, two text sizes). The corpus adds eighteen copied-tree browser
+  # plants plus its clean baseline, including deliberate 25-second and
+  # 30-second timeout defects. That cost is stated because this workflow bills
+  # by the minute and silence between dispatches remains UNKNOWN.
+  # ---------------------------------------------------------------------------
+  display-first:
+    name: Fullscreen first through both Settings doors
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fullscreen is first and visible through both Settings doors
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs
+
+      - name: …and that gate can fail — nineteen same-door browser boots
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
+
   browser-guard:
     # RENAMED 2026-08-21 (#295). It read "?shot= cannot touch a player's save",
     # which was the whole job when it was written and became one of four claims
@@ -523,20 +548,6 @@ jobs:
         # removes.
         run: node tools/verdict.mjs -- node tools/armoury-arrival-figure.mjs
 
-      # ---- #319 / #248. The settings order probe is Linux-only and browser
-      # driven, so this is its durable exact-head home. CI remains manual at the
-      # workflow boundary above; a person dispatches this workflow for the ref
-      # being reviewed. The clean edge measures eight cells (two doors, two
-      # shapes, two text sizes). The corpus adds eighteen copied-tree browser
-      # plants plus its clean baseline, including deliberate 25-second and
-      # 30-second timeout defects. That cost is stated because this workflow
-      # bills by the minute and silence between dispatches remains UNKNOWN.
-      - name: Fullscreen is first and visible through both Settings doors
-        run: node tools/verdict.mjs -- node tools/displayfirst.mjs
-
-      - name: …and that gate can fail — nineteen same-door browser boots
-        run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
-
       # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
       # The three gates above this each have a `--selftest` / `--mutate` door.
       # This tool has none. Its two known-bads — an initially-EXPANDED CARDS pane
@@ -555,12 +566,12 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, reproducible, browser-guard]
+    needs: [test, reproducible, browser-guard, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }}"
+          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
