@@ -11,6 +11,7 @@ import { keywords } from './keywords.js';
 import { reaverCards } from './cards/reaver.js';
 import { starseerCards } from './cards/starseer.js';
 import { heraldCards } from './cards/herald.js';
+import { rogueCards } from './cards/rogue.js';
 import { colorlessCards } from './cards/colorless.js';
 import { coopCards } from './cards/coop.js';
 import { relics } from './relics.js';
@@ -30,15 +31,16 @@ import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
 import {
   ARMAMENTS, ARMOUR, SLOTS, MOD_FIELDS, CARD_TARGETS, BASIC_CARD_PROFILES, CARD_EXPOSURE, STARTING_KITS,
-  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING,
+  EQUIPMENT_REQUIREMENTS, CARD_EQUIPMENT_EXCEPTIONS, CARD_EQUIPMENT_TAGGING, ARMOURY_UI,
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
+import { characterCreation } from './generated/characterCreation.js';
 
-const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...colorlessCards, ...coopCards];
+const authoredCards = [...reaverCards, ...starseerCards, ...heraldCards, ...rogueCards, ...colorlessCards, ...coopCards];
 const exposureByCard = new Map(CARD_EXPOSURE.map((row) => [row.cardId, row]));
 const cards = authoredCards.map((card) => {
   const carrier = exposureByCard.get(card.id);
@@ -83,6 +85,7 @@ export const contentBundle = {
     equipmentRequirements: EQUIPMENT_REQUIREMENTS,
     cardEquipmentExceptions: CARD_EQUIPMENT_EXCEPTIONS,
     cardTagging: CARD_EQUIPMENT_TAGGING,
+    armouryUi: ARMOURY_UI,
   },
   unlocks,
   // The card-tag registry rides the bundle so effect `tags` and
@@ -95,6 +98,7 @@ export const contentBundle = {
   // row it guards against (retiredNames.js says why in full).
   attributeRules: { ...attributeRules, retired: retiredAttributeNames },
   derivedStatRules,
+  characterCreation,
 };
 
 // Not part of the bundle (UI-only data / M1 flow):

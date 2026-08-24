@@ -24,7 +24,7 @@
 // deliberately rather than by luck.
 
 import { esc } from './tooltip.js';
-import { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED } from '../../buildversion.js';
+import { BUILD_STAMP_TEXT, BUILD_VERSION, BUILD_IS_STAMPED, BUILD_IS_ORDERED, SOURCE } from '../../buildversion.js';
 
 /**
  * The one sentence a player gets if they hover it, and it asks for the report.
@@ -47,6 +47,13 @@ const WHY = !BUILD_IS_STAMPED
  * `place` names the surface ('title' | 'map' | 'combat') and reaches the DOM so
  * the gate can count placements instead of taking three on trust.
  */
-export function buildStampHtml(place) {
-  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}" title="${esc(WHY)}">${esc(BUILD_STAMP_TEXT)}</span>`;
+export function buildStampHtml(place, { split = false, seed = null } = {}) {
+  const contents = split
+    ? `<span class="build-number">BUILD ${esc(BUILD_VERSION)}</span>`
+      + `<span class="build-source"> · src ${esc(SOURCE)}</span>`
+    : esc(BUILD_STAMP_TEXT);
+  const seedAttrs = split && seed != null
+    ? ` data-seed="${esc(seed)}" aria-label="BUILD ${esc(BUILD_VERSION)}, SEED ${esc(seed)}, SOURCE ${esc(SOURCE)}"`
+    : '';
+  return `<span class="build-stamp" data-role="build-version" data-place="${esc(place)}"${seedAttrs} title="${esc(WHY)}">${contents}</span>`;
 }

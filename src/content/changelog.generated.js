@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-329",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Character creation now owns one shared Inventory and validates every starting hand",
+    "detail": "Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.",
+    "build": "0.4.0.1126",
+    "pullRequest": 329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/329"
+  },
+  {
+    "id": "pr-328",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Swapped armaments now remain attached to their actual hand sockets",
+    "detail": "The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.",
+    "build": "0.4.0.1114",
+    "pullRequest": 328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/328"
+  },
+  {
+    "id": "pr-327",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Map and combat now share the same three-row HUD",
+    "detail": "Run information stays across the top with Cinders centered; HP, MP, and SP remain stacked at the left with Relics beneath; and Armoury, Menu, Health, and Mana form one aligned two-by-two control block at the right. The map keeps its zoom and legend controls together below the playfield.",
+    "build": "0.4.0.1091",
+    "pullRequest": 327,
+    "url": "https://github.com/cehinds/AshenSpire/pull/327"
+  },
+  {
+    "id": "pr-323",
+    "date": "2026-08-22",
+    "group": "2026-08-22",
+    "summary": "Map and combat share one compact player HUD",
+    "detail": "HP, MP, and SP now keep the same vertical order and percentage scale on both screens; the top HUD leaves Poise to the combat character card, caps its resource area at 40% of the viewport, and centers Floor with Cinders without letting visible resource cards paint through that receipt.",
+    "build": "0.4.0.1078",
+    "pullRequest": 323,
+    "url": "https://github.com/cehinds/AshenSpire/pull/323"
+  },
+  {
+    "id": "pr-317",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The reward menu is written down, in the README and the changelog",
+    "detail": "Docs only.",
+    "build": "0.4.0.1000",
+    "pullRequest": 317,
+    "url": "https://github.com/cehinds/AshenSpire/pull/317"
+  },
+  {
+    "id": "pr-316",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "The Armoury opens on your figure, and CARDS is one click away",
+    "detail": "The card strip now arrives folded by default, on every shape, so the character you dressed is whole the moment the panel opens instead of being squeezed into a scrolling sliver by the cards beneath it. One click on CARDS opens the strip, another folds it again, and outside a fight whatever you leave it on is what the Armoury gives you next time — it arrives the way you left it. The Armoury you open mid-fight keeps no such memory: it starts folded every time, whatever you did to it last. On a phone nothing changes: that view never showed the figure and already opened folded.",
+    "build": "0.4.0.0983",
+    "pullRequest": 316,
+    "url": "https://github.com/cehinds/AshenSpire/pull/316"
+  },
+  {
     "id": "pr-305",
     "date": "2026-08-21",
     "group": "2026-08-21",
@@ -11,6 +71,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.4.0.0947",
     "pullRequest": 305,
     "url": "https://github.com/cehinds/AshenSpire/pull/305"
+  },
+  {
+    "id": "pr-292",
+    "date": "2026-08-21",
+    "group": "2026-08-21",
+    "summary": "Stat points and a starting-armour choice at creation",
+    "detail": "Two more rows on the creation screen, and both stay open where the six pickers fold. STARTING ARMOUR offers your class's own set plus every set you have earned — a new profile sees one, and each prize won becomes another way to begin. STAT POINTS hands you ten to place across the five stats: they arrive laid along your class's grain, dropping a stat gives its points back, and nothing goes below 8 or above 15 at creation. BEGIN THE CLIMB waits while points are unspent, and if an allocation starves your starting kit it says which stat and how much it needs.",
+    "build": "0.4.0.0946",
+    "pullRequest": 292,
+    "url": "https://github.com/cehinds/AshenSpire/pull/292"
   },
   {
     "id": "pr-296",
@@ -26,8 +96,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-290",
     "date": "2026-08-21",
     "group": "2026-08-21",
-    "summary": "Rewards wait for a deliberate hold and leave untouched choices alone",
-    "detail": "Ordinary rows no longer show Skip. Cards, potions, and armaments open before collection; Back preserves the menu. Manual mode leaves untouched rewards behind, while auto mode still takes the rest. Continue requires the shared hold on pointer, touch, keyboard, and gamepad.",
+    "summary": "Rewards are a menu you open, not a handful you're handed",
+    "detail": "Cinders, cards, flasks, armaments and relics arrive as rows, and nothing is applied until you take it — so you can look before you collect, and Back leaves the menu exactly as you found it. A reward with nowhere to go — a full flask belt, a full armament bag — says so on its own row before you tap it, and it is the only kind of row that offers Skip. Continue is always pressable and says what it will do; Settings → Advanced → Reward collection decides which: Auto (the default) takes everything you did not skip, picking a card for you, while Manual means done — only what you chose comes along. Continue is a press-and-hold on mouse, touch, keyboard, and pad.",
     "build": "0.4.0.0929",
     "pullRequest": 290,
     "url": "https://github.com/cehinds/AshenSpire/pull/290"
@@ -267,7 +337,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-17",
     "group": "2026-08-17",
     "summary": "The verified current build lives at the repository root",
-    "detail": "`AshenSpire.html` at the root is the same bytes as `dist/`, checked by `tools/verify-shipped.mjs`.",
+    "detail": "AshenSpire.html at the root is the same bytes as dist/, checked by tools/verify-shipped.mjs.",
     "build": "0.4.0.0788",
     "pullRequest": 186,
     "url": "https://github.com/cehinds/AshenSpire/pull/186"

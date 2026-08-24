@@ -219,9 +219,28 @@ const SHOTS_OUT = val('--shots', null);
 
 // THE SWEEP. Real maxima, and the range is not invented: 40 is a cursed reaver
 // (actions.js loseMaxHpPct halves it), 72/78/84 are the three shipped classes,
-// 88 is a reaver in the one outfit that carries `self.maxHp=+4`, and 120/160 sit
-// above the domain to prove the ceiling clamps rather than overflows.
-const SWEEP = [40, 56, 72, 78, 84, 88, 120, 160];
+// 88 is a reaver in the one outfit that carries `self.maxHp=+4`.
+const SWEEP_CONTENT = [40, 56, 72, 78, 84, 88];
+// THE TWO CEILING POSES USED TO BE TYPED — `120, 160`, with the comment "sit
+// above the domain to prove the ceiling clamps rather than overflows". They
+// were above the domain when the domain was the derived population (94ish) and
+// they are BELOW IT NOW: E9 / #254 made the hp domain a REFERENCE of 500
+// (src/content/resources.js HUD_REFERENCE_MAX), and A3's premise — "at max 160,
+// above the derived domain" — silently became false. The check went red while
+// nothing about the screen was wrong.
+//
+// So the two ceiling poses are DERIVED from the domain the tree actually has,
+// which is what the comment always meant. This is a strengthening, not a
+// relaxation: the sweep now reaches the real ceiling (500) and one pose above
+// it instead of stopping at a third of the way up. A tree that derives no
+// domain (the legacy shape) keeps the old typed pair, because there is nothing
+// to derive from and a silent shorter sweep would be worse than a stale one.
+const LEGACY_CEILING_POSES = [120, 160];
+function sweepFor(domain) {
+  if (!Number.isFinite(domain) || domain <= 0) return [...SWEEP_CONTENT, ...LEGACY_CEILING_POSES];
+  const ceiling = Math.max(Math.round(domain), SWEEP_CONTENT[SWEEP_CONTENT.length - 1] + 1);
+  return [...SWEEP_CONTENT.filter((v) => v < ceiling), ceiling, Math.round(ceiling * 1.25)];
+}
 const MIN_POINTS = 5; // distinct rendered widths required before this reports
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -324,6 +343,7 @@ const READ = `(() => {
       visibleLabel: vis.length ? vis.map((s) => s.textContent.trim()).join(' ') : '',
       cur: el.dataset.cur != null ? Number(el.dataset.cur) : null,
       max: el.dataset.max != null ? Number(el.dataset.max) : null,
+      asked: parseFloat(el.style.width),
       floored: el.dataset.floored === '1',
       dashed: getComputedStyle(el).borderTopStyle === 'dashed',
       labelW: n(labelW),
@@ -415,10 +435,10 @@ function proveAnonymousLabelFails() {
   }
 }
 
-async function sweepShape(b, href, [w, h]) {
+async function sweepShape(b, href, [w, h], sweep) {
   await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }, b.S);
   const rows = [];
-  for (const max of SWEEP) {
+  for (const max of sweep) {
     await b.cdp.send('Page.navigate', { url: `${href}?shot=combat&shotMaxHp=${max}` }, b.S);
     await b.until(`!!document.querySelector('.combat .topbar')`, `combat topbar @ max ${max}`);
     await wait(320); // the fill has a 200ms width transition; let it land
@@ -439,7 +459,7 @@ async function sweepShape(b, href, [w, h]) {
 // ~tens) is sampled at six spread values that INCLUDE the domain itself, so
 // every resource's sweep stands at its own ceiling at least once — nothing
 // invents a maximum past it.
-const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina', poise: 'shotMaxPoise' });
+const RESOURCE_DOORS = Object.freeze({ mana: 'shotMaxMana', stamina: 'shotMaxStamina' });
 function sweepValues(domain) {
   if (domain <= 6) return Array.from({ length: domain }, (_, i) => i + 1);
   const vals = new Set();
@@ -460,8 +480,9 @@ async function sweepResource(b, href, [w, h], resId, door, domain) {
   return points;
 }
 
-// A2, one resource at one shape: constant px-per-point against the resource's
-// OWN derived domain, over the points that are neither floored nor above it.
+// A2, one resource at one shape: constant percentage-points-per-stat-point
+// against the resource's OWN domain. The containing track may change when a
+// synthetic sweep crosses a label digit, but the inline percentage must not.
 // The at-domain point is ON the line (max/domain is exactly 100 %) and stays
 // in; the floor and the over-domain clamp are the two named exceptions, and
 // both are exclusions this function prints rather than performs silently.
@@ -475,20 +496,20 @@ function judgeResourceProportion(tag, resId, points, domain) {
     notes.push(`A2 ${tag}: ${resId} — only ${usable.length} usable point(s) of ${points.length} (domain ${domain}, ${excluded} floored/over-domain); linearity is not claimable at this shape`);
     return usable.length;
   }
-  const ratios = usable.map((p) => p.w / p.max);
+  const ratios = usable.map((p) => p.asked / p.max);
   const lo = Math.min(...ratios), hi = Math.max(...ratios);
   const spread = (hi - lo) / hi;
   if (spread > 0.03) {
-    fail('A2', `${tag}: ${resId} PROPORTION — px-per-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread) against its OWN domain ${domain}. `
+    fail('A2', `${tag}: ${resId} PROPORTION — percentage-points-per-stat-point ranges ${lo.toFixed(3)}..${hi.toFixed(3)} (${(spread * 100).toFixed(1)} % spread) against its OWN domain ${domain}. `
       + `Per-resource linearity is the ruled shape (D19 C6); if the transpose scale was deliberately curved, this assertion changes with it.`);
   } else {
-    notes.push(`A2 ${tag}: ${resId} PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} px per point of ITS OWN max (domain ${domain}, ${usable.length} points, spread ${(spread * 100).toFixed(1)} %)`);
+    notes.push(`A2 ${tag}: ${resId} PROPORTION ok — linear at ${((lo + hi) / 2).toFixed(3)} percentage points per stat point (domain ${domain}, ${usable.length} points, spread ${(spread * 100).toFixed(1)} %)`);
   }
   return usable.length;
 }
 
 // A2X — the cross-resource negative control the per-resource ruling demands.
-//   (a) hp and mana, standing at DIFFERENT maxes, must render DIFFERENT px
+//   (a) hp and mana, standing at DIFFERENT maxes, must ask DIFFERENT percentage
 //       per point. The dead shared-rate alternative says they must not differ;
 //       per resource says they must. Floored bars are excluded — a floored
 //       length encodes nothing. A shape with no unfloored pair says so by
@@ -511,15 +532,15 @@ function judgeCrossResource(tag, hpRows, manaPoints, domains) {
   } else {
     hadPairs = true;
     const worst = pairs.reduce((a, p) => {
-      const hpRate = p.hp.w / p.hp.max, manaRate = p.mana.w / p.mana.max;
+      const hpRate = p.hp.asked / p.hp.max, manaRate = p.mana.asked / p.mana.max;
       const rel = Math.abs(hpRate - manaRate) / Math.max(hpRate, manaRate);
       return rel < a.rel ? { rel, p, hpRate, manaRate } : a;
     }, { rel: Infinity });
     if (worst.rel < 0.25) {
-      fail('A2X', `${tag}: hp at max ${worst.p.hp.max} renders ${worst.hpRate.toFixed(3)} px/pt and mana at max ${worst.p.mana.max} renders ${worst.manaRate.toFixed(3)} px/pt — `
+      fail('A2X', `${tag}: hp at max ${worst.p.hp.max} asks ${worst.hpRate.toFixed(3)} pct-pt/stat and mana at max ${worst.p.mana.max} asks ${worst.manaRate.toFixed(3)} pct-pt/stat — `
         + `only ${(worst.rel * 100).toFixed(1)} % apart. Two pools at different maxes sharing a rate is the SHARED scale, which is dead by his word (D19 C6).`);
     } else {
-      notes.push(`A2X ${tag}: CROSS-RESOURCE ok — hp ${worst.hpRate.toFixed(3)} px/pt vs mana ${worst.manaRate.toFixed(3)} px/pt (${pairs.length} pairs; rates differ ≥ ${(worst.rel * 100).toFixed(0)} %), which per-resource requires and a shared rate forbids`);
+      notes.push(`A2X ${tag}: CROSS-RESOURCE ok — hp ${worst.hpRate.toFixed(3)} vs mana ${worst.manaRate.toFixed(3)} percentage-points/stat (${pairs.length} pairs; rates differ ≥ ${(worst.rel * 100).toFixed(0)} %), which per-resource requires and a shared rate forbids`);
     }
   }
   const atDomain = manaPoints.find((p) => p.max === domains.mana);
@@ -548,8 +569,10 @@ const READ_VESSEL = `(() => {
   const main = document.querySelector('.combat .topbar .resbars-host');
   const player = window.__combat && window.__combat.player;
   return {
-    poise: grab(main && main.querySelector('.resbar[data-res="poise"]')),
-    hp: grab(main && main.querySelector('.resbar[data-res="hp"]')),
+    poiseTop: grab(main && main.querySelector('.resbar[data-res="poise"]')),
+    hpTop: grab(main && main.querySelector('.resbar[data-res="hp"]')),
+    poiseModel: grab(document.querySelector('.combatant.player .meters .resbar[data-res="poise"]')),
+    hpModel: grab(document.querySelector('.combatant.player .meters .resbar[data-res="hp"]')),
     meter: player && player.poiseMeter ? { value: player.poiseMeter.value, max: player.poiseMeter.max } : null,
     modelRows: [...document.querySelectorAll('.combatant.player .meters .resbar')].map((el) => el.dataset.res),
   };
@@ -561,21 +584,24 @@ async function judgePlayerVessel(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} (A11)`);
   await wait(320);
   const r = await b.ev(READ_VESSEL);
-  // (a) present on the main HUD, DOM agreeing with the entity, empty, skinny.
+  // (a) absent from the top HUD; present dynamically on the player card,
+  // agreeing with the entity, empty, skinny.
   if (!r.meter) {
     fail('A11', `${tag}: the posed player entity carries NO poiseMeter — the model seat this vessel reads is absent`);
-  } else if (!r.poise) {
-    fail('A11', `${tag}: player poiseMeter is {${r.meter.value}/${r.meter.max}} but the main HUD renders NO poise bar — "poise (very skinny bar) under the health bar" is his layout, twice asked (D10.4, D17 q5)`);
+  } else if (r.poiseTop) {
+    fail('A11', `${tag}: top HUD renders poise ${r.poiseTop.cur}/${r.poiseTop.max} — the canonical top stack is HP, MP, SP only`);
+  } else if (!r.poiseModel) {
+    fail('A11', `${tag}: player poiseMeter is {${r.meter.value}/${r.meter.max}} but the player character card renders NO dynamic poise bar`);
   } else {
-    if (r.poise.max !== r.meter.max || r.poise.cur !== r.meter.value) {
-      fail('A11', `${tag}: DOM says poise ${r.poise.cur}/${r.poise.max}, the entity says ${r.meter.value}/${r.meter.max} — the bar is not reading the model seat`);
+    if (r.poiseModel.max !== r.meter.max || r.poiseModel.cur !== r.meter.value) {
+      fail('A11', `${tag}: player card says poise ${r.poiseModel.cur}/${r.poiseModel.max}, the entity says ${r.meter.value}/${r.meter.max} — the bar is not reading the model seat`);
     }
-    if (r.poise.cur !== 0) {
-      fail('A11', `${tag}: poise cur is ${r.poise.cur} — nothing writes player poise build-up yet; a non-zero value here means a writer landed and this assertion must MOVE with the mechanics, not be relaxed`);
+    if (r.poiseModel.cur !== 0) {
+      fail('A11', `${tag}: poise cur is ${r.poiseModel.cur} — nothing writes player poise build-up yet; a non-zero value here means a writer landed and this assertion must MOVE with the mechanics, not be relaxed`);
     }
-    if (!r.hp) fail('A11', `${tag}: no hp bar beside the poise vessel — the pose itself is broken`);
-    else if (!(r.poise.h < r.hp.h)) {
-      fail('A11', `${tag}: poise trough renders ${r.poise.h} px tall against hp's ${r.hp.h} px — "very skinny" is not a rendered fact here (the main-surface height rule outranks .resbar-skinny by specificity; only this measurement can claim it)`);
+    if (!r.hpModel) fail('A11', `${tag}: player character card has poise but no hp bar — the card is broken`);
+    else if (!(r.poiseModel.h < r.hpModel.h)) {
+      fail('A11', `${tag}: player-card poise trough renders ${r.poiseModel.h} px tall against hp's ${r.hpModel.h} px — "very skinny" is not a rendered fact`);
     }
   }
   // (b) the under-model strip: exactly hp and poise, his sentence.
@@ -588,11 +614,11 @@ async function judgePlayerVessel(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar')`, `combat @ ${tag} shotMaxPoise=0 (A11)`);
   await wait(320);
   const z = await b.ev(READ_VESSEL);
-  if (z.poise) fail('A11', `${tag}: at threshold 0 the main HUD still renders a poise bar (${z.poise.cur}/${z.poise.max}) — a zero-threshold player has no vessel; drawing one is the empty-trough lie the refusal exists to prevent`);
+  if (z.poiseTop || z.poiseModel) fail('A11', `${tag}: at threshold 0 a poise bar still renders in top HUD or player card — a zero-threshold player has no vessel`);
   if (z.meter) fail('A11', `${tag}: at threshold 0 the entity still carries a poiseMeter {${z.meter.value}/${z.meter.max}} — the refusal must live in the model, not the paint`);
-  if (!z.hp) fail('A11', `${tag}: hp vanished with the poise vessel at shotMaxPoise=0 — the refusal took the wrong bar with it`);
+  if (!z.hpTop || !z.hpModel) fail('A11', `${tag}: hp vanished with the poise vessel at shotMaxPoise=0 — the refusal took the wrong bar with it`);
   if (!fails.some((f) => f.startsWith('A11') && f.includes(tag))) {
-    notes.push(`A11 ${tag}: PLAYER VESSEL ok — poise ${r.poise.cur}/${r.poise.max} = entity {${r.meter.value}/${r.meter.max}}, trough ${r.poise.h} px < hp ${r.hp.h} px, model strip [${rows.join('+')}], and threshold 0 renders ABSENT with hp standing`);
+    notes.push(`A11 ${tag}: PLAYER CARD VESSEL ok — top HUD [hp+mana+stamina], poise ${r.poiseModel.cur}/${r.poiseModel.max} = entity {${r.meter.value}/${r.meter.max}}, player-card strip [${rows.join('+')}], and threshold 0 renders poise ABSENT with hp standing`);
   }
 }
 
@@ -747,11 +773,11 @@ function judge(shape, rows, hpDomain) {
 
   // ---- the denominator guard: a sweep that measured one thing N times -------
   if (distinct < MIN_POINTS) {
-    fail('A1', `${tag}: TRACKING — ${SWEEP.length} maxima from ${SWEEP[0]} to ${SWEEP[SWEEP.length - 1]} produced only ${distinct} distinct rendered widths `
+    fail('A1', `${tag}: TRACKING — ${rows.length} maxima from ${rows[0].max} to ${rows[rows.length - 1].max} produced only ${distinct} distinct rendered widths `
       + `(${widths.join(', ')} px). The bar's length is not a function of the maximum. `
       + (rows[0].legacy ? 'This tree has no .resbars-host — it is the pre-change HUD, whose health bar is a typed constant.' : ''));
   } else {
-    notes.push(`A1 ${tag}: TRACKING ok — ${distinct} distinct widths across ${SWEEP.length} maxima`);
+    notes.push(`A1 ${tag}: TRACKING ok — ${distinct} distinct widths across ${rows.length} maxima`);
   }
 
   // ---- A1 strict monotonicity below the domain ceiling ----------------------
@@ -839,33 +865,21 @@ function judge(shape, rows, hpDomain) {
   }
   if (!fails.some((f) => f.startsWith('A5'))) notes.push(`A5 ${tag}: TAP FLOOR ok — ${rows[0].btns.length} top-row buttons at/above ${rows[0].floor} px`);
 
-  // ---- A6 a floored bar wears the broken-axis mark --------------------------
+  // ---- A6 the percentage is authoritative -----------------------------------
   for (const r of rows) {
     for (const bar of r.bars) {
-      if (bar.floored && !bar.dashed) {
-        fail('A6', `${tag}: at max ${r.max} the "${bar.id}" bar is at its minimum width but is drawn solid — a bar that has stopped being to scale must say so`);
+      if (bar.floored || bar.dashed) {
+        fail('A6', `${tag}: at max ${r.max} the "${bar.id}" bar carries floored=${bar.floored}, dashed=${bar.dashed} — an absolute floor has replaced the max/reference percentage`);
       }
     }
   }
 }
 
-// ---- A6W THE FLOOR IS ALIVE (development.md, *The wake condition*; Freja
-// 2026-08-14). A6 above is one-sided by construction: it fires only on a bar
-// OBSERVED floored — so the day the floor itself dies (--resbar-min renamed,
-// min-width lost to a cleanup, markFlooredBars unhooked, the dashed rule
-// outranked), no bar is ever floored, A6 goes vacuously green, and the
-// broken-axis mark quietly stops existing. Absence never fails a test written
-// to expect absence: the refusal needs a red on its WAKE, not only on its
-// firing shape. Two poses per shape, through the same ?shot doors the sweeps
-// use:
-//   · max 2 — the to-scale width is a sliver and the floor MUST catch it:
-//     the token resolves, min-width wins, data-floored is stamped, the dash
-//     draws. Each organ failing is named separately, because each dies to a
-//     different class of cleanup.
-//   · the default pose — hp far above the floor: the stamp must be absent
-//     and the border solid, or the mark lies about a truncation that is not
-//     happening (the reverse edge; a dash that always shows says nothing).
-async function judgeFloorAlive(b, href, [w, h]) {
+// ---- A6P THE PERCENTAGE OWNS EVEN THE LOW EDGE. The max-2 pose makes the
+// requested trough only a fraction of the track. It must still render at that
+// percentage: an absolute floor would collapse several different maxima to one
+// length and recreate the eight REDs this decision closes.
+async function judgePercentageAuthority(b, href, [w, h]) {
   const tag = `${w}x${h}`;
   const PROBE = `(() => {
     const n = (v) => Math.round(v * 100) / 100;
@@ -873,16 +887,8 @@ async function judgeFloorAlive(b, href, [w, h]) {
     if (!el) return { missing: true };
     const cellW = el.parentElement ? el.parentElement.getBoundingClientRect().width : 0;
     const asked = parseFloat(el.style.width);
-    // The floor, MEASURED off a probe resolving the same token min-width
-    // uses, inside the bar's own scope — never parsed out of the stylesheet.
-    // Fallback 0px: an unresolved token measures 0 and is reported as dead.
-    const p = document.createElement('div');
-    p.style.cssText = 'position:absolute;left:-9999px;top:0;height:1px;padding:0;border:0;width:var(--resbar-min, 0px)';
-    el.appendChild(p);
-    const floor = n(p.getBoundingClientRect().width);
-    p.remove();
     return {
-      floor,
+      minWidth: getComputedStyle(el).minWidth,
       wanted: n((asked / 100) * cellW),
       got: n(el.getBoundingClientRect().width),
       floored: el.dataset.floored === '1',
@@ -894,26 +900,13 @@ async function judgeFloorAlive(b, href, [w, h]) {
   await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ shotMaxHp=2');
   await wait(320);
   const low = await b.ev(PROBE);
-  if (low.missing) { fail('A6W', `${tag}: no hp resbar at the floored pose — the wake has no subject`); return; }
-  if (!(low.floor > 4)) {
-    fail('A6W', `${tag}: --resbar-min resolves to ${low.floor} px — the floor token is dead (renamed, unset, or scoped away); no bar can ever be floored again and A6 is vacuously green from here on`);
-  } else if (low.wanted >= low.floor - 0.5) {
-    fail('A6W', `${tag}: the max-2 pose wants ${low.wanted} px against a ${low.floor} px floor — the pose no longer forces flooring (domain or track moved); re-derive the pose, do not let this clause go quiet`);
-  } else {
-    if (low.got < low.floor - 0.5) fail('A6W', `${tag}: at max 2 the hp bar rendered ${low.got} px below the ${low.floor} px floor — min-width no longer wins; the floor is dead while its token still resolves`);
-    if (!low.floored) fail('A6W', `${tag}: at max 2 the hp bar sits at the floor (${low.got} px for a wanted ${low.wanted} px) with no data-floored stamp — markFlooredBars is not seeing it, so the dash can never fire`);
-    if (!low.dashed) fail('A6W', `${tag}: at max 2 the hp bar is floored and drawn SOLID — the broken-axis mark is dead (rule deleted or lost the cascade); a bar that has stopped being to scale no longer says so`);
-  }
-  await b.cdp.send('Page.navigate', { url: `${href}?shot=combat` }, b.S);
-  await b.until(`!!document.querySelector('.combat .topbar .resbar')`, 'combat @ default');
-  await wait(320);
-  const high = await b.ev(PROBE);
-  if (!high.missing && high.wanted > high.floor + 2) {
-    if (high.floored) fail('A6W', `${tag}: the default pose (wanted ${high.wanted} px, floor ${high.floor} px) is stamped data-floored — the stamp lies about unfloored bars`);
-    if (high.dashed) fail('A6W', `${tag}: the default pose wears the dash while ${high.wanted} px above the floor — the mark claims a truncation that is not happening`);
-  }
-  if (!fails.some((f) => f.startsWith(`A6W  ${tag}`))) {
-    notes.push(`A6W ${tag}: FLOOR ALIVE ok — token ${low.floor} px, max-2 pose floored+dashed (wanted ${low.wanted} px → got ${low.got} px), default pose solid and unstamped`);
+  if (low.missing) { fail('A6P', `${tag}: no hp resbar at the low percentage pose — the check has no subject`); return; }
+  const minWidth = parseFloat(low.minWidth);
+  if (Number.isFinite(minWidth) && minWidth > 0.01) fail('A6P', `${tag}: max-2 pose has min-width ${low.minWidth} — an absolute floor can override percentage`);
+  if (Math.abs(low.got - low.wanted) > 0.75) fail('A6P', `${tag}: max-2 pose rendered ${low.got} px for a ${low.wanted} px percentage ask`);
+  if (low.floored || low.dashed) fail('A6P', `${tag}: max-2 pose carries floored=${low.floored}, dashed=${low.dashed} — percentage is not authoritative`);
+  if (!fails.some((f) => f.startsWith(`A6P  ${tag}`))) {
+    notes.push(`A6P ${tag}: PERCENTAGE AUTHORITY ok — max-2 rendered ${low.got} px for ${low.wanted} px ask, min-width ${low.minWidth}`);
   }
 }
 
@@ -1047,7 +1040,7 @@ async function verdictAt(href, shape, hpDomain) {
   fails.length = 0; notes.length = 0;
   const b = await open();
   try {
-    const rows = await sweepShape(b, href, shape);
+    const rows = await sweepShape(b, href, shape, sweepFor(hpDomain));
     judge(shape, rows, hpDomain);
   } finally { b.close(); }
   return { fails: [...fails], notes: [...notes] };
@@ -1289,7 +1282,7 @@ async function main() {
   const source = SHOTS_OUT ? await serve({ root: TREE, port: 8317, open: false }) : null;
   try {
     for (const shape of SHAPES) {
-      const rows = await sweepShape(b, href, shape);
+      const rows = await sweepShape(b, href, shape, sweepFor(domains && domains.hp));
       all[`${shape[0]}x${shape[1]}`] = rows;
       console.log(`\n  ${shape[0]}x${shape[1]}   track ${rows[0].trackW} px${rows[0].legacy ? '   [LEGACY HUD — no .resbars-host in this tree]' : ''}`);
       console.log('    max    bar px   px/point   bars  label   floored');
@@ -1300,17 +1293,13 @@ async function main() {
           + `${String(hp ? hp.labelW : '—').padStart(5)}   ${hp && hp.floored ? 'yes' : 'no'}`);
       }
       judge(shape, rows, domains ? domains.hp : null);
-      await judgeFloorAlive(b, href, shape);
+      await judgePercentageAuthority(b, href, shape);
       if (domains) {
         const tag = `${shape[0]}x${shape[1]}`;
         let manaPoints = [];
         for (const [resId, door] of Object.entries(RESOURCE_DOORS)) {
-          // Seed 0 FIRST: a door whose resource never sweeps (no derived
-          // domain — e.g. this tool against a tree from before that resource
-          // reached the model) must land in the fewer-than-two-points RED
-          // below, never in silence. The pre-poise tree is the live known-bad:
-          // RESOURCE_DOORS names poise, the old model derives no poise domain,
-          // and without this seed the loop's `continue` was a quiet green.
+          // Seed 0 FIRST: a named main-HUD resource whose domain disappears
+          // must land in the fewer-than-two-points RED below, never in silence.
           usableByResource[resId] = usableByResource[resId] || 0;
           if (!Number.isFinite(domains[resId]) || domains[resId] <= 0) continue;
           const points = await sweepResource(b, href, shape, resId, door, domains[resId]);
@@ -1318,16 +1307,6 @@ async function main() {
           console.log(`    ${resId} sweep: ${points.map((p) => `${p.max}→${p.w}px${p.floored ? ' (floored)' : ''}`).join('  ')}`);
           const usable = judgeResourceProportion(tag, resId, points, domains[resId]);
           usableByResource[resId] = Math.max(usableByResource[resId], usable);
-          // A11 (d) — poise AT its own domain fills its own cell: A2X (b)'s
-          // clause, poise's copy, measured from the sweep's own at-domain
-          // point (sweepValues always includes the domain).
-          if (resId === 'poise') {
-            const atDomain = points.find((p) => p.max === domains[resId]);
-            if (!atDomain) fail('A11', `${tag}: the poise sweep never stood AT its own domain ${domains[resId]} — the fills-own-cell clause was not measured`);
-            else if (Math.abs(atDomain.w - atDomain.cellW) > 1.0) {
-              fail('A11', `${tag}: poise at its OWN domain ${domains[resId]} rendered ${atDomain.w} px of its ${atDomain.cellW} px cell${atDomain.floored ? ' (floored)' : ''} — a resource at 100 % of its own ceiling must fill its own cell`);
-            } else notes.push(`A11 ${tag}: POISE AT-OWN-DOMAIN ok — max ${domains[resId]} fills its ${atDomain.cellW} px cell exactly`);
-          }
         }
         crossPairsAnywhere = judgeCrossResource(tag, rows, manaPoints, domains) || crossPairsAnywhere;
         await judgePlayerVessel(b, href, shape);

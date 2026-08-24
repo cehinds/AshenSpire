@@ -9,10 +9,10 @@
 //
 // Headless: no document/window/localStorage/timers.
 
-import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt } from './loadout.js';
+import { createLoadout, runMods, stampDeck, startingDeckRefs, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { syncFlaskGrowth } from './flaskgrowth.js';
-import { classAttributePreset, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
+import { classAttributePreset, creationModeSnapshot, defaultCreationModeId, normalizeRunAttributes } from './attributes.js';
 import {
   createDerivedStatRuleSnapshot,
   restoreDerivedStatRuleSnapshot,
@@ -20,6 +20,7 @@ import {
   deriveStat,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
+import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
 import { DAMAGE_SCHOOLS } from './schemas.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 // The run door's witness. Recording only; nothing here changes a number.
@@ -30,7 +31,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 // granted — and capacity must derive from the three (validateRunShape). v2
 // saves lack the ledger and are attributed once at the load door
 // (initializeRunFlaskCharges); v1 additionally predates starting kits.
-export const RUN_SCHEMA_VERSION = 4;
+export const RUN_SCHEMA_VERSION = 5;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -65,7 +66,9 @@ export function createRunState({
   derivedStatOptions = {},
   derivedStatRuleSnapshot = undefined,
   startingKitId = undefined,
+  startingHands = undefined,
   startingArmourId = undefined,
+  startingRelicId = undefined,
   profileMeta = {},
 }) {
   const classDef = registries.classes.get(classId);
@@ -75,15 +78,24 @@ export function createRunState({
   const attributes = requestedAttributes === undefined
     ? classAttributePreset(registries, classId, selectedAttributeMode)
     : normalizeRunAttributes({ class: classId, attributeMode: selectedAttributeMode, attributes: requestedAttributes }, registries).attributes;
+  const attributeModeSnapshot = creationModeSnapshot(registries, selectedAttributeMode);
   const idGen = createIdGen('rc');
-  const startingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const baseStartingKit = resolveStartingKit(registries, classId, startingKitId, profileMeta);
+  const hands = resolveCreationHands(registries, classId, startingHands, baseStartingKit);
+  const startingKit = { ...baseStartingKit, ...hands, ...(startingHands ? { customized: true } : {}) };
+  const startingRelic = resolveCreationRelic(registries, classId, startingRelicId);
   // E5 (#250): the set the run begins wearing. Resolved against the same
   // profile meta the kit above is — absent, the class's free set, which is
   // what createLoadout always chose. The loadout row is the persisted home;
   // no new run field, because run.loadout.sets.armor[0] already IS the record.
   const startingArmour = resolveStartingArmour(registries, classId, startingArmourId, profileMeta);
   const loadout = createLoadout(registries, classId, startingKit, startingArmour);
-  for (const [slotId, itemId] of Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
+  // A class's baseline kit is part of its birth contract, not an equipment
+  // choice made after creation. Alternate kits still pass the requirement
+  // gate; the baseline remains usable when a save-safe mode retunes attributes.
+  for (const [slotId, itemId] of startingKit.baseline
+    ? []
+    : Object.entries({ rightHand: startingKit.rightHand, leftHand: startingKit.leftHand })) {
     if (!itemId) continue;
     const piece = (registries.equipment.armaments || []).find((row) => row.id === itemId);
     const receipt = equipmentRequirementReceipt(registries, piece, attributes);
@@ -92,9 +104,11 @@ export function createRunState({
       throw new Error(`${startingKit.id}.${slotId}: ${itemId} requires ${failed.attributeId} ${failed.required} (got ${failed.actual})`);
     }
   }
-  // Armour can carry `self.maxHp`, so the pool it sets has to be known before
-  // hp is filled — the run starts at full, in whatever it starts wearing.
-  const oldMaxHp = classDef.maxHp + runMods(registries, loadout, classId).maxHp;
+  // Equipment can carry pool bonuses, so the active set is resolved before the
+  // run fills HP, Mana, and Stamina at the derived-stat door below.
+  const startingRunMods = runMods(registries, loadout, classId);
+  const equipmentPoolBonuses = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, startingRunMods[field]]));
+  const oldMaxHp = classDef.maxHp + equipmentPoolBonuses.maxHp;
   const run = {
     schemaVersion: RUN_SCHEMA_VERSION,
     contentVersion: registries.contentVersion,
@@ -104,6 +118,7 @@ export function createRunState({
     startingKitId: startingKit.id,
     startingKitSnapshot: startingKitSnapshot(startingKit),
     attributeMode: selectedAttributeMode,
+    attributeModeSnapshot,
     attributes,
     // LEVELS BOUGHT AT SHRINES, per run — Constantine: "players should have the
     // option to level up their character (per run) by trading cinders". It is a
@@ -126,10 +141,12 @@ export function createRunState({
     hp: oldMaxHp,
     maxHp: oldMaxHp,
     maxHpAdjustment: 0,
+    equipmentPoolBonuses,
+    equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     loadout,
-    relics: [classDef.startingRelic],
+    relics: [startingRelic.id],
     damageBySchoolAdd: Object.fromEntries(DAMAGE_SCHOOLS.map((school) => [school, 0])),
     flasks: [], // [{ flaskId }] — max slots from balance.flaskSlots
     flaskCharges: createFlaskCharges(registries.balance, classDef.startingFlaskAllocation),
@@ -208,16 +225,77 @@ export function initializeRunDerivedStats(run, registries, {
   derivedStatOptions = {},
   preserveDeficits = true,
 } = {}) {
+  const modeProfiles = run.attributeModeSnapshot && run.attributeModeSnapshot.equipmentProfiles;
+  const modeModifiers = modeProfiles
+    ? { ...(derivedStatOptions.modeModifiers || {}), equipmentProfiles: modeProfiles }
+    : derivedStatOptions.modeModifiers;
+  const effectiveDerivedStatOptions = { ...derivedStatOptions, modeModifiers };
   const existing = snapshot || run.derivedStatRuleSnapshot;
   const classDef = registries.classes.get(run.class);
-  const hpEquipmentBonus = run.loadout ? runMods(registries, run.loadout, run.class).maxHp : 0;
+  const liveEquipmentMods = run.loadout ? runMods(registries, run.loadout, run.class) : null;
   run.equipmentProfileRuleSnapshot = run.equipmentProfileRuleSnapshot
     ? restoreEquipmentProfileRuleSnapshot(run.equipmentProfileRuleSnapshot, registries)
-    : createEquipmentProfileRuleSnapshot(registries, derivedStatOptions);
+    : createEquipmentProfileRuleSnapshot(registries, effectiveDerivedStatOptions);
   const currentRuleset = registries.derivedStatRules.rulesetVersion;
-  const existingIsCurrent = existing && existing.rulesetVersion === currentRuleset;
+  // Ruleset 3 was the first fully persisted, host-owned snapshot. Preserve it
+  // exactly across later balance tables; versions 1/2 remain migration inputs.
+  const existingIsCurrent = existing && existing.rulesetVersion >= 3 && existing.rulesetVersion <= currentRuleset;
   let restoredExisting = null;
-  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries));
+  if (existing) restoredExisting = restoreDerivedStatRuleSnapshot(existing, derivedOptions(registries, effectiveDerivedStatOptions));
+
+  // Schema v4 and older persisted the resulting pools but not the equipment
+  // contribution that produced them. Infer that contribution once from the
+  // run's own immutable rule snapshot. A later content edit therefore cannot
+  // rebalance or archive a climb merely because its active piece gained a mod.
+  if (!run.equipmentPoolBonuses) {
+    const inferred = Object.fromEntries(EQUIPMENT_POOL_FIELDS.map((field) => [field, liveEquipmentMods ? liveEquipmentMods[field] : 0]));
+    if (restoredExisting) {
+      const statFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
+      for (const maxField of EQUIPMENT_POOL_FIELDS) {
+        const persistedMax = run[maxField];
+        const adjustment = maxField === 'maxHp' ? run.maxHpAdjustment : 0;
+        if (!Number.isFinite(persistedMax) || !Number.isInteger(adjustment)) continue;
+        const derived = deriveStat(restoredExisting.rules, statFor[maxField], { attributes: run.attributes, classDef }).value;
+        inferred[maxField] = persistedMax - derived - adjustment;
+      }
+    }
+    run.equipmentPoolBonuses = inferred;
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunDerivedStats',
+      field: 'equipmentPoolBonuses',
+      was: undefined,
+      now: { ...inferred },
+      why: 'absent in the save: inferred once from persisted maxima and the run-owned derived-stat snapshot, so live equipment content cannot rewrite the climb',
+    });
+  }
+  for (const field of EQUIPMENT_POOL_FIELDS) {
+    if (!Number.isInteger(run.equipmentPoolBonuses[field])) {
+      throw new Error(`Persisted equipmentPoolBonuses.${field} must be an integer`);
+    }
+  }
+  const hpEquipmentBonus = run.equipmentPoolBonuses.maxHp;
+  const equipmentDeficitsAbsent = !run.equipmentPoolDeficits;
+  if (equipmentDeficitsAbsent) {
+    run.equipmentPoolDeficits = {
+      hp: Number.isFinite(run.maxHp) && Number.isFinite(run.hp) ? Math.max(0, run.maxHp - run.hp) : 0,
+      mana: Number.isFinite(run.maxMana) && Number.isFinite(run.mana) ? Math.max(0, run.maxMana - run.mana) : 0,
+      stamina: Number.isFinite(run.maxStamina) && Number.isFinite(run.stamina) ? Math.max(0, run.maxStamina - run.stamina) : 0,
+    };
+    note(run, {
+      kind: 'heal',
+      site: 'state.js:initializeRunDerivedStats',
+      field: 'equipmentPoolDeficits',
+      was: undefined,
+      now: { ...run.equipmentPoolDeficits },
+      why: 'absent in the save: captured from the persisted current/max pools so shrinking equipment cannot erase spent resource debt',
+    });
+  }
+  for (const field of ['hp', 'mana', 'stamina']) {
+    if (!Number.isInteger(run.equipmentPoolDeficits[field]) || run.equipmentPoolDeficits[field] < 0) {
+      throw new Error(`Persisted equipmentPoolDeficits.${field} must be a non-negative integer`);
+    }
+  }
 
   // Schema v3 and older had no explanation for permanent max-HP reductions.
   // Infer the exact residual once from the old authoritative rule plus current
@@ -256,7 +334,9 @@ export function initializeRunDerivedStats(run, registries, {
       if (!Number.isInteger(value) || value < 0) {
         throw new Error(`Persisted ${key} must be a non-negative integer under its derived-stat snapshot`);
       }
-      const expected = deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value;
+      const equipmentBonus = key === 'maxMana' ? run.equipmentPoolBonuses.maxMana
+        : key === 'maxStamina' ? run.equipmentPoolBonuses.maxStamina : 0;
+      const expected = Math.max(0, deriveStat(restored.rules, statId, { attributes: run.attributes, classDef }).value + equipmentBonus);
       if (value !== expected) throw new Error(`Persisted ${key} ${value} contradicts derived-stat snapshot value ${expected}`);
     }
     // MAX-HP HOME 1 of 3 (the validating one). Same formula as home 2 below and
@@ -307,7 +387,7 @@ export function initializeRunDerivedStats(run, registries, {
   // wrong answer Law 0 clause 5 is about.
   const hostRules = resolveDerivedStatRules(
     registries.derivedStatRules,
-    derivedOptions(registries, derivedStatOptions),
+    derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
     Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
@@ -319,7 +399,7 @@ export function initializeRunDerivedStats(run, registries, {
   const receipt = existingIsCurrent
     ? restoredExisting
     : createDerivedStatRuleSnapshot(registries.derivedStatRules, {
-      ...derivedOptions(registries, derivedStatOptions),
+      ...derivedOptions(registries, effectiveDerivedStatOptions),
       classDef,
       relicModifierReceipt,
     });
@@ -348,8 +428,8 @@ export function initializeRunDerivedStats(run, registries, {
     why: 'max-HP home 2 of 3 — the host derived-stat rules replace whatever was in the field, at birth and at the load door alike',
   });
   run.maxHp = derivedMaxHp;
-  run.maxMana = mana.value;
-  run.maxStamina = stamina.value;
+  run.maxMana = Math.max(0, mana.value + run.equipmentPoolBonuses.maxMana);
+  run.maxStamina = Math.max(0, stamina.value + run.equipmentPoolBonuses.maxStamina);
   run.energyMax = energy.value;
   run.drawPerTurn = draw.value;
   run.damageBySchoolAdd = structuredClone(
@@ -384,6 +464,13 @@ export function initializeRunDerivedStats(run, registries, {
     run.mana = Math.max(0, Math.min(run.maxMana, Math.round(legacyRatio * run.maxMana)));
   } else run.mana = run.maxMana;
   run.stamina = run.maxStamina;
+  if (equipmentDeficitsAbsent) {
+    run.equipmentPoolDeficits = {
+      hp: Math.max(0, run.maxHp - run.hp),
+      mana: Math.max(0, run.maxMana - run.mana),
+      stamina: Math.max(0, run.maxStamina - run.stamina),
+    };
+  }
   return run;
 }
 
@@ -405,6 +492,7 @@ export const RUN_SHAPE = [
   { key: 'startingKitSnapshot', type: 'object' },
   // Optional as a pair only so pre-attribute saves can migrate as one block.
   { key: 'attributeMode', type: 'string', optional: true },
+  { key: 'attributeModeSnapshot', type: 'object', optional: true },
   { key: 'attributes', type: 'object', optional: true },
   // Optional so a run saved before shrine levelling existed still loads: absent
   // reads as zero levels bought, which is what such a run is. `levelPoints` is
@@ -420,6 +508,8 @@ export const RUN_SHAPE = [
   { key: 'hp', type: 'number' },
   { key: 'maxHp', type: 'number' },
   { key: 'maxHpAdjustment', type: 'number' },
+  { key: 'equipmentPoolBonuses', type: 'object' },
+  { key: 'equipmentPoolDeficits', type: 'object' },
   // Optional only for save compatibility. save.js migrates a pre-mana run to
   // its class-authored full pool before handing it to the game.
   { key: 'mana', type: 'number', optional: true },
@@ -457,11 +547,12 @@ function typeOk(value, type) {
 /** validateRunShape(run) → [] when sound, else a list of human-readable problems.
  *  `legacy` admits v1 saves (pre-starting-kit); `preLedger` admits v1/v2 saves
  *  (pre-capacity-ledger). deserializeRun derives both from schemaVersion. */
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger } = {}) {
   const problems = [];
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
     if (preHpLedger && (f.key === 'maxHpAdjustment' || f.key === 'damageBySchoolAdd')) continue;
+    if (preEquipmentPools && (f.key === 'equipmentPoolBonuses' || f.key === 'equipmentPoolDeficits')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -476,6 +567,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const modeAbsent = run.attributeMode === undefined;
   const attributesAbsent = run.attributes === undefined;
   if (modeAbsent !== attributesAbsent) problems.push('attributeMode and attributes must both be present or both be absent');
+  if (modeAbsent && run.attributeModeSnapshot !== undefined) problems.push('attributeModeSnapshot requires attributeMode and attributes');
   if (!attributesAbsent && typeOk(run.attributes, 'object')) {
     for (const [id, value] of Object.entries(run.attributes)) {
       if (!Number.isInteger(value)) problems.push(`attributes.${id} must be an integer`);
@@ -687,10 +779,11 @@ export function migrateRunSchema(run) {
   const legacy = run.schemaVersion === 1;
   const preLedger = legacy || run.schemaVersion === 2; // v2: no flaskCharges capacity ledger yet
   const preHpLedger = [1, 2, 3].includes(run.schemaVersion);
-  if (![1, 2, 3, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, ${RUN_SCHEMA_VERSION})`);
+  const preEquipmentPools = [1, 2, 3, 4].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools });
   if (problems.length) throw new Error(`Malformed run save: ${problems.join('; ')}`);
   if (originalVersion !== RUN_SCHEMA_VERSION) {
     run.migratedFromRunSchemaVersion = originalVersion;

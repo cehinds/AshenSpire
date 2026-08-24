@@ -46,6 +46,53 @@ const edit = (root, rel, fn) => {
   writeFileSync(p, fn(readFileSync(p, 'utf8')), 'utf8');
 };
 
+const OWNER_PLACEMENT = '    ${buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}';
+const COMBAT_REMOVAL = "    ${model.properties.place === 'combat' ? '' : buildStampHtml(model.properties.place, { split: true, seed: model.properties.seed })}";
+
+function sourceFindingsFrom(owner, combat) {
+  const findings = [];
+  if (!/^import \{ buildStampHtml \} from '\.\/buildstamp\.js';$/m.test(owner)
+      || !owner.split(/\r?\n/).includes(OWNER_PLACEMENT)) {
+    findings.push('owner-placement: hudmeta does not unconditionally emit the split build stamp');
+  }
+  if (!/^import \{ hudShellHtml \} from '\.\.\/components\/hudmeta\.js';$/m.test(combat)
+      || !/^import \{ runHudViewModel \} from '\.\.\/viewModels\/RunHudViewModel\.js';$/m.test(combat)
+      || !/\$\{hudShellHtml\(runHudViewModel\(\{/.test(combat)) {
+    findings.push('combat-consumer: combat does not import and mount hudShellHtml');
+  }
+  return findings;
+}
+
+function sourceFindings(root) {
+  return sourceFindingsFrom(
+    readFileSync(resolve(root, 'src/ui/components/hudmeta.js'), 'utf8'),
+    readFileSync(resolve(root, 'src/ui/screens/combat.js'), 'utf8'),
+  );
+}
+
+export function sourceSelftest() {
+  const owner = readFileSync(resolve(REPO_ROOT, 'src/ui/components/hudmeta.js'), 'utf8');
+  const combat = readFileSync(resolve(REPO_ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  const cases = [
+    ['clean shared owner + combat consumer', [], owner, combat],
+    ['combat-visible placement removed at shared owner', ['owner-placement'], owner.replace(OWNER_PLACEMENT, COMBAT_REMOVAL), combat],
+    ['combat stops mounting the shared owner', ['combat-consumer'], owner, combat.replace("import { hudShellHtml } from '../components/hudmeta.js';", '')],
+  ];
+  let failures = 0;
+  for (const [name, expected, ownerText, combatText] of cases) {
+    const findings = sourceFindingsFrom(ownerText, combatText);
+    const exact = findings.length === expected.length && expected.every((code) => findings.some((finding) => finding.startsWith(code)));
+    if (!exact) {
+      failures++;
+      console.log(`  FAIL ${name}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(findings)}`);
+    } else console.log(`  ${expected.length ? 'RED ' : 'PASS'} ${name}${findings.length ? ` — ${findings.join('; ')}` : ''}`);
+  }
+  console.log(failures
+    ? `buildstamp-shot --source-selftest: RED — ${failures}/${cases.length} cases failed`
+    : `buildstamp-shot --source-selftest: OK — ${cases.length}/${cases.length} clean/plant cases discriminated`);
+  return failures ? 1 : 0;
+}
+
 const PLANTS = [
   {
     name: 'opacity: 0 — in the DOM, in the viewport, in the layout, and NOT ON THE SCREEN',
@@ -78,14 +125,15 @@ const PLANTS = [
   },
   {
     name: 'the combat placement deleted outright',
-    expect: /no \[data-role/i,
-    plant: (root) => edit(root, 'src/ui/screens/combat.js', (t) => t.replace(/^.*buildStampHtml.*$/gm, '')),
+    expect: /combat @ .*: no \[data-role/i,
+    expectSource: 'owner-placement',
+    plant: (root) => edit(root, 'src/ui/components/hudmeta.js', (t) => t.replace(OWNER_PLACEMENT, COMBAT_REMOVAL)),
   },
   {
     name: 'the stamp TYPES a version instead of deriving one',
     expect: /reads "BUILD 9\.9\.9/i,
     plant: (root) => edit(root, 'src/ui/components/buildstamp.js',
-      (t) => t.replace('${esc(BUILD_STAMP_TEXT)}', 'BUILD 9.9.9+deadbeef01')),
+      (t) => t.replace(": esc(BUILD_STAMP_TEXT);", ": 'BUILD 9.9.9+deadbeef01';")),
   },
 ];
 
@@ -167,6 +215,16 @@ export async function selftest() {
     const root = fresh();
     try {
       p.plant(root);
+      if (p.expectSource) {
+        const sourceHit = sourceFindings(root).find((finding) => finding.startsWith(p.expectSource));
+        if (!sourceHit) {
+          failures += 1;
+          console.log(`  FAIL  SOURCE NOT ARMED — ${p.name}`);
+          console.log(`          expected source discriminator ${p.expectSource}`);
+          continue;
+        }
+        console.log(`  RED   [source] armed — ${sourceHit}`);
+      }
       const { misses } = await run({ root, out: outDir, quiet: true });
       const hit = misses.find((m) => p.expect.test(m));
       if (!hit) {
@@ -218,5 +276,5 @@ export async function selftest() {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
-  process.exit(await selftest());
+  process.exit(process.argv.includes('--source-selftest') ? sourceSelftest() : await selftest());
 }

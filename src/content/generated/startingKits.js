@@ -49,5 +49,21 @@ export const startingKits = [
     "baseline": false,
     "rightHand": "emberlightSceptre",
     "leftHand": ""
+  },
+  {
+    "id": "rogueBaseline",
+    "classId": "rogue",
+    "label": "Knife and Buckler",
+    "baseline": true,
+    "rightHand": "dagger",
+    "leftHand": "buckler"
+  },
+  {
+    "id": "rogueBow",
+    "classId": "rogue",
+    "label": "Shortbow and Parrying Dagger",
+    "baseline": false,
+    "rightHand": "shortbow",
+    "leftHand": "parryDagger"
   }
 ];

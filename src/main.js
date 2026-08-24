@@ -34,7 +34,6 @@ import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
-import { KEEPSAKES } from './content/keepsakes.js';
 import { executeRunEffects, drawCards, discardFromHand } from './engine/actions.js';
 import { mountMap } from './ui/screens/map.js';
 import { mountCombat } from './ui/screens/combat.js';
@@ -227,6 +226,38 @@ initInput({ getSettings: () => saves.loadMeta().settings || {} });
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
 const UI = registries.balance.ui;
+const hudMaxViewportPct = Number(UI.hudBars?.main?.maxViewportPct);
+if (!Number.isFinite(hudMaxViewportPct) || hudMaxViewportPct <= 0 || hudMaxViewportPct > 100) {
+  throw new Error(`balance.ui.hudBars.main.maxViewportPct must be in (0, 100], got ${JSON.stringify(UI.hudBars?.main?.maxViewportPct)}`);
+}
+document.documentElement.style.setProperty('--hud-resource-max-vw', `${hudMaxViewportPct}vw`);
+const hudAvailableWidthPct = Number(UI.hudBars?.main?.availableWidthPct);
+if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAvailableWidthPct > 85) {
+  throw new Error(`balance.ui.hudBars.main.availableWidthPct must be in [80, 85], got ${JSON.stringify(UI.hudBars?.main?.availableWidthPct)}`);
+}
+document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
+document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
+const HUD_PRESENTATION = UI.hudPresentation || {};
+const projectHudToken = (key, min, max, cssName, unit) => {
+  const value = Number(HUD_PRESENTATION[key]);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`balance.ui.hudPresentation.${key} must be in [${min}, ${max}], got ${JSON.stringify(HUD_PRESENTATION[key])}`);
+  }
+  document.documentElement.style.setProperty(cssName, `${value}${unit}`);
+};
+projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
+projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
+projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
+projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
+projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
+projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
+projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
+projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
+if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
+  throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
+}
+document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -683,7 +714,7 @@ function randomSeedString() {
   return seedToString((Math.random() * 0xffffffff) >>> 0);
 }
 
-function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingArmourId, attributeMode, attributes, slot = 1 }) {
+function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -734,7 +765,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // byte-identical to one made before the dial existed. The settings row says
   // this out loud so he does not turn it, load a save, and see nothing.
   run = createRunState({
-    seed, classId, registries, startingKitId, startingArmourId, attributeMode, attributes,
+    seed, classId, registries, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes,
     profileMeta: saves.loadMeta(),
     derivedStatOptions: derivedStatDialOptions(saves.loadMeta().settings),
   });
@@ -748,7 +779,7 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   rng = createRng(seed);
 
   // Keepsake: a one-time bundle of run-level effects (content/keepsakes.js).
-  const keepsake = KEEPSAKES.find((k) => k.id === keepsakeId);
+  const keepsake = (registries.characterCreation.keepsakes || []).find((k) => k.id === keepsakeId);
   if (keepsake && keepsake.effects.length) {
     executeRunEffects({ run, registries, rng }, keepsake.effects);
   }
@@ -1140,15 +1171,16 @@ function finishRun(victory) {
   return fresh.map((id) => registries.unlocks.find((u) => u.id === id)).filter(Boolean);
 }
 
-function showCustomize(slot = 1) {
+function showCustomize(slot = 1, catalog = false) {
   mountCustomize(app, {
     registries,
     meta: saves.loadMeta(),
     // A ?shot= boot gets a fixed seed so the field photographs identically on
     // every capture; a real boot still gets a random one.
-    defaultSeedString: shotState === 'customize' ? 'SHOWCASE' : randomSeedString(),
+    defaultSeedString: shotState === 'customize' || shotState === 'components' ? 'SHOWCASE' : randomSeedString(),
     onBack: showTitle,
     onStart: (config) => newRun({ ...config, slot }),
+    catalog,
   });
 }
 
@@ -1344,6 +1376,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentPoolDeficits: run.equipmentPoolDeficits,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1451,9 +1484,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  for (const field of ['hp', 'mana', 'stamina']) {
+    run[field] = combat.player[field];
+    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
+    run[maxField] = combat.player[maxField];
+  }
+  run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
-  stampDeck(registries, run);
+  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -1465,9 +1504,6 @@ function onCombatEnd(result, combat, enc) {
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
 
-  run.hp = combat.player.hp;
-  run.mana = combat.player.mana;
-  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 
@@ -1912,6 +1948,64 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  // ---- THE POOL REACH DOORS, AT ONE SITE FOR EVERY SCREEN THAT DRAWS A HUD ---
+  //
+  // `?shotMaxHp` / `?shotMaxMana` / `?shotMaxStamina` / `?shotMana` — STAND AT A
+  // DIFFERENT MAXIMUM.
+  //
+  // A REACH STATE, exactly the shape and reason as `?shotAt` and `?shotEvent`
+  // below. His bar-scaling rule ("the size of that bar should scale depending on
+  // the max total") is a claim about how the HUD behaves ACROSS maxima, and no
+  // instrument could vary a maximum: every capture this repo has ever taken of
+  // the HUD was taken at the reaver's own numbers. One max is not the scale, in
+  // the same way one map is not the map. These are the levers tools/hudbars.mjs
+  // and tools/hudparity.mjs sweep, and the proof that a bar's length tracks the
+  // number is worth nothing without them.
+  //
+  // They move the RUN's fields, which are the same fields a curse and an armour
+  // mod move (actions.js runMods, loadout.js) — so a value enters through the
+  // door a real maximum enters, never through the renderer.
+  //
+  // MOVED HERE 2026-08-22 (E9 / #254) FROM INSIDE THE `combat|fx` BRANCH, and
+  // the move is the point: the map now draws the SAME HUD through the same
+  // renderer, and a lever that reaches one screen and not the other cannot ask
+  // whether the two agree — the instrument would be comparing a posed combat
+  // screen against an unposed map. One site, every `?shot=` state that shows a
+  // HUD. THE WIDENING IS REAL AND DELIBERATE: states that never read these
+  // params before (reward, shop, rest, event, death) now do. They are dev-only
+  // reach params on a boot that cannot touch a save, and a per-state allow-list
+  // here would be a second copy of the state list above.
+  const shotMaxHp = Number(shotParams.get('shotMaxHp'));
+  if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
+    run.maxHp = Math.floor(shotMaxHp);
+    run.hp = Math.min(run.hp, run.maxHp);
+  }
+  // Current mana enters through the run, before combat entity creation; the
+  // renderer never receives a fabricated value.
+  const shotMana = Number(shotParams.get('shotMana'));
+  if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
+    run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
+  }
+  const shotMaxMana = Number(shotParams.get('shotMaxMana'));
+  if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
+    run.maxMana = Math.floor(shotMaxMana);
+    run.mana = Math.min(run.mana, run.maxMana);
+  }
+  const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
+  if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
+    run.maxStamina = Math.floor(shotMaxStamina);
+    run.stamina = Math.min(run.stamina, run.maxStamina);
+  }
+  // `newRun()` ends in `startClimb()` -> `showMap()`, so on the map state the
+  // screen is ALREADY DRAWN by the time the lines above run. Re-draw it, or the
+  // photograph shows the un-posed character while the URL says otherwise — the
+  // exact silent-lie shape that cost a whole set of E9 frames on 2026-08-22
+  // (gamedesign/sunna/log/2026/2026-08-22_the-caps-that-were-never-reachable.md).
+  // Guarded on a door actually having fired so an ordinary `?shot=map` mounts
+  // once, as it always has.
+  const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
+    .some((k) => shotParams.has(k));
+  if (posedPools && shotState === 'map') showMap();
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map
@@ -2108,43 +2202,10 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
       onDone: () => { rewardDoneCount++; showMap(); },
     });
   } else if (shotState === 'combat' || shotState === 'fx') {
-    // `?shotMaxHp=<n>` — STAND AT A DIFFERENT MAXIMUM.
-    //
-    // A REACH STATE, exactly the shape and reason as ?shotAt and ?shotEvent
-    // above. His bar-scaling rule ("the size of that bar should scale depending
-    // on the max total") is a claim about how the HUD behaves ACROSS maxima,
-    // and no instrument could vary a maximum: every capture this repo has ever
-    // taken of the combat HUD was taken at the reaver's 84. One max is not the
-    // scale, in the same way one map is not the map. This is the lever
-    // tools/hudbars.mjs sweeps, and the proof that the bar length tracks the
-    // number is worth nothing without it.
-    //
-    // It moves the RUN's maxHp, which is the same field a curse and an armour
-    // mod move (actions.js:549, loadout.js runMods) — so the value enters
-    // through the door a real maximum enters, not through the renderer.
-    const shotMaxHp = Number(shotParams.get('shotMaxHp'));
-    if (Number.isFinite(shotMaxHp) && shotMaxHp > 0) {
-      run.maxHp = Math.floor(shotMaxHp);
-      run.hp = Math.min(run.hp, run.maxHp);
-    }
-    // Current mana enters through the run, before combat entity creation; the
-    // renderer never receives a fabricated value.
-    const shotMana = Number(shotParams.get('shotMana'));
-    if (shotParams.has('shotMana') && Number.isFinite(shotMana)) {
-      run.mana = Math.max(0, Math.min(run.maxMana, Math.floor(shotMana)));
-    }
-    const shotMaxMana = Number(shotParams.get('shotMaxMana'));
-    if (Number.isFinite(shotMaxMana) && shotMaxMana > 0) {
-      run.maxMana = Math.floor(shotMaxMana);
-      run.mana = Math.min(run.mana, run.maxMana);
-    }
-    const shotMaxStamina = Number(shotParams.get('shotMaxStamina'));
-    if (Number.isFinite(shotMaxStamina) && shotMaxStamina > 0) {
-      run.maxStamina = Math.floor(shotMaxStamina);
-      run.stamina = Math.min(run.stamina, run.maxStamina);
-    }
     // `?shotMaxPoise=<n>` — STAND AT A DIFFERENT STAGGER THRESHOLD. Unlike the
-    // three doors above there is no run field to write: the player's poise max
+    // four POOL doors (which sit above the shot branches, right after newRun,
+    // because the map reads them too) there is no run field to write: the
+    // player's poise max
     // is derived per fight from the loadout (engine/combat.js reads the
     // equipment threshold receipt at entity creation). So this door enters at
     // the receipt's OUTPUT seam — the explicit override createCombat already
@@ -2237,13 +2298,13 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // showTitle → showProfileNoticeIfNeeded → profileStatus().ok is false →
   // mountProfileNotice. Nothing on this branch mentions the notice screen.
   showTitle();
-} else if (shotState === 'customize') {
+} else if (shotState === 'customize' || shotState === 'components') {
   // EldenSpire#29 slice 1. The character-creation screen had no ?shot= state,
   // and #29's own boundary records what that cost: no sweep can open a screen
   // it cannot reach, so customize went unexamined for the whole week combat
   // was measured three times over. A seed is passed rather than randomised so
   // the seed field photographs the same on every run.
-  showCustomize(1);
+  showCustomize(1, shotState === 'components');
 } else {
   showTitle();
 }

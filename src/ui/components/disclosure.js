@@ -139,7 +139,7 @@ function tipHtml(entry) {
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel })
+ * mountDisclosure(host, entries, { moreLabel, armFace? })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
@@ -150,7 +150,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
+export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -297,10 +297,16 @@ export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
     // an object, and silently erasing the card would be the plausible failure.
     if (entry.face && entry.face.node) button.appendChild(entry.face.node);
     else button.innerHTML = faceHtml(entry);
-    button.addEventListener('click', () => {
+    const toggle = () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
-    });
+    };
+    // Composite Inventory faces use the same physical card for a short reveal
+    // tap and a configured hold action. The caller owns that action and returns
+    // true when it armed the face; every existing disclosure keeps the ordinary
+    // one-click toggle path.
+    const armed = armFace ? armFace({ button, entry, onTap: toggle }) === true : false;
+    if (!armed) button.addEventListener('click', toggle);
     if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
     faceBox.appendChild(button);

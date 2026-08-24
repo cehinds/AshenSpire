@@ -647,15 +647,33 @@ export function check(root = REPO_ROOT) {
       + ` ${commentHits} prose mention${commentHits === 1 ? '' : 's'} in comments, which assert nothing and are not copies.`);
   }
 
-  // C — EVERY CONSUMER DERIVES. The three surfaces he named must read the one
-  //     module. A screen that prints a version it computed itself is a copy
-  //     that agrees today.
-  const CONSUMERS = ['src/ui/screens/title.js', 'src/ui/screens/map.js', 'src/ui/screens/combat.js'];
-  const missing = CONSUMERS.filter((f) => !/buildStampHtml/.test(src(f)));
-  add(missing.length === 0, 'C THREE CONSUMERS',
-    missing.length === 0
-      ? `title, map and combat all render through ui/components/buildstamp.js`
-      : `these named surfaces do not derive the version: ${missing.join(', ')}`);
+  // C — EVERY CONSUMER DERIVES. Title owns its stamp directly. Map and combat
+  //     now mount one shared HUD shell, so requiring the leaf screens to name
+  //     buildStampHtml would reject the delegation that prevents them drifting.
+  //     The whole chain is guarded instead: the shared owner must import AND
+  //     invoke buildStampHtml, and each leaf must import AND invoke that owner.
+  //     Requiring both halves prevents an unused import or a coincidental word
+  //     in prose from buying green.
+  const importsAndInvokes = (file, symbol, modulePath) => {
+    const text = src(file);
+    const escaped = modulePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const imported = new RegExp(`^import\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*from\\s*['"]${escaped}['"]\\s*;`, 'm').test(text);
+    const invoked = new RegExp(`\\$\\{\\s*${symbol}\\s*\\(`).test(text);
+    return imported && invoked;
+  };
+  const directTitle = importsAndInvokes('src/ui/screens/title.js', 'buildStampHtml', '../components/buildstamp.js');
+  const sharedOwner = importsAndInvokes('src/ui/components/hudmeta.js', 'buildStampHtml', './buildstamp.js');
+  const missingMounts = ['src/ui/screens/map.js', 'src/ui/screens/combat.js']
+    .filter((f) => !importsAndInvokes(f, 'hudShellHtml', '../components/hudmeta.js'));
+  const consumerFailures = [
+    ...(!directTitle ? ['src/ui/screens/title.js does not derive directly'] : []),
+    ...(!sharedOwner ? ['src/ui/components/hudmeta.js does not own the shared stamp'] : []),
+    ...missingMounts.map((f) => `${f} does not mount the shared HUD owner`),
+  ];
+  add(consumerFailures.length === 0, 'C THREE CONSUMERS',
+    consumerFailures.length === 0
+      ? `title derives directly; shared hudmeta owns the stamp; map and combat both mount that owner`
+      : `the named version-consumer chain is broken:\n      ${consumerFailures.join('\n      ')}`);
 
   // D — THE CONTAINMENT CLAIM. The digest's four roots must be a superset of
   //     what the bundler reads, or a real source change can move the build
