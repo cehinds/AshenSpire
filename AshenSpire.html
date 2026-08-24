@@ -38555,8 +38555,12 @@ function pollPads() {
   for (const pad of pads) {
     if (!pad) continue;
     any = true;
-    const prev = padPrev[pad.index] || [];
     const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
+    if (!Object.hasOwn(padPrev, pad.index)) {
+      padPrev[pad.index] = pressed;
+      continue;
+    }
+    const prev = padPrev[pad.index];
 
     for (let i = 0; i < pressed.length; i++) {
       // THE RELEASE, which this poller never used to look at. A pad had only
@@ -38641,7 +38645,7 @@ function initInput({ getSettings } = {}) {
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
   addEventListener('blur', () => {
-    cancelInputGate('keyboard');
+    cancelInputGate();
     pressEnd(true);
   });
 
@@ -39567,7 +39571,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '774d74b74d';
+const SOURCE = '3248caabca';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39601,7 +39605,7 @@ const SOURCE = '774d74b74d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1302';
+const ORDINAL = '1305';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41926,8 +41930,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Cold boot now opens on the Ashen Spire threshold",
-    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled instead of surviving blur or controller disconnect, and the title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
-    "build": "0.4.0.1302",
+    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled on blur or controller disconnect, and controller buttons already held when polling begins are seeded rather than invented as fresh presses. The title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
+    "build": "dev artifact; exact BUILD in PR evidence",
     "pullRequest": 346,
     "url": "https://github.com/cehinds/AshenSpire/pull/346"
   },

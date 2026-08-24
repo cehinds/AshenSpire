@@ -133,6 +133,20 @@ if (args.includes('--selftest')) {
         expectRed: /RED A7\.INTERRUPT-CANCEL/,
       },
       {
+        name: 'window blur leaves a held controller activation armed',
+        file: 'src/ui/input.js',
+        find: '    cancelInputGate();',
+        replace: "    cancelInputGate('keyboard'); // startup-gate selftest plant",
+        expectRed: /RED A7\.GAMEPAD-BLUR-CANCEL/,
+      },
+      {
+        name: 'a controller button held before the first poll becomes a rising edge',
+        file: 'src/ui/input.js',
+        find: '      padPrev[pad.index] = pressed;',
+        replace: '      padPrev[pad.index] = pressed.map(() => false); // startup-gate selftest plant',
+        expectRed: /RED A7\.HELD-AT-BOOT/,
+      },
+      {
         name: 'startup activation is removed from the accessibility tree',
         file: 'src/ui/models/StartupGateModels.js',
         find: "      role: 'button',",
@@ -162,7 +176,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 14 plants, 14 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 16 plants, 16 caught');
   process.exit(code);
 }
 
@@ -198,7 +212,7 @@ function verdict(condition, code, detail) {
 
 async function page({
   query = '', width = 1200, height = 730, mobile = false,
-  pad = false, corruptProfile = false, reduced = false,
+  pad = false, heldButton = null, corruptProfile = false, reduced = false,
 } = {}) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -215,6 +229,7 @@ async function page({
     localStorage.clear();
     ${corruptProfile ? "localStorage.setItem('sote_meta_v1', '{torn'); localStorage.removeItem('sote_meta_backup_v1');" : ''}
     const state = { connected: ${pad}, buttons: Array.from({length: 16}, () => ({pressed:false,value:0})) };
+    ${Number.isInteger(heldButton) ? `state.buttons[${heldButton}]={pressed:true,value:1};` : ''}
     const gamepad = { id:'startup-gate-test-pad', index:0, connected:true, mapping:'standard',
       timestamp:0, axes:[0,0,0,0], buttons:state.buttons };
     Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad] : [] });
@@ -244,6 +259,7 @@ async function page({
   const url = `http://127.0.0.1:${serverPort}/${query}`;
   await cdp.send('Page.navigate', { url }, sessionId);
   await until(`location.href === ${JSON.stringify(url)} && document.readyState !== 'loading'`, url);
+  if (pad) await wait(80);
   return {
     targetId, sessionId, ev, until,
     async key(key) {
@@ -310,7 +326,7 @@ async function assertPromptFamilies() {
   await p.mouse('move');
   let f = await startupFacts(p);
   verdict(f.family === 'pointer' && f.prompt === 'CLICK TO CONTINUE', 'A3.PROMPT-FAMILY', `mouse -> ${f.family}: ${f.prompt}`);
-  await p.ev(`window.__startupPad.connect()`); await wait(40);
+  await p.ev(`window.__startupPad.connect()`); await wait(80);
   await p.ev(`window.__startupPad.set(12,true)`); await wait(80);
   f = await startupFacts(p);
   verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-CONTROLLER', `D-pad -> ${f.family}: ${f.prompt}`);
@@ -395,6 +411,27 @@ async function assertInterruptedPresses() {
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
   verdict(await pad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
   await pad.close();
+
+  const blurredPad = await page({ pad: true });
+  await blurredPad.until(`!!document.querySelector('.startup-gate')`, 'gamepad blur startup');
+  await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await blurredPad.ev(`dispatchEvent(new Event('blur'))`);
+  await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await blurredPad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-BLUR-CANCEL', 'window blur cancels controller ownership; the orphaned release cannot reveal title');
+  await blurredPad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await blurredPad.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  verdict(await blurredPad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.GAMEPAD-BLUR-RECOVERY', 'a fresh complete controller press still reveals after focus returns');
+  await blurredPad.close();
+
+  const held = await page({ pad: true, heldButton: 0 });
+  await held.until(`!!document.querySelector('.startup-gate')`, 'held-at-boot startup');
+  await wait(120);
+  await held.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await held.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-BOOT', 'a button already held when polling begins is seeded, not invented as a fresh activation');
+  await held.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await held.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  verdict(await held.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
+  await held.close();
 }
 
 async function assertReturnBypass() {

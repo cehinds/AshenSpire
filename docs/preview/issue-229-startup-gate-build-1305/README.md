@@ -1,10 +1,10 @@
 # Issue #229 startup-gate evidence
 
 - Base: `dev@13919f3d155928b4540342db54076ef39ee7fe91`
-- Built artifact commit: `811a9d034fd165312db6c7f5da5275fa2c10daa4`
-- Build: `0.4.0.1302 · src 774d74b74d`
+- Built artifact commit: `PENDING_FINAL_BUILD_COMMIT`
+- Build: `0.4.0.1305 · src PENDING_FINAL_SOURCE_DIGEST`
 - Artifact: `dist/AshenSpire.html`
-- Artifact SHA-256: `7fac6f0478b0e879568a5f6779b9ea8c86e8d653c789c7aff2fb82a3acf82c98`
+- Artifact SHA-256: `PENDING_FINAL_ARTIFACT_SHA256`
 - Browser: Google Chrome on Windows, device scale factor 1
 
 ## Visually inspected captures
@@ -25,5 +25,5 @@ controller buttons 0 and 9, D-pad/analog last-input prompts, pointer/touch focus
 without a persistent gamepad cursor, return-to-title bypass, profile
 crisis precedence, interrupted-press cancellation, actionable startup semantics,
 deterministic reduced-motion reveal cleanup, and Text M/XL at 390x844,
-844x344, and 1200x730. Result: 41 checks passed; its 14 same-door plants
+844x344, and 1200x730. Result: 45 checks passed; its 16 same-door plants
 were each observed red and the clean copied tree returned green.

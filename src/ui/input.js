@@ -942,8 +942,12 @@ function pollPads() {
   for (const pad of pads) {
     if (!pad) continue;
     any = true;
-    const prev = padPrev[pad.index] || [];
     const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
+    if (!Object.hasOwn(padPrev, pad.index)) {
+      padPrev[pad.index] = pressed;
+      continue;
+    }
+    const prev = padPrev[pad.index];
 
     for (let i = 0; i < pressed.length; i++) {
       // THE RELEASE, which this poller never used to look at. A pad had only
@@ -1028,7 +1032,7 @@ export function initInput({ getSettings } = {}) {
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
   addEventListener('blur', () => {
-    cancelInputGate('keyboard');
+    cancelInputGate();
     pressEnd(true);
   });
 

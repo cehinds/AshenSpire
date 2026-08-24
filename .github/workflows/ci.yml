@@ -388,7 +388,7 @@ jobs:
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
-      - name: The startup gate can fail by the same rendered door (14 plants)
+      - name: The startup gate can fail by the same rendered door (16 plants)
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest
 
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
