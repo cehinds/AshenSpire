@@ -24,6 +24,8 @@ export const AUDIO_DEFAULTS = balance.ui.audio;
 export function resolveMusicEnabled(settings = {}) {
   return typeof settings.musicEnabled === 'boolean'
     ? settings.musicEnabled
+    : typeof settings.muteMusic === 'boolean'
+      ? settings.muteMusic !== true
     : AUDIO_DEFAULTS.musicEnabled !== false;
 }
 
