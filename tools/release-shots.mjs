@@ -153,6 +153,7 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
     name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
     drive: `document.querySelector('.cz-stats').open = true`,
