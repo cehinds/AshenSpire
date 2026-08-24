@@ -164,7 +164,7 @@
 <main>
   <header>
     <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
-    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
+    <div class="meta">Live dev manifest<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentDefinition.js">Open component definitions</a></div>
   </header>
   <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
@@ -189,7 +189,7 @@
     </table></div>
   </section>
   <section class="grid" id="grid" data-view="grid" aria-live="polite"></section>
-  <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
+  <p class="catalog-footer">Live source of truth: <code>src/ui/models/UiComponentDefinition.js</code>. This page imports the same immutable dev manifest that produces the runtime component ID registry, so merged names, ownership, composition, and reuse metadata appear automatically. Miniatures remain reference diagrams; production renderers live in <code>src/ui/components/</code>.</p>
 </main>
 <div class="detail-backdrop" id="detail-backdrop"></div>
 <aside class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
@@ -200,7 +200,7 @@
   <div class="detail-section"><h3>Related components</h3><div class="detail-related" id="detail-related"></div></div>
   <div class="detail-section" id="detail-actions"></div>
 </aside>
-<script>
+<script type="module">
 const V = {
   sharedHud:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>◎ REAVER</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1</span></div><div class="panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div><div class="split-belt"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div>',
   runHeader:'<div class="mini"><div class="mini-header"><b>◎ NAME · CLASS</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1 · BUILD</span></div></div>',
@@ -275,95 +275,7 @@ const V = {
   playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
   actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>'
 };
-const C = [
- ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Shared composition of header, resources, controls, and belt.','sharedHud'],
- ['run-header-strip','runHeaderModel','hudmeta.runHeaderStripHtml','hud','Map + Combat','Identity, cinders, and prioritized metadata.','runHeader'],
- ['identity-cluster','identityClusterModel','hudmeta.identityClusterHtml','hud','Map + Combat','Character identity cluster.','identityCluster'],
- ['portrait-badge','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Character glyph/badge.','portraitBadge'],
- ['character-title','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Name and class label.','characterTitle'],
- ['cinders-counter','cindersCounterModel','hudmeta.cindersCounterHtml','hud','Map + Combat','Live cinders count.','cindersCounter'],
- ['build-metadata-trail','buildMetadataTrailModel','hudmeta.buildMetadataTrailHtml','hud','Map + Combat','Act, floor, seed, build, and source.','buildTrail'],
- ['metadata-field','metadataFieldModel','hudmeta metadata spans','primitive','Map + Combat','One prioritized metadata field.','metadataField'],
- ['primary-hud-row','componentModel composition','hudmeta.primaryHudRowHtml','hud','Map + Combat','Vitals and Quick Access row.','primaryRow'],
- ['panel','panelModel child','shared panel frame','primitive','HUD panels','Common panel semantic/frame component.','panel'],
- ['component-background','componentModel child','panel + combatant CSS','primitive','Panels + combat cards','Reusable opacity, tint, border, and backing layer.','componentBackground'],
- ['vitals-panel','vitalsPanelModel','hudmeta.vitalsPanelHtml','hud','Map + Combat','HP, MP, and SP panel.','vitalsPanel'],
- ['resource-meter','componentModel child','resbars.resourceBars','hud','HUD + combat cards','Data-driven resource trough/fill.','resourceMeter'],
- ['quick-access-panel','quickAccessPanelModel','hudmeta.quickAccessPanelHtml','hud','Map + Combat','Armoury, menu, and charge flasks.','quickPanel'],
- ['action-control','actionControlModel child','hudmeta quick access','primitive','HUD controls','Shared activation semantics.','actionControl'],
- ['hotkey-badge','componentModel semantic ID','view-owned','primitive','HUD controls','Configurable key hint badge.','hotkeyBadge'],
- ['armoury-control','actionControlModel','quick access view','hud','Map + Combat','Opens Armoury.','armouryControl'],
- ['quick-menu-control','actionControlModel','quick access view','hud','Map + Combat','Opens Quick Menu.','quickMenuControl'],
- ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Contextual Quick Menu dropdown.','quickMenuPanel'],
- ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Variant/status caption.','quickMenuCaption'],
- ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','One context-specific menu action.','quickMenuRow'],
- ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Full tabbed in-run menu.','menuOverlay'],
- ['menu-tab-strip','menuTabStripModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Shared tab navigation strip.','menuTabStrip'],
- ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Deck/Relics/Stats/Save/Settings/Controls tab.','menuTab'],
- ['menu-panel','menuPanelModel','menuComponents.updateMenuSelection','menu','Menu Overlay','Active tab content host.','menuPanel'],
- ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','crimsonFlask'],
- ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','azureFlask'],
- ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','inventoryBelt'],
- ['item-tray','itemTrayModel child','belt view','primitive','Inventory','Shared horizontal tray behavior.','itemTray'],
- ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','itemSlot'],
- ['folding-tray','trayModel','trayComponents.renderTray','primitive','Armoury + future menus','Edge-aware disclosure composition.','foldingTray'],
- ['tray-header','trayHeaderModel child','trayComponents.renderTray','primitive','Folding Tray','Directional fold action, name, quantity, and optional sort.','trayHeader'],
- ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Expanded Folding Tray','44px mouse, touch-hold, and keyboard resize surface.','trayResizeHandle'],
- ['tray-content','trayContentModel child','trayComponents.renderTray','primitive','Folding Tray','Pluggable item-model content host.','trayContent'],
- ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','relicTray'],
- ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','relicSlot'],
- ['potion-tray','itemTrayModel','belt view','inventory','Map + Combat','Utility potion tray, right anchored.','potionTray'],
- ['potion-control','componentModel semantic ID','item view','primitive','Inventory','Individual utility potion control.','potionControl'],
- ['armoury-overlay','armouryOverlayModel','armouryComponents.renderArmouryOverlay','armoury','Map + Combat','Modal Armoury veil and focus scope.','armouryOverlay'],
- ['armoury-panel','armouryPanelModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Complete Armoury surface.','armouryPanel'],
- ['armoury-header','armouryHeaderModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Title, view controls, and close action.','armouryHeader'],
- ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Grid/Rack/Hybrid view selector.','armouryViewSwitcher'],
- ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive figure and slot workspace.','armouryBody'],
- ['armoury-figure','componentModel semantic ID','equipment.js + assets.js','armoury','Armoury','Layered equipped character figure.','armouryFigure'],
- ['equipment-slot','equipmentSlotModel','armouryComponents.renderEquipmentSlot','armoury','Armoury','One named equipment socket and its sets.','equipmentSlot'],
- ['equipment-set-cell','equipmentSetCellModel','armouryComponents.renderEquipmentSetCell','armoury','Equipment Slot','One active, empty, or locked set cell.','equipmentSetCell'],
- ['armoury-inventory','armouryInventoryModel','equipment.js inside renderTray','armoury','Armoury','Shared carried-item inventory content.','armouryInventory'],
- ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','Collapsed carried-item summary.','inventoryItemCard'],
- ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded item art, tags, mods, and action.','inventoryDetailCard'],
- ['equipment-comparison','componentModel semantic ID','equipmentReceipts.js','armoury','Armoury Inventory','Before/after equipment receipt.','equipmentComparison'],
- ['armoury-stats-panel','armouryStatsPanelModel','equipment.js','armoury','Armoury','Attributes and derived resource projection.','armouryStatsPanel'],
- ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js','armoury','Armoury','Live card rewrites from equipped pieces.','armouryCardStrip'],
- ['armoury-region-header','compatibility semantic ID','replaced by tray-header','armoury','Armoury','Historical Armoury-only fold-header name.','armouryRegionHeader'],
- ['battlefield-stage','componentModel','combat.js','combat','Combat','Combat scene/stage host.','battlefieldStage'],
- ['combatant-frame','combatantFrame','combatantFrame.js','combat','Combat','Shared combatant card geometry.','combatantFrame'],
- ['player-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Player combatant card.','playerFrame'],
- ['enemy-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Enemy combatant card.','enemyFrame'],
- ['combatant-sprite','combatantFrame child','combatantFrame.js + assets.js','combat','Combat cards','Rendered player or enemy figure.','combatantSprite'],
- ['combatant-nameplate','combatantFrame child','combatantFrame.js','combat','Combat cards','Combatant name label.','combatantNameplate'],
- ['intent-indicator','componentModel semantic ID','combat.js + uiContent.js','combat','Enemy combat cards','Telegraphed enemy action and amount.','intentIndicator'],
- ['block-badge','componentModel semantic ID','combat.js','combat','Combat cards','Current Guard/Block value over the sprite.','blockBadge'],
- ['health-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant HP bar.','healthStatusBar'],
- ['poise-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant Poise bar.','poiseStatusBar'],
- ['proc-status-bar','componentModel semantic ID','combat.js','combat','Enemy combat cards','Individual threshold buildup bar such as Bleed.','procStatusBar'],
- ['arcane-exposure-bar','componentModel semantic ID','arcaneExposure.js','combat','Enemy combat cards','Individual Arcane Exposure meter.','arcaneExposureBar'],
- ['status-effect-tray','componentModel semantic ID','combat.js','combat','Combat cards','Row of active status icons and stacks.','statusEffectTray'],
- ['tooltip','componentModel semantic ID','tooltip.js','primitive','All interactive surfaces','Shared contextual explanation surface.','tooltip'],
- ['damage-feedback','componentModel semantic ID','fx.js','combat','Combat feedback','One hit receipt composed from Guard and HP channels.','damageFeedback'],
- ['guarded-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Amount absorbed by Guard.','guardedDamage'],
- ['health-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Residual damage applied to HP.','healthDamage'],
- ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
- ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
-].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
-const COMPOSITION = Object.freeze({
-  'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
-  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
-  'armoury-overlay':['armoury-panel'],
-  'folding-tray':['tray-header','tray-resize-handle (expanded)','tray-content → context region component'],
-  'armoury-panel':['armoury-header','armoury-view-switcher','subject region (default: armoury-body)','folding-tray × 3'],
-  'armoury-body':['armoury-figure','equipment-slot × N'],
-  'equipment-slot':['equipment-set-cell × N'],
-  'armoury-inventory':['inventory-item-card × N','inventory-detail-card','equipment-comparison'],
-  'battlefield-stage':['component-background','player-combatant-frame','enemy-combatant-frame × N'],
-  'combatant-frame':['component-background','combatant-sprite','combatant-nameplate','health-status-bar','poise-status-bar','proc-status-bar','arcane-exposure-bar','status-effect-tray','intent-indicator','block-badge'],
-  'player-combatant-frame':['combatant-frame'],
-  'enemy-combatant-frame':['combatant-frame','intent-indicator'],
-  'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
-});
+import { UI_COMPONENT_CATALOG as C } from '../src/ui/models/UiComponentDefinition.js';
 const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), kind=document.querySelector('#kind'), sort=document.querySelector('#sort'), count=document.querySelector('#count');
 const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
 const clearFilters=document.querySelector('#clear-filters'), copyView=document.querySelector('#copy-view');
@@ -399,8 +311,8 @@ function syncUrl(){
   const query=next.toString(); history.replaceState(null,'',`${location.pathname}${query?`?${query}`:''}${location.hash}`);
 }
 function relatedIds(id){
-  const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
-  for(const [parent,children] of Object.entries(COMPOSITION)) if(children.some(value=>value.includes(id))) related.add(parent);
+  const related=new Set((C.find(item=>item.id===id)?.composition||[]).map(value=>value.split(/\s×|\s→|\s\(/)[0]).filter(value=>C.some(c=>c.id===value)));
+  for(const parent of C) if(parent.composition.some(value=>value.includes(id))) related.add(parent.id);
   return [...related].filter(value=>value!==id);
 }
 function closeDetails(){
@@ -411,10 +323,10 @@ function openDetails(id,trigger=null){
   const c=C.find(item=>item.id===id); if(!c) return;
   detailReturnFocus=trigger||document.activeElement;
   document.querySelector('#detail-id').textContent=c.id;
-  document.querySelector('#detail-title').textContent=c.id.replaceAll('-',' ');
+  document.querySelector('#detail-title').textContent=c.name;
   document.querySelector('#detail-visual').innerHTML=V[c.visual];
   document.querySelector('#detail-fields').innerHTML=`<dt>Model</dt><dd><code>${c.model}</code></dd><dt>Renderer / View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Group</dt><dd>${c.group}</dd><dt>Role</dt><dd>${c.purpose}</dd>`;
-  const parts=COMPOSITION[c.id]||[];
+  const parts=c.composition;
   document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
   const related=relatedIds(c.id);
   document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
@@ -426,12 +338,12 @@ function openDetails(id,trigger=null){
 function render(){
   const terms=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean), g=group.value, k=kind.value;
   const shown=C.filter(c=>{
-    const composite=Boolean(COMPOSITION[c.id]?.length), haystack=[...Object.values(c),...(COMPOSITION[c.id]||[])].join(' ').toLowerCase();
+    const composite=Boolean(c.composition.length), haystack=Object.values(c).flat().join(' ').toLowerCase();
     return (g==='all'||c.group===g)&&(k==='all'||(k==='composite')===composite)&&terms.every(term=>haystack.includes(term));
   });
   const compareText=(a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'});
   shown.sort((a,b)=>sort.value==='id-desc'?compareText(b.id,a.id):sort.value==='group'?compareText(a.group,b.group)||compareText(a.id,b.id):sort.value==='model'?compareText(a.model,b.model)||compareText(a.id,b.id):sort.value==='view'?compareText(a.owner,b.owner)||compareText(a.id,b.id):compareText(a.id,b.id));
-  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
+  grid.innerHTML=shown.map(c=>{const parts=c.composition;return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.name}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.name}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts.length?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts.length?'composite':'leaf'}</span><span class="chip">live dev</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
   count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); syncUrl(); updateDensityUi();
 }
 closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;

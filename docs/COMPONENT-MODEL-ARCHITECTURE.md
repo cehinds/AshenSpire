@@ -43,6 +43,12 @@ Domain directly.
 | Behaviors | `src/ui/behaviors/` | Command, focus, tooltip, hold, refusal, and lifecycle binders |
 | Composition Root | `src/main.js` | Construction and dependency wiring only |
 
+`src/ui/models/UiComponentDefinition.js` is the canonical immutable component
+manifest. It projects the runtime `UI_COMPONENTS` ID registry and the developer
+component catalog from the same definitions. A component's display name,
+model/view ownership, group, reuse surface, purpose, visual key, and composition
+therefore move with the `dev` build instead of being duplicated in catalog HTML.
+
 The target folders are introduced only when a migrated slice needs them. Bulk
 moves are forbidden; public imports remain compatible until consumers migrate.
 

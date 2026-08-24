@@ -216,6 +216,22 @@ async function main() {
     }
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/component-catalog.html` }, sessionId);
     await until("!!document.querySelector('[data-component=\"folding-tray\"]')", 'catalog Folding Tray card');
+    const liveManifest = await evaluate(`(async () => {
+      const { UI_COMPONENT_CATALOG, UI_COMPONENTS } = await import('/src/ui/models/UiComponentDefinition.js');
+      const cards=[...document.querySelectorAll('#grid article')];
+      return {
+        definitions:UI_COMPONENT_CATALOG.length,
+        runtimeIds:Object.keys(UI_COMPONENTS).length,
+        cards:cards.length,
+        synced:UI_COMPONENT_CATALOG.every((definition)=>{
+          const card=document.querySelector('[data-component="' + definition.id + '"]');
+          return card?.querySelector('h2')?.textContent===definition.name
+            && card?.textContent.includes(definition.model)
+            && card?.textContent.includes(definition.owner);
+        }),
+      };
+    })()`);
+    check(liveManifest.definitions === liveManifest.runtimeIds && liveManifest.cards === liveManifest.definitions && liveManifest.synced, 'catalog cards are projected from the same live dev manifest as runtime component IDs');
     const catalogControls = await evaluate(`(() => ({
       links:Object.fromEntries([...document.querySelectorAll('.catalog-nav a')].map((link)=>[link.textContent.trim(),link.href])),
       titleLink:document.querySelector('.title-link')?.href,

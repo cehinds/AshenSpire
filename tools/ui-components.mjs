@@ -34,6 +34,8 @@ const REQUIRED_IDS = Object.freeze([
 export function receipt() {
   return {
     registry: read('src/ui/models/UiComponentId.js'),
+    definitions: read('src/ui/models/UiComponentDefinition.js'),
+    catalog: read('docs/component-catalog.html'),
     componentModel: read('src/ui/models/ComponentModel.js'),
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
@@ -69,10 +71,14 @@ export function receipt() {
 
 export function findings(r) {
   const bad = [];
-  const ids = [...r.registry.matchAll(/:\s*'([a-z][a-z0-9-]+)'/g)].map((m) => m[1]);
+  const keys = [...r.definitions.matchAll(/^\s*\['([a-z][A-Za-z0-9]+)'/gm)].map((m) => m[1]);
+  const ids = keys.map((key) => key.replace(/([a-z\d])([A-Z])/g, '$1-$2').toLowerCase());
   const missing = REQUIRED_IDS.filter((id) => !ids.includes(id));
-  if (missing.length || new Set(ids).size !== ids.length) {
-    bad.push(`C1 registry ids missing/duplicated: ${missing.join(', ') || 'duplicate value'}`);
+  if (missing.length || new Set(ids).size !== ids.length
+      || !/import \{ UI_COMPONENTS \} from '\.\/UiComponentDefinition\.js'/.test(r.registry)
+      || !/import \{ UI_COMPONENT_CATALOG as C \} from '\.\.\/src\/ui\/models\/UiComponentDefinition\.js'/.test(r.catalog)
+      || /const C\s*=\s*\[/.test(r.catalog)) {
+    bad.push(`C1 live manifest ids missing/duplicated or catalog detached: ${missing.join(', ') || 'registry/catalog contract'}`);
   }
   const hudExports = [
     'identityClusterHtml', 'cindersCounterHtml', 'buildMetadataTrailHtml',
@@ -93,7 +99,7 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.definitions + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
       || /\b(run|combat)\s*=/.test(r.hud + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
@@ -220,7 +226,7 @@ export function findings(r) {
 function selftest() {
   const clean = receipt();
   const plants = [
-    ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
+    ['remove Vitals definition', 'C1 ', (r) => ({ ...r, definitions: r.definitions.replace(/^\s*\['vitalsPanel'.*\r?\n/m, '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace('const box = combatantFrame({\n        role: \'enemy\'', "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],

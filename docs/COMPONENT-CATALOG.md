@@ -19,9 +19,13 @@ focus search. Results can be sorted by ID, group, model, or view and filtered to
 composite or leaf components. **Copy view link** preserves the active search,
 group, kind, and sort in a shareable URL; **Clear** resets discovery filters.
 
-Stable IDs live in [`UiComponentId.js`](../src/ui/models/UiComponentId.js). Model
-factories live under [`src/ui/models/`](../src/ui/models/) and the shared HUD
-projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
+The canonical component records live in
+[`UiComponentDefinition.js`](../src/ui/models/UiComponentDefinition.js). The
+runtime ID registry and this HTML catalog both project from that immutable dev
+manifest, so names, model/view ownership, composition, reuse, and role metadata
+update together when a build is merged into `dev`. Model factories live under
+[`src/ui/models/`](../src/ui/models/) and the shared HUD projection is
+[`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
