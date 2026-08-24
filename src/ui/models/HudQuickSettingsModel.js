@@ -1,17 +1,15 @@
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { resolveMusicEnabled } from '../audio.js';
 
 export function musicQuickSettingsPlan(settings = {}) {
   const audioMuted = settings.muteAudio === true;
-  const musicMuted = settings.muteMusic === true;
-  const active = !audioMuted && !musicMuted;
+  const active = resolveMusicEnabled(settings);
   return Object.freeze({
     active,
-    stateLabel: active ? 'On' : audioMuted ? 'Audio off' : 'Off',
-    label: active ? 'Turn music off' : audioMuted ? 'Turn audio and music on' : 'Turn music on',
-    change: Object.freeze(active
-      ? { muteMusic: true }
-      : { muteAudio: false, muteMusic: false }),
+    stateLabel: active ? (audioMuted ? 'On · Audio muted' : 'On') : 'Off',
+    label: active ? 'Turn music off' : 'Turn music on',
+    change: Object.freeze({ musicEnabled: !active }),
   });
 }
 

@@ -65,7 +65,7 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -309,6 +309,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
+        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { armoury: () => onArmoury() } : {}),

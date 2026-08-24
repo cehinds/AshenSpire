@@ -10,7 +10,7 @@ import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
-import { AUDIO_DEFAULTS } from '../audio.js';
+import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
@@ -77,6 +77,8 @@ function graceRefillRows() {
 }
 
 const ROWS = [
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
@@ -220,10 +222,12 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'switcher',
-    choices: ['mirror', 'switcher'], label: 'Quick menu style',
-    note: 'MIRROR keeps the tab row and adds the context menu. SWITCHER replaces the tab row with one compact button on narrow screens. Switcher is the phone-friendly default.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
+    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
 
+  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
+    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
     note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
@@ -524,7 +528,28 @@ export function categoryTip(cat) {
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
+  if (row.resolve) return row.resolve(settings);
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+export function musicEnabledCondition(settings = {}) {
+  if (!resolveMusicEnabled(settings)) return 'Music off · sound effects unchanged.';
+  if (settings.muteAudio === true) return 'Music on · all audio muted.';
+  const volume = typeof settings.musicVolume === 'number'
+    ? settings.musicVolume
+    : AUDIO_DEFAULTS.musicVolume;
+  return `Music on · volume ${volume}%.`;
+}
+
+function rowNote(settings, row) {
+  return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+function refreshConditionNotes(container, settings) {
+  container.querySelectorAll('[data-setting-condition]').forEach((node) => {
+    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
+    if (row) node.textContent = rowNote(settings, row);
+  });
 }
 
 // Save data keeps legacy negative keys such as `muteAudio`; controls should
@@ -564,7 +589,14 @@ export function settingOn(settings, key) {
 }
 
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const help = `<details class="set-help"><summary>Details</summary><p class="set-note">${r.note}</p></details>`;
+  const note = rowNote(settings, r);
+  const condition = typeof r.note === 'function'
+    ? ` data-setting-condition="${r.key}" aria-live="polite"`
+    : '';
+  const status = r.type === 'action'
+    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
+    : condition;
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
@@ -652,10 +684,19 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
-  const on = controlOn(settings, r);
+  if (r.type === 'action' && !fullscreenCapability(doc).supported) {
+    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
+    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
+      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
+      <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
+        <span class="knob"></span>
+      </button>
+    </div>`;
+  }
+  const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
   return `<div class="set-row">
       <div><b>${r.label}</b>${help}</div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}" role="switch" aria-checked="${on}">
+      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}">
         <span class="knob"></span>
       </button>
     </div>`;
@@ -1212,6 +1253,23 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
 
+  const syncFullscreen = (message = '') => {
+    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
+    if (!btn) return;
+    const capability = fullscreenCapability();
+    const on = isFullscreen();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = !capability.supported;
+    btn.setAttribute('aria-disabled', String(!capability.supported));
+    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
+    if (status) {
+      status.textContent = message || (capability.supported
+        ? 'Fill the screen when this browser allows it.'
+        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
+    }
+  };
+
   // ---- everything below wires ONE PANEL'S controls -------------------------
   // It used to run once over the whole column, because the whole column was on
   // screen. With one category at a time it has to run again after every tab
@@ -1335,7 +1393,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
+      if (btn.dataset.action) {
+        const result = await toggleFullscreen();
+        syncFullscreen(result.ok || result.reason === 'unsupported'
+          ? ''
+          : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+        return;
+      }
       const now = !btn.classList.contains('on');
       btn.classList.toggle('on', now);
       btn.setAttribute('aria-checked', String(now));
@@ -1343,6 +1408,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const stored = row && row.positiveWhen === false ? !now : now;
       settings[btn.dataset.key] = stored;
       onChange({ [btn.dataset.key]: stored });
+      refreshConditionNotes(container, settings);
     });
   });
   }; // ---- end wire() ---------------------------------------------------
@@ -1359,12 +1425,22 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // collect four handlers that all write the same number.
   const onResize = () => refreshApplied(container, settings);
   window.addEventListener('resize', onResize);
+  const onFullscreenChange = () => syncFullscreen();
+  const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  document.addEventListener('fullscreenerror', onFullscreenError);
+  document.addEventListener('webkitfullscreenerror', onFullscreenError);
   // The settings container is rebuilt on every open, so the listener is dropped
   // with it rather than accumulating one per visit. Same observer releases the
   // bumpers if this strip took them.
   const obs = new MutationObserver(() => {
     if (lifecycleSentinel.isConnected) return;
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    document.removeEventListener('fullscreenerror', onFullscreenError);
+    document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });

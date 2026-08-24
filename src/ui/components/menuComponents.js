@@ -27,8 +27,15 @@ export function renderQuickMenu(model, { onActivate }) {
     button.className = `qn-row${row.tone ? ` ${row.tone}` : ''}${row.active ? ' on' : ''}`;
     button.dataset.act = row.act;
     button.dataset.member = row.act;
+    button.setAttribute('role', rowModel.accessibility.role);
+    if (row.control === 'switch') button.setAttribute('aria-checked', String(row.checked));
+    if (row.disabled) {
+      button.disabled = true;
+      button.setAttribute('aria-disabled', 'true');
+    }
     if (row.tab) button.dataset.tab = row.tab;
     button.innerHTML = `<span class="qn-ic">${esc(row.icon)}</span><span class="qn-label">${esc(row.label)}</span>`
+      + (row.control === 'switch' ? `<span class="qn-condition" aria-live="polite">${esc(row.condition)}</span><span class="qn-state">${row.checked ? 'ON' : 'OFF'}</span>` : '')
       + (row.badge ? `<span class="qn-badge">${esc(row.badge)}</span>` : '');
     markUiComponent(button, rowModel.component, rowModel.variant);
     if (row.tip) attachTooltip(button, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);

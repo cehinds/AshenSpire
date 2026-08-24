@@ -5173,12 +5173,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
-  test('61. Fullscreen and Music share one persistent HUD component; Settings does not duplicate them', () => {
+  test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
     const display = categoryHandler('Display').rows;
-    eq(display.some((r) => r.key === 'fullscreen'), false,
-      'Settings has no second Fullscreen state surface');
-    eq(display.some((r) => r.key === 'muteMusic'), false,
-      'Settings has no second Music state surface');
+    const audio = categoryHandler('Audio').rows;
+    eq(display.some((r) => r.key === 'fullscreen'), true,
+      'Settings exposes the browser-owned Fullscreen state');
+    eq(audio.some((r) => r.key === 'musicEnabled'), true,
+      'Settings exposes the canonical Music preference');
+    eq(audio.some((r) => r.key === 'muteMusic'), false,
+      'Settings does not introduce a second Music preference');
 
     const presentation = REG.balance.ui.hudQuickSettings;
     eq(presentation.places.join(','), 'title,map,combat',
@@ -5190,16 +5193,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
 
     const audibleMusic = musicQuickSettingsPlan({});
-    eq(audibleMusic.active, true, 'Music is active only while neither mute layer is set');
-    eq(audibleMusic.change.muteMusic, true, 'the active quick control mutes Music alone');
+    eq(audibleMusic.active, true, 'Music is enabled by default');
+    eq(audibleMusic.change.musicEnabled, false, 'the active quick control disables Music alone');
     const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
-    eq(musicMuted.active, false, 'the quick control reports an explicit Music mute');
-    eq(musicMuted.change.muteMusic, false, 'the quick control can unmute Music');
+    eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');
+    eq(musicMuted.change.musicEnabled, true, 'the quick control writes the canonical preference when re-enabled');
     const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
-    eq(audioMuted.active, false, 'master Audio mute cannot leave the Music control visually on');
-    eq(audioMuted.stateLabel, 'Audio off', 'master mute is named instead of masquerading as Music on');
-    eq(audioMuted.change.muteAudio, false, 'turning Music on also releases master Audio mute');
-    eq(audioMuted.change.muteMusic, false, 'turning Music on clears both mute layers');
+    eq(audioMuted.active, true, 'master Audio mute stays distinct from the Music preference');
+    eq(audioMuted.stateLabel, 'On · Audio muted', 'master mute is named without rewriting Music state');
+    eq(audioMuted.change.musicEnabled, false, 'the Music control changes only the canonical preference');
+    eq('muteAudio' in audioMuted.change, false, 'the Music control never releases global Audio mute');
 
     const restoredSettings = { muteMusic: true };
     const binding = { settings: {} };
@@ -5212,8 +5215,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the refresh carries the restored profile settings object');
 
     const quick = display.find((r) => r.key === 'quickNav');
-    eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');
-    eq(quick.choices.join(','), 'mirror,switcher', 'Quick menu exposes only Mirror or Switcher');
+    eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
+    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
     eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
       'the internal row order is not exposed as a redundant second setting');
 

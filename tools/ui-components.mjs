@@ -118,8 +118,9 @@ export function findings(r) {
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*620px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*520px[\s\S]*build-number/.test(r.css)) {
-    bad.push('C7 metadata does not hide Source, then Seed, then Build without wrapping');
+  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*620px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*520px/.test(r.css)
+      || /max-width:\s*520px[\s\S]{0,500}build-number\s*\{[^}]*display:\s*none/.test(r.css)) {
+    bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)

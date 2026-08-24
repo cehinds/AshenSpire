@@ -46,7 +46,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -58,7 +58,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -219,11 +219,13 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-const audio = initAudio(saves.loadMeta().settings || {});
+let activeMeta = saves.loadMeta();
+let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
-initInput({ getSettings: () => saves.loadMeta().settings || {} });
+initInput({ getSettings: () => activeSettings });
 
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
@@ -620,7 +622,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
-  audio.setVolumes(settings);
+  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -629,7 +631,7 @@ function applyDisplaySettings(settings) {
     audio.configureMusic({ folder });
   }
 }
-applyDisplaySettings(saves.loadMeta().settings);
+applyDisplaySettings(activeSettings);
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -652,11 +654,11 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  for (const key of Object.keys(activeSettings)) delete activeSettings[key];
+  Object.assign(activeSettings, settings);
+  activeMeta.settings = activeSettings;
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
-  audio.setVolumes(settings);     // music, sfx, mute
-  audio.configureMusic({ folder: settings.musicFolder || '' });
-  lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
   refreshHudQuickSettings(app, settings);
@@ -954,22 +956,56 @@ function showProfile() {
 }
 
 function persistSettingsChange(changed) {
-  const meta = saves.loadMeta();
-  meta.settings = {
-    ...((meta.settings && typeof meta.settings === 'object') ? meta.settings : {}),
-    ...changed,
-  };
-  const res = saves.saveMeta(meta);
-  applyDisplaySettings(meta.settings);
+  if (!saves.profileStatus().quarantined) {
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  Object.assign(activeSettings, changed);
+  activeMeta.settings = activeSettings;
+  const res = saves.saveMeta(activeMeta);
+  applyDisplaySettings(activeSettings);
+  refreshHudQuickSettings(app, activeSettings);
   remountMapIfShowing(changed);
   if (changed.bindings) setBindings(changed.bindings);
   if (changed.keyBindings) setKeyBindings(changed.keyBindings);
   if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  return res;
 }
+
+const quickMenuControls = {
+  fullscreen: {
+    read: () => {
+      const capability = fullscreenCapability(document);
+      const checked = isFullscreen(document);
+      return {
+        checked,
+        disabled: !capability.supported,
+        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
+      };
+    },
+    activate: async () => {
+      const result = await toggleFullscreen(document);
+      return result.ok || result.reason === 'unsupported'
+        ? {}
+        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
+    },
+  },
+  music: {
+    read: () => ({
+      checked: resolveMusicEnabled(activeSettings),
+      condition: musicEnabledCondition(activeSettings),
+    }),
+    activate: () => {
+      const next = !resolveMusicEnabled(activeSettings);
+      const persisted = persistSettingsChange({ musicEnabled: next });
+      return { changed: { musicEnabled: next }, persisted };
+    },
+  },
+};
 
 function showSettings() {
   openSettings({
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onChange: persistSettingsChange,
   });
 }
@@ -1047,7 +1083,7 @@ function showOverlay(initialTab = 'settings') {
   openOverlay({
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     initialTab,
     // The overlay gets the save manager too (#67, Sunna's D18). Without it this
     // door discarded saveMeta's {ok:false} exactly as the modal used to, and
@@ -1057,6 +1093,7 @@ function showOverlay(initialTab = 'settings') {
     // there tomorrow.
     saves,
     onSettingsChange: persistSettingsChange,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1233,12 +1270,13 @@ function showMap() {
   mountMap(app, {
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1447,11 +1485,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
