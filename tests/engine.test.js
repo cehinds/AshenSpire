@@ -74,6 +74,10 @@ import {
   orderArmourySlots, trayPresentationState,
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
+import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
+import {
+  hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
+} from '../src/ui/components/hudQuickSettings.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
@@ -88,7 +92,7 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, settingsRowHtml, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -1102,7 +1106,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // His ask: "profile should be able to be created before first run, not after".
   // Bjorn's walk on the shipped bundle at cd3da94: cleared storage, picked a
   // class, typed a name, pressed BEGIN THE CLIMB — `sote_run_v1` written,
-  // `sote_meta_v1` absent, and Settings → Profile printing his own sentence back
+  // `sote_meta_v1` absent, and Title → Profile printing his own sentence back
   // at him. Every assertion below was observed RED at dev cd3da94 by running
   // this file against that tree; the screen half — the same walk in a real
   // browser, on the shipped bundle — is tools/profile-first-run.mjs.
@@ -5169,25 +5173,43 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
-  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
-    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
-    // the first option in the display". Order on the screen IS array order in
-    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
-    // sequence — so this reads through the same door the renderer uses, not a
-    // copy of the table.
+  test('61. Fullscreen and Music share one persistent HUD component; Settings does not duplicate them', () => {
     const display = categoryHandler('Display').rows;
-    eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
-    eq(display.filter((r) => r.key === 'fullscreen').length, 1,
-      'and it appears exactly once — the row MOVED, it was not copied');
-    // The other edge: a move re-orders, it must not shrink. The row that held
-    // first place is still filed, just no longer first.
-    const sprites = display.findIndex((r) => r.key === 'useSprites');
-    assert(sprites > 0, 'Character sprites is still a Display row, behind Fullscreen');
-    // And the toggle kept its shape in transit: same type, same label, so the
-    // renderer draws the same control in the new seat.
-    const fs = display[0];
-    eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
-    eq(fs.label, 'Fullscreen', 'same label');
+    eq(display.some((r) => r.key === 'fullscreen'), false,
+      'Settings has no second Fullscreen state surface');
+    eq(display.some((r) => r.key === 'muteMusic'), false,
+      'Settings has no second Music state surface');
+
+    const presentation = REG.balance.ui.hudQuickSettings;
+    eq(presentation.places.join(','), 'title,map,combat',
+      'one data row places the shared controls on all three requested surfaces');
+    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
+    eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
+    const html = hudQuickSettingsHtml(model);
+    assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
+    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
+
+    const audibleMusic = musicQuickSettingsPlan({});
+    eq(audibleMusic.active, true, 'Music is active only while neither mute layer is set');
+    eq(audibleMusic.change.muteMusic, true, 'the active quick control mutes Music alone');
+    const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
+    eq(musicMuted.active, false, 'the quick control reports an explicit Music mute');
+    eq(musicMuted.change.muteMusic, false, 'the quick control can unmute Music');
+    const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
+    eq(audioMuted.active, false, 'master Audio mute cannot leave the Music control visually on');
+    eq(audioMuted.stateLabel, 'Audio off', 'master mute is named instead of masquerading as Music on');
+    eq(audioMuted.change.muteAudio, false, 'turning Music on also releases master Audio mute');
+    eq(audioMuted.change.muteMusic, false, 'turning Music on clears both mute layers');
+
+    const restoredSettings = { muteMusic: true };
+    const binding = { settings: {} };
+    eq(updateHudQuickSettingsBinding(binding, restoredSettings), restoredSettings,
+      'a restored profile replaces the settings object owned by the mounted HUD');
+    let refreshEvent = null;
+    eq(refreshHudQuickSettings({ querySelector: () => ({ dispatchEvent: (event) => { refreshEvent = event; } }) }, restoredSettings), true,
+      'the title can refresh its mounted HUD without remounting the Profile dialog');
+    eq(refreshEvent?.detail?.settings, restoredSettings,
+      'the refresh carries the restored profile settings object');
 
     const quick = display.find((r) => r.key === 'quickNav');
     eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');
@@ -5232,15 +5254,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fullscreenCapability(webkit).supported, true,
       'the prefixed fullscreen API remains a supported route');
 
-    const fullscreenHtml = settingsRowHtml({}, settingsRow('fullscreen'), unsupported);
-    assert(/aria-label="Fullscreen"/.test(fullscreenHtml),
-      'the fullscreen switch has an accessible name');
-    assert(/aria-describedby="set-fullscreen-status"/.test(fullscreenHtml)
-      && /id="set-fullscreen-status"/.test(fullscreenHtml),
-    'the switch is associated with its support or refusal explanation');
-    assert(/disabled aria-disabled="true"/.test(fullscreenHtml)
-      && /Add to Home Screen/.test(fullscreenHtml),
-    'an unsupported iPhone-shaped browser gets a truthful disabled fallback');
+    eq(MENU_TABS.map((tab) => tab.id).join(','), 'settings,controls',
+      'the in-run overlay keeps only Settings and Controls');
+    assert(!MENU_TABS.some((tab) => ['deck', 'stats', 'save'].includes(tab.id)),
+      'Deck, Stats, and Save are not duplicated as overlay tabs');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {

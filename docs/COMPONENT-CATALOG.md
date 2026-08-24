@@ -43,6 +43,9 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared top-right Fullscreen/Music stack; 44px glyph controls on narrow screens. |
+| `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Browser-state Fullscreen action; unavailable when the platform exposes no API. |
+| `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle persisted through profile settings. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
 | `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
@@ -139,9 +142,12 @@ character-disclosure
 | `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Active Quick Menu variant/status caption. |
 | `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination or action. |
 | `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | Full in-run tabbed menu. |
-| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
+| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Settings/Controls navigation. |
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
 | `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
+| `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
+| `save-game-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save the active slot and remain in the run. |
+| `save-quit-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save and return to the title screen. |
 
 ```text
 quick-menu-panel
@@ -151,7 +157,10 @@ quick-menu-panel
 menu-overlay
 ├─ menu-tab-strip
 │  └─ menu-tab × N
-└─ menu-panel
+├─ menu-panel
+└─ menu-footer
+   ├─ save-game-control
+   └─ save-quit-control
 ```
 
 ## Armoury components

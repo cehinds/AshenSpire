@@ -8,8 +8,10 @@
 import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { buildStampHtml } from '../components/buildstamp.js';
+import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 
-export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onSettings, onQuit, onCustom, onLan, onCompendium }) {
+export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onProfile, onSettings, onSettingsChange, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
   const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
   const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
@@ -45,6 +47,11 @@ export function mountTitle(app, { slots, meta, registries, onContinue, onNew, on
   app.innerHTML = `
     <div class="screen title-screen">
       ${embers}
+      ${hudQuickSettingsHtml(hudQuickSettingsModel({
+        place: 'title',
+        presentation: registries.balance.ui.hudQuickSettings,
+        settings: meta.settings || {},
+      }))}
       <div class="title-stack">
         <h1 class="title-big title-glow">ASHEN SPIRE</h1>
         <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER</p>
@@ -55,6 +62,7 @@ export function mountTitle(app, { slots, meta, registries, onContinue, onNew, on
         <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
         <button class="subtle" id="armaments">ARMAMENTS</button>
         <button class="subtle" id="run-history">RUN HISTORY</button>
+        <button class="subtle" id="profile">PROFILE</button>
         <button class="subtle" id="settings">SETTINGS</button>
         <button class="subtle" id="quit-game">QUIT</button>
       </div>
@@ -62,7 +70,10 @@ export function mountTitle(app, { slots, meta, registries, onContinue, onNew, on
       ${buildStampHtml('title')}
     </div>`;
 
+  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+
   app.querySelector('#run-history').addEventListener('click', onHistory);
+  if (onProfile) app.querySelector('#profile').addEventListener('click', onProfile);
   app.querySelector('#settings').addEventListener('click', onSettings);
   if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
   if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);

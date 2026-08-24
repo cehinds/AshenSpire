@@ -36,8 +36,9 @@ import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
+import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -70,6 +71,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           armouryId: 'combat-armoury',
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
+        },
+        quickSettings: {
+          presentation: registries.balance.ui.hudQuickSettings,
+          settings: meta.settings || {},
         },
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
@@ -120,6 +125,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         <line x1="0" y1="0" x2="0" y2="0" stroke="var(--gold)" stroke-width="3" stroke-dasharray="8 6"/>
       </svg>
     </div>`;
+
+  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
@@ -1089,17 +1096,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
     if (veilIsOpen()) return;
 
-    // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
-    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['stats', 'stats']]) {
-      if (matchAction(ev, id)) {
-        ev.preventDefault();
-        if (onMenu) onMenu(tab);
-        return;
-      }
+    // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
+    // land in Armoury now that it owns every run-information surface.
+    if (matchAction(ev, 'menu')) {
+      ev.preventDefault();
+      if (onMenu) onMenu('settings');
+      return;
     }
-    // Keep the established R / pad binding, but route it to the one equipment
-    // destination. The button owns the combat swap rules; this is only a click.
-    if (matchAction(ev, 'relics')) {
+    if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
       ev.preventDefault();
       $('#combat-armoury').click();
       return;
@@ -1387,7 +1391,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   const menuBtn = $('#combat-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
@@ -1411,7 +1415,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Deck, stats, settings, controls and saving.'
+        ? 'Armoury, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
 

@@ -1672,15 +1672,13 @@ async function main() {
     }
   }
 
-  // ---- SETTINGS → PROFILE: restoring a set-aside profile --------------------
+  // ---- TITLE → PROFILE: restoring a set-aside profile -----------------------
   {
-    console.log(`\n  SETTINGS → PROFILE — Restore opens an inline confirm that names what happens to the profile in play`);
+    console.log(`\n  TITLE → PROFILE — Restore opens an inline confirm that names what happens to the profile in play`);
     await openShot('profile');
-    // The player's own door into the section: the Profile tab in the modal.
-    const tab = await pointOf('.set-tab[data-member="Profile"]');
-    if (!tab) skip('profile', 'unasked', 'no Profile tab in the Settings modal at ?shot=profile at this ref');
+    const tab = await pointOf('.profile-archive-modal');
+    if (!tab) skip('profile', 'unasked', 'no Profile archive modal at ?shot=profile at this ref');
     else {
-      await press(tab, 30); await wait(300);
       if (mutate) {
         // THE OLD DOOR: one tap "restores" — the result line speaks, no
         // confirm ever opens.
