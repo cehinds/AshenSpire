@@ -12,6 +12,10 @@
     header { display:flex; justify-content:space-between; gap:24px; align-items:end; border-bottom:1px solid var(--line); padding-bottom:20px; }
     h1 { margin:0; font:700 clamp(24px,4vw,42px)/1.1 Georgia,serif; letter-spacing:.03em; }
     h1 span { color:var(--gold); }
+    .title-link { display:inline-block; padding:5px 8px 7px; margin:-5px -8px 0; border:1px solid transparent; border-radius:8px; color:var(--ink); text-decoration:none; }
+    .title-link:hover,.title-link:focus-visible { border-color:var(--gold); background:color-mix(in srgb,var(--panel) 78%,transparent); }
+    .title-link:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+    .title-link h1::after { content:' ↗'; color:var(--muted); font:16px ui-sans-serif,system-ui,sans-serif; vertical-align:middle; }
     .lede { max-width:720px; color:var(--muted); margin:10px 0 0; }
     .meta { text-align:right; color:var(--muted); font-size:12px; }
     .meta a { color:var(--gold); }
@@ -27,6 +31,8 @@
     .catalog-controls button { min-width:36px; height:36px; padding:0 9px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); cursor:pointer; }
     .catalog-controls button:hover,.catalog-controls button:focus-visible,.catalog-controls button[aria-pressed="true"] { border-color:var(--gold); color:var(--gold); }
     .catalog-controls button:disabled { opacity:.4; cursor:not-allowed; }
+    .tool-button { min-height:44px; padding:7px 11px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--ink); cursor:pointer; }
+    .tool-button:hover,.tool-button:focus-visible { border-color:var(--gold); color:var(--gold); }
     .density-readout { min-width:84px; text-align:center; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--catalog-card-min)),1fr)); gap:14px; }
     .grid[data-view="list"] { display:flex; flex-direction:column; }
@@ -157,10 +163,10 @@
 <body>
 <main>
   <header>
-    <div><h1>Ashen<span>Spire</span> component catalog</h1><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
+    <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
     <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
   </header>
-  <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count"></span></div>
+  <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
   <section class="token-panel" aria-labelledby="token-heading">
@@ -358,8 +364,9 @@ const COMPOSITION = Object.freeze({
   'enemy-combatant-frame':['combatant-frame','intent-indicator'],
   'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
 });
-const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
+const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), kind=document.querySelector('#kind'), sort=document.querySelector('#sort'), count=document.querySelector('#count');
 const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
+const clearFilters=document.querySelector('#clear-filters'), copyView=document.querySelector('#copy-view');
 const densityLess=document.querySelector('#density-less'), densityReset=document.querySelector('#density-reset'), densityMore=document.querySelector('#density-more');
 const viewGrid=document.querySelector('#view-grid'), viewList=document.querySelector('#view-list');
 const DENSITY_STEPS=[205,245,285,335,395,465], DEFAULT_DENSITY=2, DENSITY_KEY='ashenspire.ui.component-catalog-density', VIEW_KEY='ashenspire.ui.component-catalog-view';
@@ -368,6 +375,9 @@ const save=(key,value)=>{try{localStorage.setItem(key,String(value));}catch{}};
 let densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,Number(stored(DENSITY_KEY,DEFAULT_DENSITY))||0));
 let catalogView=stored(VIEW_KEY,'grid')==='list'?'list':'grid', wheelLocked=false;
 let detailReturnFocus=null;
+const params=new URLSearchParams(location.search);
+search.value=params.get('q')||''; group.value=params.get('group')||'all'; kind.value=params.get('kind')||'all'; sort.value=params.get('sort')||'id-asc';
+if(!group.value) group.value='all'; if(!kind.value) kind.value='all'; if(!sort.value) sort.value='id-asc';
 function actualColumns(){
   const cards=[...grid.querySelectorAll('article')]; if(!cards.length||catalogView==='list') return 1;
   const firstTop=cards[0].getBoundingClientRect().top;
@@ -382,6 +392,11 @@ function setDensity(next){densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-
 function setView(next){
   catalogView=next==='list'?'list':'grid'; grid.dataset.view=catalogView; save(VIEW_KEY,catalogView);
   viewGrid.setAttribute('aria-pressed',String(catalogView==='grid')); viewList.setAttribute('aria-pressed',String(catalogView==='list')); updateDensityUi();
+}
+function syncUrl(){
+  const next=new URLSearchParams(location.search); ['q','group','kind','sort'].forEach(key=>next.delete(key));
+  if(search.value.trim()) next.set('q',search.value.trim()); if(group.value!=='all') next.set('group',group.value); if(kind.value!=='all') next.set('kind',kind.value); if(sort.value!=='id-asc') next.set('sort',sort.value);
+  const query=next.toString(); history.replaceState(null,'',`${location.pathname}${query?`?${query}`:''}${location.hash}`);
 }
 function relatedIds(id){
   const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
@@ -408,7 +423,17 @@ function openDetails(id,trigger=null){
   drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
   drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
 }
-function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); updateDensityUi(); }
+function render(){
+  const terms=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean), g=group.value, k=kind.value;
+  const shown=C.filter(c=>{
+    const composite=Boolean(COMPOSITION[c.id]?.length), haystack=[...Object.values(c),...(COMPOSITION[c.id]||[])].join(' ').toLowerCase();
+    return (g==='all'||c.group===g)&&(k==='all'||(k==='composite')===composite)&&terms.every(term=>haystack.includes(term));
+  });
+  const compareText=(a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'});
+  shown.sort((a,b)=>sort.value==='id-desc'?compareText(b.id,a.id):sort.value==='group'?compareText(a.group,b.group)||compareText(a.id,b.id):sort.value==='model'?compareText(a.model,b.model)||compareText(a.id,b.id):sort.value==='view'?compareText(a.owner,b.owner)||compareText(a.id,b.id):compareText(a.id,b.id));
+  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
+  count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); syncUrl(); updateDensityUi();
+}
 closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;
 document.addEventListener('keydown',event=>{
   if(!document.body.classList.contains('detail-open')) return;
@@ -420,7 +445,9 @@ document.addEventListener('keydown',event=>{
     else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   }
 });
-search.oninput=render; group.onchange=render;
+search.oninput=render; group.onchange=render; kind.onchange=render; sort.onchange=render;
+clearFilters.onclick=()=>{search.value='';group.value='all';kind.value='all';sort.value='id-asc';render();search.focus();};
+copyView.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyView.textContent='Copied';setTimeout(()=>copyView.textContent='Copy view link',900);}catch{copyView.textContent='Copy unavailable';}};
 densityLess.onclick=()=>setDensity(densityIndex-1); densityMore.onclick=()=>setDensity(densityIndex+1); densityReset.onclick=()=>setDensity(DEFAULT_DENSITY);
 viewGrid.onclick=()=>setView('grid'); viewList.onclick=()=>setView('list');
 document.addEventListener('wheel',event=>{
@@ -428,6 +455,7 @@ document.addEventListener('wheel',event=>{
   event.preventDefault(); if(wheelLocked) return; wheelLocked=true;
   setDensity(densityIndex+(event.deltaY<0?1:-1)); setTimeout(()=>wheelLocked=false,120);
 },{passive:false});
+document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();search.focus();}else if(event.key==='Escape'&&document.activeElement===search&&search.value){search.value='';render();}});
 window.addEventListener('resize',updateDensityUi); setView(catalogView); render();
 </script>
 </body>
