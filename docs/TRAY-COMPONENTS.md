@@ -162,4 +162,6 @@ the shared renderer.
 `node tools/tray-components.mjs --shots` drives all four edge variants in a
 real browser, checks literal arrows (including open Right `>`), ARIA/content
 state, side-rail geometry, child-model delivery, and every configurable Armoury
-subject. Its visual artifact is written to `scratch/tray-components/`.
+subject. It also verifies the clickable catalog detail drawer and the dedicated
+[`tray-gallery.html`](./tray-gallery.html) page. Its eight-state visual artifact
+is written to `scratch/tray-components/eight-state-trays.png`.

@@ -20,8 +20,9 @@
     input { flex:1 1 260px; }
     .count { color:var(--muted); align-self:center; }
     .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:14px; }
-    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; }
+    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; cursor:pointer; }
     article:hover { border-color:var(--gold); transform:translateY(-2px); }
+    article:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
     article[hidden] { display:none; }
     .visual { min-height:112px; display:grid; place-items:center; padding:14px; background:#0c0b09; border-bottom:1px solid #3d3022; }
     .body { padding:13px 14px 15px; }
@@ -108,6 +109,28 @@
     .equip-square { height:38px; border:1px solid #78643e; border-radius:5px; display:grid; place-items:center; color:var(--muted); font-size:9px; }
     .inventory-list-demo { width:200px; display:grid; gap:3px; } .inventory-list-demo div { display:grid; grid-template-columns:1fr auto; padding:5px 7px; border:1px solid #584a34; border-radius:4px; font-size:9px; }
     .comparison-demo { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; font:10px ui-monospace,monospace; } .comparison-demo div { padding:7px; border:1px solid #665536; border-radius:5px; }
+    .tray-icon { width:220px; height:82px; display:grid; grid-template-columns:31px 1fr 31px; grid-template-rows:25px 1fr 25px; gap:3px; color:var(--gold); font:700 13px ui-monospace,monospace; }
+    .tray-icon .edge { display:grid; place-items:center; border:1px solid #6f5b35; border-radius:5px; background:#17120e; }
+    .tray-icon .top { grid-column:2; grid-row:1; } .tray-icon .right { grid-column:3; grid-row:2; }
+    .tray-icon .bottom { grid-column:2; grid-row:3; } .tray-icon .left { grid-column:1; grid-row:2; }
+    .tray-icon .core { grid-column:2; grid-row:2; display:grid; place-items:center; border:1px solid #947936; border-radius:5px; background:linear-gradient(#251e15,#120f0c); color:var(--ink); font:10px Georgia,serif; letter-spacing:.1em; }
+    .detail-backdrop { position:fixed; inset:0; z-index:20; background:#0009; opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .detail-drawer { position:fixed; inset:0 0 0 auto; z-index:21; width:min(48rem,94vw); padding:2rem; overflow:auto; border-left:1px solid var(--line); background:linear-gradient(155deg,#241e18,#100e0c 72%); box-shadow:-14px 0 34px #000b; transform:translateX(102%); transition:transform .2s ease; }
+    body.detail-open .detail-backdrop { opacity:1; pointer-events:auto; }
+    body.detail-open .detail-drawer { transform:translateX(0); }
+    .detail-head { display:flex; align-items:start; justify-content:space-between; gap:1rem; padding-bottom:1.4rem; border-bottom:1px solid var(--line); }
+    .detail-head h2 { margin:.4rem 0 0; font-size:2.4rem; }
+    .detail-close { flex:0 0 44px; width:44px; height:44px; border:1px solid var(--line); border-radius:7px; background:#17120e; color:var(--ink); cursor:pointer; font-size:18px; }
+    .detail-close:hover,.detail-close:focus-visible { border-color:var(--gold); color:var(--gold); }
+    .detail-visual { min-height:180px; display:grid; place-items:center; margin:1.6rem 0; padding:1.6rem; border:1px solid #483b29; border-radius:9px; background:#0c0b09; }
+    .detail-fields { display:grid; grid-template-columns:9rem 1fr; gap:.8rem 1rem; margin:0; }
+    .detail-fields dt { color:var(--muted); } .detail-fields dd { margin:0; }
+    .detail-section { margin-top:1.8rem; } .detail-section h3 { margin:0 0 .7rem; color:var(--gold); font:700 1.4rem Georgia,serif; }
+    .detail-related { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .detail-related button,.detail-gallery-link { border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:#e9d59d; padding:.55rem .75rem; cursor:pointer; text-decoration:none; }
+    .detail-related button:hover,.detail-gallery-link:hover { border-color:var(--gold); }
+    .open-detail { display:inline-block; margin:10px 0 0 8px; color:var(--muted); font-size:11px; }
+    @media (prefers-reduced-motion:reduce) { article,.detail-backdrop,.detail-drawer { transition:none; } }
   </style>
 </head>
 <body>
@@ -141,6 +164,15 @@
   <section class="grid" id="grid" aria-live="polite"></section>
   <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
 </main>
+<div class="detail-backdrop" id="detail-backdrop"></div>
+<aside class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+  <div class="detail-head"><div><div class="id" id="detail-id"></div><h2 id="detail-title"></h2></div><button class="detail-close" id="detail-close" type="button" aria-label="Close component details">✕</button></div>
+  <div class="detail-visual" id="detail-visual"></div>
+  <dl class="detail-fields" id="detail-fields"></dl>
+  <div class="detail-section" id="detail-composition"></div>
+  <div class="detail-section"><h3>Related components</h3><div class="detail-related" id="detail-related"></div></div>
+  <div class="detail-section" id="detail-actions"></div>
+</aside>
 <script>
 const V = {
   sharedHud:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>◎ REAVER</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1</span></div><div class="panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div><div class="split-belt"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div>',
@@ -173,8 +205,8 @@ const V = {
   inventoryBelt:'<div class="mini mini-stack" style="width:100%"><div class="split-belt"><div><div class="mini-label">relics</div><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div></div><div><div class="mini-label" style="text-align:right">potions</div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div></div>',
   itemTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">1</div><div class="mini-slot">2</div><div class="mini-slot slot-empty">3</div><div class="mini-slot slot-empty">4</div></div><div class="mini-label">horizontal item tray</div></div>',
   itemSlot:'<div class="mini mini-stack"><div class="mini-slot slot-empty">+</div><div class="mini-label">generic item slot</div></div>',
-  foldingTray:'<div class="mini mini-stack"><div class="menu-demo" style="width:220px"><div class="row"><span>v TOP</span><span>×4</span></div><div class="row"><span>&gt; LEFT</span><span>RIGHT &lt;</span></div><div class="row"><span>^ BOTTOM</span><span>four edge variants</span></div></div><div class="mini-label">closed arrows point inward</div></div>',
-  trayHeader:'<div class="mini"><div class="menu-demo" style="width:220px"><div class="row"><span>▸ CARDS</span><span>×3 cards</span></div></div></div>',
+  foldingTray:'<div class="mini mini-stack"><div class="tray-icon"><span class="edge top">v</span><span class="edge right">&lt;</span><span class="edge bottom">^</span><span class="edge left">&gt;</span><span class="core">FOLDING<br>TRAY</span></div><div class="mini-label">four anchored disclosure edges</div></div>',
+  trayHeader:'<div class="mini"><div class="menu-demo" style="width:220px"><div class="row"><span>^ CARDS</span><span>×3 cards</span></div></div></div>',
   trayContent:'<div class="mini"><div class="inventory-list-demo"><div><span>tray item component</span><b>×1</b></div><div><span>tray item component</span><b>×2</b></div></div></div>',
   relicTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✺</div><div class="mini-slot">♜</div></div><div class="mini-label">relic tray · left anchored</div></div>',
   relicSlot:'<div class="mini mini-stack"><div class="mini-slot">🏅</div><div class="mini-label">one relic slot</div></div>',
@@ -304,7 +336,45 @@ const COMPOSITION = Object.freeze({
   'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
 });
 const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
-function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><button class="copy" data-copy="${c.id}">Copy component ID</button></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard?.writeText(b.dataset.copy); const old=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=old,900);}); }
+const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
+let detailReturnFocus=null;
+function relatedIds(id){
+  const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
+  for(const [parent,children] of Object.entries(COMPOSITION)) if(children.some(value=>value.includes(id))) related.add(parent);
+  return [...related].filter(value=>value!==id);
+}
+function closeDetails(){
+  document.body.classList.remove('detail-open'); drawer.setAttribute('aria-hidden','true');
+  detailReturnFocus?.focus(); detailReturnFocus=null;
+}
+function openDetails(id,trigger=null){
+  const c=C.find(item=>item.id===id); if(!c) return;
+  detailReturnFocus=trigger||document.activeElement;
+  document.querySelector('#detail-id').textContent=c.id;
+  document.querySelector('#detail-title').textContent=c.id.replaceAll('-',' ');
+  document.querySelector('#detail-visual').innerHTML=V[c.visual];
+  document.querySelector('#detail-fields').innerHTML=`<dt>Model</dt><dd><code>${c.model}</code></dd><dt>Renderer / View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Group</dt><dd>${c.group}</dd><dt>Role</dt><dd>${c.purpose}</dd>`;
+  const parts=COMPOSITION[c.id]||[];
+  document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
+  const related=relatedIds(c.id);
+  document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
+  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}`;
+  drawer.setAttribute('aria-hidden','false'); document.body.classList.add('detail-open'); closeDetailButton.focus();
+  drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
+  drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
+}
+function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); }
+closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;
+document.addEventListener('keydown',event=>{
+  if(!document.body.classList.contains('detail-open')) return;
+  if(event.key==='Escape'){closeDetails();return;}
+  if(event.key==='Tab'){
+    const focusable=[...drawer.querySelectorAll('button,a[href]')].filter(node=>!node.disabled);
+    const first=focusable[0],last=focusable.at(-1);
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  }
+});
 search.oninput=render; group.onchange=render; render();
 </script>
 </body>

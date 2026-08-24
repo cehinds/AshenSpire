@@ -151,6 +151,52 @@ async function main() {
       writeFileSync(resolve(SHOT_DIR, 'four-edge-trays.png'), Buffer.from(shot.data, 'base64'));
       console.log(`    SHOT ${resolve(SHOT_DIR, 'four-edge-trays.png')}`);
     }
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 1250, deviceScaleFactor: 1, mobile: false }, sessionId);
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/tray-gallery.html` }, sessionId);
+    await until("document.querySelectorAll('.tray-gallery-card').length === 8", 'eight-state tray gallery');
+    const gallery = await evaluate(`(() => ({
+      cards:document.querySelectorAll('.tray-gallery-card').length,
+      edges:Object.fromEntries(['top','right','bottom','left'].map((edge)=>[edge,[...document.querySelectorAll('.tray-gallery-cell[data-edge="' + edge + '"] .folding-tray')].map((tray)=>tray.dataset.collapsed).sort()])),
+      rightOpen:[...document.querySelectorAll('.tray-gallery-cell[data-edge="right"] .folding-tray')].find((tray)=>tray.dataset.collapsed==='0')?.querySelector('.tray-fold').innerText.trim().replace(/\\s+/g,' '),
+    }))()`);
+    check(gallery.cards === 8, 'gallery renders all eight folded/unfolded specimens');
+    check(Object.values(gallery.edges).every((states) => states.join(',') === '0,1'), 'each edge has one folded and one unfolded specimen');
+    check(gallery.rightOpen.startsWith('> RIGHT TRAY'), 'gallery preserves the open Right Tray “>” contract');
+    if (SHOTS) {
+      const galleryShot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: true }, sessionId);
+      writeFileSync(resolve(SHOT_DIR, 'eight-state-trays.png'), Buffer.from(galleryShot.data, 'base64'));
+      console.log(`    SHOT ${resolve(SHOT_DIR, 'eight-state-trays.png')}`);
+    }
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/component-catalog.html` }, sessionId);
+    await until("!!document.querySelector('[data-component=\"folding-tray\"]')", 'catalog Folding Tray card');
+    await evaluate(`document.querySelector('[data-component="folding-tray"]').click(); true`);
+    await wait(250);
+    const drawer = await evaluate(`(() => ({
+      open:document.querySelector('#detail-drawer').getAttribute('aria-hidden')==='false',
+      id:document.querySelector('#detail-id').textContent,
+      icon:!!document.querySelector('#detail-visual .tray-icon'),
+      gallery:document.querySelector('#detail-actions a')?.getAttribute('href'),
+    }))()`);
+    check(drawer.open && drawer.id === 'folding-tray', 'clicking a catalog card opens its component detail drawer');
+    check(drawer.icon, 'Folding Tray detail uses the four-edge component icon');
+    check(drawer.gallery === 'tray-gallery.html', 'Folding Tray detail links to the eight-state gallery');
+    if (SHOTS) {
+      const drawerShot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
+      writeFileSync(resolve(SHOT_DIR, 'catalog-drawer.png'), Buffer.from(drawerShot.data, 'base64'));
+      console.log(`    SHOT ${resolve(SHOT_DIR, 'catalog-drawer.png')}`);
+    }
+    await evaluate(`document.querySelector('#detail-close').click(); true`);
+    check(await evaluate(`document.querySelector('#detail-drawer').getAttribute('aria-hidden')==='true'`), 'detail drawer closes and returns to the catalog');
+    await evaluate(`document.querySelector('[data-component="combatant-frame"]').click(); true`);
+    check(await evaluate(`document.querySelector('#detail-id').textContent==='combatant-frame'`), 'the same drawer resolves a second component card');
+    await evaluate(`document.querySelector('#detail-close').click(); true`);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false }, sessionId);
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/component-catalog.html` }, sessionId);
+    await until("!!document.querySelector('[data-component=\"quick-menu-panel\"]')", 'mobile catalog');
+    await evaluate(`document.querySelector('[data-component="quick-menu-panel"]').click(); true`);
+    await wait(250);
+    const mobileDrawer = await evaluate(`(() => { const rect=document.querySelector('#detail-drawer').getBoundingClientRect(); return { left:rect.left, right:rect.right, width:rect.width, viewport:innerWidth }; })()`);
+    check(mobileDrawer.left >= 0 && mobileDrawer.right <= mobileDrawer.viewport + 0.5, 'component detail drawer fits the 390px phone viewport');
   } finally {
     cdp.close();
     await browser.close();

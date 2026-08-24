@@ -54,7 +54,9 @@ by `node tools/about-changelog.mjs`.
 
 Use the [AshenSpire component catalog](docs/component-catalog.html) for the
 stable component IDs, model/factory names, renderers, reuse surfaces, and a
-distinct visual miniature for every component. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
+distinct visual miniature for every component. Select any component card for its
+detail drawer; the [Folding Tray gallery](docs/tray-gallery.html) shows every
+top/right/bottom/left folded and unfolded state. The [Markdown catalog](docs/COMPONENT-CATALOG.md) is the
 chat-friendly reference. The [component model architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md)
 defines the model, renderer, host, behavior, service, and infrastructure
 boundaries used as screens migrate. The [Folding Tray contract](docs/TRAY-COMPONENTS.md)

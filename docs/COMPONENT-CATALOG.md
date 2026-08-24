@@ -2,6 +2,9 @@
 
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
+Select any component card there to open its detail drawer. The dedicated
+[`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
+folded and unfolded Tray states using the production renderer.
 
 Stable IDs live in [`UiComponentId.js`](../src/ui/models/UiComponentId.js). Model
 factories live under [`src/ui/models/`](../src/ui/models/) and the shared HUD
