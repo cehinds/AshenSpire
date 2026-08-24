@@ -256,6 +256,11 @@ projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
 projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
 projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
 projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('panelPadPx', 0, 12, '--hud-panel-pad-px', 'px');
+projectHudToken('mobilePanelPadPx', 0, 12, '--hud-mobile-panel-pad-px', 'px');
+projectHudToken('mobileControlGapPx', 0, 12, '--hud-mobile-control-gap-px', 'px');
+projectHudToken('mobileOuterPadPx', 0, 12, '--hud-mobile-outer-pad-px', 'px');
+projectHudToken('mobileRowGapPx', 0, 12, '--hud-mobile-row-gap-px', 'px');
 projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
 projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
 if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
@@ -266,10 +271,10 @@ const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
 for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
-  ['wideControlHeightPx', '--hud-quick-wide-control-height'],
-  ['labelFontPx', '--hud-quick-label-font'],
+  ['cardSizePx', '--hud-quick-card-size'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],
+  ['activeTintPct', '--hud-quick-active-tint'],
 ]) {
   document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
 }

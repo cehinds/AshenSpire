@@ -717,7 +717,7 @@ export function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
+      err('balance.ui.hudPresentation', 'must be an object with shared HUD spacing, sizing, metadata, and mobile density tokens');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
@@ -727,6 +727,11 @@ export function validateContent(bundle) {
         ['primaryRowGapPx', 0, 24],
         ['controlGapPx', 0, 12],
         ['resourceRowGapPx', 0, 12],
+        ['panelPadPx', 0, 12],
+        ['mobilePanelPadPx', 0, 12],
+        ['mobileControlGapPx', 0, 12],
+        ['mobileOuterPadPx', 0, 12],
+        ['mobileRowGapPx', 0, 12],
         ['cindersMaxWidthPct', 20, 40],
         ['metadataMaxWidthPct', 20, 40],
       ]) {
@@ -762,10 +767,10 @@ export function validateContent(bundle) {
         }
       }
       for (const [key, min, max] of [
-        ['wideControlHeightPx', 20, 36],
-        ['labelFontPx', 8, 18],
-        ['glyphSizePx', 10, 28],
+        ['cardSizePx', 32, 44],
+        ['glyphSizePx', 16, 32],
         ['stateDotPx', 3, 12],
+        ['activeTintPct', 0, 30],
       ]) {
         const value = quickSettings[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {

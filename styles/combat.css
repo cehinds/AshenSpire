@@ -46,7 +46,7 @@
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
-  --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(var(--hud-panel-pad-px) / var(--ui-zoom, 1));
   --hud-control-visual: calc(32px / var(--ui-zoom, 1));
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
@@ -1254,14 +1254,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
   :root[data-layout='narrow'] .topbar.combat-hud {
-    flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
+    flex-wrap: nowrap;
+    gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
+    padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1)); }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
+    --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
+    --hud-panel-pad: calc(var(--hud-mobile-panel-pad-px) / var(--ui-zoom, 1));
+  }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
     gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
   }
