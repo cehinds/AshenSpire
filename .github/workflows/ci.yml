@@ -382,7 +382,7 @@ jobs:
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
 
-      - name: The mobile visual reach gate can fail (7 plants)
+      - name: The mobile visual reach gate can fail (8 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
       # -----------------------------------------------------------------------

@@ -131,6 +131,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
+        name: 'the fullscreen lifecycle listener calls a synchronizer outside its scope',
+        file: 'src/ui/screens/settings.js',
+        find: 'const onFullscreenChange = () => syncFullscreen();',
+        replace: 'const onFullscreenChange = () => missingFullscreenSynchronizer();',
+        expectRed: /fullscreen lifecycle event threw/,
+      },
+      {
         name: 'the preserved R shortcut returns to the removed Relics tab',
         file: 'src/ui/screens/map.js',
         find: "if (onArmoury) onArmoury();",
@@ -139,7 +146,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 7 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
   process.exit(selftestCode);
 }
 
@@ -174,6 +181,9 @@ const SETTINGS_CYCLE = `(async () => {
     };
   };
   wrap(window); wrap(document);
+  const lifecycleErrors = [];
+  const recordLifecycleError = (event) => lifecycleErrors.push(event.message || String(event.error || 'unknown error'));
+  window.addEventListener('error', recordLifecycleError);
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
@@ -182,6 +192,11 @@ const SETTINGS_CYCLE = `(async () => {
   const described = fullscreen?.getAttribute('aria-describedby');
   window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
     && described && document.getElementById(described));
+  document.dispatchEvent(new Event('fullscreenchange'));
+  document.dispatchEvent(new Event('fullscreenerror'));
+  await pause();
+  window.__fullscreenLifecycleErrors = lifecycleErrors;
+  window.removeEventListener('error', recordLifecycleError);
   tab('deck')?.click(); await pause();
   tab('settings')?.click(); await pause();
   tab('deck')?.click(); await pause();
@@ -358,6 +373,7 @@ const PROBE = `(() => {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
     if (leaks.length) visual.push('Settings revisit leaked listeners: ' + leaks.map(([type, count]) => type + '=' + count).join(', '));
     if (!window.__fullscreenA11y) visual.push('fullscreen switch lacks an accessible name or description');
+    if (window.__fullscreenLifecycleErrors?.length) visual.push('fullscreen lifecycle event threw: ' + window.__fullscreenLifecycleErrors[0]);
     if (!window.__armouryShortcutOpened) visual.push('equipment shortcut did not open Armoury');
   }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
