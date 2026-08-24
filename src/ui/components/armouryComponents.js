@@ -1,4 +1,4 @@
-import { childModel } from '../models/ComponentModel.js';
+import { childModel, descendantModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { esc } from './tooltip.js';
 import { markUiComponent } from './uiComponents.js';
@@ -14,8 +14,7 @@ export function renderArmouryOverlay(model) {
 export function renderArmouryPanel(model, wrap) {
   const header = childModel(model, UI.armouryHeader);
   const switcher = childModel(header, UI.armouryViewSwitcher);
-  const body = childModel(model, UI.armouryBody);
-  const inventory = childModel(model, UI.armouryInventory);
+  const body = descendantModel(model, UI.armouryBody);
   wrap.innerHTML = `
     <div class="armoury${model.properties.picking ? ' picking' : ''}" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
       <header class="armoury-head">
@@ -26,25 +25,25 @@ export function renderArmouryPanel(model, wrap) {
         <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
       </header>
       ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
-      <div class="armoury-body">
-        <div class="armoury-left"></div>
-        <div class="armoury-right"></div>
+      <div class="armoury-subject">
+        <div class="armoury-body">
+          <div class="armoury-left"></div>
+          <div class="armoury-right"></div>
+        </div>
       </div>
-      <section class="armoury-inventory" role="region" aria-label="${esc(inventory.accessibility.label)}"></section>
-      <div class="armoury-strip"></div>
+      <div class="armoury-trays"></div>
     </div>`;
   const panel = wrap.querySelector('.armoury');
   markUiComponent(panel, model.component, model.variant);
   markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);
   markUiComponent(wrap.querySelector('.armoury-views'), switcher.component, switcher.variant);
   markUiComponent(wrap.querySelector('.armoury-body'), body.component, body.variant);
-  markUiComponent(wrap.querySelector('.armoury-inventory'), inventory.component, inventory.variant);
   return {
     panel,
     left: wrap.querySelector('.armoury-left'),
     right: wrap.querySelector('.armoury-right'),
-    inventory: wrap.querySelector('.armoury-inventory'),
-    strip: wrap.querySelector('.armoury-strip'),
+    subject: wrap.querySelector('.armoury-subject'),
+    trays: wrap.querySelector('.armoury-trays'),
     close: wrap.querySelector('.armoury-close'),
     viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
   };

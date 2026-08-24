@@ -28,6 +28,7 @@ const REQUIRED_IDS = Object.freeze([
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
   'armoury-card-strip', 'armoury-region-header',
+  'folding-tray', 'tray-header', 'tray-resize-handle', 'tray-content',
 ]);
 
 export function receipt() {
@@ -42,9 +43,11 @@ export function receipt() {
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
     armouryModels: read('src/ui/models/ArmouryModels.js'),
+    trayModels: read('src/ui/models/TrayModels.js'),
     hud: read('src/ui/components/hudmeta.js'),
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
+    trayComponents: read('src/ui/components/trayComponents.js'),
     frame: read('src/ui/components/combatantFrame.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
@@ -59,6 +62,7 @@ export function receipt() {
     overlay: read('src/ui/components/overlay.js'),
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
+    uiCss: read('styles/ui.css'),
     spec: read('SPEC.md'),
   };
 }
@@ -186,6 +190,30 @@ export function findings(r) {
       || /\b(document|window)\b|innerHTML|createElement/.test(presentationModels)) {
     bad.push('C14 Menu and Armoury no longer compose immutable models into renderer components');
   }
+  if (!/export function trayModel/.test(r.trayModels)
+      || !/UI\.trayHeader/.test(r.trayModels)
+      || !/UI\.trayResizeHandle/.test(r.trayModels)
+      || !/UI\.trayContent/.test(r.trayModels)
+      || !/export function renderTray/.test(r.trayComponents)
+      || !/trayModel\([\s\S]*items:\s*\[item\]/.test(r.armouryModels)
+      || !/renderTray\([\s\S]*renderContent:/.test(r.equipment)
+      || !/right: Object\.freeze\(\{ closed: '<', open: '>' \}\)/.test(r.trayComponents)
+      || !/top: Object\.freeze\(\{ closed: 'v', open: '\^' \}\)/.test(r.trayComponents)
+      || !/bottom: Object\.freeze\(\{ closed: '\^', open: 'v' \}\)/.test(r.trayComponents)
+      || !/left: Object\.freeze\(\{ closed: '>', open: '<' \}\)/.test(r.trayComponents)
+      || !/aria-expanded/.test(r.trayComponents)
+      || !/aria-controls/.test(r.trayComponents)
+      || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)
+      || !/if \(renderContent\) renderContent\(content, contentModel\.children\)/.test(r.trayComponents)
+      || !/\.tray-header \.tray-count\s*\{[^}]*margin-left:\s*auto;/.test(r.uiCss)
+      || !/--ui-section-control-gap/.test(r.uiCss)
+      || !/--ui-tray-side-margin/.test(r.uiCss)
+      || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
+      || !/pointerdown/.test(r.trayComponents)
+      || !/sizeService\.write/.test(r.trayComponents)
+      || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
+    bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
+  }
   return bad;
 }
 
@@ -206,11 +234,12 @@ function selftest() {
     ['let metadata grid into rows', 'C12 ', (r) => ({ ...r, css: r.css.replace('display: inline-flex;', 'display: inline-grid;') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace('return Object.freeze({\n    component,', 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
+    ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 14/14 reusable component contracts hold');
+  else console.log('PASS clean source: 15/15 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -226,5 +255,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 14/14 reusable component contracts hold');
+  else console.log('ui-components: OK — 15/15 reusable component contracts hold');
 }

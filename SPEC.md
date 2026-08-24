@@ -832,7 +832,7 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   model path beside a hand-written fallback.
 - **Shared Presentation primitives.** The public primitive Component Model ids are `panel`,
   `component-background`, `metadata-field`, `action-control`, `hotkey-badge`, `item-tray`,
-  `item-slot`, and `tooltip`. Specialized
+  `item-slot`, `folding-tray`, `tray-header`, `tray-resize-handle`, `tray-content`, and `tooltip`. Specialized
   models compose these primitives and may add semantic variants; they do not clone their record
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
@@ -859,7 +859,16 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
   `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
-  `armoury-region-header`. These ids describe the existing data-driven Quick Menu and Armoury
+  `armoury-region-header`. Inventory, Cards, and Stats are content models mounted inside the
+  shared `folding-tray` → `tray-header` + expanded-only `tray-resize-handle` + `tray-content` composition. The `trayModel` factory owns edge,
+  expanded state, count semantics, and optional sort intent; `renderTray` owns the uniform
+  DOM and accessibility grammar. Closed arrows point inward and open arrows point back to the
+  anchored edge, including the open Right Tray form `> TRAY NAME`. Expanded Top/Bottom trays resize
+  vertically and Left/Right trays resize horizontally through a 44px mouse, touch-hold, and keyboard
+  surface. Size is remembered by stable tray id and edge; folding always returns to the standard bar
+  or rail, and reopening restores the last expanded size. Before the first resize, unfolded trays fit
+  their header and visible content rather than claiming a fixed panel fraction. Bottom trays remain
+  bottom-anchored and grow upward. These ids describe the existing data-driven Quick Menu and Armoury
   structures; they do not create a parallel menu or equipment implementation. Menu records are
   constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records are
   constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind

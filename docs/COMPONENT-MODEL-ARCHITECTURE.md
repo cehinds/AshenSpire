@@ -131,6 +131,25 @@ commands into the existing callbacks, but no longer author the extracted
 component markup. Presentation Models import neither the DOM nor simulation
 state, and all properties remain serializable and deeply frozen.
 
+## Shared Folding Tray aggregate
+
+Inventory, Cards, and Stats no longer author separate disclosure headers. Each
+is mounted through the edge-aware presentation aggregate:
+
+```text
+trayModel → Folding Tray Component Model
+├─ trayHeaderModel
+│  └─ toggle behavior + optional sort behavior
+└─ trayContentModel
+   └─ caller-owned Component Models × N
+```
+
+The `trayModel` factory owns the stable id, name, edge, expanded state, total quantity,
+item-type noun, and optional sort intent. `trayComponents.renderTray` owns the
+shared header, directional arrow, `aria-expanded`/`aria-controls`, content host,
+and edge classes. Domain-specific item behavior stays with the item models. The
+full Top/Right/Bottom/Left contract is in `docs/TRAY-COMPONENTS.md`.
+
 ## Migration order
 
 1. Contracts, validators, renderer registry, and behavior binder.
