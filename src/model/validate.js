@@ -745,6 +745,26 @@ export function validateContent(bundle) {
     } else if (!['list', 'grid'].includes(shrinePresentation.optionLayout)) {
       err('balance.ui.shrinePresentation.optionLayout', `must be 'list' or 'grid' — got ${JSON.stringify(shrinePresentation.optionLayout)}`);
     }
+    const quickSettings = ui.hudQuickSettings;
+    const quickPlaces = ['title', 'map', 'combat'];
+    if (!quickSettings || typeof quickSettings !== 'object' || Array.isArray(quickSettings)) {
+      err('balance.ui.hudQuickSettings', 'must be an object with places, edgeGapPx, stackGapPx, and showLabels');
+    } else {
+      if (!Array.isArray(quickSettings.places)
+        || quickSettings.places.some((place) => !quickPlaces.includes(place))
+        || new Set(quickSettings.places).size !== quickSettings.places.length) {
+        err('balance.ui.hudQuickSettings.places', `must contain unique values from ${quickPlaces.join(', ')} — got ${JSON.stringify(quickSettings.places)}`);
+      }
+      for (const key of ['edgeGapPx', 'stackGapPx']) {
+        const value = quickSettings[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 24) {
+          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [0, 24] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof quickSettings.showLabels !== 'boolean') {
+        err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)

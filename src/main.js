@@ -30,7 +30,9 @@ import {
   applyGraceRefill,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
+import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -44,7 +46,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -56,7 +58,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -217,11 +219,13 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-const audio = initAudio(saves.loadMeta().settings || {});
+let activeMeta = saves.loadMeta();
+let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
-initInput({ getSettings: () => saves.loadMeta().settings || {} });
+initInput({ getSettings: () => activeSettings });
 
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
@@ -618,7 +622,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
-  audio.setVolumes(settings);
+  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -627,7 +631,7 @@ function applyDisplaySettings(settings) {
     audio.configureMusic({ folder });
   }
 }
-applyDisplaySettings(saves.loadMeta().settings);
+applyDisplaySettings(activeSettings);
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -650,13 +654,14 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  for (const key of Object.keys(activeSettings)) delete activeSettings[key];
+  Object.assign(activeSettings, settings);
+  activeMeta.settings = activeSettings;
   applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
-  audio.setVolumes(settings);     // music, sfx, mute
-  audio.configureMusic({ folder: settings.musicFolder || '' });
-  lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+  refreshHudQuickSettings(app, settings);
 }
 
 
@@ -666,7 +671,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -704,7 +709,11 @@ function showLobby() {
       // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
-      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
+      mountCoop(app, {
+        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        onSettingsChange: persistSettingsChange,
+        onLeave: () => showTitle(),
+      });
     },
   });
 }
@@ -922,7 +931,9 @@ function showTitle() {
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
+    onProfile: showProfile,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -937,32 +948,65 @@ function showTitle() {
   });
 }
 
+function showProfile() {
+  openProfileArchive({
+    saves,
+    onRestored: () => applyRestoredSettings(saves.loadMeta().settings || {}),
+  });
+}
+
+function persistSettingsChange(changed) {
+  if (!saves.profileStatus().quarantined) {
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  Object.assign(activeSettings, changed);
+  activeMeta.settings = activeSettings;
+  const res = saves.saveMeta(activeMeta);
+  applyDisplaySettings(activeSettings);
+  refreshHudQuickSettings(app, activeSettings);
+  remountMapIfShowing(changed);
+  if (changed.bindings) setBindings(changed.bindings);
+  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  return res;
+}
+
+const quickMenuControls = {
+  fullscreen: {
+    read: () => {
+      const capability = fullscreenCapability(document);
+      const checked = isFullscreen(document);
+      return {
+        checked,
+        disabled: !capability.supported,
+        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
+      };
+    },
+    activate: async () => {
+      const result = await toggleFullscreen(document);
+      return result.ok || result.reason === 'unsupported'
+        ? {}
+        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
+    },
+  },
+  music: {
+    read: () => ({
+      checked: resolveMusicEnabled(activeSettings),
+      condition: musicEnabledCondition(activeSettings),
+    }),
+    activate: () => {
+      const next = !resolveMusicEnabled(activeSettings);
+      const persisted = persistSettingsChange({ musicEnabled: next });
+      return { changed: { musicEnabled: next }, persisted };
+    },
+  },
+};
+
 function showSettings() {
   openSettings({
-    meta: saves.loadMeta(),
-    // The Profile section (#67) needs the manager itself: it lists, exports and
-    // restores archives. Without it the section does not render at all.
-    saves,
-    // …and a restore swaps the whole profile, so the screen must be re-dressed
-    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
-    // save keeps the old profile's contrast, motion and text size.
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      // saveMeta refuses while the profile is quarantined — correctly, it is
-      // protecting the original bytes. Nobody read that {ok:false}, so a player
-      // who pressed "Not now" and then turned the music down got a silent
-      // no-op: the change applies for this session and does not persist, and
-      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
-      // saying so is the whole fix.
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    meta: activeMeta,
+    onChange: persistSettingsChange,
   });
 }
 
@@ -1032,14 +1076,14 @@ function quitGame() {
   }
 }
 
-// The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
-// map and combat screens via their onMenu callback.
-function showOverlay(initialTab = 'deck') {
+// The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
+// equipment, deck, relics, flasks, and run stats.
+function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     initialTab,
     // The overlay gets the save manager too (#67, Sunna's D18). Without it this
     // door discarded saveMeta's {ok:false} exactly as the modal used to, and
@@ -1048,20 +1092,8 @@ function showOverlay(initialTab = 'deck') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onSettingsChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (changed.bindings) setBindings(changed.bindings);
-      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    onSettingsChange: persistSettingsChange,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1070,7 +1102,6 @@ function showOverlay(initialTab = 'deck') {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
-    onExit: quitGame, // "Quit Game" — leave the app entirely
   });
 }
 
@@ -1239,11 +1270,13 @@ function showMap() {
   mountMap(app, {
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onPick: enterNode,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1452,10 +1485,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1746,7 +1781,11 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
+  mountCoop(app, {
+    registries, conn: stub, myId, meta: saves.loadMeta(),
+    onSettingsChange: persistSettingsChange,
+    onLeave() {},
+  });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
@@ -2277,18 +2316,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   showTitle();
 } else if (shotState === 'profile') {
-  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
+  // A REACH STATE for title-screen Profile (`profileRestore` in secondbeat.js —
   // the inline .prof-confirm box). The set-aside profile is real and set aside
   // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
   // through the real writer, startNewProfile archives it through
   // replacePrimaryWith — the one path allowed to replace the primary — and
   // the drawer entry the screen lists is that archive read back through
   // saves.listArchives. The instrument still opens the section by the
-  // player's own door: the Profile tab in the Settings modal.
+  // player's own door: Profile on the title screen.
   saves.ensureProfile();
   saves.startNewProfile();
   showTitle();
-  showSettings();
+  showProfile();
 } else if (shotState === 'crisis') {
   // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
   // modal). The torn bytes were planted at the storage seam beside

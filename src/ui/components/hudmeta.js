@@ -4,6 +4,7 @@ import { esc } from './tooltip.js';
 import { buildStampHtml } from './buildstamp.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { childModel } from '../models/ComponentModel.js';
+import { hudQuickSettingsHtml } from './hudQuickSettings.js';
 
 function progressHtml(value, total, label) {
   return `${esc(label)} ${esc(value)}`
@@ -87,6 +88,7 @@ export function sharedRunHudHtml(model) {
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
+    ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
     ${overlayHtml}
   </header>`;
 }

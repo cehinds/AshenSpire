@@ -226,6 +226,12 @@ jobs:
       - name: The fullscreen controller can fail (3 plants)
         run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs --selftest
 
+      - name: Music-only preference and Quick Menu parity
+        run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs
+
+      - name: Music-only parity can fail (11 plants)
+        run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs --selftest
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.

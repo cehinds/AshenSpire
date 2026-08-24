@@ -1,12 +1,11 @@
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
-// One overlay hosts every in-run menu as a tab: Deck, Stats (run telemetry),
-// Settings, and Controls. Equipment and carried items live in Armoury. Opened from a button or hotkey on the map and
+// The in-run overlay is intentionally narrow: Settings and Controls only.
+// Deck, Stats, equipment, relics, and flasks live in Armoury. Opened from a button or hotkey on the map and
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
-import { renderCard } from './card.js';
-import { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
+import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
@@ -38,14 +37,9 @@ let overlayCleanup = [];
 // one. Each takes (container, ctx) — the same bag openOverlay builds once — so
 // they can live at module scope where the check can see them.
 const PANELS = {
-  deck: (host, ctx) => renderDeck(host, ctx),
-  stats: (host, ctx) => renderStats(host, ctx),
-  save: (host, ctx) => renderSave(host, ctx),
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
     onChange: ctx.onSettingsChange || (() => {}),
-    saves: ctx.saves,
-    onProfileRestored: ctx.onProfileRestored,
   }),
   controls: (host, ctx) => renderControls(host, {
     settings: ctx.settings,
@@ -56,50 +50,6 @@ const PANELS = {
 /** panelFor(id) → the renderer for a tab, or undefined. The one join. */
 export function panelFor(id) {
   return PANELS[id];
-}
-
-// ---- the panel bodies, at module scope so PANELS can name them -------------
-// Each takes (container, ctx) and reads the bag openOverlay builds once. They
-// used to be closures inside openOverlay, which is where the if-chain could
-// hide: a function only reachable through a comparison on an id.
-
-function renderDeck(container, ctx) {
-  const grid = document.createElement('div');
-  grid.className = 'grid';
-  if (!ctx.run.deck.length) {
-    grid.innerHTML = '<div style="color:var(--muted);padding:20px">Empty.</div>';
-  } else {
-    for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
-  }
-  container.appendChild(grid);
-}
-
-// Save tab: save to the current slot, save-and-quit to title, or quit the app.
-// (In-run slot switching is intentionally left to the title's Continue.)
-function renderSave(container, ctx) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ov-save-tab';
-  wrap.innerHTML = `
-    <h3 class="set-cat">Save</h3>
-    <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
-    <div class="ov-save-actions">
-      ${ctx.onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
-      ${ctx.onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
-      ${ctx.onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
-    </div>`;
-  container.appendChild(wrap);
-  const s = wrap.querySelector('#ovs-save');
-  if (s && ctx.onSave) {
-    s.addEventListener('click', () => {
-      const slot = ctx.onSave();
-      s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
-      setTimeout(() => (s.textContent = 'Save now'), 1500);
-    });
-  }
-  const q = wrap.querySelector('#ovs-quit');
-  if (q && ctx.onQuit) q.addEventListener('click', () => { closeOverlay(); ctx.onQuit(); });
-  const e = wrap.querySelector('#ovs-exit');
-  if (e && ctx.onExit) e.addEventListener('click', () => { closeOverlay(); ctx.onExit(); });
 }
 
 export function hybridStatsPlan(ctx) {
@@ -126,16 +76,6 @@ export function hybridStatsPlan(ctx) {
     ['Deck size', ctx.run.deck.length],
     ['Relics', ctx.run.relics.length],
   ];
-}
-
-function renderStats(container, ctx) {
-  const rows = hybridStatsPlan(ctx);
-  const el = document.createElement('div');
-  el.className = 'ov-stats';
-  el.innerHTML = rows
-    .map(([k, v]) => `<div class="ov-stat"><span>${esc(String(k))}</span><b>${esc(String(v))}</b></div>`)
-    .join('');
-  container.appendChild(el);
 }
 
 // `overlayIsOpen()` USED TO LIVE HERE and is deleted rather than widened.
@@ -168,13 +108,13 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit || onExit);
+  const hasSave = !!(onSave || onQuit);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -185,7 +125,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   const folded = quickNavFolds();
   const mirrored = quickNavMode() === 'mirror';
 
-  const initialId = TABS.some((tab) => tab.id === initialTab) ? initialTab : 'deck';
+  const initialId = TABS.some((tab) => tab.id === initialTab) ? initialTab : 'settings';
   const model = menuOverlayModel({ tabs: TABS, activeId: initialId, folded, mirrored });
   const { veil, body } = renderMenuOverlay(model);
   document.body.appendChild(veil);
@@ -209,95 +149,27 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
+    onSettingsChange, onSave, onQuit,
   };
 
-  const quickActions = veil.querySelector('[data-settings-quick-actions]');
-  const fullscreenButton = veil.querySelector('#ov-fullscreen');
-  const musicButton = veil.querySelector('#ov-music');
-  const saveButton = veil.querySelector('#ov-save-quick');
-  const exitButton = veil.querySelector('#ov-exit-quick');
+  const saveButton = veil.querySelector('#ov-save');
+  const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
-  if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
-
-  const syncFullscreenQuickAction = () => {
-    const active = isFullscreen();
-    if (!fullscreenButton) return;
-    fullscreenButton.classList.toggle('on', active);
-    fullscreenButton.setAttribute('aria-pressed', String(active));
-    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
-    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
-  };
-  const syncMusicQuickAction = () => {
-    if (!musicButton) return;
-    const active = settings.muteMusic !== true;
-    musicButton.classList.toggle('on', active);
-    musicButton.setAttribute('aria-pressed', String(active));
-    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
-    musicButton.title = active ? 'Turn music off' : 'Turn music on';
-    const label = musicButton.querySelector('[data-music-label]');
-    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
-  };
-  syncFullscreenQuickAction();
-  syncMusicQuickAction();
-  document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
-  document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
-  overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
-  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
-
-  fullscreenButton?.addEventListener('click', async () => {
-    fullscreenButton.setAttribute('aria-disabled', 'true');
-    const result = await toggleFullscreen();
-    fullscreenButton.removeAttribute('aria-disabled');
-    syncFullscreenQuickAction();
-    if (!result.ok) showSettingsNotice(result.reason);
-  });
-  musicButton?.addEventListener('click', () => {
-    settings.muteMusic = settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
-    syncMusicQuickAction();
-  });
+  if (!onQuit && quitButton) quitButton.hidden = true;
   saveButton?.addEventListener('click', () => {
-    if (!onSave) return;
-    const slot = onSave();
-    const label = saveButton.querySelector('[data-save-label]');
-    if (label) label.textContent = slot ? `Saved · ${slot}` : 'Saved';
-    saveButton.setAttribute('aria-label', slot ? `Saved to slot ${slot}` : 'Saved');
+    const slot = onSave?.();
+    saveButton.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
     clearTimeout(saveButton._labelTimer);
-    saveButton._labelTimer = setTimeout(() => {
-      if (label) label.textContent = 'Save';
-      saveButton.setAttribute('aria-label', 'Save now');
-    }, 1500);
+    saveButton._labelTimer = setTimeout(() => { saveButton.textContent = 'Save Game'; }, 1500);
   });
-  let exitArmed = false;
-  let exitTimer = null;
-  exitButton?.addEventListener('click', () => {
-    if (!exitArmed) {
-      exitArmed = true;
-      exitButton.classList.add('armed');
-      exitButton.setAttribute('aria-label', 'Press again to save and quit');
-      const icon = exitButton.querySelector('[data-exit-icon]');
-      const label = exitButton.querySelector('[data-exit-label]');
-      if (icon) icon.textContent = '!';
-      if (label) label.textContent = 'Confirm';
-      exitTimer = setTimeout(() => {
-        exitArmed = false;
-        exitButton.classList.remove('armed');
-        exitButton.setAttribute('aria-label', 'Save and quit the game');
-        if (icon) icon.textContent = '⏻';
-        if (label) label.textContent = 'Quit';
-      }, 3000);
-      return;
-    }
-    clearTimeout(exitTimer);
+  quitButton?.addEventListener('click', () => {
     closeOverlay();
-    (onExit || onQuit)();
+    onQuit?.();
   });
 
   function selectTab(id) {
     currentTab = id;
     veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
-    if (quickActions) quickActions.hidden = id !== 'settings';
     updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
@@ -338,6 +210,19 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
+      controls: {
+        ...quickControls,
+        ...(quickControls.music ? {
+          music: {
+            ...quickControls.music,
+            activate: async (...args) => {
+              const result = await quickControls.music.activate(...args);
+              if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
+              return result;
+            },
+          },
+        } : {}),
+      },
       actions: {
         close: () => closeOverlay(),
         tab: (id) => selectTab(id),
@@ -345,10 +230,50 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
       },
     });
-  const qnBtn = veil.querySelector('#ov-quicknav');
-  if (qnBtn) qnBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(qnBtn); });
-  const swBtn = veil.querySelector('#ov-switch');
-  if (swBtn) swBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(swBtn); });
+  const overlayHead = veil.querySelector('.overlay-head');
+  const syncQuickLauncher = () => {
+    if (!overlayHead) return;
+    const tabs = overlayHead.querySelector('.overlay-tabs');
+    const actions = overlayHead.querySelector('.overlay-actions');
+    const foldedNow = quickNavFolds();
+    if (tabs) tabs.hidden = foldedNow;
+    let switcher = overlayHead.querySelector('#ov-switch');
+    if (foldedNow && !switcher) {
+      switcher = document.createElement('button');
+      switcher.className = 'subtle ov-switch';
+      switcher.id = 'ov-switch';
+      switcher.setAttribute('aria-haspopup', 'menu');
+      actions?.before(switcher);
+    } else if (!foldedNow) {
+      switcher?.remove();
+      switcher = null;
+    }
+    if (switcher) switcher.textContent = `${TABS.find((tab) => tab.id === currentTab)?.label || currentTab} ▾`;
+    let quickButton = overlayHead.querySelector('#ov-quicknav');
+    if (quickNavMode() === 'mirror' && !quickButton) {
+      quickButton = document.createElement('button');
+      quickButton.className = 'subtle';
+      quickButton.id = 'ov-quicknav';
+      quickButton.title = 'Go to…';
+      quickButton.textContent = '☰';
+      actions?.prepend(quickButton);
+    } else if (quickNavMode() !== 'mirror') {
+      quickButton?.remove();
+    }
+  };
+  const onQuickLauncherClick = (event) => {
+    const anchor = event.target.closest('#ov-quicknav, #ov-switch');
+    if (!anchor || !overlayHead.contains(anchor)) return;
+    event.stopPropagation();
+    openHere(anchor);
+  };
+  overlayHead?.addEventListener('click', onQuickLauncherClick);
+  window.addEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
+  overlayCleanup.push(() => {
+    overlayHead?.removeEventListener('click', onQuickLauncherClick);
+    window.removeEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
+  });
+  syncQuickLauncher();
 
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {

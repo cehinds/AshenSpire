@@ -1377,6 +1377,7 @@ export function mountEquipment(host, {
     box.dataset.component = 'armoury.statsSummary';
     const attributes = projection.attributes.map((row) => `${row.shortLabel || row.label} ${row.value}`).join(' · ');
     const relicNames = (run.relics || []).map((id) => registries.relics.get(id)?.name || id);
+    const runStats = run.stats || {};
     box.innerHTML = `<section class="armoury-stats-identity"><strong>${esc(cls?.name || run.class)}</strong><span>Level ${esc(String(run.level || 1))}</span></section>`
       + `<section class="armoury-stats-group"><b>Combat</b><span>Strike ${esc(String(valueFor('attack')))}</span>`
       + `<span>${esc(labelFor('technique'))} ${esc(String(valueFor('technique')))}</span>`
@@ -1384,6 +1385,9 @@ export function mountEquipment(host, {
       + `<section class="armoury-stats-group"><b>Attributes</b><span>${esc(attributes || 'No attributes')}</span></section>`
       + `<section class="armoury-stats-group"><b>Resources</b><span>Actions ${esc(String(derived('energy')))}</span>`
       + `<span>Hand ${esc(String(derived('draw')))}</span><span>Resistance —</span></section>`
+      + `<section class="armoury-stats-group"><b>Run</b><span>Fights won ${esc(String(runStats.fightsWon || 0))}</span>`
+      + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
+      + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
       + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
     return box;
   }

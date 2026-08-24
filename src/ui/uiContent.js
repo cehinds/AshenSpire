@@ -286,9 +286,6 @@ export function actPlate(actNumber, plates) {
 // argument: it only bites where a screen has destinations of its own, and combat
 // is the screen that does.
 export const MENU_TABS = [
-  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
   { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
 ];
@@ -299,39 +296,45 @@ const TAIL = [
     tip: 'Save, then back to the title. Continue picks the climb up again.' },
 ];
 
+const QUICK_CONTROLS = [
+  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'head', control: 'switch',
+    tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
+  { act: 'music', icon: '♫', label: 'Music', band: 'head', control: 'switch',
+    tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
+];
+
 export const MENU = {
   map: [
+    ...QUICK_CONTROLS,
     { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
       tip: 'Weapons and armour — swap between fights for free.' },
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,
   ],
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
+    ...QUICK_CONTROLS,
     { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
       tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
-    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
       tip: 'What is still to come, shuffled for viewing.' },
     { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
       tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,
   ],
   // The menu already open: the dropdown mirrors the strip behind it, current tab
   // marked. Controls earns a row here (it is a tab) and not on map/combat, where
   // it is one click away once you land.
   overlay: [
+    ...QUICK_CONTROLS,
     { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
       tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,
@@ -365,7 +368,7 @@ const BANDS = ['head', 'body', 'tail'];
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-export const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+export const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'fullscreen', 'music', 'save', 'quit', 'close'];
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -412,8 +415,9 @@ export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {
   const ordered = fixedEnds
     ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
     : [
-        ...src.filter((r) => r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.local && r.band !== 'tail'),
+        ...src.filter((r) => r.control && r.band !== 'tail'),
+        ...src.filter((r) => !r.control && r.local && r.band !== 'tail'),
+        ...src.filter((r) => !r.control && !r.local && r.band !== 'tail'),
         ...src.filter((r) => r.band === 'tail'),
       ];
   let prevBand = null;
@@ -431,6 +435,7 @@ export function menuRows(context, { fixedEnds = true, hasSave = true, counts = {
       tone: r.tone || '',
       badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
       on: !!(current && r.act === 'tab' && r.tab === current),
+      control: r.control || '',
       sep,
     };
   });

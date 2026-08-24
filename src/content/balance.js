@@ -274,6 +274,15 @@ export const balance = {
       metadataMaxWidthPct: 30,
       metadataShowTotals: false,
     },
+    // The two always-nearby comfort controls are one shared component on the
+    // title, map, and combat surfaces. Places and spacing are authored here so
+    // a future surface or denser theme does not require another renderer.
+    hudQuickSettings: {
+      places: ['title', 'map', 'combat'],
+      edgeGapPx: 8,
+      stackGapPx: 4,
+      showLabels: true,
+    },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow
     // screens still collapse it to a list for touch and readable labels.
@@ -709,7 +718,7 @@ export const balance = {
     // The beds carry their own gain staging on top of this bus (music.js,
     // gains 0.34–0.6), so 50 is clearly audible from first boot without
     // crowding the feedback layer.
-    audio: { musicVolume: 50, sfxVolume: 75 },
+    audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------

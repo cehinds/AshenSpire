@@ -4,6 +4,7 @@ import { runHeaderModel } from '../models/RunHeaderModel.js';
 import { vitalsPanelModel } from '../models/VitalsPanelModel.js';
 import { quickAccessPanelModel } from '../models/QuickAccessPanelModel.js';
 import { inventoryBeltModel } from '../models/InventoryBeltModel.js';
+import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 
 // Presentation projection only: callers provide a domain snapshot and command
 // ids; the result is a frozen tree with no callbacks or mutable run objects.
@@ -18,6 +19,7 @@ export function runHudViewModel({
   seed,
   identity,
   controls,
+  quickSettings,
   overlayHtml = '',
 } = {}) {
   return componentModel(UI.sharedRunHud, {
@@ -29,6 +31,7 @@ export function runHudViewModel({
         children: [vitalsPanelModel(), quickAccessPanelModel(controls)],
       }),
       inventoryBeltModel(place),
+      hudQuickSettingsModel({ place, ...quickSettings }),
     ],
   });
 }

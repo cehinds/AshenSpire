@@ -21,9 +21,16 @@ function quickMenuRowModel(row) {
       tip: row.tip || '',
       tone: row.tone || '',
       active: !!row.on,
+      control: row.control || '',
+      checked: !!row.checked,
+      disabled: !!row.disabled,
+      condition: row.condition || '',
       separatorBefore: !!row.sep,
     },
-    accessibility: { role: 'menuitem', label: row.label || row.act },
+    // These rows live inside a role=menu. A switch role is not a valid owned
+    // child there; menuitemcheckbox keeps the stateful control in the menu's
+    // accessibility tree while retaining aria-checked.
+    accessibility: { role: row.control === 'switch' ? 'menuitemcheckbox' : 'menuitem', label: row.label || row.act },
     behaviors: [behaviorModel(`activate-${row.act}`, {
       event: 'click',
       command: 'activate-menu-row',
@@ -71,6 +78,22 @@ function menuPanelModel(id = '') {
   });
 }
 
+function menuFooterModel() {
+  return componentModel(UI.menuFooter, {
+    accessibility: { role: 'contentinfo', label: 'Run actions' },
+    children: [
+      componentModel(UI.saveGameControl, {
+        accessibility: { role: 'button', label: 'Save Game' },
+        behaviors: [behaviorModel('save-game', { event: 'click', command: 'save-game' })],
+      }),
+      componentModel(UI.saveQuitControl, {
+        accessibility: { role: 'button', label: 'Save and Quit to Title' },
+        behaviors: [behaviorModel('save-quit', { event: 'click', command: 'save-quit-to-title' })],
+      }),
+    ],
+  });
+}
+
 export function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored = false }) {
   return componentModel(UI.menuOverlay, {
     variant: folded ? 'folded' : (mirrored ? 'mirrored' : 'tabs'),
@@ -80,6 +103,7 @@ export function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored
     children: [
       menuTabStripModel({ tabs, activeId, folded }),
       menuPanelModel(activeId),
+      menuFooterModel(),
     ],
   });
 }
