@@ -40,19 +40,22 @@ export function hudQuickSettingsHtml(model) {
   </aside>`;
 }
 
-function showHudNotice(stack, message) {
+function showHudNotice(stack, message, kind = 'status') {
   const notice = stack.querySelector('[data-hud-quick-notice]');
   if (!notice) return null;
   notice.textContent = message;
+  notice.dataset.kind = kind;
   notice.hidden = false;
   return notice;
 }
 
-function hideHudNotice(stack) {
+function hideHudNotice(stack, kind = null) {
   const notice = stack.querySelector('[data-hud-quick-notice]');
   if (!notice) return;
+  if (kind && notice.dataset.kind !== kind) return;
   notice.hidden = true;
   notice.textContent = '';
+  delete notice.dataset.kind;
 }
 
 function syncFullscreen(stack) {
@@ -72,6 +75,11 @@ function syncFullscreen(stack) {
     : 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.';
   const state = button.querySelector('[data-hud-quick-state]');
   if (state) state.textContent = capability.supported ? (active ? 'On' : 'Off') : 'N/A';
+  if (!capability.supported) {
+    showHudNotice(stack, 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.', 'unsupported');
+  } else {
+    hideHudNotice(stack, 'unsupported');
+  }
 }
 
 function syncMusic(stack, settings) {
@@ -121,10 +129,10 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     if (result.ok) {
       hideHudNotice(stack);
     } else {
-      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.');
+      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.', 'refused');
       clearTimeout(noticeTimer);
       noticeTimer = setTimeout(() => {
-        if (stack.isConnected) hideHudNotice(stack);
+        if (stack.isConnected) hideHudNotice(stack, 'refused');
       }, 6500);
     }
   };

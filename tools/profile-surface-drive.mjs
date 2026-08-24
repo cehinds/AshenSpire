@@ -98,6 +98,27 @@ check('D9 clicking the scrim dismisses it', await ev(`!document.querySelector('.
 
 // --- D8: Title → Profile is a real route to the archive ---
 await ev(`(document.querySelector('.profile-notice .notnow')||document.querySelector('.profile-notice .keep')).click()`); await sleep(900);
+await ev(`(()=>{
+  Object.defineProperties(document.documentElement, {
+    requestFullscreen: { value: undefined, configurable: true },
+    webkitRequestFullscreen: { value: undefined, configurable: true },
+  });
+  Object.defineProperties(document, {
+    exitFullscreen: { value: undefined, configurable: true },
+    webkitExitFullscreen: { value: undefined, configurable: true },
+    fullscreenEnabled: { value: false, configurable: true },
+    webkitFullscreenEnabled: { value: false, configurable: true },
+  });
+  return 1;
+})()`); await sleep(850);
+const unsupportedFullscreen = await ev(`(()=>{
+  const notice=document.querySelector('[data-hud-quick-notice]:not([hidden])');
+  const button=document.querySelector('[data-hud-quick-action="fullscreen"]');
+  return {notice:notice?.textContent||'',disabled:button?.disabled||false,state:button?.textContent||''};
+})()`);
+check('iPhone-like browsers visibly explain the Add to Home Screen alternative',
+  unsupportedFullscreen.disabled && /add to home screen/i.test(unsupportedFullscreen.notice),
+  JSON.stringify(unsupportedFullscreen));
 await ev(`document.querySelector('#profile').click()`); await sleep(700);
 const st = await ev(`(()=>{
   const body=document.querySelector('.profile-archive-body'); if(!body) return {no:true};

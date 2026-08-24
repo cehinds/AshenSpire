@@ -40,9 +40,16 @@ if (process.argv.includes('--selftest')) {
         replace: 'notice.hidden = true;',
         expectRed: /quick-control refusal should render into its own visible notice/,
       },
+      {
+        name: 'unsupported fullscreen loses its visible iPhone guidance',
+        file: 'src/ui/components/hudQuickSettings.js',
+        find: "showHudNotice(stack, 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.', 'unsupported');",
+        replace: "hideHudNotice(stack);",
+        expectRed: /unsupported Fullscreen should visibly explain the iPhone alternative/,
+      },
     ],
   });
-  if (selftestCode === 0) console.log('fullscreen-control-selftest: OK — 4 checks passed');
+  if (selftestCode === 0) console.log('fullscreen-control-selftest: OK — 5 checks passed');
   process.exit(selftestCode);
 }
 
@@ -94,5 +101,7 @@ check(/data-hud-quick-notice/.test(quickControlSource)
   && /notice\.textContent\s*=/.test(quickControlSource)
   && /notice\.hidden\s*=\s*false/.test(quickControlSource),
   'quick-control refusal should render into its own visible notice');
+check(/showHudNotice\(stack, 'Fullscreen is unavailable here\. On iPhone, use Add to Home Screen\.', 'unsupported'\);/.test(quickControlSource),
+  'unsupported Fullscreen should visibly explain the iPhone alternative');
 
 console.log(`fullscreen-control: OK — ${checks} checks passed`);

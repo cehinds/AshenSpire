@@ -39245,7 +39245,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '1568a92a8c';
+const SOURCE = '5428fc0462';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39279,7 +39279,7 @@ const SOURCE = '1568a92a8c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1269';
+const ORDINAL = '1270';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39431,19 +39431,22 @@ function hudQuickSettingsHtml(model) {
   </aside>`;
 }
 
-function showHudNotice(stack, message) {
+function showHudNotice(stack, message, kind = 'status') {
   const notice = stack.querySelector('[data-hud-quick-notice]');
   if (!notice) return null;
   notice.textContent = message;
+  notice.dataset.kind = kind;
   notice.hidden = false;
   return notice;
 }
 
-function hideHudNotice(stack) {
+function hideHudNotice(stack, kind = null) {
   const notice = stack.querySelector('[data-hud-quick-notice]');
   if (!notice) return;
+  if (kind && notice.dataset.kind !== kind) return;
   notice.hidden = true;
   notice.textContent = '';
+  delete notice.dataset.kind;
 }
 
 function syncFullscreen(stack) {
@@ -39463,6 +39466,11 @@ function syncFullscreen(stack) {
     : 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.';
   const state = button.querySelector('[data-hud-quick-state]');
   if (state) state.textContent = capability.supported ? (active ? 'On' : 'Off') : 'N/A';
+  if (!capability.supported) {
+    showHudNotice(stack, 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.', 'unsupported');
+  } else {
+    hideHudNotice(stack, 'unsupported');
+  }
 }
 
 function syncMusic(stack, settings) {
@@ -39512,10 +39520,10 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     if (result.ok) {
       hideHudNotice(stack);
     } else {
-      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.');
+      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.', 'refused');
       clearTimeout(noticeTimer);
       noticeTimer = setTimeout(() => {
-        if (stack.isConnected) hideHudNotice(stack);
+        if (stack.isConnected) hideHudNotice(stack, 'refused');
       }, 6500);
     }
   };
@@ -41515,8 +41523,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Fullscreen, music, Settings, and Profile now have one clear home each",
-    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
-    "build": "0.4.0.1269",
+    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens. Browser refusals are explained beside the control instead of disappearing into Settings, and iPhone users see the Add to Home Screen alternative without needing a hover tooltip. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
+    "build": "0.4.0.1270",
     "pullRequest": 344,
     "url": "https://github.com/cehinds/AshenSpire/pull/344"
   },
