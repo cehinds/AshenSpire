@@ -29,6 +29,7 @@ export function renderTray(model, { onToggle = null, onSort = null, onResize = n
 
   const vertical = tray.edge === 'top' || tray.edge === 'bottom';
   const rememberedSize = tray.expanded && tray.resizable ? sizeService.read(tray.id, tray.edge) : null;
+  root.dataset.sized = rememberedSize ? '1' : '0';
   if (rememberedSize) root.style[vertical ? 'height' : 'width'] = `${rememberedSize}px`;
 
   const header = document.createElement('div');
@@ -80,6 +81,7 @@ export function renderTray(model, { onToggle = null, onSort = null, onResize = n
       const hostSize = vertical ? root.parentElement?.clientHeight : root.parentElement?.clientWidth;
       const maximum = Math.max(tray.minExpandedSize, (hostSize || requested) - 8);
       const size = Math.min(maximum, Math.max(tray.minExpandedSize, requested));
+      root.dataset.sized = '1';
       root.style[vertical ? 'height' : 'width'] = `${size}px`;
       return size;
     };

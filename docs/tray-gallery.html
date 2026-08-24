@@ -16,15 +16,19 @@
     .gallery-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.6rem; margin-top:2rem; }
     .tray-gallery-card { min-width:0; border:1px solid var(--line-soft); border-radius:1rem; background:color-mix(in srgb,var(--panel) 86%,transparent); overflow:hidden; }
     .state-label { display:flex; justify-content:space-between; gap:1rem; padding:.8rem 1rem; color:var(--muted); font:1.1rem ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; border-bottom:1px solid var(--line-soft); }
-    .tray-gallery-cell { display:flex; min-width:0; min-height:18rem; background:#0c0b09; }
+    .tray-gallery-cell { display:flex; min-width:0; height:28rem; min-height:28rem; background:#0c0b09; }
     .tray-gallery-cell[data-edge='top'], .tray-gallery-cell[data-edge='bottom'] { flex-direction:column; }
+    .tray-gallery-cell[data-edge='bottom'] { justify-content:flex-end; }
     .tray-gallery-cell[data-edge='right'] { flex-direction:row; justify-content:flex-end; }
     .tray-gallery-cell[data-edge='left'] { flex-direction:row; justify-content:flex-start; }
-    .tray-gallery-cell .folding-tray[data-collapsed='0'] { flex:1 1 auto; }
+    .tray-gallery-cell .folding-tray[data-collapsed='0'][data-tray-edge='top'],
+    .tray-gallery-cell .folding-tray[data-collapsed='0'][data-tray-edge='bottom'] { flex:0 1 auto; }
+    .tray-gallery-cell .folding-tray[data-collapsed='0'][data-tray-edge='left'],
+    .tray-gallery-cell .folding-tray[data-collapsed='0'][data-tray-edge='right'] { flex:1 1 auto; }
     .tray-gallery-cell .folding-tray[data-collapsed='1'][data-tray-edge='top'],
     .tray-gallery-cell .folding-tray[data-collapsed='1'][data-tray-edge='bottom'] { flex:0 0 auto; }
     .tray-gallery-cell .folding-tray[data-collapsed='1'][data-tray-edge='right'],
-    .tray-gallery-cell .folding-tray[data-collapsed='1'][data-tray-edge='left'] { min-height:18rem; }
+    .tray-gallery-cell .folding-tray[data-collapsed='1'][data-tray-edge='left'] { min-height:calc(28rem - (2 * var(--ui-tray-side-margin))); }
     .gallery-items { display:grid; gap:.45rem; padding:1rem 0; }
     .gallery-item { display:flex; justify-content:space-between; gap:1rem; padding:.7rem .9rem; border:1px solid var(--line-soft); background:#15110e; color:var(--parchment); }
     .gallery-item small { color:var(--muted); }

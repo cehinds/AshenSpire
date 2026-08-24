@@ -129,6 +129,11 @@ async function main() {
       const opened = await evaluate(`(() => {
         const region = document.querySelector('[data-region="inventory"]');
         const rows = [...region.querySelectorAll('[data-inventory-item]')];
+        const panel = document.querySelector('.armoury');
+        const context = [...document.querySelectorAll('.armoury [data-role="context"]')];
+        const panelRect = panel?.getBoundingClientRect();
+        const regionRect = region?.getBoundingClientRect();
+        const lastRect = context.at(-1)?.getBoundingClientRect();
         return {
           countLabel: Number(region.querySelector('.rf-count')?.textContent.match(/\\d+/)?.[0] || -1),
           quantity: rows.reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
@@ -137,12 +142,16 @@ async function main() {
           expanded: region.querySelectorAll('.disc-face[aria-expanded="true"]').length,
           visibleActions: [...region.querySelectorAll('[data-act]')].filter((element) => element.offsetParent !== null).length,
           focusedFold: document.activeElement?.dataset.fold || null,
+          compactShare: panelRect?.height && regionRect?.height ? regionRect.height / panelRect.height : null,
+          bottomAnchored: !!panelRect && !!lastRect && Math.abs(panelRect.bottom - lastRect.bottom) < 2,
         };
       })()`);
       check(opened.rows > 0, `expanded Inventory draws item rows (${opened.rows})`);
       check(opened.countLabel === opened.quantity, `Inventory header count equals summed quantities (${opened.countLabel})`);
       check(opened.expanded === 0 && opened.visibleActions === 0, 'Inventory item cards arrive folded with no visible actions');
       check(opened.focusedFold === 'inventory', 'Inventory keeps keyboard focus after its redraw');
+      check(opened.compactShare != null && opened.compactShare <= 0.35, `unfolded tray hugs content instead of claiming half the Armoury (${Math.round((opened.compactShare || 0) * 100)}%)`);
+      check(opened.bottomAnchored, 'Bottom Tray group remains anchored to the Armoury bottom edge');
       check(opened.categories.includes('Armour') && opened.categories.some((category) => ['Weapon', 'Shield', 'Staff'].includes(category)) && opened.categories.includes('Relic'),
         `starting Inventory covers armour, armaments, and relics (${opened.categories.join(', ')})`);
       const firstToggle = await evaluate(`(() => {
@@ -174,6 +183,23 @@ async function main() {
       })()`);
       check(closed === 'false', 'clicking the Inventory item title again refolds it');
     }
+
+    await evaluate(`(() => {
+      const inventory = document.querySelector('[data-fold=inventory]');
+      if (inventory?.getAttribute('aria-expanded') === 'true') inventory.click();
+      const cards = document.querySelector('[data-fold=cards]');
+      if (cards?.getAttribute('aria-expanded') === 'false') cards.click();
+    })()`);
+    const cardsTray = await evaluate(`(() => {
+      const panel = document.querySelector('.armoury').getBoundingClientRect();
+      const tray = document.querySelector('[data-region=cards]').getBoundingClientRect();
+      const last = [...document.querySelectorAll('.armoury [data-role="context"]')].at(-1).getBoundingClientRect();
+      return { share:tray.height / panel.height, bottomAnchored:Math.abs(panel.bottom-last.bottom)<2 };
+    })()`);
+    check(cardsTray.share <= 0.35, `Cards tray opens at its compact content height (${Math.round(cardsTray.share * 100)}%)`);
+    check(cardsTray.bottomAnchored, 'Cards tray expands upward from the bottom tray group');
+    await screenshot('desktop-cards-tray-expanded');
+    await evaluate("document.querySelector('[data-fold=cards]')?.click()");
 
     await evaluate(`(() => {
       const slot = [...document.querySelectorAll('.equip-slot')].find((element) => element.querySelector('.es-label')?.textContent === 'Right Hand');

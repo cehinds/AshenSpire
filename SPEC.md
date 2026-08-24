@@ -866,7 +866,9 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   anchored edge, including the open Right Tray form `> TRAY NAME`. Expanded Top/Bottom trays resize
   vertically and Left/Right trays resize horizontally through a 44px mouse, touch-hold, and keyboard
   surface. Size is remembered by stable tray id and edge; folding always returns to the standard bar
-  or rail, and reopening restores the last expanded size. These ids describe the existing data-driven Quick Menu and Armoury
+  or rail, and reopening restores the last expanded size. Before the first resize, unfolded trays fit
+  their header and visible content rather than claiming a fixed panel fraction. Bottom trays remain
+  bottom-anchored and grow upward. These ids describe the existing data-driven Quick Menu and Armoury
   structures; they do not create a parallel menu or equipment implementation. Menu records are
   constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records are
   constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind

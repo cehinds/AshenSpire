@@ -6,6 +6,8 @@
   --ui-section-letter-spacing: 0.08em;
   --ui-tray-side-margin: 0.4rem;
   --ui-tray-resize-surface: 44px;
+  --ui-tray-expanded-block-max: 36rem;
+  --ui-tray-expanded-panel-max: 34%;
 }
 
 /* ---------- tooltip ---------- */
@@ -2322,7 +2324,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: transparent; color: var(--gold); cursor: pointer; text-align: left;
   font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
 }
-.tray-content { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; }
+.tray-content { flex: 0 1 auto; min-width: 0; min-height: 0; overflow: auto; }
+.folding-tray[data-sized='1'] > .tray-content { flex: 1 1 auto; }
 .tray-content[hidden] { display: none !important; }
 .tray-sort {
   flex: 0 0 var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
@@ -2561,11 +2564,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
 .armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
 .armoury [data-role='context'][data-collapsed='0'] {
-  /* An expanded receipt pane is real content, not overflow behind the modal.
-     Share the panel with its subject and give the pane its own scrollport so a
-     phone can reach candidate receipts without moving the Armoury off-screen. */
-  flex: 1 1 50%; min-height: var(--tap-floor); overflow-y: auto;
+  /* An untouched tray hugs its header and visible content. A remembered drag
+     writes an explicit size through renderTray; content then owns the scrollport
+     without making the default pane consume half the Armoury. */
+  flex: 0 1 auto; min-height: var(--tap-floor);
+  overflow-y: auto;
 }
+.armoury [data-role='context'][data-collapsed='0'][data-sized='0'] {
+  max-height: min(var(--ui-tray-expanded-block-max), var(--ui-tray-expanded-panel-max));
+}
+.armoury [data-role='context'][data-collapsed='0'][data-sized='1'] { max-height: none; }
+.armoury-trays > [data-tray-edge='bottom']:first-child { margin-top: auto; }
 
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
    the contract under review. They are query-gated dev surfaces; ordinary play
@@ -2577,7 +2586,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
 :root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
 :root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
-:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 1 auto; }
 :root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they

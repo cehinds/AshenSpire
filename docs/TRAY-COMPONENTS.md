@@ -146,6 +146,10 @@ Responsive and access rules:
   touch. Arrow keys resize a focused handle in 16px steps.
 - Remember expanded size by stable tray id and edge. Folding always returns to
   the standard bar/rail; reopening restores the last expanded size.
+- Before the player resizes it, an unfolded tray hugs its header and visible
+  contents instead of claiming a fixed share of the host panel.
+- Bottom trays anchor to the bottom edge and grow upward; Top trays anchor to
+  the top edge and grow downward.
 
 Avoid: hand-written tray headers in screens, inert sort icons, arrows with
 different meanings between edges, hidden counts, and item-specific logic in
