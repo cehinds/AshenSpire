@@ -84,6 +84,13 @@ if (args.includes('--selftest')) {
         expectRed: /RED A3\.PROMPT-FAMILY/,
       },
       {
+        name: 'analog-stick activity bypasses the startup input-family owner',
+        file: 'src/ui/input.js',
+        find: "      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });",
+        replace: "      false; // startup-gate selftest plant",
+        expectRed: /RED A3\.PROMPT-ANALOG/,
+      },
+      {
         name: 'Space is no longer an activation key',
         file: 'src/ui/components/startupGate.js',
         find: "if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';",
@@ -133,6 +140,13 @@ if (args.includes('--selftest')) {
         expectRed: /RED A1\.ACTION-SEMANTICS/,
       },
       {
+        name: 'pointer reveal publishes the persistent gamepad cursor',
+        file: 'src/main.js',
+        find: "        focusCursor: family === 'keyboard' || family === 'controller',",
+        replace: '        focusCursor: true, // startup-gate selftest plant',
+        expectRed: /RED A6\.POINTER-CURSOR/,
+      },
+      {
         name: 'reveal transition skips its deterministic cleanup deadline',
         file: 'src/ui/components/startupGate.js',
         find: "    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;",
@@ -148,7 +162,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 12 plants, 12 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 14 plants, 14 caught');
   process.exit(code);
 }
 
@@ -207,7 +221,8 @@ async function page({
     window.__startupPad = {
       connect() { state.connected=true; dispatchEvent(new Event('gamepadconnected')); },
       disconnect() { state.connected=false; dispatchEvent(new Event('gamepaddisconnected')); },
-      set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; }
+      set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; },
+      setAxis(index, value) { gamepad.axes[index]=value; gamepad.timestamp += 1; }
     };
   })();`;
   await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: bootstrap }, sessionId);
@@ -300,6 +315,11 @@ async function assertPromptFamilies() {
   f = await startupFacts(p);
   verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-CONTROLLER', `D-pad -> ${f.family}: ${f.prompt}`);
   await p.ev(`window.__startupPad.set(12,false)`); await wait(50);
+  await p.mouse('move');
+  await p.ev(`window.__startupPad.setAxis(0,1)`); await wait(100);
+  f = await startupFacts(p);
+  verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-ANALOG', `left stick -> ${f.family}: ${f.prompt}`);
+  await p.ev(`window.__startupPad.setAxis(0,0)`); await wait(50);
   await p.close();
 }
 
@@ -316,14 +336,17 @@ async function assertKeyboard(key, code) {
   await p.close();
 }
 
-async function assertPointerAndTouch() {
+async function assertPointerCursor() {
   const mouse = await page();
   await mouse.until(`!!document.querySelector('.startup-gate')`, 'pointer startup');
   await mouse.mouse();
   await mouse.until(`!!document.querySelector('.title-screen')`, 'pointer reveal');
   verdict(await mouse.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen') && !!document.activeElement?.matches('.slot-new,.slot-continue')`), 'A6.POINTER', 'real mouse press reveals once and focuses the title default');
+  verdict(await mouse.ev(`!!document.activeElement?.matches('.slot-new,.slot-continue') && !document.activeElement.classList.contains('gp-focus')`), 'A6.POINTER-CURSOR', 'pointer reveal keeps DOM focus without publishing the persistent gamepad cursor');
   await mouse.close();
+}
 
+async function assertTouch() {
   const touch = await page({ width: 390, height: 844, mobile: true });
   await touch.until(`!!document.querySelector('.startup-gate')`, 'touch startup');
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: 195, y: 422, radiusX: 2, radiusY: 2, force: 1, id: 1 }] }, touch.sessionId);
@@ -333,6 +356,7 @@ async function assertPointerAndTouch() {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, touch.sessionId);
   await touch.until(`!!document.querySelector('.title-screen')`, 'touch reveal');
   verdict(await touch.ev(`!document.querySelector('.startup-gate') && !!document.activeElement?.matches('.slot-new,.slot-continue')`), 'A6.TOUCH-UP', 'real touch completion reveals once and focuses the title default');
+  verdict(await touch.ev(`!!document.activeElement?.matches('.slot-new,.slot-continue') && !document.activeElement.classList.contains('gp-focus')`), 'A6.TOUCH-CURSOR', 'touch reveal keeps DOM focus without publishing the persistent gamepad cursor');
   await touch.close();
 }
 
@@ -458,7 +482,8 @@ async function main() {
   await assertPromptFamilies();
   await assertKeyboard('Enter', 'A4.ENTER');
   await assertKeyboard(' ', 'A5.SPACE');
-  if (!SELFTEST_LANE) await assertPointerAndTouch();
+  await assertPointerCursor();
+  if (!SELFTEST_LANE) await assertTouch();
   await assertGamepad(0);
   await assertGamepad(9);
   await assertInterruptedPresses();

@@ -936,15 +936,19 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   unmountStartupGate = mountStartupGate(app, {
     model: startupGateModel({ inputFamily: family }),
     registerInputGate: setInputGate,
-    onReveal: () => {
+    onReveal: ({ family }) => {
       startupGatePending = false;
       unmountStartupGate = null;
-      showTitle({ skipStartup: true, focusDefault: true });
+      showTitle({
+        skipStartup: true,
+        focusDefault: true,
+        focusCursor: family === 'keyboard' || family === 'controller',
+      });
     },
   });
 }
 
-function showTitle({ skipStartup = false, focusDefault = false } = {}) {
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
   if (startupGatePending && !skipStartup) {
     showStartupGate();
@@ -984,7 +988,7 @@ function showTitle({ skipStartup = false, focusDefault = false } = {}) {
     },
     onLan: showLobby,
   });
-  if (focusDefault) focusTitleDefault(app);
+  if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');

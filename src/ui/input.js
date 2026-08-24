@@ -990,6 +990,7 @@ function pollPads() {
     const ax = pad.axes[0] || 0;
     const ay = pad.axes[1] || 0;
     if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
+      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
         if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');

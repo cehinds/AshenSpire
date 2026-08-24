@@ -1,10 +1,10 @@
 # Issue #229 startup-gate evidence
 
 - Base: `dev@13919f3d155928b4540342db54076ef39ee7fe91`
-- Built artifact commit: `900e323ee224866e23a84e44dce2a70eee2dcce5`
-- Build: `0.4.0.1301 · src a4f1853380`
+- Built artifact commit: `PENDING_FINAL_BUILD_COMMIT`
+- Build: `0.4.0.1302 · src PENDING_FINAL_SOURCE_DIGEST`
 - Artifact: `dist/AshenSpire.html`
-- Artifact SHA-256: `1a4b1c60c2a2c37d84e85f475cc4bccbdc986a966bfaa3ffa6be89f60cd8a075`
+- Artifact SHA-256: `PENDING_FINAL_ARTIFACT_SHA256`
 - Browser: Google Chrome on Windows, device scale factor 1
 
 ## Visually inspected captures
@@ -20,8 +20,9 @@
 | `title-after-enter-1200x730.png` | Title after consumed Enter; default slot focused | `d6795b48a8545d8cbe6f685789e4f29c58ea18f2ed9c4f5383ad6fa40f66e827` |
 
 `tools/startup-gate.mjs` separately exercised Click, touch, Enter, Space,
-controller buttons 0 and 9, last-input prompts, return-to-title bypass, profile
+controller buttons 0 and 9, D-pad/analog last-input prompts, pointer/touch focus
+without a persistent gamepad cursor, return-to-title bypass, profile
 crisis precedence, interrupted-press cancellation, actionable startup semantics,
 deterministic reduced-motion reveal cleanup, and Text M/XL at 390x844,
-844x344, and 1200x730. Result: 38 checks passed; its 12 same-door plants
+844x344, and 1200x730. Result: 41 checks passed; its 14 same-door plants
 were each observed red and the clean copied tree returned green.

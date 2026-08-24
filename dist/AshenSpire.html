@@ -7673,15 +7673,19 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   unmountStartupGate = mountStartupGate(app, {
     model: startupGateModel({ inputFamily: family }),
     registerInputGate: setInputGate,
-    onReveal: () => {
+    onReveal: ({ family }) => {
       startupGatePending = false;
       unmountStartupGate = null;
-      showTitle({ skipStartup: true, focusDefault: true });
+      showTitle({
+        skipStartup: true,
+        focusDefault: true,
+        focusCursor: family === 'keyboard' || family === 'controller',
+      });
     },
   });
 }
 
-function showTitle({ skipStartup = false, focusDefault = false } = {}) {
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
   if (startupGatePending && !skipStartup) {
     showStartupGate();
@@ -7721,7 +7725,7 @@ function showTitle({ skipStartup = false, focusDefault = false } = {}) {
     },
     onLan: showLobby,
   });
-  if (focusDefault) focusTitleDefault(app);
+  if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
@@ -34927,11 +34931,11 @@ const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/component
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { focusElement } = require("src/ui/input.js");
 
-function focusTitleDefault(app) {
+function focusTitleDefault(app, { showCursor = true } = {}) {
   const control = app?.querySelector('.slot-continue, .slot-new');
   if (!control) return false;
   control.focus({ preventScroll: true });
-  focusElement(control);
+  if (showCursor) focusElement(control);
   return document.activeElement === control;
 }
 
@@ -38599,6 +38603,7 @@ function pollPads() {
     const ax = pad.axes[0] || 0;
     const ay = pad.axes[1] || 0;
     if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
+      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
         if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
@@ -39562,7 +39567,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a4f1853380';
+const SOURCE = '774d74b74d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39596,7 +39601,7 @@ const SOURCE = 'a4f1853380';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1301';
+const ORDINAL = '1302';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41921,8 +41926,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Cold boot now opens on the Ashen Spire threshold",
-    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled instead of surviving blur or controller disconnect, and the title then gives focus to its first available slot. The invitation follows the last active input family, exposes one named startup action without exposing title controls, profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
-    "build": "0.4.0.1301",
+    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled instead of surviving blur or controller disconnect, and the title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
+    "build": "0.4.0.1302",
     "pullRequest": 346,
     "url": "https://github.com/cehinds/AshenSpire/pull/346"
   },

@@ -12,11 +12,11 @@ import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQui
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { focusElement } from '../input.js';
 
-export function focusTitleDefault(app) {
+export function focusTitleDefault(app, { showCursor = true } = {}) {
   const control = app?.querySelector('.slot-continue, .slot-new');
   if (!control) return false;
   control.focus({ preventScroll: true });
-  focusElement(control);
+  if (showCursor) focusElement(control);
   return document.activeElement === control;
 }
 
