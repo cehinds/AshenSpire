@@ -409,7 +409,8 @@ async function main() {
   }
 
   if (!checks) { console.error('startup-gate: UNKNOWN — NOTHING RAN.'); process.exitCode = 2; return; }
-  console.log(`\nstartup-gate: ${checks - failures}/${checks} verdicts green; ${failures} red.`);
+  if (failures) console.error(`\nstartup-gate: RED — ${checks - failures}/${checks} checks passed; ${failures} failed.`);
+  else console.log(`\nstartup-gate: OK — ${checks}/${checks} checks passed`);
   console.log('BOUNDARY: source tree, one spawned Chromium, cold/local profile storage, keyboard, real CDP mouse/touch, and a standard-mapping gamepad shim read by the production poller.');
   process.exitCode = failures ? 1 : 0;
 }
