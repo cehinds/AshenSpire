@@ -5,6 +5,7 @@
   --ui-section-label-size: 1.2rem;
   --ui-section-letter-spacing: 0.08em;
   --ui-tray-side-margin: 0.4rem;
+  --ui-tray-control-size: calc(var(--tap-target, 44px) / var(--ui-zoom, 1));
   --ui-tray-resize-surface: 44px;
   --ui-tray-expanded-block-max: 36rem;
   --ui-tray-expanded-panel-max: 34%;
@@ -2328,7 +2329,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .folding-tray[data-sized='1'] > .tray-content { flex: 1 1 auto; }
 .tray-content[hidden] { display: none !important; }
 .tray-sort {
-  flex: 0 0 var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  flex: 0 0 var(--ui-tray-control-size); width: var(--ui-tray-control-size); height: var(--ui-tray-control-size);
+  min-width: var(--ui-tray-control-size); min-height: var(--ui-tray-control-size); aspect-ratio: 1; padding: 0;
   border: 1px solid var(--line-soft); border-radius: 0.65rem; background: transparent;
   color: var(--gold); cursor: pointer; font: inherit;
 }

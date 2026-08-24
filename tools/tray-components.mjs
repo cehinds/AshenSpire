@@ -202,11 +202,13 @@ async function main() {
       edges:Object.fromEntries(['top','right','bottom','left'].map((edge)=>[edge,[...document.querySelectorAll('.tray-gallery-cell[data-edge="' + edge + '"] .folding-tray')].map((tray)=>tray.dataset.collapsed).sort()])),
       rightOpen:[...document.querySelectorAll('.tray-gallery-cell[data-edge="right"] .folding-tray')].find((tray)=>tray.dataset.collapsed==='0')?.querySelector('.tray-fold').innerText.trim().replace(/\\s+/g,' '),
       bottomOpen:(() => { const cell=[...document.querySelectorAll('.tray-gallery-cell[data-edge="bottom"]')].find((node)=>node.querySelector('.folding-tray[data-collapsed="0"]')); const tray=cell.querySelector('.folding-tray[data-collapsed="0"]'); const c=cell.getBoundingClientRect(); const t=tray.getBoundingClientRect(); return { aligned:Math.abs(c.bottom-t.bottom)<1, compact:t.height<c.height-20 }; })(),
+      sortSquares:[...document.querySelectorAll('.tray-sort')].map((button)=>{ const rect=button.getBoundingClientRect(); return { width:rect.width, height:rect.height }; }),
     }))()`);
     check(gallery.cards === 8, 'gallery renders all eight folded/unfolded specimens');
     check(Object.values(gallery.edges).every((states) => states.join(',') === '0,1'), 'each edge has one folded and one unfolded specimen');
     check(gallery.rightOpen.startsWith('> RIGHT TRAY'), 'gallery preserves the open Right Tray “>” contract');
     check(gallery.bottomOpen.aligned && gallery.bottomOpen.compact, 'unfolded Bottom Tray is compact and anchored to the bottom edge');
+    check(gallery.sortSquares.length === 4 && gallery.sortSquares.every(({ width, height }) => Math.abs(width-height)<0.5 && width>=44 && width<=45), `every tray sort control is a 44px square (${JSON.stringify(gallery.sortSquares)})`);
     if (SHOTS) {
       const galleryShot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: true }, sessionId);
       writeFileSync(resolve(SHOT_DIR, 'eight-state-trays.png'), Buffer.from(galleryShot.data, 'base64'));
