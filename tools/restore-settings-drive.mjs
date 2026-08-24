@@ -1,13 +1,13 @@
 // tools/restore-settings-drive.mjs — Rune, 2026-08-07 (#68 D22).
 //
 // After a restore, does the SCREEN match the profile that was restored? Sunna's
-// scenario, on BOTH doors: a live profile with high contrast OFF / reduced
+// scenario, through the title-screen Profile route: a live profile with high contrast OFF / reduced
 // motion ON / text L, an archived profile with high contrast ON / reduced
 // motion OFF / text S — restore it and read the body classes and root
 // font-size, not the stored values.
 //
 // Run:  node tools/restore-settings-drive.mjs     (from the repo root)
-// Exit 0 = both doors dress the screen in the restored profile.
+// Exit 0 = the real restore door dresses the screen and both visible Music consumers.
 //
 // BOUNDARY: headless Chromium at 390x844. It proves the settings are APPLIED,
 // not that the result is legible — that is Sunna's gate and no driver replaces it.
@@ -87,17 +87,13 @@ const readScreen = `(()=>({
   storedMusic: JSON.parse(localStorage.getItem('sote_meta_v1')).settings.musicEnabled,
 }))()`;
 
-async function door(name, openSettings) {
+async function door(name, openProfile) {
   await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(600);
   await ev(seed + '1');
   await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1700);
   const before = await ev(readScreen);
-  await openSettings();
+  await openProfile();
   await sleep(600);
-  // #90: the categories are tabs, so Profile is one click in. Click the tab if
-  // it is there; the restore button is unreachable without it.
-  await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Profile'); if(t){t.click(); return true;} return false;})()`);
-  await sleep(300);
   const found = await ev(`(()=>{const b=document.querySelector('.prof-restore'); if(b){b.click(); return true;} return false;})()`);
   if (!found) {
     check(`${name}: restore button reached`, false, 'Profile restore control was absent');
@@ -114,6 +110,11 @@ async function door(name, openSettings) {
     `stored=${after.storedRM} screen=${after.reducedMotionClass} (was ${before.reducedMotionClass})`);
   check(`${name}: root font-size followed the restored text size`, after.rootFont !== before.rootFont,
     `unchanged at ${after.rootFont}`);
+  const hudMusicChecked = await ev(`document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed')`);
+  check(`${name}: restored Music preference is reflected by the title HUD`,
+    after.storedMusic === false && hudMusicChecked === 'false', `stored=${after.storedMusic} aria=${hudMusicChecked}`);
+  await ev(`document.querySelector('[data-profile-close]')?.click()`); await sleep(150);
+  await ev(`document.querySelector('#settings')?.click()`); await sleep(300);
   const audioTab = await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Audio'); if(t)t.click(); return !!t;})()`);
   await sleep(150);
   const musicChecked = audioTab && await ev(`document.querySelector('.toggle[data-key="musicEnabled"]')?.getAttribute('aria-checked')`);
@@ -121,19 +122,8 @@ async function door(name, openSettings) {
     after.storedMusic === false && musicChecked === 'false', `stored=${after.storedMusic} aria=${musicChecked}`);
 }
 
-await door('DOOR 1 (title Settings)', async () => {
-  await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`);
-});
-await door('DOOR 2 (in-run overlay Settings)', async () => {
-  await ev(`[...document.querySelectorAll('button')].find(b=>/begin a climb/i.test(b.textContent)).click()`); await sleep(800);
-  const started = await ev(`(()=>{const b=document.querySelector('#cz-start'); if(!b || b.disabled)return false; b.click(); return true;})()`);
-  check('DOOR 2 (in-run overlay Settings): character start control reached', started);
-  await sleep(1400);
-  const menuOpened = await ev(`(()=>{const m=document.querySelector('#open-menu, #combat-menu'); if(!m)return false; m.click(); return true;})()`);
-  check('DOOR 2 (in-run overlay Settings): in-run menu control reached', menuOpened);
-  await sleep(600);
-  const settingsOpened = await ev(`(()=>{const t=document.querySelector('.qn-row[data-tab="settings"]') || [...document.querySelectorAll('button')].find(b=>/^settings$/i.test(b.textContent.trim())); if(!t)return false; t.click(); return true;})()`);
-  check('DOOR 2 (in-run overlay Settings): Settings destination reached', settingsOpened);
+await door('DOOR 1 (title Profile)', async () => {
+  await ev(`document.querySelector('#profile').click()`);
 });
 console.log(`\n${fails} failing check(s).`);
 process.exit(fails?1:0);
