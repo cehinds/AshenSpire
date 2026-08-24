@@ -5,6 +5,8 @@ export const equipSlots = [
   {
     "id": "rightHand",
     "label": "Right Hand",
+    "positionLabel": "Right Hand Slot {n}",
+    "positionCode": "RH{n}",
     "kinds": [
       "weapon",
       "shield",
@@ -20,6 +22,8 @@ export const equipSlots = [
   {
     "id": "leftHand",
     "label": "Left Hand",
+    "positionLabel": "Left Hand Slot {n}",
+    "positionCode": "LH{n}",
     "kinds": [
       "weapon",
       "shield",
@@ -35,6 +39,8 @@ export const equipSlots = [
   {
     "id": "armor",
     "label": "Armour",
+    "positionLabel": "Armour Slot {n}",
+    "positionCode": "BODY",
     "kinds": "armor",
     "hand": "",
     "sets": 1,
@@ -46,6 +52,8 @@ export const equipSlots = [
   {
     "id": "talisman",
     "label": "Talisman",
+    "positionLabel": "Talisman Slot {n}",
+    "positionCode": "TAL{n}",
     "kinds": "talisman",
     "hand": "",
     "sets": 3,

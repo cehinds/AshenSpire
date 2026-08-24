@@ -177,6 +177,9 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
  *                      the offset-from-the-point rule, per-axis flip and all —
  *                      arithmetic, not a second branch at the call site.
+ *           'above'  — above it when possible, otherwise under it. This is the
+ *                      card/tray instruction intent: keep the explanation out
+ *                      of the component being held or resized.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
@@ -204,8 +207,8 @@ export function placeAnchored(el, anchor, {
   pad = 4,
   keep = Infinity,
 } = {}) {
-  if (intent !== 'beside' && intent !== 'under') {
-    throw new Error(`placeAnchored: intent must be 'beside' or 'under', got ${JSON.stringify(intent)}`);
+  if (!['beside', 'above', 'under'].includes(intent)) {
+    throw new Error(`placeAnchored: intent must be 'beside', 'above', or 'under', got ${JSON.stringify(intent)}`);
   }
   const room = view || viewportLocalBox();
   const gap = placeGap(el);
@@ -249,11 +252,12 @@ export function placeAnchored(el, anchor, {
     const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const candidates = intent === 'under' ? [under] : [
+    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const candidates = intent === 'under' ? [under] : intent === 'above' ? [above, under] : [
       { left: a.left + a.width + gap, top: slideY },  // right of it
       { left: a.left - b.width - gap, top: slideY },  // left of it
       { left: slideX, top: a.top + a.height + gap },  // below it
-      { left: slideX, top: a.top - b.height - gap },  // above it
+      above,
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {

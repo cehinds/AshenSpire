@@ -183,11 +183,15 @@ async function main() {
       const regions = ids.map((id) => ({ id, label:id, count:1, unit:'item', edge:'bottom', expanded:false }));
       return ids.map((subject) => {
         const panel = armouryPanelModel({ view:'grid', views:['grid'], layout:{ figure:true, slots:'flank' }, subject, regions });
+        const directIds = panel.children.slice(1).map((child) => child.component);
         return { subject, trays:panel.children.filter((child) => child.component === 'folding-tray').length,
-          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]) };
+          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]),
+          allRegions: ['armoury-body','armoury-inventory','armoury-card-strip','armoury-stats-panel']
+            .every((component) => directIds.includes(component)) };
       });
     })()`);
-    check(composition.every((row) => row.trays === 3 && row.direct), 'every configured Armoury subject remains direct while the other three become trays');
+    check(composition.every((row) => row.trays === 0 && row.direct && row.allRegions),
+      'the semantic panel model owns each region once while the screen alone composes shared trays');
     if (SHOTS) {
       mkdirSync(SHOT_DIR, { recursive: true });
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);

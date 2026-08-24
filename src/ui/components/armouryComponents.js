@@ -15,34 +15,51 @@ export function renderArmouryPanel(model, wrap) {
   const header = childModel(model, UI.armouryHeader);
   const switcher = childModel(header, UI.armouryViewSwitcher);
   const body = descendantModel(model, UI.armouryBody);
+  const inventory = descendantModel(model, UI.armouryInventory);
+  const cards = descendantModel(model, UI.armouryCardStrip);
+  const stats = descendantModel(model, UI.armouryStatsPanel);
   wrap.innerHTML = `
     <div class="armoury${model.properties.picking ? ' picking' : ''}" data-figure="${model.properties.figure ? '1' : '0'}" data-slots="${esc(model.properties.slots)}" data-view="${esc(model.properties.view)}" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
       <header class="armoury-head">
         <h2>${esc(header.properties.title)}</h2>
         <div class="armoury-views" data-surface="armouryView" role="tablist" aria-label="${esc(switcher.accessibility.label)}">
-          ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.id)}</button>`).join('')}
+          ${switcher.properties.views.map((view) => `<button type="button" role="tab" aria-selected="${view.active ? 'true' : 'false'}" data-member="${esc(view.id)}" class="${view.active ? 'on' : ''}">${esc(view.label)}</button>`).join('')}
         </div>
         <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
       </header>
       ${model.properties.notice ? `<p class="armoury-notice">${esc(model.properties.notice)}</p>` : ''}
-      <div class="armoury-subject">
+      <div class="armoury-subject armoury-content">
         <div class="armoury-body">
           <div class="armoury-left"></div>
+          <div class="armoury-hybrid-splitter" data-component="armoury.hybridPaneSplitter" role="separator" aria-label="Resize Character and Armaments panes" aria-orientation="vertical" tabindex="0"></div>
           <div class="armoury-right"></div>
         </div>
+        <div class="armoury-pane-splitter" data-component="armoury.paneSplitter" role="separator" aria-label="Resize Armaments and Inventory panes" aria-orientation="vertical" tabindex="0"></div>
+        <section class="armoury-inventory"></section>
       </div>
-      <div class="armoury-trays"></div>
+      <div class="armoury-trays">
+        <div class="armoury-strip"></div>
+        <section class="armoury-stats-tray"></section>
+      </div>
     </div>`;
   const panel = wrap.querySelector('.armoury');
   markUiComponent(panel, model.component, model.variant);
   markUiComponent(wrap.querySelector('.armoury-head'), header.component, header.variant);
   markUiComponent(wrap.querySelector('.armoury-views'), switcher.component, switcher.variant);
   markUiComponent(wrap.querySelector('.armoury-body'), body.component, body.variant);
+  markUiComponent(wrap.querySelector('.armoury-inventory'), inventory.component, inventory.variant);
+  markUiComponent(wrap.querySelector('.armoury-strip'), cards.component, cards.variant);
+  markUiComponent(wrap.querySelector('.armoury-stats-tray'), stats.component, stats.variant);
   return {
     panel,
     left: wrap.querySelector('.armoury-left'),
     right: wrap.querySelector('.armoury-right'),
     subject: wrap.querySelector('.armoury-subject'),
+    inventory: wrap.querySelector('.armoury-inventory'),
+    strip: wrap.querySelector('.armoury-strip'),
+    statsTray: wrap.querySelector('.armoury-stats-tray'),
+    paneSplitter: wrap.querySelector('.armoury-pane-splitter'),
+    hybridSplitter: wrap.querySelector('.armoury-hybrid-splitter'),
     trays: wrap.querySelector('.armoury-trays'),
     close: wrap.querySelector('.armoury-close'),
     viewButtons: [...wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')],
@@ -58,6 +75,10 @@ export function renderInventoryItemCard(model) {
   element.dataset.itemCategory = row.category;
   element.dataset.itemCount = String(row.count);
   element.draggable = row.draggable;
+  if (row.holdAction) {
+    element.dataset.cardClass = 'inventoryItem';
+    element.dataset.holdCapable = 'true';
+  }
   const equipped = row.equippedLabels.length
     ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
       ? 'Equipped'
@@ -75,6 +96,10 @@ export function renderInventoryDetailCard(model, { comparisonHtml = '', action =
   const detail = model.properties;
   const element = document.createElement('div');
   element.className = 'inventory-detail';
+  if (detail.holdAction) {
+    element.dataset.cardClass = 'inventoryItem';
+    element.dataset.holdCapable = 'true';
+  }
   const art = detail.art.kind === 'image'
     ? `<img src="${esc(detail.art.value)}" alt="">`
     : `<span aria-hidden="true">${esc(detail.art.value)}</span>`;
@@ -94,17 +119,20 @@ export function renderInventoryDetailCard(model, { comparisonHtml = '', action =
   return element;
 }
 
-export function renderEquipmentSlot(model) {
+export function renderEquipmentSlot(model, { renderCell = null, showHeader = true } = {}) {
   const slot = model.properties;
   const element = document.createElement('div');
-  element.className = 'equip-slot';
-  element.innerHTML = `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>`
-    + (slot.rule.ok ? '' : `<span class="es-sealed" title="${esc(slot.rule.reason)}">${esc(slot.rule.word)}</span>`)
-    + '</div><div class="es-sets"></div>';
+  element.className = `equip-slot${showHeader ? '' : ' armoury-equipment-slot-component'}`;
+  element.innerHTML = (showHeader
+    ? `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>`
+      + (slot.rule.ok ? '' : `<span class="es-sealed" title="${esc(slot.rule.reason)}">${esc(slot.rule.word)}</span>`)
+      + '</div>'
+    : '') + '<div class="es-sets"></div>';
   markUiComponent(element, model.component, model.variant);
   const sets = element.querySelector('.es-sets');
   const cells = model.children.map((cellModel) => {
-    const cell = renderEquipmentSetCell(cellModel);
+    const cell = renderCell ? renderCell(cellModel) : renderEquipmentSetCell(cellModel);
+    if (renderCell) markUiComponent(cell, cellModel.component, cellModel.variant);
     sets.appendChild(cell);
     return { model: cellModel, element: cell };
   });

@@ -302,9 +302,10 @@
   {
    "id": "A1",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (picker on slot pick) · the .on.empty cell died with #140 (basics fill the shelf) — the occupied cell is now the door",
+   "read": "src/ui/screens/equipment.js (openInventoryForSelection opens the one shared Inventory; inventoryBlock filters its item cards to the selected position)",
    "anchors": [
-    "ui.picker()"
+    "openInventoryForSelection",
+    "function inventoryBlock()"
    ],
    "screen": "the Armoury › a hand slot's picker",
    "reach": [
@@ -318,27 +319,27 @@
     },
     {
      "op": "click",
-     "sel": ".es-cell.on",
+     "sel": "[data-slot-position=\"rightHand:0\"] .armoury-position-action",
      "ms": 600
     }
    ],
-   "focus": ".equip-chip",
+   "focus": "[data-region=\"inventory\"] .inventory-face",
    "expect": {
     "present": {
-     "the picker, listing what you own": ".equip-chip"
+     "the shared Inventory, listing compatible owned items": "[data-region=\"inventory\"] .inventory-face"
     },
     "measure": {
-     "chips": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
+     "chips": "[...document.querySelectorAll('[data-region=\"inventory\"] .inventory-face')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,30)).join(' | ')"
     }
    }
   },
   {
    "id": "A2",
    "by": "Bjorn",
-   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the locked cell the ladder produces)",
+   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the procedural locked position card the ladder produces) · src/ui/screens/equipment.js (.armoury-position-card.is-locked)",
    "anchors": [
     "fitsSlot",
-    "es-cell locked"
+    "armoury-position-card is-locked"
    ],
    "screen": "the Armoury › the slot ladder",
    "reach": [
@@ -351,17 +352,17 @@
      "sel": "#open-armoury"
     }
    ],
-   "focus": ".es-cell.locked",
+   "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-     "exactly the next locked slot": ".es-cell.locked"
+        "exactly the next locked position": ".armoury-position-card.is-locked"
     },
     "measure": {
-     "perSlot": "[...document.querySelectorAll('.equip-slot')].map(s=>(s.querySelector('.es-label')||{}).textContent+':'+s.querySelectorAll('.es-cell.locked').length+' locked').join(' | ')"
+        "perSlot": "Object.entries([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).map(([id,n])=>id+':'+n+' locked').join(' | ')"
     },
     "wrong": [
      {
-      "js": "[...document.querySelectorAll('.equip-slot')].some(s=>s.querySelectorAll('.es-cell.locked').length>1)",
+          "js": "Object.values([...document.querySelectorAll('[data-slot-position]')].reduce((m,e)=>{const id=e.dataset.slotPosition.split(':')[0]; m[id]=(m[id]||0)+(e.matches('.armoury-position-card.is-locked')?1:0); return m;},{})).some(n=>n>1)",
       "why": "a slot block shows more than one locked rung — the ladder is showing more than the NEXT locked thing"
      }
     ]
@@ -439,7 +440,7 @@
    "by": "Bjorn",
    "read": "src/ui/screens/equipment.js opensCollapsed(regionId, stored) — a context pane opens FOLDED on EVERY shape unless the player's own stored choice says otherwise (D99, #316). REPAIRED 2026-08-22 by Sunna, in another seat's file and said so out loud: this row cited line 424 and a `narrow` third parameter, and #316 removed that parameter. Line 424 is now an unrelated statement, so the derivation pointed at code that does not exist while the row reported green — tools/watched.mjs only checks that this field is NON-EMPTY, never that it still names anything real. That weakness is Bjorn's and is bigger than this row. BJORN, 2026-08-22, resolving the #320 merge onto dev 594e7c3: Sunna's repair is kept whole and the typed line number it carried is DELETED, because this floor now refuses a typed citation in a `read` — the line is derived from the anchor below and printed on every run. The anchor is the SIGNATURE, not the bare symbol: Saga blocked #320 by showing that `opensCollapsed` alone survives #316 untouched, so the probe that named this defect could not have caught it. A parameter change moves the signature; the symbol it does not. DECLARED LIMIT — READ, NOT MEASURED: A5 compares `aria-expanded` strings. It may not be cited as coverage that the pane visually arrives collapsed; that remains UNKNOWN here.",
    "anchors": [
-    "export function opensCollapsed(regionId, stored)"
+    "export function opensCollapsed(regionId, stored, mode = null)"
    ],
    "screen": "the Armoury › the fold, opened and closed",
    "why-drive": "His sentence was 'so that I can see the armory slots better' — so the edge that matters is that the pane OPENS folded, and that the fold still opens. Both edges are driven. SCOPE, STATED RATHER THAN IMPLIED: the rule this row watches is now every shape, but the reach below still drives the PHONE ONLY. That is a narrower drive than the rule, and widening it is a change to Bjorn's probe rather than a repair of a false derivation, so it is left as his call and named here instead of done quietly. tools/armoury-arrival-figure.mjs (#316) asserts the desktop edge in the meantime.",
@@ -490,9 +491,9 @@
   {
    "id": "A9",
    "by": "Bjorn",
-   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js (.es-sealed) · the locked cell's own tooltip",
+   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position card's own tooltip",
    "anchors": [
-    "es-sealed"
+    "armoury-position-card is-locked"
    ],
    "screen": "the Armoury › a locked slot, touched",
    "reach": [
@@ -507,13 +508,13 @@
     {
      "op": "js",
      "ms": 400,
-     "code": "const c=document.querySelector('.es-cell.locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
+     "code": "const c=document.querySelector('.armoury-position-card.is-locked'); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); c.click(); await sleep(300); return true;"
     }
    ],
-   "focus": ".es-cell.locked",
+   "focus": ".armoury-position-card.is-locked",
    "expect": {
     "present": {
-     "the locked cell": ".es-cell.locked",
+        "the locked position card": ".armoury-position-card.is-locked",
      "a refusal that says why": "#tooltip"
     },
     "measure": {
@@ -1304,9 +1305,10 @@
   {
    "id": "A11",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (ui.picker() mounted on the right pane when a slot is picked)",
+   "read": "src/ui/screens/equipment.js (inventoryBlock is the one shared Inventory and data-filtered-for names the selected equipment position)",
    "anchors": [
-    "ui.picker()"
+    "function inventoryBlock()",
+    "box.dataset.filteredFor"
    ],
    "screen": "the Armoury › a slot picked, the pane listing what you can switch to",
    "reach": [
@@ -1320,17 +1322,17 @@
     },
     {
      "op": "click",
-     "sel": ".es-cell.on",
+     "sel": "[data-slot-position=\"rightHand:0\"] .armoury-position-action",
      "ms": 600
     }
    ],
-   "focus": ".equip-chip",
+   "focus": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"]",
    "expect": {
     "present": {
-     "the list of available options": ".equip-chip"
+     "the selected-position list of compatible options": "[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face"
     },
     "measure": {
-     "options": "[...document.querySelectorAll('.equip-chip')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
+     "options": "[...document.querySelectorAll('[data-region=\"inventory\"] [data-filtered-for=\"rightHand:0\"] .inventory-face')].map(e=>e.innerText.replace(/\\s+/g,' ').slice(0,24)).join(' | ')"
     }
    }
   },

@@ -4,7 +4,7 @@ import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
 const EDGES = Object.freeze(['top', 'right', 'bottom', 'left']);
 
-function trayHeaderModel({ id, name, count, itemType, edge, expanded, sortable, sortLabel }) {
+function trayHeaderModel({ id, name, count, itemType, summary, edge, expanded, sortable, sortLabel }) {
   const behaviors = [behaviorModel(`toggle-${id}`, {
     event: 'click',
     command: 'toggle-tray',
@@ -17,8 +17,8 @@ function trayHeaderModel({ id, name, count, itemType, edge, expanded, sortable, 
   }));
   return componentModel(UI.trayHeader, {
     variant: edge,
-    properties: { id, name, count, itemType, edge, expanded, sortable, sortLabel },
-    accessibility: { label: `${name}, ${count} ${itemType}${count === 1 ? '' : 's'}` },
+    properties: { id, name, count, itemType, summary, edge, expanded, sortable, sortLabel },
+    accessibility: { label: summary || `${name}, ${count} ${itemType}${count === 1 ? '' : 's'}` },
     behaviors,
   });
 }
@@ -53,6 +53,7 @@ export function trayModel({
   name,
   count = 0,
   itemType = 'item',
+  summary = '',
   edge = 'bottom',
   expanded = false,
   sortable = false,
@@ -68,7 +69,7 @@ export function trayModel({
   if (!Number.isFinite(minExpandedSize) || minExpandedSize < 96) throw new Error(`${id} tray minimum expanded size must be at least 96`);
   return componentModel(UI.foldingTray, {
     variant: edge,
-    properties: { id, name, count, itemType, edge, expanded: !!expanded, sortable: !!sortable, sortLabel, resizable: !!resizable, minExpandedSize },
+    properties: { id, name, count, itemType, summary: String(summary || ''), edge, expanded: !!expanded, sortable: !!sortable, sortLabel, resizable: !!resizable, minExpandedSize },
     accessibility: { role: 'region', label: name },
     behaviors: [behaviorModel(`toggle-${id}`, {
       event: 'click',
@@ -76,7 +77,7 @@ export function trayModel({
       payload: { id },
     })],
     children: [
-      trayHeaderModel({ id, name, count, itemType, edge, expanded: !!expanded, sortable: !!sortable, sortLabel }),
+      trayHeaderModel({ id, name, count, itemType, summary: String(summary || ''), edge, expanded: !!expanded, sortable: !!sortable, sortLabel }),
       trayResizeHandleModel({ id, edge, expanded: !!expanded, resizable: !!resizable }),
       trayContentModel({ id, edge, expanded: !!expanded, items }),
     ],

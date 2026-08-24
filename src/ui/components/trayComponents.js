@@ -43,12 +43,14 @@ export function renderTray(model, { onToggle = null, onSort = null, onResize = n
   fold.setAttribute('aria-controls', `tray-content-${tray.id}`);
   fold.innerHTML = `<span class="tray-caret rf-caret" aria-hidden="true">${esc(GLYPHS[tray.edge][state])}</span>`
     + `<span class="tray-title rf-label">${esc(tray.name)}</span>`
-    + `<span class="tray-count rf-count">×${tray.count} ${esc(tray.itemType)}${tray.count === 1 ? '' : 's'}</span>`;
+    + (tray.summary
+      ? `<span class="tray-summary rf-count">${esc(tray.summary)}</span>`
+      : `<span class="tray-count rf-count">×${tray.count} ${esc(tray.itemType)}${tray.count === 1 ? '' : 's'}</span>`);
   if (onToggle) fold.addEventListener('click', () => onToggle(tray.id));
   header.appendChild(fold);
 
   let sort = null;
-  if (tray.sortable) {
+  if (tray.sortable && tray.expanded) {
     sort = document.createElement('button');
     sort.type = 'button';
     sort.className = 'tray-sort';

@@ -1882,6 +1882,12 @@ button.ev-choice {
   background-repeat: no-repeat;
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
+.beat-hold[data-hold-feedback='delegated'],
+.beat-hold[data-hold-feedback='delegated']:hover,
+.beat-hold[data-hold-feedback='delegated']:focus,
+.beat-hold[data-hold-feedback='delegated']:active {
+  background-image: none;
+}
 /* `background` LEAVES THE TRANSITION LIST, and nothing else does. Naming the
    three properties a held control may still ease keeps the border going gold
    and the press squashing on their own timings (durations cycle from whatever
@@ -2224,6 +2230,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: var(--bg-raise); border: 1px solid var(--line); border-radius: 6px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6); overflow: hidden;
 }
+.armoury-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .armoury-head {
   display: flex; align-items: center; gap: 1.6rem; padding: 1.2rem 1.6rem;
   border-bottom: 1px solid var(--line); background: var(--panel);
@@ -2373,6 +2380,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    face's own padding back to the card so the two spellings look identical —
    they are one markup (pieceChipHtml) and they must not become two looks. */
 .ep-list .disc-faces { flex-direction: column; gap: 0; }
+.armoury-inventory .ep-list .disc-faces { gap: var(--armoury-tray-content-gap, 0.35rem); }
 .ep-list .disc-face { padding: 0; border: 0; background: none; text-align: left; width: 100%; }
 .ep-list .disc-face .equip-chip.as-face { display: grid; width: 100%; }
 .ep-list .disc-face[data-reveal='open'] .equip-chip.as-face,
@@ -2388,10 +2396,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    hand picker. Its folded grammar is deliberately text-only: name, category,
    count, and an equipped tag when applicable. */
 .inventory-face {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   align-items: center; gap: 0.7rem; width: 100%; min-height: var(--tap-floor);
   padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
+}
+/* Delegated card feedback is painted after the card's own background shorthand
+   so touch and mouse see the same whole-surface progress fill. The source
+   button intentionally suppresses its duplicate fill; these hosts are the one
+   visual surface for both the folded face and the expanded reveal. */
+.beat-hold[data-hold-feedback='card'],
+.beat-hold[data-hold-feedback='card']:hover,
+.beat-hold[data-hold-feedback='card']:focus,
+.beat-hold[data-hold-feedback='card']:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
+.inventory-face > .hold-hint {
+  margin: 0; white-space: nowrap; justify-self: start;
 }
 .inventory-name { min-width: 0; font-size: 1.2rem; }
 .inventory-category, .inventory-count {
@@ -2402,7 +2425,15 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   border: 1px solid var(--equip-equipped-tag-color, var(--line-soft)); border-radius: 2px;
   padding: 0 0.4rem; font-style: normal; font-size: 0.9rem; text-transform: uppercase;
 }
+.inventory-inline-action {
+  justify-self: end; white-space: nowrap; color: var(--gold); border: 1px solid var(--gold);
+  border-radius: 3px; padding: 0.2rem 0.55rem; font-size: 0.82rem;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
 .inventory-detail { display: grid; grid-template-columns: minmax(5rem, 18%) minmax(0, 1fr); gap: 1rem; align-items: start; }
+.inventory-detail.beat-hold { position: relative; }
+.inventory-detail.beat-hold > .hold-hint { position: absolute; top: 0.35rem; right: 0.45rem; margin: 0; white-space: nowrap; }
+.inventory-card-action-label { pointer-events: none; }
 .inventory-model {
   min-height: 7rem; display: grid; place-items: center;
   border: 1px solid var(--line-soft); background: rgba(10, 8, 6, 0.35); font-size: 4rem;
@@ -2440,6 +2471,58 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
+.armoury-inventory,
+.armoury-strip,
+.armoury-stats-tray { border-top: 1px solid var(--line); background: var(--panel); padding: 0 1.6rem 0.7rem; }
+.armoury-stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.45rem; color: var(--muted); font-size: 0.92rem; }
+.armoury-stats-summary section { display: flex; flex-wrap: wrap; align-content: start; gap: 0.25rem 0.7rem; min-width: 0; padding: 0.55rem 0.65rem; border: 1px solid var(--line-soft); background: var(--bg); }
+.armoury-stats-summary b,
+.armoury-stats-summary strong { flex: 1 1 100%; color: var(--gold); font-family: var(--font-display); letter-spacing: 0.05em; }
+.armoury-stats-summary span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.equip-cards.armoury-card-list { display: grid; align-items: stretch; gap: 0.45rem; min-width: 0; width: 100%; }
+.armoury-equipment-slot-component,
+.armoury-equipment-slot-component > .es-sets { display: contents; }
+.armoury-card-list[data-card-view='grid'] { grid-template-columns: repeat(var(--armoury-card-grid-columns, 4), minmax(0, 1fr)); }
+.armoury-card-row { min-width: 0; border: 1px solid var(--line-soft); background: var(--bg); }
+.armoury-card-row summary { display: grid; grid-template-columns: 1.1rem 2rem minmax(8rem, 1fr) auto auto minmax(0, 1fr) auto; align-items: center; gap: 0.45rem; min-width: 0; min-height: var(--tap-floor); padding: 0.45rem 0.6rem; color: var(--parchment); cursor: pointer; list-style: none; }
+.armoury-card-row summary::-webkit-details-marker { display: none; }
+.armoury-card-row summary:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+.armoury-card-row[open] summary { border-bottom: 1px solid var(--line-soft); }
+.armoury-card-row-caret { color: var(--gold); }
+.armoury-card-row[open] .armoury-card-row-caret { transform: rotate(90deg); }
+.armoury-card-row-icon { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border: 1px solid var(--line-soft); color: var(--gold); font-size: 1.15rem; }
+.armoury-card-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.armoury-card-row-type,
+.armoury-card-row-cost,
+.armoury-card-row-tags { color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
+.armoury-card-row-tags { overflow: hidden; text-overflow: ellipsis; }
+.armoury-card-row-count { color: var(--gold); font-style: normal; white-space: nowrap; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row summary {
+  grid-template-columns: 1rem 2rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    'caret icon name count'
+    'caret icon type type'
+    'caret icon cost tags';
+  align-items: center;
+}
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-caret { grid-area: caret; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-icon { grid-area: icon; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-name { grid-area: name; white-space: normal; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-type { grid-area: type; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-cost { grid-area: cost; }
+.armoury-card-list[data-card-view='grid'] .armoury-card-row-tags { grid-area: tags; min-width: 0; }
+.armoury-card-row-detail { display: grid; grid-template-columns: minmax(8rem, 30%) minmax(0, 70%); gap: 1rem; min-width: 0; padding: 0.8rem; }
+.armoury-card-icon-pane { min-width: 0; display: grid; align-content: start; gap: 0.35rem; padding: 0.65rem; border: 1px solid var(--line-soft); background: var(--panel); }
+.armoury-card-art { display: grid; place-items: center; min-height: 5rem; color: var(--gold); font-size: clamp(2rem, 7vw, 4rem); }
+.armoury-card-combat-label { color: var(--gold); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-card-combat { color: var(--parchment); line-height: 1.25; overflow-wrap: anywhere; }
+.armoury-card-detail-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.armoury-card-details-pane { min-width: 0; display: grid; align-content: start; gap: 0.55rem; }
+.armoury-card-details-pane h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.25rem; }
+.armoury-card-detail-meta { color: var(--muted); font-size: 0.85rem; }
+.armoury-card-detail-text { color: var(--parchment); line-height: 1.35; }
+.armoury-card-detail-flavor { color: var(--muted); font-style: italic; }
+
 .armoury-trays { display: contents; }
 .armoury-subject { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
 .folding-tray {
@@ -2466,6 +2549,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .tray-sort:disabled { opacity: 0.45; cursor: not-allowed; }
 .tray-header .tray-fold { min-width: 0; }
 .tray-header .tray-count { margin-left: auto; white-space: nowrap; }
+.tray-header .tray-summary {
+  margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 /* Edge-aware action grammar. A closed caret points inward, where the tray will
    open. An open caret points back to its anchored edge, where it will fold. */
@@ -2508,8 +2594,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] {
   left: 50%; width: 9.6rem; height: var(--ui-tray-resize-surface); transform: translateX(-50%); cursor: ns-resize;
 }
-.tray-resize-handle[data-ui-variant='top'] { bottom: 0; }
-.tray-resize-handle[data-ui-variant='bottom'] { top: 0; }
+.tray-resize-handle[data-ui-variant='top'] { bottom: 0; transform: translate(-50%, 50%); }
+.tray-resize-handle[data-ui-variant='bottom'] { top: 0; transform: translate(-50%, -50%); }
 .tray-resize-handle[data-ui-variant='top']::after, .tray-resize-handle[data-ui-variant='bottom']::after {
   width: 4.8rem; height: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%);
 }
@@ -2601,6 +2687,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .arcane-refusal-receipt { color: var(--gold); }
 .equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
 .equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
+#tooltip .equip-candidate-comparison { margin-left: 0; }
+#tooltip[data-tooltip-variant='equipment-comparison'] { overflow: auto; }
+.inventory-detail [data-ui-variant='inline'] .equip-candidate-comparison {
+  margin-left: 0;
+  border-left-color: var(--gold-dim);
+}
 .equip-candidate-comparison summary { min-height: var(--tap-floor); display: flex; align-items: center; cursor: pointer; color: var(--gold); }
 .equip-candidate-comparison ul { margin: 0.35rem 0; padding-left: 1.4rem; }
 .equip-card-changes li { display: grid; grid-template-columns: minmax(9rem, 1fr) auto; gap: 0.15rem 0.5rem; }
@@ -2651,11 +2743,28 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    and the copy that was not rebuilt is the one that stayed wrong. Named here
    rather than silently swapped, because a stale comment asserting a control is
    accessible is the failure mode this clause exists for. */
-.armoury [data-role='context'] > .region-head {
+.armoury [data-role='context'] > .region-head,
+.armoury-equipment > .region-head {
   display: flex; align-items: center;
   border-bottom: 1px solid var(--line-soft);
 }
-.armoury [data-role='context'][data-collapsed='1'] > .region-head { border-bottom: none; }
+.armoury [data-role='context'][data-collapsed='1'] > .region-head,
+.armoury-equipment[data-collapsed='1'] > .region-head { border-bottom: none; }
+.armoury [data-region='cards'] > .region-head .region-fold,
+.armoury-equipment > .region-head .region-fold { width: auto; flex: 1 1 auto; }
+.armoury-card-view-toggle {
+  display: flex; place-items: center; align-items: center; justify-content: center; gap: 0.45rem;
+  flex: 0 0 auto; width: auto; min-width: var(--tap-floor); height: var(--tap-floor); padding: 0.35rem 0.6rem;
+  border: 0; background: transparent; color: var(--muted); cursor: pointer;
+}
+.armoury-card-view-toggle:hover, .armoury-card-view-toggle:focus-visible { color: var(--gold); outline: 1px solid var(--line-soft); outline-offset: -0.45rem; }
+.armoury-view-mode-label { font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.card-view-glyph { display: grid; width: 1.05rem; height: 1.05rem; gap: 0.12rem; }
+.card-view-glyph.grid { grid-template-columns: repeat(2, 1fr); }
+.card-view-glyph.grid i { display: block; border: 1px solid currentColor; }
+.card-view-glyph.list { grid-template-rows: repeat(3, 1fr); }
+.card-view-glyph.list i { position: relative; display: block; border: 1px solid currentColor; border-radius: 1px; }
+.card-view-glyph.list i::after { content: ''; position: absolute; left: 0.35rem; right: 0.02rem; top: 50%; border-top: 1px solid currentColor; }
 .region-fold {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
   /* `var(--tap-floor)`, not a bare `44px` — Sunna, 2026-08-08, and this is my
@@ -2692,18 +2801,31 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
    is handed to the subject by the layout that was already there. */
 .armoury [data-role='context'][data-collapsed='1'] > :not(.region-head) { display: none; }
-.armoury [data-role='context'][data-collapsed='1'] { flex: 0 0 auto; padding-top: 0; padding-bottom: 0; }
-.armoury [data-role='context'][data-collapsed='0'] {
-  /* An untouched tray hugs its header and visible content. A remembered drag
-     writes an explicit size through renderTray; content then owns the scrollport
-     without making the default pane consume half the Armoury. */
-  flex: 0 1 auto; min-height: var(--tap-floor);
-  overflow-y: auto;
+.armoury [data-role='context'][data-collapsed='1'] {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible;
+  padding-top: 0;
+  padding-bottom: 0;
 }
-.armoury [data-role='context'][data-collapsed='0'][data-sized='0'] {
+.armoury [data-region='cards'][data-collapsed='1'] .armoury-card-view-toggle { display: none; }
+.armoury [data-role='context'][data-collapsed='0'] {
+  /* An expanded receipt pane is real content, not overflow behind the modal.
+     Share the panel with its subject and give the pane its own scrollport so a
+     phone can reach candidate receipts without moving the Armoury off-screen. */
+  position: relative;
+  flex: 0 1 var(--armoury-tray-height, 10%); min-height: var(--tap-floor); overflow-y: auto;
+}
+/* Shared Folding Tray instances keep their intrinsic compact size until the
+   shared renderer records a resize. */
+.folding-tray[data-role='context'][data-collapsed='0'][data-sized='0'] {
   max-height: min(var(--ui-tray-expanded-block-max), var(--ui-tray-expanded-panel-max));
 }
-.armoury [data-role='context'][data-collapsed='0'][data-sized='1'] { max-height: none; }
+.folding-tray[data-role='context'][data-collapsed='0'][data-sized='1'] { max-height: none; }
+.armoury .folding-tray[data-role='context'][data-collapsed='0'][data-sized='1'] {
+  flex: 0 0 auto;
+}
 .armoury-trays > [data-tray-edge='bottom']:first-child { margin-top: auto; }
 
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
@@ -2794,7 +2916,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .armoury-body { flex-direction: column; overflow-y: auto; }
 :root[data-layout='narrow'] .armoury-left { width: 100%; overflow-y: visible; }
 :root[data-layout='narrow'] .armoury-right { width: 100%; overflow-y: visible; }
-:root[data-layout='narrow'] .inventory-face { grid-template-columns: minmax(0, 1fr) auto auto; }
+:root[data-layout='narrow'] .inventory-face { grid-template-columns: minmax(0, 1fr) auto auto auto; }
 :root[data-layout='narrow'] .inventory-equipped { grid-column: 1 / -1; justify-self: start; }
 :root[data-layout='narrow'] .inventory-detail { grid-template-columns: minmax(4.5rem, 5.5rem) minmax(0, 1fr); gap: 0.7rem; }
 :root[data-layout='narrow'] .inventory-model { min-height: 5.5rem; }
@@ -3542,3 +3664,552 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .class-sprite,
 .equipped-figure { transform: scaleX(-1); }
 .class-sprite .equipped-figure { transform: none; }
+
+/* ---------- Shared Armoury shell (Grid / Rack / Hybrid) -------------------
+   The three view names remain saved presentation choices, but the player
+   should never lose the character or have to relearn the socket order. The
+   authored ratios arrive as CSS variables from armouryUi.json, so this is one
+   responsive shell rather than three hand-tuned layouts. */
+.armoury[data-composition='character-equipment'] .armoury-body {
+  display: grid;
+  grid-template-columns: minmax(0, var(--armoury-character-ratio)) minmax(0, var(--armoury-equipment-ratio));
+  gap: var(--armoury-gap);
+  min-height: 0;
+  flex-direction: initial;
+  overflow: hidden;
+}
+.armoury[data-composition='character-equipment'][data-pane='both'] .armoury-body {
+  grid-template-columns: minmax(0, var(--armoury-character-ratio)) 0.7rem minmax(0, var(--armoury-equipment-ratio));
+  gap: 0;
+}
+.armoury[data-pane='both'] .armoury-left { grid-column: 1; }
+.armoury[data-pane='both'] .armoury-right { grid-column: 3; }
+.armoury-hybrid-splitter { display: none; }
+.armoury[data-pane='both'] .armoury-hybrid-splitter {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-width: 0.7rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.armoury[data-pane='both'] .armoury-hybrid-splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 0.28rem;
+  background: var(--line-soft);
+}
+.armoury[data-pane='both'] .armoury-hybrid-splitter:hover::before,
+.armoury[data-pane='both'] .armoury-hybrid-splitter:focus-visible::before,
+.armoury[data-pane='both'] .armoury-hybrid-splitter.dragging::before {
+  background: var(--gold);
+  box-shadow: 0 0 0.5rem rgba(201, 162, 39, 0.55);
+}
+.armoury[data-composition='character-equipment'] .armoury-left,
+.armoury[data-composition='character-equipment'][data-figure='0'] .armoury-left {
+  display: flex;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden auto;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex: initial;
+}
+.armoury[data-composition='character-equipment'] .armoury-right {
+  display: flex;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: none;
+  overflow: hidden auto;
+  flex: initial;
+}
+.armoury[data-composition='character-equipment'][data-pane='character'] .armoury-body,
+.armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-body { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-composition='character-equipment'][data-pane='character'] .armoury-right { display: none; }
+.armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-right { display: none; }
+.armoury[data-composition='character-equipment'][data-pane='character'] .armoury-left,
+.armoury[data-composition='character-equipment'][data-pane='inventory'] .armoury-left { grid-column: 1; }
+.armoury[data-pane='inventory'] .armoury-content {
+  display: grid;
+  grid-template-columns: minmax(0, var(--armoury-armaments-pane-width)) 0.7rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
+.armoury[data-pane='inventory'] .armoury-body { grid-column: 1; grid-row: 1; min-height: 0; flex: initial; }
+.armoury[data-pane='inventory'] .armoury-inventory { grid-column: 3; grid-row: 1; min-height: 0; overflow-y: auto; flex: initial; }
+.armoury-pane-splitter { display: none; }
+.armoury[data-pane='inventory'] .armoury-pane-splitter {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-width: 0.7rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter::before {
+  content: '';
+  position: absolute;
+  inset: 0 0.28rem;
+  background: var(--line-soft);
+}
+.armoury[data-pane='inventory'] .armoury-pane-splitter:hover::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter:focus-visible::before,
+.armoury[data-pane='inventory'] .armoury-pane-splitter.dragging::before {
+  background: var(--gold);
+  box-shadow: 0 0 0.5rem rgba(201, 162, 39, 0.55);
+}
+/* The legacy flank rule hid its picker when Grid was not active. The shared
+   shell keeps the vertical socket pane present in every view, so its explicit
+   composition selector must win that older convenience rule. */
+.armoury[data-composition='character-equipment'][data-slots='flank']:not(.picking) .armoury-right {
+  display: flex;
+}
+.armoury-character {
+  display: grid;
+  grid-template-rows: auto minmax(7rem, var(--armoury-sprite-ratio)) minmax(0, var(--armoury-stats-ratio));
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 100%;
+}
+.armoury[data-pane='character'] .armoury-character {
+  grid-template-columns: minmax(0, var(--armoury-summary-pane-ratio)) minmax(0, var(--armoury-stats-pane-ratio));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.7rem;
+}
+.armoury[data-pane='character'] .character-summary { grid-column: 1; grid-row: 1; }
+.armoury[data-pane='character'] .armoury-sprite-pane { grid-column: 1; grid-row: 2; }
+.armoury[data-pane='character'] .armoury-character-stats { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+.armoury[data-pane='character'] .armoury-left { align-items: stretch; }
+.armoury[data-pane='character'] .armoury-character { width: 100%; }
+.armoury-sprite-pane {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 10rem;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  background: rgba(10, 8, 6, 0.26);
+}
+.armoury-sprite-pane .armoury-figure {
+  width: auto;
+  height: min(82%, 22rem);
+  aspect-ratio: 150 / 190;
+  max-width: 78%;
+  max-height: 82%;
+  min-width: 0;
+}
+.armoury-character-stats {
+  min-width: 0;
+  overflow: auto;
+  padding: 0.2rem;
+}
+.character-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.8rem;
+  align-items: baseline;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.character-summary .character-kicker {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.character-summary h3 { color: var(--gold); font-family: var(--font-display); font-size: 1.35rem; }
+.character-summary span { color: var(--muted); white-space: nowrap; }
+.character-summary p { grid-column: 1 / -1; color: var(--muted); font-size: 0.95rem; line-height: 1.25; }
+.character-info-card {
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: rgba(32, 27, 20, 0.82);
+}
+.character-info-card > summary {
+  display: grid;
+  grid-template-columns: 0.8rem auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.55rem;
+  padding: 0.62rem 0.7rem;
+  color: var(--parchment);
+  cursor: pointer;
+  list-style: none;
+}
+.character-info-card > summary::-webkit-details-marker { display: none; }
+.character-info-card > summary::before { content: '▸'; color: var(--gold); }
+.character-info-card[open] > summary::before { content: '▾'; }
+.character-info-label {
+  color: var(--gold);
+  font-family: var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.character-info-summary {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.character-info-card > :not(summary) { padding: 0 0.55rem 0.55rem; }
+.character-power-cards,
+.character-attributes,
+.character-relics { margin-top: 0; }
+.character-power-cards .disc-faces,
+.character-attributes .disc-faces,
+.character-relics .disc-faces { display: grid; grid-template-columns: 1fr; gap: 0.35rem; }
+.character-power-cards .disc-face,
+.character-attributes .disc-face,
+.character-relics .disc-face {
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--line-soft);
+  background: var(--panel);
+  color: var(--parchment);
+  text-align: left;
+}
+.character-power-cards .disc-name,
+.character-attributes .disc-name,
+.character-relics .disc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.character-power-cards .disc-value,
+.character-attributes .disc-value { margin-left: auto; color: var(--gold); }
+.combat-power-face { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 0.45rem; width: 100%; min-width: 0; text-align: left; }
+.combat-power-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combat-power-bonus { color: var(--muted); font-size: 0.8em; white-space: nowrap; }
+.combat-power-value { color: var(--gold); white-space: nowrap; }
+.character-power-cards .disc-reveal,
+.character-attributes .disc-reveal,
+.character-relics .disc-reveal { grid-column: 1 / -1; }
+.armoury-equipment { width: 100%; min-width: 0; flex: 1 1 auto; }
+.armoury-equipment[data-collapsed='1'] { flex: 0 0 auto; }
+.armoury-equipment[data-outer-border='off'] { border: 0; }
+.armoury-equipment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.armoury-armament-view-toggle {
+  flex: 0 0 auto;
+}
+.armoury-armament-view-toggle:hover,
+.armoury-armament-view-toggle:focus-visible { color: var(--gold); outline: 1px solid var(--line-soft); outline-offset: -0.45rem; }
+.armoury[data-composition='character-equipment'] .equip-slots {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  margin-top: 0.8rem;
+}
+.armoury-position-list { display: flex; flex-direction: column; gap: 0.55rem; padding: 0; }
+.armoury-position-list.armoury-position-grid-groups { display: grid; gap: 0.8rem; }
+.armoury-position-grid-group { display: grid; gap: 0.4rem; min-width: 0; }
+.armoury-position-grid-group > h4 { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.07em; text-transform: uppercase; }
+.armoury-position-grid-tiles { display: grid; grid-template-columns: repeat(var(--armoury-position-grid-columns, 3), minmax(0, 1fr)); gap: 0.5rem; min-width: 0; }
+.armoury-position-grid-card {
+  display: grid;
+  grid-template-rows: auto minmax(4.5rem, 1fr) auto;
+  place-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 8rem;
+  padding: 0.55rem;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.2rem;
+  background: rgba(24, 20, 15, 0.86);
+  color: var(--parchment);
+  cursor: pointer;
+}
+.armoury-position-grid-card > strong { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.06em; }
+.armoury-position-grid-sprite { display: grid; place-items: center; width: 100%; min-width: 0; min-height: 4.5rem; background: rgba(8, 7, 6, 0.58); }
+.armoury-position-grid-sprite img { width: 100%; height: 4.5rem; object-fit: contain; }
+.armoury-position-grid-sprite > span { color: var(--gold); font-size: 1.65rem; }
+.armoury-position-grid-name { max-width: 100%; overflow: hidden; color: var(--parchment); font-family: var(--font-display); text-overflow: ellipsis; white-space: nowrap; }
+.armoury-position-grid-card.is-selected { border-color: var(--gold); box-shadow: 0 0 0.55rem rgba(201, 162, 39, 0.6); }
+.armoury-position-grid-card.is-locked { color: var(--muted); }
+.armoury-position-grid-detail { display: grid; gap: 0.45rem; min-width: 0; padding-top: 0.7rem; border-top: 1px solid var(--line-soft); }
+.armoury-position-grid-detail > h4 { color: var(--gold); font-family: var(--font-display); letter-spacing: 0.07em; text-transform: uppercase; }
+.armoury-position-grid-detail .armoury-position-detail { border: 1px solid var(--line-soft); }
+.armoury[data-composition='character-equipment'] .equip-picker { margin-top: 0.8rem; }
+.armoury[data-composition='character-equipment'] .equip-picker[data-empty] { display: none; }
+.armoury-position-card {
+  --armoury-position-label-width: minmax(4rem, 12%);
+  --armoury-position-sprite-width: clamp(6.4rem, 16cqi, 9.2rem);
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 0.2rem;
+  background: rgba(24, 20, 15, 0.86);
+  color: var(--parchment);
+  container-type: inline-size;
+}
+button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }
+.armoury-position-card > summary {
+  display: grid;
+  grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr);
+  min-width: 0;
+  min-height: 6.4rem;
+  cursor: pointer;
+  list-style: none;
+}
+.armoury-position-card > summary::-webkit-details-marker { display: none; }
+.armoury-position-card.is-active { border-color: rgba(201, 162, 39, 0.74); }
+.armoury-position-card.is-selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0.55rem rgba(201, 162, 39, 0.6);
+}
+.armoury-position-card.drop-ready {
+  border-color: var(--equip-equipped-tag-color);
+  box-shadow: inset 0 0 0 2px var(--equip-equipped-tag-color), 0 0 0.55rem rgba(127, 212, 127, 0.45);
+}
+.armoury-position-label-pane {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 0.7rem;
+  border-right: 1px solid var(--line-soft);
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.armoury-position-label-pane strong { color: var(--gold); font-size: clamp(0.58rem, 1.55cqi, 0.82rem); line-height: 1.08; overflow-wrap: anywhere; }
+.armoury-position-label-pane em { margin-top: 0.28rem; color: var(--muted); font-size: clamp(0.5rem, 1.15cqi, 0.64rem); font-style: normal; }
+.armoury-position-sprite-pane {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 6.4rem;
+  padding: 0.22rem;
+  border-right: 2px solid var(--line-soft);
+  background: rgba(8, 7, 6, 0.58);
+}
+.armoury-position-sprite-pane img { width: 100%; height: 100%; max-height: 5.8rem; object-fit: contain; }
+.armoury-position-sprite-pane > span { color: var(--gold); font-size: 2rem; }
+.armoury-position-summary-pane { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-width: 0; padding: 0.48rem 0.65rem; }
+.armoury-position-headings,
+.armoury-position-values { display: grid; grid-template-columns: minmax(5rem, 0.72fr) minmax(7rem, 1.25fr) minmax(7rem, 1fr); align-items: baseline; gap: 0.55rem; min-width: 0; }
+.armoury-position-headings small { color: var(--muted); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.armoury-position-values { align-self: center; }
+.armoury-position-values > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.armoury-position-values em { width: fit-content; padding: 0.06rem 0.3rem; border: 1px solid var(--line-soft); color: var(--gold); font-size: 0.74rem; font-style: normal; text-transform: uppercase; }
+.armoury-position-values strong { font-family: var(--font-display); font-size: clamp(0.72rem, 1.8cqi, 1.03rem); }
+.armoury-position-values > span { color: var(--gold); text-align: right; }
+.armoury-position-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: end; gap: 0.55rem; min-width: 0; }
+.armoury-position-tags { display: flex; flex-wrap: wrap; gap: 0.22rem; min-width: 0; overflow: hidden; }
+.armoury-position-tags em { padding: 0.04rem 0.22rem; border: 1px solid var(--line-soft); color: var(--muted); font-size: 0.66rem; font-style: normal; text-transform: uppercase; }
+.armoury-position-weight { color: var(--muted); font-size: 0.72rem; white-space: nowrap; }
+.armoury-position-action {
+  min-height: 1.5rem;
+  padding: 0.12rem 0.38rem;
+  border: 1px solid var(--gold);
+  border-radius: 0.18rem;
+  background: rgba(8, 7, 6, 0.6);
+  color: var(--gold);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.armoury-position-action.equipped { border-color: var(--equip-equipped-tag-color); color: var(--equip-equipped-tag-color); }
+.armoury-position-card.is-empty { min-height: 6.4rem; cursor: pointer; }
+.armoury-position-empty-hint { grid-column: 1 / -1; color: var(--muted); font-size: 0.74rem; }
+.armoury-position-locked-pane {
+  grid-column: 2 / -1;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  place-content: center;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 6.4rem;
+  padding: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+}
+.armoury-position-locked-pane > span { font-size: 1.8rem; }
+.armoury-position-locked-pane strong { color: var(--parchment); text-transform: uppercase; }
+.armoury-position-locked-pane small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.armoury-position-detail { padding: 0.8rem; border-top: 1px solid var(--line-soft); background: rgba(13, 11, 9, 0.36); }
+.armoury-armament-details { min-width: 0; }
+.armoury-armament-details h4 { color: var(--gold); font-family: var(--font-display); font-size: 1.08rem; }
+.armoury-armament-lore { margin: 0.3rem 0 0.75rem; color: var(--muted); font-style: italic; line-height: 1.35; }
+.armoury-armament-details dl { display: grid; gap: 0.38rem; margin: 0; }
+.armoury-armament-details dl > div { display: grid; grid-template-columns: minmax(6rem, 0.34fr) minmax(0, 1fr); gap: 0.55rem; padding-bottom: 0.28rem; border-bottom: 1px solid rgba(133, 113, 69, 0.26); }
+.armoury-armament-details dt { color: var(--gold); font-weight: 700; }
+.armoury-armament-details dd { margin: 0; color: var(--parchment); text-align: right; }
+.armoury-armament-tag-details { display: grid; gap: 0.25rem; margin-top: 0.55rem; }
+.armoury-armament-tag-details p { display: grid; grid-template-columns: minmax(5rem, 0.25fr) minmax(0, 1fr); gap: 0.55rem; margin: 0; }
+.armoury-armament-tag-details strong { color: var(--gold); }
+.armoury-armament-tag-details span { color: var(--muted); text-align: right; }
+.armoury-armament-empty { grid-column: 1 / -1; margin: 0; padding: 1rem; color: var(--muted); }
+.armoury[data-armament-density='compact'] .armoury-position-card > summary,
+.armoury[data-armament-density='compact'] button.armoury-position-card {
+  --armoury-position-label-width: minmax(3.5rem, 16%);
+  --armoury-position-sprite-width: clamp(4.8rem, 20cqi, 6.6rem);
+  grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr);
+}
+.armoury[data-armament-density='compact'] .armoury-position-card > summary,
+.armoury[data-armament-density='compact'] .armoury-position-card.is-empty,
+.armoury[data-armament-density='compact'] .armoury-position-locked-pane { min-height: 4.4rem; }
+.armoury[data-armament-density='compact'] .armoury-position-label-pane { padding: 0.3rem; font-size: 0.72rem; }
+.armoury[data-armament-density='compact'] .armoury-position-label-pane em { margin-top: 0.18rem; font-size: 0.62rem; }
+.armoury[data-armament-density='compact'] .armoury-position-sprite-pane { min-height: 4.4rem; padding: 0.12rem; }
+.armoury[data-armament-density='compact'] .armoury-position-sprite-pane img { max-height: 3.8rem; }
+.armoury[data-armament-density='compact'] .armoury-position-summary-pane { padding: 0.36rem 0.42rem; }
+.armoury[data-armament-density='compact'] .armoury-position-headings { display: none; }
+.armoury[data-armament-density='compact'] .armoury-position-values { grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem; }
+.armoury[data-armament-density='compact'] .armoury-position-values em { display: none; }
+.armoury[data-armament-density='compact'] .armoury-position-values strong { font-size: 0.86rem; }
+.armoury[data-armament-density='compact'] .armoury-position-values > span { font-size: 0.68rem; }
+.armoury[data-armament-density='compact'] .armoury-position-footer { grid-template-columns: minmax(0, 1fr) auto; gap: 0.3rem; }
+.armoury[data-armament-density='compact'] .armoury-position-tags,
+.armoury[data-armament-density='compact'] .armoury-position-weight { display: none; }
+.armoury[data-armament-density='compact'] .armoury-position-action { font-size: 0.58rem; }
+.armoury[data-armament-density='minimal'] .armoury-position-card > summary,
+.armoury[data-armament-density='minimal'] button.armoury-position-card {
+  --armoury-position-label-width: minmax(3.2rem, 20%);
+  --armoury-position-sprite-width: clamp(4.4rem, 22cqi, 5.8rem);
+  grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr);
+}
+.armoury[data-armament-density='minimal'] .armoury-position-values { grid-template-columns: minmax(0, 1fr); }
+.armoury[data-armament-density='minimal'] .armoury-position-values > span { display: none; }
+.armoury[data-armament-density='minimal'] .armoury-position-footer { display: block; margin-top: 0.18rem; }
+.armoury[data-armament-density='minimal'] .armoury-position-action { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.armoury[data-armament-density='minimal'] .armoury-position-locked-pane { grid-template-columns: auto minmax(0, 1fr); gap: 0.3rem; padding: 0.35rem; }
+.armoury[data-armament-density='minimal'] .armoury-position-locked-pane small { display: none; }
+.armoury[data-inventory-density='compact'] .armoury-inventory { padding: 0.55rem; }
+.armoury[data-inventory-density='compact'] .inventory-face {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.18rem;
+  min-height: var(--tap-floor);
+  padding: 0.65rem 0.7rem;
+}
+.armoury[data-inventory-density='compact'] .inventory-name { font-size: 0.92rem; line-height: 1.05; }
+.armoury[data-inventory-density='compact'] .inventory-face > .hold-hint { grid-column: 2; grid-row: 1; align-self: center; }
+.armoury[data-inventory-density='compact'] .inventory-category,
+.armoury[data-inventory-density='compact'] .inventory-count { display: none; }
+.armoury[data-inventory-density='compact'] .inventory-equipped {
+  grid-column: 1; grid-row: 2; justify-self: start;
+  padding-inline: 0.2rem; font-size: 0.62rem; line-height: 1.05;
+}
+.armoury[data-inventory-density='compact'] .inventory-inline-action { grid-column: 2; grid-row: 2; }
+.armoury[data-view-mode='Character'] .armoury-body { flex: 1 1 75%; min-height: 0; }
+.armoury[data-view-mode='Character'] .armoury-strip[data-collapsed='0'] { flex: 0 1 var(--armoury-tray-height, 10%); min-height: var(--tap-floor); overflow: auto; }
+.armoury[data-view-mode='Inventory'] .armoury-body { flex: 1 1 65%; min-height: 0; }
+.armoury[data-view-mode='Inventory'] .armoury-inventory[data-collapsed='0'] { min-height: 0; overflow: auto; }
+.armoury[data-pane='inventory'] .armoury-inventory.folding-tray[data-collapsed='0'] {
+  align-self: stretch; height: auto; max-height: none; padding-block: 0.7rem;
+}
+
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, var(--armoury-phone-character-ratio)) minmax(0, var(--armoury-phone-equipment-ratio));
+  gap: 0.7rem;
+  padding: 0.7rem;
+}
+.armoury[data-composition='character-equipment'][data-pane='character'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+.armoury[data-composition='character-equipment'][data-pane='both'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, var(--armoury-character-ratio)) 0.55rem minmax(0, var(--armoury-equipment-ratio));
+  gap: 0;
+}
+.armoury[data-pane='both'][data-responsive='phone'] .armoury-hybrid-splitter { min-width: 0.55rem; }
+.armoury[data-pane='both'][data-responsive='phone'] .armoury-hybrid-splitter::before { inset: 0 0.22rem; }
+.armoury[data-composition='character-equipment'][data-pane='inventory'][data-responsive='phone'] .armoury-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--armoury-armaments-pane-width)) 0.55rem minmax(0, var(--armoury-inventory-pane-width));
+  gap: 0;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-body {
+  grid-column: 1;
+  grid-row: 1;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-pane-splitter {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  min-height: 0.55rem;
+  cursor: row-resize;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-pane-splitter::before { inset: 0.22rem 0; }
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-inventory {
+  grid-column: 1;
+  grid-row: 3;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content:has(> .armoury-inventory[data-collapsed='1']) {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content:has(> .armoury-inventory[data-collapsed='1']) > .armoury-pane-splitter {
+  display: none;
+}
+.armoury[data-pane='inventory'][data-responsive='phone'] .armoury-content:has(> .armoury-inventory[data-collapsed='1']) > .armoury-inventory {
+  grid-row: 2;
+}
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head { gap: 0.5rem; padding: 0.7rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-head h2 { font-size: 1.3rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views { gap: 0.2rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-views button { padding: 0.25rem 0.45rem; font-size: 0.9rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-character { grid-template-rows: auto minmax(6rem, var(--armoury-sprite-ratio)) minmax(0, var(--armoury-stats-ratio)); gap: 0.25rem; }
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-character {
+  grid-template-columns: minmax(8rem, var(--armoury-summary-pane-ratio)) minmax(10rem, var(--armoury-stats-pane-ratio));
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 0.45rem;
+}
+.armoury[data-pane='character'][data-responsive='phone'] .character-summary { grid-column: 1; grid-row: 1; }
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-sprite-pane { grid-column: 1; grid-row: 2; }
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-character-stats { grid-column: 2; grid-row: 1 / span 2; }
+.armoury[data-character-state='folded'] .armoury-character-stats { padding: 0; }
+.armoury[data-character-state='folded'] .character-info-card { margin-top: 0.35rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-sprite-pane { min-height: 8rem; }
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-left,
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-character,
+.armoury[data-pane='character'][data-responsive='phone'] .character-summary,
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-sprite-pane,
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-character-stats { width: 100%; max-width: none; }
+.armoury[data-pane='character'][data-responsive='phone'] .armoury-sprite-pane .armoury-figure {
+  width: auto;
+  height: min(74%, 14rem);
+  max-width: 68%;
+  max-height: 74%;
+}
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-equipment-head { display: flex; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary p { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-summary .character-kicker { display: block; font-size: 0.68rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .combat-power-bonus { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-position-detail { padding: 0.55rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dl > div,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details p { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-details dd,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-armament-tag-details span { text-align: left; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-info-summary { font-size: 0.78rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] { --armoury-card-grid-columns: 2; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-list[data-card-view='grid'] .armoury-card-row summary {
+  grid-template-columns: 0.8rem 1.7rem minmax(0, 1fr) auto;
+}
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-row summary { grid-template-columns: 1rem 1.7rem minmax(0, 1fr) auto; gap: 0.3rem; padding-inline: 0.35rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-row-type,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-row-tags { display: none; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-row-detail { grid-template-columns: minmax(4rem, 30%) minmax(0, 70%); gap: 0.55rem; padding: 0.55rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-card-details-pane h4 { font-size: 1rem; }
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
+.armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }

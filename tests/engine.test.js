@@ -70,6 +70,11 @@ import {
 import { ENGINE_KEYWORDS } from '../src/model/schemas.js';
 import { armouryUiProblems, equippedTagColor } from '../src/model/equipmentUi.js';
 import {
+  equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
+  orderArmourySlots, trayPresentationState,
+} from '../src/model/armouryLayout.js';
+import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
+import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
 } from '../src/model/characterCreation.js';
@@ -5573,6 +5578,150 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(!baselineHandValidation.ok && baselineHandValidation.errors.some((e) =>
       e.path.includes('characterCreation.classes.reaver.handIds') && /roundShield|straightSword/.test(e.msg)),
     'a hand roster that omits the baseline kit is refused by armament id before customization boots');
+  });
+
+  test('72. Armoury layout is authored, stable, and responsive', () => {
+    assert(contentBundle.equipment.armouryUi.layout.trays,
+      'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
+    const layout = normalizeArmouryLayout(contentBundle.equipment.armouryUi.layout);
+    eq(layout.shell.characterRatio, 0.4, 'character pane owns the authored 40% desktop share');
+    eq(layout.shell.equipmentRatio, 0.6, 'equipment pane owns the authored 60% desktop share');
+    eq(layout.character.spriteRatio, 0.38, 'sprite owns the authored 38% character height');
+    eq(layout.character.statsRatio, 0.62, 'stats own the authored 62% character height');
+    eq(layout.character.statsPaneRatio, 0.6, 'Character gives the right column 60% of the full-width character pane');
+  eq(layout.cards.defaultView, 'list', 'Cards defaults to the authored vertical list');
+  eq(layout.cards.gridColumns, 4, 'Cards grid columns are authored as four');
+    eq(layout.responsive.phone.cardsGridColumns, 2, 'Phone Cards grid columns are authored as two');
+    eq(layout.equipment.defaultView, 'list', 'Armaments defaults to the authored detailed list');
+    eq(layout.equipment.gridColumns, 3, 'Armaments grid columns are authored as three');
+    eq(layout.responsive.phone.armamentGridColumns, 2, 'Phone Armaments grid columns are authored as two');
+    eq(layout.equipment.slotOrder.join(','), 'armor,rightHand,leftHand', 'equipment order is authored armor then right and left hand');
+    eq(layout.combatPower.cards.map((card) => card.id).join(','), 'strike,potency,defense', 'Combat Power cards are authored in vertical display order');
+    eq(layout.combatPower.cards[1].label, 'Magic', 'the primary technique-facing combat value is presented as Magic');
+    eq(layout.combatPower.cards[1].fullLabel, 'Magic Power', 'the expanded primary value is presented as Magic Power, not Potency');
+    eq(layout.viewModes.grid.label, 'Character', 'the character view has a player-facing authored label');
+    eq(layout.viewModes.rack.label, 'Inventory', 'the inventory view has a player-facing authored label');
+    eq(layout.viewModes.grid.pane, 'character', 'Character promotes the character pane to the full surface');
+    eq(layout.viewModes.rack.pane, 'inventory', 'Inventory pairs the armaments and inventory panes');
+    eq(layout.viewModes.rack.armaments, 'expanded', 'Inventory exposes the authored Armaments position list');
+    eq(layout.viewModes.hybrid.pane, 'both', 'Hybrid keeps the two panes split');
+    eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
+    eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
+    eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
+    eq(layout.trays.defaultHeightRatio, 0.1, 'each expanded tray starts at the authored ten-percent height');
+    eq(layout.trays.minimumHeightRatio, 0.1, 'tray resize keeps the authored minimum visible');
+    eq(layout.trays.maximumHeightRatio, 0.9, 'a tray can scale to the authored near-full-panel maximum');
+    eq(layout.trays.snapRatios.join(','), '0.1,0.3,0.5,0.7,0.9', 'independent tray heights snap to authored stops');
+    eq(layout.trays.contentGapRem, 0.35, 'Inventory tray content keeps one authored row gap across resolutions');
+    assert(layout.cardClasses.inventoryItem.holdAction === true,
+      'the Inventory item card class explicitly opts into the shared hold action on both folded and unfolded faces');
+    assert(normalizeArmouryLayout({}).cardClasses.inventoryItem.holdAction === false,
+      'card classes do not acquire a destructive hold action unless their authored model toggles it true');
+    let invalidHoldClass = '';
+    try { normalizeArmouryLayout({ cardClasses: { inventoryItem: { holdAction: 'true' } } }); } catch (error) { invalidHoldClass = error.message; }
+    assert(invalidHoldClass.includes('holdAction must be true or false'),
+      'the card class hold capability rejects truthy strings instead of silently arming them');
+    eq(layout.comparison.presentation, 'tooltip', 'equipment comparison presentation is authored as tooltip or inline data');
+    eq(layout.comparison.hoverDelayMs, 550, 'equipment comparison hover delay is authored in milliseconds');
+    eq(layout.comparison.tooltipWidthRem, 52, 'equipment comparison tooltip width is authored rather than buried in CSS');
+    eq(layout.comparison.tooltipMaxHeightRatio, 0.8, 'equipment comparison tooltip viewport cap is authored');
+    let invalidComparison = '';
+    try { normalizeArmouryLayout({ comparison: { presentation: 'drawer' } }); } catch (error) { invalidComparison = error.message; }
+    assert(invalidComparison.includes('comparison.presentation must be tooltip or inline'),
+      'unknown equipment comparison presentations are refused by name');
+    let invalidComparisonDelay = '';
+    try { normalizeArmouryLayout({ comparison: { hoverDelayMs: -1 } }); } catch (error) { invalidComparisonDelay = error.message; }
+    assert(invalidComparisonDelay.includes('comparison.hoverDelayMs'),
+      'negative equipment comparison hover delays are refused by name');
+    const sharedInventoryRow = {
+      key: 'weapon:straightSword', id: 'straightSword', name: 'Straight Sword', category: 'Weapon',
+      count: 1, equippedLabels: [], item: { name: 'Straight Sword', tags: [] },
+    };
+    assert(inventoryItemCardModel(sharedInventoryRow, { classModel: layout.cardClasses.inventoryItem }).properties.holdAction === true,
+      'the shared folded Inventory card model projects the opted-in class hold capability');
+    assert(inventoryItemCardModel(sharedInventoryRow).properties.holdAction === false,
+      'the shared folded Inventory card model remains hold-safe without an opted-in class');
+    assert(inventoryDetailCardModel({
+      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
+      classModel: layout.cardClasses.inventoryItem,
+    }).properties.holdAction === true,
+    'the shared unfolded Inventory card model projects the same opted-in class hold capability');
+    assert(inventoryDetailCardModel({
+      row: sharedInventoryRow, art: { kind: 'icon', value: '†' }, description: '', mods: [],
+    }).properties.holdAction === false,
+    'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
+    eq(contentBundle.balance.ui.holdConfirm.def, 'off',
+      'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
+    const expandedTray = trayPresentationState({
+      collapsed: false,
+      savedHeightRatio: 0.7,
+      defaultHeightRatio: layout.trays.defaultHeightRatio,
+    });
+    eq(expandedTray.heightRatio, 0.7, 'an unfolded tray restores its independently saved expanded height');
+    assert(expandedTray.resizable, 'an unfolded tray exposes its resize edge');
+    const foldedTray = trayPresentationState({
+      collapsed: true,
+      savedHeightRatio: 0.7,
+      defaultHeightRatio: layout.trays.defaultHeightRatio,
+    });
+    eq(foldedTray.heightRatio, null, 'a folded tray ignores the saved expanded height and uses its intrinsic header height');
+    assert(!foldedTray.resizable, 'a folded tray cannot retain or expose its resize edge');
+    eq(foldedTray.savedHeightRatio, 0.7, 'folding preserves the expanded height for the next unfold');
+    const selectedMove = inventorySelectionAction({
+      itemId: 'straightSword',
+      selectedSlotId: 'rightHand',
+      selectedSetIndex: 0,
+      selectedItemId: 'roundShield',
+      equippedPositions: [{ slotId: 'leftHand', setIndex: 0, itemId: 'straightSword' }],
+    });
+    eq(`${selectedMove.kind}:${selectedMove.slotId}:${selectedMove.setIndex}:${selectedMove.pieceId}`,
+      'move:rightHand:0:straightSword',
+      'a selected compatible position takes precedence over the hand that currently owns the item');
+    const selectedUnequip = inventorySelectionAction({
+      itemId: 'straightSword',
+      selectedSlotId: 'rightHand',
+      selectedSetIndex: 0,
+      selectedItemId: 'straightSword',
+      equippedPositions: [{ slotId: 'rightHand', setIndex: 0, itemId: 'straightSword' }],
+    });
+    eq(`${selectedUnequip.kind}:${selectedUnequip.pieceId}`,
+      'unequip:null',
+      'the selected position turns its currently equipped Inventory item into Unequip');
+    for (const badTrays of [
+      { ...layout.trays, defaultHeightRatio: 0.95 },
+      { ...layout.trays, snapRatios: [0.1, 0.3, 0.95] },
+      { ...layout.trays, snapRatios: [0.1, 0.3, 0.3] },
+      { ...layout.trays, contentGapRem: 0 },
+    ]) {
+      let named = '';
+      try { normalizeArmouryLayout({ ...contentBundle.equipment.armouryUi.layout, trays: badTrays }); }
+      catch (error) { named = error.message; }
+      assert(named.includes('armouryUi.layout.trays'), 'an impossible tray default or snap stop is refused by the tray config name');
+    }
+    eq(orderArmourySlots([
+      { id: 'leftFoot', order: 50 }, { id: 'back', order: 40 }, { id: 'rightHand', order: 20 }, { id: 'armor', order: 10 },
+    ], layout).map((slot) => slot.id).join(','), 'armor,rightHand,back,leftFoot', 'arbitrary equipment groups iterate by authored order without named-slot branches');
+    const occupiedPosition = equipmentPositionCardState({
+      slot: { id: 'backHand', label: 'Back Hand', positionLabel: 'Back Hand Slot {n}', positionCode: 'BH{n}', sets: 3 },
+      index: 1,
+      modelState: 'open',
+      item: { id: 'wardWand', name: 'Ward Wand' },
+      activeIndex: 0,
+    });
+    eq(occupiedPosition.label, 'Back Hand Slot 2', 'an arbitrary equipment position formats its authored label');
+    eq(occupiedPosition.code, 'BH2', 'an arbitrary equipment position formats its authored short code');
+    eq(occupiedPosition.state, 'occupied', 'an unlocked item position is a first-class occupied card');
+    eq(occupiedPosition.action, 'equip', 'an inactive occupied position exposes Equip');
+    eq(equipmentPositionCardState({
+      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
+      index: 2, modelState: 'next', item: null, activeIndex: 0,
+    }).state, 'locked', 'the next authored rung is a first-class locked card');
+    eq(equipmentPositionCardState({
+      slot: { id: 'leftFoot', label: 'Left Foot', positionLabel: 'Left Foot Slot {n}', positionCode: 'LF{n}', sets: 4 },
+      index: 1, modelState: 'open', item: null, activeIndex: 0,
+    }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
+    eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
+    assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
   });
 
   const passed = results.filter((r) => r.ok).length;

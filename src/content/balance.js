@@ -537,13 +537,15 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // The durations: 600 ms is the default because a long-press people already
-    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
-    // just past reflex without becoming a chore. `short` is for players who
-    // find the wait irritating, `long` for hands that need the room. `off` is
-    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
+    // `off` is the default: a card class may advertise the capability without
+    // silently changing anybody's controls. If the player enables the dial,
+    // `normal` is 600 ms because a long-press people already know is ~400-500
+    // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
+    // without becoming a chore. `short` is for players who find the wait
+    // irritating, `long` for hands that need the room. `off` is 0 and means
+    // the pre-hold behaviour, byte for byte: one tap commits.
     holdConfirm: {
-      def: 'normal',
+      def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
