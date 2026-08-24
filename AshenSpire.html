@@ -39121,7 +39121,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '6994548679';
+const SOURCE = 'cff6f4e126';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39155,7 +39155,7 @@ const SOURCE = '6994548679';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1262';
+const ORDINAL = '1263';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -57192,7 +57192,9 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     }
     clearTimeout(exitTimer);
     closeOverlay();
-    (onExit || onQuit)();
+    // This control promises Save & Quit to Title. `onExit` belongs only to the
+    // separately labelled Quit Game action in the Save panel.
+    (onQuit || onExit)();
   });
 
   function selectTab(id) {

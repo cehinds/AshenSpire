@@ -289,7 +289,9 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     }
     clearTimeout(exitTimer);
     closeOverlay();
-    (onExit || onQuit)();
+    // This control promises Save & Quit to Title. `onExit` belongs only to the
+    // separately labelled Quit Game action in the Save panel.
+    (onQuit || onExit)();
   });
 
   function selectTab(id) {
