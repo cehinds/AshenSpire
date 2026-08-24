@@ -776,7 +776,19 @@ function judge(r, cell) {
 }
 
 async function main() {
-  if (args.includes('--selftest')) return selftest();
+  if (args.includes('--selftest')) {
+    const platformCode = await unsupportedPlatformPlant();
+    if (platformCode) return finish('fail', 'unsupported-platform regression failed');
+    if (process.platform !== 'linux') return refuseUnsupportedPlatform();
+    return selftest();
+  }
+
+  // THE MEASURED PLATFORM IS PART OF THE POPULATION. A Windows or macOS run
+  // with CHROME set can otherwise paint every cell and print OK while the
+  // boundary below calls that same run UNKNOWN. Refuse before importing the
+  // server or resolving/launching a browser; nothing on an unsupported runtime
+  // is evidence about this Linux-only instrument.
+  if (process.platform !== 'linux') return refuseUnsupportedPlatform();
 
   // THE POPULATION IS SETTLED BEFORE ANYTHING BOOTS — no server, no browser, no
   // cells — because both refusals below are about there being nothing to measure.
@@ -954,6 +966,14 @@ async function main() {
   await shutdown();
 
   return finish(bad ? 'fail' : 'ok');
+}
+
+function refuseUnsupportedPlatform() {
+  expected = SHAPES.length * TEXTS.length * DOORS.length;
+  const detail = `platform ${process.platform} is unsupported; displayfirst measures Linux headless Chromium only`;
+  console.error(`displayfirst: ${detail}.`);
+  console.error('              Exit 2, not 0: no server or browser was started and no screen cell was measured.');
+  return finish('unknown', detail);
 }
 
 // ---------------------------------------------------------------------------
@@ -1572,6 +1592,98 @@ async function serverClosePlant() {
     }
     console.log(`  CAUGHT  fixed exited 2 with its complete UNKNOWN line in ${fixed.elapsed} ms; mutant still held `
       + `the HTTP server at ${mutant.elapsed} ms and was killed before the three-second backstop.`);
+    return 0;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// UNSUPPORTED-PLATFORM REGRESSION — NO SERVER, NO BROWSER, BOTH EDGES.
+//
+// The child process changes only Node's configurable `process.platform` value,
+// then imports this tool normally. Its copied serve/browser boundaries throw if
+// called, so exit 2 plus the explicit UNKNOWN line proves the refusal happened
+// before either boot path. The mutant removes both production guard sites; it
+// must reach the throwing server boundary and exit 1. A fixed-only assertion
+// would not distinguish an early refusal from a late one.
+// ---------------------------------------------------------------------------
+async function unsupportedPlatformPlant() {
+  const { mkdtempSync, cpSync, writeFileSync, readFileSync, rmSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { spawnSync } = await import('node:child_process');
+
+  console.log('');
+  console.log('  unsupported-platform regression — fixed-vs-mutant, browser-free darwin child');
+  const dir = mkdtempSync(join(tmpdir(), 'displayfirst-platform-'));
+  try {
+    cpSync(join(ROOT, 'tools'), join(dir, 'tools'), {
+      recursive: true,
+      filter: (src) => !/tools[\\/](results|shots)([\\/]|$)/.test(src) && !/\.png$/.test(src),
+    });
+    const tool = join(dir, 'tools', 'displayfirst.mjs');
+    const real = readFileSync(tool, 'utf8').replace(/\r\n/g, '\n');
+    const FIND_PLATFORM_GUARD = [
+      '  if (process.platform !==',
+      " 'linux') return refuseUnsupportedPlatform();",
+    ].join('');
+    const guardCount = real.split(FIND_PLATFORM_GUARD).length - 1;
+    if (guardCount !== 2) {
+      fail(`unsupported-platform regression: PLANT SITE DRIFTED — expected two production guard sites, `
+        + `found ${guardCount}; the no-boot mutant could not be built unambiguously.`);
+      return 1;
+    }
+    writeFileSync(join(dir, 'tools', 'displayfirst.MUTANT.mjs'),
+      real.split(FIND_PLATFORM_GUARD).join('  /* planted: unsupported platform allowed through */'));
+    writeFileSync(join(dir, 'tools', 'serve.mjs'), [
+      'export async function serve() {',
+      "  throw new Error('UNSUPPORTED REGRESSION SERVER BOOTED');",
+      '}',
+      '',
+    ].join('\n'));
+    writeFileSync(join(dir, 'tools', 'browser.mjs'), [
+      "export function resolveBrowser() { throw new Error('UNSUPPORTED REGRESSION BROWSER RESOLVED'); }",
+      "export async function launchBrowser() { throw new Error('UNSUPPORTED REGRESSION BROWSER LAUNCHED'); }",
+      '',
+    ].join('\n'));
+    const wrapper = join(dir, 'platform-child.mjs');
+    writeFileSync(wrapper, [
+      "Object.defineProperty(process, 'platform', { value: 'darwin' });",
+      "await import('./tools/' + process.argv[2]);",
+      '',
+    ].join('\n'));
+
+    const run = (name) => {
+      const result = spawnSync(process.execPath, [wrapper, name,
+        '--only-shape', '1440x860', '--only-text', 'M', '--port', '0'], {
+        cwd: dir,
+        encoding: 'utf8',
+        timeout: 5000,
+        maxBuffer: 4 * 1024 * 1024,
+      });
+      return { ...result, output: `${result.stdout || ''}\n${result.stderr || ''}` };
+    };
+
+    const fixed = run('displayfirst.mjs');
+    const mutant = run('displayfirst.MUTANT.mjs');
+    const fixedUnknown = fixed.status === 2 && !fixed.error
+      && /displayfirst: UNKNOWN — nothing was measured \(platform darwin is unsupported; displayfirst measures Linux headless Chromium only\)\./.test(fixed.output)
+      && !/UNSUPPORTED REGRESSION (?:SERVER|BROWSER)/.test(fixed.output)
+      && !/displayfirst: OK/.test(fixed.output);
+    const mutantBooted = mutant.status === 1 && !mutant.error
+      && /UNSUPPORTED REGRESSION SERVER BOOTED/.test(mutant.output)
+      && /displayfirst: STOPPED/.test(mutant.output);
+    if (!fixedUnknown) {
+      fail(`unsupported-platform regression: FIXED CHILD DID NOT REFUSE BEFORE BOOT — status=${fixed.status}, `
+        + `error=${fixed.error?.code || 'none'}. Expected explicit UNKNOWN/2 with neither server nor browser marker.`);
+      return 1;
+    }
+    if (!mutantBooted) {
+      fail(`unsupported-platform regression: MUTANT WAS NOT DISTINGUISHED — status=${mutant.status}, `
+        + `error=${mutant.error?.code || 'none'}. Removing the guards must reach the throwing server boundary.`);
+      return 1;
+    }
+    console.log('  CAUGHT  fixed darwin child exited UNKNOWN/2 before boot; guardless mutant reached serve() and STOPPED/1.');
     return 0;
   } finally {
     rmSync(dir, { recursive: true, force: true });
