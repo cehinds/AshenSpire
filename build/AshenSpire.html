@@ -1382,59 +1382,69 @@ button.rs-reset {
 .hud-quick-settings {
   position: absolute;
   z-index: 80;
-  right: calc(env(safe-area-inset-right, 0px) + var(--hud-quick-edge-gap, 8px));
-  top: calc(100% + var(--hud-quick-edge-gap, 8px));
+  right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--hud-quick-stack-gap, 4px);
-  width: min(8.6rem, calc(100vw - 1rem));
+  align-items: flex-end;
+  gap: calc(var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1));
+  width: max-content;
+  max-width: calc(100% - (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)) - (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   pointer-events: auto;
 }
 .title-screen > .hud-quick-settings {
-  top: calc(env(safe-area-inset-top, 0px) + var(--hud-quick-edge-gap, 8px));
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
 }
 .hud-quick-setting {
   position: relative;
   box-sizing: border-box;
   min-height: var(--tap-floor);
-  width: 100%;
-  padding: 0.45rem 0.65rem;
+  min-width: var(--tap-floor);
+  width: auto;
+  padding: 0 calc(4px / var(--ui-zoom, 1));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
+  justify-content: flex-end;
+  gap: calc(4px / var(--ui-zoom, 1));
+  border: 0;
+  border-radius: calc(4px / var(--ui-zoom, 1));
+  background: transparent;
   color: var(--parchment);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
-  font: 700 0.82rem/1.1 var(--font-ui);
-  letter-spacing: 0.06em;
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
 }
-.hud-quick-setting-glyph { display: none; font-size: 1.25rem; line-height: 1; }
+.hud-quick-setting-glyph { display: none; font-size: calc(var(--hud-quick-glyph-size, 14px) / var(--ui-zoom, 1)); line-height: 1; }
 .hud-quick-setting:hover,
-.hud-quick-setting:focus-visible { border-color: var(--gold); color: var(--gold); }
+.hud-quick-setting:focus-visible { color: var(--gold); }
+.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: -1px; }
 .hud-quick-setting-state {
-  min-width: 2.2rem;
-  padding: 0.2rem 0.3rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--muted);
   text-align: center;
-  font-size: 0.72rem;
+  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
 }
 .hud-quick-setting.on .hud-quick-setting-state {
-  border-color: var(--gold);
   color: var(--gold);
-  background: rgba(var(--accent-rgb), 0.12);
+  background: transparent;
+}
+.hud-quick-settings[data-card-background='true'] .hud-quick-setting {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
 .hud-quick-notice {
   position: absolute;
-  top: calc(100% + var(--hud-quick-stack-gap, 4px));
+  top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));
   right: 0;
   box-sizing: border-box;
   width: min(19rem, calc(100vw - 1rem));
@@ -1450,7 +1460,7 @@ button.rs-reset {
   text-transform: none;
 }
 .hud-quick-notice[hidden] { display: none; }
-.hud-quick-settings.compact { width: 4.2rem; }
+.hud-quick-settings.compact { width: var(--tap-floor); }
 .hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-settings.compact .hud-quick-setting { justify-content: center; }
 @media (max-width: 420px) {
@@ -1464,7 +1474,12 @@ button.rs-reset {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
   }
   .hud-quick-setting-state {
-    position: absolute; right: 4px; bottom: 4px; width: 7px; min-width: 7px; height: 7px;
+    position: absolute;
+    right: calc(4px / var(--ui-zoom, 1));
+    bottom: calc(4px / var(--ui-zoom, 1));
+    width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
+    min-width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
+    height: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
     padding: 0; border-radius: 50%; overflow: hidden; color: transparent; font-size: 0;
     background: var(--muted); opacity: 0.72;
   }
@@ -5348,6 +5363,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
   --combatant-intent-gap: 0.18rem;
   flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
+  box-sizing: border-box;
+  padding-inline-end: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
 }
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
@@ -6101,7 +6118,9 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      layout in styles/ui.css — it was never a fact about combat (#29 slice 0). */
 
   /* ---- battlefield: give the enemies the width ---- */
-  :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
+  :root[data-layout='narrow'] .field {
+    padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
+  }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,
   :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
@@ -6872,6 +6891,17 @@ if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
   throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
 }
 document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
+const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
+for (const [key, cssName] of [
+  ['edgeGapPx', '--hud-quick-edge-gap'],
+  ['stackGapPx', '--hud-quick-stack-gap'],
+  ['labelFontPx', '--hud-quick-label-font'],
+  ['glyphSizePx', '--hud-quick-glyph-size'],
+  ['stateDotPx', '--hud-quick-state-dot'],
+]) {
+  document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
+}
+document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -9351,8 +9381,12 @@ const balance = {
     // a future surface or denser theme does not require another renderer.
     hudQuickSettings: {
       places: ['title', 'map', 'combat'],
-      edgeGapPx: 8,
-      stackGapPx: 4,
+      edgeGapPx: 4,
+      stackGapPx: 0,
+      labelFontPx: 10,
+      glyphSizePx: 14,
+      stateDotPx: 5,
+      showCardBackground: false,
       showLabels: true,
     },
     // Shrine options default to one vertical list. `grid` preserves the
@@ -20164,7 +20198,7 @@ function validateContent(bundle) {
     const quickSettings = ui.hudQuickSettings;
     const quickPlaces = ['title', 'map', 'combat'];
     if (!quickSettings || typeof quickSettings !== 'object' || Array.isArray(quickSettings)) {
-      err('balance.ui.hudQuickSettings', 'must be an object with places, edgeGapPx, stackGapPx, and showLabels');
+      err('balance.ui.hudQuickSettings', 'must be an object with places, spacing, visual sizing, background, and label settings');
     } else {
       if (!Array.isArray(quickSettings.places)
         || quickSettings.places.some((place) => !quickPlaces.includes(place))
@@ -20176,6 +20210,19 @@ function validateContent(bundle) {
         if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 24) {
           err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [0, 24] — got ${JSON.stringify(value)}`);
         }
+      }
+      for (const [key, min, max] of [
+        ['labelFontPx', 8, 18],
+        ['glyphSizePx', 10, 28],
+        ['stateDotPx', 3, 12],
+      ]) {
+        const value = quickSettings[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof quickSettings.showCardBackground !== 'boolean') {
+        err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
       }
       if (typeof quickSettings.showLabels !== 'boolean') {
         err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);
@@ -39320,7 +39367,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0fc4db086c';
+const SOURCE = 'fbf484f7a8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39354,7 +39401,7 @@ const SOURCE = '0fc4db086c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1286';
+const ORDINAL = '1288';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39498,9 +39545,11 @@ function hudQuickSettingsHtml(model) {
   if (!model.properties.enabled) return '';
   const fullscreen = childModel(model, UI.fullscreenControl);
   const music = childModel(model, UI.musicControl);
-  const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px`;
+  const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px;`
+    + `--hud-quick-label-font:${model.properties.labelFontPx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
+    + `--hud-quick-state-dot:${model.properties.stateDotPx}px`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
-    data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
+    data-place="${model.properties.place}" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
     ${controlHtml(music, 'music', 'Music', '♪', music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
@@ -43338,8 +43387,12 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
     properties: {
       enabled,
       place,
-      edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 8,
-      stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 4,
+      edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 4,
+      stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 0,
+      labelFontPx: Number.isFinite(presentation.labelFontPx) ? presentation.labelFontPx : 10,
+      glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 14,
+      stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 5,
+      showCardBackground: presentation.showCardBackground === true,
       showLabels: presentation.showLabels !== false,
     },
     children: [
@@ -50220,11 +50273,13 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        overlayHtml: legendHtml,
+        // The phone orientation receipt belongs to the header's layout flow.
+        // Keeping it inside the same positioned host means the quick utility
+        // stack starts after ENTRANCE → BOSS instead of floating across it.
+        overlayHtml: `${legendHtml}${entranceOrientation}`,
       }))}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   //

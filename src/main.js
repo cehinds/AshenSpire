@@ -262,6 +262,17 @@ if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
   throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
 }
 document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
+const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
+for (const [key, cssName] of [
+  ['edgeGapPx', '--hud-quick-edge-gap'],
+  ['stackGapPx', '--hud-quick-stack-gap'],
+  ['labelFontPx', '--hud-quick-label-font'],
+  ['glyphSizePx', '--hud-quick-glyph-size'],
+  ['stateDotPx', '--hud-quick-state-dot'],
+]) {
+  document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
+}
+document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
