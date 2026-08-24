@@ -523,6 +523,20 @@ jobs:
         # removes.
         run: node tools/verdict.mjs -- node tools/armoury-arrival-figure.mjs
 
+      # ---- #319 / #248. The settings order probe is Linux-only and browser
+      # driven, so this is its durable exact-head home. CI remains manual at the
+      # workflow boundary above; a person dispatches this workflow for the ref
+      # being reviewed. The clean edge measures eight cells (two doors, two
+      # shapes, two text sizes). The corpus adds eighteen copied-tree browser
+      # plants plus its clean baseline, including deliberate 25-second and
+      # 30-second timeout defects. That cost is stated because this workflow
+      # bills by the minute and silence between dispatches remains UNKNOWN.
+      - name: Fullscreen is first and visible through both Settings doors
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs
+
+      - name: …and that gate can fail — nineteen same-door browser boots
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
+
       # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
       # The three gates above this each have a `--selftest` / `--mutate` door.
       # This tool has none. Its two known-bads — an initially-EXPANDED CARDS pane

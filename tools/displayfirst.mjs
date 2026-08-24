@@ -119,21 +119,15 @@
 //     tool would be green on a settings screen he hates. It says one thing:
 //     the first control under Display is the Fullscreen toggle, and you can see
 //     it without scrolling.
-//   · THE OTHER NINETEEN ROWS. Only position 1 has an ask attached to it, so
-//     only position 1 is held. The rest may be reordered freely.
+//   · THE REMAINING ROWS. Only position 1 has an ask attached to it, so only
+//     position 1 is held. The rest may be reordered freely.
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
 //     and macOS are `unknown` here as everywhere else in this repo.
-//   · IT IS NOT WIRED INTO ci.yml, AND MY STATED REASON HAS EXPIRED. It read
-//     "`ci.yml` is open under #294 and adding a step mid-flight changes the
-//     census under its author's feet." #294 has LANDED — `dev` is `8b5c030` —
-//     so that sentence is no longer true and I am not keeping a dead reason to
-//     hold a live position. The reason NOW is the defect above it: a gate that
-//     could print green having measured ZERO cells would make the census say
-//     `covered` about a check that can be empty. That refusal landed today, in
-//     this file. THE WIRING IS ITS OWN CARD and is not smuggled in behind a
-//     fix — Marina's ruling, 2026-08-22. Until it is wired this gate is a seat's
-//     hand-run, which under SOP 2's silence guard is `unknown` between runs,
-//     not green.
+//   · IT IS WIRED INTO ci.yml's MANUAL Ubuntu browser job. One clean run
+//     measures eight rendered cells; the selftest adds eighteen copied-tree
+//     browser plants, including deliberate 25-second and 30-second timeout
+//     defects. The workflow states that cost beside the steps. Until an
+//     exact-head dispatch finishes, this gate is `unknown`, not green.
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day #248's ordering ask is
 // withdrawn or superseded by a different first row — in which case the ask moves
@@ -145,6 +139,7 @@
 
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
 import { launchBrowser, resolveBrowser } from './browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -268,7 +263,7 @@ function printBoundary() {
   console.log('  · THE LOOK-AND-FEEL HALF OF #248 IS NOT ASSERTED HERE and is still unowned. This tool');
   console.log('    would be green on a settings screen Constantine dislikes. It holds ONE sentence:');
   console.log('    the first control under Display is the Fullscreen toggle, and it is on screen.');
-  console.log('  · Only position 1 is held. The other nineteen Display rows may be reordered freely.');
+  console.log('  · Only position 1 is held. The remaining Display rows may be reordered freely.');
   console.log('  · D1 orders ROWS, and that is its subject on purpose: two controls inside ONE row have');
   console.log('    no order of their own here, and D1 would report whichever the DOM lists first. D2');
   console.log('    counts controls and D3 judges the control\'s own box, so a duplicate or a displaced');
@@ -280,7 +275,8 @@ function printBoundary() {
   console.log('    invisible to a player and green here. Closing those means deciding what "painted"');
   console.log('    means, which is a different instrument.');
   console.log('  · Linux headless Chromium only; windows-latest and macos-latest are `unknown`.');
-  console.log('  · NOT WIRED INTO ci.yml (see the header) — between hand-runs this is `unknown`.');
+  console.log('  · WIRED INTO ci.yml\'s MANUAL Ubuntu browser job (see the header) — between');
+  console.log('    exact-head dispatches this is `unknown`, not green.');
   if (expected === null) {
     console.log('  · this run measured NO cells of its own — it is the corpus harness, and what it');
     console.log('    reports is whether the plants went red, never whether the screen is right.');
@@ -777,10 +773,14 @@ function judge(r, cell) {
 
 async function main() {
   if (args.includes('--selftest')) {
+    const plants = selftestPlants();
+    if (!preflightSelftestPlantSites(plants)) {
+      return finish('fail', 'selftest plant-site preflight failed');
+    }
     const platformCode = await unsupportedPlatformPlant();
     if (platformCode) return finish('fail', 'unsupported-platform regression failed');
     if (process.platform !== 'linux') return refuseUnsupportedPlatform();
-    return selftest();
+    return selftest(plants);
   }
 
   // THE MEASURED PLATFORM IS PART OF THE POPULATION. A Windows or macOS run
@@ -979,7 +979,7 @@ function refuseUnsupportedPlatform() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// SEVENTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
+// EIGHTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
@@ -1022,16 +1022,18 @@ function refuseUnsupportedPlatform() {
 // interpolate them here instead of matching them there — a plant whose
 // find-string evaluates is a plant that never arms. doorplant turns an
 // unmatched find-string into a hard red, so this is watched, not hoped.
-async function selftest() {
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const { readFileSync } = await import('node:fs');
+function selftestPlants() {
   const settingsEol = readFileSync(join(ROOT, 'src/ui/screens/settings.js'), 'utf8').includes('\r\n') ? '\r\n' : '\n';
   const fsButton = [
-    '      <button class="toggle ${on ? \'on\' : \'\'}" data-key="${r.key}"${r.type === \'action\' ? \' data-action="1"\' : \'\'} role="switch" aria-checked="${on}">',
+    '      <button class="toggle ${on ? \'on\' : \'\'}" data-key="${r.key}"${r.type === \'action\' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'} role="switch" aria-checked="${on}">',
     '        <span class="knob"></span>',
     '      </button>',
   ].join(settingsEol);
-  const plants = [
+  // Split the production line so the self-referential plant below does not
+  // copy its own find bytes into this file. That leaves exactly one match: the
+  // exit it is meant to mutate, which the cross-platform preflight can prove.
+  const verdictReturn = ["  return finish(bad ? ", "'fail' : 'ok');"].join('');
+  return [
     {
       // 1 — THE NEIGHBOURHOOD. `fullscreen` moves exactly ONE position. One step
       // of the threshold's own unit flips the verdict (Charter 2b). test 61
@@ -1041,7 +1043,7 @@ async function selftest() {
       file: 'src/ui/screens/settings.js',
       find: [
         "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-        "    note: 'Fill the screen (also toggles with F11 in most browsers).' },",
+        "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
         "  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',",
         "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
       ].join(settingsEol),
@@ -1049,7 +1051,7 @@ async function selftest() {
         "  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',",
         "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
         "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
-        "    note: 'Fill the screen (also toggles with F11 in most browsers).' },",
+        "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
       ].join(settingsEol),
       expectRed: /FINDING D1\/order .*first=useSprites want=fullscreen/,
     },
@@ -1059,8 +1061,8 @@ async function selftest() {
       // here.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: '  return h.rows.map((r) => rowHtml(settings, r)).join(\'\');',
-      replace: '  return [...h.rows].reverse().map((r) => rowHtml(settings, r)).join(\'\');',
+      find: '  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
+      replace: '  return `${heading}<div class="set-card-list">${[...h.rows].reverse().map((r) => settingsRowHtml(settings, r)).join(\'\')}</div>`;',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1292,13 +1294,77 @@ async function selftest() {
       // made to fix. With the latch: exit 1, and the refusal is printed by name.
       name: 'a fatal verdict is followed by a green in the same run (the exit code must not be overwritten)',
       file: 'tools/displayfirst.mjs',
-      find: "  return finish(bad ? 'fail' : 'ok');",
-      replace: "  finish('stopped', 'planted: a fatal arrived first');\n  return finish(bad ? 'fail' : 'ok');",
+      find: verdictReturn,
+      replace: "  finish('stopped', 'planted: a fatal arrived first');\n" + verdictReturn,
       expectRed: /displayfirst: SECOND VERDICT REFUSED — this run already ended on STOPPED \(exit 1\)/,
     },
+    {
+      // 19 — THE CURRENT SETTINGS SCROLLER MOVES WHILE THE FULLSCREEN ROW
+      // remains wholly on screen. The mobile-settings redesign made
+      // `#set-panel` the scroll owner for both doors; before that replay the
+      // title door scrolled `.modal` and the in-run door scrolled
+      // `.overlay-body`. This plant holds the current contract and, more
+      // importantly, makes another scroll-owner move fail loudly instead of
+      // letting `panelTop=0` print "nothing scrolled" over a different
+      // element's non-zero offset.
+      name: 'the current settings panel is scrolled four pixels while Fullscreen remains on screen',
+      file: 'src/ui/screens/settings.js',
+      append: 'setInterval(() => {\n'
+        + '  const __displayFirstPanel = document.querySelector("#set-panel");\n'
+        + '  if (__displayFirstPanel && __displayFirstPanel.scrollHeight > __displayFirstPanel.clientHeight) {\n'
+        + '    __displayFirstPanel.scrollTop = 4;\n'
+        + '  }\n'
+        + '}, 50);',
+      expectRed: /FINDING D3\/ink .*unscrolled=false .*panelTop=4/,
+    },
   ];
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: seventeen whole-tool browser runs plus
-  // a clean run is eighteen browser boots. The population is one shape and one
+}
+
+// ANCHORS ARE PART OF THE CORPUS, EVEN ON A PLATFORM THAT CANNOT RUN ITS
+// BROWSER DOOR. Windows correctly refuses the rendered verdict, but that used
+// to let three retired mutation anchors sit undetected until a Linux hand-run.
+// Read every plant site before the platform boundary: append-only plants prove
+// their target exists; replacement plants must match exactly once, the same
+// arming rule doorplant enforces before it boots Chromium.
+function preflightSelftestPlantSites(plants) {
+  let anchored = 0;
+  let appendOnly = 0;
+  let drifted = 0;
+  for (const [index, plant] of plants.entries()) {
+    let source;
+    try {
+      source = readFileSync(join(ROOT, plant.file), 'utf8');
+    } catch (err) {
+      fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.file} could not be read (${err.message}).`);
+      drifted++;
+      continue;
+    }
+    if (typeof plant.find === 'string') {
+      const matches = source.split(plant.find).length - 1;
+      if (matches !== 1) {
+        fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.file} contains the exact find bytes `
+          + `${matches} time(s), want exactly 1 (${plant.name}).`);
+        drifted++;
+      } else {
+        anchored++;
+      }
+    } else if (typeof plant.append === 'string') {
+      appendOnly++;
+    } else {
+      fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.name} has neither find/replace nor append bytes.`);
+      drifted++;
+    }
+  }
+  if (drifted) return false;
+  console.log(`  CAUGHT  selftest plant-site preflight: ${anchored} exact replacement anchor(s), `
+    + `${appendOnly} append target(s), 0 drifted — checked before the platform boundary.`);
+  return true;
+}
+
+async function selftest(plants = selftestPlants()) {
+  const { doorSelftest } = await import('./doorplant.mjs');
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: eighteen whole-tool browser runs plus
+  // a clean run is nineteen browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
