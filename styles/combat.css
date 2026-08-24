@@ -1263,8 +1263,17 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      the screen. Capped by width, height auto so it does not squash. */
   :root[data-layout='narrow'] .player-zone .combatant .sprite > img { max-width: 11rem; height: auto; }
   :root[data-layout='narrow'] .enemy-row { padding-block: 0.6rem; gap: 0.4rem; }
-  :root[data-layout='narrow'] .combatant .meters { width: 9.4rem; }
-  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; }
+  /* The complete combatant frame compacts as one component on phones. Intent,
+     art, name, meters and statuses therefore keep their order and stay inside
+     the flexible battlefield instead of painting beneath either fixed HUD. */
+  :root[data-layout='narrow'] .combatant { gap: 0; }
+  :root[data-layout='narrow'] .combatant .intent {
+    margin-bottom: 0; padding: 0 0.5rem; font-size: 1rem;
+  }
+  :root[data-layout='narrow'] .combatant .intent .ic { font-size: 1rem; }
+  :root[data-layout='narrow'] .combatant .nm { font-size: 0.95rem; }
+  :root[data-layout='narrow'] .combatant .meters { width: 8rem; gap: 0; }
+  :root[data-layout='narrow'] .statuses { max-width: 10rem; min-height: 0; gap: 0.15rem; }
   :root[data-layout='narrow'] .backdrop::after { width: 30rem; height: 30rem; }
 
   /* ---- hand + controls: the actual reflow ----

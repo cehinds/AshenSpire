@@ -1090,12 +1090,19 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (veilIsOpen()) return;
 
     // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
-    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['relics', 'relics'], ['stats', 'stats']]) {
+    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['stats', 'stats']]) {
       if (matchAction(ev, id)) {
         ev.preventDefault();
         if (onMenu) onMenu(tab);
         return;
       }
+    }
+    // Keep the established R / pad binding, but route it to the one equipment
+    // destination. The button owns the combat swap rules; this is only a click.
+    if (matchAction(ev, 'relics')) {
+      ev.preventDefault();
+      $('#combat-armoury').click();
+      return;
     }
 
     if (ev.key === 'Escape') {
@@ -1398,14 +1405,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
-  // MENU table. Note the label: the ⚒ glyph is "Armoury" on the map and
-  // "Armaments" here, and it was ALREADY context-specific before anyone asked.
+  // MENU table. Armoury is the canonical equipment name in every context.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Deck, relics, stats, settings and saving.'
+        ? 'Deck, stats, settings, controls and saving.'
         : 'Everywhere you can go from here.')}`);
   }
 

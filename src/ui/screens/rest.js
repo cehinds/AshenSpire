@@ -124,16 +124,21 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       <div class="class-row">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
-          <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          <div class="cp-body">
+            <h3>Rest</h3>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          </div>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
-          <h3>Smith</h3>
-          <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          <div class="cp-body">
+            <h3>Smith</h3>
+            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          </div>
         </div>
         <div class="class-pick" id="flask-reallocate">
           <div class="glyph">⚗</div>
+          <div class="cp-body">
           <h3>Reallocate Flask Charges</h3>
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
@@ -168,6 +173,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               </div>`).join('')}
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
+          </div>
         </div>
         <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
@@ -195,12 +201,14 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              data-cost="${level.cost}"
              data-short="${level.short}">
           <div class="glyph">✦</div>
+          <div class="cp-body">
           <h3>Level up</h3>
           <p>${level.capped
             ? `You have taken every level this climb allows (${level.levelsTaken}).`
             : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
           <div class="flask-allocation-controls">
             ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          </div>
           </div>
         </div>
       </div>

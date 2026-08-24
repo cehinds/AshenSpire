@@ -220,6 +220,12 @@ jobs:
       - name: Engine suite
         run: node tools/verdict.mjs -- node tests/run-node.mjs
 
+      - name: Fullscreen capability, enter, exit, and refusal states
+        run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs
+
+      - name: The fullscreen controller can fail (3 plants)
+        run: node tools/verdict.mjs -- node tools/fullscreen-control.mjs --selftest
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
@@ -372,6 +378,12 @@ jobs:
         # because this workflow bills by the minute and runs by hand; a runner
         # will be slower and that number is not a promise about one.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
+
+      - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
+        run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
+
+      - name: The mobile visual reach gate can fail (7 plants)
+        run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
       # -----------------------------------------------------------------------
       # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.

@@ -287,7 +287,6 @@ export function actPlate(actNumber, plates) {
 // is the screen that does.
 export const MENU_TABS = [
   { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'relics', label: 'Relics & Flasks', icon: '◆', tip: 'What you carry, and what each one does.' },
   { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
   { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
@@ -307,7 +306,6 @@ export const MENU = {
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
     { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     ...TAIL,
@@ -315,14 +313,13 @@ export const MENU = {
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
-    { act: 'armoury', icon: '⚒', label: 'Armaments', band: 'head', local: true,
-      tip: 'Your hand sets, mid-fight. Swapping costs energy.' },
+    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
+      tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
     { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
       tip: 'What is still to come, shuffled for viewing.' },
     { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
       tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     ...TAIL,
@@ -334,7 +331,6 @@ export const MENU = {
     { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
       tip: 'Back to the screen behind this one.' },
     { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'relics', band: 'body' },
     { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     { act: 'tab', tab: 'controls', band: 'body' },
