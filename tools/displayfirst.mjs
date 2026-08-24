@@ -599,7 +599,12 @@ const OPEN_INRUN = `(async () => {
   const m = [...document.querySelectorAll('button')].find((x) => /^\\s*(menu|☰)\\s*$/i.test(x.textContent) || x.id === 'menu' || /(^|\\s)menu(\\s|$)/i.test(x.className));
   if (!m) return { err: 'no menu button in combat' };
   m.click(); await new Promise((r) => setTimeout(r, 550));
-  const t = [...document.querySelectorAll('button')].find((x) => /^settings$/i.test(x.textContent.trim()));
+  // QuickNav includes the row's icon in its text, so use the public menu-act
+  // attributes rather than a whole-button text match. With QuickNav disabled,
+  // the menu opens the overlay directly and the overlay tab is the same
+  // player-facing next step.
+  const t = document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')
+    || document.querySelector('.ov-tab[data-member="settings"]');
   if (!t) return { err: 'no Settings tab in the overlay' };
   t.click(); await new Promise((r) => setTimeout(r, 550));
   const d = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Display');
