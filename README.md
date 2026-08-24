@@ -52,6 +52,9 @@ by `node tools/about-changelog.mjs`.
 
 ## UI component library
 
+**Quick references:** [Component catalog](docs/component-catalog.html) ·
+[Full structural refactor](docs/COMPONENT-MODEL-ARCHITECTURE.md)
+
 Use the [AshenSpire component catalog](docs/component-catalog.html) for the
 stable component IDs, model/factory names, renderers, reuse surfaces, and a
 distinct visual miniature for every component. Select any component card for its
