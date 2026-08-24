@@ -104,15 +104,16 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'Shrine cards lose the shared body wrapper and split into narrow sibling columns',
         file: 'src/ui/screens/rest.js',
-        find: '<div class="cp-body">\n            <h3>Rest</h3>',
-        replace: '<div>\n            <h3>Rest</h3>',
+        find: '<div class="cp-body">',
+        replace: '<div>',
+        all: true,
         expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
       },
       {
-        name: 'the narrow combatant frame regains its intrinsic gaps and crosses both HUD bands',
+        name: 'the narrow combatant frame gains a large vertical gap and crosses a HUD band',
         file: 'styles/combat.css',
         find: ":root[data-layout='narrow'] .combatant { gap: 0; }",
-        replace: ":root[data-layout='narrow'] .combatant { gap: 0.4rem; }",
+        replace: ":root[data-layout='narrow'] .combatant { gap: 4rem; }",
         expectRed: /frame paints under the HUD/,
       },
       {
