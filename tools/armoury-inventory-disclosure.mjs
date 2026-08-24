@@ -115,7 +115,7 @@ async function main() {
     })()`);
     check(arrival.inventory, 'no-selection Armoury has an Inventory region');
     check(arrival.inventoryCollapsed === '1' && arrival.inventoryExpanded === 'false', 'Inventory arrives folded');
-    check(/INVENTORY\s+\d+\s+items?/i.test(arrival.inventoryText), `Inventory header reports its item count (${JSON.stringify(arrival.inventoryText)})`);
+    check(/INVENTORY\s+[×x]\d+\s+items?/i.test(arrival.inventoryText), `Inventory header reports its item count (${JSON.stringify(arrival.inventoryText)})`);
     check(arrival.cards && arrival.cardsCollapsed === '1', 'Cards still arrive folded');
     check(arrival.order, 'Inventory is stacked directly above Cards');
     await screenshot('desktop-collapsed');

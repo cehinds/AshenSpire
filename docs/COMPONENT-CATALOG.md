@@ -32,6 +32,9 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
 | `item-tray` | `itemTrayModel` child | Belt view | Inventory | Shared horizontal tray behavior. |
 | `item-slot` | `componentModel` semantic ID | Item view | Inventory | Generic item slot contract. |
+| `folding-tray` | `trayModel` | `trayComponents.renderTray` | Armoury + future menus | Edge-aware disclosure composition. |
+| `tray-header` | `trayHeaderModel` child | `trayComponents.renderTray` | Folding Tray | Arrow, name, quantity, and optional sort action. |
+| `tray-content` | `trayContentModel` child | `trayComponents.renderTray` | Folding Tray | Pluggable item-model content host. |
 | `relic-tray` | `itemTrayModel` | Belt view | Map + Combat | Relics under SP. |
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
@@ -110,29 +113,33 @@ menu-overlay
 | `armoury-figure` | semantic child model | `equipment.js` + `assets.js` | Layered equipped character figure. |
 | `equipment-slot` | `equipmentSlotModel` | `armouryComponents.renderEquipmentSlot` | One named equipment socket. |
 | `equipment-set-cell` | `equipmentSetCellModel` | `armouryComponents.renderEquipmentSetCell` | One active, empty, or locked set cell. |
-| `armoury-inventory` | `armouryInventoryModel` | `armouryComponents.renderArmouryPanel` | Shared carried-item inventory. |
+| `armoury-inventory` | `armouryInventoryModel` | `equipment.js` inside `renderTray` | Shared carried-item inventory. |
 | `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Collapsed carried-item summary. |
 | `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded item art, tags, mods, and action. |
 | `equipment-comparison` | semantic child model | `equipmentReceipts.js` | Before/after equipment receipt. |
 | `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` | Attributes and derived resources. |
 | `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` | Live card rewrites from equipment. |
-| `armoury-region-header` | semantic child model | `equipment.js` | Fold control and region item count. |
+| `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 
 ```text
 armoury-overlay
 └─ armoury-panel
    ├─ armoury-header ── armoury-view-switcher
-   ├─ armoury-body
+   ├─ subject region (default: armoury-body)
    │  ├─ armoury-figure
    │  └─ equipment-slot × N ── equipment-set-cell × N
-   ├─ armoury-inventory
-   │  ├─ armoury-region-header
-   │  ├─ inventory-item-card × N
-   │  ├─ inventory-detail-card
-   │  └─ equipment-comparison
-   ├─ armoury-stats-panel
-   └─ armoury-card-strip
+   ├─ folding-tray × 3
+   │  ├─ tray-header
+   │  └─ tray-content
+   │     └─ one context region component
+   └─ context regions: armoury-inventory / armoury-stats-panel / armoury-card-strip
+      └─ armoury-inventory may contain inventory-item-card × N,
+         inventory-detail-card, and equipment-comparison
 ```
+
+The three current Armoury trays are Inventory, Cards, and Stats. They share the
+same `folding-tray` shell; their content components remain independent. See the
+[four-edge ASCII and interaction contract](./TRAY-COMPONENTS.md).
 
 ### Combatant card detail
 

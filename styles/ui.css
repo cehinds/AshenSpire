@@ -1,5 +1,11 @@
 /* styles/ui.css — tooltips, cards, modals, screens shared chrome */
 
+:root {
+  --ui-section-control-gap: 0.6rem;
+  --ui-section-label-size: 1.2rem;
+  --ui-section-letter-spacing: 0.08em;
+}
+
 /* ---------- tooltip ---------- */
 /* --place-gap: THE DISTANCE FROM THE ANCHOR, AND THIS IS ITS ONE HOME.
    src/ui/fx.js placeAnchored() reads it from here through getComputedStyle, and
@@ -212,7 +218,8 @@
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
-  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0; font-size: 1.2rem; letter-spacing: 0.05em;
+  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0;
+  font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
   /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
      These six tabs measured 20.3-35.8 DEVICE px against the 44 a finger wants,
@@ -2300,8 +2307,54 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .ep-equip.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ep-equip.locked { opacity: 0.45; cursor: not-allowed; }
 
-.armoury-inventory,
-.armoury-strip { border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem; }
+.armoury-trays { display: contents; }
+.armoury-subject { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+.folding-tray {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem;
+}
+.tray-header { display: flex; align-items: center; gap: var(--ui-section-control-gap); min-width: 0; }
+.tray-fold {
+  display: flex; align-items: center; gap: var(--ui-section-control-gap); flex: 1 1 auto;
+  min-width: 0; min-height: var(--tap-floor); border: 0; padding: 0;
+  background: transparent; color: var(--gold); cursor: pointer; text-align: left;
+  font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
+}
+.tray-content { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; }
+.tray-content[hidden] { display: none !important; }
+.tray-sort {
+  flex: 0 0 var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  border: 1px solid var(--line-soft); border-radius: 0.65rem; background: transparent;
+  color: var(--gold); cursor: pointer; font: inherit;
+}
+.tray-sort:hover, .tray-sort:focus-visible { border-color: var(--gold); color: var(--parchment); }
+.tray-sort:disabled { opacity: 0.45; cursor: not-allowed; }
+.tray-header .tray-fold { min-width: 0; }
+.tray-header .tray-count { margin-left: auto; white-space: nowrap; }
+
+/* Edge-aware action grammar. A closed caret points inward, where the tray will
+   open. An open caret points back to its anchored edge, where it will fold. */
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-fold,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-fold {
+  flex-direction: column; justify-content: flex-start; width: var(--tap-floor); height: 100%;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'],
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] {
+  align-self: stretch; flex: 0 0 var(--tap-floor); width: var(--tap-floor); height: 100%;
+  padding: 0; border-top: 0;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='0'],
+.folding-tray[data-tray-edge='right'][data-collapsed='0'] {
+  align-self: stretch; width: 100%; height: 100%;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-title,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-count,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-count {
+  margin-left: 0; writing-mode: vertical-rl;
+}
 .equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
 .equip-card-with-count { position: relative; }
 .equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
@@ -2448,7 +2501,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .region-fold:hover, .region-fold:focus-visible { color: var(--gold); }
 .rf-caret { font-size: 1.1rem; }
-.rf-label { font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.rf-label { font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing); text-transform: uppercase; }
 /* A folded pane still SAYS how much is inside it — a pane that folds to a bare
    arrow is decoration that decorates nothing, and the player cannot tell an
    empty strip from a hidden one. */
@@ -2460,7 +2513,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    has to assemble, and the count is the half that stops looking like it belongs
    to the label. Sat beside its label it is one phrase — "CARDS, 3 cards" — at
    every width, and the hit area is untouched. ~~ */
-.rf-count { margin-left: 0.9rem; font-size: 1.05rem; color: var(--muted); }
+.rf-count { margin-left: var(--ui-section-control-gap); font-size: var(--ui-section-label-size); color: var(--muted); }
 /* The fold itself: everything but the header goes, and the pane stops competing
    for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
    is handed to the subject by the layout that was already there. */
@@ -2679,10 +2732,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Navigation rows use the same text-independent ergonomic floor, then grow
    intrinsically when their content needs more room. */
 .qn-panel .qn-row {
-  display: flex; align-items: center; gap: 1.2rem; width: 100%;
+  display: flex; align-items: center; gap: var(--ui-section-control-gap); width: 100%;
   min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;
   background: transparent; border: 0; border-radius: 0; color: inherit;
-  font-family: inherit; font-size: 1.4rem; cursor: pointer;
+  font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing); cursor: pointer;
 }
 .qn-panel .qn-row:hover { background: var(--bg-raise); }
 .qn-panel .qn-row.on { background: var(--bg-raise); color: var(--gold); }

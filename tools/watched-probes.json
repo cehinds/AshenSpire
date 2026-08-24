@@ -408,9 +408,9 @@
   {
    "id": "A4",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (btn.className = 'region-fold'), aria-expanded",
+   "read": "src/ui/components/trayComponents.js (shared Tray fold control), aria-expanded",
    "anchors": [
-    "region-fold"
+    "tray-fold region-fold"
    ],
    "screen": "the Armoury › the CARDS pane's fold",
    "reach": [
