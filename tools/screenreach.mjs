@@ -192,7 +192,9 @@ const SETTINGS_CYCLE = `(async () => {
   }
   const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
-  tab('settings')?.click(); await pause();
+  const quickSettings = document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]');
+  if (quickSettings) quickSettings.click(); else tab('settings')?.click();
+  await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
   const described = fullscreen?.getAttribute('aria-describedby');
   window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
