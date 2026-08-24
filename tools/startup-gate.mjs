@@ -127,6 +127,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
+  if (code === 0) console.log('startup-gate-selftest: OK — 9 plants, 9 caught');
   process.exit(code);
 }
 
