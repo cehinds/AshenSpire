@@ -279,8 +279,12 @@ export const balance = {
     // a future surface or denser theme does not require another renderer.
     hudQuickSettings: {
       places: ['title', 'map', 'combat'],
-      edgeGapPx: 8,
-      stackGapPx: 4,
+      edgeGapPx: 4,
+      stackGapPx: 0,
+      labelFontPx: 10,
+      glyphSizePx: 14,
+      stateDotPx: 5,
+      showCardBackground: false,
       showLabels: true,
     },
     // Shrine options default to one vertical list. `grid` preserves the
