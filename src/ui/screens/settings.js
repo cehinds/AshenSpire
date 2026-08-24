@@ -11,7 +11,7 @@ import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderProfileSection } from './profileArchive.js';
 import { renderAboutSection } from './about.js';
-import { AUDIO_DEFAULTS } from '../audio.js';
+import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
@@ -228,10 +228,12 @@ const ROWS = [
   { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'switcher',
-    choices: ['mirror', 'switcher'], label: 'Quick menu style',
-    note: 'MIRROR keeps the tab row and adds the context menu. SWITCHER replaces the tab row with one compact button on narrow screens. Switcher is the phone-friendly default.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
+    choices: ['mirror', 'switcher'], label: 'Quick menu',
+    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. Existing stored OFF still keeps the direct-to-Deck route; fresh or invalid values use MIRROR.' },
 
+  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
+    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
@@ -526,7 +528,28 @@ export function categoryTip(cat) {
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
+  if (row.resolve) return row.resolve(settings);
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+export function musicEnabledCondition(settings = {}) {
+  if (!resolveMusicEnabled(settings)) return 'Music off · sound effects unchanged.';
+  if (settings.muteAudio === true) return 'Music on · all audio muted.';
+  const volume = typeof settings.musicVolume === 'number'
+    ? settings.musicVolume
+    : AUDIO_DEFAULTS.musicVolume;
+  return `Music on · volume ${volume}%.`;
+}
+
+function rowNote(settings, row) {
+  return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+function refreshConditionNotes(container, settings) {
+  container.querySelectorAll('[data-setting-condition]').forEach((node) => {
+    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
+    if (row) node.textContent = rowNote(settings, row);
+  });
 }
 
 /**
@@ -559,7 +582,14 @@ export function settingOn(settings, key) {
 }
 
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const help = `<details class="set-help"><summary>Details</summary><p class="set-note">${r.note}</p></details>`;
+  const note = rowNote(settings, r);
+  const condition = typeof r.note === 'function'
+    ? ` data-setting-condition="${r.key}" aria-live="polite"`
+    : '';
+  const status = r.type === 'action'
+    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
+    : condition;
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
@@ -650,8 +680,9 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // Do not draw a convincing dead switch on browsers (notably iPhone Safari)
   // that expose no document fullscreen API.
   if (r.type === 'action' && !fullscreenCapability(doc).supported) {
+    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
     return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
-      <div><b>${r.label}</b>${help}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
+      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
       <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
         <span class="knob"></span>
       </button>
@@ -1092,7 +1123,7 @@ export async function toggleFullscreen(doc = globalThis.document) {
   } catch (error) {
     return {
       ok: false,
-      reason: 'The browser refused fullscreen. Try again from its own page menu.',
+      reason: 'refused',
       error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
     };
   }
@@ -1241,6 +1272,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // `settings` object: the restore replaced the profile, so the settings
         // this screen was built from are the OLD ones.
         const restored = (saves.loadMeta().settings) || {};
+        for (const key of Object.keys(settings)) delete settings[key];
+        Object.assign(settings, restored);
         if (onProfileRestored) onProfileRestored(restored);
       },
     });
@@ -1305,6 +1338,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (out) out.textContent = val;
       settings[slider.dataset.key] = val;
       onChange({ [slider.dataset.key]: val });
+      refreshConditionNotes(container, settings);
     });
   });
 
@@ -1355,6 +1389,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       btn.setAttribute('aria-checked', String(now));
       settings[btn.dataset.key] = now;
       onChange({ [btn.dataset.key]: now });
+      refreshConditionNotes(container, settings);
     });
   });
   }; // ---- end wire() ---------------------------------------------------

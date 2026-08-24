@@ -152,6 +152,7 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  { name: 'components', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
     name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
     drive: `document.querySelector('.cz-stats').open = true`,
@@ -308,13 +309,10 @@ const SCREENS = [
     drive: `document.querySelector('#combat-armoury').click()`,
   },
   {
-    // The quicknav experiment defaults to 'off' (quicknav.js `let mode = 'off'`),
-    // so #combat-menu opens the TABS OVERLAY directly (onMenu('deck') →
-    // showOverlay, components/overlay.js `.overlay-tabs`). My first two
-    // landmarks here were both wrong — `.menu-tabs` and then `.qn-panel`,
-    // neither of which the shipped default path ever renders. Measured, not
-    // guessed: this is the surface Law 3's bumpers ride.
-    name: 'menu-tabs', query: '?shot=combat', landmark: '.overlay-tabs',
+    // Mirror is the shipped default, so #combat-menu opens the promoted Quick
+    // Menu. Explicit legacy `off` still routes directly to the Deck overlay,
+    // but a default release capture must follow the default player door.
+    name: 'quick-menu', query: '?shot=combat', landmark: '.qn-panel',
     drive: `document.querySelector('#combat-menu').click()`,
   },
   {

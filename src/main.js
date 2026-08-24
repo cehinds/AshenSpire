@@ -44,7 +44,7 @@ import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } from './ui/screens/settings.js';
+import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
@@ -56,7 +56,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled } from './ui/audio.js';
 import { installHoldBeat } from './ui/components/holdbeat.js';
 import { updateUprightGate } from './ui/components/upright.js';
 import { surfaceReport } from './ui/surfaces.js';
@@ -592,7 +592,7 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
-  // The quick-menu experiment. Handed to the component the same way input.js is
+  // The quick-menu preference. Handed to the component the same way input.js is
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
@@ -618,7 +618,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
-  audio.setVolumes(settings);
+  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -650,11 +650,8 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
-  applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
+  applyDisplaySettings(settings); // display + the complete resolved audio bag
   applyUiScale(settings);         // UI zoom / Auto fit
-  audio.setVolumes(settings);     // music, sfx, mute
-  audio.configureMusic({ folder: settings.musicFolder || '' });
-  lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
 }
@@ -667,6 +664,52 @@ function applyRestoredSettings(restored) {
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
   'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+
+// One persistence/apply owner for title Settings, in-run Settings, and the
+// Quick Menu. The launcher receives this capability; it never writes profile
+// state itself.
+function commitSettingsChange(changed) {
+  const meta = saves.loadMeta();
+  Object.assign(meta.settings, changed);
+  const res = saves.saveMeta(meta);
+  applyDisplaySettings(meta.settings);
+  remountMapIfShowing(changed);
+  if (changed.bindings) setBindings(changed.bindings);
+  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  return res;
+}
+
+const quickMenuControls = {
+  fullscreen: {
+    read: () => {
+      const capability = fullscreenCapability(document);
+      const checked = isFullscreen(document);
+      return {
+        checked,
+        disabled: !capability.supported,
+        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
+      };
+    },
+    activate: async () => {
+      const result = await toggleFullscreen(document);
+      return result.ok || result.reason === 'unsupported'
+        ? {}
+        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
+    },
+  },
+  music: {
+    read: () => {
+      const settings = saves.loadMeta().settings || {};
+      return { checked: resolveMusicEnabled(settings), condition: musicEnabledCondition(settings) };
+    },
+    activate: () => {
+      const settings = saves.loadMeta().settings || {};
+      commitSettingsChange({ musicEnabled: !resolveMusicEnabled(settings) });
+      return {};
+    },
+  },
+};
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -947,22 +990,7 @@ function showSettings() {
     // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
     // save keeps the old profile's contrast, motion and text size.
     onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      // saveMeta refuses while the profile is quarantined — correctly, it is
-      // protecting the original bytes. Nobody read that {ok:false}, so a player
-      // who pressed "Not now" and then turned the music down got a silent
-      // no-op: the change applies for this session and does not persist, and
-      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
-      // saying so is the whole fix.
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    onChange: commitSettingsChange,
   });
 }
 
@@ -1050,18 +1078,9 @@ function showOverlay(initialTab = 'deck') {
     saves,
     onProfileRestored: (restored) => applyRestoredSettings(restored),
     onSettingsChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (changed.bindings) setBindings(changed.bindings);
-      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
+      commitSettingsChange(changed);
     },
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1252,6 +1271,7 @@ function showMap() {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
+    quickControls: quickMenuControls,
   });
 }
 
@@ -1464,6 +1484,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       persist();
       showTitle();
     },
+    quickControls: quickMenuControls,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();

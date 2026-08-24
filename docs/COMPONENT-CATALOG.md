@@ -136,8 +136,8 @@ character-disclosure
 | Component ID | Model | Renderer | Purpose |
 |---|---|---|---|
 | `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Contextual dropdown opened from the HUD. |
-| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Active Quick Menu variant/status caption. |
-| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination or action. |
+| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Stable production Quick Menu caption. |
+| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination, action, or stateful switch with live condition copy. |
 | `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | Full in-run tabbed menu. |
 | `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |

@@ -5190,7 +5190,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fs.label, 'Fullscreen', 'same label');
 
     const quick = display.find((r) => r.key === 'quickNav');
-    eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');
+    eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
     eq(quick.choices.join(','), 'mirror,switcher', 'Quick menu exposes only Mirror or Switcher');
     eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
       'the internal row order is not exposed as a redundant second setting');

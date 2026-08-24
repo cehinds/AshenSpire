@@ -3415,7 +3415,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
-/* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
+/* ---------- ☰ quick menu -------------------------------------------------- */
 /* A `.modal-veil` on purpose and not for the dimming: input.js's scopeRoot()
    scopes the focus cursor to the topmost veil, so a D-pad drives this list with
    no new input code (Law 3 clause 6 — a vertical list takes the cursor, and the
@@ -3450,6 +3450,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .qn-panel .qn-ic { width: 2rem; flex-shrink: 0; text-align: center; color: var(--muted); }
 .qn-panel .qn-row.on .qn-ic, .qn-panel .qn-row.danger .qn-ic { color: inherit; }
 .qn-panel .qn-label { flex: 1; }
+.qn-panel .qn-condition { color: var(--muted); font-size: 1rem; line-height: 1.2; text-align: right; }
+.qn-panel .qn-state { min-width: 2.6rem; color: var(--muted); font-size: 1rem; font-weight: 700; text-align: right; }
+.qn-panel .qn-row[role='switch'][aria-checked='true'] .qn-state { color: var(--gold); }
+.qn-panel .qn-row:disabled { cursor: not-allowed; opacity: 0.58; }
 .qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
 .qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
 
@@ -6507,7 +6511,7 @@ const { mountEvent } = require("src/ui/screens/event.js");
 const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
-const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions } = require("src/ui/screens/settings.js");
+const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } = require("src/ui/screens/settings.js");
 const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
@@ -6519,7 +6523,7 @@ const { mountCoop } = require("src/ui/screens/coop.js");
 const { lanInfo } = require("src/net/lan.js");
 const { setAnimSpeed, anchorLocalBox, clampBox, floatNum: fxFloatNum } = require("src/ui/fx.js");
 const { sfx } = require("src/ui/sfx.js");
-const { initAudio } = require("src/ui/audio.js");
+const { initAudio, resolveMusicEnabled } = require("src/ui/audio.js");
 const { installHoldBeat } = require("src/ui/components/holdbeat.js");
 const { updateUprightGate } = require("src/ui/components/upright.js");
 const { surfaceReport } = require("src/ui/surfaces.js");
@@ -7055,7 +7059,7 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
-  // The quick-menu experiment. Handed to the component the same way input.js is
+  // The quick-menu preference. Handed to the component the same way input.js is
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
@@ -7081,7 +7085,7 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(settings.animSpeed || 'normal');
-  audio.setVolumes(settings);
+  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak).
   const folder = settings.musicFolder || '';
@@ -7113,11 +7117,8 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
-  applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
+  applyDisplaySettings(settings); // display + the complete resolved audio bag
   applyUiScale(settings);         // UI zoom / Auto fit
-  audio.setVolumes(settings);     // music, sfx, mute
-  audio.configureMusic({ folder: settings.musicFolder || '' });
-  lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
 }
@@ -7130,6 +7131,52 @@ function applyRestoredSettings(restored) {
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
   'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+
+// One persistence/apply owner for title Settings, in-run Settings, and the
+// Quick Menu. The launcher receives this capability; it never writes profile
+// state itself.
+function commitSettingsChange(changed) {
+  const meta = saves.loadMeta();
+  Object.assign(meta.settings, changed);
+  const res = saves.saveMeta(meta);
+  applyDisplaySettings(meta.settings);
+  remountMapIfShowing(changed);
+  if (changed.bindings) setBindings(changed.bindings);
+  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  return res;
+}
+
+const quickMenuControls = {
+  fullscreen: {
+    read: () => {
+      const capability = fullscreenCapability(document);
+      const checked = isFullscreen(document);
+      return {
+        checked,
+        disabled: !capability.supported,
+        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
+      };
+    },
+    activate: async () => {
+      const result = await toggleFullscreen(document);
+      return result.ok || result.reason === 'unsupported'
+        ? {}
+        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
+    },
+  },
+  music: {
+    read: () => {
+      const settings = saves.loadMeta().settings || {};
+      return { checked: resolveMusicEnabled(settings), condition: musicEnabledCondition(settings) };
+    },
+    activate: () => {
+      const settings = saves.loadMeta().settings || {};
+      commitSettingsChange({ musicEnabled: !resolveMusicEnabled(settings) });
+      return {};
+    },
+  },
+};
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -7410,22 +7457,7 @@ function showSettings() {
     // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
     // save keeps the old profile's contrast, motion and text size.
     onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      // saveMeta refuses while the profile is quarantined — correctly, it is
-      // protecting the original bytes. Nobody read that {ok:false}, so a player
-      // who pressed "Not now" and then turned the music down got a silent
-      // no-op: the change applies for this session and does not persist, and
-      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
-      // saying so is the whole fix.
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    onChange: commitSettingsChange,
   });
 }
 
@@ -7513,18 +7545,9 @@ function showOverlay(initialTab = 'deck') {
     saves,
     onProfileRestored: (restored) => applyRestoredSettings(restored),
     onSettingsChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (changed.bindings) setBindings(changed.bindings);
-      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
+      commitSettingsChange(changed);
     },
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -7715,6 +7738,7 @@ function showMap() {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
+    quickControls: quickMenuControls,
   });
 }
 
@@ -7927,6 +7951,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       persist();
       showTitle();
     },
+    quickControls: quickMenuControls,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -9595,7 +9620,7 @@ const balance = {
     // The beds carry their own gain staging on top of this bus (music.js,
     // gains 0.34–0.6), so 50 is clearly audible from first boot without
     // crowding the feedback layer.
-    audio: { musicVolume: 50, sfxVolume: 75 },
+    audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------
@@ -38511,8 +38536,16 @@ const TAIL = [
     tip: 'Save, then back to the title. Continue picks the climb up again.' },
 ];
 
+const QUICK_CONTROLS = [
+  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'head', control: 'switch',
+    tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
+  { act: 'music', icon: '♫', label: 'Music', band: 'head', control: 'switch',
+    tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
+];
+
 const MENU = {
   map: [
+    ...QUICK_CONTROLS,
     { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
       tip: 'Weapons and armour — swap between fights for free.' },
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
@@ -38525,6 +38558,7 @@ const MENU = {
   // Draw and discard are real destinations that exist ONLY here (combat.js's
   // pile modals) — the demonstration that context-specific means something.
   combat: [
+    ...QUICK_CONTROLS,
     { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
       tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
     { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
@@ -38540,6 +38574,7 @@ const MENU = {
   // marked. Controls earns a row here (it is a tab) and not on map/combat, where
   // it is one click away once you land.
   overlay: [
+    ...QUICK_CONTROLS,
     { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
       tip: 'Back to the screen behind this one.' },
     { act: 'tab', tab: 'deck', band: 'body' },
@@ -38577,7 +38612,7 @@ const BANDS = ['head', 'body', 'tail'];
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'save', 'quit', 'close'];
+const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'fullscreen', 'music', 'save', 'quit', 'close'];
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -38624,8 +38659,9 @@ function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, curr
   const ordered = fixedEnds
     ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
     : [
-        ...src.filter((r) => r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.local && r.band !== 'tail'),
+        ...src.filter((r) => r.control && r.band !== 'tail'),
+        ...src.filter((r) => !r.control && r.local && r.band !== 'tail'),
+        ...src.filter((r) => !r.control && !r.local && r.band !== 'tail'),
         ...src.filter((r) => r.band === 'tail'),
       ];
   let prevBand = null;
@@ -38643,6 +38679,7 @@ function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, curr
       tone: r.tone || '',
       badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
       on: !!(current && r.act === 'tab' && r.tab === current),
+      control: r.control || '',
       sep,
     };
   });
@@ -39083,7 +39120,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'bd5547bb6d';
+const SOURCE = 'fdba772274';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39117,7 +39154,7 @@ const SOURCE = 'bd5547bb6d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1257';
+const ORDINAL = '1261';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46006,7 +46043,7 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury, quickControls = {} }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -46234,7 +46271,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     toggleLegend();
   });
 
-  // ☰ — today it opens the overlay at Deck; under the quick-nav experiment it
+  // ☰ — legacy Off opens the overlay at Deck; Mirror/Switcher open the shared
   // opens the list of everywhere this screen can go. Every row below calls a
   // handler that already exists, so nothing here decides navigation state.
   const menuBtn = app.querySelector('#open-menu');
@@ -46245,6 +46282,7 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
+        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { armoury: () => onArmoury() } : {}),
@@ -46583,22 +46621,27 @@ const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { quickMenuPanelModel } = require("src/ui/models/MenuModels.js");
 const { renderQuickMenu } = require("src/ui/components/menuComponents.js");
 
-// The player's compact pause-menu presentation, set from applyDisplaySettings
-// (main.js) the same way input.js is handed its bindings — so screens never
-// have to thread `meta` down just to ask which presentation is running.
-let mode = 'switcher'; // 'mirror' | 'switcher'
+// The player's presentation choice, set from applyDisplaySettings (main.js) the same
+// way input.js is handed its bindings — so screens never have to thread `meta`
+// down just to ask which variant is running.
+let mode = 'mirror'; // 'off' | 'mirror' | 'switcher'
 let fixedEnds = true;
+
+function resolveQuickNavMode(value) {
+  return ['off', 'mirror', 'switcher'].includes(value) ? value : 'mirror';
+}
 
 /** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
 function setQuickNav(opts) {
-  mode = opts && opts.mode === 'mirror' ? 'mirror' : 'switcher';
-  if (opts && opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  mode = resolveQuickNavMode(opts?.mode);
+  if (opts?.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
+    if (mode === 'off') closeQuickNav();
   }
 }
 
-/** 'mirror' | 'switcher' — the selected quick-navigation composition. */
+/** 'off' | 'mirror' | 'switcher' — the current quick-menu presentation. */
 function quickNavMode() {
   return mode;
 }
@@ -46611,20 +46654,36 @@ function quickNavFolds() {
     && document.documentElement.getAttribute('data-layout') === 'narrow';
 }
 
-const MODE_NAMES = { mirror: 'Mirror', switcher: 'Switcher' };
-
 let openVeil = null;
+let openAnchor = null;
 let escHandler = null;
+let fullscreenSync = null;
 
-function closeQuickNav() {
+function closeQuickNav({ restoreFocus = true } = {}) {
+  const anchor = openAnchor;
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
     hideTooltip();
   }
+  if (anchor) anchor.setAttribute('aria-expanded', 'false');
+  openAnchor = null;
   if (escHandler) {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
+  }
+  if (fullscreenSync) {
+    for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
+      document.removeEventListener(type, fullscreenSync);
+    }
+    fullscreenSync = null;
+  }
+  if (restoreFocus && anchor?.isConnected) {
+    queueMicrotask(() => {
+      const staysInModal = !!anchor.closest('.modal-veil');
+      const replacementModal = document.querySelector('.modal-veil, .armoury-overlay');
+      if (anchor.isConnected && (staysInModal || !replacementModal)) anchor.focus();
+    });
   }
 }
 
@@ -46659,29 +46718,39 @@ function saveAction(onSave) {
  * does that thing. An act with no handler is dropped rather than drawn dead.
  * Returns the panel element, or null when there is no anchor/action to show.
  */
-function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
-  if (!anchorEl) return null;
+function openQuickNav(anchorEl, context, { actions = {}, controls = {}, counts = {}, current = null, hasSave = true } = {}) {
+  if (mode === 'off' || !anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });
-  closeQuickNav();
+  closeQuickNav({ restoreFocus: false });
 
   const rows = menuRows(context, { fixedEnds, hasSave, counts, current })
-    .filter((r) => typeof actions[r.act] === 'function');
+    .filter((r) => typeof actions[r.act] === 'function' || typeof controls[r.act]?.activate === 'function')
+    .map((r) => {
+      const state = controls[r.act]?.read?.() || {};
+      return { ...r, checked: !!state.checked, disabled: !!state.disabled, condition: state.condition || '' };
+    });
   if (!rows.length) return null;
 
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: `Quick menu · ${MODE_NAMES[mode]}`,
+    caption: 'Quick menu',
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {
-    onActivate: (row, button) => {
-      const inPlace = actions[row.act](row.tab, button);
+    onActivate: async (row, button) => {
+      const handler = controls[row.act]?.activate || actions[row.act];
+      const result = await handler(row.tab, button);
+      if (controls[row.act]) syncControlRows(panel, controls, row.act, result?.announcement || '');
+      const inPlace = controls[row.act] ? 'keep' : result;
       if (inPlace !== 'keep') closeQuickNav();
     },
   });
   document.body.appendChild(veil);
   openVeil = veil;
+  openAnchor = anchorEl;
+  anchorEl.setAttribute('aria-haspopup', 'menu');
+  anchorEl.setAttribute('aria-expanded', 'true');
   position(anchorEl, panel);
 
   veil.addEventListener('click', (ev) => {
@@ -46696,12 +46765,32 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
   };
   addEventListener('keydown', escHandler, true);
 
+  fullscreenSync = () => syncControlRows(panel, controls);
+  for (const type of ['fullscreenchange', 'webkitfullscreenchange', 'fullscreenerror', 'webkitfullscreenerror']) {
+    document.addEventListener(type, fullscreenSync);
+  }
+
   // Keyboard/pad players land on the list rather than nowhere — the same smart
   // default openOverlay() uses, and the reason the vertical list needs no new
   // input code: it IS the focus scope while it is open.
   if (isEngaged()) setTimeout(() => focusFirst('.qn-row.on') || focusFirst('.qn-row'), 0);
 
   return panel;
+}
+
+function syncControlRows(panel, controls, announcedAct = '', announcement = '') {
+  for (const [act, control] of Object.entries(controls)) {
+    const button = panel.querySelector(`.qn-row[data-act="${act}"]`);
+    if (!button || typeof control.read !== 'function') continue;
+    const state = control.read() || {};
+    button.setAttribute('aria-checked', String(!!state.checked));
+    button.disabled = !!state.disabled;
+    button.setAttribute('aria-disabled', String(!!state.disabled));
+    const condition = button.querySelector('.qn-condition');
+    if (condition) condition.textContent = act === announcedAct && announcement ? announcement : (state.condition || '');
+    const visible = button.querySelector('.qn-state');
+    if (visible) visible.textContent = state.checked ? 'ON' : 'OFF';
+  }
 }
 
 // Right-aligned under its button, then bounded regardless — see the header for
@@ -46731,7 +46820,7 @@ function position(anchorEl, panel) {
 }
 
 
-Object.assign(module.exports, { setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, openQuickNav });
+Object.assign(module.exports, { resolveQuickNavMode, setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, openQuickNav });
 
 },
 "src/ui/models/MenuModels.js": function (module, exports, require) {
@@ -46758,9 +46847,13 @@ function quickMenuRowModel(row) {
       tip: row.tip || '',
       tone: row.tone || '',
       active: !!row.on,
+      control: row.control || '',
+      checked: !!row.checked,
+      disabled: !!row.disabled,
+      condition: row.condition || '',
       separatorBefore: !!row.sep,
     },
-    accessibility: { role: 'menuitem', label: row.label || row.act },
+    accessibility: { role: row.control === 'switch' ? 'switch' : 'menuitem', label: row.label || row.act },
     behaviors: [behaviorModel(`activate-${row.act}`, {
       event: 'click',
       command: 'activate-menu-row',
@@ -46855,8 +46948,15 @@ function renderQuickMenu(model, { onActivate }) {
     button.className = `qn-row${row.tone ? ` ${row.tone}` : ''}${row.active ? ' on' : ''}`;
     button.dataset.act = row.act;
     button.dataset.member = row.act;
+    button.setAttribute('role', rowModel.accessibility.role);
+    if (row.control === 'switch') button.setAttribute('aria-checked', String(row.checked));
+    if (row.disabled) {
+      button.disabled = true;
+      button.setAttribute('aria-disabled', 'true');
+    }
     if (row.tab) button.dataset.tab = row.tab;
     button.innerHTML = `<span class="qn-ic">${esc(row.icon)}</span><span class="qn-label">${esc(row.label)}</span>`
+      + (row.control === 'switch' ? `<span class="qn-condition" aria-live="polite">${esc(row.condition)}</span><span class="qn-state">${row.checked ? 'ON' : 'OFF'}</span>` : '')
       + (row.badge ? `<span class="qn-badge">${esc(row.badge)}</span>` : '');
     markUiComponent(button, rowModel.component, rowModel.variant);
     if (row.tip) attachTooltip(button, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
@@ -46883,8 +46983,8 @@ function renderMenuOverlay(model) {
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
           <div class="overlay-settings-actions" data-settings-quick-actions hidden>
-            <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
-            <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" aria-pressed="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
+            <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" role="switch" aria-checked="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
+            <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" role="switch" aria-checked="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
             <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>
             <button class="subtle danger ov-quick-action" id="ov-exit-quick" type="button" title="Save and quit the game" aria-label="Save and quit the game"><span aria-hidden="true" data-exit-icon>⏻</span><span class="ov-qa-label" data-exit-label>Quit</span></button>
           </div>
@@ -49199,7 +49299,7 @@ const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { combatantFrame } = require("src/ui/components/combatantFrame.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 
-function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
+function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -50542,7 +50642,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   $('.hand-next').addEventListener('click', () => stepHand(1));
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   //
-  // Under the quick-nav experiment ☰ opens the list instead. Combat is the
+  // Under Mirror/Switcher ☰ opens the shared list instead. Combat is the
   // screen that MAKES "context-specific" mean something: the draw and discard
   // piles are real destinations that exist nowhere else, and today the only way
   // to them is two small corner targets a thumb has to find.
@@ -50554,6 +50654,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
         hasSave: !!(onSave || onQuit),
+        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
           armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
@@ -52892,7 +52993,7 @@ const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { setTabRing, hasTabRing } = require("src/ui/input.js");
 const { renderProfileSection } = require("src/ui/screens/profileArchive.js");
 const { renderAboutSection } = require("src/ui/screens/about.js");
-const { AUDIO_DEFAULTS } = require("src/ui/audio.js");
+const { AUDIO_DEFAULTS, resolveMusicEnabled } = require("src/ui/audio.js");
 const { balance } = require("src/content/balance.js");
 const { derivedStatRules } = require("src/content/derivedStats.js");
 const { ZOOM_STEPS, MAP_ZOOM_DEFAULT } = require("src/model/mapview.js");
@@ -53109,10 +53210,12 @@ const ROWS = [
   { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'switcher',
-    choices: ['mirror', 'switcher'], label: 'Quick menu style',
-    note: 'MIRROR keeps the tab row and adds the context menu. SWITCHER replaces the tab row with one compact button on narrow screens. Switcher is the phone-friendly default.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
+    choices: ['mirror', 'switcher'], label: 'Quick menu',
+    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. Existing stored OFF still keeps the direct-to-Deck route; fresh or invalid values use MIRROR.' },
 
+  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
+    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
@@ -53407,7 +53510,28 @@ function categoryTip(cat) {
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
+  if (row.resolve) return row.resolve(settings);
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
+}
+
+function musicEnabledCondition(settings = {}) {
+  if (!resolveMusicEnabled(settings)) return 'Music off · sound effects unchanged.';
+  if (settings.muteAudio === true) return 'Music on · all audio muted.';
+  const volume = typeof settings.musicVolume === 'number'
+    ? settings.musicVolume
+    : AUDIO_DEFAULTS.musicVolume;
+  return `Music on · volume ${volume}%.`;
+}
+
+function rowNote(settings, row) {
+  return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+function refreshConditionNotes(container, settings) {
+  container.querySelectorAll('[data-setting-condition]').forEach((node) => {
+    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
+    if (row) node.textContent = rowNote(settings, row);
+  });
 }
 
 /**
@@ -53440,7 +53564,14 @@ function settingOn(settings, key) {
 }
 
 function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const help = `<details class="set-help"><summary>Details</summary><p class="set-note">${r.note}</p></details>`;
+  const note = rowNote(settings, r);
+  const condition = typeof r.note === 'function'
+    ? ` data-setting-condition="${r.key}" aria-live="polite"`
+    : '';
+  const status = r.type === 'action'
+    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
+    : condition;
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
@@ -53531,8 +53662,9 @@ function settingsRowHtml(settings, r, doc = globalThis.document) {
   // Do not draw a convincing dead switch on browsers (notably iPhone Safari)
   // that expose no document fullscreen API.
   if (r.type === 'action' && !fullscreenCapability(doc).supported) {
+    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
     return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
-      <div><b>${r.label}</b>${help}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
+      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
       <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
         <span class="knob"></span>
       </button>
@@ -53973,7 +54105,7 @@ async function toggleFullscreen(doc = globalThis.document) {
   } catch (error) {
     return {
       ok: false,
-      reason: 'The browser refused fullscreen. Try again from its own page menu.',
+      reason: 'refused',
       error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
     };
   }
@@ -54122,6 +54254,8 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
         // `settings` object: the restore replaced the profile, so the settings
         // this screen was built from are the OLD ones.
         const restored = (saves.loadMeta().settings) || {};
+        for (const key of Object.keys(settings)) delete settings[key];
+        Object.assign(settings, restored);
         if (onProfileRestored) onProfileRestored(restored);
       },
     });
@@ -54186,6 +54320,7 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
       if (out) out.textContent = val;
       settings[slider.dataset.key] = val;
       onChange({ [slider.dataset.key]: val });
+      refreshConditionNotes(container, settings);
     });
   });
 
@@ -54236,6 +54371,7 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
       btn.setAttribute('aria-checked', String(now));
       settings[btn.dataset.key] = now;
       onChange({ [btn.dataset.key]: now });
+      refreshConditionNotes(container, settings);
     });
   });
   }; // ---- end wire() ---------------------------------------------------
@@ -54375,7 +54511,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, musicEnabledCondition, settingOn, settingsRowHtml, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -55348,6 +55484,13 @@ const { assetUrl } = require("src/ui/assetmap.js");
 // shared with ui/screens/settings.js.
 const AUDIO_DEFAULTS = balance.ui.audio;
 
+/** Resolve the sparse music-only preference without deriving it from volume. */
+function resolveMusicEnabled(settings = {}) {
+  return typeof settings.musicEnabled === 'boolean'
+    ? settings.musicEnabled
+    : AUDIO_DEFAULTS.musicEnabled !== false;
+}
+
 // Contexts that can be backed by external audio files. A manifest maps each to
 // a list of file paths (see configureMusic); missing/failed loads fall back to
 // the procedural bed above.
@@ -55373,7 +55516,7 @@ function initAudio(settings = {}) {
     musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
     sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
-    musicMuted: settings.muteMusic === true,
+    musicEnabled: resolveMusicEnabled(settings),
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
@@ -55391,7 +55534,7 @@ function initAudio(settings = {}) {
   function applyGains() {
     const m = state.muted ? 0 : 1;
     master.gain.value = 0.9 * m;
-    musicBus.gain.value = state.musicMuted ? 0 : state.musicVol / 100;
+    musicBus.gain.value = state.musicVol / 100;
     sfxBus.gain.value = state.sfxVol / 100;
   }
 
@@ -55734,7 +55877,7 @@ function initAudio(settings = {}) {
   // the word a human typed in BEDS) | 'unknown' (a context with no bed — the
   // bug shape, warned loud) | 'muted' | 'unchanged'. Callers may ignore it.
   function music(context) {
-    if (state.context === context) return 'unchanged';
+    if (state.context === context && state.musicEnabled) return 'unchanged';
     state.context = context;
     stopMusic();
     const bed = own(BEDS, context);
@@ -55745,7 +55888,8 @@ function initAudio(settings = {}) {
       console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
       return 'unknown';
     }
-    if (state.muted || state.musicMuted) return 'muted';
+    if (!state.musicEnabled) return 'disabled';
+    if (state.muted) return 'muted';
     resume();
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
@@ -55764,6 +55908,7 @@ function initAudio(settings = {}) {
   // plays, the silence word stays quiet. Without this guard the word itself
   // would have been handed to playProcedural as if it were a bed object.
   function proceduralFallback(context) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.
     const bed = own(BEDS, context);
     if (bed && bed !== MUSIC_SILENCE_WORD) playProcedural(context, bed);
   }
@@ -55778,6 +55923,7 @@ function initAudio(settings = {}) {
   // handed in rather than looked up again — the caller already resolved it,
   // and resolving it twice is how two readers of one number get born.
   function playExternal(context, urls, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return;
     const url = pickRandom(urls);
     let el;
     try {
@@ -55793,10 +55939,10 @@ function initAudio(settings = {}) {
       return proceduralFallback(context);
     }
     el.addEventListener('ended', () => {
-      if (state.context === context) playExternal(context, urls, bed);
+      if (state.musicEnabled && !state.muted && state.context === context) playExternal(context, urls, bed);
     });
     el.addEventListener('error', () => {
-      if (state.context === context) {
+      if (state.musicEnabled && !state.muted && state.context === context) {
         state.mediaEl = null;
         proceduralFallback(context);
       }
@@ -55807,6 +55953,7 @@ function initAudio(settings = {}) {
   }
 
   function playProcedural(context, bed) {
+    if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.
     const variant = pickRandom(bed.variants);
     // Every voice below carries its own RAW peak and meets the bed's level at
     // one shared stage — see bedGain().
@@ -55905,7 +56052,7 @@ function initAudio(settings = {}) {
       }
     }
     // Re-trigger the current context so the new source is used immediately.
-    if (state.context && !state.muted && !state.musicMuted) {
+    if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;
       state.context = null;
       music(c);
@@ -55952,14 +56099,17 @@ function initAudio(settings = {}) {
   }
 
   // ---- settings applied live ----------------------------------------------
-  function setVolumes({ musicVolume, sfxVolume, muteAudio, muteMusic } = {}) {
+  function setVolumes({ musicEnabled, musicVolume, sfxVolume, muteAudio } = {}) {
+    const wasMusicEnabled = state.musicEnabled;
+    if (musicEnabled != null) state.musicEnabled = typeof musicEnabled === 'boolean'
+      ? musicEnabled
+      : AUDIO_DEFAULTS.musicEnabled !== false;
     if (musicVolume != null) state.musicVol = clampVol(musicVolume, state.musicVol);
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
-    if (muteMusic != null) state.musicMuted = !!muteMusic;
     applyGains();
-    if (state.muted || state.musicMuted) stopMusic(0.3);
-    else if (state.context) {
+    if (state.muted || !state.musicEnabled) stopMusic(0.3);
+    else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {
       const c = state.context;
       state.context = null;
       music(c);
@@ -55981,7 +56131,7 @@ function silentEngine() {
 }
 
 
-Object.assign(module.exports, { AUDIO_DEFAULTS, initAudio });
+Object.assign(module.exports, { AUDIO_DEFAULTS, resolveMusicEnabled, initAudio });
 
 },
 "src/ui/screens/event.js": function (module, exports, require) {
@@ -56758,7 +56908,7 @@ Object.assign(module.exports, { mountCompendium });
 // clicking the veil closes it.
 
 const { renderCard } = require("src/ui/components/card.js");
-const { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } = require("src/ui/screens/settings.js");
+const { renderSettings } = require("src/ui/screens/settings.js");
 const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
@@ -56906,7 +57056,7 @@ function closeOverlay() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
-    closeQuickNav(); // the mirrored list has nothing behind it any more
+    closeQuickNav({ restoreFocus: false }); // the mirrored list has nothing behind it any more
     setTabRing(null); // the bumpers go back to their global bindings
   }
   if (escHandler) {
@@ -56920,10 +57070,10 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
+function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, quickControls = {}, initialTab = 'deck' }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
-  closeQuickNav(); // opened FROM the list on map/combat: it has done its job
+  closeQuickNav({ restoreFocus: false }); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
   const hasSave = !!(onSave || onQuit || onExit);
@@ -56972,23 +57122,22 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   if (!onSave && saveButton) saveButton.hidden = true;
   if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
 
-  const syncFullscreenQuickAction = () => {
-    const active = isFullscreen();
-    if (!fullscreenButton) return;
-    fullscreenButton.classList.toggle('on', active);
-    fullscreenButton.setAttribute('aria-pressed', String(active));
-    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
-    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+  const syncQuickAction = (button, control, label) => {
+    if (!button) return;
+    const state = control?.read?.() || { checked: false, disabled: true, condition: `${label} unavailable.` };
+    button.classList.toggle('on', !!state.checked);
+    button.disabled = !!state.disabled;
+    button.setAttribute('aria-disabled', String(!!state.disabled));
+    button.setAttribute('aria-checked', String(!!state.checked));
+    button.setAttribute('aria-label', `${label} ${state.checked ? 'on' : 'off'}. ${state.condition || ''}`.trim());
+    button.title = state.condition || `${label}: ${state.checked ? 'On' : 'Off'}`;
+    return state;
   };
+  const syncFullscreenQuickAction = () => syncQuickAction(fullscreenButton, quickControls.fullscreen, 'Fullscreen');
   const syncMusicQuickAction = () => {
-    if (!musicButton) return;
-    const active = settings.muteMusic !== true;
-    musicButton.classList.toggle('on', active);
-    musicButton.setAttribute('aria-pressed', String(active));
-    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
-    musicButton.title = active ? 'Turn music off' : 'Turn music on';
-    const label = musicButton.querySelector('[data-music-label]');
-    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
+    const state = syncQuickAction(musicButton, quickControls.music, 'Music');
+    const label = musicButton?.querySelector('[data-music-label]');
+    if (label) label.textContent = `Music: ${state?.checked ? 'On' : 'Off'}`;
   };
   syncFullscreenQuickAction();
   syncMusicQuickAction();
@@ -56998,15 +57147,14 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
 
   fullscreenButton?.addEventListener('click', async () => {
-    fullscreenButton.setAttribute('aria-disabled', 'true');
-    const result = await toggleFullscreen();
-    fullscreenButton.removeAttribute('aria-disabled');
+    if (fullscreenButton.disabled || !quickControls.fullscreen?.activate) return;
+    const result = await quickControls.fullscreen.activate();
     syncFullscreenQuickAction();
-    if (!result.ok) showSettingsNotice(result.reason);
+    if (result?.announcement) fullscreenButton.title = result.announcement;
   });
-  musicButton?.addEventListener('click', () => {
-    settings.muteMusic = settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+  musicButton?.addEventListener('click', async () => {
+    if (musicButton.disabled || !quickControls.music?.activate) return;
+    await quickControls.music.activate();
     syncMusicQuickAction();
   });
   saveButton?.addEventListener('click', () => {
@@ -57090,6 +57238,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
+      controls: quickControls,
       actions: {
         close: () => closeOverlay(),
         tab: (id) => selectTab(id),

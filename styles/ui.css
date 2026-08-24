@@ -3115,7 +3115,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .cp-body { flex: 1; min-width: 0; }
 :root[data-layout='narrow'] .cz-opts { flex-wrap: wrap; justify-content: center; }
 :root[data-layout='narrow'] .cz-keepsakes { width: 100%; }
-/* ---------- ☰ quick-nav list (the quick-menu experiment, EldenSpire#34) ----- */
+/* ---------- ☰ quick menu -------------------------------------------------- */
 /* A `.modal-veil` on purpose and not for the dimming: input.js's scopeRoot()
    scopes the focus cursor to the topmost veil, so a D-pad drives this list with
    no new input code (Law 3 clause 6 — a vertical list takes the cursor, and the
@@ -3150,6 +3150,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .qn-panel .qn-ic { width: 2rem; flex-shrink: 0; text-align: center; color: var(--muted); }
 .qn-panel .qn-row.on .qn-ic, .qn-panel .qn-row.danger .qn-ic { color: inherit; }
 .qn-panel .qn-label { flex: 1; }
+.qn-panel .qn-condition { color: var(--muted); font-size: 1rem; line-height: 1.2; text-align: right; }
+.qn-panel .qn-state { min-width: 2.6rem; color: var(--muted); font-size: 1rem; font-weight: 700; text-align: right; }
+.qn-panel .qn-row[role='switch'][aria-checked='true'] .qn-state { color: var(--gold); }
+.qn-panel .qn-row:disabled { cursor: not-allowed; opacity: 0.58; }
 .qn-panel .qn-badge { color: var(--muted); font-size: 1.1rem; }
 .qn-sep { border-top: 1px solid var(--line); margin: 0.4rem 0; }
 

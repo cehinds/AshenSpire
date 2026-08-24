@@ -6,7 +6,7 @@
 // clicking the veil closes it.
 
 import { renderCard } from './card.js';
-import { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
+import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
@@ -154,7 +154,7 @@ export function closeOverlay() {
   if (openVeil) {
     openVeil.remove();
     openVeil = null;
-    closeQuickNav(); // the mirrored list has nothing behind it any more
+    closeQuickNav({ restoreFocus: false }); // the mirrored list has nothing behind it any more
     setTabRing(null); // the bumpers go back to their global bindings
   }
   if (escHandler) {
@@ -168,10 +168,10 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, quickControls = {}, initialTab = 'deck' }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
-  closeQuickNav(); // opened FROM the list on map/combat: it has done its job
+  closeQuickNav({ restoreFocus: false }); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
   const hasSave = !!(onSave || onQuit || onExit);
@@ -220,23 +220,22 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   if (!onSave && saveButton) saveButton.hidden = true;
   if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
 
-  const syncFullscreenQuickAction = () => {
-    const active = isFullscreen();
-    if (!fullscreenButton) return;
-    fullscreenButton.classList.toggle('on', active);
-    fullscreenButton.setAttribute('aria-pressed', String(active));
-    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
-    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+  const syncQuickAction = (button, control, label) => {
+    if (!button) return;
+    const state = control?.read?.() || { checked: false, disabled: true, condition: `${label} unavailable.` };
+    button.classList.toggle('on', !!state.checked);
+    button.disabled = !!state.disabled;
+    button.setAttribute('aria-disabled', String(!!state.disabled));
+    button.setAttribute('aria-checked', String(!!state.checked));
+    button.setAttribute('aria-label', `${label} ${state.checked ? 'on' : 'off'}. ${state.condition || ''}`.trim());
+    button.title = state.condition || `${label}: ${state.checked ? 'On' : 'Off'}`;
+    return state;
   };
+  const syncFullscreenQuickAction = () => syncQuickAction(fullscreenButton, quickControls.fullscreen, 'Fullscreen');
   const syncMusicQuickAction = () => {
-    if (!musicButton) return;
-    const active = settings.muteMusic !== true;
-    musicButton.classList.toggle('on', active);
-    musicButton.setAttribute('aria-pressed', String(active));
-    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
-    musicButton.title = active ? 'Turn music off' : 'Turn music on';
-    const label = musicButton.querySelector('[data-music-label]');
-    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
+    const state = syncQuickAction(musicButton, quickControls.music, 'Music');
+    const label = musicButton?.querySelector('[data-music-label]');
+    if (label) label.textContent = `Music: ${state?.checked ? 'On' : 'Off'}`;
   };
   syncFullscreenQuickAction();
   syncMusicQuickAction();
@@ -246,15 +245,14 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
 
   fullscreenButton?.addEventListener('click', async () => {
-    fullscreenButton.setAttribute('aria-disabled', 'true');
-    const result = await toggleFullscreen();
-    fullscreenButton.removeAttribute('aria-disabled');
+    if (fullscreenButton.disabled || !quickControls.fullscreen?.activate) return;
+    const result = await quickControls.fullscreen.activate();
     syncFullscreenQuickAction();
-    if (!result.ok) showSettingsNotice(result.reason);
+    if (result?.announcement) fullscreenButton.title = result.announcement;
   });
-  musicButton?.addEventListener('click', () => {
-    settings.muteMusic = settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+  musicButton?.addEventListener('click', async () => {
+    if (musicButton.disabled || !quickControls.music?.activate) return;
+    await quickControls.music.activate();
     syncMusicQuickAction();
   });
   saveButton?.addEventListener('click', () => {
@@ -338,6 +336,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
+      controls: quickControls,
       actions: {
         close: () => closeOverlay(),
         tab: (id) => selectTab(id),
