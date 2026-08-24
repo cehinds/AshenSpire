@@ -18,6 +18,10 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
+import {
+  primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
+  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton,
+} from '../components/creationCards.js';
 
 export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
@@ -37,14 +41,16 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   };
   let previewAttributes = null;
   let pointBuyOverlay = null;
-  let refreshFaces = () => {};
+  let refreshSectionFaces = () => {};
+  let refreshCharacterFaces = () => {};
+  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); };
   let updateStartRefusal = () => {};
 
   app.innerHTML = `
     <div class="screen customize${catalog ? ' component-catalog' : ''}">
       <div class="cz-scroll">
         <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
-        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every character-creation section and selector state.</p>' : ''}
+        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every creation section, nested disclosure, and reusable selector card.</p>' : ''}
         <div class="cz-flow cz-disc">
           <section id="cz-class-panel" class="cz-stage">
             <div id="cz-classes" class="class-row"></div>
@@ -55,19 +61,21 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
               <div class="cc-stats-side">
                 <label class="cz-label" for="cz-name">NAME</label>
                 <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken">
-                <div id="cz-statedit" class="cz-statedit"></div>
-                <div id="cz-primary-stats" class="cc-primary-stats"></div>
-                <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
+                <div id="cz-character-fold" class="cc-character-fold cz-disc">
+                  <section id="cz-primary-group" class="cc-character-picker">
+                    <div id="cz-primary-stats" class="cc-primary-stats"></div>
+                    <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
+                    <div id="cz-statedit" class="cz-statedit"></div>
+                  </section>
+                  <section id="cz-sprite-group" class="cc-character-picker"><div id="cz-styles" class="cz-opts"></div></section>
+                  <section id="cz-tint-group" class="cc-character-picker"><div id="cz-tints" class="cz-opts"></div></section>
+                  <section id="cz-sigil-group" class="cc-character-picker"><div id="cz-glyphs" class="cz-opts"></div></section>
+                  <section id="cz-keepsake-group" class="cc-character-picker"><div id="cz-keepsakes" class="cz-keepsakes"></div></section>
+                </div>
               </div>
               <div class="cc-preview-side">
                 <div id="cz-portrait" class="cz-portrait" aria-label="Live character preview"></div>
               </div>
-            </div>
-            <div class="cc-appearance">
-              <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
-              <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
-              <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
-              <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
             </div>
             <button type="button" class="cz-next" data-next="equipment">Continue to Starting Equip</button>
           </section>
@@ -169,26 +177,18 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').innerHTML = projection.attributes.map((row) =>
-      `<div class="disc-face cc-primary-stat" data-stat="${esc(row.id)}"><b class="disc-name">${esc(row.shortLabel)}</b><span class="disc-value">${row.value}</span></div>`).join('');
+    $('#cz-primary-stats').replaceChildren(...projection.attributes.map(primaryStatCard));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    $('#cz-derived').innerHTML = projection.derived.map((row) =>
-      `<span data-stat="${esc(row.id)}" data-formula="${esc(row.formula)}" title="${esc(row.formula)}"><b>${esc(row.faceLabel)}</b> ${row.value}</span>`).join('')
-      + `<span data-stat="poise"><b>Poise</b> ${poise.value}</span>`;
+    const resources = resourceStrip(projection.derived, poise);
+    $('#cz-derived').replaceChildren(...resources.childNodes);
   }
 
   function renderModes() {
-    statBox.innerHTML = '<p class="cz-label">PRIMARY STATS</p>';
+    statBox.innerHTML = '';
     const modes = document.createElement('div');
     modes.className = 'se-modes';
     for (const mode of registries.creationModes.all()) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `cz-opt se-mode${state.attributeMode === mode.id ? ' chosen' : ''}`;
-      button.dataset.creationMode = mode.id;
-      button.textContent = mode.label;
-      button.setAttribute('aria-pressed', state.attributeMode === mode.id ? 'true' : 'false');
-      button.addEventListener('click', () => {
+      const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
           if (!state.attributes) resetAttributes();
@@ -221,6 +221,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     app.appendChild(overlay);
 
     const draw = () => {
+      const focusedStep = overlay.querySelector('.se-step.gp-focus')
+        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
+      const preservedFocus = focusedStep ? {
+        statId: focusedStep.dataset.statId,
+        action: focusedStep.dataset.statAction,
+        dom: document.activeElement === focusedStep,
+        cursor: focusedStep.classList.contains('gp-focus'),
+      } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
       overlay.innerHTML = `<div class="modal cc-stat-modal"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
@@ -234,11 +242,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
         row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`;
         const minus = document.createElement('button');
         minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
+        minus.dataset.statId = def.id; minus.dataset.statAction = 'decrease';
         minus.setAttribute('aria-label', `Decrease ${def.label}`);
         minus.setAttribute('aria-disabled', value <= mode.minimum ? 'true' : 'false');
         const number = document.createElement('span'); number.className = 'se-value'; number.textContent = value;
         const plus = document.createElement('button');
         plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
+        plus.dataset.statId = def.id; plus.dataset.statAction = 'increase';
         plus.setAttribute('aria-label', `Increase ${def.label}`);
         plus.setAttribute('aria-disabled', value >= mode.maximum || remaining <= 0 ? 'true' : 'false');
         minus.addEventListener('click', () => {
@@ -267,6 +277,15 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
       });
+      if (preservedFocus) {
+        const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
+          button.dataset.statId === preservedFocus.statId && button.dataset.statAction === preservedFocus.action
+        ));
+        if (replacement) {
+          if (preservedFocus.dom) replacement.focus();
+          if (preservedFocus.cursor) focusElement(replacement);
+        }
+      }
     };
     draw();
   }
@@ -298,40 +317,33 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const styleBox = $('#cz-styles');
     styleBox.innerHTML = '';
     for (const style of SPRITE_STYLES) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt style${style.id === state.spriteStyle ? ' chosen' : ''}`;
-      button.textContent = style.name; button.setAttribute('aria-pressed', style.id === state.spriteStyle ? 'true' : 'false');
-      button.addEventListener('click', () => { state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = spriteChoiceButton(style, style.id === state.spriteStyle, () => {
+        state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       styleBox.appendChild(button);
     }
     const tintBox = $('#cz-tints');
     tintBox.innerHTML = '';
     for (const tint of PORTRAIT_TINTS) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt tint${tint.id === state.tint ? ' chosen' : ''}`;
-      button.style.background = tint.css; button.setAttribute('aria-label', tint.name); button.title = tint.name;
-      button.setAttribute('aria-pressed', tint.id === state.tint ? 'true' : 'false');
-      attachTooltip(button, () => esc(tint.name));
-      button.addEventListener('click', () => { state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = tintChoiceButton(tint, tint.id === state.tint, () => {
+        state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       tintBox.appendChild(button);
     }
     const glyphBox = $('#cz-glyphs');
     glyphBox.innerHTML = '';
     for (const glyph of PORTRAIT_GLYPHS) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt${glyph === state.glyph ? ' chosen' : ''}`; button.textContent = glyph;
-      button.setAttribute('aria-label', `Sigil ${glyph}`); button.setAttribute('aria-pressed', glyph === state.glyph ? 'true' : 'false');
-      button.addEventListener('click', () => { state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = sigilChoiceButton(glyph, glyph === state.glyph, () => {
+        state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       glyphBox.appendChild(button);
     }
     const keepsakeBox = $('#cz-keepsakes');
     keepsakeBox.innerHTML = '';
     for (const keepsake of registries.characterCreation.keepsakes) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-keepsake${keepsake.id === state.keepsakeId ? ' chosen' : ''}`;
-      button.dataset.keepsakeId = keepsake.id; button.setAttribute('aria-pressed', keepsake.id === state.keepsakeId ? 'true' : 'false');
-      button.innerHTML = `<span class="ks-icon">${esc(keepsake.icon)}</span><span><b>${esc(keepsake.name)}</b><small>${esc(keepsake.desc)}</small></span>`;
-      button.addEventListener('click', () => { state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); });
+      const button = keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
+        state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
+      });
       keepsakeBox.appendChild(button);
     }
   }
@@ -372,8 +384,34 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     }
   }
 
+  const selectedRow = (id, rows) => rows.find((row) => row.id === id);
+  const characterRows = [
+    { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
+      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
+    ) },
+    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
+      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
+    ) },
+    { key: 'tint', label: 'TINT', node: $('#cz-tint-group'), value: () => (
+      selectedRow(state.tint, PORTRAIT_TINTS)?.name || state.tint
+    ) },
+    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => state.glyph },
+    { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
+      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
+    ) },
+  ];
+  const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
+  })));
+  refreshCharacterFaces = () => {
+    for (const row of characterRows) characterFold.setValue(row.key, row.value());
+  };
+  characterFold.open('primary');
+
   resetClassChoices();
-  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview();
+  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); refreshCharacterFaces();
 
   const panels = {
     class: $('#cz-class-panel'), character: $('#cz-character-panel'),
@@ -393,16 +431,69 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   if (catalog) {
     const flow = $('.cz-flow');
     const fragment = document.createDocumentFragment();
-    for (const row of sectionRows) {
+    const appendCatalogItem = (row, kind) => {
       const article = document.createElement('article');
       article.className = 'cc-catalog-item';
       article.dataset.catalogComponent = row.key;
       const headingId = `cc-catalog-${row.key}`;
-      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>LIVE COMPONENT</span></header>`;
+      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>${esc(kind)}</span></header>`;
       row.node.setAttribute('aria-labelledby', headingId);
       article.appendChild(row.node);
       fragment.appendChild(article);
-    }
+    };
+    for (const row of sectionRows) appendCatalogItem(row, 'LIVE SECTION');
+
+    const choiceSpecimen = (className, choices, idFor, renderer, initial) => {
+      const host = document.createElement('div');
+      host.className = `cc-catalog-specimen ${className}`;
+      let selected = initial;
+      const draw = () => host.replaceChildren(...choices.map((choice) => renderer(
+        choice, idFor(choice) === selected, () => { selected = idFor(choice); draw(); },
+      )));
+      draw();
+      return host;
+    };
+    const specimenRun = previewRun();
+    const specimenProjection = statProjection(registries, specimenRun);
+    const disclosureHost = document.createElement('div');
+    disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
+    const disclosureStat = document.createElement('div');
+    disclosureStat.className = 'cc-character-picker';
+    disclosureStat.appendChild(primaryStatCard(specimenProjection.attributes[0]));
+    const disclosureKeepsake = document.createElement('div');
+    disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
+    disclosureKeepsake.appendChild(keepsakeChoiceButton(registries.characterCreation.keepsakes[0], true));
+    const disclosureSpecimen = mountDisclosure(disclosureHost, [
+      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
+      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
+    ]);
+    disclosureSpecimen.open('sample-primary');
+    const statHost = document.createElement('div');
+    statHost.className = 'cc-primary-stats cc-catalog-specimen';
+    statHost.append(...specimenProjection.attributes.map(primaryStatCard));
+    const specimens = [
+      { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
+      { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
+      { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(
+        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+      ) },
+      { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
+        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
+      ) },
+      { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
+        'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
+      ) },
+      { key: 'tint-choice', label: 'TINT SWATCH', node: choiceSpecimen(
+        'cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
+      ) },
+      { key: 'sigil-choice', label: 'SIGIL CHOICE', node: choiceSpecimen(
+        'cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
+      ) },
+      { key: 'keepsake-choice', label: 'KEEPSAKE CARD', node: choiceSpecimen(
+        'cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
+      ) },
+    ];
+    for (const row of specimens) appendCatalogItem(row, 'REUSABLE PRIMITIVE');
     flow.replaceChildren(fragment);
   } else {
     fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
@@ -410,7 +501,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
     })));
-    refreshFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
+    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }
 

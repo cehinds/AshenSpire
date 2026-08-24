@@ -1190,13 +1190,18 @@ button.rs-reset {
 
 .cc-character-grid {
   display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 18rem);
-  gap: 2rem; align-items: center;
+  gap: 2rem; align-items: start;
 }
 .cc-character-grid[data-sprite-side='left'] .cc-preview-side { grid-column: 1; grid-row: 1; }
 .cc-character-grid[data-sprite-side='left'] .cc-stats-side { grid-column: 2; grid-row: 1; }
 .cc-stats-side, .cc-preview-side { min-width: 0; }
+.cc-stats-side { display: flex; flex-direction: column; }
 .cc-preview-side { display: flex; justify-content: center; }
-.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.8rem; }
+.cc-character-fold { width: 100%; margin-top: 0.9rem; }
+.cc-character-fold > .disc-faces { width: 100%; }
+.cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
+.cc-character-picker .cz-opts { flex-wrap: wrap; }
+.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
 .cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
 .cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
 .cc-derived {
@@ -1205,10 +1210,9 @@ button.rs-reset {
 }
 .cc-derived span { white-space: nowrap; }
 .cc-derived b { color: var(--muted); font-weight: 600; }
-.cc-appearance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
-.cc-appearance > :last-child { grid-column: 1 / -1; }
-.cc-appearance .cz-opts { flex-wrap: wrap; }
-.cc-appearance #cz-styles .cz-opt { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker #cz-styles .cz-opt,
+.cc-catalog-specimen .cz-opt.style { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker .cz-statedit { margin-top: 0.15rem; }
 .cz-keepsake small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 1rem; }
 
 .cc-equip-group { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -1249,6 +1253,10 @@ button.rs-reset {
 .cc-catalog-head h3 { margin: 0; color: var(--gold); font-size: 1.15rem; letter-spacing: 0.2em; }
 .cc-catalog-head span { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.14em; }
 .component-catalog .cz-stage { padding: 0.2rem; }
+.cc-catalog-specimen { width: 100%; max-width: 48rem; }
+.cc-catalog-specimen.cz-opts,
+.cc-catalog-specimen.se-modes { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.cc-catalog-specimen.cc-primary-stats { margin-top: 0; }
 
 /* ---------- D26 — the short form: FACE, then REVEAL ------------------------
    Constantine: "just the starting stats, starting armaments selection , and
@@ -2692,8 +2700,6 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-layout='narrow'] .cc-character-grid { display: flex; flex-direction: column; gap: 1.2rem; }
 :root[data-layout='narrow'] .cc-character-grid .cc-preview-side { order: -1; }
 :root[data-layout='narrow'] .cc-stats-side { width: 100%; }
-:root[data-layout='narrow'] .cc-appearance { grid-template-columns: 1fr; }
-:root[data-layout='narrow'] .cc-appearance > :last-child { grid-column: auto; }
 :root[data-layout='narrow'] .cc-card-selectors { grid-template-columns: 1fr; }
 :root[data-layout='narrow'] .cz-scroll { padding: 1.5rem 1rem 1rem; }
 :root[data-layout='narrow'] .cz-flow .disc-reveal { padding: 0.8rem; }

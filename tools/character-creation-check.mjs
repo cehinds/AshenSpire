@@ -142,6 +142,15 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }
 
   await open('character');
+  const characterFold = await evaluate(`(() => ({
+    labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
+    open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
+    resourceOrder:[...document.querySelectorAll('#cz-primary-group > *')].map(e=>e.id)
+  }))()`);
+  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'SPRITE', 'TINT', 'SIGIL', 'KEEPSAKE'])
+    && JSON.stringify(characterFold.open) === JSON.stringify(['primary'])
+    && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-primary-stats', 'cz-derived', 'cz-statedit']),
+  `${width}x${height}: Character uses one-open nested disclosures and keeps resources after stats before modes`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
   for (let i = 0; i < 3; i += 1) {
@@ -185,16 +194,24 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await noOverflow(), `${width}x${height}: Character has no horizontal overflow`);
   assert((await evaluate(`document.querySelectorAll('.cc-primary-stats .cc-primary-stat').length`)) === 5, `${width}x${height}: five primary stats are vertical cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-character-panel .se-step').length`)) === 0, `${width}x${height}: Standard shows no plus/minus controls`);
+  await click('#cz-character-fold [data-face="sprite"]');
   await click('#cz-styles .cz-opt', 1);
+  await click('#cz-character-fold [data-face="tint"]');
   await click('#cz-tints .cz-opt', 1);
+  await click('#cz-character-fold [data-face="sigil"]');
   await click('#cz-glyphs .cz-opt', 1);
+  await click('#cz-character-fold [data-face="keepsake"]');
   await click('#cz-keepsakes .cz-keepsake', 1);
+  assert((await evaluate(`[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'keepsake', `${width}x${height}: nested Character disclosures keep only the focused picker open`);
   await setInput('#cz-name', 'Marya');
+  await click('#cz-character-fold [data-face="primary"]');
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
-  await click('.cc-stat-overlay .se-step', 0);
-  await click('.cc-stat-overlay .se-step', 1);
+  await evaluate(`(() => { document.querySelectorAll('.gp-focus').forEach(e => e.classList.remove('gp-focus')); const e=document.querySelector('.cc-stat-overlay [aria-label="Decrease Dexterity"]'); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
+  assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Decrease Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Decrease Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the decremented stat`);
+  await evaluate(`(() => { const e=document.querySelector('.cc-stat-overlay [aria-label="Increase Dexterity"]'); document.querySelectorAll('.gp-focus').forEach(x => x.classList.remove('gp-focus')); e.focus(); e.classList.add('gp-focus'); e.click(); })()`);
+  assert(await evaluate(`document.activeElement?.getAttribute('aria-label') === 'Increase Dexterity' && document.querySelector('.cc-stat-overlay .gp-focus')?.getAttribute('aria-label') === 'Increase Dexterity'`), `${width}x${height}: redraw preserves keyboard and gamepad focus on the incremented stat`);
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay close');
 
@@ -276,21 +293,35 @@ async function checkCatalog(width, height, screenshotName) {
         relics: root.querySelectorAll('.cc-relic-card').length,
         seed: root.querySelectorAll('#seed-input').length,
       },
+      primitives: {
+        disclosure: root.querySelectorAll('[data-catalog-component="character-disclosure"] .disc-face').length,
+        stat: root.querySelectorAll('[data-catalog-component="primary-stat-card"] .cc-primary-stat').length,
+        resources: root.querySelectorAll('[data-catalog-component="resource-strip"] .cc-derived').length,
+        mode: root.querySelectorAll('[data-catalog-component="mode-choice"] .se-mode').length,
+        sprite: root.querySelectorAll('[data-catalog-component="sprite-choice"] .cz-opt.style').length,
+        tint: root.querySelectorAll('[data-catalog-component="tint-choice"] .cz-opt.tint').length,
+        sigil: root.querySelectorAll('[data-catalog-component="sigil-choice"] .cz-opt').length,
+        keepsake: root.querySelectorAll('[data-catalog-component="keepsake-choice"] .cz-keepsake').length,
+      },
       overflow: root.scrollWidth > root.clientWidth + 1,
     };
   })()`);
-  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed', `${width}x${height}: component catalog shows all four live creation sections`);
-  assert(receipt.controls.classes >= 2 && receipt.controls.stats === 5 && receipt.controls.keepsakes >= 2
+  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice', `${width}x${height}: component catalog shows live sections plus all reusable Character primitives`);
+  assert(receipt.controls.classes >= 2 && receipt.controls.stats >= 5 && receipt.controls.keepsakes >= 2
     && receipt.controls.armour >= 2 && receipt.controls.left >= 2 && receipt.controls.right >= 2
     && receipt.controls.relics >= 2 && receipt.controls.seed === 1 && !receipt.overflow,
   `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
+  assert(Object.values(receipt.primitives).every((count) => count >= 1),
+    `${width}x${height}: component catalog references every reusable Character card primitive`);
+  await evaluate(`document.querySelector('[data-catalog-component="character-disclosure"]').scrollIntoView({block:'start'})`);
+  await wait(150);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, screenshotName), Buffer.from(shot.data, 'base64'));
   await cdp.send('Target.closeTarget', { targetId });
 }
 
 try {
-  await exercise(1440, 900, 'character-creation-after-desktop.png', 'equipment', {
+  await exercise(1440, 900, 'character-creation-after-desktop.png', 'character', {
     schemaVersion: 2, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], unlocked: ['winAsReaver'],
   });
   await exercise(390, 844, 'character-creation-after-mobile.png', 'character');
