@@ -187,9 +187,10 @@ const SETTINGS_CYCLE = `(async () => {
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
   if (document.querySelector('.qn-panel')) {
-    document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')?.click();
+    document.querySelector('.qn-row[data-act="tab"][data-tab="deck"]')?.click();
     await pause();
   }
+  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
   tab('settings')?.click(); await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
@@ -204,7 +205,8 @@ const SETTINGS_CYCLE = `(async () => {
   tab('deck')?.click(); await pause();
   tab('settings')?.click(); await pause();
   tab('deck')?.click(); await pause();
-  window.__settingsListenerBalance = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
+  window.__settingsListenerBalance = Object.fromEntries([...live]
+    .map(([type, listeners]) => [type, listeners.size - (baseline[type] || 0)]));
   document.querySelector('#ov-close')?.click(); await pause();
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); await pause();
   window.__armouryShortcutOpened = !!document.querySelector('.armoury-overlay');
