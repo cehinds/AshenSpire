@@ -241,7 +241,7 @@ async function main() {
     await evaluate(`(() => { const select=document.querySelector('#sort'); select.value='id-desc'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
     check(await evaluate(`(() => { const ids=[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component); return ids.every((id,index)=>index===0||ids[index-1].localeCompare(id)>=0); })()`), 'sort control orders filtered components by descending ID');
     await evaluate(`document.querySelector('#clear-filters').click(); true`);
-    check(await evaluate(`document.querySelectorAll('#grid article').length===72 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
+    check(await evaluate(`document.querySelectorAll('#grid article').length===88 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
     await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',bubbles:true,cancelable:true})); true`);
     check(await evaluate(`document.activeElement===document.querySelector('#search')`), 'slash keyboard shortcut focuses component search');
     await evaluate(`document.querySelector('#density-less').click(); true`);

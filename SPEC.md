@@ -845,6 +845,14 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
+- **Character Creation components.** The reusable creation family is `character-disclosure`,
+  `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
+  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,
+  `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
+  `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
+  `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
+  choices. Art and copy arrive through content/asset inputs, while screens own mutable selection
+  state and callbacks.
 - **Combatant Component Model.** `combatant-frame` may compose `component-background`,
   `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
   `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and

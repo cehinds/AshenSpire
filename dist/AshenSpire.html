@@ -1408,7 +1408,13 @@ button.rs-reset {
    this 24px ought to be rem so it tracks Text size is a live Law 2 question and
    is deliberately NOT answered here: changing it would change the wide layout
    at L/XL, which nothing in this repo measures. */
-.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; }
+.cz-kicker {
+  display: flex; align-items: center; gap: 0.75rem; width: min(32rem, 90%); margin: 0 0 -1.25rem;
+  color: var(--muted); font-family: var(--font-display); font-size: 0.92rem; letter-spacing: 0.22em;
+}
+.cz-kicker::before, .cz-kicker::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; margin-bottom: -1.25rem; }
+.cz-subtitle { margin: 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.07em; }
 /* The name field had no label element, no placeholder and no aria-label — so
    the label is a real <label for>, not a styled <p>, because the gap it closes
    is a screen reader announcing an unlabelled text field. */
@@ -1484,22 +1490,128 @@ button.rs-reset {
 
 /* Character creation redesign: one themed section at a time. The four faces
    keep the route compact; the open stage owns the richer layout. */
-.cz-flow { width: min(72rem, 100%); }
+.cz-flow { width: min(92rem, 100%); }
 .cz-flow > .disc-faces { width: 100%; }
 .cz-flow .disc-reveal { padding: 1.2rem; background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .cz-stage { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; }
 .cz-stage .class-row { justify-content: center; }
 .cz-next { align-self: flex-end; min-height: var(--tap-floor); }
 
+.cc-stage-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  min-height: var(--tap-floor); padding: 0.2rem 0;
+}
+.cc-stage-toolbar h3 {
+  margin: 0; color: var(--muted); font-size: 1rem; font-weight: 600;
+  letter-spacing: 0.18em;
+}
+.cc-stage-tools { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; min-width: 0; }
+.cc-auto-advance-note { color: var(--muted); font-size: 1rem; white-space: nowrap; }
+.cc-boolean-setting { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 1rem; }
+.cc-switch {
+  position: relative; width: 2.6rem; height: 1.45rem; min-width: 2.6rem; padding: 0.15rem;
+  border: 1px solid var(--line-soft); border-radius: 999px; background: var(--panel); cursor: pointer;
+}
+.cc-switch-knob {
+  display: block; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--muted);
+  transform: translateX(0); transition: transform 120ms, background 120ms;
+}
+.cc-switch[aria-checked='true'] .cc-switch-knob { transform: translateX(1.05rem); background: var(--gold); }
+.cc-view-toggle {
+  display: inline-flex; align-items: stretch; border: 1px solid var(--line-soft);
+  border-radius: 9px; overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
+}
+.cc-view-option {
+  min-width: 4.8rem; min-height: calc(var(--tap-floor) - 0.35rem); padding: 0.35rem 0.9rem;
+  border: 0; border-right: 1px solid var(--line); border-radius: 0;
+  color: var(--muted); background: transparent; font-family: var(--font-display);
+  letter-spacing: 0.06em; cursor: pointer;
+}
+.cc-view-option:last-child { border-right: 0; }
+.cc-view-option:hover { color: var(--parchment); background: rgba(255,255,255,0.025); }
+.cc-view-option.chosen { color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); }
+
+.cc-class-split {
+  --cc-class-preview-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--cc-class-preview-share)) 1.15rem minmax(28rem, 1fr);
+  gap: 1.1rem; align-items: stretch; width: 100%;
+}
+.cc-class-preview-host, .cc-class-selection {
+  min-width: 0; border: 1px solid var(--line-soft); border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+}
+.cc-class-preview-host { display: flex; }
+.cc-class-selection { display: flex; flex-direction: column; gap: 0.85rem; padding: 1rem; }
+.cc-class-selection > .cz-next { margin-top: auto; }
+.cc-class-divider {
+  position: relative; justify-self: center; width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; border: 0;
+  background: transparent;
+  cursor: col-resize;
+}
+.cc-class-divider::before {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--line-soft);
+}
+.cc-class-divider::after {
+  content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
+  font-family: var(--font-display); letter-spacing: 0.12em;
+  text-align: center; white-space: nowrap;
+}
+.cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
+.cc-class-preview {
+  display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
+  padding: 1.1rem; text-align: center;
+}
+.cc-class-preview h3 { margin: 0.15rem 0 0.2rem; color: var(--gold); font-size: 2rem; }
+.cc-preview-eyebrow {
+  display: flex; align-items: center; gap: 0.6rem; margin: 0;
+  color: var(--muted); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.16em;
+}
+.cc-preview-eyebrow::before, .cc-preview-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.cc-class-art { display: flex; align-items: center; justify-content: center; min-height: 15rem; overflow: hidden; }
+.cc-class-art .class-sprite { transform: scale(1.28); transform-origin: 50% 70%; }
+.cc-class-resource-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0.55rem 0 1.1rem;
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+}
+.cc-class-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.65rem 0.25rem; border-right: 1px solid var(--line); }
+.cc-class-resource:last-child { border-right: 0; }
+.cc-class-resource span { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
+.cc-class-resource b { color: var(--parchment); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.cc-class-relic { display: grid; grid-template-columns: 2.8rem 1fr; gap: 0.75rem; align-items: start; padding: 0.75rem 0 0; text-align: left; }
+.cc-class-relic-art { font-size: 2.2rem; text-align: center; }
+.cc-class-relic > span:last-child { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.cc-class-relic b { color: var(--parchment); font-size: 1.15rem; }
+.cc-class-relic small { color: var(--muted); font-size: 0.95rem; line-height: 1.35; }
+
+.cc-class-selection .class-row[data-view='list'] { flex-direction: column; flex-wrap: nowrap; gap: 0.7rem; width: 100%; }
+.cc-class-selection .class-row[data-view='list'] .class-pick {
+  width: 100%; padding: 1rem 1.25rem; display: grid; grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center; gap: 1rem; text-align: left;
+}
+.cc-class-selection .class-row[data-view='list'] .class-pick .glyph { margin: 0; font-size: 4rem; text-align: center; }
+.cc-class-selection .class-row[data-view='list'] .class-pick h3 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.cc-class-selection .class-row[data-view='list'] .class-pick p { font-size: 1rem; line-height: 1.45; }
+.cc-class-selection .class-row[data-view='grid'] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.8rem; }
+.cc-class-selection .class-row[data-view='grid'] .class-pick { width: 100%; min-width: 0; }
+
 .cc-character-grid {
   display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 18rem);
-  gap: 2rem; align-items: center;
+  gap: 2rem; align-items: start;
 }
 .cc-character-grid[data-sprite-side='left'] .cc-preview-side { grid-column: 1; grid-row: 1; }
 .cc-character-grid[data-sprite-side='left'] .cc-stats-side { grid-column: 2; grid-row: 1; }
 .cc-stats-side, .cc-preview-side { min-width: 0; }
+.cc-stats-side { display: flex; flex-direction: column; }
 .cc-preview-side { display: flex; justify-content: center; }
-.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.8rem; }
+.cc-name-row { display: flex; align-items: center; gap: 0.9rem; color: var(--muted); font-size: 0.95rem; letter-spacing: 0.18em; }
+.cc-name-row .cz-name { flex: 0 1 14rem; }
+.cc-character-fold { width: 100%; margin-top: 0.9rem; }
+.cc-character-fold > .disc-faces { width: 100%; }
+.cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
+.cc-character-picker .cz-opts { flex-wrap: wrap; }
+.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
 .cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
 .cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
 .cc-derived {
@@ -1508,22 +1620,34 @@ button.rs-reset {
 }
 .cc-derived span { white-space: nowrap; }
 .cc-derived b { color: var(--muted); font-weight: 600; }
-.cc-appearance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
-.cc-appearance > :last-child { grid-column: 1 / -1; }
-.cc-appearance .cz-opts { flex-wrap: wrap; }
-.cc-appearance #cz-styles .cz-opt { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker #cz-styles .cz-opt,
+.cc-catalog-specimen .cz-opt.style { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker .cz-statedit { margin-top: 0.15rem; }
+.cc-sprite-fold { width: 100%; margin-top: 0.2rem; }
+.cc-sprite-fold .disc-faces { flex-direction: column; }
+.cc-sprite-fold .disc-face { width: 100%; justify-content: space-between; }
 .cz-keepsake small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 1rem; }
 
+.cc-equipment-fold > .disc-faces { flex-direction: column; }
+.cc-equipment-fold > .disc-faces > .disc-face { width: 100%; justify-content: space-between; }
+.cc-selection-face { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(8rem, 1fr); gap: 1rem; align-items: center; width: 100%; }
+.cc-selection-face-art { grid-row: 1; color: var(--muted); }
+.cc-selection-face .disc-name { text-align: left; }
+.cc-selection-face .disc-value { text-align: left; color: var(--muted); }
+.cc-equipment-fold > .disc-faces > .disc-reveal { padding: 0.85rem; }
 .cc-equip-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.cc-card-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.cc-card-selectors { display: grid; gap: 0.7rem; }
+.cc-card-selectors[data-view='list'] { grid-template-columns: minmax(0, 1fr); }
+.cc-card-selectors[data-view='grid'] { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
 .cc-card-selectors .equip-chip { width: 100%; }
+.cc-empty-slot { margin: 0; padding: 0.75rem; color: var(--muted); font-size: 1rem; }
 .cc-relic-card {
   display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
   min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
   color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
   border-radius: 3px; cursor: pointer;
 }
-.cc-relic-card > span { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
+.cc-relic-card > .cc-relic-art { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
 .cc-relic-card small { color: var(--muted); }
 .cc-relic-card:hover { border-color: var(--line-soft); }
 .cc-relic-card.chosen { border-color: var(--gold); background: var(--bg); }
@@ -1552,6 +1676,10 @@ button.rs-reset {
 .cc-catalog-head h3 { margin: 0; color: var(--gold); font-size: 1.15rem; letter-spacing: 0.2em; }
 .cc-catalog-head span { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.14em; }
 .component-catalog .cz-stage { padding: 0.2rem; }
+.cc-catalog-specimen { width: 100%; max-width: 48rem; }
+.cc-catalog-specimen.cz-opts,
+.cc-catalog-specimen.se-modes { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.cc-catalog-specimen.cc-primary-stats { margin-top: 0; }
 
 /* ---------- D26 — the short form: FACE, then REVEAL ------------------------
    Constantine: "just the starting stats, starting armaments selection , and
@@ -3114,11 +3242,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 :root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
 :root[data-layout='narrow'] .cz-flow { width: 100%; }
+:root[data-layout='narrow'] .cc-class-split { display: flex; flex-direction: column; gap: 0.9rem; }
+:root[data-layout='narrow'] .cc-class-divider { display: none; }
+:root[data-layout='narrow'] .cc-class-preview-host,
+:root[data-layout='narrow'] .cc-class-selection { width: 100%; }
+:root[data-layout='narrow'] .cc-class-art { min-height: 12rem; }
+:root[data-layout='narrow'] .cc-class-art .class-sprite { transform: scale(1.08); }
+:root[data-layout='narrow'] .cc-class-resource-grid { grid-template-columns: repeat(5, minmax(3.2rem, 1fr)); overflow-x: auto; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick {
+  display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); padding: 0.9rem;
+}
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick .glyph { font-size: 3rem; }
+:root[data-layout='narrow'] .cc-stage-toolbar { align-items: flex-start; flex-wrap: wrap; }
+:root[data-layout='narrow'] .cc-stage-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
+:root[data-layout='narrow'] .cc-auto-advance-note { white-space: normal; }
+:root[data-layout='narrow'] .cc-name-row { align-items: stretch; flex-direction: column; gap: 0.4rem; }
+:root[data-layout='narrow'] .cc-name-row .cz-name { flex: none; width: 100%; }
 :root[data-layout='narrow'] .cc-character-grid { display: flex; flex-direction: column; gap: 1.2rem; }
 :root[data-layout='narrow'] .cc-character-grid .cc-preview-side { order: -1; }
 :root[data-layout='narrow'] .cc-stats-side { width: 100%; }
-:root[data-layout='narrow'] .cc-appearance { grid-template-columns: 1fr; }
-:root[data-layout='narrow'] .cc-appearance > :last-child { grid-column: auto; }
 :root[data-layout='narrow'] .cc-card-selectors { grid-template-columns: 1fr; }
 :root[data-layout='narrow'] .cz-scroll { padding: 1.5rem 1rem 1rem; }
 :root[data-layout='narrow'] .cz-flow .disc-reveal { padding: 0.8rem; }
@@ -4505,9 +4647,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
   .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
-@container run-header (max-width: 430px) {
-  .hud-run-meta .build-number { display: none; }
-}
+/* Source and seed yield first, but the build number stays visible at every
+   width. It is the only immutable identity a phone screenshot carries. */
 @media (max-width: 350px) {
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
@@ -18735,6 +18876,41 @@ Object.assign(module.exports, { derivedStatRules });
 
 const characterCreation = {
   "spritePreviewSide": "right",
+  "layout": {
+    "classPreviewPercent": 30,
+    "classChoiceView": "list",
+    "equipmentChoiceView": "list",
+    "equipmentAutoAdvance": true
+  },
+  "equipmentSections": [
+    {
+      "id": "armour",
+      "label": "STARTING ARMOUR",
+      "kind": "armour"
+    },
+    {
+      "id": "leftHand",
+      "label": "LEFT HAND",
+      "kind": "hand",
+      "slot": "leftHand"
+    },
+    {
+      "id": "rightHand",
+      "label": "RIGHT HAND",
+      "kind": "hand",
+      "slot": "rightHand"
+    },
+    {
+      "id": "equipSlot",
+      "label": "EQUIP SLOT",
+      "kind": "slot"
+    },
+    {
+      "id": "relic",
+      "label": "RELIC",
+      "kind": "relic"
+    }
+  ],
   "classes": {
     "reaver": {
       "armourIds": [
@@ -25768,6 +25944,8 @@ Object.assign(module.exports, { PROGRESSION_MODES, UNDISCOVERED_PRESENTATIONS, s
 
 const SIDES = Object.freeze(['left', 'right']);
 const CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
+const CHOICE_VIEWS = Object.freeze(['list', 'grid']);
+const EQUIPMENT_SECTION_KINDS = Object.freeze(['armour', 'hand', 'slot', 'relic']);
 
 function config(source) {
   return (source && source.characterCreation) || source || {};
@@ -25776,9 +25954,51 @@ function config(source) {
 function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
+  const layout = cfg.layout;
+  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
+    problems.push('characterCreation.layout: must be an object');
+  } else {
+    const fields = ['classPreviewPercent', 'classChoiceView', 'equipmentChoiceView', 'equipmentAutoAdvance'];
+    for (const key of Object.keys(layout)) if (!fields.includes(key)) problems.push(`characterCreation.layout.${key}: Unknown field`);
+    if (!Number.isFinite(layout.classPreviewPercent) || layout.classPreviewPercent < 22 || layout.classPreviewPercent > 45) {
+      problems.push('characterCreation.layout.classPreviewPercent: must be between 22 and 45');
+    }
+    for (const key of ['classChoiceView', 'equipmentChoiceView']) {
+      if (!CHOICE_VIEWS.includes(layout[key])) problems.push(`characterCreation.layout.${key}: must be ${CHOICE_VIEWS.join('|')}`);
+    }
+    if (typeof layout.equipmentAutoAdvance !== 'boolean') problems.push('characterCreation.layout.equipmentAutoAdvance: must be boolean');
+  }
+  const sections = cfg.equipmentSections;
+  if (!Array.isArray(sections) || sections.length < 4) {
+    problems.push('characterCreation.equipmentSections: must contain armour, both hands, and relic');
+  } else {
+    const seenSections = new Set();
+    for (const [index, row] of sections.entries()) {
+      const path = `characterCreation.equipmentSections.${index}`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        problems.push(`${path}: must be an object`);
+        continue;
+      }
+      for (const key of Object.keys(row)) if (!['id', 'label', 'kind', 'slot'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
+      if (typeof row.id !== 'string' || !row.id) problems.push(`${path}.id: must be non-empty`);
+      else if (seenSections.has(row.id)) problems.push(`${path}.id: duplicate section id`);
+      else seenSections.add(row.id);
+      if (typeof row.label !== 'string' || !row.label) problems.push(`${path}.label: must be non-empty`);
+      if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
+      if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
+    }
+    const requireExactlyOne = (role, matches) => {
+      const count = sections.filter((row) => row && typeof row === 'object' && !Array.isArray(row) && matches(row)).length;
+      if (count === 0) problems.push(`characterCreation.equipmentSections: missing ${role} section`);
+      else if (count > 1) problems.push(`characterCreation.equipmentSections: duplicate ${role} section`);
+    };
+    requireExactlyOne('armour', (row) => row.kind === 'armour');
+    requireExactlyOne('relic', (row) => row.kind === 'relic');
+    for (const slot of ['leftHand', 'rightHand']) requireExactlyOne(slot, (row) => row.kind === 'hand' && row.slot === slot);
+  }
   if (!cfg.classes || typeof cfg.classes !== 'object' || Array.isArray(cfg.classes)) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
     return problems;
@@ -35614,6 +35834,22 @@ const UI_COMPONENTS = Object.freeze({
   healthDamageIndicator: 'health-damage-indicator',
   playerHandTray: 'player-hand-tray',
   combatActionRail: 'combat-action-rail',
+  characterDisclosure: 'character-disclosure',
+  classPreviewPane: 'class-preview-pane',
+  classResourceGrid: 'class-resource-grid',
+  classChoiceCard: 'class-choice-card',
+  viewModeToggle: 'view-mode-toggle',
+  booleanSettingToggle: 'boolean-setting-toggle',
+  selectionSectionFace: 'selection-section-face',
+  primaryStatCard: 'primary-stat-card',
+  resourceStrip: 'resource-strip',
+  modeChoice: 'mode-choice',
+  spriteChoice: 'sprite-choice',
+  tintChoice: 'tint-choice',
+  sigilChoice: 'sigil-choice',
+  keepsakeChoice: 'keepsake-choice',
+  equipmentChoiceCard: 'equipment-choice-card',
+  relicChoiceCard: 'relic-choice-card',
 });
 
 const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));
@@ -38614,7 +38850,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'd2ca3b08b8';
+const SOURCE = '1a3b4c29fa';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -38648,7 +38884,7 @@ const SOURCE = 'd2ca3b08b8';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1185';
+const ORDINAL = '1191';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38994,9 +39230,17 @@ const { creationHandChoices, creationRelicChoices, selectStartingHand } = requir
 
 const { pieceChip } = require("src/ui/screens/equipment.js");
 const { relicText } = require("src/ui/components/card.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton, selectionSectionFace } = require("src/ui/components/creationCards.js");
+
+
+
+
+
 
 function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
+  const creationLayout = registries.characterCreation.layout || {};
   const state = {
     classId: firstClass.id,
     name: 'Forsaken',
@@ -39010,48 +39254,70 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     startingRelicId: firstClass.startingRelic,
     attributeMode: defaultCreationModeId(registries),
     attributes: null,
+    classChoiceView: creationLayout.classChoiceView,
+    equipmentChoiceView: creationLayout.equipmentChoiceView,
+    classPreviewPercent: creationLayout.classPreviewPercent,
+    equipmentAutoAdvance: creationLayout.equipmentAutoAdvance,
   };
   let previewAttributes = null;
   let pointBuyOverlay = null;
-  let refreshFaces = () => {};
+  let pointBuyReturnFocus = null;
+  let pointBuyKeydown = null;
+  let refreshSectionFaces = () => {};
+  let refreshCharacterFaces = () => {};
+  let refreshSpriteFaces = () => {};
+  let refreshEquipmentFaces = () => {};
+  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
   let updateStartRefusal = () => {};
 
   app.innerHTML = `
     <div class="screen customize${catalog ? ' component-catalog' : ''}">
       <div class="cz-scroll">
+        ${catalog ? '' : '<p class="cz-kicker">DIVIDED OATH</p>'}
         <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
-        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every character-creation section and selector state.</p>' : ''}
+        ${catalog ? '' : '<p class="cz-subtitle">Choose your path. The spire remembers.</p>'}
+        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every creation section, nested disclosure, and reusable selector card.</p>' : ''}
         <div class="cz-flow cz-disc">
           <section id="cz-class-panel" class="cz-stage">
-            <div id="cz-classes" class="class-row"></div>
-            <button type="button" class="cz-next" data-next="character">Continue to Character</button>
+            <div class="cc-class-split" style="--cc-class-preview-share:${state.classPreviewPercent}%">
+              <div id="cz-class-preview-host" class="cc-class-preview-host"></div>
+              <button type="button" class="cc-class-divider" role="separator" aria-label="Resize class preview" aria-orientation="vertical" aria-valuemin="22" aria-valuemax="45" aria-valuenow="${state.classPreviewPercent}"></button>
+              <div class="cc-class-selection">
+                <header class="cc-stage-toolbar"><h3>CLASS SELECTION</h3><div id="cz-class-view-toggle"></div></header>
+                <div id="cz-classes" class="class-row cc-choice-collection" data-view="${state.classChoiceView}"></div>
+                <button type="button" class="cz-next" data-next="character">Continue to Character</button>
+              </div>
+            </div>
           </section>
           <section id="cz-character-panel" class="cz-stage">
             <div class="cc-character-grid" data-sprite-side="${esc(registries.characterCreation.spritePreviewSide)}">
               <div class="cc-stats-side">
-                <label class="cz-label" for="cz-name">NAME</label>
-                <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken">
-                <div id="cz-statedit" class="cz-statedit"></div>
-                <div id="cz-primary-stats" class="cc-primary-stats"></div>
-                <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
+                <label class="cc-name-row" for="cz-name"><span>NAME</span><input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken"></label>
+                <div id="cz-character-fold" class="cc-character-fold cz-disc">
+                  <section id="cz-primary-group" class="cc-character-picker">
+                    <div id="cz-statedit" class="cz-statedit"></div>
+                    <div id="cz-primary-stats" class="cc-primary-stats"></div>
+                    <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
+                  </section>
+                  <section id="cz-sprite-group" class="cc-character-picker">
+                    <div id="cz-styles" class="cz-opts"></div>
+                    <div id="cz-sprite-fold" class="cc-sprite-fold cz-disc">
+                      <section id="cz-sigil-group" class="cc-character-picker"><div id="cz-glyphs" class="cz-opts"></div></section>
+                      <section id="cz-tint-group" class="cc-character-picker"><div id="cz-tints" class="cz-opts"></div></section>
+                    </div>
+                  </section>
+                  <section id="cz-keepsake-group" class="cc-character-picker"><div id="cz-keepsakes" class="cz-keepsakes"></div></section>
+                </div>
               </div>
               <div class="cc-preview-side">
                 <div id="cz-portrait" class="cz-portrait" aria-label="Live character preview"></div>
               </div>
             </div>
-            <div class="cc-appearance">
-              <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
-              <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
-              <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
-              <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
-            </div>
             <button type="button" class="cz-next" data-next="equipment">Continue to Starting Equip</button>
           </section>
           <section id="cz-equipment-panel" class="cz-stage">
-            <div class="cc-equip-group"><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cc-card-selectors"></div></div>
-            <div class="cc-equip-group"><p class="cz-label">LEFT HAND</p><div id="cz-left-hand" class="cc-card-selectors"></div></div>
-            <div class="cc-equip-group"><p class="cz-label">RIGHT HAND</p><div id="cz-right-hand" class="cc-card-selectors"></div></div>
-            <div class="cc-equip-group"><p class="cz-label">RELIC</p><div id="cz-relics" class="cc-card-selectors"></div></div>
+            <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
+            <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
             <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
             <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
           </section>
@@ -39068,9 +39334,75 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     </div>`;
 
   const $ = (selector) => app.querySelector(selector);
+  const customizeScreen = $('.screen.customize');
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
+  const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
+  const equipmentSections = registries.characterCreation.equipmentSections;
+  const equipmentNodes = new Map();
+  for (const section of equipmentSections) {
+    const node = document.createElement('section');
+    node.className = 'cc-equip-group';
+    node.dataset.equipmentSection = section.id;
+    const choices = document.createElement('div');
+    choices.className = 'cc-card-selectors cc-choice-collection';
+    choices.dataset.view = state.equipmentChoiceView;
+    if (section.kind === 'armour') choices.id = 'cz-armours';
+    else if (section.kind === 'relic') choices.id = 'cz-relics';
+    else if (section.kind === 'hand') choices.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
+    else choices.id = `cz-${section.id}`;
+    node.appendChild(choices);
+    equipmentNodes.set(section.id, node);
+  }
+  let equipmentFold = null;
+
+  function setClassPreviewPercent(percent) {
+    state.classPreviewPercent = Math.max(22, Math.min(45, Math.round(percent)));
+    $('.cc-class-split').style.setProperty('--cc-class-preview-share', `${state.classPreviewPercent}%`);
+    const divider = $('.cc-class-divider');
+    divider.setAttribute('aria-valuenow', String(state.classPreviewPercent));
+  }
+
+  const classDivider = $('.cc-class-divider');
+  classDivider.addEventListener('keydown', (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    if (event.key === 'Home') setClassPreviewPercent(22);
+    else if (event.key === 'End') setClassPreviewPercent(45);
+    else setClassPreviewPercent(state.classPreviewPercent + (event.key === 'ArrowRight' ? 2 : -2));
+  });
+  classDivider.addEventListener('pointerdown', (event) => {
+    if (matchMedia('(max-width: 760px)').matches) return;
+    const split = $('.cc-class-split');
+    const move = (moveEvent) => {
+      const rect = split.getBoundingClientRect();
+      setClassPreviewPercent(((moveEvent.clientX - rect.left) / rect.width) * 100);
+    };
+    const finish = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', finish);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', finish, { once: true });
+    move(event);
+  });
+
+  function renderViewToggles() {
+    $('#cz-class-view-toggle').replaceChildren(viewModeToggle(state.classChoiceView, (mode) => {
+      state.classChoiceView = mode;
+      renderClasses();
+    }, 'Class choice view'));
+    $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
+      state.equipmentChoiceView = mode;
+      for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
+      renderViewToggles();
+    }, 'Starting equipment choice view'));
+    $('#cz-auto-advance-toggle').replaceChildren(booleanSettingToggle('Auto-advance on valid choice', state.equipmentAutoAdvance, (value) => {
+      state.equipmentAutoAdvance = value;
+      renderViewToggles();
+    }));
+  }
 
   function baseKit() {
     const views = startingKitViews(registries, state.classId, meta);
@@ -39145,26 +39477,36 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').innerHTML = projection.attributes.map((row) =>
-      `<div class="disc-face cc-primary-stat" data-stat="${esc(row.id)}"><b class="disc-name">${esc(row.shortLabel)}</b><span class="disc-value">${row.value}</span></div>`).join('');
+    $('#cz-primary-stats').replaceChildren(...projection.attributes.map(primaryStatCard));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    $('#cz-derived').innerHTML = projection.derived.map((row) =>
-      `<span data-stat="${esc(row.id)}" data-formula="${esc(row.formula)}" title="${esc(row.formula)}"><b>${esc(row.faceLabel)}</b> ${row.value}</span>`).join('')
-      + `<span data-stat="poise"><b>Poise</b> ${poise.value}</span>`;
+    const resources = resourceStrip(projection.derived, poise);
+    $('#cz-derived').replaceChildren(...resources.childNodes);
+    renderClassPreview();
+  }
+
+  function renderClassPreview() {
+    const cls = registries.classes.get(state.classId);
+    const run = previewRun();
+    const projection = statProjection(registries, run);
+    const sprite = spritesAreEnabled()
+      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
+      : null;
+    const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
+    const pane = classPreviewPane({
+      cls, sprite,
+      resources: classResourceGrid(projection.derived.slice(0, 5)),
+      relic,
+      relicDescription: relicText(relic, registries),
+    });
+    $('#cz-class-preview-host').replaceChildren(pane);
   }
 
   function renderModes() {
-    statBox.innerHTML = '<p class="cz-label">PRIMARY STATS</p>';
+    statBox.innerHTML = '';
     const modes = document.createElement('div');
     modes.className = 'se-modes';
     for (const mode of registries.creationModes.all()) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `cz-opt se-mode${state.attributeMode === mode.id ? ' chosen' : ''}`;
-      button.dataset.creationMode = mode.id;
-      button.textContent = mode.label;
-      button.setAttribute('aria-pressed', state.attributeMode === mode.id ? 'true' : 'false');
-      button.addEventListener('click', () => {
+      const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
           if (!state.attributes) resetAttributes();
@@ -39180,14 +39522,25 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     statBox.appendChild(modes);
   }
 
-  function closePointBuy() {
+  function closePointBuy({ restoreFocus = true } = {}) {
     if (!pointBuyOverlay) return;
+    if (pointBuyKeydown) window.removeEventListener('keydown', pointBuyKeydown, true);
     pointBuyOverlay.remove();
+    customizeScreen.inert = false;
     pointBuyOverlay = null;
+    pointBuyKeydown = null;
+    if (restoreFocus) {
+      const target = pointBuyReturnFocus?.isConnected
+        ? pointBuyReturnFocus
+        : statBox.querySelector('.se-mode.chosen');
+      if (target) { target.focus(); focusElement(target); }
+    }
+    pointBuyReturnFocus = null;
   }
 
   function openPointBuy() {
-    closePointBuy();
+    closePointBuy({ restoreFocus: false });
+    pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const overlay = document.createElement('div');
     overlay.className = 'modal-veil cc-stat-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -39195,11 +39548,42 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     overlay.setAttribute('aria-labelledby', 'cc-stat-title');
     pointBuyOverlay = overlay;
     app.appendChild(overlay);
+    customizeScreen.inert = true;
+    let needsInitialFocus = true;
+    pointBuyKeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation();
+        overlay.querySelector('[data-stat-cancel]')?.click();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => !element.hidden && element.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); event.stopPropagation(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); event.stopPropagation(); first.focus();
+      } else if (!overlay.contains(document.activeElement)) {
+        event.preventDefault(); event.stopPropagation(); (event.shiftKey ? last : first).focus();
+      }
+    };
+    window.addEventListener('keydown', pointBuyKeydown, true);
 
     const draw = () => {
+      const focusedStep = overlay.querySelector('.se-step.gp-focus')
+        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
+      const preservedFocus = focusedStep ? {
+        statId: focusedStep.dataset.statId,
+        action: focusedStep.dataset.statAction,
+        dom: document.activeElement === focusedStep,
+        cursor: focusedStep.classList.contains('gp-focus'),
+      } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
-      overlay.innerHTML = `<div class="modal cc-stat-modal"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
+      overlay.innerHTML = `<div class="modal cc-stat-modal" tabindex="-1"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
         + `<p class="se-pool">Points to assign: ${remaining}</p><div class="cc-allocation-rows"></div>`
         + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>Standard</button><button type="button" data-stat-done>Done</button></div></div>`;
       const rows = overlay.querySelector('.cc-allocation-rows');
@@ -39210,11 +39594,13 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
         row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`;
         const minus = document.createElement('button');
         minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
+        minus.dataset.statId = def.id; minus.dataset.statAction = 'decrease';
         minus.setAttribute('aria-label', `Decrease ${def.label}`);
         minus.setAttribute('aria-disabled', value <= mode.minimum ? 'true' : 'false');
         const number = document.createElement('span'); number.className = 'se-value'; number.textContent = value;
         const plus = document.createElement('button');
         plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
+        plus.dataset.statId = def.id; plus.dataset.statAction = 'increase';
         plus.setAttribute('aria-label', `Increase ${def.label}`);
         plus.setAttribute('aria-disabled', value >= mode.maximum || remaining <= 0 ? 'true' : 'false');
         minus.addEventListener('click', () => {
@@ -39239,75 +39625,80 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
         closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
       });
       overlay.querySelector('[data-stat-cancel]').addEventListener('click', () => {
-        state.attributeMode = defaultCreationModeId(registries);
+        state.attributeMode = STANDARD;
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        const standard = statBox.querySelector('.se-mode.chosen');
+        standard?.focus(); focusElement(standard);
       });
+      if (preservedFocus) {
+        const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
+          button.dataset.statId === preservedFocus.statId && button.dataset.statAction === preservedFocus.action
+        ));
+        if (replacement) {
+          if (preservedFocus.dom) replacement.focus();
+          if (preservedFocus.cursor) focusElement(replacement);
+        }
+      } else if (needsInitialFocus) {
+        needsInitialFocus = false;
+        queueMicrotask(() => overlay.querySelector('.cc-stat-modal')?.focus());
+      }
     };
     draw();
   }
 
   function renderClasses() {
     classBox.innerHTML = '';
+    classBox.dataset.view = state.classChoiceView;
     for (const cls of registries.classes.all()) {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `class-pick cz-class${cls.id === state.classId ? ' chosen' : ''}`;
-      button.dataset.class = cls.id;
-      button.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p></div>`;
-      button.addEventListener('click', () => {
+      const button = classChoiceCard(cls, {
+        selected: cls.id === state.classId,
+        visual: classGlyph(cls.id),
+        onChoose: () => {
         if (state.classId === cls.id) return;
         state.classId = cls.id; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        },
       });
       classBox.appendChild(button);
     }
     for (const cls of LOCKED_CLASSES) {
-      const card = document.createElement('div');
-      card.className = 'class-pick locked';
-      card.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span></div>`;
-      classBox.appendChild(card);
+      classBox.appendChild(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     }
+    renderViewToggles();
   }
 
   function renderAppearance() {
     const styleBox = $('#cz-styles');
     styleBox.innerHTML = '';
     for (const style of SPRITE_STYLES) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt style${style.id === state.spriteStyle ? ' chosen' : ''}`;
-      button.textContent = style.name; button.setAttribute('aria-pressed', style.id === state.spriteStyle ? 'true' : 'false');
-      button.addEventListener('click', () => { state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = spriteChoiceButton(style, style.id === state.spriteStyle, () => {
+        state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       styleBox.appendChild(button);
     }
     const tintBox = $('#cz-tints');
     tintBox.innerHTML = '';
     for (const tint of PORTRAIT_TINTS) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt tint${tint.id === state.tint ? ' chosen' : ''}`;
-      button.style.background = tint.css; button.setAttribute('aria-label', tint.name); button.title = tint.name;
-      button.setAttribute('aria-pressed', tint.id === state.tint ? 'true' : 'false');
-      attachTooltip(button, () => esc(tint.name));
-      button.addEventListener('click', () => { state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = tintChoiceButton(tint, tint.id === state.tint, () => {
+        state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       tintBox.appendChild(button);
     }
     const glyphBox = $('#cz-glyphs');
     glyphBox.innerHTML = '';
     for (const glyph of PORTRAIT_GLYPHS) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-opt${glyph === state.glyph ? ' chosen' : ''}`; button.textContent = glyph;
-      button.setAttribute('aria-label', `Sigil ${glyph}`); button.setAttribute('aria-pressed', glyph === state.glyph ? 'true' : 'false');
-      button.addEventListener('click', () => { state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces(); });
+      const button = sigilChoiceButton(glyph, glyph === state.glyph, () => {
+        state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
+      });
       glyphBox.appendChild(button);
     }
     const keepsakeBox = $('#cz-keepsakes');
     keepsakeBox.innerHTML = '';
     for (const keepsake of registries.characterCreation.keepsakes) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cz-keepsake${keepsake.id === state.keepsakeId ? ' chosen' : ''}`;
-      button.dataset.keepsakeId = keepsake.id; button.setAttribute('aria-pressed', keepsake.id === state.keepsakeId ? 'true' : 'false');
-      button.innerHTML = `<span class="ks-icon">${esc(keepsake.icon)}</span><span><b>${esc(keepsake.name)}</b><small>${esc(keepsake.desc)}</small></span>`;
-      button.addEventListener('click', () => { state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces(); });
+      const button = keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
+        state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
+      });
       keepsakeBox.appendChild(button);
     }
   }
@@ -39317,9 +39708,13 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     armourBox.innerHTML = '';
     for (const piece of armourChoices()) {
       const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
+      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
       button.dataset.startingArmourId = piece.id;
       button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
-      button.addEventListener('click', () => { state.startingArmourId = piece.id; renderEquipment(); renderCharacterPreview(); refreshFaces(); });
+      button.addEventListener('click', () => {
+        state.startingArmourId = piece.id;
+        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('armour');
+      });
       armourBox.appendChild(button);
     }
     for (const hand of ['leftHand', 'rightHand']) {
@@ -39327,11 +39722,12 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       box.innerHTML = '';
       for (const piece of creationHandChoices(registries, state.classId, hand)) {
         const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
+        markUiComponent(button, UI.equipmentChoiceCard, hand);
         button.dataset.hand = hand; button.dataset.armamentId = piece.id;
         button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
         button.addEventListener('click', () => {
           state.startingHands = selectStartingHand(state.startingHands, hand, piece.id);
-          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(hand);
         });
         box.appendChild(button);
       }
@@ -39339,17 +39735,96 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     const relicBox = $('#cz-relics');
     relicBox.innerHTML = '';
     for (const relic of creationRelicChoices(registries, state.classId)) {
-      const button = document.createElement('button');
-      button.type = 'button'; button.className = `cc-relic-card${relic.id === state.startingRelicId ? ' chosen' : ''}`;
-      button.dataset.relicId = relic.id; button.setAttribute('aria-pressed', relic.id === state.startingRelicId ? 'true' : 'false');
-      button.innerHTML = `<span>${esc(relic.icon || '◆')}</span><b>${esc(relic.name)}</b><small>${esc(relicText(relic, registries))}</small>`;
-      button.addEventListener('click', () => { state.startingRelicId = relic.id; renderEquipment(); renderCharacterPreview(); refreshFaces(); });
+      const button = relicChoiceButton(relic, relicText(relic, registries), relic.id === state.startingRelicId, () => {
+        state.startingRelicId = relic.id;
+        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('relic');
+      });
       relicBox.appendChild(button);
     }
+    for (const section of equipmentSections.filter((row) => row.kind === 'slot')) {
+      const box = equipmentNodes.get(section.id).querySelector('.cc-card-selectors');
+      if (!box.childElementCount) {
+        const empty = document.createElement('p');
+        empty.className = 'cc-empty-slot';
+        empty.textContent = 'No starting options in this build. Content added to this slot will appear here.';
+        box.appendChild(empty);
+      }
+    }
+    for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = state.equipmentChoiceView;
+    refreshEquipmentFaces();
   }
 
+  function advanceEquipment(sectionId) {
+    if (!state.equipmentAutoAdvance || !equipmentFold) return;
+    const index = equipmentSections.findIndex((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
+    const next = equipmentSections.slice(index + 1).find((section) => section.kind !== 'slot');
+    if (!next) return;
+    equipmentFold.open(next.id);
+    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
+  }
+
+  const selectedRow = (id, rows) => rows.find((row) => row.id === id);
+  const spriteRows = [
+    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => state.glyph },
+    { key: 'tint', label: 'TINT', node: $('#cz-tint-group'), value: () => (
+      selectedRow(state.tint, PORTRAIT_TINTS)?.name || state.tint
+    ) },
+  ];
+  const spriteFold = mountDisclosure($('#cz-sprite-fold'), spriteRows.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
+  })));
+  refreshSpriteFaces = () => {
+    for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
+  };
+
+  const characterRows = [
+    { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
+      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
+    ) },
+    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
+      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
+    ) },
+    { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
+      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
+    ) },
+  ];
+  const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
+  })));
+  markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
+  refreshCharacterFaces = () => {
+    for (const row of characterRows) characterFold.setValue(row.key, row.value());
+  };
+  characterFold.open('primary');
+
+  const equipmentValue = (section) => {
+    if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
+      row.classId === state.classId && row.id === state.startingArmourId
+    ))?.name || 'None';
+    if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
+    if (section.kind === 'slot') return 'None';
+    const id = state.startingHands[section.slot];
+    return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
+  };
+  const equipmentFaces = new Map(equipmentSections.map((section) => [
+    section.id, selectionSectionFace(section.label, equipmentValue(section)),
+  ]));
+  equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSections.map((section) => ({
+    key: section.id, kind: 'pick', disclosure: 'face',
+    face: { node: equipmentFaces.get(section.id).node },
+    reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
+  })));
+  refreshEquipmentFaces = () => {
+    for (const section of equipmentSections) equipmentFaces.get(section.id).setValue(equipmentValue(section));
+  };
+  equipmentFold.open(equipmentSections[0].id);
+
   resetClassChoices();
-  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview();
+  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
 
   const panels = {
     class: $('#cz-class-panel'), character: $('#cz-character-panel'),
@@ -39369,16 +39844,147 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   if (catalog) {
     const flow = $('.cz-flow');
     const fragment = document.createDocumentFragment();
-    for (const row of sectionRows) {
+    const appendCatalogItem = (row, kind) => {
       const article = document.createElement('article');
       article.className = 'cc-catalog-item';
       article.dataset.catalogComponent = row.key;
       const headingId = `cc-catalog-${row.key}`;
-      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>LIVE COMPONENT</span></header>`;
+      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>${esc(kind)}</span></header>`;
       row.node.setAttribute('aria-labelledby', headingId);
       article.appendChild(row.node);
       fragment.appendChild(article);
-    }
+    };
+    for (const row of sectionRows) appendCatalogItem(row, 'LIVE SECTION');
+
+    const choiceSpecimen = (className, choices, idFor, renderer, initial) => {
+      const host = document.createElement('div');
+      host.className = `cc-catalog-specimen ${className}`;
+      let selected = initial;
+      const draw = () => host.replaceChildren(...choices.map((choice) => renderer(
+        choice, idFor(choice) === selected, () => { selected = idFor(choice); draw(); },
+      )));
+      draw();
+      return host;
+    };
+    const specimenRun = previewRun();
+    const specimenProjection = statProjection(registries, specimenRun);
+    const disclosureHost = document.createElement('div');
+    disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
+    const disclosureStat = document.createElement('div');
+    disclosureStat.className = 'cc-character-picker';
+    disclosureStat.appendChild(primaryStatCard(specimenProjection.attributes[0]));
+    const disclosureKeepsake = document.createElement('div');
+    disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
+    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
+    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
+      keepsake, keepsake.id === disclosureKeepsakeId,
+      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
+    )));
+    drawDisclosureKeepsakes();
+    const disclosureSpecimen = mountDisclosure(disclosureHost, [
+      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
+      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
+    ]);
+    markUiComponent(disclosureHost, UI.characterDisclosure);
+    disclosureSpecimen.open('sample-primary');
+    const statHost = document.createElement('div');
+    statHost.className = 'cc-primary-stats cc-catalog-specimen';
+    statHost.append(...specimenProjection.attributes.map(primaryStatCard));
+    const classChoiceSpecimen = document.createElement('div');
+    classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
+    const classChoiceHost = document.createElement('div');
+    classChoiceHost.className = 'class-row';
+    classChoiceHost.dataset.view = 'list';
+    let specimenClassId = state.classId;
+    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
+      selected: cls.id === specimenClassId,
+      visual: classGlyph(cls.id),
+      onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
+    })));
+    drawClassChoices();
+    classChoiceSpecimen.appendChild(classChoiceHost);
+    const previewRelic = registries.relics.get(state.startingRelicId);
+    const classPreviewHost = classPreviewPane({
+      cls: registries.classes.get(state.classId),
+      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
+      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
+      relic: previewRelic,
+      relicDescription: relicText(previewRelic, registries),
+    });
+    classPreviewHost.classList.add('cc-catalog-specimen');
+    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    classResourceSpecimen.classList.add('cc-catalog-specimen');
+    let viewToggleHost = null;
+    const setCatalogView = (mode) => {
+      const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
+      next.classList.add('cc-catalog-specimen');
+      if (viewToggleHost) viewToggleHost.replaceWith(next);
+      viewToggleHost = next;
+    };
+    setCatalogView('list');
+    let autoAdvanceSpecimen = null;
+    const setCatalogAutoAdvance = (value) => {
+      const next = booleanSettingToggle('Auto-advance on valid choice', value, setCatalogAutoAdvance);
+      next.classList.add('cc-catalog-specimen');
+      if (autoAdvanceSpecimen) autoAdvanceSpecimen.replaceWith(next);
+      autoAdvanceSpecimen = next;
+    };
+    setCatalogAutoAdvance(true);
+    const armourSpecimen = document.createElement('div');
+    armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
+    armourSpecimen.dataset.view = 'list';
+    const specimenArmours = armourChoices().slice(0, 2);
+    let specimenArmourId = specimenArmours[0].id;
+    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
+      const button = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+      button.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
+      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
+      button.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+      return button;
+    }));
+    drawArmourChoices();
+    const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
+    const relicSpecimen = document.createElement('div');
+    relicSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
+    let specimenRelicId = specimenRelics[0].id;
+    const drawRelicChoices = () => relicSpecimen.replaceChildren(...specimenRelics.map((relic) => relicChoiceButton(
+      relic, relicText(relic, registries), relic.id === specimenRelicId,
+      () => { specimenRelicId = relic.id; drawRelicChoices(); },
+    )));
+    drawRelicChoices();
+    const selectionFaceSpecimen = selectionSectionFace('STARTING ARMOUR', 'Ashen Vigil').node;
+    selectionFaceSpecimen.classList.add('cc-catalog-specimen');
+    const specimens = [
+      { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
+      { key: 'class-preview-pane', label: 'CLASS PREVIEW PANE', node: classPreviewHost },
+      { key: 'class-resource-grid', label: 'CLASS RESOURCE GRID', node: classResourceSpecimen },
+      { key: 'class-choice-card', label: 'CLASS CHOICE CARD', node: classChoiceSpecimen },
+      { key: 'view-mode-toggle', label: 'LIST / GRID TOGGLE', node: viewToggleHost },
+      { key: 'boolean-setting-toggle', label: 'BOOLEAN SETTING TOGGLE', node: autoAdvanceSpecimen },
+      { key: 'selection-section-face', label: 'SELECTION SUBCARD FACE', node: selectionFaceSpecimen },
+      { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
+      { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(
+        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+      ) },
+      { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
+        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
+      ) },
+      { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
+        'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
+      ) },
+      { key: 'tint-choice', label: 'TINT SWATCH', node: choiceSpecimen(
+        'cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
+      ) },
+      { key: 'sigil-choice', label: 'SIGIL CHOICE', node: choiceSpecimen(
+        'cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
+      ) },
+      { key: 'keepsake-choice', label: 'KEEPSAKE CARD', node: choiceSpecimen(
+        'cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
+      ) },
+      { key: 'equipment-choice-card', label: 'EQUIPMENT CHOICE CARD', node: armourSpecimen },
+      { key: 'relic-choice-card', label: 'RELIC CHOICE CARD', node: relicSpecimen },
+    ];
+    for (const row of specimens) appendCatalogItem(row, 'REUSABLE COMPONENT');
     flow.replaceChildren(fragment);
   } else {
     fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
@@ -39386,7 +39992,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       face: { label: row.label, value: row.value() },
       reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
     })));
-    refreshFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
+    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
     fold.open('class');
   }
 
@@ -44254,6 +44860,290 @@ const traySizeService = createTraySizeService();
 
 
 Object.assign(module.exports, { createTraySizeService, traySizeService });
+
+},
+"src/ui/components/creationCards.js": function (module, exports, require) {
+// Reusable character-creation cards. The live screen and dev catalogue both
+// call these renderers, so a specimen is the production component rather than
+// a look-alike maintained beside it.
+
+const { attachTooltip } = require("src/ui/components/tooltip.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+
+function appendVisual(host, visual) {
+  if (!visual) return;
+  if (visual instanceof Node) host.appendChild(visual);
+  else host.textContent = String(visual);
+}
+
+function choiceButton({ className, selected, label, text, onChoose }) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = `${className}${selected ? ' chosen' : ''}`;
+  button.textContent = text;
+  button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  if (label) button.setAttribute('aria-label', label);
+  if (onChoose) button.addEventListener('click', onChoose);
+  return button;
+}
+
+function primaryStatCard(row) {
+  const card = document.createElement('div');
+  card.className = 'disc-face cc-primary-stat';
+  card.dataset.stat = row.id;
+  const name = document.createElement('b');
+  name.className = 'disc-name';
+  name.textContent = row.shortLabel;
+  const value = document.createElement('span');
+  value.className = 'disc-value';
+  value.textContent = row.value;
+  card.append(name, value);
+  return markUiComponent(card, UI.primaryStatCard);
+}
+
+function resourceStrip(rows, poise) {
+  const strip = document.createElement('div');
+  strip.className = 'cc-derived';
+  strip.setAttribute('aria-label', 'Derived resources');
+  for (const row of rows) {
+    const item = document.createElement('span');
+    item.dataset.stat = row.id;
+    item.dataset.formula = row.formula;
+    item.title = row.formula;
+    const label = document.createElement('b');
+    label.textContent = row.faceLabel;
+    item.append(label, ` ${row.value}`);
+    strip.appendChild(item);
+  }
+  const poiseItem = document.createElement('span');
+  poiseItem.dataset.stat = 'poise';
+  const poiseLabel = document.createElement('b');
+  poiseLabel.textContent = 'Poise';
+  poiseItem.append(poiseLabel, ` ${poise.value}`);
+  strip.appendChild(poiseItem);
+  return markUiComponent(strip, UI.resourceStrip);
+}
+
+function viewModeToggle(value, onChoose, label = 'View choices') {
+  const group = document.createElement('div');
+  group.className = 'cc-view-toggle';
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', label);
+  for (const mode of ['list', 'grid']) {
+    const button = choiceButton({
+      className: 'cc-view-option', selected: value === mode,
+      text: mode === 'list' ? 'List' : 'Grid',
+      label: `${mode === 'list' ? 'List' : 'Grid'} view`,
+      onChoose: () => onChoose?.(mode),
+    });
+    button.dataset.viewMode = mode;
+    group.appendChild(button);
+  }
+  return markUiComponent(group, UI.viewModeToggle);
+}
+
+function booleanSettingToggle(label, value, onChoose) {
+  const wrapper = document.createElement('label');
+  wrapper.className = 'cc-boolean-setting';
+  const text = document.createElement('span');
+  text.textContent = label;
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'cc-switch';
+  button.setAttribute('role', 'switch');
+  button.setAttribute('aria-checked', value ? 'true' : 'false');
+  button.setAttribute('aria-label', label);
+  button.addEventListener('click', () => onChoose?.(!value));
+  const knob = document.createElement('span');
+  knob.className = 'cc-switch-knob';
+  button.appendChild(knob);
+  wrapper.append(text, button);
+  return markUiComponent(wrapper, UI.booleanSettingToggle);
+}
+
+function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null } = {}) {
+  const card = document.createElement(locked ? 'div' : 'button');
+  if (!locked) card.type = 'button';
+  card.className = `class-pick cz-class${selected ? ' chosen' : ''}${locked ? ' locked' : ''}`;
+  card.dataset.class = cls.id;
+  if (!locked) card.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  const icon = document.createElement('div');
+  icon.className = 'glyph';
+  appendVisual(icon, visual);
+  const copy = document.createElement('div');
+  copy.className = 'cp-body';
+  const title = document.createElement('h3');
+  title.textContent = cls.name;
+  const description = document.createElement('p');
+  description.textContent = cls.description || '';
+  copy.append(title, description);
+  if (locked && cls.milestone) {
+    const milestone = document.createElement('span');
+    milestone.className = 'chip';
+    milestone.textContent = `ARRIVES IN ${cls.milestone}`;
+    copy.appendChild(milestone);
+  }
+  card.append(icon, copy);
+  if (!locked && onChoose) card.addEventListener('click', onChoose);
+  return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
+}
+
+function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '' }) {
+  const pane = document.createElement('article');
+  pane.className = 'cc-class-preview';
+  pane.setAttribute('aria-label', `${cls.name} class preview`);
+  const eyebrow = document.createElement('p');
+  eyebrow.className = 'cc-preview-eyebrow';
+  eyebrow.textContent = 'CLASS PREVIEW';
+  const title = document.createElement('h3');
+  title.textContent = cls.name;
+  const art = document.createElement('div');
+  art.className = 'cc-class-art';
+  appendVisual(art, sprite);
+  const resourceHeading = document.createElement('p');
+  resourceHeading.className = 'cc-preview-eyebrow';
+  resourceHeading.textContent = 'STARTING RESOURCES';
+  const resourceHost = document.createElement('div');
+  resourceHost.className = 'cc-class-resources';
+  if (resources) resourceHost.appendChild(resources);
+  const relicHeading = document.createElement('p');
+  relicHeading.className = 'cc-preview-eyebrow';
+  relicHeading.textContent = 'CLASS RELIC';
+  const relicRow = document.createElement('div');
+  relicRow.className = 'cc-class-relic';
+  if (relic) {
+    const icon = document.createElement('span');
+    icon.className = 'cc-class-relic-art';
+    appendVisual(icon, relic.icon || null);
+    const copy = document.createElement('span');
+    const name = document.createElement('b');
+    name.textContent = relic.name;
+    const description = document.createElement('small');
+    description.textContent = relicDescription;
+    copy.append(name, description);
+    relicRow.append(icon, copy);
+  }
+  pane.append(eyebrow, title, art, resourceHeading, resourceHost, relicHeading, relicRow);
+  return markUiComponent(pane, UI.classPreviewPane);
+}
+
+function classResourceGrid(rows) {
+  const grid = document.createElement('div');
+  grid.className = 'cc-class-resource-grid';
+  grid.setAttribute('aria-label', 'Starting resources');
+  for (const row of rows) {
+    const item = document.createElement('div');
+    item.className = 'cc-class-resource';
+    item.dataset.stat = row.id;
+    const label = document.createElement('span');
+    label.textContent = row.faceLabel || row.label;
+    const value = document.createElement('b');
+    value.textContent = row.value;
+    item.append(label, value);
+    grid.appendChild(item);
+  }
+  return markUiComponent(grid, UI.classResourceGrid);
+}
+
+function selectionSectionFace(label, value, visual = null) {
+  const node = document.createElement('span');
+  node.className = 'cc-selection-face';
+  if (visual) {
+    const art = document.createElement('span');
+    art.className = 'cc-selection-face-art';
+    appendVisual(art, visual);
+    node.appendChild(art);
+  }
+  const name = document.createElement('b');
+  name.className = 'disc-name';
+  name.textContent = label;
+  const receipt = document.createElement('span');
+  receipt.className = 'disc-value';
+  receipt.textContent = value;
+  node.append(name, receipt);
+  return {
+    node: markUiComponent(node, UI.selectionSectionFace),
+    setValue(next) { receipt.textContent = next; },
+  };
+}
+
+function modeChoiceButton(mode, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cz-opt se-mode', selected, text: mode.label,
+    label: `${mode.label} attributes`, onChoose,
+  });
+  button.dataset.modeId = mode.id;
+  button.dataset.creationMode = mode.id;
+  return markUiComponent(button, UI.modeChoice);
+}
+
+function spriteChoiceButton(style, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cz-opt style', selected, text: style.name,
+    label: `${style.name} sprite`, onChoose,
+  });
+  button.dataset.spriteStyle = style.id;
+  return markUiComponent(button, UI.spriteChoice);
+}
+
+function tintChoiceButton(tint, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cz-opt tint', selected, text: '', label: tint.name, onChoose,
+  });
+  button.dataset.tintId = tint.id;
+  button.style.background = tint.css;
+  button.title = tint.name;
+  attachTooltip(button, () => tint.name);
+  return markUiComponent(button, UI.tintChoice);
+}
+
+function sigilChoiceButton(glyph, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cz-opt sigil', selected, text: glyph,
+    label: `Sigil ${glyph}`, onChoose,
+  });
+  button.dataset.sigil = glyph;
+  return markUiComponent(button, UI.sigilChoice);
+}
+
+function keepsakeChoiceButton(keepsake, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cz-keepsake', selected, text: '',
+    label: `${keepsake.name}. ${keepsake.desc}`, onChoose,
+  });
+  button.dataset.keepsakeId = keepsake.id;
+  const icon = document.createElement('span');
+  icon.className = 'ks-icon';
+  icon.textContent = keepsake.icon;
+  const copy = document.createElement('span');
+  const name = document.createElement('b');
+  name.textContent = keepsake.name;
+  const description = document.createElement('small');
+  description.textContent = keepsake.desc;
+  copy.append(name, description);
+  button.append(icon, copy);
+  return markUiComponent(button, UI.keepsakeChoice);
+}
+
+function relicChoiceButton(relic, description, selected, onChoose) {
+  const button = choiceButton({
+    className: 'cc-relic-card', selected, text: '',
+    label: `${relic.name}. ${description}`, onChoose,
+  });
+  button.dataset.relicId = relic.id;
+  const icon = document.createElement('span');
+  icon.className = 'cc-relic-art';
+  appendVisual(icon, relic.icon || null);
+  const name = document.createElement('b');
+  name.textContent = relic.name;
+  const copy = document.createElement('small');
+  copy.textContent = description;
+  button.append(icon, name, copy);
+  return markUiComponent(button, UI.relicChoiceCard);
+}
+
+
+Object.assign(module.exports, { primaryStatCard, resourceStrip, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, selectionSectionFace, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, relicChoiceButton });
 
 },
 "src/ui/screens/customRun.js": function (module, exports, require) {

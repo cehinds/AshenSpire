@@ -133,7 +133,7 @@ const PLANTS = [
     name: 'the stamp TYPES a version instead of deriving one',
     expect: /reads "BUILD 9\.9\.9/i,
     plant: (root) => edit(root, 'src/ui/components/buildstamp.js',
-      (t) => t.replace('${esc(BUILD_STAMP_TEXT)}', 'BUILD 9.9.9+deadbeef01')),
+      (t) => t.replace(": esc(BUILD_STAMP_TEXT);", ": 'BUILD 9.9.9+deadbeef01';")),
   },
 ];
 

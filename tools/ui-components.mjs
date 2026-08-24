@@ -29,6 +29,11 @@ const REQUIRED_IDS = Object.freeze([
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
   'armoury-card-strip', 'armoury-region-header',
   'folding-tray', 'tray-header', 'tray-resize-handle', 'tray-content',
+  'character-disclosure', 'class-preview-pane', 'class-resource-grid',
+  'class-choice-card', 'view-mode-toggle', 'boolean-setting-toggle',
+  'selection-section-face', 'primary-stat-card', 'resource-strip', 'mode-choice',
+  'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+  'equipment-choice-card', 'relic-choice-card',
 ]);
 
 export function receipt() {
@@ -48,6 +53,10 @@ export function receipt() {
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
+    creationCards: read('src/ui/components/creationCards.js'),
+    customize: read('src/ui/screens/customize.js'),
+    catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
+    catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
@@ -103,8 +112,8 @@ export function findings(r) {
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*520px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*430px[\s\S]*build-number/.test(r.css)) {
-    bad.push('C7 metadata does not hide Source, then Seed, then Build without wrapping');
+  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*520px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*build number stays visible at every/.test(r.css)) {
+    bad.push('C7 metadata does not hide Source, then Seed, while preserving Build without wrapping');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
@@ -218,6 +227,24 @@ export function findings(r) {
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
   }
+  const creationExports = [
+    'primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
+    'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
+    'modeChoiceButton', 'spriteChoiceButton', 'tintChoiceButton', 'sigilChoiceButton',
+    'keepsakeChoiceButton', 'relicChoiceButton',
+  ];
+  const creationIds = REQUIRED_IDS.slice(-16);
+  if (!creationExports.every((name) => r.creationCards.includes(`export function ${name}`))
+      || !['primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
+        'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
+        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice', 'keepsakeChoice',
+        'relicChoiceCard'].every((name) => r.creationCards.includes(`UI.${name}`))
+      || !/UI\.characterDisclosure/.test(r.customize)
+      || !/UI\.equipmentChoiceCard/.test(r.customize)
+      || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
+        && r.catalogHtml.includes(`'${id}'`))) {
+    bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
+  }
   return bad;
 }
 
@@ -227,7 +254,7 @@ function selftest() {
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
-    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace('const box = combatantFrame({\n        role: \'enemy\'', "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
+    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, css: r.css.replace('@container run-header (max-width: 720px)', '@container run-header (max-width: 721px)') })],
@@ -236,14 +263,15 @@ function selftest() {
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
     ['let metadata grid into rows', 'C12 ', (r) => ({ ...r, css: r.css.replace('display: inline-flex;', 'display: inline-grid;') })],
-    ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace('return Object.freeze({\n    component,', 'return ({\n    component,') })],
+    ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
+    ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 15/15 reusable component contracts hold');
+  else console.log('PASS clean source: 16/16 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -259,5 +287,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 15/15 reusable component contracts hold');
+  else console.log('ui-components: OK — 16/16 reusable component contracts hold');
 }
