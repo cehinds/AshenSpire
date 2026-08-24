@@ -265,12 +265,12 @@ async function selftest() {
     // homes with one `new Set`, which is right — a tab that is declared and also
     // navigated to is the two homes agreeing. But the same Set also deduped
     // WITHIN a home, so S2 ("no name is declared twice") could not fire on this
-    // set at all: two `deck` rows in MENU_TABS drew two identical buttons onto
+    // set at all: two `settings` rows in MENU_TABS drew two identical buttons onto
     // one panel and every check was green. Duplicates are now per home for the
     // mirror-image reason that zero members is.
-    ['MENU_TABS declaring `deck` twice — two buttons, one panel, and S2 could not see it',
-      'overlayTab', 'deck',
-      () => { MENU_TABS.push({ id: 'deck', label: 'Deck', icon: '🂠', tip: 'x' }); },
+    ['MENU_TABS declaring `settings` twice — two buttons, one panel, and S2 could not see it',
+      'overlayTab', 'settings',
+      () => { MENU_TABS.push({ id: 'settings', label: 'Settings', icon: '⚙', tip: 'x' }); },
       () => { MENU_TABS.pop(); }],
 
     // P12. THE READ PATH — Vira again, at the re-gate of 3010a72, and it is her

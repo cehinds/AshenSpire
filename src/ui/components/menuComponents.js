@@ -55,15 +55,23 @@ export function renderMenuOverlay(model) {
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
-    <div class="modal overlay-modal" role="dialog" aria-modal="true" aria-label="${esc(model.accessibility.label)}">
+    <div class="modal overlay-modal" role="dialog" aria-modal="true" aria-labelledby="ov-title">
       <div class="overlay-head">
-        <div class="overlay-tabs" data-surface="overlayTab"${model.properties.folded ? ' hidden' : ''} role="tablist" aria-label="${esc(stripModel.accessibility.label)}">
-          ${stripModel.children.map((tab) => `<button class="ov-tab${tab.properties.active ? ' on' : ''}" data-member="${esc(tab.properties.id)}" role="tab" aria-selected="${tab.properties.active ? 'true' : 'false'}">${esc(tab.properties.label)}</button>`).join('')}
+        <div class="overlay-titlebar">
+          <div>
+            <span class="overlay-eyebrow">RUN MENU</span>
+            <h2 id="ov-title">Options</h2>
+          </div>
+          <div class="overlay-actions">
+            ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
+            <button class="subtle" id="ov-close" title="Close (Esc)" aria-label="Close options">✕</button>
+          </div>
         </div>
-        ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
-        <div class="overlay-actions">
-          ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
-          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
+        <div class="overlay-nav">
+          <div class="overlay-tabs" data-surface="overlayTab"${model.properties.folded ? ' hidden' : ''} role="tablist" aria-label="${esc(stripModel.accessibility.label)}">
+            ${stripModel.children.map((tab) => `<button class="ov-tab${tab.properties.active ? ' on' : ''}" data-member="${esc(tab.properties.id)}" role="tab" aria-selected="${tab.properties.active ? 'true' : 'false'}">${esc(tab.properties.label)}</button>`).join('')}
+          </div>
+          ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
