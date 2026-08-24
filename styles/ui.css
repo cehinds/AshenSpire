@@ -1213,6 +1213,101 @@ button.rs-reset {
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
 
+/* ---------- cold-boot startup gate (#229) ---------------------------------
+   A separate surface from the title menu: the menu is not mounted behind it,
+   so hidden controls cannot leak into Tab order or the accessibility tree.
+   Copy and particle positions arrive through StartupGateModels.js; this block
+   owns layout only. */
+.startup-gate {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(16, 13, 10, 0.88), var(--bg));
+}
+.startup-gate:focus { outline: none; }
+.startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.startup-ash {
+  position: absolute;
+  left: var(--ash-left);
+  bottom: -1rem;
+  width: var(--ash-size);
+  height: var(--ash-size);
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55);
+  opacity: 0;
+  animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
+}
+@keyframes startupAshRise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  14% { opacity: 0.62; }
+  72% { opacity: 0.28; }
+  100% { transform: translate3d(1.4rem, -78vh, 0); opacity: 0; }
+}
+.startup-mark {
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  width: min(92vw, 72rem);
+  padding: 2rem;
+  text-align: center;
+  animation: startupMarkIn 520ms ease-out both;
+}
+@keyframes startupMarkIn {
+  from { opacity: 0; transform: translateY(0.65rem); }
+  to { opacity: 1; transform: none; }
+}
+.startup-overline {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.72rem, 1.8vw, 0.95rem);
+  letter-spacing: 0.38em;
+  text-indent: 0.38em;
+}
+.startup-wordmark {
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6.8rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
+}
+.startup-prompt {
+  margin: clamp(2.5rem, 8vh, 6rem) 0 0;
+  color: var(--parchment);
+  font-size: clamp(0.82rem, 2.2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  opacity: 0.82;
+  animation: startupPromptPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
+.startup-gate .build-stamp {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  color: var(--parchment);
+  text-align: center;
+}
+@media (max-width: 30rem) {
+  .startup-mark { width: 94vw; padding-inline: 0.8rem; }
+  .startup-wordmark { font-size: clamp(2.45rem, 12vw, 4.3rem); letter-spacing: 0.11em; text-indent: 0.11em; }
+  .startup-prompt { max-width: 20rem; line-height: 1.55; }
+  .startup-gate .build-stamp { font-size: 0.72rem; }
+}
+
 /* ---------- character customization ---------- */
 
 /* EldenSpire#29 slice 1. These three rules were inline `style=` attributes on

@@ -564,6 +564,22 @@ export function setScreenKeyClaim(claim = null) {
   return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
 }
 
+// A cold-boot surface may temporarily own the physical press before the focus
+// cursor and screen hotkeys see it. The callback receives a normalized,
+// immutable record and returns true only when it consumed that phase. This is
+// deliberately one slot, not a stack: two first-input owners would recreate
+// the double-activation race the gate exists to prevent.
+let inputGate = null;
+export function setInputGate(gate = null) {
+  inputGate = typeof gate === 'function' ? gate : null;
+  const owned = inputGate;
+  return () => { if (inputGate === owned) inputGate = null; };
+}
+
+function gateInput(input) {
+  return !!inputGate && inputGate(Object.freeze({ ...input })) === true;
+}
+
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
 // A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
@@ -762,6 +778,11 @@ function onKeydown(ev) {
     cb(k);
     return;
   }
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    return;
+  }
   if (!enabled) return;
   const tag = (ev.target && ev.target.tagName) || '';
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
@@ -885,6 +906,11 @@ function onKeydown(ev) {
 // however the world changes, or the control is left filling forever.
 //
 function onKeyup(ev) {
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'up', key: ev.key, repeat: false })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    return;
+  }
   if (ev.key === CONFIRM_KEY) { pressEnd(); return; }
   if (keyPressAction && matchAction(ev, keyPressAction)) {
     keyPressAction = null;
@@ -920,12 +946,16 @@ function pollPads() {
       // rising edges, so a pad button was a tap and could never be a hold —
       // the same gap the keyboard had, one input over (S7).
       if (!pressed[i] && prev[i]) {
+        const releasedAction = actionForButton(i);
+        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, action: releasedAction?.id || '' })) continue;
         if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
         continue;
       }
       const rising = pressed[i] && !prev[i];
       if (!rising) continue;
       engaged = true;
+      const gatedAction = actionForButton(i);
+      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, action: gatedAction?.id || '' })) continue;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;

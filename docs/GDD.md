@@ -501,6 +501,18 @@ The component library must cover at least:
 
 Each component defines default, hover, focus-visible, active, selected, disabled, loading where applicable, invalid, and reduced-motion behavior.
 
+### 13.4 Cold-boot threshold
+
+A fresh page boot opens on a sparse Ashen Spire threshold before the title menu. The threshold
+uses the gold inscriptional wordmark, a near-black umber field, restrained ash and ember movement,
+one input-family-specific invitation, and the exact shared BUILD/source receipt. It is not a menu:
+title controls do not exist behind it, and the first qualifying input is consumed before the title
+is mounted. Profile recovery and quarantine notices retain priority. Once crossed, the threshold
+does not return during that boot; returning from creation or a run goes directly to the title.
+Keyboard, pointer, touch, and standard controller confirm/menu inputs are equivalent, focus moves
+to the first available title slot, and reduced motion preserves the same information and timing
+contract without ornamental movement.
+
 ## 14. Visual language and motif
 
 ### 14.1 Emotional tone

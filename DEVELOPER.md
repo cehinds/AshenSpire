@@ -180,6 +180,14 @@ node tools/tray-components.mjs
 node tests/run-node.mjs
 ```
 
+Cold-boot startup changes additionally run the rendered input contract and its
+same-door known-bad corpus:
+
+```bash
+node tools/startup-gate.mjs
+node tools/startup-gate.mjs --selftest
+```
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js

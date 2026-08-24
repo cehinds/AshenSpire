@@ -1,10 +1,10 @@
 // tools/screenshot.mjs — capture real screenshots of the game into docs/preview/.
 //
 // Serves the project on a local port, then drives headless Chrome/Edge through
-// the app's ?shot= states (see main.js): title, map (a fresh seeded run), and
+// the app's ?shot= states (see main.js): startup, title, map (a fresh seeded run), and
 // combat (first fight of that run). No dependencies beyond a local Chrome/Edge.
 //
-//   node tools/screenshot.mjs            → docs/preview/{title,map,combat}.png
+//   node tools/screenshot.mjs            → docs/preview/{startup,title,map,combat,...}.png
 //   node tools/screenshot.mjs --out DIR  → capture into DIR instead
 
 import { spawn } from 'node:child_process';
@@ -27,7 +27,8 @@ const BROWSERS = [
 ];
 
 const SHOTS = [
-  { name: 'title', query: '' },
+  { name: 'startup', query: '?shot=startup' },
+  { name: 'title', query: '?shot=title' },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
