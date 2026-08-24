@@ -467,7 +467,7 @@ jobs:
         # reached is red (H0), never absent. The strip is display:none on the
         # narrow layout, so every check there is `unknown` and counts toward
         # nothing — the tool prints that as a state with its reason.
-        run: node tools/hintstrip.mjs
+        run: node tools/verdict.mjs -- node tools/hintstrip.mjs
 
       - name: …and that gate can fail — six known-bads, each through the real door
         # Inverted expectation, the idiom this job already uses three times.
@@ -484,7 +484,7 @@ jobs:
         # plant result rather than a baseline complaint. The tree is green now, so
         # the clean edge is green on its own merits — the stronger state, and it
         # needs no excuse. Every plant is still red by its own named finding.
-        run: node tools/hintstrip.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/hintstrip.mjs --selftest
 
       # ---- #316's probe, wired because a probe nobody runs is the same defect
       # as a probe that prints without asserting, and this file just carried
@@ -509,7 +509,7 @@ jobs:
         # REPORTED and deliberately not gated: stripFullyVisible, false at `dev`
         # and at head alike — a pre-existing scroll this change neither adds nor
         # removes.
-        run: node tools/armoury-arrival-figure.mjs
+        run: node tools/verdict.mjs -- node tools/armoury-arrival-figure.mjs
 
       # NO CAN-FAIL ARM HERE, AND I AM NAMING THE HOLE RATHER THAN IMPLYING ONE.
       # The three gates above this each have a `--selftest` / `--mutate` door.
