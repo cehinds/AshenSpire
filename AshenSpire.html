@@ -6696,11 +6696,17 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-const audio = initAudio(saves.loadMeta().settings || {});
+// Keep the applied profile in memory for the session. A quarantined profile is
+// deliberately unreadable after the first failure; reloading it for every
+// Quick Menu read would manufacture a fresh default and make a live Music
+// change appear to undo itself. Normal persistence still goes through `saves`.
+let activeMeta = saves.loadMeta();
+let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
-initInput({ getSettings: () => saves.loadMeta().settings || {} });
+initInput({ getSettings: () => activeSettings });
 
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
@@ -7106,7 +7112,7 @@ function applyDisplaySettings(settings) {
     audio.configureMusic({ folder });
   }
 }
-applyDisplaySettings(saves.loadMeta().settings);
+applyDisplaySettings(activeSettings);
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -7129,6 +7135,9 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  for (const key of Object.keys(activeSettings)) delete activeSettings[key];
+  Object.assign(activeSettings, settings);
+  activeMeta.settings = activeSettings;
   applyDisplaySettings(settings); // display + the complete resolved audio bag
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);
@@ -7148,10 +7157,14 @@ const QUARANTINE_NOTICE =
 // Quick Menu. The launcher receives this capability; it never writes profile
 // state itself.
 function commitSettingsChange(changed) {
-  const meta = saves.loadMeta();
-  Object.assign(meta.settings, changed);
-  const res = saves.saveMeta(meta);
-  applyDisplaySettings(meta.settings);
+  if (!saves.profileStatus().quarantined) {
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  Object.assign(activeSettings, changed);
+  activeMeta.settings = activeSettings;
+  const res = saves.saveMeta(activeMeta);
+  applyDisplaySettings(activeSettings);
   remountMapIfShowing(changed);
   if (changed.bindings) setBindings(changed.bindings);
   if (changed.keyBindings) setKeyBindings(changed.keyBindings);
@@ -7179,13 +7192,13 @@ const quickMenuControls = {
   },
   music: {
     read: () => {
-      const settings = saves.loadMeta().settings || {};
+      const settings = activeSettings;
       return { checked: resolveMusicEnabled(settings), condition: musicEnabledCondition(settings) };
     },
     activate: () => {
-      const settings = saves.loadMeta().settings || {};
-      commitSettingsChange({ musicEnabled: !resolveMusicEnabled(settings) });
-      return {};
+      const next = !resolveMusicEnabled(activeSettings);
+      const persisted = commitSettingsChange({ musicEnabled: next });
+      return { changed: { musicEnabled: next }, persisted };
     },
   },
 };
@@ -7461,7 +7474,7 @@ function showTitle() {
 
 function showSettings() {
   openSettings({
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     // The Profile section (#67) needs the manager itself: it lists, exports and
     // restores archives. Without it the section does not render at all.
     saves,
@@ -7546,7 +7559,7 @@ function showOverlay(initialTab = 'deck') {
   openOverlay({
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     initialTab,
     // The overlay gets the save manager too (#67, Sunna's D18). Without it this
     // door discarded saveMeta's {ok:false} exactly as the modal used to, and
@@ -39132,7 +39145,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e7e48e9d8c';
+const SOURCE = '71f0c67629';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39166,7 +39179,7 @@ const SOURCE = 'e7e48e9d8c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1264';
+const ORDINAL = '1265';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -53224,7 +53237,7 @@ const ROWS = [
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
-    choices: ['mirror', 'switcher'], label: 'Quick menu',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. Existing stored OFF still keeps the direct-to-Deck route; fresh or invalid values use MIRROR.' },
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
@@ -55501,6 +55514,8 @@ const AUDIO_DEFAULTS = balance.ui.audio;
 function resolveMusicEnabled(settings = {}) {
   return typeof settings.musicEnabled === 'boolean'
     ? settings.musicEnabled
+    : typeof settings.muteMusic === 'boolean'
+      ? settings.muteMusic !== true
     : AUDIO_DEFAULTS.musicEnabled !== false;
 }
 
@@ -57182,7 +57197,13 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   });
   musicButton?.addEventListener('click', async () => {
     if (musicButton.disabled || !quickControls.music?.activate) return;
-    await quickControls.music.activate();
+    const result = await quickControls.music.activate();
+    if (result?.changed) Object.assign(settings, result.changed);
+    // The header action and the Settings row are two presentations of one
+    // setting. Rebuild the active Settings panel after the shared owner
+    // commits so its switch, aria-checked state, and condition copy cannot lag
+    // one click behind the Quick Menu.
+    if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
     syncMusicQuickAction();
   });
   saveButton?.addEventListener('click', () => {
