@@ -4802,7 +4802,8 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
 }
 @container run-header (max-width: 520px) {
-  .topbar.combat-hud.shared-hud .hud-run-meta .build-number { display: none; }
+  /* Source and Seed have already yielded above; the build number stays visible
+     at every supported width so a phone screenshot still identifies its tree. */
   .topbar.combat-hud.shared-hud .hud-run-meta {
     gap: 0;
     font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));
@@ -39120,7 +39121,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'fdba772274';
+const SOURCE = '6994548679';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39154,7 +39155,7 @@ const SOURCE = 'fdba772274';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1261';
+const ORDINAL = '1262';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

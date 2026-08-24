@@ -513,4 +513,5 @@ console.log('          combat + menu-expanded. --artifact selects the shipped ro
 console.log('          NO GAMEPAD IS ATTACHED — R5 drives the ring through the keyboard');
 console.log('          analogue ([ / ]), which shares the ring but NOT the button-4/5');
 console.log('          precedence path. The precedence line itself is read, not observed.');
+console.log(`${checks.filter(Boolean).length} passed, ${red} failed`);
 process.exit(red ? 1 : 0);

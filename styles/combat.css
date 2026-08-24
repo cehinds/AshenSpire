@@ -126,7 +126,8 @@
   .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
 }
 @container run-header (max-width: 520px) {
-  .topbar.combat-hud.shared-hud .hud-run-meta .build-number { display: none; }
+  /* Source and Seed have already yielded above; the build number stays visible
+     at every supported width so a phone screenshot still identifies its tree. */
   .topbar.combat-hud.shared-hud .hud-run-meta {
     gap: 0;
     font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));
