@@ -277,7 +277,13 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   });
   musicButton?.addEventListener('click', async () => {
     if (musicButton.disabled || !quickControls.music?.activate) return;
-    await quickControls.music.activate();
+    const result = await quickControls.music.activate();
+    if (result?.changed) Object.assign(settings, result.changed);
+    // The header action and the Settings row are two presentations of one
+    // setting. Rebuild the active Settings panel after the shared owner
+    // commits so its switch, aria-checked state, and condition copy cannot lag
+    // one click behind the Quick Menu.
+    if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
     syncMusicQuickAction();
   });
   saveButton?.addEventListener('click', () => {

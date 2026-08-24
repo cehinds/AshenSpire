@@ -64,8 +64,15 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'overlay-settings-stale', file: 'src/ui/components/overlay.js',
-        find: 'controls: quickControls,', replace: 'controls: {},',
-        expectRed: /overlay forwards the shared controls/,
+        find: "if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);",
+        replace: '/* planted: Settings panel stays stale after Quick Menu Music */',
+        expectRed: /overlay refreshes Settings after a Quick Menu music change/,
+      },
+      {
+        name: 'quarantine-settings-reader', file: 'src/main.js',
+        find: 'if (!saves.profileStatus().quarantined) {',
+        replace: 'if (true) { // planted: quarantine reloads the rejected profile',
+        expectRed: /quarantine keeps the applied settings in session memory/,
       },
       {
         name: 'overlay-fullscreen-refusal-silent', file: 'src/ui/components/overlay.js',
@@ -98,7 +105,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('music-toggle-parity-selftest: OK — 14 checks passed');
+  if (code === 0) console.log('music-toggle-parity-selftest: OK — 15 checks passed');
   process.exit(code);
 }
 
@@ -124,6 +131,8 @@ const { resolveQuickNavMode } = await import('../src/ui/components/quicknav.js')
 const { menuRows } = await import('../src/ui/uiContent.js');
 
 check(resolveMusicEnabled({}) === true, 'absent Music resolves enabled without a volume inference');
+check(resolveMusicEnabled({ muteMusic: true }) === false && resolveMusicEnabled({ muteMusic: false }) === true,
+  'legacy muteMusic profiles migrate to the equivalent Music state');
 check(resolveMusicEnabled({ musicEnabled: false, muteAudio: false }) === false, 'explicit Music off resolves off');
 check(resolveMusicEnabled({ musicEnabled: 'broken' }) === true, 'invalid Music heals through the default resolver');
 check(resolveMusicEnabled({ musicEnabled: true, musicVolume: 0 }) === true, 'volume 0 remains enabled');
@@ -170,6 +179,8 @@ const main = source('src/main.js');
 check(!/saveMeta|localStorage|META_KEY/.test(quick), 'Quick Menu contains no persistence owner');
 check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
 check(overlay.includes('controls: quickControls,'), 'overlay forwards the shared controls');
+check(overlay.includes("if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);"),
+  'overlay refreshes Settings after a Quick Menu music change');
 check(overlay.includes("document.addEventListener('fullscreenerror', announceFullscreenError);")
   && overlay.includes("settingsAnnouncement.textContent = result.announcement;"),
   'overlay announces fullscreen refusal');
@@ -183,6 +194,8 @@ check(audio.includes('else if (state.context && (!wasMusicEnabled || musicVolume
 check(audio.includes('if (state.muted || !state.musicEnabled) stopMusic(0.3);'), 'disable and global mute share the stop-only branch');
 check(audio.includes('        el.pause();'), 'disabling Music pauses external media');
 check(main.includes('applyDisplaySettings(settings); // display + the complete resolved audio bag'), 'restore applies the complete settings bag');
+check(main.includes('if (!saves.profileStatus().quarantined) {') && main.includes('const settings = activeSettings;'),
+  'quarantine keeps the applied settings in session memory');
 
 if (failures) {
   console.error(`music-toggle-parity: ${checks - failures} passed, ${failures} failed`);

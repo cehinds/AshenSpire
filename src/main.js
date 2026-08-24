@@ -217,11 +217,17 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-const audio = initAudio(saves.loadMeta().settings || {});
+// Keep the applied profile in memory for the session. A quarantined profile is
+// deliberately unreadable after the first failure; reloading it for every
+// Quick Menu read would manufacture a fresh default and make a live Music
+// change appear to undo itself. Normal persistence still goes through `saves`.
+let activeMeta = saves.loadMeta();
+let activeSettings = activeMeta.settings || (activeMeta.settings = {});
+const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
 
 // Keyboard + gamepad navigation (SPEC §7.3). Bindings live in meta.settings.
-initInput({ getSettings: () => saves.loadMeta().settings || {} });
+initInput({ getSettings: () => activeSettings });
 
 // All presentation config is data (content/balance.js → balance.ui): accent
 // palettes, UI zoom scale, text sizes. Code never embeds these numbers.
@@ -627,7 +633,7 @@ function applyDisplaySettings(settings) {
     audio.configureMusic({ folder });
   }
 }
-applyDisplaySettings(saves.loadMeta().settings);
+applyDisplaySettings(activeSettings);
 
 /**
  * applyRestoredSettings(restored) — re-dress the running app in a profile that
@@ -650,6 +656,9 @@ applyDisplaySettings(saves.loadMeta().settings);
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  for (const key of Object.keys(activeSettings)) delete activeSettings[key];
+  Object.assign(activeSettings, settings);
+  activeMeta.settings = activeSettings;
   applyDisplaySettings(settings); // display + the complete resolved audio bag
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);
@@ -669,10 +678,14 @@ const QUARANTINE_NOTICE =
 // Quick Menu. The launcher receives this capability; it never writes profile
 // state itself.
 function commitSettingsChange(changed) {
-  const meta = saves.loadMeta();
-  Object.assign(meta.settings, changed);
-  const res = saves.saveMeta(meta);
-  applyDisplaySettings(meta.settings);
+  if (!saves.profileStatus().quarantined) {
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  Object.assign(activeSettings, changed);
+  activeMeta.settings = activeSettings;
+  const res = saves.saveMeta(activeMeta);
+  applyDisplaySettings(activeSettings);
   remountMapIfShowing(changed);
   if (changed.bindings) setBindings(changed.bindings);
   if (changed.keyBindings) setKeyBindings(changed.keyBindings);
@@ -700,13 +713,13 @@ const quickMenuControls = {
   },
   music: {
     read: () => {
-      const settings = saves.loadMeta().settings || {};
+      const settings = activeSettings;
       return { checked: resolveMusicEnabled(settings), condition: musicEnabledCondition(settings) };
     },
     activate: () => {
-      const settings = saves.loadMeta().settings || {};
-      commitSettingsChange({ musicEnabled: !resolveMusicEnabled(settings) });
-      return {};
+      const next = !resolveMusicEnabled(activeSettings);
+      const persisted = commitSettingsChange({ musicEnabled: next });
+      return { changed: { musicEnabled: next }, persisted };
     },
   },
 };
@@ -982,7 +995,7 @@ function showTitle() {
 
 function showSettings() {
   openSettings({
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     // The Profile section (#67) needs the manager itself: it lists, exports and
     // restores archives. Without it the section does not render at all.
     saves,
@@ -1067,7 +1080,7 @@ function showOverlay(initialTab = 'deck') {
   openOverlay({
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     initialTab,
     // The overlay gets the save manager too (#67, Sunna's D18). Without it this
     // door discarded saveMeta's {ok:false} exactly as the modal used to, and

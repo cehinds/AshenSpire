@@ -229,7 +229,7 @@ const ROWS = [
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
-    choices: ['mirror', 'switcher'], label: 'Quick menu',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
     note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. Existing stored OFF still keeps the direct-to-Deck route; fresh or invalid values use MIRROR.' },
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
