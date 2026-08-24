@@ -160,6 +160,7 @@ async function main() {
     const verticalResize = await evaluate(`(() => {
       document.querySelector('[data-tray-edge="top"] .tray-fold').click();
       const tray = document.querySelector('[data-tray-edge="top"]');
+      tray.style.height = '140px';
       const handle = tray.querySelector('.tray-resize-handle');
       const hit = handle.getBoundingClientRect();
       const start = tray.getBoundingClientRect().height;

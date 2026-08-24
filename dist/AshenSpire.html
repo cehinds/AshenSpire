@@ -2668,41 +2668,26 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-count {
   margin-left: 0; writing-mode: vertical-rl;
 }
-.folding-tray[data-collapsed='0'][data-resizable='1'] { display: grid; }
-.folding-tray[data-collapsed='0'][data-tray-edge='top'] {
-  grid-template: auto minmax(0, 1fr) var(--ui-tray-resize-surface) / minmax(0, 1fr);
-}
-.folding-tray[data-collapsed='0'][data-tray-edge='bottom'] {
-  grid-template: var(--ui-tray-resize-surface) auto minmax(0, 1fr) / minmax(0, 1fr);
-}
-.folding-tray[data-collapsed='0'][data-tray-edge='left'] {
-  grid-template: auto minmax(0, 1fr) / minmax(0, 1fr) var(--ui-tray-resize-surface);
-}
-.folding-tray[data-collapsed='0'][data-tray-edge='right'] {
-  grid-template: auto minmax(0, 1fr) / var(--ui-tray-resize-surface) minmax(0, 1fr);
-}
-.folding-tray[data-collapsed='0'][data-tray-edge='bottom'] > .tray-resize-handle { grid-row: 1; }
-.folding-tray[data-collapsed='0'][data-tray-edge='bottom'] > .tray-header { grid-row: 2; }
-.folding-tray[data-collapsed='0'][data-tray-edge='bottom'] > .tray-content { grid-row: 3; }
-.folding-tray[data-collapsed='0'][data-tray-edge='left'] > .tray-header,
-.folding-tray[data-collapsed='0'][data-tray-edge='left'] > .tray-content { grid-column: 1; }
-.folding-tray[data-collapsed='0'][data-tray-edge='left'] > .tray-resize-handle { grid-column: 2; grid-row: 1 / -1; }
-.folding-tray[data-collapsed='0'][data-tray-edge='right'] > .tray-header,
-.folding-tray[data-collapsed='0'][data-tray-edge='right'] > .tray-content { grid-column: 2; }
-.folding-tray[data-collapsed='0'][data-tray-edge='right'] > .tray-resize-handle { grid-column: 1; grid-row: 1 / -1; }
 .tray-resize-handle {
-  position: relative; min-width: var(--ui-tray-resize-surface); min-height: var(--ui-tray-resize-surface);
-  touch-action: none; user-select: none; outline: 0;
+  position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0;
 }
 .tray-resize-handle::after {
   content: ''; position: absolute; border-radius: 999px; background: color-mix(in srgb, var(--gold) 58%, transparent);
   transition: background-color 120ms ease, transform 120ms ease;
 }
-.tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] { cursor: ns-resize; }
+.tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] {
+  left: 50%; width: 9.6rem; height: var(--ui-tray-resize-surface); transform: translateX(-50%); cursor: ns-resize;
+}
+.tray-resize-handle[data-ui-variant='top'] { bottom: 0; }
+.tray-resize-handle[data-ui-variant='bottom'] { top: 0; }
 .tray-resize-handle[data-ui-variant='top']::after, .tray-resize-handle[data-ui-variant='bottom']::after {
   width: 4.8rem; height: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%);
 }
-.tray-resize-handle[data-ui-variant='left'], .tray-resize-handle[data-ui-variant='right'] { cursor: ew-resize; }
+.tray-resize-handle[data-ui-variant='left'], .tray-resize-handle[data-ui-variant='right'] {
+  top: 50%; width: var(--ui-tray-resize-surface); height: 9.6rem; transform: translateY(-50%); cursor: ew-resize;
+}
+.tray-resize-handle[data-ui-variant='left'] { right: 0; }
+.tray-resize-handle[data-ui-variant='right'] { left: 0; }
 .tray-resize-handle[data-ui-variant='left']::after, .tray-resize-handle[data-ui-variant='right']::after {
   width: 2px; height: 4.8rem; left: 50%; top: 50%; transform: translate(-50%, -50%);
 }
@@ -37383,7 +37368,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '712cd60108';
+const SOURCE = '1656e1ddbe';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -37417,7 +37402,7 @@ const SOURCE = '712cd60108';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1172';
+const ORDINAL = '1173';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
