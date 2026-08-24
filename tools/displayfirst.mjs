@@ -1377,7 +1377,10 @@ function selftestPlants() {
         + '  }\n'
         + '  __displayFirstHost.scrollTop = 1;\n'
         + '}, 50);',
-      expectRed: /FINDING D3\/ink .*unscrolled=false .*ancestors=\[[^\]]*(?:settings-modal|overlay-body):top=1,left=0/,
+      // Chromium may expose a one-device-pixel scroll as a fractional CSS
+      // pixel at non-1 device scale factors. The contract is the non-zero
+      // ancestor offset, not one particular CSS-pixel serialization.
+      expectRed: /FINDING D3\/ink .*unscrolled=false .*ancestors=\[[^\]]*(?:settings-modal|overlay-body):top=(?!0(?:\.0+)?(?:,|\]))(?:\d+(?:\.\d+)?|\.\d+),left=0/,
     },
     {
       // 20 — A RENDERED ROW WHOLLY ABOVE THE VIEWPORT IS NOT VISIBLE ORDER.
