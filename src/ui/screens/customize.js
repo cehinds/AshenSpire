@@ -643,10 +643,14 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const viewToggleHost = viewModeToggle('list', (mode) => {
-      viewToggleHost.replaceWith(viewModeToggle(mode, () => {}, 'Catalog view choice'));
-    }, 'Catalog view choice');
-    viewToggleHost.classList.add('cc-catalog-specimen');
+    let viewToggleHost = null;
+    const setCatalogView = (mode) => {
+      const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
+      next.classList.add('cc-catalog-specimen');
+      if (viewToggleHost) viewToggleHost.replaceWith(next);
+      viewToggleHost = next;
+    };
+    setCatalogView('list');
     const autoAdvanceSpecimen = booleanSettingToggle('Auto-advance on valid choice', true, () => {});
     autoAdvanceSpecimen.classList.add('cc-catalog-specimen');
     const armourSpecimen = document.createElement('div');

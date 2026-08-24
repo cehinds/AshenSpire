@@ -366,6 +366,12 @@ async function checkCatalog(width, height, screenshotName) {
   `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
   assert(Object.values(receipt.primitives).every((count) => count >= 1),
     `${width}x${height}: component catalog references every reusable creation component`);
+  await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').click()`);
+  assert(await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="grid"]').getAttribute('aria-pressed') === 'true'`),
+    `${width}x${height}: catalog view-mode specimen switches to Grid`);
+  await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="list"]').click()`);
+  assert(await evaluate(`document.querySelector('[data-catalog-component="view-mode-toggle"] [data-view-mode="list"]').getAttribute('aria-pressed') === 'true'`),
+    `${width}x${height}: catalog view-mode specimen remains interactive after replacement`);
   await evaluate(`document.querySelector('[data-catalog-component="character-disclosure"]').scrollIntoView({block:'start'})`);
   await wait(150);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);

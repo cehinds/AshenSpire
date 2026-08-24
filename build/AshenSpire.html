@@ -37599,7 +37599,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e3bf21cf3f';
+const SOURCE = '67d58a65ec';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -37633,7 +37633,7 @@ const SOURCE = 'e3bf21cf3f';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1185';
+const ORDINAL = '1187';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38604,10 +38604,14 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const viewToggleHost = viewModeToggle('list', (mode) => {
-      viewToggleHost.replaceWith(viewModeToggle(mode, () => {}, 'Catalog view choice'));
-    }, 'Catalog view choice');
-    viewToggleHost.classList.add('cc-catalog-specimen');
+    let viewToggleHost = null;
+    const setCatalogView = (mode) => {
+      const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
+      next.classList.add('cc-catalog-specimen');
+      if (viewToggleHost) viewToggleHost.replaceWith(next);
+      viewToggleHost = next;
+    };
+    setCatalogView('list');
     const autoAdvanceSpecimen = booleanSettingToggle('Auto-advance on valid choice', true, () => {});
     autoAdvanceSpecimen.classList.add('cc-catalog-specimen');
     const armourSpecimen = document.createElement('div');
