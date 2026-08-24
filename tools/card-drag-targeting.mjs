@@ -216,6 +216,9 @@ function finish(code, why = null) {
   // uncaught exception is `unknown`, and `unknown` outranks every verdict a
   // later-resolving main() can reach.
   if (fatal !== null) { code = 2; why = why || fatal; }
+  // Browser cleanup can raise exit 3 under BROWSER_LEAK_STRICT. That refusal
+  // outranks a successful screen run and must not be rewritten as green.
+  code = Math.max(code, process.exitCode || 0);
   // EXACTLY ONE COUNTED LINE, EVER. A second one would make readVerdict report
   // AMBIGUOUS — or, worse, be the only recognised row and hand the door the
   // wrong count. A late death still RAISES the exit code; it never reprints.
@@ -475,7 +478,9 @@ if (process.argv.includes('--selftest')) {
   // here was ALSO doing control flow — it is what kept the module from falling
   // through into main() — so the fall-through is now guarded explicitly at the
   // call site instead of by a side effect of exiting.
-  process.exitCode = selftestCode;
+  // A fatal caught while the corpus is still running has already raised the
+  // process to 2. A later green corpus result must not lower it back to 0.
+  process.exitCode = Math.max(selftestCode, process.exitCode || 0);
 }
 
 const BROWSERS = [
