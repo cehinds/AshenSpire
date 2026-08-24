@@ -88,11 +88,11 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, settingsRowHtml, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
-import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
+import { LOCK_COPY, PARCHMENT_ACTS, PARCHMENT_EXT, BACKDROP_ACTS, MENU_TABS, MENU, parchmentAsset, backdropClass, actPlate } from '../src/ui/uiContent.js';
 
 // ---------------------------------------------------------------------------
 // Test-only content (registered alongside the real bundle; never shipped)
@@ -5200,6 +5200,59 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const fs = display[0];
     eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
     eq(fs.label, 'Fullscreen', 'same label');
+
+    const quick = display.find((r) => r.key === 'quickNav');
+    eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');
+    eq(quick.choices.join(','), 'mirror,switcher', 'Quick menu exposes only Mirror or Switcher');
+    eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
+      'the internal row order is not exposed as a redundant second setting');
+
+    const unsupported = fullscreenCapability({ documentElement: {}, exitFullscreen: null });
+    eq(unsupported.supported, false, 'iPhone-like documents do not receive a dead fullscreen toggle');
+    const supported = fullscreenCapability({
+      documentElement: { requestFullscreen() {} },
+      exitFullscreen() {},
+    });
+    eq(supported.supported, true, 'documents with both enter and exit APIs expose fullscreen');
+  });
+
+  test('61a. Armoury is the one equipment route, and fullscreen reports browser support', () => {
+    assert(!MENU_TABS.some((tab) => tab.id === 'relics'),
+      'the run menu does not duplicate Armoury with a Relics & Flasks tab');
+    for (const [context, rows] of Object.entries(MENU)) {
+      assert(!rows.some((row) => row.tab === 'relics'),
+        `${context} quick navigation has no duplicate relic/equipment route`);
+      const armouryRows = rows.filter((row) => row.act === 'armoury');
+      for (const row of armouryRows) eq(row.label, 'Armoury', `${context} names the canonical equipment route Armoury`);
+    }
+
+    const unsupported = { documentElement: {}, fullscreenEnabled: false };
+    eq(fullscreenCapability(unsupported).supported, false,
+      'a browser without the document fullscreen API is reported unsupported');
+    const supported = {
+      documentElement: { requestFullscreen() {} },
+      exitFullscreen() {},
+      fullscreenEnabled: true,
+    };
+    eq(fullscreenCapability(supported).supported, true,
+      'a browser with request and exit support is reported supported');
+    const webkit = {
+      documentElement: { webkitRequestFullscreen() {} },
+      webkitExitFullscreen() {},
+      webkitFullscreenEnabled: true,
+    };
+    eq(fullscreenCapability(webkit).supported, true,
+      'the prefixed fullscreen API remains a supported route');
+
+    const fullscreenHtml = settingsRowHtml({}, settingsRow('fullscreen'), unsupported);
+    assert(/aria-label="Fullscreen"/.test(fullscreenHtml),
+      'the fullscreen switch has an accessible name');
+    assert(/aria-describedby="set-fullscreen-status"/.test(fullscreenHtml)
+      && /id="set-fullscreen-status"/.test(fullscreenHtml),
+    'the switch is associated with its support or refusal explanation');
+    assert(/disabled aria-disabled="true"/.test(fullscreenHtml)
+      && /Add to Home Screen/.test(fullscreenHtml),
+    'an unsupported iPhone-shaped browser gets a truthful disabled fallback');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {

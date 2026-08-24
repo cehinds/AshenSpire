@@ -1,25 +1,25 @@
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
-// One overlay hosts every in-run menu as a tab: Deck, Relics & Flasks, Stats
-// (run telemetry), and Settings. Opened from a button or hotkey on the map and
+// One overlay hosts every in-run menu as a tab: Deck, Stats (run telemetry),
+// Settings, and Controls. Equipment and carried items live in Armoury. Opened from a button or hotkey on the map and
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
 import { renderCard } from './card.js';
-import { renderSettings } from '../screens/settings.js';
+import { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
-import { relicText } from './card.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
-import { closeFlaskActionMenu, flaskIdentityHtml } from './flask.js';
+import { closeFlaskActionMenu } from './flask.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 
 let openVeil = null;
 let escHandler = null;
+let overlayCleanup = [];
 
 // ---- the panels: ONE name per tab, not two (#78) ---------------------------
 //
@@ -39,7 +39,6 @@ let escHandler = null;
 // they can live at module scope where the check can see them.
 const PANELS = {
   deck: (host, ctx) => renderDeck(host, ctx),
-  relics: (host, ctx) => renderRelics(host, ctx),
   stats: (host, ctx) => renderStats(host, ctx),
   save: (host, ctx) => renderSave(host, ctx),
   settings: (host, ctx) => renderSettings(host, {
@@ -73,43 +72,6 @@ function renderDeck(container, ctx) {
     for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
   }
   container.appendChild(grid);
-}
-
-function renderRelics(container, ctx) {
-  const wrap = document.createElement('div');
-  wrap.className = 'ov-relics';
-  const rTitle = document.createElement('h3');
-  rTitle.className = 'set-cat';
-  rTitle.textContent = `Relics (${ctx.run.relics.length})`;
-  wrap.appendChild(rTitle);
-  const rGrid = document.createElement('div');
-  rGrid.className = 'ov-relic-grid';
-  for (const rid of ctx.run.relics) {
-    const def = ctx.registries.relics.get(rid);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
-    rGrid.appendChild(el);
-  }
-  if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
-  wrap.appendChild(rGrid);
-
-  const fTitle = document.createElement('h3');
-  fTitle.className = 'set-cat';
-  fTitle.textContent = `Flasks (${ctx.run.flasks.length})`;
-  wrap.appendChild(fTitle);
-  const fGrid = document.createElement('div');
-  fGrid.className = 'ov-relic-grid';
-  for (const f of ctx.run.flasks) {
-    const def = ctx.registries.flasks.get(f.flaskId);
-    const el = document.createElement('div');
-    el.className = 'ov-relic';
-    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
-    fGrid.appendChild(el);
-  }
-  if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
-  wrap.appendChild(fGrid);
-  container.appendChild(wrap);
 }
 
 // Save tab: save to the current slot, save-and-quit to title, or quit the app.
@@ -199,6 +161,7 @@ export function closeOverlay() {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
   }
+  for (const release of overlayCleanup.splice(0)) release();
 }
 
 /**
@@ -249,8 +212,92 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
   };
 
+  const quickActions = veil.querySelector('[data-settings-quick-actions]');
+  const fullscreenButton = veil.querySelector('#ov-fullscreen');
+  const musicButton = veil.querySelector('#ov-music');
+  const saveButton = veil.querySelector('#ov-save-quick');
+  const exitButton = veil.querySelector('#ov-exit-quick');
+  if (!onSave && saveButton) saveButton.hidden = true;
+  if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
+
+  const syncFullscreenQuickAction = () => {
+    const active = isFullscreen();
+    if (!fullscreenButton) return;
+    fullscreenButton.classList.toggle('on', active);
+    fullscreenButton.setAttribute('aria-pressed', String(active));
+    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+  };
+  const syncMusicQuickAction = () => {
+    if (!musicButton) return;
+    const active = settings.muteMusic !== true;
+    musicButton.classList.toggle('on', active);
+    musicButton.setAttribute('aria-pressed', String(active));
+    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
+    musicButton.title = active ? 'Turn music off' : 'Turn music on';
+    const label = musicButton.querySelector('[data-music-label]');
+    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
+  };
+  syncFullscreenQuickAction();
+  syncMusicQuickAction();
+  document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+  overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
+  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
+
+  fullscreenButton?.addEventListener('click', async () => {
+    fullscreenButton.setAttribute('aria-disabled', 'true');
+    const result = await toggleFullscreen();
+    fullscreenButton.removeAttribute('aria-disabled');
+    syncFullscreenQuickAction();
+    if (!result.ok) showSettingsNotice(result.reason);
+  });
+  musicButton?.addEventListener('click', () => {
+    settings.muteMusic = settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+    syncMusicQuickAction();
+  });
+  saveButton?.addEventListener('click', () => {
+    if (!onSave) return;
+    const slot = onSave();
+    const label = saveButton.querySelector('[data-save-label]');
+    if (label) label.textContent = slot ? `Saved · ${slot}` : 'Saved';
+    saveButton.setAttribute('aria-label', slot ? `Saved to slot ${slot}` : 'Saved');
+    clearTimeout(saveButton._labelTimer);
+    saveButton._labelTimer = setTimeout(() => {
+      if (label) label.textContent = 'Save';
+      saveButton.setAttribute('aria-label', 'Save now');
+    }, 1500);
+  });
+  let exitArmed = false;
+  let exitTimer = null;
+  exitButton?.addEventListener('click', () => {
+    if (!exitArmed) {
+      exitArmed = true;
+      exitButton.classList.add('armed');
+      exitButton.setAttribute('aria-label', 'Press again to save and quit');
+      const icon = exitButton.querySelector('[data-exit-icon]');
+      const label = exitButton.querySelector('[data-exit-label]');
+      if (icon) icon.textContent = '!';
+      if (label) label.textContent = 'Confirm';
+      exitTimer = setTimeout(() => {
+        exitArmed = false;
+        exitButton.classList.remove('armed');
+        exitButton.setAttribute('aria-label', 'Save and quit the game');
+        if (icon) icon.textContent = '⏻';
+        if (label) label.textContent = 'Quit';
+      }, 3000);
+      return;
+    }
+    clearTimeout(exitTimer);
+    closeOverlay();
+    (onExit || onQuit)();
+  });
+
   function selectTab(id) {
     currentTab = id;
+    veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
+    if (quickActions) quickActions.hidden = id !== 'settings';
     updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and

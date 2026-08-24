@@ -747,6 +747,38 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (numsTree.code !== 0 || !numsTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 73/74 — module URL/filesystem path conversions use node:url (#13).
+  // 73 proves the two required known-bads through the real scanner and runs
+  // both from a working directory containing spaces. 74 scans tools/ + tests/.
+  // These numbers follow the suite's own 64/65 uniqueness gate and the 67/68
+  // gate-list pair; tools/testnumbers.mjs is the authority that verifies them.
+  const runUrlPath = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/urlpath-conversions.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+
+  const urlPathSelf = runUrlPath(['--selftest']);
+  const urlPathSelfV = quote(urlPathSelf.out);
+  console.log(
+    `${urlPathSelf.code === 0 && urlPathSelfV.text ? 'PASS' : 'FAIL'}  73. the URL/path check catches both known-bads from a spaced working directory` +
+      ` — ${urlPathSelfV.text || `urlpath-conversions --selftest (exit ${urlPathSelf.code}): ${urlPathSelfV.why}`}`
+  );
+  if (urlPathSelf.code !== 0 || !urlPathSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const urlPathTree = runUrlPath([]);
+  const urlPathTreeV = quote(urlPathTree.out);
+  console.log(
+    `${urlPathTree.code === 0 && urlPathTreeV.text ? 'PASS' : 'FAIL'}  74. module URL/filesystem path conversions use the platform API` +
+      ` — ${urlPathTreeV.text || `urlpath-conversions (exit ${urlPathTree.code}): ${urlPathTreeV.why}`}` +
+      ` (\`node tools/urlpath-conversions.mjs\` names each site)`
+  );
+  if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
@@ -833,4 +865,11 @@ console.log('          `by` in tools/watched-probes.json names who picked it. It
 console.log('          READ door of tools/watched.mjs: nothing in this suite opens the build, drives');
 console.log('          a probe, or photographs a control, so `watched` as a VERDICT is still');
 console.log('          unwatched by CI — only the derivations behind it are.');
+console.log('          73–74 guard module URL/path conversion shapes in tools/ and tests/:');
+console.log('          actual dynamic file:// templates/concats and same-file static URL');
+console.log('          pathname conversions through direct, grouped, bracket, destructuring,');
+console.log('          or bounded local-alias forms. A platform consumer is trusted only through');
+console.log('          its static node:url import; ambiguous lexical, binding, or alias flow fails');
+console.log('          closed. They prove both fixtures fail from a spaced working directory;');
+console.log('          they do not cover cross-module flow or platform-API semantic correctness.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

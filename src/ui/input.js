@@ -92,8 +92,9 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
-// The deck/relics/stats actions jump the in-run overlay straight to that tab
-// (StS2-style dedicated zone keys) instead of only the generic Menu.
+// The Deck and Stats actions jump the in-run overlay straight to those tabs.
+// The stable legacy `relics` action id now opens Armoury, preserving existing
+// bindings while giving equipment and carried items one canonical destination.
 export const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
@@ -102,7 +103,7 @@ export const ACTIONS = [
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
   { id: 'deck', label: 'Open Deck', short: 'Deck', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Relics', short: 'Relics', kind: 'key', defKey: 'r', defBtn: 4 },
+  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4 },
   { id: 'stats', label: 'Open Stats', short: 'Stats', kind: 'key', defKey: 't', defBtn: 5 },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
@@ -129,7 +130,7 @@ export function actionShort(id) {
 // A tabbed surface registers its own set here while it is open; the pad poller
 // and the keyboard handler below give buttons 4/5 and `[`/`]` to that set in
 // preference to whatever they are globally bound to. That preference is the
-// whole clause: EldenSpire's defaults already SPEND LB/RB on Relics and Stats
+// whole clause: the defaults already SPEND LB/RB on Armoury and Stats
 // (ACTIONS above, defBtn 4 and 5), so without contextual precedence the two
 // bindings race and the winner is whoever notices first.
 //
@@ -933,7 +934,7 @@ function pollPads() {
       }
       // CONTEXTUAL PRECEDENCE (Law 3 clause 2), and the order is the rule:
       // an open tab set takes LB/RB BEFORE actionForButton() can hand them to
-      // Relics/Stats. Without this line the defaults win and the law is prose.
+      // Armoury/Stats. Without this line the defaults win and the law is prose.
       if (tabRingButton(i)) continue;
       const a = actionForButton(i);
       // Remember WHICH button opened the press so its own release closes it —

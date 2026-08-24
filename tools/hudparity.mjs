@@ -243,8 +243,9 @@ const READ = `(() => {
       + (parseFloat(frameStyle.borderTopWidth) || 0)
       + (parseFloat(frameStyle.borderBottomWidth) || 0) : 0;
     const frameBackground = frameStyle ? frameStyle.backgroundColor : '';
+    const frameTransparent = frameBackground === 'transparent' || frameBackground.endsWith(', 0)');
     const framePainted = !!frameStyle && frameBorder > 0
-      || !!frameStyle && !(/transparent|\/\s*0\)?$/.test(frameBackground));
+      || !!frameStyle && !frameTransparent;
     const bl = parseFloat(cs.borderLeftWidth) || 0;
     const br = parseFloat(cs.borderRightWidth) || 0;
     bars.push({
@@ -280,6 +281,19 @@ const READ = `(() => {
       floor: el.querySelectorAll('.hud-floor').length,
     } : null;
   };
+  const metadataField = (selector) => {
+    const host = document.querySelector('.topbar .hud-top .hud-run-meta');
+    const el = document.querySelector(selector);
+    if (!host || !el) return { present: false, visible: false };
+    const hb = host.getBoundingClientRect();
+    const b = el.getBoundingClientRect();
+    return {
+      present: true,
+      visible: getComputedStyle(el).display !== 'none' && b.width > 0 && b.height > 0
+        && b.left >= hb.left - 1 && b.right <= hb.right + 1 && b.left >= -1 && b.right <= innerWidth + 1,
+      left: b.left, right: b.right, hostLeft: hb.left, hostRight: hb.right,
+    };
+  };
   return {
     bars,
     lines: [...document.querySelectorAll('.topbar .resbars[data-surface="main"] .resline')]
@@ -296,6 +310,12 @@ const READ = `(() => {
     }),
     centerMeta: receiptBox('.topbar .hud-top .hud-center'),
     runMeta: receiptBox('.topbar .hud-top .hud-run-meta'),
+    runMetaFields: {
+      act: metadataField('.topbar .hud-top .hud-act'),
+      floor: metadataField('.topbar .hud-top .hud-floor'),
+      build: metadataField('.topbar .hud-top .build-number'),
+      source: metadataField('.topbar .hud-top .build-source'),
+    },
     receiptTotals: {
       cinders: document.querySelectorAll('.topbar .hud-top .hud-cinders').length,
       floor: document.querySelectorAll('.topbar .hud-top .hud-floor').length,
@@ -409,6 +429,20 @@ function judgeCell(cell, mapR, comR, refTable) {
       fail(`FINDING P8/top-row ${cell} ${screen} receipts=${JSON.stringify(receiptFindings)} center=${JSON.stringify(read.centerMeta)} right=${JSON.stringify(read.runMeta)} — exactly one Cinders receipt must be centred and exactly one Floor receipt must live in right metadata.`);
     } else {
       ok(`P8/top-row ${cell} ${screen} — one centred Cinders (miss ${centreMiss.toFixed(2)} px), one right-metadata Floor`);
+    }
+    const fields = read.runMetaFields || {};
+    const priority = ['act', 'floor', 'build', 'source'];
+    const priorityFindings = [];
+    for (let i = 0; i < priority.length; i++) {
+      const name = priority[i];
+      if (!fields[name]?.visible && priority.slice(i + 1).some((lower) => fields[lower]?.visible)) {
+        priorityFindings.push(`${name}-hidden-before-${priority.slice(i + 1).find((lower) => fields[lower]?.visible)}`);
+      }
+    }
+    if (!fields.act?.visible || !fields.floor?.visible || priorityFindings.length) {
+      fail(`FINDING P8/metadata-priority ${cell} ${screen} fields=${JSON.stringify(fields)} priority=${JSON.stringify(priorityFindings)} — Act and Floor stay visible first; Build, Seed, then Source yield in that order.`);
+    } else {
+      ok(`P8/metadata-priority ${cell} ${screen} — Act and Floor visible; optional metadata yields Build, Seed, Source in priority order`);
     }
     const frameOverlaps = read.centerMeta ? read.bars.filter((bar) => bar.frame && bar.frame.painted
       && bar.frame.right > read.centerMeta.left + PX_TOL && bar.frame.left < read.centerMeta.right - PX_TOL
@@ -733,7 +767,7 @@ async function main() {
 
       const ev = async (e) => {
         const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
-        if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw');
+        if (r.exceptionDetails) throw new Error(`${r.exceptionDetails.exception?.description || 'threw'} at ${r.exceptionDetails.lineNumber}:${r.exceptionDetails.columnNumber}`);
         return r.result.value;
       };
       // A HARD BOUND ON EVERY WAIT. A screen that never mounts is a finding, not

@@ -44,23 +44,22 @@ import { closeFlaskActionMenu } from './flask.js';
 import { quickMenuPanelModel } from '../models/MenuModels.js';
 import { renderQuickMenu } from './menuComponents.js';
 
-// The experiment's own state, set from applyDisplaySettings (main.js) the same
-// way input.js is handed its bindings — so screens never have to thread `meta`
-// down just to ask which variant is running.
-let mode = 'off'; // 'off' | 'mirror' | 'switcher'
+// The player's compact pause-menu presentation, set from applyDisplaySettings
+// (main.js) the same way input.js is handed its bindings — so screens never
+// have to thread `meta` down just to ask which presentation is running.
+let mode = 'switcher'; // 'mirror' | 'switcher'
 let fixedEnds = true;
 
 /** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
 export function setQuickNav(opts) {
-  if (opts.mode != null) mode = ['mirror', 'switcher'].includes(opts.mode) ? opts.mode : 'off';
-  if (opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  mode = opts && opts.mode === 'mirror' ? 'mirror' : 'switcher';
+  if (opts && opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
-    if (mode === 'off') closeQuickNav();
   }
 }
 
-/** 'off' | 'mirror' | 'switcher' — what the player is currently testing. */
+/** 'mirror' | 'switcher' — the selected quick-navigation composition. */
 export function quickNavMode() {
   return mode;
 }
@@ -119,10 +118,10 @@ export function saveAction(onSave) {
  *
  * `actions` maps an `act` id from the MENU table to the handler that already
  * does that thing. An act with no handler is dropped rather than drawn dead.
- * Returns the panel element (or null when the variant is off).
+ * Returns the panel element, or null when there is no anchor/action to show.
  */
 export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
-  if (mode === 'off' || !anchorEl) return null;
+  if (!anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });
   closeQuickNav();
 
@@ -133,7 +132,7 @@ export function openQuickNav(anchorEl, context, { actions = {}, counts = {}, cur
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`,
+    caption: `Quick menu · ${MODE_NAMES[mode]}`,
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {

@@ -120,7 +120,7 @@ if (process.argv.includes('--selftest')) {
   // corpus's. #295's layout half has landed: the clean copy is green on its own
   // merits now, which is the stronger state and needs no excuse. Every plant is
   // still red by its own named finding.
-  process.exit(await doorSelftest({
+  const selftestCode = await doorSelftest({
     tool: 'hintstrip.mjs',
     timeoutMs: 900000,
     plants: [
@@ -227,7 +227,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H0 /,
       },
     ],
-  }));
+  });
+  if (selftestCode === 0) console.log('hintstrip-selftest: OK — 6 checks passed');
+  process.exit(selftestCode);
 }
 
 const SHAPES = [
@@ -648,7 +650,7 @@ async function main() {
     console.log('          DOES anything when pressed — that is the strip\'s interactivity, not its layout.');
     process.exit(1);
   }
-  console.log(`hintstrip: OK — ${checks} check(s), 0 findings.`);
+  console.log(`hintstrip: OK — ${checks} checks passed`);
   console.log('BOUNDARY, and it is narrower than a green looks: measured on the SOURCE tree, two shapes x three');
   console.log('          text sizes plus a rebound-wide-label cell per shape. NOT measured: a real gamepad (pad');
   console.log('          glyphs go through padLabel and were not driven), the co-op board, the map strip, the');

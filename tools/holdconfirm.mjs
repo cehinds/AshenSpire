@@ -638,6 +638,40 @@ async function main() {
       await wait(220);
       const after = await ev(STATE);
       ok(`off commits on a tap (the pre-hold behaviour)`, mutate ? true : after.committed, `committed=${after.committed}`);
+
+      // A mobile browser may turn a stationary long press into its native
+      // context gesture and suppress the trailing click. `off` still means
+      // one press commits; it must not secretly mean "release quickly enough
+      // for WebKit/Chromium to synthesize click". Re-open the same authored
+      // state because the tap above consumed its binding choice.
+      await open('off');
+      const heldPoint = await barPoint(0);
+      if (!heldPoint) {
+        console.error(`\nholdconfirm: '${EVENT}' lost its binding choice before the off-mode long-press check.`);
+        cdp.close(); await dropBrowser(); stop(); process.exit(2);
+      }
+      // Dispatch the pointer stream without a synthetic click. That is the
+      // mobile-browser edge: once the native long-press gesture wins, the
+      // trailing click is allowed to disappear. The control must own release,
+      // not depend on an event the browser may never synthesize.
+      await ev(`(() => {
+        const b=[...document.querySelectorAll('button.ev-choice')].find(x=>x.dataset.binding==='1');
+        const r=b.getBoundingClientRect();
+        b.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,pointerId:77,pointerType:'touch',isPrimary:true,button:0,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
+        return true;
+      })()`);
+      await wait(900);
+      await ev(`(() => {
+        const b=[...document.querySelectorAll('button.ev-choice')].find(x=>x.dataset.binding==='1');
+        const r=b.getBoundingClientRect();
+        b.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
+        b.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,cancelable:true,pointerId:77,pointerType:'touch',isPrimary:true,button:0,clientX:r.left+r.width/2,clientY:r.top+r.height/2}));
+        return true;
+      })()`);
+      await wait(260);
+      const afterLongPress = await ev(STATE);
+      ok(`off commits on a mobile long press too`, mutate ? true : afterLongPress.committed,
+        `committed=${afterLongPress.committed}`);
       continue;
     }
 

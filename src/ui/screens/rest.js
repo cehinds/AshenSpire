@@ -28,6 +28,7 @@ import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
+import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -64,32 +65,6 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-// WHAT A POINT IN THIS STAT DOES, READ AND NEVER TYPED. Every word comes from
-// the content tables — the attribute's own `sense` (content/attributes.js) and
-// the `presentation.label` of every derived stat whose `sourceStat` is this
-// attribute (content/derivedStats.js). So the sixth attribute, or a sixth
-// derived stat, describes itself at the shrine with nothing edited here, and no
-// number a player reads is a copy of one in a table (Law 1 clause 2).
-//
-// THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
-// the run: the point is permanent and the player is owed the arithmetic before
-// they spend, not a promise about it.
-function levelDetailHtml(registries, run, attr, points) {
-  const rules = (registries.derivedStatRules || {}).rules || {};
-  const presentation = (registries.derivedStatRules || {}).presentation || {};
-  const feeds = Object.keys(rules)
-    .filter((id) => rules[id] && rules[id].sourceStat === attr.id)
-    .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
-    .map((id) => (presentation[id] || {}).label || id);
-  const now = run.attributes[attr.id];
-  // BOTH SIDES OF THE ARROW ARE READ, including the step: the level value is a
-  // dial he turns (Settings → Advanced), so a hard-coded +1 here would be the
-  // confirm panel promising one thing while the purchase does another.
-  return `<p><b>${esc(attr.label)} ${now} → ${now + points}</b></p>
-    <p>${esc(attr.sense || '')}</p>
-    ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
-}
-
 /** The partner kind's authored NAME, never its id — a player has never heard of `mana`. */
 function partnerName(registries, kind) {
   if (!kind) return 'nothing';
@@ -97,7 +72,7 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -114,27 +89,44 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // "also at graces, players should have the option to level up their character
   // (per run) by trading cinders to level up." The screen asks the model what
   // it may offer and prices nothing itself.
-  const level = levelUpPlan(registries, run, { pointsPerLevel: levelValue });
+  // The shrine assignment card grants exactly one point. The model still owns
+  // pricing, caps, persistence, and pool reconciliation; the screen only fixes
+  // the size of this one interaction.
+  const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  const authoredShrineLayout = registries.balance?.ui?.shrinePresentation?.optionLayout;
+  const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
 
   app.innerHTML = `
     <div class="screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       ${refillLineHtml(registries, refill)}
-      <div class="class-row">
+      <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
-          <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          <div class="cp-body">
+            <h3>Rest</h3>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          </div>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
-          <h3>Smith</h3>
-          <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          <div class="cp-body">
+            <h3>Smith</h3>
+            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          </div>
         </div>
-        <div class="class-pick" id="flask-reallocate">
-          <div class="glyph">⚗</div>
+        <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+          <summary>
+            <span class="shrine-fold-glyph">⚗</span>
+            <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+          </summary>
+          <div class="shrine-fold-content">
           <h3>Reallocate Flask Charges</h3>
+          <div class="shrine-fold-detail">
+          <div class="glyph">⚗</div>
+          <div class="cp-body">
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
                two numbers the increment rows below now carry, which is Law 1
@@ -168,7 +160,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               </div>`).join('')}
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
-        </div>
+          </div>
+          </div>
+          </div>
+        </details>
         <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -189,20 +184,33 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+        <details class="class-pick shrine-fold${level.offerable ? '' : ' locked'}" id="level-opt"${openPanel === 'level' ? ' open' : ''}
              data-affordable="${level.affordable ? '1' : '0'}"
              data-blocked-by="${level.blockedBy || ''}"
              data-cost="${level.cost}"
              data-short="${level.short}">
-          <div class="glyph">✦</div>
+          <summary>
+            <span class="shrine-fold-glyph">✦</span>
+            <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+          </summary>
+          <div class="shrine-fold-content">
           <h3>Level up</h3>
-          <p>${level.capped
-            ? `You have taken every level this climb allows (${level.levelsTaken}).`
-            : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
-          <div class="flask-allocation-controls">
-            ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          <div class="shrine-fold-detail">
+            <div class="glyph">✦</div>
+            <div class="cp-body">
+            ${level.capped
+            ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
+            : `<p class="level-cinder-preview" data-level-cinder-preview>
+                <span aria-hidden="true">✦</span>
+                <span>You hold <b>${level.cinders}</b> − <strong class="level-cinder-cost">${level.cost} cinders</strong> to level up.</span>
+                <span class="level-cinder-result" data-level-cinder-result hidden>→ <b>${level.cinders - level.cost} remaining</b></span>
+              </p>`}
+            </div>
           </div>
-        </div>
+          <div class="shrine-stat-mount"></div>
+          </div>
+        </details>
       </div>
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
@@ -254,33 +262,45 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
-  // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
-  // model/secondbeat.js and the machinery picks the form from its
-  // characteristics. This screen names the action and hands over the commit,
-  // which is the rule that whole file exists to enforce.
+  // The same allocation component used by character creation, with shrine
+  // policy: existing values are immutable, one and only one plus may be chosen,
+  // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    for (const attr of level.attributes) {
-      const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
-      if (!btn) continue;
-      arm(btn, 'shrineLevelUp', {
-        question: `Spend ${level.cost} cinders on ${attr.label}? ${level.pointsPerLevel === 1 ? 'The point is' : `All ${level.pointsPerLevel} points are`} permanent.`,
-        detailHtml: levelDetailHtml(registries, run, attr, level.pointsPerLevel),
-        confirmLabel: 'LEVEL UP',
-        onConfirm: () => {
-          applyLevelUp(registries, run, attr.id, { pointsPerLevel: levelValue });
+    let pendingAttribute = null;
+    const mount = app.querySelector('#level-opt .shrine-stat-mount');
+    const drawLevelCard = () => {
+      const result = app.querySelector('#level-opt [data-level-cinder-result]');
+      if (result) result.hidden = !pendingAttribute;
+      renderStatAllocationCard(mount, {
+        title: 'ASSIGN 1 POINT',
+        remaining: pendingAttribute ? 0 : 1,
+        note: 'Choose one attribute. Existing points cannot be reduced.',
+        cancelLabel: 'Clear',
+        doneLabel: 'Level up',
+        doneDisabled: !pendingAttribute,
+        rows: level.attributes.map((attr) => ({
+          id: attr.id,
+          label: attr.label,
+          shortLabel: attr.shortLabel,
+          value: run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+          canDecrease: false,
+          canIncrease: !pendingAttribute,
+        })),
+        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
+        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onDone: () => {
+          if (!pendingAttribute) return;
+          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          // RE-MOUNT, the same shape the flask reallocation above already uses:
-          // the price has moved, the purse has moved, and so has a derived pool
-          // the Rest panel is quoting. A screen that stayed put would be
-          // offering the old price for the next point.
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
         },
       });
-    }
+    };
+    drawLevelCard();
   }
   if (upgradable.length) {
     // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry

@@ -739,6 +739,12 @@ export function validateContent(bundle) {
         err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
       }
     }
+    const shrinePresentation = ui.shrinePresentation;
+    if (!shrinePresentation || typeof shrinePresentation !== 'object' || Array.isArray(shrinePresentation)) {
+      err('balance.ui.shrinePresentation', 'must be an object with optionLayout');
+    } else if (!['list', 'grid'].includes(shrinePresentation.optionLayout)) {
+      err('balance.ui.shrinePresentation.optionLayout', `must be 'list' or 'grid' — got ${JSON.stringify(shrinePresentation.optionLayout)}`);
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)

@@ -54,6 +54,12 @@ export function renderMenuOverlay(model) {
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
+          <div class="overlay-settings-actions" data-settings-quick-actions hidden>
+            <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
+            <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" aria-pressed="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
+            <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>
+            <button class="subtle danger ov-quick-action" id="ov-exit-quick" type="button" title="Save and quit the game" aria-label="Save and quit the game"><span aria-hidden="true" data-exit-icon>⏻</span><span class="ov-qa-label" data-exit-label>Quit</span></button>
+          </div>
           ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
