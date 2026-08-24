@@ -30,20 +30,27 @@ export function combatantFrame({
     ? UI.playerCombatantFrame
     : UI.enemyCombatantFrame;
 
-  appendAll(frame, leading);
+  const leadingHost = document.createElement('div');
+  leadingHost.className = 'combatant-leading';
+  appendAll(leadingHost, leading);
+  frame.appendChild(leadingHost);
+
+  const card = document.createElement('div');
+  card.className = 'combatant-card';
 
   const spriteHost = document.createElement('div');
   spriteHost.className = 'sprite';
   markUiComponent(spriteHost, UI.combatantSprite, role);
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
-  frame.appendChild(spriteHost);
+  card.appendChild(spriteHost);
 
   if (name) {
     markUiComponent(name, UI.combatantNameplate, role);
-    frame.appendChild(name);
+    card.appendChild(name);
   }
-  if (meters) frame.appendChild(meters);
-  appendAll(frame, trailing);
+  if (meters) card.appendChild(meters);
+  appendAll(card, trailing);
+  frame.appendChild(card);
   return frame;
 }

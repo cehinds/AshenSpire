@@ -56,7 +56,7 @@
   /* Three negotiating tracks: identity, centered Cinders, and metadata.
      Cinders and metadata are each capped by data-owned viewport widths; the
      side tracks still flex so the three components influence one another. */
-  grid-template-columns: minmax(0, 1fr) minmax(0, var(--hud-cinders-max-width)) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) fit-content(var(--hud-cinders-max-width)) minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
   min-width: 0;
@@ -119,15 +119,25 @@
 .topbar.combat-hud.shared-hud .hud-run-meta .build-source { order: 3; }
 
 @container run-header (max-width: 720px) {
-  .hud-run-meta .build-source { display: none; }
-  .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-source { display: none; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
+}
+@container run-header (max-width: 620px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
 }
 @container run-header (max-width: 520px) {
-  .hud-run-meta .build-stamp[data-seed]::before { display: none; }
-  .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-number { display: none; }
+  .topbar.combat-hud.shared-hud .hud-run-meta {
+    gap: 0;
+    font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));
+    letter-spacing: 0.02em;
+  }
+  .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { margin-right: 0.15rem; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
-/* Source and seed yield first, but the build number stays visible at every
-   width. It is the only immutable identity a phone screenshot carries. */
+/* Optional provenance yields from least to most important as space tightens:
+   Source, Seed, then Build. Act and Floor remain the phone player's primary
+   run-position receipt. */
 @media (max-width: 350px) {
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
@@ -515,15 +525,19 @@
    yield only when main.js's existing fit decider says the viewport is not
    short. The short-screen branch keeps the min-content premise measured by the
    upright refusal; this selector reads that answer and defines no breakpoint. */
-.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+.field {
+  --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
+  --combatant-intent-gap: 0.18rem;
+  flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
+}
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding-block: 0.6rem; gap: 0.6rem;
+  padding-block: var(--battlefield-edge-gap); gap: 0.6rem;
 }
 .enemy-row {
   flex: 1; display: flex; align-items: center; justify-content: space-evenly;
-  padding-block: 0.6rem; gap: 1rem;
+  padding-block: var(--battlefield-edge-gap); gap: 1rem;
 }
 
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
@@ -538,8 +552,20 @@
   width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
 }
 
-.combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
-.combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.combatant {
+  display: flex; flex-direction: column; align-items: center; position: relative;
+  width: 100%; height: 100%; min-height: 0;
+}
+.combatant-leading {
+  display: flex; align-items: flex-end; justify-content: center;
+  flex: 0 0 2.65rem; min-height: 0; width: 100%;
+}
+.combatant-card {
+  display: flex; flex: 1 1 auto; flex-direction: column; align-items: center;
+  justify-content: flex-end; gap: 0.4rem; width: 100%; min-height: 0;
+  margin-top: var(--combatant-intent-gap);
+}
+.combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
    the old .hpbar/.poisebar pair here was two more homes for one grammar, and
    they are gone rather than kept in parallel (Law 0 clause 4). What survives is
@@ -642,7 +668,7 @@
 
 /* ---------- intents ---------- */
 .intent {
-  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.6rem; margin: 0;
   background: #1c1610; border: 1.5px solid var(--blood); border-radius: 9px;
   padding: 0.4rem 1rem; font-weight: 700; font-size: 1.4rem; cursor: default;
 }
@@ -1258,6 +1284,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
+  :root[data-layout='narrow'] .player-zone .combatant,
+  :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite { flex: 1 1 auto; overflow: hidden; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite > img {
+    max-height: 100%; width: auto; object-fit: contain;
+  }
   /* The player sprite is sized from balance.ui.spriteTiers and does not know
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */

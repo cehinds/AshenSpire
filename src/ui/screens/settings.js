@@ -84,7 +84,7 @@ const ROWS = [
   // the seat. The row itself is unchanged: same key, type, label, note; it
   // MOVED here from below the map-header rows.
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
@@ -228,24 +228,9 @@ const ROWS = [
   { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
-  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
-  // should offer everywhere you can go from here".
-  //
-  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
-  // pixel move. It ships in the build rather than hiding behind a URL flag
-  // because the question it asks is a PHONE question (the menu's tab strip wraps
-  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
-  //
-  // The note carries the way back, and so does the list itself: it names the
-  // variant and points here every time it opens. An experiment that outlives the
-  // memory of switching it on has stopped being an experiment and become a bug
-  // report.
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
-    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
-    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
-  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
-    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'switcher',
+    choices: ['mirror', 'switcher'], label: 'Quick menu style',
+    note: 'MIRROR keeps the tab row and adds the context menu. SWITCHER replaces the tab row with one compact button on narrow screens. Switcher is the phone-friendly default.' },
 
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
@@ -469,6 +454,15 @@ const CAT_KEY = 'settingsCategory';
 
 export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
+const CATEGORY_LABELS = {
+  Display: 'Game & Display',
+  Accessibility: 'Access',
+};
+
+function categoryLabel(cat) {
+  return CATEGORY_LABELS[cat] || cat;
+}
+
 /**
  * categoryHandler(cat) → what will render under that heading, or null.
  *
@@ -565,10 +559,11 @@ export function settingOn(settings, key) {
 }
 
 function rowHtml(settings, r) {
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note">${r.note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
       </div>`;
   }
@@ -613,7 +608,7 @@ function rowHtml(settings, r) {
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
         <div class="num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
                  min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
@@ -629,7 +624,7 @@ function rowHtml(settings, r) {
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <div class="range-wrap">
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
@@ -638,7 +633,7 @@ function rowHtml(settings, r) {
   }
   if (r.type === 'button') {
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
@@ -648,14 +643,22 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
         <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
-  // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
+  // Do not draw a convincing dead switch on browsers (notably iPhone Safari)
+  // that expose no document fullscreen API.
+  if (r.type === 'action' && !fullscreenCapability().supported) {
+    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
+      <div><b>${r.label}</b>${help}</div>
+      <span class="set-action-status" role="status">Unavailable in this browser · use its page controls</span>
+    </div>`;
+  }
+  // Supported action rows render as a live toggle reflecting browser state.
   const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
   return `<div class="set-row">
-      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+      <div><b>${r.label}</b>${help}</div>
       <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
         <span class="knob"></span>
       </button>
@@ -1059,16 +1062,26 @@ function anchorPressed(container, btn, wasAt) {
   }
 }
 
-function isFullscreen() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+export function fullscreenCapability(doc = (typeof document !== 'undefined' ? document : null)) {
+  const root = doc && doc.documentElement;
+  const enter = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
+  return { supported: typeof enter === 'function' && typeof exit === 'function', root, enter, exit };
 }
 
-function toggleFullscreen() {
-  const el = document.documentElement;
-  if (isFullscreen()) {
-    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
-  } else {
-    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+export function isFullscreen(doc = (typeof document !== 'undefined' ? document : null)) {
+  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
+}
+
+export async function toggleFullscreen(doc = document) {
+  const api = fullscreenCapability(doc);
+  if (!api.supported) return { ok: false, reason: 'Fullscreen is unavailable in this browser.' };
+  try {
+    const result = isFullscreen(doc) ? api.exit.call(doc) : api.enter.call(api.root);
+    if (result && typeof result.then === 'function') await result;
+    return { ok: true, active: isFullscreen(doc) };
+  } catch (error) {
+    return { ok: false, reason: 'The browser refused fullscreen. Try again from its own page menu.' };
   }
 }
 
@@ -1095,8 +1108,10 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  if (h.mount) return `<div class="${h.mount}"></div>`;
-  return h.rows.map((r) => rowHtml(settings, r)).join('');
+  const heading = `<header class="set-section-head"><p>Settings</p><h2>${esc(categoryLabel(cat))}</h2>`
+    + `<span>${esc(categoryTip(cat))}</span></header>`;
+  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
+  return `${heading}<div class="set-card-list">${h.rows.map((r) => rowHtml(settings, r)).join('')}</div>`;
 }
 
 /**
@@ -1153,7 +1168,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // to fix in this file.
       const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(cat)}</button>`).join('');
+        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
       html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
         + `<div class="set-panel" id="set-panel" role="tabpanel"`
@@ -1288,15 +1303,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
-        toggleFullscreen();
-        // Reflect the new state shortly after the API resolves.
-        setTimeout(() => {
-          const on = isFullscreen();
-          btn.classList.toggle('on', on);
-          btn.setAttribute('aria-checked', String(on));
-        }, 60);
+        if (btn.getAttribute('aria-disabled') === 'true') return;
+        btn.setAttribute('aria-disabled', 'true');
+        const result = await toggleFullscreen();
+        const on = isFullscreen();
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-checked', String(on));
+        btn.removeAttribute('aria-disabled');
+        if (!result.ok) showSettingsNotice(result.reason);
         return;
       }
       const now = !btn.classList.contains('on');
@@ -1309,6 +1325,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
+
+  // Esc, F11 and browser chrome can all change fullscreen without this toggle.
+  // The browser event is the authority; a 60 ms guess was the source of the
+  // inverted state shown on slower/mobile transitions.
+  const syncFullscreen = () => {
+    const on = isFullscreen();
+    container.querySelectorAll('.toggle[data-action="1"]').forEach((btn) => {
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-checked', String(on));
+    });
+  };
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  document.addEventListener('webkitfullscreenchange', syncFullscreen);
 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
@@ -1326,6 +1355,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const obs = new MutationObserver(() => {
     if (container.isConnected) return;
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', syncFullscreen);
+    document.removeEventListener('webkitfullscreenchange', syncFullscreen);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });

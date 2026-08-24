@@ -538,6 +538,15 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
 .overlay-actions { display: flex; gap: 0.8rem; align-items: center; }
+.overlay-settings-actions { display: flex; align-items: center; gap: 6px; }
+.overlay-settings-actions[hidden] { display: none; }
+.ov-quick-action {
+  min-height: var(--tap-floor); height: auto; padding: 0.55rem 0.8rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap;
+}
+.ov-quick-action.on { color: var(--gold); border-color: var(--gold); }
+.ov-quick-action.armed { background: rgba(140, 30, 30, 0.3); border-color: var(--ember); }
 .overlay-body { flex: 1; overflow: auto; padding: 1.8rem; }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
@@ -551,6 +560,27 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .ov-stat b { color: var(--parchment); font-size: 1.2rem; }
 .set-cat { color: var(--gold); font-size: 1.2rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 1.4rem 0 0.4rem; }
 .set-cat:first-child { margin-top: 0; }
+.set-row-unavailable { opacity: 0.86; }
+.set-action-status {
+  max-width: 24rem; color: var(--muted); font-size: 1.05rem; line-height: 1.35; text-align: right;
+}
+.set-section-head {
+  display: grid; gap: 4px; padding: 0 0 14px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.set-section-head p {
+  color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.set-section-head h2 { margin: 0; color: var(--parchment); font-size: 1.65rem; }
+.set-section-head span { max-width: 42rem; color: var(--muted); line-height: 1.35; }
+.set-card-list { display: grid; gap: 8px; }
+.set-help { margin-top: 4px; color: var(--muted); }
+.set-help summary {
+  width: max-content; color: var(--gold); cursor: pointer; font-size: 0.95rem;
+  letter-spacing: 0.03em; list-style-position: inside;
+}
+.set-help[open] summary { margin-bottom: 4px; }
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ov-save-actions { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; margin-top: 1.4rem; max-width: 32rem; }
@@ -1003,6 +1033,19 @@ button.rs-reset {
 .seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
 .class-row { display: flex; gap: 1.8rem; }
+.shrine-option-list {
+  width: min(100%, 44rem); margin-inline: auto;
+  flex-direction: column; align-items: stretch; gap: 12px;
+}
+.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
+.shrine-option-list > #rest-opt,
+.shrine-option-list > #smith-opt {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  align-items: center; gap: 18px; padding: 18px 20px; text-align: left;
+}
+.shrine-option-list > #rest-opt .glyph,
+.shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
+.shrine-option-grid { align-items: stretch; }
 .class-pick {
   width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;
   background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
@@ -1011,13 +1054,48 @@ button.rs-reset {
 .class-pick.locked { opacity: 0.45; cursor: default; }
 .class-pick.locked:hover { border-color: var(--line-soft); transform: none; }
 .class-pick .glyph { font-size: 4.4rem; margin-bottom: 0.8rem; }
+.class-pick .cp-body { min-width: 0; }
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
 .class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.flask-allocation-controls {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
 .flask-allocation-controls button {
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
+
+/* Shrine option disclosures: the summary is the folded card; the reveal keeps
+   the same component and expands downward without changing its width. */
+.shrine-fold { padding: 0; overflow: hidden; text-align: left; }
+.shrine-fold > summary {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: 10px; min-height: var(--tap-floor); padding: 10px 14px;
+  cursor: pointer; list-style: none;
+}
+.shrine-fold > summary::-webkit-details-marker { display: none; }
+.shrine-fold-glyph { color: var(--gold); font-size: 1.65rem; }
+.shrine-fold-summary { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.shrine-fold-summary b { color: var(--gold); font-family: var(--font-display); font-size: 1.15rem; }
+.shrine-fold-summary small { min-width: 0; color: var(--muted); font-size: 0.95rem; }
+.shrine-fold-caret { color: var(--gold); font-size: 1.5rem; transform: rotate(0); }
+.shrine-fold[open] .shrine-fold-caret { transform: rotate(90deg); }
+.shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.shrine-fold-content { display: grid; gap: 10px; padding: 12px 14px 14px; }
+.shrine-fold-content > h3 { margin: 0; color: var(--gold); text-align: center; }
+.shrine-fold-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.shrine-fold-detail .glyph { margin: 0; font-size: 2.8rem; }
+.level-cinder-preview { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 7px; margin: 0; }
+.level-cinder-preview > [aria-hidden='true'] { color: var(--gold); }
+.level-cinder-cost { color: var(--ember); }
+.level-cinder-result { color: var(--parchment); }
+.level-cinder-result[hidden] { display: none; }
+.stat-allocation-card { min-width: 0; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+.stat-allocation-card > h3 { color: var(--gold); text-align: center; }
+.stat-allocation-note { margin-top: 6px; color: var(--muted); font-size: 1rem; line-height: 1.35; text-align: center; }
+.stat-allocation-card .cc-stat-actions { justify-content: center; }
+.stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
 /* HIS WORDS: "I don't like how the flask assignments are separate buttons
@@ -1803,7 +1881,16 @@ button.rs-reset {
    block (`.modal-veil`, fixed inset:0) — one space, one number, and NOT `vh`
    (Law 2, and the comment on .modal says why that distinction is load-bearing
    here). */
-.settings-modal { min-width: 36rem; height: 80%; }
+.settings-modal {
+  display: flex; flex-direction: column; width: 76rem; max-width: 96%; min-width: min(36rem, 96%);
+  height: 80%; overflow: hidden;
+}
+.settings-modal .set-body {
+  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
+  flex: 1; min-height: 0; overflow: hidden;
+}
+.settings-modal .set-panel { min-width: 0; min-height: 0; overflow: auto; padding: 0 1rem; }
+.settings-modal .set-actions { flex: 0 0 auto; }
 
 /* The settings SECTION TABS (Sunna, EldenSpire#90). Six sections used to be six
    headings down one scrolling column: one name on screen at open, AUDIO 1848px
@@ -1827,11 +1914,9 @@ button.rs-reset {
    measured AFTER --ui-zoom (base.css) — the same unit .ov-tab and .choice use,
    because a finger is the same size on every screen. */
 .set-tabs {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  position: sticky; top: 0; z-index: 2;
-  background: var(--bg-raise);
-  padding: 2px 0 8px; margin-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  display: grid; grid-auto-rows: minmax(var(--tap-floor), auto); gap: 6px;
+  align-content: start; position: sticky; top: 0; z-index: 2;
+  background: var(--panel); padding: 14px 10px; border-right: 1px solid var(--line);
 }
 /* THE TAB IS NOT TALL, IT IS LOUD — and that is the whole of what reads as big.
    Constantine: "make the tabs about 20% smaller or the size configurable or
@@ -1902,12 +1987,12 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  padding: 6px 9px; border-radius: 6px;
+  width: 100%; padding: 6px 10px; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
   background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
 }
 .set-tabs .set-tab:hover { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
@@ -1955,7 +2040,11 @@ button.rs-reset {
   color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
   font-weight: 600;
 }
-.set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
+.set-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 74%, transparent);
+}
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
 /* THE TEXT COLUMN HAS A FLOOR NOW, and a row that cannot honour it wraps.
    #107, Sunna: the Map zoom row offers seven chips, `.choice-group` was
@@ -1972,7 +2061,7 @@ button.rs-reset {
    longer word from the same failure. */
 .set-row > :first-child { flex: 1 1 14rem; min-width: min(14rem, 100%); }
 .set-row { flex-wrap: wrap; row-gap: 0.8rem; }
-.set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
+.set-note { color: var(--muted); font-size: 1.05rem; margin-top: 0.3rem; max-width: 34rem; line-height: 1.4; }
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
    because "you asked for XL and this window gets 1.00x" is the sentence that
@@ -3316,6 +3405,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: auto; padding: 1.2rem 1.6rem;
   display: flex; align-items: center; gap: 1.6rem; text-align: left;
 }
+:root[data-layout='narrow'] .class-pick.shrine-fold {
+  display: block; padding: 0; text-align: left;
+}
 :root[data-layout='narrow'] .class-pick .glyph { margin-bottom: 0; flex-shrink: 0; }
 /* min-width: 0 or the text column refuses to shrink below its longest word and
    the card overflows its own row — the flex default that has bitten this repo
@@ -3471,6 +3563,69 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .ov-switch:hover { border-color: var(--gold); }
 .overlay-tabs[hidden] { display: none; }
+
+/* Settings is a destination, not a document nested inside a pause modal. The
+   category rail and the independently scrolling page remain stable while a
+   player changes sections. */
+.overlay-body[data-settings-host] {
+  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
+  min-height: 0; padding: 0; overflow: hidden;
+}
+.overlay-modal.settings-surface,
+.settings-modal {
+  border-color: transparent;
+  background: var(--bg-raise);
+  box-shadow: none;
+}
+.overlay-modal.settings-surface .overlay-head,
+.overlay-modal.settings-surface .set-tabs,
+.settings-modal .set-tabs {
+  background: transparent;
+}
+.overlay-body[data-settings-host] .set-panel {
+  min-width: 0; min-height: 0; overflow: auto; padding: 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .overlay-modal { width: 96%; height: 92%; max-height: 92%; }
+  .overlay-head { padding: 8px 10px; gap: 4px; }
+  .overlay-actions { gap: 4px; }
+  .overlay-settings-actions { gap: 3px; }
+  .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
+  .ov-qa-label { display: none; }
+  .overlay-modal.settings-surface .ov-switch { min-width: 0; flex: 1 1 auto; padding-inline: 10px; }
+  .overlay-body[data-settings-host] {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  .overlay-body[data-settings-host] .set-tabs {
+    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .overlay-body[data-settings-host] .set-tab {
+    justify-content: center; padding-inline: 4px; text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .overlay-body[data-settings-host] .set-panel { padding: 10px; }
+  .settings-modal { width: 96%; height: 92%; min-width: 0; padding: 12px; }
+  .settings-modal .set-body {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  .settings-modal .set-tabs {
+    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .settings-modal .set-tab { justify-content: center; padding-inline: 4px; text-align: center; }
+  .settings-modal .set-panel { padding: 10px; }
+  .set-section-head { padding-bottom: 8px; }
+  .set-section-head h2 { font-size: 1.45rem; }
+  .set-section-head span { display: none; }
+  .set-row { gap: 8px; padding: 10px; }
+  .set-row > :first-child { flex-basis: min(12rem, 100%); min-width: min(12rem, 100%); }
+  .choice-group { width: 100%; justify-content: flex-start; }
+  .set-action-status { max-width: 11rem; text-align: right; }
+}
 
 /* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
    and ONLY while the experiment is on, so "off" stays today exactly and the
@@ -4573,7 +4728,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   /* Three negotiating tracks: identity, centered Cinders, and metadata.
      Cinders and metadata are each capped by data-owned viewport widths; the
      side tracks still flex so the three components influence one another. */
-  grid-template-columns: minmax(0, 1fr) minmax(0, var(--hud-cinders-max-width)) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) fit-content(var(--hud-cinders-max-width)) minmax(0, 1fr);
   align-items: center;
   gap: 1rem;
   min-width: 0;
@@ -4636,15 +4791,25 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .topbar.combat-hud.shared-hud .hud-run-meta .build-source { order: 3; }
 
 @container run-header (max-width: 720px) {
-  .hud-run-meta .build-source { display: none; }
-  .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-source { display: none; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(36px * var(--hud-portrait-scale)); height: calc(36px * var(--hud-portrait-scale)); font-size: calc(18px * var(--hud-portrait-scale)); }
+}
+@container run-header (max-width: 620px) {
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
 }
 @container run-header (max-width: 520px) {
-  .hud-run-meta .build-stamp[data-seed]::before { display: none; }
-  .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-number { display: none; }
+  .topbar.combat-hud.shared-hud .hud-run-meta {
+    gap: 0;
+    font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));
+    letter-spacing: 0.02em;
+  }
+  .topbar.combat-hud.shared-hud .hud-run-meta > :not(:first-child):not(.build-stamp)::before { margin-right: 0.15rem; }
+  .topbar.combat-hud.shared-hud .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
-/* Source and seed yield first, but the build number stays visible at every
-   width. It is the only immutable identity a phone screenshot carries. */
+/* Optional provenance yields from least to most important as space tightens:
+   Source, Seed, then Build. Act and Floor remain the phone player's primary
+   run-position receipt. */
 @media (max-width: 350px) {
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
@@ -5032,15 +5197,19 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
    yield only when main.js's existing fit decider says the viewport is not
    short. The short-screen branch keeps the min-content premise measured by the
    upright refusal; this selector reads that answer and defines no breakpoint. */
-.field { flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1; }
+.field {
+  --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
+  --combatant-intent-gap: 0.18rem;
+  flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
+}
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
   width: 32%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding-block: 0.6rem; gap: 0.6rem;
+  padding-block: var(--battlefield-edge-gap); gap: 0.6rem;
 }
 .enemy-row {
   flex: 1; display: flex; align-items: center; justify-content: space-evenly;
-  padding-block: 0.6rem; gap: 1rem;
+  padding-block: var(--battlefield-edge-gap); gap: 1rem;
 }
 
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
@@ -5055,8 +5224,20 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   width: 100%; min-width: 0; height: 100%; padding: 0; align-items: center;
 }
 
-.combatant { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; position: relative; }
-.combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; }
+.combatant {
+  display: flex; flex-direction: column; align-items: center; position: relative;
+  width: 100%; height: 100%; min-height: 0;
+}
+.combatant-leading {
+  display: flex; align-items: flex-end; justify-content: center;
+  flex: 0 0 2.65rem; min-height: 0; width: 100%;
+}
+.combatant-card {
+  display: flex; flex: 1 1 auto; flex-direction: column; align-items: center;
+  justify-content: flex-end; gap: 0.4rem; width: 100%; min-height: 0;
+  margin-top: var(--combatant-intent-gap);
+}
+.combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
    the old .hpbar/.poisebar pair here was two more homes for one grammar, and
    they are gone rather than kept in parallel (Law 0 clause 4). What survives is
@@ -5159,7 +5340,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 
 /* ---------- intents ---------- */
 .intent {
-  display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;
+  display: flex; align-items: center; gap: 0.6rem; margin: 0;
   background: #1c1610; border: 1.5px solid var(--blood); border-radius: 9px;
   padding: 0.4rem 1rem; font-weight: 700; font-size: 1.4rem; cursor: default;
 }
@@ -5775,6 +5956,14 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
+  :root[data-layout='narrow'] .player-zone .combatant,
+  :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite { flex: 1 1 auto; overflow: hidden; }
+  :root[data-layout='narrow'] .player-zone .combatant .sprite > img,
+  :root[data-layout='narrow'] .enemy-row .combatant .sprite > img {
+    max-height: 100%; width: auto; object-fit: contain;
+  }
   /* The player sprite is sized from balance.ui.spriteTiers and does not know
      about the zone it stands in; at 390x844 it ran 9px past the left edge of
      the screen. Capped by width, height auto so it does not squash. */
@@ -6861,7 +7050,7 @@ function applyDisplaySettings(settings) {
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
-  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
+  setQuickNav({ mode: settings.quickNav });
   // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
   // Same shape as `ambient` below: an unknown stored value lands on the default
   // rather than on a silent no-fade, and the default here restates the settings
@@ -8961,6 +9150,12 @@ const balance = {
       cindersMaxWidthPct: 30,
       metadataMaxWidthPct: 30,
       metadataShowTotals: false,
+    },
+    // Shrine options default to one vertical list. `grid` preserves the
+    // horizontal wide-screen composition as an authored alternative; narrow
+    // screens still collapse it to a list for touch and readable labels.
+    shrinePresentation: {
+      optionLayout: 'list', // list | grid
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -19755,6 +19950,12 @@ function validateContent(bundle) {
       if (typeof hp.metadataShowTotals !== 'boolean') {
         err('balance.ui.hudPresentation.metadataShowTotals', `must be boolean — got ${JSON.stringify(hp.metadataShowTotals)}`);
       }
+    }
+    const shrinePresentation = ui.shrinePresentation;
+    if (!shrinePresentation || typeof shrinePresentation !== 'object' || Array.isArray(shrinePresentation)) {
+      err('balance.ui.shrinePresentation', 'must be an object with optionLayout');
+    } else if (!['list', 'grid'].includes(shrinePresentation.optionLayout)) {
+      err('balance.ui.shrinePresentation.optionLayout', `must be 'list' or 'grid' — got ${JSON.stringify(shrinePresentation.optionLayout)}`);
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
@@ -38876,7 +39077,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '261bc73a9d';
+const SOURCE = 'e04fd3819f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -38910,7 +39111,7 @@ const SOURCE = '261bc73a9d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1240';
+const ORDINAL = '1256';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39256,6 +39457,7 @@ const { creationHandChoices, creationRelicChoices, selectStartingHand } = requir
 
 const { pieceChip } = require("src/ui/screens/equipment.js");
 const { relicText } = require("src/ui/components/card.js");
+const { renderStatAllocationCard } = require("src/ui/components/statAllocationCard.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton, tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle, booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton, selectionSectionFace } = require("src/ui/components/creationCards.js");
 
@@ -39609,48 +39811,38 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
-      overlay.innerHTML = `<div class="modal cc-stat-modal" tabindex="-1"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
-        + `<p class="se-pool">Points to assign: ${remaining}</p><div class="cc-allocation-rows"></div>`
-        + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>Standard</button><button type="button" data-stat-done>Done</button></div></div>`;
-      const rows = overlay.querySelector('.cc-allocation-rows');
-      for (const def of orderedAttributes(registries)) {
-        const value = state.attributes[def.id];
-        const row = document.createElement('div');
-        row.className = 'se-row';
-        row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`;
-        const minus = document.createElement('button');
-        minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
-        minus.dataset.statId = def.id; minus.dataset.statAction = 'decrease';
-        minus.setAttribute('aria-label', `Decrease ${def.label}`);
-        minus.setAttribute('aria-disabled', value <= mode.minimum ? 'true' : 'false');
-        const number = document.createElement('span'); number.className = 'se-value'; number.textContent = value;
-        const plus = document.createElement('button');
-        plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
-        plus.dataset.statId = def.id; plus.dataset.statAction = 'increase';
-        plus.setAttribute('aria-label', `Increase ${def.label}`);
-        plus.setAttribute('aria-disabled', value >= mode.maximum || remaining <= 0 ? 'true' : 'false');
-        minus.addEventListener('click', () => {
-          if (value <= mode.minimum) return;
-          state.attributes[def.id] -= 1;
+      const allocation = renderStatAllocationCard(overlay, {
+        title: 'ASSIGN POINTS',
+        remaining,
+        modal: true,
+        cancelLabel: 'Standard',
+        rows: orderedAttributes(registries).map((def) => ({
+          id: def.id,
+          label: def.label,
+          shortLabel: def.shortLabel,
+          value: state.attributes[def.id],
+          canDecrease: state.attributes[def.id] > mode.minimum,
+          canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
+        })),
+        onDecrease: (id) => {
+          state.attributes[id] -= 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        });
-        plus.addEventListener('click', () => {
-          if (value >= mode.maximum || remaining <= 0) return;
-          state.attributes[def.id] += 1;
+        },
+        onIncrease: (id) => {
+          state.attributes[id] += 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        });
-        row.append(minus, number, plus); rows.appendChild(row);
-      }
-      const done = overlay.querySelector('[data-stat-done]');
+        },
+      });
+      const done = allocation.done;
       refusesWhen(done, statsProblem, 'Apply these stats');
       done.addEventListener('click', () => {
         if (statsProblem()) return;
         previewAttributes = { ...state.attributes };
         closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
       });
-      overlay.querySelector('[data-stat-cancel]').addEventListener('click', () => {
+      allocation.cancel.addEventListener('click', () => {
         state.attributeMode = STANDARD;
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
@@ -44896,6 +45088,77 @@ const traySizeService = createTraySizeService();
 Object.assign(module.exports, { createTraySizeService, traySizeService });
 
 },
+"src/ui/components/statAllocationCard.js": function (module, exports, require) {
+// Shared attribute-allocation card. Character creation and shrine levelling
+// provide policy (limits, remaining points, commit); this component owns the
+// common card, controls, semantics, and interaction shape.
+const { esc } = require("src/ui/components/tooltip.js");
+
+function renderStatAllocationCard(host, {
+  title = 'ASSIGN POINTS',
+  remaining = 0,
+  remainingLabel = 'Points to assign',
+  note = '',
+  rows = [],
+  modal = false,
+  cancelLabel = 'Cancel',
+  doneLabel = 'Done',
+  doneDisabled = false,
+  onDecrease = null,
+  onIncrease = null,
+  onCancel = null,
+  onDone = null,
+} = {}) {
+  host.innerHTML = `<section class="${modal ? 'modal cc-stat-modal' : 'stat-allocation-card'}" tabindex="-1">`
+    + `<h3 id="cc-stat-title">${esc(title)}</h3>`
+    + `<p class="se-pool">${esc(remainingLabel)}: ${esc(String(remaining))}</p>`
+    + (note ? `<p class="stat-allocation-note">${esc(note)}</p>` : '')
+    + '<div class="cc-allocation-rows"></div>'
+    + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>${esc(cancelLabel)}</button>`
+    + `<button type="button" data-stat-done aria-disabled="${doneDisabled ? 'true' : 'false'}">${esc(doneLabel)}</button></div>`
+    + '</section>';
+
+  const card = host.firstElementChild;
+  const rowsHost = card.querySelector('.cc-allocation-rows');
+  for (const rowModel of rows) {
+    const row = document.createElement('div');
+    row.className = 'se-row';
+    row.innerHTML = `<span class="se-name" title="${esc(rowModel.label)}">${esc(rowModel.shortLabel || rowModel.label)}</span>`;
+    const minus = document.createElement('button');
+    minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
+    minus.dataset.statId = rowModel.id; minus.dataset.statAction = 'decrease';
+    minus.setAttribute('aria-label', `Decrease ${rowModel.label}`);
+    minus.setAttribute('aria-disabled', rowModel.canDecrease ? 'false' : 'true');
+    const number = document.createElement('span');
+    number.className = 'se-value'; number.textContent = rowModel.value;
+    const plus = document.createElement('button');
+    plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
+    plus.dataset.statId = rowModel.id; plus.dataset.statAction = 'increase';
+    plus.setAttribute('aria-label', `Increase ${rowModel.label}`);
+    plus.setAttribute('aria-disabled', rowModel.canIncrease ? 'false' : 'true');
+    minus.addEventListener('click', () => {
+      if (rowModel.canDecrease && onDecrease) onDecrease(rowModel.id);
+    });
+    plus.addEventListener('click', () => {
+      if (rowModel.canIncrease && onIncrease) onIncrease(rowModel.id);
+    });
+    row.append(minus, number, plus);
+    rowsHost.appendChild(row);
+  }
+
+  const cancel = card.querySelector('[data-stat-cancel]');
+  const done = card.querySelector('[data-stat-done]');
+  cancel.addEventListener('click', () => onCancel && onCancel());
+  done.addEventListener('click', () => {
+    if (!doneDisabled && onDone) onDone();
+  });
+  return { card, rowsHost, cancel, done };
+}
+
+
+Object.assign(module.exports, { renderStatAllocationCard });
+
+},
 "src/ui/components/creationCards.js": function (module, exports, require) {
 // Reusable character-creation cards. The live screen and dev catalogue both
 // call these renderers, so a specimen is the production component rather than
@@ -46314,23 +46577,22 @@ const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { quickMenuPanelModel } = require("src/ui/models/MenuModels.js");
 const { renderQuickMenu } = require("src/ui/components/menuComponents.js");
 
-// The experiment's own state, set from applyDisplaySettings (main.js) the same
-// way input.js is handed its bindings — so screens never have to thread `meta`
-// down just to ask which variant is running.
-let mode = 'off'; // 'off' | 'mirror' | 'switcher'
+// The player's compact pause-menu presentation, set from applyDisplaySettings
+// (main.js) the same way input.js is handed its bindings — so screens never
+// have to thread `meta` down just to ask which presentation is running.
+let mode = 'switcher'; // 'mirror' | 'switcher'
 let fixedEnds = true;
 
 /** setQuickNav({ mode, fixedEnds }) — called by applyDisplaySettings. */
 function setQuickNav(opts) {
-  if (opts.mode != null) mode = ['mirror', 'switcher'].includes(opts.mode) ? opts.mode : 'off';
-  if (opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
+  mode = opts && opts.mode === 'mirror' ? 'mirror' : 'switcher';
+  if (opts && opts.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
-    if (mode === 'off') closeQuickNav();
   }
 }
 
-/** 'off' | 'mirror' | 'switcher' — what the player is currently testing. */
+/** 'mirror' | 'switcher' — the selected quick-navigation composition. */
 function quickNavMode() {
   return mode;
 }
@@ -46389,10 +46651,10 @@ function saveAction(onSave) {
  *
  * `actions` maps an `act` id from the MENU table to the handler that already
  * does that thing. An act with no handler is dropped rather than drawn dead.
- * Returns the panel element (or null when the variant is off).
+ * Returns the panel element, or null when there is no anchor/action to show.
  */
 function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = null, hasSave = true } = {}) {
-  if (mode === 'off' || !anchorEl) return null;
+  if (!anchorEl) return null;
   closeFlaskActionMenu({ cancelled: true });
   closeQuickNav();
 
@@ -46403,7 +46665,7 @@ function openQuickNav(anchorEl, context, { actions = {}, counts = {}, current = 
   const model = quickMenuPanelModel({
     context,
     mode,
-    caption: `TEST · Quick menu: ${MODE_NAMES[mode]} — change or turn off in Settings ▸ Display`,
+    caption: `Quick menu · ${MODE_NAMES[mode]}`,
     rows,
   });
   const { veil, panel } = renderQuickMenu(model, {
@@ -46614,6 +46876,12 @@ function renderMenuOverlay(model) {
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
+          <div class="overlay-settings-actions" data-settings-quick-actions hidden>
+            <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
+            <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" aria-pressed="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
+            <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>
+            <button class="subtle danger ov-quick-action" id="ov-exit-quick" type="button" title="Save and quit the game" aria-label="Save and quit the game"><span aria-hidden="true" data-exit-icon>⏻</span><span class="ov-qa-label" data-exit-label>Quit</span></button>
+          </div>
           ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
@@ -51137,21 +51405,28 @@ function combatantFrame({
     ? UI.playerCombatantFrame
     : UI.enemyCombatantFrame;
 
-  appendAll(frame, leading);
+  const leadingHost = document.createElement('div');
+  leadingHost.className = 'combatant-leading';
+  appendAll(leadingHost, leading);
+  frame.appendChild(leadingHost);
+
+  const card = document.createElement('div');
+  card.className = 'combatant-card';
 
   const spriteHost = document.createElement('div');
   spriteHost.className = 'sprite';
   markUiComponent(spriteHost, UI.combatantSprite, role);
   spriteHost.appendChild(sprite);
   if (blockBadge) spriteHost.appendChild(blockBadge);
-  frame.appendChild(spriteHost);
+  card.appendChild(spriteHost);
 
   if (name) {
     markUiComponent(name, UI.combatantNameplate, role);
-    frame.appendChild(name);
+    card.appendChild(name);
   }
-  if (meters) frame.appendChild(meters);
-  appendAll(frame, trailing);
+  if (meters) card.appendChild(meters);
+  appendAll(card, trailing);
+  frame.appendChild(card);
   return frame;
 }
 
@@ -51717,6 +51992,7 @@ const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } = require("src/model/gracerefill.js");
+const { renderStatAllocationCard } = require("src/ui/components/statAllocationCard.js");
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -51753,32 +52029,6 @@ function refillLineHtml(registries, refill) {
   return `<p class="rest-refill">${said.join(' ')}</p>`;
 }
 
-// WHAT A POINT IN THIS STAT DOES, READ AND NEVER TYPED. Every word comes from
-// the content tables — the attribute's own `sense` (content/attributes.js) and
-// the `presentation.label` of every derived stat whose `sourceStat` is this
-// attribute (content/derivedStats.js). So the sixth attribute, or a sixth
-// derived stat, describes itself at the shrine with nothing edited here, and no
-// number a player reads is a copy of one in a table (Law 1 clause 2).
-//
-// THE `→` IS THE ONLY THING THIS SCREEN AUTHORS. Both sides of it are read off
-// the run: the point is permanent and the player is owed the arithmetic before
-// they spend, not a promise about it.
-function levelDetailHtml(registries, run, attr, points) {
-  const rules = (registries.derivedStatRules || {}).rules || {};
-  const presentation = (registries.derivedStatRules || {}).presentation || {};
-  const feeds = Object.keys(rules)
-    .filter((id) => rules[id] && rules[id].sourceStat === attr.id)
-    .sort((a, b) => ((presentation[a] || {}).order || 0) - ((presentation[b] || {}).order || 0))
-    .map((id) => (presentation[id] || {}).label || id);
-  const now = run.attributes[attr.id];
-  // BOTH SIDES OF THE ARROW ARE READ, including the step: the level value is a
-  // dial he turns (Settings → Advanced), so a hard-coded +1 here would be the
-  // confirm panel promising one thing while the purchase does another.
-  return `<p><b>${esc(attr.label)} ${now} → ${now + points}</b></p>
-    <p>${esc(attr.sense || '')}</p>
-    ${feeds.length ? `<p class="set-note">Feeds: ${feeds.map(esc).join(' · ')}</p>` : ''}`;
-}
-
 /** The partner kind's authored NAME, never its id — a player has never heard of `mana`. */
 function partnerName(registries, kind) {
   if (!kind) return 'nothing';
@@ -51786,7 +52036,7 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null }) {
+function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null }) {
   const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
   const noRest = passiveFlag(registries, run.relics, 'shrineNoRest');
   const upgradable = run.deck.filter((c) => !c.upgraded && registries.cards.get(c.cardId).upgrade);
@@ -51803,27 +52053,44 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // "also at graces, players should have the option to level up their character
   // (per run) by trading cinders to level up." The screen asks the model what
   // it may offer and prices nothing itself.
-  const level = levelUpPlan(registries, run, { pointsPerLevel: levelValue });
+  // The shrine assignment card grants exactly one point. The model still owns
+  // pricing, caps, persistence, and pool reconciliation; the screen only fixes
+  // the size of this one interaction.
+  const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
+  const authoredShrineLayout = registries.balance?.ui?.shrinePresentation?.optionLayout;
+  const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
 
   app.innerHTML = `
     <div class="screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       ${refillLineHtml(registries, refill)}
-      <div class="class-row">
+      <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
-          <h3>Rest</h3>
-          <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          <div class="cp-body">
+            <h3>Rest</h3>
+            <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+          </div>
         </div>
         <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
-          <h3>Smith</h3>
-          <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          <div class="cp-body">
+            <h3>Smith</h3>
+            <p>${upgradable.length ? 'Upgrade a card, permanently.' : 'Nothing left to upgrade.'}</p>
+          </div>
         </div>
-        <div class="class-pick" id="flask-reallocate">
-          <div class="glyph">⚗</div>
+        <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+          <summary>
+            <span class="shrine-fold-glyph">⚗</span>
+            <span class="shrine-fold-summary"><b>Reallocate Flask Charges</b><small>${charge.assigned}/${charge.capacity} assigned</small></span>
+            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+          </summary>
+          <div class="shrine-fold-content">
           <h3>Reallocate Flask Charges</h3>
+          <div class="shrine-fold-detail">
+          <div class="glyph">⚗</div>
+          <div class="cp-body">
           <!-- THE PER-FLASK COUNTS LEFT THIS LINE WHEN THE ROWS GAINED THEM.
                It used to read "Fixed capacity 3: <art> 2 · <art> 1" — the same
                two numbers the increment rows below now carry, which is Law 1
@@ -51857,7 +52124,10 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
               </div>`).join('')}
             <p class="flask-increment-total">${charge.assigned} of ${charge.capacity} assigned</p>
           </div>
-        </div>
+          </div>
+          </div>
+          </div>
+        </details>
         <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
@@ -51878,20 +52148,33 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+        <details class="class-pick shrine-fold${level.offerable ? '' : ' locked'}" id="level-opt"${openPanel === 'level' ? ' open' : ''}
              data-affordable="${level.affordable ? '1' : '0'}"
              data-blocked-by="${level.blockedBy || ''}"
              data-cost="${level.cost}"
              data-short="${level.short}">
-          <div class="glyph">✦</div>
+          <summary>
+            <span class="shrine-fold-glyph">✦</span>
+            <span class="shrine-fold-summary"><b>Level up</b><small>${level.capped ? 'Level cap reached' : `${level.cost} cinders · +1 point`}</small></span>
+            <span class="shrine-fold-caret" aria-hidden="true">›</span>
+          </summary>
+          <div class="shrine-fold-content">
           <h3>Level up</h3>
-          <p>${level.capped
-            ? `You have taken every level this climb allows (${level.levelsTaken}).`
-            : `${level.cost} cinders for ${level.pointsPerLevel} point${level.pointsPerLevel === 1 ? '' : 's'}. You hold ${level.cinders}${level.levelsTaken ? ` · ${level.levelsTaken} taken` : ''}.`}</p>
-          <div class="flask-allocation-controls">
-            ${level.attributes.map((a) => `<button type="button" data-attr="${a.id}"${level.offerable ? '' : ' disabled'}>${esc(a.shortLabel || a.label)} ${run.attributes[a.id]}</button>`).join('')}
+          <div class="shrine-fold-detail">
+            <div class="glyph">✦</div>
+            <div class="cp-body">
+            ${level.capped
+            ? `<p>You have taken every level this climb allows (${level.levelsTaken}).</p>`
+            : `<p class="level-cinder-preview" data-level-cinder-preview>
+                <span aria-hidden="true">✦</span>
+                <span>You hold <b>${level.cinders}</b> − <strong class="level-cinder-cost">${level.cost} cinders</strong> to level up.</span>
+                <span class="level-cinder-result" data-level-cinder-result hidden>→ <b>${level.cinders - level.cost} remaining</b></span>
+              </p>`}
+            </div>
           </div>
-        </div>
+          <div class="shrine-stat-mount"></div>
+          </div>
+        </details>
       </div>
       <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
@@ -51943,33 +52226,45 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
       // panel adopted from it: the counts moved, and so did which buttons are
       // legal. A control that redrew only its own number would leave the OTHER
       // row's `+` looking pressable at the moment it stopped being.
-      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
+      mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, openPanel: 'flask', refill: { chargePools: { ...run.flaskCharges }, grants: [], total: 0, shortfalls: [] } });
     });
   }
-  // THE SECOND BEAT IS NOT DECIDED HERE — `shrineLevelUp` is a row in
-  // model/secondbeat.js and the machinery picks the form from its
-  // characteristics. This screen names the action and hands over the commit,
-  // which is the rule that whole file exists to enforce.
+  // The same allocation component used by character creation, with shrine
+  // policy: existing values are immutable, one and only one plus may be chosen,
+  // and the run is not mutated until Done commits it through applyLevelUp.
   if (level.offerable) {
-    for (const attr of level.attributes) {
-      const btn = app.querySelector(`#level-opt [data-attr="${attr.id}"]`);
-      if (!btn) continue;
-      arm(btn, 'shrineLevelUp', {
-        question: `Spend ${level.cost} cinders on ${attr.label}? ${level.pointsPerLevel === 1 ? 'The point is' : `All ${level.pointsPerLevel} points are`} permanent.`,
-        detailHtml: levelDetailHtml(registries, run, attr, level.pointsPerLevel),
-        confirmLabel: 'LEVEL UP',
-        onConfirm: () => {
-          applyLevelUp(registries, run, attr.id, { pointsPerLevel: levelValue });
+    let pendingAttribute = null;
+    const mount = app.querySelector('#level-opt .shrine-stat-mount');
+    const drawLevelCard = () => {
+      const result = app.querySelector('#level-opt [data-level-cinder-result]');
+      if (result) result.hidden = !pendingAttribute;
+      renderStatAllocationCard(mount, {
+        title: 'ASSIGN 1 POINT',
+        remaining: pendingAttribute ? 0 : 1,
+        note: 'Choose one attribute. Existing points cannot be reduced.',
+        cancelLabel: 'Clear',
+        doneLabel: 'Level up',
+        doneDisabled: !pendingAttribute,
+        rows: level.attributes.map((attr) => ({
+          id: attr.id,
+          label: attr.label,
+          shortLabel: attr.shortLabel,
+          value: run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+          canDecrease: false,
+          canIncrease: !pendingAttribute,
+        })),
+        onIncrease: (id) => { pendingAttribute = id; drawLevelCard(); },
+        onCancel: () => { pendingAttribute = null; drawLevelCard(); },
+        onDone: () => {
+          if (!pendingAttribute) return;
+          applyLevelUp(registries, run, pendingAttribute, { pointsPerLevel: 1 });
           sfx.play('shrine');
           if (onLevelUp) onLevelUp();
-          // RE-MOUNT, the same shape the flask reallocation above already uses:
-          // the price has moved, the purse has moved, and so has a derived pool
-          // the Rest panel is quoting. A screen that stayed put would be
-          // offering the old price for the next point.
-          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill });
+          mountRest(app, { registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: 'level' });
         },
       });
-    }
+    };
+    drawLevelCard();
   }
   if (upgradable.length) {
     // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
@@ -52658,7 +52953,7 @@ const ROWS = [
   // the seat. The row itself is unchanged: same key, type, label, note; it
   // MOVED here from below the map-header rows.
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen (also toggles with F11 in most browsers).' },
+    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
   { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
@@ -52802,24 +53097,9 @@ const ROWS = [
   { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
-  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
-  // should offer everywhere you can go from here".
-  //
-  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
-  // pixel move. It ships in the build rather than hiding behind a URL flag
-  // because the question it asks is a PHONE question (the menu's tab strip wraps
-  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
-  //
-  // The note carries the way back, and so does the list itself: it names the
-  // variant and points here every time it opens. An experiment that outlives the
-  // memory of switching it on has stopped being an experiment and become a bug
-  // report.
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
-    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
-    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
-  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
-    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'switcher',
+    choices: ['mirror', 'switcher'], label: 'Quick menu style',
+    note: 'MIRROR keeps the tab row and adds the context menu. SWITCHER replaces the tab row with one compact button on narrow screens. Switcher is the phone-friendly default.' },
 
   { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
     note: 'Silence music and sound effects.' },
@@ -53043,6 +53323,15 @@ const CAT_KEY = 'settingsCategory';
 
 const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
+const CATEGORY_LABELS = {
+  Display: 'Game & Display',
+  Accessibility: 'Access',
+};
+
+function categoryLabel(cat) {
+  return CATEGORY_LABELS[cat] || cat;
+}
+
 /**
  * categoryHandler(cat) → what will render under that heading, or null.
  *
@@ -53139,10 +53428,11 @@ function settingOn(settings, key) {
 }
 
 function rowHtml(settings, r) {
+  const help = `<details class="set-help"><summary>Details</summary><p class="set-note">${r.note}</p></details>`;
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
       </div>`;
   }
@@ -53187,7 +53477,7 @@ function rowHtml(settings, r) {
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
         <div class="num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
                  min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
@@ -53203,7 +53493,7 @@ function rowHtml(settings, r) {
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <div class="range-wrap">
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
@@ -53212,7 +53502,7 @@ function rowHtml(settings, r) {
   }
   if (r.type === 'button') {
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+        <div><b>${r.label}</b>${help}</div>
         <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
@@ -53222,14 +53512,22 @@ function rowHtml(settings, r) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
         <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
-  // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
+  // Do not draw a convincing dead switch on browsers (notably iPhone Safari)
+  // that expose no document fullscreen API.
+  if (r.type === 'action' && !fullscreenCapability().supported) {
+    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
+      <div><b>${r.label}</b>${help}</div>
+      <span class="set-action-status" role="status">Unavailable in this browser · use its page controls</span>
+    </div>`;
+  }
+  // Supported action rows render as a live toggle reflecting browser state.
   const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
   return `<div class="set-row">
-      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+      <div><b>${r.label}</b>${help}</div>
       <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
         <span class="knob"></span>
       </button>
@@ -53633,16 +53931,26 @@ function anchorPressed(container, btn, wasAt) {
   }
 }
 
-function isFullscreen() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+function fullscreenCapability(doc = (typeof document !== 'undefined' ? document : null)) {
+  const root = doc && doc.documentElement;
+  const enter = root && (root.requestFullscreen || root.webkitRequestFullscreen);
+  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
+  return { supported: typeof enter === 'function' && typeof exit === 'function', root, enter, exit };
 }
 
-function toggleFullscreen() {
-  const el = document.documentElement;
-  if (isFullscreen()) {
-    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
-  } else {
-    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
+function isFullscreen(doc = (typeof document !== 'undefined' ? document : null)) {
+  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
+}
+
+async function toggleFullscreen(doc = document) {
+  const api = fullscreenCapability(doc);
+  if (!api.supported) return { ok: false, reason: 'Fullscreen is unavailable in this browser.' };
+  try {
+    const result = isFullscreen(doc) ? api.exit.call(doc) : api.enter.call(api.root);
+    if (result && typeof result.then === 'function') await result;
+    return { ok: true, active: isFullscreen(doc) };
+  } catch (error) {
+    return { ok: false, reason: 'The browser refused fullscreen. Try again from its own page menu.' };
   }
 }
 
@@ -53669,8 +53977,10 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  if (h.mount) return `<div class="${h.mount}"></div>`;
-  return h.rows.map((r) => rowHtml(settings, r)).join('');
+  const heading = `<header class="set-section-head"><p>Settings</p><h2>${esc(categoryLabel(cat))}</h2>`
+    + `<span>${esc(categoryTip(cat))}</span></header>`;
+  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
+  return `${heading}<div class="set-card-list">${h.rows.map((r) => rowHtml(settings, r)).join('')}</div>`;
 }
 
 /**
@@ -53727,7 +54037,7 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
       // to fix in this file.
       const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(cat)}</button>`).join('');
+        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
       html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
         + `<div class="set-panel" id="set-panel" role="tabpanel"`
@@ -53862,15 +54172,16 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
-        toggleFullscreen();
-        // Reflect the new state shortly after the API resolves.
-        setTimeout(() => {
-          const on = isFullscreen();
-          btn.classList.toggle('on', on);
-          btn.setAttribute('aria-checked', String(on));
-        }, 60);
+        if (btn.getAttribute('aria-disabled') === 'true') return;
+        btn.setAttribute('aria-disabled', 'true');
+        const result = await toggleFullscreen();
+        const on = isFullscreen();
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-checked', String(on));
+        btn.removeAttribute('aria-disabled');
+        if (!result.ok) showSettingsNotice(result.reason);
         return;
       }
       const now = !btn.classList.contains('on');
@@ -53883,6 +54194,19 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
+
+  // Esc, F11 and browser chrome can all change fullscreen without this toggle.
+  // The browser event is the authority; a 60 ms guess was the source of the
+  // inverted state shown on slower/mobile transitions.
+  const syncFullscreen = () => {
+    const on = isFullscreen();
+    container.querySelectorAll('.toggle[data-action="1"]').forEach((btn) => {
+      btn.classList.toggle('on', on);
+      btn.setAttribute('aria-checked', String(on));
+    });
+  };
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  document.addEventListener('webkitfullscreenchange', syncFullscreen);
 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
@@ -53900,6 +54224,8 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
   const obs = new MutationObserver(() => {
     if (container.isConnected) return;
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('fullscreenchange', syncFullscreen);
+    document.removeEventListener('webkitfullscreenchange', syncFullscreen);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });
@@ -54007,7 +54333,7 @@ function openSettings({ meta, onChange, saves = null, onProfileRestored = null }
 }
 
 
-Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, renderSettings, showSettingsNotice, openSettings });
+Object.assign(module.exports, { CATEGORY_ORDER, categoryHandler, filedCategories, settingsCategories, categoryTip, settingOn, resolveGraceRefill, resolveNumberRow, settingsRow, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, resolveTapSize, fullscreenCapability, isFullscreen, toggleFullscreen, renderSettings, showSettingsNotice, openSettings });
 
 },
 "src/ui/screens/profileArchive.js": function (module, exports, require) {
@@ -55005,6 +55331,7 @@ function initAudio(settings = {}) {
     musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
     sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
+    musicMuted: settings.muteMusic === true,
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
@@ -55022,7 +55349,7 @@ function initAudio(settings = {}) {
   function applyGains() {
     const m = state.muted ? 0 : 1;
     master.gain.value = 0.9 * m;
-    musicBus.gain.value = state.musicVol / 100;
+    musicBus.gain.value = state.musicMuted ? 0 : state.musicVol / 100;
     sfxBus.gain.value = state.sfxVol / 100;
   }
 
@@ -55376,7 +55703,7 @@ function initAudio(settings = {}) {
       console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
       return 'unknown';
     }
-    if (state.muted) return 'muted';
+    if (state.muted || state.musicMuted) return 'muted';
     resume();
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
@@ -55536,7 +55863,7 @@ function initAudio(settings = {}) {
       }
     }
     // Re-trigger the current context so the new source is used immediately.
-    if (state.context && !state.muted) {
+    if (state.context && !state.muted && !state.musicMuted) {
       const c = state.context;
       state.context = null;
       music(c);
@@ -55583,12 +55910,13 @@ function initAudio(settings = {}) {
   }
 
   // ---- settings applied live ----------------------------------------------
-  function setVolumes({ musicVolume, sfxVolume, muteAudio } = {}) {
+  function setVolumes({ musicVolume, sfxVolume, muteAudio, muteMusic } = {}) {
     if (musicVolume != null) state.musicVol = clampVol(musicVolume, state.musicVol);
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
+    if (muteMusic != null) state.musicMuted = !!muteMusic;
     applyGains();
-    if (state.muted) stopMusic(0.3);
+    if (state.muted || state.musicMuted) stopMusic(0.3);
     else if (state.context) {
       const c = state.context;
       state.context = null;
@@ -56388,7 +56716,7 @@ Object.assign(module.exports, { mountCompendium });
 // clicking the veil closes it.
 
 const { renderCard } = require("src/ui/components/card.js");
-const { renderSettings } = require("src/ui/screens/settings.js");
+const { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } = require("src/ui/screens/settings.js");
 const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
@@ -56402,6 +56730,7 @@ const { renderMenuOverlay, updateMenuSelection } = require("src/ui/components/me
 
 let openVeil = null;
 let escHandler = null;
+let overlayCleanup = [];
 
 // ---- the panels: ONE name per tab, not two (#78) ---------------------------
 //
@@ -56581,6 +56910,7 @@ function closeOverlay() {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
   }
+  for (const release of overlayCleanup.splice(0)) release();
 }
 
 /**
@@ -56631,8 +56961,92 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
   };
 
+  const quickActions = veil.querySelector('[data-settings-quick-actions]');
+  const fullscreenButton = veil.querySelector('#ov-fullscreen');
+  const musicButton = veil.querySelector('#ov-music');
+  const saveButton = veil.querySelector('#ov-save-quick');
+  const exitButton = veil.querySelector('#ov-exit-quick');
+  if (!onSave && saveButton) saveButton.hidden = true;
+  if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
+
+  const syncFullscreenQuickAction = () => {
+    const active = isFullscreen();
+    if (!fullscreenButton) return;
+    fullscreenButton.classList.toggle('on', active);
+    fullscreenButton.setAttribute('aria-pressed', String(active));
+    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+  };
+  const syncMusicQuickAction = () => {
+    if (!musicButton) return;
+    const active = settings.muteMusic !== true;
+    musicButton.classList.toggle('on', active);
+    musicButton.setAttribute('aria-pressed', String(active));
+    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
+    musicButton.title = active ? 'Turn music off' : 'Turn music on';
+    const label = musicButton.querySelector('[data-music-label]');
+    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
+  };
+  syncFullscreenQuickAction();
+  syncMusicQuickAction();
+  document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+  overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
+  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
+
+  fullscreenButton?.addEventListener('click', async () => {
+    fullscreenButton.setAttribute('aria-disabled', 'true');
+    const result = await toggleFullscreen();
+    fullscreenButton.removeAttribute('aria-disabled');
+    syncFullscreenQuickAction();
+    if (!result.ok) showSettingsNotice(result.reason);
+  });
+  musicButton?.addEventListener('click', () => {
+    settings.muteMusic = settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+    syncMusicQuickAction();
+  });
+  saveButton?.addEventListener('click', () => {
+    if (!onSave) return;
+    const slot = onSave();
+    const label = saveButton.querySelector('[data-save-label]');
+    if (label) label.textContent = slot ? `Saved · ${slot}` : 'Saved';
+    saveButton.setAttribute('aria-label', slot ? `Saved to slot ${slot}` : 'Saved');
+    clearTimeout(saveButton._labelTimer);
+    saveButton._labelTimer = setTimeout(() => {
+      if (label) label.textContent = 'Save';
+      saveButton.setAttribute('aria-label', 'Save now');
+    }, 1500);
+  });
+  let exitArmed = false;
+  let exitTimer = null;
+  exitButton?.addEventListener('click', () => {
+    if (!exitArmed) {
+      exitArmed = true;
+      exitButton.classList.add('armed');
+      exitButton.setAttribute('aria-label', 'Press again to save and quit');
+      const icon = exitButton.querySelector('[data-exit-icon]');
+      const label = exitButton.querySelector('[data-exit-label]');
+      if (icon) icon.textContent = '!';
+      if (label) label.textContent = 'Confirm';
+      exitTimer = setTimeout(() => {
+        exitArmed = false;
+        exitButton.classList.remove('armed');
+        exitButton.setAttribute('aria-label', 'Save and quit the game');
+        if (icon) icon.textContent = '⏻';
+        if (label) label.textContent = 'Quit';
+      }, 3000);
+      return;
+    }
+    clearTimeout(exitTimer);
+    closeOverlay();
+    (onExit || onQuit)();
+  });
+
   function selectTab(id) {
     currentTab = id;
+    veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
+    if (quickActions) quickActions.hidden = id !== 'settings';
     updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and

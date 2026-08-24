@@ -238,6 +238,15 @@
 .overlay-tabs .ov-tab:hover { color: var(--parchment); }
 .overlay-tabs .ov-tab.on { color: var(--gold); border-color: var(--line); border-bottom-color: transparent; background: var(--bg-raise); }
 .overlay-actions { display: flex; gap: 0.8rem; align-items: center; }
+.overlay-settings-actions { display: flex; align-items: center; gap: 6px; }
+.overlay-settings-actions[hidden] { display: none; }
+.ov-quick-action {
+  min-height: var(--tap-floor); height: auto; padding: 0.55rem 0.8rem;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  white-space: nowrap;
+}
+.ov-quick-action.on { color: var(--gold); border-color: var(--gold); }
+.ov-quick-action.armed { background: rgba(140, 30, 30, 0.3); border-color: var(--ember); }
 .overlay-body { flex: 1; overflow: auto; padding: 1.8rem; }
 .overlay-body .grid { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
 .ov-relic-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
@@ -251,6 +260,27 @@
 .ov-stat b { color: var(--parchment); font-size: 1.2rem; }
 .set-cat { color: var(--gold); font-size: 1.2rem; letter-spacing: 0.15em; text-transform: uppercase; margin: 1.4rem 0 0.4rem; }
 .set-cat:first-child { margin-top: 0; }
+.set-row-unavailable { opacity: 0.86; }
+.set-action-status {
+  max-width: 24rem; color: var(--muted); font-size: 1.05rem; line-height: 1.35; text-align: right;
+}
+.set-section-head {
+  display: grid; gap: 4px; padding: 0 0 14px; margin-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.set-section-head p {
+  color: var(--gold); font-family: var(--font-display); font-size: 0.9rem;
+  letter-spacing: 0.14em; text-transform: uppercase;
+}
+.set-section-head h2 { margin: 0; color: var(--parchment); font-size: 1.65rem; }
+.set-section-head span { max-width: 42rem; color: var(--muted); line-height: 1.35; }
+.set-card-list { display: grid; gap: 8px; }
+.set-help { margin-top: 4px; color: var(--muted); }
+.set-help summary {
+  width: max-content; color: var(--gold); cursor: pointer; font-size: 0.95rem;
+  letter-spacing: 0.03em; list-style-position: inside;
+}
+.set-help[open] summary { margin-bottom: 4px; }
 .subtle.danger { border-color: var(--blood); color: var(--ember); }
 .subtle.danger:hover { background: rgba(140, 30, 30, 0.25); border-color: var(--ember); }
 .ov-save-actions { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; margin-top: 1.4rem; max-width: 32rem; }
@@ -703,6 +733,19 @@ button.rs-reset {
 .seed-line input[aria-invalid='true'] { border-color: var(--ember); }
 
 .class-row { display: flex; gap: 1.8rem; }
+.shrine-option-list {
+  width: min(100%, 44rem); margin-inline: auto;
+  flex-direction: column; align-items: stretch; gap: 12px;
+}
+.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
+.shrine-option-list > #rest-opt,
+.shrine-option-list > #smith-opt {
+  display: grid; grid-template-columns: auto minmax(0, 1fr);
+  align-items: center; gap: 18px; padding: 18px 20px; text-align: left;
+}
+.shrine-option-list > #rest-opt .glyph,
+.shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
+.shrine-option-grid { align-items: stretch; }
 .class-pick {
   width: 19rem; padding: 1.6rem; border: 2px solid var(--line-soft); border-radius: 12px;
   background: var(--panel); cursor: pointer; text-align: center; transition: border-color 150ms, transform 150ms;
@@ -711,13 +754,48 @@ button.rs-reset {
 .class-pick.locked { opacity: 0.45; cursor: default; }
 .class-pick.locked:hover { border-color: var(--line-soft); transform: none; }
 .class-pick .glyph { font-size: 4.4rem; margin-bottom: 0.8rem; }
+.class-pick .cp-body { min-width: 0; }
 .class-pick h3 { color: var(--gold); font-size: 1.5rem; margin-bottom: 0.6rem; }
 .class-pick p { font-size: 1.1rem; color: var(--muted); line-height: 1.5; }
 .class-pick .chip { display: inline-block; margin-top: 0.8rem; font-size: 1rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 0.2rem 0.8rem; }
+.flask-allocation-controls {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
 .flask-allocation-controls button {
   min-width: var(--tap-floor); min-height: var(--tap-floor); height: auto;
   display: inline-flex; align-items: center; justify-content: center;
 }
+
+/* Shrine option disclosures: the summary is the folded card; the reveal keeps
+   the same component and expands downward without changing its width. */
+.shrine-fold { padding: 0; overflow: hidden; text-align: left; }
+.shrine-fold > summary {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center; gap: 10px; min-height: var(--tap-floor); padding: 10px 14px;
+  cursor: pointer; list-style: none;
+}
+.shrine-fold > summary::-webkit-details-marker { display: none; }
+.shrine-fold-glyph { color: var(--gold); font-size: 1.65rem; }
+.shrine-fold-summary { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.shrine-fold-summary b { color: var(--gold); font-family: var(--font-display); font-size: 1.15rem; }
+.shrine-fold-summary small { min-width: 0; color: var(--muted); font-size: 0.95rem; }
+.shrine-fold-caret { color: var(--gold); font-size: 1.5rem; transform: rotate(0); }
+.shrine-fold[open] .shrine-fold-caret { transform: rotate(90deg); }
+.shrine-fold[open] > summary { border-bottom: 1px solid var(--line-soft); }
+.shrine-fold-content { display: grid; gap: 10px; padding: 12px 14px 14px; }
+.shrine-fold-content > h3 { margin: 0; color: var(--gold); text-align: center; }
+.shrine-fold-detail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: center; }
+.shrine-fold-detail .glyph { margin: 0; font-size: 2.8rem; }
+.level-cinder-preview { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 7px; margin: 0; }
+.level-cinder-preview > [aria-hidden='true'] { color: var(--gold); }
+.level-cinder-cost { color: var(--ember); }
+.level-cinder-result { color: var(--parchment); }
+.level-cinder-result[hidden] { display: none; }
+.stat-allocation-card { min-width: 0; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+.stat-allocation-card > h3 { color: var(--gold); text-align: center; }
+.stat-allocation-note { margin-top: 6px; color: var(--muted); font-size: 1rem; line-height: 1.35; text-align: center; }
+.stat-allocation-card .cc-stat-actions { justify-content: center; }
+.stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
 /* HIS WORDS: "I don't like how the flask assignments are separate buttons
@@ -1503,7 +1581,16 @@ button.rs-reset {
    block (`.modal-veil`, fixed inset:0) — one space, one number, and NOT `vh`
    (Law 2, and the comment on .modal says why that distinction is load-bearing
    here). */
-.settings-modal { min-width: 36rem; height: 80%; }
+.settings-modal {
+  display: flex; flex-direction: column; width: 76rem; max-width: 96%; min-width: min(36rem, 96%);
+  height: 80%; overflow: hidden;
+}
+.settings-modal .set-body {
+  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
+  flex: 1; min-height: 0; overflow: hidden;
+}
+.settings-modal .set-panel { min-width: 0; min-height: 0; overflow: auto; padding: 0 1rem; }
+.settings-modal .set-actions { flex: 0 0 auto; }
 
 /* The settings SECTION TABS (Sunna, EldenSpire#90). Six sections used to be six
    headings down one scrolling column: one name on screen at open, AUDIO 1848px
@@ -1527,11 +1614,9 @@ button.rs-reset {
    measured AFTER --ui-zoom (base.css) — the same unit .ov-tab and .choice use,
    because a finger is the same size on every screen. */
 .set-tabs {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  position: sticky; top: 0; z-index: 2;
-  background: var(--bg-raise);
-  padding: 2px 0 8px; margin-bottom: 10px;
-  border-bottom: 1px solid var(--line);
+  display: grid; grid-auto-rows: minmax(var(--tap-floor), auto); gap: 6px;
+  align-content: start; position: sticky; top: 0; z-index: 2;
+  background: var(--panel); padding: 14px 10px; border-right: 1px solid var(--line);
 }
 /* THE TAB IS NOT TALL, IT IS LOUD — and that is the whole of what reads as big.
    Constantine: "make the tabs about 20% smaller or the size configurable or
@@ -1602,12 +1687,12 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  padding: 6px 9px; border-radius: 6px;
+  width: 100%; padding: 6px 10px; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
   background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
 }
 .set-tabs .set-tab:hover { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
@@ -1655,7 +1740,11 @@ button.rs-reset {
   color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
   font-weight: 600;
 }
-.set-row { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 1rem 0; border-bottom: 1px solid var(--line-soft); }
+.set-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
+  padding: 0.9rem 1rem; border: 1px solid var(--line-soft); border-radius: 8px;
+  background: color-mix(in srgb, var(--panel) 74%, transparent);
+}
 .set-row b { color: var(--parchment); font-size: 1.3rem; }
 /* THE TEXT COLUMN HAS A FLOOR NOW, and a row that cannot honour it wraps.
    #107, Sunna: the Map zoom row offers seven chips, `.choice-group` was
@@ -1672,7 +1761,7 @@ button.rs-reset {
    longer word from the same failure. */
 .set-row > :first-child { flex: 1 1 14rem; min-width: min(14rem, 100%); }
 .set-row { flex-wrap: wrap; row-gap: 0.8rem; }
-.set-note { color: var(--muted); font-size: 1.1rem; margin-top: 0.3rem; max-width: 23rem; line-height: 1.4; }
+.set-note { color: var(--muted); font-size: 1.05rem; margin-top: 0.3rem; max-width: 34rem; line-height: 1.4; }
 /* EldenSpire#26 — the value the UI-size control actually applied. Muted like a
    note when the request was granted; accented when the fit had to hold it back,
    because "you asked for XL and this window gets 1.00x" is the sentence that
@@ -3016,6 +3105,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: auto; padding: 1.2rem 1.6rem;
   display: flex; align-items: center; gap: 1.6rem; text-align: left;
 }
+:root[data-layout='narrow'] .class-pick.shrine-fold {
+  display: block; padding: 0; text-align: left;
+}
 :root[data-layout='narrow'] .class-pick .glyph { margin-bottom: 0; flex-shrink: 0; }
 /* min-width: 0 or the text column refuses to shrink below its longest word and
    the card overflows its own row — the flex default that has bitten this repo
@@ -3171,6 +3263,69 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .ov-switch:hover { border-color: var(--gold); }
 .overlay-tabs[hidden] { display: none; }
+
+/* Settings is a destination, not a document nested inside a pause modal. The
+   category rail and the independently scrolling page remain stable while a
+   player changes sections. */
+.overlay-body[data-settings-host] {
+  display: grid; grid-template-columns: 13rem minmax(0, 1fr);
+  min-height: 0; padding: 0; overflow: hidden;
+}
+.overlay-modal.settings-surface,
+.settings-modal {
+  border-color: transparent;
+  background: var(--bg-raise);
+  box-shadow: none;
+}
+.overlay-modal.settings-surface .overlay-head,
+.overlay-modal.settings-surface .set-tabs,
+.settings-modal .set-tabs {
+  background: transparent;
+}
+.overlay-body[data-settings-host] .set-panel {
+  min-width: 0; min-height: 0; overflow: auto; padding: 1.25rem;
+}
+
+@media (max-width: 720px) {
+  .overlay-modal { width: 96%; height: 92%; max-height: 92%; }
+  .overlay-head { padding: 8px 10px; gap: 4px; }
+  .overlay-actions { gap: 4px; }
+  .overlay-settings-actions { gap: 3px; }
+  .ov-quick-action { min-width: var(--tap-floor); padding-inline: 6px; }
+  .ov-qa-label { display: none; }
+  .overlay-modal.settings-surface .ov-switch { min-width: 0; flex: 1 1 auto; padding-inline: 10px; }
+  .overlay-body[data-settings-host] {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  .overlay-body[data-settings-host] .set-tabs {
+    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .overlay-body[data-settings-host] .set-tab {
+    justify-content: center; padding-inline: 4px; text-align: center;
+    overflow-wrap: anywhere;
+  }
+  .overlay-body[data-settings-host] .set-panel { padding: 10px; }
+  .settings-modal { width: 96%; height: 92%; min-width: 0; padding: 12px; }
+  .settings-modal .set-body {
+    grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr);
+  }
+  .settings-modal .set-tabs {
+    position: static; grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(var(--tap-floor), auto); padding: 8px;
+    border-right: 0; border-bottom: 1px solid var(--line);
+  }
+  .settings-modal .set-tab { justify-content: center; padding-inline: 4px; text-align: center; }
+  .settings-modal .set-panel { padding: 10px; }
+  .set-section-head { padding-bottom: 8px; }
+  .set-section-head h2 { font-size: 1.45rem; }
+  .set-section-head span { display: none; }
+  .set-row { gap: 8px; padding: 10px; }
+  .set-row > :first-child { flex-basis: min(12rem, 100%); min-width: min(12rem, 100%); }
+  .choice-group { width: 100%; justify-content: flex-start; }
+  .set-action-status { max-width: 11rem; text-align: right; }
+}
 
 /* Sunna's tap-target finding, taken in the cheapest moment it will ever have —
    and ONLY while the experiment is on, so "off" stays today exactly and the

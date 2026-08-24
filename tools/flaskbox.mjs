@@ -434,16 +434,71 @@ async function main() {
     await cdp.send('Page.navigate', { url: `${base}?shot=rest` }, S);
     await until(`!!document.querySelector('#flask-reallocate .flask-step')`, 'shrine');
     await wait(600);
+    const folds = await ev(`(() => ({
+      flask: document.querySelector('#flask-reallocate')?.open,
+      level: document.querySelector('#level-opt')?.open,
+      details: document.querySelectorAll('#level-opt [data-stat-action="decrease"]').length,
+      plus: document.querySelectorAll('#level-opt [data-stat-action="increase"]').length
+    }))()`);
+    if (folds.flask || folds.level) bad('B4', shape, 'the flask or level-up card opens expanded — both shrine options must start folded');
+    else ok('B4', shape, 'flask allocation and level-up both start folded');
+    const shrineList = await ev(`(() => {
+      const list = document.querySelector('.shrine-option-list');
+      const cards = [...document.querySelectorAll('.shrine-option-list > .class-pick')].map((x) => x.getBoundingClientRect());
+      return {
+        authoredLayout: list?.dataset.optionLayout || null,
+        count: cards.length,
+        vertical: cards.every((box, i) => i === 0 || box.top >= cards[i - 1].bottom),
+        aligned: cards.every((box) => Math.abs(box.left - cards[0].left) < 1 && Math.abs(box.right - cards[0].right) < 1)
+      };
+    })()`);
+    if (shrineList.authoredLayout !== 'list' || shrineList.count !== 4 || !shrineList.vertical || !shrineList.aligned) bad('B4', shape, `the authored shrine default is not one aligned vertical list (${JSON.stringify(shrineList)})`);
+    else ok('B4', shape, 'all four shrine options stay in one aligned vertical list');
+    if (folds.details !== 5 || folds.plus !== 5) bad('B4', shape, `the shared level allocator drew ${folds.details} minus and ${folds.plus} plus controls instead of five of each`);
+    else ok('B4', shape, 'the shrine level card uses the five-row shared stat allocator');
+    const assignment = await ev(`(() => {
+      const level = document.querySelector('#level-opt'); level.open = true;
+      const cinderResultBefore = level.querySelector('[data-level-cinder-result]');
+      const before = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
+      level.querySelector('[data-stat-action="increase"]').click();
+      const after = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
+      const cinderResultAfter = level.querySelector('[data-level-cinder-result]');
+      const cinderCost = level.querySelector('.level-cinder-cost');
+      return {
+        changed: after.filter((n, i) => n !== before[i]).length,
+        delta: after.reduce((n, value, i) => n + value - before[i], 0),
+        minusLocked: [...level.querySelectorAll('[data-stat-action="decrease"]')].every((x) => x.getAttribute('aria-disabled') === 'true'),
+        plusLocked: [...level.querySelectorAll('[data-stat-action="increase"]')].every((x) => x.getAttribute('aria-disabled') === 'true'),
+        doneReady: level.querySelector('[data-stat-done]').getAttribute('aria-disabled') === 'false',
+        cinderPreviewHiddenBefore: cinderResultBefore?.hidden === true,
+        cinderPreviewVisibleAfter: cinderResultAfter?.hidden === false,
+        cinderPreviewText: cinderResultAfter?.textContent || '',
+        cinderCostStyled: cinderCost ? getComputedStyle(cinderCost).color !== getComputedStyle(level).color : false
+      };
+    })()`);
+    if (assignment.changed !== 1 || assignment.delta !== 1 || !assignment.minusLocked || !assignment.plusLocked || !assignment.doneReady
+      || !assignment.cinderPreviewHiddenBefore || !assignment.cinderPreviewVisibleAfter || !/remaining/.test(assignment.cinderPreviewText) || !assignment.cinderCostStyled) {
+      bad('B4', shape, `level assignment did not lock to one added point and preview its cinder spend (changed ${assignment.changed}, delta ${assignment.delta}, minusLocked ${assignment.minusLocked}, plusLocked ${assignment.plusLocked}, doneReady ${assignment.doneReady}, cinders ${assignment.cinderPreviewText})`);
+    } else ok('B4', shape, 'level assignment previews exactly one added point, the remaining cinders, and never enables a decrease');
+    await ev(`(() => { document.querySelector('#level-opt').open = false; document.querySelector('#flask-reallocate').open = true; return true; })()`);
+    await wait(40);
     const READ_INC = `(() => {
       const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
       const steps = [...document.querySelectorAll('#flask-reallocate .flask-step')];
+      const card = document.querySelector('#flask-reallocate');
+      const cardBox = card ? card.getBoundingClientRect() : null;
       const L = (el) => { const r = el.getBoundingClientRect();
         return { left: r.left/z, top: r.top/z, right: r.right/z, bottom: r.bottom/z, w: r.width/z, h: r.height/z }; };
+      const outside = cardBox ? [...card.querySelectorAll('button, .flask-increment-id, .flask-increment-total')]
+        .map((el) => { const r = el.getBoundingClientRect(); return { text: el.textContent.trim(), left: r.left, right: r.right, top: r.top, bottom: r.bottom }; })
+        .filter((r) => r.left < cardBox.left - 1 || r.right > cardBox.right + 1 || r.left < -1 || r.right > innerWidth + 1) : [];
       return {
         rows: document.querySelectorAll('#flask-reallocate .flask-increment-row').length,
         counts: [...document.querySelectorAll('#flask-reallocate .flask-increment-count')].map((e) => Number(e.textContent.trim())),
         total: (document.querySelector('#flask-reallocate .flask-increment-total') || {}).textContent || '',
         legacySplits: document.querySelectorAll('#flask-reallocate [data-hp]').length,
+        viewport: { width: innerWidth, scrollWidth: document.documentElement.scrollWidth },
+        outside,
         steps: steps.map((e) => ({ kind: e.dataset.kind, step: Number(e.dataset.step),
           off: e.getAttribute('aria-disabled') === 'true', box: L(e) })),
       };
@@ -467,6 +522,11 @@ async function main() {
       const small = probe.steps.filter((x) => x.box.h < floorNow - 0.5 || x.box.w < floorNow - 0.5);
       if (small.length) bad('B4', shape, `${small.length} step button(s) under the ${floorNow} px floor — smallest ${Math.min(...probe.steps.map((x) => Math.min(x.box.w, x.box.h))).toFixed(1)}`);
       else ok('B4', shape, `every step button at or above the ${floorNow} px floor`);
+      if (probe.viewport.scrollWidth > probe.viewport.width + 1) {
+        bad('B4', shape, `the Shrine is ${probe.viewport.scrollWidth - probe.viewport.width}px wider than its viewport (${probe.viewport.scrollWidth} > ${probe.viewport.width})`);
+      } else if (probe.outside.length) {
+        bad('B4', shape, `${probe.outside.length} flask assignment element(s) escape their card or viewport: ${probe.outside.map((x) => x.text).join(' · ')}`);
+      } else ok('B4', shape, 'the flask assignment stays inside its card and the viewport');
       const sum = probe.counts.reduce((a, b) => a + b, 0);
       if (sum !== Number(capText[2]) || Number(capText[1]) !== sum) bad('B4', shape, `the counts on screen sum to ${sum} but the panel says "${probe.total.trim()}" — the number a player reads is a copy of one nothing syncs (Law 1 clause 2)`);
       else ok('B4', shape, `the counts on screen sum to the stated total (${probe.total.trim()})`);
