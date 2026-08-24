@@ -867,19 +867,81 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
   `equipment-comparison`, `armoury-stats-panel`, `armoury-card-strip`, and
-  `armoury-region-header`. Inventory, Cards, and Stats are content models mounted inside the
-  shared `folding-tray` → `tray-header` + expanded-only `tray-resize-handle` + `tray-content` composition. The `trayModel` factory owns edge,
-  expanded state, count semantics, and optional sort intent; `renderTray` owns the uniform
-  DOM and accessibility grammar. Closed arrows point inward and open arrows point back to the
-  anchored edge, including the open Right Tray form `> TRAY NAME`. Expanded Top/Bottom trays resize
-  vertically and Left/Right trays resize horizontally through a 44px mouse, touch-hold, and keyboard
-  surface. Size is remembered by stable tray id and edge; folding always returns to the standard bar
-  or rail, and reopening restores the last expanded size. Before the first resize, unfolded trays fit
-  their header and visible content rather than claiming a fixed panel fraction. Bottom trays remain
-  bottom-anchored and grow upward. These ids describe the existing data-driven Quick Menu and Armoury
-  structures; they do not create a parallel menu or equipment implementation. Menu records are
-  constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records are
-  constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
+  `armoury-region-header`. These public Component Model ids remain stable; Armaments is a
+  configured `folding-tray` instance, not a second public primitive or a parallel equipment
+  implementation. The persisted view ids also remain `grid`, `rack`, and `hybrid` for save and
+  content compatibility, while their player-facing labels are respectively **Character**,
+  **Inventory**, and **Hybrid**. The equipment subject retains the compatibility region id
+  `slots`; the visible tray instance is `armaments`.
+
+  The three Armoury views are projections of the same loadout, not separate stores or screens:
+
+  - **Character** (`grid`) is character-only and fills the available body width. It uses two
+    columns: identity, class/level text, and the responsive character sprite on the left; Combat
+    Power, Attributes, and Relics on the right. It does not mount an Armaments, Inventory, or
+    Stats tray.
+  - **Inventory** (`rack`) is the full-width equipment workspace. Armaments occupies the left
+    pane and exactly one shared Inventory occupies the right pane; their resizable divider uses
+    the authored ratios and snap stops. Stats is available as a context tray. There is never a
+    second, hand-specific Inventory below Armaments.
+  - **Hybrid** (`hybrid`) uses the authored compact Character/Armaments split, with its own
+    resizable and snapping divider. Inventory and Cards remain available as compact context
+    trays below; the separate Stats tray is not part of this view.
+
+  Armaments, Inventory, Cards, and Stats all use the shared `folding-tray` → `tray-header` +
+  optional expanded-only `tray-resize-handle` + `tray-content` grammar. Their stable tray instance
+  ids are `armaments`, `inventory`, `cards`, and `stats`. The `trayModel` factory owns the edge,
+  expanded state, count/summary semantics, resize capability, and optional list/grid sort intent;
+  `renderTray` owns the uniform DOM and accessibility grammar. Sort controls appear only while
+  their tray is expanded. Closed arrows point inward and open arrows point back to the anchored
+  edge, including the open Right Tray form `> TRAY NAME`. A tray that declares the optional resize
+  capability exposes a 44px mouse, touch-hold, and keyboard surface: Top/Bottom resize vertically
+  and Left/Right resize horizontally. Size is remembered by stable tray id and edge for those
+  resizable instances; folding always returns to the standard bar or rail, and reopening restores
+  the last expanded size. The generic component may hug content before its first resize, while
+  Armoury supporting trays intentionally apply the configured default ratio immediately. Armaments
+  is non-resizable, and Inventory disables height resizing while it fills the Inventory-view pane.
+  Bottom trays remain bottom-anchored and grow upward.
+
+  Equipment positions are procedural content. `content/source/equipSlots.csv` supplies each slot
+  id, label, position label/code, accepted kinds, physical hand/socket, set capacity, swap rule,
+  storage behavior, and order; `content/source/unlocks.csv` supplies any additional position rungs;
+  and `armouryUi.layout.equipment.slotOrder` supplies preferred group order without defining the
+  set of slots. The Armoury iterates every authored position in vertical list or configured grid
+  form and renders its locked, empty, or occupied state. Adding an authored position or slot group
+  must not require a branch in the screen. Item kind determines eligibility only: the selected
+  hand equipment position owns the character-sprite socket, so placing a shield in a right-hand
+  position renders it in the right hand and placing a sword in a left-hand position renders it in
+  the left hand. The current figure composer supports armour/body plus authored left/right-hand
+  layers; a future foot, back, or other visible attachment also requires an explicit asset-composer
+  and configuration extension rather than an inferred screen coordinate.
+
+  Inventory owns one logical item-card action surface in both folded and expanded forms. The
+  `armouryUi.layout.cardClasses.inventoryItem.holdAction` class capability opts action-capable
+  `inventory-item-card` and `inventory-detail-card` models into the shared `equipInventory`
+  action. When the universal hold-confirm setting has a positive duration, the whole folded face
+  and whole expanded reveal use the same `armHold` timing, progress fill, keyboard/gamepad path,
+  and mutation callback; an early release aborts, and pointer movement beyond
+  `HOLD_POINTER_SLOP` aborts the hold so scrolling or dragging can take ownership. A completed
+  hold commits once. When hold-confirm is off, ordinary immediate-action and disclosure behavior
+  remains. Selecting an equipment position opens this same Inventory, filters it to compatible
+  items, exposes the contextual Equip/Move/Unequip action, and accepts either that selection or a
+  drag to the selected position; a successful replacement clears the selection and folds the
+  Inventory back to its default state.
+
+  Equipment comparison is information, not confirmation. The data-owned
+  `armouryUi.layout.comparison.presentation` is `tooltip` or `inline`. Tooltip mode presents the
+  full comparison after the configured `hoverDelayMs` on pointer hover, or after the shared focus
+  delay on keyboard/gamepad focus, above its card when space permits, using `tooltipWidthRem` and `tooltipMaxHeightRatio` to remain readable and
+  viewport-safe; inline mode embeds the same information in the expanded card. Comparison must
+  not borrow the action's hold gesture: an action-owning card holds to equip or unequip, while
+  hover/focus remains the comparison path. The primary combat-power term shown to players is
+  **Magic**. The existing combat-card id `potency` and role `technique` remain compatibility keys;
+  **Potency** means a modifier to Magic damage, never the primary Magic value or its visible label.
+
+  These ids and keys describe the existing data-driven Quick Menu and Armoury structures. Menu
+  records are constructed in `MenuModels.js` and rendered by `menuComponents.js`; Armoury records
+  are constructed in `ArmouryModels.js` and rendered by `armouryComponents.js`. Screen hosts bind
   commands and lifecycle callbacks, while presentation models remain immutable, serializable,
   and DOM-free.
 - **One shared HUD composition on Map and Combat.** The one-row `run-header-strip` contains
@@ -927,7 +989,12 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
 
 - **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
-- Every interactive element has a tooltip within 150 ms of hover: cards (with nested keyword tooltips), statuses (name, current math), intents (exact damage after modifiers), relics, flasks, map nodes.
+- Ordinary interactive elements expose their concise tooltip within 150 ms of
+  hover: cards (with nested keyword tooltips), statuses (name, current math),
+  intents (exact damage after modifiers), relics, flasks, and map nodes.
+  Deliberate reading surfaces may author a longer validated delay; the Armoury
+  equipment-comparison tooltip currently uses `armouryUi.layout.comparison.hoverDelayMs`
+  (`550` ms) and remains immediately reachable through keyboard/gamepad focus.
 
 ### 7.4 Feedback & animation rules
 

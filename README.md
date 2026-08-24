@@ -51,6 +51,13 @@ build changes; the visible build stamp ties each image to the tree that drew it.
 |---|---|---|
 | [![Current development title screen](docs/preview/title.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development act map](docs/preview/map.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) | [![Current development combat](docs/preview/combat.png)](https://cehinds.github.io/AshenSpire/AshenSpire.html) |
 
+Armoury reference captures: [Character](docs/preview/armoury-1191-character-desktop.png),
+[Inventory](docs/preview/armoury-1191-inventory-desktop.png),
+[Hybrid](docs/preview/armoury-1191-hybrid-desktop.png),
+[whole-card hold progress](docs/preview/armoury-1191-hold-progress-desktop.png),
+[comparison tooltip](docs/preview/armoury-1191-comparison-tooltip-desktop.png), and
+[390×844 phone](docs/preview/armoury-1191-phone.png).
+
 The About changelog is checked through the real title → Settings → About route
 by `node tools/about-changelog.mjs`.
 
@@ -64,7 +71,11 @@ top/right/bottom/left folded and unfolded state. The [Markdown catalog](docs/COM
 chat-friendly reference. The [component model architecture](docs/COMPONENT-MODEL-ARCHITECTURE.md)
 defines the model, renderer, host, behavior, service, and infrastructure
 boundaries used as screens migrate. The [Folding Tray contract](docs/TRAY-COMPONENTS.md)
-defines the shared Top, Right, Bottom, and Left disclosure grammar. Any merge or PR that changes a UI element
+defines the shared Top, Right, Bottom, and Left disclosure grammar. The
+[Armoury layout contract](docs/ARMOURY-LAYOUT-BRIEF.md) and
+[asset-component index](docs/ASSET-COMPONENTS.md) name the exact Character,
+Armaments, Inventory, Cards, Stats, card-hold, comparison, and resizing
+surfaces shown in the current build. Any merge or PR that changes a UI element
 or component must update the catalog when needed and include this catalog link
 in its summary.
 
@@ -100,6 +111,7 @@ No install, no framework, no build step for the source.
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
 - **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
+- **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.

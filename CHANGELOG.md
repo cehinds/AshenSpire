@@ -23,6 +23,8 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-23
 
+- **The Armoury is now one configurable equipment workspace** ([#334](https://github.com/cehinds/AshenSpire/pull/334), `0.4.0.1191`). Character, Inventory, and Hybrid views share one loadout and one Inventory; procedural equipment positions support List/Grid presentation, dragging, socket-correct moves, responsive panes, and one Folding Tray grammar with independently sized supporting trays where enabled. Inventory equipment cards now own their complete folded and expanded action surface: the configured hold gesture fills the whole card, early release aborts, and comparison receipts use a wide data-configured hover/focus tooltip or inline presentation.
+
 - **Character creation now owns one shared Inventory and validates every starting hand** ([#329](https://github.com/cehinds/AshenSpire/pull/329), `0.4.0.1126`). Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.
 
 - **Swapped armaments now remain attached to their actual hand sockets** ([#328](https://github.com/cehinds/AshenSpire/pull/328), `0.4.0.1114`). The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.

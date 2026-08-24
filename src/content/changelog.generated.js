@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-335",
+    "date": "2026-08-24",
+    "group": "2026-08-24",
+    "summary": "Development coordination now has one canonical home",
+    "detail": "The repository now points owners and reviewers to one workflow for routine evidence, status receipts, cross-family handoffs, and the boundary between development approval and Constantine-only release authority. Docs only; release remains RED.",
+    "build": "0.4.0.1191",
+    "pullRequest": 335,
+    "url": "https://github.com/cehinds/AshenSpire/pull/335"
+  },
+  {
+    "id": "pr-334",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "The Armoury is now one configurable equipment workspace",
+    "detail": "Character, Inventory, and Hybrid views share one loadout and one Inventory; procedural equipment positions support List/Grid presentation, dragging, socket-correct moves, responsive panes, and one Folding Tray grammar with independently sized supporting trays where enabled. Inventory equipment cards now own their complete folded and expanded action surface: the configured hold gesture fills the whole card, early release aborts, and comparison receipts use a wide data-configured hover/focus tooltip or inline presentation.",
+    "build": "0.4.0.1191",
+    "pullRequest": 334,
+    "url": "https://github.com/cehinds/AshenSpire/pull/334"
+  },
+  {
     "id": "pr-329",
     "date": "2026-08-23",
     "group": "2026-08-23",

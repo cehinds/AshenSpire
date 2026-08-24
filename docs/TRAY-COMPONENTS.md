@@ -16,6 +16,26 @@ Model. It owns `id`, `name`, `edge`, expanded
 state, total quantity, item-type noun, optional sort affordance, and child item
 models. `renderTray` owns the shared DOM and accessibility contract.
 
+## Current Armoury instances
+
+The Armoury does not maintain a parallel pane-header system. Its four content
+families compose the same base component:
+
+| Tray | Content model | Optional expanded action | Saved size |
+|---|---|---|---|
+| Armaments | Procedural occupied/empty/locked equipment positions | List/Grid | Not resizable in the current Armoury |
+| Inventory | One authoritative carried-item list | Contextual filter/action only | Saved when mounted as a resizable supporting tray; disabled while it fills Inventory view |
+| Cards | Equipment-associated card list | List/Grid | By stable Cards tray ID |
+| Stats | Class, level, combat, attributes, resources, relics | None | By stable Stats tray ID |
+
+Not every presentation mounts all four at once. Character uses its full-width
+character surface without a duplicate Stats tray; Inventory pairs Armaments and
+Inventory and exposes Stats; Hybrid pairs the compact Character pane and
+Armaments with Inventory and Cards as supporting trays. The shared structure
+and arrow rule remain identical wherever a tray is mounted. Sorting and
+resizing are optional capabilities declared by each instance; saved-size
+behavior is identical among the instances that enable resizing.
+
 ## Direction rule
 
 The arrow says what pressing it will do. A closed tray points inward toward the
@@ -144,10 +164,12 @@ Responsive and access rules:
   with the shared `--ui-tray-side-margin` token.
 - Start resizing immediately with a mouse, or after a short deliberate hold on
   touch. Arrow keys resize a focused handle in 16px steps.
-- Remember expanded size by stable tray id and edge. Folding always returns to
-  the standard bar/rail; reopening restores the last expanded size.
-- Before the player resizes it, an unfolded tray hugs its header and visible
-  contents instead of claiming a fixed share of the host panel.
+- For a resizable instance, remember expanded size by stable tray id and edge.
+  Folding always returns to the standard bar/rail; reopening restores the last
+  expanded size.
+- Before the player resizes it, the generic component may hug its header and
+  visible contents. Armoury supporting trays intentionally opt into the
+  data-authored default height ratio immediately.
 - Bottom trays anchor to the bottom edge and grow upward; Top trays anchor to
   the top edge and grow downward.
 

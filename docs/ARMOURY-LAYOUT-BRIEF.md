@@ -101,22 +101,46 @@ same occupied, empty, locked, selected, drag/drop, and refusal states as List.
 ## Inventory comparison
 
 Expanded Inventory cards contain item information and their action. Comparison
-receipts do not lengthen the card body: hover or the shared configured
-press-and-hold gesture displays the comparison in the shared tooltip above the
-expanded card. `Magic` is the primary displayed combat value; `Potency` remains
-the modifier that adds to Magic damage.
+receipts do not lengthen the card body in the shipped `tooltip` presentation:
+delayed pointer hover or keyboard/gamepad focus displays the complete receipt
+in the shared tooltip above the expanded card. The data-owned `inline`
+presentation instead keeps that receipt inside the expanded card.
+
+Comparison and action are deliberately separate. The Inventory item class owns
+Equip, Move, or Unequip through the shared hold-confirm system; comparison
+reading never consumes that hold. `Magic` is the primary displayed combat
+value; `Potency` remains the modifier that adds to Magic damage.
+
+## Unified Inventory card action
+
+- `layout.cardClasses.inventoryItem.holdAction` explicitly opts the Inventory
+  item class into the reusable card action. Missing classes default to false.
+- With hold-confirm enabled, the folded face and expanded reveal are one large
+  action control. The progress wash covers the complete visible card—including
+  the title and expanded information—and releasing early cancels without
+  changing the loadout.
+- The visible Equip/Move/Unequip wording inside a hold-enabled expanded card is
+  a label, not a second nested button. The same card remains keyboard/gamepad
+  focusable.
+- With hold-confirm off, ordinary activation continues to fold/unfold the item
+  and the explicit in-card action remains the commit control.
+- The folded card is also the drag source. Crossing the shared movement slop
+  cancels a pending hold and transfers the gesture to drag/drop.
 
 ## Tray and pane resizing
 
-- Inventory/Card/Stats tray heights are independent saved ratios.
-- Each unfolded tray exposes its top-edge pointer/keyboard handle; folded trays
-  expose only the uniform compact header.
+- Resizable supporting Inventory/Card/Stats tray heights are independent saved
+  ratios. Inventory disables height resizing while it fills Inventory view;
+  Armaments is non-resizable.
+- A tray exposes its top-edge pointer/keyboard handle only while unfolded and
+  only when its model enables resizing; folded trays expose only the uniform
+  compact header.
 - Folding ignores the saved expanded ratio and collapses immediately to the
   header; reopening restores that same saved expanded ratio.
 - Default, minimum, maximum, snap ratios, and tolerance are authored under
   `layout.trays`.
-- Cards and Armaments share the tray-header pattern. Their labelled List/Grid
-  icon exists only while that component is unfolded.
+- Armaments, Inventory, Cards, and Stats share the same Folding Tray structure.
+  A labelled List/Grid action exists only for an unfolded sortable tray.
 - Inventory and Hybrid center dividers reuse the authored pane bounds and snap
   stops; Inventory changes Armaments/Inventory, Hybrid changes
   Character/Armaments.
@@ -125,15 +149,20 @@ the modifier that adds to Magic damage.
 
 ## Acceptance checklist
 
-- [ ] Character is two-column at every resolution and has no duplicate Stats tray.
-- [ ] Inventory stacks at 390×844 and its divider resizes desktop panes.
-- [ ] Hybrid keeps the approved vertical Character stack and its center divider
+- [x] Character is two-column at every resolution and has no duplicate Stats tray.
+- [x] Inventory stacks at 390×844 and its divider resizes desktop panes.
+- [x] Hybrid keeps the approved vertical Character stack and its center divider
       resizes Character and Armaments.
-- [ ] Sprite and item art remain fully visible at desktop and phone widths.
-- [ ] List and Grid iterate arbitrary authored equipment groups and positions.
-- [ ] Comparison hover and configured hold remain wholly on-glass above the card.
-- [ ] Tray handles appear only unfolded and persist independent snapped heights.
-- [ ] Folded/expanded tray headers align and Cards toggle is absent when folded.
-- [ ] `Magic` is primary; `Potency` is only a modifier.
-- [ ] Component registry, generated content, shipped HTML, tests, and screenshots
+- [x] Sprite and item art remain fully visible at desktop and phone widths.
+- [x] List and Grid iterate arbitrary authored equipment groups and positions.
+- [x] Comparison hover/focus remains wholly on-glass; action hold fills the
+      complete folded or expanded card and aborts cleanly on early release.
+- [x] Enabled tray handles appear only unfolded and persist independent snapped heights.
+- [x] Folded/expanded tray headers align and sort toggles are absent when folded.
+- [x] `Magic` is primary; `Potency` is only a modifier.
+- [x] Component registry, generated content, shipped HTML, tests, and screenshots
       match this contract.
+
+Shipped evidence: `0.4.0.1191` / PR #334, including the desktop Character,
+Inventory, Hybrid, hold-progress and comparison-tooltip captures plus the
+390×844 phone capture under [`docs/preview/`](./preview/).

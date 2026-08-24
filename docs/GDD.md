@@ -324,13 +324,25 @@ The Armoury is one equipment owner with multiple configurable presentations.
 Armoury Overlay
 └─ Armoury Panel
    ├─ Header and view switcher
-   ├─ Character figure and equipment sockets
-   ├─ Folding Tray: Inventory
-   ├─ Folding Tray: Cards
-   └─ Folding Tray: Stats
+   ├─ Character view
+   │  └─ identity + contained sprite | Combat Power + Attributes + Relics
+   ├─ Inventory view
+   │  └─ Folding Tray: Armaments | Folding Tray: Inventory
+   │     └─ supporting Folding Tray: Stats
+   └─ Hybrid view
+      └─ compact vertical Character | Folding Tray: Armaments
+         └─ supporting Folding Trays: Inventory + Cards
 ```
 
-Inventory, Cards, and Stats share one Folding Tray shell but retain independent content models.
+Character, Inventory, and Hybrid are labels authored in configuration. Their
+persisted keys remain compatible with older saves and are not player-facing.
+Character never renders a duplicate Stats tray. Inventory contains the one
+authoritative carried-item surface. Hybrid preserves the approved compact
+vertical Character stack and exposes a draggable, snapping, saved center split.
+
+Armaments, Inventory, Cards, and Stats share one Folding Tray shell while
+retaining independent content models. Sort/view actions only appear on
+expanded trays that actually support them.
 
 ### 11.2 Ownership and receipts
 
@@ -339,18 +351,75 @@ Inventory, Cards, and Stats share one Folding Tray shell but retain independent 
 - Swapping, moving, and unequipping preserve ownership.
 - Before-and-after receipts expose affected stats, cards, and resource changes.
 - The player's facing direction must not reverse semantic Left Hand and Right Hand ownership.
+- Selecting an equipment position makes that socket the destination; item type
+  determines compatibility, not an assumed left/right preference.
+- A successful Equip/Move/Unequip returns the Inventory presentation to its
+  normal collapsed, unfiltered state.
 
-### 11.3 Folding trays
+### 11.3 Procedural Armaments
+
+Armaments supports List and Grid presentation over the same position models.
+Equipment groups, position count, label, short code, order, unlocked/next-locked
+state, and item assignment are authored data. Adding another UI equipment group
+must not require a named position-card branch. The current equipped-figure
+composer supports the authored body/armour plus left- and right-hand layers;
+adding a visually attached foot, back, or other socket also requires an explicit
+asset-composer/configuration extension rather than an inferred screen position.
+
+List mode renders one complete horizontal position card:
+
+```text
+┌──────────────┬──────────────┬────────────────────────────────┐
+│ Position     │ Item sprite  │ Category · Name · Combat       │
+│ label + code │ contained    │ Tags · Weight · Equipment state│
+└──────────────┴──────────────┴────────────────────────────────┘
+                     expanded details: lore · effects · bonuses
+```
+
+Grid mode groups compact position/sprite/name tiles and shows one shared detail
+area for the selected position. Occupied, empty, locked, selected, drop-target,
+and refusal states remain equivalent between List and Grid.
+
+### 11.4 Inventory card action and comparison
+
+- Folded and expanded item presentations are one disclosure card, not two
+  independent action buttons.
+- The Inventory item class explicitly opts into the shared action capability.
+  With hold-confirm enabled, Equip/Move/Unequip progress fills the complete
+  visible card, including title and reveal. Early release aborts without a
+  loadout change.
+- With hold-confirm disabled, tapping continues to disclose item information
+  and the explicit action inside the expanded card performs the mutation.
+- The folded card is the drag source; sufficient pointer movement cancels a
+  pending hold and becomes drag/drop.
+- Comparison is independent of action. The shipped presentation opens a wide,
+  viewport-contained receipt after the configured hover delay or on focus; a
+  data option may render the same receipt inline instead.
+- `Magic` is the primary magic-damage value. `Potency` is a modifier to Magic,
+  never a replacement label for it.
+
+### 11.5 Folding trays and resizable panes
 
 - Top and Bottom collapse to horizontal bars.
 - Left and Right collapse to narrow vertical rails.
 - Closed arrows point toward the area that will open; open arrows point back toward the anchored edge.
 - Counts remain visible while folded and represent the full quantity.
 - Expanded content owns its scrollport.
-- Mouse resizing begins immediately; touch resizing begins after a short deliberate hold.
-- Keyboard arrows resize a focused handle in consistent steps.
-- Expanded size persists by stable tray ID and edge.
+- When the resize capability is enabled, mouse resizing begins immediately;
+  touch resizing begins after a short deliberate hold, and keyboard arrows
+  resize the focused handle in consistent steps.
+- For resizable instances, expanded size persists by stable tray ID and edge. Folding always returns to
+  the compact header; reopening restores the saved expanded size.
+- Resizable supporting trays have independent heights. Default, minimum,
+  maximum, snap ratios, snap tolerance, and content gap are data-owned.
+  Armaments is currently non-resizable; Inventory also disables height resizing
+  while it fills the Inventory-view pane.
+- Inventory and Hybrid pane dividers use independently saved, data-authored
+  horizontal ratios and snap stops.
 - Compact screens may enforce one open secondary tray per group.
+- Narrow panes first fold expanded detail and hide secondary metadata; they
+  preserve position, item art, item name, and equipment state for as long as
+  the card remains visible.
 
 ## 12. Rewards, merchants, and disclosure
 
