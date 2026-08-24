@@ -224,12 +224,9 @@ body {
    written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
-   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
-   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
-   (it sees the unzoomed 390) while a container query on #app does not (the app
-   has 629 local px). A media breakpoint here is a length evaluated in the
-   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
-   answer was never a media query.
+   The threshold is evaluated in the unzoomed viewport room. It intentionally
+   remains independent of the height-aware --ui-zoom so browser chrome and the
+   on-screen keyboard cannot flip the composition while a player is reading it.
 
    The answer turned out not to be a container query either. Asking the question
    in CSS at all made two deciders out of one decision — the zoom judging
@@ -573,10 +570,10 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 }
 .boss-intro .bi-name {
   color: var(--gold); font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15;
-  max-width: 80vw; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
+  max-width: 80%; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
 }
 .boss-intro .bi-rule {
-  width: 34rem; max-width: 60vw; height: 1px; margin: 2rem auto 0;
+  width: 34rem; max-width: 60%; height: 1px; margin: 2rem auto 0;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
   animation: bi-rule 900ms ease-out;
 }
@@ -587,9 +584,9 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 @keyframes bi-fade { to { opacity: 0; } }
 
 /* ---------- command log (Settings → Advanced) ---------- */
-.debug-modal { width: 72rem; max-width: 94vw; }
+.debug-modal { width: 72rem; max-width: 94%; }
 .debug-log-body {
-  margin-top: 1rem; max-height: 46vh; overflow: auto; user-select: text;
+  margin-top: 1rem; max-height: 46%; overflow: auto; user-select: text;
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   padding: 1rem 1.2rem; font-family: Consolas, monospace; font-size: 1.1rem;
   line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
@@ -614,7 +611,7 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
   display: flex; gap: 1.4rem; white-space: nowrap;
-  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96vw; overflow: hidden;
+  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96%; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
@@ -694,9 +691,8 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
    that do not). Measured against a 9-character rebound label, both shapes;
    tools/hintstrip.mjs holds it.
 
-   `max-width: 96vw` becomes `96%` here — Law 2 forbids vw/vh below body and
-   this is a new write of this rule. The base .hint-bar above keeps its vw and
-   is NOT swept (ratchet, not sweep). */
+   `max-width: 96%` keeps the combat hint inside its containing block under body
+   zoom. Law 2 forbids viewport units below body. */
 .hint-bar.hint-combat {
   position: static; top: auto; bottom: auto; transform: none;
   align-self: center; margin: 0 auto 0.6rem; max-width: 96%;
@@ -1257,7 +1253,7 @@ button.rs-reset {
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */
-.slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }
+.slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92%; animation: screenIn 500ms ease-out; }
 .slot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
   padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: 12px;
@@ -1778,7 +1774,7 @@ button.rs-reset {
 
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
-.hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }
+.hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58%; margin-top: 0.4rem; }
 .hx-table { border-collapse: collapse; width: 100%; font-size: 1.25rem; }
 .hx-table th {
   color: var(--muted); text-align: left; font-weight: 400; font-size: 1rem;
@@ -6574,10 +6570,10 @@ const UI_NAMED = UI.uiScale.named;
 //   545. END TURN under the hand: 45/45 on dev, 0/45 here. Three of four
 //   tablet shapes that work today, dead.
 //
-// The cliff sits at aspect ratio 2/3 exactly: when the narrow fit is
-// height-limited, localW = narrowH x w/h, which crosses 520 at w/h = 520/780.
-// 884/1326 = 0.66667 passes, 885/1326 = 0.66742 fails. A second door is the
-// 1.70 ceiling, which pins localW = w/1.70 > 520 for every w above 884.
+// That old cliff was a height-derived mode decision: when the narrow fit was
+// height-limited, localW = narrowH x w/h, so a transient browser-chrome resize
+// could cross 520 and flip the whole composition. Height still participates in
+// the zoom chosen for the current frame, but it no longer changes the mode.
 //
 // Vira's sentence, which is the whole lesson and is not paraphrased: WHEN A FIX
 // ADDS A SECOND DECIDER, THE DEFECT IS RARELY THE NEW VALUE. IT IS THAT NOTHING
@@ -6592,11 +6588,10 @@ const UI_NAMED = UI.uiScale.named;
 // single-home rule exists to prevent. Removing one needs it in neither: it is
 // data, in balance.ui.uiScale, read once, right here.
 //
-// THE PROPERTY, and it is now true by construction rather than by care:
-//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
-// A candidate is admissible only if it is self-consistent — the narrow baseline
-// only when the zoom it produces really does leave <= narrowMax local px, the
-// wide baseline otherwise. tools/mobilefit.mjs asserts it at every shape.
+// THE PROPERTY: layout mode is width-owned. `narrowMax` is a viewport-width
+// threshold, so a height-only resize cannot change `data-layout`; tools/mobilefit
+// asserts that it agrees with the rendered attribute at every shape. The zoom
+// remains height-aware and can change without changing the composition mode.
 //
 // The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
 // the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
@@ -6688,7 +6683,7 @@ function layoutForCap(cap, vw, vh) {
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return answer(narrowZoom, true);
+  if (w <= z.narrowMax) return answer(narrowZoom, true);
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -6696,10 +6691,7 @@ function layoutForCap(cap, vw, vh) {
   // ARGUED: Vira instrumented it and the counter enters 0 times at cap
   // Infinity and 47,790-265,908 times under the named caps. Not load-bearing
   // for #24's property — see the header — only for the quality of the answer.
-  if (w / narrowFit <= z.narrowMax) {
-    const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return answer(bandFloor, true);
-  }
+  if (w <= z.narrowMax) return answer(narrowFit, true);
   return answer(wideZoom, false);
 }
 
@@ -6830,9 +6822,12 @@ function applyDisplaySettings(settings) {
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
   const TEXT_SIZES = UI.textSize;
-  const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize
-    : (settings.largeText === true ? 'L' : 'M');
-  document.documentElement.style.fontSize = TEXT_SIZES[tKey];
+  const storedText = String(settings.textSize || '').toUpperCase();
+  const tKey = storedText === 'M' || storedText === 'AUTO' ? null
+    : TEXT_SIZES[storedText] ? storedText
+      : (settings.largeText === true ? 'L' : null);
+  if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
+  else document.documentElement.style.removeProperty('font-size');
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.
@@ -8996,20 +8991,13 @@ const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // narrowMax is the width, in LOCAL px, at or below which the narrow
-      // layout is used. It lives HERE and nowhere else.
+      // narrowMax is the viewport width, in visual px, at or below which the
+      // narrow layout is used. Height may change the zoom, never this mode.
       //
-      // It used to live in styles/combat.css instead, as `@container app
-      // (max-width: 520px)`, because a container query condition cannot read a
-      // custom property. That was a correct single-home argument and Vira
-      // verified it — and it was not the point. The stylesheet asking the
-      // question at all made TWO deciders out of one decision: the zoom judged
-      // innerWidth/innerHeight against 430x780, the layout judged the
-      // container's local width against 520, and nothing made them agree. On a
-      // tablet they disagreed and the fight became unadvanceable (#24).
-      // main.js now decides once and writes `data-layout` on <html>; the
-      // stylesheets follow it and measure nothing. One decider, one home, and
-      // CSS needs no copy of this number.
+      // It used to live in styles/combat.css as a container query. main.js now
+      // owns the width decision and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. Height can change the zoom,
+      // but cannot make a browser-chrome or keyboard resize flip the mode.
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
@@ -9172,8 +9160,9 @@ const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. It scales readable type and line metrics;
-    // component and sprite geometry is owned separately (styles/base.css).
+    // Text size → root font-size %. Auto owns the browser stylesheet baseline;
+    // M remains a legacy data alias for old saves and geometry tools. It scales
+    // readable type and line metrics; component and sprite geometry is separate.
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //
@@ -38850,7 +38839,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '1a3b4c29fa';
+const SOURCE = 'c8e5c8d604';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -38884,7 +38873,7 @@ const SOURCE = '1a3b4c29fa';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1191';
+const ORDINAL = '1204';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52805,9 +52794,9 @@ const ROWS = [
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
   { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
-  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
-    choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
-    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },
+  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
+    choices: ['Auto', 'S', 'L', 'XL'], label: 'Text size',
+    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
