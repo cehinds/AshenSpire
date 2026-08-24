@@ -41,9 +41,10 @@ if (process.argv.includes('--selftest')) {
 }
 
 import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8201, open: false });
+const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8201, open: false });
 // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
 // Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
 // passed no `--user-data-dir` and never killed the browser at all, so every run

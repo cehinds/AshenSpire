@@ -270,10 +270,10 @@
 }
 .boss-intro .bi-name {
   color: var(--gold); font-size: 5.4rem; letter-spacing: 0.12em; line-height: 1.15;
-  max-width: 80vw; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
+  max-width: 80%; text-shadow: 0 0 34px rgba(var(--accent-rgb), 0.55), 0 2px 10px #000;
 }
 .boss-intro .bi-rule {
-  width: 34rem; max-width: 60vw; height: 1px; margin: 2rem auto 0;
+  width: 34rem; max-width: 60%; height: 1px; margin: 2rem auto 0;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
   animation: bi-rule 900ms ease-out;
 }
@@ -284,9 +284,9 @@
 @keyframes bi-fade { to { opacity: 0; } }
 
 /* ---------- command log (Settings → Advanced) ---------- */
-.debug-modal { width: 72rem; max-width: 94vw; }
+.debug-modal { width: 72rem; max-width: 94%; }
 .debug-log-body {
-  margin-top: 1rem; max-height: 46vh; overflow: auto; user-select: text;
+  margin-top: 1rem; max-height: 46%; overflow: auto; user-select: text;
   background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
   padding: 1rem 1.2rem; font-family: Consolas, monospace; font-size: 1.1rem;
   line-height: 1.55; color: var(--parchment); white-space: pre-wrap; word-break: break-word;
@@ -311,7 +311,7 @@
 .hint-bar {
   position: fixed; left: 50%; transform: translateX(-50%); bottom: 0.6rem; z-index: 40;
   display: flex; gap: 1.4rem; white-space: nowrap;
-  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96vw; overflow: hidden;
+  padding: 0.4rem 1.2rem; border-radius: 10px; max-width: 96%; overflow: hidden;
   background: rgba(12, 10, 7, 0.62); border: 1px solid var(--line-soft);
   font-size: 1.1rem; color: var(--muted); letter-spacing: 0.04em;
 }
@@ -391,9 +391,8 @@
    that do not). Measured against a 9-character rebound label, both shapes;
    tools/hintstrip.mjs holds it.
 
-   `max-width: 96vw` becomes `96%` here — Law 2 forbids vw/vh below body and
-   this is a new write of this rule. The base .hint-bar above keeps its vw and
-   is NOT swept (ratchet, not sweep). */
+   `max-width: 96%` keeps the combat hint inside its containing block under body
+   zoom. Law 2 forbids viewport units below body. */
 .hint-bar.hint-combat {
   position: static; top: auto; bottom: auto; transform: none;
   align-self: center; margin: 0 auto 0.6rem; max-width: 96%;
@@ -954,7 +953,7 @@ button.rs-reset {
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */
-.slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92vw; animation: screenIn 500ms ease-out; }
+.slot-list { display: flex; flex-direction: column; gap: 1rem; width: 43rem; max-width: 92%; animation: screenIn 500ms ease-out; }
 .slot {
   display: flex; align-items: center; justify-content: space-between; gap: 1.2rem;
   padding: 1.1rem 1.6rem; border: 1.5px solid var(--line-soft); border-radius: 12px;
@@ -1475,7 +1474,7 @@ button.rs-reset {
 
 /* ---------- run history ---------- */
 .hx-byclass { color: var(--muted); font-size: 1.1rem; letter-spacing: 0.08em; }
-.hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58vh; margin-top: 0.4rem; }
+.hx-wrap { width: 100%; max-width: 72rem; overflow-y: auto; max-height: 58%; margin-top: 0.4rem; }
 .hx-table { border-collapse: collapse; width: 100%; font-size: 1.25rem; }
 .hx-table th {
   color: var(--muted); text-align: left; font-weight: 400; font-size: 1rem;

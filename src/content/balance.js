@@ -303,20 +303,13 @@ export const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // narrowMax is the width, in LOCAL px, at or below which the narrow
-      // layout is used. It lives HERE and nowhere else.
+      // narrowMax is the viewport width, in visual px, at or below which the
+      // narrow layout is used. Height may change the zoom, never this mode.
       //
-      // It used to live in styles/combat.css instead, as `@container app
-      // (max-width: 520px)`, because a container query condition cannot read a
-      // custom property. That was a correct single-home argument and Vira
-      // verified it — and it was not the point. The stylesheet asking the
-      // question at all made TWO deciders out of one decision: the zoom judged
-      // innerWidth/innerHeight against 430x780, the layout judged the
-      // container's local width against 520, and nothing made them agree. On a
-      // tablet they disagreed and the fight became unadvanceable (#24).
-      // main.js now decides once and writes `data-layout` on <html>; the
-      // stylesheets follow it and measure nothing. One decider, one home, and
-      // CSS needs no copy of this number.
+      // It used to live in styles/combat.css as a container query. main.js now
+      // owns the width decision and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. Height can change the zoom,
+      // but cannot make a browser-chrome or keyboard resize flip the mode.
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
@@ -479,8 +472,9 @@ export const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. It scales readable type and line metrics;
-    // component and sprite geometry is owned separately (styles/base.css).
+    // Text size → root font-size %. Auto owns the browser stylesheet baseline;
+    // M remains a legacy data alias for old saves and geometry tools. It scales
+    // readable type and line metrics; component and sprite geometry is separate.
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //

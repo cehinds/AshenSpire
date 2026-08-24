@@ -305,10 +305,10 @@ const UI_NAMED = UI.uiScale.named;
 //   545. END TURN under the hand: 45/45 on dev, 0/45 here. Three of four
 //   tablet shapes that work today, dead.
 //
-// The cliff sits at aspect ratio 2/3 exactly: when the narrow fit is
-// height-limited, localW = narrowH x w/h, which crosses 520 at w/h = 520/780.
-// 884/1326 = 0.66667 passes, 885/1326 = 0.66742 fails. A second door is the
-// 1.70 ceiling, which pins localW = w/1.70 > 520 for every w above 884.
+// That old cliff was a height-derived mode decision: when the narrow fit was
+// height-limited, localW = narrowH x w/h, so a transient browser-chrome resize
+// could cross 520 and flip the whole composition. Height still participates in
+// the zoom chosen for the current frame, but it no longer changes the mode.
 //
 // Vira's sentence, which is the whole lesson and is not paraphrased: WHEN A FIX
 // ADDS A SECOND DECIDER, THE DEFECT IS RARELY THE NEW VALUE. IT IS THAT NOTHING
@@ -323,11 +323,10 @@ const UI_NAMED = UI.uiScale.named;
 // single-home rule exists to prevent. Removing one needs it in neither: it is
 // data, in balance.ui.uiScale, read once, right here.
 //
-// THE PROPERTY, and it is now true by construction rather than by care:
-//   the zoom selects the narrow baseline  IFF  the narrow layout is active.
-// A candidate is admissible only if it is self-consistent — the narrow baseline
-// only when the zoom it produces really does leave <= narrowMax local px, the
-// wide baseline otherwise. tools/mobilefit.mjs asserts it at every shape.
+// THE PROPERTY: layout mode is width-owned. `narrowMax` is a viewport-width
+// threshold, so a height-only resize cannot change `data-layout`; tools/mobilefit
+// asserts that it agrees with the rendered attribute at every shape. The zoom
+// remains height-aware and can change without changing the composition mode.
 //
 // The clamp is UNCHANGED. #23 reads as a floor bug and is not one: at 390x844
 // the wide baseline wants 0.325, the floor gives 0.62, and BOTH are wrong,
@@ -419,7 +418,7 @@ function layoutForCap(cap, vw, vh) {
 
   const narrowFit = clamp(Math.floor(fitFor(z.narrowW, z.narrowH) * 100) / 100);
   const narrowZoom = clamp(capped(narrowFit));
-  if (w / narrowZoom <= z.narrowMax) return answer(narrowZoom, true);
+  if (w <= z.narrowMax) return answer(narrowZoom, true);
 
   // Recovery: the cap, not the screen, is what pushed this out of the narrow
   // band. Unreachable when cap is Infinity — narrowZoom === narrowFit there, so
@@ -427,10 +426,7 @@ function layoutForCap(cap, vw, vh) {
   // ARGUED: Vira instrumented it and the counter enters 0 times at cap
   // Infinity and 47,790-265,908 times under the named caps. Not load-bearing
   // for #24's property — see the header — only for the quality of the answer.
-  if (w / narrowFit <= z.narrowMax) {
-    const bandFloor = clamp(Math.ceil((w / z.narrowMax) * 100) / 100);
-    if (w / bandFloor <= z.narrowMax) return answer(bandFloor, true);
-  }
+  if (w <= z.narrowMax) return answer(narrowFit, true);
   return answer(wideZoom, false);
 }
 
@@ -561,9 +557,12 @@ function applyDisplaySettings(settings) {
   // are rem, one value rescales the whole UI (base.css). Legacy boolean largeText
   // maps to L. Stacks with --ui-zoom (which additionally scales px hairlines).
   const TEXT_SIZES = UI.textSize;
-  const tKey = TEXT_SIZES[settings.textSize] ? settings.textSize
-    : (settings.largeText === true ? 'L' : 'M');
-  document.documentElement.style.fontSize = TEXT_SIZES[tKey];
+  const storedText = String(settings.textSize || '').toUpperCase();
+  const tKey = storedText === 'M' || storedText === 'AUTO' ? null
+    : TEXT_SIZES[storedText] ? storedText
+      : (settings.largeText === true ? 'L' : null);
+  if (tKey) document.documentElement.style.fontSize = TEXT_SIZES[tKey];
+  else document.documentElement.style.removeProperty('font-size');
   document.body.classList.toggle('no-shake', settings.screenShake === false);
   // Card colour motif: mode on the root as a data attr, wash depth as a var, so
   // switching is a re-paint with no re-render. Both defaults live in balance.ui.

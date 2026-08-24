@@ -265,9 +265,9 @@ const ROWS = [
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
   { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
-  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
-    choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
-    note: 'Scale interface text. This step keeps class, player, and enemy art plus key action floors stable; some older spacing may still scale. M is default; L/XL aid readability. Stacks with UI size.' },
+  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
+    choices: ['Auto', 'S', 'L', 'XL'], label: 'Text size',
+    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and

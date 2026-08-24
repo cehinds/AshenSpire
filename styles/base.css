@@ -217,12 +217,9 @@ body {
    written by main.js's resolveLayout() in the same call that chooses --ui-zoom.
    The stylesheets measure nothing.
 
-   THIS WAS A CONTAINER QUERY AND THE MEASUREMENT THAT PUT IT THERE STILL
-   STANDS: at 390x844 with --ui-zoom 0.62, `@media (max-width: 520px)` MATCHES
-   (it sees the unzoomed 390) while a container query on #app does not (the app
-   has 629 local px). A media breakpoint here is a length evaluated in the
-   unzoomed room — EldenSpire#15 wearing a different hat, and that is why the
-   answer was never a media query.
+   The threshold is evaluated in the unzoomed viewport room. It intentionally
+   remains independent of the height-aware --ui-zoom so browser chrome and the
+   on-screen keyboard cannot flip the composition while a player is reading it.
 
    The answer turned out not to be a container query either. Asking the question
    in CSS at all made two deciders out of one decision — the zoom judging
