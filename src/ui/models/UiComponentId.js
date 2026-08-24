@@ -74,6 +74,22 @@ export const UI_COMPONENTS = Object.freeze({
   healthDamageIndicator: 'health-damage-indicator',
   playerHandTray: 'player-hand-tray',
   combatActionRail: 'combat-action-rail',
+  characterDisclosure: 'character-disclosure',
+  classPreviewPane: 'class-preview-pane',
+  classResourceGrid: 'class-resource-grid',
+  classChoiceCard: 'class-choice-card',
+  viewModeToggle: 'view-mode-toggle',
+  booleanSettingToggle: 'boolean-setting-toggle',
+  selectionSectionFace: 'selection-section-face',
+  primaryStatCard: 'primary-stat-card',
+  resourceStrip: 'resource-strip',
+  modeChoice: 'mode-choice',
+  spriteChoice: 'sprite-choice',
+  tintChoice: 'tint-choice',
+  sigilChoice: 'sigil-choice',
+  keepsakeChoice: 'keepsake-choice',
+  equipmentChoiceCard: 'equipment-choice-card',
+  relicChoiceCard: 'relic-choice-card',
 });
 
 const KNOWN_COMPONENTS = new Set(Object.values(UI_COMPONENTS));

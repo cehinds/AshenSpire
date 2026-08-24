@@ -1105,7 +1105,13 @@ button.rs-reset {
    this 24px ought to be rem so it tracks Text size is a live Law 2 question and
    is deliberately NOT answered here: changing it would change the wide layout
    at L/XL, which nothing in this repo measures. */
-.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; }
+.cz-kicker {
+  display: flex; align-items: center; gap: 0.75rem; width: min(32rem, 90%); margin: 0 0 -1.25rem;
+  color: var(--muted); font-family: var(--font-display); font-size: 0.92rem; letter-spacing: 0.22em;
+}
+.cz-kicker::before, .cz-kicker::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.cz-title { color: var(--gold); font-size: 24px; letter-spacing: 0.2em; margin-bottom: -1.25rem; }
+.cz-subtitle { margin: 0; color: var(--muted); font-size: 1rem; letter-spacing: 0.07em; }
 /* The name field had no label element, no placeholder and no aria-label — so
    the label is a real <label for>, not a styled <p>, because the gap it closes
    is a screen reader announcing an unlabelled text field. */
@@ -1181,22 +1187,128 @@ button.rs-reset {
 
 /* Character creation redesign: one themed section at a time. The four faces
    keep the route compact; the open stage owns the richer layout. */
-.cz-flow { width: min(72rem, 100%); }
+.cz-flow { width: min(92rem, 100%); }
 .cz-flow > .disc-faces { width: 100%; }
 .cz-flow .disc-reveal { padding: 1.2rem; background: color-mix(in srgb, var(--panel) 88%, transparent); }
 .cz-stage { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; }
 .cz-stage .class-row { justify-content: center; }
 .cz-next { align-self: flex-end; min-height: var(--tap-floor); }
 
+.cc-stage-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  min-height: var(--tap-floor); padding: 0.2rem 0;
+}
+.cc-stage-toolbar h3 {
+  margin: 0; color: var(--muted); font-size: 1rem; font-weight: 600;
+  letter-spacing: 0.18em;
+}
+.cc-stage-tools { display: flex; align-items: center; justify-content: flex-end; gap: 1rem; min-width: 0; }
+.cc-auto-advance-note { color: var(--muted); font-size: 1rem; white-space: nowrap; }
+.cc-boolean-setting { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--muted); font-size: 1rem; }
+.cc-switch {
+  position: relative; width: 2.6rem; height: 1.45rem; min-width: 2.6rem; padding: 0.15rem;
+  border: 1px solid var(--line-soft); border-radius: 999px; background: var(--panel); cursor: pointer;
+}
+.cc-switch-knob {
+  display: block; width: 0.9rem; height: 0.9rem; border-radius: 50%; background: var(--muted);
+  transform: translateX(0); transition: transform 120ms, background 120ms;
+}
+.cc-switch[aria-checked='true'] .cc-switch-knob { transform: translateX(1.05rem); background: var(--gold); }
+.cc-view-toggle {
+  display: inline-flex; align-items: stretch; border: 1px solid var(--line-soft);
+  border-radius: 9px; overflow: hidden; background: color-mix(in srgb, var(--panel) 84%, transparent);
+}
+.cc-view-option {
+  min-width: 4.8rem; min-height: calc(var(--tap-floor) - 0.35rem); padding: 0.35rem 0.9rem;
+  border: 0; border-right: 1px solid var(--line); border-radius: 0;
+  color: var(--muted); background: transparent; font-family: var(--font-display);
+  letter-spacing: 0.06em; cursor: pointer;
+}
+.cc-view-option:last-child { border-right: 0; }
+.cc-view-option:hover { color: var(--parchment); background: rgba(255,255,255,0.025); }
+.cc-view-option.chosen { color: var(--gold); box-shadow: inset 0 0 0 1.5px var(--gold); }
+
+.cc-class-split {
+  --cc-class-preview-share: 30%;
+  display: grid; grid-template-columns: minmax(18rem, var(--cc-class-preview-share)) 1.15rem minmax(28rem, 1fr);
+  gap: 1.1rem; align-items: stretch; width: 100%;
+}
+.cc-class-preview-host, .cc-class-selection {
+  min-width: 0; border: 1px solid var(--line-soft); border-radius: 10px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+}
+.cc-class-preview-host { display: flex; }
+.cc-class-selection { display: flex; flex-direction: column; gap: 0.85rem; padding: 1rem; }
+.cc-class-selection > .cz-next { margin-top: auto; }
+.cc-class-divider {
+  position: relative; justify-self: center; width: var(--tap-floor); min-width: var(--tap-floor); padding: 0; border: 0;
+  background: transparent;
+  cursor: col-resize;
+}
+.cc-class-divider::before {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--line-soft);
+}
+.cc-class-divider::after {
+  content: '‹\00a0›'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  min-width: 2rem; padding: 0.4rem 0.18rem; color: var(--muted); background: var(--panel);
+  font-family: var(--font-display); letter-spacing: 0.12em;
+  text-align: center; white-space: nowrap;
+}
+.cc-class-divider:hover::after, .cc-class-divider:focus-visible::after { color: var(--gold); }
+.cc-class-preview {
+  display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: stretch;
+  padding: 1.1rem; text-align: center;
+}
+.cc-class-preview h3 { margin: 0.15rem 0 0.2rem; color: var(--gold); font-size: 2rem; }
+.cc-preview-eyebrow {
+  display: flex; align-items: center; gap: 0.6rem; margin: 0;
+  color: var(--muted); font-size: 0.9rem; font-weight: 600; letter-spacing: 0.16em;
+}
+.cc-preview-eyebrow::before, .cc-preview-eyebrow::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.cc-class-art { display: flex; align-items: center; justify-content: center; min-height: 15rem; overflow: hidden; }
+.cc-class-art .class-sprite { transform: scale(1.28); transform-origin: 50% 70%; }
+.cc-class-resource-grid {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin: 0.55rem 0 1.1rem;
+  border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+}
+.cc-class-resource { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.65rem 0.25rem; border-right: 1px solid var(--line); }
+.cc-class-resource:last-child { border-right: 0; }
+.cc-class-resource span { color: var(--muted); font-size: 0.82rem; overflow-wrap: anywhere; }
+.cc-class-resource b { color: var(--parchment); font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.cc-class-relic { display: grid; grid-template-columns: 2.8rem 1fr; gap: 0.75rem; align-items: start; padding: 0.75rem 0 0; text-align: left; }
+.cc-class-relic-art { font-size: 2.2rem; text-align: center; }
+.cc-class-relic > span:last-child { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.cc-class-relic b { color: var(--parchment); font-size: 1.15rem; }
+.cc-class-relic small { color: var(--muted); font-size: 0.95rem; line-height: 1.35; }
+
+.cc-class-selection .class-row[data-view='list'] { flex-direction: column; flex-wrap: nowrap; gap: 0.7rem; width: 100%; }
+.cc-class-selection .class-row[data-view='list'] .class-pick {
+  width: 100%; padding: 1rem 1.25rem; display: grid; grid-template-columns: 5.5rem minmax(0, 1fr);
+  align-items: center; gap: 1rem; text-align: left;
+}
+.cc-class-selection .class-row[data-view='list'] .class-pick .glyph { margin: 0; font-size: 4rem; text-align: center; }
+.cc-class-selection .class-row[data-view='list'] .class-pick h3 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+.cc-class-selection .class-row[data-view='list'] .class-pick p { font-size: 1rem; line-height: 1.45; }
+.cc-class-selection .class-row[data-view='grid'] { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.8rem; }
+.cc-class-selection .class-row[data-view='grid'] .class-pick { width: 100%; min-width: 0; }
+
 .cc-character-grid {
   display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(13rem, 18rem);
-  gap: 2rem; align-items: center;
+  gap: 2rem; align-items: start;
 }
 .cc-character-grid[data-sprite-side='left'] .cc-preview-side { grid-column: 1; grid-row: 1; }
 .cc-character-grid[data-sprite-side='left'] .cc-stats-side { grid-column: 2; grid-row: 1; }
 .cc-stats-side, .cc-preview-side { min-width: 0; }
+.cc-stats-side { display: flex; flex-direction: column; }
 .cc-preview-side { display: flex; justify-content: center; }
-.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.8rem; }
+.cc-name-row { display: flex; align-items: center; gap: 0.9rem; color: var(--muted); font-size: 0.95rem; letter-spacing: 0.18em; }
+.cc-name-row .cz-name { flex: 0 1 14rem; }
+.cc-character-fold { width: 100%; margin-top: 0.9rem; }
+.cc-character-fold > .disc-faces { width: 100%; }
+.cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
+.cc-character-picker .cz-opts { flex-wrap: wrap; }
+.cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
 .cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
 .cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
 .cc-derived {
@@ -1205,22 +1317,34 @@ button.rs-reset {
 }
 .cc-derived span { white-space: nowrap; }
 .cc-derived b { color: var(--muted); font-weight: 600; }
-.cc-appearance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.2rem; }
-.cc-appearance > :last-child { grid-column: 1 / -1; }
-.cc-appearance .cz-opts { flex-wrap: wrap; }
-.cc-appearance #cz-styles .cz-opt { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker #cz-styles .cz-opt,
+.cc-catalog-specimen .cz-opt.style { width: auto; min-width: var(--tap-floor); padding: 0.5rem 0.9rem; font-size: 1.05rem; }
+.cc-character-picker .cz-statedit { margin-top: 0.15rem; }
+.cc-sprite-fold { width: 100%; margin-top: 0.2rem; }
+.cc-sprite-fold .disc-faces { flex-direction: column; }
+.cc-sprite-fold .disc-face { width: 100%; justify-content: space-between; }
 .cz-keepsake small { display: block; margin-top: 0.2rem; color: var(--muted); font-size: 1rem; }
 
+.cc-equipment-fold > .disc-faces { flex-direction: column; }
+.cc-equipment-fold > .disc-faces > .disc-face { width: 100%; justify-content: space-between; }
+.cc-selection-face { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(8rem, 1fr); gap: 1rem; align-items: center; width: 100%; }
+.cc-selection-face-art { grid-row: 1; color: var(--muted); }
+.cc-selection-face .disc-name { text-align: left; }
+.cc-selection-face .disc-value { text-align: left; color: var(--muted); }
+.cc-equipment-fold > .disc-faces > .disc-reveal { padding: 0.85rem; }
 .cc-equip-group { display: flex; flex-direction: column; gap: 0.5rem; }
-.cc-card-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+.cc-card-selectors { display: grid; gap: 0.7rem; }
+.cc-card-selectors[data-view='list'] { grid-template-columns: minmax(0, 1fr); }
+.cc-card-selectors[data-view='grid'] { grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
 .cc-card-selectors .equip-chip { width: 100%; }
+.cc-empty-slot { margin: 0; padding: 0.75rem; color: var(--muted); font-size: 1rem; }
 .cc-relic-card {
   display: grid; grid-template-columns: 2.6rem 1fr; gap: 0.25rem 0.75rem; align-items: center;
   min-height: var(--tap-floor); padding: 0.7rem 0.9rem; text-align: left;
   color: var(--parchment); background: var(--panel); border: 1px solid var(--line);
   border-radius: 3px; cursor: pointer;
 }
-.cc-relic-card > span { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
+.cc-relic-card > .cc-relic-art { grid-row: 1 / 3; font-size: 2rem; text-align: center; }
 .cc-relic-card small { color: var(--muted); }
 .cc-relic-card:hover { border-color: var(--line-soft); }
 .cc-relic-card.chosen { border-color: var(--gold); background: var(--bg); }
@@ -1249,6 +1373,10 @@ button.rs-reset {
 .cc-catalog-head h3 { margin: 0; color: var(--gold); font-size: 1.15rem; letter-spacing: 0.2em; }
 .cc-catalog-head span { color: var(--muted); font-size: 0.8rem; letter-spacing: 0.14em; }
 .component-catalog .cz-stage { padding: 0.2rem; }
+.cc-catalog-specimen { width: 100%; max-width: 48rem; }
+.cc-catalog-specimen.cz-opts,
+.cc-catalog-specimen.se-modes { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+.cc-catalog-specimen.cc-primary-stats { margin-top: 0; }
 
 /* ---------- D26 — the short form: FACE, then REVEAL ------------------------
    Constantine: "just the starting stats, starting armaments selection , and
@@ -2689,11 +2817,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 :root[data-layout='narrow'] .cz-fields { max-width: 100%; width: 100%; }
 :root[data-layout='narrow'] .cz-flow { width: 100%; }
+:root[data-layout='narrow'] .cc-class-split { display: flex; flex-direction: column; gap: 0.9rem; }
+:root[data-layout='narrow'] .cc-class-divider { display: none; }
+:root[data-layout='narrow'] .cc-class-preview-host,
+:root[data-layout='narrow'] .cc-class-selection { width: 100%; }
+:root[data-layout='narrow'] .cc-class-art { min-height: 12rem; }
+:root[data-layout='narrow'] .cc-class-art .class-sprite { transform: scale(1.08); }
+:root[data-layout='narrow'] .cc-class-resource-grid { grid-template-columns: repeat(5, minmax(3.2rem, 1fr)); overflow-x: auto; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick {
+  display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); padding: 0.9rem;
+}
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick .glyph { font-size: 3rem; }
+:root[data-layout='narrow'] .cc-stage-toolbar { align-items: flex-start; flex-wrap: wrap; }
+:root[data-layout='narrow'] .cc-stage-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
+:root[data-layout='narrow'] .cc-auto-advance-note { white-space: normal; }
+:root[data-layout='narrow'] .cc-name-row { align-items: stretch; flex-direction: column; gap: 0.4rem; }
+:root[data-layout='narrow'] .cc-name-row .cz-name { flex: none; width: 100%; }
 :root[data-layout='narrow'] .cc-character-grid { display: flex; flex-direction: column; gap: 1.2rem; }
 :root[data-layout='narrow'] .cc-character-grid .cc-preview-side { order: -1; }
 :root[data-layout='narrow'] .cc-stats-side { width: 100%; }
-:root[data-layout='narrow'] .cc-appearance { grid-template-columns: 1fr; }
-:root[data-layout='narrow'] .cc-appearance > :last-child { grid-column: auto; }
 :root[data-layout='narrow'] .cc-card-selectors { grid-template-columns: 1fr; }
 :root[data-layout='narrow'] .cz-scroll { padding: 1.5rem 1rem 1rem; }
 :root[data-layout='narrow'] .cz-flow .disc-reveal { padding: 0.8rem; }
