@@ -1,7 +1,7 @@
 import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { uiComponentAttrs } from './uiComponents.js';
-import { fullscreenCapability, isFullscreen, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
+import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
 
 let releaseActiveStack = null;
 
@@ -23,7 +23,23 @@ export function hudQuickSettingsHtml(model) {
     data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
     ${controlHtml(music, 'music', 'Music', '♪', music.properties.active ? 'On' : 'Off', music.properties.active)}
+    <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
+}
+
+function showHudNotice(stack, message) {
+  const notice = stack.querySelector('[data-hud-quick-notice]');
+  if (!notice) return null;
+  notice.textContent = message;
+  notice.hidden = false;
+  return notice;
+}
+
+function hideHudNotice(stack) {
+  const notice = stack.querySelector('[data-hud-quick-notice]');
+  if (!notice) return;
+  notice.hidden = true;
+  notice.textContent = '';
 }
 
 function syncFullscreen(stack) {
@@ -67,6 +83,7 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
   const fullscreenSyncTimers = new Set();
+  let noticeTimer = null;
   const onFullscreenChange = () => syncFullscreen(stack);
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
@@ -83,7 +100,15 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
       }, delay);
       fullscreenSyncTimers.add(timer);
     }
-    if (!result.ok) showSettingsNotice(result.message || 'Fullscreen is unavailable in this browser.');
+    if (result.ok) {
+      hideHudNotice(stack);
+    } else {
+      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.');
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => {
+        if (stack.isConnected) hideHudNotice(stack);
+      }, 6500);
+    }
   };
   const onMusicClick = () => {
     settings.muteMusic = settings.muteMusic !== true;
@@ -107,6 +132,7 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   const release = () => {
     detachObserver.disconnect();
     clearInterval(fullscreenStatePoll);
+    clearTimeout(noticeTimer);
     fullscreenSyncTimers.forEach(clearTimeout);
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);

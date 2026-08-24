@@ -1132,6 +1132,24 @@ button.rs-reset {
   background: rgba(var(--accent-rgb), 0.12);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
+.hud-quick-notice {
+  position: absolute;
+  top: calc(100% + var(--hud-quick-stack-gap, 4px));
+  right: 0;
+  box-sizing: border-box;
+  width: min(19rem, calc(100vw - 1rem));
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--gold);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg-raise) 96%, transparent);
+  color: var(--parchment);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  font: 600 0.76rem/1.35 var(--font-ui);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.hud-quick-notice[hidden] { display: none; }
 .hud-quick-settings.compact { width: 4.2rem; }
 .hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-settings.compact .hud-quick-setting { justify-content: center; }

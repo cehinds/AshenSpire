@@ -1432,6 +1432,24 @@ button.rs-reset {
   background: rgba(var(--accent-rgb), 0.12);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
+.hud-quick-notice {
+  position: absolute;
+  top: calc(100% + var(--hud-quick-stack-gap, 4px));
+  right: 0;
+  box-sizing: border-box;
+  width: min(19rem, calc(100vw - 1rem));
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--gold);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg-raise) 96%, transparent);
+  color: var(--parchment);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  font: 600 0.76rem/1.35 var(--font-ui);
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+.hud-quick-notice[hidden] { display: none; }
 .hud-quick-settings.compact { width: 4.2rem; }
 .hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-settings.compact .hud-quick-setting { justify-content: center; }
@@ -39225,7 +39243,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9285c37b65';
+const SOURCE = '0da9d40945';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39259,7 +39277,7 @@ const SOURCE = '9285c37b65';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1267';
+const ORDINAL = '1268';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39372,7 +39390,7 @@ Object.assign(module.exports, { RELEASE, SOURCE, ORDINAL, BUILT, RUN_PATH, BUILD
 const { childModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { uiComponentAttrs } = require("src/ui/components/uiComponents.js");
-const { fullscreenCapability, isFullscreen, showSettingsNotice, toggleFullscreen } = require("src/ui/screens/settings.js");
+const { fullscreenCapability, isFullscreen, toggleFullscreen } = require("src/ui/screens/settings.js");
 
 let releaseActiveStack = null;
 
@@ -39394,7 +39412,23 @@ function hudQuickSettingsHtml(model) {
     data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
     ${controlHtml(music, 'music', 'Music', '♪', music.properties.active ? 'On' : 'Off', music.properties.active)}
+    <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
+}
+
+function showHudNotice(stack, message) {
+  const notice = stack.querySelector('[data-hud-quick-notice]');
+  if (!notice) return null;
+  notice.textContent = message;
+  notice.hidden = false;
+  return notice;
+}
+
+function hideHudNotice(stack) {
+  const notice = stack.querySelector('[data-hud-quick-notice]');
+  if (!notice) return;
+  notice.hidden = true;
+  notice.textContent = '';
 }
 
 function syncFullscreen(stack) {
@@ -39438,6 +39472,7 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
   const fullscreenSyncTimers = new Set();
+  let noticeTimer = null;
   const onFullscreenChange = () => syncFullscreen(stack);
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
@@ -39454,7 +39489,15 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
       }, delay);
       fullscreenSyncTimers.add(timer);
     }
-    if (!result.ok) showSettingsNotice(result.message || 'Fullscreen is unavailable in this browser.');
+    if (result.ok) {
+      hideHudNotice(stack);
+    } else {
+      showHudNotice(stack, result.message || 'Fullscreen is unavailable in this browser.');
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => {
+        if (stack.isConnected) hideHudNotice(stack);
+      }, 6500);
+    }
   };
   const onMusicClick = () => {
     settings.muteMusic = settings.muteMusic !== true;
@@ -39478,6 +39521,7 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
   const release = () => {
     detachObserver.disconnect();
     clearInterval(fullscreenStatePoll);
+    clearTimeout(noticeTimer);
     fullscreenSyncTimers.forEach(clearTimeout);
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);
@@ -41449,8 +41493,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Fullscreen, music, Settings, and Profile now have one clear home each",
-    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.",
-    "build": "0.4.0.1267",
+    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.",
+    "build": "0.4.0.1268",
     "pullRequest": 344,
     "url": "https://github.com/cehinds/AshenSpire/pull/344"
   },

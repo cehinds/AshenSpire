@@ -19,7 +19,7 @@ projection of this file, which remains the one authoritative structured owner.)*
 
 ## 2026-08-24
 
-- **Fullscreen, music, Settings, and Profile now have one clear home each** ([#344](https://github.com/cehinds/AshenSpire/pull/344), `0.4.0.1267`). Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.
+- **Fullscreen, music, Settings, and Profile now have one clear home each** ([#344](https://github.com/cehinds/AshenSpire/pull/344), `0.4.0.1268`). Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.
 
 - **Development coordination now has one canonical home** ([#335](https://github.com/cehinds/AshenSpire/pull/335), `0.4.0.1191`). The repository now points owners and reviewers to one workflow for routine evidence, status receipts, cross-family handoffs, and the boundary between development approval and Constantine-only release authority. Docs only; release remains RED.
 
