@@ -181,9 +181,15 @@ const quick = source('src/ui/components/quicknav.js');
 const renderer = source('src/ui/components/menuComponents.js');
 const overlay = source('src/ui/components/overlay.js');
 const settingsSource = source('src/ui/screens/settings.js');
+const menuModel = source('src/ui/models/MenuModels.js');
 const audio = source('src/ui/audio.js');
 const main = source('src/main.js');
 check(!/saveMeta|localStorage|META_KEY/.test(quick), 'Quick Menu contains no persistence owner');
+check(overlay.includes("ashenspire:quicknav-mode-change")
+  && overlay.includes('syncQuickLauncher')
+  && quick.includes("new CustomEvent('ashenspire:quicknav-mode-change'")
+  && menuModel.includes("'menuitemcheckbox'"),
+  'open overlays rebuild their Quick Menu launcher mode and stateful rows keep an owned menu role');
 check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
 check(overlay.includes('controls: {') && overlay.includes('...quickControls,'), 'overlay forwards the shared controls');
 check(overlay.includes("if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);"),

@@ -27,7 +27,10 @@ function quickMenuRowModel(row) {
       condition: row.condition || '',
       separatorBefore: !!row.sep,
     },
-    accessibility: { role: row.control === 'switch' ? 'switch' : 'menuitem', label: row.label || row.act },
+    // These rows live inside a role=menu. A switch role is not a valid owned
+    // child there; menuitemcheckbox keeps the stateful control in the menu's
+    // accessibility tree while retaining aria-checked.
+    accessibility: { role: row.control === 'switch' ? 'menuitemcheckbox' : 'menuitem', label: row.label || row.act },
     behaviors: [behaviorModel(`activate-${row.act}`, {
       event: 'click',
       command: 'activate-menu-row',

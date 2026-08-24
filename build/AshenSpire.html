@@ -39321,7 +39321,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '86f3949ad3';
+const SOURCE = '0981648cae';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39355,7 +39355,7 @@ const SOURCE = '86f3949ad3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1276';
+const ORDINAL = '1284';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -50755,6 +50755,9 @@ function setQuickNav(opts) {
     const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
     launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
+    window.dispatchEvent(new CustomEvent('ashenspire:quicknav-mode-change', {
+      detail: { mode, folded: quickNavFolds() },
+    }));
   }
 }
 
@@ -50970,7 +50973,10 @@ function quickMenuRowModel(row) {
       condition: row.condition || '',
       separatorBefore: !!row.sep,
     },
-    accessibility: { role: row.control === 'switch' ? 'switch' : 'menuitem', label: row.label || row.act },
+    // These rows live inside a role=menu. A switch role is not a valid owned
+    // child there; menuitemcheckbox keeps the stateful control in the menu's
+    // accessibility tree while retaining aria-checked.
+    accessibility: { role: row.control === 'switch' ? 'menuitemcheckbox' : 'menuitem', label: row.label || row.act },
     behaviors: [behaviorModel(`activate-${row.act}`, {
       event: 'click',
       command: 'activate-menu-row',
@@ -57695,10 +57701,50 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
         ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
       },
     });
-  const qnBtn = veil.querySelector('#ov-quicknav');
-  if (qnBtn) qnBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(qnBtn); });
-  const swBtn = veil.querySelector('#ov-switch');
-  if (swBtn) swBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(swBtn); });
+  const overlayHead = veil.querySelector('.overlay-head');
+  const syncQuickLauncher = () => {
+    if (!overlayHead) return;
+    const tabs = overlayHead.querySelector('.overlay-tabs');
+    const actions = overlayHead.querySelector('.overlay-actions');
+    const foldedNow = quickNavFolds();
+    if (tabs) tabs.hidden = foldedNow;
+    let switcher = overlayHead.querySelector('#ov-switch');
+    if (foldedNow && !switcher) {
+      switcher = document.createElement('button');
+      switcher.className = 'subtle ov-switch';
+      switcher.id = 'ov-switch';
+      switcher.setAttribute('aria-haspopup', 'menu');
+      actions?.before(switcher);
+    } else if (!foldedNow) {
+      switcher?.remove();
+      switcher = null;
+    }
+    if (switcher) switcher.textContent = `${TABS.find((tab) => tab.id === currentTab)?.label || currentTab} ▾`;
+    let quickButton = overlayHead.querySelector('#ov-quicknav');
+    if (quickNavMode() === 'mirror' && !quickButton) {
+      quickButton = document.createElement('button');
+      quickButton.className = 'subtle';
+      quickButton.id = 'ov-quicknav';
+      quickButton.title = 'Go to…';
+      quickButton.textContent = '☰';
+      actions?.prepend(quickButton);
+    } else if (quickNavMode() !== 'mirror') {
+      quickButton?.remove();
+    }
+  };
+  const onQuickLauncherClick = (event) => {
+    const anchor = event.target.closest('#ov-quicknav, #ov-switch');
+    if (!anchor || !overlayHead.contains(anchor)) return;
+    event.stopPropagation();
+    openHere(anchor);
+  };
+  overlayHead?.addEventListener('click', onQuickLauncherClick);
+  window.addEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
+  overlayCleanup.push(() => {
+    overlayHead?.removeEventListener('click', onQuickLauncherClick);
+    window.removeEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
+  });
+  syncQuickLauncher();
 
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
