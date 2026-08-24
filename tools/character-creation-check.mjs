@@ -366,6 +366,20 @@ async function checkCatalog(width, height, screenshotName) {
   `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
   assert(Object.values(receipt.primitives).every((count) => count >= 1),
     `${width}x${height}: component catalog references every reusable creation component`);
+  const viewSpecimen = '[data-catalog-component="view-mode-toggle"]';
+  await evaluate(`document.querySelector('${viewSpecimen} [data-view-mode="grid"]').click()`);
+  assert(await evaluate(`document.querySelector('${viewSpecimen} [data-view-mode="grid"]').getAttribute('aria-pressed') === 'true'`),
+    `${width}x${height}: catalog List/Grid specimen switches to Grid`);
+  await evaluate(`document.querySelector('${viewSpecimen} [data-view-mode="list"]').click()`);
+  assert(await evaluate(`document.querySelector('${viewSpecimen} [data-view-mode="list"]').getAttribute('aria-pressed') === 'true'`),
+    `${width}x${height}: catalog List/Grid specimen switches back to List`);
+  const autoAdvanceSpecimen = '[data-catalog-component="auto-advance-toggle"] .cc-switch';
+  await evaluate(`document.querySelector('${autoAdvanceSpecimen}').click()`);
+  assert(await evaluate(`document.querySelector('${autoAdvanceSpecimen}').getAttribute('aria-checked') === 'false'`),
+    `${width}x${height}: catalog Auto-advance specimen switches off`);
+  await evaluate(`document.querySelector('${autoAdvanceSpecimen}').click()`);
+  assert(await evaluate(`document.querySelector('${autoAdvanceSpecimen}').getAttribute('aria-checked') === 'true'`),
+    `${width}x${height}: catalog Auto-advance specimen switches back on`);
   await evaluate(`document.querySelector('[data-catalog-component="character-disclosure"]').scrollIntoView({block:'start'})`);
   await wait(150);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);

@@ -643,12 +643,30 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const viewToggleHost = viewModeToggle('list', (mode) => {
-      viewToggleHost.replaceWith(viewModeToggle(mode, () => {}, 'Catalog view choice'));
-    }, 'Catalog view choice');
-    viewToggleHost.classList.add('cc-catalog-specimen');
-    const autoAdvanceSpecimen = booleanSettingToggle('Auto-advance on valid choice', true, () => {});
-    autoAdvanceSpecimen.classList.add('cc-catalog-specimen');
+    let catalogViewMode = 'list';
+    let viewToggleHost = null;
+    const renderCatalogViewToggle = () => {
+      const replacement = viewModeToggle(catalogViewMode, (mode) => {
+        catalogViewMode = mode;
+        renderCatalogViewToggle();
+      }, 'Catalog view choice');
+      replacement.classList.add('cc-catalog-specimen');
+      viewToggleHost?.replaceWith(replacement);
+      viewToggleHost = replacement;
+    };
+    renderCatalogViewToggle();
+    let catalogAutoAdvance = true;
+    let autoAdvanceSpecimen = null;
+    const renderCatalogAutoAdvance = () => {
+      const replacement = booleanSettingToggle('Auto-advance on valid choice', catalogAutoAdvance, (value) => {
+        catalogAutoAdvance = value;
+        renderCatalogAutoAdvance();
+      });
+      replacement.classList.add('cc-catalog-specimen');
+      autoAdvanceSpecimen?.replaceWith(replacement);
+      autoAdvanceSpecimen = replacement;
+    };
+    renderCatalogAutoAdvance();
     const armourSpecimen = document.createElement('div');
     armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
     armourSpecimen.dataset.view = 'list';
