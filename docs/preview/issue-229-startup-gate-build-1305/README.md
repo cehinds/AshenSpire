@@ -1,24 +1,24 @@
 # Issue #229 startup-gate evidence
 
 - Base: `dev@13919f3d155928b4540342db54076ef39ee7fe91`
-- Built artifact commit: `PENDING_FINAL_BUILD_COMMIT`
-- Build: `0.4.0.1305 · src PENDING_FINAL_SOURCE_DIGEST`
+- Built artifact commit: `6a4da5ed16ddc15de414ba5006c03da1cb18ea44`
+- Build: `0.4.0.1305 · src 3248caabca`
 - Artifact: `dist/AshenSpire.html`
-- Artifact SHA-256: `PENDING_FINAL_ARTIFACT_SHA256`
+- Artifact SHA-256: `ca8f9168da94d28098e27032d2c9f45dc108bd7039bbb0246c170f233618539e`
 - Browser: Google Chrome on Windows, device scale factor 1
 
 ## Visually inspected captures
 
 | File | State | SHA-256 |
 |---|---|---|
-| `startup-1200x730.png` | Built artifact, desktop, keyboard prompt | `2313911fc41eca2183c6da3f1a06c4171199d07d9096f203549974d3dabcee5b` |
-| `startup-390x844.png` | Built artifact, phone | `9edfb83af8f83611bdc1fccada8a89989f81bb6da2e183a01f11a59a4430e399` |
-| `startup-844x344-text-m-keyboard.png` | Short landscape, Text M | `4c9fbcb3a7d9cb1f48b0f2a84d96030a49b5a047aa93248ee17fb8e2271ddabc` |
-| `startup-390x844-text-xl-touch.png` | Phone, Text XL, touch prompt | `e1739c025fb1544094d84fcbcfccce6d7f3fe2bc60a88b90f9fe0ce4dc87bfc8` |
-| `startup-1200x730-controller.png` | Desktop controller prompt | `f44e3974e5b741c2a9a38eb9dc385b555745bbf511d0e75d6a6696c62dc0d319` |
-| `startup-1200x730-reduced-motion.png` | Desktop reduced motion | `06cdd98bf9b9e29c6d7d61dc1d7e5b5f50dbdc2bfc60e9b3998ac919af2168ca` |
-| `title-after-enter-1200x730.png` | Title after consumed Enter; keyboard cursor visible | `5900178241f72a6fec3cdf81e91cba693c88039ba35e50c768a325548a65ffd1` |
-| `title-after-pointer-1200x730.png` | Title after pointer reveal; DOM focus without gamepad cursor | `208a91b489cd5315fe2bfec5fb22c0f8bc32beb1f13dd464b7381948d3bceb00` |
+| `startup-1200x730.png` | Built artifact, desktop, keyboard prompt | `209da3a3204b1c9737548d8e934b3385931ae7c73c582133cb8df175ff0b0e5d` |
+| `startup-390x844.png` | Built artifact, phone | `c52283199cd916a9f394523d413570b3f4d002b97b2123f47e76d53a5e010cd0` |
+| `startup-844x344-text-m-keyboard.png` | Short landscape, Text M | `618efa2357950eb438d602fbc4617d686241f45287a62ad7994a15196f52065f` |
+| `startup-390x844-text-xl-touch.png` | Phone, Text XL, touch prompt | `026b7cb0996690abf26a647d1bbb85138130778b3d840d2810fd9de9c2e6472c` |
+| `startup-1200x730-controller.png` | Desktop controller prompt | `4250440e66d02cf438a340f5485a56b5c03ae189aa44f834b390fb11c6dd1e16` |
+| `startup-1200x730-reduced-motion.png` | Desktop reduced motion | `ef79b1676d821faf4728e36d9ebb9c8d3b33984ca3da36e2730394e47aca4ea0` |
+| `title-after-enter-1200x730.png` | Title after consumed Enter; keyboard cursor visible | `6c5b3f4ec0c59ab17f2cf862f1339906e402d01c15f23d4c357e0e5e45d3f49f` |
+| `title-after-pointer-1200x730.png` | Title after pointer reveal; DOM focus without gamepad cursor | `a49a1321b58e5f6550330a336a78fad5622b4a83d4c1e89e340f9927d4186974` |
 
 `tools/startup-gate.mjs` separately exercised Click, touch, Enter, Space,
 controller buttons 0 and 9, D-pad/analog last-input prompts, pointer/touch focus
