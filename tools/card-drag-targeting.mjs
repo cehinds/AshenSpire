@@ -1,4 +1,44 @@
-// tools/card-drag-targeting.mjs — browser acceptance for #150 + #198 + #311.
+// tools/card-drag-targeting.mjs — browser acceptance for #150 + #198 + #311
+// + #294c.
+//
+// #294c ADDS FOUR CELLS AND A COUNTED VERDICT LINE.
+//
+// The four are every OTHER reading of the sentence #311 fixed — "if a card is
+// selected and the enemy is highlighted, I can't drag the card on the enemy to
+// use it." #311 proved ONE of them (a slow press, the read OPEN). The rest were
+// unexercised, and the fix's own comment ASSERTS one in prose: "while merely
+// pending, a real drag crossing the shared 12 px boundary abandons the inspect
+// in the same event and proceeds here." A claim with no cell behind it.
+//   1 · ALREADY SELECTED, THEN DRAGGED FAST — one move, no dwell, and the move
+//       that starts the drag must also AIM it.
+//   2 · CARD A SELECTED WHILE CARD B IS DRAGGED — the card that plays is named
+//       by instanceId, so "which one" is a fact and not a count.
+//   3 · A MEDIUM DRAG — a dwell at 0.65 of the MEASURED dial, exactly one play.
+//   4 · A TOUCH DRAG off a selected card — real Input.dispatchTouchEvent, every
+//       pointerdown read back with its pointerType.
+// Each has a plant; each plant was watched red at 1200x730 before it was
+// written down, and every mouse cell stays green under cell 4's.
+//
+// THE VERDICT LINE NOW ENDS AT ITS COUNTED CLAIM. This tool used to print
+// "PASS — card drag targeting … at every measured shape", which readVerdict
+// (tools/verdict.mjs) refuses outright: prose after the counted claim is
+// unrecognised grammar (D103). It was one of the ~40 that ruling named and left
+// to "whoever wraps next". The count is derived by incrementing as each check is
+// evaluated, never typed. And the BOUNDARY prints on every exit path — green,
+// red, a run that dies in the harness, and `--selftest` — proved by a plant
+// (the hand draws no card; exit 2, boundary printed) rather than by reading it.
+//
+// THAT CLAIM WAS FALSE FOR THE PATHS ABOVE `main()`, AND IT WAS FALSE IN THE
+// COMMIT THAT MADE IT. `--text typo` threw at module scope, above the guarded
+// `main().then(…).catch(…)`, and exited 1 with an empty stdout: no verdict, no
+// boundary. Fixed two ways, because one of them only fixes one line — the
+// argument checks moved INTO `main()` so a bad flag is a named refusal, and an
+// `uncaughtException` net registered beside finish() so any OTHER module-scope
+// death (the `--selftest` branch reads four files and resolves an import up
+// there too) still prints the extent. NO PLANT REACHES EITHER: the corpus
+// mutates source and runs this tool, and both of these die before a source file
+// is read. Same class as the `--selftest` ordering bug above — run the flag,
+// read the LAST line.
 //
 // The same real page and pointer door checks the approved hand paging controls,
 // drag start, nearest-only single target switching, all-target multi aim,
@@ -43,9 +83,228 @@ const lines = (file, ...rows) => {
   return rows.join(bytes.includes('\r\n') ? '\r\n' : '\n');
 };
 
+// THE COUNTERS ARE MODULE-SCOPE BECAUSE THE BOUNDARY OUTLIVES `main`. A run
+// that dies in the harness still has to say how much of the door it reached,
+// and a count that lives inside the try block cannot be printed from the catch.
+let fails = 0;
+let checks = 0;
+let ran = 0;
+let boundaryPrinted = false;
+
+// EVERY EXIT PATH PRINTS THIS. Not the green one, not "at the end of main()" —
+// Vira's line printed at the end of `main()` too, and `main()` also had a
+// `.catch` and a `process.exit(2)` above it. Proved with a plant, not by reading
+// the file (`--selftest`, "the run dies in the harness before any check"): the
+// boundary prints and the exit is 2.
+//
+// AND IT SITS ABOVE THE `--selftest` BRANCH BECAUSE THE FIRST CUT OF THIS DID
+// NOT, AND THAT WAS THE SAME DEFECT ONE LEVEL UP. It sat below, with a comment
+// claiming the function declaration hoists so the branch could call it. THE
+// FUNCTION HOISTS; `let boundaryPrinted` DOES NOT — it is in its temporal dead
+// zone until the module reaches it, which a `process.exit` at the top never
+// does. Measured: `--selftest` printed SELFTEST GREEN and then died with
+// `ReferenceError: Cannot access 'boundaryPrinted' before initialization`, exit
+// 1 on a run in which all 15 plants were caught.
+//
+// NO PLANT COULD HAVE CAUGHT IT, and that is the part worth keeping: every
+// plant runs the tool WITHOUT `--selftest`, because the harness IS the
+// selftest. So this one exit path is the one no corpus reaches, and the claim
+// about it was carried by a comment — which is exactly the shape this whole
+// file's night was about. It is checkable only by running the flag, which is
+// now the standing instruction here: change this block, run `--selftest`, and
+// read the LAST line, not the verdict.
+function printBoundary() {
+  if (boundaryPrinted) return;
+  boundaryPrinted = true;
+  console.log('  BOUNDARY: Linux headless Chromium, one container, four emulated shapes and ONE text');
+  console.log('        size per run. Synthesized CDP input, never a finger and never a real mouse:');
+  console.log('        Input.dispatchMouseEvent for cells 1-3, Emulation.setTouchEmulationEnabled +');
+  console.log('        Input.dispatchTouchEvent for cell 4, every press aimed at the coordinates');
+  console.log('        elementFromPoint reports and every pointerdown in cell 4 read back with its');
+  console.log('        pointerType, so a press that misses is a named failure and never a quiet pass.');
+  console.log('        THE DIAL IS MEASURED, NOT TYPED: cell 3 solves balance.ui.inspectHold out of two');
+  console.log('        data-inspect-progress samples and dwells at 0.65 of it. WHAT THAT DOES NOT BUY:');
+  console.log('        the pair either side of that dial (cell 3 pending, the #311 read-yield cell open)');
+  console.log('        is NOT an adjacent pair — a CDP round trip is tens of ms, so no cell here sits one');
+  console.log('        millisecond off the threshold and this door cannot place one. The dial itself is');
+  console.log('        therefore watched, not bounded. THE MID-DRAG CELL IS NOW PROVEN, NOT WATCHED:');
+  console.log('        "no read opens ON TOP of the live medium drag" has a same-door plant of its own');
+  console.log('        — the read yielding to every pointer BUT a mouse — observed RED at 1200x730');
+  console.log('        through the real page (data-inspect=open, inspectCopies 1, exit 1). The older');
+  console.log('        plant, the read abandoned only once open, reds the TOUCH cell only; both ship,');
+  console.log('        one per side. NOT COVERED: a plain unselected touch drag');
+  console.log('        (tools/gesture-cancel.mjs check 5 owns that gesture — one home, not two); the');
+  console.log('        narrow pan-x axis split (same tool, check 6); any text size but the one passed;');
+  console.log('        a real thumb\'s size, angle or accuracy; body zoom or a CSS transform, since this');
+  console.log('        aims in raw rect px; and CI, which runs NEITHER this tool nor its composer');
+  console.log('        (tools/hybrid-input-parity.mjs) — every number above comes from a hand-dispatched');
+  console.log('        run, so a green here is a claim about this machine, not about the pipeline.');
+  console.log('  ONE HAZARD THIS WRAP CREATES, named where the text that causes it is printed: the');
+  console.log('        composer above REPRINTS this whole stream, verdict line included. Its own');
+  console.log('        summary matches no readVerdict row, so wrapping the COMPOSER today would find');
+  console.log('        exactly one recognised line — THIS one — and hand it this count. Not a defect');
+  console.log('        today; the fix belongs to whoever wraps that tool, in the same act.');
+  console.log('  THE EXITS OUTSIDE main()\'S CATCH ARE COVERED BY A LATCH, NOT BY A COUNT. A bad flag');
+  console.log('        refuses INSIDE main(); every other death outside it — module init, and an async');
+  console.log('        callback throwing while main() runs — is caught by one uncaughtException');
+  console.log('        handler that LATCHES the fatal, closes the browser, the CDP socket and the');
+  console.log('        server, and forces exit 2. The latch is load-bearing: process.exitCode is not');
+  console.log('        final the way process.exit() was, so without it a later-resolving main() over-');
+  console.log('        wrote a FATAL with its own success line and verdict.mjs read that as a green.');
+  console.log('        NOT PLANTED IN THIS CORPUS, run by hand both ways instead: the init deaths die');
+  console.log('        before any source file is read, and the async one needs serve.mjs mutated.');
+  console.log('  ONE PLANT IN THIS CORPUS WAS INTERMITTENT AND IS NOT ANY MORE, and the number is');
+  console.log('        here because the first explanation for it was wrong. "the read is abandoned only');
+  console.log('        when open" reported UNCAUGHT twice; at 725ca10a I blamed a loaded box, re-ran it');
+  console.log('        ONCE on a quiet box, got a red, and wrote that down. ONE RED IS NOT A RATE. Same');
+  console.log('        door, one shape, six serial runs on a quiet box: NAMED RED IN 1 OF 6. Cell 4 was');
+  console.log('        sampling its mid-drag state ~180 ms in while the dial is ~400 ms, so under the');
+  console.log('        known-bad the read had usually not opened yet. Cell 4 now dwells past the');
+  console.log('        MEASURED dial before sampling, which is what cell 3 already did: 6 of 6 red under');
+  console.log('        the plant, 180 of 180 green clean. Any corpus green printed before that fix is');
+  console.log('        UNKNOWN for that one assertion, not green.');
+  console.log('        STILL UNCOVERED: a failure of this file\'s four static imports, which rejects');
+  console.log('        before any handler of ours exists, and a SIGKILL, which no handler can catch —');
+  console.log('        verdict.mjs calls those HARNESS COULD NOT RUN and KILLED, and it is right.');
+}
+
+// THE FATAL LATCH, AND IT EXISTS BECAUSE THE FLUSH FIX TOOK ONE AWAY. Moving
+// from `process.exit()` to `process.exitCode` is what stops a piped write being
+// truncated — measured, see finish() below — but `process.exit()` was ALSO what
+// made a fatal exit FINAL. Take it away and the exit code becomes a variable
+// that anything reaching finish() later can reassign, INCLUDING A SUCCESS PATH
+// ALREADY IN FLIGHT. Found by Codex on `e387131` and reproduced here by
+// producing the false pass rather than by reading the code: a non-EADDRINUSE
+// server error (`tools/serve.mjs:149` rethrows one) arriving while main() is
+// still running took the exit code from 2 to 0 and printed
+// `OK — 45 checks passed`, and `tools/verdict.mjs` read that and reported
+// `verdict: OK — 45`, exit 0. A fatal error through the gate as a full green,
+// which is the worst state in this house.
+//
+// So the fatal is LATCHED, not merely set: once `fatal` is non-null every later
+// finish() is forced to 2 whatever it was called with, and exactly one counted
+// line is ever printed.
+let fatal = null;
+let finished = false;
+
+// THE CLEANUP HAS ONE HOME, because two callers need it now and two copies of a
+// teardown is the second copy this house exists to catch (Law 0 clause 4).
+// main() registers each handle THE MOMENT IT EXISTS, so a death between two
+// awaits still closes what already opened. It is idempotent: whichever of the
+// crash handler and main()'s `finally` gets here first does the work, and the
+// other is a no-op.
+//
+// AND IT IS WHY THE HANDLER CALLS IT AT ALL: finish() only sets
+// `process.exitCode`, so without this the CDP socket, the browser and the
+// static server keep the event loop alive and the tool HANGS instead of dying —
+// the other half of the same finding. Closing the socket also makes main()'s
+// next `cdp.send` reject, which drives the run out through its own `finally`
+// rather than leaving it aiming a pointer at a dead page.
+let liveCdp = null;
+let liveBrowser = null;
+let liveServed = null;
+async function closeEverything() {
+  const cdp = liveCdp; const browser = liveBrowser; const served = liveServed;
+  liveCdp = null; liveBrowser = null; liveServed = null;
+  try { if (cdp) cdp.close(); } catch { /* already gone */ }
+  try { if (browser) await browser.close(); } catch { /* already gone */ }
+  try { if (served) served.server.close(); } catch { /* already gone */ }
+}
+
+function finish(code, why = null) {
+  // THE LATCH, FIRST, BEFORE ANYTHING IS PRINTED OR SET. A run that died of an
+  // uncaught exception is `unknown`, and `unknown` outranks every verdict a
+  // later-resolving main() can reach.
+  if (fatal !== null) { code = 2; why = why || fatal; }
+  // Browser cleanup can raise exit 3 under BROWSER_LEAK_STRICT. That refusal
+  // outranks a successful screen run and must not be rewritten as green.
+  code = Math.max(code, process.exitCode || 0);
+  // EXACTLY ONE COUNTED LINE, EVER. A second one would make readVerdict report
+  // AMBIGUOUS — or, worse, be the only recognised row and hand the door the
+  // wrong count. A late death still RAISES the exit code; it never reprints.
+  if (finished) {
+    if (why) console.error(`card-drag-targeting: ${why}`);
+    if (code > (process.exitCode || 0)) process.exitCode = code;
+    return;
+  }
+  finished = true;
+  if (why) console.error(`card-drag-targeting: ${why}`);
+  console.log('');
+  if (code === 0) console.log(`card-drag-targeting: OK — ${checks} checks passed`);
+  else console.log(`  ${fails} finding(s) in ${checks} check(s) reached${why ? ' before the run died' : ''}`);
+  printBoundary();
+  // `process.exitCode`, NEVER `process.exit()`, AND THE REASON IS MEASURED.
+  // On POSIX a pipe is an ASYNCHRONOUS stdout, so `process.exit()` can kill the
+  // process with writes still queued — and the two lines above are the last
+  // thing written. Reproduced through the real door, and re-measured at this
+  // head because the first sizing of it was too narrow: this tool's output
+  // shape (180 checks, ~27 KB) run as `node tools/verdict.mjs -- node <stub>`
+  // with stdout piped lost its tail on 10 of 20 runs emitted in ONE TICK — and
+  // on 5 of 40 STREAMED, which the earlier note said was safe. It is not.
+  // STREAMING THE BODY BUYS NOTHING, BECAUSE THE TAIL IS ALWAYS ONE TICK: the
+  // verdict line and this boundary are written in a single burst whatever the
+  // body did. EIGHT OF THE NINE LOSSES cut at a buffer boundary — 23087 bytes on
+  // the one-tick stub (4 of 4), 23089 on the streamed one (4 of 5), every one at
+  // check 172 of 180. THE NINTH is the one that shows the failure mode: it cut at
+  // 24153 with all 180 PASS lines intact, losing ONLY the verdict and the
+  // boundary. (This comment first said "every lost run cut at 23087" — true of one
+  // stub, false of the set. The run that breaks the pattern is the evidence.)
+  // `verdict.mjs` called each of them SILENCE, exit 3. With `process.exitCode`
+  // and natural shutdown: 40 of 40 intact.
+  process.exitCode = code;
+}
+
+// THE FIX AND THE HOLE IN ONE COMMIT, AGAIN — and that is why the net is here
+// rather than one more moved line. `main()` is guarded: `.then(finish).catch((e)
+// => finish(2, …))` at the bottom of this file, so every death INSIDE it prints
+// the boundary. Everything at MODULE SCOPE runs ABOVE that guard and had
+// nothing. Measured at 725ca10a: `node tools/card-drag-targeting.mjs --text typo`
+// threw at the argument check, exited 1 with ZERO bytes on stdout — no verdict
+// line, no boundary — which breaks the every-exit-path claim this file's own
+// header makes. It is the same defect as gatelist's G3, where `process.exit(2)`
+// sat above both refusal prints; mine, one round later.
+//
+// A PER-INSTANCE FIX WOULD LEAVE THE CLASS OPEN IN THIS SAME FILE. The
+// `--selftest` branch below is module scope too: `lines()` reads four source
+// files off disk and `import('./doorplant.mjs')` resolves, all above the guard.
+//
+// AND IT IS NOT ONLY A MODULE-SCOPE NET, WHICH IS THE HALF I GOT WRONG FIRST.
+// `uncaughtException` is process-wide: it also catches an async callback that
+// throws while main() is RUNNING, and that case needs the latch and the cleanup
+// above, not just a printed boundary. Restricting the handler to initialization
+// would have left that case uncovered; latching covers both with one mechanism.
+//
+// MEASURED, NOT ASSUMED — node v22.22.2, four death shapes, all four caught: a
+// synchronous top-level throw; a rejected top-level `await import(...)`; a throw
+// after a top-level await; and a `setTimeout` throw from inside `serve.mjs`'s
+// own error branch, planted as file bytes in a copied real tree.
+//
+// REGISTERED HERE, and the position is load-bearing: it must sit BELOW the
+// `fatal` / `finished` / `boundaryPrinted` / `checks` / `fails` declarations,
+// because the handler body reaches those bindings and a TDZ read inside a crash
+// handler is a second crash — the same temporal-dead-zone mistake this file
+// already made once, two commits back. It must sit ABOVE the first module-scope
+// statement that can throw, which is the `--selftest` branch immediately below.
+//
+// WHAT IT DOES NOT COVER, stated positively: the four static `import`s at the
+// top of this file. Those reject before any of this module's code exists, so no
+// handler of ours can be registered yet. That path still dies bare — and
+// `verdict.mjs` still names it HARNESS COULD NOT RUN, exit 2, which is correct.
+// Nor does it cover a SIGKILL, which no handler can; `verdict.mjs` calls that
+// KILLED, exit 4.
+process.on('uncaughtException', (e) => {
+  const why = `died outside main()'s catch — ${(e && e.message) || e}`;
+  if (fatal === null) fatal = why;
+  void closeEverything();
+  finish(2, why);
+});
+
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  process.exit(await doorSelftest({
+  // EVERY exit path, this one included: `printBoundary` is a hoisted function
+  // declaration precisely so this branch — which returns above main() — can
+  // state the same extent the runs it just performed were bounded by.
+  const selftestCode = await doorSelftest({
     tool: 'card-drag-targeting.mjs',
     args: ['--text', 'XL'],
     timeoutMs: 600000,
@@ -90,6 +349,110 @@ if (process.argv.includes('--selftest')) {
       replace: '      /* planted: a self-only drag names no default target */',
       expectRed: /FAIL a self-only drag lights the player blue/,
     }, {
+      // CELL 1. The move that STARTS a drag no longer also AIMS it. Every other
+      // cell in this file survives it — they all send a second move — and a
+      // single-jump drag still PLAYS, so no count of plays can see this. What
+      // dies is the only move a fast flick has.
+      //
+      // MEASURED WHILE CHOOSING THIS PLANT, and it is the finding: widening the
+      // `data-inspect === 'open'` guard to cover `pending` changes NOTHING. The
+      // hand arms the read BEFORE it wires the drag (hand.js), same-element
+      // listeners run in registration order, so holdconfirm's own onMove has
+      // already closed the read to `idle` before combat's guard ever reads it.
+      // The pending path is protected by REGISTRATION ORDER, not by that guard.
+      name: 'the move that starts a drag does not also aim it, so a single-jump drag arms nothing',
+      file: 'src/ui/screens/combat.js',
+      find: '        if (dragging && dragGhost) {',
+      replace: '        else if (dragging && dragGhost) {',
+      expectRed: /FAIL cell 1 a fast drag off a selected card starts AND aims/,
+    }, {
+      // CELL 2. The commit reads the SELECTION instead of the card under the
+      // finger — the exact confusion two live cards invite, and invisible to
+      // every check that counts plays instead of naming which card left.
+      name: 'a drag commits the SELECTED card instead of the dragged one',
+      file: 'src/ui/screens/combat.js',
+      find: '            if (enemyBox) playCard(inst.instanceId, enemyBox.dataset.eid);',
+      replace: '            if (enemyBox) playCard(selected || inst.instanceId, enemyBox.dataset.eid);',
+      expectRed: /FAIL cell 2 the card that PLAYS is the one under the finger/,
+    }, {
+      // CELL 3, AND IT IS AIMED AT THE DERIVATION, NOT THE GESTURE. The dial
+      // stops publishing its progress, so the dwell cell 3 calls "inside the
+      // dial" can no longer be solved for. What must NOT happen is the cell
+      // quietly falling back to a number somebody remembered: it reds, twice,
+      // and says `null ms`. The medium drag still plays once under this plant —
+      // which is the point. An unmeasurable dwell is an unknown cell, not a
+      // green one.
+      name: 'the inspect dial stops publishing its progress, so the medium dwell can no longer be derived',
+      file: 'src/ui/components/holdconfirm.js',
+      find: '        el.dataset.inspectProgress = p.toFixed(3);',
+      replace: '        /* planted: the dial stops publishing its progress */',
+      expectRed: /FAIL cell 3 the medium dwell sits INSIDE the measured dial/,
+    }, {
+      // CELL 4. The drag becomes a mouse feature — holdconfirm's rule 3 ("BE A
+      // MOUSE FEATURE"), in the one place it was never asserted. EVERY mouse
+      // cell in this file stays green under it, which is the whole argument for
+      // cell 4 existing: no amount of dispatchMouseEvent can see this.
+      name: 'the card drag refuses every pointer that is not a mouse',
+      file: 'src/ui/screens/combat.js',
+      find: "      if (busy || !affordable || ev.button !== 0) return;",
+      replace: "      if (busy || !affordable || ev.button !== 0 || ev.pointerType !== 'mouse') return;",
+      expectRed: /FAIL cell 4 the finger plays the selected card exactly once/,
+    }, {
+      // A READ OPENING ON TOP OF A LIVE DRAG — the inverse of the #311 plant
+      // above: the read is abandoned only once it is ALREADY open, so a press
+      // that became a drag while merely pending keeps its dial running and a
+      // card-sized copy lands over the board mid-aim.
+      //
+      // NAMED FOR WHAT IT ACTUALLY REDS, WHICH IS NOT WHAT I EXPECTED. It reds
+      // the TOUCH cell and leaves the mouse cell at the same dwell GREEN —
+      // measured, both directions, at 1200x730. Something abandons the mouse
+      // read that does not abandon the touch one, and I did not find it. So
+      // cell 3's mid-drag assertion has no plant of its own and is WATCHED,
+      // NOT PROVEN; the boundary says so rather than letting this plant's red
+      // be read as coverage for it.
+      name: 'the read is abandoned only when open, so it opens on top of a live TOUCH drag',
+      file: 'src/ui/components/holdconfirm.js',
+      find: '        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();',
+      replace: "        if (phase === 'open' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();",
+      expectRed: /FAIL cell 4 the touch drag arms the drop off a selected card/,
+    }, {
+      // THE MOUSE HALF OF THE PLANT ABOVE, AND IT CLOSES A WITHHOLD THIS FILE
+      // WAS CARRYING. The plant above reds the TOUCH cell and leaves the mouse
+      // cell green, so cell 3's mid-drag assertion had no plant of its own: the
+      // boundary called it `unknown` while `ok()` counted it into the terminal
+      // total. One fact with two homes, disagreeing (Law 0 clause 4) — and the
+      // one a machine reads was the false one.
+      //
+      // WHAT THE EARLIER NOTE COULD NOT FIND, FOUND BY PLANTING RATHER THAN
+      // READING: the mouse read is abandoned by `onMove` at SLOP like any
+      // other pointer. Scope that abandon to every pointer EXCEPT a mouse and
+      // the mouse aim keeps its dial running, so the read reaches `open` and a
+      // card-sized copy lands over the board while the player is still aiming.
+      // Observed RED at 1200x730 through the real page, unplanted-green either
+      // side: `data-inspect=open`, `inspectCopies: 1`, exit 1.
+      //
+      // COLLATERAL NAMED RATHER THAN TRIMMED: it also reds the two #311
+      // read-yield cells and `combat chrome stays inside the viewport`, because
+      // the copy it opens is a real element on a real board. A narrower plant
+      // that reds only this one line would be a plant aimed at the assertion
+      // instead of at the defect.
+      name: 'the read yields to every pointer BUT a mouse, so it opens on top of a live mouse drag',
+      file: 'src/ui/components/holdconfirm.js',
+      find: '        if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();',
+      replace: "        if (mv.pointerType !== 'mouse' && Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) close();",
+      expectRed: /FAIL cell 3 no read opens ON TOP of the live medium drag/,
+    }, {
+      // THE BOUNDARY ITSELF, and it is planted rather than read. The hand draws
+      // no card, so the FIRST `until` is unreachable and the run dies inside the
+      // harness — not at a check. What must survive that is the boundary block
+      // and a non-zero exit; a boundary that only prints on the happy path is
+      // the defect this plant exists to make impossible.
+      name: 'the run dies in the harness before any check — the boundary must still print',
+      file: 'src/ui/components/hand.js',
+      find: '      handEl.appendChild(el);',
+      replace: '      /* planted: the hand draws no card, so the run dies in the harness */',
+      expectRed: /BOUNDARY: Linux headless Chromium/,
+    }, {
       name: 'pager escapes the hand overlay at Text XL',
       file: 'styles/combat.css',
       find: lines('styles/combat.css', ".hand-overlay[data-paging='true'] {", '  grid-template-columns: var(--tap-floor) minmax(0, 1fr) var(--tap-floor);', '  grid-template-areas: "prev hand next";', '}'),
@@ -108,7 +471,16 @@ if (process.argv.includes('--selftest')) {
       replace: ":root[data-short='false'] .field { /* planted: fitting field cannot yield */ }",
       expectRed: /FAIL combat chrome stays inside the viewport/,
     }],
-  }));
+  });
+  printBoundary();
+  // Same reason as finish(), and this branch had the same shape: the boundary
+  // block is ~30 lines written immediately before the exit. `process.exit()`
+  // here was ALSO doing control flow — it is what kept the module from falling
+  // through into main() — so the fall-through is now guarded explicitly at the
+  // call site instead of by a side effect of exiting.
+  // A fatal caught while the corpus is still running has already raised the
+  // process to 2. A later green corpus result must not lower it back to 0.
+  process.exitCode = Math.max(selftestCode, process.exitCode || 0);
 }
 
 const BROWSERS = [
@@ -128,7 +500,13 @@ const only = argOf('--only');
 const screenshots = args.includes('--screenshots');
 const useDist = args.includes('--dist');
 const textSize = argOf('--text') || 'M';
-if (!['S', 'M', 'L', 'XL'].includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
+// THE ARGUMENT CHECKS LIVE IN `main()`, NOT HERE. A throw on this line is a
+// throw at module scope, above the `.catch` that owns finish(2, …) — which is
+// how a typo'd flag exited 1 with an empty stdout at 725ca10a. The handler
+// registered near finish() catches it now either way; putting the refusal
+// inside the guarded path is what makes it a NAMED refusal in this tool's own
+// grammar instead of a rescued crash.
+const TEXT_SIZES = ['S', 'M', 'L', 'XL'];
 const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -154,13 +532,21 @@ function connectCdp(wsUrl) {
 }
 
 async function main() {
+  if (!TEXT_SIZES.includes(textSize)) throw new Error(`--text must be S, M, L, or XL (got ${textSize})`);
   if (!browserPath) throw new Error('no Chrome/Edge found; pass --browser or set CHROME');
+  // EACH HANDLE IS REGISTERED THE MOMENT IT EXISTS, never in a batch at the end:
+  // a death between two of these awaits must still close what already opened.
   const served = useDist ? null : await serve({ root: ROOT, port: 8298, open: false });
+  liveServed = served;
   const base = useDist ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href : `http://localhost:${served.port}/`;
   const browser = await launchBrowser({ prefix: 'carddrag-', browser: browserPath, timeoutMs: 15000 });
-  const cdp = connectCdp(browser.wsUrl); await cdp.ready;
-  let fails = 0; let ran = 0;
+  liveBrowser = browser;
+  const cdp = connectCdp(browser.wsUrl); liveCdp = cdp; await cdp.ready;
+  // THE COUNT IS DERIVED BY INCREMENTING AS EACH CHECK IS EVALUATED, never
+  // typed and never recounted from a list — a hand-typed N is a second copy of
+  // the truth and it is the one that rots.
   const ok = (value, label, detail = '') => {
+    checks++;
     console.log(`    ${value ? 'PASS' : 'FAIL'} ${label}${detail ? ` — ${detail}` : ''}`);
     if (!value) fails++;
   };
@@ -452,14 +838,290 @@ async function main() {
       ok(!multiEnd.mode && multiEnd.dropAttrs === 0 && multiEnd.aimed.length === 0
         && multiEnd.silhouettes === 0 && multiEnd.ghosts === 0,
       'multi-target drop clears every drag marker', JSON.stringify(multiEnd));
+
+      // ---- #294c · THE FOUR CELLS HIS OWN SENTENCE HAS AND THIS DOOR DID NOT
+      //
+      // His words are already quoted above: "if a card is selected and the
+      // enemy is highlighted, I can't drag the card on the enemy to use it."
+      // The #311 cell proves ONE reading of that sentence — a SLOW press, the
+      // read OPEN, the drag taking the press back. Every other reading of the
+      // same sentence was unexercised, and the fix's own comment ASSERTS one of
+      // them in prose: "while merely pending, a real drag crossing the shared
+      // 12 px boundary abandons the inspect in the same event and proceeds
+      // here." That is a claim with no cell behind it, so it is `unknown`.
+      //
+      // All four below start from the state he reported — a card ALREADY
+      // SELECTED — because that is the half of his sentence the existing cells
+      // vary least. They are cells 1-4 of Sunna's probe, re-derived here rather
+      // than carried: her run reported all four playing exactly once and this
+      // file does not take a reported green as a baseline.
+      //
+      // WHAT IS DELIBERATELY NOT HERE: a PLAIN (unselected) touch drag onto an
+      // enemy. tools/gesture-cancel.mjs check 5 already drives that gesture
+      // through synthesized CDP touch and asserts discard+1 — measured green at
+      // 1200x730 on this tree. A second copy of it here would be the second
+      // home Law 0 clause 4 forbids. Cell 4 is the SELECTED variant, which that
+      // tool does not drive and which is the state he actually reported.
+      const say = () => ev(`(() => { const p=window.__combat.piles; const m=(x)=>x.map(c=>c.instanceId);
+        return {hand:m(p.hand),discard:m(p.discard),exhaust:m(p.exhaust),
+          energy:document.querySelector('.energy-orb').textContent.trim(),
+          selected:[...document.querySelectorAll('.hand .card.selected')].map(x=>x.dataset.instanceId),
+          mode:document.querySelector('.combat').classList.contains('drag-targeting'),
+          ghosts:document.querySelectorAll('.card-drag-ghost').length,
+          inspectCopies:document.querySelectorAll('.card-inspect').length,
+          dropAttrs:document.querySelectorAll('[data-drop-state]').length,
+          silhouettes:document.querySelectorAll('.aim-silho').length}; })()`);
+      // AIM, THEN PRESS. Every gesture below is aimed at the coordinates
+      // `elementFromPoint` reports for the element, and the hit test travels
+      // WITH the point — so a press that lands on something else is a named
+      // failure here and never a quiet pass. Viki's A6 rule (#315), applied.
+      // THE SCROLL AND THE MEASUREMENT ARE TWO ACTS, and that is a repair, not
+      // tidiness. On the narrow layout `.hand` is a horizontal scroller, so
+      // `scrollIntoView` MOVES the strip — and reading the rect in the same
+      // synchronous block reads the box the card had BEFORE the scroll. The
+      // stale point then lands on a different card: measured at 320x640 and
+      // 390x844, where the tap meant to SELECT Slashing Strike PLAYED a Shield
+      // Defend instead (discard 0 -> 1 before the cell had begun). Same artifact
+      // gesture-cancel.mjs records in its header. Scroll, settle, then measure —
+      // and the hit test travels with the point that was actually measured.
+      const handCard = async (name) => {
+        await ev(`(() => { const c=[...document.querySelectorAll('.hand .card')]
+          .find(x=>new RegExp(${JSON.stringify(name)}).test(x.textContent));
+          if(c)c.scrollIntoView({inline:'center',block:'nearest'}); return !!c; })()`);
+        await wait(220);
+        return ev(`(() => {
+          const c=[...document.querySelectorAll('.hand .card')].find(x=>new RegExp(${JSON.stringify(name)}).test(x.textContent));
+          if(!c)return null;
+          const r=c.getBoundingClientRect(); const x=r.left+r.width/2, y=r.top+r.height/2;
+          const hit=document.elementFromPoint(x,y);
+          return {x,y,iid:c.dataset.instanceId||null,cardId:c.dataset.cardId||null,
+            onTop:!!(hit&&hit.closest&&hit.closest('.hand .card')===c)}; })()`);
+      };
+      const foeAt = (i) => ev(`(() => { const e=[...document.querySelectorAll('.enemy:not(.dead)')][${i}];
+        if(!e)return null; const r=e.getBoundingClientRect(); const x=r.left+r.width/2, y=r.top+r.height/2;
+        const hit=document.elementFromPoint(x,y);
+        return {id:e.dataset.eid,x,y,onTop:!!(hit&&hit.closest&&hit.closest('.enemy')===e)}; })()`);
+      const phaseOf = () => ev(`(() => { const c=document.querySelector('.hand .card[data-inspect="open"]')
+        || document.querySelector('.hand .card[data-inspect="pending"]'); return c?c.dataset.inspect:'idle'; })()`);
+      const freshBoard = async (label) => {
+        await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+        await until(`!!document.querySelector('.combat .hand .card')`, label); await wait(350);
+        await mouse('mouseMoved', 2, 2, false); await wait(80);
+      };
+      const tapSelect = async (box) => {
+        await mouse('mousePressed', box.x, box.y, true);
+        await mouse('mouseReleased', box.x, box.y, false); await wait(320);
+      };
+
+      // THE DIAL IS MEASURED, NOT TYPED. `data-inspect-progress` is written
+      // every frame as (now - t0) / ms, so two samples a known wall-gap apart
+      // solve for ms without this file ever naming 400. Cell 3's dwell is a
+      // function of what came back; if the dial cannot be read, cell 3 says so
+      // and fails rather than falling back to a number somebody remembered.
+      await freshBoard('combat · the inspect dial, measured');
+      const dialCard = await handCard('Slashing Strike');
+      if (!dialCard) throw new Error(`${shape}: the four gesture cells need Slashing Strike in the opening hand`);
+      await mouse('mousePressed', dialCard.x, dialCard.y, true);
+      const dialMs = await ev(`(() => new Promise((res) => {
+        const c = document.querySelector('.hand .card[data-inspect="pending"]');
+        if (!c) return res(null);
+        const t1 = performance.now(); const p1 = Number(c.dataset.inspectProgress || 0);
+        setTimeout(() => { const t2 = performance.now(); const p2 = Number(c.dataset.inspectProgress || 0);
+          res(p2 > p1 && p2 < 1 ? Math.round((t2 - t1) / (p2 - p1)) : null); }, 100); }))()`);
+      await mouse('mouseReleased', dialCard.x, dialCard.y, false); await wait(250);
+      ok(dialMs > 0, 'the inspect dial is read off the live page, so the medium dwell is derived and never typed',
+        `${dialMs} ms`);
+
+      // ---- CELL 1 · ALREADY SELECTED, THEN DRAGGED FAST ---------------------
+      // One move, no dwell: the read is still `pending` when the 12 px boundary
+      // is crossed. This is the sentence the fix wrote in a comment.
+      await freshBoard('combat · cell 1');
+      const c1 = await handCard('Slashing Strike');
+      const f1 = await foeAt(0);
+      if (!c1 || !f1) throw new Error(`${shape}: cell 1 needs one targetable card and one living enemy`);
+      ok(c1.onTop && f1.onTop, 'cell 1 aims at what it presses — card and enemy are topmost at their own centres',
+        JSON.stringify({ card: c1.onTop, foe: f1.onTop }));
+      await tapSelect(c1);
+      const sel1 = await say();
+      ok(sel1.selected.length === 1 && sel1.selected[0] === c1.iid,
+        'cell 1 the card is SELECTED before the drag, which is the state he reported', JSON.stringify(sel1.selected));
+      const c1b = await handCard('Slashing Strike');
+      await mouse('mousePressed', c1b.x, c1b.y, true);
+      const phase1 = await phaseOf();
+      await mouse('mouseMoved', f1.x, f1.y, true); await wait(140);
+      const armed1 = await say();
+      ok(phase1 === 'pending',
+        'cell 1 the press is still a PENDING read when the fast drag begins — no read had opened', `data-inspect=${phase1}`);
+      // THE AIM IS PART OF THE CELL, not decoration. ONE move both crosses the
+      // 12 px boundary and has to aim the drag, and nothing downstream can tell
+      // you it did not: the release commits off elementFromPoint whether or not
+      // a target was ever lit, so a single-jump drag that armed no aim plays the
+      // card and shows the player nothing on the way.
+      ok(armed1.mode && armed1.ghosts === 1 && armed1.inspectCopies === 0
+        && armed1.dropAttrs === 2 && armed1.silhouettes === 1,
+      'cell 1 a fast drag off a selected card starts AND aims on the same single move', JSON.stringify(armed1));
+      await mouse('mouseReleased', f1.x, f1.y, false); await wait(700);
+      const end1 = await say();
+      ok(end1.discard.length === sel1.discard.length + 1 && end1.discard.includes(c1.iid)
+        && end1.hand.length === sel1.hand.length - 1 && !end1.hand.includes(c1.iid),
+      'cell 1 the fast drag plays THAT card exactly once', JSON.stringify({ before: sel1.discard, after: end1.discard, iid: c1.iid }));
+      ok(!end1.mode && end1.ghosts === 0 && end1.dropAttrs === 0 && end1.silhouettes === 0 && end1.selected.length === 0,
+        'cell 1 the fast drag leaves no marker and no selection behind', JSON.stringify(end1));
+
+      // ---- CELL 2 · CARD A SELECTED WHILE CARD B IS DRAGGED -----------------
+      // Two different cardIds, so "which one played" is a fact and not a count.
+      await freshBoard('combat · cell 2');
+      // ONE CARD IS AIMED AT A TIME, and the order matters on a narrow board:
+      // `handCard` SCROLLS the strip, so measuring B before tapping A hands the
+      // tap a point B's scroll has already moved. Measured at 320x640 and
+      // 390x844 — the tap meant to select Slashing Strike played a Shield
+      // Defend, discard 0 -> 1 before the cell had begun, and the two shapes
+      // where the hand is not a scroller were green throughout. Each card is
+      // measured immediately before the gesture that uses it.
+      const a2 = await handCard('Slashing Strike');
+      const f2 = await foeAt(0);
+      if (!a2 || !f2) throw new Error(`${shape}: cell 2 needs one targetable card and one living enemy`);
+      ok(a2.onTop, 'cell 2 card A is topmost at the point the select will press', JSON.stringify(a2));
+      await tapSelect(a2);
+      const sel2 = await say();
+      const b2 = await handCard('Gorefire Slash');
+      if (!b2) throw new Error(`${shape}: cell 2 needs a second, differently-named targetable card`);
+      ok(sel2.selected.length === 1 && sel2.selected[0] === a2.iid,
+        'cell 2 card A is the selected one before card B is ever touched', JSON.stringify({ selected: sel2.selected, a: a2.iid, b: b2.iid }));
+      ok(b2.onTop && b2.iid !== a2.iid,
+        'cell 2 card B is a different card and is aimable after the selection raised card A', JSON.stringify(b2));
+      await mouse('mousePressed', b2.x, b2.y, true);
+      await mouse('mouseMoved', b2.x, b2.y - 30, true); await wait(60);
+      await mouse('mouseMoved', f2.x, f2.y, true); await wait(140);
+      await mouse('mouseReleased', f2.x, f2.y, false); await wait(700);
+      const end2 = await say();
+      ok(end2.discard.length === sel2.discard.length + 1 && end2.hand.length === sel2.hand.length - 1,
+        'cell 2 exactly one card leaves the hand', JSON.stringify({ hand: [sel2.hand.length, end2.hand.length], discard: [sel2.discard.length, end2.discard.length] }));
+      ok(end2.discard.includes(b2.iid) && !end2.discard.includes(a2.iid) && end2.hand.includes(a2.iid),
+        'cell 2 the card that PLAYS is the one under the finger, never the one that was selected',
+        JSON.stringify({ dragged: b2.iid, selected: a2.iid, discard: end2.discard }));
+      ok(end2.selected.length === 0 && end2.ghosts === 0 && end2.mode === false,
+        'cell 2 the drag clears card A’s selection instead of stranding it', JSON.stringify(end2));
+
+      // ---- CELL 3 · A MEDIUM DRAG, AND EXACTLY ONE PLAY ---------------------
+      // The dwell is a fraction of the MEASURED dial, and the phase is asserted
+      // rather than assumed: this cell only means "inside the dial" if the read
+      // is still pending when the drag starts.
+      await freshBoard('combat · cell 3');
+      const c3 = await handCard('Slashing Strike');
+      const f3 = await foeAt(0);
+      if (!c3 || !f3) throw new Error(`${shape}: cell 3 needs one targetable card and one living enemy`);
+      await tapSelect(c3);
+      const sel3 = await say();
+      const c3b = await handCard('Slashing Strike');
+      const dwell = dialMs > 0 ? Math.max(1, Math.round(dialMs * 0.65)) : null;
+      await mouse('mousePressed', c3b.x, c3b.y, true);
+      if (dwell) await wait(dwell);
+      const phase3 = await phaseOf();
+      for (let i = 1; i <= 5; i++) {
+        await mouse('mouseMoved', c3b.x + (f3.x - c3b.x) * i / 5, c3b.y + (f3.y - c3b.y) * i / 5, true);
+        await wait(30);
+      }
+      // MID-DRAG, BEFORE THE RELEASE. A read that opens ON TOP of a live drag
+      // is a whole card-sized copy over the board while the player is still
+      // aiming, and nothing after the release can see that it happened. The
+      // extra settle is a fraction of the measured dial, so this sample sits
+      // PAST the dial under a defect and never reaches it under the fix.
+      await wait(dialMs > 0 ? dialMs : 400);
+      const armed3 = await say();
+      const phase3b = await phaseOf();
+      await mouse('mouseReleased', f3.x, f3.y, false); await wait(800);
+      const end3 = await say();
+      ok(dwell !== null && phase3 === 'pending',
+        'cell 3 the medium dwell sits INSIDE the measured dial and the read is still pending',
+        `dwell ${dwell} ms of a measured ${dialMs} ms, data-inspect=${phase3}`);
+      ok(end3.discard.length === sel3.discard.length + 1 && end3.hand.length === sel3.hand.length - 1
+        && end3.discard.includes(c3.iid),
+      'cell 3 a medium drag plays exactly ONCE — not zero, not twice',
+      JSON.stringify({ hand: [sel3.hand.length, end3.hand.length], discard: [sel3.discard.length, end3.discard.length], energy: [sel3.energy, end3.energy] }));
+      ok(armed3.mode && armed3.ghosts === 1 && armed3.inspectCopies === 0,
+        'cell 3 no read opens ON TOP of the live medium drag', `data-inspect=${phase3b} ${JSON.stringify(armed3)}`);
+      ok(end3.selected.length === 0 && end3.ghosts === 0 && end3.inspectCopies === 0 && end3.dropAttrs === 0,
+        'cell 3 the medium drag arms nothing that outlives it', JSON.stringify(end3));
+
+      // ---- CELL 4 · THE SAME SENTENCE, DRIVEN BY A REAL FINGER --------------
+      // REAL touch: Emulation.setTouchEmulationEnabled + Input.dispatchTouch-
+      // Event, aimed with elementFromPoint, with EVERY pointerdown recorded and
+      // its pointerType read back — so a press that missed, or a press the page
+      // saw as a mouse, is a named failure and never a quiet pass.
+      await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }, S);
+      await freshBoard('combat · cell 4 (real touch)');
+      await ev(`(() => { window.__cell4 = []; document.addEventListener('pointerdown', (e) => window.__cell4.push({
+        type: e.pointerType,
+        iid: ((e.target.closest && e.target.closest('.hand .card')) || { dataset: {} }).dataset.instanceId || null }), true);
+        return 1; })()`);
+      const touchAt = (type, x, y) => cdp.send('Input.dispatchTouchEvent', {
+        type, touchPoints: type === 'touchEnd' ? [] : [{ x: Math.round(x), y: Math.round(y), id: 77 }],
+      }, S);
+      const c4 = await handCard('Slashing Strike');
+      const f4 = await foeAt(0);
+      if (!c4 || !f4) throw new Error(`${shape}: cell 4 needs one targetable card and one living enemy`);
+      ok(c4.onTop && f4.onTop, 'cell 4 the finger aims at what elementFromPoint reports for the card and the enemy',
+        JSON.stringify({ card: c4.onTop, foe: f4.onTop }));
+      await touchAt('touchStart', c4.x, c4.y); await touchAt('touchEnd'); await wait(360);
+      const sel4 = await say();
+      ok(sel4.selected.length === 1 && sel4.selected[0] === c4.iid,
+        'cell 4 a real finger SELECTS the card, which is the first half of his sentence', JSON.stringify(sel4.selected));
+      const c4b = await handCard('Slashing Strike');
+      await touchAt('touchStart', c4b.x, c4b.y);
+      for (let i = 1; i <= 6; i++) {
+        await touchAt('touchMove', c4b.x + (f4.x - c4b.x) * i / 6, c4b.y + (f4.y - c4b.y) * i / 6);
+        await wait(30);
+      }
+      // DWELL PAST THE MEASURED DIAL BEFORE SAMPLING — THE SAME CONSTRUCTION
+      // CELL 3 ALREADY USES TWELVE LINES UP, AND CELL 4 WAS MISSING IT.
+      // Without this the sample lands ~180 ms after touchStart (6 moves x 30 ms
+      // plus CDP round trips) while the inspect dial is ~400 ms, so under the
+      // known-bad the read has usually NOT reached `open` yet and the plant
+      // reports UNCAUGHT — which reads exactly like "the check is blind."
+      //
+      // MEASURED, BECAUSE I HAD ALREADY EXPLAINED THIS AWAY ONCE. At 725ca10a I
+      // saw this plant go UNCAUGHT, blamed a loaded box, re-ran it once on a
+      // quiet box, got a red, and wrote that down as the answer. ONE RED IS NOT
+      // A RATE. Re-measured properly at 8c140fb, same door, one shape, six
+      // serial runs on a quiet box: NAMED RED IN 1 OF 6. The plant was
+      // intermittent, and the corpus green it produced was `unknown`, not green.
+      //
+      // Under the FIX this changes nothing: the touch read is abandoned at SLOP
+      // on the first move, so `data-inspect` is idle and inspectCopies stays 0
+      // however long we wait. Under the KNOWN-BAD the dial now always fires
+      // before the sample. Costs one dial-length per shape.
+      await wait(dialMs > 0 ? dialMs : 400);
+      const armed4 = await say();
+      await touchAt('touchEnd'); await wait(800);
+      const end4 = await say();
+      const downs4 = await ev('JSON.stringify(window.__cell4)');
+      const presses4 = JSON.parse(downs4 || '[]');
+      ok(presses4.length === 2 && presses4.every((d) => d.type === 'touch' && d.iid === c4.iid),
+        'cell 4 both presses arrived as REAL TOUCH and both landed on that card', downs4);
+      ok(armed4.mode && armed4.ghosts === 1 && armed4.inspectCopies === 0,
+        'cell 4 the touch drag arms the drop off a selected card', JSON.stringify(armed4));
+      ok(end4.discard.length === sel4.discard.length + 1 && end4.discard.includes(c4.iid)
+        && end4.hand.length === sel4.hand.length - 1,
+      'cell 4 the finger plays the selected card exactly once',
+      JSON.stringify({ before: sel4.discard, after: end4.discard, iid: c4.iid }));
+      ok(!end4.mode && end4.ghosts === 0 && end4.dropAttrs === 0 && end4.selected.length === 0,
+        'cell 4 the touch drag leaves no marker and no selection behind', JSON.stringify(end4));
+      await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: false }, S);
+
       await cdp.send('Target.closeTarget', { targetId });
     }
     if (!ran) throw new Error(`--only ${only} matched no shape`);
-    console.log(`\n${fails ? `FAIL — ${fails} finding(s)` : 'PASS — card drag targeting and approved hand paging hold at every measured shape'}`);
-    process.exitCode = fails ? 1 : 0;
   } finally {
-    cdp.close(); await browser.close(); if (served) served.server.close();
+    await closeEverything();
   }
 }
 
-main().catch((e) => { console.error(`card-drag-targeting: ${e.message}`); process.exitCode = 2; });
+// THE VERDICT LINE ENDS AT ITS COUNTED CLAIM. `readVerdict` (tools/verdict.mjs)
+// refuses trailing prose outright — D103 — so the sentence this tool used to
+// print ("PASS — card drag targeting and approved hand paging hold at every
+// measured shape") matched no row and was refused, exit 3. It is one of the ~40
+// D103 named and left to "whoever wraps next"; this is that wrap.
+if (!process.argv.includes('--selftest')) {
+  main().then(() => finish(fails ? 1 : 0)).catch((e) => finish(2, e.message));
+}
