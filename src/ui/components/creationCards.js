@@ -3,6 +3,7 @@
 // a look-alike maintained beside it.
 
 import { attachTooltip } from './tooltip.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 function appendVisual(host, visual) {
   if (!visual) return;
@@ -32,7 +33,7 @@ export function primaryStatCard(row) {
   value.className = 'disc-value';
   value.textContent = row.value;
   card.append(name, value);
-  return card;
+  return markUiComponent(card, UI.primaryStatCard);
 }
 
 export function resourceStrip(rows, poise) {
@@ -55,7 +56,7 @@ export function resourceStrip(rows, poise) {
   poiseLabel.textContent = 'Poise';
   poiseItem.append(poiseLabel, ` ${poise.value}`);
   strip.appendChild(poiseItem);
-  return strip;
+  return markUiComponent(strip, UI.resourceStrip);
 }
 
 export function viewModeToggle(value, onChoose, label = 'View choices') {
@@ -73,7 +74,7 @@ export function viewModeToggle(value, onChoose, label = 'View choices') {
     button.dataset.viewMode = mode;
     group.appendChild(button);
   }
-  return group;
+  return markUiComponent(group, UI.viewModeToggle);
 }
 
 export function booleanSettingToggle(label, value, onChoose) {
@@ -92,7 +93,7 @@ export function booleanSettingToggle(label, value, onChoose) {
   knob.className = 'cc-switch-knob';
   button.appendChild(knob);
   wrapper.append(text, button);
-  return wrapper;
+  return markUiComponent(wrapper, UI.booleanSettingToggle);
 }
 
 export function classChoiceCard(cls, { selected = false, locked = false, visual = null, onChoose = null } = {}) {
@@ -119,7 +120,7 @@ export function classChoiceCard(cls, { selected = false, locked = false, visual 
   }
   card.append(icon, copy);
   if (!locked && onChoose) card.addEventListener('click', onChoose);
-  return card;
+  return markUiComponent(card, UI.classChoiceCard, locked ? 'locked' : 'available');
 }
 
 export function classPreviewPane({ cls, sprite = null, resources = null, relic = null, relicDescription = '' }) {
@@ -158,7 +159,7 @@ export function classPreviewPane({ cls, sprite = null, resources = null, relic =
     relicRow.append(icon, copy);
   }
   pane.append(eyebrow, title, art, resourceHeading, resourceHost, relicHeading, relicRow);
-  return pane;
+  return markUiComponent(pane, UI.classPreviewPane);
 }
 
 export function classResourceGrid(rows) {
@@ -176,7 +177,7 @@ export function classResourceGrid(rows) {
     item.append(label, value);
     grid.appendChild(item);
   }
-  return grid;
+  return markUiComponent(grid, UI.classResourceGrid);
 }
 
 export function selectionSectionFace(label, value, visual = null) {
@@ -196,7 +197,7 @@ export function selectionSectionFace(label, value, visual = null) {
   receipt.textContent = value;
   node.append(name, receipt);
   return {
-    node,
+    node: markUiComponent(node, UI.selectionSectionFace),
     setValue(next) { receipt.textContent = next; },
   };
 }
@@ -208,7 +209,7 @@ export function modeChoiceButton(mode, selected, onChoose) {
   });
   button.dataset.modeId = mode.id;
   button.dataset.creationMode = mode.id;
-  return button;
+  return markUiComponent(button, UI.modeChoice);
 }
 
 export function spriteChoiceButton(style, selected, onChoose) {
@@ -217,7 +218,7 @@ export function spriteChoiceButton(style, selected, onChoose) {
     label: `${style.name} sprite`, onChoose,
   });
   button.dataset.spriteStyle = style.id;
-  return button;
+  return markUiComponent(button, UI.spriteChoice);
 }
 
 export function tintChoiceButton(tint, selected, onChoose) {
@@ -228,7 +229,7 @@ export function tintChoiceButton(tint, selected, onChoose) {
   button.style.background = tint.css;
   button.title = tint.name;
   attachTooltip(button, () => tint.name);
-  return button;
+  return markUiComponent(button, UI.tintChoice);
 }
 
 export function sigilChoiceButton(glyph, selected, onChoose) {
@@ -237,7 +238,7 @@ export function sigilChoiceButton(glyph, selected, onChoose) {
     label: `Sigil ${glyph}`, onChoose,
   });
   button.dataset.sigil = glyph;
-  return button;
+  return markUiComponent(button, UI.sigilChoice);
 }
 
 export function keepsakeChoiceButton(keepsake, selected, onChoose) {
@@ -256,7 +257,7 @@ export function keepsakeChoiceButton(keepsake, selected, onChoose) {
   description.textContent = keepsake.desc;
   copy.append(name, description);
   button.append(icon, copy);
-  return button;
+  return markUiComponent(button, UI.keepsakeChoice);
 }
 
 export function relicChoiceButton(relic, description, selected, onChoose) {
@@ -273,5 +274,5 @@ export function relicChoiceButton(relic, description, selected, onChoose) {
   const copy = document.createElement('small');
   copy.textContent = description;
   button.append(icon, name, copy);
-  return button;
+  return markUiComponent(button, UI.relicChoiceCard);
 }

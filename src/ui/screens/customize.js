@@ -18,6 +18,7 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
+import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import {
   primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
@@ -48,6 +49,8 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   };
   let previewAttributes = null;
   let pointBuyOverlay = null;
+  let pointBuyReturnFocus = null;
+  let pointBuyKeydown = null;
   let refreshSectionFaces = () => {};
   let refreshCharacterFaces = () => {};
   let refreshSpriteFaces = () => {};
@@ -119,8 +122,10 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     </div>`;
 
   const $ = (selector) => app.querySelector(selector);
+  const customizeScreen = $('.screen.customize');
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
+  const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
   const equipmentSections = registries.characterCreation.equipmentSections;
   const equipmentNodes = new Map();
@@ -305,14 +310,25 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     statBox.appendChild(modes);
   }
 
-  function closePointBuy() {
+  function closePointBuy({ restoreFocus = true } = {}) {
     if (!pointBuyOverlay) return;
+    if (pointBuyKeydown) window.removeEventListener('keydown', pointBuyKeydown, true);
     pointBuyOverlay.remove();
+    customizeScreen.inert = false;
     pointBuyOverlay = null;
+    pointBuyKeydown = null;
+    if (restoreFocus) {
+      const target = pointBuyReturnFocus?.isConnected
+        ? pointBuyReturnFocus
+        : statBox.querySelector('.se-mode.chosen');
+      if (target) { target.focus(); focusElement(target); }
+    }
+    pointBuyReturnFocus = null;
   }
 
   function openPointBuy() {
-    closePointBuy();
+    closePointBuy({ restoreFocus: false });
+    pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const overlay = document.createElement('div');
     overlay.className = 'modal-veil cc-stat-overlay';
     overlay.setAttribute('role', 'dialog');
@@ -320,6 +336,29 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     overlay.setAttribute('aria-labelledby', 'cc-stat-title');
     pointBuyOverlay = overlay;
     app.appendChild(overlay);
+    customizeScreen.inert = true;
+    let needsInitialFocus = true;
+    pointBuyKeydown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopPropagation();
+        overlay.querySelector('[data-stat-cancel]')?.click();
+        return;
+      }
+      if (event.key !== 'Tab') return;
+      const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => !element.hidden && element.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault(); event.stopPropagation(); last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault(); event.stopPropagation(); first.focus();
+      } else if (!overlay.contains(document.activeElement)) {
+        event.preventDefault(); event.stopPropagation(); (event.shiftKey ? last : first).focus();
+      }
+    };
+    window.addEventListener('keydown', pointBuyKeydown, true);
 
     const draw = () => {
       const focusedStep = overlay.querySelector('.se-step.gp-focus')
@@ -332,7 +371,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
-      overlay.innerHTML = `<div class="modal cc-stat-modal"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
+      overlay.innerHTML = `<div class="modal cc-stat-modal" tabindex="-1"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
         + `<p class="se-pool">Points to assign: ${remaining}</p><div class="cc-allocation-rows"></div>`
         + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>Standard</button><button type="button" data-stat-done>Done</button></div></div>`;
       const rows = overlay.querySelector('.cc-allocation-rows');
@@ -374,9 +413,11 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
         closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
       });
       overlay.querySelector('[data-stat-cancel]').addEventListener('click', () => {
-        state.attributeMode = defaultCreationModeId(registries);
+        state.attributeMode = STANDARD;
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        const standard = statBox.querySelector('.se-mode.chosen');
+        standard?.focus(); focusElement(standard);
       });
       if (preservedFocus) {
         const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
@@ -386,6 +427,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
           if (preservedFocus.dom) replacement.focus();
           if (preservedFocus.cursor) focusElement(replacement);
         }
+      } else if (needsInitialFocus) {
+        needsInitialFocus = false;
+        queueMicrotask(() => overlay.querySelector('.cc-stat-modal')?.focus());
       }
     };
     draw();
@@ -452,6 +496,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     armourBox.innerHTML = '';
     for (const piece of armourChoices()) {
       const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
+      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
       button.dataset.startingArmourId = piece.id;
       button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
       button.addEventListener('click', () => {
@@ -465,6 +510,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       box.innerHTML = '';
       for (const piece of creationHandChoices(registries, state.classId, hand)) {
         const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
+        markUiComponent(button, UI.equipmentChoiceCard, hand);
         button.dataset.hand = hand; button.dataset.armamentId = piece.id;
         button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
         button.addEventListener('click', () => {
@@ -537,6 +583,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     face: { label: row.label, value: row.value() },
     reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
   })));
+  markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
   refreshCharacterFaces = () => {
     for (const row of characterRows) characterFold.setValue(row.key, row.value());
   };
@@ -616,11 +663,17 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     disclosureStat.appendChild(primaryStatCard(specimenProjection.attributes[0]));
     const disclosureKeepsake = document.createElement('div');
     disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
-    disclosureKeepsake.appendChild(keepsakeChoiceButton(registries.characterCreation.keepsakes[0], true));
+    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
+    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
+      keepsake, keepsake.id === disclosureKeepsakeId,
+      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
+    )));
+    drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
       { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
       { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
+    markUiComponent(disclosureHost, UI.characterDisclosure);
     disclosureSpecimen.open('sample-primary');
     const statHost = document.createElement('div');
     statHost.className = 'cc-primary-stats cc-catalog-specimen';
@@ -630,9 +683,13 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const classChoiceHost = document.createElement('div');
     classChoiceHost.className = 'class-row';
     classChoiceHost.dataset.view = 'list';
-    for (const cls of registries.classes.all().slice(0, 2)) classChoiceHost.appendChild(classChoiceCard(cls, {
-      selected: cls.id === state.classId, visual: classGlyph(cls.id),
-    }));
+    let specimenClassId = state.classId;
+    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
+      selected: cls.id === specimenClassId,
+      visual: classGlyph(cls.id),
+      onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
+    })));
+    drawClassChoices();
     classChoiceSpecimen.appendChild(classChoiceHost);
     const previewRelic = registries.relics.get(state.startingRelicId);
     const classPreviewHost = classPreviewPane({
@@ -643,6 +700,8 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
+    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
       const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
@@ -651,22 +710,45 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       viewToggleHost = next;
     };
     setCatalogView('list');
-    const autoAdvanceSpecimen = booleanSettingToggle('Auto-advance on valid choice', true, () => {});
-    autoAdvanceSpecimen.classList.add('cc-catalog-specimen');
+    let autoAdvanceSpecimen = null;
+    const setCatalogAutoAdvance = (value) => {
+      const next = booleanSettingToggle('Auto-advance on valid choice', value, setCatalogAutoAdvance);
+      next.classList.add('cc-catalog-specimen');
+      if (autoAdvanceSpecimen) autoAdvanceSpecimen.replaceWith(next);
+      autoAdvanceSpecimen = next;
+    };
+    setCatalogAutoAdvance(true);
     const armourSpecimen = document.createElement('div');
     armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
     armourSpecimen.dataset.view = 'list';
-    armourSpecimen.appendChild(pieceChip(registries, armourChoices()[0], { selected: true }));
-    const relicSpecimen = relicChoiceButton(previewRelic, relicText(previewRelic, registries), true);
-    relicSpecimen.classList.add('cc-catalog-specimen');
+    const specimenArmours = armourChoices().slice(0, 2);
+    let specimenArmourId = specimenArmours[0].id;
+    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
+      const button = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+      button.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
+      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
+      button.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+      return button;
+    }));
+    drawArmourChoices();
+    const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
+    const relicSpecimen = document.createElement('div');
+    relicSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
+    let specimenRelicId = specimenRelics[0].id;
+    const drawRelicChoices = () => relicSpecimen.replaceChildren(...specimenRelics.map((relic) => relicChoiceButton(
+      relic, relicText(relic, registries), relic.id === specimenRelicId,
+      () => { specimenRelicId = relic.id; drawRelicChoices(); },
+    )));
+    drawRelicChoices();
     const selectionFaceSpecimen = selectionSectionFace('STARTING ARMOUR', 'Ashen Vigil').node;
     selectionFaceSpecimen.classList.add('cc-catalog-specimen');
     const specimens = [
       { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
       { key: 'class-preview-pane', label: 'CLASS PREVIEW PANE', node: classPreviewHost },
+      { key: 'class-resource-grid', label: 'CLASS RESOURCE GRID', node: classResourceSpecimen },
       { key: 'class-choice-card', label: 'CLASS CHOICE CARD', node: classChoiceSpecimen },
       { key: 'view-mode-toggle', label: 'LIST / GRID TOGGLE', node: viewToggleHost },
-      { key: 'auto-advance-toggle', label: 'AUTO-ADVANCE TOGGLE', node: autoAdvanceSpecimen },
+      { key: 'boolean-setting-toggle', label: 'BOOLEAN SETTING TOGGLE', node: autoAdvanceSpecimen },
       { key: 'selection-section-face', label: 'SELECTION SUBCARD FACE', node: selectionFaceSpecimen },
       { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
       { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(

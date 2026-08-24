@@ -95,6 +95,42 @@ shared-run-hud
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
 
+## Character Creation components
+
+These components are the production renderers used by Character Creation and
+its `?shot=components` reference page. Art-bearing components receive their
+visual node or content row from the existing asset/content registries, so later
+custom art does not require a second card implementation.
+
+| Component ID | Model / input | Renderer | Reuse |
+|---|---|---|---|
+| `character-disclosure` | disclosure entries | `disclosure.mountDisclosure` | Character Creation + catalog |
+| `class-preview-pane` | class preview presentation | `creationCards.classPreviewPane` | Class preview + catalog |
+| `class-resource-grid` | `statProjection.derived[]` | `creationCards.classResourceGrid` | Class preview + catalog |
+| `class-choice-card` | class row + selected/locked state | `creationCards.classChoiceCard` | Class selection + catalog |
+| `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
+| `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
+| `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
+| `primary-stat-card` | attribute projection row | `creationCards.primaryStatCard` | Character stats + catalog |
+| `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
+| `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
+| `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog |
+| `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
+| `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
+| `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
+| `equipment-choice-card` | equipment row + selected state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
+| `relic-choice-card` | relic row + selected state | `creationCards.relicChoiceButton` | Starting Equipment + catalog |
+
+```text
+class-preview-pane
+└─ class-resource-grid
+
+character-disclosure
+├─ mode-choice + primary-stat-card × N + resource-strip
+├─ sprite-choice + sigil-choice + tint-choice
+└─ keepsake-choice
+```
+
 ## Menu components
 
 | Component ID | Model | Renderer | Purpose |
