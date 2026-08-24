@@ -742,7 +742,7 @@ async function browserRoute(entries, {
     await send('Emulation.setDeviceMetricsOverride', {
       width: shape.width, height: shape.height, deviceScaleFactor: 1, mobile: shape.mobile,
     });
-    const entry = artifact ? '/build/AshenSpire.html' : '/';
+    const entry = `${artifact ? '/build/AshenSpire.html' : '/'}?shot=title`;
     await send('Page.navigate', { url: `http://127.0.0.1:${port}${entry}` });
     await until('document.readyState === "complete" && !!document.querySelector("#settings")', 'title Settings control is unreachable');
     const title = await evaluate(`(() => ({
