@@ -1,6 +1,14 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { trayModel } from './TrayModels.js';
+
+const DEFAULT_REGIONS = Object.freeze([
+  Object.freeze({ id: 'slots', label: 'Slots', count: 0, unit: 'slot', edge: 'bottom', expanded: true }),
+  Object.freeze({ id: 'inventory', label: 'Inventory', count: 0, unit: 'item', edge: 'bottom', expanded: false }),
+  Object.freeze({ id: 'cards', label: 'Cards', count: 0, unit: 'card', edge: 'bottom', expanded: false }),
+  Object.freeze({ id: 'stats', label: 'Stats', count: 0, unit: 'stat', edge: 'bottom', expanded: false }),
+]);
 
 function armouryViewSwitcherModel({ views, activeView }) {
   return componentModel(UI.armouryViewSwitcher, {
@@ -30,25 +38,46 @@ function armouryBodyModel({ view, figure, slots }) {
   });
 }
 
-function armouryInventoryModel() {
+export function armouryInventoryModel() {
   return componentModel(UI.armouryInventory, {
     accessibility: { role: 'region', label: 'Inventory' },
   });
 }
 
-function armouryStatsPanelModel() {
+export function armouryStatsPanelModel() {
   return componentModel(UI.armouryStatsPanel, {
     accessibility: { role: 'region', label: 'Attributes and resources' },
   });
 }
 
-function armouryCardStripModel() {
+export function armouryCardStripModel() {
   return componentModel(UI.armouryCardStrip, {
     accessibility: { role: 'region', label: 'Equipment cards' },
   });
 }
 
-export function armouryPanelModel({ view, views, layout, picking = false, notice = '' }) {
+export function armouryPanelModel({ view, views, layout, subject = 'slots', regions = DEFAULT_REGIONS, picking = false, notice = '' }) {
+  const content = Object.freeze({
+    slots: armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
+    inventory: armouryInventoryModel(),
+    cards: armouryCardStripModel(),
+    stats: armouryStatsPanelModel(),
+  });
+  const regionModels = regions.map((region) => {
+    const item = content[region.id];
+    if (!item) throw new Error(`Unknown Armoury region model: ${region.id}`);
+    if (region.id === subject) return item;
+    return trayModel({
+      id: region.id,
+      name: region.label,
+      count: region.count,
+      itemType: region.unit,
+      edge: region.edge || 'bottom',
+      expanded: !!region.expanded,
+      sortable: !!region.sortable,
+      items: [item],
+    });
+  });
   return componentModel(UI.armouryPanel, {
     variant: view,
     properties: {
@@ -57,14 +86,12 @@ export function armouryPanelModel({ view, views, layout, picking = false, notice
       notice,
       figure: !!layout?.figure,
       slots: layout?.slots || 'none',
+      subject,
     },
     accessibility: { role: 'dialog', label: 'Armoury', modal: true },
     children: [
       armouryHeaderModel({ views, activeView: view }),
-      armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
-      armouryInventoryModel(),
-      armouryStatsPanelModel(),
-      armouryCardStripModel(),
+      ...regionModels,
     ],
   });
 }

@@ -43,6 +43,8 @@ import {
   renderArmouryOverlay, renderArmouryPanel, renderInventoryItemCard, renderInventoryDetailCard,
   renderEquipmentSlot,
 } from '../components/armouryComponents.js';
+import { renderTray } from '../components/trayComponents.js';
+import { descendantModel } from '../models/ComponentModel.js';
 
 const CFG = () => balance.equipment;
 
@@ -170,14 +172,16 @@ const REGIONS = [
   {
     id: 'slots',
     label: 'Slots',
-    sel: '.armoury-body',
+    className: 'armoury-slots-tray',
+    edge: 'bottom',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
   },
   {
     id: 'inventory',
     label: 'Inventory',
-    sel: '.armoury-inventory',
+    className: 'armoury-inventory',
+    edge: 'bottom',
     count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
       .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
     unit: 'item',
@@ -185,9 +189,18 @@ const REGIONS = [
   {
     id: 'cards',
     label: 'Cards',
-    sel: '.armoury-strip',
+    className: 'armoury-strip',
+    edge: 'bottom',
     count: (el) => el.querySelectorAll('.equip-cards > .equip-card-with-count').length,
     unit: 'card',
+  },
+  {
+    id: 'stats',
+    label: 'Stats',
+    className: 'armoury-stats-tray',
+    edge: 'bottom',
+    count: (el) => el.querySelectorAll('.statproj-attributes > span, [data-stat]').length,
+    unit: 'stat',
   },
 ];
 
@@ -947,10 +960,10 @@ export function mountEquipment(host, {
   }
 
   /** The no-selection shelf: all currently usable item kinds, folded by row. */
-  function inventoryBlock() {
+  function inventoryBlock(model, rows = inventoryRows(registries, run, meta)) {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list';
-    const rows = inventoryRows(registries, run, meta);
+    markUiComponent(box, model.component, model.variant);
     const entries = rows.map((row) => {
       const target = inventoryTarget(row);
       const draggable = !!target;
@@ -992,11 +1005,10 @@ export function mountEquipment(host, {
   }
 
   /** The rewrites, live: the actual cards this loadout produces right now. */
-  function cardStrip() {
+  function cardStrip(model, surface = equipmentSurfaceReceipt(registries, run)) {
     const box = document.createElement('div');
     box.className = 'equip-cards';
-    markUiComponent(box, UI.armouryCardStrip);
-    const surface = equipmentSurfaceReceipt(registries, run);
+    markUiComponent(box, model.component, model.variant);
     const shown = new Set();
     for (const inst of run.deck || []) {
       const key = inst.equipmentRole || `signature:${inst.cardId}`;
@@ -1036,11 +1048,10 @@ export function mountEquipment(host, {
     return box;
   }
 
-  function statsComparison() {
-    const projection = statProjection(registries, run);
+  function statsComparison(model, projection = statProjection(registries, run)) {
     const box = document.createElement('section');
     box.className = 'armoury-stats';
-    markUiComponent(box, UI.armouryStatsPanel);
+    markUiComponent(box, model.component, model.variant);
     box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
       + `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
       + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
@@ -1081,56 +1092,45 @@ export function mountEquipment(host, {
    * own members. The convention has no answer for a set that contains another
    * set, and the armoury is where that first bites.
    */
-  function dressRegions() {
+  function regionTray(r, model, content) {
     const subject = subjectRegion();
-    for (const r of REGIONS) {
-      const el = wrap.querySelector(r.sel);
-      if (!el) continue;
-      el.dataset.region = r.id;
-      const isSubject = !!subject && r.id === subject.id;
-      el.dataset.role = isSubject ? 'subject' : 'context';
-      if (isSubject) { delete el.dataset.collapsed; continue; }
-      const shut = folded.get(r.id) === true;
-      el.dataset.collapsed = shut ? '1' : '0';
-
-      const head = document.createElement('div');
-      head.className = 'region-head';
-      markUiComponent(head, UI.armouryRegionHeader, r.id);
-      const n = r.count(el);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'region-fold';
-      btn.dataset.fold = r.id;
-      btn.setAttribute('aria-expanded', shut ? 'false' : 'true');
-      // LAW 3 CLAUSE 4 — a control ships with a contextual tooltip or it is a
-      // defect, and `title=` alone does NOT satisfy it: touch and gamepad players
-      // never see one. The law's own words, and I wrote `data-tip` here first —
-      // an attribute NOTHING in this tree reads, under a comment claiming the
-      // clause was met. attachTooltip is the mechanism (pointer AND the pad's
-      // gpfocus), so this is the mechanism, not an attribute that looks like it.
-      const say = () => `<div class="tt-title">${esc(shut ? `Show ${r.label}` : `Hide ${r.label}`)}</div>`
-        + esc(shut
-          ? `${r.count(el)} ${r.unit}${r.count(el) === 1 ? '' : 's'} in here.`
-          : `Folds away, so ${subject ? subject.label.toLowerCase() : 'the main pane'} get the room.`);
-      btn.title = shut ? `Show ${r.label.toLowerCase()}` : `Hide ${r.label.toLowerCase()}`;
-      attachTooltip(btn, say);
-      btn.innerHTML = `<span class="rf-caret">${shut ? '▸' : '▾'}</span>`
-        + `<span class="rf-label">${esc(r.label)}</span>`
-        + `<span class="rf-count">${n} ${esc(r.unit)}${n === 1 ? '' : 's'}</span>`;
-      btn.addEventListener('click', () => {
+    const shut = folded.get(r.id) === true;
+    const n = model.properties.count;
+    const rendered = renderTray(model, {
+      onToggle: () => {
         folded.set(r.id, !folded.get(r.id));
-        // The whole map goes back, not just the one that moved: a partial write
-        // would make `meta.settings.armouryCollapsed` disagree with the screen
-        // for every other region. One fact, one home.
         if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
         draw();
-        // draw() replaces the activated header. Put keyboard/gamepad focus on
-        // its replacement so expanding a region does not throw the player out
-        // of the control they just used.
         wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
-      });
-      head.appendChild(btn);
-      el.insertBefore(head, el.firstChild);
+      },
+      renderContent: (host) => host.appendChild(content),
+    });
+    rendered.element.classList.add(r.className);
+    rendered.element.dataset.region = r.id;
+    rendered.element.dataset.role = 'context';
+    rendered.header.dataset.armouryRegion = r.id;
+    const say = () => `<div class="tt-title">${esc(shut ? `Show ${r.label}` : `Hide ${r.label}`)}</div>`
+      + esc(shut
+        ? `${n} ${r.unit}${n === 1 ? '' : 's'} in here.`
+        : `Folds toward the ${r.edge} edge, so ${subject ? subject.label.toLowerCase() : 'the main pane'} get the room.`);
+    rendered.fold.title = shut ? `Show ${r.label.toLowerCase()}` : `Hide ${r.label.toLowerCase()}`;
+    attachTooltip(rendered.fold, say);
+    return rendered.element;
+  }
+
+  function mountRegions(rendered, panelModel, contents) {
+    const subject = subjectRegion();
+    const subjectContent = contents[subject?.id];
+    if (subjectContent) {
+      subjectContent.dataset.region = subject.id;
+      subjectContent.dataset.role = 'subject';
+      rendered.subject.replaceChildren(subjectContent);
+    }
+    for (const r of contextRegions()) {
+      const content = contents[r.id];
+      const model = panelModel.children.find((child) => child.component === UI.foldingTray
+        && child.properties.id === r.id);
+      if (content && model) rendered.trays.appendChild(regionTray(r, model, content));
     }
   }
 
@@ -1140,7 +1140,30 @@ export function mountEquipment(host, {
     // host names the set, each control names its member, so an instrument can
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
-    const panelModel = armouryPanelModel({ view, views: IDS, layout: L, picking: !!picking, notice });
+    const inventoryData = inventoryRows(registries, run, meta);
+    const equipmentSurface = equipmentSurfaceReceipt(registries, run);
+    const statData = statProjection(registries, run);
+    const cardKeys = new Set((run.deck || []).map((inst) => inst.equipmentRole || `signature:${inst.cardId}`));
+    const regionCounts = {
+      slots: eq.slots.filter((slot) => authoredFor(slot).length).length,
+      inventory: inventoryItemCount(inventoryData),
+      cards: cardKeys.size,
+      stats: statData.attributes.length + statData.derived.length,
+    };
+    const subject = subjectRegion();
+    const panelModel = armouryPanelModel({
+      view,
+      views: IDS,
+      layout: L,
+      subject: subject?.id || 'slots',
+      regions: REGIONS.map((region) => ({
+        ...region,
+        count: regionCounts[region.id],
+        expanded: region.id === subject?.id || folded.get(region.id) !== true,
+      })),
+      picking: !!picking,
+      notice,
+    });
     const rendered = renderArmouryPanel(panelModel, wrap);
     const { left, right } = rendered;
     const blocks = eq.slots
@@ -1186,13 +1209,14 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
-    const inventory = rendered.inventory;
-    if (inventory) inventory.appendChild(inventoryBlock());
-    rendered.strip.appendChild(statsComparison());
-    rendered.strip.appendChild(cardStrip());
+    mountRegions(rendered, panelModel, {
+      slots: wrap.querySelector('.armoury-body'),
+      inventory: inventoryBlock(descendantModel(panelModel, UI.armouryInventory), inventoryData),
+      cards: cardStrip(descendantModel(panelModel, UI.armouryCardStrip), equipmentSurface),
+      stats: statsComparison(descendantModel(panelModel, UI.armouryStatsPanel), statData),
+    });
 
     notice = '';
-    dressRegions();
     wrap.querySelectorAll('.equip-candidate-comparison').forEach((comparison) => (
       markUiComponent(comparison, UI.equipmentComparison)
     ));
