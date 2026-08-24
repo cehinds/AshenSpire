@@ -13,7 +13,8 @@ const REQUIRED_IDS = Object.freeze([
   'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'crimson-flask-control', 'azure-flask-control',
+  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
+  'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
   'player-hand-tray', 'combat-action-rail', 'metadata-field', 'panel',
@@ -23,7 +24,8 @@ const REQUIRED_IDS = Object.freeze([
   'status-effect-tray', 'tooltip', 'damage-feedback', 'guarded-damage-indicator',
   'health-damage-indicator',
   'quick-menu-panel', 'quick-menu-caption', 'quick-menu-row', 'menu-overlay',
-  'menu-tab-strip', 'menu-tab', 'menu-panel', 'armoury-overlay', 'armoury-panel',
+  'menu-tab-strip', 'menu-tab', 'menu-panel', 'menu-footer', 'save-game-control',
+  'save-quit-control', 'armoury-overlay', 'armoury-panel',
   'armoury-header', 'armoury-view-switcher', 'armoury-body', 'armoury-figure',
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
@@ -43,13 +45,14 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
     armouryModels: read('src/ui/models/ArmouryModels.js'),
     trayModels: read('src/ui/models/TrayModels.js'),
     hud: read('src/ui/components/hudmeta.js'),
+    quickSettings: read('src/ui/components/hudQuickSettings.js'),
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
@@ -67,6 +70,7 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
+    coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
     equipment: read('src/ui/screens/equipment.js'),
@@ -89,7 +93,9 @@ export function findings(r) {
     'primaryHudRowHtml', 'inventoryBeltHtml', 'sharedRunHudHtml',
   ];
   if (hudExports.some((name) => !r.hud.includes(`export function ${name}`))
-      || !r.hud.includes('export const hudShellHtml = sharedRunHudHtml;')) {
+      || !r.hud.includes('export const hudShellHtml = sharedRunHudHtml;')
+      || !/export function hudQuickSettingsHtml/.test(r.quickSettings)
+      || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
   if (![r.map, r.combat].every((text) => /import \{ hudShellHtml \}/.test(text)
@@ -102,8 +108,8 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
-      || /\b(run|combat)\s*=/.test(r.hud + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
+      || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
@@ -112,8 +118,8 @@ export function findings(r) {
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*520px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*build number stays visible at every/.test(r.css)) {
-    bad.push('C7 metadata does not hide Source, then Seed, while preserving Build without wrapping');
+  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*620px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*520px[\s\S]*build-number/.test(r.css)) {
+    bad.push('C7 metadata does not hide Source, then Seed, then Build without wrapping');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/UI\.playerHandTray/.test(r.combat)
@@ -138,6 +144,9 @@ export function findings(r) {
       || !/UI\.menuOverlay/.test(r.menuModels)
       || !/UI\.menuTab/.test(r.menuModels)
       || !/UI\.menuPanel/.test(r.menuModels)
+      || !/UI\.menuFooter/.test(r.menuModels)
+      || !/UI\.saveGameControl/.test(r.menuModels)
+      || !/UI\.saveQuitControl/.test(r.menuModels)
       || !/UI\.armouryOverlay/.test(r.armouryModels)
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
@@ -153,8 +162,9 @@ export function findings(r) {
     bad.push('C10 SPEC no longer codifies every public component id');
   }
   if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
+      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*8,[\s\S]*stackGapPx:\s*4,[\s\S]*showLabels:\s*true,[\s\S]*\}/.test(r.balance)
       || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width'].every((name) => r.main.includes(`'${name}'`))
-      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals'].every((name) => r.validate.includes(name))) {
+      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
   if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
@@ -164,18 +174,20 @@ export function findings(r) {
       || !/width:\s*calc\(3\.8rem \* var\(--hud-portrait-scale\)\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-primary-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-resource-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
+      || !/grid-template-columns:\s*minmax\(0, 1fr\) fit-content\(var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
       || !/width:\s*min\(100%, var\(--hud-metadata-max-width\)\)/.test(r.css)
       || !/data-hud-metadata-show-totals='false'/.test(r.css)
       || !/\.hud-potions \.flask-slot\s*\{[^}]*width:\s*var\(--hud-utility-visual-size\);[^}]*min-width:\s*var\(--hud-utility-visual-size\);/.test(r.css)
-      || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)) {
+      || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
+      || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
+      || !/@media \(max-width:\s*420px\)[\s\S]*\.hud-quick-settings\s*\{\s*width:\s*var\(--tap-floor\);/.test(r.uiCss)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)
       || !/Object\.freeze\(\{[\s\S]*component,[\s\S]*properties:[\s\S]*tokens:[\s\S]*accessibility:[\s\S]*behaviors:[\s\S]*children:/.test(r.componentModel)
       || !/export function behaviorModel/.test(r.behaviorModel)
       || !/export function runHudViewModel/.test(r.hudViewModel)
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
+      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudQuickSettingsModel\(\{ place, \.\.\.quickSettings \}\)/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
     bad.push('C13 shared HUD no longer follows the immutable MVVM Component Model composition');
@@ -245,6 +257,13 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
   }
+  if (!/import \{ hudQuickSettingsHtml, wireHudQuickSettings \}/.test(r.coop)
+      || !/import \{ hudQuickSettingsModel \}/.test(r.coop)
+      || (r.coop.match(/hudQuickSettingsHtml\(hudQuickSettingsModel\(\{/g) || []).length !== 2
+      || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
+      || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
+    bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
+  }
   return bad;
 }
 
@@ -267,11 +286,12 @@ function selftest() {
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
+    ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 16/16 reusable component contracts hold');
+  else console.log('PASS clean source: 17/17 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -287,5 +307,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 16/16 reusable component contracts hold');
+  else console.log('ui-components: OK — 17/17 reusable component contracts hold');
 }

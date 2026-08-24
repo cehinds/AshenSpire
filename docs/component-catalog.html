@@ -169,6 +169,7 @@
   <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="creation">Character Creation</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury semantics</option><option value="armoury-assets">Rendered Armoury assets</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
+  <p class="catalog-footer"><strong>Quick Menu / overlay contract:</strong> Quick Menu uses the stable production caption and resolves absent or invalid preferences to <strong>Mirror</strong>; legacy <code>off</code> and <code>switcher</code> remain explicit modes. Fullscreen and Music are its first rows, contextual destinations stay in the middle, and Save / Save &amp; Quit stay fixed at the tail. Those switches, the first relevant Settings rows, and <code>hud-quick-settings</code> all call the same browser/audio owners. The in-run overlay keeps only Settings and Controls as tabs, with Save Game and Save &amp; Quit in its persistent footer.</p>
   <p class="catalog-footer"><strong>Armoury contract:</strong> Player labels are Character / Inventory / Hybrid (internal compatibility keys remain <code>grid</code> / <code>rack</code> / <code>hybrid</code>). Armaments, Inventory, Cards, and Stats share the Folding Tray shell. Armaments is non-resizable; resize handles are optional expanded capabilities, and Inventory exposes one only in supporting-tray contexts. The enabled <code>inventoryItem.holdAction</code> makes folded and expanded equipment items one whole-card action/progress surface; comparison remains a separate delayed hover/focus tooltip or inline receipt. <a href="ASSET-COMPONENTS.md">Open the rendered Asset Components reference.</a></p>
   <section class="token-panel" aria-labelledby="armoury-assets-heading">
     <h2 id="armoury-assets-heading">Asset Components / Rendered Armoury</h2>
@@ -225,13 +226,19 @@ const V = {
   hotkeyBadge:'<div class="mini mini-stack"><div class="mini-slot key-demo">♥<span class="key">F</span></div><div class="mini-label">hotkey badge</div></div>',
   armouryControl:'<div class="mini mini-stack"><div class="mini-btn">⚒</div><div class="mini-label">open armoury</div></div>',
   quickMenuControl:'<div class="mini mini-stack"><div class="mini-btn">☰</div><div class="mini-label">quick menu</div></div>',
-  quickMenuPanel:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div><div class="row"><span>⛶ Fullscreen</span><b>OFF</b></div><div class="row"><span>♫ Music</span><b>ON</b></div><div class="row"><span>🂠 Deck</span><span>24</span></div></div></div>',
-  quickMenuCaption:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div></div></div>',
-  quickMenuRow:'<div class="mini"><div class="menu-demo"><div class="row"><span>♫ Music</span><span>ON · 35%</span></div></div></div>',
-  menuOverlay:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span></div><div class="mini-panel" style="width:210px;height:48px">ACTIVE MENU PANEL</div></div>',
-  menuTabStrip:'<div class="mini"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span><span>SETTINGS</span></div></div>',
-  menuTab:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">RELICS &amp; FLASKS</span></div><div class="mini-label">one menu tab</div></div>',
-  menuPanel:'<div class="mini mini-stack"><div class="mini-panel" style="width:210px"><div>🂠 🂠 🂠</div><div class="mini-label">tab-selected content</div></div></div>',
+  hudQuickSettings:'<div class="mini mini-stack"><div class="menu-demo" style="width:150px"><div class="row"><span>⛶ Fullscreen</span><b>OFF</b></div><div class="row"><span>♪ Music</span><b>ON</b></div></div><div class="mini-label">same owners · desktop labels · phone glyphs</div></div>',
+  fullscreenControl:'<div class="mini mini-stack"><div class="mini-btn">⛶</div><div class="mini-label">live browser state · shared with menu/settings</div></div>',
+  musicControl:'<div class="mini mini-stack"><div class="mini-btn">♪</div><div class="mini-label">positive on state · shared settings owner</div></div>',
+  quickMenuPanel:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div><div class="row"><span>⛶ Fullscreen</span><b>OFF</b></div><div class="row"><span>♪ Music</span><b>ON · 35%</b></div><div class="row"><span>⚒ Armoury</span><span>›</span></div><div class="row"><span>⚙ Settings</span><span>›</span></div><div class="row"><span>💾 Save</span><span>✓</span></div><div class="row"><span>⏻ Save &amp; Quit</span><span>›</span></div></div></div>',
+  quickMenuCaption:'<div class="mini mini-stack"><div class="menu-demo"><div class="caption">QUICK MENU</div></div><div class="mini-label">stable production caption · Mirror default</div></div>',
+  quickMenuRow:'<div class="mini mini-stack"><div class="menu-demo"><div class="row"><span>♪ Music</span><b>ON · 35%</b></div></div><div class="mini-label">destination, action, or synchronized switch</div></div>',
+  menuOverlay:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">SETTINGS</span><span>CONTROLS</span></div><div class="mini-panel" style="width:210px;height:48px">ACTIVE MENU PANEL</div><div class="tab-demo"><span>SAVE GAME</span><span>SAVE &amp; QUIT</span></div></div>',
+  menuTabStrip:'<div class="mini"><div class="tab-demo"><span class="on">SETTINGS</span><span>CONTROLS</span></div></div>',
+  menuTab:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">SETTINGS</span></div><div class="mini-label">one menu tab</div></div>',
+  menuPanel:'<div class="mini mini-stack"><div class="mini-panel" style="width:210px"><div>GAME · AUDIO · ACCESSIBILITY</div><div class="mini-label">tab-selected content</div></div></div>',
+  menuFooter:'<div class="mini"><div class="tab-demo"><span>SAVE GAME</span><span>SAVE &amp; QUIT</span></div></div>',
+  saveGameControl:'<div class="mini"><div class="mini-slot" style="width:100px">SAVE GAME</div></div>',
+  saveQuitControl:'<div class="mini"><div class="mini-slot" style="width:130px;border-color:#9f4038">SAVE &amp; QUIT</div></div>',
   crimsonFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#d95a50">♥<span class="key">F</span></div><div class="mini-label">crimson flask · 3</div></div>',
   azureFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#6e9fe5">◆<span class="key">G</span></div><div class="mini-label">azure flask · 1</div></div>',
   inventoryBelt:'<div class="mini mini-stack" style="width:100%"><div class="split-belt"><div><div class="mini-label">relics</div><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div></div><div><div class="mini-label" style="text-align:right">potions</div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div></div>',
@@ -315,13 +322,19 @@ const SEMANTIC_COMPONENTS = [
  ['hotkey-badge','componentModel semantic ID','view-owned','primitive','HUD controls','Configurable key hint badge.','hotkeyBadge'],
  ['armoury-control','actionControlModel','quick access view','hud','Map + Combat','Opens Armoury.','armouryControl'],
  ['quick-menu-control','actionControlModel','quick access view','hud','Map + Combat','Opens Quick Menu.','quickMenuControl'],
- ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Contextual Quick Menu dropdown.','quickMenuPanel'],
- ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Stable production caption.','quickMenuCaption'],
- ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','Destination, action, or synchronized switch.','quickMenuRow'],
- ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Full tabbed in-run menu.','menuOverlay'],
+ ['hud-quick-settings','hudQuickSettingsModel','hudQuickSettingsHtml + wireHudQuickSettings','hud','Title + Map + Combat','Shared top-right Fullscreen/Music stack; same owners as Quick Menu and Settings, with 44px glyph controls on narrow screens.','hudQuickSettings'],
+ ['fullscreen-control','componentModel child','hudQuickSettingsHtml','primitive','HUD Quick Settings','Live browser-state action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API.','fullscreenControl'],
+ ['music-control','componentModel child','hudQuickSettingsHtml','primitive','HUD Quick Settings','Positive-state toggle mirrored by Quick Menu and Settings and persisted by the shared settings owner.','musicControl'],
+ ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Mirror-default contextual Quick Menu with fixed control and save bands.','quickMenuPanel'],
+ ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Stable production Quick Menu caption; no test or experiment copy.','quickMenuCaption'],
+ ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','Contextual destination/action or synchronized Fullscreen/Music switch.','quickMenuRow'],
+ ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Settings/Controls dialog with persistent run-action footer.','menuOverlay'],
  ['menu-tab-strip','menuTabStripModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Shared tab navigation strip.','menuTabStrip'],
- ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Deck/Relics/Stats/Save/Settings/Controls tab.','menuTab'],
+ ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Settings or Controls tab.','menuTab'],
  ['menu-panel','menuPanelModel','menuComponents.updateMenuSelection','menu','Menu Overlay','Active tab content host.','menuPanel'],
+ ['menu-footer','menuFooterModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Persistent run-action footer.','menuFooter'],
+ ['save-game-control','componentModel child','menuComponents.renderMenuOverlay','menu','Menu Footer','Save the active slot and remain in the run.','saveGameControl'],
+ ['save-quit-control','componentModel child','menuComponents.renderMenuOverlay','menu','Menu Footer','Save and return to the title screen.','saveQuitControl'],
  ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','crimsonFlask'],
  ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','azureFlask'],
  ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','inventoryBelt'],
@@ -452,8 +465,8 @@ const RENDERED_ARMOURY_COMPONENTS = [
 }));
 const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
 const COMPOSITION = Object.freeze({
-  'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
-  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
+  'quick-menu-panel':['quick-menu-caption','quick-menu-row × N (Fullscreen + Music first; contextual middle; Save + Save & Quit tail)'],
+  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel','menu-footer','save-game-control','save-quit-control'],
   'armoury-overlay':['armoury-panel'],
   'folding-tray':['tray-header','tray-resize-handle (optional; expanded when enabled)','tray-content → context region component'],
   'armoury-panel':['armoury-header','armoury-view-switcher (Character / Inventory / Hybrid)','responsive subject region (armoury-body)','shared folding-tray families: Armaments / Inventory / Cards / Stats'],

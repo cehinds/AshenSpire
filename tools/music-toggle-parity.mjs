@@ -58,7 +58,7 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'restore-drops-setting', file: 'src/main.js',
-        find: 'applyDisplaySettings(settings); // display + the complete resolved audio bag',
+        find: 'applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif',
         replace: 'applyDisplaySettings({ ...settings, musicEnabled: true }); // planted: restore drops the preference',
         expectRed: /restore applies the complete settings bag/,
       },
@@ -81,20 +81,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /Quick Menu OFF hides open overlay launchers/,
       },
       {
-        name: 'overlay-fullscreen-refusal-silent', file: 'src/ui/components/overlay.js',
-        find: "document.addEventListener('fullscreenerror', announceFullscreenError);",
+        name: 'settings-fullscreen-refusal-silent', file: 'src/ui/screens/settings.js',
+        find: "document.addEventListener('fullscreenerror', onFullscreenError);",
         replace: "/* planted: fullscreen refusal is silent */",
-        expectRed: /overlay announces fullscreen refusal/,
+        expectRed: /Settings announces fullscreen refusal/,
       },
       {
-        name: 'overlay-fullscreen-listener-leak', file: 'src/ui/components/overlay.js',
-        find: 'else stopListeningForQuickFullscreen();',
-        replace: 'else { /* planted: settings listeners survive tab exit */ }',
-        expectRed: /overlay releases fullscreen listeners/,
+        name: 'settings-fullscreen-listener-leak', file: 'src/ui/screens/settings.js',
+        find: "document.removeEventListener('fullscreenerror', onFullscreenError);",
+        replace: '/* planted: fullscreen listener survives Settings teardown */',
+        expectRed: /Settings releases fullscreen listeners/,
       },
       {
         name: 'quick-exit-bypasses-save', file: 'src/ui/components/overlay.js',
-        find: '(onQuit || onExit)();', replace: '(onExit || onQuit)();',
+        find: 'onQuit?.();', replace: '/* planted: Save & Quit does not call persistence owner */',
         expectRed: /Save & Quit prefers the persistence callback/,
       },
       {
@@ -180,27 +180,28 @@ check(/role="switch"/.test(switchHtml) && /aria-checked="true"/.test(switchHtml)
 const quick = source('src/ui/components/quicknav.js');
 const renderer = source('src/ui/components/menuComponents.js');
 const overlay = source('src/ui/components/overlay.js');
+const settingsSource = source('src/ui/screens/settings.js');
 const audio = source('src/ui/audio.js');
 const main = source('src/main.js');
 check(!/saveMeta|localStorage|META_KEY/.test(quick), 'Quick Menu contains no persistence owner');
 check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
-check(overlay.includes('controls: quickControls,'), 'overlay forwards the shared controls');
+check(overlay.includes('controls: {') && overlay.includes('...quickControls,'), 'overlay forwards the shared controls');
 check(overlay.includes("if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);"),
   'overlay refreshes Settings after a Quick Menu music change');
-check(overlay.includes("document.addEventListener('fullscreenerror', announceFullscreenError);")
-  && overlay.includes("settingsAnnouncement.textContent = result.announcement;"),
-  'overlay announces fullscreen refusal');
-check(overlay.includes('else stopListeningForQuickFullscreen();')
-  && overlay.includes('overlayCleanup.push(stopListeningForQuickFullscreen);'),
-  'overlay releases fullscreen listeners');
-check(overlay.includes('(onQuit || onExit)();'), 'Save & Quit prefers the persistence callback');
+check(settingsSource.includes("document.addEventListener('fullscreenerror', onFullscreenError);")
+  && settingsSource.includes('Fullscreen was refused by the browser.'),
+  'Settings announces fullscreen refusal');
+check(settingsSource.includes("document.removeEventListener('fullscreenerror', onFullscreenError);"),
+  'Settings releases fullscreen listeners');
+check(overlay.includes('onQuit?.();') && main.includes('onQuit: () => {\n      persist();'),
+  'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');
 check(audio.includes('else if (state.context && (!wasMusicEnabled || musicVolume != null || muteAudio != null)) {'), 're-enable clears same-context no-op before restart');
 check(audio.includes('if (state.muted || !state.musicEnabled) stopMusic(0.3);'), 'disable and global mute share the stop-only branch');
 check(audio.includes('        el.pause();'), 'disabling Music pauses external media');
-check(main.includes('applyDisplaySettings(settings); // display + the complete resolved audio bag'), 'restore applies the complete settings bag');
-check(main.includes('if (!saves.profileStatus().quarantined) {') && main.includes('const settings = activeSettings;'),
+check(main.includes('applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif'), 'restore applies the complete settings bag');
+check(main.includes('if (!saves.profileStatus().quarantined) {') && main.includes('initInput({ getSettings: () => activeSettings });'),
   'quarantine keeps the applied settings in session memory');
 check(quick.includes("const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');")
   && quick.includes("button.hidden = mode === 'off';"),

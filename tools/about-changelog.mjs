@@ -756,25 +756,37 @@ async function browserRoute(entries, {
     await evaluate('document.querySelector("#settings").click()');
     await until('!!document.querySelector(".settings-modal .set-tab[data-member=\\"About\\"]")', 'Settings modal or About tab is unreachable');
     await evaluate('document.querySelector(".settings-modal .set-tab[data-member=\\"About\\"]").click()');
-    await until('!!document.querySelector(".settings-modal .about-changelog details.about-change summary")', 'About did not mount the changelog');
+    await until('!!document.querySelector(".settings-modal .about-ai")', 'About disclosure did not mount');
+    const aboutState = await evaluate(`(() => {
+      const host = document.querySelector('.settings-modal');
+      const sourceLink = host.querySelector('.about-debug-version');
+      return {
+        disclosureBlocks: host.querySelectorAll('.about-block').length,
+        hasCopy: !!host.querySelector('.about-copy'),
+        source: { href: sourceLink?.href, target: sourceLink?.target, rel: sourceLink?.rel }
+      };
+    })()`);
+    await evaluate('document.querySelector(".settings-modal .set-tab[data-member=\\"Advanced\\"]").click()');
+    await until('!!document.querySelector(".settings-modal .set-subtab[data-advanced-group=\\"Changelog\\"]")', 'Advanced Changelog tab is unreachable');
+    await evaluate('document.querySelector(".settings-modal .set-subtab[data-advanced-group=\\"Changelog\\"]").click()');
+    await until('!!document.querySelector(".settings-modal .about-changelog details.about-change summary")', 'Advanced did not mount the changelog');
     const initial = await evaluate(`(() => {
       const host = document.querySelector('.settings-modal');
       const all = [...host.querySelectorAll('details.about-change')];
       const summary = all[0]?.querySelector('summary');
       if (summary) summary.focus();
-      const sourceLink = host.querySelector('.about-debug-version');
       return {
         count: all.length,
         initiallyClosed: all.every((item) => !item.open),
         minHeight: summary ? parseFloat(getComputedStyle(summary).minHeight) : null,
         summaryName: summary?.textContent?.trim().replace(/\\s+/g, ' ') || '',
         summaryTabIndex: summary?.tabIndex,
-        disclosureBlocks: host.querySelectorAll('.about-block').length,
-        hasCopy: !!host.querySelector('.about-copy'),
         hasDone: !!host.querySelector('#set-close'),
         changeLinks: [...host.querySelectorAll('a.about-change-pr')].map((link) => ({ href: link.href, target: link.target, rel: link.rel })),
         changeInert: host.querySelectorAll('span.about-change-pr').length,
-        source: { href: sourceLink?.href, target: sourceLink?.target, rel: sourceLink?.rel }
+        source: ${JSON.stringify(aboutState.source)},
+        disclosureBlocks: ${JSON.stringify(aboutState.disclosureBlocks)},
+        hasCopy: ${JSON.stringify(aboutState.hasCopy)}
       };
     })()`);
     if (!initial.summaryName || initial.summaryTabIndex !== 0) throw new Error(`changelog summary is not keyboard reachable (${JSON.stringify(initial)})`);
@@ -1276,7 +1288,11 @@ async function selftest() {
     },
     {
       name: 'missing About mount', file: 'src/ui/screens/settings.js',
-      find: "About: { mount: 'set-about-mount'", replace: "About: { mount: 'set-about-missing'", expect: 'About did not mount the changelog',
+      find: "About: { mount: 'set-about-mount'", replace: "About: { mount: 'set-about-missing'", expect: 'About disclosure did not mount',
+    },
+    {
+      name: 'missing Advanced Changelog mount', file: 'src/ui/screens/settings.js',
+      find: 'class="set-changelog-mount"', replace: 'class="set-changelog-missing"', expect: 'Advanced did not mount the changelog',
     },
     {
       name: 'broken Done navigation', file: 'src/ui/screens/settings.js',
@@ -1286,7 +1302,7 @@ async function selftest() {
     },
     {
       name: 'non-keyboard changelog row', file: 'src/ui/screens/about.js',
-      find: '<summary class="region-fold">', replace: '<div class="region-fold">', expect: 'About did not mount the changelog',
+      find: '<summary class="region-fold">', replace: '<div class="region-fold">', expect: 'Advanced did not mount the changelog',
     },
     {
       name: 'missing Pages development link', file: 'src/ui/screens/about.js',

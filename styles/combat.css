@@ -22,6 +22,9 @@
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
   gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+  position: relative;
+  z-index: 20;
+  overflow: visible;
 }
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
@@ -126,8 +129,9 @@
   .topbar.combat-hud.shared-hud .hud-run-meta .build-stamp[data-seed]::before { display: none; }
 }
 @container run-header (max-width: 520px) {
-  /* Source and Seed have already yielded above; the build number stays visible
-     at every supported width so a phone screenshot still identifies its tree. */
+  .topbar.combat-hud.shared-hud .hud-run-meta .build-number { display: none; }
+  /* Source, Seed and Build have yielded; Act and Floor remain the phone
+     player's primary run-position receipt. */
   .topbar.combat-hud.shared-hud .hud-run-meta {
     gap: 0;
     font-size: calc((var(--hud-metadata-font-px) * 0.8) / var(--ui-zoom, 1));

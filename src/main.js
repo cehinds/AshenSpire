@@ -30,7 +30,9 @@ import {
   applyGraceRefill,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
+import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -217,10 +219,6 @@ if (shotState) {
 
 // Procedural audio engine (SPEC §7.4). The sink plugs into the existing sfx
 // hook seam, so every sfx.play() call site makes sound with no change.
-// Keep the applied profile in memory for the session. A quarantined profile is
-// deliberately unreadable after the first failure; reloading it for every
-// Quick Menu read would manufacture a fresh default and make a live Music
-// change appear to undo itself. Normal persistence still goes through `saves`.
 let activeMeta = saves.loadMeta();
 let activeSettings = activeMeta.settings || (activeMeta.settings = {});
 const audio = initAudio(activeSettings);
@@ -598,7 +596,7 @@ function applyDisplaySettings(settings) {
   document.body.classList.toggle('map-compact', settings.mapHeaderDensity === 'compact');
   document.body.classList.toggle('hide-header-relics', settings.mapHeaderRelics === false);
   document.body.classList.toggle('hide-header-seed', settings.mapHeaderSeed === false);
-  // The quick-menu preference. Handed to the component the same way input.js is
+  // The quick-menu experiment. Handed to the component the same way input.js is
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
@@ -659,10 +657,11 @@ function applyRestoredSettings(restored) {
   for (const key of Object.keys(activeSettings)) delete activeSettings[key];
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
-  applyDisplaySettings(settings); // display + the complete resolved audio bag
+  applyDisplaySettings(settings); // sprites, contrast, motion, text size, shake, motif
   applyUiScale(settings);         // UI zoom / Auto fit
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+  refreshHudQuickSettings(app, settings);
 }
 
 
@@ -672,57 +671,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
-
-// One persistence/apply owner for title Settings, in-run Settings, and the
-// Quick Menu. The launcher receives this capability; it never writes profile
-// state itself.
-function commitSettingsChange(changed) {
-  if (!saves.profileStatus().quarantined) {
-    activeMeta = saves.loadMeta();
-    activeSettings = activeMeta.settings || (activeMeta.settings = {});
-  }
-  Object.assign(activeSettings, changed);
-  activeMeta.settings = activeSettings;
-  const res = saves.saveMeta(activeMeta);
-  applyDisplaySettings(activeSettings);
-  remountMapIfShowing(changed);
-  if (changed.bindings) setBindings(changed.bindings);
-  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
-  return res;
-}
-
-const quickMenuControls = {
-  fullscreen: {
-    read: () => {
-      const capability = fullscreenCapability(document);
-      const checked = isFullscreen(document);
-      return {
-        checked,
-        disabled: !capability.supported,
-        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
-      };
-    },
-    activate: async () => {
-      const result = await toggleFullscreen(document);
-      return result.ok || result.reason === 'unsupported'
-        ? {}
-        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
-    },
-  },
-  music: {
-    read: () => {
-      const settings = activeSettings;
-      return { checked: resolveMusicEnabled(settings), condition: musicEnabledCondition(settings) };
-    },
-    activate: () => {
-      const next = !resolveMusicEnabled(activeSettings);
-      const persisted = commitSettingsChange({ musicEnabled: next });
-      return { changed: { musicEnabled: next }, persisted };
-    },
-  },
-};
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -760,7 +709,11 @@ function showLobby() {
       // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
-      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
+      mountCoop(app, {
+        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        onSettingsChange: persistSettingsChange,
+        onLeave: () => showTitle(),
+      });
     },
   });
 }
@@ -978,7 +931,9 @@ function showTitle() {
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
+    onProfile: showProfile,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -993,17 +948,65 @@ function showTitle() {
   });
 }
 
+function showProfile() {
+  openProfileArchive({
+    saves,
+    onRestored: () => applyRestoredSettings(saves.loadMeta().settings || {}),
+  });
+}
+
+function persistSettingsChange(changed) {
+  if (!saves.profileStatus().quarantined) {
+    activeMeta = saves.loadMeta();
+    activeSettings = activeMeta.settings || (activeMeta.settings = {});
+  }
+  Object.assign(activeSettings, changed);
+  activeMeta.settings = activeSettings;
+  const res = saves.saveMeta(activeMeta);
+  applyDisplaySettings(activeSettings);
+  refreshHudQuickSettings(app, activeSettings);
+  remountMapIfShowing(changed);
+  if (changed.bindings) setBindings(changed.bindings);
+  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+  return res;
+}
+
+const quickMenuControls = {
+  fullscreen: {
+    read: () => {
+      const capability = fullscreenCapability(document);
+      const checked = isFullscreen(document);
+      return {
+        checked,
+        disabled: !capability.supported,
+        condition: capability.supported ? `Fullscreen ${checked ? 'on' : 'off'}.` : 'Unavailable in this browser.',
+      };
+    },
+    activate: async () => {
+      const result = await toggleFullscreen(document);
+      return result.ok || result.reason === 'unsupported'
+        ? {}
+        : { announcement: 'Fullscreen was refused by the browser. State is unchanged.' };
+    },
+  },
+  music: {
+    read: () => ({
+      checked: resolveMusicEnabled(activeSettings),
+      condition: musicEnabledCondition(activeSettings),
+    }),
+    activate: () => {
+      const next = !resolveMusicEnabled(activeSettings);
+      const persisted = persistSettingsChange({ musicEnabled: next });
+      return { changed: { musicEnabled: next }, persisted };
+    },
+  },
+};
+
 function showSettings() {
   openSettings({
     meta: activeMeta,
-    // The Profile section (#67) needs the manager itself: it lists, exports and
-    // restores archives. Without it the section does not render at all.
-    saves,
-    // …and a restore swaps the whole profile, so the screen must be re-dressed
-    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
-    // save keeps the old profile's contrast, motion and text size.
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onChange: commitSettingsChange,
+    onChange: persistSettingsChange,
   });
 }
 
@@ -1073,9 +1076,9 @@ function quitGame() {
   }
 }
 
-// The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
-// map and combat screens via their onMenu callback.
-function showOverlay(initialTab = 'deck') {
+// The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
+// equipment, deck, relics, flasks, and run stats.
+function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
     registries,
@@ -1089,10 +1092,7 @@ function showOverlay(initialTab = 'deck') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onSettingsChange: (changed) => {
-      commitSettingsChange(changed);
-    },
+    onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
     onSave: () => {
       persist();
@@ -1102,7 +1102,6 @@ function showOverlay(initialTab = 'deck') {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
-    onExit: quitGame, // "Quit Game" — leave the app entirely
   });
 }
 
@@ -1271,11 +1270,13 @@ function showMap() {
   mountMap(app, {
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onPick: enterNode,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1284,7 +1285,6 @@ function showMap() {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
-    quickControls: quickMenuControls,
   });
 }
 
@@ -1485,10 +1485,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     label,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
-    meta: saves.loadMeta(),
+    meta: activeMeta,
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
+    quickControls: quickMenuControls,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1497,7 +1499,6 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       persist();
       showTitle();
     },
-    quickControls: quickMenuControls,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -1780,7 +1781,11 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
+  mountCoop(app, {
+    registries, conn: stub, myId, meta: saves.loadMeta(),
+    onSettingsChange: persistSettingsChange,
+    onLeave() {},
+  });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
@@ -2311,18 +2316,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   showTitle();
 } else if (shotState === 'profile') {
-  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
+  // A REACH STATE for title-screen Profile (`profileRestore` in secondbeat.js —
   // the inline .prof-confirm box). The set-aside profile is real and set aside
   // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
   // through the real writer, startNewProfile archives it through
   // replacePrimaryWith — the one path allowed to replace the primary — and
   // the drawer entry the screen lists is that archive read back through
   // saves.listArchives. The instrument still opens the section by the
-  // player's own door: the Profile tab in the Settings modal.
+  // player's own door: Profile on the title screen.
   saves.ensureProfile();
   saves.startNewProfile();
   showTitle();
-  showSettings();
+  showProfile();
 } else if (shotState === 'crisis') {
   // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
   // modal). The torn bytes were planted at the storage seam beside

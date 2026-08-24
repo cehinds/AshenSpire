@@ -6,8 +6,7 @@
 // it. A sentence typed into this file would be the second copy the arrangement
 // exists to prevent.
 //
-// Follows the Profile section's pattern (profileArchive.js): a section rendered
-// into the Settings modal rather than a screen of its own.
+// About stays inside Settings; the Profile archive is now a title-screen route.
 
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
@@ -48,9 +47,22 @@ function changelogHtml(entries, { linkExternal = false } = {}) {
   }).join('');
 }
 
+export function renderChangelogSection(container, {
+  changelog = CHANGELOG,
+  runPath = RUN_PATH,
+  locationLike = globalThis.location,
+} = {}) {
+  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
+  container.innerHTML = `
+    <section class="about-changelog" aria-labelledby="advanced-changelog-title">
+      <h2 id="advanced-changelog-title">What changed</h2>
+      <p class="set-note">Newest changes are first. Open an entry for the player-facing detail.</p>
+      ${changelogHtml(changelog, { linkExternal: changeLinks })}
+    </section>`;
+}
+
 export function renderAboutSection(container, {
   disclosure = AI_DISCLOSURE,
-  changelog = CHANGELOG,
   runPath = RUN_PATH,
   locationLike = globalThis.location,
 } = {}) {
@@ -98,16 +110,10 @@ export function renderAboutSection(container, {
   const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
     ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
     : esc(ABOUT_BUILD_LINE);
-  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
-
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
       ${sections}
-      <section class="about-changelog" aria-labelledby="about-changelog-title">
-        <h2 id="about-changelog-title">Changelog</h2>
-        ${changelogHtml(changelog, { linkExternal: changeLinks })}
-      </section>
       <div class="about-actions">
         <button class="about-copy">Save this to a file</button>
       </div>

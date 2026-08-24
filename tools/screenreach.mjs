@@ -187,13 +187,13 @@ const SETTINGS_CYCLE = `(async () => {
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
   if (document.querySelector('.qn-panel')) {
-    document.querySelector('.qn-row[data-act="tab"][data-tab="deck"]')?.click();
+    document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')?.click();
     await pause();
   }
-  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
-  const quickSettings = document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]');
-  if (quickSettings) quickSettings.click(); else tab('settings')?.click();
+  tab('controls')?.click(); await pause();
+  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
+  tab('settings')?.click();
   await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
   const described = fullscreen?.getAttribute('aria-describedby');
@@ -204,9 +204,9 @@ const SETTINGS_CYCLE = `(async () => {
   await pause();
   window.__fullscreenLifecycleErrors = lifecycleErrors;
   window.removeEventListener('error', recordLifecycleError);
-  tab('deck')?.click(); await pause();
+  tab('controls')?.click(); await pause();
   tab('settings')?.click(); await pause();
-  tab('deck')?.click(); await pause();
+  tab('controls')?.click(); await pause();
   window.__settingsListenerBalance = Object.fromEntries([...live]
     .map(([type, listeners]) => [type, listeners.size - (baseline[type] || 0)]));
   document.querySelector('#ov-close')?.click(); await pause();

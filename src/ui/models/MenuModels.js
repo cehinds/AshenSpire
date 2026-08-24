@@ -75,6 +75,22 @@ function menuPanelModel(id = '') {
   });
 }
 
+function menuFooterModel() {
+  return componentModel(UI.menuFooter, {
+    accessibility: { role: 'contentinfo', label: 'Run actions' },
+    children: [
+      componentModel(UI.saveGameControl, {
+        accessibility: { role: 'button', label: 'Save Game' },
+        behaviors: [behaviorModel('save-game', { event: 'click', command: 'save-game' })],
+      }),
+      componentModel(UI.saveQuitControl, {
+        accessibility: { role: 'button', label: 'Save and Quit to Title' },
+        behaviors: [behaviorModel('save-quit', { event: 'click', command: 'save-quit-to-title' })],
+      }),
+    ],
+  });
+}
+
 export function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored = false }) {
   return componentModel(UI.menuOverlay, {
     variant: folded ? 'folded' : (mirrored ? 'mirrored' : 'tabs'),
@@ -84,6 +100,7 @@ export function menuOverlayModel({ tabs, activeId = '', folded = false, mirrored
     children: [
       menuTabStripModel({ tabs, activeId, folded }),
       menuPanelModel(activeId),
+      menuFooterModel(),
     ],
   });
 }

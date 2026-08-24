@@ -411,9 +411,9 @@ try {
       await boot('map', { quickNav: mode, quickNavFixedEnds: true });
       await ev(`document.getElementById('open-menu').click(); true`);
       await until(`!!document.querySelector('.qn-panel')`, 4000);
-      await ev(`document.querySelector('.qn-row[data-tab="deck"]').click(); true`);
+      await ev(`document.querySelector('.qn-row[data-tab="settings"]').click(); true`);
       if (!(await until(`!!document.querySelector('.overlay-modal')`, 4000))) {
-        fail('R1', `${vp.tag} ${mode} overlay`, 'a Deck row did not open the overlay');
+        fail('R1', `${vp.tag} ${mode} overlay`, 'the Settings row did not open the overlay');
       } else {
         await wait(400);
         const narrow = await ev(`document.documentElement.getAttribute('data-layout') === 'narrow'`);
@@ -426,7 +426,7 @@ try {
         else pass('R6', `${vp.tag} ${mode} overlay`, folded ? 'strip folded to a switcher' : 'strip stands');
         if (folded) {
           const lbl = await ev(`document.querySelector('#ov-switch').textContent`);
-          if (!/^Deck/.test(lbl)) fail('R6', `${vp.tag} ${mode} overlay`, `switcher says "${lbl}", not the tab it is on`);
+          if (!/^Settings/.test(lbl)) fail('R6', `${vp.tag} ${mode} overlay`, `switcher says "${lbl}", not the tab it is on`);
           else pass('R6', `${vp.tag} ${mode} overlay`, `switcher names "${lbl.trim()}"`);
         }
 
@@ -456,7 +456,7 @@ try {
         }
         const back = await cur();
         if (back !== first) fail('R5', `${vp.tag} ${mode} overlay`, `] x${order.length} never wrapped back to "${first}" (saw ${order.join(' → ')})`);
-        else if (order.length < 3) fail('R5', `${vp.tag} ${mode} overlay`, `the ring holds only ${order.length} tab(s)`);
+        else if (order.length < 2) fail('R5', `${vp.tag} ${mode} overlay`, `the ring holds only ${order.length} tab(s)`);
         else pass('R5', `${vp.tag} ${mode} overlay`, `] wraps after ${order.length}: ${order.join(' → ')}`);
         await key('[');
         await wait(120);

@@ -286,9 +286,6 @@ export function actPlate(actNumber, plates) {
 // argument: it only bites where a screen has destinations of its own, and combat
 // is the screen that does.
 export const MENU_TABS = [
-  { id: 'deck', label: 'Deck', icon: '🂠', count: 'deck', tip: 'Every card in the climb, not just the ones in hand.' },
-  { id: 'stats', label: 'Stats', icon: '♜', tip: 'This run in numbers — floor, damage, seed.' },
-  { id: 'save', label: 'Save', icon: '💾', needsSave: true, tip: 'Save, quit to title, or leave the game.' },
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
   { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
 ];
@@ -313,9 +310,8 @@ export const MENU = {
       tip: 'Weapons and armour — swap between fights for free.' },
     { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
       tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,
   ],
   // Draw and discard are real destinations that exist ONLY here (combat.js's
@@ -324,13 +320,12 @@ export const MENU = {
     ...QUICK_CONTROLS,
     { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
       tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
-    { act: 'tab', tab: 'deck', label: 'Hand / Deck', band: 'body' },
     { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
       tip: 'What is still to come, shuffled for viewing.' },
     { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
       tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
+    { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,
   ],
   // The menu already open: the dropdown mirrors the strip behind it, current tab
@@ -340,8 +335,6 @@ export const MENU = {
     ...QUICK_CONTROLS,
     { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
       tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'deck', band: 'body' },
-    { act: 'tab', tab: 'stats', band: 'body' },
     { act: 'tab', tab: 'settings', band: 'body' },
     { act: 'tab', tab: 'controls', band: 'body' },
     ...TAIL,

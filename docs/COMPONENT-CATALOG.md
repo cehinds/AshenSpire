@@ -43,6 +43,9 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared top-right Fullscreen/Music stack; 44px glyph controls on narrow screens and the same state owners used by Quick Menu and Settings. |
+| `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
+| `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
 | `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
@@ -133,25 +136,50 @@ character-disclosure
 
 ## Menu components
 
+The production Quick Menu has one stable **Quick Menu** caption and defaults to
+**Mirror** when the stored value is absent or invalid. Mirror keeps the
+Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
+`switcher` values remain explicit presentation modes. Fullscreen and Music are
+the first rows, contextual destinations occupy the middle, and Save then Save &
+Quit remain the fixed tail. The Quick Menu rows, Settings rows, and
+`hud-quick-settings` controls project the same Fullscreen and Music owners; none
+of those renderers keeps a second copy of browser or audio state.
+
+PR #344's in-run overlay remains a separate composition: its only tabs are
+Settings and Controls, while Save Game and Save & Quit stay in the persistent
+footer. Fullscreen and Music remain the first relevant controls in Settings, so
+the complete configuration surface and the two quick-control surfaces stay in
+sync without duplicating persistence.
+
 | Component ID | Model | Renderer | Purpose |
 |---|---|---|---|
-| `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Contextual dropdown opened from the HUD. |
-| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Stable production Quick Menu caption. |
-| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination, action, or stateful switch with live condition copy. |
-| `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | Full in-run tabbed menu. |
-| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
+| `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Mirror-default contextual dropdown opened from Map, Combat, or the mirrored overlay launcher. |
+| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Stable production **Quick Menu** caption; no test/experiment copy. |
+| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | Contextual destination/action or synchronized `role="switch"` Fullscreen/Music row with live state and condition copy. |
+| `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | In-run Settings/Controls dialog with persistent run-action footer. |
+| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Settings/Controls navigation. |
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
 | `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
+| `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
+| `save-game-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save the active slot and remain in the run. |
+| `save-quit-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save and return to the title screen. |
 
 ```text
 quick-menu-panel
 ├─ quick-menu-caption
-└─ quick-menu-row × N
+├─ quick-menu-row: Fullscreen switch
+├─ quick-menu-row: Music switch
+├─ quick-menu-row × N: contextual destinations + Settings/Controls
+├─ quick-menu-row: Save
+└─ quick-menu-row: Save & Quit
 
 menu-overlay
 ├─ menu-tab-strip
 │  └─ menu-tab × N
-└─ menu-panel
+├─ menu-panel
+└─ menu-footer
+   ├─ save-game-control
+   └─ save-quit-control
 ```
 
 ## Armoury components
