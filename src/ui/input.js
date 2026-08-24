@@ -580,6 +580,10 @@ function gateInput(input) {
   return !!inputGate && inputGate(Object.freeze({ ...input })) === true;
 }
 
+function cancelInputGate(family = '') {
+  if (inputGate) inputGate(Object.freeze({ family, kind: 'cancel', phase: 'cancel' }));
+}
+
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
 // A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
@@ -1022,7 +1026,10 @@ export function initInput({ getSettings } = {}) {
   addEventListener('keyup', onKeyup, true);
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
-  addEventListener('blur', () => pressEnd(true));
+  addEventListener('blur', () => {
+    cancelInputGate('keyboard');
+    pressEnd(true);
+  });
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
   // logical element (by key) if it still exists — so navigation doesn't snap
@@ -1048,6 +1055,7 @@ export function initInput({ getSettings } = {}) {
     startPolling();
   });
   addEventListener('gamepaddisconnected', () => {
+    cancelInputGate('controller');
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }

@@ -38,8 +38,8 @@ export function startupGateModel({
       particles: particles(particleCount),
     },
     accessibility: {
-      role: 'region',
-      label: 'Ashen Spire startup',
+      role: 'button',
+      label: 'Continue to the Ashen Spire title menu',
       promptLive: 'polite',
     },
     behaviors: [behaviorModel('reveal-title', {

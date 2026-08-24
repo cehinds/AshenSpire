@@ -1529,8 +1529,12 @@ button.rs-reset {
   background:
     radial-gradient(circle at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 34%),
     linear-gradient(180deg, rgba(16, 13, 10, 0.88), var(--bg));
+  transition: opacity 180ms ease-out;
 }
 .startup-gate:focus { outline: none; }
+.startup-gate:focus-visible { outline: 2px solid var(--gold); outline-offset: -0.45rem; }
+.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
+.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .startup-ash {
   position: absolute;
@@ -38185,6 +38189,10 @@ function gateInput(input) {
   return !!inputGate && inputGate(Object.freeze({ ...input })) === true;
 }
 
+function cancelInputGate(family = '') {
+  if (inputGate) inputGate(Object.freeze({ family, kind: 'cancel', phase: 'cancel' }));
+}
+
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
 // A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
@@ -38627,7 +38635,10 @@ function initInput({ getSettings } = {}) {
   addEventListener('keyup', onKeyup, true);
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
-  addEventListener('blur', () => pressEnd(true));
+  addEventListener('blur', () => {
+    cancelInputGate('keyboard');
+    pressEnd(true);
+  });
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
   // logical element (by key) if it still exists — so navigation doesn't snap
@@ -38653,6 +38664,7 @@ function initInput({ getSettings } = {}) {
     startPolling();
   });
   addEventListener('gamepaddisconnected', () => {
+    cancelInputGate('controller');
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }
@@ -39550,7 +39562,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '37097fd4c0';
+const SOURCE = 'a4f1853380';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39584,7 +39596,7 @@ const SOURCE = '37097fd4c0';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1295';
+const ORDINAL = '1301';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41909,8 +41921,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Cold boot now opens on the Ashen Spire threshold",
-    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; the title then gives focus to its first available slot. The invitation follows the last active input family, profile recovery still takes priority, reduced motion remains deterministic, and returning to the title during the same boot does not show the threshold again.",
-    "build": "0.4.0.1295",
+    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled instead of surviving blur or controller disconnect, and the title then gives focus to its first available slot. The invitation follows the last active input family, exposes one named startup action without exposing title controls, profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
+    "build": "0.4.0.1301",
     "pullRequest": 346,
     "url": "https://github.com/cehinds/AshenSpire/pull/346"
   },
@@ -58239,7 +58251,7 @@ function mountStartupGate(app, {
   )).join('');
 
   app.innerHTML = `
-    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="-1"
+    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       <div class="startup-mark">
@@ -58255,6 +58267,7 @@ function mountStartupGate(app, {
   let family = properties.inputFamily;
   let armed = null;
   let finished = false;
+  let revealTimer = null;
 
   const setFamily = (next) => {
     if (!properties.prompts[next] || next === family) return;
@@ -58266,13 +58279,25 @@ function mountStartupGate(app, {
   const finish = (source) => {
     if (finished) return;
     finished = true;
-    teardown(true);
-    onReveal({ source, family });
+    armed = null;
+    root.classList.add('is-revealing');
+    root.setAttribute('aria-busy', 'true');
+    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      teardown(true);
+      onReveal({ source, family });
+    }, delay);
   };
 
   const claimInput = (input) => {
+    if (input.phase === 'cancel') {
+      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;
+      return false;
+    }
     setFamily(input.family);
     if (!isActivation(input)) return false;
+    if (finished) return true;
     const identity = `${input.family}:${input.family === 'keyboard' ? input.key : input.button}`;
     if (input.phase === 'down') {
       if (!input.repeat) armed = identity;
@@ -58306,6 +58331,10 @@ function mountStartupGate(app, {
   root.focus({ preventScroll: true });
 
   function teardown(releaseGate = true) {
+    if (revealTimer != null) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+    }
     if (releaseGate) releaseInputGate();
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerdown', onPointerDown, true);
@@ -58361,8 +58390,8 @@ function startupGateModel({
       particles: particles(particleCount),
     },
     accessibility: {
-      role: 'region',
-      label: 'Ashen Spire startup',
+      role: 'button',
+      label: 'Continue to the Ashen Spire title menu',
       promptLive: 'polite',
     },
     behaviors: [behaviorModel('reveal-title', {

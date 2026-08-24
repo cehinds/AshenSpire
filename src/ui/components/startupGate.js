@@ -32,7 +32,7 @@ export function mountStartupGate(app, {
   )).join('');
 
   app.innerHTML = `
-    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="-1"
+    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       <div class="startup-mark">
@@ -48,6 +48,7 @@ export function mountStartupGate(app, {
   let family = properties.inputFamily;
   let armed = null;
   let finished = false;
+  let revealTimer = null;
 
   const setFamily = (next) => {
     if (!properties.prompts[next] || next === family) return;
@@ -59,13 +60,25 @@ export function mountStartupGate(app, {
   const finish = (source) => {
     if (finished) return;
     finished = true;
-    teardown(true);
-    onReveal({ source, family });
+    armed = null;
+    root.classList.add('is-revealing');
+    root.setAttribute('aria-busy', 'true');
+    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      teardown(true);
+      onReveal({ source, family });
+    }, delay);
   };
 
   const claimInput = (input) => {
+    if (input.phase === 'cancel') {
+      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;
+      return false;
+    }
     setFamily(input.family);
     if (!isActivation(input)) return false;
+    if (finished) return true;
     const identity = `${input.family}:${input.family === 'keyboard' ? input.key : input.button}`;
     if (input.phase === 'down') {
       if (!input.repeat) armed = identity;
@@ -99,6 +112,10 @@ export function mountStartupGate(app, {
   root.focus({ preventScroll: true });
 
   function teardown(releaseGate = true) {
+    if (revealTimer != null) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+    }
     if (releaseGate) releaseInputGate();
     root.removeEventListener('pointermove', onPointerMove);
     root.removeEventListener('pointerdown', onPointerDown, true);

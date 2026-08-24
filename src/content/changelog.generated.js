@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Cold boot now opens on the Ashen Spire threshold",
-    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; the title then gives focus to its first available slot. The invitation follows the last active input family, profile recovery still takes priority, reduced motion remains deterministic, and returning to the title during the same boot does not show the threshold again.",
-    "build": "0.4.0.1295",
+    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled instead of surviving blur or controller disconnect, and the title then gives focus to its first available slot. The invitation follows the last active input family, exposes one named startup action without exposing title controls, profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
+    "build": "0.4.0.1301",
     "pullRequest": 346,
     "url": "https://github.com/cehinds/AshenSpire/pull/346"
   },

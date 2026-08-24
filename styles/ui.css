@@ -1229,8 +1229,12 @@ button.rs-reset {
   background:
     radial-gradient(circle at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 34%),
     linear-gradient(180deg, rgba(16, 13, 10, 0.88), var(--bg));
+  transition: opacity 180ms ease-out;
 }
 .startup-gate:focus { outline: none; }
+.startup-gate:focus-visible { outline: 2px solid var(--gold); outline-offset: -0.45rem; }
+.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
+.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
 .startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .startup-ash {
   position: absolute;

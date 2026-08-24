@@ -65,8 +65,8 @@ if (args.includes('--selftest')) {
       {
         name: 'title controls are mounted behind the cold-boot surface',
         file: 'src/ui/components/startupGate.js',
-        find: '  app.innerHTML = `\n    <section class="screen startup-gate"',
-        replace: '  app.innerHTML = `\n    <div class="title-screen"><button class="slot-new">PLANT</button></div>\n    <section class="screen startup-gate"',
+        find: '    <section class="screen startup-gate"',
+        replace: '    <div class="title-screen"><button class="slot-new">PLANT</button></div>\n    <section class="screen startup-gate"',
         expectRed: /RED A1\.COLD-ONLY/,
       },
       {
@@ -93,15 +93,15 @@ if (args.includes('--selftest')) {
       {
         name: 'controller reveals on button-down instead of release',
         file: 'src/ui/components/startupGate.js',
-        find: "if (input.phase === 'down') {\n      if (!input.repeat) armed = identity;",
-        replace: "if (input.phase === 'down') {\n      if (input.family === 'controller') finish(input.family);\n      if (!input.repeat) armed = identity;",
+        find: '      if (!input.repeat) armed = identity;',
+        replace: "      if (input.family === 'controller') finish(input.family);\n      if (!input.repeat) armed = identity;",
         expectRed: /RED A7\.GAMEPAD-RELEASE/,
       },
       {
         name: 'Start or Menu button 9 is no longer an activation button',
         file: 'src/ui/components/startupGate.js',
-        find: "return input.button === 0 || input.button === 9\n      || input.action === 'confirm' || input.action === 'menu';",
-        replace: "return input.button === 0 || input.action === 'confirm'; // startup-gate selftest plant",
+        find: "  if (input.family === 'controller') {",
+        replace: "  if (input.family === 'controller' && input.button !== 9 && input.action !== 'menu') {",
         expectRed: /RED A7\.GAMEPAD-REVEAL/,
       },
       {
@@ -114,9 +114,30 @@ if (args.includes('--selftest')) {
       {
         name: 'startup outranks the corrupt-profile crisis notice',
         file: 'src/main.js',
-        find: "function showTitle({ skipStartup = false, focusDefault = false } = {}) {\n  if (showProfileNoticeIfNeeded()) return;\n  if (startupGatePending && !skipStartup) {\n    showStartupGate();\n    return;\n  }",
-        replace: "function showTitle({ skipStartup = false, focusDefault = false } = {}) {\n  if (startupGatePending && !skipStartup) {\n    showStartupGate();\n    return;\n  }\n  if (showProfileNoticeIfNeeded()) return;",
+        find: '  if (showProfileNoticeIfNeeded()) return;',
+        replace: '  if (false && showProfileNoticeIfNeeded()) return; // startup-gate selftest plant',
         expectRed: /RED A9\.CRISIS-PRECEDENCE/,
+      },
+      {
+        name: 'interrupted startup presses stay armed',
+        file: 'src/ui/components/startupGate.js',
+        find: "      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;",
+        replace: '      armed = armed; // startup-gate selftest plant',
+        expectRed: /RED A7\.INTERRUPT-CANCEL/,
+      },
+      {
+        name: 'startup activation is removed from the accessibility tree',
+        file: 'src/ui/models/StartupGateModels.js',
+        find: "      role: 'button',",
+        replace: "      role: 'region', // startup-gate selftest plant",
+        expectRed: /RED A1\.ACTION-SEMANTICS/,
+      },
+      {
+        name: 'reveal transition skips its deterministic cleanup deadline',
+        file: 'src/ui/components/startupGate.js',
+        find: "    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;",
+        replace: "    const delay = document.body.classList.contains('reduced-motion') ? 900 : 180; // startup-gate selftest plant",
+        expectRed: /RED A10\.REVEAL-CLEANUP/,
       },
       {
         name: 'reduced-motion setting no longer reaches the rendered page',
@@ -127,7 +148,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 9 plants, 9 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 12 plants, 12 caught');
   process.exit(code);
 }
 
@@ -185,6 +206,7 @@ async function page({
     Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad] : [] });
     window.__startupPad = {
       connect() { state.connected=true; dispatchEvent(new Event('gamepadconnected')); },
+      disconnect() { state.connected=false; dispatchEvent(new Event('gamepaddisconnected')); },
       set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; }
     };
   })();`;
@@ -246,7 +268,8 @@ async function startupFacts(p) {
     const focusables=[...document.querySelectorAll('button,a[href],input,select,textarea,[tabindex]')]
       .filter(e => e.tabIndex >= 0 && !e.hidden && getComputedStyle(e).display !== 'none');
     return { gate:!!gate, title:!!document.querySelector('.title-screen'), titleControls:document.querySelectorAll('.slot-new,.slot-continue,.title-menu button').length,
-      focusables:focusables.map(e=>e.outerHTML.slice(0,80)), active:document.activeElement?.className||document.activeElement?.tagName,
+       focusables:focusables.map(e=>e.outerHTML.slice(0,80)), active:document.activeElement?.className||document.activeElement?.tagName,
+       role:gate?.getAttribute('role')||'', label:gate?.getAttribute('aria-label')||'',
       prompt:document.querySelector('.startup-prompt')?.textContent.trim()||'', family:gate?.dataset.inputFamily||'',
       stamp:stamp?.textContent.trim()||'', place:stamp?.dataset.place||'' };
   })()`);
@@ -257,7 +280,8 @@ async function assertColdAndStamp() {
   await p.until(`!!document.querySelector('.startup-gate,.title-screen,.profile-notice')`, 'cold boot surface');
   let f = await startupFacts(p);
   verdict(f.gate && !f.title && f.titleControls === 0, 'A1.COLD-ONLY', `startup=${f.gate}, title=${f.title}, title controls=${f.titleControls}`);
-  verdict(f.focusables.length === 0, 'A1.TAB-EXPOSURE', `Tab ring exposes ${f.focusables.length}: ${f.focusables.join(', ') || 'none'}`);
+  verdict(f.focusables.length === 1 && f.focusables[0].includes('startup-gate'), 'A1.TAB-EXPOSURE', `Tab ring exposes only the startup action (${f.focusables.join(', ') || 'none'})`);
+  verdict(f.role === 'button' && /continue/i.test(f.label), 'A1.ACTION-SEMANTICS', `role=${f.role || 'none'}, label=${JSON.stringify(f.label)}`);
   const releaseTab = await p.key('Tab'); await releaseTab();
   f = await startupFacts(p);
   verdict(!f.title && f.titleControls === 0, 'A1.TAB-CONSUMPTION', 'Tab cannot reach or activate a title control behind startup');
@@ -316,13 +340,37 @@ async function assertGamepad(button) {
   const p = await page({ pad: true });
   await p.until(`!!document.querySelector('.startup-gate')`, `gamepad ${button} startup`);
   await p.ev(`window.__startupPad.set(${button},true)`); await wait(100);
-  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed and gate remains`);
+  verdict(await p.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.startup-gate.is-revealing') && !document.querySelector('.title-screen')`), 'A7.GAMEPAD-RELEASE', `button ${button} down is consumed without beginning reveal`);
   await p.ev(`window.__startupPad.set(${button},false)`); await wait(220);
   await wait(150);
   const r = await p.ev(`({title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),customize:!!document.querySelector('.customize'),veil:!!document.querySelector('.modal-veil'),active:document.activeElement?.className||''})`);
   verdict(r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
   verdict(r.title && !r.startup && !r.customize && !r.veil && /slot-(new|continue)/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
   await p.close();
+}
+
+async function assertInterruptedPresses() {
+  const keyboard = await page();
+  await keyboard.until(`!!document.querySelector('.startup-gate')`, 'keyboard interrupt startup');
+  const release = await keyboard.key('Enter');
+  await keyboard.ev(`dispatchEvent(new Event('blur'))`);
+  await release();
+  await wait(220);
+  verdict(await keyboard.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'blur cancels the armed keyboard press; its orphaned keyup cannot reveal title');
+  const freshRelease = await keyboard.key('Enter'); await freshRelease();
+  await keyboard.until(`!!document.querySelector('.title-screen')`, 'fresh keyboard press after blur');
+  await keyboard.close();
+
+  const pad = await page({ pad: true });
+  await pad.until(`!!document.querySelector('.startup-gate')`, 'gamepad interrupt startup');
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'disconnect cancels the armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  verdict(await pad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
+  await pad.close();
 }
 
 async function assertReturnBypass() {
@@ -367,6 +415,18 @@ async function assertReducedMotion() {
   const short = a.particles.every(({ duration }) => duration.split(',').every((d) => d.endsWith('ms') ? parseFloat(d) <= 20 : parseFloat(d) <= 0.02));
   verdict(a.reduced && short, 'A10.REDUCED-MOTION', `class=${a.reduced}, particle durations=${[...new Set(a.particles.map(x=>x.duration))].join('/')}`);
   verdict(JSON.stringify(a.particles.map(({ p, style }) => [p, style])) === JSON.stringify(b.particles.map(({ p, style }) => [p, style])), 'A10.DETERMINISTIC-ASH', `${a.particles.length} authored particle records are byte-stable across fresh boots`);
+
+  const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${encodeURIComponent(JSON.stringify({ reducedMotion: true }))}`, reduced: true });
+  await p.until(`!!document.querySelector('.startup-gate')`, 'reduced-motion reveal startup');
+  const started = Date.now();
+  const release = await p.key('Enter'); await release();
+  const during = await p.ev(`({revealing:document.querySelector('.startup-gate')?.classList.contains('is-revealing')===true,busy:document.querySelector('.startup-gate')?.getAttribute('aria-busy')})`);
+  await wait(180);
+  const after = await p.ev(`({startup:!!document.querySelector('.startup-gate'),title:!!document.querySelector('.title-screen'),ash:document.querySelectorAll('.startup-ash').length})`);
+  const elapsed = Date.now() - started;
+  verdict(during.revealing && during.busy === 'true', 'A10.READABLE-EXIT', `reduced-motion reveal retains a short marked exit state (${JSON.stringify(during)})`);
+  verdict(!after.startup && after.title && after.ash === 0 && elapsed < 600, 'A10.REVEAL-CLEANUP', `startup unmounted by deterministic deadline (${elapsed}ms, ${JSON.stringify(after)})`);
+  await p.close();
 }
 
 async function assertShape(shape, textSize) {
@@ -401,6 +461,7 @@ async function main() {
   if (!SELFTEST_LANE) await assertPointerAndTouch();
   await assertGamepad(0);
   await assertGamepad(9);
+  await assertInterruptedPresses();
   await assertReturnBypass();
   await assertCrisisPrecedence();
   await assertReducedMotion();
