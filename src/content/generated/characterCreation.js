@@ -34,6 +34,22 @@ export const characterCreation = {
         "goldenSprout"
       ]
     },
+    "rogue": {
+      "armourIds": [
+        "default",
+        "nightveil"
+      ],
+      "handIds": [
+        "dagger",
+        "buckler",
+        "shortbow",
+        "parryDagger"
+      ],
+      "relicIds": [
+        "cutpursesCoin",
+        "goldenSprout"
+      ]
+    },
     "herald": {
       "armourIds": [
         "default",

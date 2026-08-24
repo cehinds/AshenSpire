@@ -231,6 +231,33 @@ if (!Number.isFinite(hudMaxViewportPct) || hudMaxViewportPct <= 0 || hudMaxViewp
   throw new Error(`balance.ui.hudBars.main.maxViewportPct must be in (0, 100], got ${JSON.stringify(UI.hudBars?.main?.maxViewportPct)}`);
 }
 document.documentElement.style.setProperty('--hud-resource-max-vw', `${hudMaxViewportPct}vw`);
+const hudAvailableWidthPct = Number(UI.hudBars?.main?.availableWidthPct);
+if (!Number.isFinite(hudAvailableWidthPct) || hudAvailableWidthPct < 80 || hudAvailableWidthPct > 85) {
+  throw new Error(`balance.ui.hudBars.main.availableWidthPct must be in [80, 85], got ${JSON.stringify(UI.hudBars?.main?.availableWidthPct)}`);
+}
+document.documentElement.style.setProperty('--hud-resource-available-pct', `${hudAvailableWidthPct}%`);
+document.documentElement.style.setProperty('--hud-resource-available-vw', `${hudAvailableWidthPct}vw`);
+const HUD_PRESENTATION = UI.hudPresentation || {};
+const projectHudToken = (key, min, max, cssName, unit) => {
+  const value = Number(HUD_PRESENTATION[key]);
+  if (!Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`balance.ui.hudPresentation.${key} must be in [${min}, ${max}], got ${JSON.stringify(HUD_PRESENTATION[key])}`);
+  }
+  document.documentElement.style.setProperty(cssName, `${value}${unit}`);
+};
+projectHudToken('componentBackgroundOpacityPct', 0, 100, '--hud-component-background-opacity', '%');
+projectHudToken('metadataFontPx', 8, 24, '--hud-metadata-font-px', 'px');
+projectHudToken('beltItemGapPx', 0, 12, '--hud-belt-item-gap-px', 'px');
+projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
+projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
+projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
+projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
+projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
+if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
+  throw new Error(`balance.ui.hudPresentation.metadataShowTotals must be boolean, got ${JSON.stringify(HUD_PRESENTATION.metadataShowTotals)}`);
+}
+document.documentElement.dataset.hudMetadataShowTotals = String(HUD_PRESENTATION.metadataShowTotals);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
 // fit invariant is `appliedZoom x designW <= innerWidth`, and a probe that reads
@@ -1349,6 +1376,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
       drawPerTurn: run.drawPerTurn,
       damageBySchoolAdd: run.damageBySchoolAdd,
       equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+      equipmentPoolDeficits: run.equipmentPoolDeficits,
       deck: run.deck,
       relicIds: run.relics,
       flasks: run.flasks,
@@ -1456,9 +1484,15 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
 function onCombatEnd(result, combat, enc) {
   run.flasks = combat.player.flasks; // drunk flasks stay drunk
   run.flaskCharges = combat.player.flaskCharges ? { ...combat.player.flaskCharges } : run.flaskCharges;
+  for (const field of ['hp', 'mana', 'stamina']) {
+    run[field] = combat.player[field];
+    const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
+    run[maxField] = combat.player[maxField];
+  }
+  run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
-  stampDeck(registries, run);
+  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
 
   if (result !== 'victory') {
     audio.stopMusic();
@@ -1470,9 +1504,6 @@ function onCombatEnd(result, combat, enc) {
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
 
-  run.hp = combat.player.hp;
-  run.mana = combat.player.mana;
-  run.stamina = combat.player.stamina;
   run.stats.fightsWon += 1;
   run.combatEntered = null;
 

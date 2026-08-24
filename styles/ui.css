@@ -1,5 +1,16 @@
 /* styles/ui.css — tooltips, cards, modals, screens shared chrome */
 
+:root {
+  --ui-section-control-gap: 0.6rem;
+  --ui-section-label-size: 1.2rem;
+  --ui-section-letter-spacing: 0.08em;
+  --ui-tray-side-margin: 0.4rem;
+  --ui-tray-control-size: calc(var(--tap-target, 44px) / var(--ui-zoom, 1));
+  --ui-tray-resize-surface: 44px;
+  --ui-tray-expanded-block-max: 36rem;
+  --ui-tray-expanded-panel-max: 34%;
+}
+
 /* ---------- tooltip ---------- */
 /* --place-gap: THE DISTANCE FROM THE ANCHOR, AND THIS IS ITS ONE HOME.
    src/ui/fx.js placeAnchored() reads it from here through getComputedStyle, and
@@ -212,7 +223,8 @@
 .overlay-head { display: flex; align-items: center; justify-content: space-between; gap: 1.2rem; padding: 1.2rem 1.6rem; border-bottom: 1px solid var(--line); background: var(--panel); }
 .overlay-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .overlay-tabs .ov-tab {
-  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0; font-size: 1.2rem; letter-spacing: 0.05em;
+  padding: 0.7rem 1.4rem; border-radius: 8px 8px 0 0;
+  font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
   background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
   /* Law 4 (#37) applied where this work touches, ratchet-style, NOT swept.
      These six tabs measured 20.3-35.8 DEVICE px against the 44 a finger wants,
@@ -1742,6 +1754,12 @@ button.ev-choice {
   background-repeat: no-repeat;
   background-size: calc(var(--hold, 0) * 100%) 100%;
 }
+.beat-hold[data-hold-feedback='delegated'],
+.beat-hold[data-hold-feedback='delegated']:hover,
+.beat-hold[data-hold-feedback='delegated']:focus,
+.beat-hold[data-hold-feedback='delegated']:active {
+  background-image: none;
+}
 /* `background` LEAVES THE TRANSITION LIST, and nothing else does. Naming the
    three properties a held control may still ease keeps the border going gold
    and the press squashing on their own timings (durations cycle from whatever
@@ -2255,6 +2273,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   padding: 0.65rem 0.9rem; border: 1px solid var(--line-soft); border-radius: 3px;
   background: rgba(10, 8, 6, 0.32); color: var(--parchment);
 }
+/* Delegated card feedback is painted after the card's own background shorthand
+   so touch and mouse see the same whole-surface progress fill. The source
+   button intentionally suppresses its duplicate fill; these hosts are the one
+   visual surface for both the folded face and the expanded reveal. */
+.beat-hold[data-hold-feedback='card'],
+.beat-hold[data-hold-feedback='card']:hover,
+.beat-hold[data-hold-feedback='card']:focus,
+.beat-hold[data-hold-feedback='card']:active {
+  background-image: linear-gradient(to right, rgba(var(--accent-rgb), 0.30) 0 100%);
+  background-repeat: no-repeat;
+  background-size: calc(var(--hold, 0) * 100%) 100%;
+}
 .inventory-face > .hold-hint {
   margin: 0; white-space: nowrap; justify-self: start;
 }
@@ -2275,6 +2305,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .inventory-detail { display: grid; grid-template-columns: minmax(5rem, 18%) minmax(0, 1fr); gap: 1rem; align-items: start; }
 .inventory-detail.beat-hold { position: relative; }
 .inventory-detail.beat-hold > .hold-hint { position: absolute; top: 0.35rem; right: 0.45rem; margin: 0; white-space: nowrap; }
+.inventory-card-action-label { pointer-events: none; }
 .inventory-model {
   min-height: 7rem; display: grid; place-items: center;
   border: 1px solid var(--line-soft); background: rgba(10, 8, 6, 0.35); font-size: 4rem;
@@ -2320,7 +2351,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-stats-summary b,
 .armoury-stats-summary strong { flex: 1 1 100%; color: var(--gold); font-family: var(--font-display); letter-spacing: 0.05em; }
 .armoury-stats-summary span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.equip-cards { display: grid; gap: 0.45rem; min-width: 0; width: 100%; }
+.equip-cards.armoury-card-list { display: grid; align-items: stretch; gap: 0.45rem; min-width: 0; width: 100%; }
+.armoury-equipment-slot-component,
+.armoury-equipment-slot-component > .es-sets { display: contents; }
 .armoury-card-list[data-card-view='grid'] { grid-template-columns: repeat(var(--armoury-card-grid-columns, 4), minmax(0, 1fr)); }
 .armoury-card-row { min-width: 0; border: 1px solid var(--line-soft); background: var(--bg); }
 .armoury-card-row summary { display: grid; grid-template-columns: 1.1rem 2rem minmax(8rem, 1fr) auto auto minmax(0, 1fr) auto; align-items: center; gap: 0.45rem; min-width: 0; min-height: var(--tap-floor); padding: 0.45rem 0.6rem; color: var(--parchment); cursor: pointer; list-style: none; }
@@ -2361,6 +2394,102 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .armoury-card-detail-meta { color: var(--muted); font-size: 0.85rem; }
 .armoury-card-detail-text { color: var(--parchment); line-height: 1.35; }
 .armoury-card-detail-flavor { color: var(--muted); font-style: italic; }
+
+.armoury-trays { display: contents; }
+.armoury-subject { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; overflow: hidden; }
+.folding-tray {
+  position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border-top: 1px solid var(--line); background: var(--panel); padding: 1.2rem 1.6rem;
+}
+.tray-header { display: flex; align-items: center; gap: var(--ui-section-control-gap); min-width: 0; }
+.tray-fold {
+  display: flex; align-items: center; gap: var(--ui-section-control-gap); flex: 1 1 auto;
+  min-width: 0; min-height: var(--tap-floor); border: 0; padding: 0;
+  background: transparent; color: var(--gold); cursor: pointer; text-align: left;
+  font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing);
+}
+.tray-content { flex: 0 1 auto; min-width: 0; min-height: 0; overflow: auto; }
+.folding-tray[data-sized='1'] > .tray-content { flex: 1 1 auto; }
+.tray-content[hidden] { display: none !important; }
+.tray-sort {
+  flex: 0 0 var(--ui-tray-control-size); width: var(--ui-tray-control-size); height: var(--ui-tray-control-size);
+  min-width: var(--ui-tray-control-size); min-height: var(--ui-tray-control-size); aspect-ratio: 1; padding: 0;
+  border: 1px solid var(--line-soft); border-radius: 0.65rem; background: transparent;
+  color: var(--gold); cursor: pointer; font: inherit;
+}
+.tray-sort:hover, .tray-sort:focus-visible { border-color: var(--gold); color: var(--parchment); }
+.tray-sort:disabled { opacity: 0.45; cursor: not-allowed; }
+.tray-header .tray-fold { min-width: 0; }
+.tray-header .tray-count { margin-left: auto; white-space: nowrap; }
+.tray-header .tray-summary {
+  margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Edge-aware action grammar. A closed caret points inward, where the tray will
+   open. An open caret points back to its anchored edge, where it will fold. */
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-fold,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-fold {
+  flex-direction: column; justify-content: flex-start; width: var(--tap-floor); height: 100%;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'],
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] {
+  align-self: stretch; flex: 0 0 var(--tap-floor); width: var(--tap-floor);
+  padding: 0; border-top: 0;
+}
+.folding-tray[data-tray-edge='left'] {
+  margin-block: var(--ui-tray-side-margin);
+  margin-left: var(--ui-tray-side-margin);
+}
+.folding-tray[data-tray-edge='right'] {
+  margin-block: var(--ui-tray-side-margin);
+  margin-right: var(--ui-tray-side-margin);
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='0'],
+.folding-tray[data-tray-edge='right'][data-collapsed='0'] {
+  align-self: stretch; width: calc(100% - var(--ui-tray-side-margin)); height: auto;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-title,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-title {
+  writing-mode: vertical-rl; text-orientation: mixed;
+}
+.folding-tray[data-tray-edge='left'][data-collapsed='1'] .tray-count,
+.folding-tray[data-tray-edge='right'][data-collapsed='1'] .tray-count {
+  margin-left: 0; writing-mode: vertical-rl;
+}
+.tray-resize-handle {
+  position: absolute; z-index: 2; touch-action: none; user-select: none; outline: 0;
+}
+.tray-resize-handle::after {
+  content: ''; position: absolute; border-radius: 999px; background: color-mix(in srgb, var(--gold) 58%, transparent);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.tray-resize-handle[data-ui-variant='top'], .tray-resize-handle[data-ui-variant='bottom'] {
+  left: 50%; width: 9.6rem; height: var(--ui-tray-resize-surface); transform: translateX(-50%); cursor: ns-resize;
+}
+.tray-resize-handle[data-ui-variant='top'] { bottom: 0; transform: translate(-50%, 50%); }
+.tray-resize-handle[data-ui-variant='bottom'] { top: 0; transform: translate(-50%, -50%); }
+.tray-resize-handle[data-ui-variant='top']::after, .tray-resize-handle[data-ui-variant='bottom']::after {
+  width: 4.8rem; height: 2px; left: 50%; top: 50%; transform: translate(-50%, -50%);
+}
+.tray-resize-handle[data-ui-variant='left'], .tray-resize-handle[data-ui-variant='right'] {
+  top: 50%; width: var(--ui-tray-resize-surface); height: 9.6rem; transform: translateY(-50%); cursor: ew-resize;
+}
+.tray-resize-handle[data-ui-variant='left'] { right: 0; }
+.tray-resize-handle[data-ui-variant='right'] { left: 0; }
+.tray-resize-handle[data-ui-variant='left']::after, .tray-resize-handle[data-ui-variant='right']::after {
+  width: 2px; height: 4.8rem; left: 50%; top: 50%; transform: translate(-50%, -50%);
+}
+.tray-resize-handle:is(:hover, :focus-visible)[data-ui-variant='top']::after,
+.tray-resize-handle:is(:hover, :focus-visible)[data-ui-variant='bottom']::after,
+.tray-resize-handle[data-dragging='1'][data-ui-variant='top']::after,
+.tray-resize-handle[data-dragging='1'][data-ui-variant='bottom']::after { background: var(--gold); transform: translate(-50%, -50%) scaleX(1.15); }
+.tray-resize-handle:is(:hover, :focus-visible)[data-ui-variant='left']::after,
+.tray-resize-handle:is(:hover, :focus-visible)[data-ui-variant='right']::after,
+.tray-resize-handle[data-dragging='1'][data-ui-variant='left']::after,
+.tray-resize-handle[data-dragging='1'][data-ui-variant='right']::after { background: var(--gold); transform: translate(-50%, -50%) scaleY(1.15); }
+.equip-cards { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.equip-card-with-count { position: relative; }
+.equip-card-with-count > .role-copy-count { position: absolute; right: 0.35rem; bottom: 0.35rem; }
 .role-copy-count { color: var(--gold); font-style: normal; white-space: nowrap; }
 .equip-role-receipts { flex: 1 1 28rem; display: grid; gap: 0.5rem; }
 .equip-role-receipts > div { display: grid; grid-template-columns: minmax(9rem, 1fr) 2fr; gap: 0.2rem 0.8rem; border-left: 2px solid var(--line-soft); padding-left: 0.8rem; }
@@ -2431,7 +2560,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .equip-candidate-row { display: grid; gap: 0.35rem; min-width: 0; }
 .equip-candidate-comparison { margin-left: 4.5rem; border-left: 2px solid var(--line-soft); padding: 0.25rem 0 0.5rem 0.8rem; overflow-wrap: anywhere; }
 #tooltip .equip-candidate-comparison { margin-left: 0; }
-#tooltip:has(.equip-candidate-comparison) { max-height: min(60vh, 30rem); overflow: auto; }
+#tooltip[data-tooltip-variant='equipment-comparison'] { overflow: auto; }
+.inventory-detail [data-ui-variant='inline'] .equip-candidate-comparison {
+  margin-left: 0;
+  border-left-color: var(--gold-dim);
+}
 .equip-candidate-comparison summary { min-height: var(--tap-floor); display: flex; align-items: center; cursor: pointer; color: var(--gold); }
 .equip-candidate-comparison ul { margin: 0.35rem 0; padding-left: 1.4rem; }
 .equip-card-changes li { display: grid; grid-template-columns: minmax(9rem, 1fr) auto; gap: 0.15rem 0.5rem; }
@@ -2523,7 +2656,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .region-fold:hover, .region-fold:focus-visible { color: var(--gold); }
 .rf-caret { font-size: 1.1rem; }
-.rf-label { font-size: 1.15rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.rf-label { font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing); text-transform: uppercase; }
 /* A folded pane still SAYS how much is inside it — a pane that folds to a bare
    arrow is decoration that decorates nothing, and the player cannot tell an
    empty strip from a hidden one. */
@@ -2535,7 +2668,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    has to assemble, and the count is the half that stops looking like it belongs
    to the label. Sat beside its label it is one phrase — "CARDS, 3 cards" — at
    every width, and the hit area is untouched. ~~ */
-.rf-count { margin-left: 0.9rem; font-size: 1.05rem; color: var(--muted); }
+.rf-count { margin-left: var(--ui-section-control-gap); font-size: var(--ui-section-label-size); color: var(--muted); }
 /* The fold itself: everything but the header goes, and the pane stops competing
    for the height the subject wanted. `.armoury-body` is `flex: 1`, so the space
    is handed to the subject by the layout that was already there. */
@@ -2556,31 +2689,16 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   position: relative;
   flex: 0 1 var(--armoury-tray-height, 10%); min-height: var(--tap-floor); overflow-y: auto;
 }
-.region-resizer {
-  position: absolute;
-  z-index: 3;
-  top: -0.35rem;
-  left: 0;
-  right: 0;
-  display: block;
-  height: 0.7rem;
-  cursor: row-resize;
-  touch-action: none;
+/* Shared Folding Tray instances keep their intrinsic compact size until the
+   shared renderer records a resize. */
+.folding-tray[data-role='context'][data-collapsed='0'][data-sized='0'] {
+  max-height: min(var(--ui-tray-expanded-block-max), var(--ui-tray-expanded-panel-max));
 }
-.region-resizer::before {
-  content: '';
-  position: absolute;
-  inset: 0.3rem 1.6rem;
-  background: var(--line-soft);
+.folding-tray[data-role='context'][data-collapsed='0'][data-sized='1'] { max-height: none; }
+.armoury .folding-tray[data-role='context'][data-collapsed='0'][data-sized='1'] {
+  flex: 0 0 auto;
 }
-.region-resizer:hover::before,
-.region-resizer:focus-visible::before,
-.region-resizer.dragging::before {
-  background: var(--gold);
-  box-shadow: 0 0 0.45rem rgba(201, 162, 39, 0.5);
-}
-.armoury [data-role='context'][data-collapsed='1'] > .region-resizer,
-.armoury[data-pane='inventory'] .armoury-inventory > .region-resizer { display: none; }
+.armoury-trays > [data-tray-edge='bottom']:first-child { margin-top: auto; }
 
 /* Screenshot evidence poses use the real screen/readers but focus the camera on
    the contract under review. They are query-gated dev surfaces; ordinary play
@@ -2592,7 +2710,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 :root[data-shot-evidence='armoury'] .armoury.picking .equip-slots { display: none; }
 :root[data-shot-evidence='armoury'] .armoury-body { min-height: 0; overflow: hidden; }
 :root[data-shot-evidence='armoury'] .armoury-right { height: 100%; overflow-y: auto !important; }
-:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 0 35%; }
+:root[data-shot-evidence='armoury'] .armoury-strip[data-role='context'][data-collapsed='0'] { flex: 0 1 auto; }
 :root[data-shot-evidence='armoury'] .equip-card-with-count { display: none; }
 
 /* Grid view: the figure between two columns of slots, hands on the side they
@@ -2788,10 +2906,10 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 /* Navigation rows use the same text-independent ergonomic floor, then grow
    intrinsically when their content needs more room. */
 .qn-panel .qn-row {
-  display: flex; align-items: center; gap: 1.2rem; width: 100%;
+  display: flex; align-items: center; gap: var(--ui-section-control-gap); width: 100%;
   min-height: var(--tap-floor); height: auto; padding: 0.6rem 1.6rem; text-align: left;
   background: transparent; border: 0; border-radius: 0; color: inherit;
-  font-family: inherit; font-size: 1.4rem; cursor: pointer;
+  font-family: inherit; font-size: var(--ui-section-label-size); letter-spacing: var(--ui-section-letter-spacing); cursor: pointer;
 }
 .qn-panel .qn-row:hover { background: var(--bg-raise); }
 .qn-panel .qn-row.on { background: var(--bg-raise); color: var(--gold); }
@@ -3853,6 +3971,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-view-mode='Character'] .armoury-strip[data-collapsed='0'] { flex: 0 1 var(--armoury-tray-height, 10%); min-height: var(--tap-floor); overflow: auto; }
 .armoury[data-view-mode='Inventory'] .armoury-body { flex: 1 1 65%; min-height: 0; }
 .armoury[data-view-mode='Inventory'] .armoury-inventory[data-collapsed='0'] { min-height: 0; overflow: auto; }
+.armoury[data-pane='inventory'] .armoury-inventory.folding-tray[data-collapsed='0'] {
+  align-self: stretch; height: auto; max-height: none; padding-block: 0.7rem;
+}
 
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .armoury-body {
   grid-template-columns: minmax(0, var(--armoury-phone-character-ratio)) minmax(0, var(--armoury-phone-equipment-ratio));

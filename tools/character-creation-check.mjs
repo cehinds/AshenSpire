@@ -142,7 +142,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }
 
   await open('character');
-  await click('#cz-statedit .se-mode', 1);
+  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
   for (let i = 0; i < 3; i += 1) {
     await click('.cc-stat-overlay [aria-label="Decrease Strength"]');
@@ -160,7 +160,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(errors.length === errorsBeforeIncompatiblePick, `${width}x${height}: incompatible hand selection keeps the live preview total`);
   assert(incompatible.disabled === 'true' && /Greatsword needs strength 12.*have 11/.test(incompatible.refusal), `${width}x${height}: Begin recomputes the current equipment requirement refusal`);
   await open('character');
-  await click('#cz-statedit .se-mode', 1);
+  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver correction overlay');
   await click('.cc-stat-overlay [data-stat-done]');
   const modalRefusal = await evaluate(`(() => {
@@ -190,7 +190,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('#cz-glyphs .cz-opt', 1);
   await click('#cz-keepsakes .cz-keepsake', 1);
   await setInput('#cz-name', 'Marya');
-  await click('#cz-statedit .se-mode', 1);
+  await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Assign Points overlay');
   assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay .se-step').length`)) === 10, `${width}x${height}: Assign Points reuses five plus/minus rows in an overlay`);
   await click('.cc-stat-overlay .se-step', 0);
@@ -214,7 +214,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await open('character');
   const persisted = await evaluate(`(() => ({
     name:document.querySelector('#cz-name').value,
-    pointbuy:document.querySelectorAll('#cz-statedit .se-mode')[1].getAttribute('aria-pressed'),
+    pointbuy:document.querySelector('#cz-statedit .se-mode[data-creation-mode="pointbuy"]').getAttribute('aria-pressed'),
     keepsake:document.querySelector('#cz-keepsakes [data-keepsake-id="oldCinder"]').getAttribute('aria-pressed')
   }))()`);
   assert(persisted.name === 'Marya' && persisted.pointbuy === 'true' && persisted.keepsake === 'true', `${width}x${height}: character choices persist through section changes`);

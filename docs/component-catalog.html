@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AshenSpire · Component Catalog</title>
+  <style>
+    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; --catalog-card-min:285px; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 48rem); color:var(--ink); font:14px/1.45 ui-sans-serif,system-ui,sans-serif; }
+    main { width:min(1500px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
+    header { display:flex; justify-content:space-between; gap:24px; align-items:end; border-bottom:1px solid var(--line); padding-bottom:20px; }
+    h1 { margin:0; font:700 clamp(24px,4vw,42px)/1.1 Georgia,serif; letter-spacing:.03em; }
+    h1 span { color:var(--gold); }
+    .title-link { display:inline-block; padding:5px 8px 7px; margin:-5px -8px 0; border:1px solid transparent; border-radius:8px; color:var(--ink); text-decoration:none; }
+    .title-link:hover,.title-link:focus-visible { border-color:var(--gold); background:color-mix(in srgb,var(--panel) 78%,transparent); }
+    .title-link:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+    .title-link h1::after { content:' ↗'; color:var(--muted); font:16px ui-sans-serif,system-ui,sans-serif; vertical-align:middle; }
+    .lede { max-width:720px; color:var(--muted); margin:10px 0 0; }
+    .meta { text-align:right; color:var(--muted); font-size:12px; }
+    .meta a { color:var(--gold); }
+    .catalog-nav { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+    .catalog-nav a { min-height:36px; display:inline-flex; align-items:center; padding:6px 9px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:12px; }
+    .catalog-nav a:hover,.catalog-nav a:focus-visible { border-color:var(--gold); color:var(--gold); }
+    .tools { display:flex; flex-wrap:wrap; gap:10px; padding:18px 0; position:sticky; top:0; z-index:2; background:color-mix(in srgb,var(--bg) 92%,transparent); backdrop-filter:blur(8px); }
+    input, select { border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); padding:9px 11px; }
+    input { flex:1 1 260px; }
+    .count { color:var(--muted); align-self:center; }
+    .catalog-controls { display:flex; align-items:center; gap:4px; min-height:44px; padding:3px; border:1px solid var(--line); border-radius:7px; background:var(--panel); }
+    .catalog-controls > span { padding:0 5px; color:var(--muted); font-size:11px; white-space:nowrap; }
+    .catalog-controls button { min-width:36px; height:36px; padding:0 9px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); cursor:pointer; }
+    .catalog-controls button:hover,.catalog-controls button:focus-visible,.catalog-controls button[aria-pressed="true"] { border-color:var(--gold); color:var(--gold); }
+    .catalog-controls button:disabled { opacity:.4; cursor:not-allowed; }
+    .tool-button { min-height:44px; padding:7px 11px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--ink); cursor:pointer; }
+    .tool-button:hover,.tool-button:focus-visible { border-color:var(--gold); color:var(--gold); }
+    .density-readout { min-width:84px; text-align:center; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--catalog-card-min)),1fr)); gap:14px; }
+    .grid[data-view="list"] { display:flex; flex-direction:column; }
+    .grid[data-view="list"] article { display:grid; grid-template-columns:minmax(170px,260px) 1fr; }
+    .grid[data-view="list"] .visual { min-height:132px; border:0; border-right:1px solid #3d3022; }
+    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; cursor:pointer; }
+    article:hover { border-color:var(--gold); transform:translateY(-2px); }
+    article:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
+    article[hidden] { display:none; }
+    .visual { min-height:112px; display:grid; place-items:center; padding:14px; background:#0c0b09; border-bottom:1px solid #3d3022; }
+    .body { padding:13px 14px 15px; }
+    .id { color:var(--gold); font:12px ui-monospace,SFMono-Regular,Consolas,monospace; }
+    h2 { margin:5px 0 7px; font:700 18px Georgia,serif; }
+    dl { display:grid; grid-template-columns:70px 1fr; gap:4px 8px; margin:0; font-size:12px; }
+    dt { color:var(--muted); } dd { margin:0; }
+    dd code { color:#e9d59d; }
+    .chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:11px; }
+    .chip { border:1px solid #5c4c31; border-radius:999px; padding:2px 7px; color:var(--muted); font-size:11px; }
+    button.copy { margin-top:11px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); padding:5px 8px; cursor:pointer; }
+    button.copy:hover { border-color:var(--gold); }
+    .catalog-footer { color:var(--muted); border-top:1px solid var(--line); margin-top:26px; padding-top:16px; font-size:12px; }
+    .token-panel { margin:18px 0 24px; padding:16px; border:1px solid #483b29; border-radius:10px; background:color-mix(in srgb,var(--panel) 88%,transparent); }
+    .token-panel h2 { margin:0 0 5px; }
+    .token-panel p { margin:0 0 12px; color:var(--muted); }
+    .token-table-wrap { overflow-x:auto; }
+    .token-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .token-table th,.token-table td { padding:7px 9px; border-top:1px solid #3d3022; text-align:left; vertical-align:top; }
+    .token-table th { color:var(--muted); font-weight:600; }
+    .token-table code { color:#e9d59d; }
+    /* Miniature visual language: deliberately schematic, not a second implementation. */
+    .mini { width:min(250px,100%); min-height:70px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .mini-header { width:100%; border:1px solid var(--line); padding:9px; display:grid; grid-template-columns:1.3fr .7fr 1.4fr; gap:7px; font:10px ui-monospace,monospace; color:var(--muted); }
+    .mini-header b { color:var(--ink); } .mini-header i { color:var(--gold); font-style:normal; text-align:center; }
+    .mini-bars { width:100%; display:grid; gap:5px; } .mini-bar { display:grid; grid-template-columns:34px 1fr; gap:5px; align-items:center; font:10px ui-monospace,monospace; }
+    .track { height:11px; border:1px solid #675638; border-radius:99px; overflow:hidden; } .fill { height:100%; width:68%; background:var(--red); } .blue { background:var(--blue); width:38%; } .green { background:var(--green); width:48%; }
+    .mini-quick { display:grid; grid-template-columns:repeat(2,44px); gap:5px; } .mini-btn,.mini-slot { height:38px; width:38px; border:1px solid #725d35; border-radius:7px; display:grid; place-items:center; color:var(--gold); background:#15110e; }
+    .mini-belt { display:flex; gap:3px; } .mini-belt .mini-slot { width:31px; height:31px; font-size:13px; }
+    .mini-combat { align-items:end; } .fighter { text-align:center; } .fighter .head { width:30px; height:30px; border:2px solid var(--gold); border-radius:50%; margin:auto; } .fighter .hp { width:62px; height:7px; background:var(--red); border-radius:5px; margin:4px auto 0; } .fighter small { color:var(--muted); font-size:9px; }
+    .mini-hand { display:flex; justify-content:center; align-items:end; min-width:155px; height:70px; margin-bottom:12px; padding-top:9px; }
+    .card { width:40px; height:58px; border:1px solid #b29242; border-radius:5px; background:linear-gradient(#33281c,#17120f); box-shadow:0 3px 7px #0009; transform-origin:50% 110%; }
+    .mini-hand .card + .card { margin-left:-15px; }
+    .mini-hand .card:nth-child(1){transform:translateY(10px) rotate(-22deg)}
+    .mini-hand .card:nth-child(2){transform:translateY(3px) rotate(-11deg)}
+    .mini-hand .card:nth-child(3){transform:translateY(0)}
+    .mini-hand .card:nth-child(4){transform:translateY(3px) rotate(11deg)}
+    .mini-hand .card:nth-child(5){transform:translateY(10px) rotate(22deg)}
+    .mini-rail { display:flex; gap:6px; } .mini-rail .mini-btn { width:43px; height:27px; }
+    .mini-panel { width:145px; height:65px; border:1px dashed #887044; border-radius:7px; display:grid; place-items:center; color:var(--muted); font-size:10px; text-align:center; }
+    .mini-label { color:var(--muted); font:9px ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+    .mini-stack { display:grid; place-items:center; gap:5px; }
+    .mini-title { color:var(--ink); font:700 12px Georgia,serif; letter-spacing:.08em; }
+    .coin { color:var(--gold); font-size:20px; }
+    .key { position:absolute; right:-5px; bottom:-5px; min-width:17px; height:17px; padding:1px 3px; border:1px solid #a78a48; border-radius:4px; background:#292118; color:var(--ink); font:10px ui-monospace,monospace; text-align:center; }
+    .key-demo,.control-demo { position:relative; }
+    .single-meter { width:205px; }
+    .panel-parts { display:grid; grid-template-columns:1fr 74px; gap:8px; width:100%; align-items:center; }
+    .transparent-panel { width:100%; min-height:72px; border:1px dashed #887044; border-radius:7px; padding:7px; background:transparent; }
+    .stage { width:100%; height:88px; display:flex; align-items:end; justify-content:space-around; border-bottom:1px solid #6a5738; background:linear-gradient(transparent,#211a13); }
+    .combat-card { width:58px; min-height:64px; padding:5px 4px; border:1px solid #8b7859; border-radius:6px; display:grid; place-items:center; align-content:center; gap:3px; box-shadow:0 4px 9px #0008; color:#fff; font:9px ui-monospace,monospace; }
+    .combat-card strong { font-size:16px; line-height:1; }
+    .combat-card .card-hp { width:46px; height:6px; border:1px solid #dfb3ae; border-radius:9px; background:linear-gradient(90deg,#d65b50 72%,#351b1a 72%); }
+    .combat-card.player { background:linear-gradient(155deg,#2c5b8d,#172b45); border-color:#6ba2d8; }
+    .combat-card.enemy { background:linear-gradient(155deg,#873e3a,#421d1b); border-color:#d06a60; }
+    .combat-card.neutral { background:linear-gradient(155deg,#66563e,#2b241b); border-color:#b89a62; }
+    .combat-card.large { width:76px; min-height:82px; }
+    .intent { display:inline-block; margin-bottom:4px; padding:1px 4px; border:1px solid var(--red); border-radius:4px; color:#f2b0a8; font:9px ui-monospace,monospace; }
+    .status-row { display:flex; justify-content:center; gap:3px; margin-top:4px; color:var(--muted); font-size:9px; }
+    .rail-wide { width:100%; justify-content:space-between; }
+    .split-belt { width:100%; display:flex; justify-content:space-between; align-items:center; }
+    .slot-empty { color:#6e604d; border-style:dashed; }
+    .background-swatch { width:175px; height:72px; border:1px solid #8b7859; border-radius:8px; display:grid; place-items:center; background:color-mix(in srgb,var(--panel2) 72%,transparent); box-shadow:inset 0 0 24px #0008; }
+    .tooltip-demo { max-width:190px; padding:8px 10px; border:1px solid #90784d; border-radius:6px; background:#241d16; box-shadow:0 5px 14px #000b; color:var(--muted); font-size:10px; }
+    .tooltip-demo b { display:block; color:var(--gold); margin-bottom:3px; }
+    .damage-pair { display:flex; gap:14px; align-items:center; font:700 28px Georgia,serif; text-shadow:0 2px 4px #000; }
+    .damage-direct { color:#ff8f6b; } .damage-guard { color:#8fc4dd; }
+    .meter-demo { width:190px; display:grid; gap:4px; }
+    .meter-demo .track { height:10px; }
+    .sprite-demo { width:58px; height:72px; display:grid; place-items:center; border:1px solid #766444; border-radius:28px 28px 8px 8px; background:linear-gradient(#786a5a,#282019); color:var(--gold); font-size:25px; }
+    .nameplate-demo { padding:5px 12px; border-bottom:1px solid var(--gold); color:var(--ink); font:700 11px Georgia,serif; letter-spacing:.06em; }
+    .status-icons { display:flex; gap:4px; } .status-icons span { width:27px; height:27px; display:grid; place-items:center; border:1px solid #816d48; border-radius:5px; background:#17120e; }
+    .block-demo { width:40px; height:45px; display:grid; place-items:center; clip-path:polygon(50% 0,95% 18%,84% 78%,50% 100%,16% 78%,5% 18%); background:#467794; color:white; font-weight:700; }
+    .composition { margin-top:9px; padding:8px; border:1px solid #4f412e; border-radius:6px; background:#100d0a; }
+    .composition strong { display:block; margin-bottom:5px; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.08em; }
+    .composition code { display:inline-block; margin:2px 3px 2px 0; padding:2px 5px; border:1px solid #5c4c31; border-radius:4px; color:#e9d59d; font-size:10px; }
+    .menu-demo { width:190px; border:1px solid #806a43; border-radius:7px; background:#17120e; overflow:hidden; font:10px ui-monospace,monospace; }
+    .menu-demo .caption { padding:4px 7px; color:var(--gold); border-bottom:1px solid #4c3e2c; }
+    .menu-demo .row { display:flex; justify-content:space-between; padding:6px 8px; border-top:1px solid #31291f; }
+    .tab-demo { display:flex; gap:3px; } .tab-demo span { padding:5px 7px; border:1px solid #5c4c31; border-radius:4px; color:var(--muted); font-size:9px; } .tab-demo .on { color:var(--gold); border-color:var(--gold); }
+    .armoury-demo { width:215px; padding:7px; border:1px solid #846e47; border-radius:7px; background:#17130f; }
+    .armoury-demo .ah { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; color:var(--gold); font:700 10px Georgia,serif; }
+    .armoury-demo .ab { display:grid; grid-template-columns:52px 1fr 52px; gap:5px; align-items:center; }
+    .equip-square { height:38px; border:1px solid #78643e; border-radius:5px; display:grid; place-items:center; color:var(--muted); font-size:9px; }
+    .inventory-list-demo { width:200px; display:grid; gap:3px; } .inventory-list-demo div { display:grid; grid-template-columns:1fr auto; padding:5px 7px; border:1px solid #584a34; border-radius:4px; font-size:9px; }
+    .comparison-demo { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; font:10px ui-monospace,monospace; } .comparison-demo div { padding:7px; border:1px solid #665536; border-radius:5px; }
+    .tray-icon { width:220px; height:82px; display:grid; grid-template-columns:31px 1fr 31px; grid-template-rows:25px 1fr 25px; gap:3px; color:var(--gold); font:700 13px ui-monospace,monospace; }
+    .tray-icon .edge { display:grid; place-items:center; border:1px solid #6f5b35; border-radius:5px; background:#17120e; }
+    .tray-icon .top { grid-column:2; grid-row:1; } .tray-icon .right { grid-column:3; grid-row:2; }
+    .tray-icon .bottom { grid-column:2; grid-row:3; } .tray-icon .left { grid-column:1; grid-row:2; }
+    .tray-icon .core { grid-column:2; grid-row:2; display:grid; place-items:center; border:1px solid #947936; border-radius:5px; background:linear-gradient(#251e15,#120f0c); color:var(--ink); font:10px Georgia,serif; letter-spacing:.1em; }
+    .detail-backdrop { position:fixed; inset:0; z-index:20; background:#0009; opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .detail-drawer { position:fixed; inset:0 0 0 auto; z-index:21; width:min(48rem,94vw); padding:2rem; overflow:auto; border-left:1px solid var(--line); background:linear-gradient(155deg,#241e18,#100e0c 72%); box-shadow:-14px 0 34px #000b; transform:translateX(102%); transition:transform .2s ease; }
+    body.detail-open .detail-backdrop { opacity:1; pointer-events:auto; }
+    body.detail-open .detail-drawer { transform:translateX(0); }
+    .detail-head { display:flex; align-items:start; justify-content:space-between; gap:1rem; padding-bottom:1.4rem; border-bottom:1px solid var(--line); }
+    .detail-head h2 { margin:.4rem 0 0; font-size:2.4rem; }
+    .detail-close { flex:0 0 44px; width:44px; height:44px; border:1px solid var(--line); border-radius:7px; background:#17120e; color:var(--ink); cursor:pointer; font-size:18px; }
+    .detail-close:hover,.detail-close:focus-visible { border-color:var(--gold); color:var(--gold); }
+    .detail-visual { min-height:180px; display:grid; place-items:center; margin:1.6rem 0; padding:1.6rem; border:1px solid #483b29; border-radius:9px; background:#0c0b09; }
+    .detail-fields { display:grid; grid-template-columns:9rem 1fr; gap:.8rem 1rem; margin:0; }
+    .detail-fields dt { color:var(--muted); } .detail-fields dd { margin:0; }
+    .detail-section { margin-top:1.8rem; } .detail-section h3 { margin:0 0 .7rem; color:var(--gold); font:700 1.4rem Georgia,serif; }
+    .detail-related { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .detail-related button,.detail-gallery-link { border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:#e9d59d; padding:.55rem .75rem; cursor:pointer; text-decoration:none; }
+    .detail-related button:hover,.detail-gallery-link:hover { border-color:var(--gold); }
+    .open-detail { display:inline-block; margin:10px 0 0 8px; color:var(--muted); font-size:11px; }
+    @media (max-width:620px) {
+      main { width:min(100% - 18px,1500px); padding-top:16px; }
+      header { align-items:start; flex-direction:column; }
+      .meta { text-align:left; }
+      .tools { gap:6px; }
+      .catalog-controls { flex:1 1 auto; }
+      .grid[data-view="list"] article { grid-template-columns:1fr; }
+      .grid[data-view="list"] .visual { border-right:0; border-bottom:1px solid #3d3022; }
+    }
+    @media (prefers-reduced-motion:reduce) { article,.detail-backdrop,.detail-drawer { transition:none; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
+    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
+  </header>
+  <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
+  <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
+  <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
+  <section class="token-panel" aria-labelledby="token-heading">
+    <h2 id="token-heading">Data-driven HUD tokens</h2>
+    <p>Defaults live in <code>balance.ui.hudPresentation</code>; <code>src/main.js</code> validates and projects them once for the shared Map/Combat HUD.</p>
+    <div class="token-table-wrap"><table class="token-table">
+      <thead><tr><th>Setting</th><th>Default</th><th>Runtime projection</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>componentBackgroundOpacityPct</code></td><td>0</td><td><code>--hud-component-background-opacity</code></td><td>Component-card background opacity</td></tr>
+        <tr><td><code>metadataFontPx</code></td><td>11</td><td><code>--hud-metadata-font-px</code></td><td>Shared metadata font size</td></tr>
+        <tr><td><code>beltItemGapPx</code></td><td>2</td><td><code>--hud-belt-item-gap-px</code></td><td>Relic/potion slot spacing</td></tr>
+        <tr><td><code>portraitScale</code></td><td>0.7</td><td><code>--hud-portrait-scale</code></td><td>Portrait-badge scale</td></tr>
+        <tr><td><code>primaryRowGapPx</code></td><td>8</td><td><code>--hud-primary-row-gap-px</code></td><td>Vitals/Quick Access gap</td></tr>
+        <tr><td><code>controlGapPx</code></td><td>2</td><td><code>--hud-control-gap-px</code></td><td>Quick Access grid gap</td></tr>
+        <tr><td><code>resourceRowGapPx</code></td><td>2</td><td><code>--hud-resource-row-gap-px</code></td><td>HP/MP/SP vertical gap</td></tr>
+        <tr><td><code>cindersMaxWidthPct</code></td><td>30</td><td><code>--hud-cinders-max-width</code></td><td>Centered Cinders track cap</td></tr>
+        <tr><td><code>metadataMaxWidthPct</code></td><td>30</td><td><code>--hud-metadata-max-width</code></td><td>Right metadata-trail cap</td></tr>
+        <tr><td><code>metadataShowTotals</code></td><td>false</td><td><code>data-hud-metadata-show-totals</code></td><td>Act/Floor total visibility</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+  <section class="grid" id="grid" data-view="grid" aria-live="polite"></section>
+  <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
+</main>
+<div class="detail-backdrop" id="detail-backdrop"></div>
+<aside class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+  <div class="detail-head"><div><div class="id" id="detail-id"></div><h2 id="detail-title"></h2></div><button class="detail-close" id="detail-close" type="button" aria-label="Close component details">✕</button></div>
+  <div class="detail-visual" id="detail-visual"></div>
+  <dl class="detail-fields" id="detail-fields"></dl>
+  <div class="detail-section" id="detail-composition"></div>
+  <div class="detail-section"><h3>Related components</h3><div class="detail-related" id="detail-related"></div></div>
+  <div class="detail-section" id="detail-actions"></div>
+</aside>
+<script>
+const V = {
+  sharedHud:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>◎ REAVER</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1</span></div><div class="panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div><div class="split-belt"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div>',
+  runHeader:'<div class="mini"><div class="mini-header"><b>◎ NAME · CLASS</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1 · BUILD</span></div></div>',
+  identityCluster:'<div class="mini"><div class="mini-btn">⚔</div><div><div class="mini-title">FORSAKEN · REAVER</div><div class="mini-label">run identity</div></div></div>',
+  portraitBadge:'<div class="mini mini-stack"><div class="fighter"><div class="head">⚔</div></div><div class="mini-label">portrait badge</div></div>',
+  characterTitle:'<div class="mini mini-stack"><div class="mini-title">FORSAKEN · REAVER</div><div class="mini-label">name · class</div></div>',
+  cindersCounter:'<div class="mini mini-stack"><div><span class="coin">⛁</span> <strong>6,000</strong></div><div class="mini-label">cinders counter</div></div>',
+  buildTrail:'<div class="mini mini-stack" style="width:100%"><div class="mini-header" style="grid-template-columns:repeat(5,auto)"><b>ACT 1</b><b>FLOOR 6</b><span>BUILD 1126</span><span>SEED 1RFRS8</span><span>SRC 5972eda</span></div><div class="mini-label">rightmost fields hide first</div></div>',
+  metadataField:'<div class="mini mini-stack"><div class="mini-panel" style="height:38px;width:92px">FLOOR 6</div><div class="mini-label">one metadata field</div></div>',
+  primaryRow:'<div class="mini panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div>',
+  panel:'<div class="mini"><div class="transparent-panel"><div class="mini-label">panel boundary</div><div style="margin-top:15px;text-align:center">composable content</div></div></div>',
+  componentBackground:'<div class="mini mini-stack"><div class="background-swatch"><span class="mini-label">background layer<br>opacity · tint · border</span></div></div>',
+  vitalsPanel:'<div class="mini"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div></div>',
+  resourceMeter:'<div class="mini"><div class="mini-bars single-meter"><div class="mini-bar">HP 62/62<div class="track"><div class="fill"></div></div></div></div></div>',
+  quickPanel:'<div class="mini mini-stack"><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div><div class="mini-label">quick access 2 × 2</div></div>',
+  actionControl:'<div class="mini mini-stack"><div class="mini-btn control-demo">⚒<span class="key">A</span></div><div class="mini-label">action control</div></div>',
+  hotkeyBadge:'<div class="mini mini-stack"><div class="mini-slot key-demo">♥<span class="key">F</span></div><div class="mini-label">hotkey badge</div></div>',
+  armouryControl:'<div class="mini mini-stack"><div class="mini-btn">⚒</div><div class="mini-label">open armoury</div></div>',
+  quickMenuControl:'<div class="mini mini-stack"><div class="mini-btn">☰</div><div class="mini-label">quick menu</div></div>',
+  quickMenuPanel:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div><div class="row"><span>🂠 Deck</span><span>24</span></div><div class="row"><span>◆ Relics</span><span>›</span></div><div class="row"><span>⚙ Settings</span><span>›</span></div></div></div>',
+  quickMenuCaption:'<div class="mini"><div class="menu-demo"><div class="caption">TEST · Quick menu: switcher</div></div></div>',
+  quickMenuRow:'<div class="mini"><div class="menu-demo"><div class="row"><span>⚒ Armoury</span><span>›</span></div></div></div>',
+  menuOverlay:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span></div><div class="mini-panel" style="width:210px;height:48px">ACTIVE MENU PANEL</div></div>',
+  menuTabStrip:'<div class="mini"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span><span>SETTINGS</span></div></div>',
+  menuTab:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">RELICS &amp; FLASKS</span></div><div class="mini-label">one menu tab</div></div>',
+  menuPanel:'<div class="mini mini-stack"><div class="mini-panel" style="width:210px"><div>🂠 🂠 🂠</div><div class="mini-label">tab-selected content</div></div></div>',
+  crimsonFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#d95a50">♥<span class="key">F</span></div><div class="mini-label">crimson flask · 3</div></div>',
+  azureFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#6e9fe5">◆<span class="key">G</span></div><div class="mini-label">azure flask · 1</div></div>',
+  inventoryBelt:'<div class="mini mini-stack" style="width:100%"><div class="split-belt"><div><div class="mini-label">relics</div><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div></div><div><div class="mini-label" style="text-align:right">potions</div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div></div>',
+  itemTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">1</div><div class="mini-slot">2</div><div class="mini-slot slot-empty">3</div><div class="mini-slot slot-empty">4</div></div><div class="mini-label">horizontal item tray</div></div>',
+  itemSlot:'<div class="mini mini-stack"><div class="mini-slot slot-empty">+</div><div class="mini-label">generic item slot</div></div>',
+  foldingTray:'<div class="mini mini-stack"><div class="tray-icon"><span class="edge top">v</span><span class="edge right">&lt;</span><span class="edge bottom">^</span><span class="edge left">&gt;</span><span class="core">FOLDING<br>TRAY</span></div><div class="mini-label">four anchored disclosure edges</div></div>',
+  trayHeader:'<div class="mini"><div class="menu-demo" style="width:220px"><div class="row"><span>^ CARDS</span><span>×3 cards</span></div></div></div>',
+  trayContent:'<div class="mini"><div class="inventory-list-demo"><div><span>tray item component</span><b>×1</b></div><div><span>tray item component</span><b>×2</b></div></div></div>',
+  relicTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✺</div><div class="mini-slot">♜</div></div><div class="mini-label">relic tray · left anchored</div></div>',
+  relicSlot:'<div class="mini mini-stack"><div class="mini-slot">🏅</div><div class="mini-label">one relic slot</div></div>',
+  potionTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">🟢</div><div class="mini-slot">🔴</div><div class="mini-slot slot-empty">+</div></div><div class="mini-label">potion tray · right anchored</div></div>',
+  potionControl:'<div class="mini mini-stack"><div class="mini-slot key-demo">🟢<span class="key">H</span></div><div class="mini-label">utility potion</div></div>',
+  armouryOverlay:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY</span><span>GRID · RACK · HYBRID ✕</span></div><div class="ab"><div class="equip-square">LEFT</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">⚔</div><div class="equip-square">RIGHT</div></div></div></div>',
+  armouryPanel:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY PANEL</span><span>✕</span></div><div class="ab"><div class="equip-square">SLOT</div><div class="mini-panel" style="width:auto;height:44px">FIGURE</div><div class="equip-square">SLOT</div></div></div></div>',
+  armouryHeader:'<div class="mini"><div class="armoury-demo"><div class="ah" style="margin:0"><span>ARMOURY</span><span>GRID · RACK · HYBRID · ✕</span></div></div></div>',
+  armouryViewSwitcher:'<div class="mini"><div class="tab-demo"><span class="on">GRID</span><span>RACK</span><span>HYBRID</span></div></div>',
+  armouryBody:'<div class="mini"><div class="armoury-demo"><div class="ab"><div class="equip-square">ARMOUR</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">♟</div><div class="equip-square">HAND</div></div></div></div>',
+  armouryFigure:'<div class="mini mini-stack"><div class="sprite-demo">♟</div><div class="mini-label">equipped figure layers</div></div>',
+  equipmentSlot:'<div class="mini mini-stack"><div class="armoury-demo" style="width:150px"><div class="mini-label">RIGHT HAND</div><div class="equip-square">ACTIVE SET</div></div></div>',
+  equipmentSetCell:'<div class="mini mini-stack"><div class="equip-square" style="width:64px">🗡<br>SWORD</div><div class="mini-label">one equipment cell</div></div>',
+  armouryInventory:'<div class="mini"><div class="inventory-list-demo"><div><span>Longsword · Weapon</span><b>×1</b></div><div><span>Gold Sigil · Relic</span><b>×1</b></div><div><span>Greenburst · Potion</span><b>×2</b></div></div></div>',
+  inventoryItemCard:'<div class="mini"><div class="inventory-list-demo"><div><span><b>Longsword</b><br>Weapon · Equipped: Right</span><strong>×1</strong></div></div></div>',
+  inventoryDetailCard:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:9px"><b>LONGSWORD</b><br><span class="mini-label">Weapon · common · 1 owned</span><br>Strike +2 · Blade</div></div>',
+  equipmentComparison:'<div class="mini"><div class="comparison-demo"><div>STRIKE<br><b>5</b></div><span>→</span><div>STRIKE<br><b style="color:var(--gold)">7</b></div></div></div>',
+  armouryStatsPanel:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:8px"><b>ATTRIBUTES &amp; RESOURCES</b><br><span class="mini-label">STR 13 · DEX 11 · HP 56</span></div></div>',
+  armouryCardStrip:'<div class="mini mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div></div>',
+  armouryRegionHeader:'<div class="mini"><div class="menu-demo"><div class="row"><span>▾ INVENTORY</span><span>12 items</span></div></div></div>',
+  trayResizeHandle:'<div class="mini mini-stack"><div style="position:relative;width:150px;height:44px;border:1px dashed var(--line-soft)"><span style="position:absolute;left:50%;top:50%;width:48px;height:2px;border-radius:99px;background:var(--gold);transform:translate(-50%,-50%)"></span></div><div class="mini-label">44px drag / hold surface</div></div>',
+  battlefieldStage:'<div class="mini"><div class="stage"><div class="combat-card player"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">7 DMG</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">3×2</span><strong>◆</strong><span>ENEMY</span><span class="card-hp"></span></div></div></div>',
+  combatantFrame:'<div class="mini mini-stack"><div class="combat-card neutral large"><span class="intent">INTENT</span><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">shared card frame</div></div>',
+  playerFrame:'<div class="mini mini-stack"><div class="combat-card player large"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span><span>SP 2/2</span></div><div class="mini-label">player card · blue</div></div>',
+  enemyFrame:'<div class="mini mini-stack"><div class="combat-card enemy large"><span class="intent">⚔ 7</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span><span>POISE 3</span></div><div class="mini-label">enemy card · red</div></div>',
+  combatantSprite:'<div class="mini mini-stack"><div class="sprite-demo">⚔</div><div class="mini-label">combatant sprite</div></div>',
+  combatantNameplate:'<div class="mini mini-stack"><div class="nameplate-demo">WANDERING SOLDIER</div><div class="mini-label">combatant nameplate</div></div>',
+  intentIndicator:'<div class="mini mini-stack"><div class="intent" style="font-size:16px">⚔ 7</div><div class="mini-label">enemy intent</div></div>',
+  blockBadge:'<div class="mini mini-stack"><div class="block-demo">12</div><div class="mini-label">guard / block</div></div>',
+  healthStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">HP 22 / 22</div><div class="track"><div class="fill" style="width:100%"></div></div></div></div>',
+  poiseStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">POISE 3 / 8</div><div class="track"><div class="fill" style="width:38%;background:#c9a227"></div></div></div></div>',
+  procStatusBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">🩸 BLEED 6 / 12</div><div class="track"><div class="fill" style="width:50%;background:#8f2f29"></div></div></div></div>',
+  arcaneExposureBar:'<div class="mini mini-stack"><div class="meter-demo"><div class="mini-label">✧ ARCANE EXPOSURE 4 / 8</div><div class="track"><div class="fill blue" style="width:50%"></div></div></div></div>',
+  statusEffectTray:'<div class="mini mini-stack"><div class="status-icons"><span>🩸</span><span>❄</span><span>☠</span></div><div class="mini-label">status effect tray</div></div>',
+  tooltip:'<div class="mini"><div class="tooltip-demo"><b>Poise</b>3 / 8 — fill it to Stagger.</div></div>',
+  damageFeedback:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span><span class="damage-direct">−4</span></div><div class="mini-label">one hit · two channels</div></div>',
+  guardedDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span></div><div class="mini-label">damage absorbed by guard</div></div>',
+  healthDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-direct">−12</span></div><div class="mini-label">damage reaching health</div></div>',
+  playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
+  actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>'
+};
+const C = [
+ ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Shared composition of header, resources, controls, and belt.','sharedHud'],
+ ['run-header-strip','runHeaderModel','hudmeta.runHeaderStripHtml','hud','Map + Combat','Identity, cinders, and prioritized metadata.','runHeader'],
+ ['identity-cluster','identityClusterModel','hudmeta.identityClusterHtml','hud','Map + Combat','Character identity cluster.','identityCluster'],
+ ['portrait-badge','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Character glyph/badge.','portraitBadge'],
+ ['character-title','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Name and class label.','characterTitle'],
+ ['cinders-counter','cindersCounterModel','hudmeta.cindersCounterHtml','hud','Map + Combat','Live cinders count.','cindersCounter'],
+ ['build-metadata-trail','buildMetadataTrailModel','hudmeta.buildMetadataTrailHtml','hud','Map + Combat','Act, floor, seed, build, and source.','buildTrail'],
+ ['metadata-field','metadataFieldModel','hudmeta metadata spans','primitive','Map + Combat','One prioritized metadata field.','metadataField'],
+ ['primary-hud-row','componentModel composition','hudmeta.primaryHudRowHtml','hud','Map + Combat','Vitals and Quick Access row.','primaryRow'],
+ ['panel','panelModel child','shared panel frame','primitive','HUD panels','Common panel semantic/frame component.','panel'],
+ ['component-background','componentModel child','panel + combatant CSS','primitive','Panels + combat cards','Reusable opacity, tint, border, and backing layer.','componentBackground'],
+ ['vitals-panel','vitalsPanelModel','hudmeta.vitalsPanelHtml','hud','Map + Combat','HP, MP, and SP panel.','vitalsPanel'],
+ ['resource-meter','componentModel child','resbars.resourceBars','hud','HUD + combat cards','Data-driven resource trough/fill.','resourceMeter'],
+ ['quick-access-panel','quickAccessPanelModel','hudmeta.quickAccessPanelHtml','hud','Map + Combat','Armoury, menu, and charge flasks.','quickPanel'],
+ ['action-control','actionControlModel child','hudmeta quick access','primitive','HUD controls','Shared activation semantics.','actionControl'],
+ ['hotkey-badge','componentModel semantic ID','view-owned','primitive','HUD controls','Configurable key hint badge.','hotkeyBadge'],
+ ['armoury-control','actionControlModel','quick access view','hud','Map + Combat','Opens Armoury.','armouryControl'],
+ ['quick-menu-control','actionControlModel','quick access view','hud','Map + Combat','Opens Quick Menu.','quickMenuControl'],
+ ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Contextual Quick Menu dropdown.','quickMenuPanel'],
+ ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Variant/status caption.','quickMenuCaption'],
+ ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','One context-specific menu action.','quickMenuRow'],
+ ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Full tabbed in-run menu.','menuOverlay'],
+ ['menu-tab-strip','menuTabStripModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Shared tab navigation strip.','menuTabStrip'],
+ ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Deck/Relics/Stats/Save/Settings/Controls tab.','menuTab'],
+ ['menu-panel','menuPanelModel','menuComponents.updateMenuSelection','menu','Menu Overlay','Active tab content host.','menuPanel'],
+ ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','crimsonFlask'],
+ ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','azureFlask'],
+ ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','inventoryBelt'],
+ ['item-tray','itemTrayModel child','belt view','primitive','Inventory','Shared horizontal tray behavior.','itemTray'],
+ ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','itemSlot'],
+ ['folding-tray','trayModel','trayComponents.renderTray','primitive','Armoury + future menus','Edge-aware disclosure composition.','foldingTray'],
+ ['tray-header','trayHeaderModel child','trayComponents.renderTray','primitive','Folding Tray','Directional fold action, name, quantity, and optional sort.','trayHeader'],
+ ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Expanded Folding Tray','44px mouse, touch-hold, and keyboard resize surface.','trayResizeHandle'],
+ ['tray-content','trayContentModel child','trayComponents.renderTray','primitive','Folding Tray','Pluggable item-model content host.','trayContent'],
+ ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','relicTray'],
+ ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','relicSlot'],
+ ['potion-tray','itemTrayModel','belt view','inventory','Map + Combat','Utility potion tray, right anchored.','potionTray'],
+ ['potion-control','componentModel semantic ID','item view','primitive','Inventory','Individual utility potion control.','potionControl'],
+ ['armoury-overlay','armouryOverlayModel','armouryComponents.renderArmouryOverlay','armoury','Map + Combat','Modal Armoury veil and focus scope.','armouryOverlay'],
+ ['armoury-panel','armouryPanelModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Complete Armoury surface.','armouryPanel'],
+ ['armoury-header','armouryHeaderModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Title, view controls, and close action.','armouryHeader'],
+ ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Grid/Rack/Hybrid view selector.','armouryViewSwitcher'],
+ ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive figure and slot workspace.','armouryBody'],
+ ['armoury-figure','componentModel semantic ID','equipment.js + assets.js','armoury','Armoury','Layered equipped character figure.','armouryFigure'],
+ ['equipment-slot','equipmentSlotModel','armouryComponents.renderEquipmentSlot','armoury','Armoury','One named equipment socket and its sets.','equipmentSlot'],
+ ['equipment-set-cell','equipmentSetCellModel','armouryComponents.renderEquipmentSetCell','armoury','Equipment Slot','One active, empty, or locked set cell.','equipmentSetCell'],
+ ['armoury-inventory','armouryInventoryModel','equipment.js inside renderTray','armoury','Armoury','Shared carried-item inventory content.','armouryInventory'],
+ ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','Collapsed carried-item summary; inventoryItem holdAction is opt-in and defaults false.','inventoryItemCard'],
+ ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded item details with the same opt-in class holdAction capability; default false.','inventoryDetailCard'],
+ ['equipment-comparison','semantic child model + armouryUi.layout.comparison','equipmentReceipts.js in tooltip or item card','armoury','Armoury Inventory','Full before/after receipt; presentation, hover delay, width, and viewport cap are authored data.','equipmentComparison'],
+ ['armoury-stats-panel','armouryStatsPanelModel','equipment.js','armoury','Armoury','Attributes and derived resource projection.','armouryStatsPanel'],
+ ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js','armoury','Armoury','Live card rewrites from equipped pieces.','armouryCardStrip'],
+ ['armoury-region-header','compatibility semantic ID','replaced by tray-header','armoury','Armoury','Historical Armoury-only fold-header name.','armouryRegionHeader'],
+ ['battlefield-stage','componentModel','combat.js','combat','Combat','Combat scene/stage host.','battlefieldStage'],
+ ['combatant-frame','combatantFrame','combatantFrame.js','combat','Combat','Shared combatant card geometry.','combatantFrame'],
+ ['player-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Player combatant card.','playerFrame'],
+ ['enemy-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Enemy combatant card.','enemyFrame'],
+ ['combatant-sprite','combatantFrame child','combatantFrame.js + assets.js','combat','Combat cards','Rendered player or enemy figure.','combatantSprite'],
+ ['combatant-nameplate','combatantFrame child','combatantFrame.js','combat','Combat cards','Combatant name label.','combatantNameplate'],
+ ['intent-indicator','componentModel semantic ID','combat.js + uiContent.js','combat','Enemy combat cards','Telegraphed enemy action and amount.','intentIndicator'],
+ ['block-badge','componentModel semantic ID','combat.js','combat','Combat cards','Current Guard/Block value over the sprite.','blockBadge'],
+ ['health-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant HP bar.','healthStatusBar'],
+ ['poise-status-bar','resourceMeter variant','resbars.js','combat','Combat cards','Individual combatant Poise bar.','poiseStatusBar'],
+ ['proc-status-bar','componentModel semantic ID','combat.js','combat','Enemy combat cards','Individual threshold buildup bar such as Bleed.','procStatusBar'],
+ ['arcane-exposure-bar','componentModel semantic ID','arcaneExposure.js','combat','Enemy combat cards','Individual Arcane Exposure meter.','arcaneExposureBar'],
+ ['status-effect-tray','componentModel semantic ID','combat.js','combat','Combat cards','Row of active status icons and stacks.','statusEffectTray'],
+ ['tooltip','componentModel semantic ID','tooltip.js','primitive','All interactive surfaces','Shared contextual explanation surface.','tooltip'],
+ ['damage-feedback','componentModel semantic ID','fx.js','combat','Combat feedback','One hit receipt composed from Guard and HP channels.','damageFeedback'],
+ ['guarded-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Amount absorbed by Guard.','guardedDamage'],
+ ['health-damage-indicator','damageFeedback variant','fx.js','combat','Combat feedback','Residual damage applied to HP.','healthDamage'],
+ ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
+ ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
+].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
+const COMPOSITION = Object.freeze({
+  'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
+  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
+  'armoury-overlay':['armoury-panel'],
+  'folding-tray':['tray-header','tray-resize-handle (expanded)','tray-content → context region component'],
+  'armoury-panel':['armoury-header','armoury-view-switcher','subject region (default: armoury-body)','folding-tray × 3'],
+  'armoury-body':['armoury-figure','equipment-slot × N'],
+  'equipment-slot':['equipment-set-cell × N'],
+  'armoury-inventory':['inventory-item-card × N','inventory-detail-card','equipment-comparison'],
+  'battlefield-stage':['component-background','player-combatant-frame','enemy-combatant-frame × N'],
+  'combatant-frame':['component-background','combatant-sprite','combatant-nameplate','health-status-bar','poise-status-bar','proc-status-bar','arcane-exposure-bar','status-effect-tray','intent-indicator','block-badge'],
+  'player-combatant-frame':['combatant-frame'],
+  'enemy-combatant-frame':['combatant-frame','intent-indicator'],
+  'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
+});
+const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), kind=document.querySelector('#kind'), sort=document.querySelector('#sort'), count=document.querySelector('#count');
+const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
+const clearFilters=document.querySelector('#clear-filters'), copyView=document.querySelector('#copy-view');
+const densityLess=document.querySelector('#density-less'), densityReset=document.querySelector('#density-reset'), densityMore=document.querySelector('#density-more');
+const viewGrid=document.querySelector('#view-grid'), viewList=document.querySelector('#view-list');
+const DENSITY_STEPS=[205,245,285,335,395,465], DEFAULT_DENSITY=2, DENSITY_KEY='ashenspire.ui.component-catalog-density', VIEW_KEY='ashenspire.ui.component-catalog-view';
+const stored=(key,fallback)=>{try{return localStorage.getItem(key)??fallback;}catch{return fallback;}};
+const save=(key,value)=>{try{localStorage.setItem(key,String(value));}catch{}};
+let densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,Number(stored(DENSITY_KEY,DEFAULT_DENSITY))||0));
+let catalogView=stored(VIEW_KEY,'grid')==='list'?'list':'grid', wheelLocked=false;
+let detailReturnFocus=null;
+const params=new URLSearchParams(location.search);
+search.value=params.get('q')||''; group.value=params.get('group')||'all'; kind.value=params.get('kind')||'all'; sort.value=params.get('sort')||'id-asc';
+if(!group.value) group.value='all'; if(!kind.value) kind.value='all'; if(!sort.value) sort.value='id-asc';
+function actualColumns(){
+  const cards=[...grid.querySelectorAll('article')]; if(!cards.length||catalogView==='list') return 1;
+  const firstTop=cards[0].getBoundingClientRect().top;
+  return cards.filter(card=>Math.abs(card.getBoundingClientRect().top-firstTop)<2).length||1;
+}
+function updateDensityUi(){
+  document.documentElement.style.setProperty('--catalog-card-min',`${DENSITY_STEPS[densityIndex]}px`);
+  densityLess.disabled=catalogView==='list'||densityIndex===0; densityMore.disabled=catalogView==='list'||densityIndex===DENSITY_STEPS.length-1; densityReset.disabled=catalogView==='list';
+  requestAnimationFrame(()=>{densityReset.textContent=catalogView==='list'?'List':`${actualColumns()} col · ${DENSITY_STEPS[densityIndex]}px`;});
+}
+function setDensity(next){densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,next));save(DENSITY_KEY,densityIndex);updateDensityUi();}
+function setView(next){
+  catalogView=next==='list'?'list':'grid'; grid.dataset.view=catalogView; save(VIEW_KEY,catalogView);
+  viewGrid.setAttribute('aria-pressed',String(catalogView==='grid')); viewList.setAttribute('aria-pressed',String(catalogView==='list')); updateDensityUi();
+}
+function syncUrl(){
+  const next=new URLSearchParams(location.search); ['q','group','kind','sort'].forEach(key=>next.delete(key));
+  if(search.value.trim()) next.set('q',search.value.trim()); if(group.value!=='all') next.set('group',group.value); if(kind.value!=='all') next.set('kind',kind.value); if(sort.value!=='id-asc') next.set('sort',sort.value);
+  const query=next.toString(); history.replaceState(null,'',`${location.pathname}${query?`?${query}`:''}${location.hash}`);
+}
+function relatedIds(id){
+  const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
+  for(const [parent,children] of Object.entries(COMPOSITION)) if(children.some(value=>value.includes(id))) related.add(parent);
+  return [...related].filter(value=>value!==id);
+}
+function closeDetails(){
+  document.body.classList.remove('detail-open'); drawer.setAttribute('aria-hidden','true');
+  detailReturnFocus?.focus(); detailReturnFocus=null;
+}
+function openDetails(id,trigger=null){
+  const c=C.find(item=>item.id===id); if(!c) return;
+  detailReturnFocus=trigger||document.activeElement;
+  document.querySelector('#detail-id').textContent=c.id;
+  document.querySelector('#detail-title').textContent=c.id.replaceAll('-',' ');
+  document.querySelector('#detail-visual').innerHTML=V[c.visual];
+  document.querySelector('#detail-fields').innerHTML=`<dt>Model</dt><dd><code>${c.model}</code></dd><dt>Renderer / View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Group</dt><dd>${c.group}</dd><dt>Role</dt><dd>${c.purpose}</dd>`;
+  const parts=COMPOSITION[c.id]||[];
+  document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
+  const related=relatedIds(c.id);
+  document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
+  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-resize-handle','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}`;
+  drawer.setAttribute('aria-hidden','false'); document.body.classList.add('detail-open'); closeDetailButton.focus();
+  drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
+  drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
+}
+function render(){
+  const terms=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean), g=group.value, k=kind.value;
+  const shown=C.filter(c=>{
+    const composite=Boolean(COMPOSITION[c.id]?.length), haystack=[...Object.values(c),...(COMPOSITION[c.id]||[])].join(' ').toLowerCase();
+    return (g==='all'||c.group===g)&&(k==='all'||(k==='composite')===composite)&&terms.every(term=>haystack.includes(term));
+  });
+  const compareText=(a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'});
+  shown.sort((a,b)=>sort.value==='id-desc'?compareText(b.id,a.id):sort.value==='group'?compareText(a.group,b.group)||compareText(a.id,b.id):sort.value==='model'?compareText(a.model,b.model)||compareText(a.id,b.id):sort.value==='view'?compareText(a.owner,b.owner)||compareText(a.id,b.id):compareText(a.id,b.id));
+  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
+  count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); syncUrl(); updateDensityUi();
+}
+closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;
+document.addEventListener('keydown',event=>{
+  if(!document.body.classList.contains('detail-open')) return;
+  if(event.key==='Escape'){closeDetails();return;}
+  if(event.key==='Tab'){
+    const focusable=[...drawer.querySelectorAll('button,a[href]')].filter(node=>!node.disabled);
+    const first=focusable[0],last=focusable.at(-1);
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  }
+});
+search.oninput=render; group.onchange=render; kind.onchange=render; sort.onchange=render;
+clearFilters.onclick=()=>{search.value='';group.value='all';kind.value='all';sort.value='id-asc';render();search.focus();};
+copyView.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyView.textContent='Copied';setTimeout(()=>copyView.textContent='Copy view link',900);}catch{copyView.textContent='Copy unavailable';}};
+densityLess.onclick=()=>setDensity(densityIndex-1); densityMore.onclick=()=>setDensity(densityIndex+1); densityReset.onclick=()=>setDensity(DEFAULT_DENSITY);
+viewGrid.onclick=()=>setView('grid'); viewList.onclick=()=>setView('list');
+document.addEventListener('wheel',event=>{
+  if(catalogView!=='grid'||(!event.ctrlKey&&!event.metaKey)) return;
+  event.preventDefault(); if(wheelLocked) return; wheelLocked=true;
+  setDensity(densityIndex+(event.deltaY<0?1:-1)); setTimeout(()=>wheelLocked=false,120);
+},{passive:false});
+document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();search.focus();}else if(event.key==='Escape'&&document.activeElement===search&&search.value){search.value='';render();}});
+window.addEventListener('resize',updateDensityUi); setView(catalogView); render();
+</script>
+</body>
+</html>

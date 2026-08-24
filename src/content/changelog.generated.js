@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-329",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Character creation now owns one shared Inventory and validates every starting hand",
+    "detail": "Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.",
+    "build": "0.4.0.1126",
+    "pullRequest": 329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/329"
+  },
+  {
+    "id": "pr-328",
+    "date": "2026-08-23",
+    "group": "2026-08-23",
+    "summary": "Swapped armaments now remain attached to their actual hand sockets",
+    "detail": "The Armoury maps left- and right-hand equipment through the same socket ownership used by the run model, so swapping and unequipping no longer makes a weapon appear to belong to the opposite hand.",
+    "build": "0.4.0.1114",
+    "pullRequest": 328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/328"
+  },
+  {
     "id": "pr-327",
     "date": "2026-08-23",
     "group": "2026-08-23",

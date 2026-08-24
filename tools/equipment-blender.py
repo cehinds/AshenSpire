@@ -354,7 +354,11 @@ RENDER_FIELDS = ("geom", "scale", "metal", "accent")
 manifest = {"armaments": {}, "armour": {}}
 
 count = 0
+rendered_armament_keys = set()
 for w in rows("weapons.csv"):
+    art_key = w.get("artKey") or w["id"]
+    if art_key in rendered_armament_keys:
+        continue
     build = GEOM.get(w["geom"])
     if not build:
         print("SKIP (no geometry):", w["id"], w["geom"])
@@ -362,16 +366,17 @@ for w in rows("weapons.csv"):
     build(mat(hexrgb(w["metal"]), metallic=0.7, rough=0.35),
           mat(hexrgb(w["accent"]), metallic=0.5, rough=0.35, emit=0.4),
           float(w["scale"]))
-    scene.render.filepath = os.path.join(OUT, f"weapon_{w['id']}.webp")
+    scene.render.filepath = os.path.join(OUT, f"weapon_{art_key}.webp")
     bpy.ops.render.render(write_still=True)
-    render_icon(os.path.join(OUT, f"icon_{w['id']}.webp"))
-    manifest["armaments"][w["id"]] = {
+    render_icon(os.path.join(OUT, f"icon_{art_key}.webp"))
+    manifest["armaments"][art_key] = {
         "fields": {k: w[k] for k in RENDER_FIELDS},
-        "files": [f"weapon_{w['id']}.webp", f"icon_{w['id']}.webp"],
+        "files": [f"weapon_{art_key}.webp", f"icon_{art_key}.webp"],
     }
+    rendered_armament_keys.add(art_key)
     clear()
     count += 1
-    print("ARM", w["id"])
+    print("ARM", art_key)
 
 # ---- armour-set bodies -------------------------------------------------------
 # The class figures live in tools/sprites-blender.py. Rather than duplicate the
@@ -387,6 +392,9 @@ exec(compile(lib_src, lib_path, "exec"), lib)
 
 CLASS_BUILD = {
     "reaver": lib["build_reaver"], "starseer": lib["build_starseer"], "herald": lib["build_herald"],
+    # Rogue reuses the light reaver rig; its authored palettes and equipment
+    # layers keep the silhouette distinct without a second geometry vocabulary.
+    "rogue": lib["build_reaver"],
 }
 
 # WHICH materials an armour set actually repaints, per class.
@@ -410,6 +418,8 @@ CLASS_BODY_MATS = {
                "leather": "HERO_LEATHER", "under": "HERO_UNDER"},
     "starseer": {"plate": "ROBE_BLUE", "plateLt": "ROBE_BLUE_LT"},
     "herald": {"plate": "ROBE_RED", "plateLt": "HOOD_DARK", "leather": "CLOTH_DARK"},
+    "rogue": {"plate": "HERO_PLATE", "plateLt": "HERO_PLATE_LT",
+              "leather": "HERO_LEATHER", "under": "HERO_UNDER"},
 }
 
 
@@ -463,7 +473,7 @@ audit = {"__name__": "palette_audit", "bpy": bpy, "os": os, "json": json, "math"
 exec(compile(open(audit_path, encoding="utf-8").read(), audit_path, "exec"), audit)
 manifest["audit"] = audit["measure"](OUT, manifest)
 
-with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8") as fh:
+with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
     json.dump(manifest, fh, indent=2, sort_keys=True)
 
 print(f"EQUIPMENT OK: {count} armaments + {sets} armour sets -> {OUT}")

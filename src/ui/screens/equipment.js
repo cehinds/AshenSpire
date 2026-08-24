@@ -35,8 +35,19 @@ import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots, trayPresentationState,
+  orderArmourySlots,
 } from '../../model/armouryLayout.js';
+import {
+  armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
+  inventoryItemCardModel, inventoryDetailCardModel,
+} from '../models/ArmouryModels.js';
+import {
+  renderArmouryOverlay, renderArmouryPanel, renderEquipmentSlot,
+  renderInventoryItemCard, renderInventoryDetailCard,
+} from '../components/armouryComponents.js';
+import { trayModel } from '../models/TrayModels.js';
+import { renderTray } from '../components/trayComponents.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 const CFG = () => balance.equipment;
 
@@ -292,12 +303,6 @@ function buildArmoury(L, ui) {
   // equipment/inventory split. Hybrid is the authored 40/60 shell.
   if (ui.viewMode.pane === 'character' || ui.viewMode.pane === 'both') ui.left.appendChild(ui.character());
 
-  const equipment = document.createElement('section');
-  equipment.className = 'armoury-equipment';
-  equipment.dataset.component = 'armoury.armamentsCard';
-  equipment.dataset.armamentView = ui.armamentView;
-  equipment.dataset.collapsed = ui.armamentsFolded ? '1' : '0';
-  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
   const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
   const positionsBySlot = ordered.map((slot) => ({
     slot,
@@ -306,40 +311,13 @@ function buildArmoury(L, ui) {
   const itemCount = positionsBySlot.reduce((sum, row) => (
     sum + row.positions.filter((position) => position.state === 'occupied').length
   ), 0);
-  const head = document.createElement('header');
-  head.className = 'armoury-equipment-head region-head';
-  head.dataset.component = 'armoury.armamentsHeader';
-  const fold = document.createElement('button');
-  fold.type = 'button';
-  fold.className = 'region-fold';
-  fold.dataset.fold = 'armaments';
-  fold.setAttribute('aria-expanded', ui.armamentsFolded ? 'false' : 'true');
-  fold.title = ui.armamentsFolded ? 'Show armaments' : 'Hide armaments';
-  fold.innerHTML = `<span class="rf-caret">${ui.armamentsFolded ? '▸' : '▾'}</span>`
-    + `<span class="rf-label">${esc(ui.layout.equipment.groupLabel)}</span>`
-    + `<span class="rf-count">${itemCount} item${itemCount === 1 ? '' : 's'}</span>`;
-  attachTooltip(fold, () => `<div class="tt-title">${ui.armamentsFolded ? 'Show' : 'Hide'} ${esc(ui.layout.equipment.groupLabel)}</div>`
-    + `<p>${itemCount} equipped item${itemCount === 1 ? '' : 's'} across the authored equipment positions.</p>`);
-  fold.addEventListener('click', ui.toggleArmaments);
-  head.appendChild(fold);
-  if (!ui.armamentsFolded) head.appendChild(ui.armamentViewToggle());
-  equipment.appendChild(head);
-  if (ui.armamentsFolded) {
-    if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
-    if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
-    return;
-  }
-
   const slots = document.createElement('div');
   slots.className = 'equip-slots armoury-position-list';
-  if (ui.armamentView === 'list') {
+  if (!ui.armamentsFolded && ui.armamentView === 'list') {
     for (const { slot, positions } of positionsBySlot) {
-      for (const position of positions) {
-        const card = ui.positionCard(slot, position);
-        if (card) slots.appendChild(card);
-      }
+      slots.appendChild(ui.positionGroup(slot, positions, 'list'));
     }
-  } else {
+  } else if (!ui.armamentsFolded) {
     slots.classList.add('armoury-position-grid-groups');
     slots.style.setProperty('--armoury-position-grid-columns', String(ui.armamentGridColumns));
     for (const { slot, positions } of positionsBySlot) {
@@ -349,16 +327,48 @@ function buildArmoury(L, ui) {
       group.innerHTML = `<h4>${esc(slot.label)}</h4>`;
       const tiles = document.createElement('div');
       tiles.className = 'armoury-position-grid-tiles';
-      for (const position of positions) {
-        const card = ui.positionGridCard(slot, position);
-        if (card) tiles.appendChild(card);
-      }
+      tiles.appendChild(ui.positionGroup(slot, positions, 'grid'));
       group.appendChild(tiles);
       slots.appendChild(group);
     }
     slots.appendChild(ui.armamentGridDetail(ordered));
   }
-  equipment.appendChild(slots);
+  const rendered = renderTray(trayModel({
+    id: 'armaments',
+    name: ui.layout.equipment.groupLabel,
+    count: itemCount,
+    itemType: 'item',
+    edge: 'bottom',
+    expanded: !ui.armamentsFolded,
+    sortable: true,
+    sortLabel: `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`,
+    resizable: false,
+    items: [],
+  }), {
+    onToggle: ui.toggleArmaments,
+    onSort: ui.toggleArmamentView,
+    renderContent: (content) => content.appendChild(slots),
+  });
+  const equipment = rendered.element;
+  equipment.classList.add('armoury-equipment');
+  equipment.dataset.component = 'armoury.armamentsCard';
+  equipment.dataset.armamentView = ui.armamentView;
+  equipment.dataset.collapsed = ui.armamentsFolded ? '1' : '0';
+  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
+  rendered.header.classList.add('armoury-equipment-head');
+  rendered.header.dataset.component = 'armoury.armamentsHeader';
+  attachTooltip(rendered.fold, () => `<div class="tt-title">${ui.armamentsFolded ? 'Show' : 'Hide'} ${esc(ui.layout.equipment.groupLabel)}</div>`
+    + `<p>${itemCount} equipped item${itemCount === 1 ? '' : 's'} across the authored equipment positions.</p>`);
+  if (rendered.sort) {
+    const next = ui.armamentView === 'list' ? 'grid' : 'list';
+    rendered.sort.classList.add('armoury-card-view-toggle', 'armoury-armament-view-toggle');
+    rendered.sort.dataset.component = 'armoury.armamentViewToggle';
+    rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
+      + (ui.armamentView === 'list'
+        ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
+        : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
+    attachTooltip(rendered.sort, () => `<div class="tt-title">${esc(next === 'grid' ? 'Grid view' : 'List view')}</div><p>${esc(next === 'grid' ? 'Show compact position tiles and one shared Details pane.' : 'Show every equipment position as a full detail row.')}</p>`);
+  }
   if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
   if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
 }
@@ -462,89 +472,100 @@ function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
   return dropArtOnError(el);
 }
 
-function inventoryFace(row, { selected = false, actionLabel = '' } = {}) {
-  const el = document.createElement('span');
-  el.className = `inventory-face${selected ? ' on' : ''}`;
-  el.dataset.inventoryItem = row.key;
-  el.dataset.itemId = row.id;
-  el.dataset.itemCategory = row.category;
-  el.dataset.itemCount = String(row.count);
-  const equipped = row.equippedLabels.length
-    ? (row.equippedLabels.length === 1 && row.equippedLabels[0] === 'Equipped'
-      ? 'Equipped'
-      : `Equipped: ${row.equippedLabels.join(' / ')}`)
-    : '';
-  el.innerHTML = `<span class="inventory-name">${esc(row.name)}</span>`
-    + `<span class="inventory-category">${esc(row.category)}</span>`
-    + `<span class="inventory-count">×${row.count}</span>`
-    + (equipped ? `<em class="inventory-equipped">${esc(equipped)}</em>` : '')
-    + (actionLabel ? `<strong class="inventory-inline-action">${esc(actionLabel)}</strong>` : '');
+function inventoryFace(row, {
+  selected = false, draggable = false, actionLabel = '', classModel = null,
+} = {}) {
+  const el = renderInventoryItemCard(inventoryItemCardModel(row, {
+    selected, draggable, classModel,
+  }));
+  if (actionLabel) el.insertAdjacentHTML('beforeend', `<strong class="inventory-inline-action">${esc(actionLabel)}</strong>`);
   return el;
 }
 
 function inventoryReveal(registries, row, {
   comparison = null, action = null, instruction = '', holdDuration = 0,
-  registerHold = null, classModel = null, onClassAction = null,
+  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null,
 } = {}) {
-  const el = document.createElement('div');
-  el.className = 'inventory-detail';
   const item = row.item;
-  let art = '';
+  let art;
   if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
-    art = `<img src="${esc(thumbSrc(item))}" alt="">`;
+    art = { kind: 'image', value: thumbSrc(item) };
   } else if (item.artAsset) {
-    art = `<img src="${esc(assetUrl(item.artAsset))}" alt="">`;
+    art = { kind: 'image', value: assetUrl(item.artAsset) };
   } else {
-    art = `<span aria-hidden="true">${esc(item.icon || '◆')}</span>`;
+    art = { kind: 'icon', value: item.icon || '◆' };
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
     : (item.blurb || item.textTemplate || 'No additional information.');
-  const tags = (item.tags || []).map((tag) => `<em>${esc(tag)}</em>`).join('');
   const mods = modSummary(registries, item);
-  el.innerHTML = `<div class="inventory-model">${art}</div>`
-    + `<div class="inventory-information"><h4>${esc(item.name)}</h4>`
-    + `<p class="inventory-kind">${esc(row.category)} · ${esc(item.rarity || 'standard')} · ${row.count} owned</p>`
-    + `<p>${esc(description)}</p>`
-    + (mods.length ? `<p class="inventory-mods">${mods.map(esc).join(' · ')}</p>` : '')
-    + (tags ? `<div class="inventory-tags">${tags}</div>` : '')
-    + (instruction ? `<p class="inventory-instruction">${esc(instruction)}</p>` : '')
-    + '</div>';
+  const detailModel = inventoryDetailCardModel({ row, art, description, mods, instruction, classModel });
+  const comparisonPresentation = comparisonConfig?.presentation || 'tooltip';
+  const comparisonHtml = comparison
+    ? `<div data-ui-component="${UI.equipmentComparison}" data-ui-variant="${comparisonPresentation}"><div class="tt-title">Compare ${esc(item.name)}</div>${renderCandidateComparison(comparison, { expanded: true })}</div>`
+    : '';
+  const el = renderInventoryDetailCard(detailModel, {
+    comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
+    action,
+  });
+  el.dataset.inventoryItem = row.key;
+  const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
   if (comparison) {
     el.dataset.component = 'armoury.comparisonTooltipAnchor';
     el.tabIndex = 0;
-    el.setAttribute('aria-label', `Compare ${item.name}. Hover or hold to show comparison.`);
-    const comparisonHtml = () => `<div class="tt-title">Compare ${esc(item.name)}</div>${renderCandidateComparison(comparison, { expanded: true })}`;
+    const actionVerb = action?.textContent?.trim() || 'equip this item';
+    const actionInstruction = cardOwnsAction
+      ? (holdDuration > 0
+        ? ` Press and hold this card to ${actionVerb}.`
+        : ` Activate this card to ${actionVerb}.`)
+      : '';
+    el.setAttribute('aria-label', comparisonPresentation === 'inline'
+      ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
+      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
     const clear = el.closest('.disc-faces') || el.parentElement;
-    attachTooltip(el, comparisonHtml, {
+    const appearance = {
+      variant: 'equipment-comparison',
+      widthRem: comparisonConfig?.tooltipWidthRem,
+      maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
+    };
+    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
       intent: 'above',
       clear,
+      delayMs: comparisonConfig?.hoverDelayMs,
+      appearance,
     });
-    if (!(classModel?.holdAction === true && onClassAction)) {
+    if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
       const disarm = armHold(el, {
         ms: holdDuration,
         id: 'compareEquipment',
         onConfirm: () => {
-          showTooltipFor(el, comparisonHtml(), { intent: 'above', clear });
+          showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
           stickTooltip(el);
         },
       });
       if (registerHold) registerHold(disarm);
     }
   }
-  if (action) el.querySelector('.inventory-information').appendChild(action);
-  if (classModel?.holdAction === true && onClassAction) {
-    el.dataset.cardClass = 'inventoryItem';
-    el.dataset.holdCapable = 'true';
+  if (cardOwnsAction) {
+    // Expanded cards are div-based composite controls, so opt them into the
+    // same keyboard/gamepad focus cursor that already reaches folded buttons.
+    // armHold then supplies the identical gppress/gprelease action contract.
+    el.dataset.focusable = 'true';
+    el.setAttribute('role', 'button');
     const disarm = armHold(el, {
       ms: holdDuration,
       id: 'equipInventory',
       onConfirm: onClassAction,
+      feedbackHosts: () => {
+        const reveal = el.closest('.disc-reveal');
+        const faces = el.closest('.disc-faces');
+        const faceButton = [...(faces?.children || [])]
+          .find((candidate) => candidate.dataset?.face === row.key);
+        return [reveal, faceButton?.querySelector('.inventory-face')];
+      },
     });
     if (registerHold) registerHold(disarm);
   }
-  const image = el.querySelector('img');
-  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: item.icon || '◆' })));
   return el;
 }
 
@@ -701,10 +722,18 @@ export function mountEquipment(host, {
   // mount — so paint order and DOM order agree everywhere I could reach. If a
   // future screen opens one over the other, the focus cursor will drive the
   // panel underneath. Named here because the class is what makes it possible.
-  const wrap = document.createElement('div');
-  wrap.className = 'modal-veil armoury-overlay';
   const customEquippedTagColor = equippedTagColor(eq.armouryUi);
-  wrap.style.setProperty('--equip-equipped-tag-color', customEquippedTagColor || 'var(--gold)');
+  const overlayPanelModel = armouryPanelModel({
+    view,
+    views: viewIds(),
+    viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
+    layout: viewLayout(view),
+    subject: 'slots',
+  });
+  const wrap = renderArmouryOverlay(armouryOverlayModel({
+    panel: overlayPanelModel,
+    equippedTagColor: customEquippedTagColor,
+  }));
   host.appendChild(wrap);
 
   // One teardown home for the listener this mount owns outside its subtree.
@@ -738,7 +767,13 @@ export function mountEquipment(host, {
   // `ev.target === wrap` is load-bearing: a click that started on the panel
   // and bubbled must not close it.
   wrap.addEventListener('click', (ev) => {
-    if (ev.target === wrap) close();
+    if (ev.target === wrap) { close(); return; }
+    if (!picking) return;
+    if (ev.target.closest('.armoury-close, [data-surface="armouryView"]')) return;
+    if (ev.target.closest('.armoury-inventory, [data-slot-position]')) return;
+    clearInventorySelection();
+    if (onChange) onChange(run.loadout, foldSettings());
+    draw();
   });
 
 
@@ -954,26 +989,12 @@ export function mountEquipment(host, {
     return card;
   }
 
-  function armamentViewToggle() {
-    const toggle = document.createElement('button');
-    toggle.type = 'button';
-    toggle.className = 'armoury-card-view-toggle armoury-armament-view-toggle';
-    toggle.dataset.component = 'armoury.armamentViewToggle';
+  function toggleArmamentView() {
     const next = armamentView === 'list' ? 'grid' : 'list';
-    toggle.setAttribute('aria-label', `Show Armaments as ${next}`);
-    toggle.title = `Show Armaments as ${next}`;
-    toggle.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-      + (armamentView === 'list'
-        ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-        : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
-    toggle.addEventListener('click', () => {
-      armamentView = next;
-      if (onChange) onChange(run.loadout, { armouryArmamentView: armamentView });
-      draw();
-      wrap.querySelector('.armoury-armament-view-toggle')?.focus();
-    });
-    attachTooltip(toggle, () => `<div class="tt-title">${esc(next === 'grid' ? 'Grid view' : 'List view')}</div><p>${esc(next === 'grid' ? 'Show compact position tiles and one shared Details pane.' : 'Show every equipment position as a full detail row.')}</p>`);
-    return toggle;
+    armamentView = next;
+    if (onChange) onChange(run.loadout, { armouryArmamentView: armamentView });
+    draw();
+    wrap.querySelector('.armoury-armament-view-toggle')?.focus();
   }
 
   function positionGridCard(slot, position) {
@@ -1149,7 +1170,11 @@ export function mountEquipment(host, {
           ? 'Unequip'
           : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${target.slot.label}`)
         : '';
-      const face = inventoryFace(row, { actionLabel: selectedSlot ? actionLabel : '' });
+      const face = inventoryFace(row, {
+        draggable,
+        actionLabel: selectedSlot ? actionLabel : '',
+        classModel: inventoryItemClass,
+      });
       if (draggable) draggableRows.set(row.key, row);
       let actionButton = null;
       if (target) {
@@ -1158,17 +1183,25 @@ export function mountEquipment(host, {
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
-        actionButton = document.createElement('button');
-        actionButton.type = 'button';
+        const wholeCardHold = inventoryItemClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
+        actionButton = document.createElement(wholeCardHold ? 'span' : 'button');
+        if (!wholeCardHold) actionButton.type = 'button';
         actionButton.className = target.kind === 'unequip' ? 'ep-equip danger' : 'ep-equip';
         actionButton.dataset.act = target.kind;
         actionButton.textContent = actionLabel;
-        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
-        actionButton.addEventListener('click', (event) => event.stopPropagation());
+        if (wholeCardHold) {
+          actionButton.classList.add('inventory-card-action-label');
+          actionButton.setAttribute('aria-hidden', 'true');
+        } else {
+          actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+          actionButton.addEventListener('click', (event) => event.stopPropagation());
+        }
         if (!seal.ok) sealChip(actionButton);
         else if (!transition.ok) {
           actionButton.classList.add('locked');
           refuses(actionButton, () => transition.reason);
+        } else if (wholeCardHold) {
+          faceActions.set(row.key, act);
         } else {
           const disarm = armHold(actionButton, {
             ms: inventoryItemClass.holdAction ? holdDuration : 0,
@@ -1199,6 +1232,7 @@ export function mountEquipment(host, {
             holdDuration,
             registerHold,
             classModel: inventoryItemClass,
+            comparisonConfig: layout.comparison,
             onClassAction: (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
           }),
           sense: `${row.name}. ${row.category}. ${row.count} owned.`,
@@ -1223,6 +1257,11 @@ export function mountEquipment(host, {
             onTap,
             hintHost: button.querySelector('.inventory-face'),
             hintBefore: button.querySelector('.inventory-category'),
+            feedbackHosts: () => {
+              const reveal = [...(button.parentElement?.children || [])]
+                .find((candidate) => candidate.dataset?.revealFor === entry.key);
+              return [button.querySelector('.inventory-face'), reveal];
+            },
           });
           registerHold(disarm);
         } else if (selectedSlot) {
@@ -1521,6 +1560,34 @@ export function mountEquipment(host, {
     });
   }
 
+  function positionGroup(slot, positions, presentation = 'list') {
+    const cells = positions.map((position) => equipmentSetCellModel({
+      slotId: slot.id,
+      index: position.index,
+      state: position.modelState === 'next' ? 'next' : position.state,
+      active: position.active,
+      piece: position.summary.item ? {
+        id: position.summary.item.id,
+        name: position.summary.name,
+        image: thumbSrc(position.summary.item),
+      } : null,
+      rung: position.rung,
+    }));
+    const model = equipmentSlotModel({
+      slotId: slot.id,
+      label: slot.label,
+      rule: canSwap(registries, slot.id, { inCombat }),
+      cells,
+    });
+    return renderEquipmentSlot(model, {
+      showHeader: false,
+      renderCell: (cellModel) => {
+        const position = positions.find((candidate) => candidate.index === cellModel.properties.index);
+        return presentation === 'grid' ? positionGridCard(slot, position) : positionCard(slot, position);
+      },
+    }).element;
+  }
+
   function armamentDetail(slot, summaryItem) {
     const card = document.createElement('article');
     card.className = 'armoury-position-detail';
@@ -1578,6 +1645,99 @@ export function mountEquipment(host, {
     draw();
   }
 
+  function regionTray(r) {
+    const source = wrap.querySelector(r.sel);
+    if (!source) return null;
+    const shut = folded.get(r.id) === true;
+    const fillsInventoryPane = r.id === 'inventory' && viewMode().pane === 'inventory';
+    const count = r.count(source);
+    const summary = r.id === 'stats' ? (() => {
+      const identity = source.querySelector('.armoury-stats-identity span')?.textContent?.replace(/^Level\s+/i, 'Lv. ') || '';
+      const groups = [...source.querySelectorAll('.armoury-stats-group')];
+      return [identity, ...groups.slice(0, 1).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent)),
+        ...groups.slice(2, 3).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent))]
+        .filter(Boolean).join(' · ');
+    })() : '';
+    const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
+    const model = trayModel({
+      id: r.id,
+      name: r.label,
+      count: count == null ? 0 : count,
+      itemType: r.unit,
+      summary,
+      edge: 'bottom',
+      expanded: !shut,
+      sortable: r.id === 'cards',
+      sortLabel: `Toggle ${r.label} list or grid`,
+      resizable: !fillsInventoryPane,
+      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * 500)),
+      items: [],
+    });
+    const snapRatio = (raw) => {
+      const bounded = clampTrayHeight(raw);
+      const nearest = layout.trays.snapRatios.reduce((best, value) => (
+        Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
+      ), layout.trays.snapRatios[0]);
+      return Math.abs(nearest - bounded) <= layout.trays.snapTolerance ? nearest : bounded;
+    };
+    const rendered = renderTray(model, {
+      sizeService: {
+        read: () => null,
+        write: (_id, _edge, size) => size,
+      },
+      onToggle: () => {
+        folded.set(r.id, !folded.get(r.id));
+        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+        draw();
+        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
+      },
+      onSort: r.id === 'cards' ? () => {
+        cardView = cardView === 'list' ? 'grid' : 'list';
+        draw();
+        wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
+      } : null,
+      onResize: (_id, size) => {
+        const panelHeight = wrap.querySelector('.armoury')?.getBoundingClientRect().height || 1;
+        const next = snapRatio(size / panelHeight);
+        trayHeights.set(r.id, next);
+        rendered.element.style.height = `${next * 100}%`;
+        if (onChange) onChange(run.loadout, { armouryTrayHeights: Object.fromEntries(trayHeights) });
+      },
+      renderContent: (content) => {
+        while (source.firstChild) content.appendChild(source.firstChild);
+      },
+    });
+    rendered.element.classList.add(...source.classList);
+    rendered.element.dataset.region = r.id;
+    rendered.element.dataset.role = 'context';
+    rendered.element.dataset.cardView = r.id === 'cards' ? cardView : '';
+    source.replaceWith(rendered.element);
+    if (!shut && !fillsInventoryPane) {
+      rendered.element.dataset.sized = '1';
+      rendered.element.style.height = `${savedRatio * 100}%`;
+    }
+    if (r.id === 'cards' && rendered.sort) {
+      const next = cardView === 'list' ? 'grid' : 'list';
+      rendered.sort.classList.add('armoury-card-view-toggle');
+      rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
+        + (cardView === 'list'
+          ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
+          : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
+    }
+    attachTooltip(rendered.fold, () => `<div class="tt-title">${shut ? 'Show' : 'Hide'} ${esc(r.label)}</div><p>${shut
+      ? esc(summary || `${count || 0} ${r.unit}${count === 1 ? '' : 's'} in here.`)
+      : `Fold ${esc(r.label)} back to its compact header.`}</p>`);
+    if (rendered.resizeHandle) {
+      rendered.resizeHandle.dataset.component = `armoury.${r.id}TrayResizeHandle`;
+      attachTooltip(rendered.resizeHandle, () => `<div class="tt-title">Resize ${esc(r.label)}</div><p>Drag the shared tray edge. The expanded height snaps to the authored stops; folding remembers it.</p>`, { intent: 'above' });
+    }
+    return rendered.element;
+  }
+
+  function mountRegionTrays() {
+    for (const region of contextRegions()) regionTray(region);
+  }
+
   /**
    * Every region says what it is, and every CONTEXT region gets its control.
    *
@@ -1602,150 +1762,6 @@ export function mountEquipment(host, {
    * own members. The convention has no answer for a set that contains another
    * set, and the armoury is where that first bites.
    */
-  function dressRegions() {
-    const subject = subjectRegion();
-    for (const r of REGIONS) {
-      const el = wrap.querySelector(r.sel);
-      if (!el) continue;
-      el.dataset.region = r.id;
-      const isSubject = !!subject && r.id === subject.id;
-      el.dataset.role = isSubject ? 'subject' : 'context';
-      if (isSubject) { delete el.dataset.collapsed; continue; }
-      const shut = folded.get(r.id) === true;
-      el.dataset.collapsed = shut ? '1' : '0';
-      const trayHeight = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
-      const trayState = trayPresentationState({
-        collapsed: shut,
-        savedHeightRatio: trayHeight,
-        defaultHeightRatio: layout.trays.defaultHeightRatio,
-      });
-      if (trayState.heightRatio == null) el.style.removeProperty('--armoury-tray-height');
-      else el.style.setProperty('--armoury-tray-height', `${trayState.heightRatio * 100}%`);
-
-      const resize = document.createElement('div');
-      resize.className = 'region-resizer';
-      resize.dataset.component = `armoury.${r.id}TrayResizeHandle`;
-      resize.dataset.resizeRegion = r.id;
-      resize.setAttribute('role', 'separator');
-      resize.setAttribute('aria-label', `Resize ${r.label} tray`);
-      resize.setAttribute('aria-orientation', 'horizontal');
-      resize.setAttribute('aria-valuemin', String(Math.round(layout.trays.minimumHeightRatio * 100)));
-      resize.setAttribute('aria-valuemax', String(Math.round(layout.trays.maximumHeightRatio * 100)));
-      resize.setAttribute('aria-valuenow', String(Math.round(trayHeight * 100)));
-      resize.tabIndex = 0;
-
-      const snapTrayHeight = (raw) => {
-        const bounded = clampTrayHeight(raw);
-        const nearest = layout.trays.snapRatios.reduce((best, value) => (
-          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-        ), layout.trays.snapRatios[0]);
-        return Math.abs(nearest - bounded) <= layout.trays.snapTolerance ? nearest : bounded;
-      };
-      const applyTrayHeight = (value, persist = false) => {
-        const next = snapTrayHeight(value);
-        trayHeights.set(r.id, next);
-        el.style.setProperty('--armoury-tray-height', `${next * 100}%`);
-        resize.setAttribute('aria-valuenow', String(Math.round(next * 100)));
-        if (persist && onChange) onChange(run.loadout, { armouryTrayHeights: Object.fromEntries(trayHeights) });
-      };
-      const setTrayFromPointer = (event) => {
-        const rect = wrap.querySelector('.armoury').getBoundingClientRect();
-        applyTrayHeight((rect.bottom - event.clientY) / Math.max(1, rect.height));
-      };
-      resize.addEventListener('pointerdown', (event) => {
-        resize.setPointerCapture(event.pointerId);
-        resize.classList.add('dragging');
-        setTrayFromPointer(event);
-      });
-      resize.addEventListener('pointermove', (event) => {
-        if (resize.hasPointerCapture(event.pointerId)) setTrayFromPointer(event);
-      });
-      const finishTrayResize = (event) => {
-        if (resize.hasPointerCapture(event.pointerId)) resize.releasePointerCapture(event.pointerId);
-        resize.classList.remove('dragging');
-        applyTrayHeight(trayHeights.get(r.id), true);
-      };
-      resize.addEventListener('pointerup', finishTrayResize);
-      resize.addEventListener('pointercancel', finishTrayResize);
-      resize.addEventListener('keydown', (event) => {
-        if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        if (event.key === 'Home') applyTrayHeight(layout.trays.minimumHeightRatio, true);
-        else if (event.key === 'End') applyTrayHeight(layout.trays.maximumHeightRatio, true);
-        else applyTrayHeight((trayHeights.get(r.id) || trayHeight) + (event.key === 'ArrowUp' ? 0.05 : -0.05), true);
-      });
-      attachTooltip(resize, () => `<div class="tt-title">Resize ${esc(r.label)}</div><p>Drag the tray edge up or down. It snaps to the authored height stops.</p>`, { intent: 'above' });
-
-      const head = document.createElement('div');
-      head.className = 'region-head';
-      const n = r.count(el);
-      const countText = n == null ? '' : `${n} ${r.unit}${n === 1 ? '' : 's'}`;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'region-fold';
-      btn.dataset.fold = r.id;
-      btn.setAttribute('aria-expanded', shut ? 'false' : 'true');
-      // LAW 3 CLAUSE 4 — a control ships with a contextual tooltip or it is a
-      // defect, and `title=` alone does NOT satisfy it: touch and gamepad players
-      // never see one. The law's own words, and I wrote `data-tip` here first —
-      // an attribute NOTHING in this tree reads, under a comment claiming the
-      // clause was met. attachTooltip is the mechanism (pointer AND the pad's
-      // gpfocus), so this is the mechanism, not an attribute that looks like it.
-      const say = () => `<div class="tt-title">${esc(shut ? `Show ${r.label}` : `Hide ${r.label}`)}</div>`
-        + esc(shut
-          ? (countText ? `${countText} in here.` : 'A compact summary is in here.')
-          : `Folds away, so ${subject ? subject.label.toLowerCase() : 'the main pane'} get the room.`);
-      btn.title = shut ? `Show ${r.label.toLowerCase()}` : `Hide ${r.label.toLowerCase()}`;
-      attachTooltip(btn, say);
-      btn.innerHTML = `<span class="rf-caret">${shut ? '▸' : '▾'}</span>`
-        + `<span class="rf-label">${esc(r.label)}</span>`
-        + (countText ? `<span class="rf-count">${esc(countText)}</span>` : '');
-      btn.addEventListener('click', () => {
-        folded.set(r.id, !folded.get(r.id));
-        // The whole map goes back, not just the one that moved: a partial write
-        // would make `meta.settings.armouryCollapsed` disagree with the screen
-        // for every other region. One fact, one home.
-        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
-        draw();
-        // draw() replaces the activated header. Put keyboard/gamepad focus on
-        // its replacement so expanding a region does not throw the player out
-        // of the control they just used.
-        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
-      });
-      head.appendChild(btn);
-      if (r.id === 'cards') {
-        const toggle = document.createElement('button');
-        toggle.type = 'button';
-        toggle.className = 'armoury-card-view-toggle';
-        toggle.dataset.cardViewToggle = '1';
-        const updateToggle = () => {
-          const next = cardView === 'list' ? 'grid' : 'list';
-          toggle.setAttribute('aria-label', `Show cards as ${next}`);
-          toggle.title = `Show cards as ${next}`;
-          toggle.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-            + (cardView === 'list'
-              ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-              : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
-        };
-        updateToggle();
-        toggle.addEventListener('click', (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          cardView = cardView === 'list' ? 'grid' : 'list';
-          const list = wrap.querySelector('.armoury-card-list');
-          if (list) list.dataset.cardView = cardView;
-          updateToggle();
-        });
-        head.appendChild(toggle);
-      }
-      el.insertBefore(head, el.firstChild);
-      // A folded tray is only its header. The remembered expanded height stays
-      // in `trayHeights`, but neither that size nor its resize edge exists in
-      // the folded DOM. Reopening redraws from the saved ratio above.
-      if (trayState.resizable) el.insertBefore(resize, head);
-    }
-  }
-
   function draw() {
     if (paneObserver) paneObserver.disconnect();
     clearHoldDisarms();
@@ -1754,30 +1770,30 @@ export function mountEquipment(host, {
     // host names the set, each control names its member, so an instrument can
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
-    wrap.innerHTML = `
-      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}" data-view-mode="${esc(viewMode().label)}" data-pane="${esc(viewMode().pane)}" data-character-state="${esc(viewMode().character)}" data-composition="character-equipment">
-        <header class="armoury-head">
-          <h2>ARMOURY</h2>
-          <div class="armoury-views" data-surface="armouryView">
-            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc((layout.viewModes[v] && layout.viewModes[v].label) || v)}</button>`).join('')}
-          </div>
-          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
-        </header>
-        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
-        <div class="armoury-content">
-          <div class="armoury-body">
-            <div class="armoury-left"></div>
-            <div class="armoury-hybrid-splitter" data-component="armoury.hybridPaneSplitter" role="separator" aria-label="Resize Character and Armaments panes" aria-orientation="vertical" tabindex="0"></div>
-            <div class="armoury-right"></div>
-          </div>
-          <div class="armoury-pane-splitter" data-component="armoury.paneSplitter" role="separator" aria-label="Resize Armaments and Inventory panes" aria-orientation="vertical" tabindex="0"></div>
-          <section class="armoury-inventory"></section>
-        </div>
-        <div class="armoury-strip"></div>
-        <section class="armoury-stats-tray"></section>
-      </div>`;
-
-    const panel = wrap.querySelector('.armoury');
+    const panelModel = armouryPanelModel({
+      view,
+      views: viewIds(),
+      viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
+      layout: L,
+      subject: 'slots',
+      picking: !!picking,
+      notice,
+      regions: REGIONS.map((region) => ({
+        id: region.id,
+        label: region.label,
+        count: region.id === 'inventory' ? inventoryItemCount(inventoryRows(registries, run, meta)) : 0,
+        unit: region.unit,
+        edge: 'bottom',
+        expanded: folded.get(region.id) !== true,
+        sortable: region.id === 'cards',
+      })),
+    });
+    const rendered = renderArmouryPanel(panelModel, wrap);
+    const panel = rendered.panel;
+    panel.dataset.viewMode = viewMode().label;
+    panel.dataset.pane = viewMode().pane;
+    panel.dataset.characterState = viewMode().character;
+    panel.dataset.composition = 'character-equipment';
     panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
       ? 'phone' : 'desktop';
     const applyHybridRatio = () => {
@@ -1850,10 +1866,11 @@ export function mountEquipment(host, {
         },
         viewMode: viewMode(),
         positions: slotPositions,
+        positionGroup,
         positionCard,
         positionGridCard,
         armamentGridDetail,
-        armamentViewToggle,
+        toggleArmamentView,
         figure: () => figureFor(registries, run, cz),
         character: () => characterPanel(),
       });
@@ -1872,6 +1889,7 @@ export function mountEquipment(host, {
     const statsTray = wrap.querySelector('.armoury-stats-tray');
     if (viewMode().pane === 'inventory') statsTray.appendChild(statsComparison());
     else statsTray.remove();
+    mountRegionTrays();
 
     const applyPaneDensity = () => {
       const equipmentPane = panel.querySelector('.armoury-equipment');
@@ -2004,10 +2022,10 @@ export function mountEquipment(host, {
     }
 
     notice = '';
-    dressRegions();
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
+        picking = null;
         view = b.dataset.member;
         // A view is a presentation preset, not a second saved preference.
         // Explicit per-region choices still win; untouched regions adopt the

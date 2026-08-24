@@ -57,7 +57,8 @@ single place that constructs it.
 | `armoury.itemCard` | Folded inventory/picker item | `.inventory-face, .equip-chip.as-face` | `src/ui/screens/equipment.js` |
 | `armoury.inventoryItemClass` | Inventory item class with model-opted folded/unfolded hold action and whole-card drag | `[data-card-class="inventoryItem"]` | `content/source/armouryUi.json` + `src/ui/components/holdconfirm.js` |
 | `armoury.itemReveal` | Model, description, tags, and available action | `.inventory-detail, .disc-reveal` | `src/ui/screens/equipment.js` + `src/ui/components/disclosure.js` |
-| `armoury.comparisonTooltipAnchor` | Hover/configured-hold comparison tooltip anchor | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
+| `armoury.comparisonTooltipAnchor` | Expanded item comparison anchor | `.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]` | `src/ui/screens/equipment.js` + `src/ui/components/tooltip.js` |
+| `armoury.equipmentComparison` | Full receipt in delayed tooltip or inline card mode | `[data-ui-component="equipment-comparison"]` | `content/source/armouryUi.json` + `src/ui/screens/equipment.js` |
 | `armoury.inventoryTrayResizeHandle` | Independent Inventory tray height handle | `[data-component="armoury.inventoryTrayResizeHandle"]` | `src/ui/screens/equipment.js` + `styles/ui.css` |
 | `armoury.cardsCard` | Folded equipment-card panel with list/grid toggle | `.armoury-strip` | `src/ui/screens/equipment.js` |
 | `armoury.cardList` | Configurable vertical list or grid | `.armoury-card-list` | `src/ui/screens/equipment.js` + `styles/ui.css` |
@@ -102,6 +103,12 @@ Proportions and order are authored in
   with the HOLD hint kept inside the card. The folded card is also the native
   and pointer drag source; crossing the shared hold slop cancels the hold and
   changes the gesture into a drag;
+- equipment comparison presentation is authored under `layout.comparison`.
+  `presentation` accepts `tooltip` or `inline`; `hoverDelayMs` controls only
+  the pointer-hover delay, while `tooltipWidthRem` and
+  `tooltipMaxHeightRatio` keep the full receipt readable without escaping the
+  viewport. The shipped Inventory class reserves press-hold for Equip/Unequip,
+  so `inline` is the always-visible touch presentation;
 - cards: list by default, grid columns authored as `4`, with the presentation
   toggle in the Cards tray header; only cards with an equipment source appear;
   phone grid columns are separately authored as `2`;

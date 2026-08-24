@@ -85,6 +85,12 @@ export const armouryUi = {
       "defaultView": "list",
       "gridColumns": 4
     },
+    "comparison": {
+      "presentation": "tooltip",
+      "hoverDelayMs": 550,
+      "tooltipWidthRem": 52,
+      "tooltipMaxHeightRatio": 0.8
+    },
     "cardClasses": {
       "inventoryItem": {
         "holdAction": true

@@ -37,6 +37,9 @@ const DEFAULTS = Object.freeze({
     ],
   },
   cards: { defaultView: 'list', gridColumns: 4 },
+  comparison: {
+    presentation: 'tooltip', hoverDelayMs: 550, tooltipWidthRem: 52, tooltipMaxHeightRatio: 0.8,
+  },
   cardClasses: { inventoryItem: { holdAction: false } },
   viewModes: {
     grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
@@ -76,6 +79,7 @@ export function normalizeArmouryLayout(source = {}) {
   const trays = { ...DEFAULTS.trays, ...(raw.trays || {}) };
   const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
   const cards = { ...DEFAULTS.cards, ...(raw.cards || {}) };
+  const comparison = { ...DEFAULTS.comparison, ...(raw.comparison || {}) };
   const cardClasses = { ...DEFAULTS.cardClasses, ...(raw.cardClasses || {}) };
   const inventoryItemClass = { ...DEFAULTS.cardClasses.inventoryItem, ...(cardClasses.inventoryItem || {}) };
   const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
@@ -138,6 +142,15 @@ export function normalizeArmouryLayout(source = {}) {
   if (!Number.isInteger(Number(cards.gridColumns)) || Number(cards.gridColumns) < 1 || Number(cards.gridColumns) > 8) {
     throw new Error('armouryUi.layout.cards.gridColumns must be an integer from 1 to 8');
   }
+  if (!['tooltip', 'inline'].includes(comparison.presentation)) {
+    throw new Error('armouryUi.layout.comparison.presentation must be tooltip or inline');
+  }
+  if (!Number.isInteger(Number(comparison.hoverDelayMs)) || Number(comparison.hoverDelayMs) < 0
+    || Number(comparison.hoverDelayMs) > 600000) {
+    throw new Error('armouryUi.layout.comparison.hoverDelayMs must be an integer from 0 to 600000');
+  }
+  positive(Number(comparison.tooltipWidthRem), 'comparison.tooltipWidthRem');
+  ratio(Number(comparison.tooltipMaxHeightRatio), 'comparison.tooltipMaxHeightRatio');
   if (typeof inventoryItemClass.holdAction !== 'boolean') {
     throw new Error('armouryUi.layout.cardClasses.inventoryItem.holdAction must be true or false');
   }
@@ -198,6 +211,12 @@ export function normalizeArmouryLayout(source = {}) {
       }))),
     }),
     cards: Object.freeze({ defaultView: String(cards.defaultView), gridColumns: Number(cards.gridColumns) }),
+    comparison: Object.freeze({
+      presentation: String(comparison.presentation),
+      hoverDelayMs: Number(comparison.hoverDelayMs),
+      tooltipWidthRem: Number(comparison.tooltipWidthRem),
+      tooltipMaxHeightRatio: Number(comparison.tooltipMaxHeightRatio),
+    }),
     cardClasses: Object.freeze({
       inventoryItem: Object.freeze({ holdAction: inventoryItemClass.holdAction === true }),
     }),

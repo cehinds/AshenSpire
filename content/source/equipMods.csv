@@ -15,7 +15,9 @@
 #         scale        adjust every numeric amount on the card at once
 #         status       set/adjust the stacks of an applyStatus for `status`
 #         startStatus  apply `status` to the player at the start of each fight
-#         maxHp        added to run max HP (and current HP) at run creation
+#         maxHp        added to run max HP
+#         maxMana      added to run max Mana
+#         maxStamina   added to run max Stamina
 #         swapCost     added to what a mid-fight armament swap costs (signed;
 #                      the total is floored at 0). A talisman is the piece this
 #                      exists for; any piece may carry it.
@@ -45,4 +47,6 @@ strength,run,startStatus,,,strength,Strength,,"Strength you begin every fight wi
 dexterity,run,startStatus,,,dexterity,Dexterity,,"Dexterity you begin every fight with."
 regen,run,startStatus,,,regen,Regen,,"HP recovered at the start of each turn."
 maxHp,run,maxHp,,,,Max HP,,"Added to your maximum HP for the run."
+maxMana,run,maxMana,,,,Max Mana,,"Added to your maximum Mana for the run."
+maxStamina,run,maxStamina,,,,Max Stamina,,"Added to your maximum Stamina for the run."
 swapCost,run,swapCost,,,,Swap cost,,"Changed cost to switch armament sets mid-fight."

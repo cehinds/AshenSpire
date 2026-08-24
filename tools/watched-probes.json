@@ -336,7 +336,7 @@
   {
    "id": "A2",
    "by": "Bjorn",
-   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/screens/equipment.js (the procedural locked position card the ladder produces)",
+   "read": "src/model/loadout.js (the slot ladder, his sentence quoted at the code) · src/ui/components/armouryComponents.js (the procedural locked position card the ladder produces) · src/ui/screens/equipment.js (.armoury-position-card.is-locked)",
    "anchors": [
     "fitsSlot",
     "armoury-position-card is-locked"
@@ -409,9 +409,9 @@
   {
    "id": "A4",
    "by": "Bjorn",
-   "read": "src/ui/screens/equipment.js (btn.className = 'region-fold'), aria-expanded",
+   "read": "src/ui/components/trayComponents.js (shared Tray fold control), aria-expanded",
    "anchors": [
-    "region-fold"
+    "tray-fold region-fold"
    ],
    "screen": "the Armoury › the CARDS pane's fold",
    "reach": [
@@ -491,7 +491,7 @@
   {
    "id": "A9",
    "by": "Bjorn",
-   "read": "src/ui/components/refusal.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position card's own tooltip",
+   "read": "src/ui/components/refusal.js · src/ui/components/armouryComponents.js · src/ui/screens/equipment.js (.armoury-position-card.is-locked) · the locked position card's own tooltip",
    "anchors": [
     "armoury-position-card is-locked"
    ],

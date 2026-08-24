@@ -159,6 +159,7 @@ export function beatCue(phase, id, form) {
  */
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
+  feedbackHosts = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -166,13 +167,44 @@ export function armHold(btn, {
   let armed = false;
   let fired = false;
   let committedThisPress = false;
+  let activeFeedback = [];
   // Set at pointerdown, read at the click that follows it: did this press start
   // a hold? Rule 1 lives on this flag, and so does the ms<=0 passthrough.
   let heldThisPress = false;
 
   const paint = (p) => {
-    btn.style.setProperty('--hold', String(p));
-    btn.dataset.holdProgress = p.toFixed(3);
+    for (const target of [btn, ...activeFeedback]) {
+      target.style.setProperty('--hold', String(p));
+      target.dataset.holdProgress = p.toFixed(3);
+    }
+  };
+
+  const resolveFeedback = () => {
+    const requested = typeof feedbackHosts === 'function' ? feedbackHosts() : feedbackHosts;
+    return [...new Set((Array.isArray(requested) ? requested : [requested])
+      .filter((target) => target && target !== btn && target.style && target.dataset))];
+  };
+
+  const dressFeedback = (targets) => {
+    for (const target of targets) {
+      target.classList.add('beat-hold');
+      target.dataset.holdFeedback = 'card';
+      target.dataset.hold = 'holding';
+      if (id) target.dataset.holdAction = id;
+      target.style.setProperty('--hold', '0');
+    }
+  };
+
+  const clearFeedback = () => {
+    for (const target of activeFeedback) {
+      target.classList.remove('beat-hold');
+      delete target.dataset.holdFeedback;
+      delete target.dataset.hold;
+      delete target.dataset.holdAction;
+      delete target.dataset.holdProgress;
+      target.style.removeProperty('--hold');
+    }
+    activeFeedback = [];
   };
 
   /**
@@ -185,6 +217,7 @@ export function armHold(btn, {
     const now = msOf();
     if (now > 0) {
       btn.classList.add('beat-hold');
+      if (feedbackHosts) btn.dataset.holdFeedback = 'delegated';
       if (id) btn.dataset.holdAction = id;
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
       btn.dataset.holdMs = String(now);
@@ -205,6 +238,7 @@ export function armHold(btn, {
       }
     } else {
       btn.classList.remove('beat-hold');
+      delete btn.dataset.holdFeedback;
       delete btn.dataset.hold;
       delete btn.dataset.holdAction;
       delete btn.dataset.holdMs;
@@ -221,6 +255,7 @@ export function armHold(btn, {
     armed = false;
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
+    clearFeedback();
   }
 
   function begin(origin, track) {
@@ -241,6 +276,9 @@ export function armHold(btn, {
     // click through untouched — that is the pre-hold behaviour, byte for byte.
     if (!(ms0 > 0)) return false;
     if (fired || armed) return false;
+    clearFeedback();
+    activeFeedback = resolveFeedback();
+    dressFeedback(activeFeedback);
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';

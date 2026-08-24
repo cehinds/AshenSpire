@@ -11,6 +11,11 @@
       "handIds": ["ashStaff", "starstoneStaff"],
       "relicIds": ["starstoneShard", "goldenSprout"]
     },
+    "rogue": {
+      "armourIds": ["default", "nightveil"],
+      "handIds": ["dagger", "buckler", "shortbow", "parryDagger"],
+      "relicIds": ["cutpursesCoin", "goldenSprout"]
+    },
     "herald": {
       "armourIds": ["default", "ossuary"],
       "handIds": ["boneSceptre", "emberlightSceptre"],

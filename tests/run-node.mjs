@@ -811,7 +811,7 @@ console.log('          number. A CONSISTENCY check — it proves the declared la
 console.log('          never that any label is the right one, and it reads only the two declared');
 console.log('          test sources, so a third test file or a number composed at runtime is');
 console.log('          invisible to it.');
-console.log("          equipment's `self.maxHp=+N` mods column, relic PASSIVE_TYPES scalars,");
+console.log("          equipment's `self.maxHp/maxMana/maxStamina=+N` mods column, relic PASSIVE_TYPES scalars,");
 console.log('          status MODIFIER_TYPES — and on whether any of those numbers is balanced.');
 console.log('          67–68 ARE ABOUT THE GATE, NOT THE GAME — the only pair here that is. They');
 console.log('          prove that every STEP naming an instrument invokes it (or states what goes');

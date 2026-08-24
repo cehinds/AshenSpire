@@ -214,5 +214,73 @@ export const outfits = [
     "unlock": "reachStitchedCourt",
     "blurb": "Road dust worked into the weave.",
     "poiseThreshold": 5
+  },
+  {
+    "id": "default",
+    "classId": "rogue",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "tags": "flourish",
+    "mods": "",
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "nightveil",
+    "classId": "rogue",
+    "name": "Nightveil Coat",
+    "plate": "20272A",
+    "plateLt": "3B4B4A",
+    "leather": "211F25",
+    "under": 151719,
+    "tags": [
+      "flourish",
+      "ash"
+    ],
+    "mods": "defend.block=+2",
+    "unlock": "rogueBeatWarden",
+    "blurb": "Dark cloth that swallows the outline.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "duelist",
+    "classId": "rogue",
+    "name": "Duelist Jerkin",
+    "plate": "46515A",
+    "plateLt": "78909A",
+    "leather": "43362C",
+    "under": "25282A",
+    "tags": [
+      "flourish",
+      "pierce"
+    ],
+    "mods": [
+      "strike.hits=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "winAsRogue",
+    "blurb": "Cut close so nothing catches the blade.",
+    "poiseThreshold": 3
+  },
+  {
+    "id": "shadow",
+    "classId": "rogue",
+    "name": "Shadow Mantle",
+    "plate": 292136,
+    "plateLt": 534066,
+    "leather": "2A2430",
+    "under": "17131F",
+    "tags": [
+      "flourish",
+      "venom"
+    ],
+    "mods": "self.strength=+1",
+    "unlock": "rogueReachCrown",
+    "blurb": "The hem remembers every alley.",
+    "poiseThreshold": 4
   }
 ];

@@ -185,6 +185,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       const button = document.createElement('button');
       button.type = 'button';
       button.className = `cz-opt se-mode${state.attributeMode === mode.id ? ' chosen' : ''}`;
+      button.dataset.creationMode = mode.id;
       button.textContent = mode.label;
       button.setAttribute('aria-pressed', state.attributeMode === mode.id ? 'true' : 'false');
       button.addEventListener('click', () => {

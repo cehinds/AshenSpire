@@ -1,6 +1,7 @@
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
-import { placeAnchored } from '../fx.js';
+import { placeAnchored, viewportLocalBox } from '../fx.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let tipEl = null;
 let showTimer = null;
@@ -69,6 +70,7 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;
@@ -125,7 +127,7 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside') {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -133,6 +135,24 @@ function showWith(html, anchor, clear = null, intent = 'beside') {
   unstick();
   const t = ensure();
   t.innerHTML = html;
+  t.style.removeProperty('width');
+  t.style.removeProperty('max-width');
+  t.style.removeProperty('max-height');
+  t.dataset.tooltipVariant = appearance?.variant || '';
+  // This element is fixed inside a UI that uses CSS zoom. Viewport units are
+  // resolved before that zoom and then enlarged, so `80vh` can be taller than
+  // the visible screen. Author the comparison size in the same local-space px
+  // that placeAnchored consumes instead.
+  const room = viewportLocalBox();
+  if (appearance?.widthRem) {
+    const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const widthPx = Math.max(0, Math.min(appearance.widthRem * rootFontPx, room.width - 16));
+    t.style.width = `${widthPx}px`;
+    t.style.maxWidth = `${Math.max(0, room.width - 16)}px`;
+  }
+  if (appearance?.maxHeightRatio) {
+    t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
+  }
   t.style.display = 'block';
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
@@ -148,7 +168,9 @@ function showWith(html, anchor, clear = null, intent = 'beside') {
  * gp-focus cursor lands on / leaves an element), so controller players get
  * every tooltip a mouse would.
  */
-export function attachTooltip(el, contentFn, { intent = 'beside', clear = null } = {}) {
+export function attachTooltip(el, contentFn, {
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null,
+} = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
   // under the cursor is gone with the pointer anchor it served: a tooltip that
@@ -169,10 +191,10 @@ export function attachTooltip(el, contentFn, { intent = 'beside', clear = null }
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(show, 140);
+    showTimer = setTimeout(show, delayMs);
   });
   el.addEventListener('pointerleave', () => {
     // The timer is cleared either way — that is today's behaviour and a stuck
@@ -183,7 +205,7 @@ export function attachTooltip(el, contentFn, { intent = 'beside', clear = null }
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
-    showTimer = setTimeout(show, 160);
+    showTimer = setTimeout(show, focusDelayMs);
   });
   el.addEventListener('gpblur', () => {
     // Same guard, and it can only ever fire on a tooltip the pad did not
@@ -195,9 +217,9 @@ export function attachTooltip(el, contentFn, { intent = 'beside', clear = null }
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-export function showTooltipFor(el, html, { intent = 'beside', clear = null } = {}) {
+export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent);
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance);
 }
 
 /**

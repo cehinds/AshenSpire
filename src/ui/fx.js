@@ -6,6 +6,7 @@
 
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
+import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 
 const STEP_MS = 80;
 
@@ -176,6 +177,9 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
  *                      the offset-from-the-point rule, per-axis flip and all —
  *                      arithmetic, not a second branch at the call site.
+ *           'above'  — above it when possible, otherwise under it. This is the
+ *                      card/tray instruction intent: keep the explanation out
+ *                      of the component being held or resized.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
@@ -203,8 +207,8 @@ export function placeAnchored(el, anchor, {
   pad = 4,
   keep = Infinity,
 } = {}) {
-  if (intent !== 'beside' && intent !== 'under') {
-    throw new Error(`placeAnchored: intent must be 'beside' or 'under', got ${JSON.stringify(intent)}`);
+  if (!['beside', 'above', 'under'].includes(intent)) {
+    throw new Error(`placeAnchored: intent must be 'beside', 'above', or 'under', got ${JSON.stringify(intent)}`);
   }
   const room = view || viewportLocalBox();
   const gap = placeGap(el);
@@ -297,6 +301,11 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
+  const feedbackComponent = /\bblk\b/.test(cls)
+    ? UI.guardedDamageIndicator
+    : (/\bdmg\b/.test(cls) ? UI.healthDamageIndicator : UI.damageFeedback);
+  markUiComponent(el, feedbackComponent);
+  el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
