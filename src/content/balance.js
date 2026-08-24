@@ -274,6 +274,12 @@ export const balance = {
       metadataMaxWidthPct: 30,
       metadataShowTotals: false,
     },
+    // Shrine options default to one vertical list. `grid` preserves the
+    // horizontal wide-screen composition as an authored alternative; narrow
+    // screens still collapse it to a list for touch and readable labels.
+    shrinePresentation: {
+      optionLayout: 'list', // list | grid
+    },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
       gold: { hex: '#c9a227', rgb: '201, 162, 39' },

@@ -6,7 +6,7 @@
 // clicking the veil closes it.
 
 import { renderCard } from './card.js';
-import { renderSettings } from '../screens/settings.js';
+import { isFullscreen, renderSettings, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
@@ -19,6 +19,7 @@ import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 
 let openVeil = null;
 let escHandler = null;
+let overlayCleanup = [];
 
 // ---- the panels: ONE name per tab, not two (#78) ---------------------------
 //
@@ -160,6 +161,7 @@ export function closeOverlay() {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
   }
+  for (const release of overlayCleanup.splice(0)) release();
 }
 
 /**
@@ -210,8 +212,92 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
     onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
   };
 
+  const quickActions = veil.querySelector('[data-settings-quick-actions]');
+  const fullscreenButton = veil.querySelector('#ov-fullscreen');
+  const musicButton = veil.querySelector('#ov-music');
+  const saveButton = veil.querySelector('#ov-save-quick');
+  const exitButton = veil.querySelector('#ov-exit-quick');
+  if (!onSave && saveButton) saveButton.hidden = true;
+  if (!onExit && !onQuit && exitButton) exitButton.hidden = true;
+
+  const syncFullscreenQuickAction = () => {
+    const active = isFullscreen();
+    if (!fullscreenButton) return;
+    fullscreenButton.classList.toggle('on', active);
+    fullscreenButton.setAttribute('aria-pressed', String(active));
+    fullscreenButton.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+    fullscreenButton.title = active ? 'Exit fullscreen' : 'Enter fullscreen';
+  };
+  const syncMusicQuickAction = () => {
+    if (!musicButton) return;
+    const active = settings.muteMusic !== true;
+    musicButton.classList.toggle('on', active);
+    musicButton.setAttribute('aria-pressed', String(active));
+    musicButton.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
+    musicButton.title = active ? 'Turn music off' : 'Turn music on';
+    const label = musicButton.querySelector('[data-music-label]');
+    if (label) label.textContent = `Music: ${active ? 'On' : 'Off'}`;
+  };
+  syncFullscreenQuickAction();
+  syncMusicQuickAction();
+  document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+  overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
+  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
+
+  fullscreenButton?.addEventListener('click', async () => {
+    fullscreenButton.setAttribute('aria-disabled', 'true');
+    const result = await toggleFullscreen();
+    fullscreenButton.removeAttribute('aria-disabled');
+    syncFullscreenQuickAction();
+    if (!result.ok) showSettingsNotice(result.reason);
+  });
+  musicButton?.addEventListener('click', () => {
+    settings.muteMusic = settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+    syncMusicQuickAction();
+  });
+  saveButton?.addEventListener('click', () => {
+    if (!onSave) return;
+    const slot = onSave();
+    const label = saveButton.querySelector('[data-save-label]');
+    if (label) label.textContent = slot ? `Saved · ${slot}` : 'Saved';
+    saveButton.setAttribute('aria-label', slot ? `Saved to slot ${slot}` : 'Saved');
+    clearTimeout(saveButton._labelTimer);
+    saveButton._labelTimer = setTimeout(() => {
+      if (label) label.textContent = 'Save';
+      saveButton.setAttribute('aria-label', 'Save now');
+    }, 1500);
+  });
+  let exitArmed = false;
+  let exitTimer = null;
+  exitButton?.addEventListener('click', () => {
+    if (!exitArmed) {
+      exitArmed = true;
+      exitButton.classList.add('armed');
+      exitButton.setAttribute('aria-label', 'Press again to save and quit');
+      const icon = exitButton.querySelector('[data-exit-icon]');
+      const label = exitButton.querySelector('[data-exit-label]');
+      if (icon) icon.textContent = '!';
+      if (label) label.textContent = 'Confirm';
+      exitTimer = setTimeout(() => {
+        exitArmed = false;
+        exitButton.classList.remove('armed');
+        exitButton.setAttribute('aria-label', 'Save and quit the game');
+        if (icon) icon.textContent = '⏻';
+        if (label) label.textContent = 'Quit';
+      }, 3000);
+      return;
+    }
+    clearTimeout(exitTimer);
+    closeOverlay();
+    (onExit || onQuit)();
+  });
+
   function selectTab(id) {
     currentTab = id;
+    veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
+    if (quickActions) quickActions.hidden = id !== 'settings';
     updateMenuSelection(veil, TABS, id);
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and

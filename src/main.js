@@ -596,7 +596,7 @@ function applyDisplaySettings(settings) {
   // handed its bindings, so no screen has to thread `meta` down just to ask which
   // variant is running. `settingOn` because the store is sparse and the default
   // is part of the answer (see its own docstring).
-  setQuickNav({ mode: settings.quickNav, fixedEnds: settingOn(settings, 'quickNavFixedEnds') });
+  setQuickNav({ mode: settings.quickNav });
   // Walked-node fade → data attr on the root; styles/map.css carries the ladder.
   // Same shape as `ambient` below: an unknown stored value lands on the default
   // rather than on a silent no-fade, and the default here restates the settings

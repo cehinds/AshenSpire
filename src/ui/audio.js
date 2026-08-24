@@ -45,6 +45,7 @@ export function initAudio(settings = {}) {
     musicVol: clampVol(settings.musicVolume, AUDIO_DEFAULTS.musicVolume),
     sfxVol: clampVol(settings.sfxVolume, AUDIO_DEFAULTS.sfxVolume),
     muted: settings.muteAudio === true,
+    musicMuted: settings.muteMusic === true,
     context: null, // current music bed key
     nodes: [], // live music nodes to tear down on switch
     timer: null,
@@ -62,7 +63,7 @@ export function initAudio(settings = {}) {
   function applyGains() {
     const m = state.muted ? 0 : 1;
     master.gain.value = 0.9 * m;
-    musicBus.gain.value = state.musicVol / 100;
+    musicBus.gain.value = state.musicMuted ? 0 : state.musicVol / 100;
     sfxBus.gain.value = state.sfxVol / 100;
   }
 
@@ -416,7 +417,7 @@ export function initAudio(settings = {}) {
       console.warn(`[audio] music('${context}'): no bed with this name in content/music.js BEDS — playing nothing. Deliberate quiet is spelled '${MUSIC_SILENCE_WORD}'.`);
       return 'unknown';
     }
-    if (state.muted) return 'muted';
+    if (state.muted || state.musicMuted) return 'muted';
     resume();
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
@@ -576,7 +577,7 @@ export function initAudio(settings = {}) {
       }
     }
     // Re-trigger the current context so the new source is used immediately.
-    if (state.context && !state.muted) {
+    if (state.context && !state.muted && !state.musicMuted) {
       const c = state.context;
       state.context = null;
       music(c);
@@ -623,12 +624,13 @@ export function initAudio(settings = {}) {
   }
 
   // ---- settings applied live ----------------------------------------------
-  function setVolumes({ musicVolume, sfxVolume, muteAudio } = {}) {
+  function setVolumes({ musicVolume, sfxVolume, muteAudio, muteMusic } = {}) {
     if (musicVolume != null) state.musicVol = clampVol(musicVolume, state.musicVol);
     if (sfxVolume != null) state.sfxVol = clampVol(sfxVolume, state.sfxVol);
     if (muteAudio != null) state.muted = !!muteAudio;
+    if (muteMusic != null) state.musicMuted = !!muteMusic;
     applyGains();
-    if (state.muted) stopMusic(0.3);
+    if (state.muted || state.musicMuted) stopMusic(0.3);
     else if (state.context) {
       const c = state.context;
       state.context = null;

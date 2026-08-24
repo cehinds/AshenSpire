@@ -18,6 +18,7 @@ import {
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
 import { relicText } from '../components/card.js';
+import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 import {
   primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
@@ -371,48 +372,38 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
-      overlay.innerHTML = `<div class="modal cc-stat-modal" tabindex="-1"><h3 id="cc-stat-title">ASSIGN POINTS</h3>`
-        + `<p class="se-pool">Points to assign: ${remaining}</p><div class="cc-allocation-rows"></div>`
-        + `<div class="cc-stat-actions"><button type="button" class="subtle" data-stat-cancel>Standard</button><button type="button" data-stat-done>Done</button></div></div>`;
-      const rows = overlay.querySelector('.cc-allocation-rows');
-      for (const def of orderedAttributes(registries)) {
-        const value = state.attributes[def.id];
-        const row = document.createElement('div');
-        row.className = 'se-row';
-        row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`;
-        const minus = document.createElement('button');
-        minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
-        minus.dataset.statId = def.id; minus.dataset.statAction = 'decrease';
-        minus.setAttribute('aria-label', `Decrease ${def.label}`);
-        minus.setAttribute('aria-disabled', value <= mode.minimum ? 'true' : 'false');
-        const number = document.createElement('span'); number.className = 'se-value'; number.textContent = value;
-        const plus = document.createElement('button');
-        plus.type = 'button'; plus.className = 'se-step'; plus.textContent = '+';
-        plus.dataset.statId = def.id; plus.dataset.statAction = 'increase';
-        plus.setAttribute('aria-label', `Increase ${def.label}`);
-        plus.setAttribute('aria-disabled', value >= mode.maximum || remaining <= 0 ? 'true' : 'false');
-        minus.addEventListener('click', () => {
-          if (value <= mode.minimum) return;
-          state.attributes[def.id] -= 1;
+      const allocation = renderStatAllocationCard(overlay, {
+        title: 'ASSIGN POINTS',
+        remaining,
+        modal: true,
+        cancelLabel: 'Standard',
+        rows: orderedAttributes(registries).map((def) => ({
+          id: def.id,
+          label: def.label,
+          shortLabel: def.shortLabel,
+          value: state.attributes[def.id],
+          canDecrease: state.attributes[def.id] > mode.minimum,
+          canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
+        })),
+        onDecrease: (id) => {
+          state.attributes[id] -= 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        });
-        plus.addEventListener('click', () => {
-          if (value >= mode.maximum || remaining <= 0) return;
-          state.attributes[def.id] += 1;
+        },
+        onIncrease: (id) => {
+          state.attributes[id] += 1;
           if (!statsProblem()) previewAttributes = { ...state.attributes };
           draw(); renderCharacterPreview(); updateStartRefusal();
-        });
-        row.append(minus, number, plus); rows.appendChild(row);
-      }
-      const done = overlay.querySelector('[data-stat-done]');
+        },
+      });
+      const done = allocation.done;
       refusesWhen(done, statsProblem, 'Apply these stats');
       done.addEventListener('click', () => {
         if (statsProblem()) return;
         previewAttributes = { ...state.attributes };
         closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
       });
-      overlay.querySelector('[data-stat-cancel]').addEventListener('click', () => {
+      allocation.cancel.addEventListener('click', () => {
         state.attributeMode = STANDARD;
         previewAttributes = null;
         closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
