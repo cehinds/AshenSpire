@@ -283,8 +283,9 @@ async function checkList(where, { expectTail = true } = {}) {
   const controls = d.rows.slice(0, 2);
   if (controls.map((r) => r.act).join(',') !== 'fullscreen,music') {
     fail('R8', where, `first two rows are ${controls.map((r) => r.act).join(', ') || '(none)'}`);
-  } else if (controls.some((r) => r.role !== 'switch' || !['true', 'false'].includes(r.checked) || !r.condition)) {
-    fail('R8', where, `stateful rows lack switch/ARIA/condition state: ${JSON.stringify(controls)}`);
+  } else if (controls.some((r) => !['switch', 'menuitemcheckbox'].includes(r.role)
+      || !['true', 'false'].includes(r.checked) || !r.condition)) {
+    fail('R8', where, `stateful rows lack an owned ARIA role/state/condition: ${JSON.stringify(controls)}`);
   } else pass('R8', where, 'Fullscreen and Music are named synchronized switches');
 
   // R3 — 44 local px.

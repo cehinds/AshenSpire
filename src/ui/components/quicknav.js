@@ -63,6 +63,9 @@ export function setQuickNav(opts) {
     const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
     launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
+    window.dispatchEvent(new CustomEvent('ashenspire:quicknav-mode-change', {
+      detail: { mode, folded: quickNavFolds() },
+    }));
   }
 }
 
