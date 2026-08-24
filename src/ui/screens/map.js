@@ -131,11 +131,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        overlayHtml: legendHtml,
+        // The phone orientation receipt belongs to the header's layout flow.
+        // Keeping it inside the same positioned host means the quick utility
+        // stack starts after ENTRANCE → BOSS instead of floating across it.
+        overlayHtml: `${legendHtml}${entranceOrientation}`,
       }))}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   //

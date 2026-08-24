@@ -1082,59 +1082,78 @@ button.rs-reset {
 .hud-quick-settings {
   position: absolute;
   z-index: 80;
-  right: calc(env(safe-area-inset-right, 0px) + var(--hud-quick-edge-gap, 8px));
-  top: calc(100% + var(--hud-quick-edge-gap, 8px));
+  right: calc(env(safe-area-inset-right, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  top: calc(100% + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  gap: var(--hud-quick-stack-gap, 4px);
-  width: min(8.6rem, calc(100vw - 1rem));
+  align-items: flex-end;
+  gap: calc(var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1));
+  width: max-content;
+  max-width: calc(100% - (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)) - (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   pointer-events: auto;
 }
 .title-screen > .hud-quick-settings {
-  top: calc(env(safe-area-inset-top, 0px) + var(--hud-quick-edge-gap, 8px));
+  top: calc(env(safe-area-inset-top, 0px) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
 }
 .hud-quick-setting {
   position: relative;
   box-sizing: border-box;
   min-height: var(--tap-floor);
-  width: 100%;
-  padding: 0.45rem 0.65rem;
+  min-width: var(--tap-floor);
+  width: auto;
+  padding: 0 calc(4px / var(--ui-zoom, 1));
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
+  justify-content: flex-end;
+  gap: calc(4px / var(--ui-zoom, 1));
+  border: 0;
+  border-radius: calc(4px / var(--ui-zoom, 1));
+  background: transparent;
   color: var(--parchment);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
-  font: 700 0.82rem/1.1 var(--font-ui);
-  letter-spacing: 0.06em;
+  box-shadow: none;
+  font-family: var(--font-ui);
+  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
 }
-.hud-quick-setting-glyph { display: none; font-size: 1.25rem; line-height: 1; }
+.hud-quick-setting-glyph { display: none; font-size: calc(var(--hud-quick-glyph-size, 14px) / var(--ui-zoom, 1)); line-height: 1; }
 .hud-quick-setting:hover,
-.hud-quick-setting:focus-visible { border-color: var(--gold); color: var(--gold); }
+.hud-quick-setting:focus-visible { color: var(--gold); }
+.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: -1px; }
 .hud-quick-setting-state {
-  min-width: 2.2rem;
-  padding: 0.2rem 0.3rem;
-  border: 1px solid var(--line-soft);
-  border-radius: 999px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--muted);
   text-align: center;
-  font-size: 0.72rem;
+  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
 }
 .hud-quick-setting.on .hud-quick-setting-state {
-  border-color: var(--gold);
   color: var(--gold);
-  background: rgba(var(--accent-rgb), 0.12);
+  background: transparent;
+}
+.hud-quick-settings[data-card-background='true'] .hud-quick-setting {
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
+/* Wide screens with a precise pointer do not need two 44px-tall invisible
+   rows around 10px labels. The visible rail contracts to its data-owned row
+   height; touch and coarse-pointer surfaces retain the full tap floor below. */
+@media (min-width: 421px) and (pointer: fine) {
+  .hud-quick-setting {
+    min-width: 0;
+    min-height: calc(var(--hud-quick-wide-control-height, 24px) / var(--ui-zoom, 1));
+  }
+}
 .hud-quick-notice {
   position: absolute;
-  top: calc(100% + var(--hud-quick-stack-gap, 4px));
+  top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));
   right: 0;
   box-sizing: border-box;
   width: min(19rem, calc(100vw - 1rem));
@@ -1150,7 +1169,7 @@ button.rs-reset {
   text-transform: none;
 }
 .hud-quick-notice[hidden] { display: none; }
-.hud-quick-settings.compact { width: 4.2rem; }
+.hud-quick-settings.compact { width: var(--tap-floor); }
 .hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-settings.compact .hud-quick-setting { justify-content: center; }
 @media (max-width: 420px) {
@@ -1164,7 +1183,12 @@ button.rs-reset {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
   }
   .hud-quick-setting-state {
-    position: absolute; right: 4px; bottom: 4px; width: 7px; min-width: 7px; height: 7px;
+    position: absolute;
+    right: calc(4px / var(--ui-zoom, 1));
+    bottom: calc(4px / var(--ui-zoom, 1));
+    width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
+    min-width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
+    height: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
     padding: 0; border-radius: 50%; overflow: hidden; color: transparent; font-size: 0;
     background: var(--muted); opacity: 0.72;
   }

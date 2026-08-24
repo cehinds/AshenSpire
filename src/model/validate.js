@@ -748,7 +748,7 @@ export function validateContent(bundle) {
     const quickSettings = ui.hudQuickSettings;
     const quickPlaces = ['title', 'map', 'combat'];
     if (!quickSettings || typeof quickSettings !== 'object' || Array.isArray(quickSettings)) {
-      err('balance.ui.hudQuickSettings', 'must be an object with places, edgeGapPx, stackGapPx, and showLabels');
+      err('balance.ui.hudQuickSettings', 'must be an object with places, spacing, visual sizing, background, and label settings');
     } else {
       if (!Array.isArray(quickSettings.places)
         || quickSettings.places.some((place) => !quickPlaces.includes(place))
@@ -760,6 +760,20 @@ export function validateContent(bundle) {
         if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 24) {
           err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [0, 24] — got ${JSON.stringify(value)}`);
         }
+      }
+      for (const [key, min, max] of [
+        ['wideControlHeightPx', 20, 36],
+        ['labelFontPx', 8, 18],
+        ['glyphSizePx', 10, 28],
+        ['stateDotPx', 3, 12],
+      ]) {
+        const value = quickSettings[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof quickSettings.showCardBackground !== 'boolean') {
+        err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
       }
       if (typeof quickSettings.showLabels !== 'boolean') {
         err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);

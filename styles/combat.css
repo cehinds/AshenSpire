@@ -533,6 +533,8 @@
   --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
   --combatant-intent-gap: 0.18rem;
   flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
+  box-sizing: border-box;
+  padding-inline-end: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
 }
 :root[data-short='false'] .field { min-height: 0; }
 .player-zone {
@@ -1286,7 +1288,9 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      layout in styles/ui.css — it was never a fact about combat (#29 slice 0). */
 
   /* ---- battlefield: give the enemies the width ---- */
-  :root[data-layout='narrow'] .field { padding: 0 1.2rem; }
+  :root[data-layout='narrow'] .field {
+    padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
+  }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,
   :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
