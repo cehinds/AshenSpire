@@ -1142,6 +1142,15 @@ button.rs-reset {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
+/* Wide screens with a precise pointer do not need two 44px-tall invisible
+   rows around 10px labels. The visible rail contracts to its data-owned row
+   height; touch and coarse-pointer surfaces retain the full tap floor below. */
+@media (min-width: 421px) and (pointer: fine) {
+  .hud-quick-setting {
+    min-width: 0;
+    min-height: calc(var(--hud-quick-wide-control-height, 24px) / var(--ui-zoom, 1));
+  }
+}
 .hud-quick-notice {
   position: absolute;
   top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));

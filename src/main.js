@@ -266,6 +266,7 @@ const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
 for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
+  ['wideControlHeightPx', '--hud-quick-wide-control-height'],
   ['labelFontPx', '--hud-quick-label-font'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],

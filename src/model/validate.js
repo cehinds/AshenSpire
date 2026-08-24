@@ -762,6 +762,7 @@ export function validateContent(bundle) {
         }
       }
       for (const [key, min, max] of [
+        ['wideControlHeightPx', 20, 36],
         ['labelFontPx', 8, 18],
         ['glyphSizePx', 10, 28],
         ['stateDotPx', 3, 12],

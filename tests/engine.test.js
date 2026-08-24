@@ -5188,6 +5188,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'one data row places the shared controls on all three requested surfaces');
     eq(`${presentation.edgeGapPx}/${presentation.stackGapPx}`, '4/0',
       'the shared utility rail is right-edge close and has no authored inter-control gap');
+    eq(presentation.wideControlHeightPx, 24,
+      'fine-pointer wide screens use a compact data-owned row height');
     eq(`${presentation.labelFontPx}/${presentation.glyphSizePx}/${presentation.stateDotPx}`, '10/14/5',
       'the visible label, glyph, and state dot sizes are data-owned');
     eq(presentation.showCardBackground, false,
@@ -5198,7 +5200,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
     assert(/data-card-background="false"/.test(html), 'the transparent presentation reaches the shared renderer');
-    assert(/--hud-quick-label-font:10px/.test(html) && /--hud-quick-glyph-size:14px/.test(html),
+    assert(/--hud-quick-wide-control-height:24px/.test(html)
+      && /--hud-quick-label-font:10px/.test(html) && /--hud-quick-glyph-size:14px/.test(html),
       'the data-owned compact visual sizes reach CSS without a second renderer');
 
     const audibleMusic = musicQuickSettingsPlan({});

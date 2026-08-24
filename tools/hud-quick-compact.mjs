@@ -32,12 +32,14 @@ function findings(r) {
   if (r.rightGap < -0.5 || r.rightGap > 9) bad.push(`right gap is ${r.rightGap.toFixed(2)}px`);
   if (r.buttons.length !== 2) bad.push(`expected 2 controls, saw ${r.buttons.length}`);
   for (const [index, button] of r.buttons.entries()) {
-    if (button.width < 43.5 || button.height < 43.5) bad.push(`control ${index + 1} lost the 44px touch floor`);
+    if (r.phone && (button.width < 43.5 || button.height < 43.5)) bad.push(`control ${index + 1} lost the 44px phone touch floor`);
+    if (!r.phone && (button.height < 23.5 || button.height > 24.5)) bad.push(`control ${index + 1} wide height is ${button.height.toFixed(2)}px, expected 24px`);
     if (button.border !== '0px' || button.background !== 'rgba(0, 0, 0, 0)' || button.shadow !== 'none') {
       bad.push(`control ${index + 1} still paints a card`);
     }
   }
   if (r.buttonGap > 1) bad.push(`control gap is ${r.buttonGap.toFixed(2)}px`);
+  if (!r.phone && r.stack.height > 49) bad.push(`wide rail is still ${r.stack.height.toFixed(2)}px tall`);
   if (r.phone && r.glyphPx > 14.5) bad.push(`phone glyph is ${r.glyphPx.toFixed(2)}px`);
   if (!r.phone && r.labelPx > 10.5) bad.push(`desktop label is ${r.labelPx.toFixed(2)}px`);
   if (r.orientationOverlap > 0.5) bad.push(`rail covers ${r.orientationOverlap.toFixed(2)}px² of the entrance-to-boss receipt`);

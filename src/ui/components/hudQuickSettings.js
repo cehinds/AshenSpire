@@ -33,6 +33,7 @@ export function hudQuickSettingsHtml(model) {
   const fullscreen = childModel(model, UI.fullscreenControl);
   const music = childModel(model, UI.musicControl);
   const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px;`
+    + `--hud-quick-wide-control-height:${model.properties.wideControlHeightPx}px;`
     + `--hud-quick-label-font:${model.properties.labelFontPx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
     + `--hud-quick-state-dot:${model.properties.stateDotPx}px`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings

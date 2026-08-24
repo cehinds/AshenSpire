@@ -1442,6 +1442,15 @@ button.rs-reset {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
 }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
+/* Wide screens with a precise pointer do not need two 44px-tall invisible
+   rows around 10px labels. The visible rail contracts to its data-owned row
+   height; touch and coarse-pointer surfaces retain the full tap floor below. */
+@media (min-width: 421px) and (pointer: fine) {
+  .hud-quick-setting {
+    min-width: 0;
+    min-height: calc(var(--hud-quick-wide-control-height, 24px) / var(--ui-zoom, 1));
+  }
+}
 .hud-quick-notice {
   position: absolute;
   top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));
@@ -6895,6 +6904,7 @@ const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
 for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
+  ['wideControlHeightPx', '--hud-quick-wide-control-height'],
   ['labelFontPx', '--hud-quick-label-font'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],
@@ -9383,6 +9393,9 @@ const balance = {
       places: ['title', 'map', 'combat'],
       edgeGapPx: 4,
       stackGapPx: 0,
+      // Fine-pointer wide screens can use compact rows; touch/coarse-pointer
+      // surfaces keep the authored tap floor regardless of viewport width.
+      wideControlHeightPx: 24,
       labelFontPx: 10,
       glyphSizePx: 14,
       stateDotPx: 5,
@@ -20212,6 +20225,7 @@ function validateContent(bundle) {
         }
       }
       for (const [key, min, max] of [
+        ['wideControlHeightPx', 20, 36],
         ['labelFontPx', 8, 18],
         ['glyphSizePx', 10, 28],
         ['stateDotPx', 3, 12],
@@ -39367,7 +39381,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'fbf484f7a8';
+const SOURCE = 'f89a527856';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39401,7 +39415,7 @@ const SOURCE = 'fbf484f7a8';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1288';
+const ORDINAL = '1290';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39546,6 +39560,7 @@ function hudQuickSettingsHtml(model) {
   const fullscreen = childModel(model, UI.fullscreenControl);
   const music = childModel(model, UI.musicControl);
   const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px;`
+    + `--hud-quick-wide-control-height:${model.properties.wideControlHeightPx}px;`
     + `--hud-quick-label-font:${model.properties.labelFontPx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
     + `--hud-quick-state-dot:${model.properties.stateDotPx}px`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
@@ -43389,6 +43404,7 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
       place,
       edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 4,
       stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 0,
+      wideControlHeightPx: Number.isFinite(presentation.wideControlHeightPx) ? presentation.wideControlHeightPx : 24,
       labelFontPx: Number.isFinite(presentation.labelFontPx) ? presentation.labelFontPx : 10,
       glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 14,
       stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 5,

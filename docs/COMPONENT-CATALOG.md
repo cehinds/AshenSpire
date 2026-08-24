@@ -43,7 +43,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
-| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Its borderless 10px labels / 14px phone glyphs sit inside 44px touch targets; the entrance-to-boss receipt remains in the HUD flow so the rail cannot cover it. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Fine-pointer wide screens use data-owned 24px rows; phone/coarse-pointer controls retain 44px touch targets. The entrance-to-boss receipt remains in the HUD flow so the rail cannot cover it. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |

@@ -281,6 +281,9 @@ export const balance = {
       places: ['title', 'map', 'combat'],
       edgeGapPx: 4,
       stackGapPx: 0,
+      // Fine-pointer wide screens can use compact rows; touch/coarse-pointer
+      // surfaces keep the authored tap floor regardless of viewport width.
+      wideControlHeightPx: 24,
       labelFontPx: 10,
       glyphSizePx: 14,
       stateDotPx: 5,
