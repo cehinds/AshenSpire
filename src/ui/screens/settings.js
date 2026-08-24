@@ -1193,6 +1193,27 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
 
+  // Fullscreen events belong to this complete Settings render, not to whichever
+  // category panel happens to be wired. Escape and browser refusals can arrive
+  // after the Display controls have been replaced, so the document listeners
+  // below need a synchronizer in their own lifecycle scope.
+  const syncFullscreen = (message = '') => {
+    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
+    if (!btn) return;
+    const capability = fullscreenCapability();
+    const on = isFullscreen();
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-checked', String(on));
+    btn.disabled = !capability.supported;
+    btn.setAttribute('aria-disabled', String(!capability.supported));
+    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
+    if (status) {
+      status.textContent = message || (capability.supported
+        ? 'Fill the screen when this browser allows it.'
+        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
+    }
+  };
+
   // ---- everything below wires ONE PANEL'S controls -------------------------
   // It used to run once over the whole column, because the whole column was on
   // screen. With one category at a time it has to run again after every tab
@@ -1314,23 +1335,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       anchorPressed(container, btn, wasAt);
     });
   });
-
-  const syncFullscreen = (message = '') => {
-    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
-    if (!btn) return;
-    const capability = fullscreenCapability();
-    const on = isFullscreen();
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-checked', String(on));
-    btn.disabled = !capability.supported;
-    btn.setAttribute('aria-disabled', String(!capability.supported));
-    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
-    if (status) {
-      status.textContent = message || (capability.supported
-        ? 'Fill the screen when this browser allows it.'
-        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
-    }
-  };
 
   container.querySelectorAll('.toggle').forEach((btn) => {
     btn.addEventListener('click', async () => {

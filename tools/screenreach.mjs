@@ -182,6 +182,17 @@ const SETTINGS_CYCLE = `(async () => {
   const described = fullscreen?.getAttribute('aria-describedby');
   window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
     && described && document.getElementById(described));
+  window.__fullscreenSyncError = '';
+  const captureFullscreenSyncError = (event) => {
+    const message = event?.error?.message || event?.message || 'unknown error';
+    if (!String(message).includes('syncFullscreen')) return;
+    window.__fullscreenSyncError = String(message);
+    event.preventDefault();
+  };
+  window.addEventListener('error', captureFullscreenSyncError);
+  document.dispatchEvent(new Event('fullscreenchange'));
+  await pause();
+  window.removeEventListener('error', captureFullscreenSyncError);
   tab('deck')?.click(); await pause();
   tab('settings')?.click(); await pause();
   tab('deck')?.click(); await pause();
@@ -358,6 +369,7 @@ const PROBE = `(() => {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
     if (leaks.length) visual.push('Settings revisit leaked listeners: ' + leaks.map(([type, count]) => type + '=' + count).join(', '));
     if (!window.__fullscreenA11y) visual.push('fullscreen switch lacks an accessible name or description');
+    if (window.__fullscreenSyncError) visual.push('fullscreen event sync threw: ' + window.__fullscreenSyncError);
     if (!window.__armouryShortcutOpened) visual.push('equipment shortcut did not open Armoury');
   }
   return { z, local: app.clientWidth + 'x' + app.clientHeight, total: all.length,
