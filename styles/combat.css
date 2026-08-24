@@ -126,9 +126,8 @@
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
   .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
-@container run-header (max-width: 430px) {
-  .hud-run-meta .build-number { display: none; }
-}
+/* Source and seed yield first, but the build number stays visible at every
+   width. It is the only immutable identity a phone screenshot carries. */
 @media (max-width: 350px) {
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }

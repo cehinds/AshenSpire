@@ -3976,9 +3976,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .hud-run-meta .build-stamp[data-seed]::before { display: none; }
   .hud-identity .portrait { width: calc(28px * var(--hud-portrait-scale)); height: calc(28px * var(--hud-portrait-scale)); font-size: calc(15px * var(--hud-portrait-scale)); }
 }
-@container run-header (max-width: 430px) {
-  .hud-run-meta .build-number { display: none; }
-}
+/* Source and seed yield first, but the build number stays visible at every
+   width. It is the only immutable identity a phone screenshot carries. */
 @media (max-width: 350px) {
   .topbar.combat-hud.shared-hud .hud-run-meta .hud-progress-total { display: none; }
 }
@@ -37597,7 +37596,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '041a039079';
+const SOURCE = '21782e771d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -37631,7 +37630,7 @@ const SOURCE = '041a039079';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1183';
+const ORDINAL = '1184';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
