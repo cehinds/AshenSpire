@@ -154,8 +154,9 @@ export function beatCue(phase, id, form) {
  * finger lands. The function form remains available to rows whose state can
  * change while a screen is mounted; End Turn itself is deliberately constant.
  *
- * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
- * byte for byte: one tap commits. Not a hold with a zero timer.
+ * `ms <= 0` is the "off" position of the dial: one completed press commits.
+ * It is not a hold with a zero timer, and it does not depend on a trailing
+ * click that a mobile browser may suppress after a stationary long press.
  */
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
@@ -167,9 +168,11 @@ export function armHold(btn, {
   let armed = false;
   let fired = false;
   let committedThisPress = false;
+  let offPointerPress = false;
   let activeFeedback = [];
-  // Set at pointerdown, read at the click that follows it: did this press start
-  // a hold? Rule 1 lives on this flag, and so does the ms<=0 passthrough.
+  // Set at pointerdown, read at the click that may follow it: did the shared
+  // press door already own this pointer? Rule 1 and off-mode deduplication both
+  // live on this flag.
   let heldThisPress = false;
 
   const paint = (p) => {
@@ -264,18 +267,44 @@ export function armHold(btn, {
     // it is the dial — read fresh, for every press, on every input.
     //
     // `heldThisPress` IS A POINTER FACT AND ONLY A POINTER FACT. It exists so
-    // the `click` a lifted finger generates can be swallowed (rule 1). A key or
-    // pad press generates NO click — input.js holds the activation and asks
-    // `onEnd` directly — so setting it for those sources would leave a live
-    // swallow flag with no click to eat, and the next real TAP would pay for
-    // it. That is F3's shape, which armInspect below learned once already.
+    // the `click` a lifted finger may generate can be swallowed after either a
+    // real hold or an off-mode release commit. A key or pad generates NO click
+    // here — input.js owns its activation — so it must never set this flag.
+    if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
+    offPointerPress = false;
     const ms0 = msOf();
-    // The dial is off, or this state of this action owes no beat. Let the
-    // click through untouched — that is the pre-hold behaviour, byte for byte.
-    if (!(ms0 > 0)) return false;
-    if (fired || armed) return false;
+    // A pointer activation normally ends in a click, but mobile browsers may
+    // suppress that click after a long press. When the dial is off, own the
+    // pointer lifecycle and commit once on release so tap and long-press have
+    // the same meaning. Key and pad retain their immediate activation path.
+    if (!(ms0 > 0)) {
+      if (origin.source !== 'pointer') return false;
+      heldThisPress = true;
+      offPointerPress = true;
+      let moved = false;
+      const x0 = origin.x;
+      const y0 = origin.y;
+      track({
+        onMove: (mv) => {
+          if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) moved = true;
+        },
+        onEnd: (ev, { cancelled }) => {
+          if (!offPointerPress) return true;
+          offPointerPress = false;
+          if (cancelled || moved) {
+            heldThisPress = false;
+            committedThisPress = false;
+            return true;
+          }
+          committedThisPress = true;
+          onConfirm(ev);
+          return true;
+        },
+      });
+      return true;
+    }
     clearFeedback();
     activeFeedback = resolveFeedback();
     dressFeedback(activeFeedback);
@@ -366,19 +395,27 @@ export function armHold(btn, {
 
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
   const onCardDragStart = () => { if (armed) stop('idle'); };
+  const onContextMenu = (ev) => {
+    if (armed || offPointerPress) ev.preventDefault();
+  };
 
   dress();
   const disarmPress = armPress(btn, begin);
   btn.addEventListener('click', onClick);
   btn.addEventListener('carddragstart', onCardDragStart);
+  btn.addEventListener('contextmenu', onContextMenu);
   addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
+    offPointerPress = false;
+    heldThisPress = false;
+    committedThisPress = false;
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);
     btn.removeEventListener('carddragstart', onCardDragStart);
+    btn.removeEventListener('contextmenu', onContextMenu);
     removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only

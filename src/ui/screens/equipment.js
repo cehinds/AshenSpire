@@ -1064,6 +1064,14 @@ export function mountEquipment(host, {
     const inventoryItemClass = layout.cardClasses.inventoryItem;
     const faceActions = new Map();
     const draggableRows = new Map();
+    // In combat the inventory stays readable, but every equipment action is
+    // sealed. Keep that refusal on the action itself so opening an equipped
+    // item explains why it cannot move instead of trying to bind a live act.
+    const sealChip = (element, reason) => {
+      element.classList.add('locked');
+      refuses(element, () => reason);
+      return element;
+    };
     const attachInventoryDrag = (element, row) => {
       let pointerDrag = null;
       let suppressClick = false;
@@ -1196,7 +1204,7 @@ export function mountEquipment(host, {
           actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
           actionButton.addEventListener('click', (event) => event.stopPropagation());
         }
-        if (!seal.ok) sealChip(actionButton);
+        if (!seal.ok) sealChip(actionButton, seal.reason);
         else if (!transition.ok) {
           actionButton.classList.add('locked');
           refuses(actionButton, () => transition.reason);
