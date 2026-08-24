@@ -75,7 +75,9 @@ import {
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
 import { hudQuickSettingsModel } from '../src/ui/models/HudQuickSettingsModel.js';
-import { hudQuickSettingsHtml } from '../src/ui/components/hudQuickSettings.js';
+import {
+  hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
+} from '../src/ui/components/hudQuickSettings.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
@@ -5186,6 +5188,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
+
+    const restoredSettings = { muteMusic: true };
+    const binding = { settings: {} };
+    eq(updateHudQuickSettingsBinding(binding, restoredSettings), restoredSettings,
+      'a restored profile replaces the settings object owned by the mounted HUD');
+    let refreshEvent = null;
+    eq(refreshHudQuickSettings({ querySelector: () => ({ dispatchEvent: (event) => { refreshEvent = event; } }) }, restoredSettings), true,
+      'the title can refresh its mounted HUD without remounting the Profile dialog');
+    eq(refreshEvent?.detail?.settings, restoredSettings,
+      'the refresh carries the restored profile settings object');
 
     const quick = display.find((r) => r.key === 'quickNav');
     eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');

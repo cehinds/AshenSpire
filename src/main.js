@@ -30,6 +30,7 @@ import {
   applyGraceRefill,
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
+import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
@@ -658,6 +659,7 @@ function applyRestoredSettings(restored) {
   lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+  refreshHudQuickSettings(app, settings);
 }
 
 

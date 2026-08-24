@@ -6624,6 +6624,7 @@ const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRel
 
 
 const { mountTitle } = require("src/ui/screens/title.js");
+const { refreshHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { mountProfileNotice } = require("src/ui/screens/profileNotice.js");
 const { openProfileArchive } = require("src/ui/screens/profileArchive.js");
 const { mountCustomize } = require("src/ui/screens/customize.js");
@@ -7252,6 +7253,7 @@ function applyRestoredSettings(restored) {
   lastMusicFolder = settings.musicFolder || '';
   if (settings.bindings) setBindings(settings.bindings);
   if (settings.keyBindings) setKeyBindings(settings.keyBindings);
+  refreshHudQuickSettings(app, settings);
 }
 
 
@@ -39243,7 +39245,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '0da9d40945';
+const SOURCE = '1568a92a8c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39277,7 +39279,7 @@ const SOURCE = '0da9d40945';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1268';
+const ORDINAL = '1269';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39393,6 +39395,19 @@ const { uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { fullscreenCapability, isFullscreen, toggleFullscreen } = require("src/ui/screens/settings.js");
 
 let releaseActiveStack = null;
+const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
+
+function updateHudQuickSettingsBinding(binding, nextSettings) {
+  binding.settings = nextSettings && typeof nextSettings === 'object' ? nextSettings : {};
+  return binding.settings;
+}
+
+function refreshHudQuickSettings(root, settings) {
+  const stack = root?.querySelector?.('[data-hud-quick-settings]');
+  if (!stack || typeof stack.dispatchEvent !== 'function') return false;
+  stack.dispatchEvent(new CustomEvent(HUD_QUICK_REFRESH, { detail: { settings } }));
+  return true;
+}
 
 function controlHtml(model, action, label, glyph, stateLabel, active) {
   return `<button type="button" class="hud-quick-setting${active ? ' on' : ''}" data-hud-quick-action="${action}"
@@ -39471,9 +39486,14 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
   }
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
+  const binding = { settings };
   const fullscreenSyncTimers = new Set();
   let noticeTimer = null;
   const onFullscreenChange = () => syncFullscreen(stack);
+  const onSettingsRefresh = (event) => {
+    updateHudQuickSettingsBinding(binding, event.detail?.settings);
+    syncMusic(stack, binding.settings);
+  };
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
     fullscreenButton.setAttribute('aria-disabled', 'true');
@@ -39500,16 +39520,17 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     }
   };
   const onMusicClick = () => {
-    settings.muteMusic = settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
-    syncMusic(stack, settings);
+    binding.settings.muteMusic = binding.settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: binding.settings.muteMusic });
+    syncMusic(stack, binding.settings);
   };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
   musicButton?.addEventListener('click', onMusicClick);
+  stack.addEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
   document.addEventListener('fullscreenchange', onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
-  syncMusic(stack, settings);
+  syncMusic(stack, binding.settings);
   // Fullscreen exit notifications are inconsistent in embedded and mobile
   // browser shells. A cheap state read keeps the control truthful even when
   // the platform drops that event; this interval owns no simulation state.
@@ -39526,6 +39547,7 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);
     musicButton?.removeEventListener('click', onMusicClick);
+    stack.removeEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
     if (releaseActiveStack === release) releaseActiveStack = null;
@@ -39536,7 +39558,7 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
 }
 
 
-Object.assign(module.exports, { hudQuickSettingsHtml, wireHudQuickSettings });
+Object.assign(module.exports, { updateHudQuickSettingsBinding, refreshHudQuickSettings, hudQuickSettingsHtml, wireHudQuickSettings });
 
 },
 "src/ui/models/ComponentModel.js": function (module, exports, require) {
@@ -41493,8 +41515,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Fullscreen, music, Settings, and Profile now have one clear home each",
-    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.",
-    "build": "0.4.0.1268",
+    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
+    "build": "0.4.0.1269",
     "pullRequest": 344,
     "url": "https://github.com/cehinds/AshenSpire/pull/344"
   },
@@ -46810,6 +46832,7 @@ function mountEquipment(host, {
     box.dataset.component = 'armoury.statsSummary';
     const attributes = projection.attributes.map((row) => `${row.shortLabel || row.label} ${row.value}`).join(' · ');
     const relicNames = (run.relics || []).map((id) => registries.relics.get(id)?.name || id);
+    const runStats = run.stats || {};
     box.innerHTML = `<section class="armoury-stats-identity"><strong>${esc(cls?.name || run.class)}</strong><span>Level ${esc(String(run.level || 1))}</span></section>`
       + `<section class="armoury-stats-group"><b>Combat</b><span>Strike ${esc(String(valueFor('attack')))}</span>`
       + `<span>${esc(labelFor('technique'))} ${esc(String(valueFor('technique')))}</span>`
@@ -46817,6 +46840,9 @@ function mountEquipment(host, {
       + `<section class="armoury-stats-group"><b>Attributes</b><span>${esc(attributes || 'No attributes')}</span></section>`
       + `<section class="armoury-stats-group"><b>Resources</b><span>Actions ${esc(String(derived('energy')))}</span>`
       + `<span>Hand ${esc(String(derived('draw')))}</span><span>Resistance —</span></section>`
+      + `<section class="armoury-stats-group"><b>Run</b><span>Fights won ${esc(String(runStats.fightsWon || 0))}</span>`
+      + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
+      + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
       + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
     return box;
   }

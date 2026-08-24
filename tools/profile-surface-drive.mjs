@@ -152,21 +152,26 @@ check('a failed restore says nothing was lost', /nothing was lost/i.test(after.m
 // sharpest note I have been handed. The two profiles now carry values I would
 // notice missing, and the assertion is about the DRAWER, not the message.
 await ev(`(()=>{ localStorage.clear();
-  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:777}}));
+  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{muteMusic:false},results:[],progress:{runs:777}}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
 await ev(`(()=>{ // a readable archive holding a DIFFERENT number
   localStorage.setItem('sote_run_archived', JSON.stringify({v:1,entries:[{id:'meta-good',kind:'meta',slot:null,
     reason:'set aside by hand for this drive',at:new Date().toISOString(),count:1,
-    save: JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:111}})}]}));
+    save: JSON.stringify({schemaVersion:1,settings:{muteMusic:true},results:[],progress:{runs:111}})}]}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
+const musicBeforeRestore = await ev(`document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed')`);
 await ev(`[...document.querySelectorAll('button')].find(b=>/^profile$/i.test(b.textContent.trim())).click()`); await sleep(600);
 await ev(`document.querySelector('.prof-restore').click()`); await sleep(200);
 await ev(`document.querySelector('.prof-go').click()`); await sleep(500);
 
 const live = await ev(`JSON.parse(localStorage.getItem('sote_meta_v1')).progress.runs`);
 check('restoring a readable archive really restores it (111 in the drawer → live)', live === 111, 'live runs = ' + live);
+const musicAfterRestore = await ev(`document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed')`);
+check('restoring a profile immediately rebinds the mounted title Music control',
+  musicBeforeRestore === 'true' && musicAfterRestore === 'false',
+  `before=${musicBeforeRestore} after=${musicAfterRestore}`);
 const drawer = await ev(`JSON.parse(localStorage.getItem('sote_run_archived')).entries.map(e=>{try{return JSON.parse(e.save).progress.runs}catch(x){return 'unreadable'}})`);
 check('THE OUTGOING PROFILE SURVIVES: 777 is in the drawer after the restore',
   Array.isArray(drawer) && drawer.includes(777), 'drawer holds: ' + JSON.stringify(drawer));
@@ -182,6 +187,16 @@ const vocab = await ev(`(()=>{
 })()`);
 check('D14 the calm screen says "set aside" and not "archived"',
   vocab.calmSetAside && !vocab.calmArchived, JSON.stringify(vocab));
+
+await ev(`document.querySelector('[data-profile-close]').click()`); await sleep(150);
+await ev(`document.querySelector('[data-hud-quick-action="music"]').click()`); await sleep(150);
+const firstMusicClick = await ev(`(()=>({
+  pressed:document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed'),
+  muted:JSON.parse(localStorage.getItem('sote_meta_v1')).settings.muteMusic
+}))()`);
+check('the first Music click after restore toggles the restored profile, not the stale one',
+  firstMusicClick.pressed === 'true' && firstMusicClick.muted === false,
+  JSON.stringify(firstMusicClick));
 
 
 // --- D18: the second door (Sunna). Not now → Continue → in-run menu →

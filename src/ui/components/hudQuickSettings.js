@@ -4,6 +4,19 @@ import { uiComponentAttrs } from './uiComponents.js';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
 
 let releaseActiveStack = null;
+const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
+
+export function updateHudQuickSettingsBinding(binding, nextSettings) {
+  binding.settings = nextSettings && typeof nextSettings === 'object' ? nextSettings : {};
+  return binding.settings;
+}
+
+export function refreshHudQuickSettings(root, settings) {
+  const stack = root?.querySelector?.('[data-hud-quick-settings]');
+  if (!stack || typeof stack.dispatchEvent !== 'function') return false;
+  stack.dispatchEvent(new CustomEvent(HUD_QUICK_REFRESH, { detail: { settings } }));
+  return true;
+}
 
 function controlHtml(model, action, label, glyph, stateLabel, active) {
   return `<button type="button" class="hud-quick-setting${active ? ' on' : ''}" data-hud-quick-action="${action}"
@@ -82,9 +95,14 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   }
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
+  const binding = { settings };
   const fullscreenSyncTimers = new Set();
   let noticeTimer = null;
   const onFullscreenChange = () => syncFullscreen(stack);
+  const onSettingsRefresh = (event) => {
+    updateHudQuickSettingsBinding(binding, event.detail?.settings);
+    syncMusic(stack, binding.settings);
+  };
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
     fullscreenButton.setAttribute('aria-disabled', 'true');
@@ -111,16 +129,17 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     }
   };
   const onMusicClick = () => {
-    settings.muteMusic = settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
-    syncMusic(stack, settings);
+    binding.settings.muteMusic = binding.settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: binding.settings.muteMusic });
+    syncMusic(stack, binding.settings);
   };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
   musicButton?.addEventListener('click', onMusicClick);
+  stack.addEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
   document.addEventListener('fullscreenchange', onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
-  syncMusic(stack, settings);
+  syncMusic(stack, binding.settings);
   // Fullscreen exit notifications are inconsistent in embedded and mobile
   // browser shells. A cheap state read keeps the control truthful even when
   // the platform drops that event; this interval owns no simulation state.
@@ -137,6 +156,7 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);
     musicButton?.removeEventListener('click', onMusicClick);
+    stack.removeEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
     if (releaseActiveStack === release) releaseActiveStack = null;

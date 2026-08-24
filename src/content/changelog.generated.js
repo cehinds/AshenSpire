@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Fullscreen, music, Settings, and Profile now have one clear home each",
-    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them. The Profile drawer also traps keyboard focus and states its real save-retention limits.",
-    "build": "0.4.0.1268",
+    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, and a browser refusal is explained beside the control instead of disappearing into Settings. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
+    "build": "0.4.0.1269",
     "pullRequest": 344,
     "url": "https://github.com/cehinds/AshenSpire/pull/344"
   },
