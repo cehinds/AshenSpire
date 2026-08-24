@@ -1400,57 +1400,89 @@ button.rs-reset {
   box-sizing: border-box;
   min-height: var(--tap-floor);
   min-width: var(--tap-floor);
-  width: auto;
-  padding: 0 calc(4px / var(--ui-zoom, 1));
+  width: var(--tap-floor);
+  height: var(--tap-floor);
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: calc(4px / var(--ui-zoom, 1));
+  justify-content: center;
   border: 0;
-  border-radius: calc(4px / var(--ui-zoom, 1));
+  border-radius: calc(7px / var(--ui-zoom, 1));
   background: transparent;
   color: var(--parchment);
   box-shadow: none;
   font-family: var(--font-ui);
-  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
 }
-.hud-quick-setting-glyph { display: none; font-size: calc(var(--hud-quick-glyph-size, 14px) / var(--ui-zoom, 1)); line-height: 1; }
+.hud-quick-setting-face {
+  position: relative;
+  box-sizing: border-box;
+  width: min(var(--tap-floor), calc(var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)));
+  height: min(var(--tap-floor), calc(var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)));
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-soft);
+  border-radius: calc(7px / var(--ui-zoom, 1));
+  background: color-mix(in srgb, var(--bg-raise) 88%, transparent);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.hud-quick-setting-glyph {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  width: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  height: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  font-size: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  line-height: 1;
+  color: var(--parchment);
+}
+.hud-quick-setting-glyph svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hud-fullscreen-exit,
+.hud-music-off { display: none; }
+.hud-quick-setting[data-hud-quick-action='fullscreen'].on .hud-fullscreen-enter,
+.hud-quick-setting[data-hud-quick-action='music'].on .hud-music-off { display: none; }
+.hud-quick-setting[data-hud-quick-action='fullscreen'].on .hud-fullscreen-exit,
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-music-off { display: grid; }
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-music-off { color: var(--danger, #c95b55); }
+.hud-quick-setting.on .hud-quick-setting-glyph { color: var(--gold); }
+.hud-quick-setting.on .hud-quick-setting-face {
+  border-color: color-mix(in srgb, var(--gold) 66%, var(--line-soft));
+  background: color-mix(in srgb, var(--gold) var(--hud-quick-active-tint, 14%), var(--bg-raise));
+}
 .hud-quick-setting:hover,
 .hud-quick-setting:focus-visible { color: var(--gold); }
-.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: -1px; }
+.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: 0; }
+.hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-setting-state {
-  min-width: 0;
+  position: absolute;
+  right: calc(3px / var(--ui-zoom, 1));
+  bottom: calc(3px / var(--ui-zoom, 1));
+  box-sizing: border-box;
+  width: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
+  min-width: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
+  height: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
   padding: 0;
-  border: 0;
-  border-radius: 0;
-  color: var(--muted);
-  text-align: center;
-  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  overflow: hidden;
+  color: var(--parchment);
+  background: transparent;
+  font-size: 0;
 }
 .hud-quick-setting.on .hud-quick-setting-state {
   color: var(--gold);
-  background: transparent;
+  background: var(--gold);
 }
-.hud-quick-settings[data-card-background='true'] .hud-quick-setting {
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-quick-setting-state {
+  color: var(--danger, #c95b55);
 }
+.hud-quick-settings[data-card-background='false'] .hud-quick-setting-face { border-color: transparent; background: transparent; box-shadow: none; }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
-/* Wide screens with a precise pointer do not need two 44px-tall invisible
-   rows around 10px labels. The visible rail contracts to its data-owned row
-   height; touch and coarse-pointer surfaces retain the full tap floor below. */
-@media (min-width: 421px) and (pointer: fine) {
-  .hud-quick-setting {
-    min-width: 0;
-    min-height: calc(var(--hud-quick-wide-control-height, 24px) / var(--ui-zoom, 1));
-  }
-}
 .hud-quick-notice {
   position: absolute;
   top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));
@@ -1469,31 +1501,8 @@ button.rs-reset {
   text-transform: none;
 }
 .hud-quick-notice[hidden] { display: none; }
+.hud-quick-settings,
 .hud-quick-settings.compact { width: var(--tap-floor); }
-.hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.hud-quick-settings.compact .hud-quick-setting { justify-content: center; }
-@media (max-width: 420px) {
-  .hud-quick-settings { width: var(--tap-floor); }
-  .hud-quick-setting {
-    width: var(--tap-floor); height: var(--tap-floor); min-height: var(--tap-floor);
-    padding: 0; justify-content: center;
-  }
-  .hud-quick-setting-glyph { display: block; }
-  .hud-quick-setting-label {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
-  }
-  .hud-quick-setting-state {
-    position: absolute;
-    right: calc(4px / var(--ui-zoom, 1));
-    bottom: calc(4px / var(--ui-zoom, 1));
-    width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    min-width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    height: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    padding: 0; border-radius: 50%; overflow: hidden; color: transparent; font-size: 0;
-    background: var(--muted); opacity: 0.72;
-  }
-  .hud-quick-setting.on .hud-quick-setting-state { background: var(--gold); opacity: 1; }
-}
 .title-stack { animation: screenIn 700ms ease-out; }
 .title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
@@ -4984,7 +4993,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
-  --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(var(--hud-panel-pad-px) / var(--ui-zoom, 1));
   --hud-control-visual: calc(32px / var(--ui-zoom, 1));
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
@@ -6192,14 +6201,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
   :root[data-layout='narrow'] .topbar.combat-hud {
-    flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
+    flex-wrap: nowrap;
+    gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
+    padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1)); }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
+    --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
+    --hud-panel-pad: calc(var(--hud-mobile-panel-pad-px) / var(--ui-zoom, 1));
+  }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
     gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
   }
@@ -6995,6 +7009,11 @@ projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
 projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
 projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
 projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('panelPadPx', 0, 12, '--hud-panel-pad-px', 'px');
+projectHudToken('mobilePanelPadPx', 0, 12, '--hud-mobile-panel-pad-px', 'px');
+projectHudToken('mobileControlGapPx', 0, 12, '--hud-mobile-control-gap-px', 'px');
+projectHudToken('mobileOuterPadPx', 0, 12, '--hud-mobile-outer-pad-px', 'px');
+projectHudToken('mobileRowGapPx', 0, 12, '--hud-mobile-row-gap-px', 'px');
 projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
 projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
 if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
@@ -7005,10 +7024,10 @@ const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
 for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
-  ['wideControlHeightPx', '--hud-quick-wide-control-height'],
-  ['labelFontPx', '--hud-quick-label-font'],
+  ['cardSizePx', '--hud-quick-card-size'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],
+  ['activeTintPct', '--hud-quick-active-tint'],
 ]) {
   document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
 }
@@ -9516,6 +9535,11 @@ const balance = {
       primaryRowGapPx: 8,
       controlGapPx: 2,
       resourceRowGapPx: 2,
+      panelPadPx: 4,
+      mobilePanelPadPx: 0,
+      mobileControlGapPx: 1,
+      mobileOuterPadPx: 4,
+      mobileRowGapPx: 3,
       // Header columns negotiate inside one grid: the center Cinders track and
       // right metadata trail each cap at 30% of the viewport. Act/Floor show
       // their current values by default; totals remain an opt-in.
@@ -9530,14 +9554,14 @@ const balance = {
       places: ['title', 'map', 'combat'],
       edgeGapPx: 4,
       stackGapPx: 0,
-      // Fine-pointer wide screens can use compact rows; touch/coarse-pointer
-      // surfaces keep the authored tap floor regardless of viewport width.
-      wideControlHeightPx: 24,
-      labelFontPx: 10,
-      glyphSizePx: 14,
-      stateDotPx: 5,
-      showCardBackground: false,
-      showLabels: true,
+      // One visual card on every device. The 40px face sits inside the shared
+      // tap floor, while its 28px icon occupies 70% of the authored face.
+      cardSizePx: 40,
+      glyphSizePx: 28,
+      stateDotPx: 6,
+      activeTintPct: 14,
+      showCardBackground: true,
+      showLabels: false,
     },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow
@@ -20317,7 +20341,7 @@ function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
+      err('balance.ui.hudPresentation', 'must be an object with shared HUD spacing, sizing, metadata, and mobile density tokens');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
@@ -20327,6 +20351,11 @@ function validateContent(bundle) {
         ['primaryRowGapPx', 0, 24],
         ['controlGapPx', 0, 12],
         ['resourceRowGapPx', 0, 12],
+        ['panelPadPx', 0, 12],
+        ['mobilePanelPadPx', 0, 12],
+        ['mobileControlGapPx', 0, 12],
+        ['mobileOuterPadPx', 0, 12],
+        ['mobileRowGapPx', 0, 12],
         ['cindersMaxWidthPct', 20, 40],
         ['metadataMaxWidthPct', 20, 40],
       ]) {
@@ -20362,10 +20391,10 @@ function validateContent(bundle) {
         }
       }
       for (const [key, min, max] of [
-        ['wideControlHeightPx', 20, 36],
-        ['labelFontPx', 8, 18],
-        ['glyphSizePx', 10, 28],
+        ['cardSizePx', 32, 44],
+        ['glyphSizePx', 16, 32],
         ['stateDotPx', 3, 12],
+        ['activeTintPct', 0, 30],
       ]) {
         const value = quickSettings[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
@@ -39580,7 +39609,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '33c9be93e1';
+const SOURCE = 'a2f11b442c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39614,7 +39643,7 @@ const SOURCE = '33c9be93e1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1311';
+const ORDINAL = '1314';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39745,12 +39774,23 @@ function refreshHudQuickSettings(root, settings) {
   return true;
 }
 
-function controlHtml(model, action, label, glyph, stateLabel, active) {
+const fullscreenGlyphs = `<span class="hud-quick-setting-glyph hud-fullscreen-enter" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false"><path d="M10 1H1v9M14 1h9v9M23 14v9h-9M10 23H1v-9"/></svg>
+    </span><span class="hud-quick-setting-glyph hud-fullscreen-exit" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false"><path d="M1 10h9V1M23 10h-9V1M14 23v-9h9M10 23v-9H1"/></svg>
+    </span>`;
+
+const musicGlyphs = `<span class="hud-quick-setting-glyph hud-music-on" aria-hidden="true">♫</span>
+    <span class="hud-quick-setting-glyph hud-music-off" aria-hidden="true">♫&#x0338;</span>`;
+
+function controlHtml(model, action, label, glyphs, stateLabel, active) {
   return `<button type="button" class="hud-quick-setting${active ? ' on' : ''}" data-hud-quick-action="${action}"
     ${uiComponentAttrs(model.component, model.variant)} aria-label="${model.accessibility.label}" aria-pressed="${active}">
-    <span class="hud-quick-setting-glyph" aria-hidden="true">${glyph}</span>
-    <span class="hud-quick-setting-label">${label}</span>
-    <span class="hud-quick-setting-state" data-hud-quick-state>${stateLabel}</span>
+    <span class="hud-quick-setting-face">
+      ${glyphs}
+      <span class="hud-quick-setting-label">${label}</span>
+      <span class="hud-quick-setting-state" data-hud-quick-state>${stateLabel}</span>
+    </span>
   </button>`;
 }
 
@@ -39759,13 +39799,12 @@ function hudQuickSettingsHtml(model) {
   const fullscreen = childModel(model, UI.fullscreenControl);
   const music = childModel(model, UI.musicControl);
   const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px;`
-    + `--hud-quick-wide-control-height:${model.properties.wideControlHeightPx}px;`
-    + `--hud-quick-label-font:${model.properties.labelFontPx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
-    + `--hud-quick-state-dot:${model.properties.stateDotPx}px`;
+    + `--hud-quick-card-size:${model.properties.cardSizePx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
+    + `--hud-quick-state-dot:${model.properties.stateDotPx}px;--hud-quick-active-tint:${model.properties.activeTintPct}%`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
     data-place="${model.properties.place}" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
-    ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
-    ${controlHtml(music, 'music', 'Music', '♪', music.properties.stateLabel, music.properties.active)}
+    ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', fullscreenGlyphs, 'Off', false)}
+    ${controlHtml(music, 'music', 'Music', musicGlyphs, music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
 }
@@ -43613,10 +43652,10 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
       place,
       edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 4,
       stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 0,
-      wideControlHeightPx: Number.isFinite(presentation.wideControlHeightPx) ? presentation.wideControlHeightPx : 24,
-      labelFontPx: Number.isFinite(presentation.labelFontPx) ? presentation.labelFontPx : 10,
-      glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 14,
-      stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 5,
+      cardSizePx: Number.isFinite(presentation.cardSizePx) ? presentation.cardSizePx : 40,
+      glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 28,
+      stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 6,
+      activeTintPct: Number.isFinite(presentation.activeTintPct) ? presentation.activeTintPct : 14,
       showCardBackground: presentation.showCardBackground === true,
       showLabels: presentation.showLabels !== false,
     },

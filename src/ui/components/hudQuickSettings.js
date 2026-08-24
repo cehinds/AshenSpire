@@ -19,12 +19,23 @@ export function refreshHudQuickSettings(root, settings) {
   return true;
 }
 
-function controlHtml(model, action, label, glyph, stateLabel, active) {
+const fullscreenGlyphs = `<span class="hud-quick-setting-glyph hud-fullscreen-enter" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false"><path d="M10 1H1v9M14 1h9v9M23 14v9h-9M10 23H1v-9"/></svg>
+    </span><span class="hud-quick-setting-glyph hud-fullscreen-exit" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false"><path d="M1 10h9V1M23 10h-9V1M14 23v-9h9M10 23v-9H1"/></svg>
+    </span>`;
+
+const musicGlyphs = `<span class="hud-quick-setting-glyph hud-music-on" aria-hidden="true">♫</span>
+    <span class="hud-quick-setting-glyph hud-music-off" aria-hidden="true">♫&#x0338;</span>`;
+
+function controlHtml(model, action, label, glyphs, stateLabel, active) {
   return `<button type="button" class="hud-quick-setting${active ? ' on' : ''}" data-hud-quick-action="${action}"
     ${uiComponentAttrs(model.component, model.variant)} aria-label="${model.accessibility.label}" aria-pressed="${active}">
-    <span class="hud-quick-setting-glyph" aria-hidden="true">${glyph}</span>
-    <span class="hud-quick-setting-label">${label}</span>
-    <span class="hud-quick-setting-state" data-hud-quick-state>${stateLabel}</span>
+    <span class="hud-quick-setting-face">
+      ${glyphs}
+      <span class="hud-quick-setting-label">${label}</span>
+      <span class="hud-quick-setting-state" data-hud-quick-state>${stateLabel}</span>
+    </span>
   </button>`;
 }
 
@@ -33,13 +44,12 @@ export function hudQuickSettingsHtml(model) {
   const fullscreen = childModel(model, UI.fullscreenControl);
   const music = childModel(model, UI.musicControl);
   const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px;`
-    + `--hud-quick-wide-control-height:${model.properties.wideControlHeightPx}px;`
-    + `--hud-quick-label-font:${model.properties.labelFontPx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
-    + `--hud-quick-state-dot:${model.properties.stateDotPx}px`;
+    + `--hud-quick-card-size:${model.properties.cardSizePx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
+    + `--hud-quick-state-dot:${model.properties.stateDotPx}px;--hud-quick-active-tint:${model.properties.activeTintPct}%`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
     data-place="${model.properties.place}" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
-    ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
-    ${controlHtml(music, 'music', 'Music', '♪', music.properties.stateLabel, music.properties.active)}
+    ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', fullscreenGlyphs, 'Off', false)}
+    ${controlHtml(music, 'music', 'Music', musicGlyphs, music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
 }

@@ -5188,21 +5188,26 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'one data row places the shared controls on all three requested surfaces');
     eq(`${presentation.edgeGapPx}/${presentation.stackGapPx}`, '4/0',
       'the shared utility rail is right-edge close and has no authored inter-control gap');
-    eq(presentation.wideControlHeightPx, 24,
-      'fine-pointer wide screens use a compact data-owned row height');
-    eq(`${presentation.labelFontPx}/${presentation.glyphSizePx}/${presentation.stateDotPx}`, '10/14/5',
-      'the visible label, glyph, and state dot sizes are data-owned');
-    eq(presentation.showCardBackground, false,
-      'the quick utilities default to transparent, borderless touch surfaces');
+    eq(`${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`, '40/28/6/14',
+      'the shared face, 70%-scale glyph, state dot, and active tint are data-owned');
+    eq(presentation.showCardBackground, true,
+      'the quick utilities default to one consistent compact card on every device');
+    eq(presentation.showLabels, false,
+      'visible words yield to the larger universal icons while accessible names remain');
     const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
     eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="false"/.test(html), 'the transparent presentation reaches the shared renderer');
-    assert(/--hud-quick-wide-control-height:24px/.test(html)
-      && /--hud-quick-label-font:10px/.test(html) && /--hud-quick-glyph-size:14px/.test(html),
+    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
+    assert(/--hud-quick-card-size:40px/.test(html)
+      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
+      && /--hud-quick-active-tint:14%/.test(html),
       'the data-owned compact visual sizes reach CSS without a second renderer');
+    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
+      'Fullscreen renders the conventional enter and exit action icons');
+    assert(/♫/.test(html) && /&#x0338;/.test(html),
+      'Music renders the authored on and slashed-off symbols');
 
     const audibleMusic = musicQuickSettingsPlan({});
     eq(audibleMusic.active, true, 'Music is enabled by default');
