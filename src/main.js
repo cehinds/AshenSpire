@@ -707,7 +707,11 @@ function showLobby() {
       // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
-      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
+      mountCoop(app, {
+        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        onSettingsChange: persistSettingsChange,
+        onLeave: () => showTitle(),
+      });
     },
   });
 }
@@ -1738,7 +1742,11 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
+  mountCoop(app, {
+    registries, conn: stub, myId, meta: saves.loadMeta(),
+    onSettingsChange: persistSettingsChange,
+    onLeave() {},
+  });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {

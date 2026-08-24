@@ -7301,7 +7301,11 @@ function showLobby() {
       // preference is the VIEWER's (ui/components/mapboard.js): a co-op client
       // is a viewer, and it was opening at a literal while the same player's
       // solo map honoured their setting.
-      mountCoop(app, { registries, conn, myId, myIds, meta: saves.loadMeta(), onLeave: () => showTitle() });
+      mountCoop(app, {
+        registries, conn, myId, myIds, meta: saves.loadMeta(),
+        onSettingsChange: persistSettingsChange,
+        onLeave: () => showTitle(),
+      });
     },
   });
 }
@@ -8332,7 +8336,11 @@ function poseFxShowcase() {
 // needed — so the co-op board/map can be photographed like the solo shots.
 function coopStubMount(snapshot, myId) {
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send() {}, close() {}, get open() { return false; } };
-  mountCoop(app, { registries, conn: stub, myId, meta: saves.loadMeta(), onLeave() {} });
+  mountCoop(app, {
+    registries, conn: stub, myId, meta: saves.loadMeta(),
+    onSettingsChange: persistSettingsChange,
+    onLeave() {},
+  });
   if (stub._h && stub._h.onMessage) stub._h.onMessage({ t: 'state', snapshot });
 }
 function coopCombatShot() {
@@ -39245,7 +39253,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '5428fc0462';
+const SOURCE = 'a90bee9fd8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39279,7 +39287,7 @@ const SOURCE = '5428fc0462';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1270';
+const ORDINAL = '1271';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39393,6 +39401,7 @@ const { childModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { fullscreenCapability, isFullscreen, toggleFullscreen } = require("src/ui/screens/settings.js");
+const { musicQuickSettingsPlan } = require("src/ui/models/HudQuickSettingsModel.js");
 
 let releaseActiveStack = null;
 const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
@@ -39426,7 +39435,7 @@ function hudQuickSettingsHtml(model) {
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
     data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
-    ${controlHtml(music, 'music', 'Music', '♪', music.properties.active ? 'On' : 'Off', music.properties.active)}
+    ${controlHtml(music, 'music', 'Music', '♪', music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
 }
@@ -39476,13 +39485,13 @@ function syncFullscreen(stack) {
 function syncMusic(stack, settings) {
   const button = stack.querySelector('[data-hud-quick-action="music"]');
   if (!button) return;
-  const active = settings.muteMusic !== true;
-  button.classList.toggle('on', active);
-  button.setAttribute('aria-pressed', String(active));
-  button.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
-  button.title = active ? 'Turn music off' : 'Turn music on';
+  const plan = musicQuickSettingsPlan(settings);
+  button.classList.toggle('on', plan.active);
+  button.setAttribute('aria-pressed', String(plan.active));
+  button.setAttribute('aria-label', plan.label);
+  button.title = plan.label;
   const state = button.querySelector('[data-hud-quick-state]');
-  if (state) state.textContent = active ? 'On' : 'Off';
+  if (state) state.textContent = plan.stateLabel;
 }
 
 function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {
@@ -39528,8 +39537,9 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     }
   };
   const onMusicClick = () => {
-    binding.settings.muteMusic = binding.settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: binding.settings.muteMusic });
+    const change = musicQuickSettingsPlan(binding.settings).change;
+    Object.assign(binding.settings, change);
+    if (onSettingsChange) onSettingsChange(change);
     syncMusic(stack, binding.settings);
   };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
@@ -41523,8 +41533,8 @@ const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-08-24",
     "group": "2026-08-24",
     "summary": "Fullscreen, music, Settings, and Profile now have one clear home each",
-    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens. Browser refusals are explained beside the control instead of disappearing into Settings, and iPhone users see the Add to Home Screen alternative without needing a hover tooltip. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
-    "build": "0.4.0.1270",
+    "detail": "Fullscreen and Music sit beneath the top-right HUD on the title, map, and combat screens, including LAN co-op. The Music control now reflects master Audio mute instead of claiming muted music is on, and turning it on releases both mute layers. Browser refusals are explained beside the control instead of disappearing into Settings, and iPhone users see the Add to Home Screen alternative without needing a hover tooltip. The in-run menu now contains only Settings and Controls, with Save Game and Save & Quit to Title in its footer; Profile lives on the title screen; Changelog lives under Advanced; and the old Deck and Stats shortcuts now open the Armoury that owns them without losing the active run’s combat totals. Restoring a profile also rebinds the title HUD immediately. The Profile drawer traps keyboard focus and states its real save-retention limits.",
+    "build": "0.4.0.1271",
     "pullRequest": 344,
     "url": "https://github.com/cehinds/AshenSpire/pull/344"
   },
@@ -43148,9 +43158,24 @@ Object.assign(module.exports, { HIDDEN, PLACED, KNOWN, RUNGS, rungHeight, MAP_MO
 const { componentModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 
+function musicQuickSettingsPlan(settings = {}) {
+  const audioMuted = settings.muteAudio === true;
+  const musicMuted = settings.muteMusic === true;
+  const active = !audioMuted && !musicMuted;
+  return Object.freeze({
+    active,
+    stateLabel: active ? 'On' : audioMuted ? 'Audio off' : 'Off',
+    label: active ? 'Turn music off' : audioMuted ? 'Turn audio and music on' : 'Turn music on',
+    change: Object.freeze(active
+      ? { muteMusic: true }
+      : { muteAudio: false, muteMusic: false }),
+  });
+}
+
 function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {}) {
   const places = Array.isArray(presentation.places) ? presentation.places : [];
   const enabled = places.includes(place);
+  const music = musicQuickSettingsPlan(settings);
   return componentModel(UI.hudQuickSettings, {
     variant: place,
     properties: {
@@ -43167,15 +43192,15 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
       }),
       componentModel(UI.musicControl, {
         variant: place,
-        properties: { active: settings.muteMusic !== true },
-        accessibility: { label: settings.muteMusic === true ? 'Turn music on' : 'Turn music off' },
+        properties: { active: music.active, stateLabel: music.stateLabel },
+        accessibility: { label: music.label },
       }),
     ],
   });
 }
 
 
-Object.assign(module.exports, { hudQuickSettingsModel });
+Object.assign(module.exports, { musicQuickSettingsPlan, hudQuickSettingsModel });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
@@ -58143,8 +58168,10 @@ const { mountHand } = require("src/ui/components/hand.js");
 const { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } = require("src/ui/input.js");
 const { decorateFriendlyTarget } = require("src/ui/components/friendlyTargets.js");
 const { friendlyTargetPlan } = require("src/model/friendlyTargets.js");
+const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
+const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 
-function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
+function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
   let snap = null;
@@ -58512,6 +58539,11 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     app.innerHTML = `
       <div class="combat coop">
         <header class="topbar combat-hud">
+          ${hudQuickSettingsHtml(hudQuickSettingsModel({
+            place: 'combat',
+            presentation: registries.balance.ui.hudQuickSettings,
+            settings: meta.settings || {},
+          }))}
           <div class="hud-top">
             <div class="resbars-host"></div>
             <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
@@ -58542,6 +58574,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
         </div>
         <div class="fx-layer"></div>
       </div>`;
+    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     // The active seat gets the same main-HUD plan as solo. Values come only
     // from the host snapshot; a missing current/max pair produces no bar.
@@ -58733,6 +58766,11 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
+          ${hudQuickSettingsHtml(hudQuickSettingsModel({
+            place: 'map',
+            presentation: registries.balance.ui.hudQuickSettings,
+            settings: meta.settings || {},
+          }))}
           <span class="mh-stat mh-prog">${snap.actNumber > 3 ? `Act ${snap.actNumber}` : `Act ${snap.actNumber} / 3`} · Floor ${snap.floor}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(snap.seedString)}</span>
           ${voteLine}
@@ -58740,6 +58778,7 @@ function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
       </div>`;
+    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     if (mapBoard) mapBoard.teardown();
     mapBoard = mountMapBoard(app.querySelector('.mapscreen'), {

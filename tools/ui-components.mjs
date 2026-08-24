@@ -70,6 +70,7 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
+    coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
     equipment: read('src/ui/screens/equipment.js'),
@@ -256,6 +257,13 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
   }
+  if (!/import \{ hudQuickSettingsHtml, wireHudQuickSettings \}/.test(r.coop)
+      || !/import \{ hudQuickSettingsModel \}/.test(r.coop)
+      || (r.coop.match(/hudQuickSettingsHtml\(hudQuickSettingsModel\(\{/g) || []).length !== 2
+      || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
+      || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
+    bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
+  }
   return bad;
 }
 
@@ -278,11 +286,12 @@ function selftest() {
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
+    ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 16/16 reusable component contracts hold');
+  else console.log('PASS clean source: 17/17 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -298,5 +307,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 16/16 reusable component contracts hold');
+  else console.log('ui-components: OK — 17/17 reusable component contracts hold');
 }

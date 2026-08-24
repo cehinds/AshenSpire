@@ -74,7 +74,7 @@ import {
   orderArmourySlots, trayPresentationState,
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
-import { hudQuickSettingsModel } from '../src/ui/models/HudQuickSettingsModel.js';
+import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
 import {
   hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
 } from '../src/ui/components/hudQuickSettings.js';
@@ -5188,6 +5188,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const html = hudQuickSettingsHtml(model);
     assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
     assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
+
+    const audibleMusic = musicQuickSettingsPlan({});
+    eq(audibleMusic.active, true, 'Music is active only while neither mute layer is set');
+    eq(audibleMusic.change.muteMusic, true, 'the active quick control mutes Music alone');
+    const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
+    eq(musicMuted.active, false, 'the quick control reports an explicit Music mute');
+    eq(musicMuted.change.muteMusic, false, 'the quick control can unmute Music');
+    const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
+    eq(audioMuted.active, false, 'master Audio mute cannot leave the Music control visually on');
+    eq(audioMuted.stateLabel, 'Audio off', 'master mute is named instead of masquerading as Music on');
+    eq(audioMuted.change.muteAudio, false, 'turning Music on also releases master Audio mute');
+    eq(audioMuted.change.muteMusic, false, 'turning Music on clears both mute layers');
 
     const restoredSettings = { muteMusic: true };
     const binding = { settings: {} };

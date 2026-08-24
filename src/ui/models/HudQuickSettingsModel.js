@@ -1,9 +1,24 @@
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
+export function musicQuickSettingsPlan(settings = {}) {
+  const audioMuted = settings.muteAudio === true;
+  const musicMuted = settings.muteMusic === true;
+  const active = !audioMuted && !musicMuted;
+  return Object.freeze({
+    active,
+    stateLabel: active ? 'On' : audioMuted ? 'Audio off' : 'Off',
+    label: active ? 'Turn music off' : audioMuted ? 'Turn audio and music on' : 'Turn music on',
+    change: Object.freeze(active
+      ? { muteMusic: true }
+      : { muteAudio: false, muteMusic: false }),
+  });
+}
+
 export function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {}) {
   const places = Array.isArray(presentation.places) ? presentation.places : [];
   const enabled = places.includes(place);
+  const music = musicQuickSettingsPlan(settings);
   return componentModel(UI.hudQuickSettings, {
     variant: place,
     properties: {
@@ -20,8 +35,8 @@ export function hudQuickSettingsModel({ place, presentation = {}, settings = {} 
       }),
       componentModel(UI.musicControl, {
         variant: place,
-        properties: { active: settings.muteMusic !== true },
-        accessibility: { label: settings.muteMusic === true ? 'Turn music on' : 'Turn music off' },
+        properties: { active: music.active, stateLabel: music.stateLabel },
+        accessibility: { label: music.label },
       }),
     ],
   });

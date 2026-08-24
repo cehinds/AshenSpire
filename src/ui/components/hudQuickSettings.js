@@ -2,6 +2,7 @@ import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { uiComponentAttrs } from './uiComponents.js';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
+import { musicQuickSettingsPlan } from '../models/HudQuickSettingsModel.js';
 
 let releaseActiveStack = null;
 const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
@@ -35,7 +36,7 @@ export function hudQuickSettingsHtml(model) {
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
     data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
-    ${controlHtml(music, 'music', 'Music', '♪', music.properties.active ? 'On' : 'Off', music.properties.active)}
+    ${controlHtml(music, 'music', 'Music', '♪', music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
   </aside>`;
 }
@@ -85,13 +86,13 @@ function syncFullscreen(stack) {
 function syncMusic(stack, settings) {
   const button = stack.querySelector('[data-hud-quick-action="music"]');
   if (!button) return;
-  const active = settings.muteMusic !== true;
-  button.classList.toggle('on', active);
-  button.setAttribute('aria-pressed', String(active));
-  button.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
-  button.title = active ? 'Turn music off' : 'Turn music on';
+  const plan = musicQuickSettingsPlan(settings);
+  button.classList.toggle('on', plan.active);
+  button.setAttribute('aria-pressed', String(plan.active));
+  button.setAttribute('aria-label', plan.label);
+  button.title = plan.label;
   const state = button.querySelector('[data-hud-quick-state]');
-  if (state) state.textContent = active ? 'On' : 'Off';
+  if (state) state.textContent = plan.stateLabel;
 }
 
 export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {
@@ -137,8 +138,9 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     }
   };
   const onMusicClick = () => {
-    binding.settings.muteMusic = binding.settings.muteMusic !== true;
-    if (onSettingsChange) onSettingsChange({ muteMusic: binding.settings.muteMusic });
+    const change = musicQuickSettingsPlan(binding.settings).change;
+    Object.assign(binding.settings, change);
+    if (onSettingsChange) onSettingsChange(change);
     syncMusic(stack, binding.settings);
   };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
