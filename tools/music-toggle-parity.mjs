@@ -75,6 +75,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /quarantine keeps the applied settings in session memory/,
       },
       {
+        name: 'quicknav-dead-launcher', file: 'src/ui/components/quicknav.js',
+        find: "const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');",
+        replace: '// planted: an open overlay launcher stays live after Quick Menu OFF',
+        expectRed: /Quick Menu OFF hides open overlay launchers/,
+      },
+      {
         name: 'overlay-fullscreen-refusal-silent', file: 'src/ui/components/overlay.js',
         find: "document.addEventListener('fullscreenerror', announceFullscreenError);",
         replace: "/* planted: fullscreen refusal is silent */",
@@ -105,7 +111,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('music-toggle-parity-selftest: OK — 15 checks passed');
+  if (code === 0) console.log('music-toggle-parity-selftest: OK — 16 checks passed');
   process.exit(code);
 }
 
@@ -196,6 +202,9 @@ check(audio.includes('        el.pause();'), 'disabling Music pauses external me
 check(main.includes('applyDisplaySettings(settings); // display + the complete resolved audio bag'), 'restore applies the complete settings bag');
 check(main.includes('if (!saves.profileStatus().quarantined) {') && main.includes('const settings = activeSettings;'),
   'quarantine keeps the applied settings in session memory');
+check(quick.includes("const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');")
+  && quick.includes("button.hidden = mode === 'off';"),
+  'Quick Menu OFF hides open overlay launchers');
 
 if (failures) {
   console.error(`music-toggle-parity: ${checks - failures} passed, ${failures} failed`);
