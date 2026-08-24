@@ -101,8 +101,8 @@ export function createSaveManager(storage) {
   }
 
   // THE DRAWER'S PROMISE (Saga's gate). The calm screen tells every player
-  // "They are never deleted to make room for anything else" and the crisis
-  // dialog says they can come back "any time". Both were false: this function
+  // "profiles are never deleted to make room" and the crisis dialog says a
+  // profile can come back "any time". The older blanket promise was false:
   // pruned by age and then by count, and the count prune was KIND-BLIND —
   // `splice(0, len - 12)` drops the oldest entries whether they are a corrupt
   // run or somebody's two thousand evenings. Twelve is not a freak number: a
@@ -324,7 +324,7 @@ export function createSaveManager(storage) {
   // What shipped did the opposite. `loadMeta()` SYNTHESIZES a profile in memory
   // for every caller (freshMeta) and writes nothing, so a player who cleared
   // storage, picked a class and pressed BEGIN THE CLIMB had `sote_run_v1` and no
-  // `sote_meta_v1` — a run with no player behind it — and Settings → Profile
+  // `sote_meta_v1` — a run with no player behind it — and Title → Profile
   // printed his own sentence back at him as the behaviour (Bjorn's M7 walk,
   // 2026-08-08). Two states for one concept: the profile that exists because
   // every read gets an object, and the profile that exists on disk.

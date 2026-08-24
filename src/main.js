@@ -31,6 +31,7 @@ import {
 } from './engine/encounters.js';
 import { mountTitle } from './ui/screens/title.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
+import { openProfileArchive } from './ui/screens/profileArchive.js';
 import { mountCustomize } from './ui/screens/customize.js';
 import { mountCustomRun } from './ui/screens/customRun.js';
 import { mountDraft } from './ui/screens/draft.js';
@@ -666,7 +667,7 @@ function applyRestoredSettings(restored) {
 // 2026-08-07; her tail now names the crisis screen's own route, so it is true
 // wherever it is shown rather than only where Profile happens to sit below.
 const QUARANTINE_NOTICE =
-  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Settings \u2192 Profile, whenever you want to.';
+  'This works right now, but it won\u2019t survive a restart \u2014 your profile is set aside and we\u2019re not writing over it. You can restore it or save a copy from Profile on the title screen, whenever you want to.';
 
 // ---- run state ----------------------------------------------------------------
 let run = null;
@@ -922,7 +923,9 @@ function showTitle() {
     },
     onHistory: showHistory,
     onCompendium: showCompendium,
+    onProfile: showProfile,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -937,32 +940,31 @@ function showTitle() {
   });
 }
 
+function showProfile() {
+  openProfileArchive({
+    saves,
+    onRestored: () => applyRestoredSettings(saves.loadMeta().settings || {}),
+  });
+}
+
+function persistSettingsChange(changed) {
+  const meta = saves.loadMeta();
+  meta.settings = {
+    ...((meta.settings && typeof meta.settings === 'object') ? meta.settings : {}),
+    ...changed,
+  };
+  const res = saves.saveMeta(meta);
+  applyDisplaySettings(meta.settings);
+  remountMapIfShowing(changed);
+  if (changed.bindings) setBindings(changed.bindings);
+  if (changed.keyBindings) setKeyBindings(changed.keyBindings);
+  if (res && res.ok === false) showSettingsNotice(QUARANTINE_NOTICE);
+}
+
 function showSettings() {
   openSettings({
     meta: saves.loadMeta(),
-    // The Profile section (#67) needs the manager itself: it lists, exports and
-    // restores archives. Without it the section does not render at all.
-    saves,
-    // …and a restore swaps the whole profile, so the screen must be re-dressed
-    // in the RESTORED settings (#68 D22) — otherwise the player who just lost a
-    // save keeps the old profile's contrast, motion and text size.
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      // saveMeta refuses while the profile is quarantined — correctly, it is
-      // protecting the original bytes. Nobody read that {ok:false}, so a player
-      // who pressed "Not now" and then turned the music down got a silent
-      // no-op: the change applies for this session and does not persist, and
-      // they were never told (Sunna's find, carried by Saga). Nothing is lost;
-      // saying so is the whole fix.
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    onChange: persistSettingsChange,
   });
 }
 
@@ -1032,9 +1034,9 @@ function quitGame() {
   }
 }
 
-// The in-run tabbed overlay (Deck / Relics / Stats / Settings), shared by the
-// map and combat screens via their onMenu callback.
-function showOverlay(initialTab = 'deck') {
+// The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
+// equipment, deck, relics, flasks, and run stats.
+function showOverlay(initialTab = 'settings') {
   if (!run) return;
   openOverlay({
     registries,
@@ -1048,20 +1050,7 @@ function showOverlay(initialTab = 'deck') {
     // turning those down mid-fight is the one who most needs them to still be
     // there tomorrow.
     saves,
-    onProfileRestored: (restored) => applyRestoredSettings(restored),
-    onSettingsChange: (changed) => {
-      const meta = saves.loadMeta();
-      Object.assign(meta.settings, changed);
-      const res = saves.saveMeta(meta);
-      applyDisplaySettings(meta.settings);
-      remountMapIfShowing(changed);
-      if (changed.bindings) setBindings(changed.bindings);
-      if (changed.keyBindings) setKeyBindings(changed.keyBindings);
-      // ONE sentence, both doors — and now literally one: QUARANTINE_NOTICE.
-      if (res && res.ok === false) {
-        showSettingsNotice(QUARANTINE_NOTICE);
-      }
-    },
+    onSettingsChange: persistSettingsChange,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1070,7 +1059,6 @@ function showOverlay(initialTab = 'deck') {
       persist(); // the run is resumable from its slot via Continue
       showTitle();
     },
-    onExit: quitGame, // "Quit Game" — leave the app entirely
   });
 }
 
@@ -1242,6 +1230,7 @@ function showMap() {
     meta: saves.loadMeta(),
     onPick: enterNode,
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
     onSave: () => {
@@ -1455,6 +1444,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     meta: saves.loadMeta(),
     onEnd: (result, endedCombat) => onCombatEnd(result, endedCombat, enc),
     onSettings: showSettings,
+    onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onSave: () => {
       persist();
@@ -2277,18 +2267,18 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
   showTitle();
 } else if (shotState === 'profile') {
-  // A REACH STATE for Settings → Profile (`profileRestore` in secondbeat.js —
+  // A REACH STATE for title-screen Profile (`profileRestore` in secondbeat.js —
   // the inline .prof-confirm box). The set-aside profile is real and set aside
   // BY THE REAL ACT that sets one aside: ensureProfile writes profile A
   // through the real writer, startNewProfile archives it through
   // replacePrimaryWith — the one path allowed to replace the primary — and
   // the drawer entry the screen lists is that archive read back through
   // saves.listArchives. The instrument still opens the section by the
-  // player's own door: the Profile tab in the Settings modal.
+  // player's own door: Profile on the title screen.
   saves.ensureProfile();
   saves.startNewProfile();
   showTitle();
-  showSettings();
+  showProfile();
 } else if (shotState === 'crisis') {
   // The worst morning (`freshProfile` in secondbeat.js — the .confirm-fresh
   // modal). The torn bytes were planted at the storage seam beside

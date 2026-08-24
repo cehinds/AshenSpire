@@ -1,0 +1,121 @@
+import { childModel } from '../models/ComponentModel.js';
+import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
+import { uiComponentAttrs } from './uiComponents.js';
+import { fullscreenCapability, isFullscreen, showSettingsNotice, toggleFullscreen } from '../screens/settings.js';
+
+let releaseActiveStack = null;
+
+function controlHtml(model, action, label, glyph, stateLabel, active) {
+  return `<button type="button" class="hud-quick-setting${active ? ' on' : ''}" data-hud-quick-action="${action}"
+    ${uiComponentAttrs(model.component, model.variant)} aria-label="${model.accessibility.label}" aria-pressed="${active}">
+    <span class="hud-quick-setting-glyph" aria-hidden="true">${glyph}</span>
+    <span class="hud-quick-setting-label">${label}</span>
+    <span class="hud-quick-setting-state" data-hud-quick-state>${stateLabel}</span>
+  </button>`;
+}
+
+export function hudQuickSettingsHtml(model) {
+  if (!model.properties.enabled) return '';
+  const fullscreen = childModel(model, UI.fullscreenControl);
+  const music = childModel(model, UI.musicControl);
+  const style = `--hud-quick-edge-gap:${model.properties.edgeGapPx}px;--hud-quick-stack-gap:${model.properties.stackGapPx}px`;
+  return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
+    data-place="${model.properties.place}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
+    ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', '⛶', 'Off', false)}
+    ${controlHtml(music, 'music', 'Music', '♪', music.properties.active ? 'On' : 'Off', music.properties.active)}
+  </aside>`;
+}
+
+function syncFullscreen(stack) {
+  const button = stack.querySelector('[data-hud-quick-action="fullscreen"]');
+  if (!button) return;
+  const capability = fullscreenCapability();
+  const active = isFullscreen();
+  button.classList.toggle('on', active);
+  button.setAttribute('aria-pressed', String(active));
+  button.setAttribute('aria-label', capability.supported
+    ? (active ? 'Exit fullscreen' : 'Enter fullscreen')
+    : 'Fullscreen unavailable in this browser');
+  button.disabled = !capability.supported;
+  button.setAttribute('aria-disabled', String(!capability.supported));
+  button.title = capability.supported
+    ? (active ? 'Exit fullscreen' : 'Enter fullscreen')
+    : 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.';
+  const state = button.querySelector('[data-hud-quick-state]');
+  if (state) state.textContent = capability.supported ? (active ? 'On' : 'Off') : 'N/A';
+}
+
+function syncMusic(stack, settings) {
+  const button = stack.querySelector('[data-hud-quick-action="music"]');
+  if (!button) return;
+  const active = settings.muteMusic !== true;
+  button.classList.toggle('on', active);
+  button.setAttribute('aria-pressed', String(active));
+  button.setAttribute('aria-label', active ? 'Turn music off' : 'Turn music on');
+  button.title = active ? 'Turn music off' : 'Turn music on';
+  const state = button.querySelector('[data-hud-quick-state]');
+  if (state) state.textContent = active ? 'On' : 'Off';
+}
+
+export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } = {}) {
+  if (releaseActiveStack) releaseActiveStack();
+  const stack = root.querySelector('[data-hud-quick-settings]');
+  if (!stack) {
+    releaseActiveStack = null;
+    return () => {};
+  }
+  const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
+  const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
+  const fullscreenSyncTimers = new Set();
+  const onFullscreenChange = () => syncFullscreen(stack);
+  const onFullscreenClick = async () => {
+    fullscreenButton.disabled = true;
+    fullscreenButton.setAttribute('aria-disabled', 'true');
+    const result = await toggleFullscreen();
+    syncFullscreen(stack);
+    // Some browser shells settle fullscreen one frame after the request and
+    // omit the matching change event when they refuse or immediately exit.
+    // Re-read the platform state so the toggle never stays visually inverted.
+    for (const delay of [150, 900]) {
+      const timer = setTimeout(() => {
+        fullscreenSyncTimers.delete(timer);
+        if (stack.isConnected) syncFullscreen(stack);
+      }, delay);
+      fullscreenSyncTimers.add(timer);
+    }
+    if (!result.ok) showSettingsNotice(result.reason);
+  };
+  const onMusicClick = () => {
+    settings.muteMusic = settings.muteMusic !== true;
+    if (onSettingsChange) onSettingsChange({ muteMusic: settings.muteMusic });
+    syncMusic(stack, settings);
+  };
+  fullscreenButton?.addEventListener('click', onFullscreenClick);
+  musicButton?.addEventListener('click', onMusicClick);
+  document.addEventListener('fullscreenchange', onFullscreenChange);
+  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+  syncFullscreen(stack);
+  syncMusic(stack, settings);
+  // Fullscreen exit notifications are inconsistent in embedded and mobile
+  // browser shells. A cheap state read keeps the control truthful even when
+  // the platform drops that event; this interval owns no simulation state.
+  const fullscreenStatePoll = setInterval(() => syncFullscreen(stack), 750);
+
+  const detachObserver = new MutationObserver(() => {
+    if (!stack.isConnected) release();
+  });
+  const release = () => {
+    detachObserver.disconnect();
+    clearInterval(fullscreenStatePoll);
+    fullscreenSyncTimers.forEach(clearTimeout);
+    fullscreenSyncTimers.clear();
+    fullscreenButton?.removeEventListener('click', onFullscreenClick);
+    musicButton?.removeEventListener('click', onMusicClick);
+    document.removeEventListener('fullscreenchange', onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
+    if (releaseActiveStack === release) releaseActiveStack = null;
+  };
+  detachObserver.observe(document.body, { childList: true, subtree: true });
+  releaseActiveStack = release;
+  return release;
+}

@@ -38,7 +38,7 @@
 //      release IS. (It is NOT silent about what run.sh opens; see above.)
 //   2. Five player-facing surfaces have NO ?shot= state and therefore cannot
 //      appear in it at all — the Armoury, the menu tabs, Settings,
-//      Settings → Profile, and the profile crisis notice (#66/#67, the newest
+//      Title → Profile, and the profile crisis notice (#66/#67, the newest
 //      surface in the release). A capture set that silently omits the newest
 //      screens is a green that means nothing.
 // So this drives the built artifact over CDP: ?shot= where one exists, real
@@ -238,13 +238,7 @@ const SCREENS = [
     // parameter is deleted rather than kept as decoration; it claimed a door
     // that does not open on this state.
     query: '?shot=profile',
-    landmark: '.prof-restore', state: 'profile',
-    drive: `(() => {
-      const t = [...document.querySelectorAll('.set-tab')].find((e) => e.dataset.member === 'Profile');
-      if (!t) return 'no Profile tab in the settings screen';
-      t.click();
-      return true;
-    })()`,
+    landmark: '.profile-archive-modal .prof-restore', state: 'profile',
   },
   { name: 'profile-crisis', query: '?shot=crisis', landmark: '.profile-notice .fresh', state: 'crisis' },
   {
@@ -309,7 +303,7 @@ const SCREENS = [
   },
   {
     // The quicknav experiment defaults to 'off' (quicknav.js `let mode = 'off'`),
-    // so #combat-menu opens the TABS OVERLAY directly (onMenu('deck') →
+    // so #combat-menu opens the TABS OVERLAY directly (onMenu('settings') →
     // showOverlay, components/overlay.js `.overlay-tabs`). My first two
     // landmarks here were both wrong — `.menu-tabs` and then `.qn-panel`,
     // neither of which the shipped default path ever renders. Measured, not
@@ -321,10 +315,8 @@ const SCREENS = [
     name: 'settings', query: '', landmark: '.settings, .set-body',
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
-  // (the hand-written `settings-profile` entry lived here and is DELETED: the
-  //  settings categories are now generated from settingsCategories(), so Profile
-  //  is `settings-Profile` below and no longer a name anyone types. Collapsing a
-  //  duplicate that leaves nothing deletable is a patch, not a collapse.)
+  // Profile is a title-screen route and is covered by `profile-drawer` above;
+  // it is deliberately absent from the generated Settings categories below.
   // The crisis notice: seeded storage, never a patched bundle. Corrupt bytes
   // (truncated JSON) is the 'corrupt' state; a future schemaVersion is 'newer'.
   {
