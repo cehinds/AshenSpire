@@ -83,7 +83,7 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
       }, delay);
       fullscreenSyncTimers.add(timer);
     }
-    if (!result.ok) showSettingsNotice(result.reason);
+    if (!result.ok) showSettingsNotice(result.message || 'Fullscreen is unavailable in this browser.');
   };
   const onMusicClick = () => {
     settings.muteMusic = settings.muteMusic !== true;

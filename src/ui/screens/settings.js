@@ -1086,7 +1086,8 @@ export async function toggleFullscreen(doc = globalThis.document) {
   } catch (error) {
     return {
       ok: false,
-      reason: 'The browser refused fullscreen. Try again from its own page menu.',
+      reason: 'refused',
+      message: 'The browser refused fullscreen. Try again from its own page menu.',
       error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
     };
   }
