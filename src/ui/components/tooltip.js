@@ -125,7 +125,7 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null) {
+function showWith(html, anchor, clear = null, intent = 'beside') {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -137,18 +137,18 @@ function showWith(html, anchor, clear = null) {
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
   // fits is an acceptable answer.
-  placeAnchored(t, anchor, { intent: 'beside', clear });
+  placeAnchored(t, anchor, { intent, clear });
   return true;
 }
 
 /**
- * attachTooltip(el, contentFn) — contentFn() → HTML string (computed at show
+ * attachTooltip(el, contentFn, options) — contentFn() → HTML string (computed at show
  * time so numbers are always live). Shows on pointer hover AND on the
  * keyboard/gamepad focus cursor (input.js dispatches gpfocus/gpblur when the
  * gp-focus cursor lands on / leaves an element), so controller players get
  * every tooltip a mouse would.
  */
-export function attachTooltip(el, contentFn) {
+export function attachTooltip(el, contentFn, { intent = 'beside', clear = null } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
   // under the cursor is gone with the pointer anchor it served: a tooltip that
@@ -169,7 +169,7 @@ export function attachTooltip(el, contentFn) {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), el.parentElement);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, 140);
@@ -192,6 +192,12 @@ export function attachTooltip(el, contentFn) {
     if (stuck) return;
     hideTooltip();
   });
+}
+
+/** Show the shared tooltip for a non-hover gesture, using the same placement. */
+export function showTooltipFor(el, html, { intent = 'beside', clear = null } = {}) {
+  if (!el) return false;
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent);
 }
 
 /**

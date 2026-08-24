@@ -248,11 +248,12 @@ export function placeAnchored(el, anchor, {
     const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const candidates = intent === 'under' ? [under] : [
+    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const candidates = intent === 'under' ? [under] : intent === 'above' ? [above, under] : [
       { left: a.left + a.width + gap, top: slideY },  // right of it
       { left: a.left - b.width - gap, top: slideY },  // left of it
       { left: slideX, top: a.top + a.height + gap },  // below it
-      { left: slideX, top: a.top - b.height - gap },  // above it
+      above,
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {

@@ -7,7 +7,9 @@
 const DEFAULTS = Object.freeze({
   shell: { characterRatio: 0.4, equipmentRatio: 0.6, gapRem: 1.6 },
   character: { spriteRatio: 0.38, statsRatio: 0.62, statsPaneRatio: 0.6, minWidth: '0' },
-  equipment: { groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armor', 'rightHand', 'leftHand'] },
+  equipment: {
+    groupLabel: 'Armaments', outerBorder: false, slotOrder: ['armor', 'rightHand', 'leftHand'], defaultView: 'list', gridColumns: 3,
+  },
   inventorySplit: {
     defaultArmamentsRatio: 0.6,
     minimumArmamentsRatio: 0.3,
@@ -18,15 +20,24 @@ const DEFAULTS = Object.freeze({
     foldSubcardsBelowPx: 420,
     foldGroupsBelowPx: 260,
   },
+  trays: {
+    defaultHeightRatio: 0.1,
+    minimumHeightRatio: 0.1,
+    maximumHeightRatio: 0.9,
+    snapRatios: [0.1, 0.3, 0.5, 0.7, 0.9],
+    snapTolerance: 0.035,
+    contentGapRem: 0.35,
+  },
   combatPower: {
     groupLabel: 'Combat Power',
     cards: [
       { id: 'strike', role: 'attack', label: 'Strike', fullLabel: 'Strike Power' },
-      { id: 'potency', role: 'technique', label: 'Potency', fullLabel: 'Technique Potency' },
+      { id: 'potency', role: 'technique', label: 'Magic', fullLabel: 'Magic Power' },
       { id: 'defense', role: 'guard', label: 'Defense', fullLabel: 'Guard / Defense' },
     ],
   },
   cards: { defaultView: 'list', gridColumns: 4 },
+  cardClasses: { inventoryItem: { holdAction: false } },
   viewModes: {
     grid: { label: 'Character', pane: 'character', character: 'expanded', armaments: 'folded', inventory: 'folded', cards: 'expanded' },
     rack: { label: 'Inventory', pane: 'inventory', character: 'folded', armaments: 'expanded', inventory: 'expanded', cards: 'folded' },
@@ -34,7 +45,7 @@ const DEFAULTS = Object.freeze({
   },
   responsive: {
     breakpoint: 760,
-    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6, cardsGridColumns: 2 },
+    phone: { minWidth: '0', characterRatio: 0.4, equipmentRatio: 0.6, cardsGridColumns: 2, armamentGridColumns: 2 },
   },
 });
 
@@ -62,8 +73,11 @@ export function normalizeArmouryLayout(source = {}) {
   const character = { ...DEFAULTS.character, ...(raw.character || {}) };
   const equipment = { ...DEFAULTS.equipment, ...(raw.equipment || {}) };
   const inventorySplit = { ...DEFAULTS.inventorySplit, ...(raw.inventorySplit || {}) };
+  const trays = { ...DEFAULTS.trays, ...(raw.trays || {}) };
   const combatPower = { ...DEFAULTS.combatPower, ...(raw.combatPower || {}) };
   const cards = { ...DEFAULTS.cards, ...(raw.cards || {}) };
+  const cardClasses = { ...DEFAULTS.cardClasses, ...(raw.cardClasses || {}) };
+  const inventoryItemClass = { ...DEFAULTS.cardClasses.inventoryItem, ...(cardClasses.inventoryItem || {}) };
   const viewModes = { ...DEFAULTS.viewModes, ...(raw.viewModes || {}) };
   const responsive = { ...DEFAULTS.responsive, ...(raw.responsive || {}) };
   const phone = { ...DEFAULTS.responsive.phone, ...(responsive.phone || {}) };
@@ -84,12 +98,35 @@ export function normalizeArmouryLayout(source = {}) {
     || equipment.slotOrder.some((id) => typeof id !== 'string' || !id)) {
     throw new Error('armouryUi.layout.equipment.slotOrder must contain unique non-empty slot ids');
   }
+  if (!['list', 'grid'].includes(equipment.defaultView)) {
+    throw new Error('armouryUi.layout.equipment.defaultView must be list or grid');
+  }
+  if (!Number.isInteger(Number(equipment.gridColumns)) || Number(equipment.gridColumns) < 1 || Number(equipment.gridColumns) > 8) {
+    throw new Error('armouryUi.layout.equipment.gridColumns must be an integer from 1 to 8');
+  }
   if (!Array.isArray(inventorySplit.snapRatios) || !inventorySplit.snapRatios.length
     || inventorySplit.snapRatios.some((value) => !Number.isFinite(Number(value)) || Number(value) <= 0 || Number(value) >= 1)) {
     throw new Error('armouryUi.layout.inventorySplit.snapRatios must contain ratios between 0 and 1');
   }
   if (Number(inventorySplit.minimumArmamentsRatio) >= Number(inventorySplit.maximumArmamentsRatio)) {
     throw new Error('armouryUi.layout.inventorySplit minimum ratio must be below its maximum ratio');
+  }
+  if (!Array.isArray(trays.snapRatios) || !trays.snapRatios.length
+    || trays.snapRatios.some((value) => !Number.isFinite(Number(value)) || Number(value) <= 0 || Number(value) >= 1)) {
+    throw new Error('armouryUi.layout.trays.snapRatios must contain ratios between 0 and 1');
+  }
+  if (Number(trays.minimumHeightRatio) >= Number(trays.maximumHeightRatio)) {
+    throw new Error('armouryUi.layout.trays minimum ratio must be below its maximum ratio');
+  }
+  if (Number(trays.defaultHeightRatio) < Number(trays.minimumHeightRatio)
+    || Number(trays.defaultHeightRatio) > Number(trays.maximumHeightRatio)) {
+    throw new Error('armouryUi.layout.trays.defaultHeightRatio must be within the tray minimum and maximum');
+  }
+  positive(Number(trays.contentGapRem), 'trays.contentGapRem');
+  const trayStops = trays.snapRatios.map(Number);
+  if (new Set(trayStops).size !== trayStops.length
+    || trayStops.some((value) => value < Number(trays.minimumHeightRatio) || value > Number(trays.maximumHeightRatio))) {
+    throw new Error('armouryUi.layout.trays.snapRatios must be unique and within the tray minimum and maximum');
   }
   if (!Array.isArray(combatPower.cards) || combatPower.cards.length !== 3
     || combatPower.cards.some((card) => !card || !card.id || !card.role || !card.label || !card.fullLabel)) {
@@ -101,8 +138,14 @@ export function normalizeArmouryLayout(source = {}) {
   if (!Number.isInteger(Number(cards.gridColumns)) || Number(cards.gridColumns) < 1 || Number(cards.gridColumns) > 8) {
     throw new Error('armouryUi.layout.cards.gridColumns must be an integer from 1 to 8');
   }
+  if (typeof inventoryItemClass.holdAction !== 'boolean') {
+    throw new Error('armouryUi.layout.cardClasses.inventoryItem.holdAction must be true or false');
+  }
   if (!Number.isInteger(Number(phone.cardsGridColumns)) || Number(phone.cardsGridColumns) < 1 || Number(phone.cardsGridColumns) > 8) {
     throw new Error('armouryUi.layout.responsive.phone.cardsGridColumns must be an integer from 1 to 8');
+  }
+  if (!Number.isInteger(Number(phone.armamentGridColumns)) || Number(phone.armamentGridColumns) < 1 || Number(phone.armamentGridColumns) > 8) {
+    throw new Error('armouryUi.layout.responsive.phone.armamentGridColumns must be an integer from 1 to 8');
   }
   const paneValues = new Set(['character', 'inventory', 'both']);
   for (const [id, mode] of Object.entries(viewModes)) {
@@ -127,6 +170,8 @@ export function normalizeArmouryLayout(source = {}) {
       groupLabel: String(equipment.groupLabel || DEFAULTS.equipment.groupLabel),
       outerBorder: equipment.outerBorder !== false,
       slotOrder: Object.freeze([...equipment.slotOrder]),
+      defaultView: String(equipment.defaultView),
+      gridColumns: Number(equipment.gridColumns),
     }),
     inventorySplit: Object.freeze({
       defaultArmamentsRatio: ratio(Number(inventorySplit.defaultArmamentsRatio), 'inventorySplit.defaultArmamentsRatio'),
@@ -138,6 +183,14 @@ export function normalizeArmouryLayout(source = {}) {
       foldSubcardsBelowPx: positive(Number(inventorySplit.foldSubcardsBelowPx), 'inventorySplit.foldSubcardsBelowPx'),
       foldGroupsBelowPx: positive(Number(inventorySplit.foldGroupsBelowPx), 'inventorySplit.foldGroupsBelowPx'),
     }),
+    trays: Object.freeze({
+      defaultHeightRatio: ratio(Number(trays.defaultHeightRatio), 'trays.defaultHeightRatio'),
+      minimumHeightRatio: ratio(Number(trays.minimumHeightRatio), 'trays.minimumHeightRatio'),
+      maximumHeightRatio: ratio(Number(trays.maximumHeightRatio), 'trays.maximumHeightRatio'),
+      snapRatios: Object.freeze(trays.snapRatios.map((value) => ratio(Number(value), 'trays.snapRatios'))),
+      snapTolerance: ratio(Number(trays.snapTolerance), 'trays.snapTolerance'),
+      contentGapRem: positive(Number(trays.contentGapRem), 'trays.contentGapRem'),
+    }),
     combatPower: Object.freeze({
       groupLabel: String(combatPower.groupLabel || DEFAULTS.combatPower.groupLabel),
       cards: Object.freeze(combatPower.cards.map((card) => Object.freeze({
@@ -145,6 +198,9 @@ export function normalizeArmouryLayout(source = {}) {
       }))),
     }),
     cards: Object.freeze({ defaultView: String(cards.defaultView), gridColumns: Number(cards.gridColumns) }),
+    cardClasses: Object.freeze({
+      inventoryItem: Object.freeze({ holdAction: inventoryItemClass.holdAction === true }),
+    }),
     viewModes: Object.freeze(Object.fromEntries(Object.entries(viewModes).map(([id, mode]) => [id, Object.freeze({
       label: String(mode.label || id),
       pane: String(mode.pane),
@@ -160,8 +216,55 @@ export function normalizeArmouryLayout(source = {}) {
         characterRatio: ratio(Number(phone.characterRatio), 'responsive.phone.characterRatio'),
         equipmentRatio: ratio(Number(phone.equipmentRatio), 'responsive.phone.equipmentRatio'),
         cardsGridColumns: Number(phone.cardsGridColumns),
+        armamentGridColumns: Number(phone.armamentGridColumns),
       }),
     }),
+  });
+}
+
+/**
+ * Resolve the two deliberately separate tray states.
+ *
+ * `savedHeightRatio` belongs to the next expanded presentation. A collapsed
+ * tray has no rendered height ratio and no resize affordance; its intrinsic
+ * header is the entire tray. Keeping the saved value in the receipt lets the
+ * next unfold restore it without allowing it to leak into the folded layout.
+ */
+export function trayPresentationState({ collapsed, savedHeightRatio, defaultHeightRatio }) {
+  const saved = Number.isFinite(Number(savedHeightRatio)) && Number(savedHeightRatio) > 0
+    ? Number(savedHeightRatio)
+    : Number(defaultHeightRatio);
+  return Object.freeze({
+    collapsed: collapsed === true,
+    savedHeightRatio: saved,
+    heightRatio: collapsed === true ? null : saved,
+    resizable: collapsed !== true,
+  });
+}
+
+/**
+ * Resolve the mutation an Inventory item owes to the selected equipment
+ * position. The selected position is the destination even when another hand
+ * currently owns the item; ownership determines Move versus Equip, never the
+ * destination. If the selected position already owns it, the same action is
+ * Unequip.
+ */
+export function inventorySelectionAction({
+  itemId, selectedSlotId, selectedSetIndex, selectedItemId, equippedPositions = [],
+}) {
+  if (!itemId || !selectedSlotId || !Number.isInteger(Number(selectedSetIndex)) || Number(selectedSetIndex) < 0) {
+    throw new Error('inventorySelectionAction requires an item and a selected equipment position');
+  }
+  const equippedHere = selectedItemId === itemId;
+  const equippedElsewhere = (equippedPositions || []).some((position) => (
+    position && position.itemId === itemId
+    && (position.slotId !== selectedSlotId || Number(position.setIndex) !== Number(selectedSetIndex))
+  ));
+  return Object.freeze({
+    kind: equippedHere ? 'unequip' : equippedElsewhere ? 'move' : 'equip',
+    slotId: selectedSlotId,
+    setIndex: Number(selectedSetIndex),
+    pieceId: equippedHere ? null : itemId,
   });
 }
 
@@ -173,4 +276,29 @@ export function orderArmourySlots(slots, layout) {
     const bi = order.has(b.id) ? order.get(b.id) : Number.MAX_SAFE_INTEGER;
     return ai - bi || (a.order || 0) - (b.order || 0) || String(a.id).localeCompare(String(b.id));
   });
+}
+
+const positionText = (template, fallback, index) => String(template || fallback)
+  .replaceAll('{n}', String(index + 1));
+
+/**
+ * Pure presentation state for one authored equipment position.
+ *
+ * The slot owns its labels and position count; the renderer only iterates the
+ * model's open/next/hidden state. This keeps future foot, back, talisman, or
+ * additional armour positions out of named UI branches.
+ */
+export function equipmentPositionCardState({ slot, index, modelState, item, activeIndex }) {
+  if (!slot || !slot.id || !Number.isInteger(index) || index < 0) {
+    throw new Error('equipmentPositionCardState requires a slot and a non-negative integer index');
+  }
+  const label = positionText(slot.positionLabel, `${slot.label || slot.id} Slot {n}`, index);
+  const code = positionText(slot.positionCode, `${slot.id}{n}`, index);
+  const active = modelState === 'open' && index === Number(activeIndex || 0);
+  const state = modelState === 'next' ? 'locked' : item ? 'occupied' : 'empty';
+  const action = state === 'locked' ? 'locked' : state === 'empty' ? 'select' : active ? 'equipped' : 'equip';
+  const equippedLabel = action === 'equipped'
+    ? (Number(slot.sets) === 1 ? String(slot.label || code) : code)
+    : '';
+  return Object.freeze({ label, code, state, action, active, equippedLabel });
 }

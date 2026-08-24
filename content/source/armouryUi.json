@@ -18,7 +18,9 @@
     "equipment": {
       "groupLabel": "Armaments",
       "outerBorder": false,
-      "slotOrder": ["armor", "rightHand", "leftHand"]
+      "slotOrder": ["armor", "rightHand", "leftHand"],
+      "defaultView": "list",
+      "gridColumns": 3
     },
     "inventorySplit": {
       "defaultArmamentsRatio": 0.6,
@@ -30,11 +32,19 @@
       "foldSubcardsBelowPx": 420,
       "foldGroupsBelowPx": 260
     },
+    "trays": {
+      "defaultHeightRatio": 0.1,
+      "minimumHeightRatio": 0.1,
+      "maximumHeightRatio": 0.9,
+      "snapRatios": [0.1, 0.3, 0.5, 0.7, 0.9],
+      "snapTolerance": 0.035,
+      "contentGapRem": 0.35
+    },
     "combatPower": {
       "groupLabel": "Combat Power",
       "cards": [
         { "id": "strike", "role": "attack", "label": "Strike", "fullLabel": "Strike Power" },
-        { "id": "potency", "role": "technique", "label": "Potency", "fullLabel": "Technique Potency" },
+        { "id": "potency", "role": "technique", "label": "Magic", "fullLabel": "Magic Power" },
         { "id": "defense", "role": "guard", "label": "Defense", "fullLabel": "Guard / Defense" }
       ]
     },
@@ -42,10 +52,15 @@
       "defaultView": "list",
       "gridColumns": 4
     },
+    "cardClasses": {
+      "inventoryItem": {
+        "holdAction": true
+      }
+    },
     "viewModes": {
       "grid": { "label": "Character", "pane": "character", "character": "expanded", "armaments": "folded", "inventory": "folded", "cards": "expanded" },
       "rack": { "label": "Inventory", "pane": "inventory", "character": "folded", "armaments": "expanded", "inventory": "expanded", "cards": "folded" },
-      "hybrid": { "label": "Hybrid", "pane": "both", "character": "folded", "armaments": "folded", "inventory": "folded", "cards": "folded" }
+      "hybrid": { "label": "Hybrid", "pane": "both", "character": "folded", "armaments": "expanded", "inventory": "folded", "cards": "folded" }
     },
     "responsive": {
       "breakpoint": 760,
@@ -53,7 +68,8 @@
         "minWidth": "0",
         "characterRatio": 0.4,
         "equipmentRatio": 0.6,
-        "cardsGridColumns": 2
+        "cardsGridColumns": 2,
+        "armamentGridColumns": 2
       }
     }
   }

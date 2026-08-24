@@ -121,7 +121,8 @@ import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
-const SLOP = 12;
+export const HOLD_POINTER_SLOP = 12;
+const SLOP = HOLD_POINTER_SLOP;
 
 /**
  * THE CUE VOCABULARY — six phases, one family. Exported so Vega can author
@@ -147,7 +148,7 @@ export function beatCue(phase, id, form) {
 }
 
 /**
- * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, onTap?, id }) -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
@@ -156,12 +157,15 @@ export function beatCue(phase, id, form) {
  * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
  * byte for byte: one tap commits. Not a hold with a zero timer.
  */
-export function armHold(btn, { ms, onConfirm, id = null }) {
+export function armHold(btn, {
+  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
+}) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
   let raf = 0;
   let armed = false;
   let fired = false;
+  let committedThisPress = false;
   // Set at pointerdown, read at the click that follows it: did this press start
   // a hold? Rule 1 lives on this flag, and so does the ms<=0 passthrough.
   let heldThisPress = false;
@@ -192,7 +196,12 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
         const hint = document.createElement('span');
         hint.className = 'hold-hint';
         hint.textContent = 'HOLD';
-        btn.appendChild(hint);
+        // Disclosure faces are armed before their button is inserted into the
+        // document. A valid authored hint host may therefore be deliberately
+        // detached at dress time; connectivity is not capability.
+        const host = hintHost && typeof hintHost.appendChild === 'function' ? hintHost : btn;
+        if (hintBefore && hintBefore.parentElement === host) host.insertBefore(hint, hintBefore);
+        else host.appendChild(hint);
       }
     } else {
       btn.classList.remove('beat-hold');
@@ -226,6 +235,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     // swallow flag with no click to eat, and the next real TAP would pay for
     // it. That is F3's shape, which armInspect below learned once already.
     heldThisPress = false;
+    committedThisPress = false;
     const ms0 = msOf();
     // The dial is off, or this state of this action owes no beat. Let the
     // click through untouched — that is the pre-hold behaviour, byte for byte.
@@ -248,6 +258,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
         // thumb is still down, which is the confirmation; waiting for the lift
         // would make a completed hold feel like it did nothing.
         fired = true;
+        committedThisPress = true;
         stop('done');
         onConfirm(ev);
         // A control that survives its own commit (End Turn does — the screen
@@ -303,16 +314,25 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     // keys and the real pad rather than trusting this comment.
     if (ev.detail === 0) { onConfirm(ev); return; }
     if (!heldThisPress) { onConfirm(ev); return; }
+    const tapped = !committedThisPress;
     heldThisPress = false;
+    committedThisPress = false;
     ev.preventDefault();
     ev.stopPropagation();
+    // A composite card may owe two SAFE meanings to the same pointer: a short
+    // tap reveals its details while a completed hold commits its action. The
+    // ordinary irreversible controls pass no onTap and retain the universal
+    // early-release abort byte for byte.
+    if (tapped && onTap) onTap(ev);
   };
 
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
+  const onCardDragStart = () => { if (armed) stop('idle'); };
 
   dress();
   const disarmPress = armPress(btn, begin);
   btn.addEventListener('click', onClick);
+  btn.addEventListener('carddragstart', onCardDragStart);
   addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
@@ -320,6 +340,7 @@ export function armHold(btn, { ms, onConfirm, id = null }) {
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);
+    btn.removeEventListener('carddragstart', onCardDragStart);
     removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only
