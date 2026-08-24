@@ -1193,6 +1193,10 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const lifecycleSentinel = document.createComment('settings-render-lifecycle');
   container.appendChild(lifecycleSentinel);
 
+  // Fullscreen events belong to this complete Settings render, not to whichever
+  // category panel happens to be wired. Escape and browser refusals can arrive
+  // after the Display controls have been replaced, so the document listeners
+  // below need a synchronizer in their own lifecycle scope.
   const syncFullscreen = (message = '') => {
     const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
     if (!btn) return;
