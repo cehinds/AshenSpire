@@ -50,7 +50,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `item-slot` | `componentModel` semantic ID | Item view | Inventory | Generic item slot contract. |
 | `folding-tray` | `trayModel` | `trayComponents.renderTray` | Armoury + future menus | Edge-aware disclosure composition. |
 | `tray-header` | `trayHeaderModel` child | `trayComponents.renderTray` | Folding Tray | Arrow, name, quantity, and optional sort action. |
-| `tray-resize-handle` | `trayResizeHandleModel` child | `trayComponents.renderTray` | Expanded Folding Tray | 44px pointer/touch/keyboard resize surface. |
+| `tray-resize-handle` | `trayResizeHandleModel` child | `trayComponents.renderTray` | Resizable expanded Folding Tray | Optional 44px pointer/touch/keyboard resize surface; emitted only when that tray enables resizing. |
 | `tray-content` | `trayContentModel` child | `trayComponents.renderTray` | Folding Tray | Pluggable item-model content host. |
 | `relic-tray` | `itemTrayModel` | Belt view | Map + Combat | Relics under SP. |
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
@@ -161,39 +161,72 @@ menu-overlay
 | `armoury-overlay` | `armouryOverlayModel` | `armouryComponents.renderArmouryOverlay` | Modal veil and Armoury focus scope. |
 | `armoury-panel` | `armouryPanelModel` | `armouryComponents.renderArmouryPanel` | Complete responsive Armoury surface. |
 | `armoury-header` | `armouryHeaderModel` | `armouryComponents.renderArmouryPanel` | Title, view switcher, and close action. |
-| `armoury-view-switcher` | `armouryViewSwitcherModel` | `armouryComponents.renderArmouryPanel` | Grid/Rack/Hybrid selector. |
-| `armoury-body` | `armouryBodyModel` | `armouryComponents.renderArmouryPanel` | Figure and equipment-slot workspace. |
+| `armoury-view-switcher` | `armouryViewSwitcherModel` | `armouryComponents.renderArmouryPanel` | Player labels are Character / Inventory / Hybrid; the compatibility keys remain `grid` / `rack` / `hybrid` internally. |
+| `armoury-body` | `armouryBodyModel` | `armouryComponents.renderArmouryPanel` | Responsive Character and Armaments workspace selected by the current player view. |
 | `armoury-figure` | semantic child model | `equipment.js` + `assets.js` | Layered equipped character figure. |
 | `equipment-slot` | `equipmentSlotModel` | `armouryComponents.renderEquipmentSlot` | One named equipment socket. |
 | `equipment-set-cell` | `equipmentSetCellModel` | `armouryComponents.renderEquipmentSetCell` | One active, empty, or locked set cell. |
-| `armoury-inventory` | `armouryInventoryModel` | `equipment.js` inside `renderTray` | Shared carried-item inventory. |
-| `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Collapsed carried-item summary; the `inventoryItem` class projects `holdAction` here only when explicitly true (default false). |
-| `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded item art, tags, mods, and action; projects the same class-owned `holdAction` capability (default false). |
-| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt; presentation, hover delay, width, and viewport cap are authored data. |
-| `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` | Attributes and derived resources. |
-| `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` | Live card rewrites from equipment. |
+| `armoury-inventory` | `armouryInventoryModel` | `equipment.js` inside `renderTray` | Inventory tray content and the single carried-item list. |
+| `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Folded carried-item face. The current `inventoryItem` class explicitly enables `holdAction`; its folded and expanded states are one action/progress surface, and an early release aborts without changing equipment. |
+| `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded art, tags, mods, and action label inside the same whole-card hold surface; the label is not a second action button while hold confirmation owns the action. |
+| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, separate from the action hold. Authored presentation chooses delayed hover/focus tooltip or inline content, with data-owned delay, width, and viewport cap. |
+| `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, and relic summary. |
+| `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: equipment-associated card rewrites in list or grid presentation. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 
 ```text
 armoury-overlay
 └─ armoury-panel
    ├─ armoury-header ── armoury-view-switcher
-   ├─ subject region (default: armoury-body)
+   ├─ player view: Character / Inventory / Hybrid
+   │  └─ compatibility key: grid / rack / hybrid
+   ├─ responsive subject region (armoury-body)
    │  ├─ armoury-figure
    │  └─ equipment-slot × N ── equipment-set-cell × N
-   ├─ folding-tray × 3
+   ├─ shared folding-tray family × 4
    │  ├─ tray-header
-   │  ├─ tray-resize-handle (expanded)
+   │  ├─ tray-resize-handle (optional; expanded when enabled)
    │  └─ tray-content
-   │     └─ one context region component
-   └─ context regions: armoury-inventory / armoury-stats-panel / armoury-card-strip
-      └─ armoury-inventory may contain inventory-item-card × N,
-         inventory-detail-card, and equipment-comparison
+   │     ├─ Armaments
+   │     ├─ Inventory ── armoury-inventory
+   │     ├─ Cards ── armoury-card-strip
+   │     └─ Stats ── armoury-stats-panel
+   └─ armoury-inventory
+      └─ inventory-item-card × N ── inventory-detail-card
+         └─ equipment-comparison (delayed tooltip/focus or inline)
 ```
 
-The three current Armoury trays are Inventory, Cards, and Stats. They share the
-same `folding-tray` shell; their content components remain independent. See the
+The four current Armoury tray families are Armaments, Inventory, Cards, and
+Stats. They share the same `folding-tray` shell while their content components
+remain independent. The current `inventoryItem` class enables whole-card hold
+confirmation in both disclosure states; comparison presentation remains a
+separate delayed hover/focus tooltip or inline receipt. See the
 [four-edge ASCII and interaction contract](./TRAY-COMPONENTS.md).
+
+Armaments uses the shared shell without a resize handle. Inventory has a height
+handle only when rendered as a supporting tray; it has no tray-height handle
+when it fills the Inventory pane. Cards and Stats may expose their configured
+expanded-state handles. Folding, sorting, and resizing are independent
+capabilities rather than guarantees of every tray instance.
+
+### Asset Components / Rendered Armoury
+
+The dotted IDs below are stable references for rendered Armoury pieces called
+out by design screenshots and implementation notes. They complement the
+semantic IDs above rather than replacing them. Select a dotted ID in the
+[interactive catalog](./component-catalog.html?group=armoury-assets), or use the
+full selector/owner cross-reference in
+[`ASSET-COMPONENTS.md`](./ASSET-COMPONENTS.md). The machine-readable authority
+is [`assets/components/armoury.json`](../assets/components/armoury.json).
+
+| Rendered family | Searchable asset IDs |
+|---|---|
+| Shell and player views | `armoury.shell`, `armoury.viewSwitcher`, `armoury.characterView`, `armoury.inventoryView`, `armoury.hybridView`, `armoury.characterViewButton`, `armoury.inventoryViewButton`, `armoury.hybridViewButton` |
+| Character composition | `armoury.characterPane`, `armoury.spritePane`, `armoury.characterSummary`, `armoury.combatPowerCard`, `armoury.combatPowerGroup`, `armoury.combatPowerMetric`, `armoury.attributesCard`, `armoury.attributeCard`, `armoury.relicsCard` |
+| Armaments tray and pane | `armoury.equipmentPane`, `armoury.armamentsCard`, `armoury.armamentsHeader`, `armoury.armamentsFoldButton`, `armoury.armamentsExpanded`, `armoury.armamentsFolded`, `armoury.armamentViewToggle`, `armoury.hybridPaneSplitter` |
+| Procedural equipment-position cards | `armoury.equipmentPositionCard`, `armoury.occupiedPositionCard`, `armoury.emptyPositionCard`, `armoury.lockedPositionCard`, `armoury.positionLabelPane`, `armoury.positionSpritePane`, `armoury.summaryDivider`, `armoury.positionSummaryPane`, `armoury.positionAction`, `armoury.armamentItemCard`, `armoury.armamentDetailPane`, `armoury.armamentGridGroup`, `armoury.positionGridCard`, `armoury.occupiedPositionGridCard`, `armoury.emptyPositionGridCard`, `armoury.lockedPositionGridCard`, `armoury.armamentGridDetails` |
+| Inventory and comparison | `armoury.inventoryCard`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
+| Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
 
 ### Combatant card detail
 

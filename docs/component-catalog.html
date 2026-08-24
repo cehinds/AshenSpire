@@ -164,11 +164,16 @@
 <main>
   <header>
     <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
-    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
+    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="ASSET-COMPONENTS.md">Open Asset Components</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
   </header>
-  <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="creation">Character Creation</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
+  <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="creation">Character Creation</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury semantics</option><option value="armoury-assets">Rendered Armoury assets</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
+  <p class="catalog-footer"><strong>Armoury contract:</strong> Player labels are Character / Inventory / Hybrid (internal compatibility keys remain <code>grid</code> / <code>rack</code> / <code>hybrid</code>). Armaments, Inventory, Cards, and Stats share the Folding Tray shell. Armaments is non-resizable; resize handles are optional expanded capabilities, and Inventory exposes one only in supporting-tray contexts. The enabled <code>inventoryItem.holdAction</code> makes folded and expanded equipment items one whole-card action/progress surface; comparison remains a separate delayed hover/focus tooltip or inline receipt. <a href="ASSET-COMPONENTS.md">Open the rendered Asset Components reference.</a></p>
+  <section class="token-panel" aria-labelledby="armoury-assets-heading">
+    <h2 id="armoury-assets-heading">Asset Components / Rendered Armoury</h2>
+    <p>The interactive catalog includes every dotted ID from <code>assets/components/armoury.json</code>: player views, Character stat cards, the non-resizable Armaments tray, procedural equipment-position subcomponents, Inventory hold/comparison surfaces, and optional supporting-tray handles. Choose <strong>Rendered Armoury assets</strong> in the group filter, or <a href="ASSET-COMPONENTS.md">open the full selector and ownership reference</a>.</p>
+  </section>
   <section class="token-panel" aria-labelledby="token-heading">
     <h2 id="token-heading">Data-driven HUD tokens</h2>
     <p>Defaults live in <code>balance.ui.hudPresentation</code>; <code>src/main.js</code> validates and projects them once for the shared Map/Combat HUD.</p>
@@ -239,17 +244,17 @@ const V = {
   relicSlot:'<div class="mini mini-stack"><div class="mini-slot">🏅</div><div class="mini-label">one relic slot</div></div>',
   potionTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">🟢</div><div class="mini-slot">🔴</div><div class="mini-slot slot-empty">+</div></div><div class="mini-label">potion tray · right anchored</div></div>',
   potionControl:'<div class="mini mini-stack"><div class="mini-slot key-demo">🟢<span class="key">H</span></div><div class="mini-label">utility potion</div></div>',
-  armouryOverlay:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY</span><span>GRID · RACK · HYBRID ✕</span></div><div class="ab"><div class="equip-square">LEFT</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">⚔</div><div class="equip-square">RIGHT</div></div></div></div>',
+  armouryOverlay:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY</span><span>CHARACTER · INVENTORY · HYBRID ✕</span></div><div class="ab"><div class="equip-square">LEFT</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">⚔</div><div class="equip-square">RIGHT</div></div></div></div>',
   armouryPanel:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY PANEL</span><span>✕</span></div><div class="ab"><div class="equip-square">SLOT</div><div class="mini-panel" style="width:auto;height:44px">FIGURE</div><div class="equip-square">SLOT</div></div></div></div>',
-  armouryHeader:'<div class="mini"><div class="armoury-demo"><div class="ah" style="margin:0"><span>ARMOURY</span><span>GRID · RACK · HYBRID · ✕</span></div></div></div>',
-  armouryViewSwitcher:'<div class="mini"><div class="tab-demo"><span class="on">GRID</span><span>RACK</span><span>HYBRID</span></div></div>',
+  armouryHeader:'<div class="mini"><div class="armoury-demo"><div class="ah" style="margin:0"><span>ARMOURY</span><span>CHARACTER · INVENTORY · HYBRID · ✕</span></div></div></div>',
+  armouryViewSwitcher:'<div class="mini"><div class="tab-demo"><span class="on">CHARACTER</span><span>INVENTORY</span><span>HYBRID</span></div></div>',
   armouryBody:'<div class="mini"><div class="armoury-demo"><div class="ab"><div class="equip-square">ARMOUR</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">♟</div><div class="equip-square">HAND</div></div></div></div>',
   armouryFigure:'<div class="mini mini-stack"><div class="sprite-demo">♟</div><div class="mini-label">equipped figure layers</div></div>',
   equipmentSlot:'<div class="mini mini-stack"><div class="armoury-demo" style="width:150px"><div class="mini-label">RIGHT HAND</div><div class="equip-square">ACTIVE SET</div></div></div>',
   equipmentSetCell:'<div class="mini mini-stack"><div class="equip-square" style="width:64px">🗡<br>SWORD</div><div class="mini-label">one equipment cell</div></div>',
   armouryInventory:'<div class="mini"><div class="inventory-list-demo"><div><span>Longsword · Weapon</span><b>×1</b></div><div><span>Gold Sigil · Relic</span><b>×1</b></div><div><span>Greenburst · Potion</span><b>×2</b></div></div></div>',
-  inventoryItemCard:'<div class="mini"><div class="inventory-list-demo"><div><span><b>Longsword</b><br>Weapon · Equipped: Right</span><strong>×1</strong></div></div></div>',
-  inventoryDetailCard:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:9px"><b>LONGSWORD</b><br><span class="mini-label">Weapon · common · 1 owned</span><br>Strike +2 · Blade</div></div>',
+  inventoryItemCard:'<div class="mini"><div class="inventory-list-demo"><div style="background:linear-gradient(90deg,#7d5d214d 58%,transparent 58%)"><span><b>Longsword</b><br>Weapon · Equipped: Right · HOLD</span><strong>×1</strong></div></div><div class="mini-label">whole-card hold/progress · release early to abort</div></div>',
+  inventoryDetailCard:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:9px;background:linear-gradient(90deg,#7d5d214d 58%,transparent 58%)"><b>LONGSWORD · HOLD</b><br><span class="mini-label">Weapon · common · 1 owned</span><br>Strike +2 · Blade<br><span class="mini-label">Equip label belongs to this same card action</span></div></div>',
   equipmentComparison:'<div class="mini"><div class="comparison-demo"><div>STRIKE<br><b>5</b></div><span>→</span><div>STRIKE<br><b style="color:var(--gold)">7</b></div></div></div>',
   armouryStatsPanel:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:8px"><b>ATTRIBUTES &amp; RESOURCES</b><br><span class="mini-label">STR 13 · DEX 11 · HP 56</span></div></div>',
   armouryCardStrip:'<div class="mini mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div></div>',
@@ -291,7 +296,7 @@ const V = {
   equipmentChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>ASHEN VIGIL</b><br><span class="mini-label">Defend Block +2 · GUARD · ASH</span></div></div>',
   relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
 };
-const C = [
+const SEMANTIC_COMPONENTS = [
  ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Shared composition of header, resources, controls, and belt.','sharedHud'],
  ['run-header-strip','runHeaderModel','hudmeta.runHeaderStripHtml','hud','Map + Combat','Identity, cinders, and prioritized metadata.','runHeader'],
  ['identity-cluster','identityClusterModel','hudmeta.identityClusterHtml','hud','Map + Combat','Character identity cluster.','identityCluster'],
@@ -324,7 +329,7 @@ const C = [
  ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','itemSlot'],
  ['folding-tray','trayModel','trayComponents.renderTray','primitive','Armoury + future menus','Edge-aware disclosure composition.','foldingTray'],
  ['tray-header','trayHeaderModel child','trayComponents.renderTray','primitive','Folding Tray','Directional fold action, name, quantity, and optional sort.','trayHeader'],
- ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Expanded Folding Tray','44px mouse, touch-hold, and keyboard resize surface.','trayResizeHandle'],
+ ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Resizable expanded Folding Tray','Optional 44px mouse, touch-hold, and keyboard resize surface; emitted only when enabled.','trayResizeHandle'],
  ['tray-content','trayContentModel child','trayComponents.renderTray','primitive','Folding Tray','Pluggable item-model content host.','trayContent'],
  ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','relicTray'],
  ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','relicSlot'],
@@ -333,17 +338,17 @@ const C = [
  ['armoury-overlay','armouryOverlayModel','armouryComponents.renderArmouryOverlay','armoury','Map + Combat','Modal Armoury veil and focus scope.','armouryOverlay'],
  ['armoury-panel','armouryPanelModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Complete Armoury surface.','armouryPanel'],
  ['armoury-header','armouryHeaderModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Title, view controls, and close action.','armouryHeader'],
- ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Grid/Rack/Hybrid view selector.','armouryViewSwitcher'],
- ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive figure and slot workspace.','armouryBody'],
+ ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Player labels are Character / Inventory / Hybrid; compatibility keys remain grid / rack / hybrid.','armouryViewSwitcher'],
+ ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive Character and Armaments workspace selected by the current player view.','armouryBody'],
  ['armoury-figure','componentModel semantic ID','equipment.js + assets.js','armoury','Armoury','Layered equipped character figure.','armouryFigure'],
  ['equipment-slot','equipmentSlotModel','armouryComponents.renderEquipmentSlot','armoury','Armoury','One named equipment socket and its sets.','equipmentSlot'],
  ['equipment-set-cell','equipmentSetCellModel','armouryComponents.renderEquipmentSetCell','armoury','Equipment Slot','One active, empty, or locked set cell.','equipmentSetCell'],
- ['armoury-inventory','armouryInventoryModel','equipment.js inside renderTray','armoury','Armoury','Shared carried-item inventory content.','armouryInventory'],
- ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','Collapsed carried-item summary; inventoryItem holdAction is opt-in and defaults false.','inventoryItemCard'],
- ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded item details with the same opt-in class holdAction capability; default false.','inventoryDetailCard'],
- ['equipment-comparison','semantic child model + armouryUi.layout.comparison','equipmentReceipts.js in tooltip or item card','armoury','Armoury Inventory','Full before/after receipt; presentation, hover delay, width, and viewport cap are authored data.','equipmentComparison'],
- ['armoury-stats-panel','armouryStatsPanelModel','equipment.js','armoury','Armoury','Attributes and derived resource projection.','armouryStatsPanel'],
- ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js','armoury','Armoury','Live card rewrites from equipped pieces.','armouryCardStrip'],
+ ['armoury-inventory','armouryInventoryModel','equipment.js inside renderTray','armoury','Armoury','Inventory tray content and the single carried-item list.','armouryInventory'],
+ ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','The current inventoryItem class enables holdAction. Folded and expanded states share one whole-card action/progress surface; early release aborts.','inventoryItemCard'],
+ ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded art, tags, mods, and action label inside the same whole-card hold surface; there is no second action button while hold confirmation owns it.','inventoryDetailCard'],
+ ['equipment-comparison','semantic child model + armouryUi.layout.comparison','equipmentReceipts.js in tooltip or item card','armoury','Armoury Inventory','Full before/after receipt, separate from action hold; authored presentation chooses delayed hover/focus tooltip or inline content.','equipmentComparison'],
+ ['armoury-stats-panel','armouryStatsPanelModel','equipment.js inside renderTray','armoury','Armoury','Stats tray content: attributes, combat values, resources, and relic summary.','armouryStatsPanel'],
+ ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js inside renderTray','armoury','Armoury','Cards tray content: equipment-associated card rewrites in list or grid presentation.','armouryCardStrip'],
  ['armoury-region-header','compatibility semantic ID','replaced by tray-header','armoury','Armoury','Historical Armoury-only fold-header name.','armouryRegionHeader'],
  ['character-disclosure','disclosure entries','disclosure.mountDisclosure','creation','Character Creation + catalog','One-open nested picker shell.','characterDisclosure'],
  ['class-preview-pane','class preview presentation','creationCards.classPreviewPane','creation','Character Creation + catalog','Selected class art, resources, and relic preview.','classPreviewPane'],
@@ -381,15 +386,80 @@ const C = [
  ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
  ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
 ].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
+const RENDERED_ARMOURY_COMPONENTS = [
+ ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],
+ ["armoury.viewSwitcher",".armoury-views","Armoury shell and view routing","Character/Inventory/Hybrid player selector; grid/rack/hybrid remain internal compatibility keys","armouryViewSwitcher"],
+ ["armoury.characterView",".armoury[data-pane='character']","Armoury shell and view routing","full-width Character view surface with identity/sprite left and stats right","armouryFigure"],
+ ["armoury.inventoryView",".armoury[data-pane='inventory']","Armoury shell and view routing","Inventory view surface with Armaments and Inventory panes","armouryPanel"],
+ ["armoury.hybridView",".armoury[data-pane='both']","Armoury shell and view routing","Hybrid view surface with vertical Character pane and Armaments pane","armouryPanel"],
+ ["armoury.characterViewButton",".armoury-views [data-member='grid']","Armoury shell and view routing","opens the player-labeled Character view through the grid compatibility key","armouryViewSwitcher"],
+ ["armoury.inventoryViewButton",".armoury-views [data-member='rack']","Armoury shell and view routing","opens the player-labeled Inventory view through the rack compatibility key","armouryViewSwitcher"],
+ ["armoury.hybridViewButton",".armoury-views [data-member='hybrid']","Armoury shell and view routing","opens the player-labeled Hybrid view through the hybrid compatibility key","armouryViewSwitcher"],
+ ["armoury.characterPane",".armoury-character","Character and Hybrid views","full Character surface or vertical left Hybrid pane","armouryFigure"],
+ ["armoury.spritePane",".armoury-sprite-pane","Character and Hybrid views","shrink-to-fit character sprite","armouryFigure"],
+ ["armoury.characterSummary",".character-summary","Character and Hybrid views","name, class description, and level","armouryStatsPanel"],
+ ["armoury.combatPowerCard",".character-info-card.combatPowerCard","Character and Hybrid views","foldable Combat Power group card with summary values","armouryStatsPanel"],
+ ["armoury.combatPowerGroup",".character-power-cards","Character and Hybrid views","vertical Combat Power detail group","armouryStatsPanel"],
+ ["armoury.combatPowerMetric",".character-power-cards .disc-face","Character and Hybrid views","Strike, Magic, or Defense card with responsive bonus line","armouryStatsPanel"],
+ ["armoury.attributesCard",".character-info-card.attributesCard","Character and Hybrid views","foldable Attributes group card with summary values","armouryStatsPanel"],
+ ["armoury.attributeCard",".character-attributes .disc-face","Character and Hybrid views","one expandable attribute","armouryStatsPanel"],
+ ["armoury.relicsCard",".character-info-card.relicsCard","Character and Hybrid views","foldable Relics group card with count and name summary","armouryStatsPanel"],
+ ["armoury.equipmentPane",".armoury-equipment","Inventory and Hybrid Armaments","vertical armaments pane; left in Inventory and right in Hybrid","equipmentSlot"],
+ ["armoury.armamentsCard",".armoury-equipment[data-component='armoury.armamentsCard']","Inventory and Hybrid Armaments","non-resizable Armaments member of the shared Folding Tray family, with configurable outer border","equipmentSlot"],
+ ["armoury.armamentsHeader",".armoury-equipment-head","Inventory and Hybrid Armaments","shared Tray header for Armaments with fold state, item count, and expanded-only view control","equipmentSlot"],
+ ["armoury.armamentsFoldButton",".armoury-equipment-head [data-fold='armaments']","Inventory and Hybrid Armaments","folds or unfolds Armaments content","equipmentSlot"],
+ ["armoury.armamentsExpanded",".armoury-equipment[data-collapsed='0']","Inventory and Hybrid Armaments","expanded Armaments tray state with List/Grid control","equipmentSlot"],
+ ["armoury.armamentsFolded",".armoury-equipment[data-collapsed='1']","Inventory and Hybrid Armaments","folded Armaments tray state with compact name and item count","equipmentSlot"],
+ ["armoury.armamentViewToggle",".armoury-armament-view-toggle","Inventory and Hybrid Armaments","Armaments list/grid presentation toggle","equipmentSlot"],
+ ["armoury.hybridPaneSplitter",".armoury-hybrid-splitter","Inventory and Hybrid Armaments","Hybrid Character/Armaments drag and keyboard divider","trayResizeHandle"],
+ ["armoury.equipmentPositionCard",".armoury-position-card","Inventory and Hybrid Armaments","one complete data-driven card for each visible equipment position","equipmentSlot"],
+ ["armoury.occupiedPositionCard",".armoury-position-card.is-occupied","Inventory and Hybrid Armaments","occupied position with item summary and expandable details","equipmentSlot"],
+ ["armoury.emptyPositionCard",".armoury-position-card.is-empty","Inventory and Hybrid Armaments","unlocked empty position and drop target","equipmentSlot"],
+ ["armoury.lockedPositionCard",".armoury-position-card.is-locked","Inventory and Hybrid Armaments","next locked equipment position and authored unlock refusal","equipmentSlot"],
+ ["armoury.positionLabelPane",".armoury-position-label-pane","Inventory and Hybrid Armaments","authored position label and short position code","equipmentSlot"],
+ ["armoury.positionSpritePane",".armoury-position-sprite-pane","Inventory and Hybrid Armaments","item, empty, or locked position art","equipmentSlot"],
+ ["armoury.summaryDivider",".armoury-position-sprite-pane","Inventory and Hybrid Armaments","right edge of the sprite pane and left boundary of the item summary","armouryPanel"],
+ ["armoury.positionSummaryPane",".armoury-position-summary-pane","Inventory and Hybrid Armaments","category, item name, combat, tags, weight, and equipment state","equipmentSlot"],
+ ["armoury.positionAction",".armoury-position-action","Inventory and Hybrid Armaments","Equip or green Equipped state action","equipmentSlot"],
+ ["armoury.armamentItemCard",".armoury-position-detail","Inventory and Hybrid Armaments","expanded lore, effects, bonus, value, weight, and tag details","inventoryDetailCard"],
+ ["armoury.armamentDetailPane",".armoury-armament-details","Inventory and Hybrid Armaments","expanded item detail pane below the compact position summary","inventoryDetailCard"],
+ ["armoury.armamentGridGroup",".armoury-position-grid-group","Inventory and Hybrid Armaments","one authored equipment group in Armaments grid mode","equipmentSlot"],
+ ["armoury.positionGridCard",".armoury-position-grid-card","Inventory and Hybrid Armaments","compact position code, sprite, and item name tile","equipmentSlot"],
+ ["armoury.occupiedPositionGridCard",".armoury-position-grid-card.is-occupied","Inventory and Hybrid Armaments","occupied Armaments grid tile","equipmentSlot"],
+ ["armoury.emptyPositionGridCard",".armoury-position-grid-card.is-empty","Inventory and Hybrid Armaments","empty Armaments grid tile and drop target","equipmentSlot"],
+ ["armoury.lockedPositionGridCard",".armoury-position-grid-card.is-locked","Inventory and Hybrid Armaments","locked Armaments grid tile","equipmentSlot"],
+ ["armoury.armamentGridDetails",".armoury-position-grid-detail","Inventory and Hybrid Armaments","shared selected-position Details area below Armaments grid groups","inventoryDetailCard"],
+ ["armoury.inventoryCard",".armoury-inventory","Inventory item workflow","Inventory member of the four shared Folding Tray families; owns the single carried-item list","inventoryItemCard"],
+ ["armoury.paneSplitter",".armoury-pane-splitter","Armoury panes","drag and keyboard pane resizer with data-authored snap points","trayResizeHandle"],
+ ["armoury.itemCard",".inventory-face, .equip-chip.as-face","Inventory item workflow","folded face of the unified inventory item card; expands in place and shares its action/progress state with the reveal","inventoryItemCard"],
+ ["armoury.inventoryItemClass","[data-card-class='inventoryItem']","Inventory item workflow","Inventory item class with holdAction enabled; folded and expanded states are one action surface","inventoryItemCard"],
+ ["armoury.itemReveal",".inventory-detail, .disc-reveal","Inventory item workflow","expanded item details within the same whole-card hold/progress surface; its action label is not a second button","inventoryDetailCard"],
+ ["armoury.comparisonTooltipAnchor",".inventory-detail[data-component='armoury.comparisonTooltipAnchor']","Inventory item workflow","comparison anchor separate from action hold; authored presentation chooses delayed hover/focus tooltip or inline receipt","equipmentComparison"],
+ ["armoury.equipmentComparison","[data-ui-component='equipment-comparison']","Inventory item workflow","full equipment comparison receipt rendered as delayed hover/focus tooltip or inline content","equipmentComparison"],
+ ["armoury.inventoryTrayResizeHandle","[data-component='armoury.inventoryTrayResizeHandle']","Inventory supporting tray","optional expanded Inventory height handle; omitted when Inventory fills its pane","trayResizeHandle"],
+ ["armoury.cardsCard",".armoury-strip","Equipment Cards tray","Cards member of the four shared Folding Tray families with expanded-only list/grid control","armouryCardStrip"],
+ ["armoury.cardList",".armoury-card-list","Equipment Cards tray","configurable vertical list or grid of equipment cards","armouryCardStrip"],
+ ["armoury.cardRow",".armoury-card-row","Equipment Cards tray","folded equipment card row with count and cost","armouryCardStrip"],
+ ["armoury.cardDetail",".armoury-card-row-detail","Equipment Cards tray","expanded card icon and detail panes","armouryCardStrip"],
+ ["armoury.cardViewToggle",".armoury-card-view-toggle","Equipment Cards tray","list/grid presentation toggle","armouryCardStrip"],
+ ["armoury.cardsTrayResizeHandle","[data-component='armoury.cardsTrayResizeHandle']","Equipment Cards tray","optional expanded Cards tray height drag and keyboard handle","trayResizeHandle"],
+ ["armoury.statsTray",".armoury-stats-tray","Stats supporting tray","Stats member of the four shared Folding Tray families with Inventory-view character data","armouryStatsPanel"],
+ ["armoury.statsSummary",".armoury-stats-summary","Stats supporting tray","class, level, combat, attributes, resources, and relic summary","armouryStatsPanel"],
+ ["armoury.statsTrayResizeHandle","[data-component='armoury.statsTrayResizeHandle']","Stats supporting tray","optional expanded Stats tray height drag and keyboard handle","trayResizeHandle"],
+ ["armoury.disclosure",".disc-face, .disc-reveal","Rendered Armoury","shared progressive-disclosure primitive","foldingTray"]
+].map(([id,owner,reuse,purpose,visual]) => ({
+  id, model:'assets/components/armoury.json', owner, group:'armoury-assets', reuse, purpose, visual,
+}));
+const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
 const COMPOSITION = Object.freeze({
   'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
   'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
   'armoury-overlay':['armoury-panel'],
-  'folding-tray':['tray-header','tray-resize-handle (expanded)','tray-content → context region component'],
-  'armoury-panel':['armoury-header','armoury-view-switcher','subject region (default: armoury-body)','folding-tray × 3'],
+  'folding-tray':['tray-header','tray-resize-handle (optional; expanded when enabled)','tray-content → context region component'],
+  'armoury-panel':['armoury-header','armoury-view-switcher (Character / Inventory / Hybrid)','responsive subject region (armoury-body)','shared folding-tray families: Armaments / Inventory / Cards / Stats'],
   'armoury-body':['armoury-figure','equipment-slot × N'],
   'equipment-slot':['equipment-set-cell × N'],
-  'armoury-inventory':['inventory-item-card × N','inventory-detail-card','equipment-comparison'],
+  'armoury-inventory':['inventory-item-card × N (folded + expanded whole-card hold surface)','inventory-detail-card (same action surface)','equipment-comparison (separate delayed tooltip/focus or inline receipt)'],
   'battlefield-stage':['component-background','player-combatant-frame','enemy-combatant-frame × N'],
   'combatant-frame':['component-background','combatant-sprite','combatant-nameplate','health-status-bar','poise-status-bar','proc-status-bar','arcane-exposure-bar','status-effect-tray','intent-indicator','block-badge'],
   'player-combatant-frame':['combatant-frame'],
@@ -397,6 +467,16 @@ const COMPOSITION = Object.freeze({
   'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
   ,'class-preview-pane':['class-resource-grid']
   ,'character-disclosure':['mode-choice','primary-stat-card × N','resource-strip','sprite-choice','sigil-choice','tint-choice','keepsake-choice']
+  ,'armoury.shell':['armoury.viewSwitcher','armoury.characterView','armoury.inventoryView','armoury.hybridView']
+  ,'armoury.characterView':['armoury.characterPane','armoury.spritePane','armoury.characterSummary','armoury.combatPowerCard','armoury.attributesCard','armoury.relicsCard']
+  ,'armoury.inventoryView':['armoury.armamentsCard','armoury.inventoryCard','armoury.cardsCard','armoury.statsTray']
+  ,'armoury.hybridView':['armoury.characterPane','armoury.hybridPaneSplitter','armoury.armamentsCard']
+  ,'armoury.armamentsCard':['armoury.armamentsHeader','armoury.equipmentPositionCard × N','armoury.armamentGridDetails','non-resizable']
+  ,'armoury.equipmentPositionCard':['armoury.positionLabelPane','armoury.positionSpritePane','armoury.summaryDivider','armoury.positionSummaryPane','armoury.positionAction','armoury.armamentDetailPane']
+  ,'armoury.inventoryCard':['armoury.itemCard × N','armoury.inventoryTrayResizeHandle (optional supporting context)']
+  ,'armoury.itemCard':['armoury.itemReveal','armoury.comparisonTooltipAnchor','armoury.equipmentComparison']
+  ,'armoury.cardsCard':['armoury.cardList','armoury.cardRow × N','armoury.cardDetail','armoury.cardsTrayResizeHandle (optional)']
+  ,'armoury.statsTray':['armoury.statsSummary','armoury.statsTrayResizeHandle (optional)']
 });
 const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), kind=document.querySelector('#kind'), sort=document.querySelector('#sort'), count=document.querySelector('#count');
 const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
@@ -452,7 +532,7 @@ function openDetails(id,trigger=null){
   document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
   const related=relatedIds(c.id);
   document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
-  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-resize-handle','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}`;
+  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-resize-handle','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}${c.group==='armoury-assets'?'<a class="detail-gallery-link" href="ASSET-COMPONENTS.md">Open Asset Components reference</a>':''}`;
   drawer.setAttribute('aria-hidden','false'); document.body.classList.add('detail-open'); closeDetailButton.focus();
   drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
   drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
@@ -465,7 +545,7 @@ function render(){
   });
   const compareText=(a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'});
   shown.sort((a,b)=>sort.value==='id-desc'?compareText(b.id,a.id):sort.value==='group'?compareText(a.group,b.group)||compareText(a.id,b.id):sort.value==='model'?compareText(a.model,b.model)||compareText(a.id,b.id):sort.value==='view'?compareText(a.owner,b.owner)||compareText(a.id,b.id):compareText(a.id,b.id));
-  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
+  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replace(/[-.]/g,' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
   count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); syncUrl(); updateDensityUi();
 }
 closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;

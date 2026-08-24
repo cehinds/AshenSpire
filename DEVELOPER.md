@@ -133,6 +133,53 @@ For migrated slices, keep these responsibilities separate:
 Menu and Armoury are the reference implementations. Keep public entry points
 compatible while migrating a vertical slice; do not bulk-move unrelated code.
 
+### Armoury configuration and documentation
+
+The current player contract is summarized in
+[`docs/ARMOURY-LAYOUT-BRIEF.md`](docs/ARMOURY-LAYOUT-BRIEF.md); stable rendered
+names and selectors live in
+[`docs/ASSET-COMPONENTS.md`](docs/ASSET-COMPONENTS.md). The reusable semantic
+model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
+
+- Author view labels, pane composition, ratios, snap stops, compact thresholds,
+  List/Grid defaults, comparison presentation, and card-class capabilities in
+  `content/source/armouryUi.json`. Run the content build; never hand-edit
+  `src/content/generated/armouryUi.js`.
+- The persisted view keys remain `grid`, `rack`, and `hybrid` for save
+  compatibility, but their player-facing labels are **Character**,
+  **Inventory**, and **Hybrid**. Do not expose the compatibility keys as UI
+  names.
+- `equipSlots.csv` and the loadout ladder own equipment group order, position
+  count, labels, short codes, lock state, and socket identity. Renderers iterate
+  those records; they must not branch on Right Hand, Left Hand, Armour, or a
+  fixed number of positions.
+- `layout.cardClasses.inventoryItem.holdAction` is the class capability switch.
+  When true and the shared hold-confirm setting is active, the folded face and
+  expanded reveal are one action surface and one progress presentation. When
+  hold-confirm is off, a tap still discloses details and the explicit in-card
+  action remains available. Do not add a second nested action button to the
+  hold-enabled presentation.
+- `layout.comparison.presentation` chooses `tooltip` or `inline`.
+  `hoverDelayMs`, `tooltipWidthRem`, and `tooltipMaxHeightRatio` configure the
+  shared tooltip. Comparison reading never steals the Equip/Move/Unequip hold.
+- Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
+  Folding collapses to the standard header without erasing the remembered
+  expanded size. Sort controls and resize handles exist only while expanded
+  and only when that tray model declares the corresponding capability.
+  Armaments is currently non-resizable; Inventory also disables height resizing
+  while it fills the Inventory-view pane.
+
+After an Armoury contract change, update the JSON registry, Markdown catalogs,
+interactive catalog description, GDD/SPEC, and changelog in the same change.
+Run at least:
+
+```bash
+node tools/content-build.mjs --check
+node tools/ui-components.mjs --selftest
+node tools/tray-components.mjs
+node tests/run-node.mjs
+```
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js
