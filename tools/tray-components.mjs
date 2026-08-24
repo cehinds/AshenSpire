@@ -96,7 +96,7 @@ async function main() {
         cell.style.flexDirection = (edge === 'left' || edge === 'right') ? 'row' : 'column';
         cell.replaceChildren();
         const item = componentModel(UI_COMPONENTS.armouryInventory);
-        const model = trayModel({ id:'test-' + edge, name:edge.toUpperCase() + ' TRAY', count:3, itemType:'card', edge, expanded:states[edge], sortable:true, items:[item] });
+        const model = trayModel({ id:'test-' + edge, name:edge.toUpperCase() + ' TRAY', count:3, itemType:'card', edge, expanded:states[edge], sortable:true, minExpandedSize:96, items:[item] });
         const rendered = renderTray(model, {
           onToggle: () => { states[edge] = !states[edge]; mount(edge); },
           onSort: () => {},
@@ -113,7 +113,8 @@ async function main() {
       const fold = tray.querySelector('.tray-fold');
       const content = tray.querySelector('.tray-content');
       const rect = tray.getBoundingClientRect();
-      return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), controls:fold.getAttribute('aria-controls'), hidden:content.hidden, width:rect.width, height:rect.height }];
+      const style = getComputedStyle(tray);
+      return [edge, { text:fold.innerText.trim().replace(/\\s+/g, ' '), expanded:fold.getAttribute('aria-expanded'), controls:fold.getAttribute('aria-controls'), hidden:content.hidden, width:rect.width, height:rect.height, marginTop:parseFloat(style.marginTop), marginLeft:parseFloat(style.marginLeft), marginRight:parseFloat(style.marginRight) }];
     })))()`);
     const closed = { top:'v', right:'<', bottom:'^', left:'>' };
     for (const edge of Object.keys(closed)) {
@@ -123,6 +124,7 @@ async function main() {
     }
     check(await evaluate(`[...document.querySelectorAll('.tray-content')].every((node) => node.dataset.childCount === '1')`), 'renderer receives each Tray Content child model');
     check(before.right.height > before.right.width * 2 && before.left.height > before.left.width * 2, 'closed side trays are full-height rails');
+    check(before.left.marginTop > 0 && before.left.marginLeft > 0 && before.right.marginTop > 0 && before.right.marginRight > 0, 'side trays share a positive vertical and anchored-edge margin');
     await evaluate(`document.querySelector('[data-tray-edge="right"] .tray-fold').click(); document.querySelector('[data-tray-edge="left"] .tray-fold').click(); true`);
     const opened = await evaluate(`(() => Object.fromEntries(['right','left'].map((edge) => {
       const tray = document.querySelector('[data-tray-edge="' + edge + '"]');
@@ -134,6 +136,46 @@ async function main() {
     check(opened.right.expanded === 'true' && !opened.right.hidden, 'right open ARIA and content state agree');
     check(opened.left.expanded === 'true' && !opened.left.hidden, 'left open ARIA and content state agree');
     check(opened.right.width > before.right.width * 2 && opened.left.width > before.left.width * 2, 'open side trays span their section width');
+    const resize = await evaluate(`(async () => {
+      const tray = document.querySelector('[data-tray-edge="right"]');
+      const handle = tray.querySelector('.tray-resize-handle');
+      const hit = handle.getBoundingClientRect();
+      const start = tray.getBoundingClientRect().width;
+      const pointerId = 41;
+      handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, pointerId, pointerType:'touch', button:0, clientX:hit.left + 22, clientY:hit.top + 22 }));
+      await new Promise((done) => setTimeout(done, 210));
+      window.dispatchEvent(new PointerEvent('pointermove', { bubbles:true, pointerId, pointerType:'touch', clientX:hit.left + 82, clientY:hit.top + 22 }));
+      window.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, pointerId, pointerType:'touch', clientX:hit.left + 82, clientY:hit.top + 22 }));
+      const resized = tray.getBoundingClientRect().width;
+      tray.querySelector('.tray-fold').click();
+      const folded = document.querySelector('[data-tray-edge="right"]').getBoundingClientRect().width;
+      document.querySelector('[data-tray-edge="right"] .tray-fold').click();
+      const restoredTray = document.querySelector('[data-tray-edge="right"]');
+      return { start, resized, folded, restored:restoredTray.getBoundingClientRect().width, handleWidth:restoredTray.querySelector('.tray-resize-handle').getBoundingClientRect().width };
+    })()`);
+    check(resize.resized < resize.start - 40, 'touch hold and drag resizes an expanded side tray');
+    check(resize.folded < resize.resized / 2, 'folding returns a resized side tray to its compact rail');
+    check(Math.abs(resize.restored - resize.resized) < 2, 'reopening restores the tray’s last expanded size');
+    check(resize.handleWidth >= 44, 'side resize handle exposes at least a 44px touch surface');
+    const verticalResize = await evaluate(`(() => {
+      document.querySelector('[data-tray-edge="top"] .tray-fold').click();
+      const tray = document.querySelector('[data-tray-edge="top"]');
+      const handle = tray.querySelector('.tray-resize-handle');
+      const hit = handle.getBoundingClientRect();
+      const start = tray.getBoundingClientRect().height;
+      const pointerId = 42;
+      handle.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true, pointerId, pointerType:'mouse', button:0, clientX:hit.left + 22, clientY:hit.top + 22 }));
+      window.dispatchEvent(new PointerEvent('pointermove', { bubbles:true, pointerId, pointerType:'mouse', clientX:hit.left + 22, clientY:hit.top - 34 }));
+      window.dispatchEvent(new PointerEvent('pointerup', { bubbles:true, pointerId, pointerType:'mouse', clientX:hit.left + 22, clientY:hit.top - 34 }));
+      const resized = tray.getBoundingClientRect().height;
+      tray.querySelector('.tray-fold').click();
+      document.querySelector('[data-tray-edge="top"] .tray-fold').click();
+      const restoredTray = document.querySelector('[data-tray-edge="top"]');
+      return { start, resized, restored:restoredTray.getBoundingClientRect().height, handleHeight:restoredTray.querySelector('.tray-resize-handle').getBoundingClientRect().height };
+    })()`);
+    check(verticalResize.resized < verticalResize.start - 35, `mouse drag resizes an expanded top tray vertically (${verticalResize.start} → ${verticalResize.resized})`);
+    check(Math.abs(verticalResize.restored - verticalResize.resized) < 2, 'top tray restores its last expanded height');
+    check(verticalResize.handleHeight >= 44, 'top resize handle exposes at least a 44px touch surface');
     const composition = await evaluate(`(async () => {
       const { armouryPanelModel } = await import('/src/ui/models/ArmouryModels.js');
       const ids = ['slots','inventory','cards','stats'];

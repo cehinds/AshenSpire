@@ -227,6 +227,7 @@ const V = {
   armouryStatsPanel:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:8px"><b>ATTRIBUTES &amp; RESOURCES</b><br><span class="mini-label">STR 13 · DEX 11 · HP 56</span></div></div>',
   armouryCardStrip:'<div class="mini mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div></div>',
   armouryRegionHeader:'<div class="mini"><div class="menu-demo"><div class="row"><span>▾ INVENTORY</span><span>12 items</span></div></div></div>',
+  trayResizeHandle:'<div class="mini mini-stack"><div style="position:relative;width:150px;height:44px;border:1px dashed var(--line-soft)"><span style="position:absolute;left:50%;top:50%;width:48px;height:2px;border-radius:99px;background:var(--gold);transform:translate(-50%,-50%)"></span></div><div class="mini-label">44px drag / hold surface</div></div>',
   battlefieldStage:'<div class="mini"><div class="stage"><div class="combat-card player"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">7 DMG</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">3×2</span><strong>◆</strong><span>ENEMY</span><span class="card-hp"></span></div></div></div>',
   combatantFrame:'<div class="mini mini-stack"><div class="combat-card neutral large"><span class="intent">INTENT</span><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">shared card frame</div></div>',
   playerFrame:'<div class="mini mini-stack"><div class="combat-card player large"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span><span>SP 2/2</span></div><div class="mini-label">player card · blue</div></div>',
@@ -280,6 +281,7 @@ const C = [
  ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','itemSlot'],
  ['folding-tray','trayModel','trayComponents.renderTray','primitive','Armoury + future menus','Edge-aware disclosure composition.','foldingTray'],
  ['tray-header','trayHeaderModel child','trayComponents.renderTray','primitive','Folding Tray','Directional fold action, name, quantity, and optional sort.','trayHeader'],
+ ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Expanded Folding Tray','44px mouse, touch-hold, and keyboard resize surface.','trayResizeHandle'],
  ['tray-content','trayContentModel child','trayComponents.renderTray','primitive','Folding Tray','Pluggable item-model content host.','trayContent'],
  ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','relicTray'],
  ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','relicSlot'],
@@ -324,7 +326,7 @@ const COMPOSITION = Object.freeze({
   'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
   'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
   'armoury-overlay':['armoury-panel'],
-  'folding-tray':['tray-header','tray-content → context region component'],
+  'folding-tray':['tray-header','tray-resize-handle (expanded)','tray-content → context region component'],
   'armoury-panel':['armoury-header','armoury-view-switcher','subject region (default: armoury-body)','folding-tray × 3'],
   'armoury-body':['armoury-figure','equipment-slot × N'],
   'equipment-slot':['equipment-set-cell × N'],
@@ -358,7 +360,7 @@ function openDetails(id,trigger=null){
   document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
   const related=relatedIds(c.id);
   document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
-  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}`;
+  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-resize-handle','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}`;
   drawer.setAttribute('aria-hidden','false'); document.body.classList.add('detail-open'); closeDetailButton.focus();
   drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
   drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };

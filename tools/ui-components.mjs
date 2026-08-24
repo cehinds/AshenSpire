@@ -28,7 +28,7 @@ const REQUIRED_IDS = Object.freeze([
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
   'armoury-card-strip', 'armoury-region-header',
-  'folding-tray', 'tray-header', 'tray-content',
+  'folding-tray', 'tray-header', 'tray-resize-handle', 'tray-content',
 ]);
 
 export function receipt() {
@@ -192,6 +192,7 @@ export function findings(r) {
   }
   if (!/export function trayModel/.test(r.trayModels)
       || !/UI\.trayHeader/.test(r.trayModels)
+      || !/UI\.trayResizeHandle/.test(r.trayModels)
       || !/UI\.trayContent/.test(r.trayModels)
       || !/export function renderTray/.test(r.trayComponents)
       || !/trayModel\([\s\S]*items:\s*\[item\]/.test(r.armouryModels)
@@ -206,7 +207,10 @@ export function findings(r) {
       || !/if \(renderContent\) renderContent\(content, contentModel\.children\)/.test(r.trayComponents)
       || !/\.tray-header \.tray-count\s*\{[^}]*margin-left:\s*auto;/.test(r.uiCss)
       || !/--ui-section-control-gap/.test(r.uiCss)
-      || !/data-tray-edge='right'\]\[data-collapsed='1'\][\s\S]*height:\s*100%/.test(r.uiCss)
+      || !/--ui-tray-side-margin/.test(r.uiCss)
+      || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
+      || !/pointerdown/.test(r.trayComponents)
+      || !/sizeService\.write/.test(r.trayComponents)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
   }

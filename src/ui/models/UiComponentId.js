@@ -53,6 +53,7 @@ export const UI_COMPONENTS = Object.freeze({
   armouryRegionHeader: 'armoury-region-header',
   foldingTray: 'folding-tray',
   trayHeader: 'tray-header',
+  trayResizeHandle: 'tray-resize-handle',
   trayContent: 'tray-content',
   battlefieldStage: 'battlefield-stage',
   combatantFrame: 'combatant-frame',

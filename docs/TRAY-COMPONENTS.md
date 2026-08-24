@@ -5,6 +5,8 @@
 - **Folding Tray** (`folding-tray`): edge-aware disclosure container.
 - **Tray Header** (`tray-header`): one fold control containing the arrow, tray
   name, and quantity, plus an optional real sort action.
+- **Tray Resize Handle** (`tray-resize-handle`): expanded-only 44px drag/hold
+  surface. Top/Bottom resize vertically; Left/Right resize horizontally.
 - **Tray Content** (`tray-content`): pluggable content area. Inventory items,
   cards, stats, relics, or future menu-specific item models remain responsible
   for their own markup and behavior.
@@ -138,6 +140,12 @@ Responsive and access rules:
   the number of rendered rows.
 - Expanded content owns its scrollport; it must not push the modal off-screen.
 - Keep central gameplay clear and collapse secondary trays by default.
+- Inset Left and Right tray shells from their anchored edge and vertical bounds
+  with the shared `--ui-tray-side-margin` token.
+- Start resizing immediately with a mouse, or after a short deliberate hold on
+  touch. Arrow keys resize a focused handle in 16px steps.
+- Remember expanded size by stable tray id and edge. Folding always returns to
+  the standard bar/rail; reopening restores the last expanded size.
 
 Avoid: hand-written tray headers in screens, inert sort icons, arrows with
 different meanings between edges, hidden counts, and item-specific logic in
@@ -156,6 +164,8 @@ the shared renderer.
    `name`, `newest`, or `equipped`; never ship a decorative button.
 5. Let layout data choose the edge. Do not infer it from viewport width inside
    the renderer.
+6. Tune the slight Left/Right tray breathing room once through
+   `--ui-tray-side-margin`; do not add screen-specific margins.
 
 ## Verification
 

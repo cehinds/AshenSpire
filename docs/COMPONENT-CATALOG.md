@@ -37,6 +37,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `item-slot` | `componentModel` semantic ID | Item view | Inventory | Generic item slot contract. |
 | `folding-tray` | `trayModel` | `trayComponents.renderTray` | Armoury + future menus | Edge-aware disclosure composition. |
 | `tray-header` | `trayHeaderModel` child | `trayComponents.renderTray` | Folding Tray | Arrow, name, quantity, and optional sort action. |
+| `tray-resize-handle` | `trayResizeHandleModel` child | `trayComponents.renderTray` | Expanded Folding Tray | 44px pointer/touch/keyboard resize surface. |
 | `tray-content` | `trayContentModel` child | `trayComponents.renderTray` | Folding Tray | Pluggable item-model content host. |
 | `relic-tray` | `itemTrayModel` | Belt view | Map + Combat | Relics under SP. |
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
@@ -133,6 +134,7 @@ armoury-overlay
    │  └─ equipment-slot × N ── equipment-set-cell × N
    ├─ folding-tray × 3
    │  ├─ tray-header
+   │  ├─ tray-resize-handle (expanded)
    │  └─ tray-content
    │     └─ one context region component
    └─ context regions: armoury-inventory / armoury-stats-panel / armoury-card-strip
