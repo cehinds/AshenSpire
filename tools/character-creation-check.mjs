@@ -214,6 +214,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   await click('.cz-class[data-class="starseer"]');
   assert((await evaluate(`document.querySelector('[data-face="class"] .disc-value').textContent`)) === 'Starseer', `${width}x${height}: class selector updates its receipt`);
+  await open('equipment');
+  assert((await evaluate(`document.querySelector('#cz-equipment-fold [data-face="armour"] .disc-value').textContent`)) === 'Nightweave', `${width}x${height}: armour receipt is scoped to the selected class`);
   await open('character');
   assert(await noOverflow(), `${width}x${height}: Character has no horizontal overflow`);
   assert((await evaluate(`document.querySelectorAll('.cc-primary-stats .cc-primary-stat').length`)) === 5, `${width}x${height}: five primary stats are vertical cards`);

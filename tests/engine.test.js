@@ -5503,6 +5503,18 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
         `invalid configurable creation ${path} reports its JSON path`);
     }
 
+    const duplicateSections = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    duplicateSections.characterCreation.equipmentSections.push(
+      { id: 'armourAgain', label: 'Armour Again', kind: 'armour' },
+      { id: 'leftAgain', label: 'Left Again', kind: 'hand', slot: 'leftHand' },
+      { id: 'relicAgain', label: 'Relic Again', kind: 'relic' },
+    );
+    const duplicateSectionProblems = characterCreationProblems(duplicateSections);
+    for (const role of ['armour', 'leftHand', 'relic']) {
+      assert(duplicateSectionProblems.some((problem) => problem.includes(`duplicate ${role} section`)),
+        `a duplicate ${role} role is rejected before rendering singleton equipment disclosures`);
+    }
+
     const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     malformedKeepsakes.characterCreation.keepsakes = {};
     const keepsakeValidation = validateContent(malformedKeepsakes);

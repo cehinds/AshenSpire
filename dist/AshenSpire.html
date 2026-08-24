@@ -25182,11 +25182,14 @@ function characterCreationProblems(source) {
       if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
       if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
     }
-    if (!sections.some((row) => row && row.kind === 'armour')) problems.push('characterCreation.equipmentSections: missing armour section');
-    if (!sections.some((row) => row && row.kind === 'relic')) problems.push('characterCreation.equipmentSections: missing relic section');
-    for (const slot of ['leftHand', 'rightHand']) if (!sections.some((row) => row && row.kind === 'hand' && row.slot === slot)) {
-      problems.push(`characterCreation.equipmentSections: missing ${slot} section`);
-    }
+    const requireExactlyOne = (role, matches) => {
+      const count = sections.filter((row) => row && typeof row === 'object' && !Array.isArray(row) && matches(row)).length;
+      if (count === 0) problems.push(`characterCreation.equipmentSections: missing ${role} section`);
+      else if (count > 1) problems.push(`characterCreation.equipmentSections: duplicate ${role} section`);
+    };
+    requireExactlyOne('armour', (row) => row.kind === 'armour');
+    requireExactlyOne('relic', (row) => row.kind === 'relic');
+    for (const slot of ['leftHand', 'rightHand']) requireExactlyOne(slot, (row) => row.kind === 'hand' && row.slot === slot);
   }
   if (!cfg.classes || typeof cfg.classes !== 'object' || Array.isArray(cfg.classes)) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
@@ -37596,7 +37599,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '21782e771d';
+const SOURCE = 'e3bf21cf3f';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -37630,7 +37633,7 @@ const SOURCE = '21782e771d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1184';
+const ORDINAL = '1185';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -38501,7 +38504,9 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
   characterFold.open('primary');
 
   const equipmentValue = (section) => {
-    if (section.kind === 'armour') return registries.equipment.armour.find((row) => row.id === state.startingArmourId)?.name || 'None';
+    if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
+      row.classId === state.classId && row.id === state.startingArmourId
+    ))?.name || 'None';
     if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
     if (section.kind === 'slot') return 'None';
     const id = state.startingHands[section.slot];

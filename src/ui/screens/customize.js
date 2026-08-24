@@ -543,7 +543,9 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   characterFold.open('primary');
 
   const equipmentValue = (section) => {
-    if (section.kind === 'armour') return registries.equipment.armour.find((row) => row.id === state.startingArmourId)?.name || 'None';
+    if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
+      row.classId === state.classId && row.id === state.startingArmourId
+    ))?.name || 'None';
     if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
     if (section.kind === 'slot') return 'None';
     const id = state.startingHands[section.slot];

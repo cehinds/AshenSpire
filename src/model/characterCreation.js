@@ -48,11 +48,14 @@ export function characterCreationProblems(source) {
       if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
       if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
     }
-    if (!sections.some((row) => row && row.kind === 'armour')) problems.push('characterCreation.equipmentSections: missing armour section');
-    if (!sections.some((row) => row && row.kind === 'relic')) problems.push('characterCreation.equipmentSections: missing relic section');
-    for (const slot of ['leftHand', 'rightHand']) if (!sections.some((row) => row && row.kind === 'hand' && row.slot === slot)) {
-      problems.push(`characterCreation.equipmentSections: missing ${slot} section`);
-    }
+    const requireExactlyOne = (role, matches) => {
+      const count = sections.filter((row) => row && typeof row === 'object' && !Array.isArray(row) && matches(row)).length;
+      if (count === 0) problems.push(`characterCreation.equipmentSections: missing ${role} section`);
+      else if (count > 1) problems.push(`characterCreation.equipmentSections: duplicate ${role} section`);
+    };
+    requireExactlyOne('armour', (row) => row.kind === 'armour');
+    requireExactlyOne('relic', (row) => row.kind === 'relic');
+    for (const slot of ['leftHand', 'rightHand']) requireExactlyOne(slot, (row) => row.kind === 'hand' && row.slot === slot);
   }
   if (!cfg.classes || typeof cfg.classes !== 'object' || Array.isArray(cfg.classes)) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
