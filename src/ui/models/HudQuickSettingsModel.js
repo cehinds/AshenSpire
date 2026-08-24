@@ -22,8 +22,13 @@ export function hudQuickSettingsModel({ place, presentation = {}, settings = {} 
     properties: {
       enabled,
       place,
-      edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 8,
-      stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 4,
+      edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 4,
+      stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 0,
+      wideControlHeightPx: Number.isFinite(presentation.wideControlHeightPx) ? presentation.wideControlHeightPx : 24,
+      labelFontPx: Number.isFinite(presentation.labelFontPx) ? presentation.labelFontPx : 10,
+      glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 14,
+      stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 5,
+      showCardBackground: presentation.showCardBackground === true,
       showLabels: presentation.showLabels !== false,
     },
     children: [
