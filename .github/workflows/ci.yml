@@ -349,7 +349,7 @@ jobs:
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
 
-      - name: …and that gate can fail — twenty-three same-door browser boots
+      - name: …and that gate can fail — twenty-four same-door browser boots
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
 
   browser-guard:

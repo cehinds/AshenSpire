@@ -421,7 +421,9 @@ function finish(state, detail) {
 const READ = `(() => {
   const panel = document.querySelector('#set-panel');
   if (!panel) return { panel: false };
-  // EFFECTIVE OPACITY — the row's own value MULTIPLIED BY EVERY ANCESTOR'S.
+  // EFFECTIVE OPACITY — the row's own value MULTIPLIED BY EVERY ANCESTOR'S,
+  // including opacity() filters that make a subtree transparent without
+  // changing its boxes or its computed opacity property.
   //
   // Opacity is the one of the three hiding mechanisms that neither inherits nor
   // collapses the box. \`display:none\` on an ancestor gives the row a 0x0 rect,
@@ -434,8 +436,13 @@ const READ = `(() => {
   const effOpacity = (el) => {
     let o = 1;
     for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-      const v = parseFloat(getComputedStyle(n).opacity);
+      const cs = getComputedStyle(n);
+      const v = parseFloat(cs.opacity);
       if (!Number.isNaN(v)) o *= v;
+      for (const match of cs.filter.matchAll(/opacity\\(\\s*([+-]?(?:\\d+(?:\\.\\d+)?|\\.\\d+))(%)?\\s*\\)/gi)) {
+        const amount = Number(match[1]) / (match[2] ? 100 : 1);
+        o *= Math.max(0, Math.min(1, amount));
+      }
     }
     return +o.toFixed(4);
   };
@@ -1278,6 +1285,15 @@ function selftestPlants() {
       expectRed: /FINDING D0\/population .*panelEffectiveOpacity=0/,
     },
     {
+      // 13b — FILTER OPACITY HAS THE SAME PAINT RESULT WITHOUT TOUCHING THE
+      // computed opacity property. Every descendant keeps opacity 1 and its
+      // full box, so only a walk that includes opacity() filters catches it.
+      name: 'a door ancestor opacity filter hides every real box in the panel',
+      file: 'styles/ui.css',
+      append: '.modal-veil { filter: opacity(0) !important; }',
+      expectRed: /FINDING D0\/population .*panelEffectiveOpacity=0/,
+    },
+    {
       // 14 — THE RENDERER NEVER YIELDS: a CDP command that is SENT AND NEVER
       // ANSWERED, with a perfectly healthy socket. This is Sunna's shape, from
       // the night her screenshot harness hung forever on `Page.captureScreenshot`
@@ -1497,8 +1513,8 @@ async function countedVerdictPlant(count) {
 
 async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelftestPlants()) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: nineteen whole-tool browser mutants
-  // plus a clean run is twenty browser boots. The population is one shape and one
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty whole-tool browser mutants
+  // plus a clean run is twenty-one browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
