@@ -20,7 +20,7 @@
 //   · the RENDERER reorders (`categoryHtml`'s `h.rows.map(...)`), leaving
 //     `categoryHandler().rows` untouched;
 //   · CSS hides the first row — it is still first in the array, and the first
-//     control a player can SEE is Character sprites;
+//     control a player can SEE is Combat pacing;
 //   · CSS reverses the visual order of a DOM that never moved (`column-reverse`
 //     / `order:`), which is the same shape as a box that "never moved" because
 //     what moved was its parent.
@@ -51,8 +51,8 @@
 //   D3 INK      that row AND THE CONTROL INSIDE IT are on screen ON ARRIVAL —
 //               non-zero box, not `display:none` / `visibility:hidden`, not
 //               transparent through ANY ancestor, and each box wholly inside the
-//               viewport ON ALL FOUR EDGES, with nothing scrolled ON ALL THREE
-//               AXES (panel, document Y, document X).
+//               viewport ON ALL FOUR EDGES, with nothing scrolled in ANY real
+//               scrollable ancestor, nor on document Y or document X.
 //               TWO BOXES SINCE 2026-08-22, and the second one is the sweep D2's
 //               finding earned: this judged the `.set-row` and called it the
 //               control. A toggle displaced, shrunk or faded INSIDE a row that
@@ -95,8 +95,9 @@
 // BOTH EDGES, named because the gate requires it:
 //   · EMPTY — Display with zero rows (plant 5). D0 goes red; nothing else may
 //     report green over it.
-//   · MAX — Text XL, the longest labels and notes and the tallest rows this
-//     screen has, at the narrow shape where the panel is nearest to overflowing.
+//   · MAX — Text XL at the narrow shape where the panel is nearest to
+//     overflowing. Its computed root font metric must exceed Text M; row height
+//     is diagnostic only because a legitimate fixed/min-height can equalize it.
 //
 // THE THRESHOLD'S OWN NEIGHBOURHOOD (Charter 2b). The threshold here is ordinal
 // position, and its unit is one row: plant 1 moves `fullscreen` exactly ONE
@@ -124,9 +125,10 @@
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
 //     and macOS are `unknown` here as everywhere else in this repo.
 //   · IT IS WIRED INTO ci.yml's MANUAL Ubuntu browser job. One clean run
-//     measures eight rendered cells; the selftest adds eighteen copied-tree
-//     browser plants, including deliberate 25-second and 30-second timeout
-//     defects. The workflow states that cost beside the steps. Until an
+//     measures eight rendered cells; the selftest adds twenty-one copied-tree
+//     browser plants across two focused corpora, including deliberate 25-second
+//     and 30-second timeout defects. The workflow states that cost beside the
+//     steps. Until an
 //     exact-head dispatch finishes, this gate is `unknown`, not green.
 //
 // REMOVAL CONDITION (SOP 1's corollary): deleted the day #248's ordering ask is
@@ -451,12 +453,15 @@ const READ = `(() => {
       bottom: +b.bottom.toFixed(2), right: +b.right.toFixed(2),
       w: +b.width.toFixed(2), h: +b.height.toFixed(2),
       display: cs.display, visibility: cs.visibility, opacity: cs.opacity,
+      intersectsViewport: b.bottom > 0 && b.right > 0
+        && b.top < window.innerHeight && b.left < window.innerWidth,
     };
   });
-  // VISIBLE means a player could see it if they looked: it occupies space and
-  // is not hidden. Being off-screen is D3's question, not this one.
+  // VISIBLE means a player can meet it now: it occupies space, is not hidden,
+  // and intersects the viewport. A rendered row translated wholly above the
+  // screen must not outrank the first control that is actually visible.
   const visible = rows.filter((r) => r.display !== 'none' && r.visibility !== 'hidden'
-    && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0);
+    && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0 && r.intersectsViewport);
   // GEOMETRIC ORDER, not DOM order. This is the whole reason the tool exists.
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
   const fs = rows.filter((r) => r.key === ${JSON.stringify(WANT)});
@@ -479,6 +484,20 @@ const READ = `(() => {
       effOpacity: effOpacity(el),
     };
   };
+  const scrollName = (el) => {
+    if (el.id) return '#' + el.id;
+    const classes = [...el.classList].map((name) => '.' + name).join('');
+    return el.tagName.toLowerCase() + classes;
+  };
+  const scrollAncestors = [];
+  for (let el = panel; el && el !== document.documentElement; el = el.parentElement) {
+    const cs = getComputedStyle(el);
+    const cssScroller = /(auto|scroll|overlay)/.test(cs.overflowX + ' ' + cs.overflowY);
+    const hasOffset = el.scrollTop !== 0 || el.scrollLeft !== 0;
+    if (el === panel || cssScroller || hasOffset) {
+      scrollAncestors.push({ name: scrollName(el), top: el.scrollTop, left: el.scrollLeft });
+    }
+  }
   return {
     panel: true,
     tab: (document.querySelector('.set-tab.on') || { dataset: {} }).dataset.member,
@@ -492,7 +511,8 @@ const READ = `(() => {
     // the thing inside it.
     fsCtrl: fsEls[0] ? boxOf(fsEls[0]) : null,
     panelEffOpacity: effOpacity(panel),
-    scroll: { panelTop: panel.scrollTop, docY: window.scrollY, docX: window.scrollX },
+    rootFontPx: +parseFloat(getComputedStyle(document.documentElement).fontSize).toFixed(2),
+    scroll: { ancestors: scrollAncestors, docY: window.scrollY, docX: window.scrollX },
     vp: { w: window.innerWidth, h: window.innerHeight },
   };
 })()`;
@@ -731,7 +751,8 @@ function judge(r, cell) {
     const ctrlState = ctrl ? boxState(ctrl) : null;
     const offscreen = rowState.off;
     const onscreen = rowState.onscreen;
-    // NOTHING SCROLLED MEANS NOTHING, AND THAT IS THREE AXES, NOT TWO.
+    // NOTHING SCROLLED MEANS NOTHING: every real scroll ancestor plus document
+    // X and Y, rather than one hard-coded panel and two page axes.
     //
     // `docX` was READ off the page and never used. With the document scrolled
     // 500 px horizontally the read came back
@@ -750,8 +771,12 @@ function judge(r, cell) {
     //
     // Watched, not asserted: corpus plant 11 scrolls the document 500 px right
     // through the real door and this predicate goes red naming `docX=500`.
-    const unscrolled = r.scroll.panelTop === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
-    const scrolls = `panelTop=${r.scroll.panelTop} docY=${r.scroll.docY} docX=${r.scroll.docX}`;
+    const movedAncestors = r.scroll.ancestors.filter((entry) => entry.top !== 0 || entry.left !== 0);
+    const unscrolled = movedAncestors.length === 0 && r.scroll.docY === 0 && r.scroll.docX === 0;
+    const ancestorOffsets = r.scroll.ancestors
+      .map((entry) => `${entry.name}:top=${entry.top},left=${entry.left}`)
+      .join(';');
+    const scrolls = `ancestors=[${ancestorOffsets}] docY=${r.scroll.docY} docX=${r.scroll.docX}`;
     const box = `x ${fs.left}..${fs.right}, y ${fs.top}..${fs.bottom}`;
     const ctrlBox = ctrl ? `x ${ctrl.left}..${ctrl.right}, y ${ctrl.top}..${ctrl.bottom}` : 'absent';
     const ctrlOk = !!ctrlState && ctrlState.shown && ctrlState.onscreen;
@@ -779,13 +804,14 @@ function judge(r, cell) {
 async function main() {
   if (args.includes('--selftest')) {
     const plants = selftestPlants();
-    if (!preflightSelftestPlantSites(plants)) {
+    const maxEdgePlants = maxEdgeSelftestPlants();
+    if (!preflightSelftestPlantSites([...plants, ...maxEdgePlants])) {
       return finish('fail', 'selftest plant-site preflight failed');
     }
     const platformCode = await unsupportedPlatformPlant();
     if (platformCode) return finish('fail', 'unsupported-platform regression failed');
     if (process.platform !== 'linux') return refuseUnsupportedPlatform();
-    return selftest(plants);
+    return selftest(plants, maxEdgePlants);
   }
 
   // THE MEASURED PLATFORM IS PART OF THE POPULATION. A Windows or macOS run
@@ -846,7 +872,7 @@ async function main() {
   live.dropBrowser = dropBrowser;
   const cdp = connectCdp(wsUrl); live.cdp = cdp; await cdp.ready;
 
-  const heights = [];
+  const textMetrics = [];
 
   for (const vp of SHAPES) {
     const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
@@ -903,11 +929,16 @@ async function main() {
         if (r && r.panel && r.tab !== 'Display') {
           fail(`FINDING D0/population cell=${cell} tab=${r.tab} — the panel measured is not Display.`);
         }
-        // THE MAX EDGE HAS TO ARRIVE, NOT JUST BE NAMED. Recorded per cell and
-        // asserted after the loop: if XL does not render taller than M, the XL
-        // cell is a second copy of the M cell wearing a different name, and the
-        // "both edges" claim is decoration.
-        if (r && r.fs) heights.push({ shape: vp.tag, door, text, h: r.fs.h });
+        // THE MAX EDGE HAS TO ARRIVE, NOT JUST BE NAMED. Record computed text
+        // metrics per cell and assert them after the loop. Row height remains a
+        // useful diagnostic, but a fixed/min-height can legitimately equalize it.
+        if (r && r.fs) textMetrics.push({
+          shape: vp.tag,
+          door,
+          text,
+          h: r.fs.h,
+          rootFontPx: r.rootFontPx,
+        });
         // THE DIAGNOSTIC MUST NOT KILL THE RUN, and it did until 2026-08-22.
         // Marina's plant: rename `#set-panel`. `judge()` does its job — it
         // records `FINDING D0/population panel=absent` — and then this line read
@@ -936,22 +967,27 @@ async function main() {
     await cdp.send('Target.closeTarget', { targetId });
   }
 
-  // D5 MAXEDGE — did Text XL actually arrive? A max edge that renders identically
-  // to the middle of the domain was never measured.
+  // D5 MAXEDGE — did Text XL actually arrive? A max edge whose computed root
+  // text metric equals M was never measured, whatever its container height.
   if (TEXTS.includes('M') && TEXTS.includes('XL')) {
     for (const vp of SHAPES) {
       for (const door of DOORS) {
-        const m = heights.find((x) => x.shape === vp.tag && x.door === door && x.text === 'M');
-        const xl = heights.find((x) => x.shape === vp.tag && x.door === door && x.text === 'XL');
+        const m = textMetrics.find((x) => x.shape === vp.tag && x.door === door && x.text === 'M');
+        const xl = textMetrics.find((x) => x.shape === vp.tag && x.door === door && x.text === 'XL');
         if (!m || !xl) {
           fail(`FINDING D5/maxedge shape=${vp.tag} door=${door} m=${m ? m.h : 'missing'} xl=${xl ? xl.h : 'missing'} `
             + '— one half of the edge pair never rendered, so the max edge is not evidence.');
-        } else if (!(xl.h > m.h)) {
-          fail(`FINDING D5/maxedge shape=${vp.tag} door=${door} m=${m.h} xl=${xl.h} `
-            + '— Text XL did not render taller than Text M, so the text size did NOT land and the XL '
-            + 'cell is the M cell under a different name.');
         } else {
-          note(`D5/maxedge ${vp.tag} ${door} — Text XL landed: row ${m.h} px at M, ${xl.h} px at XL`);
+          const textSizeArrived = xl.rootFontPx > m.rootFontPx;
+          if (!textSizeArrived) {
+            fail(`FINDING D5/maxedge shape=${vp.tag} door=${door} `
+              + `root-font-m=${m.rootFontPx} root-font-xl=${xl.rootFontPx} `
+              + '— Text XL did not increase the computed text metric, so the XL cell is the M cell '
+              + 'under a different name.');
+          } else {
+            note(`D5/maxedge ${vp.tag} ${door} — Text XL landed: root font ${m.rootFontPx} px at M, `
+              + `${xl.rootFontPx} px at XL (row height ${m.h} -> ${xl.h} px)`);
+          }
         }
       }
     }
@@ -984,7 +1020,8 @@ function refuseUnsupportedPlatform() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// EIGHTEEN FILE-BYTE PLANTS, PLUS PLANT 15, WHICH IS A CONDITION AND NOT A FILE.
+// TWENTY-ONE FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
+// CONDITION AND NOT A FILE.
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
 // `categoryHandler('Display').rows` exactly as they are, so the engine suite
@@ -1038,6 +1075,10 @@ function selftestPlants() {
   // copy its own find bytes into this file. That leaves exactly one match: the
   // exit it is meant to mutate, which the cross-platform preflight can prove.
   const verdictReturn = ["  return finish(bad ? ", "'fail' : 'ok');"].join('');
+  const viewportIntersectionFilter = [
+    '&& r.effOpacity > 0 && r.intersects',
+    'Viewport);',
+  ].join('');
   return [
     {
       // 1 — THE NEIGHBOURHOOD. `fullscreen` moves exactly ONE position. One step
@@ -1049,16 +1090,26 @@ function selftestPlants() {
       find: [
         "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
         "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
-        "  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',",
+        "  // Fullscreen and Music are persistent quick controls on Title, Map, and",
+        "  // Combat. Settings does not duplicate them with a second stateful surface.",
+        "  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',",
         "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
+        "  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',",
+        "    choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',",
+        "    note: 'How deliberately actions play out — one actor at a time, or instant.' },",
       ].join(settingsEol),
       replace: [
-        "  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',",
+        "  // Fullscreen and Music are persistent quick controls on Title, Map, and",
+        "  // Combat. Settings does not duplicate them with a second stateful surface.",
+        "  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',",
         "    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },",
+        "  { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',",
+        "    choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',",
+        "    note: 'How deliberately actions play out — one actor at a time, or instant.' },",
         "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
         "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
       ].join(settingsEol),
-      expectRed: /FINDING D1\/order .*first=useSprites want=fullscreen/,
+      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
     },
     {
       // 2 — THE RENDERER REORDERS AND THE TABLE DOES NOT. test 61 reads
@@ -1072,11 +1123,11 @@ function selftestPlants() {
     },
     {
       // 3 — CSS HIDES THE FIRST ROW. Array untouched, test 61 green, and the
-      // first control a player can see is Character sprites.
+      // first control a player can see is Combat pacing.
       name: 'CSS hides the first row (test 61 stays green)',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { display: none !important; }',
-      expectRed: /FINDING D1\/order .*first=useSprites want=fullscreen/,
+      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
     },
     {
       // 4 — THE DOM NEVER MOVES AND THE SCREEN REVERSES. This is the exact
@@ -1127,7 +1178,7 @@ function selftestPlants() {
       name: 'EDGE TOP — the Fullscreen row sits 4000px off the top of the viewport',
       file: 'styles/ui.css',
       append: '.set-panel .set-row:first-child { position: relative !important; top: -4000px !important; }',
-      expectRed: /FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
+      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen[\s\S]*FINDING D3\/ink .*offscreen-edges=\[[^\]]*top/,
     },
     {
       name: 'EDGE BOTTOM — the Fullscreen row sits 4000px off the bottom of the viewport',
@@ -1186,7 +1237,7 @@ function selftestPlants() {
       // document wider than the viewport and holds it scrolled; `.modal-veil` is
       // fixed, so the row's own box stays legally on screen and D3's four-edge
       // half stays green. THAT IS THE POINT: only the scroll half can catch this,
-      // which is why the scroll half had to name all three axes.
+      // which is why the scroll half has to name every scroll owner and page axis.
       name: 'the document is scrolled 500px right while the fixed panel stays put (docX)',
       file: 'src/ui/screens/settings.js',
       append: 'document.documentElement.style.minWidth = "3000px";\n'
@@ -1304,23 +1355,80 @@ function selftestPlants() {
       expectRed: /displayfirst: SECOND VERDICT REFUSED — this run already ended on STOPPED \(exit 1\)/,
     },
     {
-      // 19 — THE CURRENT SETTINGS SCROLLER MOVES WHILE THE FULLSCREEN ROW
-      // remains wholly on screen. The mobile-settings redesign made
-      // `#set-panel` the scroll owner for both doors; before that replay the
-      // title door scrolled `.modal` and the in-run door scrolled
-      // `.overlay-body`. This plant holds the current contract and, more
-      // importantly, makes another scroll-owner move fail loudly instead of
-      // letting `panelTop=0` print "nothing scrolled" over a different
-      // element's non-zero offset.
-      name: 'the current settings panel is scrolled four pixels while Fullscreen remains on screen',
+      // 19 — A REAL ANCESTOR SCROLLS WHILE #set-panel DOES NOT. The current
+      // layout owns scroll on the panel, but D3 promises arrival, not one CSS
+      // implementation. This mutation makes the distinct title/in-run host a
+      // genuine scroll container and holds it one pixel down while both subject
+      // boxes remain inside the viewport. A panel-only read stays green.
+      name: 'the active door host scrolls one pixel while #set-panel and both subject boxes stay put',
       file: 'src/ui/screens/settings.js',
       append: 'setInterval(() => {\n'
         + '  const __displayFirstPanel = document.querySelector("#set-panel");\n'
-        + '  if (__displayFirstPanel && __displayFirstPanel.scrollHeight > __displayFirstPanel.clientHeight) {\n'
-        + '    __displayFirstPanel.scrollTop = 4;\n'
+        + '  const __displayFirstHost = __displayFirstPanel?.closest(".settings-modal")\n'
+        + '    || __displayFirstPanel?.closest(".overlay-body");\n'
+        + '  if (!__displayFirstHost) return;\n'
+        + '  __displayFirstHost.style.overflow = "auto";\n'
+        + '  let __displayFirstSpacer = __displayFirstHost.querySelector(":scope > [data-displayfirst-spacer]");\n'
+        + '  if (!__displayFirstSpacer) {\n'
+        + '    __displayFirstSpacer = document.createElement("div");\n'
+        + '    __displayFirstSpacer.dataset.displayfirstSpacer = "1";\n'
+        + '    __displayFirstSpacer.style.cssText = "height:200%;min-height:200%;flex:0 0 auto";\n'
+        + '    __displayFirstHost.append(__displayFirstSpacer);\n'
         + '  }\n'
+        + '  __displayFirstHost.scrollTop = 1;\n'
         + '}, 50);',
-      expectRed: /FINDING D3\/ink .*unscrolled=false .*panelTop=4/,
+      expectRed: /FINDING D3\/ink .*unscrolled=false .*ancestors=\[[^\]]*(?:settings-modal|overlay-body):top=1,left=0/,
+    },
+    {
+      // 20 — A RENDERED ROW WHOLLY ABOVE THE VIEWPORT IS NOT VISIBLE ORDER.
+      // The mutation removes the viewport-intersection term from D1 and moves
+      // Combat pacing above the screen; the legacy predicate then names it
+      // first even though the player cannot meet it.
+      name: 'an off-screen non-Fullscreen row is incorrectly allowed to outrank visible Fullscreen',
+      edits: [
+        {
+          file: 'tools/displayfirst.mjs',
+          find: viewportIntersectionFilter,
+          replace: '&& r.effOpacity > 0);',
+        },
+        {
+          file: 'styles/ui.css',
+          append: '.set-panel .set-row:nth-child(2) { position: relative !important; top: -4000px !important; }',
+        },
+      ],
+      expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
+    },
+  ];
+}
+
+function maxEdgeSelftestPlants() {
+  const textMetricArrival = [
+    'const textSizeArrived = xl.rootFontPx > ',
+    'm.rootFontPx;',
+  ].join('');
+  const textSizeTable = "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },";
+  return [
+    {
+      name: 'fixed-height rows do not make a correctly enlarged XL font look absent',
+      edits: [
+        {
+          file: 'tools/displayfirst.mjs',
+          find: textMetricArrival,
+          replace: 'const textSizeArrived = xl.h > m.h;',
+        },
+        {
+          file: 'styles/ui.css',
+          append: '.set-panel .set-row { box-sizing: border-box !important; height: 200px !important; min-height: 200px !important; max-height: 200px !important; }',
+        },
+      ],
+      expectRed: /FINDING D5\/maxedge .*root-font-m=.*root-font-xl=/,
+    },
+    {
+      name: 'Text XL is authored with the same computed root font size as Text M',
+      file: 'src/content/balance.js',
+      find: textSizeTable,
+      replace: "textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '62.5%' },",
+      expectRed: /FINDING D5\/maxedge .*root-font-m=10 root-font-xl=10/,
     },
   ];
 }
@@ -1336,28 +1444,31 @@ function preflightSelftestPlantSites(plants) {
   let appendOnly = 0;
   let drifted = 0;
   for (const [index, plant] of plants.entries()) {
-    let source;
-    try {
-      source = readFileSync(join(ROOT, plant.file), 'utf8');
-    } catch (err) {
-      fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.file} could not be read (${err.message}).`);
-      drifted++;
-      continue;
-    }
-    if (typeof plant.find === 'string') {
-      const matches = source.split(plant.find).length - 1;
-      if (matches !== 1) {
-        fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.file} contains the exact find bytes `
-          + `${matches} time(s), want exactly 1 (${plant.name}).`);
+    const edits = plant.edits || [plant];
+    for (const edit of edits) {
+      let source;
+      try {
+        source = readFileSync(join(ROOT, edit.file), 'utf8');
+      } catch (err) {
+        fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${edit.file} could not be read (${err.message}).`);
         drifted++;
-      } else {
-        anchored++;
+        continue;
       }
-    } else if (typeof plant.append === 'string') {
-      appendOnly++;
-    } else {
-      fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.name} has neither find/replace nor append bytes.`);
-      drifted++;
+      if (typeof edit.find === 'string') {
+        const matches = source.split(edit.find).length - 1;
+        if (matches !== 1) {
+          fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${edit.file} contains the exact find bytes `
+            + `${matches} time(s), want exactly 1 (${plant.name}).`);
+          drifted++;
+        } else {
+          anchored++;
+        }
+      } else if (typeof edit.append === 'string') {
+        appendOnly++;
+      } else {
+        fail(`selftest plant ${index + 1}: PLANT SITE DRIFTED — ${plant.name} has neither find/replace nor append bytes.`);
+        drifted++;
+      }
     }
   }
   if (drifted) return false;
@@ -1366,10 +1477,25 @@ function preflightSelftestPlantSites(plants) {
   return true;
 }
 
-async function selftest(plants = selftestPlants()) {
+const selftestOk = (count) => `displayfirst --selftest: OK — ${count} checks passed.`;
+
+async function countedVerdictPlant(count) {
+  const { readVerdict } = await import('./verdict.mjs');
+  const oldProse = readVerdict('displayfirst: SELFTEST GREEN — every known-bad was caught.');
+  const counted = readVerdict(selftestOk(count));
+  if (oldProse.error === 'none' && counted.error === undefined && counted.count === count) {
+    console.log(`  CAUGHT  counted terminal regression: old prose is silence; new verdict counts ${count}.`);
+    return 0;
+  }
+  fail(`counted terminal regression: old=${oldProse.error || oldProse.count} `
+    + `new=${counted.error || counted.count} want=${count}.`);
+  return 1;
+}
+
+async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelftestPlants()) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: eighteen whole-tool browser runs plus
-  // a clean run is nineteen browser boots. The population is one shape and one
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: nineteen whole-tool browser mutants
+  // plus a clean run is twenty browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
@@ -1381,7 +1507,15 @@ async function selftest(plants = selftestPlants()) {
     plants,
     timeoutMs: 300000,
   });
-  const filePlantCount = plants.length;
+  // D5 needs both M and XL. Keep that cost out of the ordering corpus and run
+  // only its two targeted mutants plus one clean edge-pair baseline.
+  const maxEdgeCode = await doorSelftest({
+    tool: 'displayfirst.mjs',
+    args: ['--only-shape', '1440x860', '--port', '8476'],
+    plants: maxEdgePlants,
+    timeoutMs: 300000,
+  });
+  const filePlantCount = plants.length + maxEdgePlants.length;
   // THE FIFTEENTH KNOWN-BAD IS NOT A FILE EDIT, so it cannot live in the array
   // above: doorplant runs the tool with `spawnSync`, which drains both pipes
   // continuously, and a reader that always drains is the one consumer this
@@ -1397,28 +1531,35 @@ async function selftest(plants = selftestPlants()) {
   // while the mutant is still alive at that deadline.
   const serverCloseCode = await serverClosePlant();
   const serverCloseLabel = serverCloseCode ? 'RED' : 'green';
-  const total = code || serverCloseCode || (flushUnknown ? 2 : flushCode);
-  // DOORPLANT'S OWN VERDICT LINE COVERS THE WHOLE FILE-BYTE CORPUS AND IS
-  // PRINTED BEFORE THE TWO EXIT-DOOR PLANTS RUN. Left as it is — it is that
-  // harness's line about its own corpus —
-  // and closed here instead, because a run that printed `SELFTEST GREEN` and
+  const selftestCheckCount = filePlantCount + 4;
+  const countedVerdictCode = await countedVerdictPlant(selftestCheckCount);
+  const countedVerdictLabel = countedVerdictCode ? 'RED' : 'green';
+  const total = code || maxEdgeCode || serverCloseCode || countedVerdictCode || (flushUnknown ? 2 : flushCode);
+  // DOORPLANT'S `SELFTEST GREEN` prose covers each file-byte corpus and is
+  // printed before the exit-door plants run. It is intentionally not a counted
+  // verdict; this tool emits one aggregate only after every corpus has closed,
+  // because a run that printed a success line and
   // then failed either exit-door plant would be a tool contradicting itself,
   // which is the whole complaint this file makes about everything else.
-  if (code || serverCloseCode || (!flushUnknown && flushCode)) {
-    console.error(`displayfirst: SELFTEST RED — ${filePlantCount} file-byte plants (doorplant, above) ${code ? 'RED' : 'green'}, `
-      + `plant 15 the piped consumer ${flushLabel}, server-close regression ${serverCloseLabel}. `
-      + `The doorplant line above covers the ${filePlantCount} file-byte plants only.`);
+  if (code || maxEdgeCode || serverCloseCode || countedVerdictCode || (!flushUnknown && flushCode)) {
+    console.error(`displayfirst: SELFTEST RED — ${filePlantCount} file-byte plants `
+      + `(ordering corpus ${code ? 'RED' : 'green'}, max-edge corpus ${maxEdgeCode ? 'RED' : 'green'}), `
+      + `plant 15 the piped consumer ${flushLabel}, server-close regression ${serverCloseLabel}, `
+      + `counted-terminal regression ${countedVerdictLabel}. `
+      + 'The doorplant lines above cover their file-byte corpora only.');
   } else if (flushUnknown) {
     console.error(`displayfirst: SELFTEST UNKNOWN — ${filePlantCount} file-byte plants and the server-close `
       + 'regression were green, but plant 15 the piped consumer was not run on this platform. '
       + 'This is not a green verdict.');
   } else {
-    console.log(`displayfirst: SELFTEST GREEN — ${filePlantCount} file-byte plants (doorplant, above), `
-      + 'plant 15 the piped consumer, and the browser-free server-close regression.');
+    console.log(`displayfirst: SELFTEST GREEN — ${filePlantCount} file-byte plants, `
+      + 'the unsupported-platform regression, plant 15 the piped consumer, and the browser-free '
+      + 'server-close and counted-terminal regressions all discriminated their known-bad edges.');
   }
   // The corpus run is an exit path too, so it prints the boundary like every
-  // other one. doorplant owns the verdict line here; this owns the limits.
+  // other one. The aggregate counted verdict must be the final success line.
   printBoundary();
+  if (!total) console.log(selftestOk(selftestCheckCount));
   process.exitCode = total;
   forceExitAfterDrain(total);
   return total;

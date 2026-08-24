@@ -331,8 +331,8 @@ jobs:
   # #319 / #248 owns a separate job so an unrelated browser probe cannot fail
   # first and silently skip this exact-head verdict. CI remains manual at the
   # workflow boundary above. The clean edge measures eight cells (two doors,
-  # two shapes, two text sizes). The corpus adds eighteen copied-tree browser
-  # plants plus its clean baseline, including deliberate 25-second and
+  # two shapes, two text sizes). The two focused corpora add twenty-one
+  # copied-tree browser plants plus two clean baselines, including deliberate 25-second and
   # 30-second timeout defects. That cost is stated because this workflow bills
   # by the minute and silence between dispatches remains UNKNOWN.
   # ---------------------------------------------------------------------------
@@ -349,7 +349,7 @@ jobs:
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
 
-      - name: …and that gate can fail — nineteen same-door browser boots
+      - name: …and that gate can fail — twenty-three same-door browser boots
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
 
   browser-guard:
