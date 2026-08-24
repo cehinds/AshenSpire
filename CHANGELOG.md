@@ -17,6 +17,10 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-08-24
+
+- **Development coordination now has one canonical home** ([#335](https://github.com/cehinds/AshenSpire/pull/335), `0.4.0.1191`). The repository now points owners and reviewers to one workflow for routine evidence, status receipts, cross-family handoffs, and the boundary between development approval and Constantine-only release authority. Docs only; release remains RED.
+
 ## 2026-08-23
 
 - **Character creation now owns one shared Inventory and validates every starting hand** ([#329](https://github.com/cehinds/AshenSpire/pull/329), `0.4.0.1126`). Creation preserves customized saves, keeps armour and armament ownership consistent, refuses invalid hand assignments, and introduces the Rogue alongside data-driven starting attributes and kits.

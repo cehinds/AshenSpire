@@ -14,6 +14,10 @@ the latest project status appears first, with timestamped updates and Daily Brie
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
+**[Development coordination workflow](docs/COORDINATION-WORKFLOW.md)** — the
+shared rules for routine ownership, evidence, status reporting, cross-family
+handoffs, and the boundary between development approval and release authority.
+
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
 after GitHub Pages finishes deploying it. This is a **development preview**, not
@@ -131,6 +135,7 @@ src/content/     ALL game data: cards, statuses, enemies, relics, events, tuning
 src/ui/          rendering and input
 tests/           headless engine tests (open tests/index.html, expect all green)
 DEVELOPER.md     how to add a card/relic/enemy/event (lands with M1)
+docs/            design, component, and development-coordination documentation
 CREDITS.md       every asset's source and license
 ```
 
