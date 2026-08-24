@@ -68,6 +68,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /overlay forwards the shared controls/,
       },
       {
+        name: 'overlay-fullscreen-refusal-silent', file: 'src/ui/components/overlay.js',
+        find: "document.addEventListener('fullscreenerror', announceFullscreenError);",
+        replace: "/* planted: fullscreen refusal is silent */",
+        expectRed: /overlay announces fullscreen refusal/,
+      },
+      {
         name: 'quick-exit-bypasses-save', file: 'src/ui/components/overlay.js',
         find: '(onQuit || onExit)();', replace: '(onExit || onQuit)();',
         expectRed: /Save & Quit prefers the persistence callback/,
@@ -86,7 +92,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('music-toggle-parity-selftest: OK — 12 checks passed');
+  if (code === 0) console.log('music-toggle-parity-selftest: OK — 13 checks passed');
   process.exit(code);
 }
 
@@ -158,6 +164,9 @@ const main = source('src/main.js');
 check(!/saveMeta|localStorage|META_KEY/.test(quick), 'Quick Menu contains no persistence owner');
 check(renderer.includes("button.setAttribute('aria-checked', String(row.checked));"), 'switch renderer reflects checked state');
 check(overlay.includes('controls: quickControls,'), 'overlay forwards the shared controls');
+check(overlay.includes("document.addEventListener('fullscreenerror', announceFullscreenError);")
+  && overlay.includes("settingsAnnouncement.textContent = result.announcement;"),
+  'overlay announces fullscreen refusal');
 check(overlay.includes('(onQuit || onExit)();'), 'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');

@@ -3767,6 +3767,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   white-space: nowrap;
   flex-shrink: 0;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 /* On the title screen it is the last line under the flavour text, centred with
    the stack rather than floated into a corner — a corner is where a watermark
    goes, and this is meant to be read. */

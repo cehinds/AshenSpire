@@ -418,7 +418,13 @@ const SUB_SURFACE_GROUPS = [
         const m = document.querySelector('#combat-menu');
         if (!m) return 'no #combat-menu on the combat screen';
         m.click();
-        const b = document.querySelector('[data-surface="overlayTab"] [data-member=${q(id)}]');
+        let b = document.querySelector('[data-surface="overlayTab"] [data-member=${q(id)}]');
+        if (!b) {
+          const quick = document.querySelector('.qn-row[data-act="tab"][data-tab=${q(id)}]')
+            || document.querySelector('.qn-row[data-act="tab"]');
+          if (quick) quick.click();
+          b = document.querySelector('[data-surface="overlayTab"] [data-member=${q(id)}]');
+        }
         if (!b) return 'no tab button for ' + ${q(id)};
         b.click();
         return true;

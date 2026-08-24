@@ -62,6 +62,7 @@ export function renderMenuOverlay(model) {
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
           <div class="overlay-settings-actions" data-settings-quick-actions hidden>
+            <span class="sr-only" data-settings-announcement role="status" aria-live="polite"></span>
             <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" role="switch" aria-checked="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
             <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" role="switch" aria-checked="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
             <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>

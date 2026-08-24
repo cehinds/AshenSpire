@@ -4067,6 +4067,17 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   white-space: nowrap;
   flex-shrink: 0;
 }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 /* On the title screen it is the last line under the flavour text, centred with
    the stack rather than floated into a corner — a corner is where a watermark
    goes, and this is meant to be read. */
@@ -39121,7 +39132,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'cff6f4e126';
+const SOURCE = 'e7e48e9d8c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39155,7 +39166,7 @@ const SOURCE = 'cff6f4e126';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1263';
+const ORDINAL = '1264';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46984,6 +46995,7 @@ function renderMenuOverlay(model) {
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
           <div class="overlay-settings-actions" data-settings-quick-actions hidden>
+            <span class="sr-only" data-settings-announcement role="status" aria-live="polite"></span>
             <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" role="switch" aria-checked="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
             <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" role="switch" aria-checked="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
             <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>
@@ -57117,6 +57129,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
 
   const quickActions = veil.querySelector('[data-settings-quick-actions]');
   const fullscreenButton = veil.querySelector('#ov-fullscreen');
+  const settingsAnnouncement = veil.querySelector('[data-settings-announcement]');
   const musicButton = veil.querySelector('#ov-music');
   const saveButton = veil.querySelector('#ov-save-quick');
   const exitButton = veil.querySelector('#ov-exit-quick');
@@ -57144,14 +57157,28 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   syncMusicQuickAction();
   document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
   document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+  const announceFullscreenError = () => {
+    syncFullscreenQuickAction();
+    if (settingsAnnouncement) {
+      settingsAnnouncement.textContent = quickControls.fullscreen?.read?.()?.condition
+        || 'Fullscreen could not be changed.';
+    }
+  };
+  document.addEventListener('fullscreenerror', announceFullscreenError);
+  document.addEventListener('webkitfullscreenerror', announceFullscreenError);
   overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
   overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
+  overlayCleanup.push(() => document.removeEventListener('fullscreenerror', announceFullscreenError));
+  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenerror', announceFullscreenError));
 
   fullscreenButton?.addEventListener('click', async () => {
     if (fullscreenButton.disabled || !quickControls.fullscreen?.activate) return;
     const result = await quickControls.fullscreen.activate();
     syncFullscreenQuickAction();
-    if (result?.announcement) fullscreenButton.title = result.announcement;
+    if (result?.announcement) {
+      fullscreenButton.title = result.announcement;
+      if (settingsAnnouncement) settingsAnnouncement.textContent = result.announcement;
+    }
   });
   musicButton?.addEventListener('click', async () => {
     if (musicButton.disabled || !quickControls.music?.activate) return;

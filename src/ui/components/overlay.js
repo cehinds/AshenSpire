@@ -214,6 +214,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
 
   const quickActions = veil.querySelector('[data-settings-quick-actions]');
   const fullscreenButton = veil.querySelector('#ov-fullscreen');
+  const settingsAnnouncement = veil.querySelector('[data-settings-announcement]');
   const musicButton = veil.querySelector('#ov-music');
   const saveButton = veil.querySelector('#ov-save-quick');
   const exitButton = veil.querySelector('#ov-exit-quick');
@@ -241,14 +242,28 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   syncMusicQuickAction();
   document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
   document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+  const announceFullscreenError = () => {
+    syncFullscreenQuickAction();
+    if (settingsAnnouncement) {
+      settingsAnnouncement.textContent = quickControls.fullscreen?.read?.()?.condition
+        || 'Fullscreen could not be changed.';
+    }
+  };
+  document.addEventListener('fullscreenerror', announceFullscreenError);
+  document.addEventListener('webkitfullscreenerror', announceFullscreenError);
   overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
   overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
+  overlayCleanup.push(() => document.removeEventListener('fullscreenerror', announceFullscreenError));
+  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenerror', announceFullscreenError));
 
   fullscreenButton?.addEventListener('click', async () => {
     if (fullscreenButton.disabled || !quickControls.fullscreen?.activate) return;
     const result = await quickControls.fullscreen.activate();
     syncFullscreenQuickAction();
-    if (result?.announcement) fullscreenButton.title = result.announcement;
+    if (result?.announcement) {
+      fullscreenButton.title = result.announcement;
+      if (settingsAnnouncement) settingsAnnouncement.textContent = result.announcement;
+    }
   });
   musicButton?.addEventListener('click', async () => {
     if (musicButton.disabled || !quickControls.music?.activate) return;
