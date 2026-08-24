@@ -5399,6 +5399,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('71. character creation choices are validated data and Begin consumes the selected loadout', () => {
     eq(characterCreationProblems(REG).length, 0, 'the shipped character-creation configuration validates');
     eq(REG.characterCreation.spritePreviewSide, 'right', 'sprite side is read from JSON configuration');
+    eq(REG.characterCreation.layout.classPreviewPercent, 30, 'the wide class preview split is read from JSON configuration');
+    eq(REG.characterCreation.layout.classChoiceView, 'list', 'the class selector defaults to the configured list view');
+    eq(REG.characterCreation.layout.equipmentChoiceView, 'list', 'equipment selectors default to the configured list view');
+    eq(REG.characterCreation.layout.equipmentAutoAdvance, true, 'equipment auto-advance is configured rather than hard-coded');
+    eq(REG.characterCreation.equipmentSections.map((row) => row.id).join(','), 'armour,leftHand,rightHand,equipSlot,relic',
+      'the equipment subcard order is authored in character-creation content');
     for (const classId of REG.classes.ids()) {
       assert(creationArmourChoices(REG, classId).length >= 2, `${classId} ships at least two armour choices`);
       assert(creationHandChoices(REG, classId).length >= 2, `${classId} ships at least two side-neutral hand choices`);
@@ -5482,6 +5488,20 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'an invalid sprite side fails by its JSON path');
     assert(validation.errors.some((e) => e.path.includes('characterCreation.classes.reaver.handIds')),
       'a short/dangling hand roster fails by its JSON path');
+
+    const malformedLayout = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
+    malformedLayout.characterCreation.layout.classPreviewPercent = 90;
+    malformedLayout.characterCreation.layout.classChoiceView = 'carousel';
+    malformedLayout.characterCreation.layout.equipmentAutoAdvance = 'yes';
+    malformedLayout.characterCreation.equipmentSections = [
+      { id: 'armour', label: 'Armour', kind: 'armour' },
+      { id: 'armour', label: '', kind: 'hand', slot: 'middleHand' },
+    ];
+    const layoutValidation = validateContent(malformedLayout);
+    for (const path of ['layout.classPreviewPercent', 'layout.classChoiceView', 'layout.equipmentAutoAdvance', 'equipmentSections']) {
+      assert(!layoutValidation.ok && layoutValidation.errors.some((e) => e.path.includes(`characterCreation.${path}`)),
+        `invalid configurable creation ${path} reports its JSON path`);
+    }
 
     const malformedKeepsakes = { ...contentBundle, characterCreation: structuredClone(contentBundle.characterCreation) };
     malformedKeepsakes.characterCreation.keepsakes = {};

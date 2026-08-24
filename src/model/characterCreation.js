@@ -2,6 +2,8 @@
 
 const SIDES = Object.freeze(['left', 'right']);
 const CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
+const CHOICE_VIEWS = Object.freeze(['list', 'grid']);
+const EQUIPMENT_SECTION_KINDS = Object.freeze(['armour', 'hand', 'slot', 'relic']);
 
 function config(source) {
   return (source && source.characterCreation) || source || {};
@@ -10,9 +12,48 @@ function config(source) {
 export function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
+  const layout = cfg.layout;
+  if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
+    problems.push('characterCreation.layout: must be an object');
+  } else {
+    const fields = ['classPreviewPercent', 'classChoiceView', 'equipmentChoiceView', 'equipmentAutoAdvance'];
+    for (const key of Object.keys(layout)) if (!fields.includes(key)) problems.push(`characterCreation.layout.${key}: Unknown field`);
+    if (!Number.isFinite(layout.classPreviewPercent) || layout.classPreviewPercent < 22 || layout.classPreviewPercent > 45) {
+      problems.push('characterCreation.layout.classPreviewPercent: must be between 22 and 45');
+    }
+    for (const key of ['classChoiceView', 'equipmentChoiceView']) {
+      if (!CHOICE_VIEWS.includes(layout[key])) problems.push(`characterCreation.layout.${key}: must be ${CHOICE_VIEWS.join('|')}`);
+    }
+    if (typeof layout.equipmentAutoAdvance !== 'boolean') problems.push('characterCreation.layout.equipmentAutoAdvance: must be boolean');
+  }
+  const sections = cfg.equipmentSections;
+  if (!Array.isArray(sections) || sections.length < 4) {
+    problems.push('characterCreation.equipmentSections: must contain armour, both hands, and relic');
+  } else {
+    const seenSections = new Set();
+    for (const [index, row] of sections.entries()) {
+      const path = `characterCreation.equipmentSections.${index}`;
+      if (!row || typeof row !== 'object' || Array.isArray(row)) {
+        problems.push(`${path}: must be an object`);
+        continue;
+      }
+      for (const key of Object.keys(row)) if (!['id', 'label', 'kind', 'slot'].includes(key)) problems.push(`${path}.${key}: Unknown field`);
+      if (typeof row.id !== 'string' || !row.id) problems.push(`${path}.id: must be non-empty`);
+      else if (seenSections.has(row.id)) problems.push(`${path}.id: duplicate section id`);
+      else seenSections.add(row.id);
+      if (typeof row.label !== 'string' || !row.label) problems.push(`${path}.label: must be non-empty`);
+      if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
+      if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
+    }
+    if (!sections.some((row) => row && row.kind === 'armour')) problems.push('characterCreation.equipmentSections: missing armour section');
+    if (!sections.some((row) => row && row.kind === 'relic')) problems.push('characterCreation.equipmentSections: missing relic section');
+    for (const slot of ['leftHand', 'rightHand']) if (!sections.some((row) => row && row.kind === 'hand' && row.slot === slot)) {
+      problems.push(`characterCreation.equipmentSections: missing ${slot} section`);
+    }
+  }
   if (!cfg.classes || typeof cfg.classes !== 'object' || Array.isArray(cfg.classes)) {
     problems.push('characterCreation.classes: must be an object keyed by class id');
     return problems;

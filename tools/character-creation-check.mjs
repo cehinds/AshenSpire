@@ -130,6 +130,29 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }))()`);
   assert(JSON.stringify(arrival.labels) === JSON.stringify(['CLASS', 'CHARACTER', 'STARTING EQUIP', 'SEED']), `${width}x${height}: sections are in the requested order`);
   assert(JSON.stringify(arrival.open) === JSON.stringify(['class']), `${width}x${height}: exactly Class opens on arrival`);
+  const classLayout = await evaluate(`(() => ({
+    preview:!!document.querySelector('.cc-class-preview'), resources:document.querySelectorAll('.cc-class-resource').length,
+    view:document.querySelector('#cz-classes').dataset.view,
+    selected:document.querySelector('#cz-class-view-toggle [data-view-mode="list"]').getAttribute('aria-pressed'),
+    divider:getComputedStyle(document.querySelector('.cc-class-divider')).display,
+    percent:document.querySelector('.cc-class-divider').getAttribute('aria-valuenow')
+  }))()`);
+  assert(classLayout.preview && classLayout.resources === 5 && classLayout.view === 'list' && classLayout.selected === 'true'
+    && classLayout.percent === '30' && (width < 700 ? classLayout.divider === 'none' : classLayout.divider !== 'none'),
+  `${width}x${height}: Class uses the configured preview split, five resources, and responsive list selector`);
+  if (width >= 700) {
+    const dividerAlignment = await evaluate(`(() => {
+      const preview = document.querySelector('.cc-class-preview-host').getBoundingClientRect();
+      const divider = document.querySelector('.cc-class-divider').getBoundingClientRect();
+      const selection = document.querySelector('.cc-class-selection').getBoundingClientRect();
+      const gapCenter = (preview.right + selection.left) / 2;
+      return Math.abs((divider.left + divider.width / 2) - gapCenter);
+    })()`);
+    assert(dividerAlignment <= 1, `${width}x${height}: Class resize handle is centered between both panes`);
+  }
+  await click('#cz-class-view-toggle [data-view-mode="grid"]');
+  assert((await evaluate(`document.querySelector('#cz-classes').dataset.view`)) === 'grid', `${width}x${height}: Class list/grid component changes the live collection`);
+  await click('#cz-class-view-toggle [data-view-mode="list"]');
   assert(await noOverflow(), `${width}x${height}: Class has no horizontal overflow`);
 
   if ((profileMeta && profileMeta.unlocked || []).includes('winAsReaver')) {
@@ -147,10 +170,10 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
     open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
     resourceOrder:[...document.querySelectorAll('#cz-primary-group > *')].map(e=>e.id)
   }))()`);
-  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'SPRITE', 'TINT', 'SIGIL', 'KEEPSAKE'])
+  assert(JSON.stringify(characterFold.labels) === JSON.stringify(['PRIMARY STATS', 'SPRITE', 'KEEPSAKE'])
     && JSON.stringify(characterFold.open) === JSON.stringify(['primary'])
-    && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-primary-stats', 'cz-derived', 'cz-statedit']),
-  `${width}x${height}: Character uses one-open nested disclosures and keeps resources after stats before modes`);
+    && JSON.stringify(characterFold.resourceOrder) === JSON.stringify(['cz-statedit', 'cz-primary-stats', 'cz-derived']),
+  `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
   for (let i = 0; i < 3; i += 1) {
@@ -160,6 +183,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await click('.cc-stat-overlay [data-stat-done]');
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay close');
   await open('equipment');
+  await click('#cz-equipment-fold [data-face="rightHand"]');
   const errorsBeforeIncompatiblePick = errors.length;
   await click('#cz-right-hand [data-armament-id="greatsword"]');
   const incompatible = await evaluate(`(() => {
@@ -196,9 +220,9 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert((await evaluate(`document.querySelectorAll('#cz-character-panel .se-step').length`)) === 0, `${width}x${height}: Standard shows no plus/minus controls`);
   await click('#cz-character-fold [data-face="sprite"]');
   await click('#cz-styles .cz-opt', 1);
-  await click('#cz-character-fold [data-face="tint"]');
+  await click('#cz-sprite-fold [data-face="tint"]');
   await click('#cz-tints .cz-opt', 1);
-  await click('#cz-character-fold [data-face="sigil"]');
+  await click('#cz-sprite-fold [data-face="sigil"]');
   await click('#cz-glyphs .cz-opt', 1);
   await click('#cz-character-fold [data-face="keepsake"]');
   await click('#cz-keepsakes .cz-keepsake', 1);
@@ -217,15 +241,23 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   await open('equipment');
   assert(await noOverflow(), `${width}x${height}: Starting Equip has no horizontal overflow`);
+  assert((await evaluate(`document.querySelector('#cz-equipment-view-toggle [data-view-mode="list"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: Starting Equip defaults to configured list view`);
+  await click('#cz-equipment-view-toggle [data-view-mode="grid"]');
+  assert((await evaluate(`document.querySelector('#cz-armours').dataset.view`)) === 'grid', `${width}x${height}: equipment list/grid component changes every subcard collection`);
+  await click('#cz-equipment-view-toggle [data-view-mode="list"]');
   assert((await evaluate(`document.querySelectorAll('#cz-armours .equip-chip').length`)) >= 2, `${width}x${height}: at least two armour cards are direct selectors`);
   assert((await evaluate(`document.querySelectorAll('#cz-left-hand .equip-chip').length`)) >= 2, `${width}x${height}: Left Hand has direct armament cards`);
   assert((await evaluate(`document.querySelectorAll('#cz-right-hand .equip-chip').length`)) >= 2, `${width}x${height}: Right Hand has direct armament cards`);
+  await click('#cz-equipment-fold [data-face="armour"]');
   await click('#cz-armours .equip-chip', 1);
+  assert((await evaluate(`[...document.querySelectorAll('#cz-equipment-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face).join(',')`)) === 'leftHand', `${width}x${height}: a valid equipment choice auto-advances to the next configured subcard`);
   await click('#cz-left-hand [data-armament-id="ashStaff"]');
   await click('#cz-right-hand [data-armament-id="ashStaff"]');
   const moved = await evaluate(`(() => ({left:document.querySelector('#cz-left-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed'),right:document.querySelector('#cz-right-hand [data-armament-id="ashStaff"]').getAttribute('aria-pressed')}))()`);
   assert(moved.left === 'false' && moved.right === 'true', `${width}x${height}: choosing one armament for the other hand moves it`);
+  await click('#cz-equipment-fold [data-face="leftHand"]');
   await click('#cz-left-hand [data-armament-id="starstoneStaff"]');
+  await click('#cz-equipment-fold [data-face="relic"]');
   await click('#cz-relics .cc-relic-card', 1);
 
   await open('character');
@@ -248,10 +280,22 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   await setInput('#seed-input', 'REDESIGN');
   assert(await noOverflow(), `${width}x${height}: Seed has no horizontal overflow`);
   await open(screenshotSection);
+  if (screenshotSection === 'class') await click('.cz-class[data-class="reaver"]');
+  await evaluate(`document.querySelector('.cz-scroll').scrollTop=0`);
   await wait(250);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
   writeFileSync(join(OUT, screenshotName), Buffer.from(shot.data, 'base64'));
 
+  if (screenshotSection === 'class') {
+    await open('equipment');
+    await click('#cz-equipment-fold [data-face="armour"]');
+    await evaluate(`document.querySelector('[data-face="equipment"]').scrollIntoView({block:'start'})`);
+    await wait(200);
+    const equipmentShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
+    writeFileSync(join(OUT, screenshotName.replace('after-', 'equipment-')), Buffer.from(equipmentShot.data, 'base64'));
+    await open('class');
+    await click('.cz-class[data-class="starseer"]');
+  }
   await open('seed');
   await click('#cz-start');
   await until(`!!document.querySelector('.mapscreen')`, 'Begin to enter the map');
@@ -295,6 +339,11 @@ async function checkCatalog(width, height, screenshotName) {
       },
       primitives: {
         disclosure: root.querySelectorAll('[data-catalog-component="character-disclosure"] .disc-face').length,
+        classPreview: root.querySelectorAll('[data-catalog-component="class-preview-pane"] .cc-class-preview').length,
+        classChoice: root.querySelectorAll('[data-catalog-component="class-choice-card"] .cz-class').length,
+        viewMode: root.querySelectorAll('[data-catalog-component="view-mode-toggle"] [data-view-mode]').length,
+        autoAdvance: root.querySelectorAll('[data-catalog-component="auto-advance-toggle"] .cc-switch').length,
+        selectionFace: root.querySelectorAll('[data-catalog-component="selection-section-face"] .cc-selection-face').length,
         stat: root.querySelectorAll('[data-catalog-component="primary-stat-card"] .cc-primary-stat').length,
         resources: root.querySelectorAll('[data-catalog-component="resource-strip"] .cc-derived').length,
         mode: root.querySelectorAll('[data-catalog-component="mode-choice"] .se-mode').length,
@@ -302,17 +351,19 @@ async function checkCatalog(width, height, screenshotName) {
         tint: root.querySelectorAll('[data-catalog-component="tint-choice"] .cz-opt.tint').length,
         sigil: root.querySelectorAll('[data-catalog-component="sigil-choice"] .cz-opt').length,
         keepsake: root.querySelectorAll('[data-catalog-component="keepsake-choice"] .cz-keepsake').length,
+        equipment: root.querySelectorAll('[data-catalog-component="equipment-choice-card"] .equip-chip').length,
+        relic: root.querySelectorAll('[data-catalog-component="relic-choice-card"] .cc-relic-card').length,
       },
       overflow: root.scrollWidth > root.clientWidth + 1,
     };
   })()`);
-  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice', `${width}x${height}: component catalog shows live sections plus all reusable Character primitives`);
+  assert(receipt.visible && receipt.keys.join(',') === 'class,character,equipment,seed,character-disclosure,class-preview-pane,class-choice-card,view-mode-toggle,auto-advance-toggle,selection-section-face,primary-stat-card,resource-strip,mode-choice,sprite-choice,tint-choice,sigil-choice,keepsake-choice,equipment-choice-card,relic-choice-card', `${width}x${height}: component catalog shows live sections plus all reusable creation components`);
   assert(receipt.controls.classes >= 2 && receipt.controls.stats >= 5 && receipt.controls.keepsakes >= 2
     && receipt.controls.armour >= 2 && receipt.controls.left >= 2 && receipt.controls.right >= 2
     && receipt.controls.relics >= 2 && receipt.controls.seed === 1 && !receipt.overflow,
   `${width}x${height}: component catalog includes every creation selector without horizontal overflow`);
   assert(Object.values(receipt.primitives).every((count) => count >= 1),
-    `${width}x${height}: component catalog references every reusable Character card primitive`);
+    `${width}x${height}: component catalog references every reusable creation component`);
   await evaluate(`document.querySelector('[data-catalog-component="character-disclosure"]').scrollIntoView({block:'start'})`);
   await wait(150);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
@@ -321,10 +372,10 @@ async function checkCatalog(width, height, screenshotName) {
 }
 
 try {
-  await exercise(1440, 900, 'character-creation-after-desktop.png', 'character', {
+  await exercise(1440, 1024, 'character-creation-after-desktop.png', 'class', {
     schemaVersion: 2, settings: {}, results: [], discoveredArmaments: [], discoveryReceipts: [], unlocked: ['winAsReaver'],
   });
-  await exercise(390, 844, 'character-creation-after-mobile.png', 'character');
+  await exercise(390, 844, 'character-creation-after-mobile.png', 'class');
   await checkCatalog(1440, 900, 'character-creation-component-catalog-desktop.png');
   await checkCatalog(390, 844, 'character-creation-component-catalog-mobile.png');
 } catch (error) {
