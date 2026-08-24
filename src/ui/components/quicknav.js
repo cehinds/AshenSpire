@@ -60,6 +60,8 @@ export function setQuickNav(opts) {
   if (opts?.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
+    const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
+    launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
   }
 }

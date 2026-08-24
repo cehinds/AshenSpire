@@ -39145,7 +39145,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '71f0c67629';
+const SOURCE = '2e21ac2eb5';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39179,7 +39179,7 @@ const SOURCE = '71f0c67629';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1265';
+const ORDINAL = '1266';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -46662,6 +46662,8 @@ function setQuickNav(opts) {
   if (opts?.fixedEnds != null) fixedEnds = !!opts.fixedEnds;
   if (typeof document !== 'undefined') {
     document.documentElement.dataset.quicknav = mode;
+    const launchers = document.querySelectorAll('#ov-quicknav, #ov-switch');
+    launchers.forEach((button) => { button.hidden = mode === 'off'; });
     if (mode === 'off') closeQuickNav();
   }
 }
