@@ -216,6 +216,43 @@ async function main() {
     }
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/component-catalog.html` }, sessionId);
     await until("!!document.querySelector('[data-component=\"folding-tray\"]')", 'catalog Folding Tray card');
+    const catalogControls = await evaluate(`(() => ({
+      links:Object.fromEntries([...document.querySelectorAll('.catalog-nav a')].map((link)=>[link.textContent.trim(),link.href])),
+      view:document.querySelector('#grid').dataset.view,
+      columns:[...document.querySelectorAll('#grid article')].filter((card,_,cards)=>Math.abs(card.getBoundingClientRect().top-cards[0].getBoundingClientRect().top)<2).length,
+      min:getComputedStyle(document.documentElement).getPropertyValue('--catalog-card-min').trim(),
+    }))()`);
+    check(['Repository','README','Issues','Daily Status','Preview'].every((label)=>catalogControls.links[label]), 'catalog header links to the repository, README, issues, Daily Status, and preview');
+    check(catalogControls.view === 'grid' && catalogControls.columns > 1 && catalogControls.min === '285px', 'catalog opens in the configurable medium grid view');
+    await evaluate(`document.querySelector('#density-less').click(); true`);
+    await wait(80);
+    const compactGrid = await evaluate(`(() => ({
+      columns:[...document.querySelectorAll('#grid article')].filter((card,_,cards)=>Math.abs(card.getBoundingClientRect().top-cards[0].getBoundingClientRect().top)<2).length,
+      min:getComputedStyle(document.documentElement).getPropertyValue('--catalog-card-min').trim(),
+      saved:localStorage.getItem('ashenspire.ui.component-catalog-density'),
+    }))()`);
+    check(compactGrid.min === '245px' && compactGrid.columns >= catalogControls.columns && compactGrid.saved === '1', 'smaller-card control increases or preserves the visible column count and persists density');
+    await evaluate(`document.querySelector('#view-list').click(); true`);
+    await wait(80);
+    const listView = await evaluate(`(() => ({
+      view:document.querySelector('#grid').dataset.view,
+      pressed:document.querySelector('#view-list').getAttribute('aria-pressed'),
+      saved:localStorage.getItem('ashenspire.ui.component-catalog-view'),
+      cards:[...document.querySelectorAll('#grid article')].slice(0,2).map(card=>card.getBoundingClientRect().width),
+    }))()`);
+    check(listView.view === 'list' && listView.pressed === 'true' && listView.saved === 'list' && Math.abs(listView.cards[0]-listView.cards[1])<0.5, 'List switch renders and persists a uniform vertical component list');
+    await evaluate(`document.querySelector('#view-grid').click(); document.querySelector('#density-reset').click(); true`);
+    await wait(140);
+    await evaluate(`document.dispatchEvent(new WheelEvent('wheel',{deltaY:80,ctrlKey:true,bubbles:true,cancelable:true})); true`);
+    await wait(140);
+    check(await evaluate(`getComputedStyle(document.documentElement).getPropertyValue('--catalog-card-min').trim()==='245px'`), 'Ctrl/Command-wheel zoom changes Grid card density');
+    await evaluate(`document.querySelector('#density-reset').click(); true`);
+    await wait(80);
+    if (SHOTS) {
+      const densityShot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
+      writeFileSync(resolve(SHOT_DIR, 'catalog-density-grid.png'), Buffer.from(densityShot.data, 'base64'));
+      console.log(`    SHOT ${resolve(SHOT_DIR, 'catalog-density-grid.png')}`);
+    }
     await evaluate(`document.querySelector('[data-component="folding-tray"]').click(); true`);
     await wait(250);
     const drawer = await evaluate(`(() => ({
@@ -240,6 +277,7 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: false }, sessionId);
     await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/docs/component-catalog.html` }, sessionId);
     await until("!!document.querySelector('[data-component=\"quick-menu-panel\"]')", 'mobile catalog');
+    check(await evaluate(`document.documentElement.scrollWidth<=innerWidth && document.querySelector('.tools').getBoundingClientRect().right<=innerWidth+0.5`), 'catalog controls wrap without horizontal overflow at 390px');
     await evaluate(`document.querySelector('[data-component="quick-menu-panel"]').click(); true`);
     await wait(250);
     const mobileDrawer = await evaluate(`(() => { const rect=document.querySelector('#detail-drawer').getBoundingClientRect(); return { left:rect.left, right:rect.right, width:rect.width, viewport:innerWidth }; })()`);

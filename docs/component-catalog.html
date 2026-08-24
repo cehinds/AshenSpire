@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AshenSpire · Component Catalog</title>
   <style>
-    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; }
+    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; --catalog-card-min:285px; }
     * { box-sizing:border-box; }
     body { margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 48rem); color:var(--ink); font:14px/1.45 ui-sans-serif,system-ui,sans-serif; }
     main { width:min(1500px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
@@ -15,11 +15,23 @@
     .lede { max-width:720px; color:var(--muted); margin:10px 0 0; }
     .meta { text-align:right; color:var(--muted); font-size:12px; }
     .meta a { color:var(--gold); }
+    .catalog-nav { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+    .catalog-nav a { min-height:36px; display:inline-flex; align-items:center; padding:6px 9px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:12px; }
+    .catalog-nav a:hover,.catalog-nav a:focus-visible { border-color:var(--gold); color:var(--gold); }
     .tools { display:flex; flex-wrap:wrap; gap:10px; padding:18px 0; position:sticky; top:0; z-index:2; background:color-mix(in srgb,var(--bg) 92%,transparent); backdrop-filter:blur(8px); }
     input, select { border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); padding:9px 11px; }
     input { flex:1 1 260px; }
     .count { color:var(--muted); align-self:center; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:14px; }
+    .catalog-controls { display:flex; align-items:center; gap:4px; min-height:44px; padding:3px; border:1px solid var(--line); border-radius:7px; background:var(--panel); }
+    .catalog-controls > span { padding:0 5px; color:var(--muted); font-size:11px; white-space:nowrap; }
+    .catalog-controls button { min-width:36px; height:36px; padding:0 9px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); cursor:pointer; }
+    .catalog-controls button:hover,.catalog-controls button:focus-visible,.catalog-controls button[aria-pressed="true"] { border-color:var(--gold); color:var(--gold); }
+    .catalog-controls button:disabled { opacity:.4; cursor:not-allowed; }
+    .density-readout { min-width:84px; text-align:center; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--catalog-card-min)),1fr)); gap:14px; }
+    .grid[data-view="list"] { display:flex; flex-direction:column; }
+    .grid[data-view="list"] article { display:grid; grid-template-columns:minmax(170px,260px) 1fr; }
+    .grid[data-view="list"] .visual { min-height:132px; border:0; border-right:1px solid #3d3022; }
     article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; cursor:pointer; }
     article:hover { border-color:var(--gold); transform:translateY(-2px); }
     article:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
@@ -130,16 +142,25 @@
     .detail-related button,.detail-gallery-link { border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:#e9d59d; padding:.55rem .75rem; cursor:pointer; text-decoration:none; }
     .detail-related button:hover,.detail-gallery-link:hover { border-color:var(--gold); }
     .open-detail { display:inline-block; margin:10px 0 0 8px; color:var(--muted); font-size:11px; }
+    @media (max-width:620px) {
+      main { width:min(100% - 18px,1500px); padding-top:16px; }
+      header { align-items:start; flex-direction:column; }
+      .meta { text-align:left; }
+      .tools { gap:6px; }
+      .catalog-controls { flex:1 1 auto; }
+      .grid[data-view="list"] article { grid-template-columns:1fr; }
+      .grid[data-view="list"] .visual { border-right:0; border-bottom:1px solid #3d3022; }
+    }
     @media (prefers-reduced-motion:reduce) { article,.detail-backdrop,.detail-drawer { transition:none; } }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <div><h1>Ashen<span>Spire</span> component catalog</h1><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p></div>
+    <div><h1>Ashen<span>Spire</span> component catalog</h1><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
     <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
   </header>
-  <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><span class="count" id="count"></span></div>
+  <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count"></span></div>
   <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
   <section class="token-panel" aria-labelledby="token-heading">
@@ -161,7 +182,7 @@
       </tbody>
     </table></div>
   </section>
-  <section class="grid" id="grid" aria-live="polite"></section>
+  <section class="grid" id="grid" data-view="grid" aria-live="polite"></section>
   <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
 </main>
 <div class="detail-backdrop" id="detail-backdrop"></div>
@@ -339,7 +360,29 @@ const COMPOSITION = Object.freeze({
 });
 const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
 const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
+const densityLess=document.querySelector('#density-less'), densityReset=document.querySelector('#density-reset'), densityMore=document.querySelector('#density-more');
+const viewGrid=document.querySelector('#view-grid'), viewList=document.querySelector('#view-list');
+const DENSITY_STEPS=[205,245,285,335,395,465], DEFAULT_DENSITY=2, DENSITY_KEY='ashenspire.ui.component-catalog-density', VIEW_KEY='ashenspire.ui.component-catalog-view';
+const stored=(key,fallback)=>{try{return localStorage.getItem(key)??fallback;}catch{return fallback;}};
+const save=(key,value)=>{try{localStorage.setItem(key,String(value));}catch{}};
+let densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,Number(stored(DENSITY_KEY,DEFAULT_DENSITY))||0));
+let catalogView=stored(VIEW_KEY,'grid')==='list'?'list':'grid', wheelLocked=false;
 let detailReturnFocus=null;
+function actualColumns(){
+  const cards=[...grid.querySelectorAll('article')]; if(!cards.length||catalogView==='list') return 1;
+  const firstTop=cards[0].getBoundingClientRect().top;
+  return cards.filter(card=>Math.abs(card.getBoundingClientRect().top-firstTop)<2).length||1;
+}
+function updateDensityUi(){
+  document.documentElement.style.setProperty('--catalog-card-min',`${DENSITY_STEPS[densityIndex]}px`);
+  densityLess.disabled=catalogView==='list'||densityIndex===0; densityMore.disabled=catalogView==='list'||densityIndex===DENSITY_STEPS.length-1; densityReset.disabled=catalogView==='list';
+  requestAnimationFrame(()=>{densityReset.textContent=catalogView==='list'?'List':`${actualColumns()} col · ${DENSITY_STEPS[densityIndex]}px`;});
+}
+function setDensity(next){densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,next));save(DENSITY_KEY,densityIndex);updateDensityUi();}
+function setView(next){
+  catalogView=next==='list'?'list':'grid'; grid.dataset.view=catalogView; save(VIEW_KEY,catalogView);
+  viewGrid.setAttribute('aria-pressed',String(catalogView==='grid')); viewList.setAttribute('aria-pressed',String(catalogView==='list')); updateDensityUi();
+}
 function relatedIds(id){
   const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
   for(const [parent,children] of Object.entries(COMPOSITION)) if(children.some(value=>value.includes(id))) related.add(parent);
@@ -365,7 +408,7 @@ function openDetails(id,trigger=null){
   drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
   drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
 }
-function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); }
+function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); updateDensityUi(); }
 closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;
 document.addEventListener('keydown',event=>{
   if(!document.body.classList.contains('detail-open')) return;
@@ -377,7 +420,15 @@ document.addEventListener('keydown',event=>{
     else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
   }
 });
-search.oninput=render; group.onchange=render; render();
+search.oninput=render; group.onchange=render;
+densityLess.onclick=()=>setDensity(densityIndex-1); densityMore.onclick=()=>setDensity(densityIndex+1); densityReset.onclick=()=>setDensity(DEFAULT_DENSITY);
+viewGrid.onclick=()=>setView('grid'); viewList.onclick=()=>setView('list');
+document.addEventListener('wheel',event=>{
+  if(catalogView!=='grid'||(!event.ctrlKey&&!event.metaKey)) return;
+  event.preventDefault(); if(wheelLocked) return; wheelLocked=true;
+  setDensity(densityIndex+(event.deltaY<0?1:-1)); setTimeout(()=>wheelLocked=false,120);
+},{passive:false});
+window.addEventListener('resize',updateDensityUi); setView(catalogView); render();
 </script>
 </body>
 </html>

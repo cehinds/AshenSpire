@@ -6,6 +6,13 @@ Select any component card there to open its detail drawer. The dedicated
 [`tray-gallery.html`](./tray-gallery.html) shows all eight top/right/bottom/left
 folded and unfolded Tray states using the production renderer.
 
+Use the catalog's **Grid / List** switch to choose card tiles or a compact
+vertical list. In Grid view, use the **− / reset / +** controls, Ctrl/Command +
+mouse wheel, or a trackpad pinch to change card size and the number of visible
+columns. View and density preferences persist in the browser. The catalog
+header also links back to the repository, README, issue list, Daily Status, and
+the current GitHub Pages preview.
+
 Stable IDs live in [`UiComponentId.js`](../src/ui/models/UiComponentId.js). Model
 factories live under [`src/ui/models/`](../src/ui/models/) and the shared HUD
 projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
