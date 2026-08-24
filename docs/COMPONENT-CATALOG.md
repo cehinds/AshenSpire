@@ -13,6 +13,12 @@ columns. View and density preferences persist in the browser. The catalog
 header also links back to the repository, README, issue list, Daily Status, and
 the current GitHub Pages preview.
 
+Search accepts multiple terms and matches each term across the component ID,
+model, renderer/view, role, reuse surface, and cataloged children. Press `/` to
+focus search. Results can be sorted by ID, group, model, or view and filtered to
+composite or leaf components. **Copy view link** preserves the active search,
+group, kind, and sort in a shareable URL; **Clear** resets discovery filters.
+
 Stable IDs live in [`UiComponentId.js`](../src/ui/models/UiComponentId.js). Model
 factories live under [`src/ui/models/`](../src/ui/models/) and the shared HUD
 projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
