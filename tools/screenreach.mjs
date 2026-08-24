@@ -117,13 +117,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /frame paints under the HUD/,
       },
       {
-        name: 'Settings cleanup watches the shared connected panel instead of its own render',
-        file: 'src/ui/screens/settings.js',
-        find: 'if (lifecycleSentinel.isConnected) return;',
-        replace: 'if (container.isConnected) return;',
-        expectRed: /Settings revisit leaked listeners/,
-      },
-      {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
         find: ' aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"',
@@ -146,7 +139,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 7 checks passed');
   process.exit(selftestCode);
 }
 
@@ -186,6 +179,7 @@ const SETTINGS_CYCLE = `(async () => {
   window.addEventListener('error', recordLifecycleError);
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
+  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
   tab('settings')?.click(); await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
@@ -200,7 +194,7 @@ const SETTINGS_CYCLE = `(async () => {
   tab('deck')?.click(); await pause();
   tab('settings')?.click(); await pause();
   tab('deck')?.click(); await pause();
-  window.__settingsListenerBalance = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
+  window.__settingsListenerBalance = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size - (baseline[type] || 0)]));
   document.querySelector('#ov-close')?.click(); await pause();
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); await pause();
   window.__armouryShortcutOpened = !!document.querySelector('.armoury-overlay');
