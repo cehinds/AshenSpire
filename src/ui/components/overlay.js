@@ -240,21 +240,31 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   };
   syncFullscreenQuickAction();
   syncMusicQuickAction();
-  document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
-  document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
   const announceFullscreenError = () => {
     syncFullscreenQuickAction();
     if (settingsAnnouncement) {
       settingsAnnouncement.textContent = quickControls.fullscreen?.read?.()?.condition
-        || 'Fullscreen could not be changed.';
+      || 'Fullscreen could not be changed.';
     }
   };
-  document.addEventListener('fullscreenerror', announceFullscreenError);
-  document.addEventListener('webkitfullscreenerror', announceFullscreenError);
-  overlayCleanup.push(() => document.removeEventListener('fullscreenchange', syncFullscreenQuickAction));
-  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction));
-  overlayCleanup.push(() => document.removeEventListener('fullscreenerror', announceFullscreenError));
-  overlayCleanup.push(() => document.removeEventListener('webkitfullscreenerror', announceFullscreenError));
+  let quickFullscreenListening = false;
+  const listenForQuickFullscreen = () => {
+    if (quickFullscreenListening) return;
+    quickFullscreenListening = true;
+    document.addEventListener('fullscreenchange', syncFullscreenQuickAction);
+    document.addEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+    document.addEventListener('fullscreenerror', announceFullscreenError);
+    document.addEventListener('webkitfullscreenerror', announceFullscreenError);
+  };
+  const stopListeningForQuickFullscreen = () => {
+    if (!quickFullscreenListening) return;
+    quickFullscreenListening = false;
+    document.removeEventListener('fullscreenchange', syncFullscreenQuickAction);
+    document.removeEventListener('webkitfullscreenchange', syncFullscreenQuickAction);
+    document.removeEventListener('fullscreenerror', announceFullscreenError);
+    document.removeEventListener('webkitfullscreenerror', announceFullscreenError);
+  };
+  overlayCleanup.push(stopListeningForQuickFullscreen);
 
   fullscreenButton?.addEventListener('click', async () => {
     if (fullscreenButton.disabled || !quickControls.fullscreen?.activate) return;
@@ -311,6 +321,8 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
 
   function selectTab(id) {
     currentTab = id;
+    if (id === 'settings') listenForQuickFullscreen();
+    else stopListeningForQuickFullscreen();
     veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
     if (quickActions) quickActions.hidden = id !== 'settings';
     updateMenuSelection(veil, TABS, id);

@@ -110,11 +110,11 @@ if (process.argv.includes('--selftest')) {
         expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
       },
       {
-        name: 'the narrow combatant frame gains a large vertical gap and crosses a HUD band',
-        file: 'styles/combat.css',
-        find: ":root[data-layout='narrow'] .combatant { gap: 0; }",
-        replace: ":root[data-layout='narrow'] .combatant { gap: 4rem; }",
-        expectRed: /frame paints under the HUD/,
+        name: 'controls inside collapsed disclosures are counted as visible targets',
+        file: 'tools/screenreach.mjs',
+        find: "\n      && !e.closest('details:not([open])')",
+        replace: '',
+        expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -126,8 +126,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
-        find: ' aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"',
-        replace: ' aria-describedby="set-${r.key}-status"',
+        find: ' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'}',
+        replace: ' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
@@ -186,6 +186,10 @@ const SETTINGS_CYCLE = `(async () => {
   window.addEventListener('error', recordLifecycleError);
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
+  if (document.querySelector('.qn-panel')) {
+    document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')?.click();
+    await pause();
+  }
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
   tab('settings')?.click(); await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
@@ -290,7 +294,8 @@ const PROBE = `(() => {
   const covered = [], scrolledOut = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
-    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden';
+    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
+      && !e.closest('details:not([open])');
   });
   for (const c of all) {
     const r = c.getBoundingClientRect();
@@ -353,7 +358,8 @@ const PROBE = `(() => {
   // width that happens to fit today's copy.
   if (document.querySelector('#flask-reallocate')) {
     const bare = [...document.querySelectorAll('.screen > .class-row > .class-pick')]
-      .filter((card) => !card.querySelector(':scope > .cp-body'));
+      .filter((card) => !card.matches('details.shrine-fold')
+        && !card.querySelector(':scope > .cp-body'));
     if (bare.length) visual.push('Shrine choice cards missing their shared .cp-body composition: ' + bare.length);
   }
   // A tall enemy can be centred through the flexible battlefield boundary.

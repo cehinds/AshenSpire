@@ -74,6 +74,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /overlay announces fullscreen refusal/,
       },
       {
+        name: 'overlay-fullscreen-listener-leak', file: 'src/ui/components/overlay.js',
+        find: 'else stopListeningForQuickFullscreen();',
+        replace: 'else { /* planted: settings listeners survive tab exit */ }',
+        expectRed: /overlay releases fullscreen listeners/,
+      },
+      {
         name: 'quick-exit-bypasses-save', file: 'src/ui/components/overlay.js',
         find: '(onQuit || onExit)();', replace: '(onExit || onQuit)();',
         expectRed: /Save & Quit prefers the persistence callback/,
@@ -92,7 +98,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('music-toggle-parity-selftest: OK — 13 checks passed');
+  if (code === 0) console.log('music-toggle-parity-selftest: OK — 14 checks passed');
   process.exit(code);
 }
 
@@ -167,6 +173,9 @@ check(overlay.includes('controls: quickControls,'), 'overlay forwards the shared
 check(overlay.includes("document.addEventListener('fullscreenerror', announceFullscreenError);")
   && overlay.includes("settingsAnnouncement.textContent = result.announcement;"),
   'overlay announces fullscreen refusal');
+check(overlay.includes('else stopListeningForQuickFullscreen();')
+  && overlay.includes('overlayCleanup.push(stopListeningForQuickFullscreen);'),
+  'overlay releases fullscreen listeners');
 check(overlay.includes('(onQuit || onExit)();'), 'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');
