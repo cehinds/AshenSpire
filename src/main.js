@@ -29,7 +29,7 @@ import {
   rollArmamentDrop,
   applyGraceRefill,
 } from './engine/encounters.js';
-import { mountTitle } from './ui/screens/title.js';
+import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
 import { openProfileArchive } from './ui/screens/profileArchive.js';
@@ -51,7 +51,9 @@ import { mountEquipment } from './ui/screens/equipment.js';
 import { openOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
-import { initInput, setBindings, setKeyBindings } from './ui/input.js';
+import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
+import { mountStartupGate } from './ui/components/startupGate.js';
+import { startupGateModel } from './ui/models/StartupGateModels.js';
 import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
@@ -917,8 +919,41 @@ function showProfileNoticeIfNeeded() {
   return true;
 }
 
-function showTitle() {
+let startupGatePending = !shotState;
+let unmountStartupGate = null;
+
+function startupInputFamily(forced = '') {
+  if (['pointer', 'touch', 'keyboard', 'controller'].includes(forced)) return forced;
+  if (hasGamepad()) return 'controller';
+  if ((navigator.maxTouchPoints || 0) > 0 || matchMedia('(pointer: coarse)').matches) return 'touch';
+  return 'keyboard';
+}
+
+function showStartupGate({ forcedFamily = '' } = {}) {
+  if (unmountStartupGate) unmountStartupGate();
+  audio.music('title');
+  const family = startupInputFamily(forcedFamily);
+  unmountStartupGate = mountStartupGate(app, {
+    model: startupGateModel({ inputFamily: family }),
+    registerInputGate: setInputGate,
+    onReveal: ({ family }) => {
+      startupGatePending = false;
+      unmountStartupGate = null;
+      showTitle({
+        skipStartup: true,
+        focusDefault: true,
+        focusCursor: family === 'keyboard' || family === 'controller',
+      });
+    },
+  });
+}
+
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
+  if (startupGatePending && !skipStartup) {
+    showStartupGate();
+    return;
+  }
   audio.music('title');
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
@@ -953,6 +988,7 @@ function showTitle() {
     },
     onLan: showLobby,
   });
+  if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
@@ -2309,6 +2345,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const meta = saves.loadMeta();
   if (found != null) meta.found = found ? found.split(',') : [];
   mountCompendium(app, { registries, meta, onBack: showTitle });
+} else if (shotState === 'startup') {
+  showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });
 } else if (shotState === 'title') {
   // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
   // one state for the one screen being watched, so the watch has a measurement

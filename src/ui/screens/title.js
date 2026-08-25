@@ -10,6 +10,15 @@ import { beatArmer } from '../components/holdconfirm.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
+import { focusElement } from '../input.js';
+
+export function focusTitleDefault(app, { showCursor = true } = {}) {
+  const control = app?.querySelector('.slot-continue, .slot-new');
+  if (!control) return false;
+  control.focus({ preventScroll: true });
+  if (showCursor) focusElement(control);
+  return document.activeElement === control;
+}
 
 export function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onProfile, onSettings, onSettingsChange, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).

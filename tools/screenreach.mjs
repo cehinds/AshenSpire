@@ -220,7 +220,8 @@ const SETTINGS_CYCLE = `(async () => {
 // design and it is listed with `overlay: true` rather than left out — a screen
 // missing from a sweep is invisible, and a screen present with a reason is not.
 const SCREENS = [
-  { name: 'title', q: '', ready: `!!document.querySelector('#app button')` },
+  { name: 'startup', q: '?shot=startup', ready: `!!document.querySelector('.startup-gate')` },
+  { name: 'title', q: '?shot=title', ready: `!!document.querySelector('#app button')` },
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
   { name: 'menu-cycle', q: '?shot=map', ready: `!!document.querySelector('.map-node')`, setup: SETTINGS_CYCLE,
     overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },

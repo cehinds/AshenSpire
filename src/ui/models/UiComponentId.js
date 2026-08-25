@@ -2,6 +2,7 @@
 // enum: Component Models and Views share the names without either owning the
 // other's implementation.
 export const UI_COMPONENTS = Object.freeze({
+  startupGate: 'startup-gate',
   sharedRunHud: 'shared-run-hud',
   runHeaderStrip: 'run-header-strip',
   identityCluster: 'identity-cluster',

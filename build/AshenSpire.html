@@ -1513,6 +1513,105 @@ button.rs-reset {
   100% { transform: translate(26px, -92vh); opacity: 0; }
 }
 
+/* ---------- cold-boot startup gate (#229) ---------------------------------
+   A separate surface from the title menu: the menu is not mounted behind it,
+   so hidden controls cannot leak into Tab order or the accessibility tree.
+   Copy and particle positions arrive through StartupGateModels.js; this block
+   owns layout only. */
+.startup-gate {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-height: 100%;
+  overflow: hidden;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(var(--accent-rgb), 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(16, 13, 10, 0.88), var(--bg));
+  transition: opacity 180ms ease-out;
+}
+.startup-gate:focus { outline: none; }
+.startup-gate:focus-visible { outline: 2px solid var(--gold); outline-offset: -0.45rem; }
+.startup-gate.is-revealing { opacity: 0; pointer-events: none; }
+.reduced-motion .startup-gate { transition-duration: 140ms; transition-timing-function: linear; }
+.startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.startup-ash {
+  position: absolute;
+  left: var(--ash-left);
+  bottom: -1rem;
+  width: var(--ash-size);
+  height: var(--ash-size);
+  border-radius: 50%;
+  background: var(--ember);
+  box-shadow: 0 0 0.55rem rgba(201, 80, 46, 0.55);
+  opacity: 0;
+  animation: startupAshRise var(--ash-duration) linear var(--ash-delay) infinite;
+}
+@keyframes startupAshRise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  14% { opacity: 0.62; }
+  72% { opacity: 0.28; }
+  100% { transform: translate3d(1.4rem, -78vh, 0); opacity: 0; }
+}
+.startup-mark {
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  width: min(92vw, 72rem);
+  padding: 2rem;
+  text-align: center;
+  animation: startupMarkIn 520ms ease-out both;
+}
+@keyframes startupMarkIn {
+  from { opacity: 0; transform: translateY(0.65rem); }
+  to { opacity: 1; transform: none; }
+}
+.startup-overline {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(0.72rem, 1.8vw, 0.95rem);
+  letter-spacing: 0.38em;
+  text-indent: 0.38em;
+}
+.startup-wordmark {
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 6.8rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  text-shadow: 0 0 3.2rem rgba(var(--accent-rgb), 0.38);
+}
+.startup-prompt {
+  margin: clamp(2.5rem, 8vh, 6rem) 0 0;
+  color: var(--parchment);
+  font-size: clamp(0.82rem, 2.2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  opacity: 0.82;
+  animation: startupPromptPulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
+.startup-gate .build-stamp {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  color: var(--parchment);
+  text-align: center;
+}
+@media (max-width: 30rem) {
+  .startup-mark { width: 94vw; padding-inline: 0.8rem; }
+  .startup-wordmark { font-size: clamp(2.45rem, 12vw, 4.3rem); letter-spacing: 0.11em; text-indent: 0.11em; }
+  .startup-prompt { max-width: 20rem; line-height: 1.55; }
+  .startup-gate .build-stamp { font-size: 0.72rem; }
+}
+
 /* ---------- character customization ---------- */
 
 /* EldenSpire#29 slice 1. These three rules were inline `style=` attributes on
@@ -6667,7 +6766,7 @@ const { rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop, rollRel
 
 
 
-const { mountTitle } = require("src/ui/screens/title.js");
+const { mountTitle, focusTitleDefault } = require("src/ui/screens/title.js");
 const { refreshHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { mountProfileNotice } = require("src/ui/screens/profileNotice.js");
 const { openProfileArchive } = require("src/ui/screens/profileArchive.js");
@@ -6689,7 +6788,9 @@ const { mountEquipment } = require("src/ui/screens/equipment.js");
 const { openOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
-const { initInput, setBindings, setKeyBindings } = require("src/ui/input.js");
+const { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } = require("src/ui/input.js");
+const { mountStartupGate } = require("src/ui/components/startupGate.js");
+const { startupGateModel } = require("src/ui/models/StartupGateModels.js");
 const { setSpritesEnabled, classGlyph, setClassGlyphs } = require("src/ui/assets.js");
 const { mountLobby } = require("src/ui/screens/lobby.js");
 const { mountCoop } = require("src/ui/screens/coop.js");
@@ -7555,8 +7656,41 @@ function showProfileNoticeIfNeeded() {
   return true;
 }
 
-function showTitle() {
+let startupGatePending = !shotState;
+let unmountStartupGate = null;
+
+function startupInputFamily(forced = '') {
+  if (['pointer', 'touch', 'keyboard', 'controller'].includes(forced)) return forced;
+  if (hasGamepad()) return 'controller';
+  if ((navigator.maxTouchPoints || 0) > 0 || matchMedia('(pointer: coarse)').matches) return 'touch';
+  return 'keyboard';
+}
+
+function showStartupGate({ forcedFamily = '' } = {}) {
+  if (unmountStartupGate) unmountStartupGate();
+  audio.music('title');
+  const family = startupInputFamily(forcedFamily);
+  unmountStartupGate = mountStartupGate(app, {
+    model: startupGateModel({ inputFamily: family }),
+    registerInputGate: setInputGate,
+    onReveal: ({ family }) => {
+      startupGatePending = false;
+      unmountStartupGate = null;
+      showTitle({
+        skipStartup: true,
+        focusDefault: true,
+        focusCursor: family === 'keyboard' || family === 'controller',
+      });
+    },
+  });
+}
+
+function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
+  if (startupGatePending && !skipStartup) {
+    showStartupGate();
+    return;
+  }
   audio.music('title');
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
@@ -7591,6 +7725,7 @@ function showTitle() {
     },
     onLan: showLobby,
   });
+  if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
   lanInfo().then((info) => {
     const btn = app.querySelector('#lan-play');
@@ -8947,6 +9082,8 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   const meta = saves.loadMeta();
   if (found != null) meta.found = found ? found.split(',') : [];
   mountCompendium(app, { registries, meta, onBack: showTitle });
+} else if (shotState === 'startup') {
+  showStartupGate({ forcedFamily: shotParams.get('shotInput') || '' });
 } else if (shotState === 'title') {
   // A REACH STATE, the same shape as `?shot=rest` and for the same sentence:
   // one state for the one screen being watched, so the watch has a measurement
@@ -34792,6 +34929,15 @@ const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
+const { focusElement } = require("src/ui/input.js");
+
+function focusTitleDefault(app, { showCursor = true } = {}) {
+  const control = app?.querySelector('.slot-continue, .slot-new');
+  if (!control) return false;
+  control.focus({ preventScroll: true });
+  if (showCursor) focusElement(control);
+  return document.activeElement === control;
+}
 
 function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onProfile, onSettings, onSettingsChange, onQuit, onCustom, onLan, onCompendium }) {
   // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
@@ -34888,7 +35034,7 @@ function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete,
 }
 
 
-Object.assign(module.exports, { mountTitle });
+Object.assign(module.exports, { focusTitleDefault, mountTitle });
 
 },
 "src/ui/components/tooltip.js": function (module, exports, require) {
@@ -36248,6 +36394,7 @@ Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent
 // enum: Component Models and Views share the names without either owning the
 // other's implementation.
 const UI_COMPONENTS = Object.freeze({
+  startupGate: 'startup-gate',
   sharedRunHud: 'shared-run-hud',
   runHeaderStrip: 'run-header-strip',
   identityCluster: 'identity-cluster',
@@ -38030,6 +38177,26 @@ function setScreenKeyClaim(claim = null) {
   return () => { if (screenKeyClaim === owned) screenKeyClaim = null; };
 }
 
+// A cold-boot surface may temporarily own the physical press before the focus
+// cursor and screen hotkeys see it. The callback receives a normalized,
+// immutable record and returns true only when it consumed that phase. This is
+// deliberately one slot, not a stack: two first-input owners would recreate
+// the double-activation race the gate exists to prevent.
+let inputGate = null;
+function setInputGate(gate = null) {
+  inputGate = typeof gate === 'function' ? gate : null;
+  const owned = inputGate;
+  return () => { if (inputGate === owned) inputGate = null; };
+}
+
+function gateInput(input) {
+  return !!inputGate && inputGate(Object.freeze({ ...input })) === true;
+}
+
+function cancelInputGate(family = '') {
+  if (inputGate) inputGate(Object.freeze({ family, kind: 'cancel', phase: 'cancel' }));
+}
+
 // ---- WHICH CONTROL AN ACTION DRAWS (S7 wide) --------------------------------
 //
 // A REGISTRATION, NEVER A LIST. `components/holdconfirm.js` registers every
@@ -38228,6 +38395,11 @@ function onKeydown(ev) {
     cb(k);
     return;
   }
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    return;
+  }
   if (!enabled) return;
   const tag = (ev.target && ev.target.tagName) || '';
   const typing = tag === 'INPUT' || tag === 'TEXTAREA';
@@ -38351,6 +38523,11 @@ function onKeydown(ev) {
 // however the world changes, or the control is left filling forever.
 //
 function onKeyup(ev) {
+  if (gateInput({ family: 'keyboard', kind: 'key', phase: 'up', key: ev.key, repeat: false })) {
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    return;
+  }
   if (ev.key === CONFIRM_KEY) { pressEnd(); return; }
   if (keyPressAction && matchAction(ev, keyPressAction)) {
     keyPressAction = null;
@@ -38378,20 +38555,28 @@ function pollPads() {
   for (const pad of pads) {
     if (!pad) continue;
     any = true;
-    const prev = padPrev[pad.index] || [];
     const pressed = pad.buttons.map((b) => b.pressed || b.value > 0.5);
+    if (!Object.hasOwn(padPrev, pad.index)) {
+      padPrev[pad.index] = pressed;
+      continue;
+    }
+    const prev = padPrev[pad.index];
 
     for (let i = 0; i < pressed.length; i++) {
       // THE RELEASE, which this poller never used to look at. A pad had only
       // rising edges, so a pad button was a tap and could never be a hold —
       // the same gap the keyboard had, one input over (S7).
       if (!pressed[i] && prev[i]) {
+        const releasedAction = actionForButton(i);
+        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, padIndex: pad.index, action: releasedAction?.id || '' })) continue;
         if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
         continue;
       }
       const rising = pressed[i] && !prev[i];
       if (!rising) continue;
       engaged = true;
+      const gatedAction = actionForButton(i);
+      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, padIndex: pad.index, action: gatedAction?.id || '' })) continue;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;
@@ -38422,6 +38607,7 @@ function pollPads() {
     const ax = pad.axes[0] || 0;
     const ay = pad.axes[1] || 0;
     if (!rebindCapture && (Math.abs(ax) > DEADZONE || Math.abs(ay) > DEADZONE)) {
+      gateInput({ family: 'controller', kind: 'axis', phase: 'move' });
       if (lastNav <= 0) {
         lastNav = Math.round(REPEAT_MS / POLL_MS);
         if (Math.abs(ax) > Math.abs(ay)) moveFocus(ax > 0 ? 'right' : 'left');
@@ -38458,7 +38644,10 @@ function initInput({ getSettings } = {}) {
   addEventListener('keyup', onKeyup, true);
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
-  addEventListener('blur', () => pressEnd(true));
+  addEventListener('blur', () => {
+    cancelInputGate();
+    pressEnd(true);
+  });
 
   // Focus memory: after a re-render drops the cursor, restore it to the same
   // logical element (by key) if it still exists — so navigation doesn't snap
@@ -38483,7 +38672,17 @@ function initInput({ getSettings } = {}) {
     document.body.classList.add('has-gamepad');
     startPolling();
   });
-  addEventListener('gamepaddisconnected', () => {
+  addEventListener('gamepaddisconnected', (event) => {
+    cancelInputGate('controller');
+    // A reconnect is a new observation epoch. Forget the disconnected pad's
+    // last sample so a button already held on reconnect is seeded instead of
+    // being invented as a fresh rising edge.
+    const disconnectedIndex = event.gamepad?.index;
+    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];
+    else {
+      const connected = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+      for (const index of Object.keys(padPrev)) if (!connected[Number(index)]) delete padPrev[index];
+    }
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }
@@ -38499,7 +38698,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -39381,7 +39580,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f89a527856';
+const SOURCE = '33c9be93e1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39415,7 +39614,7 @@ const SOURCE = 'f89a527856';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1290';
+const ORDINAL = '1311';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39442,7 +39641,7 @@ const ORDINAL = '1290';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-24';
+const BUILT = '2026-08-25';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -41735,6 +41934,16 @@ Object.assign(module.exports, { PROJECT_REPOSITORY_URL, validateChangelog, CHANG
 // Do not edit: the focused check refuses any drift from the authoritative Markdown.
 
 const GENERATED_CHANGELOG = Object.freeze([
+  {
+    "id": "pr-346",
+    "date": "2026-08-24",
+    "group": "2026-08-24",
+    "summary": "Cold boot now opens on the Ashen Spire threshold",
+    "detail": "The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled on blur or controller disconnect, and controller buttons already held when polling begins are seeded rather than invented as fresh presses. The title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.",
+    "build": "dev artifact; exact BUILD in PR evidence",
+    "pullRequest": 346,
+    "url": "https://github.com/cehinds/AshenSpire/pull/346"
+  },
   {
     "id": "pr-344",
     "date": "2026-08-24",
@@ -58023,6 +58232,200 @@ function showBossIntro({ name, act }, { hold = false } = {}) {
 
 
 Object.assign(module.exports, { showBossIntro });
+
+},
+"src/ui/components/startupGate.js": function (module, exports, require) {
+const { buildStampHtml } = require("src/ui/components/buildstamp.js");
+const { esc } = require("src/ui/components/tooltip.js");
+
+function isActivation(input) {
+  if (input.family === 'keyboard') return input.key === 'Enter' || input.key === ' ';
+  if (input.family === 'controller') {
+    return input.button === 0 || input.button === 9
+      || input.action === 'confirm' || input.action === 'menu';
+  }
+  return false;
+}
+
+function familyForPointer(event) {
+  return event.pointerType === 'touch' ? 'touch' : 'pointer';
+}
+
+function mountStartupGate(app, {
+  model,
+  registerInputGate,
+  onReveal,
+} = {}) {
+  if (!app || !model || model.component !== 'startup-gate') {
+    throw new Error('mountStartupGate requires an app root and startup-gate Component Model');
+  }
+  if (typeof registerInputGate !== 'function' || typeof onReveal !== 'function') {
+    throw new Error('mountStartupGate requires input registration and reveal callbacks');
+  }
+
+  const { properties, accessibility } = model;
+  const particleHtml = properties.particles.map((particle) => (
+    `<span class="startup-ash" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
+  )).join('');
+
+  app.innerHTML = `
+    <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
+      role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
+      <div class="startup-ash-field" aria-hidden="true">${particleHtml}</div>
+      <div class="startup-mark">
+        ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
+        <h1 class="startup-wordmark">${esc(properties.wordmark)}</h1>
+        <p class="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+      </div>
+      ${buildStampHtml('startup')}
+    </section>`;
+
+  const root = app.querySelector('.startup-gate');
+  const prompt = root.querySelector('.startup-prompt');
+  let family = properties.inputFamily;
+  let armed = null;
+  let finished = false;
+  let revealTimer = null;
+
+  const setFamily = (next) => {
+    if (!properties.prompts[next] || next === family) return;
+    family = next;
+    root.dataset.inputFamily = next;
+    prompt.textContent = properties.prompts[next];
+  };
+
+  const finish = (source) => {
+    if (finished) return;
+    finished = true;
+    armed = null;
+    root.classList.add('is-revealing');
+    root.setAttribute('aria-busy', 'true');
+    const delay = document.body.classList.contains('reduced-motion') ? 140 : 180;
+    revealTimer = setTimeout(() => {
+      revealTimer = null;
+      teardown(true);
+      onReveal({ source, family });
+    }, delay);
+  };
+
+  const claimInput = (input) => {
+    if (input.phase === 'cancel') {
+      if (!input.family || armed?.startsWith(`${input.family}:`)) armed = null;
+      return false;
+    }
+    setFamily(input.family);
+    if (!isActivation(input)) return false;
+    if (finished) return true;
+    const identity = input.family === 'keyboard'
+      ? `${input.family}:${input.key}`
+      : `${input.family}:${input.padIndex}:${input.button}`;
+    if (input.phase === 'down') {
+      if (!input.repeat) armed = identity;
+      return true;
+    }
+    if (input.phase === 'up') {
+      const completes = armed === identity;
+      if (completes) {
+        armed = null;
+        finish(input.family);
+      }
+      return true;
+    }
+    return true;
+  };
+
+  const releaseInputGate = registerInputGate(claimInput);
+  const onPointerMove = (event) => setFamily(familyForPointer(event));
+  const onPointerDown = (event) => setFamily(familyForPointer(event));
+  const onClick = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    // A touch pointer normally ends as a compatibility MouseEvent whose
+    // pointerType is absent. Keep the family claimed on pointerdown instead
+    // of relabelling that same physical gesture as a mouse click.
+    finish(event.pointerType ? familyForPointer(event) : family);
+  };
+
+  root.addEventListener('pointermove', onPointerMove, { passive: true });
+  root.addEventListener('pointerdown', onPointerDown, true);
+  root.addEventListener('click', onClick, true);
+  root.focus({ preventScroll: true });
+
+  function teardown(releaseGate = true) {
+    if (revealTimer != null) {
+      clearTimeout(revealTimer);
+      revealTimer = null;
+    }
+    if (releaseGate) releaseInputGate();
+    root.removeEventListener('pointermove', onPointerMove);
+    root.removeEventListener('pointerdown', onPointerDown, true);
+    root.removeEventListener('click', onClick, true);
+    armed = null;
+  }
+
+  return () => teardown(true);
+}
+
+
+Object.assign(module.exports, { mountStartupGate });
+
+},
+"src/ui/models/StartupGateModels.js": function (module, exports, require) {
+const { behaviorModel } = require("src/ui/models/BehaviorModel.js");
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+const DEFAULT_PROMPTS = Object.freeze({
+  pointer: 'CLICK TO CONTINUE',
+  touch: 'TAP TO CONTINUE',
+  keyboard: 'PRESS ENTER OR SPACE',
+  controller: 'PRESS A / CROSS OR START / MENU',
+});
+
+function particles(count = 7) {
+  const total = Math.max(0, Math.min(12, Math.floor(Number(count) || 0)));
+  return Array.from({ length: total }, (_, index) => Object.freeze({
+    id: `ash-${index + 1}`,
+    leftPct: 9 + ((index * 17) % 82),
+    delayMs: (index * 1130) % 6200,
+    durationMs: 7600 + (index % 4) * 1400,
+    sizePx: 1 + (index % 3),
+  }));
+}
+
+function startupGateModel({
+  inputFamily = 'keyboard',
+  wordmark = 'ASHEN SPIRE',
+  overline = '',
+  prompts = DEFAULT_PROMPTS,
+  particleCount = 7,
+} = {}) {
+  const family = Object.hasOwn(prompts, inputFamily) ? inputFamily : 'keyboard';
+  return componentModel(UI.startupGate, {
+    variant: family,
+    properties: {
+      wordmark,
+      overline,
+      inputFamily: family,
+      prompts: { ...DEFAULT_PROMPTS, ...prompts },
+      particles: particles(particleCount),
+    },
+    accessibility: {
+      role: 'button',
+      label: 'Continue to the Ashen Spire title menu',
+      promptLive: 'polite',
+    },
+    behaviors: [behaviorModel('reveal-title', {
+      event: 'input',
+      command: 'reveal-title',
+      policy: 'consume-first-press',
+    })],
+  });
+}
+
+
+Object.assign(module.exports, { startupGateModel });
 
 },
 "src/ui/screens/lobby.js": function (module, exports, require) {
