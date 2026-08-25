@@ -1,13 +1,18 @@
 # Issue #229 startup-gate evidence
 
 - Base: `dev@13919f3d155928b4540342db54076ef39ee7fe91`
-- Built artifact commit: `6a4da5ed16ddc15de414ba5006c03da1cb18ea44`
-- Build: `0.4.0.1305 · src 3248caabca`
+- Built artifact commit: `38b2e2d6795fa12de38de525bde55523640606c9`
+- Build: `0.4.0.1307 · src e0c8ce81ab`
 - Artifact: `dist/AshenSpire.html`
-- Artifact SHA-256: `ca8f9168da94d28098e27032d2c9f45dc108bd7039bbb0246c170f233618539e`
+- Artifact SHA-256: `fa258563f467a49e5fb39319bb5bf53624b3a4fc6ca982fb0cf2e1ec45ebdb2a`
 - Browser: Google Chrome on Windows, device scale factor 1
 
 ## Visually inspected captures
+
+The captures were taken from build 1305. The final build 1307 changes only
+controller disconnect/reconnect state seeding and its test instrument; layout,
+art, and responsive styling are unchanged. Its visible build stamp is verified
+separately by the final 45-check rendered contract.
 
 | File | State | SHA-256 |
 |---|---|---|
@@ -23,7 +28,8 @@
 `tools/startup-gate.mjs` separately exercised Click, touch, Enter, Space,
 controller buttons 0 and 9, D-pad/analog last-input prompts, pointer/touch focus
 without a persistent gamepad cursor, return-to-title bypass, profile
-crisis precedence, interrupted-press cancellation, actionable startup semantics,
+crisis precedence, interrupted-press cancellation, held-controller reconnect
+seeding, actionable startup semantics,
 deterministic reduced-motion reveal cleanup, and Text M/XL at 390x844,
-844x344, and 1200x730. Result: 45 checks passed; its 16 same-door plants
+844x344, and 1200x730. Result: 45 checks passed; its 17 same-door plants
 were each observed red and the clean copied tree returned green.
