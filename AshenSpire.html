@@ -38568,7 +38568,7 @@ function pollPads() {
       // the same gap the keyboard had, one input over (S7).
       if (!pressed[i] && prev[i]) {
         const releasedAction = actionForButton(i);
-        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, action: releasedAction?.id || '' })) continue;
+        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, padIndex: pad.index, action: releasedAction?.id || '' })) continue;
         if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
         continue;
       }
@@ -38576,7 +38576,7 @@ function pollPads() {
       if (!rising) continue;
       engaged = true;
       const gatedAction = actionForButton(i);
-      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, action: gatedAction?.id || '' })) continue;
+      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, padIndex: pad.index, action: gatedAction?.id || '' })) continue;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;
@@ -39580,7 +39580,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'e0c8ce81ab';
+const SOURCE = '33c9be93e1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39614,7 +39614,7 @@ const SOURCE = 'e0c8ce81ab';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1307';
+const ORDINAL = '1311';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58316,15 +58316,19 @@ function mountStartupGate(app, {
     setFamily(input.family);
     if (!isActivation(input)) return false;
     if (finished) return true;
-    const identity = `${input.family}:${input.family === 'keyboard' ? input.key : input.button}`;
+    const identity = input.family === 'keyboard'
+      ? `${input.family}:${input.key}`
+      : `${input.family}:${input.padIndex}:${input.button}`;
     if (input.phase === 'down') {
       if (!input.repeat) armed = identity;
       return true;
     }
     if (input.phase === 'up') {
       const completes = armed === identity;
-      armed = null;
-      if (completes) finish(input.family);
+      if (completes) {
+        armed = null;
+        finish(input.family);
+      }
       return true;
     }
     return true;

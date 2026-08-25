@@ -79,15 +79,19 @@ export function mountStartupGate(app, {
     setFamily(input.family);
     if (!isActivation(input)) return false;
     if (finished) return true;
-    const identity = `${input.family}:${input.family === 'keyboard' ? input.key : input.button}`;
+    const identity = input.family === 'keyboard'
+      ? `${input.family}:${input.key}`
+      : `${input.family}:${input.padIndex}:${input.button}`;
     if (input.phase === 'down') {
       if (!input.repeat) armed = identity;
       return true;
     }
     if (input.phase === 'up') {
       const completes = armed === identity;
-      armed = null;
-      if (completes) finish(input.family);
+      if (completes) {
+        armed = null;
+        finish(input.family);
+      }
       return true;
     }
     return true;

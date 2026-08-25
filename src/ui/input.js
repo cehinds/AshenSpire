@@ -955,7 +955,7 @@ function pollPads() {
       // the same gap the keyboard had, one input over (S7).
       if (!pressed[i] && prev[i]) {
         const releasedAction = actionForButton(i);
-        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, action: releasedAction?.id || '' })) continue;
+        if (gateInput({ family: 'controller', kind: 'button', phase: 'up', button: i, padIndex: pad.index, action: releasedAction?.id || '' })) continue;
         if (padPressBtn === i) { padPressBtn = null; pressEnd(); }
         continue;
       }
@@ -963,7 +963,7 @@ function pollPads() {
       if (!rising) continue;
       engaged = true;
       const gatedAction = actionForButton(i);
-      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, action: gatedAction?.id || '' })) continue;
+      if (gateInput({ family: 'controller', kind: 'button', phase: 'down', button: i, padIndex: pad.index, action: gatedAction?.id || '' })) continue;
       if (rebindCapture) {
         const cb = rebindCapture;
         rebindCapture = null;

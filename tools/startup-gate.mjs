@@ -154,6 +154,13 @@ if (args.includes('--selftest')) {
         expectRed: /RED A7\.HELD-AT-RECONNECT/,
       },
       {
+        name: 'one controller can complete another controller\'s activation',
+        file: 'src/ui/components/startupGate.js',
+        find: "      : `${input.family}:${input.padIndex}:${input.button}`;",
+        replace: "      : `${input.family}:${input.button}`; // startup-gate selftest plant",
+        expectRed: /RED A7\.MULTIPAD-OWNERSHIP/,
+      },
+      {
         name: 'startup activation is removed from the accessibility tree',
         file: 'src/ui/models/StartupGateModels.js',
         find: "      role: 'button',",
@@ -183,7 +190,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 17 plants, 17 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 18 plants, 18 caught');
   process.exit(code);
 }
 
@@ -219,7 +226,7 @@ function verdict(condition, code, detail) {
 
 async function page({
   query = '', width = 1200, height = 730, mobile = false,
-  pad = false, heldButton = null, corruptProfile = false, reduced = false,
+  pad = false, heldButton = null, secondHeldButton = null, corruptProfile = false, reduced = false,
 } = {}) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -239,7 +246,12 @@ async function page({
     ${Number.isInteger(heldButton) ? `state.buttons[${heldButton}]={pressed:true,value:1};` : ''}
     const gamepad = { id:'startup-gate-test-pad', index:0, connected:true, mapping:'standard',
       timestamp:0, axes:[0,0,0,0], buttons:state.buttons };
-    Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad] : [] });
+    const secondButtons = Array.from({length: 16}, () => ({pressed:false,value:0}));
+    ${Number.isInteger(secondHeldButton) ? `secondButtons[${secondHeldButton}]={pressed:true,value:1};` : ''}
+    const secondGamepad = { id:'startup-gate-test-pad-2', index:1, connected:true, mapping:'standard',
+      timestamp:0, axes:[0,0,0,0], buttons:secondButtons };
+    const secondConnected = ${Number.isInteger(secondHeldButton)};
+    Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad, secondConnected ? secondGamepad : null] : [] });
     window.__startupPad = {
       connect() {
         state.connected=true;
@@ -254,6 +266,7 @@ async function page({
         dispatchEvent(event);
       },
       set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; },
+      setSecond(index, pressed) { secondButtons[index]={pressed,value:pressed?1:0}; secondGamepad.timestamp += 1; },
       setAxis(index, value) { gamepad.axes[index]=value; gamepad.timestamp += 1; }
     };
   })();`;
@@ -459,6 +472,15 @@ async function assertInterruptedPresses() {
   await held.ev(`window.__startupPad.set(0,false)`); await wait(260);
   verdict(await held.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.HELD-RECOVERY', 'release then a fresh complete press reveals normally');
   await held.close();
+
+  const multiple = await page({ pad: true, secondHeldButton: 0 });
+  await multiple.until(`!!document.querySelector('.startup-gate')`, 'multiple gamepads startup');
+  await multiple.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await multiple.ev(`window.__startupPad.setSecond(0,false)`); await wait(240);
+  verdict(await multiple.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.MULTIPAD-OWNERSHIP', 'releasing a seeded hold on pad 1 cannot complete the activation begun by pad 0');
+  await multiple.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  verdict(await multiple.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.MULTIPAD-RECOVERY', 'releasing the same pad that began the activation reveals normally');
+  await multiple.close();
 }
 
 async function assertReturnBypass() {
