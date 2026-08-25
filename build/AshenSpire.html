@@ -35609,7 +35609,7 @@ function mountTitle(app, {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slot) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -35670,7 +35670,7 @@ function mountTitle(app, {
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
       button.addEventListener('click', () => {
-        selectedSlot = +button.dataset.slot;
+        selectedSlot = +button.dataset.slotPick;
         render();
         focusModal(`[data-slot-pick="${selectedSlot}"]`);
       });
@@ -40194,7 +40194,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b4b400e2c1';
+const SOURCE = 'f5f2e282e3';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -40228,7 +40228,7 @@ const SOURCE = 'b4b400e2c1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1354';
+const ORDINAL = '1356';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

@@ -133,7 +133,7 @@ export function mountTitle(app, {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slot) });
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete) });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };
@@ -194,7 +194,7 @@ export function mountTitle(app, {
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
       button.addEventListener('click', () => {
-        selectedSlot = +button.dataset.slot;
+        selectedSlot = +button.dataset.slotPick;
         render();
         focusModal(`[data-slot-pick="${selectedSlot}"]`);
       });

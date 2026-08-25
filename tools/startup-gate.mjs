@@ -498,6 +498,36 @@ async function assertReturnBypass() {
   await p.close();
 }
 
+async function assertNewGameSlotSelection() {
+  const p = await page({ query: '?shot=titleDelete', width: 390, height: 844, mobile: true });
+  await p.until(`!!document.querySelector('[data-title-action="new"]')`, 'mobile title with an occupied save');
+  await p.click('[data-title-action="new"]');
+  await p.until(`!!document.querySelector('.title-menu-modal')`, 'mobile New Game slot picker');
+
+  const initial = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null};
+  })()`);
+  verdict(initial.selected === '1' && initial.focused === initial.selected,
+    'A8.NEW-SLOT-INITIAL', `New Game visibly focuses its selected slot (${JSON.stringify(initial)})`);
+
+  await p.click('[data-slot-pick="2"]');
+  const changed = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(changed.selected === '2' && changed.focused === '2' && changed.continueEnabled,
+    'A8.NEW-SLOT-CHANGE', `a real mobile-sized pointer press selects another occupied slot and enables Continue (${JSON.stringify(changed)})`);
+
+  await p.click('[data-title-action="modal-continue"]');
+  await p.until(`!!document.querySelector('#cz-back')`, 'character creation from the newly selected slot');
+  verdict(await p.ev(`!!document.querySelector('.customize')`), 'A8.NEW-SLOT-CONTINUE', 'Continue enters character creation after changing slots');
+  await p.close();
+}
+
 async function assertCrisisPrecedence() {
   const p = await page({ corruptProfile: true });
   await p.until(`!!document.querySelector('.profile-notice, .startup-gate')`, 'crisis or startup');
@@ -576,6 +606,7 @@ async function main() {
   await assertGamepad(9);
   await assertInterruptedPresses();
   await assertReturnBypass();
+  await assertNewGameSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();
   if (!SELFTEST_LANE) {
