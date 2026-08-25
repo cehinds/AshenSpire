@@ -38672,8 +38672,17 @@ function initInput({ getSettings } = {}) {
     document.body.classList.add('has-gamepad');
     startPolling();
   });
-  addEventListener('gamepaddisconnected', () => {
+  addEventListener('gamepaddisconnected', (event) => {
     cancelInputGate('controller');
+    // A reconnect is a new observation epoch. Forget the disconnected pad's
+    // last sample so a button already held on reconnect is seeded instead of
+    // being invented as a fresh rising edge.
+    const disconnectedIndex = event.gamepad?.index;
+    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];
+    else {
+      const connected = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+      for (const index of Object.keys(padPrev)) if (!connected[Number(index)]) delete padPrev[index];
+    }
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }
@@ -39571,7 +39580,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '3248caabca';
+const SOURCE = 'e0c8ce81ab';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39605,7 +39614,7 @@ const SOURCE = '3248caabca';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1305';
+const ORDINAL = '1307';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39632,7 +39641,7 @@ const ORDINAL = '1305';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-24';
+const BUILT = '2026-08-25';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------

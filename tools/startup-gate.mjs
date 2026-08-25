@@ -147,6 +147,13 @@ if (args.includes('--selftest')) {
         expectRed: /RED A7\.HELD-AT-BOOT/,
       },
       {
+        name: 'a disconnected controller keeps its stale button sample',
+        file: 'src/ui/input.js',
+        find: '    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];',
+        replace: '    if (Number.isInteger(disconnectedIndex)) void disconnectedIndex; // startup-gate selftest plant',
+        expectRed: /RED A7\.HELD-AT-RECONNECT/,
+      },
+      {
         name: 'startup activation is removed from the accessibility tree',
         file: 'src/ui/models/StartupGateModels.js',
         find: "      role: 'button',",
@@ -176,7 +183,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 16 plants, 16 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 17 plants, 17 caught');
   process.exit(code);
 }
 
@@ -411,8 +418,9 @@ async function assertInterruptedPresses() {
   await pad.until(`!!document.querySelector('.startup-gate')`, 'gamepad interrupt startup');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
-  await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
-  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'disconnect cancels the armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  await pad.ev(`window.__startupPad.connect()`); await wait(140);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(240);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-RECONNECT', 'disconnect cancels ownership and a button held through reconnect is seeded, not invented as a new press');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
   verdict(await pad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');

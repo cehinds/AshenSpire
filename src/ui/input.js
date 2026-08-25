@@ -1059,8 +1059,17 @@ export function initInput({ getSettings } = {}) {
     document.body.classList.add('has-gamepad');
     startPolling();
   });
-  addEventListener('gamepaddisconnected', () => {
+  addEventListener('gamepaddisconnected', (event) => {
     cancelInputGate('controller');
+    // A reconnect is a new observation epoch. Forget the disconnected pad's
+    // last sample so a button already held on reconnect is seeded instead of
+    // being invented as a fresh rising edge.
+    const disconnectedIndex = event.gamepad?.index;
+    if (Number.isInteger(disconnectedIndex)) delete padPrev[disconnectedIndex];
+    else {
+      const connected = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+      for (const index of Object.keys(padPrev)) if (!connected[Number(index)]) delete padPrev[index];
+    }
     if (!navigator.getGamepads || !Array.from(navigator.getGamepads()).some(Boolean)) {
       document.body.classList.remove('has-gamepad');
     }
