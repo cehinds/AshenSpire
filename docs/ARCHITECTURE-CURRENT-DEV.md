@@ -5,7 +5,7 @@
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
 - Source branch: `dev`
-- Source commit: `4d563c8a456320794937629fdbed76c6e85af3b1`
+- Source commit: `67b3b938f68bce1503005a4fa30ef132e0e19dbd`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -31,7 +31,7 @@
 | Authoritative JSON/CSV content | `content/source/` | 15 |
 | Transport | `src/net/` | 1 |
 | Tests | `tests/` | 18 |
-| Architecture/tooling | `tools/` | 316 |
+| Architecture/tooling | `tools/` | 317 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **1336**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 185, `.json` 23, `.md` 33, `.mjs` 170, `.png` 747, `.py` 4, `.sh` 4, `.svg` 10, `.txt` 21, `.webp` 106, `.yml` 1, `(none)` 1.
+Tracked files: **1339**.
+Extensions: `.bat` 1, `.css` 4, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 185, `.json` 23, `.md` 34, `.mjs` 171, `.png` 747, `.py` 4, `.sh` 4, `.svg` 10, `.txt` 21, `.webp` 106, `.yml` 2, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
