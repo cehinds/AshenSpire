@@ -27,19 +27,19 @@ export function mountStartupGate(app, {
 
   const { properties, accessibility } = model;
   const particleHtml = properties.particles.map((particle) => (
-    `<span class="startup-ash" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
+    `<span class="startup-ash" data-component="startup-ash-particle" data-particle="${esc(particle.id)}" style="--ash-left:${particle.leftPct}%;--ash-delay:${particle.delayMs}ms;--ash-duration:${particle.durationMs}ms;--ash-size:${particle.sizePx}px"></span>`
   )).join('');
 
   app.innerHTML = `
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
-      <div class="startup-ash-field" aria-hidden="true">${particleHtml}</div>
-      <div class="startup-mark">
+      <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
+      <div class="startup-mark" data-component="startup-mark">
         ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
-        <h1 class="startup-wordmark">${esc(properties.wordmark)}</h1>
-        ${properties.subtitle ? `<p class="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
-        <div class="startup-rule" aria-hidden="true"><span></span></div>
-        <p class="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+        <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
+        ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
+        <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
+        <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
       </div>
       ${buildStampHtml('startup')}
     </section>`;
