@@ -49,7 +49,7 @@
 //               `:419`. Both numbers are printed now — `controls=N rows=M` —
 //               because their divergence IS the defect.
 //   D3 INK      that row AND THE CONTROL INSIDE IT are on screen ON ARRIVAL —
-//               non-zero box, not `display:none` / `visibility:hidden`, not
+//               non-zero box, `display` not none, `visibility` exactly visible, not
 //               transparent through ANY ancestor, and each box wholly inside the
 //               viewport ON ALL FOUR EDGES, with nothing scrolled in ANY real
 //               scrollable ancestor, nor on document Y or document X.
@@ -125,7 +125,7 @@
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
 //     and macOS are `unknown` here as everywhere else in this repo.
 //   · IT IS WIRED INTO ci.yml's MANUAL Ubuntu browser job. One clean run
-//     measures eight rendered cells; the selftest adds twenty-three copied-tree
+//     measures eight rendered cells; the selftest adds twenty-four copied-tree
 //     browser plants across two focused corpora, including deliberate 25-second
 //     and 30-second timeout defects. The workflow states that cost beside the
 //     steps. Until an
@@ -464,10 +464,11 @@ const READ = `(() => {
         && b.top < window.innerHeight && b.left < window.innerWidth,
     };
   });
-  // VISIBLE means a player can meet it now: it occupies space, is not hidden,
+  // VISIBLE means a player can meet it now: it occupies space, its computed
+  // visibility is exactly visible,
   // and intersects the viewport. A rendered row translated wholly above the
   // screen must not outrank the first control that is actually visible.
-  const visible = rows.filter((r) => r.display !== 'none' && r.visibility !== 'hidden'
+  const visible = rows.filter((r) => r.display !== 'none' && r.visibility === 'visible'
     && r.w > 0 && r.h > 0 && r.opacity !== '0' && r.effOpacity > 0 && r.intersectsViewport);
   // GEOMETRIC ORDER, not DOM order. This is the whole reason the tool exists.
   visible.sort((a, b2) => (a.top - b2.top) || (a.left - b2.left));
@@ -694,7 +695,7 @@ function judge(r, cell) {
     // same way the row's own 0.01 always has. Refusing "faint" would need a
     // number nobody has ruled on; refusing "absent" needs none. The residue is
     // in the printed boundary block with ancestor clip and occlusion.
-    const shown = fs.display !== 'none' && fs.visibility !== 'hidden' && fs.w > 0 && fs.h > 0
+    const shown = fs.display !== 'none' && fs.visibility === 'visible' && fs.w > 0 && fs.h > 0
       && fs.opacity !== '0' && fs.effOpacity > 0;
     // eslint-disable-next-line no-unused-vars -- `shown` is the row's half; the
     // control's half is `ctrlState.shown` below, and both are printed.
@@ -747,7 +748,7 @@ function judge(r, cell) {
       };
       const off = Object.keys(edgeOk).filter((k) => !edgeOk[k]);
       return {
-        shown: b.display !== 'none' && b.visibility !== 'hidden' && b.w > 0 && b.h > 0
+        shown: b.display !== 'none' && b.visibility === 'visible' && b.w > 0 && b.h > 0
           && b.opacity !== '0' && b.effOpacity > 0,
         off,
         onscreen: off.length === 0,
@@ -1047,7 +1048,7 @@ function refuseUnsupportedPlatform() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// TWENTY-THREE FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
+// TWENTY-FOUR FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
 // CONDITION AND NOT A FILE.
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
@@ -1449,6 +1450,16 @@ function selftestPlants() {
       replace: '        void input.family; // displayfirst selftest plant: startup never releases',
       expectRed: /displayfirst: STOPPED .*timeout waiting for title after startup gate/,
     },
+    {
+      // 22 — COLLAPSED IS NOT VISIBLE. Chromium may retain a non-zero layout
+      // box for visibility:collapse outside table layout, so accepting every
+      // value except hidden lets an invisible Fullscreen row remain first and
+      // pass both halves of D3.
+      name: 'the Fullscreen row is visibility-collapsed while retaining its box',
+      file: 'styles/ui.css',
+      append: '.set-panel .set-row:first-child { visibility: collapse !important; }',
+      expectRed: /FINDING D0\/population|FINDING D1\/order|FINDING D3\/ink/,
+    },
   ];
 }
 
@@ -1545,8 +1556,8 @@ async function countedVerdictPlant(count) {
 
 async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelftestPlants()) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty-one whole-tool browser mutants
-  // plus a clean run is twenty-two browser boots. The population is one shape and one
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty-two whole-tool browser mutants
+  // plus a clean run is twenty-three browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
