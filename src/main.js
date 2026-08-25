@@ -1067,12 +1067,13 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = null) {
   mountEquipment(document.body, {
     registries,
     run,
     meta: saves.loadMeta(),
     inCombat: false,
+    initialView,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
         const meta = saves.loadMeta();
@@ -1086,6 +1087,17 @@ function showArmoury() {
     onClose: showMap,
   });
 }
+
+function saveActiveRunFromMenu() {
+  persist();
+  return activeSlot;
+}
+
+// Browser-safe exits always land on the title screen. They never rely on
+// window.close(), which normal browser tabs are allowed to refuse.
+function loadFromMenu() { showTitle(); }
+function saveAndQuitFromMenu() { persist(); showTitle(); }
+function quitWithoutSavingFromMenu() { showTitle(); }
 
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
@@ -1147,13 +1159,14 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
+    onArmoury: (initialView) => {
+      const launcher = app.querySelector('#combat-armoury, #open-armoury');
+      if (launcher) launcher.dispatchEvent(new CustomEvent('click', { detail: { initialView } }));
+      else showArmoury(initialView);
     },
   });
 }
@@ -1330,14 +1343,10 @@ function showMap() {
     onMenu: showOverlay,
     onArmoury: showArmoury,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
   });
 }
 
@@ -1544,14 +1553,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist();
-      showTitle();
-    },
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();

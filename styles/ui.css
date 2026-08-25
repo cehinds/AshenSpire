@@ -4642,3 +4642,39 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-power-cards .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
+
+/* Settings category cards keep the 44px mobile hit area, while the painted
+   face is inset to a quieter 36px card. */
+.set-tabs .set-tab {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  background: transparent;
+}
+.set-tabs .set-tab::before {
+  content: '';
+  position: absolute; z-index: -1;
+  inset: 4px 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.set-tabs .set-tab.on { border-color: transparent; background: transparent; }
+.set-tabs .set-tab.on::before {
+  border-color: var(--gold);
+  background: rgba(201, 162, 39, 0.25);
+}
+
+/* Mobile faces are 32px instead of 40px (20% smaller); the button around each
+   face remains the tap floor. Compact mode uses the same pair under potions. */
+@media (max-width: 720px) {
+  .hud-quick-setting-face {
+    width: calc(32px / var(--ui-zoom, 1));
+    height: calc(32px / var(--ui-zoom, 1));
+  }
+  .hud-quick-setting-glyph {
+    width: calc(23px / var(--ui-zoom, 1));
+    height: calc(23px / var(--ui-zoom, 1));
+    font-size: calc(23px / var(--ui-zoom, 1));
+  }
+}

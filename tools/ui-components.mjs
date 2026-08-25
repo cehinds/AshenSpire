@@ -14,7 +14,7 @@ const REQUIRED_IDS = Object.freeze([
   'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
+  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control', 'hud-resize-grip',
   'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
@@ -117,7 +117,8 @@ export function findings(r) {
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css)
+      || /hud-context/.test(r.hud + r.css)
+      || /\.topbar\.combat-hud\.shared-hud \.hud-run-meta\s*\{[^}]*grid-row:\s*2/.test(r.css)
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
@@ -197,7 +198,8 @@ export function findings(r) {
       || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
       || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
       || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
-      || !/overlayHtml:\s*`\$\{legendHtml\}\$\{entranceOrientation\}`/.test(r.map)) {
+      || !/overlayHtml:\s*legendHtml/.test(r.map)
+      || !/\$\{hudShellHtml\([\s\S]*\n\s*\$\{entranceOrientation\}/.test(r.map)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)
@@ -292,7 +294,7 @@ function selftest() {
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
     ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
-    ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
+    ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.topbar.combat-hud.shared-hud .hud-run-meta { grid-row: 2; }\n` })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, css: r.css.replace('@container run-header (max-width: 720px)', '@container run-header (max-width: 721px)') })],
     ['remove Hand reference', 'C8 ', (r) => ({ ...r, combat: r.combat.replace('UI.playerHandTray', "'anonymous-hand'") })],
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],

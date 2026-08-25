@@ -1280,7 +1280,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      max HP from 84; combat's track is derived from the row now, so the narrow
      shape needs nothing said about it. */
   :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
-  :root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
+:root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
      on a phone. It is not gone, and I checked rather than assuming when I
      wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
@@ -1406,3 +1406,160 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- two-state shared HUD: expanded + Right-Dock compact ---------- */
+.topbar.combat-hud.shared-hud {
+  padding-block: calc(4px / var(--ui-zoom, 1));
+  gap: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-top { gap: calc(3px / var(--ui-zoom, 1)); }
+.topbar.combat-hud.shared-hud .hud-right-dock {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.topbar.combat-hud.shared-hud .hud-right-dock .hud-potions { width: 100%; }
+.topbar.combat-hud.shared-hud .hud-bottom :is(.relic, .flask-identity) {
+  width: calc(32px / var(--ui-zoom, 1));
+  height: calc(32px / var(--ui-zoom, 1));
+}
+
+/* The visual grip is only the border dash. Its transparent button keeps a full
+   touch target without spending any layout height. */
+.hud-resize-grip {
+  position: absolute;
+  z-index: 82;
+  left: 50%;
+  bottom: calc(-1 * var(--tap-floor) / 2);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: var(--tap-floor);
+  height: var(--tap-floor);
+  min-width: var(--tap-floor);
+  min-height: var(--tap-floor);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.hud-resize-grip::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: calc(18px / var(--ui-zoom, 1));
+  height: calc(3px / var(--ui-zoom, 1));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 72%, var(--line));
+  transform: translate(-50%, -50%);
+}
+.hud-resize-grip:hover::before,
+.hud-resize-grip:focus-visible::before { background: var(--gold); }
+.hud-resize-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -8px; }
+
+/* Variant B: status reads on the left, run position in the centre, and every
+   frequent touch action in the right dock. Three compact tracks protect the
+   playfield while preserving 44px-equivalent hit targets. */
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding: calc(3px / var(--ui-zoom, 1)) 1rem;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(calc(74px / var(--ui-zoom, 1)), 0.42fr) calc(var(--tap-floor) * 4);
+  grid-template-rows: var(--tap-floor) calc(34px / var(--ui-zoom, 1)) var(--tap-floor);
+  column-gap: calc(5px / var(--ui-zoom, 1));
+  row-gap: 0;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] :is(.hud-info-row, .hud-resource-row, .hud-bottom) {
+  display: contents;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity {
+  grid-column: 2; grid-row: 3;
+  justify-self: center; align-self: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1));
+  height: calc(28px / var(--ui-zoom, 1));
+  font-size: calc(15px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-center {
+  grid-column: 2; grid-row: 1;
+  align-self: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  grid-column: 2; grid-row: 2;
+  align-self: center; justify-self: stretch;
+  width: 100%; max-width: none;
+  justify-content: center; gap: calc(3px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child)::before {
+  content: '·'; margin-right: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-column: 1; grid-row: 1 / span 2;
+  align-self: stretch;
+  width: 100%; height: auto;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel .resunit {
+  min-height: calc(22px / var(--ui-zoom, 1));
+  padding-inline: calc(5px / var(--ui-zoom, 1));
+  gap: calc(4px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-column: 3; grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(4, var(--tap-floor));
+  grid-template-rows: var(--tap-floor);
+  width: calc(var(--tap-floor) * 4); height: var(--tap-floor);
+  padding: 0; gap: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) {
+  display: contents;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(1) { grid-column: 1; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(1) { grid-column: 3; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(2) { grid-column: 4; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn > span, .flask-identity) {
+  width: calc(34px / var(--ui-zoom, 1));
+  height: calc(34px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-column: 1; grid-row: 3;
+  align-self: center;
+  width: 100%; max-width: 100%; height: var(--tap-floor);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock {
+  grid-column: 3; grid-row: 2 / span 2;
+  display: grid;
+  grid-template-rows: calc(34px / var(--ui-zoom, 1)) var(--tap-floor);
+  justify-items: end; align-items: center;
+  width: 100%; min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock .hud-potions {
+  grid-row: 1; align-self: center;
+  width: 100%; height: calc(34px / var(--ui-zoom, 1));
+  overflow-y: hidden;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock .hud-quick-settings {
+  position: static;
+  grid-row: 2;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  width: auto; max-width: none;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-notice {
+  top: auto; bottom: calc(100% + 2px);
+}

@@ -71,24 +71,30 @@ export function primaryHudRowHtml(model) {
   </div>`;
 }
 
-export function inventoryBeltHtml(model) {
+export function inventoryBeltHtml(model, quickSettingsModel) {
   const relics = childModel(model, UI.relicTray);
   const potions = childModel(model, UI.potionTray);
   return `<div class="hud-bottom" ${uiComponentAttrs(model.component, model.variant)}>
     <div class="relics hud-relics" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>
-    <div class="hud-potions${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
+    <div class="hud-right-dock">
+      <div class="hud-potions${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
+      ${hudQuickSettingsHtml(quickSettingsModel)}
+    </div>
   </div>`;
 }
 
 export function sharedRunHudHtml(model) {
-  const { place, headerClass, overlayHtml } = model.properties;
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(model.component, place)}>
+  const { place, headerClass, overlayHtml, hudMode } = model.properties;
+  const grip = childModel(model, UI.hudResizeGrip);
+  const quickSettings = childModel(model, UI.hudQuickSettings);
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
-      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
+      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt), quickSettings)}
     </div>
-    ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
+    <button type="button" class="hud-resize-grip" data-hud-grip ${uiComponentAttrs(grip.component, grip.variant)}
+      aria-label="${hudMode === 'compact' ? 'Expand run HUD' : 'Compact run HUD'}" aria-pressed="${hudMode === 'compact'}"></button>
     ${overlayHtml}
   </header>`;
 }

@@ -94,7 +94,7 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'quick-exit-bypasses-save', file: 'src/ui/components/overlay.js',
-        find: 'onQuit?.();', replace: '/* planted: Save & Quit does not call persistence owner */',
+        find: 'onSaveQuit?.();', replace: '/* planted: Save & Quit does not call persistence owner */',
         expectRed: /Save & Quit prefers the persistence callback/,
       },
       {
@@ -165,8 +165,12 @@ engine.music('combat');
 check(stubGraph().elements.length === externalBefore, 'disabled Music starts no external stream');
 
 const controls = menuRows('map', { fixedEnds: false, hasSave: true });
-check(controls[0]?.act === 'fullscreen' && controls[1]?.act === 'music', 'Fullscreen and Music stay the first Quick Menu rows');
-check(controls.at(-2)?.act === 'save' && controls.at(-1)?.act === 'quit', 'Save and Save & Quit stay the final rows');
+check(controls[0]?.act === 'settings' && controls[1]?.act === 'controls'
+  && controls[2]?.act === 'fullscreen' && controls[3]?.act === 'music',
+  'Settings and Controls lead Fullscreen and Music in the Quick Menu');
+check(controls.at(-3)?.act === 'save' && controls.at(-2)?.act === 'saveQuit'
+  && controls.at(-1)?.act === 'quitWithoutSave',
+  'Save, Save & Quit, and Quit Without Saving stay the final rows');
 check(resolveQuickNavMode() === 'mirror' && resolveQuickNavMode('broken') === 'mirror'
   && resolveQuickNavMode('off') === 'off' && resolveQuickNavMode('switcher') === 'switcher',
   'Quick Menu defaults to Mirror and preserves explicit legacy choices');
@@ -199,7 +203,7 @@ check(settingsSource.includes("document.addEventListener('fullscreenerror', onFu
   'Settings announces fullscreen refusal');
 check(settingsSource.includes("document.removeEventListener('fullscreenerror', onFullscreenError);"),
   'Settings releases fullscreen listeners');
-check(overlay.includes('onQuit?.();') && main.includes('onQuit: () => {\n      persist();'),
+check(overlay.includes('onSaveQuit?.();') && main.includes('function saveAndQuitFromMenu() { persist(); showTitle(); }'),
   'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');

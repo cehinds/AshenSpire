@@ -238,7 +238,7 @@ async function selftest() {
         savedMenu = {};
         for (const k of Object.keys(MENU)) {
           savedMenu[k] = MENU[k].slice();
-          MENU[k] = MENU[k].filter((r) => r.act !== 'tab');
+          MENU[k] = MENU[k].filter((r) => !r.tab);
         }
       },
       async () => {

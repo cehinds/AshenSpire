@@ -437,6 +437,8 @@ const ROWS = [
 // is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
 // an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
+  Changelog: { mount: 'set-changelog-mount', needs: null,
+    tip: 'Newest player-visible changes first.' },
   About: { mount: 'set-about-mount', needs: null,
     tip: 'Version, credits, and how AI was used to make this game.' },
 };
@@ -446,14 +448,13 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Changelog', label: 'Changelog', tip: 'Newest player-visible changes first.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'About'];
+export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
 
 const CATEGORY_LABELS = {
   Display: 'Game',
@@ -516,7 +517,7 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return 'Optional gameplay rules, interface controls, tuning, and diagnostics.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -1167,10 +1168,6 @@ function categoryHtml(cat, settings, saves) {
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     const groups = ADVANCED_GROUPS.map((group) => {
       const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + '><div class="set-changelog-mount"></div></section>';
-      }
       const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`

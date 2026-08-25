@@ -577,7 +577,7 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+  registries, run, meta = {}, inCombat: inCombatArg, initialView = null, onClose, onChange, onSwap,
 }) {
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
@@ -649,7 +649,8 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  const requestedView = initialView && IDS.includes(initialView) ? initialView : null;
+  let view = requestedView || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same

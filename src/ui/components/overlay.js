@@ -10,7 +10,10 @@ import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
-import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
+import {
+  openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds,
+  saveAction, confirmQuickMenuAction,
+} from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
 import { closeFlaskActionMenu } from './flask.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
@@ -108,13 +111,16 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
+export function openOverlay({
+  registries, run, meta, saves = null, onSettingsChange, onSave, onLoad,
+  onSaveQuit, onQuitWithoutSave, onArmoury, quickControls = {}, initialTab = 'settings',
+}) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit);
+  const hasSave = !!(onSave || onSaveQuit || onQuitWithoutSave);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -149,13 +155,13 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit,
+    onSettingsChange, onSave, onSaveQuit,
   };
 
   const saveButton = veil.querySelector('#ov-save');
   const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
-  if (!onQuit && quitButton) quitButton.hidden = true;
+  if (!onSaveQuit && quitButton) quitButton.hidden = true;
   saveButton?.addEventListener('click', () => {
     const slot = onSave?.();
     saveButton.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
@@ -164,7 +170,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   });
   quitButton?.addEventListener('click', () => {
     closeOverlay();
-    onQuit?.();
+    onSaveQuit?.();
   });
 
   function selectTab(id) {
@@ -224,10 +230,22 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         } : {}),
       },
       actions: {
-        close: () => closeOverlay(),
-        tab: (id) => selectTab(id),
+        settings: () => selectTab('settings'),
+        controls: () => selectTab('controls'),
+        ...(onArmoury ? {
+          inventory: () => { closeOverlay(); onArmoury('inventory'); },
+          character: () => { closeOverlay(); onArmoury('character'); },
+        } : {}),
+        ...(onLoad ? { load: confirmQuickMenuAction(
+          'Load another slot? Changes since the last save will be lost.',
+          () => { closeOverlay(); onLoad(); },
+        ) } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onSaveQuit ? { saveQuit: () => { closeOverlay(); onSaveQuit(); } } : {}),
+        ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+          'Quit without saving? Changes since the last save will be lost.',
+          () => { closeOverlay(); onQuitWithoutSave(); },
+        ) } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');

@@ -24,6 +24,7 @@ export const UI_COMPONENTS = Object.freeze({
   hudQuickSettings: 'hud-quick-settings',
   fullscreenControl: 'fullscreen-control',
   musicControl: 'music-control',
+  hudResizeGrip: 'hud-resize-grip',
   quickMenuPanel: 'quick-menu-panel',
   quickMenuCaption: 'quick-menu-caption',
   quickMenuRow: 'quick-menu-row',

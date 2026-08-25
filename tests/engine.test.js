@@ -5246,14 +5246,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(supported.supported, true, 'documents with both enter and exit APIs expose fullscreen');
   });
 
-  test('61a. Armoury is the one equipment route, and fullscreen reports browser support', () => {
+  test('61a. Inventory and Character are direct Armoury routes, and fullscreen reports browser support', () => {
     assert(!MENU_TABS.some((tab) => tab.id === 'relics'),
       'the run menu does not duplicate Armoury with a Relics & Flasks tab');
     for (const [context, rows] of Object.entries(MENU)) {
       assert(!rows.some((row) => row.tab === 'relics'),
         `${context} quick navigation has no duplicate relic/equipment route`);
-      const armouryRows = rows.filter((row) => row.act === 'armoury');
-      for (const row of armouryRows) eq(row.label, 'Armoury', `${context} names the canonical equipment route Armoury`);
+      const armouryRows = rows.filter((row) => ['inventory', 'character'].includes(row.act));
+      eq(armouryRows.map((row) => row.act).join(','), 'inventory,character',
+        `${context} exposes the two requested direct Armoury destinations`);
     }
 
     const unsupported = { documentElement: {}, fullscreenEnabled: false };

@@ -381,3 +381,15 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 }
 .mapscreen .map-tapnote[hidden],
 .mapscreen .map-clipnote[hidden] { display: none; }
+
+/* In Expanded mode the Act Route Strip gives both ends the same safe inset:
+   1.2x the Fullscreen/Music rail width. Compact mode moves that rail into the
+   HUD, so the strip can reclaim its ordinary padding. */
+.shared-hud[data-hud-mode='expanded'] + .map-entrance-orientation {
+  --map-route-safe-inset: calc(1.2 * var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  padding-inline: var(--map-route-safe-inset);
+}
+.shared-hud[data-hud-mode='compact'] + .map-entrance-orientation {
+  --map-route-safe-inset: 12px;
+  padding-inline: var(--map-route-safe-inset);
+}

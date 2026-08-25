@@ -2,7 +2,7 @@
 //
 // WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
 // It is a LAUNCHER: every row calls a handler that already exists — the screen's
-// ⚒/? buttons, openOverlay({initialTab}), the pile modals, onSave, onQuit. It
+// Armoury views, openOverlay({initialTab}), save/load, and explicit exit paths. It
 // holds no navigation state at all, so `selectTab` in overlay.js stays the single
 // decider. The day a row knows something selectTab does not, this stopped being a
 // quick way into the menu and became a second menu.
@@ -136,6 +136,16 @@ export function saveAction(onSave) {
     lab.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
     setTimeout(() => { lab.textContent = was; }, 1500);
     return 'keep';
+  };
+}
+
+/** Keep destructive/unsaved exits explicit and testable at their launcher. */
+export function confirmQuickMenuAction(message, action, confirmFn = globalThis.confirm) {
+  return (...args) => {
+    // A host with no confirmation surface must fail closed. This keeps a
+    // browser shell from turning a missing API into an unconfirmed data loss.
+    if (typeof confirmFn !== 'function' || !confirmFn(message)) return 'keep';
+    return action(...args);
   };
 }
 

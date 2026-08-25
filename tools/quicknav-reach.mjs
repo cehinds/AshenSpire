@@ -9,7 +9,7 @@
 //
 // WHAT IT ASSERTS, per variant x shape x context:
 //   R1  every row of an open list is fully inside the viewport (the clamp)
-//   R2  Save then Save & Quit to Title are the LAST TWO rows — every context,
+//   R2  Save, Save & Quit, then Quit Without Saving are the LAST THREE rows — every context,
 //       both readings of "context-specific" (Constantine fixed this by hand)
 //   R3  every row is at least 44 local px tall (Sunna's tap target)
 //   R4  every row carries a REAL tooltip, shown on the focus cursor — `title=`
@@ -275,14 +275,15 @@ async function checkList(where, { expectTail = true } = {}) {
 
   // R2 — his constraint, and it is the one thing not up for testing.
   if (expectTail) {
-    const last2 = d.rows.slice(-2).map((r) => r.act);
-    if (last2.join(',') !== 'save,quit') fail('R2', where, `last two rows are ${last2.join(', ') || '(none)'}, not save, quit`);
+    const last3 = d.rows.slice(-3).map((r) => r.act);
+    if (last3.join(',') !== 'save,saveQuit,quitWithoutSave') fail('R2', where, `last three rows are ${last3.join(', ') || '(none)'}, not save, saveQuit, quitWithoutSave`);
     else pass('R2', where);
   }
 
-  const controls = d.rows.slice(0, 2);
-  if (controls.map((r) => r.act).join(',') !== 'fullscreen,music') {
-    fail('R8', where, `first two rows are ${controls.map((r) => r.act).join(', ') || '(none)'}`);
+  const lead = d.rows.slice(0, 4);
+  const controls = lead.slice(2);
+  if (lead.map((r) => r.act).join(',') !== 'settings,controls,fullscreen,music') {
+    fail('R8', where, `first four rows are ${lead.map((r) => r.act).join(', ') || '(none)'}`);
   } else if (controls.some((r) => !['switch', 'menuitemcheckbox'].includes(r.role)
       || !['true', 'false'].includes(r.checked) || !r.condition)) {
     fail('R8', where, `stateful rows lack an owned ARIA role/state/condition: ${JSON.stringify(controls)}`);

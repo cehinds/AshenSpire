@@ -32,14 +32,14 @@ import { matchAction, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
-import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { openQuickNav, quickNavMode, saveAction, confirmQuickMenuAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { wireHudQuickSettings, HUD_LAYOUT_CHANGE } from '../components/hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -65,7 +65,10 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+export function mountMap(app, {
+  registries, run, meta, onPick, onSave, onLoad, onSaveQuit, onQuitWithoutSave,
+  onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {},
+}) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -131,11 +134,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
-        overlayHtml: `${legendHtml}${entranceOrientation}`,
+        overlayHtml: legendHtml,
       }))}
+      ${entranceOrientation}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -196,6 +197,37 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     },
     chromeHtml: hintBarHtml('map'),
   });
+
+  // Fullscreen and mobile browser chrome can publish several intermediate
+  // viewport sizes. Debounce them, then wait two painted frames before asking
+  // the map camera to recenter on the current node.
+  let viewportTimer = null;
+  let viewportFrameA = null;
+  let viewportFrameB = null;
+  const settleViewportFocus = () => {
+    clearTimeout(viewportTimer);
+    viewportTimer = setTimeout(() => {
+      viewportFrameA = requestAnimationFrame(() => {
+        viewportFrameB = requestAnimationFrame(() => board.recenter());
+      });
+    }, 90);
+  };
+  const viewportEvents = ['resize', HUD_LAYOUT_CHANGE];
+  viewportEvents.forEach((type) => window.addEventListener(type, settleViewportFocus));
+  document.addEventListener('fullscreenchange', settleViewportFocus);
+  document.addEventListener('webkitfullscreenchange', settleViewportFocus);
+  window.visualViewport?.addEventListener('resize', settleViewportFocus);
+  const boardTeardown = board.teardown.bind(board);
+  board.teardown = () => {
+    clearTimeout(viewportTimer);
+    if (viewportFrameA != null) cancelAnimationFrame(viewportFrameA);
+    if (viewportFrameB != null) cancelAnimationFrame(viewportFrameB);
+    viewportEvents.forEach((type) => window.removeEventListener(type, settleViewportFocus));
+    document.removeEventListener('fullscreenchange', settleViewportFocus);
+    document.removeEventListener('webkitfullscreenchange', settleViewportFocus);
+    window.visualViewport?.removeEventListener('resize', settleViewportFocus);
+    boardTeardown();
+  };
 
   const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
@@ -273,13 +305,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
 
   const armouryBtn = app.querySelector('#open-armoury');
-  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  if (onArmoury) armouryBtn.addEventListener('click', (event) => onArmoury(event.detail?.initialView));
   else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
-  // it (added only while open, so it never leaks across screens). Lifted out of
-  // the listener so the quick-nav's "Map legend" row opens the SAME popover
-  // rather than growing a second copy of it.
+  // it (added only while open, so it never leaks across screens).
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
   function toggleLegend() {
@@ -310,14 +340,25 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
-        hasSave: !!(onSave || onQuit),
+        hasSave: !!(onSave || onSaveQuit || onQuitWithoutSave),
         controls: quickControls,
         actions: {
-          tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          settings: () => onMenu('settings'),
+          controls: () => onMenu('controls'),
+          ...(onArmoury ? {
+            inventory: () => onArmoury('inventory'),
+            character: () => onArmoury('character'),
+          } : {}),
+          ...(onLoad ? { load: confirmQuickMenuAction(
+            'Load another slot? Changes since the last save will be lost.',
+            () => onLoad(),
+          ) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onSaveQuit ? { saveQuit: () => onSaveQuit() } : {}),
+          ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+            'Quit without saving? Changes since the last save will be lost.',
+            () => onQuitWithoutSave(),
+          ) } : {}),
         },
       });
     });
@@ -326,11 +367,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
   // the same MENU table the rows read. `title=` alone (what these carried) is
   // invisible to touch and to a pad.
-  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+  for (const [sel, ctxAct] of [['#open-armoury', 'inventory']]) {
     const el = app.querySelector(sel);
     const row = (MENU.map || []).find((r) => r.act === ctxAct);
     if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
   }
+  attachTooltip(legendBtn, () => '<div class="tt-title">Map legend</div>What each mark on the act map means.');
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
       ? 'Armoury, settings, controls and saving.'

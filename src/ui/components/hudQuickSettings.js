@@ -2,10 +2,11 @@ import { childModel } from '../models/ComponentModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { uiComponentAttrs } from './uiComponents.js';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../screens/settings.js';
-import { musicQuickSettingsPlan } from '../models/HudQuickSettingsModel.js';
+import { musicQuickSettingsPlan, resolveHudMode } from '../models/HudQuickSettingsModel.js';
 
 let releaseActiveStack = null;
 const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
+export const HUD_LAYOUT_CHANGE = 'ashenspire:hud-layout-change';
 
 export function updateHudQuickSettingsBinding(binding, nextSettings) {
   binding.settings = nextSettings && typeof nextSettings === 'object' ? nextSettings : {};
@@ -117,13 +118,33 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
   }
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
+  const hud = stack.closest('.shared-hud');
+  const grip = hud?.querySelector('[data-hud-grip]');
   const binding = { settings };
   const fullscreenSyncTimers = new Set();
   let noticeTimer = null;
+  let gripStartY = null;
+  let gripPreview = null;
+  let suppressGripClick = false;
+  const applyHudMode = (mode, { persist = false } = {}) => {
+    if (!hud) return;
+    hud.dataset.hudMode = mode;
+    if (grip) {
+      grip.setAttribute('aria-pressed', String(mode === 'compact'));
+      grip.setAttribute('aria-label', mode === 'compact' ? 'Expand run HUD' : 'Compact run HUD');
+    }
+    if (persist) {
+      const change = { runHudMode: mode };
+      Object.assign(binding.settings, change);
+      onSettingsChange?.(change);
+      window.dispatchEvent(new CustomEvent(HUD_LAYOUT_CHANGE, { detail: { mode } }));
+    }
+  };
   const onFullscreenChange = () => syncFullscreen(stack);
   const onSettingsRefresh = (event) => {
     updateHudQuickSettingsBinding(binding, event.detail?.settings);
     syncMusic(stack, binding.settings);
+    applyHudMode(resolveHudMode(binding.settings));
   };
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
@@ -156,13 +177,43 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     if (onSettingsChange) onSettingsChange(change);
     syncMusic(stack, binding.settings);
   };
+  const onGripPointerDown = (event) => {
+    gripStartY = event.clientY;
+    gripPreview = resolveHudMode(binding.settings);
+    suppressGripClick = false;
+    grip?.setPointerCapture?.(event.pointerId);
+  };
+  const onGripPointerMove = (event) => {
+    if (gripStartY == null) return;
+    const delta = event.clientY - gripStartY;
+    if (Math.abs(delta) < 18) return;
+    gripPreview = delta < 0 ? 'compact' : 'expanded';
+    suppressGripClick = true;
+    applyHudMode(gripPreview);
+  };
+  const onGripPointerUp = (event) => {
+    if (gripStartY == null) return;
+    grip?.releasePointerCapture?.(event.pointerId);
+    gripStartY = null;
+    if (suppressGripClick) applyHudMode(gripPreview, { persist: true });
+  };
+  const onGripClick = () => {
+    if (suppressGripClick) { suppressGripClick = false; return; }
+    applyHudMode(resolveHudMode(binding.settings) === 'compact' ? 'expanded' : 'compact', { persist: true });
+  };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
   musicButton?.addEventListener('click', onMusicClick);
+  grip?.addEventListener('pointerdown', onGripPointerDown);
+  grip?.addEventListener('pointermove', onGripPointerMove);
+  grip?.addEventListener('pointerup', onGripPointerUp);
+  grip?.addEventListener('pointercancel', onGripPointerUp);
+  grip?.addEventListener('click', onGripClick);
   stack.addEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
   document.addEventListener('fullscreenchange', onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
   syncMusic(stack, binding.settings);
+  applyHudMode(resolveHudMode(binding.settings));
   // Fullscreen exit notifications are inconsistent in embedded and mobile
   // browser shells. A cheap state read keeps the control truthful even when
   // the platform drops that event; this interval owns no simulation state.
@@ -179,6 +230,11 @@ export function wireHudQuickSettings(root, { settings = {}, onSettingsChange = n
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);
     musicButton?.removeEventListener('click', onMusicClick);
+    grip?.removeEventListener('pointerdown', onGripPointerDown);
+    grip?.removeEventListener('pointermove', onGripPointerMove);
+    grip?.removeEventListener('pointerup', onGripPointerUp);
+    grip?.removeEventListener('pointercancel', onGripPointerUp);
+    grip?.removeEventListener('click', onGripClick);
     stack.removeEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', onFullscreenChange);

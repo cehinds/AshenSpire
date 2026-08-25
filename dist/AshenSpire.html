@@ -4943,6 +4943,42 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-attributes .disc-faces,
 .armoury[data-composition='character-equipment'][data-responsive='phone'] .character-relics .disc-faces { grid-template-columns: 1fr; }
 
+/* Settings category cards keep the 44px mobile hit area, while the painted
+   face is inset to a quieter 36px card. */
+.set-tabs .set-tab {
+  position: relative;
+  isolation: isolate;
+  border-color: transparent;
+  background: transparent;
+}
+.set-tabs .set-tab::before {
+  content: '';
+  position: absolute; z-index: -1;
+  inset: 4px 0;
+  border: 1px solid var(--line-soft);
+  border-radius: 6px;
+  background: var(--bg);
+}
+.set-tabs .set-tab.on { border-color: transparent; background: transparent; }
+.set-tabs .set-tab.on::before {
+  border-color: var(--gold);
+  background: rgba(201, 162, 39, 0.25);
+}
+
+/* Mobile faces are 32px instead of 40px (20% smaller); the button around each
+   face remains the tap floor. Compact mode uses the same pair under potions. */
+@media (max-width: 720px) {
+  .hud-quick-setting-face {
+    width: calc(32px / var(--ui-zoom, 1));
+    height: calc(32px / var(--ui-zoom, 1));
+  }
+  .hud-quick-setting-glyph {
+    width: calc(23px / var(--ui-zoom, 1));
+    height: calc(23px / var(--ui-zoom, 1));
+    font-size: calc(23px / var(--ui-zoom, 1));
+  }
+}
+
   </style>
   <style data-src="styles/combat.css">
 /* styles/combat.css — combat screen (mockup: docs/mockups/combat-screen.svg) */
@@ -6227,7 +6263,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
      max HP from 84; combat's track is derived from the row now, so the narrow
      shape needs nothing said about it. */
   :root[data-layout='narrow'] .topbar .hpbar { width: 14rem; }
-  :root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
+:root[data-layout='narrow'] .topbar .nm { font-size: 1rem; }
   /* The seed string is dev information and it is what was overflowing the bar
      on a phone. It is not gone, and I checked rather than assuming when I
      wrote this the first time: overlay.js:163 puts Seed in the Stats panel,
@@ -6353,6 +6389,163 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- two-state shared HUD: expanded + Right-Dock compact ---------- */
+.topbar.combat-hud.shared-hud {
+  padding-block: calc(4px / var(--ui-zoom, 1));
+  gap: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud .hud-top { gap: calc(3px / var(--ui-zoom, 1)); }
+.topbar.combat-hud.shared-hud .hud-right-dock {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.topbar.combat-hud.shared-hud .hud-right-dock .hud-potions { width: 100%; }
+.topbar.combat-hud.shared-hud .hud-bottom :is(.relic, .flask-identity) {
+  width: calc(32px / var(--ui-zoom, 1));
+  height: calc(32px / var(--ui-zoom, 1));
+}
+
+/* The visual grip is only the border dash. Its transparent button keeps a full
+   touch target without spending any layout height. */
+.hud-resize-grip {
+  position: absolute;
+  z-index: 82;
+  left: 50%;
+  bottom: calc(-1 * var(--tap-floor) / 2);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: var(--tap-floor);
+  height: var(--tap-floor);
+  min-width: var(--tap-floor);
+  min-height: var(--tap-floor);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.hud-resize-grip::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: calc(18px / var(--ui-zoom, 1));
+  height: calc(3px / var(--ui-zoom, 1));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 72%, var(--line));
+  transform: translate(-50%, -50%);
+}
+.hud-resize-grip:hover::before,
+.hud-resize-grip:focus-visible::before { background: var(--gold); }
+.hud-resize-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -8px; }
+
+/* Variant B: status reads on the left, run position in the centre, and every
+   frequent touch action in the right dock. Three compact tracks protect the
+   playfield while preserving 44px-equivalent hit targets. */
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding: calc(3px / var(--ui-zoom, 1)) 1rem;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(calc(74px / var(--ui-zoom, 1)), 0.42fr) calc(var(--tap-floor) * 4);
+  grid-template-rows: var(--tap-floor) calc(34px / var(--ui-zoom, 1)) var(--tap-floor);
+  column-gap: calc(5px / var(--ui-zoom, 1));
+  row-gap: 0;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] :is(.hud-info-row, .hud-resource-row, .hud-bottom) {
+  display: contents;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity {
+  grid-column: 2; grid-row: 3;
+  justify-self: center; align-self: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1));
+  height: calc(28px / var(--ui-zoom, 1));
+  font-size: calc(15px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-center {
+  grid-column: 2; grid-row: 1;
+  align-self: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  grid-column: 2; grid-row: 2;
+  align-self: center; justify-self: stretch;
+  width: 100%; max-width: none;
+  justify-content: center; gap: calc(3px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child)::before {
+  content: '·'; margin-right: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-column: 1; grid-row: 1 / span 2;
+  align-self: stretch;
+  width: 100%; height: auto;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel .resunit {
+  min-height: calc(22px / var(--ui-zoom, 1));
+  padding-inline: calc(5px / var(--ui-zoom, 1));
+  gap: calc(4px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-column: 3; grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(4, var(--tap-floor));
+  grid-template-rows: var(--tap-floor);
+  width: calc(var(--tap-floor) * 4); height: var(--tap-floor);
+  padding: 0; gap: 0; border: 0; background: transparent;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) {
+  display: contents;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(1) { grid-column: 1; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(1) { grid-column: 3; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(2) { grid-column: 4; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn > span, .flask-identity) {
+  width: calc(34px / var(--ui-zoom, 1));
+  height: calc(34px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-column: 1; grid-row: 3;
+  align-self: center;
+  width: 100%; max-width: 100%; height: var(--tap-floor);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock {
+  grid-column: 3; grid-row: 2 / span 2;
+  display: grid;
+  grid-template-rows: calc(34px / var(--ui-zoom, 1)) var(--tap-floor);
+  justify-items: end; align-items: center;
+  width: 100%; min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock .hud-potions {
+  grid-row: 1; align-self: center;
+  width: 100%; height: calc(34px / var(--ui-zoom, 1));
+  overflow-y: hidden;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-right-dock .hud-quick-settings {
+  position: static;
+  grid-row: 2;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  width: auto; max-width: none;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-notice {
+  top: auto; bottom: calc(100% + 2px);
+}
 
   </style>
   <style data-src="styles/map.css">
@@ -6739,6 +6932,18 @@ body.hide-header-relics .map-header .hud-relics { display: none; }
 }
 .mapscreen .map-tapnote[hidden],
 .mapscreen .map-clipnote[hidden] { display: none; }
+
+/* In Expanded mode the Act Route Strip gives both ends the same safe inset:
+   1.2x the Fullscreen/Music rail width. Compact mode moves that rail into the
+   HUD, so the strip can reclaim its ordinary padding. */
+.shared-hud[data-hud-mode='expanded'] + .map-entrance-orientation {
+  --map-route-safe-inset: calc(1.2 * var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  padding-inline: var(--map-route-safe-inset);
+}
+.shared-hud[data-hud-mode='compact'] + .map-entrance-orientation {
+  --map-route-safe-inset: 12px;
+  padding-inline: var(--map-route-safe-inset);
+}
 
   </style>
 </head>
@@ -7818,12 +8023,13 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = null) {
   mountEquipment(document.body, {
     registries,
     run,
     meta: saves.loadMeta(),
     inCombat: false,
+    initialView,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
         const meta = saves.loadMeta();
@@ -7837,6 +8043,17 @@ function showArmoury() {
     onClose: showMap,
   });
 }
+
+function saveActiveRunFromMenu() {
+  persist();
+  return activeSlot;
+}
+
+// Browser-safe exits always land on the title screen. They never rely on
+// window.close(), which normal browser tabs are allowed to refuse.
+function loadFromMenu() { showTitle(); }
+function saveAndQuitFromMenu() { persist(); showTitle(); }
+function quitWithoutSavingFromMenu() { showTitle(); }
 
 function showHistory() {
   mountHistory(app, { meta: saves.loadMeta(), onBack: showTitle });
@@ -7898,13 +8115,14 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
+    onArmoury: (initialView) => {
+      const launcher = app.querySelector('#combat-armoury, #open-armoury');
+      if (launcher) launcher.dispatchEvent(new CustomEvent('click', { detail: { initialView } }));
+      else showArmoury(initialView);
     },
   });
 }
@@ -8081,14 +8299,10 @@ function showMap() {
     onMenu: showOverlay,
     onArmoury: showArmoury,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
   });
 }
 
@@ -8295,14 +8509,10 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     quickControls: quickMenuControls,
-    onSave: () => {
-      persist();
-      return activeSlot;
-    },
-    onQuit: () => {
-      persist();
-      showTitle();
-    },
+    onSave: saveActiveRunFromMenu,
+    onLoad: loadFromMenu,
+    onSaveQuit: saveAndQuitFromMenu,
+    onQuitWithoutSave: quitWithoutSavingFromMenu,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -36445,6 +36655,7 @@ const UI_COMPONENTS = Object.freeze({
   hudQuickSettings: 'hud-quick-settings',
   fullscreenControl: 'fullscreen-control',
   musicControl: 'music-control',
+  hudResizeGrip: 'hud-resize-grip',
   quickMenuPanel: 'quick-menu-panel',
   quickMenuCaption: 'quick-menu-caption',
   quickMenuRow: 'quick-menu-row',
@@ -39023,58 +39234,33 @@ const MENU_TABS = [
   { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
 ];
 
-const TAIL = [
-  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
-  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
-    tip: 'Save, then back to the title. Continue picks the climb up again.' },
-];
-
-const QUICK_CONTROLS = [
-  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'head', control: 'switch',
+const QUICK_MENU_ROWS = [
+  { act: 'settings', tab: 'settings', band: 'primary' },
+  { act: 'controls', tab: 'controls', band: 'primary' },
+  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'system', control: 'switch',
     tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
-  { act: 'music', icon: '♫', label: 'Music', band: 'head', control: 'switch',
+  { act: 'music', icon: '♫', label: 'Music', band: 'system', control: 'switch',
     tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
+  { act: 'inventory', icon: '▦', label: 'Inventory', band: 'character',
+    tip: 'Open the Armoury directly on carried items and equipment.' },
+  { act: 'character', icon: '◉', label: 'Character', band: 'character',
+    tip: 'Open the Armoury directly on character and combat statistics.' },
+  { act: 'load', icon: '↥', label: 'Load', band: 'save', tone: 'caution',
+    tip: 'Return to the title slot list without saving this moment first.' },
+  { act: 'save', icon: '💾', label: 'Save', band: 'save', tip: 'Write the climb to its slot and stay here.' },
+  { act: 'saveQuit', icon: '↪', label: 'Save and Quit', band: 'save',
+    tip: 'Save, then return to the title. Continue picks the climb up again.' },
+  { act: 'quitWithoutSave', icon: '⏻', label: 'Quit Without Saving', band: 'save', tone: 'danger',
+    tip: 'Return to the title without writing the current in-memory state.' },
 ];
 
 const MENU = {
-  map: [
-    ...QUICK_CONTROLS,
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Weapons and armour — swap between fights for free.' },
-    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
-      tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
-  // Draw and discard are real destinations that exist ONLY here (combat.js's
-  // pile modals) — the demonstration that context-specific means something.
-  combat: [
-    ...QUICK_CONTROLS,
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
-    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
-      tip: 'What is still to come, shuffled for viewing.' },
-    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
-      tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
-  // The menu already open: the dropdown mirrors the strip behind it, current tab
-  // marked. Controls earns a row here (it is a tab) and not on map/combat, where
-  // it is one click away once you land.
-  overlay: [
-    ...QUICK_CONTROLS,
-    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
-      tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
+  map: [...QUICK_MENU_ROWS],
+  combat: [...QUICK_MENU_ROWS],
+  overlay: [...QUICK_MENU_ROWS],
 };
 
-const BANDS = ['head', 'body', 'tail'];
+const BANDS = ['primary', 'system', 'character', 'save'];
 
 // The acts a MENU row may name — the vocabulary, beside the table it governs.
 // It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
@@ -39101,7 +39287,7 @@ const BANDS = ['head', 'body', 'tail'];
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'fullscreen', 'music', 'save', 'quit', 'close'];
+const MENU_ACTS = ['settings', 'controls', 'fullscreen', 'music', 'inventory', 'character', 'load', 'save', 'saveQuit', 'quitWithoutSave'];
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -39118,7 +39304,7 @@ function tabDef(id) {
  */
 function menuTabRefs() {
   return [...new Set(Object.values(MENU).flat()
-    .filter((r) => r.act === 'tab' && typeof r.tab === 'string' && r.tab)
+    .filter((r) => typeof r.tab === 'string' && r.tab)
     .map((r) => r.tab))];
 }
 
@@ -39144,18 +39330,11 @@ function menuTabs({ hasSave = true, counts = {} } = {}) {
  * the two readings look different, which is the point of being able to try both).
  */
 function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
-  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
-  const ordered = fixedEnds
-    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
-    : [
-        ...src.filter((r) => r.control && r.band !== 'tail'),
-        ...src.filter((r) => !r.control && r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.control && !r.local && r.band !== 'tail'),
-        ...src.filter((r) => r.band === 'tail'),
-      ];
+  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'save'));
+  const ordered = BANDS.flatMap((band) => src.filter((row) => row.band === band));
   let prevBand = null;
   return ordered.map((r) => {
-    const t = r.act === 'tab' ? tabDef(r.tab) : null;
+    const t = r.tab ? tabDef(r.tab) : null;
     const countKey = r.count || (t && t.count);
     const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
     prevBand = r.band;
@@ -39167,7 +39346,7 @@ function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, curr
       tip: r.tip || (t && t.tip) || '',
       tone: r.tone || '',
       badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
-      on: !!(current && r.act === 'tab' && r.tab === current),
+      on: !!(current && r.tab === current),
       control: r.control || '',
       sep,
     };
@@ -39609,7 +39788,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a2f11b442c';
+const SOURCE = '810128c2b3';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39643,7 +39822,7 @@ const SOURCE = 'a2f11b442c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1314';
+const ORDINAL = '1315';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39757,10 +39936,11 @@ const { childModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { uiComponentAttrs } = require("src/ui/components/uiComponents.js");
 const { fullscreenCapability, isFullscreen, toggleFullscreen } = require("src/ui/screens/settings.js");
-const { musicQuickSettingsPlan } = require("src/ui/models/HudQuickSettingsModel.js");
+const { musicQuickSettingsPlan, resolveHudMode } = require("src/ui/models/HudQuickSettingsModel.js");
 
 let releaseActiveStack = null;
 const HUD_QUICK_REFRESH = 'ashenspire:hud-quick-settings-refresh';
+const HUD_LAYOUT_CHANGE = 'ashenspire:hud-layout-change';
 
 function updateHudQuickSettingsBinding(binding, nextSettings) {
   binding.settings = nextSettings && typeof nextSettings === 'object' ? nextSettings : {};
@@ -39872,13 +40052,33 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
   }
   const fullscreenButton = stack.querySelector('[data-hud-quick-action="fullscreen"]');
   const musicButton = stack.querySelector('[data-hud-quick-action="music"]');
+  const hud = stack.closest('.shared-hud');
+  const grip = hud?.querySelector('[data-hud-grip]');
   const binding = { settings };
   const fullscreenSyncTimers = new Set();
   let noticeTimer = null;
+  let gripStartY = null;
+  let gripPreview = null;
+  let suppressGripClick = false;
+  const applyHudMode = (mode, { persist = false } = {}) => {
+    if (!hud) return;
+    hud.dataset.hudMode = mode;
+    if (grip) {
+      grip.setAttribute('aria-pressed', String(mode === 'compact'));
+      grip.setAttribute('aria-label', mode === 'compact' ? 'Expand run HUD' : 'Compact run HUD');
+    }
+    if (persist) {
+      const change = { runHudMode: mode };
+      Object.assign(binding.settings, change);
+      onSettingsChange?.(change);
+      window.dispatchEvent(new CustomEvent(HUD_LAYOUT_CHANGE, { detail: { mode } }));
+    }
+  };
   const onFullscreenChange = () => syncFullscreen(stack);
   const onSettingsRefresh = (event) => {
     updateHudQuickSettingsBinding(binding, event.detail?.settings);
     syncMusic(stack, binding.settings);
+    applyHudMode(resolveHudMode(binding.settings));
   };
   const onFullscreenClick = async () => {
     fullscreenButton.disabled = true;
@@ -39911,13 +40111,43 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     if (onSettingsChange) onSettingsChange(change);
     syncMusic(stack, binding.settings);
   };
+  const onGripPointerDown = (event) => {
+    gripStartY = event.clientY;
+    gripPreview = resolveHudMode(binding.settings);
+    suppressGripClick = false;
+    grip?.setPointerCapture?.(event.pointerId);
+  };
+  const onGripPointerMove = (event) => {
+    if (gripStartY == null) return;
+    const delta = event.clientY - gripStartY;
+    if (Math.abs(delta) < 18) return;
+    gripPreview = delta < 0 ? 'compact' : 'expanded';
+    suppressGripClick = true;
+    applyHudMode(gripPreview);
+  };
+  const onGripPointerUp = (event) => {
+    if (gripStartY == null) return;
+    grip?.releasePointerCapture?.(event.pointerId);
+    gripStartY = null;
+    if (suppressGripClick) applyHudMode(gripPreview, { persist: true });
+  };
+  const onGripClick = () => {
+    if (suppressGripClick) { suppressGripClick = false; return; }
+    applyHudMode(resolveHudMode(binding.settings) === 'compact' ? 'expanded' : 'compact', { persist: true });
+  };
   fullscreenButton?.addEventListener('click', onFullscreenClick);
   musicButton?.addEventListener('click', onMusicClick);
+  grip?.addEventListener('pointerdown', onGripPointerDown);
+  grip?.addEventListener('pointermove', onGripPointerMove);
+  grip?.addEventListener('pointerup', onGripPointerUp);
+  grip?.addEventListener('pointercancel', onGripPointerUp);
+  grip?.addEventListener('click', onGripClick);
   stack.addEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
   document.addEventListener('fullscreenchange', onFullscreenChange);
   document.addEventListener('webkitfullscreenchange', onFullscreenChange);
   syncFullscreen(stack);
   syncMusic(stack, binding.settings);
+  applyHudMode(resolveHudMode(binding.settings));
   // Fullscreen exit notifications are inconsistent in embedded and mobile
   // browser shells. A cheap state read keeps the control truthful even when
   // the platform drops that event; this interval owns no simulation state.
@@ -39934,6 +40164,11 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
     fullscreenSyncTimers.clear();
     fullscreenButton?.removeEventListener('click', onFullscreenClick);
     musicButton?.removeEventListener('click', onMusicClick);
+    grip?.removeEventListener('pointerdown', onGripPointerDown);
+    grip?.removeEventListener('pointermove', onGripPointerMove);
+    grip?.removeEventListener('pointerup', onGripPointerUp);
+    grip?.removeEventListener('pointercancel', onGripPointerUp);
+    grip?.removeEventListener('click', onGripClick);
     stack.removeEventListener(HUD_QUICK_REFRESH, onSettingsRefresh);
     document.removeEventListener('fullscreenchange', onFullscreenChange);
     document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
@@ -39945,7 +40180,7 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
 }
 
 
-Object.assign(module.exports, { updateHudQuickSettingsBinding, refreshHudQuickSettings, hudQuickSettingsHtml, wireHudQuickSettings });
+Object.assign(module.exports, { HUD_LAYOUT_CHANGE, updateHudQuickSettingsBinding, refreshHudQuickSettings, hudQuickSettingsHtml, wireHudQuickSettings });
 
 },
 "src/ui/models/ComponentModel.js": function (module, exports, require) {
@@ -40512,6 +40747,8 @@ const ROWS = [
 // is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
 // an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
+  Changelog: { mount: 'set-changelog-mount', needs: null,
+    tip: 'Newest player-visible changes first.' },
   About: { mount: 'set-about-mount', needs: null,
     tip: 'Version, credits, and how AI was used to make this game.' },
 };
@@ -40521,14 +40758,13 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Changelog', label: 'Changelog', tip: 'Newest player-visible changes first.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'About'];
+const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
 
 const CATEGORY_LABELS = {
   Display: 'Game',
@@ -40591,7 +40827,7 @@ function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return 'Optional gameplay rules, interface controls, tuning, and diagnostics.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -41242,10 +41478,6 @@ function categoryHtml(cat, settings, saves) {
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     const groups = ADVANCED_GROUPS.map((group) => {
       const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + '><div class="set-changelog-mount"></div></section>';
-      }
       const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`
@@ -43630,6 +43862,12 @@ const { componentModel } = require("src/ui/models/ComponentModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { resolveMusicEnabled } = require("src/ui/audio.js");
 
+const HUD_MODES = Object.freeze(['expanded', 'compact']);
+
+function resolveHudMode(settings = {}) {
+  return HUD_MODES.includes(settings.runHudMode) ? settings.runHudMode : 'expanded';
+}
+
 function musicQuickSettingsPlan(settings = {}) {
   const audioMuted = settings.muteAudio === true;
   const active = resolveMusicEnabled(settings);
@@ -43674,7 +43912,7 @@ function hudQuickSettingsModel({ place, presentation = {}, settings = {} } = {})
 }
 
 
-Object.assign(module.exports, { musicQuickSettingsPlan, hudQuickSettingsModel });
+Object.assign(module.exports, { HUD_MODES, resolveHudMode, musicQuickSettingsPlan, hudQuickSettingsModel });
 
 },
 "src/ui/screens/profileNotice.js": function (module, exports, require) {
@@ -46539,7 +46777,7 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+  registries, run, meta = {}, inCombat: inCombatArg, initialView = null, onClose, onChange, onSwap,
 }) {
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
@@ -46611,7 +46849,8 @@ function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  const requestedView = initialView && IDS.includes(initialView) ? initialView : null;
+  let view = requestedView || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -50438,14 +50677,14 @@ const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
 const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
-const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
+const { openQuickNav, quickNavMode, saveAction, confirmQuickMenuAction } = require("src/ui/components/quicknav.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
 const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
-const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
+const { wireHudQuickSettings, HUD_LAYOUT_CHANGE } = require("src/ui/components/hudQuickSettings.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
 const { resourceBars } = require("src/ui/components/resbars.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
@@ -50471,7 +50710,10 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+function mountMap(app, {
+  registries, run, meta, onPick, onSave, onLoad, onSaveQuit, onQuitWithoutSave,
+  onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {},
+}) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -50537,11 +50779,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
-        overlayHtml: `${legendHtml}${entranceOrientation}`,
+        overlayHtml: legendHtml,
       }))}
+      ${entranceOrientation}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -50602,6 +50842,37 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
     },
     chromeHtml: hintBarHtml('map'),
   });
+
+  // Fullscreen and mobile browser chrome can publish several intermediate
+  // viewport sizes. Debounce them, then wait two painted frames before asking
+  // the map camera to recenter on the current node.
+  let viewportTimer = null;
+  let viewportFrameA = null;
+  let viewportFrameB = null;
+  const settleViewportFocus = () => {
+    clearTimeout(viewportTimer);
+    viewportTimer = setTimeout(() => {
+      viewportFrameA = requestAnimationFrame(() => {
+        viewportFrameB = requestAnimationFrame(() => board.recenter());
+      });
+    }, 90);
+  };
+  const viewportEvents = ['resize', HUD_LAYOUT_CHANGE];
+  viewportEvents.forEach((type) => window.addEventListener(type, settleViewportFocus));
+  document.addEventListener('fullscreenchange', settleViewportFocus);
+  document.addEventListener('webkitfullscreenchange', settleViewportFocus);
+  window.visualViewport?.addEventListener('resize', settleViewportFocus);
+  const boardTeardown = board.teardown.bind(board);
+  board.teardown = () => {
+    clearTimeout(viewportTimer);
+    if (viewportFrameA != null) cancelAnimationFrame(viewportFrameA);
+    if (viewportFrameB != null) cancelAnimationFrame(viewportFrameB);
+    viewportEvents.forEach((type) => window.removeEventListener(type, settleViewportFocus));
+    document.removeEventListener('fullscreenchange', settleViewportFocus);
+    document.removeEventListener('webkitfullscreenchange', settleViewportFocus);
+    window.visualViewport?.removeEventListener('resize', settleViewportFocus);
+    boardTeardown();
+  };
 
   const strip = app.querySelector('.hud-relics');
   for (const rid of run.relics) {
@@ -50679,13 +50950,11 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   }
 
   const armouryBtn = app.querySelector('#open-armoury');
-  if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
+  if (onArmoury) armouryBtn.addEventListener('click', (event) => onArmoury(event.detail?.initialView));
   else armouryBtn.remove();
 
   // Legend "?" popover: opens on click; a one-shot outside-click listener closes
-  // it (added only while open, so it never leaks across screens). Lifted out of
-  // the listener so the quick-nav's "Map legend" row opens the SAME popover
-  // rather than growing a second copy of it.
+  // it (added only while open, so it never leaks across screens).
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
   function toggleLegend() {
@@ -50716,14 +50985,25 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
-        hasSave: !!(onSave || onQuit),
+        hasSave: !!(onSave || onSaveQuit || onQuitWithoutSave),
         controls: quickControls,
         actions: {
-          tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          settings: () => onMenu('settings'),
+          controls: () => onMenu('controls'),
+          ...(onArmoury ? {
+            inventory: () => onArmoury('inventory'),
+            character: () => onArmoury('character'),
+          } : {}),
+          ...(onLoad ? { load: confirmQuickMenuAction(
+            'Load another slot? Changes since the last save will be lost.',
+            () => onLoad(),
+          ) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onSaveQuit ? { saveQuit: () => onSaveQuit() } : {}),
+          ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+            'Quit without saving? Changes since the last save will be lost.',
+            () => onQuitWithoutSave(),
+          ) } : {}),
         },
       });
     });
@@ -50732,11 +51012,12 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
   // the same MENU table the rows read. `title=` alone (what these carried) is
   // invisible to touch and to a pad.
-  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+  for (const [sel, ctxAct] of [['#open-armoury', 'inventory']]) {
     const el = app.querySelector(sel);
     const row = (MENU.map || []).find((r) => r.act === ctxAct);
     if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
   }
+  attachTooltip(legendBtn, () => '<div class="tt-title">Map legend</div>What each mark on the act map means.');
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
       ? 'Armoury, settings, controls and saving.'
@@ -51012,7 +51293,7 @@ Object.assign(module.exports, { setHintMode, hintBarHtml, refreshHintBars });
 //
 // WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
 // It is a LAUNCHER: every row calls a handler that already exists — the screen's
-// ⚒/? buttons, openOverlay({initialTab}), the pile modals, onSave, onQuit. It
+// Armoury views, openOverlay({initialTab}), save/load, and explicit exit paths. It
 // holds no navigation state at all, so `selectTab` in overlay.js stays the single
 // decider. The day a row knows something selectTab does not, this stopped being a
 // quick way into the menu and became a second menu.
@@ -51149,6 +51430,16 @@ function saveAction(onSave) {
   };
 }
 
+/** Keep destructive/unsaved exits explicit and testable at their launcher. */
+function confirmQuickMenuAction(message, action, confirmFn = globalThis.confirm) {
+  return (...args) => {
+    // A host with no confirmation surface must fail closed. This keeps a
+    // browser shell from turning a missing API into an unconfirmed data loss.
+    if (typeof confirmFn !== 'function' || !confirmFn(message)) return 'keep';
+    return action(...args);
+  };
+}
+
 /**
  * openQuickNav(anchorEl, context, { actions, counts, current, hasSave })
  *
@@ -51258,7 +51549,7 @@ function position(anchorEl, panel) {
 }
 
 
-Object.assign(module.exports, { resolveQuickNavMode, setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, openQuickNav });
+Object.assign(module.exports, { resolveQuickNavMode, setQuickNav, quickNavMode, quickNavFolds, closeQuickNav, quickNavIsOpen, saveAction, confirmQuickMenuAction, openQuickNav });
 
 },
 "src/ui/models/MenuModels.js": function (module, exports, require) {
@@ -52829,24 +53120,30 @@ function primaryHudRowHtml(model) {
   </div>`;
 }
 
-function inventoryBeltHtml(model) {
+function inventoryBeltHtml(model, quickSettingsModel) {
   const relics = childModel(model, UI.relicTray);
   const potions = childModel(model, UI.potionTray);
   return `<div class="hud-bottom" ${uiComponentAttrs(model.component, model.variant)}>
     <div class="relics hud-relics" ${uiComponentAttrs(relics.component, relics.variant)} aria-label="Relics"></div>
-    <div class="hud-potions${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
+    <div class="hud-right-dock">
+      <div class="hud-potions${model.variant === 'map' ? ' mh-flasks' : ''}" ${uiComponentAttrs(potions.component, potions.variant)} aria-label="Potions"></div>
+      ${hudQuickSettingsHtml(quickSettingsModel)}
+    </div>
   </div>`;
 }
 
 function sharedRunHudHtml(model) {
-  const { place, headerClass, overlayHtml } = model.properties;
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(model.component, place)}>
+  const { place, headerClass, overlayHtml, hudMode } = model.properties;
+  const grip = childModel(model, UI.hudResizeGrip);
+  const quickSettings = childModel(model, UI.hudQuickSettings);
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
-      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
+      ${inventoryBeltHtml(childModel(model, UI.inventoryBelt), quickSettings)}
     </div>
-    ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
+    <button type="button" class="hud-resize-grip" data-hud-grip ${uiComponentAttrs(grip.component, grip.variant)}
+      aria-label="${hudMode === 'compact' ? 'Expand run HUD' : 'Compact run HUD'}" aria-pressed="${hudMode === 'compact'}"></button>
     ${overlayHtml}
   </header>`;
 }
@@ -52866,7 +53163,7 @@ const { runHeaderModel } = require("src/ui/models/RunHeaderModel.js");
 const { vitalsPanelModel } = require("src/ui/models/VitalsPanelModel.js");
 const { quickAccessPanelModel } = require("src/ui/models/QuickAccessPanelModel.js");
 const { inventoryBeltModel } = require("src/ui/models/InventoryBeltModel.js");
-const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
+const { hudQuickSettingsModel, resolveHudMode } = require("src/ui/models/HudQuickSettingsModel.js");
 
 // Presentation projection only: callers provide a domain snapshot and command
 // ids; the result is a frozen tree with no callbacks or mutable run objects.
@@ -52886,7 +53183,7 @@ function runHudViewModel({
 } = {}) {
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml },
+    properties: { place, headerClass, overlayHtml, hudMode: resolveHudMode(quickSettings?.settings) },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -52894,6 +53191,11 @@ function runHudViewModel({
       }),
       inventoryBeltModel(place),
       hudQuickSettingsModel({ place, ...quickSettings }),
+      componentModel(UI.hudResizeGrip, {
+        variant: place,
+        properties: { mode: resolveHudMode(quickSettings?.settings) },
+        accessibility: { role: 'button', label: 'Resize run HUD' },
+      }),
     ],
   });
 }
@@ -53312,7 +53614,7 @@ const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
 const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
-const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
+const { openQuickNav, quickNavMode, saveAction, confirmQuickMenuAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
 const { veilIsOpen } = require("src/ui/components/veil.js");
@@ -53338,7 +53640,11 @@ const { combatantFrame } = require("src/ui/components/combatantFrame.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 
-function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, quickControls = {} }) {
+function mountCombat(app, {
+  registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone,
+  onSettings, onSettingsChange, onMenu, onSave, onLoad, onSaveQuit,
+  onQuitWithoutSave, quickControls = {},
+}) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -54682,6 +54988,29 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
+  const openCombatArmoury = (initialView = null) => {
+    if (!registries.balance.equipment.enabled) return;
+    const panel = mountEquipment(document.body, {
+      registries,
+      run,
+      meta: { settings: { customization: run.customization } },
+      inCombat: true,
+      initialView,
+      onSwap: (slotId, setIndex) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message;
+        }
+        sfx.play('cardPlay');
+        panel.redraw();
+        render();
+        afterDispatch(out.events);
+      },
+    });
+  };
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   //
   // Under the quick-nav experiment ☰ opens the list instead. Combat is the
@@ -54695,15 +55024,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
-        hasSave: !!(onSave || onQuit),
+        hasSave: !!(onSave || onSaveQuit || onQuitWithoutSave),
         controls: quickControls,
         actions: {
-          tab: (id) => onMenu(id),
-          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
-          draw: () => showDraw(),
-          discard: () => showDiscard(),
+          settings: () => onMenu('settings'),
+          controls: () => onMenu('controls'),
+          inventory: () => openCombatArmoury('inventory'),
+          character: () => openCombatArmoury('character'),
+          ...(onLoad ? { load: confirmQuickMenuAction(
+            'Load another slot? Changes since the last save will be lost.',
+            () => onLoad(),
+          ) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onSaveQuit ? { saveQuit: () => onSaveQuit() } : {}),
+          ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+            'Quit without saving? Changes since the last save will be lost.',
+            () => onQuitWithoutSave(),
+          ) } : {}),
         },
       });
     });
@@ -54712,7 +55049,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
   // MENU table. Armoury is the canonical equipment name in every context.
   {
-    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
+    const row = (MENU.combat || []).find((r) => r.act === 'inventory');
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
@@ -54723,28 +55060,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  $('#combat-armoury').addEventListener('click', () => {
-    if (!registries.balance.equipment.enabled) return;
-    const panel = mountEquipment(document.body, {
-      registries,
-      run,
-      meta: { settings: { customization: run.customization } },
-      inCombat: true,
-      onSwap: (slotId, setIndex) => {
-        let out;
-        try {
-          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
-        } catch (e) {
-          dlog('equip', e.message);
-          return e.message; // the panel shows the refusal in place
-        }
-        sfx.play('cardPlay');
-        panel.redraw();
-        render();
-        afterDispatch(out.events);
-      },
-    });
-  });
+  $('#combat-armoury').addEventListener('click', (event) => openCombatArmoury(event.detail?.initialView));
 
   render();
 
@@ -57799,7 +58115,10 @@ const { renderControls } = require("src/ui/screens/controls.js");
 const { attachTooltip, esc } = require("src/ui/components/tooltip.js");
 const { isEngaged, focusFirst, setTabRing } = require("src/ui/input.js");
 const { menuTabs } = require("src/ui/uiContent.js");
-const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
+const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction, confirmQuickMenuAction } = require("src/ui/components/quicknav.js");
+
+
+
 const { statProjection } = require("src/model/statProjection.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { menuOverlayModel } = require("src/ui/models/MenuModels.js");
@@ -57897,13 +58216,16 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
+function openOverlay({
+  registries, run, meta, saves = null, onSettingsChange, onSave, onLoad,
+  onSaveQuit, onQuitWithoutSave, onArmoury, quickControls = {}, initialTab = 'settings',
+}) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit);
+  const hasSave = !!(onSave || onSaveQuit || onQuitWithoutSave);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -57938,13 +58260,13 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit,
+    onSettingsChange, onSave, onSaveQuit,
   };
 
   const saveButton = veil.querySelector('#ov-save');
   const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
-  if (!onQuit && quitButton) quitButton.hidden = true;
+  if (!onSaveQuit && quitButton) quitButton.hidden = true;
   saveButton?.addEventListener('click', () => {
     const slot = onSave?.();
     saveButton.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
@@ -57953,7 +58275,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   });
   quitButton?.addEventListener('click', () => {
     closeOverlay();
-    onQuit?.();
+    onSaveQuit?.();
   });
 
   function selectTab(id) {
@@ -58013,10 +58335,22 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
         } : {}),
       },
       actions: {
-        close: () => closeOverlay(),
-        tab: (id) => selectTab(id),
+        settings: () => selectTab('settings'),
+        controls: () => selectTab('controls'),
+        ...(onArmoury ? {
+          inventory: () => { closeOverlay(); onArmoury('inventory'); },
+          character: () => { closeOverlay(); onArmoury('character'); },
+        } : {}),
+        ...(onLoad ? { load: confirmQuickMenuAction(
+          'Load another slot? Changes since the last save will be lost.',
+          () => { closeOverlay(); onLoad(); },
+        ) } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onSaveQuit ? { saveQuit: () => { closeOverlay(); onSaveQuit(); } } : {}),
+        ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+          'Quit without saving? Changes since the last save will be lost.',
+          () => { closeOverlay(); onQuitWithoutSave(); },
+        ) } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');

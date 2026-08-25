@@ -852,7 +852,7 @@ keeps the same state and focus contract without meaningful animation.
   `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
   `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`,
   `crimson-flask-control`, `azure-flask-control`,
-  `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
+  `relic-tray`, `potion-tray`, and `hud-resize-grip`. Combat additionally composes `battlefield-stage`,
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.

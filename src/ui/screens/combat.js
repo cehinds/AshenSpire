@@ -12,7 +12,7 @@ import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
+import { openQuickNav, quickNavMode, saveAction, confirmQuickMenuAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
 import { veilIsOpen } from '../components/veil.js';
@@ -38,7 +38,11 @@ import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, quickControls = {} }) {
+export function mountCombat(app, {
+  registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone,
+  onSettings, onSettingsChange, onMenu, onSave, onLoad, onSaveQuit,
+  onQuitWithoutSave, quickControls = {},
+}) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -1382,6 +1386,29 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   $('.pile.exhaust').addEventListener('click', () => openPileModal(registries, 'Exhaust pile', combat.piles.exhaust));
   $('.hand-prev').addEventListener('click', () => stepHand(-1));
   $('.hand-next').addEventListener('click', () => stepHand(1));
+  const openCombatArmoury = (initialView = null) => {
+    if (!registries.balance.equipment.enabled) return;
+    const panel = mountEquipment(document.body, {
+      registries,
+      run,
+      meta: { settings: { customization: run.customization } },
+      inCombat: true,
+      initialView,
+      onSwap: (slotId, setIndex) => {
+        let out;
+        try {
+          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
+        } catch (e) {
+          dlog('equip', e.message);
+          return e.message;
+        }
+        sfx.play('cardPlay');
+        panel.redraw();
+        render();
+        afterDispatch(out.events);
+      },
+    });
+  };
   // Settings lives inside the Menu overlay (Settings tab) — one button, one home.
   //
   // Under the quick-nav experiment ☰ opens the list instead. Combat is the
@@ -1395,15 +1422,23 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
-        hasSave: !!(onSave || onQuit),
+        hasSave: !!(onSave || onSaveQuit || onQuitWithoutSave),
         controls: quickControls,
         actions: {
-          tab: (id) => onMenu(id),
-          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
-          draw: () => showDraw(),
-          discard: () => showDiscard(),
+          settings: () => onMenu('settings'),
+          controls: () => onMenu('controls'),
+          inventory: () => openCombatArmoury('inventory'),
+          character: () => openCombatArmoury('character'),
+          ...(onLoad ? { load: confirmQuickMenuAction(
+            'Load another slot? Changes since the last save will be lost.',
+            () => onLoad(),
+          ) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onSaveQuit ? { saveQuit: () => onSaveQuit() } : {}),
+          ...(onQuitWithoutSave ? { quitWithoutSave: confirmQuickMenuAction(
+            'Quit without saving? Changes since the last save will be lost.',
+            () => onQuitWithoutSave(),
+          ) } : {}),
         },
       });
     });
@@ -1412,7 +1447,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
   // MENU table. Armoury is the canonical equipment name in every context.
   {
-    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
+    const row = (MENU.combat || []).find((r) => r.act === 'inventory');
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
@@ -1423,28 +1458,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  $('#combat-armoury').addEventListener('click', () => {
-    if (!registries.balance.equipment.enabled) return;
-    const panel = mountEquipment(document.body, {
-      registries,
-      run,
-      meta: { settings: { customization: run.customization } },
-      inCombat: true,
-      onSwap: (slotId, setIndex) => {
-        let out;
-        try {
-          out = dispatch(combat, { type: 'swapArmament', slotId, setIndex });
-        } catch (e) {
-          dlog('equip', e.message);
-          return e.message; // the panel shows the refusal in place
-        }
-        sfx.play('cardPlay');
-        panel.redraw();
-        render();
-        afterDispatch(out.events);
-      },
-    });
-  });
+  $('#combat-armoury').addEventListener('click', (event) => openCombatArmoury(event.detail?.initialView));
 
   render();
 

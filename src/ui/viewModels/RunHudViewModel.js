@@ -4,7 +4,7 @@ import { runHeaderModel } from '../models/RunHeaderModel.js';
 import { vitalsPanelModel } from '../models/VitalsPanelModel.js';
 import { quickAccessPanelModel } from '../models/QuickAccessPanelModel.js';
 import { inventoryBeltModel } from '../models/InventoryBeltModel.js';
-import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
+import { hudQuickSettingsModel, resolveHudMode } from '../models/HudQuickSettingsModel.js';
 
 // Presentation projection only: callers provide a domain snapshot and command
 // ids; the result is a frozen tree with no callbacks or mutable run objects.
@@ -24,7 +24,7 @@ export function runHudViewModel({
 } = {}) {
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml },
+    properties: { place, headerClass, overlayHtml, hudMode: resolveHudMode(quickSettings?.settings) },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -32,6 +32,11 @@ export function runHudViewModel({
       }),
       inventoryBeltModel(place),
       hudQuickSettingsModel({ place, ...quickSettings }),
+      componentModel(UI.hudResizeGrip, {
+        variant: place,
+        properties: { mode: resolveHudMode(quickSettings?.settings) },
+        accessibility: { role: 'button', label: 'Resize run HUD' },
+      }),
     ],
   });
 }

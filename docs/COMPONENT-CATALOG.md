@@ -44,9 +44,10 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
-| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Desktop and phone use the same 40px visual cards inside 44px touch targets, with data-owned 28px icons and state dots. The entrance-to-boss receipt remains in the HUD flow so the rail cannot cover it. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Fullscreen/Music utility pair: external rail in Expanded mode, right-docked beneath potions in Compact mode. Phone faces are 32px inside 44px touch targets. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
+| `hud-resize-grip` | `componentModel` child | `hudmeta.sharedRunHudHtml` | Map + Combat | Border-integrated 18x3px grip with a tap-floor hit area; toggles or drags between remembered Expanded and Compact snaps. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
 | `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
@@ -91,9 +92,11 @@ shared-run-hud
 ├─ primary-hud-row
 │  ├─ vitals-panel ── panel + resource-meter
 │  └─ quick-access-panel ── panel + action-control + flasks
-└─ inventory-belt
-   ├─ relic-tray ── item-tray + relic-slot × N
-   └─ potion-tray ── item-tray + potion-control × N
+├─ inventory-belt
+│  ├─ relic-tray ── item-tray + relic-slot × N
+│  ├─ potion-tray ── item-tray + potion-control × N
+│  └─ hud-quick-settings ── fullscreen-control + music-control
+└─ hud-resize-grip
 ```
 
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
@@ -140,9 +143,10 @@ character-disclosure
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the
 Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
-`switcher` values remain explicit presentation modes. Fullscreen and Music are
-the first rows, contextual destinations occupy the middle, and Save then Save &
-Quit remain the fixed tail. The Quick Menu rows, Settings rows, and
+`switcher` values remain explicit presentation modes. The fixed row order is
+Settings, Controls / Fullscreen, Music / Inventory, Character / Load, Save,
+Save and Quit, Quit Without Saving. The unsaved exits confirm before returning
+to the browser-safe title fallback. The Quick Menu rows, Settings rows, and
 `hud-quick-settings` controls project the same Fullscreen and Music owners; none
 of those renderers keeps a second copy of browser or audio state.
 
@@ -168,11 +172,10 @@ sync without duplicating persistence.
 ```text
 quick-menu-panel
 ├─ quick-menu-caption
-├─ quick-menu-row: Fullscreen switch
-├─ quick-menu-row: Music switch
-├─ quick-menu-row × N: contextual destinations + Settings/Controls
-├─ quick-menu-row: Save
-└─ quick-menu-row: Save & Quit
+├─ quick-menu-row × 2: Settings + Controls
+├─ quick-menu-row × 2: Fullscreen + Music switches
+├─ quick-menu-row × 2: Inventory + Character
+└─ quick-menu-row × 4: Load + Save + Save and Quit + Quit Without Saving
 
 menu-overlay
 ├─ menu-tab-strip

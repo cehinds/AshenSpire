@@ -2,6 +2,12 @@ import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { resolveMusicEnabled } from '../audio.js';
 
+export const HUD_MODES = Object.freeze(['expanded', 'compact']);
+
+export function resolveHudMode(settings = {}) {
+  return HUD_MODES.includes(settings.runHudMode) ? settings.runHudMode : 'expanded';
+}
+
 export function musicQuickSettingsPlan(settings = {}) {
   const audioMuted = settings.muteAudio === true;
   const active = resolveMusicEnabled(settings);
