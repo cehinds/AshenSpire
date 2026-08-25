@@ -31,14 +31,20 @@ export function renderControls(container, { settings, onChange }) {
       : false;
 
   container.innerHTML = `
-    <h3 class="set-cat">Navigation</h3>
-    <p class="set-note" style="max-width:520px">
-      Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>;
-      activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.
-    </p>
-    <h3 class="set-cat">Bindings ${padConnected ? '<span class="pad-live">● pad connected</span>' : '<span class="pad-off">(no pad detected)</span>'}</h3>
-    <div class="rebind-list"></div>
-    <p class="set-note" style="margin-top:10px">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>`;
+    <div class="controls-screen">
+      <section class="controls-intro" aria-labelledby="controls-navigation-heading">
+        <h3 class="set-cat" id="controls-navigation-heading">Navigation</h3>
+        <p class="set-note">
+          Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>;
+          activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.
+        </p>
+      </section>
+      <section class="controls-bindings" aria-labelledby="controls-bindings-heading">
+        <h3 class="set-cat" id="controls-bindings-heading">Bindings ${padConnected ? '<span class="pad-live">● pad connected</span>' : '<span class="pad-off">(no pad detected)</span>'}</h3>
+        <div class="rebind-list"></div>
+        <p class="set-note controls-rebind-note">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>
+      </section>
+    </div>`;
 
   const list = container.querySelector('.rebind-list');
   const bindings = getBindings();
@@ -47,7 +53,7 @@ export function renderControls(container, { settings, onChange }) {
   for (const a of ACTIONS) {
     const rebindableKey = !!a.defKey; // Confirm's key (Enter) is fixed
     const row = document.createElement('div');
-    row.className = 'set-row rebind-row';
+    row.className = `set-row rebind-row${rebindableKey ? ' has-key-rebind' : ''}`;
     row.innerHTML = `
       <div><b>${a.label}</b></div>
       <div class="rebind-ctl">

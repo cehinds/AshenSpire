@@ -759,6 +759,13 @@ body.hide-hints .hint-bar { display: none; }
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
 /* ---------- controls / rebinds ---------- */
+.controls-screen { display: flex; flex-direction: column; min-height: 100%; }
+.controls-intro, .controls-bindings { display: flex; flex-direction: column; }
+.controls-intro { gap: 0.4rem; }
+.controls-bindings { gap: 0.8rem; margin-top: 1.4rem; }
+.controls-screen .set-cat, .controls-screen .set-note { margin: 0; }
+.controls-screen .set-note { max-width: 52rem; }
+.controls-rebind-note { padding-bottom: 0.4rem; }
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .pad-btn {
@@ -769,6 +776,21 @@ body.hide-hints .hint-bar { display: none; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 1.1rem; }
 .pad-off { color: var(--muted); font-size: 1.1rem; }
+
+@media (max-width: 720px) {
+  .controls-intro { gap: 6px; }
+  .controls-bindings { gap: 8px; margin-top: 14px; }
+  .controls-screen .rebind-row {
+    flex-direction: column; align-items: stretch; gap: 8px; padding: 10px;
+  }
+  .controls-screen .rebind-row > :first-child { flex: 0 0 auto; min-width: 0; }
+  .controls-screen .rebind-ctl {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%;
+  }
+  .controls-screen .rebind-row.has-key-rebind .rebind-ctl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls-screen .rebind-ctl > * { min-width: 0; width: 100%; padding-inline: 6px; }
+  .controls-rebind-note { padding-bottom: 10px; }
+}
 
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
@@ -40194,7 +40216,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b4b400e2c1';
+const SOURCE = '4faf11605b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -40228,7 +40250,7 @@ const SOURCE = 'b4b400e2c1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1354';
+const ORDINAL = '1356';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58957,14 +58979,20 @@ function renderControls(container, { settings, onChange }) {
       : false;
 
   container.innerHTML = `
-    <h3 class="set-cat">Navigation</h3>
-    <p class="set-note" style="max-width:520px">
-      Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>;
-      activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.
-    </p>
-    <h3 class="set-cat">Bindings ${padConnected ? '<span class="pad-live">● pad connected</span>' : '<span class="pad-off">(no pad detected)</span>'}</h3>
-    <div class="rebind-list"></div>
-    <p class="set-note" style="margin-top:10px">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>`;
+    <div class="controls-screen">
+      <section class="controls-intro" aria-labelledby="controls-navigation-heading">
+        <h3 class="set-cat" id="controls-navigation-heading">Navigation</h3>
+        <p class="set-note">
+          Move the focus cursor with the <b>arrow keys</b>, <b>D-pad</b>, or <b>left stick</b>;
+          activate with <b>Enter</b> / <b>A</b>. In combat, number keys <b>1–9</b> select cards and targets.
+        </p>
+      </section>
+      <section class="controls-bindings" aria-labelledby="controls-bindings-heading">
+        <h3 class="set-cat" id="controls-bindings-heading">Bindings ${padConnected ? '<span class="pad-live">● pad connected</span>' : '<span class="pad-off">(no pad detected)</span>'}</h3>
+        <div class="rebind-list"></div>
+        <p class="set-note controls-rebind-note">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>
+      </section>
+    </div>`;
 
   const list = container.querySelector('.rebind-list');
   const bindings = getBindings();
@@ -58973,7 +59001,7 @@ function renderControls(container, { settings, onChange }) {
   for (const a of ACTIONS) {
     const rebindableKey = !!a.defKey; // Confirm's key (Enter) is fixed
     const row = document.createElement('div');
-    row.className = 'set-row rebind-row';
+    row.className = `set-row rebind-row${rebindableKey ? ' has-key-rebind' : ''}`;
     row.innerHTML = `
       <div><b>${a.label}</b></div>
       <div class="rebind-ctl">

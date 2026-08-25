@@ -459,6 +459,13 @@ body.hide-hints .hint-bar { display: none; }
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
 /* ---------- controls / rebinds ---------- */
+.controls-screen { display: flex; flex-direction: column; min-height: 100%; }
+.controls-intro, .controls-bindings { display: flex; flex-direction: column; }
+.controls-intro { gap: 0.4rem; }
+.controls-bindings { gap: 0.8rem; margin-top: 1.4rem; }
+.controls-screen .set-cat, .controls-screen .set-note { margin: 0; }
+.controls-screen .set-note { max-width: 52rem; }
+.controls-rebind-note { padding-bottom: 0.4rem; }
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
 .pad-btn {
@@ -469,6 +476,21 @@ body.hide-hints .hint-bar { display: none; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 1.1rem; }
 .pad-off { color: var(--muted); font-size: 1.1rem; }
+
+@media (max-width: 720px) {
+  .controls-intro { gap: 6px; }
+  .controls-bindings { gap: 8px; margin-top: 14px; }
+  .controls-screen .rebind-row {
+    flex-direction: column; align-items: stretch; gap: 8px; padding: 10px;
+  }
+  .controls-screen .rebind-row > :first-child { flex: 0 0 auto; min-width: 0; }
+  .controls-screen .rebind-ctl {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%;
+  }
+  .controls-screen .rebind-row.has-key-rebind .rebind-ctl { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .controls-screen .rebind-ctl > * { min-width: 0; width: 100%; padding-inline: 6px; }
+  .controls-rebind-note { padding-bottom: 10px; }
+}
 
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
