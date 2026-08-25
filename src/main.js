@@ -48,7 +48,7 @@ import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
-import { openOverlay } from './ui/components/overlay.js';
+import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
@@ -905,6 +905,20 @@ function resumeRun(slot = 1) {
   }
 }
 
+function loadActiveSlot() {
+  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
+  resumeRun(activeSlot);
+  return true;
+}
+
+function quitWithoutSaving() {
+  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
+  audio.stopMusic();
+  run = null;
+  showTitle();
+  return true;
+}
+
 // ---- screens --------------------------------------------------------------------
 // #67 property 3/5: a profile that could not be read is a NAMED, VISIBLE state
 // with a reachable handle — never a fresh profile wearing the same filename.
@@ -1067,11 +1081,13 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = '') {
+  const armouryMeta = saves.loadMeta();
+  if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: armouryMeta,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -1147,6 +1163,16 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    onArmoury: (view) => {
+      const combatArmoury = app.querySelector('#combat-armoury');
+      closeOverlay();
+      if (!combatArmoury) return showArmoury(view);
+      combatArmoury.dataset.equipView = view;
+      combatArmoury.click();
+      delete combatArmoury.dataset.equipView;
+    },
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1329,6 +1355,8 @@ function showMap() {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
       persist();
@@ -1543,6 +1571,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
       persist();

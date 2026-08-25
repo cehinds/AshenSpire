@@ -25,6 +25,9 @@
     border-bottom: 1px solid var(--line); background: var(--bg-raise);
     pointer-events: none; user-select: none; cursor: default;
   }
+  .map-header[data-hud-mode='expanded'] .map-entrance-orientation {
+    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
+  }
   .map-entrance-orientation strong {
     text-align: center; color: var(--gold); font-family: Georgia, serif;
     font-size: 11px; line-height: 1.1; letter-spacing: 2px;

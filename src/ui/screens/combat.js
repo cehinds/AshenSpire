@@ -37,8 +37,9 @@ import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { wireHudModeGrip } from '../components/hudModeGrip.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, quickControls = {} }) {
+export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -127,6 +128,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     </div>`;
 
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
@@ -1399,11 +1401,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
-          draw: () => showDraw(),
-          discard: () => showDiscard(),
+          inventory: () => openCombatArmoury('rack'),
+          character: () => openCombatArmoury('grid'),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
         },
       });
     });
@@ -1423,12 +1426,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  $('#combat-armoury').addEventListener('click', () => {
+  function openCombatArmoury(equipView = '') {
     if (!registries.balance.equipment.enabled) return;
     const panel = mountEquipment(document.body, {
       registries,
       run,
-      meta: { settings: { customization: run.customization } },
+      meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;
@@ -1444,7 +1447,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         afterDispatch(out.events);
       },
     });
-  });
+  }
+  $('#combat-armoury').addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
 
   render();
 

@@ -14,7 +14,7 @@ const REQUIRED_IDS = Object.freeze([
   'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
+  'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
   'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
@@ -46,7 +46,7 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel', 'HudModeModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
@@ -174,7 +174,7 @@ export function findings(r) {
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
     bad.push('C18 startup gate no longer uses its immutable component model and shared build stamp');
   }
-  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*4,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
+  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
       || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)
       || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
       || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {

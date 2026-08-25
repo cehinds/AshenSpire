@@ -846,7 +846,8 @@ keeps the same state and focus contract without meaningful animation.
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
-  `run-header-strip`, `primary-hud-row`, `inventory-belt`, and `hud-quick-settings`.
+  `run-header-strip`, `primary-hud-row`, `inventory-belt`, `hud-quick-settings`, and
+  `hud-mode-grip`. The grip remembers either the Expanded HUD or the 132px Razor Strip.
   Its reusable children are
   `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
   `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,

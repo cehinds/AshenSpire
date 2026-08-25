@@ -1203,6 +1203,15 @@ button.rs-reset {
 .hud-quick-notice[hidden] { display: none; }
 .hud-quick-settings,
 .hud-quick-settings.compact { width: var(--tap-floor); }
+:root[data-layout='narrow'] .hud-quick-setting-face {
+  width: min(var(--tap-floor), calc(32px / var(--ui-zoom, 1)));
+  height: min(var(--tap-floor), calc(32px / var(--ui-zoom, 1)));
+}
+:root[data-layout='narrow'] .hud-quick-setting-glyph {
+  width: calc(22px / var(--ui-zoom, 1));
+  height: calc(22px / var(--ui-zoom, 1));
+  font-size: calc(22px / var(--ui-zoom, 1));
+}
 .title-stack { animation: screenIn 700ms ease-out; }
 .title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
@@ -1928,14 +1937,21 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 6px 10px; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
-  background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
+  background: transparent; color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
 }
-.set-tabs .set-tab:hover { color: var(--parchment); }
+.set-tab-face {
+  box-sizing: border-box; width: 100%; min-height: calc(35px / var(--ui-zoom, 1));
+  padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  display: inline-flex; align-items: center; justify-content: inherit;
+  border: 1px solid var(--line-soft); border-radius: calc(6px / var(--ui-zoom, 1));
+  background: var(--bg); color: inherit;
+}
+.set-tabs .set-tab:hover .set-tab-face { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
    the same reason the overlay strip carries three: an accent-only answer dies
    for a colourblind player, and --gold is rewritten from balance.ui when a
@@ -1978,9 +1994,10 @@ button.rs-reset {
    in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
    screen that themes — divergence dressed as a fix. Filed as its own act. */
 .set-tabs .set-tab.on {
-  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
+  color: var(--gold);
   font-weight: 600;
 }
+.set-tabs .set-tab.on .set-tab-face { border-color: var(--gold); background: rgba(201, 162, 39, 0.25); }
 .set-subtabs {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
   padding-bottom: 10px; border-bottom: 1px solid var(--line-soft);

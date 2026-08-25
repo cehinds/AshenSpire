@@ -21,7 +21,7 @@
    keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
-  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+  gap: calc(4px / var(--ui-zoom, 1)); padding: calc(4px / var(--ui-zoom, 1)) 1.6rem;
   position: relative;
   z-index: 20;
   overflow: visible;
@@ -51,8 +51,63 @@
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
   display: grid;
-  gap: calc(5px / var(--ui-zoom, 1));
+  gap: calc(3px / var(--ui-zoom, 1));
   min-width: 0;
+}
+
+.shared-hud .hud-mode-grip {
+  position: absolute; z-index: 90; left: 50%; bottom: calc(-22px / var(--ui-zoom, 1));
+  transform: translateX(-50%); box-sizing: border-box;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border: 0; background: transparent; cursor: ns-resize;
+  display: grid; place-items: start center;
+}
+.shared-hud .hud-mode-grip > span {
+  width: calc(18px / var(--ui-zoom, 1)); height: calc(3px / var(--ui-zoom, 1));
+  border-radius: 999px; background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
+}
+.shared-hud .hud-mode-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -9px; }
+
+/* Variant A — Razor Strip: three 44px bands, with utilities below potions. */
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  box-sizing: border-box; height: calc(132px / var(--ui-zoom, 1));
+  min-height: calc(132px / var(--ui-zoom, 1)); padding: 0 0.6rem; justify-content: start;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  height: 100%; display: grid; grid-template-columns: minmax(7rem, 1fr) minmax(5rem, 0.72fr) calc(var(--tap-floor) * 4);
+  grid-template-rows: repeat(3, var(--tap-floor)); gap: 0 0.35rem; align-items: stretch;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] :is(.hud-info-row, .hud-resource-row, .hud-bottom) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-column: 1; grid-row: 1 / span 2; height: calc(var(--tap-floor) * 2); align-self: stretch; padding: 0; border: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics { grid-column: 1; grid-row: 3; width: 100%; margin: 0; overflow-x: auto; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-center { grid-column: 2; grid-row: 1; justify-self: stretch; justify-content: center; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  grid-area: 2 / 2; justify-self: stretch; justify-content: center; width: 100%; max-width: 100%;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity { grid-column: 2; grid-row: 3; justify-self: center; gap: 0; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1)); height: calc(28px / var(--ui-zoom, 1)); font-size: calc(15px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-column: 3; grid-row: 1; display: grid; grid-template-columns: repeat(4, var(--tap-floor));
+  grid-template-rows: var(--tap-floor); width: calc(var(--tap-floor) * 4); height: var(--tap-floor);
+  padding: 0; border: 0; gap: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(1) { grid-column: 3; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(2) { grid-column: 4; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(1) { grid-column: 1; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(2) { grid-column: 2; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions {
+  grid-area: 2 / 3; justify-self: end; width: calc(var(--tap-floor) * 4); height: var(--tap-floor);
+  align-items: center; justify-content: flex-start;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] > .hud-quick-settings {
+  top: auto; bottom: 0; right: 0.6rem; flex-direction: row; width: calc(var(--tap-floor) * 2); max-width: none;
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
