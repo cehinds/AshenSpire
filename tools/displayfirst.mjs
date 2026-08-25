@@ -125,7 +125,7 @@
 //   · Linux headless Chromium, two shapes, two text sizes, two doors. Windows
 //     and macOS are `unknown` here as everywhere else in this repo.
 //   · IT IS WIRED INTO ci.yml's MANUAL Ubuntu browser job. One clean run
-//     measures eight rendered cells; the selftest adds twenty-one copied-tree
+//     measures eight rendered cells; the selftest adds twenty-three copied-tree
 //     browser plants across two focused corpora, including deliberate 25-second
 //     and 30-second timeout defects. The workflow states that cost beside the
 //     steps. Until an
@@ -914,11 +914,30 @@ async function main() {
       const perDoor = {};
       for (const door of DOORS) {
         const cell = `${vp.tag} Text ${text} ${door}`;
-        const shot = door === 'title' ? 'title' : 'combat';
-        const url = `${base}?shot=${shot}&shotSettings=${encodeURIComponent(JSON.stringify({ textSize: text }))}`;
+        const shot = door === 'title' ? 'startup' : 'combat';
+        const settings = encodeURIComponent(JSON.stringify({ textSize: text }));
+        const url = door === 'title'
+          ? `${base}?shot=startup&shotInput=keyboard&shotSettings=${settings}`
+          : `${base}?shot=combat&shotSettings=${settings}`;
         await cdp.send('Page.navigate', { url }, S);
+        if (door === 'title') {
+          // The title Settings door begins at the same cold-boot surface a
+          // player meets. A complete physical Enter press owns the transition:
+          // key-down arms it, key-up releases it, and only then may this probe
+          // click the title's Settings control.
+          await until(`!!document.querySelector('.startup-gate')`, `startup ${cell}`);
+          await cdp.send('Input.dispatchKeyEvent', {
+            type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13,
+          }, S);
+          await wait(60);
+          await cdp.send('Input.dispatchKeyEvent', {
+            type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13,
+          }, S);
+          await until(`!!document.querySelector('.title-screen') && !document.querySelector('.startup-gate')`,
+            'title after startup gate', 5000);
+        }
         const ready = door === 'title'
-          ? `!!document.querySelector('button')`
+          ? `!!document.querySelector('.title-screen button')`
           : `!!document.querySelector('.combat')`;
         await until(ready, `${shot} ${cell}`);
         await wait(700);
@@ -1027,7 +1046,7 @@ function refuseUnsupportedPlatform() {
 // ---------------------------------------------------------------------------
 // --selftest — the same-door known-bad corpus.
 //
-// TWENTY-ONE FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
+// TWENTY-THREE FILE-BYTE PLANTS ACROSS TWO CORPORA, PLUS PLANT 15, WHICH IS A
 // CONDITION AND NOT A FILE.
 // THREE OF THEM ARE INVISIBLE TO test 61, and that is the argument for this file
 // existing at all: plants 2, 3 and 4 leave `ROWS` and
@@ -1417,6 +1436,18 @@ function selftestPlants() {
       ],
       expectRed: /FINDING D1\/order .*first=animSpeed want=fullscreen/,
     },
+    {
+      // 21 — THE TITLE DOOR STARTS WHERE A PLAYER STARTS. The startup gate is
+      // not decorative: a complete input release must reveal Title before this
+      // probe can click Settings. The old `?shot=title` route bypassed this
+      // mutation and stayed green, so this plant distinguishes the real door
+      // from a posed title screen.
+      name: 'the startup gate never releases the title door after Enter',
+      file: 'src/ui/components/startupGate.js',
+      find: '        finish(input.family);',
+      replace: '        void input.family; // displayfirst selftest plant: startup never releases',
+      expectRed: /displayfirst: STOPPED .*timeout waiting for title after startup gate/,
+    },
   ];
 }
 
@@ -1513,8 +1544,8 @@ async function countedVerdictPlant(count) {
 
 async function selftest(plants = selftestPlants(), maxEdgePlants = maxEdgeSelftestPlants()) {
   const { doorSelftest } = await import('./doorplant.mjs');
-  // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty whole-tool browser mutants
-  // plus a clean run is twenty-one browser boots. The population is one shape and one
+  // NARROWED ON PURPOSE AND SAID OUT LOUD: twenty-one whole-tool browser mutants
+  // plus a clean run is twenty-two browser boots. The population is one shape and one
   // text size, both doors — the DOOR is unnarrowed, which is the axis the corpus
   // is about. Plant 10 spends its own 25 s waiting for a page that never boots
   // and plant 14 its own 30 s waiting for a reply that never comes; those waits
