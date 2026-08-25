@@ -241,8 +241,18 @@ async function page({
       timestamp:0, axes:[0,0,0,0], buttons:state.buttons };
     Object.defineProperty(navigator, 'getGamepads', { configurable:true, value:() => state.connected ? [gamepad] : [] });
     window.__startupPad = {
-      connect() { state.connected=true; dispatchEvent(new Event('gamepadconnected')); },
-      disconnect() { state.connected=false; dispatchEvent(new Event('gamepaddisconnected')); },
+      connect() {
+        state.connected=true;
+        const event=new Event('gamepadconnected');
+        Object.defineProperty(event,'gamepad',{value:gamepad});
+        dispatchEvent(event);
+      },
+      disconnect() {
+        state.connected=false;
+        const event=new Event('gamepaddisconnected');
+        Object.defineProperty(event,'gamepad',{value:gamepad});
+        dispatchEvent(event);
+      },
       set(index, pressed) { state.buttons[index]={pressed,value:pressed?1:0}; gamepad.timestamp += 1; },
       setAxis(index, value) { gamepad.axes[index]=value; gamepad.timestamp += 1; }
     };
