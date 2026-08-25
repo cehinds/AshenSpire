@@ -12,7 +12,7 @@
 The captures were taken from build 1305. The final build 1307 changes only
 controller disconnect/reconnect state seeding and its test instrument; layout,
 art, and responsive styling are unchanged. Its visible build stamp is verified
-separately by the final 45-check rendered contract.
+separately by the final 46-check rendered contract.
 
 | File | State | SHA-256 |
 |---|---|---|
@@ -31,5 +31,5 @@ without a persistent gamepad cursor, return-to-title bypass, profile
 crisis precedence, interrupted-press cancellation, held-controller reconnect
 seeding, actionable startup semantics,
 deterministic reduced-motion reveal cleanup, and Text M/XL at 390x844,
-844x344, and 1200x730. Result: 45 checks passed; its 17 same-door plants
+844x344, and 1200x730. Result: 46 checks passed; its 17 same-door plants
 were each observed red and the clean copied tree returned green.

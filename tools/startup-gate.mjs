@@ -428,9 +428,12 @@ async function assertInterruptedPresses() {
   await pad.until(`!!document.querySelector('.startup-gate')`, 'gamepad interrupt startup');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
-  await pad.ev(`window.__startupPad.connect()`); await wait(140);
+  await pad.ev(`window.__startupPad.set(0,false); window.__startupPad.connect()`); await wait(140);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.INTERRUPT-CANCEL', 'disconnect cancels an armed controller press; reconnecting unpressed cannot synthesize a reveal');
+  await pad.ev(`window.__startupPad.disconnect()`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,true); window.__startupPad.connect()`); await wait(140);
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(240);
-  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-RECONNECT', 'disconnect cancels ownership and a button held through reconnect is seeded, not invented as a new press');
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`), 'A7.HELD-AT-RECONNECT', 'a button pressed while disconnected and held through reconnect is seeded, not invented as a new press');
   await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
   await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
   verdict(await pad.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen')`), 'A7.INTERRUPT-RECOVERY', 'a fresh complete controller press still reveals after reconnect');
