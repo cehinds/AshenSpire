@@ -728,9 +728,9 @@
    upright refusal; this selector reads that answer and defines no breakpoint. */
 .field {
   --battlefield-edge-gap: clamp(0.35rem, 1.2%, 0.8rem);
-  --combatant-intent-gap: 0.18rem;
   flex: 1; display: flex; align-items: stretch; position: relative; z-index: 1;
   box-sizing: border-box;
+  padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
   padding-inline-end: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
 }
 :root[data-short='false'] .field { min-height: 0; }
@@ -742,6 +742,7 @@
   flex: 1; display: flex; align-items: center; justify-content: space-evenly;
   padding-block: var(--battlefield-edge-gap); gap: 1rem;
 }
+.field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
 
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
    Remove unrelated player/action chrome so all conditional enemy states remain
@@ -759,14 +760,33 @@
   display: flex; flex-direction: column; align-items: center; position: relative;
   width: 100%; height: 100%; min-height: 0;
 }
-.combatant-leading {
-  display: flex; align-items: flex-end; justify-content: center;
-  flex: 0 0 2.65rem; min-height: 0; width: 100%;
+.combatant[data-ui-component='combatant-frame'] {
+  display: block;
+  overflow: visible;
 }
+.combatant-stack {
+  position: absolute;
+  left: 50%;
+  top: var(--combatant-stage-center, 50%);
+  width: 100%;
+  height: var(--combatant-stack-height, auto);
+  transform: translate(-50%, -50%);
+}
+.combatant-leading {
+  position: absolute; inset: 0 0 auto;
+  display: flex; align-items: flex-end; justify-content: center;
+  flex: 0 0 auto; min-height: 0; width: 100%;
+}
+.combatant-leading:empty { display: none; }
 .combatant-card {
-  display: flex; flex: 1 1 auto; flex-direction: column; align-items: center;
+  position: absolute;
+  top: var(--combatant-card-offset, 0);
+  left: 50%;
+  display: flex; flex: 0 0 auto; flex-direction: column; align-items: center;
   justify-content: flex-end; gap: 0.4rem; width: 100%; min-height: 0;
-  margin-top: var(--combatant-intent-gap);
+  margin: 0;
+  transform: translateX(-50%) scale(var(--combatant-card-scale, 1));
+  transform-origin: top center;
 }
 .combatant .sprite { position: relative; display: flex; align-items: flex-end; justify-content: center; min-height: 0; }
 /* The under-model strip. Its bars are the SAME component as the main HUD's —
@@ -1368,6 +1388,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 :root[data-composition='short-wide'] .combat { --action-row-drop: 6.4rem; }
 :root[data-composition='short-wide'] .player-zone,
 :root[data-composition='short-wide'] .enemy-row { padding-block: 0.4rem; }
+:root[data-composition='short-wide'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
 :root[data-composition='short-wide'] .combatant { gap: 0.15rem; }
 :root[data-composition='short-wide'] .combatant .intent {
   margin-bottom: 0.1rem; padding: 0.15rem 0.5rem; font-size: 1rem;
@@ -1491,7 +1512,8 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field {
-    padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
+    padding-block: var(--battlefield-hud-clearance, 0) var(--battlefield-action-clearance, 0);
+    padding-inline: 1.2rem calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   /* The compact utility pair is vertical below the HUD. Reserve its right-edge
      column so enemy art and intent never sit beneath a control. */
@@ -1499,6 +1521,7 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     padding-inline-end: calc(1.2rem + var(--hud-compact-control-cell) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
+  :root[data-layout='narrow'] .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
   :root[data-layout='narrow'] .player-zone .combatant,
   :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
   :root[data-layout='narrow'] .player-zone .combatant .sprite,

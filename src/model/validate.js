@@ -784,6 +784,25 @@ export function validateContent(bundle) {
         err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);
       }
     }
+    const combatantStage = ui.combatantStage;
+    if (!combatantStage || typeof combatantStage !== 'object' || Array.isArray(combatantStage)) {
+      err('balance.ui.combatantStage', 'must be an object with viewport clearances, intent gap, and center position');
+    } else {
+      for (const key of ['hudClearanceViewportPct', 'actionClearanceViewportPct']) {
+        const value = combatantStage[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 25) {
+          err(`balance.ui.combatantStage.${key}`, `must be a finite viewport percentage in [0, 25] — got ${JSON.stringify(value)}`);
+        }
+      }
+      if (typeof combatantStage.intentGapPx !== 'number' || !Number.isFinite(combatantStage.intentGapPx)
+        || combatantStage.intentGapPx < 0 || combatantStage.intentGapPx > 24) {
+        err('balance.ui.combatantStage.intentGapPx', `must be a finite device-pixel gap in [0, 24] — got ${JSON.stringify(combatantStage.intentGapPx)}`);
+      }
+      if (typeof combatantStage.centerPct !== 'number' || !Number.isFinite(combatantStage.centerPct)
+        || combatantStage.centerPct < 25 || combatantStage.centerPct > 75) {
+        err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)

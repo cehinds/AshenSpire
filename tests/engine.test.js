@@ -75,6 +75,7 @@ import {
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
 import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
+import { battlefieldStageModel } from '../src/ui/models/BattlefieldStageModel.js';
 import {
   hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
 } from '../src/ui/components/hudQuickSettings.js';
@@ -5283,6 +5284,32 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the in-run overlay keeps only Settings and Controls');
     assert(!MENU_TABS.some((tab) => ['deck', 'stats', 'save'].includes(tab.id)),
       'Deck, Stats, and Save are not duplicated as overlay tabs');
+  });
+
+  test('61b. the combatant stage owns one validated safe-corridor model', () => {
+    const presentation = REG.balance.ui.combatantStage;
+    eq(`${presentation.hudClearanceViewportPct}/${presentation.actionClearanceViewportPct}`, '3/3',
+      'the HUD and hand each reserve three percent of viewport height');
+    eq(`${presentation.intentGapPx}/${presentation.centerPct}`, '6/50',
+      'intent attachment and battlefield center are data-owned');
+    const model = battlefieldStageModel(presentation);
+    eq(model.component, 'battlefield-stage', 'the shared battlefield component owns the model');
+    eq(`${model.tokens.hudClearanceViewportPct}/${model.tokens.actionClearanceViewportPct}/${model.tokens.intentGapPx}/${model.tokens.centerPct}`,
+      '3/3/6/50', 'all four authored tokens reach the immutable Component Model');
+
+    const malformed = {
+      ...contentBundle,
+      balance: {
+        ...contentBundle.balance,
+        ui: {
+          ...contentBundle.balance.ui,
+          combatantStage: { ...contentBundle.balance.ui.combatantStage, hudClearanceViewportPct: Infinity },
+        },
+      },
+    };
+    const validation = validateContent(malformed);
+    assert(!validation.ok && validation.errors.some((error) => error.path === 'balance.ui.combatantStage.hudClearanceViewportPct'),
+      'an unreadable safe clearance fails the real boot validator by name');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {

@@ -38,6 +38,8 @@ import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
+import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
+import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -136,6 +138,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
+  const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -422,6 +425,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     renderEnemies();
     renderHand();
     renderControls();
+    battlefieldStage.refresh();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
