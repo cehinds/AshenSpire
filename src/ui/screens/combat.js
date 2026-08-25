@@ -506,6 +506,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
       potions.appendChild(el);
     });
+    potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a

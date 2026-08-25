@@ -83,13 +83,13 @@ export function inventoryBeltHtml(model) {
 export function sharedRunHudHtml(model) {
   const { place, headerClass, overlayHtml, hudMode } = model.properties;
   const grip = childModel(model, UI.hudModeGrip);
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" ${uiComponentAttrs(model.component, place)}>
+  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" data-has-utility-potions="false" ${uiComponentAttrs(model.component, place)}>
     <div class="hud-top">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
+      ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
     </div>
-    ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
     <button type="button" class="hud-mode-grip" data-next-mode="${esc(grip.properties.next)}" ${uiComponentAttrs(grip.component, grip.variant)} aria-label="${esc(grip.accessibility.label)}" title="${esc(grip.accessibility.hint)}"><span aria-hidden="true"></span></button>
     ${overlayHtml}
   </header>`;
