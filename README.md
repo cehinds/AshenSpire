@@ -37,6 +37,11 @@ reviewed governance head is Approved before canonical integration and Active
 when that exact head is contained in canonical `dev`; no merge-time status or
 version edit is required.
 
+**[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
+composition/component redesign contract. The [current-`dev` architecture
+snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
+every push to `dev` without rewriting the core contract.
+
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
 after GitHub Pages finishes deploying it. This is a **development preview**, not
