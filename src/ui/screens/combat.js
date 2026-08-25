@@ -419,13 +419,17 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   // ---------- rendering ----------
-  function render() {
-    renderTopbar();
+  function renderCombatantStage() {
     renderPlayer();
     renderEnemies();
+    battlefieldStage.refresh();
+  }
+
+  function render() {
+    renderTopbar();
+    renderCombatantStage();
     renderHand();
     renderControls();
-    battlefieldStage.refresh();
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
@@ -1239,8 +1243,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         onBeatApplied: (beat) => {
           applyBeatToDisp(beat);
           renderTopbar();
-          renderPlayer();
-          renderEnemies();
+          renderCombatantStage();
           renderHand();
           renderControls();
         },

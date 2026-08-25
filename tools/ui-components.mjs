@@ -131,6 +131,8 @@ export function findings(r) {
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
       || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
       || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      || !/function renderCombatantStage\(\)\s*\{\s*renderPlayer\(\);\s*renderEnemies\(\);\s*battlefieldStage\.refresh\(\);\s*\}/.test(r.combat)
+      || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.combat)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
