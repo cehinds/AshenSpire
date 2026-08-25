@@ -19,10 +19,10 @@ function particles(count = 7) {
     sizePx: 1 + (index % 3),
   }));
 }
-
 export function startupGateModel({
   inputFamily = 'keyboard',
   wordmark = 'ASHEN SPIRE',
+  subtitle = 'A ROGUELIKE DECKBUILDER',
   overline = '',
   prompts = DEFAULT_PROMPTS,
   particleCount = 7,
@@ -32,6 +32,7 @@ export function startupGateModel({
     variant: family,
     properties: {
       wordmark,
+      subtitle,
       overline,
       inputFamily: family,
       prompts: { ...DEFAULT_PROMPTS, ...prompts },

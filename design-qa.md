@@ -47,3 +47,43 @@ The full comparison board retains both images at native density and makes the cl
 - P3: swap in the future branded shell logo and bespoke resource/section icons when the separate asset-library task delivers approved production files. The components already accept injected asset-backed content.
 
 final result: passed
+
+---
+
+# Title Menu Design QA
+
+- Source visual truth: `C:\Users\const\Documents\Codex\2026-08-23\ashenspire-asset-component-library\.codex-remote-attachments\01a03230-593b-7c31-ac0e-095f74f38b93\62753926-b830-4e31-a536-251bfa3adf41\1-Photo-1.jpg`, `2-Photo-2.jpg`, and `3-Photo-3.jpg`.
+- Exact prototype sources behind the photos: `C:\Users\const\Documents\Codex\2026-08-23\ashenspire-asset-component-library\outputs\startup-menu-preview\screenshots-expanded-desktop.png`, `screenshots-load-desktop.png`, and `screenshots-load-mobile-390x844.png`.
+- Implementation screenshots: `docs/preview/title-menu-wide-1440x900.png`, `docs/preview/title-load-wide-1440x900.png`, and `docs/preview/title-load-mobile-390x844.png`.
+- Viewports: implementation desktop 1440 x 900 CSS px and mobile 390 x 844 CSS px, device scale 1. Reference exports are 1425 x 929 px desktop and 375 x 868 px mobile; the user-provided camera exports are 1280 x 834 px and 553 x 1280 px.
+- Normalization: comparison used the design-owned game surface and ignored the isolated prototype's `PREVIEW` harness and surrounding black capture canvas. Source and implementation were opened together in one comparison input. No density resampling was needed for the implementation captures.
+- States: expanded hall with Continue selected, LOAD modal with slot 1 selected, NEW modal selection/continuation availability, and borderless folded startup.
+
+## Findings
+
+No actionable P0, P1, or P2 differences remain.
+
+- Fonts and typography: Cinzel remains the production display face; the wordmark is parchment rather than saturated gold, menu tracking and slot serif treatment now match the preferred prototype hierarchy, and mobile modal type is compensated for the automatic UI zoom so it retains the reference's readable scale.
+- Spacing and layout rhythm: the desktop menu renders at roughly 432 px wide, the modal at roughly 760 x 615 px, and the mobile modal at roughly 368 x 478 px. Slot rows and actions match the reference density while retaining the shipped minimum tap target.
+- Colors and visual tokens: the implementation stays on the existing brown-black, parchment, muted brass, and gold tokens. The background remains the genuine shipped `bg_act1.webp` raster.
+- Image quality and asset fidelity: no generated replacements, CSS illustrations, placeholder art, or screenshot crops were introduced. The supplied reference and shipped background are the only art sources.
+- Copy and content: ASHEN SPIRE, A ROGUELIKE DECKBUILDER, Continue/Load/New/Collection/Settings/Quit, slot metadata, Back, and Continue match the selected target and current game records.
+- Accessibility and interaction: semantic buttons/dialog remain unchanged; visible selected/hover/focus treatment is retained; LOAD and NEW open the reusable modal; Back closes it; NEW has a valid selected slot; mobile actions render at 50 px and slot rows at about 89 px; browser console reported zero errors.
+
+## Focused evidence
+
+The title lockup/menu and modal slot/action regions were compared separately because the reference capture includes prototype-only harness chrome. The production default now frames Continue like the selected reference. The folded state was also inspected after the restyle: `.startup-mark` computes to `border: 0px none`.
+
+## Comparison history
+
+1. Initial integrated capture was materially larger than the preferred prototype: the wide menu was about 516 px, the modal about 912 x 734 px, the first slot about 133 px high, and the mobile actions about 45 px high.
+2. First fix restored the prototype's compact desktop proportions and serif slot treatment. Post-fix desktop measurements were about 432 px for the menu and 760 x 615 px for the modal.
+3. Mobile comparison found the automatic 0.9 UI zoom made the modal type, slots, and actions smaller than the reference. The mobile rules now compensate for UI zoom while preserving Text Size scaling; post-fix slot height is about 89 px and action height is 50 px.
+4. Final comparison restored the reference's default framed Continue state and confirmed no browser console errors.
+
+## Follow-up polish
+
+- P3: at unusually short wide canvases, production keeps its 44 px tap floor, so the menu is slightly taller than the isolated visual prototype. This is an intentional accessibility constraint.
+- P3: production Quick Settings and build metadata remain present because they are shipped controls/evidence, not part of the isolated prototype harness.
+
+final result: passed
