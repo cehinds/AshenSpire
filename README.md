@@ -18,6 +18,11 @@ naming the pull request that landed it and the build number it shipped in.
 shared rules for routine ownership, evidence, status reporting, cross-family
 handoffs, and the boundary between development approval and release authority.
 
+**[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
+composition/component redesign contract. The [current-`dev` architecture
+snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
+every push to `dev` without rewriting the core contract.
+
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
 after GitHub Pages finishes deploying it. This is a **development preview**, not
