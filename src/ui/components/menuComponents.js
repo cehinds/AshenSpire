@@ -71,7 +71,7 @@ export function renderMenuOverlay(model) {
         <span class="overlay-footer-note">Progress saves to the active slot.</span>
         <div class="overlay-footer-actions">
           <button class="subtle" id="ov-save" type="button">Save Game</button>
-          <button class="subtle danger" id="ov-quit" type="button">Save &amp; Quit to Title</button>
+          <button class="subtle danger" id="ov-quit" type="button">Save and Quit</button>
         </div>
       </footer>
     </div>`;

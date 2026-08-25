@@ -87,7 +87,7 @@ function menuFooterModel() {
         behaviors: [behaviorModel('save-game', { event: 'click', command: 'save-game' })],
       }),
       componentModel(UI.saveQuitControl, {
-        accessibility: { role: 'button', label: 'Save and Quit to Title' },
+        accessibility: { role: 'button', label: 'Save and Quit' },
         behaviors: [behaviorModel('save-quit', { event: 'click', command: 'save-quit-to-title' })],
       }),
     ],

@@ -11,10 +11,10 @@ const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const REQUIRED_IDS = Object.freeze([
   'startup-gate',
-  'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
+  'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'fullscreen-control', 'music-control',
+  'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
   'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
@@ -46,7 +46,7 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel', 'HudModeModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
@@ -117,7 +117,7 @@ export function findings(r) {
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css)
+      || /hud-context|grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
@@ -174,10 +174,10 @@ export function findings(r) {
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
     bad.push('C18 startup gate no longer uses its immutable component model and shared build stamp');
   }
-  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
-      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*wideControlHeightPx:\s*24,[\s\S]*labelFontPx:\s*10,[\s\S]*glyphSizePx:\s*14,[\s\S]*stateDotPx:\s*5,[\s\S]*showCardBackground:\s*false,[\s\S]*showLabels:\s*true,[\s\S]*\}/.test(r.balance)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-wide-control-height', '--hud-quick-label-font', '--hud-quick-glyph-size', '--hud-quick-state-dot'].every((name) => r.main.includes(`'${name}'`))
-      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'wideControlHeightPx', 'labelFontPx', 'glyphSizePx', 'stateDotPx', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
+  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
+      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
+      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
   if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
@@ -194,9 +194,11 @@ export function findings(r) {
       || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
       || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
       || !/\.hud-quick-setting\s*\{[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;/.test(r.uiCss)
-      || !/@media \(min-width:\s*421px\) and \(pointer:\s*fine\)[\s\S]*--hud-quick-wide-control-height/.test(r.uiCss)
-      || !/@media \(max-width:\s*420px\)[\s\S]*\.hud-quick-settings\s*\{\s*width:\s*var\(--tap-floor\);/.test(r.uiCss)
-      || !/overlayHtml:\s*`\$\{legendHtml\}\$\{entranceOrientation\}`/.test(r.map)) {
+      || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
+      || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
+      || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
+      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
+      || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)

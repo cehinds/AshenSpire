@@ -263,10 +263,15 @@ export const balance = {
       // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
       // legacy badge; the primary row, control grid, and vital rows each own
       // their own gap so responsive layouts do not hide a second copy.
-      portraitScale: 0.7,
-      primaryRowGapPx: 8,
-      controlGapPx: 2,
+      portraitScale: 0.58,
+      primaryRowGapPx: 4,
+      controlGapPx: 0,
       resourceRowGapPx: 2,
+      panelPadPx: 0,
+      mobilePanelPadPx: 0,
+      mobileControlGapPx: 1,
+      mobileOuterPadPx: 4,
+      mobileRowGapPx: 3,
       // Header columns negotiate inside one grid: the center Cinders track and
       // right metadata trail each cap at 30% of the viewport. Act/Floor show
       // their current values by default; totals remain an opt-in.
@@ -281,14 +286,14 @@ export const balance = {
       places: ['title', 'map', 'combat'],
       edgeGapPx: 4,
       stackGapPx: 0,
-      // Fine-pointer wide screens can use compact rows; touch/coarse-pointer
-      // surfaces keep the authored tap floor regardless of viewport width.
-      wideControlHeightPx: 24,
-      labelFontPx: 10,
-      glyphSizePx: 14,
-      stateDotPx: 5,
-      showCardBackground: false,
-      showLabels: true,
+      // One visual card on every device. The 40px face sits inside the shared
+      // tap floor, while its 28px icon occupies 70% of the authored face.
+      cardSizePx: 40,
+      glyphSizePx: 28,
+      stateDotPx: 6,
+      activeTintPct: 14,
+      showCardBackground: true,
+      showLabels: false,
     },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow

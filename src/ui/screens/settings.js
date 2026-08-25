@@ -437,6 +437,8 @@ const ROWS = [
 // is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
 // an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
+  Changelog: { mount: 'set-changelog-mount', needs: null,
+    tip: 'Newest player-visible changes first.' },
   About: { mount: 'set-about-mount', needs: null,
     tip: 'Version, credits, and how AI was used to make this game.' },
 };
@@ -446,14 +448,13 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Changelog', label: 'Changelog', tip: 'Newest player-visible changes first.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'About'];
+export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
 
 const CATEGORY_LABELS = {
   Display: 'Game',
@@ -1236,7 +1237,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // to fix in this file.
       const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
+        + ` aria-controls="set-panel" data-member="${esc(cat)}"><span class="set-tab-face">${esc(categoryLabel(cat))}</span></button>`).join('');
       html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
         + `<div class="set-panel" id="set-panel" role="tabpanel"`

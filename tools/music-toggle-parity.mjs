@@ -165,8 +165,11 @@ engine.music('combat');
 check(stubGraph().elements.length === externalBefore, 'disabled Music starts no external stream');
 
 const controls = menuRows('map', { fixedEnds: false, hasSave: true });
-check(controls[0]?.act === 'fullscreen' && controls[1]?.act === 'music', 'Fullscreen and Music stay the first Quick Menu rows');
-check(controls.at(-2)?.act === 'save' && controls.at(-1)?.act === 'quit', 'Save and Save & Quit stay the final rows');
+check(controls[0]?.tab === 'settings' && controls[1]?.tab === 'controls'
+  && controls[2]?.act === 'fullscreen' && controls[3]?.act === 'music',
+  'Settings and Controls lead the Quick Menu before Fullscreen and Music');
+check(controls.slice(-4).map((row) => row.act).join(',') === 'load,save,saveQuit,quit',
+  'Load, Save, Save and Quit, and Quit Without Saving stay the final group');
 check(resolveQuickNavMode() === 'mirror' && resolveQuickNavMode('broken') === 'mirror'
   && resolveQuickNavMode('off') === 'off' && resolveQuickNavMode('switcher') === 'switcher',
   'Quick Menu defaults to Mirror and preserves explicit legacy choices');

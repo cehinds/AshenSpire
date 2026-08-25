@@ -4,6 +4,7 @@
 export const UI_COMPONENTS = Object.freeze({
   startupGate: 'startup-gate',
   sharedRunHud: 'shared-run-hud',
+  actRouteStrip: 'act-route-strip',
   runHeaderStrip: 'run-header-strip',
   identityCluster: 'identity-cluster',
   portraitBadge: 'portrait-badge',
@@ -22,6 +23,7 @@ export const UI_COMPONENTS = Object.freeze({
   armouryControl: 'armoury-control',
   quickMenuControl: 'quick-menu-control',
   hudQuickSettings: 'hud-quick-settings',
+  hudModeGrip: 'hud-mode-grip',
   fullscreenControl: 'fullscreen-control',
   musicControl: 'music-control',
   quickMenuPanel: 'quick-menu-panel',

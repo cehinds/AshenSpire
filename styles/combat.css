@@ -21,7 +21,7 @@
    keeps its smaller live-session bar and therefore does not wear `.shared-hud`. */
 .topbar.combat-hud {
   flex-direction: column; align-items: stretch; justify-content: center;
-  gap: calc(6px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1.6rem;
+  gap: calc(4px / var(--ui-zoom, 1)); padding: calc(4px / var(--ui-zoom, 1)) 1.6rem;
   position: relative;
   z-index: 20;
   overflow: visible;
@@ -46,13 +46,210 @@
 }
 .topbar.combat-hud.shared-hud .hud-top {
   --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1));
-  --hud-panel-pad: calc(4px / var(--ui-zoom, 1));
+  --hud-panel-pad: calc(var(--hud-panel-pad-px) / var(--ui-zoom, 1));
   --hud-control-visual: calc(32px / var(--ui-zoom, 1));
   --hud-quick-panel-size: calc(var(--tap-floor) + var(--tap-floor) + var(--hud-control-gap) + var(--hud-panel-pad) + var(--hud-panel-pad));
   --hud-utility-visual-size: 2.6rem;
   display: grid;
-  gap: calc(5px / var(--ui-zoom, 1));
+  gap: calc(3px / var(--ui-zoom, 1));
   min-width: 0;
+}
+
+.shared-hud .hud-mode-grip {
+  position: absolute; z-index: 90; left: 50%; bottom: calc(-22px / var(--ui-zoom, 1));
+  transform: translateX(-50%); box-sizing: border-box;
+  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
+  padding: 0; border: 0; background: transparent; cursor: ns-resize;
+  display: grid; place-items: start center;
+}
+.shared-hud .hud-mode-grip > span {
+  width: calc(18px / var(--ui-zoom, 1)); height: calc(2px / var(--ui-zoom, 1));
+  border-radius: 999px; background: var(--line); box-shadow: 0 0 0 1px var(--bg-raise);
+  transform: translateY(calc(21px / var(--ui-zoom, 1)));
+}
+.shared-hud .hud-mode-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -9px; }
+
+/* Variant D — Strict Compact HUD
+
+   One intrinsic three-column composition, shared by Map and Combat:
+
+     VITALS              CINDERS             HP  MP  ARMOURY  MENU
+     RELICS               ACT / FLOOR         UTILITY POTIONS
+                          CLASS ICON          FULLSCREEN  MUSIC
+
+   The wrappers become grid-transparent only where their children must enter
+   this one composition. Run Header remains a real center-column component so
+   its three lines cannot scatter across later responsive rules. Other potions
+   own the full second right-rail row. Fullscreen/Music are a compact pair just
+   below the complete HUD, so neither steals a potion cell. */
+:root { --hud-compact-control-cell: var(--tap-floor); }
+:root[data-layout='narrow'] { --hud-compact-control-cell: calc(36px / var(--ui-zoom, 1)); }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  gap: 0;
+  padding: calc(5px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  justify-content: start;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  --compact-gap: calc(2px / var(--ui-zoom, 1));
+  --compact-control-cell: var(--hud-compact-control-cell);
+  --compact-right-step: calc(var(--compact-control-cell) + (var(--compact-gap) * 3) + calc(2px / var(--ui-zoom, 1)));
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(calc(58px / var(--ui-zoom, 1)), auto) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "vitals center right"
+    "relics center right";
+  column-gap: calc(6px / var(--ui-zoom, 1));
+  row-gap: var(--compact-gap);
+  align-items: start;
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] :is(.hud-resource-row, .hud-bottom) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-info-row {
+  grid-area: center;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(3, min-content);
+  place-content: center;
+  justify-items: center;
+  gap: calc(3px / var(--ui-zoom, 1));
+  min-width: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-area: vitals;
+  align-self: start;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .resbars {
+  gap: calc(2px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-area: relics;
+  align-self: end;
+  width: 100%;
+  margin: 0;
+  overflow-x: auto;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-center {
+  order: 1;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: stretch;
+  justify-content: center;
+  width: 100%;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  order: 2;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  gap: calc(3px / var(--ui-zoom, 1));
+  font-size: calc(9px / var(--ui-zoom, 1));
+  letter-spacing: 0.02em;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp[data-seed] { display: none !important; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta .hud-progress-total { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child)::before {
+  margin-right: calc(3px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity {
+  order: 3;
+  grid-column: 1;
+  grid-row: 3;
+  justify-self: center;
+  gap: 0;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1)); height: calc(28px / var(--ui-zoom, 1)); font-size: calc(15px / var(--ui-zoom, 1));
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-area: right;
+  justify-self: end;
+  align-self: start;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, var(--compact-control-cell));
+  grid-template-rows: var(--compact-control-cell);
+  width: max-content;
+  height: auto;
+  padding: var(--compact-gap);
+  gap: var(--compact-gap);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) { display: contents; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.topbar-btn, .flask-slot) {
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(1) { grid-column: 3; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-actions .topbar-btn:nth-child(2) { grid-column: 4; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(1) { grid-column: 1; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-charge-flasks .flask-slot:nth-child(2) { grid-column: 2; grid-row: 1; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions {
+  grid-area: right;
+  justify-self: end;
+  align-self: start;
+  z-index: 2;
+  margin-top: var(--compact-right-step);
+  width: min(100%, calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3)));
+  max-width: calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3));
+  min-height: var(--compact-control-cell);
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--compact-gap);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-potions { display: none; }
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-slot {
+  box-sizing: border-box;
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+  display: grid;
+  place-items: center;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-identity {
+  width: var(--hud-utility-visual-size);
+  height: var(--hud-utility-visual-size);
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
+  position: absolute;
+  top: calc(100% + var(--compact-gap));
+  right: calc(8px / var(--ui-zoom, 1));
+  z-index: 80;
+  margin: 0;
+  flex-direction: column;
+  gap: var(--compact-gap);
+  width: var(--compact-control-cell);
+  max-width: none;
+}
+.topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
+  flex: 0 0 var(--compact-control-cell);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
+}
+/* End Variant D */
+
+.topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(8px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(9px / var(--ui-zoom, 1));
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
@@ -1254,14 +1451,19 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     height: auto; flex-wrap: wrap; row-gap: 0.4rem; gap: 1rem; padding: 0.6rem 1rem;
   }
   :root[data-layout='narrow'] .topbar.combat-hud {
-    flex-wrap: nowrap; gap: calc(5px / var(--ui-zoom, 1)); padding: calc(6px / var(--ui-zoom, 1)) 1rem;
+    flex-wrap: nowrap;
+    gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
+    padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
   }
-  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud { --hud-control-gap: calc(var(--hud-control-gap-px) / var(--ui-zoom, 1)); }
+  :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
+    --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
+    --hud-panel-pad: calc(var(--hud-mobile-panel-pad-px) / var(--ui-zoom, 1));
+  }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-resource-row {
     gap: calc(var(--hud-primary-row-gap-px) / var(--ui-zoom, 1));
   }
@@ -1290,6 +1492,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field {
     padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
+  }
+  /* The compact utility pair is vertical below the HUD. Reserve its right-edge
+     column so enemy art and intent never sit beneath a control. */
+  :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
+    padding-inline-end: calc(1.2rem + var(--hud-compact-control-cell) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,

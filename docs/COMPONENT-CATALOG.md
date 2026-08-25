@@ -26,7 +26,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
-| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition. |
+| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
 | `portrait-badge` | `componentModel` child | `hudmeta.identityClusterHtml` | Map + Combat | Character glyph/badge. |
@@ -44,7 +44,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
-| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Fine-pointer wide screens use data-owned 24px rows; phone/coarse-pointer controls retain 44px touch targets. The entrance-to-boss receipt remains in the HUD flow so the rail cannot cover it. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Phone faces are 32px (20% smaller) inside unchanged 44px touch targets; compact HUD anchors the pair below potions. |
+| `hud-mode-grip` | `hudModeGripModel` | `sharedRunHudHtml` + `wireHudModeGrip` | Map + Combat | Two-state HUD snap control: an 18x3 visible border notch within a 44x44 pointer/keyboard/drag target. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
@@ -140,14 +141,14 @@ character-disclosure
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the
 Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
-`switcher` values remain explicit presentation modes. Fullscreen and Music are
-the first rows, contextual destinations occupy the middle, and Save then Save &
-Quit remain the fixed tail. The Quick Menu rows, Settings rows, and
+`switcher` values remain explicit presentation modes. Settings and Controls lead,
+followed by Fullscreen and Music, Inventory and Character, then Load, Save,
+Save and Quit, and Quit Without Saving. The Quick Menu rows, Settings rows, and
 `hud-quick-settings` controls project the same Fullscreen and Music owners; none
 of those renderers keeps a second copy of browser or audio state.
 
 PR #344's in-run overlay remains a separate composition: its only tabs are
-Settings and Controls, while Save Game and Save & Quit stay in the persistent
+Settings and Controls, while Save Game and Save and Quit stay in the persistent
 footer. Fullscreen and Music remain the first relevant controls in Settings, so
 the complete configuration surface and the two quick-control surfaces stay in
 sync without duplicating persistence.
@@ -168,11 +169,10 @@ sync without duplicating persistence.
 ```text
 quick-menu-panel
 ├─ quick-menu-caption
-├─ quick-menu-row: Fullscreen switch
-├─ quick-menu-row: Music switch
-├─ quick-menu-row × N: contextual destinations + Settings/Controls
-├─ quick-menu-row: Save
-└─ quick-menu-row: Save & Quit
+├─ quick-menu-row × 2: Settings + Controls
+├─ quick-menu-row × 2: Fullscreen + Music
+├─ quick-menu-row × 2: Inventory + Character
+└─ quick-menu-row × 4: Load + Save + Save and Quit + Quit Without Saving
 
 menu-overlay
 ├─ menu-tab-strip

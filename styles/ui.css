@@ -1100,57 +1100,89 @@ button.rs-reset {
   box-sizing: border-box;
   min-height: var(--tap-floor);
   min-width: var(--tap-floor);
-  width: auto;
-  padding: 0 calc(4px / var(--ui-zoom, 1));
+  width: var(--tap-floor);
+  height: var(--tap-floor);
+  padding: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: calc(4px / var(--ui-zoom, 1));
+  justify-content: center;
   border: 0;
-  border-radius: calc(4px / var(--ui-zoom, 1));
+  border-radius: calc(7px / var(--ui-zoom, 1));
   background: transparent;
   color: var(--parchment);
   box-shadow: none;
   font-family: var(--font-ui);
-  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
 }
-.hud-quick-setting-glyph { display: none; font-size: calc(var(--hud-quick-glyph-size, 14px) / var(--ui-zoom, 1)); line-height: 1; }
+.hud-quick-setting-face {
+  position: relative;
+  box-sizing: border-box;
+  width: min(var(--tap-floor), calc(var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)));
+  height: min(var(--tap-floor), calc(var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)));
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-soft);
+  border-radius: calc(7px / var(--ui-zoom, 1));
+  background: color-mix(in srgb, var(--bg-raise) 88%, transparent);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+  transition: border-color 120ms, background 120ms, color 120ms;
+}
+.hud-quick-setting-glyph {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+  width: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  height: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  font-size: calc(var(--hud-quick-glyph-size, 28px) / var(--ui-zoom, 1));
+  line-height: 1;
+  color: var(--parchment);
+}
+.hud-quick-setting-glyph svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.hud-fullscreen-exit,
+.hud-music-off { display: none; }
+.hud-quick-setting[data-hud-quick-action='fullscreen'].on .hud-fullscreen-enter,
+.hud-quick-setting[data-hud-quick-action='music'].on .hud-music-off { display: none; }
+.hud-quick-setting[data-hud-quick-action='fullscreen'].on .hud-fullscreen-exit,
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-music-off { display: grid; }
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-music-off { color: var(--danger, #c95b55); }
+.hud-quick-setting.on .hud-quick-setting-glyph { color: var(--gold); }
+.hud-quick-setting.on .hud-quick-setting-face {
+  border-color: color-mix(in srgb, var(--gold) 66%, var(--line-soft));
+  background: color-mix(in srgb, var(--gold) var(--hud-quick-active-tint, 14%), var(--bg-raise));
+}
 .hud-quick-setting:hover,
 .hud-quick-setting:focus-visible { color: var(--gold); }
-.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: -1px; }
+.hud-quick-setting:focus-visible { outline: 1px solid var(--gold); outline-offset: 0; }
+.hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .hud-quick-setting-state {
-  min-width: 0;
+  position: absolute;
+  right: calc(3px / var(--ui-zoom, 1));
+  bottom: calc(3px / var(--ui-zoom, 1));
+  box-sizing: border-box;
+  width: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
+  min-width: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
+  height: calc(var(--hud-quick-state-dot, 6px) / var(--ui-zoom, 1));
   padding: 0;
-  border: 0;
-  border-radius: 0;
-  color: var(--muted);
-  text-align: center;
-  font-size: calc(var(--hud-quick-label-font, 10px) / var(--ui-zoom, 1));
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  overflow: hidden;
+  color: var(--parchment);
+  background: transparent;
+  font-size: 0;
 }
 .hud-quick-setting.on .hud-quick-setting-state {
   color: var(--gold);
-  background: transparent;
+  background: var(--gold);
 }
-.hud-quick-settings[data-card-background='true'] .hud-quick-setting {
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--bg-raise) 90%, transparent);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.34);
+.hud-quick-setting[data-hud-quick-action='music']:not(.on) .hud-quick-setting-state {
+  color: var(--danger, #c95b55);
 }
+.hud-quick-settings[data-card-background='false'] .hud-quick-setting-face { border-color: transparent; background: transparent; box-shadow: none; }
 .hud-quick-setting:disabled { cursor: not-allowed; opacity: 0.55; }
-/* Wide screens with a precise pointer do not need two 44px-tall invisible
-   rows around 10px labels. The visible rail contracts to its data-owned row
-   height; touch and coarse-pointer surfaces retain the full tap floor below. */
-@media (min-width: 421px) and (pointer: fine) {
-  .hud-quick-setting {
-    min-width: 0;
-    min-height: calc(var(--hud-quick-wide-control-height, 24px) / var(--ui-zoom, 1));
-  }
-}
 .hud-quick-notice {
   position: absolute;
   top: calc(100% + (var(--hud-quick-stack-gap, 0px) / var(--ui-zoom, 1)));
@@ -1169,30 +1201,16 @@ button.rs-reset {
   text-transform: none;
 }
 .hud-quick-notice[hidden] { display: none; }
+.hud-quick-settings,
 .hud-quick-settings.compact { width: var(--tap-floor); }
-.hud-quick-settings.compact .hud-quick-setting-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.hud-quick-settings.compact .hud-quick-setting { justify-content: center; }
-@media (max-width: 420px) {
-  .hud-quick-settings { width: var(--tap-floor); }
-  .hud-quick-setting {
-    width: var(--tap-floor); height: var(--tap-floor); min-height: var(--tap-floor);
-    padding: 0; justify-content: center;
-  }
-  .hud-quick-setting-glyph { display: block; }
-  .hud-quick-setting-label {
-    position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
-  }
-  .hud-quick-setting-state {
-    position: absolute;
-    right: calc(4px / var(--ui-zoom, 1));
-    bottom: calc(4px / var(--ui-zoom, 1));
-    width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    min-width: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    height: calc(var(--hud-quick-state-dot, 5px) / var(--ui-zoom, 1));
-    padding: 0; border-radius: 50%; overflow: hidden; color: transparent; font-size: 0;
-    background: var(--muted); opacity: 0.72;
-  }
-  .hud-quick-setting.on .hud-quick-setting-state { background: var(--gold); opacity: 1; }
+:root[data-layout='narrow'] .hud-quick-setting-face {
+  width: min(var(--tap-floor), calc(32px / var(--ui-zoom, 1)));
+  height: min(var(--tap-floor), calc(32px / var(--ui-zoom, 1)));
+}
+:root[data-layout='narrow'] .hud-quick-setting-glyph {
+  width: calc(22px / var(--ui-zoom, 1));
+  height: calc(22px / var(--ui-zoom, 1));
+  font-size: calc(22px / var(--ui-zoom, 1));
 }
 .title-stack { animation: screenIn 700ms ease-out; }
 .title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
@@ -1919,14 +1937,21 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 6px 10px; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
-  background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
+  background: transparent; color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
 }
-.set-tabs .set-tab:hover { color: var(--parchment); }
+.set-tab-face {
+  box-sizing: border-box; width: 100%; min-height: calc(35px / var(--ui-zoom, 1));
+  padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  display: inline-flex; align-items: center; justify-content: inherit;
+  border: 1px solid var(--line-soft); border-radius: calc(6px / var(--ui-zoom, 1));
+  background: var(--bg); color: inherit;
+}
+.set-tabs .set-tab:hover .set-tab-face { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
    the same reason the overlay strip carries three: an accent-only answer dies
    for a colourblind player, and --gold is rewritten from balance.ui when a
@@ -1969,9 +1994,10 @@ button.rs-reset {
    in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
    screen that themes — divergence dressed as a fix. Filed as its own act. */
 .set-tabs .set-tab.on {
-  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
+  color: var(--gold);
   font-weight: 600;
 }
+.set-tabs .set-tab.on .set-tab-face { border-color: var(--gold); background: rgba(201, 162, 39, 0.25); }
 .set-subtabs {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
   padding-bottom: 10px; border-bottom: 1px solid var(--line-soft);

@@ -48,7 +48,7 @@ import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
 import { mountEquipment } from './ui/screens/equipment.js';
-import { openOverlay } from './ui/components/overlay.js';
+import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
@@ -258,6 +258,11 @@ projectHudToken('portraitScale', 0.5, 1, '--hud-portrait-scale', '');
 projectHudToken('primaryRowGapPx', 0, 24, '--hud-primary-row-gap-px', 'px');
 projectHudToken('controlGapPx', 0, 12, '--hud-control-gap-px', 'px');
 projectHudToken('resourceRowGapPx', 0, 12, '--hud-resource-row-gap-px', 'px');
+projectHudToken('panelPadPx', 0, 12, '--hud-panel-pad-px', 'px');
+projectHudToken('mobilePanelPadPx', 0, 12, '--hud-mobile-panel-pad-px', 'px');
+projectHudToken('mobileControlGapPx', 0, 12, '--hud-mobile-control-gap-px', 'px');
+projectHudToken('mobileOuterPadPx', 0, 12, '--hud-mobile-outer-pad-px', 'px');
+projectHudToken('mobileRowGapPx', 0, 12, '--hud-mobile-row-gap-px', 'px');
 projectHudToken('cindersMaxWidthPct', 20, 40, '--hud-cinders-max-width', 'vw');
 projectHudToken('metadataMaxWidthPct', 20, 40, '--hud-metadata-max-width', 'vw');
 if (typeof HUD_PRESENTATION.metadataShowTotals !== 'boolean') {
@@ -268,10 +273,10 @@ const HUD_QUICK_SETTINGS = UI.hudQuickSettings || {};
 for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
-  ['wideControlHeightPx', '--hud-quick-wide-control-height'],
-  ['labelFontPx', '--hud-quick-label-font'],
+  ['cardSizePx', '--hud-quick-card-size'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],
+  ['activeTintPct', '--hud-quick-active-tint'],
 ]) {
   document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
 }
@@ -900,6 +905,20 @@ function resumeRun(slot = 1) {
   }
 }
 
+function loadActiveSlot() {
+  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
+  resumeRun(activeSlot);
+  return true;
+}
+
+function quitWithoutSaving() {
+  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
+  audio.stopMusic();
+  run = null;
+  showTitle();
+  return true;
+}
+
 // ---- screens --------------------------------------------------------------------
 // #67 property 3/5: a profile that could not be read is a NAMED, VISIBLE state
 // with a reachable handle — never a fresh profile wearing the same filename.
@@ -1062,11 +1081,13 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = '') {
+  const armouryMeta = saves.loadMeta();
+  if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
-    meta: saves.loadMeta(),
+    meta: armouryMeta,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -1142,6 +1163,16 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    onArmoury: (view) => {
+      const combatArmoury = app.querySelector('#combat-armoury');
+      closeOverlay();
+      if (!combatArmoury) return showArmoury(view);
+      combatArmoury.dataset.equipView = view;
+      combatArmoury.click();
+      delete combatArmoury.dataset.equipView;
+    },
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     onSave: () => {
       persist();
       return activeSlot;
@@ -1324,6 +1355,8 @@ function showMap() {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
       persist();
@@ -1538,6 +1571,8 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
+    onLoad: loadActiveSlot,
+    onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
       persist();

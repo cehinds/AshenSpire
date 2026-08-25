@@ -38,8 +38,10 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
+import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
+import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -64,8 +66,9 @@ let liveMapKeys = null;
 // re-centre a scrollport this mount is about to replace; leaving them running is
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
+let liveMapViewportRelease = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -76,6 +79,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     liveMapBoard.teardown();
     liveMapBoard = null;
   }
+  liveMapViewportRelease?.();
+  liveMapViewportRelease = null;
   const map = run.mapGraph;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
@@ -89,16 +94,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
-  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
-  const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
-  const entranceOrientation = entranceStart && entranceBoss
-    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
-        <strong>${esc(actTitle(run.actNumber))}</strong>
-        <span class="map-orientation-progress" aria-hidden="true">
-          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
-        </span>
-      </div>`
-    : '';
   const legendHtml = `<div class="map-legend-pop" hidden>
     ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
   </div>`;
@@ -131,13 +126,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
-        overlayHtml: `${legendHtml}${entranceOrientation}`,
+        overlayHtml: legendHtml,
       }))}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
 
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
   //
@@ -266,11 +260,13 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           const at = run.flasks.indexOf(f);
           if (at >= 0) run.flasks.splice(at, 1);
           el.remove();
+          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
         },
       });
     });
     flaskWrap.appendChild(el);
   }
+  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
 
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
@@ -314,10 +310,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
         },
       });
     });
@@ -372,6 +369,27 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // cursor lands once it has (only when the player is using keyboard/gamepad, so
   // mouse players get no stray ring).
   board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
+  let frameA = 0;
+  let frameB = 0;
+  const recenterAfterSettle = () => {
+    cancelAnimationFrame(frameA);
+    cancelAnimationFrame(frameB);
+    frameA = requestAnimationFrame(() => {
+      frameB = requestAnimationFrame(() => {
+        if (app.querySelector('.mapscreen')) board.recenter();
+      });
+    });
+  };
+  const viewport = window.visualViewport;
+  for (const type of ['resize', 'ashenspire:hud-mode-change']) window.addEventListener(type, recenterAfterSettle);
+  for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(type, recenterAfterSettle);
+  viewport?.addEventListener('resize', recenterAfterSettle);
+  liveMapViewportRelease = () => {
+    cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
+    for (const type of ['resize', 'ashenspire:hud-mode-change']) window.removeEventListener(type, recenterAfterSettle);
+    for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
+    viewport?.removeEventListener('resize', recenterAfterSettle);
+  };
   liveMapBoard = board;
 }
 

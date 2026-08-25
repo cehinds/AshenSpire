@@ -108,7 +108,7 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings' }) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
@@ -149,7 +149,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit,
+    onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
   };
 
   const saveButton = veil.querySelector('#ov-save');
@@ -224,10 +224,12 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         } : {}),
       },
       actions: {
-        close: () => closeOverlay(),
         tab: (id) => selectTab(id),
+        ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
+        ...(onLoad ? { load: () => { const loaded = onLoad(); if (loaded) closeOverlay(); return loaded; } } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave(); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');
