@@ -17,6 +17,12 @@ would be reconstruction from memory, not receipts. The history before this
 point lives in `git log` and is not restated. The in-game changelog is #189's
 projection of this file, which remains the one authoritative structured owner.)*
 
+## 2026-08-25
+
+- **The title now unfolds from the Ashen Spire threshold into one centered menu** ([#347](https://github.com/cehinds/AshenSpire/pull/347), `0.4.0.1352`). The folded startup mark keeps its logo, subtitle, divider, and input-family invitation centered while its phone background is fully transparent. The revealed title presents Continue, Load, New, Collection, Settings, and Quit as one vertical list; Fullscreen and Music stay anchored at the top right. Load and New share one responsive save-slot dialog with selected, empty, focused, disabled, and occupied states plus Back and Continue controls.
+
+- **Combatants now stay centered inside a safe battlefield corridor** ([#348](https://github.com/cehinds/AshenSpire/pull/348), `0.4.0.1354`). Intent remains full size while the combatant card alone scales between the shared HUD and action hand, preserving explicit breathing room above and below on desktop and phone.
+
 ## 2026-08-24
 
 - **Cold boot now opens on the Ashen Spire threshold** ([#346](https://github.com/cehinds/AshenSpire/pull/346), `dev artifact; exact BUILD in PR evidence`). The title menu now waits behind a sparse Ashen Spire wordmark, ash, and exact BUILD/source receipt until the first click, tap, Enter, Space, A/Cross, or Start/Menu press is completed. That first press is consumed instead of falling through into a save slot; interrupted presses are cancelled on blur or controller disconnect, and controller buttons already held when polling begins are seeded rather than invented as fresh presses. The title then gives focus to its first available slot. The invitation follows the last active input family, including analog-stick activity, exposes one named startup action without exposing title controls, and keeps pointer/touch focus free of the persistent gamepad cursor. Profile recovery still takes priority, reduced motion keeps a short deterministic exit, and returning to the title during the same boot does not show the threshold again.

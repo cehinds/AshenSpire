@@ -872,6 +872,19 @@ keeps the same state and focus contract without meaningful animation.
   behavior. Its renderer owns layout and temporary event binding, consumes the one first-input
   owner supplied by the composition root, and uses the shared build-stamp renderer. It never
   imports simulation state, persists dismissal, or mounts Title controls behind itself.
+  The gate composes `startup-ash-field` → `startup-ash-particle` and `startup-mark` →
+  `startup-wordmark`, `startup-subtitle`, `startup-divider`, and `startup-prompt`. The mark's
+  phone backing is transparent; the content remains centered and opaque.
+- **Title Menu components.** The revealed Title composes `title-brand-lockup` from
+  `title-wordmark`, `title-subtitle`, and `title-divider`; `title-menu` from six
+  `title-menu-item` controls, each with a `title-menu-gem`; and the independent
+  `title-tagline`. Load and New reuse one `title-menu-modal`, composed from
+  `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`,
+  `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
+  `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
+  occupied; the action group supplies `title-modal-back-control` and
+  `title-modal-continue-control`. Save data and callbacks remain screen inputs rather than being
+  owned by these presentation components.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,
