@@ -327,6 +327,31 @@ jobs:
   # as a pass. It exits 1 only when a check actually RAN and failed. Those two were
   # the same exit code until run 1 of this workflow taught me otherwise.
   # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # #319 / #248 owns a separate job so an unrelated browser probe cannot fail
+  # first and silently skip this exact-head verdict. CI remains manual at the
+  # workflow boundary above. The clean edge measures eight cells (two doors,
+  # two shapes, two text sizes). The two focused corpora add twenty-four
+  # copied-tree browser plants plus two clean baselines, including deliberate 25-second and
+  # 30-second timeout defects. That cost is stated because this workflow bills
+  # by the minute and silence between dispatches remains UNKNOWN.
+  # ---------------------------------------------------------------------------
+  display-first:
+    name: Fullscreen first through both Settings doors
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fullscreen is first and visible through both Settings doors
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs
+
+      - name: …and that gate can fail — twenty-six same-door browser boots
+        run: node tools/verdict.mjs -- node tools/displayfirst.mjs --selftest
+
   browser-guard:
     # RENAMED 2026-08-21 (#295). It read "?shot= cannot touch a player's save",
     # which was the whole job when it was written and became one of four claims
@@ -553,12 +578,12 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, reproducible, browser-guard]
+    needs: [test, reproducible, browser-guard, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }}"
+          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
@@ -640,13 +665,13 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. One job opens a browser"
-          echo "    on the game — TWO gates inside it: the hint-strip gate at ?shot=combat and"
-          echo "    the Armoury gate at ?shot=combat -> the Armoury overlay. They measure"
-          echo "    BOXES, and the Armoury gate DISPATCHES A DOM CLICK at exactly ONE control"
-          echo "    (CARDS) and checks that a pane opened — it does NOT press it, and cannot"
-          echo "    tell whether a player could. Its own output says so on every run. NOTHING"
-          echo "    HERE IS PRESSED. No job here fights, wins, loses, or finishes a run."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Two jobs open a browser."
+          echo "    browser-guard owns TWO gates: the hint strip at ?shot=combat and Armoury"
+          echo "    at ?shot=combat -> overlay. display-first owns Settings through BOTH the"
+          echo "    cold Startup -> Title door and the in-run door. It sends a complete CDP"
+          echo "    Enter down/up through Startup, then the Settings controls are DOM clicks."
+          echo "    These gates measure BOXES; Armoury also checks that its pane opened. None"
+          echo "    fights, wins, loses, or finishes a run, and none proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
@@ -678,9 +703,10 @@ jobs:
           echo "  · that the ART rendered. Art present in the file is not art on screen;"
           echo "    no screenshot is compared, and screenshot bytes are not even"
           echo "    deterministic on this app (two runs of identical code differ). The"
-          echo "    two browser gates read geometry off a live page — rects, never pixels —"
+          echo "    three browser gates read geometry off a live page — rects, never pixels —"
           echo "    and between them they are silent about every surface but combat's control"
-          echo "    strip and the Armoury's figure-and-cards pane. NEITHER compares an image:"
+          echo "    strip, the Armoury's figure-and-cards pane, and Title/in-run Settings."
+          echo "    NONE compares an image:"
           echo "    the pixel diffs in #316 were run by hand and are not repeated here."
           echo "  · that content is correct or balanced. README.md:55's counts disagree"
           echo "    with the loader (54 relics / 20 events / 39 cards vs 40 / 10 / ~30);"
@@ -688,8 +714,9 @@ jobs:
           echo "  · that the co-op/LAN code works. SPEC.md:643 lists it as a non-goal and"
           echo "    it shipped anyway; no test here touches tools/lan.mjs or serve.mjs."
           echo "  · anything about TIMING on a machine other than this one. Acquiring CDP"
-          echo "    takes ~272ms on a warm local browser and timed out at 15060ms on a"
-          echo "    cold runner during run 1 of this workflow. A green here is not a"
+          echo "    takes ~272ms on a warm local browser and display-first twice timed out at"
+          echo "    its old 15-second cold-runner bound before moving to 20 seconds and new"
+          echo "    headless mode. A green here is not a"
           echo "    statement about how slow some other runner's cold start can be."
           echo ""
           echo "RULES THIS REPO STILL ENFORCES BY HAND (SOP 3 requirement 3, not met):"

@@ -5176,6 +5176,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
     const display = categoryHandler('Display').rows;
     const audio = categoryHandler('Audio').rows;
+    eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
+    eq(display.filter((r) => r.key === 'fullscreen').length, 1,
+      'Fullscreen moved to the first seat without being duplicated');
+    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
+      'Combat pacing remains available behind Fullscreen');
     eq(display.some((r) => r.key === 'fullscreen'), true,
       'Settings exposes the browser-owned Fullscreen state');
     eq(audio.some((r) => r.key === 'musicEnabled'), true,
