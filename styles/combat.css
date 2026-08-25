@@ -231,9 +231,9 @@
   right: calc(8px / var(--ui-zoom, 1));
   z-index: 80;
   margin: 0;
-  flex-direction: row;
+  flex-direction: column;
   gap: var(--compact-gap);
-  width: calc((var(--compact-control-cell) * 2) + var(--compact-gap));
+  width: var(--compact-control-cell);
   max-width: none;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
@@ -245,38 +245,11 @@
 }
 /* End Variant D */
 
-/* Shared Act Route Strip — part of the Map/Combat HUD component. It is a
-   compact-phone orientation cue, not a map-screen overlay. */
-.act-route-strip { display: none; }
-@media (max-width: 700px) {
-  .act-route-strip {
-    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
-    border-bottom: 1px solid var(--line); background: var(--bg-raise);
-    pointer-events: none; user-select: none; cursor: default;
-  }
-  .shared-hud[data-hud-mode='expanded'] .act-route-strip {
-    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
-  }
-  .act-route-strip strong {
-    text-align: center; color: var(--gold); font-family: Georgia, serif;
-    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
-  }
-  .map-orientation-progress {
-    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-    align-items: center; gap: 8px;
-  }
-  .map-orientation-progress small {
-    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
-  }
-  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
-  .map-orientation-rail {
-    height: 1px; position: relative; background: var(--map-structure);
-  }
-  .map-orientation-rail::after {
-    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
-    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
-    transform: translateY(-50%) rotate(45deg);
-  }
+.topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(8px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(9px / var(--ui-zoom, 1));
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
@@ -1520,10 +1493,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .field {
     padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
   }
-  /* The compact utility pair is horizontal below the HUD. Reserve its full
-     right-edge footprint so enemy art and intent never sit beneath a control. */
+  /* The compact utility pair is vertical below the HUD. Reserve its right-edge
+     column so enemy art and intent never sit beneath a control. */
   :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
-    padding-inline-end: calc(1.2rem + (var(--hud-compact-control-cell) * 2) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+    padding-inline-end: calc(1.2rem + var(--hud-compact-control-cell) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,

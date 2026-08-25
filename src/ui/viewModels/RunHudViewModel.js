@@ -21,13 +21,12 @@ export function runHudViewModel({
   identity,
   controls,
   quickSettings,
-  routeTitle = '',
   overlayHtml = '',
 } = {}) {
   const hudMode = normalizeHudMode(quickSettings?.settings?.runHudMode);
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml, routeTitle, hudMode },
+    properties: { place, headerClass, overlayHtml, hudMode },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {

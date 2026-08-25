@@ -11,7 +11,7 @@ const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const REQUIRED_IDS = Object.freeze([
   'startup-gate',
-  'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
+  'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
   'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
@@ -197,8 +197,8 @@ export function findings(r) {
       || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
       || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
       || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
-      || !/routeTitle:\s*actTitle\(run\.actNumber\)/.test(r.map)
-      || !/routeTitle:\s*actTitle\(run\.actNumber\)/.test(r.combat)) {
+      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
+      || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)

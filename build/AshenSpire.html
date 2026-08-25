@@ -5195,9 +5195,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   right: calc(8px / var(--ui-zoom, 1));
   z-index: 80;
   margin: 0;
-  flex-direction: row;
+  flex-direction: column;
   gap: var(--compact-gap);
-  width: calc((var(--compact-control-cell) * 2) + var(--compact-gap));
+  width: var(--compact-control-cell);
   max-width: none;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
@@ -5209,38 +5209,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 /* End Variant D */
 
-/* Shared Act Route Strip — part of the Map/Combat HUD component. It is a
-   compact-phone orientation cue, not a map-screen overlay. */
-.act-route-strip { display: none; }
-@media (max-width: 700px) {
-  .act-route-strip {
-    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
-    border-bottom: 1px solid var(--line); background: var(--bg-raise);
-    pointer-events: none; user-select: none; cursor: default;
-  }
-  .shared-hud[data-hud-mode='expanded'] .act-route-strip {
-    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
-  }
-  .act-route-strip strong {
-    text-align: center; color: var(--gold); font-family: Georgia, serif;
-    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
-  }
-  .map-orientation-progress {
-    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-    align-items: center; gap: 8px;
-  }
-  .map-orientation-progress small {
-    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
-  }
-  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
-  .map-orientation-rail {
-    height: 1px; position: relative; background: var(--map-structure);
-  }
-  .map-orientation-rail::after {
-    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
-    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
-    transform: translateY(-50%) rotate(45deg);
-  }
+.topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(8px / var(--ui-zoom, 1));
+}
+:root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-quick-settings {
+  right: calc(9px / var(--ui-zoom, 1));
 }
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
@@ -6484,10 +6457,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .field {
     padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
   }
-  /* The compact utility pair is horizontal below the HUD. Reserve its full
-     right-edge footprint so enemy art and intent never sit beneath a control. */
+  /* The compact utility pair is vertical below the HUD. Reserve its right-edge
+     column so enemy art and intent never sit beneath a control. */
   :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
-    padding-inline-end: calc(1.2rem + (var(--hud-compact-control-cell) * 2) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+    padding-inline-end: calc(1.2rem + var(--hud-compact-control-cell) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,
@@ -6617,6 +6590,52 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
+
+/* Map-only Act orientation. It is a sibling after the shared HUD, never part
+   of that component, and leaves a protected right gutter for HUD utilities. */
+.mapscreen > .act-route-strip {
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  display: grid;
+  width: 80%;
+  margin-inline: auto;
+  gap: 3px;
+  padding: 5px 12px 6px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-raise);
+  pointer-events: none;
+  user-select: none;
+  cursor: default;
+}
+.mapscreen > .act-route-strip strong {
+  text-align: center; color: var(--gold); font-family: Georgia, serif;
+  font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress {
+  display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+  align-items: center; gap: 8px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress small {
+  color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+}
+.mapscreen > .act-route-strip .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+.mapscreen > .act-route-strip .map-orientation-rail {
+  height: 1px; position: relative; background: var(--map-structure);
+}
+.mapscreen > .act-route-strip .map-orientation-rail::after {
+  content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+  border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+  transform: translateY(-50%) rotate(45deg);
+}
+@media (max-width: 700px) {
+  .mapscreen > .act-route-strip {
+    /* Percentage is intentional: body is zoomed, so viewport units render at
+       80% × UI zoom. 80% of the Map surface stays 80% on glass. */
+    width: min(80%, calc(100% - var(--tap-floor) - calc(1.75rem / var(--ui-zoom, 1))));
+    margin-left: auto;
+    margin-right: calc(var(--tap-floor) + calc(14px / var(--ui-zoom, 1)));
+  }
+}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   /* The browser owns a finger or pen on the one axis the map can scroll.
@@ -36668,6 +36687,7 @@ Object.assign(module.exports, { UI_COMPONENTS, uiComponentAttrs, markUiComponent
 const UI_COMPONENTS = Object.freeze({
   startupGate: 'startup-gate',
   sharedRunHud: 'shared-run-hud',
+  actRouteStrip: 'act-route-strip',
   runHeaderStrip: 'run-header-strip',
   identityCluster: 'identity-cluster',
   portraitBadge: 'portrait-badge',
@@ -39813,7 +39833,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'ba6d428901';
+const SOURCE = 'b116bba38d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39847,7 +39867,7 @@ const SOURCE = 'ba6d428901';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1324';
+const ORDINAL = '1327';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -50649,6 +50669,7 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
 const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { actRouteStripHtml } = require("src/ui/components/actRouteStrip.js");
 const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
@@ -50736,9 +50757,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        routeTitle: actTitle(run.actNumber),
         overlayHtml: legendHtml,
       }))}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
@@ -53024,19 +53045,6 @@ function runHeaderStripHtml(model) {
   </div>`;
 }
 
-// One orientation strip belongs to the shared run HUD, never to the Map
-// screen. Both Map and Combat therefore reserve the same compact-header height
-// and present the same run context while only the playfield below changes.
-function actRouteStripHtml(routeTitle) {
-  if (!routeTitle) return '';
-  return `<div class="act-route-strip map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(routeTitle)} orientation: entrance to boss">
-    <strong>${esc(routeTitle)}</strong>
-    <span class="map-orientation-progress" aria-hidden="true">
-      <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
-    </span>
-  </div>`;
-}
-
 function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
   return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
@@ -53085,7 +53093,6 @@ function sharedRunHudHtml(model) {
     </div>
     <button type="button" class="hud-mode-grip" data-next-mode="${esc(grip.properties.next)}" ${uiComponentAttrs(grip.component, grip.variant)} aria-label="${esc(grip.accessibility.label)}" title="${esc(grip.accessibility.hint)}"><span aria-hidden="true"></span></button>
     ${overlayHtml}
-    ${actRouteStripHtml(model.properties.routeTitle)}
   </header>`;
 }
 
@@ -53094,7 +53101,27 @@ function sharedRunHudHtml(model) {
 const hudShellHtml = sharedRunHudHtml;
 
 
-Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, actRouteStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+
+},
+"src/ui/components/actRouteStrip.js": function (module, exports, require) {
+// Map-only orientation component. It sits between the shared run HUD and the
+// map board; Combat never mounts it and the shared HUD does not know it exists.
+const { esc } = require("src/ui/components/tooltip.js");
+const { UI_COMPONENTS: UI, uiComponentAttrs } = require("src/ui/components/uiComponents.js");
+
+function actRouteStripHtml({ title } = {}) {
+  if (!title) return '';
+  return `<div class="act-route-strip map-entrance-orientation" ${uiComponentAttrs(UI.actRouteStrip)} data-composition="orientation-strip" role="note" aria-label="${esc(title)} orientation: entrance to boss">
+    <strong>${esc(title)}</strong>
+    <span class="map-orientation-progress" aria-hidden="true">
+      <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+    </span>
+  </div>`;
+}
+
+
+Object.assign(module.exports, { actRouteStripHtml });
 
 },
 "src/ui/viewModels/RunHudViewModel.js": function (module, exports, require) {
@@ -53121,13 +53148,12 @@ function runHudViewModel({
   identity,
   controls,
   quickSettings,
-  routeTitle = '',
   overlayHtml = '',
 } = {}) {
   const hudMode = normalizeHudMode(quickSettings?.settings?.runHudMode);
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml, routeTitle, hudMode },
+    properties: { place, headerClass, overlayHtml, hudMode },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -53620,7 +53646,7 @@ const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.j
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { actTitle, intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -53686,7 +53712,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        routeTitle: actTitle(run.actNumber),
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>

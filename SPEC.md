@@ -857,6 +857,9 @@ keeps the same state and focus contract without meaningful animation.
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
+  `act-route-strip` is a Map-only sibling below `shared-run-hud`, never one of its children and
+  never mounted by Combat. On narrow Map layouts it occupies about 80% of the viewport while
+  reserving the HUD utility-control gutter on the right.
   `hud-quick-settings` is shared by Title, Map, and Combat. It anchors beneath the top-right
   HUD edge as a vertical pair, exposes live positive-state Fullscreen and Music controls,
   persists Music through the profile settings service, and reads Fullscreen from the browser

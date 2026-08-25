@@ -6,6 +6,7 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8');
 const files = {
   css: read('styles/combat.css'),
   hud: read('src/ui/components/hudmeta.js'),
+  route: (() => { try { return read('src/ui/components/actRouteStrip.js'); } catch { return ''; } })(),
   map: read('src/ui/screens/map.js'),
   combat: read('src/ui/screens/combat.js'),
 };
@@ -23,8 +24,8 @@ check(/grid-template-areas:\s*["']vitals center right["'][\s\S]*["']relics cente
 check(/data-has-utility-potions='false'[\s\S]*\.hud-potions\s*\{\s*display:\s*none/.test(compact),
   'D3 an empty utility-potion row does not collapse');
 check(/\.hud-potions\s*\{[\s\S]*justify-self:\s*end[\s\S]*max-width:\s*calc\(\(var\(--compact-control-cell\) \* 4\)/.test(compact)
-    && /\.hud-quick-settings\s*\{[\s\S]*position:\s*absolute[\s\S]*top:\s*calc\(100%[\s\S]*right:[\s\S]*flex-direction:\s*row/.test(compact),
-  'D4 other potions do not retain the full second row or Fullscreen/Music are not below the HUD');
+    && /\.hud-quick-settings\s*\{[\s\S]*position:\s*absolute[\s\S]*top:\s*calc\(100%[\s\S]*right:[\s\S]*flex-direction:\s*column/.test(compact),
+  'D4 other potions do not retain the full second row or Fullscreen/Music are not vertically stacked below the HUD');
 check(/\.build-stamp\[data-seed\]\s*\{\s*display:\s*none\s*!important/.test(compact),
   'D5 Build/Seed/Source can leak into compact mode');
 check(/\.hud-mode-grip\s*>\s*span[\s\S]*width:\s*calc\(18px[\s\S]*height:\s*calc\(2px/.test(files.css),
@@ -43,13 +44,14 @@ check(/data-has-utility-potions="false"/.test(files.hud),
 for (const [surface, source] of [['map', files.map], ['combat', files.combat]]) {
   check(/dataset\.hasUtilityPotions\s*=\s*[^;]*children\.length\s*\?\s*'true'\s*:\s*'false'/.test(source),
     `D10 ${surface} does not publish whether its utility-potion row has content`);
-  check(/routeTitle:\s*actTitle\(run\.actNumber\)/.test(source),
-    `D11 ${surface} does not feed the shared Act route strip`);
 }
 
-check(/function actRouteStripHtml[\s\S]*class="act-route-strip map-entrance-orientation"/.test(files.hud)
-    && /\$\{actRouteStripHtml\(model\.properties\.routeTitle\)\}/.test(files.hud),
-  'D12 the Act route strip is not rendered by the shared Map/Combat HUD component');
+check(/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(files.map)
+    && !/routeTitle|actRouteStripHtml|act-route-strip/.test(files.combat),
+  'D11 the Act route strip is not Map-only');
+check(/function actRouteStripHtml[\s\S]*class="act-route-strip map-entrance-orientation"/.test(files.route)
+    && !/actRouteStripHtml|act-route-strip|routeTitle/.test(files.hud),
+  'D12 the Act route strip remains owned by the shared HUD instead of a Map component');
 
 if (failures.length) {
   console.error(`compact-hud-layout: ${failures.length} failure(s)`);

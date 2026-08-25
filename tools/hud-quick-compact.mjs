@@ -35,7 +35,7 @@ function findings(r) {
   const expectedOuter = r.phone && r.compact ? 36 : 44;
   const expectedFace = r.phone ? 32 : 40;
   const expectedGlyph = r.phone ? 22 : 28;
-  const expectedButtonGap = r.horizontal ? 2 : 0;
+  const expectedButtonGap = r.compact ? 2 : 0;
   const expectedFaceGap = expectedOuter - expectedFace + expectedButtonGap;
   if (r.stack.right > r.viewport.width + 0.5 || r.stack.left < -0.5) bad.push('rail leaves the viewport');
   if (r.rightGap < -0.5 || r.rightGap > 9) bad.push(`right gap is ${r.rightGap.toFixed(2)}px`);
@@ -49,7 +49,7 @@ function findings(r) {
     }
   }
   if (Math.abs(r.buttonGap - expectedButtonGap) > 0.5) bad.push(`control gap is ${r.buttonGap.toFixed(2)}px, expected ${expectedButtonGap}px`);
-  const expectedStackHeight = r.horizontal ? expectedOuter : (expectedOuter * 2);
+  const expectedStackHeight = r.horizontal ? expectedOuter : ((expectedOuter * 2) + expectedButtonGap);
   if (Math.abs(r.stack.height - expectedStackHeight) > 0.5) bad.push(`shared rail is ${r.stack.height.toFixed(2)}px tall, expected ${expectedStackHeight}px`);
   for (const [index, face] of r.faces.entries()) {
     if (Math.abs(face.width - expectedFace) > 0.5 || Math.abs(face.height - expectedFace) > 0.5) {
@@ -77,13 +77,19 @@ function parityFindings(map, combat) {
   for (const [name, left, right] of [
     ['header height', map.header.height, combat.header.height],
     ['HUD content height', map.hudTop.height, combat.hudTop.height],
-    ['route-strip top', map.route.top, combat.route.top],
-    ['route-strip height', map.route.height, combat.route.height],
     ['Quick Access top', map.quickPanel.top, combat.quickPanel.top],
     ['Fullscreen/Music top', map.stack.top, combat.stack.top],
+    ['Fullscreen/Music right edge', map.stack.right, combat.stack.right],
   ]) {
     if (!near(left, right)) bad.push(`${name} differs: Map ${left.toFixed(2)}px, Combat ${right.toFixed(2)}px`);
   }
+  if (!map.route || map.route.height < 0.5) bad.push('Map route strip is not visibly rendered');
+  else if (Math.abs(map.route.width - (map.viewport.width * 0.8)) > 1.5) {
+    bad.push(`Map route strip is ${map.route.width.toFixed(2)}px, expected about 80vw`);
+  }
+  if (combat.route && (combat.route.width > 0.5 || combat.route.height > 0.5)) bad.push('Combat still renders the Map-only route strip');
+  if (Math.abs(map.stack.right - map.quickPanel.right) > 0.75) bad.push('Map Fullscreen/Music stack is not flush with Quick Access');
+  if (Math.abs(combat.stack.right - combat.quickPanel.right) > 0.75) bad.push('Combat Fullscreen/Music stack is not flush with Quick Access');
   return bad;
 }
 

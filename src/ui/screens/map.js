@@ -38,6 +38,7 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
+import { actRouteStripHtml } from '../components/actRouteStrip.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
@@ -125,9 +126,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        routeTitle: actTitle(run.actNumber),
         overlayHtml: legendHtml,
       }))}
+      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
