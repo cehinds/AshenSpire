@@ -295,6 +295,15 @@ export const balance = {
       showCardBackground: true,
       showLabels: false,
     },
+    // BattlefieldStageModel owns the protected vertical corridor between the
+    // shared run HUD and the hand. Percentages are viewport-height shares on
+    // the glass; intentGapPx is the visible device-pixel attachment distance.
+    combatantStage: {
+      hudClearanceViewportPct: 3,
+      actionClearanceViewportPct: 3,
+      intentGapPx: 6,
+      centerPct: 50,
+    },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow
     // screens still collapse it to a list for touch and readable labels.

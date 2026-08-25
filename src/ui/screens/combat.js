@@ -38,6 +38,8 @@ import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
+import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
+import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -136,6 +138,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
+  const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -416,10 +419,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   // ---------- rendering ----------
-  function render() {
-    renderTopbar();
+  function renderCombatantStage() {
     renderPlayer();
     renderEnemies();
+    battlefieldStage.refresh();
+  }
+
+  function render() {
+    renderTopbar();
+    renderCombatantStage();
     renderHand();
     renderControls();
     refreshAim(); // re-apply the target glow after the board rebuilds
@@ -1235,8 +1243,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         onBeatApplied: (beat) => {
           applyBeatToDisp(beat);
           renderTopbar();
-          renderPlayer();
-          renderEnemies();
+          renderCombatantStage();
           renderHand();
           renderControls();
         },

@@ -62,6 +62,8 @@ export function receipt() {
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
+    battlefieldStage: read('src/ui/components/battlefieldStage.js'),
+    battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
@@ -126,6 +128,11 @@ export function findings(r) {
     bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
+      || !/centerHeightRatio/.test(r.battlefieldStageModel)
+      || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
+      || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
+      || !/function renderCombatantStage\(\)\s*\{\s*renderPlayer\(\);\s*renderEnemies\(\);\s*battlefieldStage\.refresh\(\);\s*\}/.test(r.combat)
+      || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.combat)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
