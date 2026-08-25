@@ -1,5 +1,5 @@
-// tools/zoomplace.mjs — do the cursor-anchored overlays land ON the cursor, at
-// every --ui-zoom we ship, and can any of them leave the screen?
+// tools/zoomplace.mjs — do pointer-driven overlays land on their declared
+// anchors at every --ui-zoom we ship, and can any of them leave the screen?
 //
 // zoomunits.mjs is a text detector: it proves a second copy of the conversion
 // exists and differs, and says on every run that it can never tell you whether a
@@ -40,9 +40,16 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
+import { balance } from '../src/content/balance.js';
+
+const GATE_BELOW_H = balance?.ui?.uiScale?.gateBelowH;
+if (typeof GATE_BELOW_H !== 'number' || !Number.isFinite(GATE_BELOW_H)) {
+  console.error('zoomplace: balance.ui.uiScale.gateBelowH is absent or not finite');
+  process.exit(2);
+}
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
-// rendered overlay against the real cursor: this tool drives real Chrome at
+// rendered overlay against its real element/pointer anchor: this tool drives real Chrome at
 // real viewports, makes the real gestures, and measures where the overlay
 // actually landed. What it had no re-runnable known-bad for was the very
 // defect it was built after — the conversion that forgot --ui-zoom. Vira's
@@ -50,17 +57,11 @@ import { serve } from './serve.mjs';
 // error back at its one home in src/ui/fx.js and re-runs this whole tool
 // against a copy of the tree.
 //
-// AND `--selftest` REPORTS RED TODAY, CORRECTLY, BECAUSE THIS TOOL HAS A
-// STANDING RED AT dev = 5244543 (Rune, 2026-08-15). Building the corpus is
-// what made me run every viewport: the tooltip case fails at ALL SEVEN —
-// 167.06 local px away at 800x450 through 169.47 at 2560x1440, against a
-// tolerance of 22, INCLUDING 1200x730, this file's own declared
-// non-regression edge at --ui-zoom 1.00. The near-constant miss across a
-// dial that runs 0.62..1.70 says it is NOT a zoom-conversion error — it is a
-// fixed offset, so the fix is not this file's own history repeating. That is
-// a shipped defect for the owner, not a tooling one, and it is why the
-// harness's clean edge goes red: a baseline that is not green means no plant
-// above proves anything, and saying so is the point of checking both edges.
+// Hover placement deliberately stopped following the pointer: the tooltip now
+// sits beside the element it explains and clears its sibling group. The old
+// assertion still measured the distance to the cursor inside that element, so
+// it called the intentional element-to-panel separation a regression. The
+// browser door stays the same; the asserted contract follows the accepted UI.
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
@@ -82,7 +83,7 @@ if (process.argv.includes('--selftest')) {
         // defect is proportional to the distance from 1.00 — which is fx.js's
         // own sentence — so the plant has to be measured where the dial is,
         // and the tool's own viewport list already names that edge.
-        expectRed: /(FAIL|out of tolerance|RESULT: .*(miss|out))/i,
+        expectRed: /✗ 2560x1440: (tooltip separation equals declared --place-gap|drag ghost hangs off the pointer|card-fly ghost's translate)/i,
       },
     ],
   }));
@@ -111,7 +112,7 @@ const BROWSERS = [
 // between them, because "wrong in BOTH directions away from 1.00" is a claim
 // about the whole dial, not about its two ends.
 const VIEWPORTS = [
-  { w: 800, h: 450 },   // 0.62 — the MIN clamp            (Sunna)
+  { w: 800, h: GATE_BELOW_H }, // smallest admitted landscape viewport
   { w: 1024, h: 640 },  // 0.85
   { w: 1200, h: 730 },  // 1.00 — the design baseline      (Sunna) — NON-REGRESSION EDGE
   { w: 1280, h: 800 },  // 1.07
@@ -124,13 +125,6 @@ const VIEWPORTS = [
 // that is exact by construction, not a guess at "close enough to play".
 const TOL = {
   anchor: 3, // a placement that names an exact offset must hit it
-  // tooltip: a pad of 14 local px on BOTH axes puts the nearest corner of the box
-  // 14·√2 = 19.80 local from the pointer, at every zoom. 22 leaves ~2.2 px for
-  // clientX/Y rounding and sub-pixel layout and nothing else. Chosen from that
-  // geometry BEFORE the fix was written, so it is a bound and not a fit: at 22 the
-  // pre-fix tree is red at six of seven viewports including 0.85, where the miss
-  // is only 22.74 and a lazier tolerance would have called it correct in play.
-  gap: 22,
   fx: 4, // an fx element centred on its anchor
 };
 
@@ -224,20 +218,23 @@ const FIXED_SPACE = `(() => {
 
 const box = (r) => ({ left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom });
 
-// Tooltip: where is it, relative to the pointer that summoned it?
-const TIP = (x, y) => `(() => {
+// Tooltip: where is it, relative to the element that summoned it?
+const TIP = (anchor, siblings) => `(() => {
   const el = document.getElementById('tooltip');
   if (!el || el.style.display !== 'block') return null;
   const r = el.getBoundingClientRect();
-  const cx = ${x}, cy = ${y};
-  // Distance from the cursor to the NEAREST point of the tooltip box. Correct
-  // placement is a pad of 14 LOCAL px on both axes, so this is 14·√2 local at
-  // every zoom — a constant, which is what makes a constant tolerance legal.
-  const dx = Math.max(r.left - cx, 0, cx - r.right);
-  const dy = Math.max(r.top - cy, 0, cy - r.bottom);
+  const a = ${JSON.stringify(anchor)};
+  const siblings = ${JSON.stringify(siblings)};
+  const dx = Math.max(r.left - a.right, a.left - r.right, 0);
+  const dy = Math.max(r.top - a.bottom, a.top - r.bottom, 0);
+  const overlap = (x, y) => Math.max(0, Math.min(x.right, y.right) - Math.max(x.left, y.left))
+    * Math.max(0, Math.min(x.bottom, y.bottom) - Math.max(x.top, y.top));
+  const declared = parseFloat(getComputedStyle(el).getPropertyValue('--place-gap'));
   return {
     r: { left: r.left, top: r.top, width: r.width, height: r.height, right: r.right, bottom: r.bottom },
-    gap: Math.hypot(dx, dy), cx, cy,
+    gap: Math.hypot(dx, dy), declared,
+    anchorOverlap: overlap(r, a),
+    siblingOverlaps: siblings.map((s) => overlap(r, s)).filter((n) => n > 0),
     inside: r.left >= -0.5 && r.top >= -0.5 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5,
     anyPixel: r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight,
   };
@@ -344,7 +341,7 @@ async function main() {
     // Hover a real hand card with real pointer events. The card nearest the
     // bottom-right of the hand is the interesting one: that is where the
     // scaling error is largest and where a player's cards actually are.
-    const cards = await evalIn(`[...document.querySelectorAll('.hand .card')].map((c) => { const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })`);
+    const cards = await evalIn(`[...document.querySelectorAll('.hand .card')].map((c) => { const r = c.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, left: r.left, top: r.top, right: r.right, bottom: r.bottom }; })`);
     if (!cards.length) {
       ok(false, `${name}: a hand card to hover`);
       continue;
@@ -352,22 +349,23 @@ async function main() {
     const hover = cards[cards.length - 1];
     await mouse('mouseMoved', hover.x - 3, hover.y - 3); // pointerenter: starts the 140 ms show timer
     await wait(400);
-    await mouse('mouseMoved', hover.x, hover.y); // pointermove: re-places it at THIS point
+    await mouse('mouseMoved', hover.x, hover.y);
     await wait(80);
-    // Measured against the LAST pointer position, which is why the move above is
-    // separate: the show timer places the tooltip at the pointerenter point, so
-    // measuring against a later cursor read a 2.8 local px offset that was the
-    // harness's, not the code's — visible as a gap of 16.96 where the geometry
-    // says 19.80 at z=1.00, the one viewport where the code is known-correct.
-    const tip = await evalIn(TIP(hover.x, hover.y));
+    // Hover lifts the card, so re-read the accepted anchor after the transition.
+    const settledCards = await evalIn(`[...document.querySelectorAll('.hand .card')].map((c) => { const r = c.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom }; })`);
+    const anchor = settledCards[settledCards.length - 1];
+    const siblings = settledCards.slice(0, -1);
+    const tip = await evalIn(TIP(anchor, siblings));
     if (!tip) {
       ok(false, `${name}: the tooltip appeared on hover (nothing to measure)`);
     } else {
       console.log(
-        `    tooltip  cursor(${n2(tip.cx)},${n2(tip.cy)}) box(${n2(tip.r.left)},${n2(tip.r.top)} ${n2(tip.r.width)}x${n2(tip.r.height)}) ` +
-          `gap ${n2(L(tip.gap))} local (${n2(tip.gap)} visual) · inside=${tip.inside} anyPixel=${tip.anyPixel}`
+        `    tooltip  anchor(${n2(anchor.left)},${n2(anchor.top)}..${n2(anchor.right)},${n2(anchor.bottom)}) box(${n2(tip.r.left)},${n2(tip.r.top)} ${n2(tip.r.width)}x${n2(tip.r.height)}) ` +
+          `gap ${n2(L(tip.gap))}/${n2(tip.declared)} local · anchorOverlap=${n2(tip.anchorOverlap)} siblingHits=${tip.siblingOverlaps.length} inside=${tip.inside}`
       );
-      ok(L(tip.gap) <= TOL.gap, `${name}: tooltip sits at the cursor — ${n2(L(tip.gap))} local px away, tolerance ${TOL.gap}`);
+      ok(tip.anchorOverlap === 0, `${name}: tooltip sits beside, never on, the element it explains`);
+      ok(Math.abs(L(tip.gap) - tip.declared) <= TOL.anchor, `${name}: tooltip separation equals declared --place-gap — ${n2(L(tip.gap))} vs ${n2(tip.declared)} local px`);
+      ok(tip.siblingOverlaps.length === 0, `${name}: tooltip clears the anchor's sibling cards (${tip.siblingOverlaps.length} touched)`);
       ok(tip.inside, `${name}: tooltip is entirely on screen (bounded — a player can read it)`);
     }
 
@@ -684,7 +682,7 @@ async function main() {
   }
   console.log(`\nRESULT: ${fails.length ? `${fails.length} FAILED` : `all cases within tolerance`} — over ${viewportsMeasured} of ${VIEWPORTS.length} viewport(s)`);
   for (const f of fails) console.log(`  ✗ ${f}`);
-  console.log('DOOR: the rendered overlay against a real cursor in a real browser; `--selftest`');
+  console.log('DOOR: the rendered overlay against its real element/pointer anchor in a real browser; `--selftest`');
   console.log('      plants the pre-fix conversion into src/ui/fx.js in a copy of the tree.');
 
   cdp.close();
