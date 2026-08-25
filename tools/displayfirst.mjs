@@ -874,7 +874,8 @@ async function main() {
   console.log(`      browser: ${browserPath}`);
 
   const { wsUrl, close: dropBrowser } = await launchBrowser({
-    prefix: 'displayfirst-', browser: browserPath, timeoutMs: 15000,
+    prefix: 'displayfirst-', browser: browserPath,
+    headless: '--headless=new', timeoutMs: 20000,
   });
   live.dropBrowser = dropBrowser;
   const cdp = connectCdp(wsUrl); live.cdp = cdp; await cdp.ready;
