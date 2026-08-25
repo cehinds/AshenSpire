@@ -334,7 +334,7 @@ async function startupFacts(p) {
     const stamp=document.querySelector('[data-role="build-version"]');
     const focusables=[...document.querySelectorAll('button,a[href],input,select,textarea,[tabindex]')]
       .filter(e => e.tabIndex >= 0 && !e.hidden && getComputedStyle(e).display !== 'none');
-    return { gate:!!gate, title:!!document.querySelector('.title-screen'), titleControls:document.querySelectorAll('.slot-new,.slot-continue,.title-menu button').length,
+    return { gate:!!gate, title:!!document.querySelector('.title-screen'), titleControls:document.querySelectorAll('.title-menu button').length,
        focusables:focusables.map(e=>e.outerHTML.slice(0,80)), active:document.activeElement?.className||document.activeElement?.tagName,
        role:gate?.getAttribute('role')||'', label:gate?.getAttribute('aria-label')||'',
       prompt:document.querySelector('.startup-prompt')?.textContent.trim()||'', family:gate?.dataset.inputFamily||'',
@@ -384,7 +384,7 @@ async function assertKeyboard(key, code) {
   await wait(180);
   const receipt = await p.ev(`({startup:!!document.querySelector('.startup-gate'), title:!!document.querySelector('.title-screen'), customize:!!document.querySelector('.customize'), active:document.activeElement?.className||''})`);
   verdict(!receipt.startup && receipt.title && !receipt.customize, `${code}.REVEAL-ONCE`, `${JSON.stringify(key)} release reveals title without activating it (${JSON.stringify(receipt)})`);
-  verdict(/slot-(new|continue)/.test(receipt.active), `${code}.TITLE-FOCUS`, `default title control owns DOM focus (${receipt.active || 'none'})`);
+  verdict(/title-menu-item/.test(receipt.active), `${code}.TITLE-FOCUS`, `default title control owns DOM focus (${receipt.active || 'none'})`);
   await p.close();
 }
 
@@ -393,8 +393,8 @@ async function assertPointerCursor() {
   await mouse.until(`!!document.querySelector('.startup-gate')`, 'pointer startup');
   await mouse.mouse();
   await mouse.until(`!!document.querySelector('.title-screen')`, 'pointer reveal');
-  verdict(await mouse.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen') && !!document.activeElement?.matches('.slot-new,.slot-continue')`), 'A6.POINTER', 'real mouse press reveals once and focuses the title default');
-  verdict(await mouse.ev(`!!document.activeElement?.matches('.slot-new,.slot-continue') && !document.activeElement.classList.contains('gp-focus')`), 'A6.POINTER-CURSOR', 'pointer reveal keeps DOM focus without publishing the persistent gamepad cursor');
+  verdict(await mouse.ev(`!document.querySelector('.startup-gate') && !!document.querySelector('.title-screen') && !!document.activeElement?.matches('.title-menu-item')`), 'A6.POINTER', 'real mouse press reveals once and focuses the title default');
+  verdict(await mouse.ev(`!!document.activeElement?.matches('.title-menu-item') && !document.activeElement.classList.contains('gp-focus')`), 'A6.POINTER-CURSOR', 'pointer reveal keeps DOM focus without publishing the persistent gamepad cursor');
   await mouse.close();
 }
 
@@ -407,8 +407,8 @@ async function assertTouch() {
   verdict(down.gate && down.family === 'touch' && down.prompt === 'TAP TO CONTINUE', 'A6.TOUCH-DOWN', `touch down updates prompt but leaves gate standing (${down.family}: ${down.prompt})`);
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, touch.sessionId);
   await touch.until(`!!document.querySelector('.title-screen')`, 'touch reveal');
-  verdict(await touch.ev(`!document.querySelector('.startup-gate') && !!document.activeElement?.matches('.slot-new,.slot-continue')`), 'A6.TOUCH-UP', 'real touch completion reveals once and focuses the title default');
-  verdict(await touch.ev(`!!document.activeElement?.matches('.slot-new,.slot-continue') && !document.activeElement.classList.contains('gp-focus')`), 'A6.TOUCH-CURSOR', 'touch reveal keeps DOM focus without publishing the persistent gamepad cursor');
+  verdict(await touch.ev(`!document.querySelector('.startup-gate') && !!document.activeElement?.matches('.title-menu-item')`), 'A6.TOUCH-UP', 'real touch completion reveals once and focuses the title default');
+  verdict(await touch.ev(`!!document.activeElement?.matches('.title-menu-item') && !document.activeElement.classList.contains('gp-focus')`), 'A6.TOUCH-CURSOR', 'touch reveal keeps DOM focus without publishing the persistent gamepad cursor');
   await touch.close();
 }
 
@@ -421,7 +421,7 @@ async function assertGamepad(button) {
   await wait(150);
   const r = await p.ev(`({title:!!document.querySelector('.title-screen'),startup:!!document.querySelector('.startup-gate'),customize:!!document.querySelector('.customize'),veil:!!document.querySelector('.modal-veil'),active:document.activeElement?.className||''})`);
   verdict(r.title && !r.startup, 'A7.GAMEPAD-REVEAL', `button ${button} release reveals the title (${JSON.stringify(r)})`);
-  verdict(r.title && !r.startup && !r.customize && !r.veil && /slot-(new|continue)/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
+  verdict(r.title && !r.startup && !r.customize && !r.veil && /title-menu-item/.test(r.active), 'A7.GAMEPAD-NO-DOUBLE', `button ${button} release reveals/focuses without title activation (${JSON.stringify(r)})`);
   await p.close();
 }
 
@@ -487,8 +487,10 @@ async function assertReturnBypass() {
   const p = await page();
   await p.until(`!!document.querySelector('.startup-gate')`, 'return startup');
   const release = await p.key('Enter'); await release();
-  await p.until(`!!document.querySelector('.slot-new,.slot-continue')`, 'title before return route');
-  await p.click('.slot-new');
+  await p.until(`!!document.querySelector('[data-title-action="new"]')`, 'title before return route');
+  await p.click('[data-title-action="new"]');
+  await p.until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-game slot selection');
+  await p.click('.title-menu-modal [data-title-action="modal-continue"]');
   await p.until(`!!document.querySelector('#cz-back')`, 'character creation');
   await p.click('#cz-back');
   await p.until(`!!document.querySelector('.title-screen,.startup-gate')`, 'returned title route');

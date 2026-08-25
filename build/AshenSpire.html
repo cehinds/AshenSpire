@@ -4359,6 +4359,221 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
    the stack rather than floated into a corner — a corner is where a watermark
    goes, and this is meant to be read. */
 .title-screen .build-stamp { margin-top: 0.4rem; text-align: center; }
+/* ---------- AshenSpire folded title menu ------------------------------- */
+/*
+   The cold-boot gate is the folded card; this title surface is the unfurled
+   hall. Both keep the existing save/content records and the shared input
+   cursor. Layout is percentage/px based so it stays honest under the game's
+   body zoom at wide and narrow sizes.
+*/
+.title-screen {
+  position: relative;
+  isolation: isolate;
+  gap: 0;
+  padding: 2.2rem 1.6rem 8rem;
+  background:
+    linear-gradient(180deg, rgba(12, 9, 6, 0.22), rgba(10, 8, 6, 0.96)),
+    url("data:image/webp;base64,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") center / cover;
+}
+.title-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 18%, transparent 0, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.62) 100%);
+}
+.title-screen > * { position: relative; z-index: 1; }
+.title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
+.title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
+.title-screen .title-big {
+  margin: 0;
+  color: var(--parchment);
+  font-size: 5.8rem;
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
+}
+.title-screen .subtitle {
+  margin-top: 1.2rem;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1.2;
+  letter-spacing: 0.32em;
+  white-space: nowrap;
+}
+.title-rule,
+.title-modal-rule {
+  position: relative;
+  height: 1px;
+  margin: 1.8rem auto 0;
+  width: min(46rem, 88%);
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.title-rule span,
+.title-modal-rule span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.9rem;
+  height: 0.9rem;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--bg);
+  border: 1px solid var(--gold);
+}
+.title-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(36rem, 92%);
+  margin: 2.5rem auto 0;
+  gap: 0;
+}
+.title-menu-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: var(--tap-floor);
+  padding: 1.4rem 2.5rem 1.1rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--gold) 52%, transparent);
+  border-radius: 0;
+  background: transparent;
+  color: var(--parchment);
+  font-size: 2rem;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
+}
+.title-menu-item::before {
+  content: '';
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0;
+}
+.title-menu-item:hover,
+.title-menu-item:focus-visible,
+.title-menu-item.gp-focus {
+  color: var(--gold);
+  background: transparent;
+  outline: 0;
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
+  text-shadow: 0 0 16px rgba(var(--accent-rgb), 0.55);
+}
+.title-menu:not(:has(.title-menu-item:focus, .title-menu-item.gp-focus)) .title-menu-item.slot-continue:not(:disabled) {
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  box-shadow: 0 0 22px rgba(var(--accent-rgb), 0.18);
+}
+.title-menu-item:hover::before,
+.title-menu-item:focus-visible::before,
+.title-menu-item.gp-focus::before { opacity: 1; }
+.title-menu-item:disabled { border-color: var(--line); background: transparent; color: var(--muted); opacity: 0.58; }
+.title-menu-gem { position: absolute; bottom: -0.65rem; padding: 0 0.65rem; color: var(--gold); background: var(--bg); font-size: 1.1rem; line-height: 1; }
+.title-tagline { margin-top: 3rem; color: var(--muted); font-size: 0.92rem; letter-spacing: 0.18em; text-align: center; }
+
+.title-modal-veil { position: absolute; inset: 0; z-index: 900; padding: 2rem; background: rgba(4, 3, 2, 0.76); backdrop-filter: blur(2px); }
+.title-menu-modal {
+  position: relative;
+  width: min(63.3rem, 94%);
+  max-width: 63.3rem;
+  max-height: 88%;
+  padding: 3.7rem 4rem 3.8rem;
+  border: 1px solid var(--gold);
+  border-radius: 1.5rem;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 96%, #000), color-mix(in srgb, var(--bg-raise) 98%, #000));
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
+}
+.title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+.title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
+.title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
+.title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
+.title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
+.title-slot-pick { display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
+.title-slot-pick:disabled { cursor: default; opacity: 0.74; }
+.title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.title-slot-tag, .title-slot-seed { color: var(--muted); font-size: 0.92rem; letter-spacing: 0.16em; }
+.title-slot-name { color: var(--gold); font-family: Georgia, 'Times New Roman', serif; font-size: 2rem; line-height: 1.1; }
+.title-slot-empty { color: var(--muted); font-family: Georgia, 'Times New Roman', serif; font-size: 2rem; line-height: 1.1; font-style: italic; }
+.title-slot-meta { color: var(--parchment); font-family: Georgia, 'Times New Roman', serif; font-size: 1.08rem; letter-spacing: 0; }
+.title-slot-seed { font-family: monospace; }
+.title-slot-state { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.14em; }
+.title-slot-row.is-selected .title-slot-state { color: var(--gold); }
+.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; }
+.title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
+.title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
+.title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
+.title-modal-continue { border-color: var(--gold); color: var(--gold); }
+.title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+@media (max-width: 30rem) {
+  .title-screen { padding: 1.2rem 0.8rem 1rem; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
+  .title-rule { width: 90%; margin-top: 1.4rem; }
+  .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
+  .title-menu-item { min-height: var(--tap-floor); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.8rem / var(--ui-zoom, 1)) calc(1.1rem / var(--ui-zoom, 1)); font-size: calc(1.5rem / var(--ui-zoom, 1)); }
+  .title-tagline { margin-top: calc(2.4rem / var(--ui-zoom, 1)); font-size: calc(0.8rem / var(--ui-zoom, 1)); letter-spacing: 0.12em; }
+  .title-modal-veil { padding: 1.2rem 0.8rem; }
+  .title-menu-modal { width: 98%; padding: calc(3.8rem / var(--ui-zoom, 1)) calc(1.3rem / var(--ui-zoom, 1)) calc(2.2rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-menu-modal h2 { font-size: calc(2.7rem / var(--ui-zoom, 1)); }
+  .title-modal-rule { width: 84%; }
+  .title-slot-list { gap: calc(1.2rem / var(--ui-zoom, 1)); margin-top: calc(1.8rem / var(--ui-zoom, 1)); }
+  .title-slot-pick { min-height: calc(8.6rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)) calc(1.6rem / var(--ui-zoom, 1)); border-radius: calc(1.3rem / var(--ui-zoom, 1)); }
+  .title-slot-name, .title-slot-empty { font-size: calc(1.8rem / var(--ui-zoom, 1)); }
+  .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
+  .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
+  .title-slot-state { display: none; }
+  .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
+  .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
+}
+
+/* Folded companion to the title hall: the first interaction reveals the
+   already-existing title surface rather than exposing hidden menu controls. */
+.startup-gate {
+  background:
+    linear-gradient(180deg, rgba(11, 9, 6, 0.34), rgba(9, 7, 5, 0.96)),
+    url("data:image/webp;base64,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") center / cover;
+}
+.startup-gate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%);
+}
+.startup-mark {
+  width: min(86%, 62rem);
+  padding: 8.2rem 2.8rem 5.2rem;
+  border: 0;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
+  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);
+}
+.startup-wordmark { color: var(--parchment); font-size: 7rem; line-height: 0.95; letter-spacing: 0.04em; text-indent: 0.04em; white-space: nowrap; }
+.startup-subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; white-space: nowrap; }
+.startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+.startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
+.startup-prompt { margin-top: 3.2rem; }
+.startup-gate:focus-visible { outline: none; }
+.startup-gate:focus-visible .startup-prompt { color: var(--gold); text-shadow: 0 0 1rem rgba(var(--accent-rgb), 0.48); }
+@media (max-width: 30rem) {
+  .startup-mark { width: 92%; padding: 5.8rem 1.3rem 3.6rem; background: transparent; box-shadow: none; }
+  .startup-wordmark { font-size: clamp(3.9rem, 11.2vw, 4.6rem); letter-spacing: 0.015em; text-indent: 0.015em; }
+  .startup-subtitle { font-size: 0.9rem; letter-spacing: 0.2em; }
+  .startup-rule { width: 90%; }
+  .startup-prompt { margin-top: 2.4rem; font-size: 0.84rem; letter-spacing: 0.13em; }
+}
+
 
 /* ---------------------------------------------------------------------------
    THE FIGURE FACES THE VIEWER, SO ITS RIGHT HAND IS ON YOUR LEFT (#48-adjacent).
@@ -35208,12 +35423,11 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 
 },
 "src/ui/screens/title.js": function (module, exports, require) {
-// src/ui/screens/title.js — animated main menu + save slots (SPEC §7.1, §3.12)
+// src/ui/screens/title.js — folded title menu with load/new slot modal.
 //
-// Ambient animation only (gold-glow pulse, drifting embers) — feedback
-// animations stay ≤300 ms elsewhere; ambient loops respect
-// prefers-reduced-motion (styles/ui.css). The menu is a list of save slots
-// (one run each): Continue an occupied slot, or Begin a climb in an empty one.
+// The title owns layout and interaction state; save-slot content stays in the
+// records handed in by main.js. The same modal shell serves LOAD and NEW so the
+// art and spacing can evolve without duplicating the screen structure.
 
 const { esc } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
@@ -35223,105 +35437,201 @@ const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.j
 const { focusElement } = require("src/ui/input.js");
 
 function focusTitleDefault(app, { showCursor = true } = {}) {
-  const control = app?.querySelector('.slot-continue, .slot-new');
+  const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
   if (!control) return false;
   control.focus({ preventScroll: true });
   if (showCursor) focusElement(control);
   return document.activeElement === control;
 }
+function slotCopy({ slot, summary }) {
+  if (!summary) {
+    return `<span class="title-slot-tag">SLOT ${slot}</span><span class="title-slot-empty">Empty</span>`;
+  }
+  return `<span class="title-slot-tag">SLOT ${slot}</span>
+    <span class="title-slot-name">${esc(summary.className)}</span>
+    <span class="title-slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
+    <span class="title-slot-seed">SEED ${esc(summary.seedString)}</span>`;
+}
 
-function mountTitle(app, { slots, meta, registries, onContinue, onNew, onDelete, onHistory, onProfile, onSettings, onSettingsChange, onQuit, onCustom, onLan, onCompendium }) {
-  // Ember density follows the "Ambient effects" setting (data-ambient on <html>).
-  const EMBER_COUNT = { off: 0, low: 3, normal: 7, high: 14 };
-  const emberN = EMBER_COUNT[document.documentElement.dataset.ambient] ?? 7;
-  const embers = Array.from({ length: emberN }, (_, i) => {
-    const left = 8 + ((i * 13.7) % 84);
-    const delay = (i * 1.7) % 9;
-    const dur = 7 + (i % 4) * 2;
-    return `<span class="ember" style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s"></span>`;
+function firstSlot(slots, predicate) {
+  return slots.find(({ summary }) => predicate(summary))?.slot ?? null;
+}
+
+function mountTitle(app, {
+  slots,
+  meta,
+  registries,
+  onContinue,
+  onNew,
+  onDelete,
+  onHistory,
+  onProfile,
+  onSettings,
+  onSettingsChange,
+  onQuit,
+  onCustom,
+  onLan,
+  onCompendium,
+}) {
+  const occupied = slots.filter(({ summary }) => !!summary);
+  let modal = null;
+  let selectedSlot = null;
+
+  const modalSlotHtml = (kind) => slots.map(({ slot, summary }) => {
+    const selectable = kind === 'new' || !!summary;
+    const selected = selectedSlot === slot;
+    return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}">
+      <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${selectable ? '' : ' disabled'}>
+        <span class="title-slot-copy">${slotCopy({ slot, summary })}</span>
+        <span class="title-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
+      </button>
+      ${summary && onDelete ? `<button class="subtle title-slot-delete" type="button" data-slot-delete="${slot}" aria-label="Delete slot ${slot}">✕</button>` : ''}
+    </div>`;
   }).join('');
 
-  const slotCards = slots
-    .map(({ slot, summary }) =>
-      summary
-        ? `<div class="slot occupied">
-             <div class="slot-info">
-               <span class="slot-tag">SLOT ${slot}</span>
-               <span class="slot-title">${esc(summary.className)}</span>
-               <span class="slot-meta">Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP</span>
-               <span class="slot-seed">SEED ${esc(summary.seedString)}</span>
-             </div>
-             <div class="slot-actions">
-               <button class="slot-continue" data-slot="${slot}">CONTINUE</button>
-               <button class="subtle slot-delete" data-slot="${slot}">✕</button>
-             </div>
-           </div>`
-        : `<div class="slot empty">
-             <div class="slot-info"><span class="slot-tag">SLOT ${slot}</span><span class="slot-empty-label">Empty</span></div>
-             <button class="slot-new" data-slot="${slot}">BEGIN A CLIMB</button>
-           </div>`
-    )
-    .join('');
+  const menuHtml = () => {
+    const continueSlot = occupied[0]?.slot ?? null;
+    return `<nav class="title-menu" aria-label="Ashen Spire main menu">
+      <button class="title-menu-item slot-continue" type="button" data-title-action="continue"${continueSlot == null ? ' disabled' : ''}>
+        <span>CONTINUE</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+      <button class="title-menu-item" id="load-game" type="button" data-title-action="load">
+        <span>LOAD</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+      <button class="title-menu-item slot-new" id="new-game" type="button" data-title-action="new">
+        <span>NEW</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+      <!-- #armaments remains the compatibility anchor for the existing watched probe. -->
+      <button class="title-menu-item" id="armaments" type="button" data-title-action="collection">
+        <span>COLLECTION</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+      <button class="title-menu-item" id="settings" type="button" data-title-action="settings">
+        <span>SETTINGS</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+      <button class="title-menu-item" id="quit-game" type="button" data-title-action="quit">
+        <span>QUIT</span><span class="title-menu-gem" aria-hidden="true">◇</span>
+      </button>
+    </nav>`;
+  };
 
-  app.innerHTML = `
-    <div class="screen title-screen">
-      ${embers}
-      ${hudQuickSettingsHtml(hudQuickSettingsModel({
-        place: 'title',
-        presentation: registries.balance.ui.hudQuickSettings,
-        settings: meta.settings || {},
-      }))}
-      <div class="title-stack">
-        <h1 class="title-big title-glow">ASHEN SPIRE</h1>
-        <p class="subtitle" style="text-align:center">A ROGUELIKE DECKBUILDER</p>
-      </div>
-      <div class="slot-list">${slotCards}</div>
-      <div class="title-menu">
-        <button class="subtle" id="lan-play" hidden>FORSAKEN TOGETHER</button>
-        <button class="subtle" id="custom-climb">CUSTOM CLIMB</button>
-        <button class="subtle" id="armaments">ARMAMENTS</button>
-        <button class="subtle" id="run-history">RUN HISTORY</button>
-        <button class="subtle" id="profile">PROFILE</button>
-        <button class="subtle" id="settings">SETTINGS</button>
-        <button class="subtle" id="quit-game">QUIT</button>
-      </div>
-      <p style="color:var(--muted);font-size:11px;letter-spacing:.15em">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
-      ${buildStampHtml('title')}
+  const modalHtml = () => {
+    if (!modal) return '';
+    const title = modal === 'load' ? 'LOAD GAME' : 'NEW GAME';
+    const canContinue = selectedSlot != null && (modal === 'new' || !!slots.find(({ slot }) => slot === selectedSlot)?.summary);
+    return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
+      <section class="modal title-menu-modal" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
+        <button class="title-modal-close" type="button" data-title-action="close-modal" aria-label="Close ${title}">×</button>
+        <h2 id="title-modal-heading">${title}</h2>
+        <div class="title-modal-rule" aria-hidden="true"><span></span></div>
+        <div class="title-slot-list" aria-label="Save slots">${modalSlotHtml(modal)}</div>
+        <div class="title-modal-actions">
+          <button class="title-modal-back" type="button" data-title-action="back">BACK</button>
+          <button class="title-modal-continue" type="button" data-title-action="modal-continue"${canContinue ? '' : ' disabled'}>CONTINUE</button>
+        </div>
+      </section>
     </div>`;
+  };
 
-  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  const focusModal = (selector = '.title-slot-pick:not([disabled]), .title-modal-back') => {
+    const control = app.querySelector(selector);
+    if (control) {
+      control.focus({ preventScroll: true });
+      focusElement(control);
+    }
+  };
 
-  app.querySelector('#run-history').addEventListener('click', onHistory);
-  if (onProfile) app.querySelector('#profile').addEventListener('click', onProfile);
-  app.querySelector('#settings').addEventListener('click', onSettings);
-  if (onQuit) app.querySelector('#quit-game').addEventListener('click', onQuit);
-  if (onCustom) app.querySelector('#custom-climb').addEventListener('click', onCustom);
-  // ARMAMENTS — the Compendium. NAMED, not "Armoury": the Armoury is the screen
-  // where you equip things and it is only reachable inside a run. Two screens
-  // one letter apart in a menu is a naming call, and naming is Viki's lens —
-  // this is my proposal, hers to overrule on sight.
-  if (onCompendium) app.querySelector('#armaments').addEventListener('click', onCompendium);
-  // LAN play only exists when the launcher's server is behind the page — the
-  // orchestrator un-hides the button once /api/lan/info answers.
-  if (onLan) app.querySelector('#lan-play').addEventListener('click', onLan);
-  app.querySelectorAll('.slot-continue').forEach((b) => b.addEventListener('click', () => onContinue(+b.dataset.slot)));
-  app.querySelectorAll('.slot-new').forEach((b) => b.addEventListener('click', () => onNew(+b.dataset.slot)));
-  // DELETE RIDES THE SHARED MACHINERY (secondbeat.js, `deleteSave` — collapsed
-  // 2026-08-14). This screen used to answer it in its own hand: a two-click,
-  // self-resetting arm with a hard-coded 2500 ms that never read the dial —
-  // `off` still demanded two clicks, `long` lengthened nothing. The screen now
-  // names its action and hands over the commit; the table picks the form and
-  // `balance.ui.holdConfirm` is the one home of the duration.
-  const arm = beatArmer(meta, registries);
-  app.querySelectorAll('.slot-delete').forEach((b) => {
-    arm(b, 'deleteSave', { onConfirm: () => onDelete(+b.dataset.slot) });
-    // The word HOLD does not fit beside an icon glyph — the flask-slot
-    // precedent (ui.css hides `.slot-delete .hold-hint`). The sentence moves
-    // into the native tooltip and READS the state the machinery dressed, so
-    // the words and the gesture cannot drift: no `data-holdMs` means the dial
-    // is off and a tap commits.
-    b.title = b.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
-  });
+  const openModal = (kind) => {
+    modal = kind;
+    selectedSlot = kind === 'new' ? firstSlot(slots, (summary) => !summary) ?? slots[0]?.slot ?? null : firstSlot(slots, (summary) => !!summary);
+    render();
+    focusModal();
+  };
+
+  const closeModal = () => {
+    modal = null;
+    selectedSlot = null;
+    render();
+    focusTitleDefault(app, { showCursor: false });
+  };
+
+  const wireDelete = (root) => {
+    if (!onDelete) return;
+    const arm = beatArmer(meta, registries);
+    root.querySelectorAll('.title-slot-delete').forEach((button) => {
+      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slot) });
+      button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
+    });
+  };
+
+  function render() {
+    app.innerHTML = `
+      <div class="screen title-screen">
+        ${Array.from({ length: 7 }, (_, i) => `<span class="ember" style="left:${8 + ((i * 13.7) % 84)}%;animation-delay:${(i * 1.7) % 9}s;animation-duration:${7 + (i % 4) * 2}s"></span>`).join('')}
+        ${hudQuickSettingsHtml(hudQuickSettingsModel({ place: 'title', presentation: registries.balance.ui.hudQuickSettings, settings: meta.settings || {} }))}
+        <div class="title-stack">
+          <h1 class="title-big title-glow">ASHEN SPIRE</h1>
+          <p class="subtitle">A ROGUELIKE DECKBUILDER</p>
+          <div class="title-rule" aria-hidden="true"><span></span></div>
+        </div>
+        ${menuHtml()}
+        <p class="title-tagline">THE EMBER FLOWS UPWARD. FOLLOW IT.</p>
+        ${buildStampHtml('title')}
+        ${modalHtml()}
+      </div>`;
+
+    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+    const root = app.querySelector('.title-screen');
+    root.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal) {
+        event.preventDefault();
+        closeModal();
+      } else if (event.key === 'Tab' && modal) {
+        const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
+        const first = controls[0];
+        const last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus({ preventScroll: true });
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus({ preventScroll: true });
+        }
+      }
+    });
+    root.querySelectorAll('[data-title-action]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const action = button.dataset.titleAction;
+        if (action === 'continue') onContinue(occupied[0].slot);
+        else if (action === 'load' || action === 'new') openModal(action);
+        else if (action === 'collection' && onCompendium) onCompendium();
+        else if (action === 'settings') onSettings();
+        else if (action === 'quit' && onQuit) onQuit();
+        else if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'modal-continue') {
+          if (selectedSlot == null) return;
+          if (modal === 'load') onContinue(selectedSlot);
+          else onNew(selectedSlot);
+        }
+      });
+    });
+    root.querySelector('[data-title-modal-scrim]')?.addEventListener('click', (event) => {
+      if (event.target === event.currentTarget) closeModal();
+    });
+    root.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      button.addEventListener('click', () => {
+        selectedSlot = +button.dataset.slot;
+        render();
+        focusModal(`[data-slot-pick="${selectedSlot}"]`);
+      });
+    });
+    wireDelete(root);
+    if (onHistory) void onHistory;
+    if (onProfile) void onProfile;
+    if (onCustom) void onCustom;
+    if (onLan) void onLan;
+  }
+
+  render();
 }
 
 
@@ -39833,7 +40143,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b116bba38d';
+const SOURCE = 'db9265896c';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39867,7 +40177,7 @@ const SOURCE = 'b116bba38d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1327';
+const ORDINAL = '1352';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -58627,7 +58937,6 @@ function isActivation(input) {
   }
   return false;
 }
-
 function familyForPointer(event) {
   return event.pointerType === 'touch' ? 'touch' : 'pointer';
 }
@@ -58656,6 +58965,8 @@ function mountStartupGate(app, {
       <div class="startup-mark">
         ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
         <h1 class="startup-wordmark">${esc(properties.wordmark)}</h1>
+        ${properties.subtitle ? `<p class="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
+        <div class="startup-rule" aria-hidden="true"><span></span></div>
         <p class="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
       </div>
       ${buildStampHtml('startup')}
@@ -58774,10 +59085,10 @@ function particles(count = 7) {
     sizePx: 1 + (index % 3),
   }));
 }
-
 function startupGateModel({
   inputFamily = 'keyboard',
   wordmark = 'ASHEN SPIRE',
+  subtitle = 'A ROGUELIKE DECKBUILDER',
   overline = '',
   prompts = DEFAULT_PROMPTS,
   particleCount = 7,
@@ -58787,6 +59098,7 @@ function startupGateModel({
     variant: family,
     properties: {
       wordmark,
+      subtitle,
       overline,
       inputFamily: family,
       prompts: { ...DEFAULT_PROMPTS, ...prompts },
