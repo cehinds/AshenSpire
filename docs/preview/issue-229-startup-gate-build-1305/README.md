@@ -1,18 +1,18 @@
 # Issue #229 startup-gate evidence
 
 - Base: `dev@13919f3d155928b4540342db54076ef39ee7fe91`
-- Built artifact commit: `38b2e2d6795fa12de38de525bde55523640606c9`
-- Build: `0.4.0.1307 · src e0c8ce81ab`
+- Built artifact commit: `1c8e52fc222001854765e79fa267f3de255582e6`
+- Build: `0.4.0.1311 · src 33c9be93e1`
 - Artifact: `dist/AshenSpire.html`
-- Artifact SHA-256: `fa258563f467a49e5fb39319bb5bf53624b3a4fc6ca982fb0cf2e1ec45ebdb2a`
+- Artifact SHA-256: `dfcae03f89c3d4be10480ffa0e76247e9265cda5a3dd6496b3f5793435dc48bd`
 - Browser: Google Chrome on Windows, device scale factor 1
 
 ## Visually inspected captures
 
-The captures were taken from build 1305. The final build 1307 changes only
-controller disconnect/reconnect state seeding and its test instrument; layout,
-art, and responsive styling are unchanged. Its visible build stamp is verified
-separately by the final 46-check rendered contract.
+The captures were taken from build 1305. The final build 1311 changes only
+controller ownership/seeding and its test instrument; layout, art, and
+responsive styling are unchanged. Its visible build stamp is verified
+separately by the final 48-check rendered contract.
 
 | File | State | SHA-256 |
 |---|---|---|
@@ -29,7 +29,7 @@ separately by the final 46-check rendered contract.
 controller buttons 0 and 9, D-pad/analog last-input prompts, pointer/touch focus
 without a persistent gamepad cursor, return-to-title bypass, profile
 crisis precedence, interrupted-press cancellation, held-controller reconnect
-seeding, actionable startup semantics,
+seeding, multi-controller ownership, actionable startup semantics,
 deterministic reduced-motion reveal cleanup, and Text M/XL at 390x844,
-844x344, and 1200x730. Result: 46 checks passed; its 17 same-door plants
+844x344, and 1200x730. Result: 48 checks passed; its 18 same-door plants
 were each observed red and the clean copied tree returned green.
