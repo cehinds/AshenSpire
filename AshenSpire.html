@@ -5043,9 +5043,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 
    The wrappers become grid-transparent only where their children must enter
    this one composition. Run Header remains a real center-column component so
-   its three lines cannot scatter across later responsive rules. No authored
-   height exists: an empty potion tray removes its row and the utility controls
-   rise directly below Quick Access. */
+   its three lines cannot scatter across later responsive rules. Other potions
+   own the full second right-rail row. Fullscreen/Music are a compact pair just
+   below the complete HUD, so neither steals a potion cell. */
+:root { --hud-compact-control-cell: var(--tap-floor); }
+:root[data-layout='narrow'] { --hud-compact-control-cell: calc(36px / var(--ui-zoom, 1)); }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
   box-sizing: border-box;
   height: auto;
@@ -5056,7 +5058,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
   --compact-gap: calc(2px / var(--ui-zoom, 1));
-  --compact-control-cell: var(--tap-floor);
+  --compact-control-cell: var(--hud-compact-control-cell);
   --compact-right-step: calc(var(--compact-control-cell) + (var(--compact-gap) * 3) + calc(2px / var(--ui-zoom, 1)));
   height: auto;
   display: grid;
@@ -5166,8 +5168,9 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   align-self: start;
   z-index: 2;
   margin-top: var(--compact-right-step);
-  width: min(100%, calc((var(--tap-floor) * 4) + (var(--compact-gap) * 3)));
-  min-height: var(--tap-floor);
+  width: min(100%, calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3)));
+  max-width: calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3));
+  min-height: var(--compact-control-cell);
   align-items: center;
   justify-content: flex-start;
   gap: var(--compact-gap);
@@ -5175,10 +5178,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-potions { display: none; }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-slot {
   box-sizing: border-box;
-  width: var(--tap-floor);
-  min-width: var(--tap-floor);
-  height: var(--tap-floor);
-  min-height: var(--tap-floor);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
   display: grid;
   place-items: center;
 }
@@ -5187,27 +5190,58 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   height: var(--hud-utility-visual-size);
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
-  grid-area: right;
-  position: static;
-  justify-self: end;
-  align-self: start;
-  z-index: 1;
-  margin-top: calc(var(--compact-right-step) + var(--tap-floor) + var(--compact-gap));
+  position: absolute;
+  top: calc(100% + var(--compact-gap));
+  right: calc(8px / var(--ui-zoom, 1));
+  z-index: 80;
+  margin: 0;
   flex-direction: row;
   gap: var(--compact-gap);
-  width: auto;
+  width: calc((var(--compact-control-cell) * 2) + var(--compact-gap));
   max-width: none;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
-  flex: 0 0 var(--tap-floor);
-}
-.topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-quick-settings {
-  margin-top: var(--compact-right-step);
-}
-:root[data-layout='narrow'] .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
-  --compact-control-cell: calc(36px / var(--ui-zoom, 1));
+  flex: 0 0 var(--compact-control-cell);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
 }
 /* End Variant D */
+
+/* Shared Act Route Strip — part of the Map/Combat HUD component. It is a
+   compact-phone orientation cue, not a map-screen overlay. */
+.act-route-strip { display: none; }
+@media (max-width: 700px) {
+  .act-route-strip {
+    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
+    border-bottom: 1px solid var(--line); background: var(--bg-raise);
+    pointer-events: none; user-select: none; cursor: default;
+  }
+  .shared-hud[data-hud-mode='expanded'] .act-route-strip {
+    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
+  }
+  .act-route-strip strong {
+    text-align: center; color: var(--gold); font-family: Georgia, serif;
+    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+  }
+  .map-orientation-progress {
+    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center; gap: 8px;
+  }
+  .map-orientation-progress small {
+    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+  }
+  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+  .map-orientation-rail {
+    height: 1px; position: relative; background: var(--map-structure);
+  }
+  .map-orientation-rail::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
   /* Three negotiating tracks: identity, centered Cinders, and metadata.
@@ -6450,6 +6484,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   :root[data-layout='narrow'] .field {
     padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
   }
+  /* The compact utility pair is horizontal below the HUD. Reserve its full
+     right-edge footprint so enemy art and intent never sit beneath a control. */
+  :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
+    padding-inline-end: calc(1.2rem + (var(--hud-compact-control-cell) * 2) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,
   :root[data-layout='narrow'] .enemy-row .combatant { height: 100%; max-height: 100%; }
@@ -6578,42 +6617,6 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
    the flex-item clamp the scrollport needs to be allowed to shrink — without it
    a tall canvas pushes the zoom bar off the bottom. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
-.map-entrance-orientation { display: none; }
-
-/* The full real climb no longer fits on a phone once adjacent floors keep their
-   device-space pitch. This static orientation strip names the same endpoints;
-   it is text and a direction rail, never a second set of node-shaped choices.
-   The real map remains directly below it and owns every interaction. */
-@media (max-width: 700px) {
-  .map-entrance-orientation {
-    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
-    border-bottom: 1px solid var(--line); background: var(--bg-raise);
-    pointer-events: none; user-select: none; cursor: default;
-  }
-  .map-header[data-hud-mode='expanded'] .map-entrance-orientation {
-    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
-  }
-  .map-entrance-orientation strong {
-    text-align: center; color: var(--gold); font-family: Georgia, serif;
-    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
-  }
-  .map-orientation-progress {
-    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
-    align-items: center; gap: 8px;
-  }
-  .map-orientation-progress small {
-    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
-  }
-  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
-  .map-orientation-rail {
-    height: 1px; position: relative; background: var(--map-structure);
-  }
-  .map-orientation-rail::after {
-    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
-    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
-    transform: translateY(-50%) rotate(45deg);
-  }
-}
 .mapscreen .map-scroll {
   flex: 1; overflow: auto;
   /* The browser owns a finger or pen on the one axis the map can scroll.
@@ -39810,7 +39813,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9494ba3efb';
+const SOURCE = 'ba6d428901';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39844,7 +39847,7 @@ const SOURCE = '9494ba3efb';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1320';
+const ORDINAL = '1324';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -50701,16 +50704,6 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
-  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
-  const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
-  const entranceOrientation = entranceStart && entranceBoss
-    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
-        <strong>${esc(actTitle(run.actNumber))}</strong>
-        <span class="map-orientation-progress" aria-hidden="true">
-          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
-        </span>
-      </div>`
-    : '';
   const legendHtml = `<div class="map-legend-pop" hidden>
     ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
   </div>`;
@@ -50743,10 +50736,8 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
-        overlayHtml: `${legendHtml}${entranceOrientation}`,
+        routeTitle: actTitle(run.actNumber),
+        overlayHtml: legendHtml,
       }))}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
@@ -53033,6 +53024,19 @@ function runHeaderStripHtml(model) {
   </div>`;
 }
 
+// One orientation strip belongs to the shared run HUD, never to the Map
+// screen. Both Map and Combat therefore reserve the same compact-header height
+// and present the same run context while only the playfield below changes.
+function actRouteStripHtml(routeTitle) {
+  if (!routeTitle) return '';
+  return `<div class="act-route-strip map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(routeTitle)} orientation: entrance to boss">
+    <strong>${esc(routeTitle)}</strong>
+    <span class="map-orientation-progress" aria-hidden="true">
+      <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+    </span>
+  </div>`;
+}
+
 function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
   return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
@@ -53081,6 +53085,7 @@ function sharedRunHudHtml(model) {
     </div>
     <button type="button" class="hud-mode-grip" data-next-mode="${esc(grip.properties.next)}" ${uiComponentAttrs(grip.component, grip.variant)} aria-label="${esc(grip.accessibility.label)}" title="${esc(grip.accessibility.hint)}"><span aria-hidden="true"></span></button>
     ${overlayHtml}
+    ${actRouteStripHtml(model.properties.routeTitle)}
   </header>`;
 }
 
@@ -53089,7 +53094,7 @@ function sharedRunHudHtml(model) {
 const hudShellHtml = sharedRunHudHtml;
 
 
-Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, actRouteStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
 
 },
 "src/ui/viewModels/RunHudViewModel.js": function (module, exports, require) {
@@ -53116,12 +53121,13 @@ function runHudViewModel({
   identity,
   controls,
   quickSettings,
+  routeTitle = '',
   overlayHtml = '',
 } = {}) {
   const hudMode = normalizeHudMode(quickSettings?.settings?.runHudMode);
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml, hudMode },
+    properties: { place, headerClass, overlayHtml, routeTitle, hudMode },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -53614,7 +53620,7 @@ const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.j
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { actTitle, intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -53680,6 +53686,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
+        routeTitle: actTitle(run.actNumber),
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>

@@ -16,14 +16,15 @@ const check = (condition, message) => { if (!condition) failures.push(message); 
 const compact = files.css.match(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//)?.[0] || '';
 check(compact, 'D1 missing the authored Variant D compact-HUD block');
 check(/grid-template-areas:\s*["']vitals center right["'][\s\S]*["']relics center right["']/.test(compact)
-    && (compact.match(/grid-area:\s*right/g) || []).length >= 3
+    && (compact.match(/grid-area:\s*right/g) || []).length >= 2
     && /\.hud-info-row\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/.test(compact)
-    && /margin-top:\s*calc\(var\(--compact-right-step\) \+ var\(--tap-floor\) \+ var\(--compact-gap\)\)/.test(compact),
-  'D2 compact HUD is not the strict vitals/center/right-rail, relics/center/right-rail composition');
+    && /\.hud-potions\s*\{[\s\S]*margin-top:\s*var\(--compact-right-step\)/.test(compact),
+  'D2 utility potions do not own the compact HUD second right-rail row');
 check(/data-has-utility-potions='false'[\s\S]*\.hud-potions\s*\{\s*display:\s*none/.test(compact),
   'D3 an empty utility-potion row does not collapse');
-check(/data-has-utility-potions='false'[\s\S]*\.hud-quick-settings[\s\S]*margin-top:\s*var\(--compact-right-step\)/.test(compact),
-  'D4 Fullscreen/Music do not rise immediately below Quick Access when no utility potions exist');
+check(/\.hud-potions\s*\{[\s\S]*justify-self:\s*end[\s\S]*max-width:\s*calc\(\(var\(--compact-control-cell\) \* 4\)/.test(compact)
+    && /\.hud-quick-settings\s*\{[\s\S]*position:\s*absolute[\s\S]*top:\s*calc\(100%[\s\S]*right:[\s\S]*flex-direction:\s*row/.test(compact),
+  'D4 other potions do not retain the full second row or Fullscreen/Music are not below the HUD');
 check(/\.build-stamp\[data-seed\]\s*\{\s*display:\s*none\s*!important/.test(compact),
   'D5 Build/Seed/Source can leak into compact mode');
 check(/\.hud-mode-grip\s*>\s*span[\s\S]*width:\s*calc\(18px[\s\S]*height:\s*calc\(2px/.test(files.css),
@@ -42,7 +43,13 @@ check(/data-has-utility-potions="false"/.test(files.hud),
 for (const [surface, source] of [['map', files.map], ['combat', files.combat]]) {
   check(/dataset\.hasUtilityPotions\s*=\s*[^;]*children\.length\s*\?\s*'true'\s*:\s*'false'/.test(source),
     `D10 ${surface} does not publish whether its utility-potion row has content`);
+  check(/routeTitle:\s*actTitle\(run\.actNumber\)/.test(source),
+    `D11 ${surface} does not feed the shared Act route strip`);
 }
+
+check(/function actRouteStripHtml[\s\S]*class="act-route-strip map-entrance-orientation"/.test(files.hud)
+    && /\$\{actRouteStripHtml\(model\.properties\.routeTitle\)\}/.test(files.hud),
+  'D12 the Act route strip is not rendered by the shared Map/Combat HUD component');
 
 if (failures.length) {
   console.error(`compact-hud-layout: ${failures.length} failure(s)`);
@@ -50,4 +57,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('compact-hud-layout: OK — 10 compact composition contracts passed');
+console.log('compact-hud-layout: OK — 13 compact composition contracts passed');

@@ -79,9 +79,11 @@
 
    The wrappers become grid-transparent only where their children must enter
    this one composition. Run Header remains a real center-column component so
-   its three lines cannot scatter across later responsive rules. No authored
-   height exists: an empty potion tray removes its row and the utility controls
-   rise directly below Quick Access. */
+   its three lines cannot scatter across later responsive rules. Other potions
+   own the full second right-rail row. Fullscreen/Music are a compact pair just
+   below the complete HUD, so neither steals a potion cell. */
+:root { --hud-compact-control-cell: var(--tap-floor); }
+:root[data-layout='narrow'] { --hud-compact-control-cell: calc(36px / var(--ui-zoom, 1)); }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
   box-sizing: border-box;
   height: auto;
@@ -92,7 +94,7 @@
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
   --compact-gap: calc(2px / var(--ui-zoom, 1));
-  --compact-control-cell: var(--tap-floor);
+  --compact-control-cell: var(--hud-compact-control-cell);
   --compact-right-step: calc(var(--compact-control-cell) + (var(--compact-gap) * 3) + calc(2px / var(--ui-zoom, 1)));
   height: auto;
   display: grid;
@@ -202,8 +204,9 @@
   align-self: start;
   z-index: 2;
   margin-top: var(--compact-right-step);
-  width: min(100%, calc((var(--tap-floor) * 4) + (var(--compact-gap) * 3)));
-  min-height: var(--tap-floor);
+  width: min(100%, calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3)));
+  max-width: calc((var(--compact-control-cell) * 4) + (var(--compact-gap) * 3));
+  min-height: var(--compact-control-cell);
   align-items: center;
   justify-content: flex-start;
   gap: var(--compact-gap);
@@ -211,10 +214,10 @@
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-potions { display: none; }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-potions .flask-slot {
   box-sizing: border-box;
-  width: var(--tap-floor);
-  min-width: var(--tap-floor);
-  height: var(--tap-floor);
-  min-height: var(--tap-floor);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
   display: grid;
   place-items: center;
 }
@@ -223,27 +226,58 @@
   height: var(--hud-utility-visual-size);
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-settings {
-  grid-area: right;
-  position: static;
-  justify-self: end;
-  align-self: start;
-  z-index: 1;
-  margin-top: calc(var(--compact-right-step) + var(--tap-floor) + var(--compact-gap));
+  position: absolute;
+  top: calc(100% + var(--compact-gap));
+  right: calc(8px / var(--ui-zoom, 1));
+  z-index: 80;
+  margin: 0;
   flex-direction: row;
   gap: var(--compact-gap);
-  width: auto;
+  width: calc((var(--compact-control-cell) * 2) + var(--compact-gap));
   max-width: none;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-quick-setting {
-  flex: 0 0 var(--tap-floor);
-}
-.topbar.combat-hud.shared-hud[data-hud-mode='compact'][data-has-utility-potions='false'] .hud-quick-settings {
-  margin-top: var(--compact-right-step);
-}
-:root[data-layout='narrow'] .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
-  --compact-control-cell: calc(36px / var(--ui-zoom, 1));
+  flex: 0 0 var(--compact-control-cell);
+  width: var(--compact-control-cell);
+  min-width: var(--compact-control-cell);
+  height: var(--compact-control-cell);
+  min-height: var(--compact-control-cell);
 }
 /* End Variant D */
+
+/* Shared Act Route Strip — part of the Map/Combat HUD component. It is a
+   compact-phone orientation cue, not a map-screen overlay. */
+.act-route-strip { display: none; }
+@media (max-width: 700px) {
+  .act-route-strip {
+    flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
+    border-bottom: 1px solid var(--line); background: var(--bg-raise);
+    pointer-events: none; user-select: none; cursor: default;
+  }
+  .shared-hud[data-hud-mode='expanded'] .act-route-strip {
+    padding-inline: calc((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) + ((var(--hud-quick-card-size, 40px) / var(--ui-zoom, 1)) / 5));
+  }
+  .act-route-strip strong {
+    text-align: center; color: var(--gold); font-family: Georgia, serif;
+    font-size: 11px; line-height: 1.1; letter-spacing: 2px;
+  }
+  .map-orientation-progress {
+    display: grid; grid-template-columns: auto minmax(36px, 1fr) auto;
+    align-items: center; gap: 8px;
+  }
+  .map-orientation-progress small {
+    color: var(--muted); font-size: 9px; line-height: 1; letter-spacing: 1.2px;
+  }
+  .map-orientation-progress [data-role="boss"] { color: var(--ember); }
+  .map-orientation-rail {
+    height: 1px; position: relative; background: var(--map-structure);
+  }
+  .map-orientation-rail::after {
+    content: ''; position: absolute; right: 0; top: 50%; width: 6px; height: 6px;
+    border-top: 1px solid var(--map-structure); border-right: 1px solid var(--map-structure);
+    transform: translateY(-50%) rotate(45deg);
+  }
+}
 .topbar.combat-hud.shared-hud .hud-info-row {
   display: grid;
   /* Three negotiating tracks: identity, centered Cinders, and metadata.
@@ -1485,6 +1519,11 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
   /* ---- battlefield: give the enemies the width ---- */
   :root[data-layout='narrow'] .field {
     padding: 0 calc(1.2rem + var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1))) 0 1.2rem;
+  }
+  /* The compact utility pair is horizontal below the HUD. Reserve its full
+     right-edge footprint so enemy art and intent never sit beneath a control. */
+  :root[data-layout='narrow'] .topbar.shared-hud[data-hud-mode='compact'] ~ .field {
+    padding-inline-end: calc(1.2rem + (var(--hud-compact-control-cell) * 2) + calc(6px / var(--ui-zoom, 1)) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
   }
   :root[data-layout='narrow'] .player-zone { width: 32%; padding-block: 0.6rem; }
   :root[data-layout='narrow'] .player-zone .combatant,

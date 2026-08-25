@@ -93,16 +93,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
   const atEntrance = !run.mapNodeId;
-  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
-  const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
-  const entranceOrientation = entranceStart && entranceBoss
-    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
-        <strong>${esc(actTitle(run.actNumber))}</strong>
-        <span class="map-orientation-progress" aria-hidden="true">
-          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
-        </span>
-      </div>`
-    : '';
   const legendHtml = `<div class="map-legend-pop" hidden>
     ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
   </div>`;
@@ -135,10 +125,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
-        overlayHtml: `${legendHtml}${entranceOrientation}`,
+        routeTitle: actTitle(run.actNumber),
+        overlayHtml: legendHtml,
       }))}
     </div>`;
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });

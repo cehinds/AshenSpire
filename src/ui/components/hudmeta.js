@@ -44,6 +44,19 @@ export function runHeaderStripHtml(model) {
   </div>`;
 }
 
+// One orientation strip belongs to the shared run HUD, never to the Map
+// screen. Both Map and Combat therefore reserve the same compact-header height
+// and present the same run context while only the playfield below changes.
+export function actRouteStripHtml(routeTitle) {
+  if (!routeTitle) return '';
+  return `<div class="act-route-strip map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(routeTitle)} orientation: entrance to boss">
+    <strong>${esc(routeTitle)}</strong>
+    <span class="map-orientation-progress" aria-hidden="true">
+      <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+    </span>
+  </div>`;
+}
+
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
   return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
@@ -92,6 +105,7 @@ export function sharedRunHudHtml(model) {
     </div>
     <button type="button" class="hud-mode-grip" data-next-mode="${esc(grip.properties.next)}" ${uiComponentAttrs(grip.component, grip.variant)} aria-label="${esc(grip.accessibility.label)}" title="${esc(grip.accessibility.hint)}"><span aria-hidden="true"></span></button>
     ${overlayHtml}
+    ${actRouteStripHtml(model.properties.routeTitle)}
   </header>`;
 }
 

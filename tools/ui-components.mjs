@@ -197,7 +197,8 @@ export function findings(r) {
       || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
       || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
       || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
-      || !/overlayHtml:\s*`\$\{legendHtml\}\$\{entranceOrientation\}`/.test(r.map)) {
+      || !/routeTitle:\s*actTitle\(run\.actNumber\)/.test(r.map)
+      || !/routeTitle:\s*actTitle\(run\.actNumber\)/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)

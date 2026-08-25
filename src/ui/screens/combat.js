@@ -11,7 +11,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { actTitle, intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -77,6 +77,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
+        routeTitle: actTitle(run.actNumber),
       }))}
       <div class="${backdropClass(run.actNumber)}"></div>
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>

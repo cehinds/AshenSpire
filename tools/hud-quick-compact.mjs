@@ -21,6 +21,8 @@ const SURFACES = [
   { name: 'title', query: '' },
   { name: 'map', query: '?shot=map' },
   { name: 'combat', query: '?shot=combat' },
+  { name: 'map-compact', query: '?shot=map&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
+  { name: 'combat-compact', query: '?shot=combat&shotSettings=%7B%22runHudMode%22%3A%22compact%22%7D', compact: true },
   { name: 'music-off', query: '?shot=map&shotSettings=%7B%22musicEnabled%22%3Afalse%7D' },
 ];
 
@@ -30,31 +32,58 @@ const intersection = (a, b) => !a || !b ? 0
 
 function findings(r) {
   const bad = [];
+  const expectedOuter = r.phone && r.compact ? 36 : 44;
+  const expectedFace = r.phone ? 32 : 40;
+  const expectedGlyph = r.phone ? 22 : 28;
+  const expectedButtonGap = r.horizontal ? 2 : 0;
+  const expectedFaceGap = expectedOuter - expectedFace + expectedButtonGap;
   if (r.stack.right > r.viewport.width + 0.5 || r.stack.left < -0.5) bad.push('rail leaves the viewport');
   if (r.rightGap < -0.5 || r.rightGap > 9) bad.push(`right gap is ${r.rightGap.toFixed(2)}px`);
   if (r.buttons.length !== 2) bad.push(`expected 2 controls, saw ${r.buttons.length}`);
   for (const [index, button] of r.buttons.entries()) {
-    if (button.width < 43.5 || button.height < 43.5) bad.push(`control ${index + 1} lost the shared 44px touch floor`);
+    if (Math.abs(button.width - expectedOuter) > 0.5 || Math.abs(button.height - expectedOuter) > 0.5) {
+      bad.push(`control ${index + 1} is ${button.width.toFixed(2)}×${button.height.toFixed(2)}px, expected ${expectedOuter}×${expectedOuter}`);
+    }
     if (button.border !== '0px' || button.background !== 'rgba(0, 0, 0, 0)' || button.shadow !== 'none') {
       bad.push(`control ${index + 1} outer touch target paints a second card`);
     }
   }
-  if (r.buttonGap > 1) bad.push(`control gap is ${r.buttonGap.toFixed(2)}px`);
-  if (r.stack.height > 89) bad.push(`shared rail is ${r.stack.height.toFixed(2)}px tall`);
+  if (Math.abs(r.buttonGap - expectedButtonGap) > 0.5) bad.push(`control gap is ${r.buttonGap.toFixed(2)}px, expected ${expectedButtonGap}px`);
+  const expectedStackHeight = r.horizontal ? expectedOuter : (expectedOuter * 2);
+  if (Math.abs(r.stack.height - expectedStackHeight) > 0.5) bad.push(`shared rail is ${r.stack.height.toFixed(2)}px tall, expected ${expectedStackHeight}px`);
   for (const [index, face] of r.faces.entries()) {
-    if (face.width < 39.5 || face.width > 40.5 || face.height < 39.5 || face.height > 40.5) {
-      bad.push(`face ${index + 1} is ${face.width.toFixed(2)}×${face.height.toFixed(2)}px, expected 40×40`);
+    if (Math.abs(face.width - expectedFace) > 0.5 || Math.abs(face.height - expectedFace) > 0.5) {
+      bad.push(`face ${index + 1} is ${face.width.toFixed(2)}×${face.height.toFixed(2)}px, expected ${expectedFace}×${expectedFace}`);
     }
     if (face.border === '0px' || face.background === 'rgba(0, 0, 0, 0)') bad.push(`face ${index + 1} does not paint the compact card`);
   }
-  if (r.faceGap < 3.5 || r.faceGap > 4.5) bad.push(`visible card gap is ${r.faceGap.toFixed(2)}px, expected 4px`);
-  if (r.glyphPx < 27.5 || r.glyphPx > 28.5) bad.push(`primary glyph is ${r.glyphPx.toFixed(2)}px, expected 28px`);
+  if (Math.abs(r.faceGap - expectedFaceGap) > 0.5) bad.push(`visible card gap is ${r.faceGap.toFixed(2)}px, expected ${expectedFaceGap}px`);
+  if (Math.abs(r.glyphPx - expectedGlyph) > 0.5) bad.push(`primary glyph is ${r.glyphPx.toFixed(2)}px, expected ${expectedGlyph}px`);
   if (r.stateDotPx < 5.5 || r.stateDotPx > 6.5) bad.push(`state dot is ${r.stateDotPx.toFixed(2)}px, expected 6px`);
   if (r.phone && r.quickPanel && r.quickPanel.height > 89.5) bad.push(`Quick Access panel is still ${r.quickPanel.height.toFixed(2)}px tall on mobile`);
-  if (r.phone && r.quickTargets.some((target) => target.width < 43.5 || target.height < 43.5)) bad.push('Quick Access density reduced a gameplay target below 44px');
+  if (r.phone && r.quickTargets.some((target) => target.width < expectedOuter - 0.5 || target.height < expectedOuter - 0.5)) {
+    bad.push(`Quick Access density reduced a gameplay target below ${expectedOuter}px`);
+  }
   if (r.orientationOverlap > 0.5) bad.push(`rail covers ${r.orientationOverlap.toFixed(2)}px² of the entrance-to-boss receipt`);
   if (r.infoOverlap > 0.5) bad.push(`rail covers ${r.infoOverlap.toFixed(2)}px² of the run header`);
   if (r.combatantOverlap > 0.5) bad.push(`rail covers ${r.combatantOverlap.toFixed(2)}px² of a combatant`);
+  if (r.compact && r.stack.top < r.header.bottom - 0.5) bad.push('compact Fullscreen/Music pair is not below the shared HUD');
+  return bad;
+}
+
+function parityFindings(map, combat) {
+  const bad = [];
+  const near = (a, b) => Math.abs(a - b) <= 0.75;
+  for (const [name, left, right] of [
+    ['header height', map.header.height, combat.header.height],
+    ['HUD content height', map.hudTop.height, combat.hudTop.height],
+    ['route-strip top', map.route.top, combat.route.top],
+    ['route-strip height', map.route.height, combat.route.height],
+    ['Quick Access top', map.quickPanel.top, combat.quickPanel.top],
+    ['Fullscreen/Music top', map.stack.top, combat.stack.top],
+  ]) {
+    if (!near(left, right)) bad.push(`${name} differs: Map ${left.toFixed(2)}px, Combat ${right.toFixed(2)}px`);
+  }
   return bad;
 }
 
@@ -109,6 +138,7 @@ const launched = await launchBrowser({ prefix: 'hud-quick-', browser, headless: 
 let client;
 let failed = 0;
 let passed = 0;
+const compactMapReceipts = new Map();
 try {
   client = await cdpClient(launched.wsUrl);
   const target = await client.send('Target.createTarget', { url: 'about:blank' });
@@ -150,23 +180,29 @@ try {
           const info=document.querySelector('.hud-info-row');
           const combatantInk=[...document.querySelectorAll('.combatant .intent, .combatant .sprite, .combatant .nm, .combatant .meters, .combatant .statuses')];
           const sr=box(stack);
+          const header=box(document.querySelector('.shared-hud'));
+          const route=box(document.querySelector('.act-route-strip'));
+          const horizontal=getComputedStyle(stack).flexDirection==='row';
           return {
             viewport:{width:innerWidth,height:innerHeight}, stack:sr, buttons:painted, faces,
             rightGap:innerWidth-sr.right,
-            buttonGap:painted.length===2?painted[1].top-painted[0].bottom:999,
-            faceGap:faces.length===2?faces[1].top-faces[0].bottom:999,
+            buttonGap:painted.length===2?(horizontal?painted[1].left-painted[0].right:painted[1].top-painted[0].bottom):999,
+            faceGap:faces.length===2?(horizontal?faces[1].left-faces[0].right:faces[1].top-faces[0].bottom):999,
             glyphPx:visibleGlyph?box(visibleGlyph).width:0,
             stateDotPx:state?box(state).width:0,
-            quickPanel:box(quickPanel), quickTargets:quickTargets.map(box),
+            quickPanel:box(quickPanel), quickTargets:quickTargets.map(box), header,
+            hudTop:box(document.querySelector('.hud-top')), route, horizontal,
             orientationOverlap:(${intersection.toString()})(sr,box(orientation)),
             infoOverlap:(${intersection.toString()})(sr,box(info)),
             combatantOverlap:Math.max(0,...combatantInk.map((el)=>(${intersection.toString()})(sr,box(el)))),
-            phone:${shape.mobile}
+            phone:${shape.mobile}, compact:${!!surface.compact}
           };
         })()`,
       }, sessionId);
       const receipt = evaluated.result.value;
       const bad = findings(receipt);
+      if (surface.name === 'map-compact') compactMapReceipts.set(shape.name, receipt);
+      if (surface.name === 'combat-compact') bad.push(...parityFindings(compactMapReceipts.get(shape.name), receipt));
       const tag = `${surface.name}-${shape.name}`;
       if (bad.length) {
         failed += bad.length;
