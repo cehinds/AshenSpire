@@ -259,7 +259,13 @@ async function page({
   const url = `http://127.0.0.1:${serverPort}/${query}`;
   await cdp.send('Page.navigate', { url }, sessionId);
   await until(`location.href === ${JSON.stringify(url)} && document.readyState !== 'loading'`, url);
-  if (pad) await wait(80);
+  // CI Chrome can throttle a newly attached background target. Wait through
+  // several poll intervals so the production poller has seeded the connected
+  // pad before this harness introduces the first deliberate edge.
+  if (pad) {
+    await until(`!!document.querySelector('.startup-gate')`, 'startup before gamepad edge');
+    await wait(250);
+  }
   return {
     targetId, sessionId, ev, until,
     async key(key) {
@@ -326,7 +332,7 @@ async function assertPromptFamilies() {
   await p.mouse('move');
   let f = await startupFacts(p);
   verdict(f.family === 'pointer' && f.prompt === 'CLICK TO CONTINUE', 'A3.PROMPT-FAMILY', `mouse -> ${f.family}: ${f.prompt}`);
-  await p.ev(`window.__startupPad.connect()`); await wait(80);
+  await p.ev(`window.__startupPad.connect()`); await wait(250);
   await p.ev(`window.__startupPad.set(12,true)`); await wait(80);
   f = await startupFacts(p);
   verdict(f.gate && f.family === 'controller' && /A \/ CROSS/.test(f.prompt), 'A3.PROMPT-CONTROLLER', `D-pad -> ${f.family}: ${f.prompt}`);
