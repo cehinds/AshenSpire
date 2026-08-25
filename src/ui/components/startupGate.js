@@ -9,7 +9,6 @@ function isActivation(input) {
   }
   return false;
 }
-
 function familyForPointer(event) {
   return event.pointerType === 'touch' ? 'touch' : 'pointer';
 }
@@ -38,6 +37,8 @@ export function mountStartupGate(app, {
       <div class="startup-mark">
         ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
         <h1 class="startup-wordmark">${esc(properties.wordmark)}</h1>
+        ${properties.subtitle ? `<p class="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
+        <div class="startup-rule" aria-hidden="true"><span></span></div>
         <p class="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
       </div>
       ${buildStampHtml('startup')}
