@@ -4084,7 +4084,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: radial-gradient(ellipse at 50% 18%, transparent 0, rgba(0, 0, 0, 0.08) 40%, rgba(0, 0, 0, 0.62) 100%);
 }
 .title-screen > * { position: relative; z-index: 1; }
-.title-screen > .hud-quick-settings { z-index: 80; }
+.title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
 .title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
 .title-screen .title-big {
   margin: 0;
