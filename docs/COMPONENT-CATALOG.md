@@ -44,7 +44,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
-| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Desktop and phone use the same 40px visual cards inside 44px touch targets, with data-owned 28px icons and state dots. The entrance-to-boss receipt remains in the HUD flow so the rail cannot cover it. |
+| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Fullscreen/Music utility rail. Expanded mode floats it outside the Run HUD and gives the Act Route Strip equal 1.2x-rail safe insets. Compact places it under the right-anchored potion shelf. Phone faces are 32px (20% smaller) inside unchanged 44px targets. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
@@ -99,6 +99,15 @@ shared-run-hud
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
 
+The Run HUD has two remembered snap states. **Expanded** preserves the current
+three-part composition at a tighter, approximately 20% shorter rhythm.
+**Compact** is Variant C's **Asymmetric Command Shelf**: HP/MP/SP occupy the
+left two rows with relics directly underneath; Cinders, Act/Floor, and the class
+icon make a narrow context spine; HP, MP, Armoury, and Menu form one horizontal
+command row at right. Potions follow below and Fullscreen/Music occupy the last
+right-anchored row. A 16x2px border mark exposes the resize grip while its
+transparent pointer/keyboard target remains 44px.
+
 ## Character Creation components
 
 These components are the production renderers used by Character Creation and
@@ -140,9 +149,11 @@ character-disclosure
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the
 Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
-`switcher` values remain explicit presentation modes. Fullscreen and Music are
-the first rows, contextual destinations occupy the middle, and Save then Save &
-Quit remain the fixed tail. The Quick Menu rows, Settings rows, and
+`switcher` values remain explicit presentation modes. Its groups are always
+Settings, Controls / Fullscreen, Music / Inventory, Character / Load, Save,
+Save and Quit, Quit Without Saving. The last action explicitly confirms that
+unsaved progress will be discarded and returns to the browser-safe title
+screen rather than trying to close the tab. The Quick Menu rows, Settings rows, and
 `hud-quick-settings` controls project the same Fullscreen and Music owners; none
 of those renderers keeps a second copy of browser or audio state.
 
@@ -168,11 +179,16 @@ sync without duplicating persistence.
 ```text
 quick-menu-panel
 ├─ quick-menu-caption
+├─ quick-menu-row: Settings
+├─ quick-menu-row: Controls
 ├─ quick-menu-row: Fullscreen switch
 ├─ quick-menu-row: Music switch
-├─ quick-menu-row × N: contextual destinations + Settings/Controls
+├─ quick-menu-row: Inventory
+├─ quick-menu-row: Character
+├─ quick-menu-row: Load
 ├─ quick-menu-row: Save
-└─ quick-menu-row: Save & Quit
+├─ quick-menu-row: Save and Quit
+└─ quick-menu-row: Quit Without Saving
 
 menu-overlay
 ├─ menu-tab-strip

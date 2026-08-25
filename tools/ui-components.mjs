@@ -101,7 +101,7 @@ export function findings(r) {
       || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
-  if (![r.map, r.combat].every((text) => /import \{ hudShellHtml \}/.test(text)
+  if (![r.map, r.combat].every((text) => /import \{[^}]*hudShellHtml[^}]*\}/.test(text)
       && /import \{ runHudViewModel \}/.test(text)
       && /\$\{hudShellHtml\(runHudViewModel\(\{/.test(text))) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
@@ -117,7 +117,8 @@ export function findings(r) {
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css)
+      || /hud-context/.test(r.hud + r.css)
+      || /\n\.hud-run-meta\s*\{[^}]*grid-row:\s*2/.test(r.css)
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }

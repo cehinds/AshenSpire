@@ -25,6 +25,17 @@
     border-bottom: 1px solid var(--line); background: var(--bg-raise);
     pointer-events: none; user-select: none; cursor: default;
   }
+  /* Expanded keeps the Act Route Strip centred between equal safe insets.
+     `--hud-utility-safe-inset` is authored as 1.2x the utility rail width, so
+     neither Fullscreen nor Music can overlay the route copy or direction rail.
+     Compact moves those controls into the command shelf and returns to the
+     ordinary edge padding. */
+  .run-hud-shell[data-hud-mode='expanded'] .map-entrance-orientation {
+    padding-inline: calc(var(--hud-utility-safe-inset, 58px) / var(--ui-zoom, 1));
+  }
+  .run-hud-shell[data-hud-mode='compact'] .map-entrance-orientation {
+    padding-inline: calc(12px / var(--ui-zoom, 1));
+  }
   .map-entrance-orientation strong {
     text-align: center; color: var(--gold); font-family: Georgia, serif;
     font-size: 11px; line-height: 1.1; letter-spacing: 2px;

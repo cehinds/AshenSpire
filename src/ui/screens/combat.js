@@ -11,7 +11,7 @@ import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { intentBadge, intentTooltip, backdropClass, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -32,13 +32,17 @@ import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
-import { hudShellHtml } from '../components/hudmeta.js';
+import { hudShellHtml, wireRunHudMode } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { combatantFrame } from '../components/combatantFrame.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, quickControls = {} }) {
+export function mountCombat(app, {
+  registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone,
+  onSettings, onSettingsChange, onMenu, onLoad, onSave, onQuit,
+  onQuitWithoutSaving, quickControls = {},
+}) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -127,6 +131,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     </div>`;
 
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  wireRunHudMode(app, { settings: meta.settings || {}, onSettingsChange });
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
@@ -1399,36 +1404,34 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
-          draw: () => showDraw(),
-          discard: () => showDiscard(),
+          inventory: () => openCombatArmoury('rack'),
+          character: () => openCombatArmoury('grid'),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSaving ? { quitNoSave: () => onQuitWithoutSaving() } : {}),
         },
       });
     });
   }
 
-  // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
-  // MENU table. Armoury is the canonical equipment name in every context.
-  {
-    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
-    attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Armoury, settings, controls and saving.'
-        : 'Everywhere you can go from here.')}`);
-  }
+  attachTooltip($('#combat-armoury'), () =>
+    '<div class="tt-title">Armoury</div>Character, inventory, armaments, relics, cards, and stats.');
+  attachTooltip(menuBtn, () =>
+    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      ? 'Armoury, settings, controls and saving.'
+      : 'Everywhere you can go from here.')}`);
 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  $('#combat-armoury').addEventListener('click', () => {
+  function openCombatArmoury(initialView = null) {
     if (!registries.balance.equipment.enabled) return;
     const panel = mountEquipment(document.body, {
       registries,
       run,
       meta: { settings: { customization: run.customization } },
+      initialView,
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;
@@ -1444,6 +1447,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         afterDispatch(out.events);
       },
     });
+  }
+  const combatArmoury = $('#combat-armoury');
+  combatArmoury.addEventListener('click', () => openCombatArmoury());
+  combatArmoury.addEventListener('ashenspire:open-armoury', (event) => {
+    openCombatArmoury(event.detail?.initialView || null);
   });
 
   render();

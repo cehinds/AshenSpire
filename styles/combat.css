@@ -1406,3 +1406,190 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     min-height: 5.6rem; font-size: 1.7rem; padding: 1rem 1.2rem;
     margin-right: 13.8rem;
   }
+
+/* ---------- resizable shared run HUD ----------
+   The shell owns the HUD, the map route strip, and the controls that float
+   outside the painted card. Nothing below consumes playfield height unless it
+   is real route-strip content. */
+.run-hud-shell {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+  z-index: 20;
+}
+.run-hud-shell > .shared-hud { box-sizing: border-box; width: 100%; }
+.run-hud-overlays { position: relative; z-index: 19; }
+
+/* The expanded card keeps the established three-part composition but spends
+   less height on framing: a 28px identity strip, tight inter-row rhythm, and
+   compact belt tiles. The 44px action targets remain untouched. */
+.shared-hud[data-hud-mode='expanded'] {
+  gap: calc(3px / var(--ui-zoom, 1));
+  padding-block: calc(4px / var(--ui-zoom, 1));
+}
+.shared-hud[data-hud-mode='expanded'] .hud-top { gap: calc(3px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-info-row { min-height: calc(28px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-identity .portrait {
+  width: calc(28px * var(--hud-portrait-scale));
+  height: calc(28px * var(--hud-portrait-scale));
+  font-size: calc(15px * var(--hud-portrait-scale));
+}
+.shared-hud[data-hud-mode='expanded'] .hud-bottom { min-height: calc(24px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-bottom :is(.flask-slot, .relic-chip) {
+  max-height: calc(24px / var(--ui-zoom, 1));
+}
+
+/* Variant C — Asymmetric Command Shelf.
+
+   [HP/MP/SP] [Cinders]  [HP][MP][Armoury][Menu]
+   [vitals  ] [Act/Floor]                [potions]
+   [relics  ] [class]          [Fullscreen][Music]
+
+   The high-frequency command shelf gets the wide track; identity is reduced
+   to its portrait and the narrow middle spine carries run context. */
+.shared-hud[data-hud-mode='compact'] {
+  min-height: 0;
+  gap: 0;
+  padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+}
+.shared-hud[data-hud-mode='compact'] .hud-top {
+  display: grid;
+  grid-template-columns: minmax(86px, 1fr) minmax(54px, 0.6fr) minmax(176px, 1.65fr);
+  grid-template-rows: repeat(3, var(--tap-floor));
+  column-gap: calc(4px / var(--ui-zoom, 1));
+  row-gap: 0;
+  position: relative;
+  min-width: 0;
+}
+.shared-hud[data-hud-mode='compact'] :is(.hud-info-row, .hud-resource-row, .hud-bottom) { display: contents; }
+
+.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 100%;
+  height: calc(var(--tap-floor) * 2);
+  align-self: stretch;
+  overflow: hidden;
+}
+.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-column: 1;
+  grid-row: 3;
+  width: 100%;
+  height: var(--tap-floor);
+  align-self: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-center {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  justify-self: center;
+  max-width: 100%;
+}
+.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  max-width: none;
+  align-self: center;
+  justify-self: stretch;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: none; }
+.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp { display: none; }
+.shared-hud[data-hud-mode='compact'] .hud-identity {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: center;
+  justify-self: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1));
+  height: calc(28px / var(--ui-zoom, 1));
+  font-size: calc(15px / var(--ui-zoom, 1));
+}
+
+.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-column: 3;
+  grid-row: 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--tap-floor);
+  min-width: calc(var(--tap-floor) * 4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: repeat(4, var(--tap-floor));
+  grid-template-rows: var(--tap-floor);
+  justify-content: end;
+  gap: 0;
+}
+.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) { display: contents; }
+.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(1) { order: 1; }
+.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(2) { order: 2; }
+.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(1) { order: 3; }
+.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(2) { order: 4; }
+.shared-hud[data-hud-mode='compact'] .hud-potions {
+  grid-column: 3;
+  grid-row: 2;
+  width: 100%;
+  height: var(--tap-floor);
+  align-self: center;
+  justify-content: flex-start;
+}
+
+/* Fullscreen and Music leave the external rail in compact mode and become the
+   final right-anchored shelf row, directly under potions. */
+.shared-hud[data-hud-mode='compact'] > .hud-quick-settings {
+  top: auto;
+  right: calc(8px / var(--ui-zoom, 1));
+  bottom: calc(4px / var(--ui-zoom, 1));
+  width: calc(var(--tap-floor) * 2);
+  max-width: none;
+  height: var(--tap-floor);
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+/* The control remains a 44px target but paints only a hairline in the card's
+   lower border. It can be clicked, dragged, or driven with arrow keys without
+   becoming another chunk of HUD. */
+.hud-resize-grip {
+  position: absolute;
+  z-index: 85;
+  left: 50%;
+  bottom: calc(var(--tap-floor) / -2);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: var(--tap-floor);
+  min-width: var(--tap-floor);
+  height: var(--tap-floor);
+  min-height: var(--tap-floor);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.hud-resize-grip-face {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 42%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg-raise) 60%, transparent);
+  transition: width 120ms, background 120ms;
+}
+.hud-resize-grip:is(:hover, :focus-visible) .hud-resize-grip-face {
+  width: 22px;
+  background: var(--gold);
+}
+.hud-resize-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -10px; }

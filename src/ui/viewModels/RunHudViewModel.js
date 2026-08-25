@@ -22,9 +22,10 @@ export function runHudViewModel({
   quickSettings,
   overlayHtml = '',
 } = {}) {
+  const hudMode = quickSettings?.settings?.runHudMode === 'compact' ? 'compact' : 'expanded';
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml },
+    properties: { place, headerClass, overlayHtml, hudMode },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {

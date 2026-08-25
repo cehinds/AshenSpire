@@ -1503,6 +1503,20 @@ button.rs-reset {
 .hud-quick-notice[hidden] { display: none; }
 .hud-quick-settings,
 .hud-quick-settings.compact { width: var(--tap-floor); }
+@media (max-width: 700px) {
+  /* The painted cards shrink by 20%; the transparent outer buttons retain the
+     configured tap floor, so mobile density never steals the interaction. */
+  .hud-quick-settings { --hud-quick-card-size-mobile: 32px; }
+  .hud-quick-setting-face {
+    width: min(var(--tap-floor), calc(var(--hud-quick-card-size-mobile) / var(--ui-zoom, 1)));
+    height: min(var(--tap-floor), calc(var(--hud-quick-card-size-mobile) / var(--ui-zoom, 1)));
+  }
+  .hud-quick-setting-glyph {
+    width: calc(22px / var(--ui-zoom, 1));
+    height: calc(22px / var(--ui-zoom, 1));
+    font-size: calc(22px / var(--ui-zoom, 1));
+  }
+}
 .title-stack { animation: screenIn 700ms ease-out; }
 .title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
@@ -2228,12 +2242,17 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 6px 10px; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
-  background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
+  background: transparent; color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
+}
+.set-tabs .set-tab-face {
+  box-sizing: border-box; width: 100%; min-height: 34px; padding: 5px 9px;
+  display: inline-flex; align-items: center; justify-content: inherit;
+  border: 1px solid var(--line-soft); border-radius: 6px; background: var(--bg);
 }
 .set-tabs .set-tab:hover { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
@@ -2278,8 +2297,10 @@ button.rs-reset {
    in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
    screen that themes — divergence dressed as a fix. Filed as its own act. */
 .set-tabs .set-tab.on {
-  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
-  font-weight: 600;
+  color: var(--gold); font-weight: 600;
+}
+.set-tabs .set-tab.on .set-tab-face {
+  border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
 }
 .set-subtabs {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;
@@ -6354,6 +6375,193 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     margin-right: 13.8rem;
   }
 
+/* ---------- resizable shared run HUD ----------
+   The shell owns the HUD, the map route strip, and the controls that float
+   outside the painted card. Nothing below consumes playfield height unless it
+   is real route-strip content. */
+.run-hud-shell {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 0;
+  z-index: 20;
+}
+.run-hud-shell > .shared-hud { box-sizing: border-box; width: 100%; }
+.run-hud-overlays { position: relative; z-index: 19; }
+
+/* The expanded card keeps the established three-part composition but spends
+   less height on framing: a 28px identity strip, tight inter-row rhythm, and
+   compact belt tiles. The 44px action targets remain untouched. */
+.shared-hud[data-hud-mode='expanded'] {
+  gap: calc(3px / var(--ui-zoom, 1));
+  padding-block: calc(4px / var(--ui-zoom, 1));
+}
+.shared-hud[data-hud-mode='expanded'] .hud-top { gap: calc(3px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-info-row { min-height: calc(28px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-identity .portrait {
+  width: calc(28px * var(--hud-portrait-scale));
+  height: calc(28px * var(--hud-portrait-scale));
+  font-size: calc(15px * var(--hud-portrait-scale));
+}
+.shared-hud[data-hud-mode='expanded'] .hud-bottom { min-height: calc(24px / var(--ui-zoom, 1)); }
+.shared-hud[data-hud-mode='expanded'] .hud-bottom :is(.flask-slot, .relic-chip) {
+  max-height: calc(24px / var(--ui-zoom, 1));
+}
+
+/* Variant C — Asymmetric Command Shelf.
+
+   [HP/MP/SP] [Cinders]  [HP][MP][Armoury][Menu]
+   [vitals  ] [Act/Floor]                [potions]
+   [relics  ] [class]          [Fullscreen][Music]
+
+   The high-frequency command shelf gets the wide track; identity is reduced
+   to its portrait and the narrow middle spine carries run context. */
+.shared-hud[data-hud-mode='compact'] {
+  min-height: 0;
+  gap: 0;
+  padding: calc(4px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+}
+.shared-hud[data-hud-mode='compact'] .hud-top {
+  display: grid;
+  grid-template-columns: minmax(86px, 1fr) minmax(54px, 0.6fr) minmax(176px, 1.65fr);
+  grid-template-rows: repeat(3, var(--tap-floor));
+  column-gap: calc(4px / var(--ui-zoom, 1));
+  row-gap: 0;
+  position: relative;
+  min-width: 0;
+}
+.shared-hud[data-hud-mode='compact'] :is(.hud-info-row, .hud-resource-row, .hud-bottom) { display: contents; }
+
+.shared-hud[data-hud-mode='compact'] .hud-vitals-panel {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  width: 100%;
+  height: calc(var(--tap-floor) * 2);
+  align-self: stretch;
+  overflow: hidden;
+}
+.shared-hud[data-hud-mode='compact'] .hud-relics {
+  grid-column: 1;
+  grid-row: 3;
+  width: 100%;
+  height: var(--tap-floor);
+  align-self: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-center {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
+  justify-self: center;
+  max-width: 100%;
+}
+.shared-hud[data-hud-mode='compact'] .hud-run-meta {
+  grid-column: 2;
+  grid-row: 2;
+  width: 100%;
+  max-width: none;
+  align-self: center;
+  justify-self: stretch;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-run-meta > :not(:first-child):not(.build-stamp)::before { content: none; }
+.shared-hud[data-hud-mode='compact'] .hud-run-meta .build-stamp { display: none; }
+.shared-hud[data-hud-mode='compact'] .hud-identity {
+  grid-column: 2;
+  grid-row: 3;
+  align-self: center;
+  justify-self: center;
+}
+.shared-hud[data-hud-mode='compact'] .hud-identity .nm { display: none; }
+.shared-hud[data-hud-mode='compact'] .hud-identity .portrait {
+  width: calc(28px / var(--ui-zoom, 1));
+  height: calc(28px / var(--ui-zoom, 1));
+  font-size: calc(15px / var(--ui-zoom, 1));
+}
+
+.shared-hud[data-hud-mode='compact'] .hud-control-grid {
+  grid-column: 3;
+  grid-row: 1;
+  box-sizing: border-box;
+  width: 100%;
+  height: var(--tap-floor);
+  min-width: calc(var(--tap-floor) * 4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  grid-template-columns: repeat(4, var(--tap-floor));
+  grid-template-rows: var(--tap-floor);
+  justify-content: end;
+  gap: 0;
+}
+.shared-hud[data-hud-mode='compact'] .hud-control-grid :is(.hud-actions, .hud-charge-flasks) { display: contents; }
+.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(1) { order: 1; }
+.shared-hud[data-hud-mode='compact'] .hud-charge-flasks > :nth-child(2) { order: 2; }
+.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(1) { order: 3; }
+.shared-hud[data-hud-mode='compact'] .hud-actions > :nth-child(2) { order: 4; }
+.shared-hud[data-hud-mode='compact'] .hud-potions {
+  grid-column: 3;
+  grid-row: 2;
+  width: 100%;
+  height: var(--tap-floor);
+  align-self: center;
+  justify-content: flex-start;
+}
+
+/* Fullscreen and Music leave the external rail in compact mode and become the
+   final right-anchored shelf row, directly under potions. */
+.shared-hud[data-hud-mode='compact'] > .hud-quick-settings {
+  top: auto;
+  right: calc(8px / var(--ui-zoom, 1));
+  bottom: calc(4px / var(--ui-zoom, 1));
+  width: calc(var(--tap-floor) * 2);
+  max-width: none;
+  height: var(--tap-floor);
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+/* The control remains a 44px target but paints only a hairline in the card's
+   lower border. It can be clicked, dragged, or driven with arrow keys without
+   becoming another chunk of HUD. */
+.hud-resize-grip {
+  position: absolute;
+  z-index: 85;
+  left: 50%;
+  bottom: calc(var(--tap-floor) / -2);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: var(--tap-floor);
+  min-width: var(--tap-floor);
+  height: var(--tap-floor);
+  min-height: var(--tap-floor);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.hud-resize-grip-face {
+  display: block;
+  width: 16px;
+  height: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--gold) 42%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--bg-raise) 60%, transparent);
+  transition: width 120ms, background 120ms;
+}
+.hud-resize-grip:is(:hover, :focus-visible) .hud-resize-grip-face {
+  width: 22px;
+  background: var(--gold);
+}
+.hud-resize-grip:focus-visible { outline: 1px solid var(--gold); outline-offset: -10px; }
+
   </style>
   <style data-src="styles/map.css">
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
@@ -6382,6 +6590,17 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     flex: 0 0 auto; display: grid; gap: 3px; padding: 5px 12px 6px;
     border-bottom: 1px solid var(--line); background: var(--bg-raise);
     pointer-events: none; user-select: none; cursor: default;
+  }
+  /* Expanded keeps the Act Route Strip centred between equal safe insets.
+     `--hud-utility-safe-inset` is authored as 1.2x the utility rail width, so
+     neither Fullscreen nor Music can overlay the route copy or direction rail.
+     Compact moves those controls into the command shelf and returns to the
+     ordinary edge padding. */
+  .run-hud-shell[data-hud-mode='expanded'] .map-entrance-orientation {
+    padding-inline: calc(var(--hud-utility-safe-inset, 58px) / var(--ui-zoom, 1));
+  }
+  .run-hud-shell[data-hud-mode='compact'] .map-entrance-orientation {
+    padding-inline: calc(12px / var(--ui-zoom, 1));
   }
   .map-entrance-orientation strong {
     text-align: center; color: var(--gold); font-family: Georgia, serif;
@@ -7031,6 +7250,12 @@ for (const [key, cssName] of [
 ]) {
   document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
 }
+const hudUtilitySafeInset = (Math.max(
+  Number(UI.tapSize?.def) || 44,
+  Number(HUD_QUICK_SETTINGS.cardSizePx) || 0,
+) + (Number(HUD_QUICK_SETTINGS.edgeGapPx) || 0))
+  * (Number(HUD_QUICK_SETTINGS.safeInsetMultiplier) || 1.2);
+document.documentElement.style.setProperty('--hud-utility-safe-inset', `${hudUtilitySafeInset}px`);
 document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
@@ -7818,11 +8043,12 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = null) {
   mountEquipment(document.body, {
     registries,
     run,
     meta: saves.loadMeta(),
+    initialView,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -7836,6 +8062,17 @@ function showArmoury() {
     },
     onClose: showMap,
   });
+}
+
+function openRunArmoury(initialView = null) {
+  const combatArmoury = app.querySelector('#combat-armoury');
+  if (combatArmoury) {
+    combatArmoury.dispatchEvent(new CustomEvent('ashenspire:open-armoury', {
+      detail: { initialView },
+    }));
+    return;
+  }
+  showArmoury(initialView);
 }
 
 function showHistory() {
@@ -7880,6 +8117,33 @@ function quitGame() {
   }
 }
 
+function confirmDiscardProgress(action, confirmFn = globalThis.confirm) {
+  if (typeof confirmFn !== 'function') return false;
+  const lead = action === 'load' ? 'Load the last saved state?' : 'Quit without saving?';
+  return !!confirmFn(`${lead}\n\nProgress since the last save will be lost.`);
+}
+
+function loadActiveGame() {
+  if (!confirmDiscardProgress('load')) return false;
+  resumeRun(activeSlot);
+  return true;
+}
+
+function saveAndQuitToTitle() {
+  persist();
+  showTitle();
+}
+
+function quitWithoutSaving() {
+  if (!confirmDiscardProgress('quit')) return false;
+  audio.stopMusic();
+  run = null;
+  // A normal browser tab cannot be closed reliably. Returning to the title is
+  // the safe, deterministic fallback on every browser and packaged shell.
+  showTitle({ skipStartup: true });
+  return true;
+}
+
 // The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
 // equipment, deck, relics, flasks, and run stats.
 function showOverlay(initialTab = 'settings') {
@@ -7898,14 +8162,14 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    onArmoury: openRunArmoury,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
   });
 }
 
@@ -8081,14 +8345,13 @@ function showMap() {
     onMenu: showOverlay,
     onArmoury: showArmoury,
     quickControls: quickMenuControls,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
   });
 }
 
@@ -8295,14 +8558,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     quickControls: quickMenuControls,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist();
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();
@@ -9153,6 +9415,9 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   showTitle();
 }
 
+
+Object.assign(module.exports, { confirmDiscardProgress });
+
 },
 "src/content/index.js": function (module, exports, require) {
 // src/content/index.js — the content bundle (shape: ENGINE-API §1)
@@ -9560,6 +9825,10 @@ const balance = {
       glyphSizePx: 28,
       stateDotPx: 6,
       activeTintPct: 14,
+      // The Act Route Strip clears the utility rail equally on both sides.
+      // A multiplier keeps that clearance tied to the authored rail rather
+      // than baking a second viewport-specific width into map.css.
+      safeInsetMultiplier: 1.2,
       showCardBackground: true,
       showLabels: false,
     },
@@ -20400,6 +20669,11 @@ function validateContent(bundle) {
         if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
           err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
         }
+      }
+      const safeInsetMultiplier = quickSettings.safeInsetMultiplier;
+      if (typeof safeInsetMultiplier !== 'number' || !Number.isFinite(safeInsetMultiplier)
+        || safeInsetMultiplier < 1 || safeInsetMultiplier > 2) {
+        err('balance.ui.hudQuickSettings.safeInsetMultiplier', `must be a finite number in [1, 2] — got ${JSON.stringify(safeInsetMultiplier)}`);
       }
       if (typeof quickSettings.showCardBackground !== 'boolean') {
         err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
@@ -39002,79 +39276,43 @@ function actPlate(actNumber, plates) {
 // as well. `act: 'tab'` is the one act that carries a second field: the tab it
 // opens, which is a member of MENU_TABS and joined to it by surfaces.js.
 //
-// TWO READINGS OF "CONTEXT-SPECIFIC", AND THE TABLE SERVES BOTH.
-// Constantine: "all buttons should be context-specific." Marina's dissent: the
-// ends are fixed, the middle is contextual, because a row whose meaning moves
-// between screens is a trap for a player who navigates by muscle memory. They
-// disagree in a way only play settles, so both orders come out of this one
-// table and a setting picks:
-//
-//   fixed ends (Marina)  — group by `band`: head, body, tail. Array order within
-//                          a band. Second row is Deck on every screen.
-//   all contextual (his) — rows marked `local` (they exist only on this screen)
-//                          come first, then the rest; `tail` still last, because
-//                          he fixed Save · Save & Quit as the last two by hand.
-//
-// The map row set is IDENTICAL under both — which is the honest shape of the
-// argument: it only bites where a screen has destinations of its own, and combat
-// is the screen that does.
+// The four bands are now a stable player contract on every run surface:
+// menu destinations, comfort toggles, Armoury destinations, then session
+// actions. Compatibility settings may still call `menuRows` with the old order
+// flag, but no stored profile is allowed to reshuffle this declared sequence.
 const MENU_TABS = [
   { id: 'settings', label: 'Settings', icon: '⚙', tip: 'Display, audio, and accessibility.' },
   { id: 'controls', label: 'Controls', icon: '⌨', tip: 'Every key and pad button, and how to rebind them.' },
 ];
 
-const TAIL = [
-  { act: 'save', icon: '💾', label: 'Save', band: 'tail', tip: 'Write the climb to its slot and stay here.' },
-  { act: 'quit', icon: '⏻', label: 'Save & Quit to Title', band: 'tail', tone: 'danger',
-    tip: 'Save, then back to the title. Continue picks the climb up again.' },
-];
-
-const QUICK_CONTROLS = [
-  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'head', control: 'switch',
+const QUICK_MENU_ROWS = [
+  { act: 'tab', tab: 'settings', band: 'menu' },
+  { act: 'tab', tab: 'controls', band: 'menu' },
+  { act: 'fullscreen', icon: '⛶', label: 'Fullscreen', band: 'toggles', control: 'switch',
     tip: 'Use the browser fullscreen owner; its live state is shared with Settings.' },
-  { act: 'music', icon: '♫', label: 'Music', band: 'head', control: 'switch',
+  { act: 'music', icon: '♫', label: 'Music', band: 'toggles', control: 'switch',
     tip: 'Turn music on or off without changing its volume, sound effects, or global mute.' },
+  { act: 'inventory', icon: '▣', label: 'Inventory', band: 'armoury', view: 'rack',
+    tip: 'Open the carried items and armaments view.' },
+  { act: 'character', icon: '♜', label: 'Character', band: 'armoury', view: 'grid',
+    tip: 'Open the character, attributes, equipment, and relic view.' },
+  { act: 'load', icon: '↥', label: 'Load', band: 'session',
+    tip: 'Discard progress since the last save and reload the active slot.' },
+  { act: 'save', icon: '◆', label: 'Save', band: 'session',
+    tip: 'Write the climb to its slot and stay here.' },
+  { act: 'saveQuit', icon: '↪', label: 'Save and Quit', band: 'session',
+    tip: 'Save, then return safely to the title screen.' },
+  { act: 'quitNoSave', icon: '⚠', label: 'Quit Without Saving', band: 'session', tone: 'danger', danger: true,
+    tip: 'Return to the title without writing the current run state.' },
 ];
 
 const MENU = {
-  map: [
-    ...QUICK_CONTROLS,
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Weapons and armour — swap between fights for free.' },
-    { act: 'legend', icon: '?', label: 'Map legend', band: 'head', local: true,
-      tip: 'What each mark on the act map means.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
-  // Draw and discard are real destinations that exist ONLY here (combat.js's
-  // pile modals) — the demonstration that context-specific means something.
-  combat: [
-    ...QUICK_CONTROLS,
-    { act: 'armoury', icon: '⚒', label: 'Armoury', band: 'head', local: true,
-      tip: 'Equipment and carried items. Hand-set swaps cost energy mid-fight.' },
-    { act: 'draw', icon: '⛁', label: 'Draw pile', band: 'body', local: true, count: 'draw',
-      tip: 'What is still to come, shuffled for viewing.' },
-    { act: 'discard', icon: '✖', label: 'Discard pile', band: 'body', local: true, count: 'discard',
-      tip: 'What you have played and what was discarded.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
-  // The menu already open: the dropdown mirrors the strip behind it, current tab
-  // marked. Controls earns a row here (it is a tab) and not on map/combat, where
-  // it is one click away once you land.
-  overlay: [
-    ...QUICK_CONTROLS,
-    { act: 'close', icon: '✕', label: 'Close menu', band: 'head', local: true,
-      tip: 'Back to the screen behind this one.' },
-    { act: 'tab', tab: 'settings', band: 'body' },
-    { act: 'tab', tab: 'controls', band: 'body' },
-    ...TAIL,
-  ],
+  map: [...QUICK_MENU_ROWS],
+  combat: [...QUICK_MENU_ROWS],
+  overlay: [...QUICK_MENU_ROWS],
 };
 
-const BANDS = ['head', 'body', 'tail'];
+const BANDS = ['menu', 'toggles', 'armoury', 'session'];
 
 // The acts a MENU row may name — the vocabulary, beside the table it governs.
 // It lived in src/ui/surfaces.js, whose header promises THAT FILE HOLDS NO
@@ -39082,15 +39320,13 @@ const BANDS = ['head', 'body', 'tail'];
 // prevent (Vira, gate of 5c49fed).
 //
 // WHAT THIS CATCHES AND WHAT IT DOES NOT, because a hand-kept list should say
-// so out loud. A launcher row is dropped when the CONTEXT does not offer its act
-// (the map has no draw pile — correct, by design), so two different situations
-// wear the same silence:
+// so out loud. A launcher row is dropped when the CONTEXT does not offer its act,
+// so two different situations wear the same silence:
 //
 //   TYPO      — `act: 'jorunal'`, not a word at all → not in this list → the
 //               boot check names it. Caught, and this list is why.
 //   ORPHAN    — a word in this list that NO context implements anywhere. Delete
-//               `legend:` from the actions bag in src/ui/screens/map.js — its
-//               only implementation — and the Map legend row silently vanishes
+//               `inventory:` from each actions bag and the Inventory row silently vanishes
 //               with every check green. NOT CAUGHT HERE, and it cannot be: the
 //               actions bags are built inside a click handler, closed over live
 //               run state, so no source-level join can see them.
@@ -39101,7 +39337,10 @@ const BANDS = ['head', 'body', 'tail'];
 // that opens the three contexts can subtract what was drawn from what is
 // declared here. That instrument is Bjorn's lens and is not written yet — this
 // comment is the statement of the gap, not a claim it is closed.
-const MENU_ACTS = ['tab', 'armoury', 'legend', 'draw', 'discard', 'fullscreen', 'music', 'save', 'quit', 'close'];
+const MENU_ACTS = [
+  'tab', 'fullscreen', 'music', 'inventory', 'character',
+  'load', 'save', 'saveQuit', 'quitNoSave',
+];
 
 /** The tab a `tab` row points at, resolved against MENU_TABS. */
 function tabDef(id) {
@@ -39144,20 +39383,17 @@ function menuTabs({ hasSave = true, counts = {} } = {}) {
  * the two readings look different, which is the point of being able to try both).
  */
 function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, current = null } = {}) {
-  const src = (MENU[context] || []).filter((r) => (hasSave ? true : r.band !== 'tail'));
-  const ordered = fixedEnds
-    ? BANDS.flatMap((b) => src.filter((r) => r.band === b))
-    : [
-        ...src.filter((r) => r.control && r.band !== 'tail'),
-        ...src.filter((r) => !r.control && r.local && r.band !== 'tail'),
-        ...src.filter((r) => !r.control && !r.local && r.band !== 'tail'),
-        ...src.filter((r) => r.band === 'tail'),
-      ];
+  const src = (MENU[context] || []).filter((r) => hasSave || r.band !== 'session');
+  // The four groups are now a player contract, not an experiment: Settings and
+  // Controls always lead, destructive session actions always trail. Keep the
+  // legacy argument for stored profiles, but never let it reorder commands.
+  void fixedEnds;
+  const ordered = BANDS.flatMap((b) => src.filter((r) => r.band === b));
   let prevBand = null;
   return ordered.map((r) => {
     const t = r.act === 'tab' ? tabDef(r.tab) : null;
     const countKey = r.count || (t && t.count);
-    const sep = fixedEnds && prevBand !== null && r.band !== prevBand;
+    const sep = prevBand !== null && r.band !== prevBand;
     prevBand = r.band;
     return {
       act: r.act,
@@ -39166,6 +39402,8 @@ function menuRows(context, { fixedEnds = true, hasSave = true, counts = {}, curr
       label: r.label || (t && t.label) || '',
       tip: r.tip || (t && t.tip) || '',
       tone: r.tone || '',
+      danger: r.danger === true,
+      view: r.view || null,
       badge: countKey != null && counts[countKey] != null ? String(counts[countKey]) : '',
       on: !!(current && r.act === 'tab' && r.tab === current),
       control: r.control || '',
@@ -39609,7 +39847,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'a2f11b442c';
+const SOURCE = 'c37ab92d3d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -39643,7 +39881,7 @@ const SOURCE = 'a2f11b442c';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1314';
+const ORDINAL = '1315';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -39802,7 +40040,7 @@ function hudQuickSettingsHtml(model) {
     + `--hud-quick-card-size:${model.properties.cardSizePx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
     + `--hud-quick-state-dot:${model.properties.stateDotPx}px;--hud-quick-active-tint:${model.properties.activeTintPct}%`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
-    data-place="${model.properties.place}" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
+    data-place="${model.properties.place}" data-compact-slot="right-utility" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', fullscreenGlyphs, 'Off', false)}
     ${controlHtml(music, 'music', 'Music', musicGlyphs, music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>
@@ -40512,6 +40750,8 @@ const ROWS = [
 // is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
 // an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
+  Changelog: { mount: 'set-changelog-mount', needs: null,
+    tip: 'Newest player-visible changes first.' },
   About: { mount: 'set-about-mount', needs: null,
     tip: 'Version, credits, and how AI was used to make this game.' },
 };
@@ -40521,14 +40761,13 @@ const ADVANCED_GROUPS = Object.freeze([
   { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
   { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
   { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Changelog', label: 'Changelog', tip: 'Newest player-visible changes first.' },
 ]);
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
 const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'About'];
+const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
 
 const CATEGORY_LABELS = {
   Display: 'Game',
@@ -40591,7 +40830,7 @@ function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return 'Optional gameplay rules, interface tuning, and diagnostics.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -41242,10 +41481,6 @@ function categoryHtml(cat, settings, saves) {
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
     const groups = ADVANCED_GROUPS.map((group) => {
       const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + '><div class="set-changelog-mount"></div></section>';
-      }
       const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
         + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`
@@ -41311,7 +41546,7 @@ function renderSettings(container, { settings, onChange, grouped = true, saves =
       // to fix in this file.
       const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(categoryLabel(cat))}</button>`).join('');
+        + ` aria-controls="set-panel" data-member="${esc(cat)}"><span class="set-tab-face">${esc(categoryLabel(cat))}</span></button>`).join('');
       html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
         + `<div class="set-panel" id="set-panel" role="tabpanel"`
@@ -46539,7 +46774,7 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+  registries, run, meta = {}, initialView = null, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
@@ -46611,7 +46846,14 @@ function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  if (initialView != null && !IDS.includes(initialView)) {
+    console.warn(`[armoury] requested view ${JSON.stringify(initialView)} is not declared`
+      + ` — opening on ${JSON.stringify((stored && IDS.includes(stored)) ? stored : shapeDefault)}.`);
+  }
+  // A named Quick Menu destination is an arrival route, not a preference. It
+  // wins for this mount without overwriting the player's ordinary default.
+  let view = (initialView != null && IDS.includes(initialView))
+    ? initialView : (stored && IDS.includes(stored)) ? stored : shapeDefault;
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -50437,13 +50679,13 @@ const { veilIsOpen } = require("src/ui/components/veil.js");
 const { matchAction, isEngaged, focusFirst, actionHint } = require("src/ui/input.js");
 const { hintBarHtml } = require("src/ui/components/hints.js");
 const { classGlyph, tintCss } = require("src/ui/assets.js");
-const { nodeBlurb, actTitle, legendEntries, MENU } = require("src/ui/uiContent.js");
+const { nodeBlurb, actTitle, legendEntries } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { mountMapBoard } = require("src/ui/components/mapboard.js");
 const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { resolveMapMode } = require("src/model/mapknowledge.js");
-const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { hudShellHtml, wireRunHudMode } = require("src/ui/components/hudmeta.js");
 const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { resourceBarPlan, resourceDomains } = require("src/model/resources.js");
@@ -50471,7 +50713,10 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+function mountMap(app, {
+  registries, run, meta, onPick, onLoad, onSave, onQuit, onQuitWithoutSaving,
+  onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {},
+}) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -50537,9 +50782,9 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
+        // The route receipt shares the Run HUD shell but sits outside the
+        // painted header. Expanded mode clears the external utility rail with
+        // equal data-owned insets; Compact reclaims that space for the shelf.
         overlayHtml: `${legendHtml}${entranceOrientation}`,
       }))}
     </div>`;
@@ -50601,6 +50846,11 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
     chromeHtml: hintBarHtml('map'),
+  });
+  wireRunHudMode(app, {
+    settings: meta.settings || {},
+    onSettingsChange,
+    onModeChange: () => board.scheduleViewportRecenter(),
   });
 
   const strip = app.querySelector('.hud-relics');
@@ -50720,10 +50970,14 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          ...(onArmoury ? {
+            inventory: () => onArmoury('rack'),
+            character: () => onArmoury('grid'),
+          } : {}),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSaving ? { quitNoSave: () => onQuitWithoutSaving() } : {}),
         },
       });
     });
@@ -50732,10 +50986,12 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettin
   // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
   // the same MENU table the rows read. `title=` alone (what these carried) is
   // invisible to touch and to a pad.
-  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+  for (const [sel, label, tip] of [
+    ['#open-armoury', 'Armoury', 'Character, inventory, armaments, relics, cards, and stats.'],
+    ['#map-legend', 'Map legend', 'What each mark on the act map means.'],
+  ]) {
     const el = app.querySelector(sel);
-    const row = (MENU.map || []).find((r) => r.act === ctxAct);
-    if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    if (el) attachTooltip(el, () => `<div class="tt-title">${esc(label)}</div>${esc(tip)}`);
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
@@ -52621,7 +52877,16 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendCont
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
+  let viewportTimer = null;
+  let viewportFrameA = null;
+  let viewportFrameB = null;
+  let viewportRo = null;
+  let lifecycleObserver = null;
+  const frame = globalThis.requestAnimationFrame || ((callback) => setTimeout(callback, 0));
+  const cancelFrame = globalThis.cancelAnimationFrame || clearTimeout;
   function recenter(onSettled) {
+    if (ro) { ro.disconnect(); ro = null; }
+    if (backstop) { clearTimeout(backstop); backstop = null; }
     let settled = false;
     const settle = () => {
       // A timeout is only a request to settle. A zero-height scrollport has no
@@ -52660,16 +52925,74 @@ function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendCont
     backstop = setTimeout(settle, 120);
   }
 
+  // Fullscreen shells and mobile visual viewports often report two or three
+  // intermediate rectangles. Debounce the event burst, then wait two paint
+  // frames so the camera reads the final map viewport before aiming at the
+  // current node. Manual zoom is preserved; only the camera is recentered.
+  function scheduleViewportRecenter() {
+    clearTimeout(viewportTimer);
+    viewportTimer = setTimeout(() => {
+      viewportTimer = null;
+      if (!scroll.isConnected) return;
+      viewportFrameA = frame(() => {
+        viewportFrameA = null;
+        viewportFrameB = frame(() => {
+          viewportFrameB = null;
+          if (!scroll.isConnected || scroll.clientHeight <= 0) return;
+          if (restorePending) recenter();
+          else {
+            centerOnCurrent();
+            emitViewState(false);
+          }
+        });
+      });
+    }, 80);
+  }
+
+  let lastViewportSize = `${scroll.clientWidth}x${scroll.clientHeight}`;
+  if (typeof ResizeObserver !== 'undefined') {
+    viewportRo = new ResizeObserver(() => {
+      const next = `${scroll.clientWidth}x${scroll.clientHeight}`;
+      if (next === lastViewportSize) return;
+      lastViewportSize = next;
+      scheduleViewportRecenter();
+    });
+    viewportRo.observe(scroll);
+  }
+  window.addEventListener('resize', scheduleViewportRecenter);
+  globalThis.visualViewport?.addEventListener?.('resize', scheduleViewportRecenter);
+  document.addEventListener('fullscreenchange', scheduleViewportRecenter);
+  document.addEventListener('webkitfullscreenchange', scheduleViewportRecenter);
+
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    lifecycleObserver = new MutationObserver(() => {
+      if (!host.isConnected) teardown();
+    });
+    lifecycleObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
   function teardown() {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
+    if (viewportRo) { viewportRo.disconnect(); viewportRo = null; }
+    if (lifecycleObserver) { lifecycleObserver.disconnect(); lifecycleObserver = null; }
+    clearTimeout(viewportTimer);
+    viewportTimer = null;
+    if (viewportFrameA != null) cancelFrame(viewportFrameA);
+    if (viewportFrameB != null) cancelFrame(viewportFrameB);
+    viewportFrameA = null;
+    viewportFrameB = null;
+    window.removeEventListener('resize', scheduleViewportRecenter);
+    globalThis.visualViewport?.removeEventListener?.('resize', scheduleViewportRecenter);
+    document.removeEventListener('fullscreenchange', scheduleViewportRecenter);
+    document.removeEventListener('webkitfullscreenchange', scheduleViewportRecenter);
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
     pendingViewCommit = null;
   }
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, stepZoom, teardown,
+    recenter, scheduleViewportRecenter, resetFraming, stepZoom, teardown,
     get zoom() { return zoom; },
   };
 }
@@ -52804,7 +53127,7 @@ function runHeaderStripHtml(model) {
 
 function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
-  return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
+  return `<section class="hud-vitals-panel hud-compact-vitals" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
     <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
 }
@@ -52812,7 +53135,7 @@ function vitalsPanelHtml(model) {
 function quickAccessPanelHtml(model) {
   const armoury = childModel(model, UI.armouryControl);
   const menu = childModel(model, UI.quickMenuControl);
-  return `<section class="hud-control-grid" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
+  return `<section class="hud-control-grid hud-compact-command" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions">
       <button class="topbar-btn" ${uiComponentAttrs(armoury.component, armoury.variant)} id="${esc(armoury.properties.id)}" title="${esc(armoury.accessibility.hint)}" aria-label="${esc(armoury.accessibility.label)}"><span aria-hidden="true">${esc(armoury.properties.glyph)}</span></button>
       <button class="topbar-btn" ${uiComponentAttrs(menu.component, menu.variant)} id="${esc(menu.properties.id)}" data-action-hint="menu"
@@ -52839,16 +53162,88 @@ function inventoryBeltHtml(model) {
 }
 
 function sharedRunHudHtml(model) {
-  const { place, headerClass, overlayHtml } = model.properties;
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(model.component, place)}>
-    <div class="hud-top">
+  const { place, headerClass, overlayHtml, hudMode } = model.properties;
+  return `<div class="run-hud-shell" data-run-hud-shell data-hud-mode="${esc(hudMode)}">
+  <header id="${esc(place)}-run-hud" class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" ${uiComponentAttrs(model.component, place)}>
+    <div class="hud-top hud-compact-run" data-compact-composition="asymmetric-command-shelf">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
+    <button type="button" class="hud-resize-grip" data-hud-resize-grip aria-controls="${esc(place)}-run-hud"
+      aria-expanded="${hudMode === 'expanded'}" aria-label="${hudMode === 'expanded' ? 'Collapse run HUD' : 'Expand run HUD'}"
+      title="Drag or press to switch HUD size"><span class="hud-resize-grip-face" aria-hidden="true"></span></button>
     ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
-    ${overlayHtml}
-  </header>`;
+  </header>
+  ${overlayHtml ? `<div class="run-hud-overlays">${overlayHtml}</div>` : ''}
+</div>`;
+}
+
+const HUD_MODE_KEY = 'runHudMode';
+
+function wireRunHudMode(root, { settings = {}, onSettingsChange = null, onModeChange = null } = {}) {
+  const shell = root?.querySelector?.('[data-run-hud-shell]');
+  const header = shell?.querySelector?.('.shared-hud');
+  const grip = shell?.querySelector?.('[data-hud-resize-grip]');
+  if (!shell || !header || !grip) return () => {};
+
+  let mode = settings[HUD_MODE_KEY] === 'compact' ? 'compact' : 'expanded';
+  let pointerStart = null;
+  let suppressClick = false;
+
+  const applyMode = (next, { persist = true } = {}) => {
+    const resolved = next === 'compact' ? 'compact' : 'expanded';
+    const changed = resolved !== mode;
+    mode = resolved;
+    shell.dataset.hudMode = mode;
+    header.dataset.hudMode = mode;
+    grip.setAttribute('aria-expanded', String(mode === 'expanded'));
+    grip.setAttribute('aria-label', mode === 'expanded' ? 'Collapse run HUD' : 'Expand run HUD');
+    if (persist && changed) {
+      settings[HUD_MODE_KEY] = mode;
+      onSettingsChange?.({ [HUD_MODE_KEY]: mode });
+      onModeChange?.(mode);
+    }
+    return mode;
+  };
+
+  const onClick = () => {
+    if (suppressClick) { suppressClick = false; return; }
+    applyMode(mode === 'expanded' ? 'compact' : 'expanded');
+  };
+  const onPointerDown = (event) => {
+    pointerStart = event.clientY;
+    grip.setPointerCapture?.(event.pointerId);
+  };
+  const onPointerUp = (event) => {
+    if (pointerStart == null) return;
+    const delta = event.clientY - pointerStart;
+    pointerStart = null;
+    grip.releasePointerCapture?.(event.pointerId);
+    if (Math.abs(delta) < 12) return;
+    suppressClick = true;
+    applyMode(delta < 0 ? 'compact' : 'expanded');
+  };
+  const onKeyDown = (event) => {
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    applyMode(event.key === 'ArrowUp' || event.key === 'Home' ? 'compact' : 'expanded');
+  };
+  const onPointerCancel = () => { pointerStart = null; };
+
+  applyMode(mode, { persist: false });
+  grip.addEventListener('click', onClick);
+  grip.addEventListener('pointerdown', onPointerDown);
+  grip.addEventListener('pointerup', onPointerUp);
+  grip.addEventListener('pointercancel', onPointerCancel);
+  grip.addEventListener('keydown', onKeyDown);
+  return () => {
+    grip.removeEventListener('click', onClick);
+    grip.removeEventListener('pointerdown', onPointerDown);
+    grip.removeEventListener('pointerup', onPointerUp);
+    grip.removeEventListener('pointercancel', onPointerCancel);
+    grip.removeEventListener('keydown', onKeyDown);
+  };
 }
 
 // Compatibility name for older tools and callers. It is the same reusable
@@ -52856,7 +53251,7 @@ function sharedRunHudHtml(model) {
 const hudShellHtml = sharedRunHudHtml;
 
 
-Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, hudShellHtml });
+Object.assign(module.exports, { identityClusterHtml, cindersCounterHtml, buildMetadataTrailHtml, runHeaderStripHtml, vitalsPanelHtml, quickAccessPanelHtml, primaryHudRowHtml, inventoryBeltHtml, sharedRunHudHtml, HUD_MODE_KEY, wireRunHudMode, hudShellHtml });
 
 },
 "src/ui/viewModels/RunHudViewModel.js": function (module, exports, require) {
@@ -52884,9 +53279,10 @@ function runHudViewModel({
   quickSettings,
   overlayHtml = '',
 } = {}) {
+  const hudMode = quickSettings?.settings?.runHudMode === 'compact' ? 'compact' : 'expanded';
   return componentModel(UI.sharedRunHud, {
     variant: place,
-    properties: { place, headerClass, overlayHtml },
+    properties: { place, headerClass, overlayHtml, hudMode },
     children: [
       runHeaderModel({ place, cinders, act, actTotal, floor, floorTotal, seed, identity }),
       componentModel(UI.primaryHudRow, {
@@ -53311,7 +53707,7 @@ const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.j
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { intentBadge, intentTooltip, backdropClass, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -53332,13 +53728,17 @@ const { flaskActionPlan } = require("src/model/flaskActions.js");
 const { flaskPresentation, mountFlaskActionMenu } = require("src/ui/components/flask.js");
 const { CHARGE_FLASK_KINDS, chargeFlaskDefinition } = require("src/model/gracerefill.js");
 const { mountHand } = require("src/ui/components/hand.js");
-const { hudShellHtml } = require("src/ui/components/hudmeta.js");
+const { hudShellHtml, wireRunHudMode } = require("src/ui/components/hudmeta.js");
 const { runHudViewModel } = require("src/ui/viewModels/RunHudViewModel.js");
 const { combatantFrame } = require("src/ui/components/combatantFrame.js");
 const { UI_COMPONENTS: UI, uiComponentAttrs, markUiComponent } = require("src/ui/components/uiComponents.js");
 const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 
-function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, quickControls = {} }) {
+function mountCombat(app, {
+  registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone,
+  onSettings, onSettingsChange, onMenu, onLoad, onSave, onQuit,
+  onQuitWithoutSaving, quickControls = {},
+}) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -53427,6 +53827,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     </div>`;
 
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
+  wireRunHudMode(app, { settings: meta.settings || {}, onSettingsChange });
 
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
@@ -54699,36 +55100,34 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
-          draw: () => showDraw(),
-          discard: () => showDiscard(),
+          inventory: () => openCombatArmoury('rack'),
+          character: () => openCombatArmoury('grid'),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSaving ? { quitNoSave: () => onQuitWithoutSaving() } : {}),
         },
       });
     });
   }
 
-  // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
-  // MENU table. Armoury is the canonical equipment name in every context.
-  {
-    const row = (MENU.combat || []).find((r) => r.act === 'armoury');
-    if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
-    attachTooltip(menuBtn, () =>
-      `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Armoury, settings, controls and saving.'
-        : 'Everywhere you can go from here.')}`);
-  }
+  attachTooltip($('#combat-armoury'), () =>
+    '<div class="tt-title">Armoury</div>Character, inventory, armaments, relics, cards, and stats.');
+  attachTooltip(menuBtn, () =>
+    `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
+      ? 'Armoury, settings, controls and saving.'
+      : 'Everywhere you can go from here.')}`);
 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  $('#combat-armoury').addEventListener('click', () => {
+  function openCombatArmoury(initialView = null) {
     if (!registries.balance.equipment.enabled) return;
     const panel = mountEquipment(document.body, {
       registries,
       run,
       meta: { settings: { customization: run.customization } },
+      initialView,
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;
@@ -54744,6 +55143,11 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         afterDispatch(out.events);
       },
     });
+  }
+  const combatArmoury = $('#combat-armoury');
+  combatArmoury.addEventListener('click', () => openCombatArmoury());
+  combatArmoury.addEventListener('ashenspire:open-armoury', (event) => {
+    openCombatArmoury(event.detail?.initialView || null);
   });
 
   render();
@@ -57897,13 +58301,16 @@ function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
+function openOverlay({
+  registries, run, meta, saves = null, onSettingsChange, onArmoury, onLoad,
+  onSave, onQuit, onQuitWithoutSaving, quickControls = {}, initialTab = 'settings',
+}) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit);
+  const hasSave = !!(onSave || onQuit || onQuitWithoutSaving);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -57938,7 +58345,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit,
+    onSettingsChange, onArmoury, onLoad, onSave, onQuit, onQuitWithoutSaving,
   };
 
   const saveButton = veil.querySelector('#ov-save');
@@ -58013,10 +58420,17 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
         } : {}),
       },
       actions: {
-        close: () => closeOverlay(),
         tab: (id) => selectTab(id),
+        ...(onArmoury ? {
+          inventory: () => { closeOverlay(); onArmoury('rack'); },
+          character: () => { closeOverlay(); onArmoury('grid'); },
+        } : {}),
+        ...(onLoad ? { load: () => (onLoad() ? undefined : 'keep') } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuitWithoutSaving ? {
+          quitNoSave: () => (onQuitWithoutSaving() ? closeOverlay() : 'keep'),
+        } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');

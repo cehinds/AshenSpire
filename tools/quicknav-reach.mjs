@@ -275,14 +275,14 @@ async function checkList(where, { expectTail = true } = {}) {
 
   // R2 — his constraint, and it is the one thing not up for testing.
   if (expectTail) {
-    const last2 = d.rows.slice(-2).map((r) => r.act);
-    if (last2.join(',') !== 'save,quit') fail('R2', where, `last two rows are ${last2.join(', ') || '(none)'}, not save, quit`);
+    const last3 = d.rows.slice(-3).map((r) => r.act);
+    if (last3.join(',') !== 'save,saveQuit,quitNoSave') fail('R2', where, `last three rows are ${last3.join(', ') || '(none)'}, not save, saveQuit, quitNoSave`);
     else pass('R2', where);
   }
 
-  const controls = d.rows.slice(0, 2);
+  const controls = d.rows.slice(2, 4);
   if (controls.map((r) => r.act).join(',') !== 'fullscreen,music') {
-    fail('R8', where, `first two rows are ${controls.map((r) => r.act).join(', ') || '(none)'}`);
+    fail('R8', where, `toggle rows are ${controls.map((r) => r.act).join(', ') || '(none)'}`);
   } else if (controls.some((r) => !['switch', 'menuitemcheckbox'].includes(r.role)
       || !['true', 'false'].includes(r.checked) || !r.condition)) {
     fail('R8', where, `stateful rows lack an owned ARIA role/state/condition: ${JSON.stringify(controls)}`);

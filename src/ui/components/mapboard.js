@@ -1130,7 +1130,16 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
+  let viewportTimer = null;
+  let viewportFrameA = null;
+  let viewportFrameB = null;
+  let viewportRo = null;
+  let lifecycleObserver = null;
+  const frame = globalThis.requestAnimationFrame || ((callback) => setTimeout(callback, 0));
+  const cancelFrame = globalThis.cancelAnimationFrame || clearTimeout;
   function recenter(onSettled) {
+    if (ro) { ro.disconnect(); ro = null; }
+    if (backstop) { clearTimeout(backstop); backstop = null; }
     let settled = false;
     const settle = () => {
       // A timeout is only a request to settle. A zero-height scrollport has no
@@ -1169,16 +1178,74 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     backstop = setTimeout(settle, 120);
   }
 
+  // Fullscreen shells and mobile visual viewports often report two or three
+  // intermediate rectangles. Debounce the event burst, then wait two paint
+  // frames so the camera reads the final map viewport before aiming at the
+  // current node. Manual zoom is preserved; only the camera is recentered.
+  function scheduleViewportRecenter() {
+    clearTimeout(viewportTimer);
+    viewportTimer = setTimeout(() => {
+      viewportTimer = null;
+      if (!scroll.isConnected) return;
+      viewportFrameA = frame(() => {
+        viewportFrameA = null;
+        viewportFrameB = frame(() => {
+          viewportFrameB = null;
+          if (!scroll.isConnected || scroll.clientHeight <= 0) return;
+          if (restorePending) recenter();
+          else {
+            centerOnCurrent();
+            emitViewState(false);
+          }
+        });
+      });
+    }, 80);
+  }
+
+  let lastViewportSize = `${scroll.clientWidth}x${scroll.clientHeight}`;
+  if (typeof ResizeObserver !== 'undefined') {
+    viewportRo = new ResizeObserver(() => {
+      const next = `${scroll.clientWidth}x${scroll.clientHeight}`;
+      if (next === lastViewportSize) return;
+      lastViewportSize = next;
+      scheduleViewportRecenter();
+    });
+    viewportRo.observe(scroll);
+  }
+  window.addEventListener('resize', scheduleViewportRecenter);
+  globalThis.visualViewport?.addEventListener?.('resize', scheduleViewportRecenter);
+  document.addEventListener('fullscreenchange', scheduleViewportRecenter);
+  document.addEventListener('webkitfullscreenchange', scheduleViewportRecenter);
+
+  if (typeof MutationObserver !== 'undefined' && document.body) {
+    lifecycleObserver = new MutationObserver(() => {
+      if (!host.isConnected) teardown();
+    });
+    lifecycleObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
   function teardown() {
     if (ro) { ro.disconnect(); ro = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
+    if (viewportRo) { viewportRo.disconnect(); viewportRo = null; }
+    if (lifecycleObserver) { lifecycleObserver.disconnect(); lifecycleObserver = null; }
+    clearTimeout(viewportTimer);
+    viewportTimer = null;
+    if (viewportFrameA != null) cancelFrame(viewportFrameA);
+    if (viewportFrameB != null) cancelFrame(viewportFrameB);
+    viewportFrameA = null;
+    viewportFrameB = null;
+    window.removeEventListener('resize', scheduleViewportRecenter);
+    globalThis.visualViewport?.removeEventListener?.('resize', scheduleViewportRecenter);
+    document.removeEventListener('fullscreenchange', scheduleViewportRecenter);
+    document.removeEventListener('webkitfullscreenchange', scheduleViewportRecenter);
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
     pendingViewCommit = null;
   }
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, stepZoom, teardown,
+    recenter, scheduleViewportRecenter, resetFraming, stepZoom, teardown,
     get zoom() { return zoom; },
   };
 }

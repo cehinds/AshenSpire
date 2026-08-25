@@ -31,13 +31,13 @@ import { veilIsOpen } from '../components/veil.js';
 import { matchAction, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
-import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
+import { nodeBlurb, actTitle, legendEntries } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
-import { hudShellHtml } from '../components/hudmeta.js';
+import { hudShellHtml, wireRunHudMode } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
 import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -65,7 +65,10 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+export function mountMap(app, {
+  registries, run, meta, onPick, onLoad, onSave, onQuit, onQuitWithoutSaving,
+  onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {},
+}) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -131,9 +134,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           presentation: registries.balance.ui.hudQuickSettings,
           settings: meta.settings || {},
         },
-        // The phone orientation receipt belongs to the header's layout flow.
-        // Keeping it inside the same positioned host means the quick utility
-        // stack starts after ENTRANCE → BOSS instead of floating across it.
+        // The route receipt shares the Run HUD shell but sits outside the
+        // painted header. Expanded mode clears the external utility rail with
+        // equal data-owned insets; Compact reclaims that space for the shelf.
         overlayHtml: `${legendHtml}${entranceOrientation}`,
       }))}
     </div>`;
@@ -195,6 +198,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
       tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
     },
     chromeHtml: hintBarHtml('map'),
+  });
+  wireRunHudMode(app, {
+    settings: meta.settings || {},
+    onSettingsChange,
+    onModeChange: () => board.scheduleViewportRecenter(),
   });
 
   const strip = app.querySelector('.hud-relics');
@@ -314,10 +322,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
-          legend: () => toggleLegend(),
+          ...(onArmoury ? {
+            inventory: () => onArmoury('rack'),
+            character: () => onArmoury('grid'),
+          } : {}),
+          ...(onLoad ? { load: () => onLoad() } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { quit: () => onQuit() } : {}),
+          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
+          ...(onQuitWithoutSaving ? { quitNoSave: () => onQuitWithoutSaving() } : {}),
         },
       });
     });
@@ -326,10 +338,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // Law 3 clause 4 — a real tooltip, hover AND focus cursor, with its text from
   // the same MENU table the rows read. `title=` alone (what these carried) is
   // invisible to touch and to a pad.
-  for (const [sel, ctxAct] of [['#open-armoury', 'armoury'], ['#map-legend', 'legend']]) {
+  for (const [sel, label, tip] of [
+    ['#open-armoury', 'Armoury', 'Character, inventory, armaments, relics, cards, and stats.'],
+    ['#map-legend', 'Map legend', 'What each mark on the act map means.'],
+  ]) {
     const el = app.querySelector(sel);
-    const row = (MENU.map || []).find((r) => r.act === ctxAct);
-    if (el && row) attachTooltip(el, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
+    if (el) attachTooltip(el, () => `<div class="tt-title">${esc(label)}</div>${esc(tip)}`);
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'

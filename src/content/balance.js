@@ -292,6 +292,10 @@ export const balance = {
       glyphSizePx: 28,
       stateDotPx: 6,
       activeTintPct: 14,
+      // The Act Route Strip clears the utility rail equally on both sides.
+      // A multiplier keeps that clearance tied to the authored rail rather
+      // than baking a second viewport-specific width into map.css.
+      safeInsetMultiplier: 1.2,
       showCardBackground: true,
       showLabels: false,
     },

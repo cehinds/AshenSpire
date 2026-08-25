@@ -108,13 +108,16 @@ export function closeOverlay() {
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, quickControls = {}, initialTab = 'settings' }) {
+export function openOverlay({
+  registries, run, meta, saves = null, onSettingsChange, onArmoury, onLoad,
+  onSave, onQuit, onQuitWithoutSaving, quickControls = {}, initialTab = 'settings',
+}) {
   closeFlaskActionMenu({ cancelled: true });
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit);
+  const hasSave = !!(onSave || onQuit || onQuitWithoutSaving);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -149,7 +152,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit,
+    onSettingsChange, onArmoury, onLoad, onSave, onQuit, onQuitWithoutSaving,
   };
 
   const saveButton = veil.querySelector('#ov-save');
@@ -224,10 +227,17 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
         } : {}),
       },
       actions: {
-        close: () => closeOverlay(),
         tab: (id) => selectTab(id),
+        ...(onArmoury ? {
+          inventory: () => { closeOverlay(); onArmoury('rack'); },
+          character: () => { closeOverlay(); onArmoury('grid'); },
+        } : {}),
+        ...(onLoad ? { load: () => (onLoad() ? undefined : 'keep') } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
+        ...(onQuitWithoutSaving ? {
+          quitNoSave: () => (onQuitWithoutSaving() ? closeOverlay() : 'keep'),
+        } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');

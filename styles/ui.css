@@ -1203,6 +1203,20 @@ button.rs-reset {
 .hud-quick-notice[hidden] { display: none; }
 .hud-quick-settings,
 .hud-quick-settings.compact { width: var(--tap-floor); }
+@media (max-width: 700px) {
+  /* The painted cards shrink by 20%; the transparent outer buttons retain the
+     configured tap floor, so mobile density never steals the interaction. */
+  .hud-quick-settings { --hud-quick-card-size-mobile: 32px; }
+  .hud-quick-setting-face {
+    width: min(var(--tap-floor), calc(var(--hud-quick-card-size-mobile) / var(--ui-zoom, 1)));
+    height: min(var(--tap-floor), calc(var(--hud-quick-card-size-mobile) / var(--ui-zoom, 1)));
+  }
+  .hud-quick-setting-glyph {
+    width: calc(22px / var(--ui-zoom, 1));
+    height: calc(22px / var(--ui-zoom, 1));
+    font-size: calc(22px / var(--ui-zoom, 1));
+  }
+}
 .title-stack { animation: screenIn 700ms ease-out; }
 .title-menu { display: flex; flex-direction: column; gap: 1.2rem; align-items: center; }
 .title-glow { animation: titleGlow 3.2s ease-in-out infinite alternate; }
@@ -1928,12 +1942,17 @@ button.rs-reset {
    loud. And nothing here is a height: the floor is untouched by construction,
    which is the whole reason this is the axis that had room. */
 .set-tabs .set-tab {
-  width: 100%; padding: 6px 10px; border-radius: 6px;
+  width: 100%; padding: 0; border: 0; border-radius: 6px;
   font-size: 1rem; letter-spacing: 0.05em;
-  background: var(--bg); border: 1px solid var(--line-soft); color: var(--muted);
+  background: transparent; color: var(--muted);
   cursor: pointer;
   min-height: var(--tap-floor);
   display: inline-flex; align-items: center; justify-content: flex-start; text-align: left;
+}
+.set-tabs .set-tab-face {
+  box-sizing: border-box; width: 100%; min-height: 34px; padding: 5px 9px;
+  display: inline-flex; align-items: center; justify-content: inherit;
+  border: 1px solid var(--line-soft); border-radius: 6px; background: var(--bg);
 }
 .set-tabs .set-tab:hover { color: var(--parchment); }
 /* THREE CHANNELS on the selected tab — fill, border colour, label colour — for
@@ -1978,8 +1997,10 @@ button.rs-reset {
    in `rgba(var(--accent-rgb), 0.25)` would make this tab the only pill on the
    screen that themes — divergence dressed as a fix. Filed as its own act. */
 .set-tabs .set-tab.on {
-  color: var(--gold); border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
-  font-weight: 600;
+  color: var(--gold); font-weight: 600;
+}
+.set-tabs .set-tab.on .set-tab-face {
+  border-color: var(--gold); background: rgba(201, 162, 39, 0.25);
 }
 .set-subtabs {
   display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px;

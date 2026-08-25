@@ -165,8 +165,11 @@ engine.music('combat');
 check(stubGraph().elements.length === externalBefore, 'disabled Music starts no external stream');
 
 const controls = menuRows('map', { fixedEnds: false, hasSave: true });
-check(controls[0]?.act === 'fullscreen' && controls[1]?.act === 'music', 'Fullscreen and Music stay the first Quick Menu rows');
-check(controls.at(-2)?.act === 'save' && controls.at(-1)?.act === 'quit', 'Save and Save & Quit stay the final rows');
+check(controls.map((row) => `${row.act}:${row.tab || ''}`).join(',')
+  === 'tab:settings,tab:controls,fullscreen:,music:,inventory:,character:,load:,save:,saveQuit:,quitNoSave:',
+  'Quick Menu keeps the declared grouped order from Settings through Quit Without Saving');
+check(controls.at(-1)?.act === 'quitNoSave' && controls.at(-1)?.danger === true,
+  'Quit Without Saving stays the explicit destructive final row');
 check(resolveQuickNavMode() === 'mirror' && resolveQuickNavMode('broken') === 'mirror'
   && resolveQuickNavMode('off') === 'off' && resolveQuickNavMode('switcher') === 'switcher',
   'Quick Menu defaults to Mirror and preserves explicit legacy choices');
@@ -199,7 +202,9 @@ check(settingsSource.includes("document.addEventListener('fullscreenerror', onFu
   'Settings announces fullscreen refusal');
 check(settingsSource.includes("document.removeEventListener('fullscreenerror', onFullscreenError);"),
   'Settings releases fullscreen listeners');
-check(overlay.includes('onQuit?.();') && main.includes('onQuit: () => {\n      persist();'),
+check(overlay.includes('onQuit?.();')
+  && main.includes('function saveAndQuitToTitle() {\n  persist();\n  showTitle();')
+  && main.includes('onQuit: saveAndQuitToTitle,'),
   'Save & Quit prefers the persistence callback');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns fallback scheduling.'), 'fallback is gated by musicEnabled');
 check(audio.includes('if (!state.musicEnabled || state.muted || state.context !== context) return; // Music owns procedural scheduling.'), 'procedural scheduling is gated by musicEnabled');

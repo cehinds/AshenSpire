@@ -5190,6 +5190,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the shared utility rail is right-edge close and has no authored inter-control gap');
     eq(`${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`, '40/28/6/14',
       'the shared face, 70%-scale glyph, state dot, and active tint are data-owned');
+    eq(presentation.safeInsetMultiplier, 1.2,
+      'the route strip clears both sides by the data-owned utility-rail multiplier');
     eq(presentation.showCardBackground, true,
       'the quick utilities default to one consistent compact card on every device');
     eq(presentation.showLabels, false,
@@ -5246,14 +5248,21 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(supported.supported, true, 'documents with both enter and exit APIs expose fullscreen');
   });
 
-  test('61a. Armoury is the one equipment route, and fullscreen reports browser support', () => {
+  test('61a. Quick Menu routes exact Armoury views and fullscreen reports browser support', () => {
     assert(!MENU_TABS.some((tab) => tab.id === 'relics'),
       'the run menu does not duplicate Armoury with a Relics & Flasks tab');
     for (const [context, rows] of Object.entries(MENU)) {
       assert(!rows.some((row) => row.tab === 'relics'),
         `${context} quick navigation has no duplicate relic/equipment route`);
-      const armouryRows = rows.filter((row) => row.act === 'armoury');
-      for (const row of armouryRows) eq(row.label, 'Armoury', `${context} names the canonical equipment route Armoury`);
+      eq(rows.map((row) => `${row.act}:${row.tab || ''}`).join(','),
+        'tab:settings,tab:controls,fullscreen:,music:,inventory:,character:,load:,save:,saveQuit:,quitNoSave:',
+        `${context} keeps the grouped Quick Menu order`);
+      eq(rows.find((row) => row.act === 'inventory')?.view, 'rack',
+        `${context} Inventory opens the Armoury inventory view`);
+      eq(rows.find((row) => row.act === 'character')?.view, 'grid',
+        `${context} Character opens the Armoury character view`);
+      eq(rows.at(-1)?.danger, true,
+        `${context} marks Quit Without Saving as destructive`);
     }
 
     const unsupported = { documentElement: {}, fullscreenEnabled: false };

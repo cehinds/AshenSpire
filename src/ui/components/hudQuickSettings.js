@@ -47,7 +47,7 @@ export function hudQuickSettingsHtml(model) {
     + `--hud-quick-card-size:${model.properties.cardSizePx}px;--hud-quick-glyph-size:${model.properties.glyphSizePx}px;`
     + `--hud-quick-state-dot:${model.properties.stateDotPx}px;--hud-quick-active-tint:${model.properties.activeTintPct}%`;
   return `<aside class="hud-quick-settings${model.properties.showLabels ? '' : ' compact'}" data-hud-quick-settings
-    data-place="${model.properties.place}" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
+    data-place="${model.properties.place}" data-compact-slot="right-utility" data-card-background="${model.properties.showCardBackground}" ${uiComponentAttrs(model.component, model.variant)} style="${style}" aria-label="Quick display and audio settings">
     ${controlHtml(fullscreen, 'fullscreen', 'Fullscreen', fullscreenGlyphs, 'Off', false)}
     ${controlHtml(music, 'music', 'Music', musicGlyphs, music.properties.stateLabel, music.properties.active)}
     <p class="hud-quick-notice" data-hud-quick-notice role="status" aria-live="polite" hidden></p>

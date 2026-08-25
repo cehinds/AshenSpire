@@ -46,7 +46,7 @@ export function runHeaderStripHtml(model) {
 
 export function vitalsPanelHtml(model) {
   const meter = childModel(model, UI.resourceMeter);
-  return `<section class="hud-vitals-panel" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
+  return `<section class="hud-vitals-panel hud-compact-vitals" ${uiComponentAttrs(model.component, model.variant)} aria-label="Health, mana, and stamina">
     <div class="resbars-host" ${uiComponentAttrs(meter.component, meter.variant)}></div>
   </section>`;
 }
@@ -54,7 +54,7 @@ export function vitalsPanelHtml(model) {
 export function quickAccessPanelHtml(model) {
   const armoury = childModel(model, UI.armouryControl);
   const menu = childModel(model, UI.quickMenuControl);
-  return `<section class="hud-control-grid" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
+  return `<section class="hud-control-grid hud-compact-command" ${uiComponentAttrs(model.component, model.variant)} aria-label="Quick access">
     <div class="hud-actions">
       <button class="topbar-btn" ${uiComponentAttrs(armoury.component, armoury.variant)} id="${esc(armoury.properties.id)}" title="${esc(armoury.accessibility.hint)}" aria-label="${esc(armoury.accessibility.label)}"><span aria-hidden="true">${esc(armoury.properties.glyph)}</span></button>
       <button class="topbar-btn" ${uiComponentAttrs(menu.component, menu.variant)} id="${esc(menu.properties.id)}" data-action-hint="menu"
@@ -81,16 +81,88 @@ export function inventoryBeltHtml(model) {
 }
 
 export function sharedRunHudHtml(model) {
-  const { place, headerClass, overlayHtml } = model.properties;
-  return `<header class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" ${uiComponentAttrs(model.component, place)}>
-    <div class="hud-top">
+  const { place, headerClass, overlayHtml, hudMode } = model.properties;
+  return `<div class="run-hud-shell" data-run-hud-shell data-hud-mode="${esc(hudMode)}">
+  <header id="${esc(place)}-run-hud" class="topbar combat-hud shared-hud${headerClass ? ` ${esc(headerClass)}` : ''}" data-hud-mode="${esc(hudMode)}" ${uiComponentAttrs(model.component, place)}>
+    <div class="hud-top hud-compact-run" data-compact-composition="asymmetric-command-shelf">
       ${runHeaderStripHtml(childModel(model, UI.runHeaderStrip))}
       ${primaryHudRowHtml(childModel(model, UI.primaryHudRow))}
       ${inventoryBeltHtml(childModel(model, UI.inventoryBelt))}
     </div>
+    <button type="button" class="hud-resize-grip" data-hud-resize-grip aria-controls="${esc(place)}-run-hud"
+      aria-expanded="${hudMode === 'expanded'}" aria-label="${hudMode === 'expanded' ? 'Collapse run HUD' : 'Expand run HUD'}"
+      title="Drag or press to switch HUD size"><span class="hud-resize-grip-face" aria-hidden="true"></span></button>
     ${hudQuickSettingsHtml(childModel(model, UI.hudQuickSettings))}
-    ${overlayHtml}
-  </header>`;
+  </header>
+  ${overlayHtml ? `<div class="run-hud-overlays">${overlayHtml}</div>` : ''}
+</div>`;
+}
+
+export const HUD_MODE_KEY = 'runHudMode';
+
+export function wireRunHudMode(root, { settings = {}, onSettingsChange = null, onModeChange = null } = {}) {
+  const shell = root?.querySelector?.('[data-run-hud-shell]');
+  const header = shell?.querySelector?.('.shared-hud');
+  const grip = shell?.querySelector?.('[data-hud-resize-grip]');
+  if (!shell || !header || !grip) return () => {};
+
+  let mode = settings[HUD_MODE_KEY] === 'compact' ? 'compact' : 'expanded';
+  let pointerStart = null;
+  let suppressClick = false;
+
+  const applyMode = (next, { persist = true } = {}) => {
+    const resolved = next === 'compact' ? 'compact' : 'expanded';
+    const changed = resolved !== mode;
+    mode = resolved;
+    shell.dataset.hudMode = mode;
+    header.dataset.hudMode = mode;
+    grip.setAttribute('aria-expanded', String(mode === 'expanded'));
+    grip.setAttribute('aria-label', mode === 'expanded' ? 'Collapse run HUD' : 'Expand run HUD');
+    if (persist && changed) {
+      settings[HUD_MODE_KEY] = mode;
+      onSettingsChange?.({ [HUD_MODE_KEY]: mode });
+      onModeChange?.(mode);
+    }
+    return mode;
+  };
+
+  const onClick = () => {
+    if (suppressClick) { suppressClick = false; return; }
+    applyMode(mode === 'expanded' ? 'compact' : 'expanded');
+  };
+  const onPointerDown = (event) => {
+    pointerStart = event.clientY;
+    grip.setPointerCapture?.(event.pointerId);
+  };
+  const onPointerUp = (event) => {
+    if (pointerStart == null) return;
+    const delta = event.clientY - pointerStart;
+    pointerStart = null;
+    grip.releasePointerCapture?.(event.pointerId);
+    if (Math.abs(delta) < 12) return;
+    suppressClick = true;
+    applyMode(delta < 0 ? 'compact' : 'expanded');
+  };
+  const onKeyDown = (event) => {
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    applyMode(event.key === 'ArrowUp' || event.key === 'Home' ? 'compact' : 'expanded');
+  };
+  const onPointerCancel = () => { pointerStart = null; };
+
+  applyMode(mode, { persist: false });
+  grip.addEventListener('click', onClick);
+  grip.addEventListener('pointerdown', onPointerDown);
+  grip.addEventListener('pointerup', onPointerUp);
+  grip.addEventListener('pointercancel', onPointerCancel);
+  grip.addEventListener('keydown', onKeyDown);
+  return () => {
+    grip.removeEventListener('click', onClick);
+    grip.removeEventListener('pointerdown', onPointerDown);
+    grip.removeEventListener('pointerup', onPointerUp);
+    grip.removeEventListener('pointercancel', onPointerCancel);
+    grip.removeEventListener('keydown', onKeyDown);
+  };
 }
 
 // Compatibility name for older tools and callers. It is the same reusable

@@ -280,6 +280,12 @@ for (const [key, cssName] of [
 ]) {
   document.documentElement.style.setProperty(cssName, `${HUD_QUICK_SETTINGS[key]}px`);
 }
+const hudUtilitySafeInset = (Math.max(
+  Number(UI.tapSize?.def) || 44,
+  Number(HUD_QUICK_SETTINGS.cardSizePx) || 0,
+) + (Number(HUD_QUICK_SETTINGS.edgeGapPx) || 0))
+  * (Number(HUD_QUICK_SETTINGS.safeInsetMultiplier) || 1.2);
+document.documentElement.style.setProperty('--hud-utility-safe-inset', `${hudUtilitySafeInset}px`);
 document.documentElement.dataset.hudQuickCardBackground = String(HUD_QUICK_SETTINGS.showCardBackground);
 const ACCENTS = UI.accents;
 // Debug handle, same species as `window.__combat` in combat.js. EldenSpire#23's
@@ -1067,11 +1073,12 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury() {
+function showArmoury(initialView = null) {
   mountEquipment(document.body, {
     registries,
     run,
     meta: saves.loadMeta(),
+    initialView,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -1085,6 +1092,17 @@ function showArmoury() {
     },
     onClose: showMap,
   });
+}
+
+function openRunArmoury(initialView = null) {
+  const combatArmoury = app.querySelector('#combat-armoury');
+  if (combatArmoury) {
+    combatArmoury.dispatchEvent(new CustomEvent('ashenspire:open-armoury', {
+      detail: { initialView },
+    }));
+    return;
+  }
+  showArmoury(initialView);
 }
 
 function showHistory() {
@@ -1129,6 +1147,33 @@ function quitGame() {
   }
 }
 
+export function confirmDiscardProgress(action, confirmFn = globalThis.confirm) {
+  if (typeof confirmFn !== 'function') return false;
+  const lead = action === 'load' ? 'Load the last saved state?' : 'Quit without saving?';
+  return !!confirmFn(`${lead}\n\nProgress since the last save will be lost.`);
+}
+
+function loadActiveGame() {
+  if (!confirmDiscardProgress('load')) return false;
+  resumeRun(activeSlot);
+  return true;
+}
+
+function saveAndQuitToTitle() {
+  persist();
+  showTitle();
+}
+
+function quitWithoutSaving() {
+  if (!confirmDiscardProgress('quit')) return false;
+  audio.stopMusic();
+  run = null;
+  // A normal browser tab cannot be closed reliably. Returning to the title is
+  // the safe, deterministic fallback on every browser and packaged shell.
+  showTitle({ skipStartup: true });
+  return true;
+}
+
 // The in-run overlay keeps only Settings and Controls. Armoury owns inventory,
 // equipment, deck, relics, flasks, and run stats.
 function showOverlay(initialTab = 'settings') {
@@ -1147,14 +1192,14 @@ function showOverlay(initialTab = 'settings') {
     saves,
     onSettingsChange: persistSettingsChange,
     quickControls: quickMenuControls,
+    onArmoury: openRunArmoury,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
   });
 }
 
@@ -1330,14 +1375,13 @@ function showMap() {
     onMenu: showOverlay,
     onArmoury: showArmoury,
     quickControls: quickMenuControls,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist(); // the run is resumable from its slot via Continue
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
   });
 }
 
@@ -1544,14 +1588,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     quickControls: quickMenuControls,
+    onLoad: loadActiveGame,
     onSave: () => {
       persist();
       return activeSlot;
     },
-    onQuit: () => {
-      persist();
-      showTitle();
-    },
+    onQuit: saveAndQuitToTitle,
+    onQuitWithoutSaving: quitWithoutSaving,
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
       const meta = saves.loadMeta();

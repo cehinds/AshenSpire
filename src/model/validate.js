@@ -777,6 +777,11 @@ export function validateContent(bundle) {
           err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
         }
       }
+      const safeInsetMultiplier = quickSettings.safeInsetMultiplier;
+      if (typeof safeInsetMultiplier !== 'number' || !Number.isFinite(safeInsetMultiplier)
+        || safeInsetMultiplier < 1 || safeInsetMultiplier > 2) {
+        err('balance.ui.hudQuickSettings.safeInsetMultiplier', `must be a finite number in [1, 2] — got ${JSON.stringify(safeInsetMultiplier)}`);
+      }
       if (typeof quickSettings.showCardBackground !== 'boolean') {
         err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
       }

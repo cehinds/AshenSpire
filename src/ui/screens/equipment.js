@@ -577,7 +577,7 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap,
+  registries, run, meta = {}, initialView = null, inCombat: inCombatArg, onClose, onChange, onSwap,
 }) {
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
@@ -649,7 +649,14 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  if (initialView != null && !IDS.includes(initialView)) {
+    console.warn(`[armoury] requested view ${JSON.stringify(initialView)} is not declared`
+      + ` — opening on ${JSON.stringify((stored && IDS.includes(stored)) ? stored : shapeDefault)}.`);
+  }
+  // A named Quick Menu destination is an arrival route, not a preference. It
+  // wins for this mount without overwriting the player's ordinary default.
+  let view = (initialView != null && IDS.includes(initialView))
+    ? initialView : (stored && IDS.includes(stored)) ? stored : shapeDefault;
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
