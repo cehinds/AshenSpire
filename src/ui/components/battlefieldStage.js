@@ -2,7 +2,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let releaseActiveStage = null;
 
-function scaleFrame(frame, intentGapPx) {
+function scaleFrame(frame, intentGapPx, centerHeightRatio) {
   const stack = frame.querySelector(':scope > .combatant-stack');
   const leading = stack?.querySelector(':scope > .combatant-leading');
   const card = stack?.querySelector(':scope > .combatant-card');
@@ -20,9 +20,10 @@ function scaleFrame(frame, intentGapPx) {
   const naturalCardWidth = Math.max(card.offsetWidth, card.scrollWidth);
   // Intent is critical combat information, so it keeps its authored size.
   // Only the card beneath it scales; the two still move as one centered unit.
+  const centeredHeight = availableHeight * centerHeightRatio;
   const scale = Math.max(0.01, Math.min(
     1,
-    Math.max(0, availableHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
+    Math.max(0, centeredHeight - leadingHeight - gap) / Math.max(1, naturalCardHeight),
     availableWidth / Math.max(1, naturalCardWidth),
   ));
   const cardOffset = leadingHeight + gap;
@@ -42,6 +43,7 @@ export function wireBattlefieldStage(field, model) {
   field.dataset.stageSafeCorridor = 'true';
   field.dataset.hudClearanceViewportPct = String(model.tokens.hudClearanceViewportPct);
   field.dataset.actionClearanceViewportPct = String(model.tokens.actionClearanceViewportPct);
+  field.dataset.centerHeightRatio = String(model.tokens.centerHeightRatio);
   field.setAttribute('aria-label', model.accessibility.label);
   field.style.setProperty('--battlefield-hud-clearance', `calc(${model.tokens.hudClearanceViewportPct}vh / var(--ui-zoom, 1))`);
   field.style.setProperty('--battlefield-action-clearance', `calc(${model.tokens.actionClearanceViewportPct}vh / var(--ui-zoom, 1))`);
@@ -53,7 +55,7 @@ export function wireBattlefieldStage(field, model) {
     frameRequest = requestAnimationFrame(() => {
       if (!field.isConnected) return;
       field.querySelectorAll('.combatant[data-ui-component="combatant-frame"]').forEach((frame) => {
-        scaleFrame(frame, model.tokens.intentGapPx);
+        scaleFrame(frame, model.tokens.intentGapPx, model.tokens.centerHeightRatio);
       });
     });
   };

@@ -5296,6 +5296,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(model.component, 'battlefield-stage', 'the shared battlefield component owns the model');
     eq(`${model.tokens.hudClearanceViewportPct}/${model.tokens.actionClearanceViewportPct}/${model.tokens.intentGapPx}/${model.tokens.centerPct}`,
       '3/3/6/50', 'all four authored tokens reach the immutable Component Model');
+    eq(battlefieldStageModel({ centerPct: 25 }).tokens.centerHeightRatio, 0.5,
+      'an upper-quarter stage center only exposes the symmetric half-height corridor');
+    eq(battlefieldStageModel({ centerPct: 75 }).tokens.centerHeightRatio, 0.5,
+      'a lower-quarter stage center receives the same collision-safe height limit');
+    eq(battlefieldStageModel({ centerPct: 50 }).tokens.centerHeightRatio, 1,
+      'the default midpoint can use the full protected corridor');
 
     const malformed = {
       ...contentBundle,
