@@ -10,6 +10,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const REQUIRED_IDS = Object.freeze([
+  'startup-gate',
   'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
@@ -65,6 +66,8 @@ export function receipt() {
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
     buildstamp: read('src/ui/components/buildstamp.js'),
+    startupGate: read('src/ui/components/startupGate.js'),
+    startupGateModel: read('src/ui/models/StartupGateModels.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
     validate: read('src/model/validate.js'),
@@ -161,6 +164,15 @@ export function findings(r) {
   }
   if (!REQUIRED_IDS.every((id) => r.spec.includes(`\`${id}\``))) {
     bad.push('C10 SPEC no longer codifies every public component id');
+  }
+  if (!/export function startupGateModel/.test(r.startupGateModel)
+      || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
+      || !/export function mountStartupGate/.test(r.startupGate)
+      || !/buildStampHtml\('startup'\)/.test(r.startupGate)
+      || !r.catalogMarkdown.includes('`startup-gate`')
+      || !r.catalogHtml.includes("['startup-gate'")
+      || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
+    bad.push('C18 startup gate no longer uses its immutable component model and shared build stamp');
   }
   if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
       || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*wideControlHeightPx:\s*24,[\s\S]*labelFontPx:\s*10,[\s\S]*glyphSizePx:\s*14,[\s\S]*stateDotPx:\s*5,[\s\S]*showCardBackground:\s*false,[\s\S]*showLabels:\s*true,[\s\S]*\}/.test(r.balance)
@@ -291,11 +303,12 @@ function selftest() {
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
+    ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 17/17 reusable component contracts hold');
+  else console.log('PASS clean source: 18/18 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -311,5 +324,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 17/17 reusable component contracts hold');
+  else console.log('ui-components: OK — 18/18 reusable component contracts hold');
 }

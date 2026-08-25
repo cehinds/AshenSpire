@@ -801,13 +801,22 @@ Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + car
 ### 7.1 Screens & flow
 
 ```
-Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
-  │                                        ▲              │
-  └── Continue (if save exists)            └──────────────┘ (reward screens between)
+Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
+                              │                                        ▲              │
+                              └── Continue (if save exists)            └──────────────┘ (reward screens between)
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
 Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
+
+Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
+Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
+stamp. Click/tap, Enter, Space, controller A/Cross, and controller Start/Menu are consumed by the
+gate and reveal Title exactly once; that physical press cannot activate a Title control. Prompt
+copy follows the most recent pointer, touch, keyboard, or controller family. Profile quarantine
+and recovery notices outrank the gate. After reveal, focus lands on Title's first available save
+slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
+keeps the same state and focus contract without meaningful animation.
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
@@ -853,6 +862,12 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   instead of storing a duplicate flag. On narrow screens it keeps the same composition but
   presents 44px square glyph controls so enemy intent remains unobscured. Browsers without a
   fullscreen API expose the Fullscreen control as unavailable rather than drawing a dead switch.
+- **Startup Gate Component Model.** `startup-gate` is a boot-scoped presentation component, not a
+  variant of the Title screen. Its immutable model supplies wordmark copy, input-family prompts,
+  deterministic decorative-particle records, accessibility metadata, and the named reveal
+  behavior. Its renderer owns layout and temporary event binding, consumes the one first-input
+  owner supplied by the composition root, and uses the shared build-stamp renderer. It never
+  imports simulation state, persists dismissal, or mounts Title controls behind itself.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,

@@ -73,7 +73,15 @@ const ev = async (e) => {
   return r.result.value;
 };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const boot = async (ms = 1600) => { await c.send('Page.navigate', { url: PAGE }); await sleep(ms); };
+const boot = async (ms = 1600) => {
+  await c.send('Page.navigate', { url: PAGE });
+  await sleep(ms);
+  if (await ev("!!document.querySelector('.startup-gate')")) {
+    await c.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    await c.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    await sleep(260);
+  }
+};
 
 let fails = 0;
 const check = (n, ok, d = '') => { console.log(`${ok ? 'PASS' : 'FAIL'}  ${n}${d ? ` — ${d}` : ''}`); if (!ok) fails++; };
@@ -220,5 +228,5 @@ if (walk.failed) {
 console.log(`\nBOUNDARY: headless Chromium at 390x844, ${DIST ? 'the SHIPPED bundle (dist/AshenSpire.html)' : 'the source tree (index.html)'}, one storage backend.`);
 console.log('It proves WHEN the profile is written and WHAT the Profile screen says. It is silent on');
 console.log('storage that is full or throws, and on every screen it does not open.');
-console.log(fails ? `\n${fails} RED` : '\nall green');
+console.log(fails ? `\nprofile-first-run: RED — ${6 - fails}/6 checks passed; ${fails} failed` : '\nprofile-first-run: OK — 6 checks passed');
 process.exit(fails ? 1 : 0);

@@ -144,7 +144,8 @@ function appShotStates() {
 // of whatever happened to be on screen — including a blank page.
 // `state:` ties an entry to the app state it covers (the derivation above).
 const SCREENS = [
-  { name: 'title', query: '', landmark: '.title-screen' },
+  { name: 'startup', query: '?shot=startup', landmark: '.startup-gate', state: 'startup' },
+  { name: 'title', query: '?shot=title', landmark: '.title-screen', state: 'title' },
   { name: 'map', query: '?shot=map', landmark: '.mapscreen', state: 'map' },
   { name: 'map-atmospheric', query: '?shot=map&shotSettings=' + encodeURIComponent('{"highContrast":false}'), landmark: '.mapscreen' },
   { name: 'combat', query: '?shot=combat', landmark: '.combat', state: 'combat' },
@@ -152,6 +153,7 @@ const SCREENS = [
   { name: 'boss', query: '?shot=boss', landmark: '.combat', state: 'boss' },
   { name: 'death', query: '?shot=death', landmark: '.stats-table', state: 'death' },
   { name: 'customize', query: '?shot=customize', landmark: '.customize', state: 'customize' },
+  { name: 'component-catalog', query: '?shot=components', landmark: '.customize.component-catalog', state: 'components' },
   {
     name: 'customize-stats', query: '?shot=customize', landmark: '#cz-stat-projection',
     drive: `document.querySelector('.cz-stats').open = true`,
@@ -312,7 +314,7 @@ const SCREENS = [
     drive: `document.querySelector('#combat-menu').click()`,
   },
   {
-    name: 'settings', query: '', landmark: '.settings, .set-body',
+    name: 'settings', query: '?shot=title', landmark: '.settings, .set-body',
     drive: `[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`,
   },
   // Profile is a title-screen route and is covered by `profile-drawer` above;
@@ -444,7 +446,7 @@ const SUB_SURFACE_GROUPS = [
     home: 'src/ui/screens/settings.js — settingsCategories(), derived from the filed rows',
     ids: () => settingsCategories().slice(),
     reach: (id) => ({
-      query: '',
+      query: '?shot=title',
       landmark: '.set-body',
       // #90: the categories are a TAB STRIP now, not six headings down one
       // column, so the drive CLICKS instead of scrolling. This is the harness

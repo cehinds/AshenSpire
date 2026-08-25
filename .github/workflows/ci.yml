@@ -385,6 +385,12 @@ jobs:
         # will be slower and that number is not a promise about one.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
 
+      - name: Cold boot owns and consumes the first input before Title exists
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+      - name: The startup gate can fail by the same rendered door (18 plants)
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest
+
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
 

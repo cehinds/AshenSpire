@@ -67,7 +67,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
 
 const SHOTS = [
-  { place: 'title', query: '', what: 'the main menu — his first word' },
+  { place: 'title', query: '?shot=title', what: 'the main menu — his first word' },
   { place: 'map', query: '?shot=map', what: 'the act map' },
   { place: 'combat', query: '?shot=combat', what: 'a fight' },
 ];
