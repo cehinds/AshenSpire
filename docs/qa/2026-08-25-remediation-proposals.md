@@ -6,15 +6,16 @@ The baseline findings came from build `0.4.0.1356`. Four bounded remediations
 are now implemented in the integrated delivery candidate, build `0.4.0.1362`
 (`20424f3657`) on `origin/dev@16d9181d`. All remaining rows are proposals.
 
-Item #1's local App Team 1 repair candidate is now build `0.4.0.1366`
-(`5063bac9f8`). After QA Team 2 returned build 1365 for undersized modal Close
-and occupied-slot Delete targets, the shared tap-floor repair was verified at
-exactly 44x44 on both 390x844 and 1200x730 probes. The repair remains local on
-branch `codex/qa-01-load-slot`, based on
-`origin/dev@75061e3ae78d8ca52df414b12d7548157ce0cf0f`. It is not pushed, merged,
-hosted, released, independently approved at the repair head, or approved for
-item #2. The exact-build receipt is
-[2026-08-25-load-slot-remediation.md](2026-08-25-load-slot-remediation.md).
+Item #1 is integrated through PR #352 at
+`origin/dev@9a37d67f567b7dca0b17977872b4b504bccb6a16`; Pages run 32935267281
+succeeded and the hosted artifact is byte-identical to the reviewed build
+`0.4.0.1366` (`5063bac9f8`). Item #2 is active locally on
+`codex/qa-02-new-slot`, deliberately rebased onto that exact item #1 merge.
+Its source candidate uses one immutable `saveSlotSelectionModel`; exact-build
+evidence is frozen locally in build `0.4.0.1368` (`ebdc7c0ea9`) and item #3
+is blocked. Receipts:
+[item #1](2026-08-25-load-slot-remediation.md) and
+[item #2](2026-08-25-new-slot-remediation.md).
 
 | Local remediation | State | Evidence still required before delivery |
 |---|---|---|
@@ -102,8 +103,8 @@ Renderers own DOM and CSS. Models own labels, ordering, selection, availability,
 
 | # | Observation | Proposed owner | Reusable proposal | Evidence |
 |---:|---|---|---|---|
-| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | **Local repair candidate 1366:** selection/review/hold behavior passes; modal Close and occupied-slot Delete render at the shared 44x44 tap floor on phone and desktop; independent exact-head review pending; [receipt](2026-08-25-load-slot-remediation.md) | `23-load-active-slot-can-deselect.png`; `qa-load-slot-list-mobile-390x844.png`; `qa-load-slot-review-mobile-390x844.png`; `qa-load-slot-review-wide-1200x730.png` |
-| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | Same selection card and state contract as Load | `02-main-menu.png` plus behavior trace |
+| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | **Integrated in PR #352 / build 1366:** deterministic selection/review/hold flow and shared 44x44 title tap targets; [receipt](2026-08-25-load-slot-remediation.md) | `23-load-active-slot-can-deselect.png`; `qa-load-slot-list-mobile-390x844.png`; `qa-load-slot-review-mobile-390x844.png`; `qa-load-slot-review-wide-1200x730.png` |
+| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | **Local build 1368 candidate:** immutable Load/New slot projection keeps selected styling, accessibility state, focus restoration, action availability, and command target on one slot; desktop/390x844 behavior and visual evidence pass; independent review pending; [receipt](2026-08-25-new-slot-remediation.md) | `02-main-menu.png`; `qa-new-slot-selected-mobile-390x844.png`; `qa-new-slot-selected-wide-1200x730.png`; behavior trace |
 | 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | Versioned exact snapshot or explicitly renamed checkpoint contract | `22-continue-restarts-combat-resources.png` |
 | 4 | Quit confirmation uses an inconsistent native prompt | `ConfirmationService` | Shared themed destructive confirmation overlay | behavior trace; screenshot blocked by native dialog |
 | 5 | Escape can bind End Turn and close Controls | `RebindCaptureService` | Reserved-key cancellation before menu dispatch | `13-controls-escape-binding-conflict.png` |

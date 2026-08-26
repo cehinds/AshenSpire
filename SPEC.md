@@ -883,8 +883,11 @@ keeps the same state and focus contract without meaningful animation.
   `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
   `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
   occupied; the action group supplies `title-modal-back-control` and
-  `title-modal-continue-control`. Save data and callbacks remain screen inputs rather than being
-  owned by these presentation components.
+  `title-modal-continue-control`. The DOM-free `saveSlotSelectionModel` projects Load and New
+  from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
+  the selected-focus restoration target, primary-action availability, and the load/create
+  command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
+  than being owned by these presentation components.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
