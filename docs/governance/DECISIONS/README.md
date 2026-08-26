@@ -10,6 +10,9 @@ record that names what it supersedes; do not silently rewrite history.
 | [0003](0003-control-plane-pools-pods-and-wip.md) | Control plane, pools, pods, routing, and WIP | Approved | Active under the same branch-containment rule |
 | [0004](0004-art-policy-adoption.md) | Art policy canonical adoption | Approved | Art policy is Active under the same branch-containment rule |
 | [0005](0005-dev-delivery-promotion-and-pages.md) | Dev delivery, promotion readiness, and Pages source | Approved | Active under the same branch-containment rule; dated branch/Pages values remain snapshot evidence |
+| [0006](0006-adaptive-model-and-effort-selection.md) | Adaptive model and effort selection | Approved | Active under the same branch-containment rule |
+| [0007](0007-standing-coordination-roles-and-completion-council.md) | Standing coordination roles and completion council | Approved | Active under the same branch-containment rule; maps historical `Main` to IT Manager III |
+| [0008](0008-capability-pool-and-review-station-raci.md) | Capability-pool and review-station RACI | Approved | Active under the same branch-containment rule; preserves bounded legacy tasks while routing new work through capability pools |
 
 Approval, local preparation, canonical merge, policy activation, and release
 are separate facts. Decision status remains historical; policy activation is

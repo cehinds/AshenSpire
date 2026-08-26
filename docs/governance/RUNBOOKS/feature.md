@@ -4,7 +4,9 @@
    impact, dependencies, authority, fresh base, claimed paths, tests, QA, and
    rollback in a contract-ready ticket.
 2. Reuse existing models, components, services, controllers, and data owners.
-   A new shared boundary or mechanic requires a recorded Main decision.
+   A new shared boundary requires an IT Manager III architecture decision; a
+   mechanic requires approval from its existing product authority through the
+   technical relay.
 3. Implement one bounded vertical slice without unrelated cleanup. Keep source
    authority distinct from generated projections and serialized artifacts.
 4. Run targeted and negative checks, applicable full suites, and the

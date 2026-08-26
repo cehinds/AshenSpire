@@ -4,7 +4,8 @@
    reproduction, expected/actual result, severity, evidence, and owner.
 2. Reproduce from the real failing surface. Create the smallest discriminating
    known-bad fixture or flow before repair when practical.
-3. Main resolves scope, ownership, architecture, or product ambiguity. A maker
+3. The IT Manager III resolves technical scope, ownership, and architecture,
+   and relays product ambiguity to the existing product authority. A maker
    claims only the repair, regression, and required evidence paths.
 4. Implement the smallest behavior-preserving repair outside the defect.
 5. Run the focused regression, relevant suites, persistence/input/viewports as

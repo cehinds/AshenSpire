@@ -5,10 +5,11 @@ promotion to `release` or `main`, release-branch merges, tags, release
 publication, public promotion beyond the development preview, final
 release-quality control, and release-readiness approval.
 
-Main may declare an exact test/release **promotion packet ready for Constantine
-review** only after strong QA playtest. That packet-readiness fact is not final
-release readiness and grants no branch, Pages, tag, publication, or release
-mutation. See [decision 0005](../DECISIONS/0005-dev-delivery-promotion-and-pages.md).
+The IT Manager III may declare an exact test/release **promotion packet ready
+for Constantine review** only after strong QA playtest. That packet-readiness
+fact is not final release readiness and grants no branch, Pages, tag,
+publication, or release mutation. See [decision
+0005](../DECISIONS/0005-dev-delivery-promotion-and-pages.md).
 
 1. Name the exact approved `dev` commit and candidate artifacts.
 2. Confirm required tickets are integrated/resolved, regressions and release

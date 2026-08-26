@@ -2,8 +2,11 @@
 
 Policy version: `1.0.0`
 
-Decisions: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-legacy-mapping.md)
-and [0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md)
+Decisions: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-legacy-mapping.md),
+[0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md),
+[0006 — Adaptive model and effort selection](DECISIONS/0006-adaptive-model-and-effort-selection.md),
+[0007 — Standing coordination roles and completion council](DECISIONS/0007-standing-coordination-roles-and-completion-council.md),
+and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md)
 
 ## Lifecycle
 
@@ -48,8 +51,8 @@ policy-QA head. No merge-time version or status-text mutation is required.
 | Legacy value | Canonical treatment |
 |---|---|
 | `READY FOR QA` | Transition through `CANDIDATE FROZEN`, then `FUNCTIONAL QA`. |
-| `WAITING ON MAIN` | `WAITING ON DECISION`, `decision_owner: Main`. |
-| `WAITING ON CONSTANTINE` | `WAITING ON DECISION`, `decision_owner: Constantine`, routed through Main. |
+| `WAITING ON MAIN` | `WAITING ON DECISION`, `decision_owner: IT Manager III`; `Main` is retained only as the legacy value. |
+| `WAITING ON CONSTANTINE` | `WAITING ON DECISION`, `decision_owner: Constantine`, routed through the IT Manager III. |
 | `CLOSED` | Decide explicitly between `RESOLVED` and `CANCELLED`; do not preserve as an ambiguous terminal synonym. |
 | `RELEASED` | Record as a separate release fact, never a workflow replacement. |
 
@@ -60,30 +63,57 @@ existed.
 ## Ticket flow and receipts
 
 1. Help Desk records, triages, and completes the ticket contract.
-2. Main decides only exceptions, scope/architecture choices, contested
-   ownership, blockers, integration, and new authority.
-3. Help Desk assigns a temporary pod after `CONTRACT READY`; the lead
-   acknowledges before ownership is active.
-4. The maker implements one ticket from a fresh base in the named isolated
+2. The Project Management Lead supplies portfolio, milestone, dependency, WIP,
+   capacity, handoff, and risk recommendations. The Data Architecture & Systems
+   Lead reviews applicable cross-domain data contracts and may record
+   `WITHHOLD` when unsafe.
+3. The IT Manager III decides technical exceptions, scope/architecture choices,
+   technical sequencing, path/maker ownership, blockers, integration, and new
+   authority routing. Help Desk assigns a temporary pod only after the decision
+   is recorded at `CONTRACT READY`; the lead acknowledges before ownership is
+   active.
+   A numbered assignment `#7` or later cannot enter `ASSIGNED` until acceptance,
+   dependencies, exact base, exclusive paths, and QA requirements are recorded.
+4. Every assignment or reassignment records `MODEL | EFFORT | WHY | ESCALATE
+   WHEN`. The pairing is risk-and-station based, not rank based. It remains
+   fixed for the active turn unless an escalation receipt authorizes the change;
+   `max` effort includes an exceptional reason.
+5. The maker implements one ticket from a fresh base in the named isolated
    lane and returns `TICKET|STATUS|OUTCOME / PATH|BASE|HEAD|CLEAN / EVIDENCE /
-   BLOCK / NEXT / AUTH` receipts.
-5. The candidate freezes once. Functional QA, then Experience QA when
+   BLOCK / NEXT / MODEL|EFFORT|WHY|ESCALATE WHEN / AUTH` receipts.
+6. The candidate freezes once. Functional QA, then Experience QA when
    applicable, use the same head. A changed candidate reopens verification.
-6. At `READY FOR MAIN`, Main records the itemized independence result and
+7. At `READY FOR MAIN`, the Project Management Lead convenes the completion
+   council. Every lead sends Help Desk and the IT Manager III available
+   independent work, dependencies/path or serialized-lane overlap,
+   recommendation, smallest next action, and exact authority. No lead silently
+   self-assigns a shared path.
+8. The IT Manager III records the itemized independence result and
    chooses `WAIT` or normal-PR delivery to `dev` under
    [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md). A `PASS` permits
    discretion; it does not create a duty. `FAIL` or `UNKNOWN` requires `WAIT`.
    Every wait records its rationale and retry trigger.
-7. Help Desk records each resulting fact without collapsing integration,
+9. Help Desk records each resulting fact without collapsing integration,
    hosting, resolution, promotion-packet readiness, or release.
+10. At `RESOLVED`, the Project Management Lead repeats the completion council
+    so independent work, overlaps, dependencies, recommendation, and authority
+    remain visible without creating an assignment.
 
 Cross-family handoffs retain distinct `SENT`, `RECEIVED`, and `ACKNOWLEDGED`
 events. A failed transport does not prove receipt or acceptance and must not
 create a duplicate assignment.
 
+New implementation routes through Feature / Architecture or Incident / Defect
+capability pools and temporary pods. `App Team2`, `IT Support2`, and `IT
+Support3` remain legacy task labels only; existing bounded lanes survive until
+closure or explicit reassignment. A temporary Experience & Accessibility Review
+pool may assist applicable tickets. When QA lanes compete, an IT Manager
+III-chaired QA Coordination Pool may sequence resources, but independent
+reviewers alone author and retain their verdicts.
+
 ## Promotion readiness
 
-After strong QA playtest at an exact candidate, Main may record
+After strong QA playtest at an exact candidate, the IT Manager III may record
 `PROMOTION PACKET READY` and submit the exact packet to Constantine. This is a
 delivery fact, not a lifecycle state, promotion, release-readiness approval, or
 authority to mutate `test`, `release`, `main`, Pages, tags, or releases. The
@@ -97,7 +127,7 @@ Chats are non-authoritative. Before recommending archive, deletion, branch or
 worktree removal, capture durable decisions/evidence and record task ID, ticket,
 owner, last verified SHA/time, dirty or unpushed state, duplicate/superseded
 link, recommendation, recovery consequence, and authority state. No archive or
-deletion occurs without Main/user authority for exact targets.
+deletion occurs without IT Manager III/user authority for exact targets.
 
 Generated root/build/dist HTML and `buildordinal.json` have one serialized
 writer. Settle source authority, freeze source, regenerate once, verify

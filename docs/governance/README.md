@@ -25,8 +25,8 @@ entry point only. It must not grow a parallel copy of these rules.
 The governance lifecycle state is derived from recorded approval, independent
 QA, and canonical branch containment; it is not a manually maintained literal:
 
-- **Proposal** — Main approval is not recorded.
-- **Approved** — Main approval is recorded, but there is no successful
+- **Proposal** — IT Manager III approval is not recorded.
+- **Approved** — IT Manager III approval is recorded, but there is no successful
   independent policy-QA head yet or that exact head is not contained in the
   fresh canonical `dev` head.
 - **Active** — the exact governance head named by the successful independent

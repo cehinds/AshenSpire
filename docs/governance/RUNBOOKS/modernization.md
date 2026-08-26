@@ -13,8 +13,8 @@
 5. Preserve product behavior, mechanics, art direction, and scope unless a
    separately approved ticket changes them.
 6. Run targeted negative evidence, relevant full suites, documentation/contract
-   checks, and independent QA. A refactor that changes behavior returns to Main
-   for scope classification.
+   checks, and independent QA. A refactor that changes behavior returns to the
+   IT Manager III for scope classification and product-authority routing.
 7. Return the consolidated receipt; update the register with resolved debt,
    residual risk, evidence freshness, and follow-up—not an automatic next patch.
 

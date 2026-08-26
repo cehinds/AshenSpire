@@ -12,8 +12,9 @@ This file is the authoritative gate index. Specialized procedures remain in
 
 Every candidate must provide:
 
-1. stable ticket ID, approved scope, authority, owner, dependencies, and
-   exclusive claimed paths;
+1. stable ticket ID, approved scope, authority, owner, dependencies, exclusive
+   claimed paths, and complete `MODEL | EFFORT | WHY | ESCALATE WHEN`
+   assignment metadata;
 2. exact fresh `dev` base and exact candidate head;
 3. acceptance addressed and any accepted deferral;
 4. targeted checks and discriminating known-bad/RED evidence where a mechanical
@@ -24,6 +25,14 @@ Every candidate must provide:
 8. independent non-maker QA at the frozen head; and
 9. a truthful receipt separating local, pushed, PR, integrated, hosted,
    resolved, and released states.
+
+For numbered assignment `#7` or later, missing acceptance, dependencies, exact
+base, exclusive paths, or QA requirements blocks entry to `ASSIGNED`.
+
+The model/effort pairing must match the assignment's risk and station. `max`
+without a recorded exceptional reason is a contract failure. A mid-turn change
+without an escalation receipt is a reassignment failure. Model choice never
+supplies authority or QA independence.
 
 `UNKNOWN`, browser exit 2, missing instrumentation, a silent successful process,
 an inherited unclassified failure, or evidence from another head is not green.
@@ -38,9 +47,11 @@ diagnostic/non-gating.
 | Feature or mechanics | SPEC/GDD acceptance, deterministic behavior, persistence/input implications, applicable full suite. |
 | UI/art/audio | Functional behavior plus Experience QA, representative desktop and approximately `390x844` phone evidence, relevant pointer/keyboard/touch/gamepad and accessibility checks. Screenshots prove pixels only. |
 | Save/schema migration | Frozen fixture provenance, each supported version, round trip, malformed and forward-version handling, rollback compatibility. |
+| Data contract | Data Architecture & Systems Lead review of schema/ID/alias/deprecation, source-generator-projection lineage, migration/version/compatibility, generated manifests, and save/content/data quality; any unresolved `WITHHOLD` is blocking. |
 | Documentation/policy | Local Markdown-link resolution, legacy-path mapping, contradiction search, independent policy QA, recorded activation head, and fresh canonical-`dev` containment result. |
 | Tool/CI | Same-door selftest, known-bad plant, exit/verdict propagation, current-head venue evidence, cost/trigger authority where applicable. |
 | Generated content/artifacts | Authoritative source check, deterministic regeneration, orphan/stale detection, one serialized writer, root/build/dist/buildordinal provenance and identity. |
+| Delivery Systems Review | IT Manager III decision with CQM/Data/Platform consultation as applicable; source-artifact lineage, serialized collisions, dependency/tooling health, integration/deployment evidence, and rollback readiness. |
 
 ## Candidate freeze and QA rejection
 
@@ -53,9 +64,13 @@ A rejection records whether the cause is behavior, experience, evidence,
 contract, or environment. It includes the smallest reproducible failure and
 likely owner but does not authorize QA to repair maker-owned paths.
 
+A temporary QA Coordination Pool may sequence competing lanes and serialized
+resources. Its chair and participants do not author, combine, soften, or
+overrule the independent reviewers' exact-head verdicts.
+
 ## Dev-delivery independence
 
-Before Main chooses delivery to `dev`, the exact-head record must classify each
+Before the IT Manager III chooses delivery to `dev`, the exact-head record must classify each
 condition in [decision 0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md):
 resolved dependencies, independence from unfinished work, shared-path and
 serialized-lane collisions, maker completion, immutable head, required
@@ -63,7 +78,7 @@ independent QA and gates, fresh `dev`/head/PR/mergeability/CI, unchanged scope,
 and durable exact evidence. The combined result is `PASS` only when every item
 passes. `FAIL` or `UNKNOWN` requires `WAIT`.
 
-Main may still choose `WAIT` after `PASS`. That receipt records the integration
+The IT Manager III may still choose `WAIT` after `PASS`. That receipt records the integration
 or sequencing rationale, retry trigger, and smallest next action. It does not
 create authority for idle implementation. Delivery uses a normal reviewable PR;
 this policy does not authorize direct pushes to `dev`.
@@ -87,7 +102,7 @@ require a version or lifecycle-text mutation.
 A test/release candidate packet requires strong QA playtest at the exact
 candidate, fresh branch heads, exact artifact path/SHA-256/build/source,
 generation and byte-identity evidence, all required independent review, and an
-itemized unresolved-finding/exception record. Main may call the packet ready for
+itemized unresolved-finding/exception record. The IT Manager III may call the packet ready for
 Constantine review; only Constantine may approve or perform promotion or final
 release-readiness actions.
 

@@ -19,18 +19,22 @@ schema but must not replace it.
 | `acceptance` | Observable conditions and explicitly out-of-scope behavior. |
 | `authority` | Granted local and remote actions; omitted actions remain unauthorized. |
 | `owner` / `pod` | Lead, maker, up to three bounded helpers, and capability pools. |
+| `model` / `effort` / `why` / `escalate_when` | Complete assignment or reassignment contract selected by risk and station; `max` includes an exceptional reason. |
 | `status` | Exact Project #4 lifecycle value plus timestamp. |
 | `base` / `head` | Exact SHAs and repository/worktree paths; head may be pending before implementation. |
 | `claimed_paths` | Exclusive source, test, evidence, docs, and serialized-lane paths. |
 | `dependencies` | Ticket/decision/owner and satisfied or blocking state. |
 | `test_plan` | Targeted, negative/RED, full-suite, browser, artifact, and docs checks as applicable. |
 | `qa_plan` | Functional QA and whether Experience QA applies; independent reviewer. |
+| `assignment_number` | When numbered, the stable assignment number. `#7` or later cannot enter `ASSIGNED` until acceptance, dependencies, exact base, exclusive paths, and QA requirements are complete. |
 | `rollback` | Smallest reversible boundary and any compatibility constraint. |
 | `evidence` | Exact command/flow, result, SHA, environment, timestamp, and durable link/path. |
 | `decisions` | Decision ID/link, owner, options, answer, scope effect, and timestamp. |
 | `policy_activation_head` | For policy work, the exact governance head named by successful independent policy QA; canonical `dev` containment derives Approved versus Active. |
 | `independence_check` | Itemized `PASS`, `FAIL`, or `UNKNOWN` result for dependencies, unfinished-work independence, shared-path/serialized-lane collision, maker completion, immutable head, QA/gates, fresh base/head/PR/mergeability/CI, unchanged scope, and exact evidence. |
-| `delivery_disposition` | Main's `WAIT`, `DELIVER TO DEV`, or `NOT YET DECIDED` result with exact head and timestamp. A `PASS` permits discretion but creates no duty. |
+| `data_contract_review` | When applicable, Data Architecture & Systems Lead `PASS`, `WITHHOLD`, or `NOT APPLICABLE` with exact invariant, affected schema/ID/lineage/version/compatibility evidence, and smallest safe correction. |
+| `completion_council` | At `READY FOR MAIN` and `RESOLVED`: each lead's available independent work, dependencies/path or serialized-lane overlap, recommendation, smallest next action, and exact authority; PM summary; Help Desk receipt; IT Manager III decision if any. |
+| `delivery_disposition` | IT Manager III's `WAIT`, `DELIVER TO DEV`, or `NOT YET DECIDED` result with exact head and timestamp. A `PASS` permits discretion but creates no duty. |
 | `wait_rationale` | When disposition is `WAIT`: evidence-based reason, owner, retry trigger, safe work if any, and smallest next action. |
 | `promotion_packet` | When promotion review is proposed: decision/action requested; fresh branch heads; candidate/PR/review/CI; dependencies and independence result; scope/paths; maker and QA evidence; artifact path/hash/build/source/provenance; strong playtest; current/desired Pages source and deploy/hosted proof; rollback target/procedure/trigger/actor/authority; recommendation and exact Constantine request. |
 | `delivery_facts` | Separate local, pushed, PR, integrated, hosted, resolved, and released facts. |
@@ -66,6 +70,15 @@ BLOCK
 NEXT
 AUTH
 ```
+
+Assignment and reassignment receipts also include:
+
+```text
+MODEL <model> | EFFORT <effort> | WHY <risk-and-station reason> | ESCALATE WHEN <observable trigger>
+```
+
+A mid-turn model/effort change appends an escalation and reassignment event; it
+does not overwrite the previous packet.
 
 Decision packets use:
 

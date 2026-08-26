@@ -8,9 +8,9 @@ manually updated status literal.
 
 ## Policy lifecycle
 
-- **Proposal** — Main approval is not recorded; the text creates no delivery
+- **Proposal** — IT Manager III approval is not recorded; the text creates no delivery
   obligation.
-- **Approved** — Main approval is recorded, but there is no successful
+- **Approved** — IT Manager III approval is recorded, but there is no successful
   independent policy-QA head yet or that exact head is not contained in the
   fresh canonical `dev` head.
 - **Active** — the exact governance head named by the successful independent
@@ -32,9 +32,10 @@ automatically requires its integration package. Suggestion approval does not
 itself authorize runtime
 implementation, changes to shared paths, a push, merge, release, publication,
 board mutation, or product-scope expansion. Help Desk records and routinely
-routes the work. Main decides exceptions, resolves ambiguity, assigns contested
-or shared paths, and owns integration decisions under the existing authority
-gates.
+routes the work. The IT Manager III decides technical exceptions, resolves
+technical ambiguity, assigns contested or shared paths, and owns integration
+decisions under the existing authority gates. Product and art approval remains
+with its existing authority and is relayed, not created, by this role.
 
 An art suggestion is not integration-ready until the package below is complete,
 internally consistent, and traceable to the approved suggestion. Missing items
@@ -52,23 +53,24 @@ green screenshot alone.
 3. Before approval, Art / Tech Art may prepare bounded proposals and comparison
    evidence. No proposal may claim new mechanics, lore, component ownership,
    or delivery authority.
-4. Main handles approval, design or scope decisions, exceptions, contested
-   ownership, blockers that routine routing cannot resolve, and integration.
-   Questions for Constantine go only through Main.
+4. The IT Manager III records approval from the existing product/art authority,
+   handles technical scope decisions and exceptions, contested ownership,
+   blockers that routine routing cannot resolve, and integration. Questions for
+   Constantine go only through the IT Manager III.
 5. After explicit approval, Help Desk records the approved option and scope and
    tracks the required package. The trigger grants no unrecorded implementation
    or remote-mutation authority.
 
 Routine questions and status go to Help Desk. When a decision, exception, scope
 choice, unresolved blocker, or integration ruling is needed, the pod lead sends
-Main the exact evidence, two or three materially different options when
+the IT Manager III the exact evidence, two or three materially different options when
 applicable, a recommendation and trade-off, the smallest next action, and the
 exact authority needed or `No new authority`.
 
 ## Required integration package
 
 While this policy is **Active**, every approved art suggestion must produce all
-of the following. Use `Not applicable` only with a short reason and Main's
+of the following. Use `Not applicable` only with a short reason and the IT Manager III's
 recorded acceptance.
 
 ### 1. Stable model and component IDs
@@ -92,7 +94,7 @@ that component.
 
 Similar models must reference shared components. A new one-off component needs
 an explicit reason that an existing component cannot express the approved
-result and Main's recorded architecture decision.
+result and the IT Manager III's recorded architecture decision.
 
 ### 3. Binary asset manifest
 
@@ -125,7 +127,7 @@ Reuse existing loaders, registries, renderers, component models, behaviors, and
 services. Do not create a screen-specific asset loader, registry, caching layer,
 or other one-off service when an existing boundary can own the work.
 
-If no existing service fits, send Main an architecture packet naming the gap,
+If no existing service fits, send the IT Manager III an architecture packet naming the gap,
 the alternatives considered, the recommended shared boundary, its consumers,
 tests, and migration cost. A new service requires its own recorded scope and
 implementation authority.
@@ -162,7 +164,7 @@ engine/content behavior it preserves.
 ### 8. Engineering integration handoff
 
 Help Desk routes substantial runtime wiring to an Engineering-backed delivery
-pod. Main resolves integration decisions and exceptions. The handoff names:
+pod. The IT Manager III resolves integration decisions and exceptions. The handoff names:
 
 - the approved suggestion and owning Help Desk ticket or issue;
 - exact base/head and claimed source, config, test, evidence, and generated
@@ -227,7 +229,7 @@ merge, deployment, or release before those states are independently verified.
 ## Completion receipt
 
 The temporary delivery pod lead returns one package receipt to Help Desk.
-Help Desk routes it to Main only for a decision, exception, unresolved blocker,
+Help Desk routes it to the IT Manager III only for a technical decision, exception, unresolved blocker,
 or integration ruling. The receipt contains:
 
 1. approved suggestion, scope, owner, ticket/issue, and decision reference;
@@ -246,7 +248,7 @@ or integration ruling. The receipt contains:
 `CANDIDATE FROZEN`, `FUNCTIONAL QA`, applicable `EXPERIENCE QA`,
 `READY FOR MAIN`, a local commit, a pushed branch, a merged PR, a deployed
 preview, and a release are separate states. Help Desk handles routine routing
-and tracking; Main owns decisions, exceptions, and integration.
+and tracking; the IT Manager III owns technical decisions, exceptions, and integration.
 Platform / Release acts only within separately recorded authority. Existing
 repository review, generated-artifact, publication, board, and Constantine-only
 release gates remain unchanged.
