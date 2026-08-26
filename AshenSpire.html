@@ -37778,6 +37778,8 @@ const UI_COMPONENTS = Object.freeze({
   confirmationModal: 'confirmation-modal',
   confirmationCancel: 'confirmation-cancel-control',
   confirmationAction: 'confirmation-action',
+  controlsRebindCapture: 'controls-rebind-capture',
+  controlsKeyRebindControl: 'controls-key-rebind-control',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
@@ -39923,9 +39925,12 @@ function endActionPress(cancelled = false) {
 // ---- keyboard navigation ----------------------------------------------------
 
 // Controls tab: capture the next keypress to rebind a keyboard action.
+// The stable service id lets receipts and browser gates name this ownership
+// boundary without turning its private state into a second public API.
+const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service';
 let keyCapture = null;
-function captureNextKey(cb) {
-  keyCapture = cb;
+function captureNextKey(onCommit, { onCancel = null } = {}) {
+  keyCapture = { onCommit, onCancel };
 }
 function cancelKeyCapture() {
   keyCapture = null;
@@ -39937,10 +39942,18 @@ function onKeydown(ev) {
     const k = ev.key;
     if (k === 'Shift' || k === 'Control' || k === 'Alt' || k === 'Meta') return;
     ev.preventDefault();
-    ev.stopPropagation();
-    const cb = keyCapture;
+    // This listener and the overlay Escape listener both live on window in the
+    // capture phase. stopPropagation() does not stop a later listener on the
+    // SAME target, so an armed Escape used to bind Escape and then close the
+    // Controls overlay. Capture owns the whole keydown until it settles.
+    ev.stopImmediatePropagation();
+    const capture = keyCapture;
     keyCapture = null;
-    cb(k);
+    if (k === 'Escape') {
+      capture.onCancel?.();
+      return;
+    }
+    capture.onCommit(k);
     return;
   }
   if (gateInput({ family: 'keyboard', kind: 'key', phase: 'down', key: ev.key, repeat: ev.repeat === true })) {
@@ -40246,7 +40259,7 @@ function initInput({ getSettings } = {}) {
 }
 
 
-Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
+Object.assign(module.exports, { ACTIONS, actionShort, setTabRing, hasTabRing, isEngaged, setBindings, getBindings, actionForButton, setKeyBindings, getKeyBindings, matchAction, padLabel, hasGamepad, keyLabel, actionLabel, actionHint, focusFirst, focusElement, setScreenKeyClaim, setInputGate, setActionControl, releaseActionControl, beginActionPress, endActionPress, REBIND_CAPTURE_SERVICE_ID, captureNextKey, cancelKeyCapture, captureNextButton, cancelCapture, initInput });
 
 },
 "src/ui/uiContent.js": function (module, exports, require) {
@@ -41089,7 +41102,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '14fa81f2e2';
+const SOURCE = 'f3aedc1ad1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41123,7 +41136,7 @@ const SOURCE = '14fa81f2e2';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1376';
+const ORDINAL = '1378';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -60664,6 +60677,7 @@ const { ACTIONS, getBindings, getKeyBindings, keyLabel, captureNextButton, cance
 
 
 const { padName } = require("src/ui/uiContent.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
 // Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
@@ -60686,7 +60700,7 @@ function renderControls(container, { settings, onChange }) {
     <div class="rebind-list"></div>
     <p class="set-note" style="margin-top:10px">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>`;
 
-  const list = container.querySelector('.rebind-list');
+  const list = markUiComponent(container.querySelector('.rebind-list'), UI.controlsRebindCapture);
   const bindings = getBindings();
   const keyBindings = getKeyBindings();
 
@@ -60707,6 +60721,8 @@ function renderControls(container, { settings, onChange }) {
         <button class="subtle rebind-btn rebind-pad" data-action="${a.id}">Pad</button>
       </div>`;
     list.appendChild(row);
+    const keyControl = row.querySelector('.rebind-key');
+    if (keyControl) markUiComponent(keyControl, UI.controlsKeyRebindControl, a.id);
   }
 
   let capturing = null; // the armed <button>, or null
@@ -60767,7 +60783,12 @@ function renderControls(container, { settings, onChange }) {
         if (badge) badge.textContent = keyLabel(id);
         reset(btn, 'Key');
         capturing = null;
-      });
+        btn.focus({ preventScroll: true });
+      }, { onCancel: () => {
+        reset(btn, 'Key');
+        btn.focus({ preventScroll: true });
+        capturing = null;
+      } });
     });
   });
 }

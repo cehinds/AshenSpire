@@ -66,6 +66,8 @@ export const UI_COMPONENTS = Object.freeze({
   confirmationModal: 'confirmation-modal',
   confirmationCancel: 'confirmation-cancel-control',
   confirmationAction: 'confirmation-action',
+  controlsRebindCapture: 'controls-rebind-capture',
+  controlsKeyRebindControl: 'controls-key-rebind-control',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',

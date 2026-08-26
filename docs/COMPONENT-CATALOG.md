@@ -281,6 +281,8 @@ sync without duplicating persistence.
 | `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested behavior and computed contrast are covered from Map and Combat at 1200×730, 390×844, and 320×640. |
 | `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
 | `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; parchment text clears 4.5:1 while the danger border retains blood/ember, and the destructive callback runs exactly once and never before activation. |
+| `controls-rebind-capture` | `rebind-capture-service` state | `controls.renderControls` | Controls keyboard/pad binding surface. An armed keyboard capture owns its keydown before the surrounding overlay. |
+| `controls-key-rebind-control` | action id + capture state | `controls.renderControls` | Stable keyboard rebind action. Press… is cancelled by Escape without mutation, then focus returns to this control; re-arming accepts a free key. |
 
 ```text
 quick-menu-panel
