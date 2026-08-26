@@ -434,8 +434,6 @@ export function createSaveManager(storage) {
       }
       // A run saved before equipment existed has no loadout. Give it the bare
       // starting one and re-stamp, rather than throwing away someone's climb.
-      const needsEquipmentStamp = !run.loadout || !run.equipmentProfileRuleSnapshot;
-      const needsCarrierStamp = (run.deck || []).some((card) => card.damageSchool === undefined || card.exposureBuildupPerHit === undefined);
       if (!run.loadout) {
         run.loadout = createLoadout(registries, run.class);
         // ONE OF THE THREE UNGATED HEALS. tests/engine.test.js 28 deletes
@@ -468,9 +466,13 @@ export function createSaveManager(storage) {
       // the current host rules and preserves existing HP/Mana deficits.
       try {
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
-        if (needsEquipmentStamp || needsCarrierStamp) {
-          stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false });
-        }
+        // Every load crosses the same deterministic composition door. This is
+        // also the one-time migration for legacy role-only attack instances:
+        // deck order binds them to attack:0..N-1; no instance is appended.
+        stampDeck(registries, run, undefined, {
+          adoptEquipmentBonuses: false,
+          reconcileEquipmentPools: false,
+        });
         initializeRunFlaskCharges(run, registries);
         delete run.migratedFromRunSchemaVersion;
       } catch (e) {

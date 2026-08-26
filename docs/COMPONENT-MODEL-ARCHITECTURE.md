@@ -165,6 +165,15 @@ one progress state to both visible regions. Comparison is a separate semantic
 child whose tooltip/inline presentation is data-owned, so reading a comparison
 cannot become a second action path.
 
+Equipment-driven attack cards use the same model/service boundary. The pure
+`WeaponDeckCompositionService.buildEquippedWeaponCardPlan()` projects equipped hand models into
+an immutable `EquippedWeaponCardPlan`; `applyEquippedWeaponCardPlan()` rebinds only the stable
+generated attack instances. Screens consume the resulting comparison/card-strip models and issue
+semantic equipment commands; they do not select weapon packages or resize the deck. One
+post-commit `equipmentChanged` event carries the loadout signatures and changed positions so
+combat, save, and future presentation consumers share the same transition instead of adding
+Rogue-, weapon-, or screen-specific controllers.
+
 ## Migration order
 
 1. Contracts, validators, renderer registry, and behavior binder.
