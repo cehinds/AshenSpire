@@ -4,6 +4,7 @@
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let activeClose = null;
+export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
 
 export function closeConfirmationModal({ restoreFocus = false } = {}) {
   activeClose?.({ restoreFocus });
@@ -47,16 +48,17 @@ export function openConfirmationModal({
   heading.textContent = title || 'Confirm action';
   header.append(eyebrow, heading);
 
-  const copy = document.createElement('div');
+  const copy = document.createElement('p');
   copy.id = 'confirmation-modal-copy';
   copy.className = 'confirmation-copy';
-  copy.innerHTML = message || '';
+  copy.textContent = message || '';
 
   const footer = document.createElement('footer');
   const cancelButton = document.createElement('button');
   cancelButton.type = 'button';
   cancelButton.className = 'subtle confirmation-cancel';
   cancelButton.textContent = cancelLabel;
+  markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
   const confirmButton = document.createElement('button');
   confirmButton.type = 'button';
   confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
@@ -109,6 +111,9 @@ export function openConfirmationModal({
   confirmButton.addEventListener('click', () => {
     if (closed) return;
     close({ restoreFocus: false });
+    window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
+      detail: { component, tone },
+    }));
     onConfirm?.();
   });
   veil.addEventListener('click', (event) => {

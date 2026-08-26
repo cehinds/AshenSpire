@@ -926,7 +926,12 @@ keeps the same state and focus contract without meaningful animation.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
   `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
-  the footer composes `save-game-control` and `save-quit-control`. The equipment
+  the footer composes `save-game-control` and `save-quit-control`. Potentially destructive
+  Load and Quit Without Saving commands enter one shared `confirmation-modal`, whose
+  `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
+  focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
+  without mutation and restore the invoking control. When it is stacked over the in-run menu,
+  one Escape removes only the top confirmation. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,

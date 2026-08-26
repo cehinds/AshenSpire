@@ -64,6 +64,7 @@ export const UI_COMPONENTS = Object.freeze({
   saveGameControl: 'save-game-control',
   saveQuitControl: 'save-quit-control',
   confirmationModal: 'confirmation-modal',
+  confirmationCancel: 'confirmation-cancel-control',
   confirmationAction: 'confirmation-action',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',

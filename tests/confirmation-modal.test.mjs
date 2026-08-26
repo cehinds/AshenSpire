@@ -135,12 +135,16 @@ export async function runConfirmationModalContract() {
     document: globalThis.document,
     window: globalThis.window,
     HTMLElement: globalThis.HTMLElement,
+    CustomEvent: globalThis.CustomEvent,
   };
   const document = new FakeDocument();
   const window = new FakeEventTarget();
   globalThis.document = document;
   globalThis.window = window;
   globalThis.HTMLElement = FakeElement;
+  globalThis.CustomEvent = class {
+    constructor(type, options = {}) { this.type = type; this.detail = options.detail; }
+  };
 
   try {
     const { openConfirmationModal, closeConfirmationModal } = await import('../src/ui/components/confirmationModal.js');
@@ -149,9 +153,11 @@ export async function runConfirmationModalContract() {
     trigger.focus();
     let confirmed = 0;
     let cancelled = 0;
+    let commitEvents = 0;
+    window.addEventListener('ashenspire:confirmation-commit', () => { commitEvents += 1; });
     const first = openConfirmationModal({
       title: 'Quit without saving?',
-      message: '<p>Unsaved changes will be lost.</p>',
+      message: 'Unsaved changes will be lost.',
       confirmLabel: 'Quit without saving',
       consequence: 'LEAVES THE RUN',
       tone: 'danger',
@@ -167,6 +173,7 @@ export async function runConfirmationModalContract() {
     check(first.dialog.getAttribute('role') === 'alertdialog', 'destructive confirmation is not an alertdialog');
     check(first.dialog.getAttribute('aria-modal') === 'true', 'confirmation is not exposed as modal');
     check(first.dialog.dataset.uiComponent === 'confirmation-modal', 'confirmation component id is absent');
+    check(first.cancelButton.dataset.uiComponent === 'confirmation-cancel-control', 'neutral Back component id is absent');
     check(first.confirmButton.dataset.uiComponent === 'confirmation-action', 'confirmation action id is absent');
     check(first.cancelButton.textContent === 'Back' && first.confirmButton.textContent === 'Quit without saving',
       'safe and destructive actions are not labeled explicitly');
@@ -185,13 +192,13 @@ export async function runConfirmationModalContract() {
     window.dispatchEvent(escape);
     check(escape.defaultPrevented && escape.immediatePropagationStopped,
       'Escape is not consumed by the top confirmation');
-    check(cancelled === 1 && confirmed === 0, 'Escape committed the destructive action or missed cancellation');
+    check(cancelled === 1 && confirmed === 0 && commitEvents === 0, 'Escape committed the destructive action or missed cancellation');
     check(!first.veil.isConnected && document.activeElement === trigger,
       'cancellation did not remove the dialog and restore its trigger');
 
     const second = openConfirmationModal({
       title: 'Load slot 1?',
-      message: '<p>Replace unsaved progress.</p>',
+      message: 'Replace unsaved progress.',
       confirmLabel: 'Load saved run',
       tone: 'danger',
       returnFocusElement: trigger,
@@ -201,12 +208,12 @@ export async function runConfirmationModalContract() {
     await new Promise((resolveTick) => setTimeout(resolveTick, 0));
     second.confirmButton.dispatchEvent(fakeEvent('click'));
     second.confirmButton.dispatchEvent(fakeEvent('click'));
-    check(confirmed === 1 && cancelled === 1, 'primary action did not commit exactly once');
+    check(confirmed === 1 && cancelled === 1 && commitEvents === 1, 'primary action did not commit exactly once');
     check(!second.veil.isConnected, 'confirmed dialog remains mounted');
 
     const third = openConfirmationModal({
       title: 'Cancel from scrim',
-      message: '<p>Nothing commits.</p>',
+      message: 'Nothing commits.',
       returnFocusElement: trigger,
       onConfirm: () => { confirmed += 1; },
       onCancel: () => { cancelled += 1; },
@@ -224,6 +231,8 @@ export async function runConfirmationModalContract() {
     else globalThis.window = saved.window;
     if (saved.HTMLElement === undefined) delete globalThis.HTMLElement;
     else globalThis.HTMLElement = saved.HTMLElement;
+    if (saved.CustomEvent === undefined) delete globalThis.CustomEvent;
+    else globalThis.CustomEvent = saved.CustomEvent;
   }
 
   return {

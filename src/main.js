@@ -913,7 +913,7 @@ function resumeRun(slot = 1) {
 function loadActiveSlot({ returnFocusElement } = {}) {
   openConfirmationModal({
     title: `Load slot ${activeSlot}?`,
-    message: '<p>The saved run will replace changes made since your last save.</p>',
+    message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
     tone: 'danger',
@@ -929,7 +929,7 @@ function loadActiveSlot({ returnFocusElement } = {}) {
 function quitWithoutSaving({ returnFocusElement } = {}) {
   openConfirmationModal({
     title: 'Quit without saving?',
-    message: '<p>Changes since your last save will be lost. Your existing save slot will remain available.</p>',
+    message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
     confirmLabel: 'Quit without saving',
     consequence: 'LEAVES THE RUN',
     tone: 'danger',
