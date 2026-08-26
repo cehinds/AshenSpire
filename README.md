@@ -29,10 +29,10 @@ naming the pull request that landed it and the build number it shipped in.
 shared rules for routine ownership, evidence, status reporting, cross-family
 handoffs, and the boundary between development approval and release authority.
 The **[automatic Art Design Integration Policy](docs/ART-DESIGN-INTEGRATION-POLICY.md)**
-is at **Proposal** status. It defines the Proposal → Approved → Active lifecycle
+is at **Approved** status. It defines the Proposal → Approved → Active lifecycle
 and, when active, the mandatory integration package triggered by an approved
 art suggestion without granting implementation, publication, or release
-authority. Its status wording changes in the adoption commit.
+authority. Activation requires a separately authorized canonical merge.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build

@@ -1,6 +1,6 @@
 # Automatic Art Design Integration Policy
 
-Status: **Proposal**.
+Status: **Approved**.
 
 ## Policy lifecycle
 
@@ -10,8 +10,10 @@ Status: **Proposal**.
 - **Active** — the adopted policy is present in the canonical branch and applies
   to art suggestions approved on or after its effective date.
 
-The adoption change updates this status and the README wording. Repository
-publication, policy approval, and policy activation are separate states.
+Each lifecycle transition updates this status and the README wording. Approval
+does not activate the policy; activation requires a separately authorized merge
+to the canonical branch. Repository publication, policy approval, and policy
+activation are separate states.
 
 ## Outcome
 
