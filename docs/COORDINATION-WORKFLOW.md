@@ -11,10 +11,11 @@ or a change to release readiness.
 ## Authority and ownership
 
 - **Main** is the AshenSpire coordinator, mandatory question and decision hub,
-  and the only routine liaison between Constantine and the delivery teams.
-  Main receives work, classifies and sequences it, protects one-maker
-  ownership, brokers handoffs, collects team-lead receipts, and returns
-  decisions to the owning lane.
+  senior developer, and the only routine liaison between Constantine and the
+  delivery teams. Main receives work, performs technical triage, classifies and
+  sequences it, protects one-maker ownership, reviews architecture and
+  integration risks, brokers handoffs, collects team-lead receipts, and
+  returns decisions to the owning lane.
 - Every delivery team has one lead and may use up to three supporting agents.
   The lead may work directly, but remains accountable for the team's bounded
   scope, evidence, internal coordination, and one concise report to Main.
@@ -67,6 +68,7 @@ assignment receipt.
 
 | Team | Primary responsibility | Idle maintenance, coordinated through Main |
 |---|---|---|
+| **Help Desk** | ServiceNow-style intake and ticket tracking. Records incidents, defects, service requests, features, art/design/writing requests, evidence, severity, status, owner, dependencies, and next action. It routes every decision through Main and never becomes a second technical or approval authority. | Reconcile ticket receipts with current issues, PRs, status, and team acknowledgements; identify duplicates, missing evidence, stale waiting states, and unowned requests. Propose corrections to Main without closing, deleting, assigning shared paths, or changing product scope. |
 | **IT Support 1, 2, 3** | First stop for defects, regressions, broken builds, diagnostics, repair, and recovery. IT Support may fix a defect in-house or ask Main to route feature-sized construction to an App Team. | Audit stale issues and sessions; prepare safe archive candidates; reconcile old context with current `dev`; refresh README, changelog, status, catalog, and backlog receipts; improve regression coverage and propose memory consolidation. Never delete history or broaden product scope merely because the team is idle. |
 | **App Team 1, 2** | Build new features, applications, architecture slices, and feature-sized implementation delegated by Main. They may accept construction escalated from IT Support, but do not self-assign defects from an IT lane. | Improve the current iteration only: reduce local code debt, align models/components/services, strengthen tests, refresh implementation documentation, and prepare bounded current-iteration proposals. Do not invent a new product initiative. |
 | **Game Design Team** | Own gameplay-system proposals, player loops, balance intent, UX rules, data contracts, acceptance criteria, and design reviews. It defines what the experience should do; App Teams implement substantial code. | Audit the current iteration for rule conflicts, unclear feedback, balance drift, unreachable content, and missing acceptance criteria. Keep proposals data-driven and traceable to SPEC/GDD decisions. |
@@ -75,13 +77,29 @@ assignment receipt.
 | **QA Team 2** | Independent UX, accessibility, responsive, touch, cross-resolution, and player-flow review. Provides the non-maker review for visible work and checks desktop plus phone evidence. | Maintain viewport/device matrices, accessibility checks, screenshot comparisons, usability heuristics, and current-iteration exploratory charters. |
 | **Art Team 1, 2** | Own non-programming visual production and the visual asset system: model appearance, asset consistency, component miniatures/icons, current-build assets, polish, and reusable/data-driven visual definitions. Similar models must reference shared components rather than duplicate them. | Audit the current build and component catalog for mismatched models, duplicate assets, inconsistent icons, weak visual miniatures, missing credits/licences, and hard-coded art. Prepare or refine relevant assets and catalog evidence. Substantive runtime wiring is routed through Main to an App Team. |
 
+### Help Desk ticket contract
+
+Each Help Desk receipt records a stable ticket ID, submitted time, requester,
+request type, player-visible problem or desired outcome, exact build/SHA and
+environment when known, reproduction/evidence, affected components or systems,
+severity/priority, status, owner, dependencies, and smallest next action.
+
+The shared statuses are `NEW`, `TRIAGED`, `ASSIGNED`, `IN PROGRESS`,
+`WAITING ON MAIN`, `READY FOR QA`, `READY FOR MAIN`, `RESOLVED`, `STALE`, and
+`CLOSED`. Help Desk records routing and acknowledgements; Main owns technical
+triage, sequencing, cross-team arbitration, and decision relays. A ticket
+status never grants implementation or remote-mutation authority.
+
 ### Intake and handoff sequence
 
 ```text
-Constantine
+request / observation
     |
     v
-  Main -- classify, sequence, and name one lead
+ Help Desk -- record evidence, type, severity, status, and dependencies
+    |
+    v
+  Main -- senior technical triage, classify, sequence, and name one lead
     |
     +-- defect / regression -----------------> IT Support
     |                                             |
@@ -94,7 +112,7 @@ Constantine
     +-- verification / independent review -----> QA Team 1 or 2
                                                   |
                                                   v
-                              lead receipt -> Main decision hub
+                    lead receipt -> Help Desk status -> Main decision hub
                                                   |
                            Constantine decision only when required
                                                   |
