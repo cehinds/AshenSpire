@@ -623,6 +623,18 @@ export function validateContent(bundle) {
       }
     }
   }
+  // balance.ui.titleLoadHold — the title slot's quick-load gesture. A malformed
+  // value would otherwise fall back inside the view and make the authored row
+  // decorative rather than authoritative, so fail by the row's own name.
+  if (b.balance && b.balance.ui && b.balance.ui.titleLoadHold != null) {
+    const lh = b.balance.ui.titleLoadHold;
+    if (typeof lh !== 'object' || Array.isArray(lh)) {
+      err('balance.ui.titleLoadHold', 'must be an object { ms }');
+    } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
+      err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
+        + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
+    }
+  }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
   // over. The beat is the only feedback a held control has once a thumb is on
   // top of the fill, and every way this row can be wrong is SILENT: a fraction

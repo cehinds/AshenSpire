@@ -4626,12 +4626,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
 .title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
 .title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
 .title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
 .title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
 .title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
 .title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
 .title-slot-pick:disabled { cursor: default; opacity: 0.74; }
 .title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -4642,12 +4642,18 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-seed { font-family: monospace; }
 .title-slot-state { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.14em; }
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
-.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; }
+.title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
+.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
 .title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
 .title-modal-continue { border-color: var(--gold); color: var(--gold); }
 .title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.title-load-review { width: min(52rem, 94%); }
+.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); }
+.title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
+.title-load-review-confirm { border-color: var(--green); color: var(--green); }
+.title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
@@ -4667,8 +4673,11 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
   .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
   .title-slot-state { display: none; }
+  .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
   .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
   .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
+  .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
+  .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
 }
 
 /* Folded companion to the title hall: the first interaction reveals the
@@ -10556,6 +10565,14 @@ const balance = {
     holdConfirm: {
       def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
+    },
+    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
+    // not the irreversible-action safety dial above: a short activation still
+    // selects/reviews the save, while a stationary hold loads it directly.
+    // Keeping the duration here lets the interaction be tuned without changing
+    // the title screen's event wiring.
+    titleLoadHold: {
+      ms: 600,
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
@@ -20968,6 +20985,18 @@ function validateContent(bundle) {
             + `the default position must exist, or every player starts on a setting the row cannot show.`);
         }
       }
+    }
+  }
+  // balance.ui.titleLoadHold — the title slot's quick-load gesture. A malformed
+  // value would otherwise fall back inside the view and make the authored row
+  // decorative rather than authoritative, so fail by the row's own name.
+  if (b.balance && b.balance.ui && b.balance.ui.titleLoadHold != null) {
+    const lh = b.balance.ui.titleLoadHold;
+    if (typeof lh !== 'object' || Array.isArray(lh)) {
+      err('balance.ui.titleLoadHold', 'must be an object { ms }');
+    } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
+      err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
+        + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
     }
   }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
@@ -35700,8 +35729,8 @@ Object.assign(module.exports, { RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_
 // records handed in by main.js. The same modal shell serves LOAD and NEW so the
 // art and spacing can evolve without duplicating the screen structure.
 
-const { esc } = require("src/ui/components/tooltip.js");
-const { beatArmer } = require("src/ui/components/holdconfirm.js");
+const { attachTooltip, esc, hideTooltip } = require("src/ui/components/tooltip.js");
+const { armHold, beatArmer } = require("src/ui/components/holdconfirm.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
@@ -35747,12 +35776,17 @@ function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+  let activatedLoadSlot = null;
+  let loadReviewSlot = null;
 
   const modalSlotHtml = (kind) => slots.map(({ slot, summary }) => {
     const selectable = kind === 'new' || !!summary;
     const selected = selectedSlot === slot;
+    const loadHint = kind === 'load' && summary
+      ? ` title="Select slot ${slot}. Hold to load now; activate the selected slot again to review." aria-label="Slot ${slot}, ${esc(summary.className)}. Hold to load now; activate twice to review."`
+      : '';
     return `<div class="title-slot-row${selected ? ' is-selected' : ''}${!selectable ? ' is-empty' : ''}" data-component="title-save-slot">
-      <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${selectable ? '' : ' disabled'}>
+      <button class="title-slot-pick${summary ? ' is-filled' : ''}" type="button" data-slot-pick="${slot}" aria-pressed="${selected}"${loadHint}${selectable ? '' : ' disabled'}>
         <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy({ slot, summary })}</span>
         <span class="title-slot-state" data-component="title-save-slot-state">${summary ? 'READY' : 'EMPTY'}</span>
       </button>
@@ -35787,6 +35821,25 @@ function mountTitle(app, {
 
   const modalHtml = () => {
     if (!modal) return '';
+    if (modal === 'load' && loadReviewSlot != null) {
+      const record = slots.find(({ slot }) => slot === loadReviewSlot);
+      if (!record?.summary) loadReviewSlot = null;
+      else return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
+        <section class="modal title-menu-modal title-load-review" data-component="title-menu-modal" data-variant="load-review" role="dialog" aria-modal="true" aria-labelledby="title-modal-heading">
+          <button class="title-modal-close" data-component="title-modal-close-control" type="button" data-title-action="close-modal" aria-label="Close Load Game">×</button>
+          <h2 id="title-modal-heading" data-component="title-modal-heading">LOAD SLOT ${record.slot}?</h2>
+          <div class="title-modal-rule" data-component="title-modal-divider" aria-hidden="true"><span></span></div>
+          <article class="title-load-review-slot" data-component="title-save-slot" aria-label="Selected save summary">
+            <span class="title-slot-copy" data-component="title-save-slot-copy">${slotCopy(record)}</span>
+          </article>
+          <p class="title-load-review-copy">Load this saved climb now?</p>
+          <div class="title-modal-actions" data-component="title-modal-actions">
+            <button class="title-modal-back title-load-review-back" data-component="title-modal-back-control" type="button" data-title-action="review-back">BACK TO SAVES</button>
+            <button class="title-load-review-confirm" data-component="title-modal-continue-control" type="button" data-title-action="review-load">LOAD SAVE</button>
+          </div>
+        </section>
+      </div>`;
+    }
     const title = modal === 'load' ? 'LOAD GAME' : 'NEW GAME';
     const canContinue = selectedSlot != null && (modal === 'new' || !!slots.find(({ slot }) => slot === selectedSlot)?.summary);
     return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>
@@ -35814,6 +35867,8 @@ function mountTitle(app, {
   const openModal = (kind) => {
     modal = kind;
     selectedSlot = kind === 'new' ? firstSlot(slots, (summary) => !summary) ?? slots[0]?.slot ?? null : firstSlot(slots, (summary) => !!summary);
+    activatedLoadSlot = null;
+    loadReviewSlot = null;
     render();
     focusModal();
   };
@@ -35821,8 +35876,55 @@ function mountTitle(app, {
   const closeModal = () => {
     modal = null;
     selectedSlot = null;
+    activatedLoadSlot = null;
+    loadReviewSlot = null;
     render();
     focusTitleDefault(app, { showCursor: false });
+  };
+
+  const closeLoadReview = () => {
+    const slot = loadReviewSlot;
+    loadReviewSlot = null;
+    render();
+    focusModal(`[data-slot-pick="${slot}"]`);
+  };
+
+  const activateSlot = (slot) => {
+    hideTooltip();
+    if (modal === 'load') {
+      if (selectedSlot === slot && activatedLoadSlot === slot) {
+        loadReviewSlot = slot;
+        render();
+        focusModal('[data-title-action="review-load"]');
+        return;
+      }
+      selectedSlot = slot;
+      activatedLoadSlot = slot;
+    } else {
+      selectedSlot = slot;
+    }
+    render();
+    focusModal(`[data-slot-pick="${selectedSlot}"]`);
+  };
+
+  const wireLoadSlots = (root) => {
+    if (modal !== 'load') return;
+    const configured = Number(registries.balance.ui.titleLoadHold?.ms);
+    const duration = Number.isFinite(configured) && configured > 0 ? configured : 600;
+    root.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
+      const slot = +button.dataset.slotPick;
+      const record = slots.find((candidate) => candidate.slot === slot);
+      attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
+        + 'Tap once to select. Tap the selected slot again to review. Hold to load now.');
+      armHold(button, {
+        ms: duration,
+        id: 'loadSave',
+        pointerOnly: true,
+        hintHost: button,
+        onTap: () => activateSlot(slot),
+        onConfirm: () => { hideTooltip(); onContinue(slot); },
+      });
+    });
   };
 
   const wireDelete = (root) => {
@@ -35855,7 +35957,8 @@ function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
-        closeModal();
+        if (loadReviewSlot != null) closeLoadReview();
+        else closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
         const first = controls[0];
@@ -35878,6 +35981,8 @@ function mountTitle(app, {
         else if (action === 'settings') onSettings();
         else if (action === 'quit' && onQuit) onQuit();
         else if (action === 'close-modal' || action === 'back') closeModal();
+        else if (action === 'review-back') closeLoadReview();
+        else if (action === 'review-load') onContinue(loadReviewSlot);
         else if (action === 'modal-continue') {
           if (selectedSlot == null) return;
           if (modal === 'load') onContinue(selectedSlot);
@@ -35889,12 +35994,12 @@ function mountTitle(app, {
       if (event.target === event.currentTarget) closeModal();
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
+      if (modal === 'load' && button.classList.contains('is-filled')) return;
       button.addEventListener('click', () => {
-        selectedSlot = +button.dataset.slot;
-        render();
-        focusModal(`[data-slot-pick="${selectedSlot}"]`);
+        activateSlot(+button.dataset.slotPick);
       });
     });
+    wireLoadSlots(root);
     wireDelete(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
@@ -37763,7 +37868,7 @@ function beatCue(phase, id, form) {
  */
 function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
-  feedbackHosts = null,
+  feedbackHosts = null, pointerOnly = false,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -37873,6 +37978,12 @@ function armHold(btn, {
     // the `click` a lifted finger may generate can be swallowed after either a
     // real hold or an off-mode release commit. A key or pad generates NO click
     // here — input.js owns its activation — so it must never set this flag.
+    // Some holds are a pointer/touch shortcut rather than a safety beat. They
+    // must not turn keyboard or controller activation into a timed gesture:
+    // declining those sources here lets the ordinary focused-control click
+    // keep its authored meaning. Safety beats leave pointerOnly false and
+    // retain the three-input parity described at the top of this file.
+    if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
@@ -37982,8 +38093,16 @@ function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) { onConfirm(ev); return; }
-    if (!heldThisPress) { onConfirm(ev); return; }
+    if (ev.detail === 0) {
+      if (pointerOnly && onTap) onTap(ev);
+      else onConfirm(ev);
+      return;
+    }
+    if (!heldThisPress) {
+      if (pointerOnly && onTap) onTap(ev);
+      else onConfirm(ev);
+      return;
+    }
     const tapped = !committedThisPress;
     heldThisPress = false;
     committedThisPress = false;
@@ -38007,7 +38126,7 @@ function armHold(btn, {
   btn.addEventListener('click', onClick);
   btn.addEventListener('carddragstart', onCardDragStart);
   btn.addEventListener('contextmenu', onContextMenu);
-  addEventListener('keydown', onKeyEsc);
+  if (!pointerOnly) addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
@@ -38019,7 +38138,7 @@ function armHold(btn, {
     btn.removeEventListener('click', onClick);
     btn.removeEventListener('carddragstart', onCardDragStart);
     btn.removeEventListener('contextmenu', onContextMenu);
-    removeEventListener('keydown', onKeyEsc);
+    if (!pointerOnly) removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
@@ -40639,7 +40758,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dc8060f1a3';
+const SOURCE = '5063bac9f8';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -40673,7 +40792,7 @@ const SOURCE = 'dc8060f1a3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1363';
+const ORDINAL = '1366';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

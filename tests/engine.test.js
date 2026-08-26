@@ -5822,6 +5822,19 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
     eq(contentBundle.balance.ui.holdConfirm.def, 'off',
       'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
+    eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
+      'the title quick-load hold duration is authored as 600 ms');
+    const malformedTitleLoadHold = {
+      ...contentBundle,
+      balance: {
+        ...contentBundle.balance,
+        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
+      },
+    };
+    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
+    assert(!titleLoadHoldValidation.ok
+      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
+    'a non-positive title quick-load duration is refused by its authored path');
     const expandedTray = trayPresentationState({
       collapsed: false,
       savedHeightRatio: 0.7,
