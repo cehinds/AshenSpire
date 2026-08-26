@@ -126,6 +126,13 @@ an App lead may request copy, art, or QA, but none of those requests silently
 changes ownership. Main records the new owner, exact paths, base/head, blocked
 dependencies, and handoff state before work changes lanes.
 
+After an art suggestion is explicitly approved, the proposed
+[automatic Art Design Integration Policy](ART-DESIGN-INTEGRATION-POLICY.md)
+makes its complete integration package mandatory: stable IDs, reuse and asset
+contracts, catalog evidence, applicable Game Design rules, App and QA handoffs,
+accessibility, provenance, and documentation. The trigger creates obligations,
+not implementation or remote-mutation authority.
+
 Idle work is maintenance, not free product scope. It begins with a read-only
 audit, stays in an isolated lane, and returns a proposal or patch to Main.
 Completed Codex sessions may be archived only after their result and pending

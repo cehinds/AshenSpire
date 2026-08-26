@@ -28,6 +28,10 @@ naming the pull request that landed it and the build number it shipped in.
 **[Development coordination workflow](docs/COORDINATION-WORKFLOW.md)** — the
 shared rules for routine ownership, evidence, status reporting, cross-family
 handoffs, and the boundary between development approval and release authority.
+The local proposed
+**[automatic Art Design Integration Policy](docs/ART-DESIGN-INTEGRATION-POLICY.md)**
+defines the mandatory integration package triggered by an approved art
+suggestion without granting implementation, publication, or release authority.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
