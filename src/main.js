@@ -16,7 +16,8 @@ import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
-import { createCombat, restoreCombatSnapshot, serializeCombatSnapshot } from './engine/combat.js';
+import { createCombat } from './engine/combat.js';
+import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
@@ -1585,14 +1586,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
-      run.loadout = combat.loadout;
-      run.combatEntered = { nodeId, encounterId, snapshot: serializeCombatSnapshot(combat) };
+      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       return activeSlot;
     },
     onQuit: () => {
-      run.loadout = combat.loadout;
-      run.combatEntered = { nodeId, encounterId, snapshot: serializeCombatSnapshot(combat) };
+      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       showTitle();
     },

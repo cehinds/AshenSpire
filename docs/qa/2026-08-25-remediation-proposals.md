@@ -1,4 +1,4 @@
-# AshenSpire QA remediation proposals — updated against build 0.4.0.1362
+# AshenSpire QA remediation proposals — item #3 active from live dev
 
 ## Status
 
@@ -9,13 +9,15 @@ are now implemented in the integrated delivery candidate, build `0.4.0.1362`
 Item #1 is integrated through PR #352 at
 `origin/dev@9a37d67f567b7dca0b17977872b4b504bccb6a16`; Pages run 32935267281
 succeeded and the hosted artifact is byte-identical to the reviewed build
-`0.4.0.1366` (`5063bac9f8`). Item #2 is active locally on
-`codex/qa-02-new-slot`, deliberately rebased onto that exact item #1 merge.
-Its source candidate uses one immutable `saveSlotSelectionModel`; exact-build
-evidence is frozen locally in build `0.4.0.1368` (`ebdc7c0ea9`) and item #3
-is blocked. Receipts:
+`0.4.0.1366` (`5063bac9f8`). Item #2 is integrated through PR #353 at
+`origin/dev@d6318d063fe47419d263f7d3a5a6041d7c0fdade`; Pages run 32940030088
+succeeded and the hosted artifact is byte-identical to reviewed build
+`0.4.0.1368` (`ebdc7c0ea9`). Item #3 is active locally on
+`codex/qa-03-combat-save`, deliberately rebased onto that exact item #2 merge;
+item #4 remains blocked. Receipts:
 [item #1](2026-08-25-load-slot-remediation.md) and
-[item #2](2026-08-25-new-slot-remediation.md).
+[item #2](2026-08-25-new-slot-remediation.md); the item #3 maker receipt is
+[in progress](2026-08-25-combat-save-remediation.md).
 
 | Local remediation | State | Evidence still required before delivery |
 |---|---|---|
@@ -104,8 +106,8 @@ Renderers own DOM and CSS. Models own labels, ordering, selection, availability,
 | # | Observation | Proposed owner | Reusable proposal | Evidence |
 |---:|---|---|---|---|
 | 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | **Integrated in PR #352 / build 1366:** deterministic selection/review/hold flow and shared 44x44 title tap targets; [receipt](2026-08-25-load-slot-remediation.md) | `23-load-active-slot-can-deselect.png`; `qa-load-slot-list-mobile-390x844.png`; `qa-load-slot-review-mobile-390x844.png`; `qa-load-slot-review-wide-1200x730.png` |
-| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | **Local build 1368 candidate:** immutable Load/New slot projection keeps selected styling, accessibility state, focus restoration, action availability, and command target on one slot; desktop/390x844 behavior and visual evidence pass; independent review pending; [receipt](2026-08-25-new-slot-remediation.md) | `02-main-menu.png`; `qa-new-slot-selected-mobile-390x844.png`; `qa-new-slot-selected-wide-1200x730.png`; behavior trace |
-| 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | Versioned exact snapshot or explicitly renamed checkpoint contract | `22-continue-restarts-combat-resources.png` |
+| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | **Integrated in PR #353 / build 1368:** immutable Load/New slot projection keeps selected styling, accessibility state, focus restoration, action availability, and command target on one slot; Pages and hosted byte identity pass; [receipt](2026-08-25-new-slot-remediation.md) | `02-main-menu.png`; `qa-new-slot-selected-mobile-390x844.png`; `qa-new-slot-selected-wide-1200x730.png`; behavior trace |
+| 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | **Local build 1371 candidate:** versioned exact committed-turn snapshot; malformed/dangling snapshots refuse and archive; older entry checkpoints remain compatible; source/artifact desktop and 390x844 behavior, full Node, three-plant same-door, byte/provenance, and screenshot gates pass; independent QA pending; [receipt](2026-08-25-combat-save-remediation.md) | `22-continue-restarts-combat-resources.png`; `qa-combat-save-before-wide-1200x730.png`; `qa-combat-save-resumed-wide-1200x730.png`; phone pair; behavior trace |
 | 4 | Quit confirmation uses an inconsistent native prompt | `ConfirmationService` | Shared themed destructive confirmation overlay | behavior trace; screenshot blocked by native dialog |
 | 5 | Escape can bind End Turn and close Controls | `RebindCaptureService` | Reserved-key cancellation before menu dispatch | `13-controls-escape-binding-conflict.png` |
 | 6 | Binding conflicts have no explicit resolution | `BindingConflictModel` | Choose another / replace / cancel dialog | `13-controls-escape-binding-conflict.png` |

@@ -351,9 +351,14 @@ persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`
 drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
 id only (§3.3).
 
-- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**:
-  only `combatEntered` is saved — reload restarts that combat from its start with the same
-  shuffle-stream state (StS behaviour). Abandoning mid-combat = same.
+- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
+  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
+  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
+  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
+  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
+  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
+  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
+  records without a snapshot remain compatible and restart the encounter deterministically.
 - An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a

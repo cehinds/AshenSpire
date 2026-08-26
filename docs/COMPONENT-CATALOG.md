@@ -276,8 +276,8 @@ sync without duplicating persistence.
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
 | `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
 | `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
-| `save-game-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save the active slot and remain in the run. |
-| `save-quit-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save and return to the title screen. |
+| `save-game-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn to the active slot and remain in the run. |
+| `save-quit-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn and return to the title screen. |
 
 ```text
 quick-menu-panel
@@ -295,6 +295,13 @@ menu-overlay
    ├─ save-game-control
    └─ save-quit-control
 ```
+
+Both lifecycle controls enter the same `commitCombatSnapshot` boundary. The
+focused rendered contract (`node tools/combat-save.mjs`) advances beyond combat
+entry, saves in place, uses Save and Quit, loads through the occupied-slot
+review action, and proves exact snapshot identity at 1200×730 and 390×844.
+Its `--selftest` corpus plants a restarted encounter, a missing commit, and a
+restore that drops the saved hand through copied real source doors.
 
 ## Armoury components
 

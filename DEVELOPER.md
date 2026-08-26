@@ -188,6 +188,17 @@ node tools/startup-gate.mjs
 node tools/startup-gate.mjs --selftest
 ```
 
+Exact combat-save changes additionally run the real Save / Save and Quit /
+Load-review path at desktop and phone sizes, plus its copied-tree known-bad
+corpus:
+
+```bash
+node tools/combat-save.mjs
+node tools/combat-save.mjs --selftest
+# after the one authorized artifact regeneration:
+node tools/combat-save.mjs --artifact --screenshots
+```
+
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js

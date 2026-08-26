@@ -17,7 +17,8 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
+import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -5939,6 +5940,62 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the next turn resolves identically instead of replaying combat setup');
     eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
       'restored combat consumes the same named RNG streams');
+
+    const runProjection = {};
+    commitCombatSnapshot({ run: runProjection, combat: restored, nodeId: 'node-75', encounterId: 'encounter-75' });
+    eq(runProjection.hp, restored.player.hp, 'slot-summary HP projects the exact combat state');
+    eq(runProjection.flaskCharges?.hpCurrent, restored.player.flaskCharges?.hpCurrent,
+      'slot-summary flask charges project the exact combat state');
+    eq(JSON.stringify(runProjection.combatEntered.snapshot), JSON.stringify(serializeCombatSnapshot(restored)),
+      'one committed snapshot owns both the resume record and run-level summary projection');
+
+    restored.queue.push({ planted: true });
+    let resolvingReason = '';
+    try { serializeCombatSnapshot(restored); } catch (error) { resolvingReason = error.message; }
+    restored.queue.pop();
+    assert(/still resolving/.test(resolvingReason), 'a live action queue must refuse a torn combat save');
+
+    const malformed = structuredClone(stored);
+    malformed.phase = 'refunded-restart';
+    let malformedReason = '';
+    try {
+      restoreCombatSnapshot({
+        registries: REG,
+        rng: createRng(seed, counters),
+        snapshot: malformed,
+      });
+    } catch (error) {
+      malformedReason = error.message;
+    }
+    assert(/phase/.test(malformedReason),
+      `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
+
+    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, serializeRun(malformedRun));
+    const saves = createSaveManager(storage);
+    eq(saves.loadRun(REG), null, 'the real load door refuses a malformed exact snapshot');
+    assert(/phase/.test(saves.runStatus().reason || ''), 'the archived refusal names the malformed snapshot phase');
+    assert(storage.getItem(RUN_ARCHIVE_KEY)?.includes('refunded-restart'), 'the original malformed bytes remain recoverable in the archive');
+
+    const dangling = structuredClone(stored);
+    dangling.piles.hand[0].cardId = 'removedByContentPatch';
+    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
+    const danglingStorage = createMemoryStorage();
+    danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
+    const danglingSaves = createSaveManager(danglingStorage);
+    eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
+    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
+      'the dangling exact-snapshot refusal names the affected card pile');
+
+    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
+    checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
+    const checkpointStorage = createMemoryStorage();
+    checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
+    assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
+      'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
 
   const passed = results.filter((r) => r.ok).length;
