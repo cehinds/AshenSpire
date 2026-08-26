@@ -30,6 +30,7 @@ import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { statProjection } from '../../model/statProjection.js';
+import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
@@ -48,8 +49,16 @@ import {
 import { trayModel } from '../models/TrayModels.js';
 import { renderTray } from '../components/trayComponents.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
+import { traySizeService } from '../services/TraySizeService.js';
 
 const CFG = () => balance.equipment;
+const armouryTraySession = { folded: new Map(), heights: new Map() };
+
+export function resetArmouryTraySession() {
+  armouryTraySession.folded.clear();
+  armouryTraySession.heights.clear();
+  traySizeService.reset();
+}
 
 // ---- the view set: a row DESCRIBES a layout, and the CELL is the vocabulary --
 //
@@ -661,18 +670,18 @@ export function mountEquipment(host, {
   // a synthetic `meta` and no `onChange`, so there is nothing to read and nothing
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
-  const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
+  const storedFolds = armouryTraySession.folded.size
+    ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
   const clampTrayHeight = (value) => Math.min(
     layout.trays.maximumHeightRatio,
     Math.max(layout.trays.minimumHeightRatio, Number(value)),
   );
-  const savedTrayHeights = (meta.settings && meta.settings.armouryTrayHeights) || {};
   const trayHeights = new Map(contextRegions().map((region) => [
     region.id,
-    clampTrayHeight(Number.isFinite(Number(savedTrayHeights[region.id]))
-      ? Number(savedTrayHeights[region.id]) : layout.trays.defaultHeightRatio),
+    clampTrayHeight(Number.isFinite(Number(armouryTraySession.heights.get(region.id)))
+      ? Number(armouryTraySession.heights.get(region.id)) : layout.trays.defaultHeightRatio),
   ]));
   let cardView = layout.cards.defaultView;
   const storedArmamentView = meta.settings && meta.settings.armouryArmamentView;
@@ -802,7 +811,10 @@ export function mountEquipment(host, {
       : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
   }
 
-  const foldSettings = () => ({ armouryCollapsed: Object.fromEntries(folded) });
+  const foldSettings = () => {
+    for (const [id, value] of folded) armouryTraySession.folded.set(id, value);
+    return null;
+  };
   const openInventoryForSelection = (slotId, setIndex) => {
     picking = { slotId, setIndex };
     folded.set('inventory', false);
@@ -1416,26 +1428,6 @@ export function mountEquipment(host, {
     return layout.combatPower.cards.map(role);
   }
 
-  function attributeEntries(projection) {
-    const pieces = equippedPieces(registries, run.loadout, run.class);
-    return projection.attributes.map((row) => {
-      const bonuses = pieces.flatMap((piece) => (piece.mods || [])
-        .filter((mod) => mod.toLowerCase().includes(row.id.slice(0, 3)))
-        .map((mod) => `${piece.name}: ${mod}`));
-      return {
-        key: row.id,
-        kind: 'attribute',
-        disclosure: 'face',
-        face: { label: row.shortLabel || row.label, value: String(row.value) },
-        reveal: {
-          title: row.label,
-          sense: 'Base value plus current equipment and relic bonuses.',
-          lines: [`Base ${row.value}`, ...(bonuses.length ? bonuses : ['No direct item bonus authored.'])],
-        },
-      };
-    });
-  }
-
   function relicEntries() {
     return (run.relics || []).map((id) => {
       const relic = registries.relics.get(id);
@@ -1483,7 +1475,10 @@ export function mountEquipment(host, {
     const attributes = document.createElement('section');
     attributes.className = 'character-attributes';
     const attributeHost = document.createElement('div');
-    const attributeRows = attributeEntries(projection);
+    const attributeRows = attributeCardModels(registries, run.attributes, {
+      projection,
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    });
     mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes' });
     attributes.appendChild(attributeHost);
     box.appendChild(informationCard({
@@ -1671,6 +1666,7 @@ export function mountEquipment(host, {
         .filter(Boolean).join(' · ');
     })() : '';
     const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
+    const viewportHeight = () => Math.max(1, window.visualViewport?.height || window.innerHeight || 1);
     const model = trayModel({
       id: r.id,
       name: r.label,
@@ -1682,7 +1678,7 @@ export function mountEquipment(host, {
       sortable: r.id === 'cards',
       sortLabel: `Toggle ${r.label} list or grid`,
       resizable: !fillsInventoryPane,
-      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * 500)),
+      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * viewportHeight())),
       items: [],
     });
     const snapRatio = (raw) => {
@@ -1699,7 +1695,7 @@ export function mountEquipment(host, {
       },
       onToggle: () => {
         folded.set(r.id, !folded.get(r.id));
-        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+        armouryTraySession.folded.set(r.id, folded.get(r.id));
         draw();
         wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
       },
@@ -1709,11 +1705,10 @@ export function mountEquipment(host, {
         wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
       } : null,
       onResize: (_id, size) => {
-        const panelHeight = wrap.querySelector('.armoury')?.getBoundingClientRect().height || 1;
-        const next = snapRatio(size / panelHeight);
+        const next = snapRatio(size / viewportHeight());
         trayHeights.set(r.id, next);
-        rendered.element.style.height = `${next * 100}%`;
-        if (onChange) onChange(run.loadout, { armouryTrayHeights: Object.fromEntries(trayHeights) });
+        armouryTraySession.heights.set(r.id, next);
+        rendered.element.style.height = `${next * 100}vh`;
       },
       renderContent: (content) => {
         while (source.firstChild) content.appendChild(source.firstChild);
@@ -1726,7 +1721,9 @@ export function mountEquipment(host, {
     source.replaceWith(rendered.element);
     if (!shut && !fillsInventoryPane) {
       rendered.element.dataset.sized = '1';
-      rendered.element.style.height = `${savedRatio * 100}%`;
+      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}vh`;
+      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}vh`;
+      rendered.element.style.height = `${savedRatio * 100}vh`;
     }
     if (r.id === 'cards' && rendered.sort) {
       const next = cardView === 'list' ? 'grid' : 'list';
@@ -1872,7 +1869,7 @@ export function mountEquipment(host, {
         armamentsFolded: folded.get('armaments') === true,
         toggleArmaments: () => {
           folded.set('armaments', !folded.get('armaments'));
-          if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+          armouryTraySession.folded.set('armaments', folded.get('armaments'));
           draw();
           wrap.querySelector('[data-fold="armaments"]')?.focus();
         },

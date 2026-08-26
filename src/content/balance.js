@@ -304,11 +304,31 @@ export const balance = {
       intentGapPx: 6,
       centerPct: 50,
     },
+    // Contextual explanations point back toward the readable centre instead of
+    // blindly choosing the first side with room. Combatants add a persistent,
+    // foldable edge inspector while the shared floating tooltip remains the
+    // short-lived hover/tap explanation.
+    tooltipPlacement: {
+      hoverDelayMs: 500,
+      topBandViewportPct: 25,
+      sideBandViewportPct: 30,
+    },
+    combatantInspector: {
+      widthRem: 20,
+      mobileWidthViewportPct: 62,
+    },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow
     // screens still collapse it to a list for touch and readable labels.
     shrinePresentation: {
       optionLayout: 'list', // list | grid
+      // The four option faces share one folded footprint. Percentages own the
+      // responsive size; the bounds preserve the 44 px interaction floor and
+      // keep a wide monitor from turning a choice into a banner.
+      foldedCardWidthViewportPct: 88,
+      foldedCardMaxWidthRem: 44,
+      foldedCardHeightViewportPct: 10,
+      foldedCardMaxHeightRem: 7,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {

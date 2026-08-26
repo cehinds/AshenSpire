@@ -42,6 +42,8 @@ const REQUIRED_IDS = Object.freeze([
   'character-disclosure', 'class-preview-pane', 'class-resource-grid',
   'class-choice-card', 'view-mode-toggle', 'boolean-setting-toggle',
   'selection-section-face', 'primary-stat-card', 'resource-strip', 'mode-choice',
+  'stat-allocation-row', 'shrine-option-card', 'smith-upgrade-modal',
+  'smith-candidate-card', 'smith-upgrade-preview',
   'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
   'equipment-choice-card', 'relic-choice-card',
 ]);
@@ -64,8 +66,15 @@ export function receipt() {
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
+    traySizeService: read('src/ui/services/TraySizeService.js'),
+    armouryUiSource: read('content/source/armouryUi.json'),
     creationCards: read('src/ui/components/creationCards.js'),
+    statAllocationCard: read('src/ui/components/statAllocationCard.js'),
+    creationBrief: read('src/model/creationBrief.js'),
     customize: read('src/ui/screens/customize.js'),
+    rest: read('src/ui/screens/rest.js'),
+    smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
+    smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
@@ -139,7 +148,7 @@ export function findings(r) {
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
       || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
       || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
-      || !/function renderCombatantStage\(\)\s*\{\s*renderPlayer\(\);\s*renderEnemies\(\);\s*battlefieldStage\.refresh\(\);\s*\}/.test(r.combat)
+      || !/function renderCombatantStage\(\)\s*\{\s*renderPlayer\(\);\s*renderEnemies\(\);(?:\s*renderCombatantInspector\(\);)?\s*battlefieldStage\.refresh\(\);\s*\}/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.combat)
@@ -283,6 +292,16 @@ export function findings(r) {
       || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
       || !/pointerdown/.test(r.trayComponents)
       || !/sizeService\.write/.test(r.trayComponents)
+      || !/reset\(\)/.test(r.traySizeService)
+      || !/return null;/.test(r.traySizeService)
+      || !/"defaultHeightRatio": 0\.45/.test(r.armouryUiSource)
+      || !/"minimumHeightRatio": 0\.3/.test(r.armouryUiSource)
+      || !/"snapRatios": \[0\.3, 0\.4, 0\.5, 0\.6, 0\.7, 0\.8, 0\.9\]/.test(r.armouryUiSource)
+      || /meta\.settings\.armouryTrayHeights/.test(r.equipment)
+      || !/resetArmouryTraySession/.test(r.equipment)
+      || !/window\.visualViewport\?\.height \|\| window\.innerHeight/.test(r.equipment)
+      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}vh`/.test(r.equipment)
+      || !/style\.height = `\$\{savedRatio \* 100\}vh`/.test(r.equipment)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
   }
@@ -292,7 +311,13 @@ export function findings(r) {
     'modeChoiceButton', 'spriteChoiceButton', 'tintChoiceButton', 'sigilChoiceButton',
     'keepsakeChoiceButton', 'relicChoiceButton',
   ];
-  const creationIds = REQUIRED_IDS.slice(-16);
+  const creationIds = [
+    'character-disclosure', 'class-preview-pane', 'class-resource-grid', 'class-choice-card',
+    'view-mode-toggle', 'boolean-setting-toggle', 'selection-section-face', 'primary-stat-card',
+    'stat-allocation-row', 'shrine-option-card', 'resource-strip', 'mode-choice',
+    'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
+    'equipment-choice-card', 'relic-choice-card',
+  ];
   if (!creationExports.every((name) => r.creationCards.includes(`export function ${name}`))
       || !['primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
         'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
@@ -300,6 +325,14 @@ export function findings(r) {
         'relicChoiceCard'].every((name) => r.creationCards.includes(`UI.${name}`))
       || !/UI\.characterDisclosure/.test(r.customize)
       || !/UI\.equipmentChoiceCard/.test(r.customize)
+      || !/export function attributeCardModels/.test(r.creationBrief)
+      || !/mountDisclosure\(host, \[model\]\)/.test(r.creationCards)
+      || !/primaryStatCard\(/.test(r.statAllocationCard)
+      || !/UI\.statAllocationRow/.test(r.statAllocationCard)
+      || !/UI\.shrineOptionCard/.test(r.rest)
+      || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
+      || !/attributeCardModels\(registries, values,/.test(r.rest)
+      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
       || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
@@ -310,6 +343,23 @@ export function findings(r) {
       || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
       || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
     bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
+  }
+  const smithIds = ['smith-upgrade-modal', 'smith-candidate-card', 'smith-upgrade-preview'];
+  if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
+      || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
+      || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
+      || !/role', 'dialog'/.test(r.smithUpgradeModal)
+      || !/aria-modal/.test(r.smithUpgradeModal)
+      || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
+      || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
+      || !/tooltip: false/.test(r.smithUpgradeModal)
+      || !/reference = freeze\(\{[\s\S]*\.\.\.instance,[\s\S]*upgraded: false/.test(r.smithSelectionModel)
+      || !/returnFocusElement: smithOption/.test(r.rest)
+      || !/smithSelectionModel\(registries, upgradable, selectedInstanceId\)/.test(r.rest)
+      || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
+      || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
+        && r.catalogHtml.includes(`'${id}'`))) {
+    bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
   }
   return bad;
 }
@@ -335,11 +385,12 @@ function selftest() {
     ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
+    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 18/18 reusable component contracts hold');
+  else console.log('PASS clean source: 19/19 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -355,5 +406,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 18/18 reusable component contracts hold');
+  else console.log('ui-components: OK — 19/19 reusable component contracts hold');
 }

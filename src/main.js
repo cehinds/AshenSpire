@@ -47,7 +47,7 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
 import { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } from './ui/screens/settings.js';
-import { mountEquipment } from './ui/screens/equipment.js';
+import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
@@ -742,6 +742,7 @@ function randomSeedString() {
 }
 
 function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
+  resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -891,6 +892,7 @@ function advanceAct() {
 }
 
 function resumeRun(slot = 1) {
+  resetArmouryTraySession();
   activeSlot = slot;
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
@@ -974,6 +976,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     return;
   }
   audio.music('title');
+  resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   const slots = saves.listSlots().map(({ slot, summary }) => ({

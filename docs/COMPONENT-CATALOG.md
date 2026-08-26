@@ -183,7 +183,8 @@ custom art does not require a second card implementation.
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
-| `primary-stat-card` | attribute projection row | `creationCards.primaryStatCard` | Character stats + catalog |
+| `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
+| `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog |
@@ -201,7 +202,52 @@ character-disclosure
 ├─ mode-choice + primary-stat-card × N + resource-strip
 ├─ sprite-choice + sigil-choice + tint-choice
 └─ keepsake-choice
+
+stat-allocation-row (invisible composition parent)
+├─ primary-stat-card + current value + decrement/increment controls
+└─ unfolded reveal spans the full row width
+
+primary-stat-card
+├─ folded: short label + one-line summary + current value
+└─ unfolded/tooltip: authored description + derived benefits and equipment gates
 ```
+
+## Shrine components
+
+| Stable ID | Model | Renderer | Reuse |
+|---|---|---|---|
+| `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up |
+| `smith-upgrade-modal` | `SmithSelectionModel` | `smithUpgradeModal.mountSmithUpgradeModal` | Dedicated Smith choose/review transaction |
+| `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` inside Smith modal | Upgrade-eligible deck card |
+| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | shared `card.upgradePreviewHtml` inside Smith modal | Current-versus-upgraded review |
+
+The default Shrine presentation is one vertical list. Every folded option uses
+the same data-owned viewport footprint: width and height percentages come from
+`balance.ui.shrinePresentation`, with accessible and wide-screen bounds. Opening
+Flask Allocation or Level Up expands only that card's content below its unchanged
+folded face.
+
+Smith is a modal composition rather than an inline card dump:
+
+```text
+smith-upgrade-modal
+├─ smith-candidate-card × eligible deck cards
+├─ smith-upgrade-preview
+├─ Back to Shrine (also Escape)
+└─ Confirm selected card (disabled until selection)
+```
+
+Selection is reversible presentation state. Back and Escape restore the Shrine
+without mutation; Confirm upgrades exactly one card and leaves the Shrine.
+
+## Folding Tray session geometry
+
+Armoury supporting instances of `folding-tray` open at the data-authored 45vh
+default, preserve at least 30vh for every expanded tray, and snap to 30, 40, 50,
+60, 70, 80, or 90vh after drag or keyboard resizing. Fold and expanded-size
+memory is keyed by tray ID for the current play session only; new/resumed runs
+and returning to Title reset it. `tray-resize-handle` remains the shared 44px
+mouse, touch-hold, and keyboard surface, while `tray-content` owns scrolling.
 
 ## Menu components
 

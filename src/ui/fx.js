@@ -177,6 +177,10 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
  *                      the offset-from-the-point rule, per-axis flip and all —
  *                      arithmetic, not a second branch at the call site.
+ *           'left'   — toward the centre from a right-edge anchor, falling
+ *                      through right / below / above only when it cannot fit.
+ *           'right'  — toward the centre from a left-edge anchor, with the
+ *                      mirrored fallback order.
  *           'above'  — above it when possible, otherwise under it. This is the
  *                      card/tray instruction intent: keep the explanation out
  *                      of the component being held or resized.
@@ -207,8 +211,8 @@ export function placeAnchored(el, anchor, {
   pad = 4,
   keep = Infinity,
 } = {}) {
-  if (!['beside', 'above', 'under'].includes(intent)) {
-    throw new Error(`placeAnchored: intent must be 'beside', 'above', or 'under', got ${JSON.stringify(intent)}`);
+  if (!['beside', 'left', 'right', 'above', 'under'].includes(intent)) {
+    throw new Error(`placeAnchored: intent must be 'beside', 'left', 'right', 'above', or 'under', got ${JSON.stringify(intent)}`);
   }
   const room = view || viewportLocalBox();
   const gap = placeGap(el);
@@ -253,9 +257,14 @@ export function placeAnchored(el, anchor, {
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
     const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
-    const candidates = intent === 'under' ? [under] : intent === 'above' ? [above, under] : [
-      { left: a.left + a.width + gap, top: slideY },  // right of it
-      { left: a.left - b.width - gap, top: slideY },  // left of it
+    const right = { left: a.left + a.width + gap, top: slideY };
+    const left = { left: a.left - b.width - gap, top: slideY };
+    const candidates = intent === 'under' ? [under]
+      : intent === 'above' ? [above, under]
+        : intent === 'left' ? [left, right, under, above]
+          : intent === 'right' ? [right, left, under, above] : [
+      right,
+      left,
       { left: slideX, top: a.top + a.height + gap },  // below it
       above,
     ];

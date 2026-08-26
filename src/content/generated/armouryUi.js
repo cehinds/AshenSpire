@@ -45,14 +45,17 @@ export const armouryUi = {
       "foldGroupsBelowPx": 260
     },
     "trays": {
-      "defaultHeightRatio": 0.1,
-      "minimumHeightRatio": 0.1,
+      "defaultHeightRatio": 0.45,
+      "minimumHeightRatio": 0.3,
       "maximumHeightRatio": 0.9,
+      "multipleExpandedMinimumRatio": 0.3,
       "snapRatios": [
-        0.1,
         0.3,
+        0.4,
         0.5,
+        0.6,
         0.7,
+        0.8,
         0.9
       ],
       "snapTolerance": 0.035,

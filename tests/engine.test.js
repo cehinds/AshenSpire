@@ -23,6 +23,7 @@ import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
+import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
@@ -5708,6 +5709,46 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'a hand roster that omits the baseline kit is refused by armament id before customization boots');
   });
 
+  test('71b. attribute cards derive their summaries, benefits, and gates from model data', () => {
+    const run = createRunState({ seed: 0x71b, classId: 'reaver', registries: REG });
+    const cards = attributeCardModels(REG, run.attributes, {
+      projection: statProjection(REG, run),
+      equipmentProfiles: run.equipmentProfileRuleSnapshot.profiles,
+    });
+    eq(cards.length, REG.attributes.ids().length, 'one card is projected for every authored attribute');
+    eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
+      'stable attribute ids drive every card key');
+    const constitution = cards.find((card) => card.id === 'constitution');
+    eq(constitution.face.summary, 'What your body takes before the climb ends.',
+      'the folded summary is derived from the authored description');
+    assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
+      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
+    'multiple mechanical benefits are projected as separate bullets');
+    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
+      'the active run profile projects Strength attack scaling without copied UI prose');
+
+    const changed = {
+      ...contentBundle,
+      derivedStatRules: structuredClone(contentBundle.derivedStatRules),
+      equipment: {
+        ...contentBundle.equipment,
+        armaments: structuredClone(contentBundle.equipment.armaments),
+      },
+    };
+    changed.derivedStatRules.rules.hp.gainPerTier = 7;
+    changed.equipment.armaments.find((piece) => piece.id === 'greatsword').requirements.attributes.strength = 14;
+    const changedRegistries = createRegistries(changed);
+    const changedRun = createRunState({ seed: 0x71b, classId: 'reaver', registries: changedRegistries });
+    const changedCards = attributeCardModels(changedRegistries, changedRun.attributes, {
+      projection: statProjection(changedRegistries, changedRun),
+      equipmentProfiles: changedRun.equipmentProfileRuleSnapshot.profiles,
+    });
+    assert(changedCards.find((card) => card.id === 'constitution').reveal.lines.includes('HP +7 every 1 point'),
+      'changing the HP rule changes the Constitution bullet without UI prose edits');
+    assert(changedCards.find((card) => card.id === 'strength').reveal.lines.includes('Greatsword asks 14'),
+      'changing an equipment gate changes the Strength bullet without UI prose edits');
+  });
+
   test('72. Armoury layout is authored, stable, and responsive', () => {
     assert(contentBundle.equipment.armouryUi.layout.trays,
       'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
@@ -5736,10 +5777,11 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
     eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
     eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
-    eq(layout.trays.defaultHeightRatio, 0.1, 'each expanded tray starts at the authored ten-percent height');
-    eq(layout.trays.minimumHeightRatio, 0.1, 'tray resize keeps the authored minimum visible');
+    eq(layout.trays.defaultHeightRatio, 0.45, 'a supporting tray opens at the authored 45vh play-session default');
+    eq(layout.trays.minimumHeightRatio, 0.3, 'tray resize keeps the authored 30vh minimum visible');
     eq(layout.trays.maximumHeightRatio, 0.9, 'a tray can scale to the authored near-full-panel maximum');
-    eq(layout.trays.snapRatios.join(','), '0.1,0.3,0.5,0.7,0.9', 'independent tray heights snap to authored stops');
+    eq(layout.trays.multipleExpandedMinimumRatio, 0.3, 'each additional expanded tray retains at least 30vh');
+    eq(layout.trays.snapRatios.join(','), '0.3,0.4,0.5,0.6,0.7,0.8,0.9', 'independent tray heights snap every 10vh from 30 through 90');
     eq(layout.trays.contentGapRem, 0.35, 'Inventory tray content keeps one authored row gap across resolutions');
     assert(layout.cardClasses.inventoryItem.holdAction === true,
       'the Inventory item card class explicitly opts into the shared hold action on both folded and unfolded faces');
@@ -5817,8 +5859,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the selected position turns its currently equipped Inventory item into Unequip');
     for (const badTrays of [
       { ...layout.trays, defaultHeightRatio: 0.95 },
-      { ...layout.trays, snapRatios: [0.1, 0.3, 0.95] },
-      { ...layout.trays, snapRatios: [0.1, 0.3, 0.3] },
+      { ...layout.trays, multipleExpandedMinimumRatio: 0.2 },
+      { ...layout.trays, snapRatios: [0.3, 0.5, 0.95] },
+      { ...layout.trays, snapRatios: [0.3, 0.5, 0.5] },
       { ...layout.trays, contentGapRem: 0 },
     ]) {
       let named = '';

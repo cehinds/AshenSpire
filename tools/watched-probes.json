@@ -523,13 +523,13 @@
   {
    "id": "S1",
    "by": "Bjorn",
-   "read": "src/ui/screens/rest.js (tooltipFn: upgradePreviewHtml) · src/ui/components/tooltip.js (pointerenter / gpfocus)",
+   "read": "src/ui/components/smithUpgradeModal.js (smith-preview-region: explicit choose/review dialog) · src/ui/models/SmithSelectionModel.js (smithSelectionModel: selection state and instance-preserving upgrade pair)",
    "anchors": [
-    "upgradePreviewHtml",
-    "tooltipFn"
+    "smith-preview-region",
+    "smithSelectionModel"
    ],
    "screen": "the Shrine › Smith, a card previewed",
-   "why-drive": "The preview is a TOOLTIP, so it has to be fired the way a finger fires it. pointerenter is what a tap dispatches first on this browser.",
+   "why-drive": "The Smith preview is now explicit modal state. Selecting one candidate must paint its current and upgraded forms without committing the upgrade.",
    "reach": [
     {
      "op": "goto",
@@ -541,24 +541,24 @@
      "sel": "#smith-opt"
     },
     {
-     "op": "js",
+     "op": "click",
      "ms": 400,
-     "code": "const c=document.querySelector('#smith-grid .card'); c.scrollIntoView({block:'center'}); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); return true;"
+     "sel": ".smith-candidate-card"
     }
    ],
-   "focus": "#tooltip",
+   "focus": ".smith-preview-region",
    "expect": {
     "present": {
-     "the upgrade preview": "#tooltip",
-     "the smith grid": "#smith-grid .card"
+     "the upgrade preview": ".smith-preview-region .smith-upgrade-preview",
+     "the smith candidates": ".smith-candidate-card"
     },
     "measure": {
-     "preview": "(document.getElementById('tooltip')||{}).innerText.replace(/\\s+/g,' ').slice(0,110)"
+     "preview": "(document.querySelector('.smith-preview-region')||{}).innerText.replace(/\\s+/g,' ').slice(0,180)"
     },
     "wrong": [
      {
-      "js": "!/→|becomes|upgrade/i.test((document.getElementById('tooltip')||{}).innerText||'')",
-      "why": "the tooltip fired but says nothing about what the upgrade CHANGES — he asked to see the upgrade, not the card"
+      "js": "!/→|becomes|upgrade/i.test((document.querySelector('.smith-preview-region')||{}).innerText||'')",
+      "why": "the modal preview says nothing about what the permanent upgrade changes"
      }
     ]
    }

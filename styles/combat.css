@@ -744,6 +744,61 @@
 }
 .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
 
+/* Combatant Inspector — the expanded reading is an ordinary Folding Tray,
+   not a second tooltip implementation. Player details own the left edge;
+   enemy details own the right. The host ignores the playfield except where the
+   tray itself is painted, so a folded rail cannot steal combat targeting. */
+.combatant-inspector-host {
+  position: absolute; z-index: 18; top: var(--battlefield-hud-clearance, 0);
+  bottom: var(--battlefield-action-clearance, 0);
+  display: flex; width: min(calc(var(--combatant-inspector-width-rem, 20) * 1rem), 34%);
+  min-width: 0; pointer-events: none;
+}
+.combatant-inspector-host[hidden] { display: none; }
+.combatant-inspector-host.left { left: 0; justify-content: flex-start; }
+.combatant-inspector-host.right {
+  right: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  justify-content: flex-end;
+}
+.combatant-inspector-host > .folding-tray {
+  pointer-events: auto; width: 100%; height: 100%; padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line); border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.45);
+}
+.combatant-inspector-host > .folding-tray[data-collapsed='1'] { width: var(--tap-floor); }
+.combatant-inspector-host .tray-content { padding-top: 0.5rem; }
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-summary > div:first-child { display: grid; gap: 0.15rem; }
+.combatant-inspector-summary > div:first-child > strong { color: var(--gold); font-family: var(--font-display); }
+.combatant-inspector-summary > div:first-child > span { color: var(--muted); font-size: 0.8rem; }
+.combatant-inspector-resources { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.3rem; }
+.combatant-inspector-resource {
+  display: flex; justify-content: space-between; gap: 0.4rem; min-width: 0;
+  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+.combatant-inspector-resource span { color: var(--muted); }
+.combatant-inspector-section { margin-top: 0.7rem; padding-top: 0.55rem; border-top: 1px solid var(--line-soft); }
+.combatant-inspector-section h4 {
+  margin: 0 0 0.35rem; color: var(--gold); font-size: 0.75rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.combatant-inspector-section ul { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+.combatant-inspector-section li {
+  display: grid; gap: 0.12rem; padding: 0.4rem 0.45rem;
+  border-left: 2px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 56%, transparent);
+}
+.combatant-inspector-section li.active { border-left-color: var(--gold); }
+.combatant-inspector-section li strong { color: var(--parchment); font-size: 0.82rem; }
+.combatant-inspector-section li span, .combatant-inspector-section li.empty { color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
+.combatant.inspectable:not(.targetable) { cursor: help; }
+
+:root[data-layout='narrow'] .combatant-inspector-host {
+  width: min(var(--combatant-inspector-mobile-vw, 62vw), calc(var(--combatant-inspector-width-rem, 20) * 1rem));
+}
+:root[data-layout='narrow'] .combatant-inspector-host.right { right: 0; }
+
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
    Remove unrelated player/action chrome so all conditional enemy states remain
    readable in one phone still. This selector is unreachable in ordinary play. */
