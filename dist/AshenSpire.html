@@ -35890,7 +35890,7 @@ function mountTitle(app, {
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
       button.addEventListener('click', () => {
-        selectedSlot = +button.dataset.slot;
+        selectedSlot = +button.dataset.slotPick;
         render();
         focusModal(`[data-slot-pick="${selectedSlot}"]`);
       });
@@ -40639,7 +40639,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'dc8060f1a3';
+const SOURCE = 'b3948fce04';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -40673,7 +40673,7 @@ const SOURCE = 'dc8060f1a3';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1363';
+const ORDINAL = '1364';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

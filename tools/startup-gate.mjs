@@ -119,6 +119,13 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.RETURN-BYPASS/,
       },
       {
+        name: 'load slot presses read a missing data attribute',
+        file: 'src/ui/screens/title.js',
+        find: '        selectedSlot = +button.dataset.slotPick;',
+        replace: '        selectedSlot = +button.dataset.slot; // startup-gate selftest plant',
+        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
+      },
+      {
         name: 'startup outranks the corrupt-profile crisis notice',
         file: 'src/main.js',
         find: '  if (showProfileNoticeIfNeeded()) return;',
@@ -498,6 +505,33 @@ async function assertReturnBypass() {
   await p.close();
 }
 
+async function assertLoadSlotSelection() {
+  const p = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
+  await p.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title with an occupied save');
+  await p.click('[data-title-action="load"]');
+  await p.until(`!!document.querySelector('.title-menu-modal')`, 'mobile Load Game slot picker');
+
+  const initial = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(initial.selected === '1' && initial.focused === '1' && initial.continueEnabled,
+    'A8.LOAD-SLOT-INITIAL', `Load visibly focuses its selected occupied slot and enables Continue (${JSON.stringify(initial)})`);
+
+  await p.click('[data-slot-pick="1"]');
+  const reselected = await p.ev(`(() => {
+    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
+    const focused=document.querySelector('[data-slot-pick].gp-focus');
+    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
+      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
+  })()`);
+  verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
+    'A8.LOAD-SLOT-RESELECT', `pressing the visibly selected occupied slot is idempotent and leaves Continue enabled (${JSON.stringify(reselected)})`);
+  await p.close();
+}
+
 async function assertCrisisPrecedence() {
   const p = await page({ corruptProfile: true });
   await p.until(`!!document.querySelector('.profile-notice, .startup-gate')`, 'crisis or startup');
@@ -576,6 +610,7 @@ async function main() {
   await assertGamepad(9);
   await assertInterruptedPresses();
   await assertReturnBypass();
+  await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();
   if (!SELFTEST_LANE) {

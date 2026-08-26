@@ -194,7 +194,7 @@ export function mountTitle(app, {
     });
     root.querySelectorAll('[data-slot-pick]').forEach((button) => {
       button.addEventListener('click', () => {
-        selectedSlot = +button.dataset.slot;
+        selectedSlot = +button.dataset.slotPick;
         render();
         focusModal(`[data-slot-pick="${selectedSlot}"]`);
       });
