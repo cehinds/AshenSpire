@@ -156,6 +156,20 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
       },
       {
+        name: 'title modal Close drops below the authored tap floor',
+        file: 'styles/ui.css',
+        find: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor);',
+        replace: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
+        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
+      },
+      {
+        name: 'occupied-slot Delete loses its tap-floor height',
+        file: 'styles/ui.css',
+        find: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }',
+        replace: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; /* startup-gate selftest plant */ }',
+        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
+      },
+      {
         name: 'startup outranks the corrupt-profile crisis notice',
         file: 'src/main.js',
         find: '  if (showProfileNoticeIfNeeded()) return;',
@@ -227,7 +241,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 23 plants, 23 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 25 plants, 25 caught');
   process.exit(code);
 }
 
@@ -559,6 +573,21 @@ async function assertReturnBypass() {
 }
 
 async function assertLoadSlotSelection() {
+  const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
+    const rect = (selector) => {
+      const element=document.querySelector(selector);
+      if (!element) return null;
+      const box=element.getBoundingClientRect();
+      return {width:Math.round(box.width*10)/10,height:Math.round(box.height*10)/10};
+    };
+    return {
+      close:rect('[data-component="title-modal-close-control"]'),
+      delete:rect('[data-component="title-save-slot-delete"]')
+    };
+  })()`);
+  const clearsTapFloor = (targets) => ['close', 'delete'].every((key) => targets[key]
+    && targets[key].width >= 44 && targets[key].height >= 44);
+
   const p = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
   await p.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title with an occupied save');
   await p.click('[data-title-action="load"]');
@@ -572,6 +601,9 @@ async function assertLoadSlotSelection() {
   })()`);
   verdict(initial.selected === '1' && initial.focused === '1' && initial.continueEnabled,
     'A8.LOAD-SLOT-INITIAL', `Load visibly focuses its selected occupied slot and enables Continue (${JSON.stringify(initial)})`);
+  const mobileTargets = await titleTargetRects(p);
+  verdict(clearsTapFloor(mobileTargets), 'A8.LOAD-SLOT-TARGETS-MOBILE',
+    `390x844 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(mobileTargets)})`);
   if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-list-mobile-390x844.png');
 
   await p.click('[data-slot-pick="1"]');
@@ -641,6 +673,9 @@ async function assertLoadSlotSelection() {
   const keyed = await page({ query: '?shot=title' });
   await keyed.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for keyboard review');
   await keyed.click('[data-title-action="load"]');
+  const desktopTargets = await titleTargetRects(keyed);
+  verdict(clearsTapFloor(desktopTargets), 'A8.LOAD-SLOT-TARGETS-DESKTOP',
+    `1200x730 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(desktopTargets)})`);
   const firstKeyRelease = await keyed.key('Enter'); await firstKeyRelease();
   const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
   verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
