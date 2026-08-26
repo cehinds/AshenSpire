@@ -145,7 +145,7 @@ export function mountTitle(app, {
     activatedLoadSlot = null;
     loadReviewSlot = null;
     render();
-    focusModal();
+    focusModal(selectedSlot == null ? undefined : `[data-slot-pick="${selectedSlot}"]`);
   };
 
   const closeModal = () => {
