@@ -308,6 +308,27 @@ rule is one row of `swapCostRules` with no code (proven by test 28q).
 in `model/loadout.js`, beside the functions that branch on them. A row naming anything else is a
 validation failure; before A8 it validated clean and silently did nothing.
 
+**Equipped weapon card packages.** The authored attack-slot count is fixed by
+`balance.equipment.roleCopies.attack`; changing equipment never changes that count or the total
+deck size. `WeaponCardPackageModel` adapts the existing `attackProfile` as an empty ordered
+priority list plus that profile as filler. `WeaponDeckCompositionService` builds an
+`EquippedWeaponCardPlan`, then rebinds the stable generated attack instances in place. No eligible
+weapon produces Unarmed in every attack slot; one eligible weapon in either hand owns every slot;
+two eligible one-handed weapons split right `ceil(N/2)` then left `floor(N/2)`. Within a hand,
+ordered priority/effect references precede repeated filler. Shields and other items without a
+weapon package consume no quota.
+
+The plan preserves `equipmentAttackSlotId`, `instanceId`, upgrades, and acquisition metadata and
+changes only package-derived card/profile/receipt/mod fields. Equip, unequip, hand move, and active
+set swap apply the plan atomically and emit one post-commit `equipmentChanged` receipt; creation
+and load/continue call the same composition service directly. Combat rebinds generated attack
+instances wherever they currently live in hand, draw, discard, or exhaust after the current card
+resolution. Legacy role-only generated attacks map once in deck order to `attack:0..N-1` and are
+never appended. Explicit `handsRequired: 2` claims the whole attack quota and is never inferred
+from tags, names, art, or kind. A conflicting off-hand, duplicate piece without distinct equipment
+instance identity, or a claimed but invalid package fails closed; Unarmed is only the valid
+zero-weapon plan.
+
 ### 3.9 Action queue
 
 Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
@@ -328,6 +349,7 @@ statusApplied, statusExpired, meterFilled, stanceEntered, stanceExited
 enemySpawned, enemyDied, enemyStaggered
 energyGained, energySpent
 flaskUsed, relicTriggered(relicId)
+equipmentChanged(reason,beforeLoadoutSignature,afterLoadoutSignature,changedPositions)
 ```
 
 ### 3.11 Seeded RNG
