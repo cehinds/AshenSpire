@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-350",
+    "date": "2026-08-26",
+    "group": "2026-08-26",
+    "summary": "Smith now lets you choose, review, and confirm one permanent card upgrade",
+    "detail": "Back and Escape return to the Shrine without changing the deck; Confirm upgrades exactly the selected card and clearly says that it leaves the Shrine. The same delivery also makes attribute explanations span their allocator rows, gives folded Shrine choices one footprint, gives Armoury trays useful session-scoped opening sizes and snap stops, adds touch-readable combatant inspection with center-seeking tooltips, and codifies the repeatable gameplay QA process and component-catalog receipts.",
+    "build": "0.4.0.1362",
+    "pullRequest": 350,
+    "url": "https://github.com/cehinds/AshenSpire/pull/350"
+  },
+  {
     "id": "pr-347",
     "date": "2026-08-25",
     "group": "2026-08-25",
