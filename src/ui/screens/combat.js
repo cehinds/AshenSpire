@@ -7,7 +7,7 @@
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
-import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
+import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -40,6 +40,9 @@ import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { wireHudModeGrip } from '../components/hudModeGrip.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
+import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
+import { combatantInspectorModel } from '../models/CombatantInspectorModel.js';
+import { mountCombatantInspector } from '../components/combatantInspector.js';
 
 export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -84,6 +87,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
+        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -139,6 +143,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -154,6 +159,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
+  let inspectedCombatant = null; // { role, id } for the persistent edge tray
+  let inspectorExpanded = true;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -161,6 +168,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
+
+  // A blank press dismisses only the floating explanation. The edge inspector
+  // is a separately owned Folding Tray and remains until its label is folded.
+  combatEl.addEventListener('click', (event) => {
+    if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    hideTooltip();
+  });
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -283,6 +297,162 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+
+  const words = (value) => String(value || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  function statusDetails(entity) {
+    const v = dv(entity);
+    return Object.entries(v.statuses || {}).flatMap(([statusId, instance]) => {
+      if (!instance) return [];
+      const amount = instance.meter ? instance.meter.value : instance.stacks;
+      if (!(amount > 0)) return [];
+      const def = registries.statuses.get(statusId);
+      if (!def) return [];
+      const presentation = statusInstancePresentation(def, instance);
+      return [{ name: presentation.label, detail: presentation.tooltip }];
+    });
+  }
+
+  function moveDetail(move, preview = null) {
+    const source = preview || move || {};
+    const pieces = [];
+    if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
+    if (source.block != null) pieces.push(`${source.block} Block`);
+    for (const effect of move?.effects || []) {
+      if (effect.op === 'applyStatus') pieces.push(`applies ${words(effect.status)}`);
+      else if (effect.op === 'heal') pieces.push('heals');
+      else if (effect.op === 'addCard') pieces.push(`adds ${words(effect.card)}`);
+      else pieces.push(words(effect.op));
+    }
+    return pieces.join(' · ') || words(source.kind || move?.intent || 'Unknown action');
+  }
+
+  function combatantSubject(role, entity) {
+    const v = dv(entity);
+    if (role === 'player') {
+      const classDef = registries.classes.get(run.class);
+      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const skills = [];
+      if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
+      skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
+      return {
+        name: (run.customization?.name || classDef.name).toUpperCase(),
+        subtitle: `${classDef.name} · Level ${run.level}`,
+        resources: [
+          { label: 'HP', value: v.hp, max: entity.maxHp },
+          { label: 'MP', value: v.mana, max: entity.maxMana },
+          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Block', value: v.block || 0 },
+        ],
+        skillLabel: 'Active skills & stance',
+        skills,
+        statuses: statusDetails(entity),
+      };
+    }
+
+    const def = registries.enemies.get(entity.enemyId);
+    const intent = previewIntent(combat, entity.id);
+    const currentMoveId = intent.moveId;
+    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
+      name: words(moveId),
+      detail: moveDetail(move, moveId === currentMoveId ? intent : null),
+      active: moveId === currentMoveId,
+    }));
+    const current = currentMoveId && def.moves?.[currentMoveId];
+    return {
+      name: def.name,
+      subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
+      resources: [
+        { label: 'HP', value: v.hp, max: entity.maxHp },
+        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        { label: 'Block', value: v.block || 0 },
+      ],
+      intent: {
+        name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        detail: moveDetail(current, intent),
+        active: true,
+      },
+      skillLabel: 'Move set',
+      skills,
+      statuses: statusDetails(entity),
+    };
+  }
+
+  function foldedCombatantTooltip(subject) {
+    const hp = subject.resources.find((row) => row.label === 'HP');
+    const poise = subject.resources.find((row) => row.label === 'Poise');
+    return `<div class="tt-title">${esc(subject.name)}</div>`
+      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
+      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
+      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
+  }
+
+  function expandedCombatantTooltip(subject, role) {
+    const live = subject.intent || subject.skills.find((row) => row.active);
+    return `${foldedCombatantTooltip(subject)}`
+      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
+      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
+  }
+
+  function renderCombatantInspector() {
+    const host = $('.combatant-inspector-host');
+    if (!host || !inspectedCombatant) {
+      if (host) host.hidden = true;
+      return;
+    }
+    const entity = inspectedCombatant.role === 'player'
+      ? combat.player : getEntity(combat, inspectedCombatant.id);
+    if (!entity) {
+      host.hidden = true;
+      return;
+    }
+    const model = combatantInspectorModel({
+      role: inspectedCombatant.role,
+      expanded: inspectorExpanded,
+      subject: combatantSubject(inspectedCombatant.role, entity),
+      presentation: registries.balance.ui.combatantInspector,
+    });
+    mountCombatantInspector(host, model, {
+      onToggle: (expanded) => {
+        inspectorExpanded = expanded;
+        renderCombatantInspector();
+      },
+    });
+  }
+
+  function inspectCombatant(role, entity, box) {
+    inspectedCombatant = { role, id: entity.id };
+    inspectorExpanded = true;
+    const subject = combatantSubject(role, entity);
+    renderCombatantInspector();
+    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
+      placementModel: tooltipPlacement,
+      clear: box.parentElement,
+      appearance: { variant: 'combatant-expanded' },
+    });
+  }
+
+  function wireCombatantReading(box, role, entity) {
+    const subject = () => combatantSubject(role, entity);
+    box.classList.add('inspectable');
+    box.dataset.focusable = '';
+    box.setAttribute('aria-label', `Inspect ${subject().name}`);
+    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
+      delayMs: tooltipPlacement.tokens.hoverDelayMs,
+      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
+      placementModel: tooltipPlacement,
+      clear: box.parentElement,
+      appearance: { variant: 'combatant-folded' },
+    });
+    box.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      box.click();
+    });
+  }
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
   // while the rest plays back (Sunna's PX gate: meters were missing, so the
@@ -422,6 +592,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function renderCombatantStage() {
     renderPlayer();
     renderEnemies();
+    renderCombatantInspector();
     battlefieldStage.refresh();
   }
 
@@ -696,14 +867,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       meters: meterBars(p),
       trailing,
     });
+    wireCombatantReading(box, 'player', p);
     // When a self/buff card is armed, the player is a confirmable target.
-    if (selfArm) {
-      box.dataset.focusable = '';
-      box.style.cursor = 'pointer';
-      box.addEventListener('click', () => {
-        if (selfArm) playCard(selfArm, null);
-      });
-    }
+    box.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (selfArm) playCard(selfArm, null);
+      else inspectCombatant('player', p, box);
+    });
     zone.appendChild(box);
   }
 
@@ -751,10 +921,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       });
+      wireCombatantReading(box, 'enemy', enemy);
       if (enemy.alive) {
-        box.addEventListener('click', () => {
+        box.addEventListener('click', (event) => {
+          event.stopPropagation();
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
+          else inspectCombatant('enemy', enemy, box);
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));

@@ -86,7 +86,8 @@ function fillTemplate(def, tokens, baseTokens) {
  *   ref  — { cardId, upgraded, instanceId? }
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
+ *            small?      (scale for reward/pile grids),
+ *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 export function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
@@ -143,8 +144,11 @@ export function renderCard(registries, ref, opts = {}) {
     el.style.setProperty('--boost-tint', boost.boostTint);
   }
 
-  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
-  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  // opts.tooltipFn overrides the default tooltip. A parent that already owns a
+  // persistent detail region may suppress the transient tooltip entirely.
+  if (opts.tooltip !== false) {
+    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
@@ -157,19 +161,24 @@ export function renderCard(registries, ref, opts = {}) {
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
 export function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
-  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const base = resolveCard(registries, { ...ref, upgraded: false });
+  const upg = resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  const baseText = fillTemplate(base, baseTokens, null);
+  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
   // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
   // are keyed to (ui.css). Without it the preview drew the number it had just
   // computed as changed in the same colour and weight as the word beside it.
   // `.ctext` carries the marks only; the card face's block layout stays on
   // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${baseText}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  if (baseText === upgradedText && upg.cost === base.cost) {
+    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+  }
   return html;
 }
 

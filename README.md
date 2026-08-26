@@ -11,6 +11,17 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 **[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
 the latest project status appears first, with timestamped updates and Daily Briefs below it.
 
+**[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
+the interactive reference for stable component IDs, model and renderer names,
+live visual specimens, and reuse surfaces. UI delivery summaries list the exact
+changed IDs; an origin-bound UI change updates both catalog formats in the same change.
+
+**[QA Testing](docs/QA-TESTING.md)** and the
+**[feature delivery loop](docs/FEATURE-DELIVERY-LOOP.md)** — the repeatable
+design, build, responsive playtest, evidence, and documentation process used for
+player-facing changes. The current Smith modal write-up is
+[here](docs/qa/2026-08-25-smith-modal-design.md).
+
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
@@ -76,8 +87,9 @@ defines the shared Top, Right, Bottom, and Left disclosure grammar. The
 [asset-component index](docs/ASSET-COMPONENTS.md) name the exact Character,
 Armaments, Inventory, Cards, Stats, card-hold, comparison, and resizing
 surfaces shown in the current build. Any merge or PR that changes a UI element
-or component must update the catalog when needed and include this catalog link
-in its summary.
+or component must update the interactive and Markdown catalogs in the same
+origin-bound change and include `Changed catalog components: <id...>` plus this
+catalog link in its summary. If the surface has no stable ID, add one first.
 
 More: the three [class sprites](docs/preview/class-sprites.svg).
 

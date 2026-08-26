@@ -333,6 +333,16 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
+#tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
+#tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
+#tooltip .tt-combatant-focus {
+  display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
+  border-top: 1px solid var(--line-soft);
+}
+#tooltip .tt-combatant-focus b { color: var(--gold); }
+#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
+#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
 
 /* ---------- card ---------- */
 .card {
@@ -1041,14 +1051,17 @@ button.rs-reset {
 
 .class-row { display: flex; gap: 1.8rem; }
 .shrine-option-list {
-  width: min(100%, 44rem); margin-inline: auto;
+  width: min(100%, var(--shrine-folded-card-width, 88vw), var(--shrine-folded-card-max-width, 44rem)); margin-inline: auto;
   flex-direction: column; align-items: stretch; gap: 12px;
 }
-.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
+.shrine-option-list > .class-pick {
+  width: 100%; min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+  box-sizing: border-box;
+}
 .shrine-option-list > #rest-opt,
 .shrine-option-list > #smith-opt {
   display: grid; grid-template-columns: auto minmax(0, 1fr);
-  align-items: center; gap: 18px; padding: 18px 20px; text-align: left;
+  align-items: center; gap: 18px; padding: 12px 20px; text-align: left;
 }
 .shrine-option-list > #rest-opt .glyph,
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
@@ -1078,7 +1091,9 @@ button.rs-reset {
 .shrine-fold { padding: 0; overflow: hidden; text-align: left; }
 .shrine-fold > summary {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center; gap: 10px; min-height: var(--tap-floor); padding: 10px 14px;
+  align-items: center; gap: 10px;
+  min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+  box-sizing: border-box; padding: 10px 14px;
   cursor: pointer; list-style: none;
 }
 .shrine-fold > summary::-webkit-details-marker { display: none; }
@@ -1103,6 +1118,95 @@ button.rs-reset {
 .stat-allocation-note { margin-top: 6px; color: var(--muted); font-size: 1rem; line-height: 1.35; text-align: center; }
 .stat-allocation-card .cc-stat-actions { justify-content: center; }
 .stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+
+/* ---------- Shrine Smith transaction -------------------------------------
+   Smith selection is a dedicated modal because the decision is permanent and
+   needs a readable before/after preview on touch. The Shrine remains behind a
+   quiet scrim; the modal owns the only selection and Confirm surface. */
+.smith-modal-veil { z-index: 620; padding: 2%; box-sizing: border-box; }
+.smith-upgrade-modal {
+  width: min(76rem, 96%); height: min(74%, 54rem); max-height: 90%; padding: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.smith-modal-head {
+  flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.smith-modal-head h2 { margin: 2px 0 4px; font-size: 1.8rem; }
+.smith-modal-head p { margin: 0; color: var(--muted); line-height: 1.35; }
+.smith-modal-eyebrow, .smith-preview-label {
+  color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.smith-modal-consequence {
+  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: 999px;
+  color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
+}
+.smith-modal-body {
+  flex: 1 1 auto; min-height: 0; display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.8fr);
+}
+.smith-candidate-region, .smith-preview-region { min-width: 0; min-height: 0; }
+.smith-candidate-region { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.smith-region-head {
+  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft);
+}
+.smith-region-head h3 { margin: 0; color: var(--parchment); }
+.smith-region-head span { color: var(--muted); }
+.smith-card-list {
+  flex: 1 1 auto; min-height: 0; overflow: auto; padding: 18px 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  align-content: start; justify-items: center; gap: 18px 10px;
+}
+.smith-candidate-card {
+  transform: scale(0.78) !important; transform-origin: top center;
+  margin-bottom: -4rem; cursor: pointer;
+}
+.smith-candidate-card.selected {
+  border-color: var(--gold); outline: 3px solid color-mix(in srgb, var(--gold) 68%, transparent);
+  outline-offset: 4px; box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.36);
+}
+.smith-preview-region {
+  display: flex; align-items: center; justify-content: center; overflow: auto;
+  padding: 20px; background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+.smith-preview-card, .smith-preview-empty {
+  width: 100%; display: grid; gap: 12px; padding: 18px;
+  border: 1px solid var(--line-soft); border-radius: 10px; background: var(--bg-raise);
+}
+.smith-preview-card .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; }
+.smith-preview-card .tt-kw { padding-top: 10px; border-top: 1px solid var(--line-soft); color: var(--muted); }
+.smith-preview-empty { text-align: center; color: var(--muted); }
+.smith-preview-empty b { color: var(--parchment); }
+.smith-preview-glyph { color: var(--gold); font-size: 2.8rem; }
+.smith-modal-footer {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--panel);
+}
+.smith-modal-footer p { max-width: 36rem; margin: 0; color: var(--muted); line-height: 1.3; }
+.smith-modal-actions { display: flex; gap: 8px; }
+.smith-modal-actions button { min-height: var(--tap-floor); height: auto; padding: 8px 16px; }
+.smith-confirm:disabled { opacity: 0.42; cursor: default; }
+
+@media (max-width: 720px) {
+  .smith-modal-veil { padding: 1.5%; }
+  .smith-upgrade-modal { width: 98%; height: 92%; max-height: 92%; }
+  .smith-modal-head { padding: 10px 12px; gap: 8px; }
+  .smith-modal-consequence { padding: 4px 6px; font-size: 0.68rem; }
+  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); }
+  .smith-card-list {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    padding: 14px 8px; gap: 12px 4px;
+  }
+  .smith-candidate-card { transform: scale(0.68) !important; margin-bottom: -6rem; }
+  .smith-preview-region { max-height: 15rem; padding: 10px 12px; }
+  .smith-preview-card, .smith-preview-empty { gap: 7px; padding: 10px 12px; }
+  .smith-modal-footer { align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 10px; }
+  .smith-modal-footer p { font-size: 0.9rem; }
+  .smith-modal-actions { width: 100%; }
+  .smith-modal-actions button { flex: 1 1 0; padding-inline: 8px; }
+}
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
 /* HIS WORDS: "I don't like how the flask assignments are separate buttons
@@ -1772,9 +1876,10 @@ button.rs-reset {
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
 .se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
-.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.55rem; }
 .se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
 .se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-controls { display: flex; align-items: center; gap: 0.45rem; }
 .se-step {
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
@@ -1925,8 +2030,20 @@ button.rs-reset {
 .cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
 .cc-character-picker .cz-opts { flex-wrap: wrap; }
 .cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
-.cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
-.cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
+.cc-attribute-card { width: 100%; min-width: 0; container-type: inline-size; }
+.cc-attribute-card > .disc-faces { width: 100%; gap: 0.35rem; }
+.cc-primary-stat.disc-face {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  width: 100%; min-width: 0; justify-content: stretch;
+}
+.cc-primary-stat .disc-summary {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-family: var(--font-body); font-size: 0.95rem;
+  font-weight: 400; letter-spacing: 0;
+}
+@container (max-width: 17rem) {
+  .cc-primary-stat .disc-summary { display: none; }
+}
 .cc-derived {
   display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin-top: 0.8rem;
   color: var(--parchment); font-variant-numeric: tabular-nums;
@@ -1969,7 +2086,16 @@ button.rs-reset {
 .cc-stat-overlay { z-index: 1300; }
 .cc-stat-modal { width: min(34rem, calc(100% - 2rem)); }
 .cc-allocation-rows { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0; }
-.cc-allocation-rows .se-row { justify-content: center; }
+.cc-allocation-rows .se-row { width: 100%; }
+.cc-allocation-rows .se-attribute-card,
+.cc-allocation-rows .se-attribute-card > .disc-faces { display: contents; }
+.cc-allocation-rows .se-attribute-card .cc-primary-stat {
+  grid-column: 1; grid-row: 1; min-width: 0;
+}
+.cc-allocation-rows .se-controls { grid-column: 2; grid-row: 1; }
+.cc-allocation-rows .se-attribute-card .disc-reveal {
+  grid-column: 1 / -1; grid-row: 2; width: 100%; box-sizing: border-box;
+}
 .cc-stat-actions { display: flex; justify-content: flex-end; gap: 0.8rem; }
 .cc-stat-actions button { min-height: var(--tap-floor); }
 .cc-stat-actions [aria-disabled='true'] { opacity: 0.45; }
@@ -3611,6 +3737,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); padding: 0.9rem;
 }
 :root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick .glyph { font-size: 3rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem;
+}
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick { padding: 0.75rem 0.55rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick .glyph { margin-bottom: 0.35rem; font-size: 2.6rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick h3 { margin-bottom: 0.2rem; font-size: 1.05rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick p { display: none; }
 :root[data-layout='narrow'] .cc-stage-toolbar { align-items: flex-start; flex-wrap: wrap; }
 :root[data-layout='narrow'] .cc-stage-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
 :root[data-layout='narrow'] .cc-auto-advance-note { white-space: normal; }
@@ -5923,6 +6056,61 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 .field[data-stage-safe-corridor='true'] :is(.player-zone, .enemy-row) { padding-block: 0; }
 
+/* Combatant Inspector — the expanded reading is an ordinary Folding Tray,
+   not a second tooltip implementation. Player details own the left edge;
+   enemy details own the right. The host ignores the playfield except where the
+   tray itself is painted, so a folded rail cannot steal combat targeting. */
+.combatant-inspector-host {
+  position: absolute; z-index: 18; top: var(--battlefield-hud-clearance, 0);
+  bottom: var(--battlefield-action-clearance, 0);
+  display: flex; width: min(calc(var(--combatant-inspector-width-rem, 20) * 1rem), 34%);
+  min-width: 0; pointer-events: none;
+}
+.combatant-inspector-host[hidden] { display: none; }
+.combatant-inspector-host.left { left: 0; justify-content: flex-start; }
+.combatant-inspector-host.right {
+  right: calc(var(--tap-floor) + (var(--hud-quick-edge-gap, 4px) / var(--ui-zoom, 1)));
+  justify-content: flex-end;
+}
+.combatant-inspector-host > .folding-tray {
+  pointer-events: auto; width: 100%; height: 100%; padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line); border-radius: 0.65rem;
+  background: color-mix(in srgb, var(--panel) 96%, transparent);
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.45);
+}
+.combatant-inspector-host > .folding-tray[data-collapsed='1'] { width: var(--tap-floor); }
+.combatant-inspector-host .tray-content { padding-top: 0.5rem; }
+.combatant-inspector-summary { display: grid; gap: 0.55rem; }
+.combatant-inspector-summary > div:first-child { display: grid; gap: 0.15rem; }
+.combatant-inspector-summary > div:first-child > strong { color: var(--gold); font-family: var(--font-display); }
+.combatant-inspector-summary > div:first-child > span { color: var(--muted); font-size: 0.8rem; }
+.combatant-inspector-resources { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.3rem; }
+.combatant-inspector-resource {
+  display: flex; justify-content: space-between; gap: 0.4rem; min-width: 0;
+  padding: 0.35rem 0.45rem; border: 1px solid var(--line-soft); border-radius: 0.35rem;
+  font-size: 0.8rem;
+}
+.combatant-inspector-resource span { color: var(--muted); }
+.combatant-inspector-section { margin-top: 0.7rem; padding-top: 0.55rem; border-top: 1px solid var(--line-soft); }
+.combatant-inspector-section h4 {
+  margin: 0 0 0.35rem; color: var(--gold); font-size: 0.75rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.combatant-inspector-section ul { display: grid; gap: 0.3rem; margin: 0; padding: 0; list-style: none; }
+.combatant-inspector-section li {
+  display: grid; gap: 0.12rem; padding: 0.4rem 0.45rem;
+  border-left: 2px solid var(--line-soft); background: color-mix(in srgb, var(--bg) 56%, transparent);
+}
+.combatant-inspector-section li.active { border-left-color: var(--gold); }
+.combatant-inspector-section li strong { color: var(--parchment); font-size: 0.82rem; }
+.combatant-inspector-section li span, .combatant-inspector-section li.empty { color: var(--muted); font-size: 0.75rem; line-height: 1.3; }
+.combatant.inspectable:not(.targetable) { cursor: help; }
+
+:root[data-layout='narrow'] .combatant-inspector-host {
+  width: min(var(--combatant-inspector-mobile-vw, 62vw), calc(var(--combatant-inspector-width-rem, 20) * 1rem));
+}
+:root[data-layout='narrow'] .combatant-inspector-host.right { right: 0; }
+
 /* Arcane visual evidence is a host-snapshot pose, not a client reconstruction.
    Remove unrelated player/action chrome so all conditional enemy states remain
    readable in one phone still. This selector is unreachable in ordinary play. */
@@ -7268,7 +7456,7 @@ const { mountGameOver } = require("src/ui/screens/gameover.js");
 const { mountHistory } = require("src/ui/screens/history.js");
 const { mountCompendium } = require("src/ui/screens/compendium.js");
 const { openSettings, settingOn, showSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, derivedStatDialOptions, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition } = require("src/ui/screens/settings.js");
-const { mountEquipment } = require("src/ui/screens/equipment.js");
+const { mountEquipment, resetArmouryTraySession } = require("src/ui/screens/equipment.js");
 const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
@@ -7963,6 +8151,7 @@ function randomSeedString() {
 }
 
 function newRun({ classId, seedString, customization, keepsakeId, custom, startingKitId, startingHands, startingArmourId, startingRelicId, attributeMode, attributes, slot = 1 }) {
+  resetArmouryTraySession();
   // THE CATCH THAT USED TO BE HERE IS GONE, and it is the whole point of the
   // change. It read:
   //
@@ -8112,6 +8301,7 @@ function advanceAct() {
 }
 
 function resumeRun(slot = 1) {
+  resetArmouryTraySession();
   activeSlot = slot;
   run = saves.loadRun(registries, slot);
   if (!run) return showTitle();
@@ -8195,6 +8385,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     return;
   }
   audio.music('title');
+  resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
   const slots = saves.listSlots().map(({ slot, summary }) => ({
@@ -10072,11 +10263,31 @@ const balance = {
       intentGapPx: 6,
       centerPct: 50,
     },
+    // Contextual explanations point back toward the readable centre instead of
+    // blindly choosing the first side with room. Combatants add a persistent,
+    // foldable edge inspector while the shared floating tooltip remains the
+    // short-lived hover/tap explanation.
+    tooltipPlacement: {
+      hoverDelayMs: 500,
+      topBandViewportPct: 25,
+      sideBandViewportPct: 30,
+    },
+    combatantInspector: {
+      widthRem: 20,
+      mobileWidthViewportPct: 62,
+    },
     // Shrine options default to one vertical list. `grid` preserves the
     // horizontal wide-screen composition as an authored alternative; narrow
     // screens still collapse it to a list for touch and readable labels.
     shrinePresentation: {
       optionLayout: 'list', // list | grid
+      // The four option faces share one folded footprint. Percentages own the
+      // responsive size; the bounds preserve the 44 px interaction floor and
+      // keep a wide monitor from turning a choice into a banner.
+      foldedCardWidthViewportPct: 88,
+      foldedCardMaxWidthRem: 44,
+      foldedCardHeightViewportPct: 10,
+      foldedCardMaxHeightRem: 7,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -19439,14 +19650,17 @@ const armouryUi = {
       "foldGroupsBelowPx": 260
     },
     "trays": {
-      "defaultHeightRatio": 0.1,
-      "minimumHeightRatio": 0.1,
+      "defaultHeightRatio": 0.45,
+      "minimumHeightRatio": 0.3,
       "maximumHeightRatio": 0.9,
+      "multipleExpandedMinimumRatio": 0.3,
       "snapRatios": [
-        0.1,
         0.3,
+        0.4,
         0.5,
+        0.6,
         0.7,
+        0.8,
         0.9
       ],
       "snapTolerance": 0.035,
@@ -27389,10 +27603,11 @@ const DEFAULTS = Object.freeze({
     foldGroupsBelowPx: 260,
   },
   trays: {
-    defaultHeightRatio: 0.1,
-    minimumHeightRatio: 0.1,
+    defaultHeightRatio: 0.45,
+    minimumHeightRatio: 0.3,
     maximumHeightRatio: 0.9,
-    snapRatios: [0.1, 0.3, 0.5, 0.7, 0.9],
+    multipleExpandedMinimumRatio: 0.3,
+    snapRatios: [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
     snapTolerance: 0.035,
     contentGapRem: 0.35,
   },
@@ -27494,6 +27709,10 @@ function normalizeArmouryLayout(source = {}) {
     || Number(trays.defaultHeightRatio) > Number(trays.maximumHeightRatio)) {
     throw new Error('armouryUi.layout.trays.defaultHeightRatio must be within the tray minimum and maximum');
   }
+  if (Number(trays.multipleExpandedMinimumRatio) < Number(trays.minimumHeightRatio)
+    || Number(trays.multipleExpandedMinimumRatio) > Number(trays.maximumHeightRatio)) {
+    throw new Error('armouryUi.layout.trays.multipleExpandedMinimumRatio must be within the tray minimum and maximum');
+  }
   positive(Number(trays.contentGapRem), 'trays.contentGapRem');
   const trayStops = trays.snapRatios.map(Number);
   if (new Set(trayStops).size !== trayStops.length
@@ -27568,6 +27787,7 @@ function normalizeArmouryLayout(source = {}) {
       defaultHeightRatio: ratio(Number(trays.defaultHeightRatio), 'trays.defaultHeightRatio'),
       minimumHeightRatio: ratio(Number(trays.minimumHeightRatio), 'trays.minimumHeightRatio'),
       maximumHeightRatio: ratio(Number(trays.maximumHeightRatio), 'trays.maximumHeightRatio'),
+      multipleExpandedMinimumRatio: ratio(Number(trays.multipleExpandedMinimumRatio), 'trays.multipleExpandedMinimumRatio'),
       snapRatios: Object.freeze(trays.snapRatios.map((value) => ratio(Number(value), 'trays.snapRatios'))),
       snapTolerance: ratio(Number(trays.snapTolerance), 'trays.snapTolerance'),
       contentGapRem: positive(Number(trays.contentGapRem), 'trays.contentGapRem'),
@@ -35693,6 +35913,7 @@ Object.assign(module.exports, { focusTitleDefault, mountTitle });
 // src/ui/components/tooltip.js — one shared tooltip, ≤150 ms hover (SPEC §7.3)
 
 const { placeAnchored, viewportLocalBox } = require("src/ui/fx.js");
+const { tooltipPlacementIntent } = require("src/ui/models/TooltipPlacementModel.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 let tipEl = null;
@@ -35819,7 +36040,7 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -35849,7 +36070,13 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
   // fits is an acceptable answer.
-  placeAnchored(t, anchor, { intent, clear });
+  const resolvedIntent = placementModel
+    ? tooltipPlacementIntent(anchor, { width: innerWidth, height: innerHeight }, placementModel, {
+      narrow: document.documentElement.dataset.layout === 'narrow',
+    })
+    : intent;
+  t.dataset.tooltipPlacement = resolvedIntent;
+  placeAnchored(t, anchor, { intent: resolvedIntent, clear });
   return true;
 }
 
@@ -35861,7 +36088,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null,
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -35883,7 +36110,7 @@ function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -35909,9 +36136,9 @@ function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null } = {}) {
+function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance);
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
 }
 
 /**
@@ -36179,6 +36406,10 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
  *                      the offset-from-the-point rule, per-axis flip and all —
  *                      arithmetic, not a second branch at the call site.
+ *           'left'   — toward the centre from a right-edge anchor, falling
+ *                      through right / below / above only when it cannot fit.
+ *           'right'  — toward the centre from a left-edge anchor, with the
+ *                      mirrored fallback order.
  *           'above'  — above it when possible, otherwise under it. This is the
  *                      card/tray instruction intent: keep the explanation out
  *                      of the component being held or resized.
@@ -36209,8 +36440,8 @@ function placeAnchored(el, anchor, {
   pad = 4,
   keep = Infinity,
 } = {}) {
-  if (!['beside', 'above', 'under'].includes(intent)) {
-    throw new Error(`placeAnchored: intent must be 'beside', 'above', or 'under', got ${JSON.stringify(intent)}`);
+  if (!['beside', 'left', 'right', 'above', 'under'].includes(intent)) {
+    throw new Error(`placeAnchored: intent must be 'beside', 'left', 'right', 'above', or 'under', got ${JSON.stringify(intent)}`);
   }
   const room = view || viewportLocalBox();
   const gap = placeGap(el);
@@ -36255,9 +36486,14 @@ function placeAnchored(el, anchor, {
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
     const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
-    const candidates = intent === 'under' ? [under] : intent === 'above' ? [above, under] : [
-      { left: a.left + a.width + gap, top: slideY },  // right of it
-      { left: a.left - b.width - gap, top: slideY },  // left of it
+    const right = { left: a.left + a.width + gap, top: slideY };
+    const left = { left: a.left - b.width - gap, top: slideY };
+    const candidates = intent === 'under' ? [under]
+      : intent === 'above' ? [above, under]
+        : intent === 'left' ? [left, right, under, above]
+          : intent === 'right' ? [right, left, under, above] : [
+      right,
+      left,
       { left: slideX, top: a.top + a.height + gap },  // below it
       above,
     ];
@@ -37112,6 +37348,7 @@ const UI_COMPONENTS = Object.freeze({
   combatantFrame: 'combatant-frame',
   playerCombatantFrame: 'player-combatant-frame',
   enemyCombatantFrame: 'enemy-combatant-frame',
+  combatantInspector: 'combatant-inspector',
   combatantSprite: 'combatant-sprite',
   combatantNameplate: 'combatant-nameplate',
   intentIndicator: 'intent-indicator',
@@ -37135,6 +37372,11 @@ const UI_COMPONENTS = Object.freeze({
   booleanSettingToggle: 'boolean-setting-toggle',
   selectionSectionFace: 'selection-section-face',
   primaryStatCard: 'primary-stat-card',
+  statAllocationRow: 'stat-allocation-row',
+  shrineOptionCard: 'shrine-option-card',
+  smithUpgradeModal: 'smith-upgrade-modal',
+  smithCandidateCard: 'smith-candidate-card',
+  smithUpgradePreview: 'smith-upgrade-preview',
   resourceStrip: 'resource-strip',
   modeChoice: 'mode-choice',
   spriteChoice: 'sprite-choice',
@@ -37153,6 +37395,182 @@ function isUiComponentId(component) {
 
 
 Object.assign(module.exports, { UI_COMPONENTS, isUiComponentId });
+
+},
+"src/ui/models/TooltipPlacementModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+const finite = (value, fallback) => Number.isFinite(value) ? value : fallback;
+const clampPct = (value, fallback) => Math.max(0, Math.min(50, finite(value, fallback)));
+
+// One authored policy for every contextual explanation. Views supply only the
+// anchor and whether the current composition is narrow; the model decides which
+// side points toward the readable centre of the glass.
+function tooltipPlacementModel(presentation = {}) {
+  return componentModel(UI.tooltip, {
+    variant: 'edge-aware',
+    tokens: {
+      hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
+      sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
+    },
+    accessibility: {
+      label: 'Contextual explanation',
+    },
+  });
+}
+
+/**
+ * Resolve an anchored explanation toward the viewport centre.
+ *
+ * Narrow layouts prefer above once the anchor is below the protected top
+ * band. Inside that top band they point inward horizontally, or below when the
+ * anchor is already centred. Wide layouts point inward from either side band
+ * and use above in the middle. The placement primitive still owns the final
+ * fit/fallback, so an authored preference can never make the tooltip disappear.
+ */
+function tooltipPlacementIntent(anchor, viewport, model, { narrow = false } = {}) {
+  if (!anchor || !viewport || !model?.tokens) return 'beside';
+  const width = Math.max(1, finite(viewport.width, 1));
+  const height = Math.max(1, finite(viewport.height, 1));
+  const centerX = finite(anchor.left, 0) + (finite(anchor.width, 0) / 2);
+  const top = finite(anchor.top, 0);
+  const side = model.tokens.sideBandViewportPct / 100;
+  const topBand = model.tokens.topBandViewportPct / 100;
+
+  if (narrow && top >= height * topBand) return 'above';
+  if (centerX <= width * side) return 'right';
+  if (centerX >= width * (1 - side)) return 'left';
+  return top < height * topBand ? 'under' : 'above';
+}
+
+
+Object.assign(module.exports, { tooltipPlacementModel, tooltipPlacementIntent });
+
+},
+"src/ui/models/ComponentModel.js": function (module, exports, require) {
+const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
+const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
+
+function freezeValue(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
+  if (value && typeof value === 'object') {
+    const frozen = {};
+    for (const [key, child] of Object.entries(value)) frozen[key] = freezeValue(child);
+    return Object.freeze(frozen);
+  }
+  return value;
+}
+
+function serializable(value) {
+  if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return true;
+  if (Array.isArray(value)) return value.every(serializable);
+  return typeof value === 'object'
+    && Object.getPrototypeOf(value) === Object.prototype
+    && Object.values(value).every(serializable);
+}
+
+// Immutable presentation record. It intentionally cannot carry callbacks or
+// mutable domain objects; behavior names are resolved later by a View host.
+function componentModel(component, {
+  variant = '',
+  properties = {},
+  tokens = {},
+  accessibility = {},
+  behaviors = [],
+  children = [],
+} = {}) {
+  if (!isUiComponentId(component)) throw new Error(`Unknown UI component model: ${component}`);
+  if (typeof variant !== 'string') throw new Error(`${component} variant must be a string`);
+  if (!serializable(properties)) throw new Error(`${component} properties must be serializable`);
+  if (!serializable(tokens)) throw new Error(`${component} tokens must be serializable`);
+  if (!serializable(accessibility)) throw new Error(`${component} accessibility must be serializable`);
+  if (!Array.isArray(behaviors) || behaviors.some((behavior) => !isBehaviorModel(behavior))) {
+    throw new Error(`${component} behaviors must be Behavior Models`);
+  }
+  if (!Array.isArray(children) || children.some((child) => !isComponentModel(child))) {
+    throw new Error(`${component} children must be Component Models`);
+  }
+  return Object.freeze({
+    component,
+    variant,
+    properties: freezeValue(properties),
+    tokens: freezeValue(tokens),
+    accessibility: freezeValue(accessibility),
+    behaviors: Object.freeze([...behaviors]),
+    children: Object.freeze([...children]),
+  });
+}
+
+function isComponentModel(value) {
+  return !!value && typeof value === 'object' && isUiComponentId(value.component)
+    && Array.isArray(value.behaviors) && Array.isArray(value.children);
+}
+
+function childModel(parent, component, variant = null) {
+  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
+  const child = parent.children.find((candidate) => candidate.component === component
+    && (variant == null || candidate.variant === variant));
+  if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
+  return child;
+}
+
+function descendantModel(parent, component, variant = null) {
+  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
+  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
+  for (const child of parent.children) {
+    const found = descendantModelOrNull(child, component, variant);
+    if (found) return found;
+  }
+  throw new Error(`${parent.component} is missing descendant ${component}${variant == null ? '' : `:${variant}`}`);
+}
+
+function descendantModelOrNull(parent, component, variant) {
+  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
+  for (const child of parent.children) {
+    const found = descendantModelOrNull(child, component, variant);
+    if (found) return found;
+  }
+  return null;
+}
+
+
+Object.assign(module.exports, { componentModel, isComponentModel, childModel, descendantModel });
+
+},
+"src/ui/models/BehaviorModel.js": function (module, exports, require) {
+function frozenRecord(value) {
+  if (Array.isArray(value)) return Object.freeze(value.map(frozenRecord));
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const [key, child] of Object.entries(value)) out[key] = frozenRecord(child);
+    return Object.freeze(out);
+  }
+  return value;
+}
+
+function behaviorModel(name, {
+  event = 'mount',
+  command = name,
+  policy = '',
+  payload = {},
+} = {}) {
+  if (typeof name !== 'string' || !name) throw new Error('Behavior name is required');
+  if (typeof event !== 'string' || !event) throw new Error(`${name} event is required`);
+  if (typeof command !== 'string' || !command) throw new Error(`${name} command is required`);
+  return Object.freeze({ name, event, command, policy, payload: frozenRecord(payload) });
+}
+
+function isBehaviorModel(value) {
+  return !!value && typeof value === 'object'
+    && typeof value.name === 'string' && !!value.name
+    && typeof value.event === 'string' && !!value.event
+    && typeof value.command === 'string' && !!value.command;
+}
+
+
+Object.assign(module.exports, { behaviorModel, isBehaviorModel });
 
 },
 "src/ui/components/holdconfirm.js": function (module, exports, require) {
@@ -40194,7 +40612,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'b4b400e2c1';
+const SOURCE = 'd0f8dab61b';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -40228,7 +40646,7 @@ const SOURCE = 'b4b400e2c1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1354';
+const ORDINAL = '1361';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -40255,7 +40673,7 @@ const ORDINAL = '1354';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-25';
+const BUILT = '2026-08-26';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -40531,130 +40949,6 @@ function wireHudQuickSettings(root, { settings = {}, onSettingsChange = null } =
 
 
 Object.assign(module.exports, { updateHudQuickSettingsBinding, refreshHudQuickSettings, hudQuickSettingsHtml, wireHudQuickSettings });
-
-},
-"src/ui/models/ComponentModel.js": function (module, exports, require) {
-const { isUiComponentId } = require("src/ui/models/UiComponentId.js");
-const { isBehaviorModel } = require("src/ui/models/BehaviorModel.js");
-
-function freezeValue(value) {
-  if (Array.isArray(value)) return Object.freeze(value.map(freezeValue));
-  if (value && typeof value === 'object') {
-    const frozen = {};
-    for (const [key, child] of Object.entries(value)) frozen[key] = freezeValue(child);
-    return Object.freeze(frozen);
-  }
-  return value;
-}
-
-function serializable(value) {
-  if (value == null || ['string', 'number', 'boolean'].includes(typeof value)) return true;
-  if (Array.isArray(value)) return value.every(serializable);
-  return typeof value === 'object'
-    && Object.getPrototypeOf(value) === Object.prototype
-    && Object.values(value).every(serializable);
-}
-
-// Immutable presentation record. It intentionally cannot carry callbacks or
-// mutable domain objects; behavior names are resolved later by a View host.
-function componentModel(component, {
-  variant = '',
-  properties = {},
-  tokens = {},
-  accessibility = {},
-  behaviors = [],
-  children = [],
-} = {}) {
-  if (!isUiComponentId(component)) throw new Error(`Unknown UI component model: ${component}`);
-  if (typeof variant !== 'string') throw new Error(`${component} variant must be a string`);
-  if (!serializable(properties)) throw new Error(`${component} properties must be serializable`);
-  if (!serializable(tokens)) throw new Error(`${component} tokens must be serializable`);
-  if (!serializable(accessibility)) throw new Error(`${component} accessibility must be serializable`);
-  if (!Array.isArray(behaviors) || behaviors.some((behavior) => !isBehaviorModel(behavior))) {
-    throw new Error(`${component} behaviors must be Behavior Models`);
-  }
-  if (!Array.isArray(children) || children.some((child) => !isComponentModel(child))) {
-    throw new Error(`${component} children must be Component Models`);
-  }
-  return Object.freeze({
-    component,
-    variant,
-    properties: freezeValue(properties),
-    tokens: freezeValue(tokens),
-    accessibility: freezeValue(accessibility),
-    behaviors: Object.freeze([...behaviors]),
-    children: Object.freeze([...children]),
-  });
-}
-
-function isComponentModel(value) {
-  return !!value && typeof value === 'object' && isUiComponentId(value.component)
-    && Array.isArray(value.behaviors) && Array.isArray(value.children);
-}
-
-function childModel(parent, component, variant = null) {
-  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
-  const child = parent.children.find((candidate) => candidate.component === component
-    && (variant == null || candidate.variant === variant));
-  if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
-  return child;
-}
-
-function descendantModel(parent, component, variant = null) {
-  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
-  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
-  for (const child of parent.children) {
-    const found = descendantModelOrNull(child, component, variant);
-    if (found) return found;
-  }
-  throw new Error(`${parent.component} is missing descendant ${component}${variant == null ? '' : `:${variant}`}`);
-}
-
-function descendantModelOrNull(parent, component, variant) {
-  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
-  for (const child of parent.children) {
-    const found = descendantModelOrNull(child, component, variant);
-    if (found) return found;
-  }
-  return null;
-}
-
-
-Object.assign(module.exports, { componentModel, isComponentModel, childModel, descendantModel });
-
-},
-"src/ui/models/BehaviorModel.js": function (module, exports, require) {
-function frozenRecord(value) {
-  if (Array.isArray(value)) return Object.freeze(value.map(frozenRecord));
-  if (value && typeof value === 'object') {
-    const out = {};
-    for (const [key, child] of Object.entries(value)) out[key] = frozenRecord(child);
-    return Object.freeze(out);
-  }
-  return value;
-}
-
-function behaviorModel(name, {
-  event = 'mount',
-  command = name,
-  policy = '',
-  payload = {},
-} = {}) {
-  if (typeof name !== 'string' || !name) throw new Error('Behavior name is required');
-  if (typeof event !== 'string' || !event) throw new Error(`${name} event is required`);
-  if (typeof command !== 'string' || !command) throw new Error(`${name} command is required`);
-  return Object.freeze({ name, event, command, policy, payload: frozenRecord(payload) });
-}
-
-function isBehaviorModel(value) {
-  return !!value && typeof value === 'object'
-    && typeof value.name === 'string' && !!value.name
-    && typeof value.event === 'string' && !!value.event
-    && typeof value.command === 'string' && !!value.command;
-}
-
-
-Object.assign(module.exports, { behaviorModel, isBehaviorModel });
 
 },
 "src/ui/screens/settings.js": function (module, exports, require) {
@@ -44773,6 +45067,7 @@ const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { refusesWhen } = require("src/ui/components/refusal.js");
 const { attachSeedField } = require("src/ui/components/seedfield.js");
 const { createRunState } = require("src/model/state.js");
+const { attributeCardModels } = require("src/model/creationBrief.js");
 const { statProjection, playerPoiseThresholdReceipt } = require("src/model/statProjection.js");
 const { startingKitViews, startingArmourViews } = require("src/model/startingKits.js");
 const { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } = require("src/model/attributes.js");
@@ -45031,7 +45326,10 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...projection.attributes.map(primaryStatCard));
+    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
+      projection,
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    }).map(primaryStatCard));
     const poise = playerPoiseThresholdReceipt(registries, run);
     const resources = resourceStrip(projection.derived, poise);
     $('#cz-derived').replaceChildren(...resources.childNodes);
@@ -45137,6 +45435,8 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
       } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
+      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
+      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
       const allocation = renderStatAllocationCard(overlay, {
         title: 'ASSIGN POINTS',
         remaining,
@@ -45147,6 +45447,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
           label: def.label,
           shortLabel: def.shortLabel,
           value: state.attributes[def.id],
+          card: cards.get(def.id),
           canDecrease: state.attributes[def.id] > mode.minimum,
           canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
         })),
@@ -45412,11 +45713,15 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     };
     const specimenRun = previewRun();
     const specimenProjection = statProjection(registries, specimenRun);
+    const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
+      projection: specimenProjection,
+      equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+    });
     const disclosureHost = document.createElement('div');
     disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
     const disclosureStat = document.createElement('div');
     disclosureStat.className = 'cc-character-picker';
-    disclosureStat.appendChild(primaryStatCard(specimenProjection.attributes[0]));
+    disclosureStat.appendChild(primaryStatCard(specimenAttributes[0]));
     const disclosureKeepsake = document.createElement('div');
     disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
     let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
@@ -45433,7 +45738,7 @@ function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack,
     disclosureSpecimen.open('sample-primary');
     const statHost = document.createElement('div');
     statHost.className = 'cc-primary-stats cc-catalog-specimen';
-    statHost.append(...specimenProjection.attributes.map(primaryStatCard));
+    statHost.append(...specimenAttributes.map(primaryStatCard));
     const classChoiceSpecimen = document.createElement('div');
     classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
     const classChoiceHost = document.createElement('div');
@@ -46022,11 +46327,12 @@ function revealHtml(entry) {
     + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
 }
 
-/** A FACE IS A LABEL AND A VALUE. One home for that markup, because it is
+/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE. One home for that markup, because it is
  *  drawn at mount and re-drawn every time a folded picker's choice changes;
  *  two spellings of it would be two answers to "what did I pick?". */
 function faceHtml(entry) {
   return `<b class="disc-name">${esc(entry.face.label)}</b>`
+    + (entry.face.summary ? `<span class="disc-summary">${esc(entry.face.summary)}</span>` : '')
     + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
 }
 
@@ -46545,6 +46851,268 @@ function attachSeedField(input, { promise = SEED_PROMISE } = {}) {
 Object.assign(module.exports, { SEED_PROMISE, attachSeedField });
 
 },
+"src/model/creationBrief.js": function (module, exports, require) {
+// src/model/creationBrief.js — D26's SHORT FORM, as one read model.
+//
+// Constantine, 2026-08-15: "the statte descriptions kind of suck. perhaps have
+// a simplifed verison with just the starting stats, starting armaments
+// selection , and then have the ability to expand by clicking, with tool tips.
+// for character creation I mean"
+//
+// THE FIX IS LAYERED PROSE, NOT A SECOND SET OF PROSE. Every entry here has a
+// FACE (name, the first authored sentence constrained to one line, and value)
+// and a REVEAL (the full sentence plus derived benefits, one tap down). The
+// vocabulary and the tier field are model/disclosure.js; this file is the one
+// place that composes them, so the creation screen and the F1 combat frame
+// cannot answer "what does a stat look like" two different ways.
+//
+// WHAT IS AUTHORED AND WHAT IS DERIVED (Law 0 clause 1 — an entry DESCRIBES,
+// the machinery DERIVES). Authored, once, per row: `sense`, one sentence with
+// NO NUMBER IN IT. Derived here, every render, from the tables that own the
+// facts:
+//
+//   an attribute's FEEDS      every derived stat whose sourceStat is this
+//                             attribute, with its own gain and its own tier
+//                             size — so adding a rule row changes the
+//                             attribute's reveal with nobody editing prose
+//   an attribute's UNLOCKS    every armament that names it in
+//                             equipmentRequirements, with the minimum it asks
+//                             — which is how STRENGTH has an honest reveal on
+//                             a screen where it feeds no pool at all
+//   a derived stat's SOURCE   its own rule row, in words
+//   a derived stat's RECEIPT  statProjection's formula string, unchanged: the
+//                             arithmetic already has one home and this is not
+//                             a second one
+//   an armament's EFFECTS     its `mods` column read through modFields, the
+//                             same vocabulary the Armoury comparison reads
+//   an armament's REQUIREMENTS equipmentRequirementReceipt, met or unmet
+//
+// AN ENTRY THAT FEEDS NOTHING AND UNLOCKS NOTHING SAYS SO. Silence there would
+// be the screen implying a stat matters because it is drawn; the derivation
+// prints "Nothing reads it yet" and that sentence goes stale the moment the
+// tables change, which is the point.
+//
+// THE RELIC IS HERE BECAUSE THE SCREEN NEVER NAMED IT (Bjorn, 2026-08-15): the
+// class-pick panel itemized "Items 6 + relics 0 = 6" one row below a screen
+// that never mentioned the starting relic — and D23 made that relic the carrier
+// of the class's own numbers. Its passive modifiers are derived below; its
+// authored sentence is composed by the caller through the shared relicText
+// renderer (`extras`), because token-filling is a rendering concern with one
+// home already (ui/components/card.js) and this module keeps no copy of it.
+//
+// REMOVAL CONDITION (SOP 1's corollary): deleted the day the creation screen
+// and the combat frame no longer show stats — the split has no subject then.
+
+const { splitByDisclosure } = require("src/model/disclosure.js");
+const { statProjection } = require("src/model/statProjection.js");
+const { equipmentRequirementReceipt, equippedPieces, parseMod } = require("src/model/loadout.js");
+const { orderedAttributes } = require("src/model/attributes.js");
+
+/** `mods` → player-readable effect lines, through the modFields vocabulary. */
+function pieceEffects(registries, piece) {
+  const fields = (registries.equipment || {}).modFields || {};
+  return (piece.mods || []).map((raw) => {
+    const mod = parseMod(raw);
+    const spec = mod && fields[mod.field];
+    // A mod the vocabulary does not know is refused at the content door, so
+    // reaching here means the tables disagree — say the raw row rather than
+    // drop it silently. A visible oddity is a bug report; a dropped line is a
+    // screen that quietly under-describes a weapon.
+    if (!spec) return raw;
+    const sign = mod.mode === 'add' && mod.value >= 0 ? '+' : '';
+    return `${spec.label} ${sign}${mod.value}`;
+  });
+}
+
+function requirementLines(registries, piece, attributes) {
+  const receipt = equipmentRequirementReceipt(registries, piece, attributes);
+  return receipt.requirements.map((row) => {
+    const def = registries.attributes.get(row.attributeId);
+    const met = Number.isFinite(row.actual) && row.actual >= row.required;
+    return `Needs ${def.shortLabel} ${row.required} — you have ${row.actual == null ? '—' : row.actual}${met ? '' : ' (short)'}`;
+  });
+}
+
+/** The armament entries: what the chosen kit actually puts in your hands. */
+function armamentEntries(registries, run) {
+  const slots = (registries.equipment || {}).slots || [];
+  return equippedPieces(registries, run.loadout, run.class).map((piece) => {
+    const slot = slots.find((row) => (row.kinds || []).includes(piece.kind) && (!piece.hand || piece.hand === 'either' || piece.hand === row.hand));
+    return {
+      id: piece.id,
+      // THE KEY IS THE MODEL'S, NOT THE SCREEN'S. Two hands may hold the same
+      // armament id, so a bare id is not unique on this surface — and a DOM
+      // that keys two faces the same silently opens the wrong reveal. One rule,
+      // stated once, adopted by every surface that draws entries.
+      key: `armament:${slot ? slot.id : piece.kind}:${piece.id}`,
+      slotId: slot ? slot.id : null,
+      kind: 'armament',
+      // Always face-tier: he named the armaments selection as the other half
+      // of the short form, so a starting armament is never behind a tap.
+      disclosure: 'face',
+      face: { label: piece.name, value: slot ? slot.label : '' },
+      reveal: {
+        title: piece.name,
+        sense: piece.blurb || '',
+        lines: [...pieceEffects(registries, piece), ...requirementLines(registries, piece, run.attributes)],
+        receipt: '',
+      },
+    };
+  });
+}
+
+function relicEntry(registries, run) {
+  const classDef = registries.classes.get(run.class);
+  const relic = classDef.startingRelic ? registries.relics.get(classDef.startingRelic) : null;
+  if (!relic) return null;
+  // The resource's name is the presentation table's, never an upper-cased id:
+  // a player reads 'Mana', and the engine's key is not a label (Vira's
+  // engine-language finding, 2026-08-15).
+  const named = (id) => (((registries.derivedStatRules || {}).presentation || {})[id] || {}).label || id;
+  const lines = ((relic.passives && relic.passives.modifiers) || []).map((row) => {
+    if (row.tag === 'resource.flat') return `${named(row.resource)} +${row.amount}`;
+    if (row.tag === 'resource.attributeTier') {
+      const def = registries.attributes.get(row.sourceStat);
+      return `${named(row.resource)} +${row.amountPerTier} per ${row.pointsPerTier} ${def.shortLabel}`;
+    }
+    if (row.tag === 'damage.school.flat') return `${row.school} damage +${row.amount}`;
+    return row.tag;
+  });
+  return {
+    id: relic.id,
+    key: `relic:${relic.id}`,
+    kind: 'relic',
+    disclosure: 'face',
+    face: { label: 'Relic', value: relic.name },
+    reveal: { title: relic.name, sense: '', lines, receipt: '' },
+  };
+}
+
+/** Every armament in the class's tables that names this attribute as a gate. */
+function unlockLines(registries, attributeId) {
+  return ((registries.equipment || {}).armaments || [])
+    .filter((piece) => ((piece.requirements && piece.requirements.attributes) || {})[attributeId] != null)
+    .map((piece) => `${piece.name} asks ${piece.requirements.attributes[attributeId]}`);
+}
+
+function foldedSummary(sense) {
+  const text = String(sense || '').trim();
+  const sentence = text.match(/^.*?[.!?](?:\s|$)/)?.[0]?.trim();
+  return sentence || text;
+}
+
+function equipmentScalingLines(registries, attributeId, profiles) {
+  const lines = new Set();
+  for (const [id, profile] of Object.entries(profiles || {})) {
+    if (!profile || profile.scalingStat !== attributeId) continue;
+    const source = (registries.equipment.basicCardProfiles || []).find((row) => row.id === id) || profile;
+    const role = source.role || profile.role;
+    const school = source.damageSchool || profile.damageSchool;
+    const label = role === 'guard'
+      ? 'Guard'
+      : `${school && school !== 'physical' ? `${school[0].toUpperCase()}${school.slice(1)} ` : 'Physical '}attacks`;
+    lines.add(`${label} +${profile.gainPerTier} every ${profile.pointsPerTier} ${profile.pointsPerTier === 1 ? 'point' : 'points'}`);
+  }
+  return [...lines];
+}
+
+/**
+ * One attribute-card model for every authored attribute.
+ *
+ * `attributes` may be an in-progress allocation, so this door deliberately
+ * does not require a valid run. The optional projection only supplies a
+ * class-specific fallback for a rule whose gain is resolved at projection
+ * time; every authored label, sentence, rule and equipment gate still comes
+ * from its owning registry row.
+ */
+function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
+  const rules = ((registries.derivedStatRules || {}).rules) || {};
+  const presentation = ((registries.derivedStatRules || {}).presentation) || {};
+  const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  return orderedAttributes(registries).map((authored) => {
+    const def = { ...authored, value: attributes?.[authored.id] };
+    const feeds = Object.entries(rules)
+      .filter(([, rule]) => rule.sourceStat === def.id)
+      .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
+      .map(([id, rule]) => {
+        const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
+        const points = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
+        const label = presentation[id].label;
+        // A class-field gain (hp) is a different number per class, so it is
+        // read off the projection's own receipt rather than restated here.
+        const perTier = gain == null
+          ? projected.get(id)?.gainPerTier
+          : gain;
+        return Number.isFinite(perTier)
+          ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
+          : `${label} scales with ${def.label}`;
+      });
+    const unlocks = unlockLines(registries, def.id);
+    const scaling = equipmentScalingLines(registries, def.id, equipmentProfiles);
+    const lines = [...feeds, ...scaling, ...unlocks];
+    return {
+      id: def.id,
+      key: `attribute:${def.id}`,
+      kind: 'attribute',
+      disclosure: def.disclosure,
+      face: { label: def.shortLabel, summary: foldedSummary(def.sense), value: def.value },
+      reveal: {
+        title: def.label,
+        sense: def.sense,
+        lines: lines.length ? lines : ['Nothing reads it yet.'],
+        receipt: '',
+      },
+    };
+  });
+}
+
+function derivedEntries(projection) {
+  return projection.derived.map((row) => ({
+    id: row.id,
+    key: `derived:${row.id}`,
+    kind: 'derived',
+    disclosure: row.disclosure,
+    face: { label: row.faceLabel, value: row.value },
+    reveal: {
+      title: row.label,
+      sense: row.sense,
+      lines: [],
+      // THE RECEIPT TIER, and it is the projection's own string — the
+      // arithmetic keeps its single home (Law 1 clause 2).
+      receipt: row.formula,
+    },
+  }));
+}
+
+/**
+ * creationBrief(registries, run) → { stats, armaments, faces, reveals }
+ *
+ * `stats` and `armaments` are every entry in authored order; `faces` and
+ * `reveals` are the same entries split by their own `disclosure` field — the
+ * split is READ, never decided here, and no caller may filter by id.
+ */
+function creationBrief(registries, run) {
+  const projection = statProjection(registries, run);
+  const stats = [...attributeCardModels(registries, run.attributes, {
+    projection,
+    equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+  }), ...derivedEntries(projection)];
+  const relic = relicEntry(registries, run);
+  const armaments = [...armamentEntries(registries, run), ...(relic ? [relic] : [])];
+  const split = splitByDisclosure(stats);
+  return {
+    classId: run.class,
+    stats,
+    armaments,
+    faces: split.face,
+    reveals: split.reveal,
+  };
+}
+
+
+Object.assign(module.exports, { attributeCardModels, creationBrief });
+
+},
 "src/ui/screens/equipment.js": function (module, exports, require) {
 // src/ui/screens/equipment.js — the Armoury.
 //
@@ -46578,6 +47146,7 @@ const { playerSprite, equippedFigure } = require("src/ui/assets.js");
 const { assetUrl } = require("src/ui/assetmap.js");
 const { sfx } = require("src/ui/sfx.js");
 const { statProjection } = require("src/model/statProjection.js");
+const { attributeCardModels } = require("src/model/creationBrief.js");
 const { syncFlaskGrowth } = require("src/model/flaskgrowth.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
 const { mountDisclosure } = require("src/ui/components/disclosure.js");
@@ -46596,8 +47165,16 @@ const { renderArmouryOverlay, renderArmouryPanel, renderEquipmentSlot, renderInv
 const { trayModel } = require("src/ui/models/TrayModels.js");
 const { renderTray } = require("src/ui/components/trayComponents.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+const { traySizeService } = require("src/ui/services/TraySizeService.js");
 
 const CFG = () => balance.equipment;
+const armouryTraySession = { folded: new Map(), heights: new Map() };
+
+function resetArmouryTraySession() {
+  armouryTraySession.folded.clear();
+  armouryTraySession.heights.clear();
+  traySizeService.reset();
+}
 
 // ---- the view set: a row DESCRIBES a layout, and the CELL is the vocabulary --
 //
@@ -47209,18 +47786,18 @@ function mountEquipment(host, {
   // a synthetic `meta` and no `onChange`, so there is nothing to read and nothing
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
-  const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
+  const storedFolds = armouryTraySession.folded.size
+    ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
   const clampTrayHeight = (value) => Math.min(
     layout.trays.maximumHeightRatio,
     Math.max(layout.trays.minimumHeightRatio, Number(value)),
   );
-  const savedTrayHeights = (meta.settings && meta.settings.armouryTrayHeights) || {};
   const trayHeights = new Map(contextRegions().map((region) => [
     region.id,
-    clampTrayHeight(Number.isFinite(Number(savedTrayHeights[region.id]))
-      ? Number(savedTrayHeights[region.id]) : layout.trays.defaultHeightRatio),
+    clampTrayHeight(Number.isFinite(Number(armouryTraySession.heights.get(region.id)))
+      ? Number(armouryTraySession.heights.get(region.id)) : layout.trays.defaultHeightRatio),
   ]));
   let cardView = layout.cards.defaultView;
   const storedArmamentView = meta.settings && meta.settings.armouryArmamentView;
@@ -47350,7 +47927,10 @@ function mountEquipment(host, {
       : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
   }
 
-  const foldSettings = () => ({ armouryCollapsed: Object.fromEntries(folded) });
+  const foldSettings = () => {
+    for (const [id, value] of folded) armouryTraySession.folded.set(id, value);
+    return null;
+  };
   const openInventoryForSelection = (slotId, setIndex) => {
     picking = { slotId, setIndex };
     folded.set('inventory', false);
@@ -47964,26 +48544,6 @@ function mountEquipment(host, {
     return layout.combatPower.cards.map(role);
   }
 
-  function attributeEntries(projection) {
-    const pieces = equippedPieces(registries, run.loadout, run.class);
-    return projection.attributes.map((row) => {
-      const bonuses = pieces.flatMap((piece) => (piece.mods || [])
-        .filter((mod) => mod.toLowerCase().includes(row.id.slice(0, 3)))
-        .map((mod) => `${piece.name}: ${mod}`));
-      return {
-        key: row.id,
-        kind: 'attribute',
-        disclosure: 'face',
-        face: { label: row.shortLabel || row.label, value: String(row.value) },
-        reveal: {
-          title: row.label,
-          sense: 'Base value plus current equipment and relic bonuses.',
-          lines: [`Base ${row.value}`, ...(bonuses.length ? bonuses : ['No direct item bonus authored.'])],
-        },
-      };
-    });
-  }
-
   function relicEntries() {
     return (run.relics || []).map((id) => {
       const relic = registries.relics.get(id);
@@ -48031,7 +48591,10 @@ function mountEquipment(host, {
     const attributes = document.createElement('section');
     attributes.className = 'character-attributes';
     const attributeHost = document.createElement('div');
-    const attributeRows = attributeEntries(projection);
+    const attributeRows = attributeCardModels(registries, run.attributes, {
+      projection,
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    });
     mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes' });
     attributes.appendChild(attributeHost);
     box.appendChild(informationCard({
@@ -48219,6 +48782,7 @@ function mountEquipment(host, {
         .filter(Boolean).join(' · ');
     })() : '';
     const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
+    const viewportHeight = () => Math.max(1, window.visualViewport?.height || window.innerHeight || 1);
     const model = trayModel({
       id: r.id,
       name: r.label,
@@ -48230,7 +48794,7 @@ function mountEquipment(host, {
       sortable: r.id === 'cards',
       sortLabel: `Toggle ${r.label} list or grid`,
       resizable: !fillsInventoryPane,
-      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * 500)),
+      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * viewportHeight())),
       items: [],
     });
     const snapRatio = (raw) => {
@@ -48247,7 +48811,7 @@ function mountEquipment(host, {
       },
       onToggle: () => {
         folded.set(r.id, !folded.get(r.id));
-        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+        armouryTraySession.folded.set(r.id, folded.get(r.id));
         draw();
         wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
       },
@@ -48257,11 +48821,10 @@ function mountEquipment(host, {
         wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
       } : null,
       onResize: (_id, size) => {
-        const panelHeight = wrap.querySelector('.armoury')?.getBoundingClientRect().height || 1;
-        const next = snapRatio(size / panelHeight);
+        const next = snapRatio(size / viewportHeight());
         trayHeights.set(r.id, next);
-        rendered.element.style.height = `${next * 100}%`;
-        if (onChange) onChange(run.loadout, { armouryTrayHeights: Object.fromEntries(trayHeights) });
+        armouryTraySession.heights.set(r.id, next);
+        rendered.element.style.height = `${next * 100}vh`;
       },
       renderContent: (content) => {
         while (source.firstChild) content.appendChild(source.firstChild);
@@ -48274,7 +48837,9 @@ function mountEquipment(host, {
     source.replaceWith(rendered.element);
     if (!shut && !fillsInventoryPane) {
       rendered.element.dataset.sized = '1';
-      rendered.element.style.height = `${savedRatio * 100}%`;
+      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}vh`;
+      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}vh`;
+      rendered.element.style.height = `${savedRatio * 100}vh`;
     }
     if (r.id === 'cards' && rendered.sort) {
       const next = cardView === 'list' ? 'grid' : 'list';
@@ -48420,7 +48985,7 @@ function mountEquipment(host, {
         armamentsFolded: folded.get('armaments') === true,
         toggleArmaments: () => {
           folded.set('armaments', !folded.get('armaments'));
-          if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+          armouryTraySession.folded.set('armaments', folded.get('armaments'));
           draw();
           wrap.querySelector('[data-fold="armaments"]')?.focus();
         },
@@ -48616,7 +49181,7 @@ function mountEquipment(host, {
 }
 
 
-Object.assign(module.exports, { viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, pieceChip, mountEquipment });
+Object.assign(module.exports, { resetArmouryTraySession, viewIds, viewCells, viewCellsSay, viewLayout, regionIds, regionById, authoredSubject, subjectRegion, contextRegions, opensCollapsed, pieceChip, mountEquipment });
 
 },
 "src/model/equipmentPresentation.js": function (module, exports, require) {
@@ -49154,7 +49719,8 @@ function fillTemplate(def, tokens, baseTokens) {
  *   ref  — { cardId, upgraded, instanceId? }
  *   opts — { preview?    (previewCard result → live numbers),
  *            affordable? (bool; greys out when false),
- *            small?      (scale for reward/pile grids) }
+ *            small?      (scale for reward/pile grids),
+ *            tooltip?    (false suppresses the shared hover/focus tooltip) }
  */
 function renderCard(registries, ref, opts = {}) {
   const def = resolveCard(registries, ref);
@@ -49211,8 +49777,11 @@ function renderCard(registries, ref, opts = {}) {
     el.style.setProperty('--boost-tint', boost.boostTint);
   }
 
-  // opts.tooltipFn overrides the default tooltip (e.g. Smith upgrade preview).
-  attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  // opts.tooltipFn overrides the default tooltip. A parent that already owns a
+  // persistent detail region may suppress the transient tooltip entirely.
+  if (opts.tooltip !== false) {
+    attachTooltip(el, () => (opts.tooltipFn ? opts.tooltipFn() : cardTooltip(registries, def, tokens)));
+  }
   if (opts.small) {
     el.style.transform = 'scale(0.92)';
   }
@@ -49225,19 +49794,24 @@ function renderCard(registries, ref, opts = {}) {
  * same up/down coloring cards use in play). All numbers come from the defs.
  */
 function upgradePreviewHtml(registries, ref) {
-  const base = resolveCard(registries, { cardId: ref.cardId, upgraded: false });
-  const upg = resolveCard(registries, { cardId: ref.cardId, upgraded: true });
+  const base = resolveCard(registries, { ...ref, upgraded: false });
+  const upg = resolveCard(registries, { ...ref, upgraded: true });
   const baseTokens = staticTokens(base);
   const upgTokens = { ...baseTokens, ...staticTokens(upg) };
+  const baseText = fillTemplate(base, baseTokens, null);
+  const upgradedText = fillTemplate(upg, upgTokens, baseTokens);
   // Both lines are CARD TEXT, so both wear `.ctext` — the class the mark rules
   // are keyed to (ui.css). Without it the preview drew the number it had just
   // computed as changed in the same colour and weight as the word beside it.
   // `.ctext` carries the marks only; the card face's block layout stays on
   // `.card .ctext` and does not follow the text into the tooltip.
   let html = `<div class="tt-title">${esc(base.name)} → ${esc(base.name)}+</div>`;
-  html += `<div class="ctext" style="color:var(--muted)">${fillTemplate(base, baseTokens, null)}</div>`;
-  html += `<div class="ctext" style="margin-top:6px">${fillTemplate(upg, upgTokens, baseTokens)}</div>`;
+  html += `<div class="ctext" style="color:var(--muted)">${baseText}</div>`;
+  html += `<div class="ctext" style="margin-top:6px">${upgradedText}</div>`;
   if (upg.cost !== base.cost) html += `<div class="tt-kw">Cost <b>${esc(base.cost)}</b> → <b>${esc(upg.cost)}</b></div>`;
+  if (baseText === upgradedText && upg.cost === base.cost) {
+    html += '<div class="tt-kw">Your current armament keeps the displayed values the same. The card still gains its permanent upgrade.</div>';
+  }
   return html;
 }
 
@@ -50101,39 +50675,49 @@ Object.assign(module.exports, { renderTray });
 },
 "src/ui/services/TraySizeService.js": function (module, exports, require) {
 const PREFIX = 'ashenspire.ui.tray-size';
-const fallback = new Map();
+const sessionValues = new Map();
 
 function key(id, edge) {
   return `${PREFIX}:${id}:${edge}`;
 }
 
 function browserStorage() {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
+  // Tray geometry is play-session state, not a profile preference. The default
+  // service deliberately stays in memory so reload/new play starts authored.
+  return null;
 }
 
 function createTraySizeService(storage = browserStorage()) {
   return Object.freeze({
     read(id, edge) {
       try {
-        const value = Number(storage?.getItem(key(id, edge)) ?? fallback.get(key(id, edge)));
+        const value = Number(storage?.getItem(key(id, edge)) ?? sessionValues.get(key(id, edge)));
         return Number.isFinite(value) && value > 0 ? value : null;
       } catch {
-        return fallback.get(key(id, edge)) || null;
+        return sessionValues.get(key(id, edge)) || null;
       }
     },
     write(id, edge, size) {
       const value = Math.round(size);
-      fallback.set(key(id, edge), value);
+      sessionValues.set(key(id, edge), value);
       try {
         storage?.setItem(key(id, edge), String(value));
       } catch {
         // The in-memory copy preserves the interaction when browser storage is unavailable.
       }
       return value;
+    },
+    reset() {
+      sessionValues.clear();
+      if (!storage) return;
+      try {
+        for (let index = storage.length - 1; index >= 0; index -= 1) {
+          const candidate = storage.key(index);
+          if (candidate?.startsWith(`${PREFIX}:`)) storage.removeItem(candidate);
+        }
+      } catch {
+        // In-memory state is already reset; unavailable storage cannot retain it.
+      }
     },
   });
 }
@@ -50149,6 +50733,8 @@ Object.assign(module.exports, { createTraySizeService, traySizeService });
 // provide policy (limits, remaining points, commit); this component owns the
 // common card, controls, semantics, and interaction shape.
 const { esc } = require("src/ui/components/tooltip.js");
+const { primaryStatCard } = require("src/ui/components/creationCards.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 function renderStatAllocationCard(host, {
   title = 'ASSIGN POINTS',
@@ -50179,7 +50765,12 @@ function renderStatAllocationCard(host, {
   for (const rowModel of rows) {
     const row = document.createElement('div');
     row.className = 'se-row';
-    row.innerHTML = `<span class="se-name" title="${esc(rowModel.label)}">${esc(rowModel.shortLabel || rowModel.label)}</span>`;
+    markUiComponent(row, UI.statAllocationRow);
+    const attribute = primaryStatCard({
+      ...rowModel.card,
+      face: { ...rowModel.card.face, value: '' },
+    });
+    attribute.classList.add('se-attribute-card');
     const minus = document.createElement('button');
     minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
     minus.dataset.statId = rowModel.id; minus.dataset.statAction = 'decrease';
@@ -50198,7 +50789,10 @@ function renderStatAllocationCard(host, {
     plus.addEventListener('click', () => {
       if (rowModel.canIncrease && onIncrease) onIncrease(rowModel.id);
     });
-    row.append(minus, number, plus);
+    const controls = document.createElement('div');
+    controls.className = 'se-controls';
+    controls.append(minus, number, plus);
+    row.append(attribute, controls);
     rowsHost.appendChild(row);
   }
 
@@ -50221,6 +50815,7 @@ Object.assign(module.exports, { renderStatAllocationCard });
 // a look-alike maintained beside it.
 
 const { attachTooltip } = require("src/ui/components/tooltip.js");
+const { mountDisclosure } = require("src/ui/components/disclosure.js");
 const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
 
 function appendVisual(host, visual) {
@@ -50240,18 +50835,13 @@ function choiceButton({ className, selected, label, text, onChoose }) {
   return button;
 }
 
-function primaryStatCard(row) {
-  const card = document.createElement('div');
-  card.className = 'disc-face cc-primary-stat';
-  card.dataset.stat = row.id;
-  const name = document.createElement('b');
-  name.className = 'disc-name';
-  name.textContent = row.shortLabel;
-  const value = document.createElement('span');
-  value.className = 'disc-value';
-  value.textContent = row.value;
-  card.append(name, value);
-  return markUiComponent(card, UI.primaryStatCard);
+function primaryStatCard(model) {
+  const host = document.createElement('div');
+  host.className = 'cc-attribute-card';
+  host.dataset.stat = model.id;
+  mountDisclosure(host, [model]);
+  host.querySelector('.disc-face')?.classList.add('cc-primary-stat');
+  return markUiComponent(host, UI.primaryStatCard);
 }
 
 function resourceStrip(rows, poise) {
@@ -54003,7 +54593,7 @@ Object.assign(module.exports, { resourceBars });
 const { dispatch, previewCard, previewIntent, getEntity } = require("src/engine/combat.js");
 const { resolveCard } = require("src/model/registries.js");
 const { openPileModal } = require("src/ui/components/piles.js");
-const { attachTooltip, hideTooltip, esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, hideTooltip, showTooltipFor, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
@@ -54036,6 +54626,9 @@ const { wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js"
 const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
+const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
+const { combatantInspectorModel } = require("src/ui/models/CombatantInspectorModel.js");
+const { mountCombatantInspector } = require("src/ui/components/combatantInspector.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -54080,6 +54673,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
+        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -54135,6 +54729,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
   const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
+  const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -54150,6 +54745,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
+  let inspectedCombatant = null; // { role, id } for the persistent edge tray
+  let inspectorExpanded = true;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -54157,6 +54754,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
+
+  // A blank press dismisses only the floating explanation. The edge inspector
+  // is a separately owned Folding Tray and remains until its label is folded.
+  combatEl.addEventListener('click', (event) => {
+    if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    hideTooltip();
+  });
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -54279,6 +54883,162 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
+
+  const words = (value) => String(value || '')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  function statusDetails(entity) {
+    const v = dv(entity);
+    return Object.entries(v.statuses || {}).flatMap(([statusId, instance]) => {
+      if (!instance) return [];
+      const amount = instance.meter ? instance.meter.value : instance.stacks;
+      if (!(amount > 0)) return [];
+      const def = registries.statuses.get(statusId);
+      if (!def) return [];
+      const presentation = statusInstancePresentation(def, instance);
+      return [{ name: presentation.label, detail: presentation.tooltip }];
+    });
+  }
+
+  function moveDetail(move, preview = null) {
+    const source = preview || move || {};
+    const pieces = [];
+    if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
+    if (source.block != null) pieces.push(`${source.block} Block`);
+    for (const effect of move?.effects || []) {
+      if (effect.op === 'applyStatus') pieces.push(`applies ${words(effect.status)}`);
+      else if (effect.op === 'heal') pieces.push('heals');
+      else if (effect.op === 'addCard') pieces.push(`adds ${words(effect.card)}`);
+      else pieces.push(words(effect.op));
+    }
+    return pieces.join(' · ') || words(source.kind || move?.intent || 'Unknown action');
+  }
+
+  function combatantSubject(role, entity) {
+    const v = dv(entity);
+    if (role === 'player') {
+      const classDef = registries.classes.get(run.class);
+      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
+      const skills = [];
+      if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
+      skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
+      return {
+        name: (run.customization?.name || classDef.name).toUpperCase(),
+        subtitle: `${classDef.name} · Level ${run.level}`,
+        resources: [
+          { label: 'HP', value: v.hp, max: entity.maxHp },
+          { label: 'MP', value: v.mana, max: entity.maxMana },
+          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+          { label: 'Block', value: v.block || 0 },
+        ],
+        skillLabel: 'Active skills & stance',
+        skills,
+        statuses: statusDetails(entity),
+      };
+    }
+
+    const def = registries.enemies.get(entity.enemyId);
+    const intent = previewIntent(combat, entity.id);
+    const currentMoveId = intent.moveId;
+    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
+      name: words(moveId),
+      detail: moveDetail(move, moveId === currentMoveId ? intent : null),
+      active: moveId === currentMoveId,
+    }));
+    const current = currentMoveId && def.moves?.[currentMoveId];
+    return {
+      name: def.name,
+      subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
+      resources: [
+        { label: 'HP', value: v.hp, max: entity.maxHp },
+        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
+        { label: 'Block', value: v.block || 0 },
+      ],
+      intent: {
+        name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
+        detail: moveDetail(current, intent),
+        active: true,
+      },
+      skillLabel: 'Move set',
+      skills,
+      statuses: statusDetails(entity),
+    };
+  }
+
+  function foldedCombatantTooltip(subject) {
+    const hp = subject.resources.find((row) => row.label === 'HP');
+    const poise = subject.resources.find((row) => row.label === 'Poise');
+    return `<div class="tt-title">${esc(subject.name)}</div>`
+      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
+      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
+      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
+  }
+
+  function expandedCombatantTooltip(subject, role) {
+    const live = subject.intent || subject.skills.find((row) => row.active);
+    return `${foldedCombatantTooltip(subject)}`
+      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
+      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
+  }
+
+  function renderCombatantInspector() {
+    const host = $('.combatant-inspector-host');
+    if (!host || !inspectedCombatant) {
+      if (host) host.hidden = true;
+      return;
+    }
+    const entity = inspectedCombatant.role === 'player'
+      ? combat.player : getEntity(combat, inspectedCombatant.id);
+    if (!entity) {
+      host.hidden = true;
+      return;
+    }
+    const model = combatantInspectorModel({
+      role: inspectedCombatant.role,
+      expanded: inspectorExpanded,
+      subject: combatantSubject(inspectedCombatant.role, entity),
+      presentation: registries.balance.ui.combatantInspector,
+    });
+    mountCombatantInspector(host, model, {
+      onToggle: (expanded) => {
+        inspectorExpanded = expanded;
+        renderCombatantInspector();
+      },
+    });
+  }
+
+  function inspectCombatant(role, entity, box) {
+    inspectedCombatant = { role, id: entity.id };
+    inspectorExpanded = true;
+    const subject = combatantSubject(role, entity);
+    renderCombatantInspector();
+    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
+      placementModel: tooltipPlacement,
+      clear: box.parentElement,
+      appearance: { variant: 'combatant-expanded' },
+    });
+  }
+
+  function wireCombatantReading(box, role, entity) {
+    const subject = () => combatantSubject(role, entity);
+    box.classList.add('inspectable');
+    box.dataset.focusable = '';
+    box.setAttribute('aria-label', `Inspect ${subject().name}`);
+    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
+      delayMs: tooltipPlacement.tokens.hoverDelayMs,
+      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
+      placementModel: tooltipPlacement,
+      clear: box.parentElement,
+      appearance: { variant: 'combatant-folded' },
+    });
+    box.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      box.click();
+    });
+  }
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
   // while the rest plays back (Sunna's PX gate: meters were missing, so the
@@ -54418,6 +55178,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   function renderCombatantStage() {
     renderPlayer();
     renderEnemies();
+    renderCombatantInspector();
     battlefieldStage.refresh();
   }
 
@@ -54692,14 +55453,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       meters: meterBars(p),
       trailing,
     });
+    wireCombatantReading(box, 'player', p);
     // When a self/buff card is armed, the player is a confirmable target.
-    if (selfArm) {
-      box.dataset.focusable = '';
-      box.style.cursor = 'pointer';
-      box.addEventListener('click', () => {
-        if (selfArm) playCard(selfArm, null);
-      });
-    }
+    box.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (selfArm) playCard(selfArm, null);
+      else inspectCombatant('player', p, box);
+    });
     zone.appendChild(box);
   }
 
@@ -54747,10 +55507,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         meters: meterBars(enemy),
         trailing: [statusRow(enemy)],
       });
+      wireCombatantReading(box, 'enemy', enemy);
       if (enemy.alive) {
-        box.addEventListener('click', () => {
+        box.addEventListener('click', (event) => {
+          event.stopPropagation();
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
+          else inspectCombatant('enemy', enemy, box);
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -56419,6 +57182,117 @@ function wireBattlefieldStage(field, model) {
 Object.assign(module.exports, { wireBattlefieldStage });
 
 },
+"src/ui/models/CombatantInspectorModel.js": function (module, exports, require) {
+const { componentModel } = require("src/ui/models/ComponentModel.js");
+const { trayModel } = require("src/ui/models/TrayModels.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+function combatantInspectorModel({
+  role,
+  expanded = true,
+  subject,
+  presentation = {},
+} = {}) {
+  if (role !== 'player' && role !== 'enemy') throw new Error(`Unknown combatant inspector role: ${role}`);
+  if (!subject?.name) throw new Error('Combatant inspector requires a named subject');
+  const edge = role === 'player' ? 'left' : 'right';
+  const tray = trayModel({
+    id: `combatant-inspector-${role}`,
+    name: subject.name,
+    summary: expanded ? (subject.subtitle || (role === 'player' ? 'Player' : 'Enemy')) : '',
+    edge,
+    expanded,
+    resizable: false,
+    items: [],
+  });
+  return componentModel(UI.combatantInspector, {
+    variant: edge,
+    properties: {
+      role,
+      edge,
+      expanded,
+      subject,
+    },
+    tokens: {
+      widthRem: Number.isFinite(presentation.widthRem) ? presentation.widthRem : 20,
+      mobileWidthViewportPct: Number.isFinite(presentation.mobileWidthViewportPct)
+        ? presentation.mobileWidthViewportPct : 62,
+    },
+    accessibility: {
+      label: `${subject.name} details`,
+    },
+    children: [tray],
+  });
+}
+
+
+Object.assign(module.exports, { combatantInspectorModel });
+
+},
+"src/ui/components/combatantInspector.js": function (module, exports, require) {
+const { childModel } = require("src/ui/models/ComponentModel.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { renderTray } = require("src/ui/components/trayComponents.js");
+const { esc } = require("src/ui/components/tooltip.js");
+
+function resourceRows(resources) {
+  return (resources || []).map((row) => `
+    <div class="combatant-inspector-resource">
+      <span>${esc(row.label)}</span>
+      <strong>${esc(row.value)}${row.max == null ? '' : ` / ${esc(row.max)}`}</strong>
+    </div>`).join('');
+}
+
+function detailRows(title, rows, empty) {
+  const body = (rows || []).length
+    ? rows.map((row) => `
+      <li${row.active ? ' class="active"' : ''}>
+        <strong>${esc(row.name)}</strong>
+        ${row.detail ? `<span>${esc(row.detail)}</span>` : ''}
+      </li>`).join('')
+    : `<li class="empty">${esc(empty)}</li>`;
+  return `<section class="combatant-inspector-section"><h4>${esc(title)}</h4><ul>${body}</ul></section>`;
+}
+
+function mountCombatantInspector(host, model, { onToggle = null } = {}) {
+  if (!host) throw new Error('Combatant inspector requires a host');
+  if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
+  const tray = childModel(model, UI.foldingTray);
+  host.innerHTML = '';
+  host.hidden = false;
+  host.className = `combatant-inspector-host ${model.properties.edge}`;
+  host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
+  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
+  host.setAttribute('aria-label', model.accessibility.label);
+  markUiComponent(host, model.component, model.variant);
+
+  const rendered = renderTray(tray, {
+    onToggle: () => onToggle?.(!model.properties.expanded),
+    renderContent: (content) => {
+      const subject = model.properties.subject;
+      content.innerHTML = `
+        <div class="combatant-inspector-summary">
+          <div>
+            <strong>${esc(subject.name)}</strong>
+            <span>${esc(subject.subtitle || '')}</span>
+          </div>
+          <div class="combatant-inspector-resources">${resourceRows(subject.resources)}</div>
+        </div>
+        ${subject.intent ? detailRows('Current intent', [subject.intent], 'No current intent.') : ''}
+        ${detailRows(subject.skillLabel || 'Skills', subject.skills, 'No active skills.')}
+        ${detailRows('Active effects', subject.statuses, 'No active effects.')}`;
+    },
+  });
+  rendered.element.dataset.role = 'context';
+  host.appendChild(rendered.element);
+  host.addEventListener('click', (event) => event.stopPropagation());
+  return rendered;
+}
+
+
+Object.assign(module.exports, { mountCombatantInspector });
+
+},
 "src/ui/screens/reward.js": function (module, exports, require) {
 // src/ui/screens/reward.js — post-combat / treasure rewards (SPEC §6, §7.1; E11/#256)
 //
@@ -56970,14 +57844,22 @@ Object.assign(module.exports, { REWARD_KIND_ORDER, rewardPlan, resolveContinue, 
 
 const { shrineHealAmount } = require("src/engine/encounters.js");
 const { levelUpPlan, applyLevelUp } = require("src/model/levelup.js");
+const { attributeCardModels } = require("src/model/creationBrief.js");
 const { passiveFlag, resolveCard } = require("src/model/registries.js");
-const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
 const { esc, attachTooltip } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { sfx } = require("src/ui/sfx.js");
 const { flaskIdentityHtml } = require("src/ui/components/flask.js");
 const { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } = require("src/model/gracerefill.js");
 const { renderStatAllocationCard } = require("src/ui/components/statAllocationCard.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+const { smithSelectionModel } = require("src/ui/models/SmithSelectionModel.js");
+const { mountSmithUpgradeModal } = require("src/ui/components/smithUpgradeModal.js");
+
+const boundedNumber = (value, fallback, minimum, maximum) => {
+  const parsed = Number(value);
+  return Math.min(maximum, Math.max(minimum, Number.isFinite(parsed) ? parsed : fallback));
+};
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -57042,11 +57924,16 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
-  const authoredShrineLayout = registries.balance?.ui?.shrinePresentation?.optionLayout;
+  const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
+  const authoredShrineLayout = shrinePresentation.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
+  const foldedCardWidthViewportPct = boundedNumber(shrinePresentation.foldedCardWidthViewportPct, 88, 60, 100);
+  const foldedCardMaxWidthRem = boundedNumber(shrinePresentation.foldedCardMaxWidthRem, 44, 24, 72);
+  const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
+  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
 
   app.innerHTML = `
-    <div class="screen">
+    <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       ${refillLineHtml(registries, refill)}
@@ -57058,7 +57945,9 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
             <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
-        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
+        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt"
+             role="button" tabindex="${upgradable.length ? '0' : '-1'}"
+             aria-disabled="${upgradable.length ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Smith</h3>
@@ -57161,8 +58050,12 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           </div>
         </details>
       </div>
-      <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
+
+  for (const [selector, variant] of [
+    ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
+    ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
+  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
@@ -57223,6 +58116,13 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     const drawLevelCard = () => {
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
       if (result) result.hidden = !pendingAttribute;
+      const values = Object.fromEntries(level.attributes.map((attr) => [
+        attr.id,
+        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+      ]));
+      const cards = new Map(attributeCardModels(registries, values, {
+        equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      }).map((card) => [card.id, card]));
       renderStatAllocationCard(mount, {
         title: 'ASSIGN 1 POINT',
         remaining: pendingAttribute ? 0 : 1,
@@ -57234,7 +58134,8 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
-          value: run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
+          value: values[attr.id],
+          card: cards.get(attr.id),
           canDecrease: false,
           canIncrease: !pendingAttribute,
         })),
@@ -57252,35 +58153,36 @@ function mountRest(app, { registries, run, meta, onDone, onReallocate = null, on
     drawLevelCard();
   }
   if (upgradable.length) {
-    // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
-    // is the point: this button commits nothing — it reveals the candidates,
-    // and the player can walk away or rest instead. Rest commits. Same screen,
-    // same shape of panel, different characteristics, different answer.
-    app.querySelector('#smith-opt').addEventListener('click', () => {
-      const grid = app.querySelector('#smith-grid');
-      if (grid.style.display !== 'none') return;
-      grid.style.display = 'flex';
-      grid.style.gap = '14px';
-      grid.style.flexWrap = 'wrap';
-      grid.style.justifyContent = 'center';
-      for (const inst of upgradable) {
-        // Hover/focus a candidate to preview exactly what the upgrade changes.
-        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
-        arm(el, 'smithUpgrade', {
-          question: `Smith ${resolveCard(registries, inst).name}? This is permanent.`,
-          // THE SAME PREVIEW THE TOOLTIP CARRIES, ON THE SCREEN. One home — a
-          // second rendering of "what this upgrade does" is the second copy
-          // this house exists to catch, and it would be the copy a phone reads.
-          detailHtml: upgradePreviewHtml(registries, inst),
-          confirmLabel: 'SMITH IT',
-          onConfirm: () => {
-            inst.upgraded = true;
-            sfx.play('shrine');
-            onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
-          },
-        });
-        grid.appendChild(el);
-      }
+    // Smith is a reversible modal transaction until its explicit Confirm.
+    // Opening and selecting mutate presentation state only. Back and Escape
+    // return to the Shrine with the run byte-for-byte untouched; Confirm is
+    // the one permanent upgrade and the one path that leaves the Shrine.
+    const smithOption = app.querySelector('#smith-opt');
+    const openSmith = () => {
+      let selectedInstanceId = null;
+      const model = () => smithSelectionModel(registries, upgradable, selectedInstanceId);
+      const modal = mountSmithUpgradeModal(app, model(), {
+        registries,
+        returnFocusElement: smithOption,
+        onSelect: (instanceId) => {
+          selectedInstanceId = instanceId;
+          modal.update(model());
+        },
+        onBack: () => {},
+        onConfirm: (instanceId) => {
+          const inst = upgradable.find((candidate) => candidate.instanceId === instanceId);
+          if (!inst) return;
+          inst.upgraded = true;
+          sfx.play('shrine');
+          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+        },
+      });
+    };
+    smithOption.addEventListener('click', openSmith);
+    smithOption.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      openSmith();
     });
   }
 }
@@ -57550,6 +58452,234 @@ function applyLevelUp(registries, run, attributeId, { pointsPerLevel = null } = 
 
 
 Object.assign(module.exports, { levelCost, levelsAffordable, levelUpPlan, applyLevelUp });
+
+},
+"src/ui/models/SmithSelectionModel.js": function (module, exports, require) {
+// A DOM-free read model for the Shrine Smith transaction.
+// Selection is reversible; only the modal's explicit Confirm command commits.
+const { resolveCard } = require("src/model/registries.js");
+const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
+
+const freeze = (value) => Object.freeze(value);
+
+function smithSelectionModel(registries, candidates, selectedInstanceId = null) {
+  const items = candidates.map((instance) => {
+    const card = resolveCard(registries, instance);
+    // Keep the instance's equipment-authored profile/modifier carrier. A
+    // card rewritten as Slashing Strike must not fall back to base Strike in
+    // either the candidate face or the permanent-upgrade preview.
+    const reference = freeze({
+      ...instance,
+      ...(Array.isArray(instance.mods) ? { mods: freeze([...instance.mods]) } : {}),
+      upgraded: false,
+    });
+    return freeze({
+      instanceId: instance.instanceId,
+      cardId: instance.cardId,
+      name: card.name,
+      selected: instance.instanceId === selectedInstanceId,
+      reference,
+    });
+  });
+  const selected = items.find((item) => item.selected) || null;
+  return freeze({
+    component: UI.smithUpgradeModal,
+    variant: selected ? 'review' : 'choose',
+    properties: freeze({
+      title: 'Smith',
+      eyebrow: 'Shrine action',
+      instruction: 'Choose one card, review its permanent upgrade, then confirm.',
+      consequence: 'Confirming upgrades the selected card and leaves the Shrine.',
+      candidates: freeze(items),
+      selected,
+      canConfirm: Boolean(selected),
+      backLabel: 'Back to Shrine',
+      confirmLabel: selected ? `Confirm ${selected.name}+` : 'Select a card',
+    }),
+    accessibility: freeze({
+      label: 'Smith a card',
+      description: 'Select one card, review its upgrade, or return to the Shrine without changing the run.',
+    }),
+  });
+}
+
+
+Object.assign(module.exports, { smithSelectionModel });
+
+},
+"src/ui/components/smithUpgradeModal.js": function (module, exports, require) {
+// Dedicated Smith selection/review overlay. The component owns dialog
+// semantics, focus containment and rendering; the screen owns run mutation.
+const { renderCard, upgradePreviewHtml } = require("src/ui/components/card.js");
+const { esc } = require("src/ui/components/tooltip.js");
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+
+const visibleFocusable = (root) => [...root.querySelectorAll(
+  'button:not([disabled]), [role="button"][tabindex="0"], [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+)].filter((element) => !element.hidden && element.getClientRects().length);
+
+function mountSmithUpgradeModal(host, initialModel, {
+  registries,
+  onSelect,
+  onBack,
+  onConfirm,
+  returnFocusElement,
+}) {
+  const returnFocus = returnFocusElement instanceof HTMLElement
+    ? returnFocusElement
+    : (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil smith-modal-veil';
+  const modal = document.createElement('section');
+  modal.className = 'modal smith-upgrade-modal';
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'smith-modal-title');
+  modal.setAttribute('aria-describedby', 'smith-modal-instruction');
+  modal.tabIndex = -1;
+  markUiComponent(modal, UI.smithUpgradeModal, initialModel.variant);
+  modal.innerHTML = `
+    <header class="smith-modal-head">
+      <div>
+        <span class="smith-modal-eyebrow">${esc(initialModel.properties.eyebrow)}</span>
+        <h2 id="smith-modal-title">${esc(initialModel.properties.title)}</h2>
+        <p id="smith-modal-instruction">${esc(initialModel.properties.instruction)}</p>
+      </div>
+      <span class="smith-modal-consequence">LEAVES SHRINE</span>
+    </header>
+    <div class="smith-modal-body">
+      <section class="smith-candidate-region" aria-labelledby="smith-candidate-title">
+        <div class="smith-region-head">
+          <h3 id="smith-candidate-title">Choose a card</h3>
+          <span data-smith-count></span>
+        </div>
+        <div class="smith-card-list" role="listbox" aria-label="Cards available to upgrade"></div>
+      </section>
+      <section class="smith-preview-region" aria-live="polite" aria-label="Selected upgrade preview"></section>
+    </div>
+    <footer class="smith-modal-footer">
+      <p>${esc(initialModel.properties.consequence)}</p>
+      <div class="smith-modal-actions">
+        <button type="button" class="subtle smith-back">${esc(initialModel.properties.backLabel)}</button>
+        <button type="button" class="smith-confirm"></button>
+      </div>
+    </footer>`;
+  veil.appendChild(modal);
+  host.appendChild(veil);
+
+  const cardsHost = modal.querySelector('.smith-card-list');
+  const previewHost = modal.querySelector('.smith-preview-region');
+  const count = modal.querySelector('[data-smith-count]');
+  const back = modal.querySelector('.smith-back');
+  const confirm = modal.querySelector('.smith-confirm');
+  let currentModel = initialModel;
+  let closed = false;
+
+  function draw(model, { focusSelection = false } = {}) {
+    currentModel = model;
+    markUiComponent(modal, UI.smithUpgradeModal, model.variant);
+    cardsHost.innerHTML = '';
+    count.textContent = `${model.properties.candidates.length} eligible`;
+    for (const item of model.properties.candidates) {
+      const card = renderCard(registries, item.reference, {
+        small: true,
+        // The modal's persistent preview owns this information. A transient
+        // card tooltip otherwise covers the modal title/instructions as soon
+        // as the pointer that opened Smith happens to land over the new grid.
+        tooltip: false,
+      });
+      card.classList.add('smith-candidate-card');
+      card.classList.toggle('selected', item.selected);
+      card.setAttribute('role', 'option');
+      card.setAttribute('aria-selected', String(item.selected));
+      card.setAttribute('aria-label', `${item.name}. Select to preview its permanent upgrade.`);
+      card.tabIndex = item.selected || (!model.properties.selected && cardsHost.childElementCount === 0) ? 0 : -1;
+      markUiComponent(card, UI.smithCandidateCard, item.selected ? 'selected' : 'available');
+      const choose = () => onSelect(item.instanceId);
+      card.addEventListener('click', choose);
+      card.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        choose();
+      });
+      cardsHost.appendChild(card);
+    }
+
+    const selected = model.properties.selected;
+    previewHost.innerHTML = selected
+      ? `<div class="smith-preview-card" data-ui-component="${UI.smithUpgradePreview}">
+          <span class="smith-preview-label">Selected upgrade</span>
+          ${upgradePreviewHtml(registries, selected.reference)}
+        </div>`
+      : `<div class="smith-preview-empty" data-ui-component="${UI.smithUpgradePreview}">
+          <span class="smith-preview-glyph" aria-hidden="true">⚒</span>
+          <b>Select a card to compare its current and upgraded forms.</b>
+          <span>Nothing changes until Confirm.</span>
+        </div>`;
+    confirm.disabled = !model.properties.canConfirm;
+    confirm.textContent = model.properties.confirmLabel;
+    confirm.setAttribute('aria-disabled', String(!model.properties.canConfirm));
+    if (focusSelection && selected) {
+      queueMicrotask(() => cardsHost.querySelector('[aria-selected="true"]')?.focus({ preventScroll: true }));
+    }
+  }
+
+  function close({ restoreFocus = true } = {}) {
+    if (closed) return;
+    closed = true;
+    window.removeEventListener('keydown', onKeydown, true);
+    veil.remove();
+    if (restoreFocus && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+  }
+
+  function backOut() {
+    close();
+    onBack();
+  }
+
+  function onKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopPropagation();
+      backOut();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = visibleFocusable(modal);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    } else if (!modal.contains(document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
+  }
+
+  back.addEventListener('click', backOut);
+  confirm.addEventListener('click', () => {
+    if (!currentModel.properties.canConfirm) return;
+    const selectedId = currentModel.properties.selected.instanceId;
+    close({ restoreFocus: false });
+    onConfirm(selectedId);
+  });
+  window.addEventListener('keydown', onKeydown, true);
+  draw(initialModel);
+  queueMicrotask(() => modal.focus({ preventScroll: true }));
+
+  return {
+    update(model) { draw(model, { focusSelection: true }); },
+    close,
+  };
+}
+
+
+Object.assign(module.exports, { mountSmithUpgradeModal });
 
 },
 "src/ui/screens/shop.js": function (module, exports, require) {

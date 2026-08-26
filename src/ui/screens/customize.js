@@ -8,6 +8,7 @@ import { mountDisclosure } from '../components/disclosure.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
+import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
@@ -266,7 +267,10 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
     const run = previewRun();
     const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...projection.attributes.map(primaryStatCard));
+    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
+      projection,
+      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+    }).map(primaryStatCard));
     const poise = playerPoiseThresholdReceipt(registries, run);
     const resources = resourceStrip(projection.derived, poise);
     $('#cz-derived').replaceChildren(...resources.childNodes);
@@ -372,6 +376,8 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
       } : null;
       const mode = pointbuyMode();
       const remaining = remainingPoints();
+      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
+      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
       const allocation = renderStatAllocationCard(overlay, {
         title: 'ASSIGN POINTS',
         remaining,
@@ -382,6 +388,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
           label: def.label,
           shortLabel: def.shortLabel,
           value: state.attributes[def.id],
+          card: cards.get(def.id),
           canDecrease: state.attributes[def.id] > mode.minimum,
           canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
         })),
@@ -647,11 +654,15 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     };
     const specimenRun = previewRun();
     const specimenProjection = statProjection(registries, specimenRun);
+    const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
+      projection: specimenProjection,
+      equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+    });
     const disclosureHost = document.createElement('div');
     disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
     const disclosureStat = document.createElement('div');
     disclosureStat.className = 'cc-character-picker';
-    disclosureStat.appendChild(primaryStatCard(specimenProjection.attributes[0]));
+    disclosureStat.appendChild(primaryStatCard(specimenAttributes[0]));
     const disclosureKeepsake = document.createElement('div');
     disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
     let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
@@ -668,7 +679,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     disclosureSpecimen.open('sample-primary');
     const statHost = document.createElement('div');
     statHost.className = 'cc-primary-stats cc-catalog-specimen';
-    statHost.append(...specimenProjection.attributes.map(primaryStatCard));
+    statHost.append(...specimenAttributes.map(primaryStatCard));
     const classChoiceSpecimen = document.createElement('div');
     classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
     const classChoiceHost = document.createElement('div');

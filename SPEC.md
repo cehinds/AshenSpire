@@ -874,12 +874,27 @@ keeps the same state and focus contract without meaningful animation.
   imports simulation state, persists dismissal, or mounts Title controls behind itself.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
-  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,
+  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
   `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
-  choices. Art and copy arrive through content/asset inputs, while screens own mutable selection
-  state and callbacks.
+  choices. `primary-stat-card` is one shared attribute model and disclosure renderer across
+  Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
+  short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
+  authored description plus benefits derived from stat rules and equipment gates. Art and copy
+  arrive through content/asset inputs, while screens own mutable selection state and callbacks.
+  In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
+  attribute face, current value, decrement/increment controls, and a reveal that spans the whole
+  row instead of inheriting the face column width.
+- **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
+  Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
+  `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
+  Smith opens the dedicated `smith-upgrade-modal`, composed from
+  `smith-candidate-card` and `smith-upgrade-preview`. Opening the modal and
+  choosing a candidate are presentation-only operations. `Back to Shrine` and
+  Escape close it without changing the run; only enabled `Confirm` upgrades one
+  selected card and leaves the Shrine. The DOM-free `SmithSelectionModel` owns
+  the choose/review state and player-facing consequence copy.
 - **Combatant Component Model.** `combatant-frame` may compose `component-background`,
   `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
   `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and
@@ -924,10 +939,13 @@ keeps the same state and focus contract without meaningful animation.
   their tray is expanded. Closed arrows point inward and open arrows point back to the anchored
   edge, including the open Right Tray form `> TRAY NAME`. A tray that declares the optional resize
   capability exposes a 44px mouse, touch-hold, and keyboard surface: Top/Bottom resize vertically
-  and Left/Right resize horizontally. Size is remembered by stable tray id and edge for those
-  resizable instances; folding always returns to the standard bar or rail, and reopening restores
-  the last expanded size. The generic component may hug content before its first resize, while
-  Armoury supporting trays intentionally apply the configured default ratio immediately. Armaments
+  and Left/Right resize horizontally. Size is remembered in memory by stable tray id and edge for
+  the current play session only; folding always returns to the standard bar or rail, reopening
+  restores the last expanded size, and starting/resuming a run or returning to Title resets the
+  authored default. Armoury supporting trays open at 45vh, retain at least 30vh when another tray
+  is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug
+  content before its first resize, while Armoury supporting trays intentionally apply the
+  configured default ratio immediately. Armaments
   is non-resizable, and Inventory disables height resizing while it fills the Inventory-view pane.
   Bottom trays remain bottom-anchored and grow upward.
 

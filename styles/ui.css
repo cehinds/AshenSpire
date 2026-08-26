@@ -33,6 +33,16 @@
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
+#tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
+#tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
+#tooltip .tt-combatant-focus {
+  display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
+  border-top: 1px solid var(--line-soft);
+}
+#tooltip .tt-combatant-focus b { color: var(--gold); }
+#tooltip .tt-combatant-focus span, #tooltip .tt-combatant-hint { color: var(--muted); }
+#tooltip .tt-combatant-hint { margin-top: 0.65rem; font-size: 0.82em; }
 
 /* ---------- card ---------- */
 .card {
@@ -741,14 +751,17 @@ button.rs-reset {
 
 .class-row { display: flex; gap: 1.8rem; }
 .shrine-option-list {
-  width: min(100%, 44rem); margin-inline: auto;
+  width: min(100%, var(--shrine-folded-card-width, 88vw), var(--shrine-folded-card-max-width, 44rem)); margin-inline: auto;
   flex-direction: column; align-items: stretch; gap: 12px;
 }
-.shrine-option-list > .class-pick { width: 100%; box-sizing: border-box; }
+.shrine-option-list > .class-pick {
+  width: 100%; min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+  box-sizing: border-box;
+}
 .shrine-option-list > #rest-opt,
 .shrine-option-list > #smith-opt {
   display: grid; grid-template-columns: auto minmax(0, 1fr);
-  align-items: center; gap: 18px; padding: 18px 20px; text-align: left;
+  align-items: center; gap: 18px; padding: 12px 20px; text-align: left;
 }
 .shrine-option-list > #rest-opt .glyph,
 .shrine-option-list > #smith-opt .glyph { margin: 0; font-size: 3.2rem; }
@@ -778,7 +791,9 @@ button.rs-reset {
 .shrine-fold { padding: 0; overflow: hidden; text-align: left; }
 .shrine-fold > summary {
   display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center; gap: 10px; min-height: var(--tap-floor); padding: 10px 14px;
+  align-items: center; gap: 10px;
+  min-height: clamp(var(--tap-floor), var(--shrine-folded-card-height, 10vh), var(--shrine-folded-card-max-height, 7rem));
+  box-sizing: border-box; padding: 10px 14px;
   cursor: pointer; list-style: none;
 }
 .shrine-fold > summary::-webkit-details-marker { display: none; }
@@ -803,6 +818,95 @@ button.rs-reset {
 .stat-allocation-note { margin-top: 6px; color: var(--muted); font-size: 1rem; line-height: 1.35; text-align: center; }
 .stat-allocation-card .cc-stat-actions { justify-content: center; }
 .stat-allocation-card .se-step[aria-disabled='true'] { opacity: 0.35; cursor: default; }
+
+/* ---------- Shrine Smith transaction -------------------------------------
+   Smith selection is a dedicated modal because the decision is permanent and
+   needs a readable before/after preview on touch. The Shrine remains behind a
+   quiet scrim; the modal owns the only selection and Confirm surface. */
+.smith-modal-veil { z-index: 620; padding: 2%; box-sizing: border-box; }
+.smith-upgrade-modal {
+  width: min(76rem, 96%); height: min(74%, 54rem); max-height: 90%; padding: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.smith-modal-head {
+  flex: 0 0 auto; display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.smith-modal-head h2 { margin: 2px 0 4px; font-size: 1.8rem; }
+.smith-modal-head p { margin: 0; color: var(--muted); line-height: 1.35; }
+.smith-modal-eyebrow, .smith-preview-label {
+  color: var(--gold); font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase;
+}
+.smith-modal-consequence {
+  flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--ember); border-radius: 999px;
+  color: var(--parchment); font-size: 0.78rem; letter-spacing: 0.1em;
+}
+.smith-modal-body {
+  flex: 1 1 auto; min-height: 0; display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.8fr);
+}
+.smith-candidate-region, .smith-preview-region { min-width: 0; min-height: 0; }
+.smith-candidate-region { display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+.smith-region-head {
+  flex: 0 0 auto; display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft);
+}
+.smith-region-head h3 { margin: 0; color: var(--parchment); }
+.smith-region-head span { color: var(--muted); }
+.smith-card-list {
+  flex: 1 1 auto; min-height: 0; overflow: auto; padding: 18px 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  align-content: start; justify-items: center; gap: 18px 10px;
+}
+.smith-candidate-card {
+  transform: scale(0.78) !important; transform-origin: top center;
+  margin-bottom: -4rem; cursor: pointer;
+}
+.smith-candidate-card.selected {
+  border-color: var(--gold); outline: 3px solid color-mix(in srgb, var(--gold) 68%, transparent);
+  outline-offset: 4px; box-shadow: 0 0 24px rgba(var(--accent-rgb), 0.36);
+}
+.smith-preview-region {
+  display: flex; align-items: center; justify-content: center; overflow: auto;
+  padding: 20px; background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+.smith-preview-card, .smith-preview-empty {
+  width: 100%; display: grid; gap: 12px; padding: 18px;
+  border: 1px solid var(--line-soft); border-radius: 10px; background: var(--bg-raise);
+}
+.smith-preview-card .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; }
+.smith-preview-card .tt-kw { padding-top: 10px; border-top: 1px solid var(--line-soft); color: var(--muted); }
+.smith-preview-empty { text-align: center; color: var(--muted); }
+.smith-preview-empty b { color: var(--parchment); }
+.smith-preview-glyph { color: var(--gold); font-size: 2.8rem; }
+.smith-modal-footer {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; padding: 12px 16px; border-top: 1px solid var(--line); background: var(--panel);
+}
+.smith-modal-footer p { max-width: 36rem; margin: 0; color: var(--muted); line-height: 1.3; }
+.smith-modal-actions { display: flex; gap: 8px; }
+.smith-modal-actions button { min-height: var(--tap-floor); height: auto; padding: 8px 16px; }
+.smith-confirm:disabled { opacity: 0.42; cursor: default; }
+
+@media (max-width: 720px) {
+  .smith-modal-veil { padding: 1.5%; }
+  .smith-upgrade-modal { width: 98%; height: 92%; max-height: 92%; }
+  .smith-modal-head { padding: 10px 12px; gap: 8px; }
+  .smith-modal-consequence { padding: 4px 6px; font-size: 0.68rem; }
+  .smith-modal-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .smith-candidate-region { border-right: 0; border-bottom: 1px solid var(--line); }
+  .smith-card-list {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    padding: 14px 8px; gap: 12px 4px;
+  }
+  .smith-candidate-card { transform: scale(0.68) !important; margin-bottom: -6rem; }
+  .smith-preview-region { max-height: 15rem; padding: 10px 12px; }
+  .smith-preview-card, .smith-preview-empty { gap: 7px; padding: 10px 12px; }
+  .smith-modal-footer { align-items: stretch; flex-direction: column; gap: 8px; padding: 8px 10px; }
+  .smith-modal-footer p { font-size: 0.9rem; }
+  .smith-modal-actions { width: 100%; }
+  .smith-modal-actions button { flex: 1 1 0; padding-inline: 8px; }
+}
 
 /* ---------- E10: the flask assignment is an increment, not a menu ---------- */
 /* HIS WORDS: "I don't like how the flask assignments are separate buttons
@@ -1472,9 +1576,10 @@ button.rs-reset {
   padding: 0.5rem 1rem; font-size: 1.05rem; line-height: 1.15;
 }
 .se-pool { font-size: 1.1rem; color: var(--gold); letter-spacing: 0.04em; margin: 0; }
-.se-row { display: flex; align-items: center; gap: 0.8rem; }
+.se-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.55rem; }
 .se-name { width: 3.2rem; font-size: 1.05rem; letter-spacing: 0.06em; color: var(--muted); }
 .se-value { width: 2.2rem; text-align: center; font-size: 1.25rem; }
+.se-controls { display: flex; align-items: center; gap: 0.45rem; }
 .se-step {
   width: var(--tap-floor); height: var(--tap-floor);
   min-width: var(--tap-floor); min-height: var(--tap-floor);
@@ -1625,8 +1730,20 @@ button.rs-reset {
 .cc-character-picker { display: flex; flex-direction: column; gap: 0.8rem; width: 100%; }
 .cc-character-picker .cz-opts { flex-wrap: wrap; }
 .cc-primary-stats { display: flex; flex-direction: column; gap: 0.45rem; }
-.cc-primary-stat.disc-face { width: 100%; justify-content: space-between; cursor: default; }
-.cc-primary-stat.disc-face:hover { border-color: var(--line-soft); }
+.cc-attribute-card { width: 100%; min-width: 0; container-type: inline-size; }
+.cc-attribute-card > .disc-faces { width: 100%; gap: 0.35rem; }
+.cc-primary-stat.disc-face {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+  width: 100%; min-width: 0; justify-content: stretch;
+}
+.cc-primary-stat .disc-summary {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--muted); font-family: var(--font-body); font-size: 0.95rem;
+  font-weight: 400; letter-spacing: 0;
+}
+@container (max-width: 17rem) {
+  .cc-primary-stat .disc-summary { display: none; }
+}
 .cc-derived {
   display: flex; flex-wrap: wrap; gap: 0.45rem 1rem; margin-top: 0.8rem;
   color: var(--parchment); font-variant-numeric: tabular-nums;
@@ -1669,7 +1786,16 @@ button.rs-reset {
 .cc-stat-overlay { z-index: 1300; }
 .cc-stat-modal { width: min(34rem, calc(100% - 2rem)); }
 .cc-allocation-rows { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0; }
-.cc-allocation-rows .se-row { justify-content: center; }
+.cc-allocation-rows .se-row { width: 100%; }
+.cc-allocation-rows .se-attribute-card,
+.cc-allocation-rows .se-attribute-card > .disc-faces { display: contents; }
+.cc-allocation-rows .se-attribute-card .cc-primary-stat {
+  grid-column: 1; grid-row: 1; min-width: 0;
+}
+.cc-allocation-rows .se-controls { grid-column: 2; grid-row: 1; }
+.cc-allocation-rows .se-attribute-card .disc-reveal {
+  grid-column: 1 / -1; grid-row: 2; width: 100%; box-sizing: border-box;
+}
 .cc-stat-actions { display: flex; justify-content: flex-end; gap: 0.8rem; }
 .cc-stat-actions button { min-height: var(--tap-floor); }
 .cc-stat-actions [aria-disabled='true'] { opacity: 0.45; }
@@ -3311,6 +3437,13 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); padding: 0.9rem;
 }
 :root[data-layout='narrow'] .cc-class-selection .class-row[data-view='list'] .class-pick .glyph { font-size: 3rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem;
+}
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick { padding: 0.75rem 0.55rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick .glyph { margin-bottom: 0.35rem; font-size: 2.6rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick h3 { margin-bottom: 0.2rem; font-size: 1.05rem; }
+:root[data-layout='narrow'] .cc-class-selection .class-row[data-view='grid'] .class-pick p { display: none; }
 :root[data-layout='narrow'] .cc-stage-toolbar { align-items: flex-start; flex-wrap: wrap; }
 :root[data-layout='narrow'] .cc-stage-tools { width: 100%; flex-wrap: wrap; justify-content: space-between; }
 :root[data-layout='narrow'] .cc-auto-advance-note { white-space: normal; }
