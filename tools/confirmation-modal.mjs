@@ -61,8 +61,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the destructive callback can commit twice',
         file: 'src/ui/components/confirmationModal.js',
-        find: "  confirmButton.addEventListener('click', () => {\n    if (closed) return;",
-        replace: "  confirmButton.addEventListener('click', () => {\n    // confirmation-modal selftest plant: closed guard removed",
+        find: '    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });',
+        replace: "    veil.addEventListener('click', () => { window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, { detail: { component, tone } })); onConfirm?.(); }, true); // confirmation-modal selftest plant\n    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });",
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE)-EXACT-COMMIT/,
       },
       {
@@ -78,6 +78,13 @@ if (process.argv.includes('--selftest')) {
         find: '  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;',
         replace: '  min-height: 10px; height: 12px; width: 120vw; padding: 0; /* confirmation-modal selftest plant */',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-LAYOUT/,
+      },
+      {
+        name: 'commit removes the hit-test shield before destination activation settles',
+        file: 'src/ui/components/confirmationModal.js',
+        find: '    close({ restoreFocus: false, retainInputShield: true });',
+        replace: '    close({ restoreFocus: false, retainInputShield: false }); // confirmation-modal selftest plant',
+        expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-(?:MAP-QUIT|COMBAT-QUIT|COMBAT-LOAD)-DOUBLE-HIT/,
       },
     ],
   });
@@ -167,12 +174,20 @@ try {
       }
       throw new Error(`timeout waiting for ${label} ${waitingFor}`);
     };
-    const click = async (selector) => {
+    const center = async (selector) => {
       const point = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
       if (!point) throw new Error(`missing ${selector}`);
-      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-      await wait(180);
+      return point;
+    };
+    const physicalClickAt = async (point, clickCount = 1, settleMs = 180) => {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: point.x, y: point.y, button: 'none' }, sessionId);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount }, sessionId);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount }, sessionId);
+      await wait(settleMs);
+    };
+    const click = async (selector) => {
+      const point = await center(selector);
+      await physicalClickAt(point);
     };
     const key = async (keyName) => {
       const vk = keyName === 'Escape' ? 27 : keyName === 'Tab' ? 9 : keyName.toUpperCase().charCodeAt(0);
@@ -203,7 +218,9 @@ try {
     const entry = ARTIFACT ? 'AshenSpire.html' : '';
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${served.port}/${entry}?shot=map` }, sessionId);
     await until(`!!document.querySelector('#open-menu')`, 'map boot');
-    await ev(`window.__qaConfirmationCommits=0; window.addEventListener('ashenspire:confirmation-commit',()=>{window.__qaConfirmationCommits+=1;}); true`);
+    await ev(`window.__qaConfirmationCommits=0; window.__qaTitleHits=[];
+      window.addEventListener('ashenspire:confirmation-commit',()=>{window.__qaConfirmationCommits+=1;});
+      window.addEventListener('click',(event)=>{const control=event.target.closest?.('[data-title-action]');if(control)window.__qaTitleHits.push(control.dataset.titleAction);},true); true`);
 
     await click('#open-menu');
     await until(`!!document.querySelector('.qn-row[data-act="load"]')`, 'Load command');
@@ -267,9 +284,28 @@ try {
     await key('Escape');
     await until(`!document.querySelector('.overlay-modal')`, 'overlay close');
 
+    await click('#open-menu');
+    await click('.qn-row[data-act="quit"]');
+    await until(`!!document.querySelector('.confirmation-confirm')`, 'physical Map Quit confirmation');
+    const mapQuitPoint = await center('.confirmation-confirm');
+    const mapBeforeCommit = await ev(`window.__qaConfirmationCommits`);
+    await physicalClickAt(mapQuitPoint, 1, 80);
+    await until(`!!document.querySelector('[data-title-action="new"]')`, 'title after physical Map Quit');
+    const mapShieldHit = await ev(`(() => { const e=document.elementFromPoint(${JSON.stringify(mapQuitPoint.x)},${JSON.stringify(mapQuitPoint.y)}); return !!e?.classList.contains('confirmation-input-shield'); })()`);
+    await physicalClickAt(mapQuitPoint, 2, 180);
+    const mapDouble = await ev(`({commits:window.__qaConfirmationCommits,titleHits:[...window.__qaTitleHits],title:!!document.querySelector('[data-title-action="new"]'),modal:!!document.querySelector('.title-modal')})`);
+    check(mapBeforeCommit === 0 && mapDouble.commits === 1, `CONFIRMATION-${label}-EXACT-COMMIT`,
+      `physical Map Quit has no early commit and commits exactly once (${mapBeforeCommit} -> ${mapDouble.commits})`);
+    check(mapShieldHit && mapDouble.title && mapDouble.titleHits.length === 0 && !mapDouble.modal,
+      `CONFIRMATION-${label}-MAP-QUIT-DOUBLE-HIT`,
+      `the second hit-tested activation landed on the transient shield and reached no Title control (${JSON.stringify(mapDouble)})`);
+
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${served.port}/${entry}?shot=combat` }, sessionId);
     await until(`!!document.querySelector('#combat-menu') && !!window.__combat`, 'combat boot');
-    await ev(`window.__qaConfirmationCommits=0; window.addEventListener('ashenspire:confirmation-commit',()=>{window.__qaConfirmationCommits+=1;}); true`);
+    await ev(`window.__qaConfirmationCommits=0; window.__qaTitleHits=[]; window.__qaEnemyHits=[];
+      window.addEventListener('ashenspire:confirmation-commit',()=>{window.__qaConfirmationCommits+=1;});
+      window.addEventListener('click',(event)=>{const control=event.target.closest?.('[data-title-action]');if(control)window.__qaTitleHits.push(control.dataset.titleAction);},true);
+      window.addEventListener('click',(event)=>{const enemy=event.target.closest?.('.combatant.enemy');if(enemy)window.__qaEnemyHits.push(enemy.dataset.eid||'enemy');},true); true`);
     await click('#combat-menu');
     await until(`!!document.querySelector('.qn-row[data-act="load"]')`, 'combat Load command');
     await click('.qn-row[data-act="load"]');
@@ -282,6 +318,24 @@ try {
     await until(`!document.querySelector('.confirmation-modal')`, 'combat Load cancellation');
     check(await ev(`!!window.__combat && document.activeElement?.id === 'combat-menu'`),
       `CONFIRMATION-${label}-COMBAT-LOAD-BACK`, 'Combat Load cancellation keeps combat and restores its launcher');
+
+    await click('#combat-menu');
+    await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('.confirmation-confirm')`, 'physical Combat Load confirmation');
+    const combatLoadPoint = await center('.confirmation-confirm');
+    const combatLoadBefore = await ev(`window.__qaConfirmationCommits`);
+    await physicalClickAt(combatLoadPoint, 1, 80);
+    await until(`!!window.__combat && !!document.querySelector('#combat-menu')`, 'combat after physical Load');
+    const combatLoadShieldHit = await ev(`(() => { const e=document.elementFromPoint(${JSON.stringify(combatLoadPoint.x)},${JSON.stringify(combatLoadPoint.y)}); return !!e?.classList.contains('confirmation-input-shield'); })()`);
+    await physicalClickAt(combatLoadPoint, 2, 180);
+    const combatLoadDouble = await ev(`({commits:window.__qaConfirmationCommits,enemyHits:[...window.__qaEnemyHits],combat:!!window.__combat,inspectorVisible:!!document.querySelector('.combatant-inspector-host:not([hidden])')})`);
+    check(combatLoadBefore === 0 && combatLoadDouble.commits === 1,
+      `CONFIRMATION-${label}-COMBAT-LOAD-EXACT-COMMIT`,
+      `physical Combat Load has no early commit and commits exactly once (${combatLoadBefore} -> ${combatLoadDouble.commits})`);
+    check(combatLoadShieldHit && combatLoadDouble.combat && combatLoadDouble.enemyHits.length === 0 && !combatLoadDouble.inspectorVisible,
+      `CONFIRMATION-${label}-COMBAT-LOAD-DOUBLE-HIT`,
+      `the second hit-tested activation landed on the transient shield and reached no enemy detail (${JSON.stringify(combatLoadDouble)})`);
+    await ev(`window.__qaConfirmationCommits=0; window.__qaTitleHits=[]; true`);
 
     await click('#combat-menu');
     await click('.qn-row[data-act="quit"]');
@@ -300,11 +354,18 @@ try {
     await click('.qn-row[data-act="quit"]');
     await until(`!!document.querySelector('.confirmation-confirm')`, 'final combat Quit confirmation');
     const beforeCommit = await ev(`window.__qaConfirmationCommits`);
-    await ev(`(() => { const button=document.querySelector('.confirmation-confirm'); button.click(); button.click(); return true; })()`);
+    const combatQuitPoint = await center('.confirmation-confirm');
+    await physicalClickAt(combatQuitPoint, 1, 80);
     await until(`!!document.querySelector('[data-title-action="new"]')`, 'title after confirmed Quit');
+    const combatQuitShieldHit = await ev(`(() => { const e=document.elementFromPoint(${JSON.stringify(combatQuitPoint.x)},${JSON.stringify(combatQuitPoint.y)}); return !!e?.classList.contains('confirmation-input-shield'); })()`);
+    await physicalClickAt(combatQuitPoint, 2, 180);
     const afterCommit = await ev(`window.__qaConfirmationCommits`);
     check(beforeCommit === 0 && afterCommit === 1, `CONFIRMATION-${label}-EXACT-COMMIT`,
       `no early commit and repeated activation commits exactly once (${beforeCommit} -> ${afterCommit})`);
+    const combatQuitDouble = await ev(`({titleHits:[...window.__qaTitleHits],title:!!document.querySelector('[data-title-action="new"]'),modal:!!document.querySelector('.title-modal')})`);
+    check(combatQuitShieldHit && combatQuitDouble.title && combatQuitDouble.titleHits.length === 0 && !combatQuitDouble.modal,
+      `CONFIRMATION-${label}-COMBAT-QUIT-DOUBLE-HIT`,
+      `the second hit-tested activation landed on the transient shield and reached no Title control (${JSON.stringify(combatQuitDouble)})`);
 
     const unexpectedConsole = diagnostics.console.filter((entry) => !entry.includes('AudioContext was not allowed to start')
       && !entry.includes('Failed to load resource: the server responded with a status of 404'));

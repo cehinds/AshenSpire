@@ -201,6 +201,7 @@ export async function runConfirmationModalContract() {
       message: 'Replace unsaved progress.',
       confirmLabel: 'Load saved run',
       tone: 'danger',
+      inputShieldMs: 8,
       returnFocusElement: trigger,
       onConfirm: () => { confirmed += 1; },
       onCancel: () => { cancelled += 1; },
@@ -209,7 +210,11 @@ export async function runConfirmationModalContract() {
     second.confirmButton.dispatchEvent(fakeEvent('click'));
     second.confirmButton.dispatchEvent(fakeEvent('click'));
     check(confirmed === 1 && cancelled === 1 && commitEvents === 1, 'primary action did not commit exactly once');
-    check(!second.veil.isConnected, 'confirmed dialog remains mounted');
+    check(second.veil.isConnected && !second.dialog.isConnected
+        && second.veil.className.includes('confirmation-input-shield'),
+      'confirmation commit did not retain an empty top-layer input shield');
+    await new Promise((resolveTick) => setTimeout(resolveTick, 32));
+    check(!second.veil.isConnected, 'confirmation input shield did not release after the destination settled');
 
     const third = openConfirmationModal({
       title: 'Cancel from scrim',
@@ -237,6 +242,6 @@ export async function runConfirmationModalContract() {
 
   return {
     ok: failures.length === 0,
-    detail: failures.length ? failures.join('; ') : 'load + quit share one themed dialog; cancel, focus trap, focus return, and single commit pass',
+    detail: failures.length ? failures.join('; ') : 'load + quit share one themed dialog; cancel, focus trap/return, single commit, and transient input shield pass',
   };
 }

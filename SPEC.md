@@ -931,7 +931,10 @@ keeps the same state and focus contract without meaningful animation.
   `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
   focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
   without mutation and restore the invoking control. When it is stacked over the in-run menu,
-  one Escape removes only the top confirmation. The equipment
+  one Escape removes only the top confirmation. After a commit, the service retains an empty
+  top-layer input shield for the bounded navigation activation window (600 ms by default) so a
+  physical second click cannot activate a newly rendered Title control or combatant beneath the
+  removed action; the shield releases after the destination paint settles. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,

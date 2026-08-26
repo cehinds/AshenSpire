@@ -5,6 +5,42 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let activeClose = null;
 export const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
+export const CONFIRMATION_INPUT_SHIELD_MS = 600;
+
+function holdNavigationInputShield({ veil, durationMs }) {
+  veil.className += ' confirmation-input-shield';
+  veil.setAttribute('aria-hidden', 'true');
+
+  let timer = null;
+  let released = false;
+  const shieldEvents = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend'];
+  const keyEvents = ['keydown', 'keyup'];
+  const release = () => {
+    if (released) return;
+    released = true;
+    if (timer != null) clearTimeout(timer);
+    shieldEvents.forEach((type) => veil.removeEventListener(type, consume, true));
+    keyEvents.forEach((type) => window.removeEventListener(type, consume, true));
+    veil.remove();
+  };
+  const consume = (event) => {
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+    // A real second physical click may carry detail 2 even though the original
+    // button was removed. Release only after that activation has landed on the
+    // shield; otherwise the timeout covers the platform double-click window.
+    if (event.type === 'click' && Number(event.detail) > 1) queueMicrotask(release);
+  };
+  shieldEvents.forEach((type) => veil.addEventListener(type, consume, true));
+  keyEvents.forEach((type) => window.addEventListener(type, consume, true));
+
+  const armRelease = () => { timer = setTimeout(release, Math.max(0, Number(durationMs) || 0)); };
+  const afterDestinationPaint = () => {
+    if (typeof window.requestAnimationFrame !== 'function') return armRelease();
+    window.requestAnimationFrame(() => window.requestAnimationFrame(armRelease));
+  };
+  return Object.freeze({ release, afterDestinationPaint });
+}
 
 export function closeConfirmationModal({ restoreFocus = false } = {}) {
   activeClose?.({ restoreFocus });
@@ -21,6 +57,7 @@ export function openConfirmationModal({
   onCancel = () => {},
   returnFocusElement = document.activeElement,
   component = UI.confirmationModal,
+  inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
 } = {}) {
   // One service, one active decision. Repeated activation replaces the stale
   // surface without committing or reporting a cancellation that was not made.
@@ -70,11 +107,12 @@ export function openConfirmationModal({
   document.body.appendChild(veil);
 
   let closed = false;
-  const close = ({ restoreFocus = true } = {}) => {
+  const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
     if (closed) return;
     closed = true;
     window.removeEventListener('keydown', onKeydown, true);
-    veil.remove();
+    if (retainInputShield) dialog.remove();
+    else veil.remove();
     if (activeClose === close) activeClose = null;
     if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
       returnFocusElement.focus({ preventScroll: true });
@@ -110,11 +148,19 @@ export function openConfirmationModal({
   cancelButton.addEventListener('click', cancel);
   confirmButton.addEventListener('click', () => {
     if (closed) return;
-    close({ restoreFocus: false });
+    close({ restoreFocus: false, retainInputShield: true });
+    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
     window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
       detail: { component, tone },
     }));
-    onConfirm?.();
+    try {
+      onConfirm?.();
+    } finally {
+      // Destination callbacks synchronously replace the app surface today.
+      // Two paints let its hit-test tree settle before the bounded shield timer
+      // begins; a physical second click is swallowed and may release it sooner.
+      shield.afterDestinationPaint();
+    }
   });
   veil.addEventListener('click', (event) => {
     if (event.target === veil) cancel();

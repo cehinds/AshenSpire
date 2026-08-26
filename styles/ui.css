@@ -472,6 +472,9 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-veil {
   z-index: 1200; box-sizing: border-box; padding: 2%;
 }
+.confirmation-veil.confirmation-input-shield {
+  padding: 0; background: transparent;
+}
 .confirmation-modal {
   width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
   display: grid; gap: 1.2rem; overflow: auto;

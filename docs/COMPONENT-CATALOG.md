@@ -278,7 +278,7 @@ sync without duplicating persistence.
 | `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
 | `save-game-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn to the active slot and remain in the run. |
 | `save-quit-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn and return to the title screen. |
-| `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, and preserve the covered menu on Escape. Browser evidence covers Map and Combat at 1200×730, 390×844, and 320×640. |
+| `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Real hit-tested double activation is covered from Map and Combat at 1200×730, 390×844, and 320×640. |
 | `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
 | `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; the destructive callback runs exactly once and never before activation. |
 
@@ -313,10 +313,11 @@ restore that drops the saved hand through copied real source doors.
 Load and Quit Without Saving use `confirmation-modal` rather than the browser's
 native prompt. `node tools/confirmation-modal.mjs` proves both commands from Map
 and Combat, cancellation/focus restoration, layered Escape, exact-once commit,
+real coordinate-based double activation without Title/enemy click-through,
 viewport fit, 44px actions, and captured console/network diagnostics at
 1200×730, 390×844, and 320×640. Its `--selftest` corpus plants bypass, unsafe
 initial focus, underlying-overlay Escape, cancel mutation, double commit, broken
-focus return, and target/overflow regressions.
+focus return, target/overflow regressions, and premature input-shield removal.
 
 ## Armoury components
 

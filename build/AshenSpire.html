@@ -772,6 +772,9 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-veil {
   z-index: 1200; box-sizing: border-box; padding: 2%;
 }
+.confirmation-veil.confirmation-input-shield {
+  padding: 0; background: transparent;
+}
 .confirmation-modal {
   width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
   display: grid; gap: 1.2rem; overflow: auto;
@@ -41081,7 +41084,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '9ee533f12e';
+const SOURCE = 'fa8e91bd6d';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41115,7 +41118,7 @@ const SOURCE = '9ee533f12e';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1374';
+const ORDINAL = '1375';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -60825,6 +60828,42 @@ const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComp
 
 let activeClose = null;
 const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
+const CONFIRMATION_INPUT_SHIELD_MS = 600;
+
+function holdNavigationInputShield({ veil, durationMs }) {
+  veil.className += ' confirmation-input-shield';
+  veil.setAttribute('aria-hidden', 'true');
+
+  let timer = null;
+  let released = false;
+  const shieldEvents = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend'];
+  const keyEvents = ['keydown', 'keyup'];
+  const release = () => {
+    if (released) return;
+    released = true;
+    if (timer != null) clearTimeout(timer);
+    shieldEvents.forEach((type) => veil.removeEventListener(type, consume, true));
+    keyEvents.forEach((type) => window.removeEventListener(type, consume, true));
+    veil.remove();
+  };
+  const consume = (event) => {
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+    // A real second physical click may carry detail 2 even though the original
+    // button was removed. Release only after that activation has landed on the
+    // shield; otherwise the timeout covers the platform double-click window.
+    if (event.type === 'click' && Number(event.detail) > 1) queueMicrotask(release);
+  };
+  shieldEvents.forEach((type) => veil.addEventListener(type, consume, true));
+  keyEvents.forEach((type) => window.addEventListener(type, consume, true));
+
+  const armRelease = () => { timer = setTimeout(release, Math.max(0, Number(durationMs) || 0)); };
+  const afterDestinationPaint = () => {
+    if (typeof window.requestAnimationFrame !== 'function') return armRelease();
+    window.requestAnimationFrame(() => window.requestAnimationFrame(armRelease));
+  };
+  return Object.freeze({ release, afterDestinationPaint });
+}
 
 function closeConfirmationModal({ restoreFocus = false } = {}) {
   activeClose?.({ restoreFocus });
@@ -60841,6 +60880,7 @@ function openConfirmationModal({
   onCancel = () => {},
   returnFocusElement = document.activeElement,
   component = UI.confirmationModal,
+  inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
 } = {}) {
   // One service, one active decision. Repeated activation replaces the stale
   // surface without committing or reporting a cancellation that was not made.
@@ -60890,11 +60930,12 @@ function openConfirmationModal({
   document.body.appendChild(veil);
 
   let closed = false;
-  const close = ({ restoreFocus = true } = {}) => {
+  const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
     if (closed) return;
     closed = true;
     window.removeEventListener('keydown', onKeydown, true);
-    veil.remove();
+    if (retainInputShield) dialog.remove();
+    else veil.remove();
     if (activeClose === close) activeClose = null;
     if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
       returnFocusElement.focus({ preventScroll: true });
@@ -60930,11 +60971,19 @@ function openConfirmationModal({
   cancelButton.addEventListener('click', cancel);
   confirmButton.addEventListener('click', () => {
     if (closed) return;
-    close({ restoreFocus: false });
+    close({ restoreFocus: false, retainInputShield: true });
+    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
     window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
       detail: { component, tone },
     }));
-    onConfirm?.();
+    try {
+      onConfirm?.();
+    } finally {
+      // Destination callbacks synchronously replace the app surface today.
+      // Two paints let its hit-test tree settle before the bounded shield timer
+      // begins; a physical second click is swallowed and may release it sooner.
+      shield.afterDestinationPaint();
+    }
   });
   veil.addEventListener('click', (event) => {
     if (event.target === veil) cancel();
@@ -60951,7 +61000,7 @@ function openConfirmationModal({
 }
 
 
-Object.assign(module.exports, { CONFIRMATION_COMMIT_EVENT, closeConfirmationModal, openConfirmationModal });
+Object.assign(module.exports, { CONFIRMATION_COMMIT_EVENT, CONFIRMATION_INPUT_SHIELD_MS, closeConfirmationModal, openConfirmationModal });
 
 },
 "src/ui/components/startupGate.js": function (module, exports, require) {
