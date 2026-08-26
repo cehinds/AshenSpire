@@ -10,7 +10,14 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const REQUIRED_IDS = Object.freeze([
-  'startup-gate',
+  'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
+  'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
+  'title-brand-lockup', 'title-wordmark', 'title-subtitle', 'title-divider',
+  'title-menu', 'title-menu-item', 'title-menu-gem', 'title-tagline',
+  'title-menu-modal', 'title-modal-close-control', 'title-modal-heading',
+  'title-modal-divider', 'title-save-slot-list', 'title-save-slot',
+  'title-save-slot-copy', 'title-save-slot-state', 'title-save-slot-delete',
+  'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
   'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
@@ -79,6 +86,7 @@ export function receipt() {
     buildstamp: read('src/ui/components/buildstamp.js'),
     startupGate: read('src/ui/components/startupGate.js'),
     startupGateModel: read('src/ui/models/StartupGateModels.js'),
+    title: read('src/ui/screens/title.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
     validate: read('src/model/validate.js'),
@@ -181,14 +189,28 @@ export function findings(r) {
   if (!REQUIRED_IDS.every((id) => r.spec.includes(`\`${id}\``))) {
     bad.push('C10 SPEC no longer codifies every public component id');
   }
+  const startupParts = [
+    'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
+    'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
+  ];
+  const titleParts = [
+    'title-brand-lockup', 'title-wordmark', 'title-subtitle', 'title-divider',
+    'title-menu', 'title-menu-item', 'title-menu-gem', 'title-tagline',
+    'title-menu-modal', 'title-modal-close-control', 'title-modal-heading',
+    'title-modal-divider', 'title-save-slot-list', 'title-save-slot',
+    'title-save-slot-copy', 'title-save-slot-state', 'title-save-slot-delete',
+    'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
+  ];
   if (!/export function startupGateModel/.test(r.startupGateModel)
       || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
       || !/export function mountStartupGate/.test(r.startupGate)
       || !/buildStampHtml\('startup'\)/.test(r.startupGate)
-      || !r.catalogMarkdown.includes('`startup-gate`')
-      || !r.catalogHtml.includes("['startup-gate'")
+      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`))
+      || !titleParts.every((id) => r.title.includes(`data-component="${id}"`))
+      || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
+        && r.catalogHtml.includes(`['${id}'`))
       || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
-    bad.push('C18 startup gate no longer uses its immutable component model and shared build stamp');
+    bad.push('C18 startup/title compositions lost a stable subcomponent, immutable gate model, or shared build stamp');
   }
   if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
       || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)

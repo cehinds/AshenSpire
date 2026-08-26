@@ -7,9 +7,9 @@ card, reviews its permanent upgrade, and then explicitly confirms. Back and
 Escape return to the Shrine without changing the deck. Confirm upgrades exactly
 one card and leaves the Shrine.
 
-The implementation and exact-build QA are complete in local build
-`0.4.0.1361` (`d0f8dab61b`). The files remain uncommitted, unpushed, unmerged,
-and unhosted until integration is explicitly approved.
+The implementation and design QA were completed in build `0.4.0.1361`
+(`d0f8dab61b`). After integrating current `origin/dev`, the exact delivery
+candidate is build `0.4.0.1362` (`20424f3657`) on base `16d9181d`.
 
 ## Problem evidence
 
@@ -98,9 +98,11 @@ claiming a numerical change that the player will not see.
 
 ## QA evidence
 
-Exact artifact: build `0.4.0.1361`, digest `d0f8dab61b`, generated from dirty
-local head `78a6e58f`. `build/AshenSpire.html`, `dist/AshenSpire.html`, and the
-root launcher are byte-identical; provenance is still uncommitted.
+Design screenshots: build `0.4.0.1361`, digest `d0f8dab61b`, generated from
+local head `78a6e58f`. The exact integrated behavior recheck used build
+`0.4.0.1362`, digest `20424f3657`, after merging `origin/dev@16d9181d`.
+`build/AshenSpire.html`, `dist/AshenSpire.html`, and the root launcher are
+byte-identical in the integrated candidate.
 
 ### Final screenshots
 
@@ -126,8 +128,9 @@ root launcher are byte-identical; provenance is still uncommitted.
 | Instance-aware copy | PASS | Slashing Strike correctly displays `7 -> 7` under the current armament and explains that the permanent upgrade still applies |
 | Desktop geometry | PASS | 1280x720, no horizontal overflow, 51.8 px action targets |
 | Phone geometry | PASS | 390x844: modal and preview wholly inside viewport, no horizontal overflow, 44 px minimum actions; 390x720 screenshot also keeps the review and actions visible |
-| Console | PASS | zero warning/error entries after desktop and phone flows |
-| Static/regression gates | PASS | `ui-components` 19/19; watched probe S1 now drives the explicit choose/review state; shipped aliases byte-identical |
+| Console | PASS | zero warning/error entries after desktop and phone flows, including the exact 1362 recheck |
+| Exact integrated behavior | PASS | 20 candidates; Confirm initially disabled; one selected state; Back and Escape restore `#smith-opt`; Confirm leaves the Shrine; 390x844 has no horizontal overflow and keeps both 44 px actions inside the viewport |
+| Static/regression gates | PASS | exact 1362 Node suite 110/0; `ui-components` 19/19 plus selftest; 47 watched probes / 77 anchors / 0 dead; shipped aliases 6/6 and byte-identical |
 
 ### Iteration findings
 

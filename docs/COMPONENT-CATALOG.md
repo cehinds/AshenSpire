@@ -26,8 +26,33 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
 | `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
+| `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |
+| `startup-ash-particle` | deterministic particle record | `startupGate.mountStartupGate` | Startup Ash Field | One data-driven ash mote with position, delay, duration, and size. |
+| `startup-mark` | startup copy + responsive presentation | `startupGate.mountStartupGate` | Startup Gate | Centered folded-title content group; its phone backing is fully transparent. |
+| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text. |
+| `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
+| `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
+| `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
+| `title-brand-lockup` | title content records | `title.mountTitle` | Title screen | Centered wordmark, subtitle, and divider composition. |
+| `title-wordmark` | title content record | `title.mountTitle` | Title Brand Lockup | Main Ashen Spire title text. |
+| `title-subtitle` | title content record | `title.mountTitle` | Title Brand Lockup | Main title genre subtitle. |
+| `title-divider` | semantic child | `title.mountTitle` | Title Brand Lockup | Gold rule and diamond under the title. |
 | `title-menu` | title content records | `title.mountTitle` | Title screen | Centered unfurled Continue / Load / New / Collection / Settings / Quit menu. |
+| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
+| `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
+| `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
 | `title-menu-modal` | save-slot records + selected slot | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal with slot selection, Back, Continue, and delete affordance. |
+| `title-modal-close-control` | modal action record | `title.mountTitle` | Title Menu Modal | Named close control that restores focus to the title menu. |
+| `title-modal-heading` | modal-kind projection | `title.mountTitle` | Title Menu Modal | LOAD GAME or NEW GAME accessible dialog heading. |
+| `title-modal-divider` | semantic child | `title.mountTitle` | Title Menu Modal | Gold rule and diamond beneath the dialog heading. |
+| `title-save-slot-list` | save-slot records | `title.mountTitle` | Title Menu Modal | Vertical host for all available save-slot choices. |
+| `title-save-slot` | save summary + selection state | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface. |
+| `title-save-slot-copy` | save summary record | `title.mountTitle` | Title Save Slot | Slot number, class, act, floor, HP, and seed receipt, or Empty copy. |
+| `title-save-slot-state` | slot availability projection | `title.mountTitle` | Title Save Slot | READY or EMPTY trailing state label. |
+| `title-save-slot-delete` | slot id + hold-confirm behavior | `title.mountTitle` | Occupied Title Save Slot | Named destructive control with shared hold-confirm timing. |
+| `title-modal-actions` | selected slot + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue action group. |
+| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu without changing a slot. |
+| `title-modal-continue-control` | modal kind + selected slot | `title.mountTitle` | Title Modal Actions | Loads or starts the selected slot; disabled until the current modal has a valid choice. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
@@ -101,6 +126,46 @@ shared-run-hud
 
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
+
+## Startup and Title components
+
+The folded startup surface and the full title menu are separate compositions.
+The startup gate consumes the first complete input and unmounts before Title is
+created. Title then owns the reusable Load/New shell and supplies its save-slot
+content as records, so changing art or copy does not require separate modal
+markup.
+
+```text
+startup-gate
+├─ startup-ash-field
+│  └─ startup-ash-particle × N
+└─ startup-mark
+   ├─ startup-wordmark
+   ├─ startup-subtitle
+   ├─ startup-divider
+   └─ startup-prompt
+
+title screen
+├─ title-brand-lockup
+│  ├─ title-wordmark
+│  ├─ title-subtitle
+│  └─ title-divider
+├─ title-menu
+│  └─ title-menu-item × 6
+│     └─ title-menu-gem
+├─ title-tagline
+└─ title-menu-modal
+   ├─ title-modal-close-control
+   ├─ title-modal-heading + title-modal-divider
+   ├─ title-save-slot-list
+   │  └─ title-save-slot × N
+   │     ├─ title-save-slot-copy
+   │     ├─ title-save-slot-state
+   │     └─ title-save-slot-delete (occupied slots only)
+   └─ title-modal-actions
+      ├─ title-modal-back-control
+      └─ title-modal-continue-control
+```
 
 ## Character Creation components
 

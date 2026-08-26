@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-347",
+    "date": "2026-08-25",
+    "group": "2026-08-25",
+    "summary": "The title now unfolds from the Ashen Spire threshold into one centered menu",
+    "detail": "The folded startup mark keeps its logo, subtitle, divider, and input-family invitation centered while its phone background is fully transparent. The revealed title presents Continue, Load, New, Collection, Settings, and Quit as one vertical list; Fullscreen and Music stay anchored at the top right. Load and New share one responsive save-slot dialog with selected, empty, focused, disabled, and occupied states plus Back and Continue controls.",
+    "build": "0.4.0.1352",
+    "pullRequest": 347,
+    "url": "https://github.com/cehinds/AshenSpire/pull/347"
+  },
+  {
+    "id": "pr-348",
+    "date": "2026-08-25",
+    "group": "2026-08-25",
+    "summary": "Combatants now stay centered inside a safe battlefield corridor",
+    "detail": "Intent remains full size while the combatant card alone scales between the shared HUD and action hand, preserving explicit breathing room above and below on desktop and phone.",
+    "build": "0.4.0.1354",
+    "pullRequest": 348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/348"
+  },
+  {
     "id": "pr-346",
     "date": "2026-08-24",
     "group": "2026-08-24",

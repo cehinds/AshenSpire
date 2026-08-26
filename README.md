@@ -91,6 +91,19 @@ or component must update the interactive and Markdown catalogs in the same
 origin-bound change and include `Changed catalog components: <id...>` plus this
 catalog link in its summary. If the surface has no stable ID, add one first.
 
+The catalog now decomposes the complete title flow as reusable families:
+`startup-gate` contains the transparent-on-phone folded mark, deterministic ash,
+wordmark, subtitle, divider, and input-family prompt; `title-menu` contains the
+six centered actions and their selection ornament; and `title-menu-modal`
+contains the shared Load/New heading, slot list, slot receipts and states,
+hold-to-delete control, and Back/Continue action group. Reference captures:
+[folded wide](docs/preview/startup-folded-wide-1440x900.png),
+[folded phone](docs/preview/startup-folded-mobile-390x844.png),
+[title wide](docs/preview/title-menu-wide-1440x900.png), and
+[Load phone](docs/preview/title-load-mobile-390x844.png). Catalog QA is recorded
+at [title-family wide](docs/preview/component-catalog-title-wide-1440x900.png)
+and [startup-family phone](docs/preview/component-catalog-startup-mobile-390x844.png).
+
 More: the three [class sprites](docs/preview/class-sprites.svg).
 
 ## Playing

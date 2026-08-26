@@ -1,23 +1,26 @@
-# AshenSpire QA remediation proposals — updated against local build 0.4.0.1361
+# AshenSpire QA remediation proposals — updated against build 0.4.0.1362
 
 ## Status
 
-The baseline findings came from build `0.4.0.1356`. Three bounded remediations
-are now implemented and bundled only in local build `0.4.0.1361`; they are not
-committed, pushed, merged, hosted, or released. All remaining rows are proposals.
+The baseline findings came from build `0.4.0.1356`. Four bounded remediations
+are now implemented in the integrated delivery candidate, build `0.4.0.1362`
+(`20424f3657`) on `origin/dev@16d9181d`. All remaining rows are proposals.
 
 | Local remediation | State | Evidence still required before delivery |
 |---|---|---|
 | Full-width Assign Points disclosure (`stat-allocation-row`) | Implemented; in-app visual pass | phone matrix and focused browser gate |
 | Uniform Shrine folded footprint (`shrine-option-card`) | Implemented; in-app visual pass | phone matrix; semantics/confirmation remain separate P1 work |
-| Dedicated Smith choose/review/confirm modal (`smith-upgrade-modal`, `smith-candidate-card`, `smith-upgrade-preview`) | Exact-build Codex browser QA PASS in 1361 | Integration approval; local files remain uncommitted/unpushed/unmerged |
+| Dedicated Smith choose/review/confirm modal (`smith-upgrade-modal`, `smith-candidate-card`, `smith-upgrade-preview`) | Exact-build browser QA PASS in 1361; exact integrated behavior recheck PASS in 1362 | Hosted deployment and real-device Safari remain separate evidence |
 | Armoury 45vh default, 30vh minimum, 30–90vh snaps, session-only memory (`folding-tray`) | Implemented; one/two-tray in-app visual pass | drag, touch-hold, keyboard snap, fold/reopen, and new-session reset browser checks |
 
 ### Current verification boundary
 
-- Node suite: `110 passed, 0 failed`.
-- Shipped aliases: `6/6` byte/provenance checks passed against the local bundle,
-  with provenance correctly reported as **UNCOMMITTED** at `78a6e58f`.
+- Exact integrated Node suite: `110 passed, 0 failed`.
+- Shipped aliases: `6/6` byte/provenance checks passed and the root/build/dist
+  artifacts are byte-identical for build `0.4.0.1362` (`20424f3657`).
+- Smith exact-build browser recheck: desktop transaction flow and 390x844
+  geometry PASS; Back/Escape restore focus; Confirm leaves the Shrine; zero
+  warning/error console entries.
 - Component contract check: one pre-existing unrelated failure remains:
   `C8 combat composition lacks stable Battlefield/Frame/Hand/Action references`.
 - The phone viewport matrix and tray interaction transitions are still pending;
