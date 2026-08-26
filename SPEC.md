@@ -934,7 +934,9 @@ keeps the same state and focus contract without meaningful animation.
   one Escape removes only the top confirmation. After a commit, the service retains an empty
   top-layer input shield for the bounded navigation activation window (600 ms by default) so a
   physical second click cannot activate a newly rendered Title control or combatant beneath the
-  removed action; the shield releases after the destination paint settles. The equipment
+  removed action; the shield releases after the destination paint settles. Danger borders retain
+  the blood/ember palette, while confirmation action and eyebrow text use the authored parchment
+  token and must measure at least 4.5:1 against their computed backgrounds. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,

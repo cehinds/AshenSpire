@@ -483,7 +483,12 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-modal header { display: grid; gap: 0.35rem; }
 .confirmation-modal h2 { margin: 0; color: var(--parchment); }
 .confirmation-eyebrow {
-  color: var(--ember); font-size: 0.85rem; letter-spacing: 0.16em;
+  font-size: 0.85rem; letter-spacing: 0.16em;
+}
+.confirmation-eyebrow,
+.confirmation-modal .confirmation-confirm {
+  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
+  color: var(--parchment);
 }
 .confirmation-copy { color: var(--parchment); line-height: 1.5; }
 .confirmation-copy > :first-child { margin-top: 0; }

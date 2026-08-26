@@ -27,6 +27,11 @@ then the second hit at the same screen coordinate could reach a newly rendered
 Title control or combat enemy detail. Calling the detached old button twice did
 not exercise that browser hit-test boundary and was not valid evidence.
 
+At the second frozen candidate, QA2 measured the danger action text at 3.70:1
+and the uppercase consequence eyebrow at 4.11:1, both below the 4.5:1 text
+contrast floor. Ember still cleared the non-text border requirement, but it was
+not an accessible text color on the rendered confirmation backgrounds.
+
 ## Repair
 
 - One `openConfirmationModal` service renders both decisions from explicit
@@ -44,6 +49,9 @@ not exercise that browser hit-test boundary and was not valid evidence.
   shield through two destination paints and a configurable 600 ms activation
   window. It consumes the physical follow-up activation, then releases without
   leaving a visible or semantic modal.
+- Blood/ember remains on the danger borders. The action and eyebrow words now
+  use the existing `--parchment` token; the browser gate reads their computed
+  foreground/background colors and requires at least 4.5:1 at every viewport.
 - Confirmation copy is plain text, and both actions inherit the authored
   `--tap-floor` minimum.
 
@@ -70,11 +78,17 @@ coordinate for a second physical browser activation after Map Quit, Combat
 Quit, and Combat Load; before that second activation, `elementFromPoint`
 must resolve the retained shield, and the trace must record no Title-control or
 enemy-detail click. It also records horizontal and vertical overflow plus
-console/network events at every viewport. Its `--selftest` corpus plants eight
+console/network events at every viewport. Its `--selftest` corpus plants nine
 real-source failures: bypassed Load review,
 unsafe initial focus, underlying-overlay Escape, cancel mutation, double commit,
-broken focus restoration, shrunken/overflowing targets, and premature
-input-shield removal.
+broken focus restoration, shrunken/overflowing targets, premature input-shield
+removal, and low-contrast danger text.
+
+For the contrast reopen, the new computed-color assertion first failed at all
+three source viewports with action `3.70:1` and eyebrow `4.11:1`. After the
+token-only repair, action measures `15.46:1` and eyebrow `17.15:1` at all three
+viewports. The same door also adds a ninth source plant that restores ember
+text and must fail by `CONFIRMATION-*-CONTRAST`.
 
 ## Catalog coverage
 
@@ -90,12 +104,12 @@ interactive HTML catalog.
 - Base: `origin/dev@03bf280d1bcce8ce1f00529e5e41af90cf8b108d`.
 - Branch: `codex/qa-04-confirmations`; the exact local candidate head is
   reported after the final commit because a commit cannot contain its own SHA.
-- Shipped build: `0.4.0.1375`; source digest `fa8e91bd6d`; artifact SHA-256
-  `ce31142abdf653be5a58f6062e9918407e6954e15bb3d51f04bcd1c04c1cdd4d`;
-  root/build/dist aliases are byte-identical at 4,152,330 bytes.
-- Focused rendered source door: `60/60`; copied-tree known-bad corpus: `8/8`
+- Shipped build: `0.4.0.1376`; source digest `14fa81f2e2`; artifact SHA-256
+  `f5388cdb66abbe6e11d77a9daf546c1cce635ae77df77cbbd443393213454f2d`;
+  root/build/dist aliases are byte-identical at 4,152,488 bytes.
+- Focused rendered source door: `63/63`; copied-tree known-bad corpus: `9/9`
   caught by its named RED, followed by a clean green copy.
-- Exact shipped browser door: `60/60` across Map and Combat at 1200×730,
+- Exact shipped browser door: `63/63` across Map and Combat at 1200×730,
   390×844, and 320×640. Every modal reported zero horizontal/vertical overflow;
   diagnostic capture reported 0 unexpected console or network events. The
   counted expected headless baseline was console/network `21/4`, `20/3`, and
@@ -129,15 +143,15 @@ interaction evidence.
 Exact screenshot SHA-256 values, in the order listed above, are:
 
 ```text
-ea72faf510bdd59c8c9b0bb15aaccdf610ef175973f653a0127285ec0cc6c46d
-e088ce85d8fe0e5411306ce772ad43b6fedf2c625198ed70e425ccddddc1918e
-d91c2ff9fd1cf7a882eab5843603c8192e28481265805c7a81347abc243786f5
-a461a842729d5abb7307ea7c98d3b731d553e2e5f77559d23313c17a069e906b
-bd096d4e1189f98321f471581ea71c0c6e0d49b881ad852beef043ab9e876f83
-26be68beff5a8aaab230f7667ad47cd25c47cf6ac2754c68fabc9fdf6f4b5788
-bec6828cb05c7fa9369d128301baa4bb56bc9b7e126170c0029f78d9bb47e75a
-230bb783a3fbc9aa8fec93cf14c1de3c27773f901b444e43e9fc673976508421
-bcf901f4ae3b2b7992150c5a237ea793958a8385c782deb582cdbd4be70d4d13
+91598ad465a3cdc19aa860ef9d067d1d05d668f6df6898ead5fadc645a3977b0
+ec5213e3a72d18b3cc1ab2a9520aad34aae7ccc72af9882dcf63a23f77a4856c
+bcf674c017a05cc60e6e52dca67818f039a8e8a3af7affddcbc195baf850f982
+4fc0eb40d28b07eec18b60535440c3278ca5d38870d799119689f6c9310353fc
+c53b250cae56bbfedbbe431e8e0f64455f76dde04fed0f369159ac41fc1cb4c5
+ef16e86b9bde40b6694079a54ed8efc25d0e2076d6be55a580b4d03490165780
+72597e144c934ebfd20d90f32a70a98d33e50cf9befeb094bb74139de44e469c
+e1c6f102da6d112bb58178dcdb76991890cbce47012b67381644d12ef611b0ae
+5a4550c2373430711875bbe83ae07a3517b55d0fdfaadf81e09dc765ac22c9e4
 ```
 
 ## Remaining boundary

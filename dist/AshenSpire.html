@@ -783,7 +783,12 @@ body.hide-hints .hint-bar { display: none; }
 .confirmation-modal header { display: grid; gap: 0.35rem; }
 .confirmation-modal h2 { margin: 0; color: var(--parchment); }
 .confirmation-eyebrow {
-  color: var(--ember); font-size: 0.85rem; letter-spacing: 0.16em;
+  font-size: 0.85rem; letter-spacing: 0.16em;
+}
+.confirmation-eyebrow,
+.confirmation-modal .confirmation-confirm {
+  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
+  color: var(--parchment);
 }
 .confirmation-copy { color: var(--parchment); line-height: 1.5; }
 .confirmation-copy > :first-child { margin-top: 0; }
@@ -41084,7 +41089,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'fa8e91bd6d';
+const SOURCE = '14fa81f2e2';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41118,7 +41123,7 @@ const SOURCE = 'fa8e91bd6d';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1375';
+const ORDINAL = '1376';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------

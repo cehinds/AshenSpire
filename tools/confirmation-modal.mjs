@@ -86,6 +86,13 @@ if (process.argv.includes('--selftest')) {
         replace: '    close({ restoreFocus: false, retainInputShield: false }); // confirmation-modal selftest plant',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-(?:MAP-QUIT|COMBAT-QUIT|COMBAT-LOAD)-DOUBLE-HIT/,
       },
+      {
+        name: 'danger text falls back to the low-contrast ember token',
+        file: 'styles/ui.css',
+        find: '  color: var(--parchment);\n}\n.confirmation-copy',
+        replace: '  color: var(--ember); /* confirmation-modal selftest plant */\n}\n.confirmation-copy',
+        expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-CONTRAST/,
+      },
     ],
   });
   process.exit(code);
@@ -205,11 +212,16 @@ try {
     };
     const modalState = () => ev(`(() => {
       const q=(s)=>document.querySelector(s); const rect=(e)=>{const r=e?.getBoundingClientRect();return r&&{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};};
+      const rgb=(value)=>{const m=String(value).match(/[0-9.]+/g)?.map(Number)||[];return {r:m[0]||0,g:m[1]||0,b:m[2]||0,a:m[3]??1};};
+      const lum=(c)=>{const channel=(v)=>{v/=255;return v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4;};return 0.2126*channel(c.r)+0.7152*channel(c.g)+0.0722*channel(c.b);};
+      const contrast=(foreground,background)=>{const fg=rgb(getComputedStyle(foreground).color),bg=rgb(getComputedStyle(background).backgroundColor);const hi=Math.max(lum(fg),lum(bg)),lo=Math.min(lum(fg),lum(bg));return {foreground:getComputedStyle(foreground).color,background:getComputedStyle(background).backgroundColor,ratio:Number(((hi+0.05)/(lo+0.05)).toFixed(2))};};
       const d=q('.confirmation-modal'), back=q('.confirmation-cancel'), commit=q('.confirmation-confirm');
+      const eyebrow=q('.confirmation-eyebrow');
       return {role:d?.getAttribute('role'),modal:d?.getAttribute('aria-modal'),component:d?.dataset.uiComponent,
         title:q('#confirmation-modal-title')?.textContent,copy:q('#confirmation-modal-copy')?.textContent,
-        consequence:q('.confirmation-eyebrow')?.textContent,back:back?.textContent,commit:commit?.textContent,
+        consequence:eyebrow?.textContent,back:back?.textContent,commit:commit?.textContent,
         cancel:back?.dataset.uiComponent,action:commit?.dataset.uiComponent,active:document.activeElement?.className || document.activeElement?.id,
+        contrast:{action:contrast(commit,commit),eyebrow:contrast(eyebrow,d)},
         dialog:rect(d),backRect:rect(back),commitRect:rect(commit),
         overflowX:document.documentElement.scrollWidth-window.innerWidth,
         overflowY:document.documentElement.scrollHeight-window.innerHeight};
@@ -238,6 +250,9 @@ try {
         && load.consequence === 'DISCARDS UNSAVED CHANGES' && load.back === 'Back' && load.commit === 'Load saved run',
       `CONFIRMATION-${label}-LOAD`, `Load is an explicit reversible alertdialog (${JSON.stringify(load)})`);
     check(String(load.active).includes('confirmation-cancel'), `CONFIRMATION-${label}-SAFE-FOCUS`, 'Back owns initial focus');
+    check(load.contrast.action.ratio >= 4.5 && load.contrast.eyebrow.ratio >= 4.5,
+      `CONFIRMATION-${label}-CONTRAST`,
+      `computed confirmation action ${load.contrast.action.ratio}:1 ${load.contrast.action.foreground} on ${load.contrast.action.background}; eyebrow ${load.contrast.eyebrow.ratio}:1 ${load.contrast.eyebrow.foreground} on ${load.contrast.eyebrow.background}`);
     check(load.overflowX <= 0 && load.overflowY <= 0 && load.dialog?.left >= 0 && load.dialog?.right <= width
         && load.dialog?.top >= 0 && load.dialog?.bottom <= height
         && load.backRect?.width >= 44 && load.backRect?.height >= 44
