@@ -598,6 +598,14 @@ export const balance = {
       def: 'off',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
     },
+    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
+    // not the irreversible-action safety dial above: a short activation still
+    // selects/reviews the save, while a stationary hold loads it directly.
+    // Keeping the duration here lets the interaction be tuned without changing
+    // the title screen's event wiring.
+    titleLoadHold: {
+      ms: 600,
+    },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
     // durations are holdConfirm above. Three facts, three homes, none restated.

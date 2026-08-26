@@ -6,6 +6,12 @@ The baseline findings came from build `0.4.0.1356`. Four bounded remediations
 are now implemented in the integrated delivery candidate, build `0.4.0.1362`
 (`20424f3657`) on `origin/dev@16d9181d`. All remaining rows are proposals.
 
+Item #1 is additionally complete in the local App Team 1 candidate build
+`0.4.0.1365` (`ab582e3a9b`) on branch `codex/qa-01-load-slot`, based on
+`origin/dev@75061e3ae78d8ca52df414b12d7548157ce0cf0f`. It is not pushed, merged,
+hosted, released, or approved for item #2. The implementation and evidence
+receipt is [2026-08-25-load-slot-remediation.md](2026-08-25-load-slot-remediation.md).
+
 | Local remediation | State | Evidence still required before delivery |
 |---|---|---|
 | Full-width Assign Points disclosure (`stat-allocation-row`) | Implemented; in-app visual pass | phone matrix and focused browser gate |
@@ -92,7 +98,7 @@ Renderers own DOM and CSS. Models own labels, ordering, selection, availability,
 
 | # | Observation | Proposed owner | Reusable proposal | Evidence |
 |---:|---|---|---|---|
-| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | Required single-select card group; selected click is idempotent | `23-load-active-slot-can-deselect.png` |
+| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | **Local 1365:** required single-select card group; first activation remains selected; second activation opens review; 600 ms pointer/touch hold loads directly; [receipt](2026-08-25-load-slot-remediation.md) | `23-load-active-slot-can-deselect.png`; `qa-load-slot-list-mobile-390x844.png`; `qa-load-slot-review-mobile-390x844.png`; `qa-load-slot-review-wide-1200x730.png` |
 | 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | Same selection card and state contract as Load | `02-main-menu.png` plus behavior trace |
 | 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | Versioned exact snapshot or explicitly renamed checkpoint contract | `22-continue-restarts-combat-resources.png` |
 | 4 | Quit confirmation uses an inconsistent native prompt | `ConfirmationService` | Shared themed destructive confirmation overlay | behavior trace; screenshot blocked by native dialog |

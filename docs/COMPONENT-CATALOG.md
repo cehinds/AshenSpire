@@ -41,18 +41,18 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
 | `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
 | `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
-| `title-menu-modal` | save-slot records + selected slot | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal with slot selection, Back, Continue, and delete affordance. |
+| `title-menu-modal` | save-slot records + selected slot | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; the `load-review` variant confirms a twice-activated save before loading. |
 | `title-modal-close-control` | modal action record | `title.mountTitle` | Title Menu Modal | Named close control that restores focus to the title menu. |
 | `title-modal-heading` | modal-kind projection | `title.mountTitle` | Title Menu Modal | LOAD GAME or NEW GAME accessible dialog heading. |
 | `title-modal-divider` | semantic child | `title.mountTitle` | Title Menu Modal | Gold rule and diamond beneath the dialog heading. |
 | `title-save-slot-list` | save-slot records | `title.mountTitle` | Title Menu Modal | Vertical host for all available save-slot choices. |
-| `title-save-slot` | save summary + selection state | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface. |
+| `title-save-slot` | save summary + selection state + `balance.ui.titleLoadHold` | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface; an occupied Load slot supports one-tap selection, second-activation review, and pointer/touch hold-to-load. |
 | `title-save-slot-copy` | save summary record | `title.mountTitle` | Title Save Slot | Slot number, class, act, floor, HP, and seed receipt, or Empty copy. |
 | `title-save-slot-state` | slot availability projection | `title.mountTitle` | Title Save Slot | READY or EMPTY trailing state label. |
 | `title-save-slot-delete` | slot id + hold-confirm behavior | `title.mountTitle` | Occupied Title Save Slot | Named destructive control with shared hold-confirm timing. |
-| `title-modal-actions` | selected slot + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue action group. |
-| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu without changing a slot. |
-| `title-modal-continue-control` | modal kind + selected slot | `title.mountTitle` | Title Modal Actions | Loads or starts the selected slot; disabled until the current modal has a valid choice. |
+| `title-modal-actions` | selected slot + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; the `load-review` variant becomes Back to Saves / Load Save. |
+| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
+| `title-modal-continue-control` | modal kind + selected slot | `title.mountTitle` | Title Modal Actions | Loads or starts the selected slot; the review variant exposes a positive Load Save action. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
