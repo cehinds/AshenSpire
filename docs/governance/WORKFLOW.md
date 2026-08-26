@@ -6,7 +6,8 @@ Decisions: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-
 [0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md),
 [0006 — Adaptive model and effort selection](DECISIONS/0006-adaptive-model-and-effort-selection.md),
 [0007 — Standing coordination roles and completion council](DECISIONS/0007-standing-coordination-roles-and-completion-council.md),
-and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md)
+[0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md),
+and [0009 — Promotion Gates A–F](DECISIONS/0009-promotion-gates-a-through-f.md)
 
 ## Lifecycle
 
@@ -113,13 +114,33 @@ reviewers alone author and retain their verdicts.
 
 ## Promotion readiness
 
-After strong QA playtest at an exact candidate, the IT Manager III may record
-`PROMOTION PACKET READY` and submit the exact packet to Constantine. This is a
-delivery fact, not a lifecycle state, promotion, release-readiness approval, or
-authority to mutate `test`, `release`, `main`, Pages, tags, or releases. The
-packet fields and Pages conditions are defined by
-[decision 0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md) and the
-[ticket schema](TICKET-SCHEMA.md).
+Promotion follows [Gates A–F](DECISIONS/0009-promotion-gates-a-through-f.md):
+
+1. **A — candidate QA:** required independent QA and gates pass at one exact
+   frozen candidate.
+2. **B — dev and hosted:** integrate that exact head to `dev` through the
+   normal reviewable PR process, then hosted-verify the exact resulting `dev`
+   SHA.
+3. **C — test fast-forward:** the IT Manager III may fast-forward `test` only
+   to that exact hosted-verified `dev` SHA when every Gate-C condition passes.
+   This is a non-release promotion.
+4. **D — exact-test acceptance:** QA1, QA2, assigned Development Lead, IT
+   Manager III, and Project Management Lead each record a recommendation at the
+   unchanged `test` SHA. Data, Experience & Accessibility, and Delivery Systems
+   reviewers join when their surfaces apply.
+5. **E — Constantine playtest:** Constantine playtests that unchanged exact
+   `test` SHA after Gate D passes.
+6. **F — main/release actions:** Constantine separately approves and performs
+   each exact-SHA `main`, `release`, tag, publication, Pages, and final
+   release-readiness action.
+
+Never advance `test` alone while a candidate is ahead of `dev`. A
+code/content/configuration/artifact change resets Gate A. Any changed `test`
+head invalidates prior Gate-D acceptance and Gate-E playtest evidence. P0/P1
+`WITHHOLD` blocks; an accepted P2 remains disclosed, owned, risked, and assigned
+to a target milestone. Promotion gates are delivery facts, not new lifecycle
+states, and do not collapse `DEV INTEGRATED`, `HOSTED VERIFIED`, `RESOLVED`, or
+`RELEASED`.
 
 ## Context and repository hygiene
 

@@ -5,7 +5,8 @@ Policy version: `1.0.0`
 Decisions: [0001 — Typed truth and authority](DECISIONS/0001-typed-truth-and-authority.md),
 [0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md),
 [0007 — Standing coordination roles and completion council](DECISIONS/0007-standing-coordination-roles-and-completion-council.md),
-and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md)
+[0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md),
+and [0009 — Promotion Gates A–F](DECISIONS/0009-promotion-gates-a-through-f.md)
 
 ## Permanent control plane
 
@@ -27,7 +28,8 @@ and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability
   contested ownership, unresolved technical blockers, incident/P0 command,
   integration and delivery gates, and questions for Constantine.
 - **Constantine** retains every authority reserved by repository policy,
-  including release readiness and the release actions listed below.
+  including `main`/`release`, tags, publication, Pages, final release readiness,
+  and the release actions listed below.
 
 Capability pools provide expertise. Temporary delivery pods perform bounded
 tickets. Standing coordination roles do not silently gain implementation paths
@@ -48,8 +50,10 @@ or product, board, promotion, publication, or release authority.
 | Push a genuinely independent completed topic head and open/update its normal PR to `dev` | IT Manager III at its discretion under [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md), or separately named authority | Itemized independence `PASS`, immutable exact head, required QA/gates, fresh base/head/PR/mergeability, unchanged scope, and recorded evidence. |
 | Integrate to `dev` through the normal reviewable PR process | IT Manager III at its discretion under [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md) | The same `PASS` evidence plus current required review and CI. `READY FOR MAIN` creates no duty to deliver. |
 | Mutate Project | Separately named authority | Explicit action-specific authority; local readiness does not imply it. |
-| Declare a test/release promotion packet ready for Constantine review | IT Manager III | Strong QA playtest at the exact candidate and a complete promotion packet; this is not release-readiness approval. |
-| Mutate `test`/`release`/`main`, change Pages source, tag, publish a release, or declare final release readiness | Constantine | Separate action-specific decision, complete promotion/rollback packet, and release runbook. |
+| Fast-forward `test` to the exact hosted-verified `dev` SHA | IT Manager III under Gate C of [0009](DECISIONS/0009-promotion-gates-a-through-f.md) | Gates A/B passed and fresh; exact SHA equality; true fast-forward; rollback/protection/mutation evidence; no blocking P0/P1 `WITHHOLD`, missing reviewer, stale evidence, or mismatch. This is non-release. |
+| Record five-role exact-test acceptance | QA1, QA2, assigned Development Lead, IT Manager III, and Project Management Lead; conditional reviewers under Gate D | Separate exact-SHA recommendations, known-defect ledger, and no P0/P1 `WITHHOLD`; accepted P2 has disclosure, owner, milestone, risk, and accepting authority. |
+| Perform exact-test playtest | Constantine | Gate D passed at the unchanged `test` SHA; exact build/artifact/flow evidence and known accepted defects. |
+| Mutate `release`/`main`, change Pages source, tag, publish a release, or declare final release readiness | Constantine | Separate action-specific exact-SHA decision, complete Gate-F promotion/rollback packet, and release runbook. |
 | Archive or delete a task, worktree, branch, artifact, or evidence | IT Manager III/user as applicable | Durable capture, exact targets, recovery consequence, explicit authority. |
 
 ## Decision and exception packets

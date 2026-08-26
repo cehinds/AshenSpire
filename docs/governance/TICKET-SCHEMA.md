@@ -36,8 +36,10 @@ schema but must not replace it.
 | `completion_council` | At `READY FOR MAIN` and `RESOLVED`: each lead's available independent work, dependencies/path or serialized-lane overlap, recommendation, smallest next action, and exact authority; PM summary; Help Desk receipt; IT Manager III decision if any. |
 | `delivery_disposition` | IT Manager III's `WAIT`, `DELIVER TO DEV`, or `NOT YET DECIDED` result with exact head and timestamp. A `PASS` permits discretion but creates no duty. |
 | `wait_rationale` | When disposition is `WAIT`: evidence-based reason, owner, retry trigger, safe work if any, and smallest next action. |
-| `promotion_packet` | When promotion review is proposed: decision/action requested; fresh branch heads; candidate/PR/review/CI; dependencies and independence result; scope/paths; maker and QA evidence; artifact path/hash/build/source/provenance; strong playtest; current/desired Pages source and deploy/hosted proof; rollback target/procedure/trigger/actor/authority; recommendation and exact Constantine request. |
-| `delivery_facts` | Separate local, pushed, PR, integrated, hosted, resolved, and released facts. |
+| `promotion_packet` | Gate A exact candidate/QA; Gate B `dev` integration and hosted-verified SHA; Gate C exact test fast-forward conditions/result/rollback; Gate D five required and applicable conditional exact-test recommendations; Gate E Constantine playtest; Gate F separately requested exact-SHA main/release/tag/publication/Pages actions; fresh branch heads; dependencies; scope/paths; artifact path/hash/build/source/provenance; known defects and `WITHHOLD` state; rollback target/procedure/trigger/actor/authority. |
+| `known_defects` | Severity, disclosure, evidence, owner, status, risk, target milestone, accepting authority, and whether it blocks. P0/P1 `WITHHOLD` blocks promotion; accepted P2 retains every field. |
+| `test_acceptance_council` | Unchanged exact `test` SHA; separate QA1, QA2, assigned Development Lead, IT Manager III, and PM recommendations; applicable Data/Experience/Delivery Systems recommendations; invalidation event when `test` changes. |
+| `delivery_facts` | Separate local, pushed, PR, dev-integrated, hosted-verified, test-fast-forwarded, test-accepted, Constantine-playtested, main/release-mutated, published, resolved, and released facts. |
 | `next` / `block` | Smallest next action; blocker owner and retry trigger. |
 
 ## Lifecycle event

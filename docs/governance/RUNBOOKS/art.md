@@ -48,8 +48,8 @@ green screenshot alone.
    build/SHA when known, status, dependencies, and smallest next action. It
    handles routine questions, routing, acknowledgements, and status receipts.
 2. Help Desk forms or updates a temporary delivery pod from the needed
-   capability pools: Art / Tech Art, Engineering, Game Systems, Experience
-   Design, QA Guild, and Platform / Release.
+   capability pools: Art / Tech Art, Feature / Architecture or Incident /
+   Defect, Game Systems, Experience Design, QA Guild, and Platform / Release.
 3. Before approval, Art / Tech Art may prepare bounded proposals and comparison
    evidence. No proposal may claim new mechanics, lore, component ownership,
    or delivery authority.
@@ -155,16 +155,17 @@ If the art communicates or changes an unlock, state, affordance, targeting
 rule, timing, reward, availability, or other player behavior, Game Systems must
 provide the authoritative unlock/behavior contract and acceptance conditions.
 Art / Tech Art and Experience Design may clarify that contract but must not
-invent a mechanic to complete the package. Engineering implements only the
-approved contract.
+invent a mechanic to complete the package. The assigned Feature / Architecture
+or Incident / Defect pod implements only the approved contract.
 
 Purely presentational work records `No behavior change` and cites the current
 engine/content behavior it preserves.
 
-### 8. Engineering integration handoff
+### 8. Technical integration handoff
 
-Help Desk routes substantial runtime wiring to an Engineering-backed delivery
-pod. The IT Manager III resolves integration decisions and exceptions. The handoff names:
+Help Desk routes substantial runtime wiring to a Feature / Architecture or
+Incident / Defect-backed delivery pod. The IT Manager III resolves integration
+decisions and exceptions. The handoff names:
 
 - the approved suggestion and owning Help Desk ticket or issue;
 - exact base/head and claimed source, config, test, evidence, and generated
@@ -239,7 +240,7 @@ or integration ruling. The receipt contains:
 5. service decision and any approved exception;
 6. catalog paths and labelled preview evidence;
 7. Game Systems contract or `No behavior change` evidence;
-8. Engineering integration handoff and acknowledgement state;
+8. technical integration handoff and acknowledgement state;
 9. QA Guild results, including negative and desktop/mobile evidence;
 10. accessibility, responsive, provenance, and licensing results;
 11. documentation and changelog paths; and

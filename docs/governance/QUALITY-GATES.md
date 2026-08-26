@@ -99,12 +99,29 @@ require a version or lifecycle-text mutation.
 
 ## Promotion and Pages proof
 
-A test/release candidate packet requires strong QA playtest at the exact
-candidate, fresh branch heads, exact artifact path/SHA-256/build/source,
-generation and byte-identity evidence, all required independent review, and an
-itemized unresolved-finding/exception record. The IT Manager III may call the packet ready for
-Constantine review; only Constantine may approve or perform promotion or final
-release-readiness actions.
+A promotion packet records Gate A–F separately. Gate B proves the QA-approved
+candidate was integrated to `dev` and the exact resulting `dev` SHA was hosted
+verified. Gate C proves `test` was a true fast-forward to that same SHA; test
+must never advance directly to a candidate-only SHA. The IT Manager III's
+standing test authority exists only when every Gate-C condition in
+[decision 0009](DECISIONS/0009-promotion-gates-a-through-f.md) is `PASS`.
+
+Gate D requires separate exact-test recommendations from QA1, QA2, the assigned
+Development Lead, IT Manager III, and Project Management Lead, plus Data,
+Experience & Accessibility, and Delivery Systems reviewers when applicable. A
+P0/P1 `WITHHOLD` blocks. An accepted P2 records disclosure, owner, target
+milestone, risk, and accepting authority. Every known defect remains visible.
+
+Gate E is Constantine's playtest of the unchanged exact `test` SHA. Any changed
+test head invalidates Gate-D and Gate-E evidence. A code, content,
+configuration, or artifact change resets Gate A. Gate F requires separate
+Constantine authority and evidence for each `main`, `release`, tag,
+publication, Pages, and final release-readiness action.
+
+Every gate packet includes fresh branch heads, exact artifact
+path/SHA-256/build/source, generation and byte-identity evidence, applicable
+independent review, an itemized unresolved-finding/exception record, and
+rollback.
 
 The desired future Pages source is `main`, but no source switch is implied.
 Before an authorized change window, record the exact candidate on `main`, the

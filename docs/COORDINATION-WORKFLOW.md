@@ -6,8 +6,9 @@ The index owns the current documents rather than duplicating them here.
 
 ## Canonical policy map
 
-- [Authority](governance/AUTHORITY.md) — Main, Help Desk, delegated authority,
-  decisions, exceptions, integration, and the release boundary.
+- [Authority](governance/AUTHORITY.md) — IT Manager III, Integration & Delivery,
+  Help Desk, delegated authority, decisions, exceptions, integration, and the
+  release boundary.
 - [Team charters](governance/TEAM-CHARTERS.md) — capability pools and temporary
   lead-owned delivery pods.
 - [Workflow](governance/WORKFLOW.md) — typed truth, lifecycle, routing, WIP,
@@ -28,7 +29,7 @@ Git/PR/CI own code and integration evidence; Pages owns hosted evidence; issue
 projection; chats are non-authoritative workspaces.
 
 Routine intake and status go to Help Desk. Decisions, exceptions, contested
-ownership, unresolved blockers, and integration rulings go to Main. Release
-authority remains separate. This entry point grants no implementation, push,
-merge, publication, deployment, board mutation, archive, deletion, or release
-authority.
+ownership, unresolved blockers, and integration rulings go to IT Manager III,
+Integration & Delivery. Release authority remains separate. This entry point
+grants no implementation, push, merge, publication, deployment, board mutation,
+archive, deletion, or release authority.

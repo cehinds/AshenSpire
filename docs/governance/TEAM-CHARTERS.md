@@ -5,7 +5,8 @@ Policy version: `1.0.0`
 Decisions: [0003 — Control plane, pools, pods, and WIP](DECISIONS/0003-control-plane-pools-pods-and-wip.md),
 [0006 — Adaptive model and effort selection](DECISIONS/0006-adaptive-model-and-effort-selection.md),
 [0007 — Standing coordination roles and completion council](DECISIONS/0007-standing-coordination-roles-and-completion-council.md),
-and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md)
+[0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability-pool-and-review-station-raci.md),
+and [0009 — Promotion Gates A–F](DECISIONS/0009-promotion-gates-a-through-f.md)
 
 ## Standing coordination roster
 
@@ -14,7 +15,7 @@ and [0008 — Capability-pool and review-station RACI](DECISIONS/0008-capability
 | Help Desk | Intake, contract/status hygiene, routing, acknowledgements, receipts, and Project workflow projection. | No implementation, product, technical-decision, integration, board-mutation, or delivery authority. |
 | Project Management Lead | Portfolio/milestone recommendations; dependency, blocker, WIP, and capacity visibility; completion councils; handoffs; risk/decision log; promotion-readiness planning; stakeholder summaries. | Recommends and coordinates; does not decide technical assignment/integration or gain product, board, delivery, promotion, or release authority. |
 | Data Architecture & Systems Lead | Schema/ID/alias/deprecation; source-generator-projection lineage; migration/version/compatibility; generated manifests; save/content/data quality; cross-domain data-contract review. | May `WITHHOLD` an unsafe contract; does not self-assign implementation or replace domain intent or IT Manager III authority. |
-| IT Manager III, Integration & Delivery | Mandatory technical relay; technical sequencing; path/maker ownership; architecture reconciliation; incident/P0 command; integration and delivery gates. | Decides technical assignment/integration within granted authority; Constantine retains reserved promotion, Pages, tag, publication, and release actions. |
+| IT Manager III, Integration & Delivery | Mandatory technical relay; technical sequencing; path/maker ownership; architecture reconciliation; incident/P0 command; integration and delivery gates. | Decides technical assignment/integration within granted authority and may perform Gate-C exact test fast-forward; Constantine retains `main`/`release`, Pages, tag, publication, playtest, and final release actions. |
 
 The IT Manager III is the role formerly named `Main`. `READY FOR MAIN` remains
 the compatibility lifecycle token and routes to this role.
