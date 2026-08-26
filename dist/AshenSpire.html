@@ -807,6 +807,10 @@ body.hide-hints .hint-bar { display: none; }
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+.rebind-btn {
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  height: auto;
+}
 .pad-btn {
   min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
@@ -41102,7 +41106,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f3aedc1ad1';
+const SOURCE = '25df5799f3';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41136,7 +41140,7 @@ const SOURCE = 'f3aedc1ad1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1378';
+const ORDINAL = '1383';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -60501,6 +60505,23 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
   };
 
+  // The body is shared, but the marker and scroll offset belong to one render.
+  // Clear both before EVERY dispatch; Settings alone reclaims its marker, while
+  // Controls keeps this shared body as its sole vertical scroll owner.
+  const dispatchPanel = (id) => {
+    body.removeAttribute('data-settings-host');
+    body.scrollTop = 0;
+    const panel = panelFor(id);
+    if (!panel) {
+      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
+        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
+        + ' the declaration, the panel is the handler, and one of them is missing.');
+      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
+      return;
+    }
+    panel(body, ctx);
+  };
+
   const saveButton = veil.querySelector('#ov-save');
   const quitButton = veil.querySelector('#ov-quit');
   if (!onSave && saveButton) saveButton.hidden = true;
@@ -60523,15 +60544,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
-    const panel = panelFor(id);
-    if (!panel) {
-      console.error(`[ui] menu tab ${JSON.stringify(id)} is declared in MENU_TABS`
-        + ' and has no panel in PANELS (src/ui/components/overlay.js) \u2014 the tab is'
-        + ' the declaration, the panel is the handler, and one of them is missing.');
-      body.innerHTML = `<div class="ov-dead">The <b>${esc(id)}</b> tab is declared and has no panel.</div>`;
-      return;
-    }
-    panel(body, ctx);
+    dispatchPanel(id);
   }
 
   veil.querySelectorAll('.ov-tab').forEach((b) => b.addEventListener('click', () => selectTab(b.dataset.member)));
@@ -60566,7 +60579,7 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
             ...quickControls.music,
             activate: async (...args) => {
               const result = await quickControls.music.activate(...args);
-              if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
+              if (currentTab === 'settings' && result?.changed) dispatchPanel('settings');
               return result;
             },
           },
