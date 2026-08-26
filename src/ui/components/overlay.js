@@ -13,6 +13,7 @@ import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
 import { closeFlaskActionMenu } from './flask.js';
+import { topVeil } from './veil.js';
 import { menuOverlayModel } from '../models/MenuModels.js';
 import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
 
@@ -226,10 +227,10 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       actions: {
         tab: (id) => selectTab(id),
         ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-        ...(onLoad ? { load: () => { const loaded = onLoad(); if (loaded) closeOverlay(); return loaded; } } : {}),
+        ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
         ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
-        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave(); if (quit) closeOverlay(); return quit; } } : {}),
+        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');
@@ -280,6 +281,9 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
+      // A confirmation opened above this overlay owns Escape. Without this
+      // paint-order guard one press cancels the confirmation and the menu below.
+      if (topVeil() !== openVeil) return;
       // Esc peels ONE layer. With the mirrored list open over the overlay, the
       // list is the layer the player is looking at; closing both would take away
       // a screen they never asked to leave.

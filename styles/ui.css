@@ -468,6 +468,34 @@ body.hide-hints .hint-bar { display: none; }
    `body.hide-hints` above is the player's own switch and is untouched. */
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
+/* ---------- shared confirmation ---------- */
+.confirmation-veil {
+  z-index: 1200; box-sizing: border-box; padding: 2%;
+}
+.confirmation-modal {
+  width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
+  display: grid; gap: 1.2rem; overflow: auto;
+  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.62);
+}
+.confirmation-modal header { display: grid; gap: 0.35rem; }
+.confirmation-modal h2 { margin: 0; color: var(--parchment); }
+.confirmation-eyebrow {
+  color: var(--ember); font-size: 0.85rem; letter-spacing: 0.16em;
+}
+.confirmation-copy { color: var(--parchment); line-height: 1.5; }
+.confirmation-copy > :first-child { margin-top: 0; }
+.confirmation-copy > :last-child { margin-bottom: 0; }
+.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 0.7rem; }
+.confirmation-modal footer button {
+  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;
+}
+.confirmation-modal.danger { border-color: var(--blood); }
+@media (max-width: 540px) {
+  .confirmation-veil { padding: 3%; }
+  .confirmation-modal { max-width: 100%; padding: 1.2rem; }
+  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }

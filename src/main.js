@@ -52,6 +52,7 @@ import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.
 import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
+import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -909,18 +910,38 @@ function resumeRun(slot = 1) {
   }
 }
 
-function loadActiveSlot() {
-  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
-  resumeRun(activeSlot);
-  return true;
+function loadActiveSlot({ returnFocusElement } = {}) {
+  openConfirmationModal({
+    title: `Load slot ${activeSlot}?`,
+    message: '<p>The saved run will replace changes made since your last save.</p>',
+    confirmLabel: 'Load saved run',
+    consequence: 'DISCARDS UNSAVED CHANGES',
+    tone: 'danger',
+    returnFocusElement,
+    onConfirm: () => {
+      closeOverlay();
+      resumeRun(activeSlot);
+    },
+  });
+  return false;
 }
 
-function quitWithoutSaving() {
-  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
-  audio.stopMusic();
-  run = null;
-  showTitle();
-  return true;
+function quitWithoutSaving({ returnFocusElement } = {}) {
+  openConfirmationModal({
+    title: 'Quit without saving?',
+    message: '<p>Changes since your last save will be lost. Your existing save slot will remain available.</p>',
+    confirmLabel: 'Quit without saving',
+    consequence: 'LEAVES THE RUN',
+    tone: 'danger',
+    returnFocusElement,
+    onConfirm: () => {
+      closeOverlay();
+      audio.stopMusic();
+      run = null;
+      showTitle();
+    },
+  });
+  return false;
 }
 
 // ---- screens --------------------------------------------------------------------

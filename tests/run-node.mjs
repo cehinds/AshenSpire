@@ -781,6 +781,22 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   else zoomPassed++;
 }
 
+// 75 — destructive quit/load confirmation without a native browser prompt.
+// This is a DOM behavior test with a deliberately tiny host: it exercises the
+// shared component's event contract, while source reads prove both controller
+// paths use it and the underlying overlay yields Escape to the top veil. It
+// does not render pixels or claim responsive geometry; that remains browser QA.
+{
+  const { runConfirmationModalContract } = await import('./confirmation-modal.test.mjs');
+  const confirmation = await runConfirmationModalContract();
+  console.log(
+    `${confirmation.ok ? 'PASS' : 'FAIL'}  75. quit and load use one reversible themed confirmation behavior` +
+      ` — ${confirmation.detail}`
+  );
+  if (confirmation.ok) zoomPassed++;
+  else zoomExtra++;
+}
+
 console.log(`\n${passed + zoomPassed} passed, ${failed + zoomExtra} failed`);
 console.log('BOUNDARY: 1–35 are engine and content invariants. 36–37 are a CONSISTENCY');
 console.log('          check over coordinate spaces — they prove a transform has two');
@@ -872,4 +888,8 @@ console.log('          or bounded local-alias forms. A platform consumer is trus
 console.log('          its static node:url import; ambiguous lexical, binding, or alias flow fails');
 console.log('          closed. They prove both fixtures fail from a spaced working directory;');
 console.log('          they do not cover cross-module flow or platform-API semantic correctness.');
+console.log('          75 drives the shared confirmation component in a minimal DOM and reads');
+console.log('          the two controller call sites. It proves cancellation/commit semantics,');
+console.log('          focus containment/return, and native-prompt removal; it does not paint');
+console.log('          the dialog or prove responsive geometry in a real browser.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);

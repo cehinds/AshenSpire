@@ -63,6 +63,8 @@ export const UI_COMPONENTS = Object.freeze({
   menuFooter: 'menu-footer',
   saveGameControl: 'save-game-control',
   saveQuitControl: 'save-quit-control',
+  confirmationModal: 'confirmation-modal',
+  confirmationAction: 'confirmation-action',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
