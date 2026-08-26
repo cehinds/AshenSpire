@@ -3,9 +3,9 @@
 // M2 flow: Title → class select → act map → [combat | shrine | shop | event |
 // treasure] → … → boss → game over. One rng is created from the seed and its
 // stream counters are saved with the run after every committed choice, so a
-// whole run is reproducible from its seed string and a reload restores
-// exactly (mid-combat: the combat restarts from its start — StS behavior,
-// because counters are saved BEFORE the combat begins).
+// whole run is reproducible from its seed string. Explicit combat saves carry
+// an exact committed-turn snapshot; the node-entry receipt remains the
+// backward-compatible recovery path for older saves and interrupted sessions.
 
 import { contentBundle } from './content/index.js';
 import { validateContent } from './model/validate.js';
@@ -17,6 +17,7 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createCombat } from './engine/combat.js';
+import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap } from './engine/actmap.js';
 import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
 import {
@@ -898,7 +899,8 @@ function resumeRun(slot = 1) {
   if (!run) return showTitle();
   rng = createRng(run.seed, run.streamCounters);
   if (run.combatEntered && run.combatEntered.encounterId) {
-    // Mid-combat save: restart that combat from its start (SPEC §3.12).
+    // Current saves resume the exact committed turn. Older saves that only
+    // carry the encounter receipt still use the deterministic restart path.
     enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
   } else if (run.shopStock) {
     showShop();
@@ -1471,12 +1473,15 @@ function startFight(pool, nodeId) {
 }
 
 function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
-  run.combatEntered = { nodeId, encounterId };
-  if (!resuming) persist(); // counters BEFORE the combat → reload restarts it identically
+  const savedSnapshot = resuming ? run.combatEntered?.snapshot : null;
+  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
+  // The entry receipt is a deterministic recovery checkpoint. An explicit Save
+  // Game replaces it with an exact committed-turn snapshot below.
+  if (!resuming) persist();
   const enc = registries.encounters.get(encounterId);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool);
-  const combat = createCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot }) : createCombat({
     registries,
     rng,
     player: {
@@ -1515,6 +1520,9 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // has no equipment code, only statuses applied at combat start.
     playerStatuses: [...cm.playerStatuses, ...runMods(registries, run.loadout, run.class).startStatuses],
   });
+  // A restored combat owns the live loadout copy from its snapshot. Rejoin it
+  // to the run so later swaps and the post-combat receipt share one object.
+  if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
   // A REACH STATE, the same shape and reason as ?shotMaxHp beside it: the
@@ -1578,10 +1586,12 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
     onSave: () => {
+      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       return activeSlot;
     },
     onQuit: () => {
+      commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
       showTitle();
     },
