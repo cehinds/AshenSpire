@@ -17,7 +17,7 @@ import { resolveFloorPlan, applyRunShape, minViableFloors, MAP_SHAPE_KEYS } from
 import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../src/model/rewardplan.js';
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, getEntity, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combat.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -5906,6 +5906,39 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
+  });
+
+  test('75. an explicit save resumes the exact committed combat state and RNG continuation', () => {
+    const seed = 0x7503;
+    const original = makeCombat({
+      seed,
+      deck: ['strike', 'defend', 'strike', 'defend', 'strike', 'defend', 'strike', 'defend'],
+      enemies: ['tHitter'],
+      hp: 61,
+      maxHp: 78,
+    });
+    playFromHand(original, 'strike');
+
+    const counters = original.rng.getCounters();
+    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(original)));
+    const restored = restoreCombatSnapshot({
+      registries: REG,
+      rng: createRng(seed, counters),
+      snapshot: stored,
+    });
+
+    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(stored),
+      'storage round-trip restores the exact committed turn, entities, intents, piles, and event receipts');
+    assert(restored.triggerState instanceof Map, 'trigger receipts restore to their runtime Map shape');
+    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
+      'runtime-only combat methods are reattached');
+
+    dispatch(original, { type: 'endTurn' });
+    dispatch(restored, { type: 'endTurn' });
+    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(serializeCombatSnapshot(original)),
+      'the next turn resolves identically instead of replaying combat setup');
+    eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
+      'restored combat consumes the same named RNG streams');
   });
 
   const passed = results.filter((r) => r.ok).length;
