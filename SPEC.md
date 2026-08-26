@@ -918,7 +918,11 @@ keeps the same state and focus contract without meaningful animation.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
   `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
-  the footer composes `save-game-control` and `save-quit-control`. The equipment
+  the footer composes `save-game-control` and `save-quit-control`. An occupied keyboard or
+  controller input opens the `binding-conflict-dialog` from one immutable
+  `BindingConflictModel` before either binding changes. **Cancel** preserves both bindings,
+  **Choose another** returns the same action to capture, and **Replace** transfers the input to
+  the requested action while explicitly leaving its former owner unbound. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,

@@ -337,7 +337,8 @@ const V = {
   titleModalBack:'<div class="mini"><div class="mini-btn" style="width:160px">BACK</div></div>',
   titleModalContinue:'<div class="mini"><div class="mini-btn" style="width:160px;border-color:#c9a227;color:#d6b84b">CONTINUE</div></div>',
   equipmentChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>ASHEN VIGIL</b><br><span class="mini-label">Defend Block +2 · GUARD · ASH</span></div></div>',
-  relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
+  relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>',
+  bindingConflictDialog:'<div class="mini mini-stack"><div class="mini-panel" style="width:230px;height:auto;padding:12px"><b>BINDING CONFLICT</b><br><span class="mini-label">F is already assigned to Use Flask 1.</span><div class="tab-demo" style="margin-top:9px"><span>CHOOSE ANOTHER</span><span class="on">REPLACE</span><span>CANCEL</span></div></div></div>'
 };
 const SEMANTIC_COMPONENTS = [
  ['startup-gate','startupGateModel','startupGate.mountStartupGate','screen','Cold boot','Input-gated wordmark, deterministic ash, family prompt, and shared build receipt. Title is not mounted behind it.','startupGate'],
@@ -400,6 +401,7 @@ const SEMANTIC_COMPONENTS = [
  ['menu-footer','menuFooterModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Persistent run-action footer.','menuFooter'],
  ['save-game-control','componentModel child','menuComponents.renderMenuOverlay','menu','Menu Footer','Save the active slot and remain in the run.','saveGameControl'],
  ['save-quit-control','componentModel child','menuComponents.renderMenuOverlay','menu','Menu Footer','Save and return to the title screen.','saveQuitControl'],
+ ['binding-conflict-dialog','bindingConflictModel','bindingConflictDialog.mountBindingConflictDialog','menu','Controls','Occupied keyboard/pad decision surface that pauses mutation and offers Choose another, Replace, and Cancel.','bindingConflictDialog'],
  ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','crimsonFlask'],
  ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','azureFlask'],
  ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','inventoryBelt'],
@@ -547,6 +549,7 @@ const COMPOSITION = Object.freeze({
   'title-modal-actions':['title-modal-back-control','title-modal-continue-control'],
   'quick-menu-panel':['quick-menu-caption','quick-menu-row × 10 (Settings/Controls; Fullscreen/Music; Inventory/Character; Load/Save/Save and Quit/Quit Without Saving)'],
   'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel','menu-footer','save-game-control','save-quit-control'],
+  'binding-conflict-dialog':['occupied input + requested action','Choose another','Replace','Cancel'],
   'armoury-overlay':['armoury-panel'],
   'folding-tray':['tray-header','tray-resize-handle (optional; expanded when enabled)','tray-content → context region component','Armoury session geometry: 45vh default · 30–90vh snap stops'],
   'armoury-panel':['armoury-header','armoury-view-switcher (Character / Inventory / Hybrid)','responsive subject region (armoury-body)','shared folding-tray families: Armaments / Inventory / Cards / Stats'],

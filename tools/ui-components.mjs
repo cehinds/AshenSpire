@@ -33,7 +33,7 @@ const REQUIRED_IDS = Object.freeze([
   'health-damage-indicator',
   'quick-menu-panel', 'quick-menu-caption', 'quick-menu-row', 'menu-overlay',
   'menu-tab-strip', 'menu-tab', 'menu-panel', 'menu-footer', 'save-game-control',
-  'save-quit-control', 'armoury-overlay', 'armoury-panel',
+  'save-quit-control', 'binding-conflict-dialog', 'armoury-overlay', 'armoury-panel',
   'armoury-header', 'armoury-view-switcher', 'armoury-body', 'armoury-figure',
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
@@ -59,11 +59,13 @@ export function receipt() {
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
+    bindingConflictModel: read('src/ui/models/BindingConflictModel.js'),
     armouryModels: read('src/ui/models/ArmouryModels.js'),
     trayModels: read('src/ui/models/TrayModels.js'),
     hud: read('src/ui/components/hudmeta.js'),
     quickSettings: read('src/ui/components/hudQuickSettings.js'),
     menuComponents: read('src/ui/components/menuComponents.js'),
+    bindingConflictDialog: read('src/ui/components/bindingConflictDialog.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
     traySizeService: read('src/ui/services/TraySizeService.js'),
@@ -95,6 +97,7 @@ export function receipt() {
     coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
+    controls: read('src/ui/screens/controls.js'),
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     uiCss: read('styles/ui.css'),
@@ -361,6 +364,20 @@ export function findings(r) {
         && r.catalogHtml.includes(`'${id}'`))) {
     bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
   }
+  if (!/export function bindingConflictModel/.test(r.bindingConflictModel)
+      || !/componentModel\(UI\.bindingConflictDialog/.test(r.bindingConflictModel)
+      || !/export function mountBindingConflictDialog/.test(r.bindingConflictDialog)
+      || !/markUiComponent\(dialog, UI\.bindingConflictDialog/.test(r.bindingConflictDialog)
+      || !/bindingConflictModel\(\{/.test(r.controls)
+      || !/mountBindingConflictDialog\(document\.body, model/.test(r.controls)
+      || !/onChooseAnother:[\s\S]*listenAgain\(btn\)/.test(r.controls)
+      || !/onReplace:[\s\S]*applyBinding\(family, id, value, model\.properties\.conflictActionId\)/.test(r.controls)
+      || !/onCancel:[\s\S]*reset\(btn/.test(r.controls)
+      || !['Choose another', 'Replace', 'Cancel'].every((label) => r.bindingConflictModel.includes(`'${label}'`))
+      || !r.catalogMarkdown.includes('`binding-conflict-dialog`')
+      || !r.catalogHtml.includes("['binding-conflict-dialog'")) {
+    bad.push('C20 Controls binding conflicts lost their model-driven Choose another/Replace/Cancel contract');
+  }
   return bad;
 }
 
@@ -386,11 +403,12 @@ function selftest() {
     ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
     ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
+    ['remove binding-conflict Replace decision', 'C20 ', (r) => ({ ...r, controls: r.controls.replace('onReplace: () => {', 'onOverwrite: () => {') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 19/19 reusable component contracts hold');
+  else console.log('PASS clean source: 20/20 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -406,5 +424,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 19/19 reusable component contracts hold');
+  else console.log('ui-components: OK — 20/20 reusable component contracts hold');
 }

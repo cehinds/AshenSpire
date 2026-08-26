@@ -479,6 +479,30 @@ body.hide-hints .hint-bar { display: none; }
 .rebind-btn.listening { border-color: var(--ember); color: var(--ember); animation: pulse-gold 0.7s ease-in-out infinite alternate; }
 .pad-live { color: var(--green); font-size: 1.1rem; }
 .pad-off { color: var(--muted); font-size: 1.1rem; }
+.binding-conflict-veil { z-index: 700; padding: 2%; box-sizing: border-box; }
+.binding-conflict-dialog {
+  width: 42rem; max-width: 94%; max-height: 88%; box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 1rem;
+  border-color: var(--ember); box-shadow: 0 18px 60px rgba(0, 0, 0, 0.58);
+}
+.binding-conflict-dialog h2 { margin: 0; }
+.binding-conflict-eyebrow {
+  color: var(--muted); font-size: 0.95rem; letter-spacing: 0.18em; text-transform: uppercase;
+}
+.binding-conflict-copy { margin: 0; color: var(--parchment); font-size: 1.25rem; line-height: 1.4; }
+.binding-conflict-consequence {
+  margin: 0; padding: 0.8rem 1rem; border-left: 2px solid var(--ember);
+  color: var(--muted); line-height: 1.45; background: rgba(139, 40, 28, 0.12);
+}
+.binding-conflict-actions { display: flex; justify-content: flex-end; gap: 0.7rem; flex-wrap: wrap; }
+.binding-conflict-actions button { min-height: var(--tap-floor); }
+
+@media (max-width: 520px) {
+  .binding-conflict-veil { padding: 3%; }
+  .binding-conflict-dialog { width: 100%; max-width: 100%; padding: 1.4rem; }
+  .binding-conflict-actions { flex-direction: column; }
+  .binding-conflict-actions button { width: 100%; }
+}
 
 /* ---------- custom climb ---------- */
 .mod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }

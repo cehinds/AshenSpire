@@ -18,6 +18,8 @@ import {
   cancelKeyCapture,
 } from '../input.js';
 import { padName } from '../uiContent.js';
+import { bindingConflictModel } from '../models/BindingConflictModel.js';
+import { mountBindingConflictDialog } from '../components/bindingConflictDialog.js';
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
 // Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
@@ -42,7 +44,6 @@ export function renderControls(container, { settings, onChange }) {
 
   const list = container.querySelector('.rebind-list');
   const bindings = getBindings();
-  const keyBindings = getKeyBindings();
 
   for (const a of ACTIONS) {
     const rebindableKey = !!a.defKey; // Confirm's key (Enter) is fixed
@@ -69,6 +70,76 @@ export function renderControls(container, { settings, onChange }) {
     btn.classList.remove('listening');
   };
 
+  const syncBadges = (family, ids) => {
+    for (const id of new Set(ids.filter(Boolean))) {
+      const badge = container.querySelector(family === 'keyboard'
+        ? `.key-btn[data-keyfor="${id}"]`
+        : `.pad-btn[data-for="${id}"]`);
+      if (badge) badge.textContent = family === 'keyboard'
+        ? keyLabel(id)
+        : btnName(getBindings()[id]);
+    }
+  };
+
+  const applyBinding = (family, id, value, conflictId = null) => {
+    const next = { ...(family === 'keyboard' ? getKeyBindings() : getBindings()) };
+    if (conflictId) next[conflictId] = null;
+    next[id] = value;
+    if (family === 'keyboard') {
+      settings.keyBindings = next;
+      onChange({ keyBindings: next });
+    } else {
+      settings.bindings = next;
+      onChange({ bindings: next });
+    }
+    syncBadges(family, [id, conflictId]);
+  };
+
+  const resolveCandidate = (family, btn, value, listenAgain) => {
+    const id = btn.dataset.action;
+    const model = bindingConflictModel({
+      family,
+      actionId: id,
+      value,
+      bindings: family === 'keyboard' ? getKeyBindings() : getBindings(),
+      actions: ACTIONS,
+      candidateLabel: family === 'controller' ? btnName(value) : '',
+    });
+    if (!model) {
+      applyBinding(family, id, value);
+      reset(btn, family === 'keyboard' ? 'Key' : 'Pad');
+      capturing = null;
+      return;
+    }
+
+    mountBindingConflictDialog(document.body, model, {
+      returnFocusElement: btn,
+      onChooseAnother: () => {
+        capturing = btn;
+        btn.textContent = 'Press…';
+        btn.classList.add('listening');
+        btn.focus({ preventScroll: true });
+        listenAgain(btn);
+      },
+      onReplace: () => {
+        applyBinding(family, id, value, model.properties.conflictActionId);
+        reset(btn, family === 'keyboard' ? 'Key' : 'Pad');
+        capturing = null;
+      },
+      onCancel: () => {
+        reset(btn, family === 'keyboard' ? 'Key' : 'Pad');
+        capturing = null;
+      },
+    });
+  };
+
+  const listenForPad = (btn) => {
+    captureNextButton((buttonIndex) => resolveCandidate('controller', btn, buttonIndex, listenForPad));
+  };
+  const listenForKey = (btn) => {
+    captureNextKey((key) => resolveCandidate('keyboard', btn, key, listenForKey));
+  };
+
   // Gamepad rebinds.
   list.querySelectorAll('.rebind-pad').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -84,16 +155,7 @@ export function renderControls(container, { settings, onChange }) {
       capturing = btn;
       btn.textContent = 'Press…';
       btn.classList.add('listening');
-      captureNextButton((buttonIndex) => {
-        const id = btn.dataset.action;
-        const next = { ...getBindings(), [id]: buttonIndex };
-        settings.bindings = next;
-        onChange({ bindings: next });
-        const badge = container.querySelector(`.pad-btn[data-for="${id}"]`);
-        if (badge) badge.textContent = btnName(buttonIndex);
-        reset(btn, 'Pad');
-        capturing = null;
-      });
+      listenForPad(btn);
     });
   });
 
@@ -112,16 +174,7 @@ export function renderControls(container, { settings, onChange }) {
       capturing = btn;
       btn.textContent = 'Press…';
       btn.classList.add('listening');
-      captureNextKey((key) => {
-        const id = btn.dataset.action;
-        const next = { ...getKeyBindings(), [id]: key };
-        settings.keyBindings = next;
-        onChange({ keyBindings: next });
-        const badge = container.querySelector(`.key-btn[data-keyfor="${id}"]`);
-        if (badge) badge.textContent = keyLabel(id);
-        reset(btn, 'Key');
-        capturing = null;
-      });
+      listenForKey(btn);
     });
   });
 }

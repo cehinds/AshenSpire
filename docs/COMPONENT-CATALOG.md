@@ -278,6 +278,7 @@ sync without duplicating persistence.
 | `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
 | `save-game-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save the active slot and remain in the run. |
 | `save-quit-control` | `componentModel` child | `menuComponents.renderMenuOverlay` | Save and return to the title screen. |
+| `binding-conflict-dialog` | `bindingConflictModel` | `bindingConflictDialog.mountBindingConflictDialog` | Pauses an occupied keyboard or controller rebind and offers Choose another, Replace, and Cancel before mutation. |
 
 ```text
 quick-menu-panel
@@ -294,6 +295,12 @@ menu-overlay
 └─ menu-footer
    ├─ save-game-control
    └─ save-quit-control
+
+binding-conflict-dialog
+├─ occupied input + requested action
+├─ Choose another: re-arm the requested action
+├─ Replace: transfer the input and unbind its former owner
+└─ Cancel: preserve both bindings
 ```
 
 ## Armoury components
