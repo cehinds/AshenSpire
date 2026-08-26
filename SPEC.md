@@ -1066,6 +1066,14 @@ keeps the same state and focus contract without meaningful animation.
 
 - **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
+- **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
+  ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
+  `controls-key-rebind-control` from Press… to Key with focus intact, performs
+  no binding mutation, and suppresses the same event before the covered menu can
+  close. With no capture armed, Escape retains its ordinary one-layer Back
+  behavior. A later re-arm accepts a free key; occupied-key conflict resolution
+  is a separate policy and is not implied by this contract. The containing
+  `controls-rebind-capture` is the stable Controls component surface.
 - Ordinary interactive elements expose their concise tooltip within 150 ms of
   hover: cards (with nested keyword tooltips), statuses (name, current math),
   intents (exact damage after modifiers), relics, flasks, and map nodes.
