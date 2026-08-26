@@ -1,6 +1,6 @@
 # Workflow
 
-Policy version: `1.0.0-candidate`
+Policy version: `1.0.0`
 
 Decision: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-legacy-mapping.md)
 
@@ -36,6 +36,11 @@ blocking condition, owner, retry trigger, and safe work that can continue.
 `STALE` means evidence or ownership is too old/ambiguous to act on and must be
 refreshed. `CANCELLED` records why the requested outcome will not proceed and
 what work/evidence remains.
+
+For governance policy, `DEV INTEGRATED` also supplies the containment fact used
+by [deterministic activation](README.md#deterministic-activation): the policy is
+Active when fresh canonical `dev` contains the exact successful independent
+policy-QA head. No merge-time version or status-text mutation is required.
 
 ## Legacy mapping
 

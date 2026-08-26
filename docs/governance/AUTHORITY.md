@@ -1,6 +1,6 @@
 # Authority
 
-Policy version: `1.0.0-candidate`
+Policy version: `1.0.0`
 
 Decision: [0001 — Typed truth and authority](DECISIONS/0001-typed-truth-and-authority.md)
 

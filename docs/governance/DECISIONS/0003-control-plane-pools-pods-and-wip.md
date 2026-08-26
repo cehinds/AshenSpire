@@ -1,7 +1,8 @@
 # 0003 — Control plane, pools, pods, routing, and WIP
 
-- Status: **Approved**
-- Effective: upon authorized canonical merge
+- Decision status: **Approved**
+- Policy effective condition: independently reviewed governance head contained
+  in fresh canonical `dev`
 - Decision owner: Main
 - Initiative: `CQM-PHASE-2`
 

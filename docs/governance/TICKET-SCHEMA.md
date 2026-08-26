@@ -1,6 +1,6 @@
 # Ticket schema
 
-Schema version: `1.0.0-candidate`
+Schema version: `1.0.0`
 
 The ticket or issue is durable truth for outcome, acceptance, evidence, and
 decisions. Project #4 `Status` owns workflow state. A receipt may project this
@@ -28,6 +28,7 @@ schema but must not replace it.
 | `rollback` | Smallest reversible boundary and any compatibility constraint. |
 | `evidence` | Exact command/flow, result, SHA, environment, timestamp, and durable link/path. |
 | `decisions` | Decision ID/link, owner, options, answer, scope effect, and timestamp. |
+| `policy_activation_head` | For policy work, the exact governance head named by successful independent policy QA; canonical `dev` containment derives Approved versus Active. |
 | `delivery_facts` | Separate local, pushed, PR, integrated, hosted, resolved, and released facts. |
 | `next` / `block` | Smallest next action; blocker owner and retry trigger. |
 

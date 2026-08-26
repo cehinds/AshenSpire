@@ -1,24 +1,29 @@
 # Automatic Art Design Integration Policy
 
-Status: **Approved**.
-
-Policy version: `1.0.0-candidate`. History source:
+Policy version: `1.0.0`. History source:
 `edc726bc50a9f86bd2c2e615915bc69bd0f61351`. Decision:
 [0004 — Art policy canonical adoption](../DECISIONS/0004-art-policy-adoption.md).
-It becomes **Active** only after a separately authorized canonical merge.
+Lifecycle state is derived by the branch-containment rule below; it is not a
+manually updated status literal.
 
 ## Policy lifecycle
 
-- **Proposal** — the text is under review and creates no delivery obligation.
-- **Approved** — the authorized decision is recorded and the adoption change is
-  prepared with its effective scope and date.
-- **Active** — the adopted policy is present in the canonical branch and applies
-  to art suggestions approved on or after its effective date.
+- **Proposal** — Main approval is not recorded; the text creates no delivery
+  obligation.
+- **Approved** — Main approval is recorded, but there is no successful
+  independent policy-QA head yet or that exact head is not contained in the
+  fresh canonical `dev` head.
+- **Active** — the exact governance head named by the successful independent
+  policy-QA receipt is contained in the fresh canonical `dev` head. The policy
+  applies to art suggestions approved on or after that containment is verified.
 
-Each lifecycle transition updates this status and the README wording. Approval
-does not activate the policy; activation requires a separately authorized merge
-to the canonical branch. Repository publication, policy approval, and policy
-activation are separate states.
+Refresh the live GitHub `dev` SHA and use
+`git merge-base --is-ancestor <independently-reviewed-governance-head>
+<fresh-live-dev-sha>`. Exit `0` means Active, exit `1` means Approved, and any
+other result is `UNKNOWN` and blocking. The ticket records the reviewed head and
+QA receipt. No version, lifecycle, or status literal changes merely because
+integration occurred. Repository publication, policy approval, policy
+activation, and release remain separate facts.
 
 ## Outcome
 

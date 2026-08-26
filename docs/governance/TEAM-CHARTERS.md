@@ -1,6 +1,6 @@
 # Team charters
 
-Policy version: `1.0.0-candidate`
+Policy version: `1.0.0`
 
 Decision: [0003 — Control plane, pools, pods, and WIP](DECISIONS/0003-control-plane-pools-pods-and-wip.md)
 

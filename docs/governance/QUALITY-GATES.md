@@ -1,6 +1,6 @@
 # Quality gates
 
-Policy version: `1.0.0-candidate`
+Policy version: `1.0.0`
 
 This file is the authoritative gate index. Specialized procedures remain in
 [Feature Delivery Loop](../FEATURE-DELIVERY-LOOP.md),
@@ -38,7 +38,7 @@ diagnostic/non-gating.
 | Feature or mechanics | SPEC/GDD acceptance, deterministic behavior, persistence/input implications, applicable full suite. |
 | UI/art/audio | Functional behavior plus Experience QA, representative desktop and approximately `390x844` phone evidence, relevant pointer/keyboard/touch/gamepad and accessibility checks. Screenshots prove pixels only. |
 | Save/schema migration | Frozen fixture provenance, each supported version, round trip, malformed and forward-version handling, rollback compatibility. |
-| Documentation/policy | Local Markdown-link resolution, legacy-path mapping, contradiction search, policy status/effective-state review, independent policy QA. |
+| Documentation/policy | Local Markdown-link resolution, legacy-path mapping, contradiction search, independent policy QA, recorded activation head, and fresh canonical-`dev` containment result. |
 | Tool/CI | Same-door selftest, known-bad plant, exit/verdict propagation, current-head venue evidence, cost/trigger authority where applicable. |
 | Generated content/artifacts | Authoritative source check, deterministic regeneration, orphan/stale detection, one serialized writer, root/build/dist/buildordinal provenance and identity. |
 
@@ -60,6 +60,12 @@ the base and invalidate stale mergeability or test evidence when the base or
 candidate changes. Before `HOSTED VERIFIED`, record the deployed SHA and verify
 the real hosted flow; a successful Pages job alone is deployment evidence, not
 complete runtime evidence.
+
+For governance policy, the successful independent policy-QA receipt names the
+activation head. Test that exact head against the fresh live `dev` SHA with
+`git merge-base --is-ancestor`: exit `0` proves Active, exit `1` proves
+Approved, and any other result is `UNKNOWN` and blocking. Integration does not
+require a version or lifecycle-text mutation.
 
 ## Rollback
 

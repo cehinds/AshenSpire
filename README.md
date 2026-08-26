@@ -30,10 +30,12 @@ naming the pull request that landed it and the build number it shipped in.
 authority, lifecycle, ticket, quality, decision, and runbook control plane.
 The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
 compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
-is at **Approved** status. It defines the Proposal → Approved → Active lifecycle
-and, when active, the mandatory integration package triggered by an approved
-art suggestion without granting implementation, publication, or release
-authority. Activation requires a separately authorized canonical merge.
+defines the Proposal → Approved → Active lifecycle and, when active, the
+mandatory integration package triggered by an approved art suggestion without
+granting implementation, publication, or release authority. Its independently
+reviewed governance head is Approved before canonical integration and Active
+when that exact head is contained in canonical `dev`; no merge-time status or
+version edit is required.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
