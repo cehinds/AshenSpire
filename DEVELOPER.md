@@ -420,6 +420,20 @@ flow.
 
 ## Standalone build (`build/AshenSpire.html`)
 
+## Shared Load / Quit confirmation
+
+`node tools/confirmation-modal.mjs` drives Load and Quit Without Saving from
+both Map and Combat through the real Quick Menu at 1200×730, 390×844, and
+320×640. It verifies the themed
+`alertdialog`, neutral initial focus, cancellation and launcher restoration,
+one-layer Escape behavior over Settings, explicit commit, viewport fit, and
+44px action targets, while capturing overflow plus console/network diagnostics.
+Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
+`--artifact --screenshots` only after the serialized standalone build has been
+regenerated from frozen source.
+
+## Standalone build (`build/AshenSpire.html`)
+
 `node tools/bundle.mjs` emits a single self-contained HTML file to `build/` —
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click

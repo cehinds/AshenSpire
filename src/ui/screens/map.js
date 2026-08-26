@@ -311,10 +311,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
         actions: {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-          ...(onLoad ? { load: () => onLoad() } : {}),
+          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
     });

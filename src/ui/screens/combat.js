@@ -1584,10 +1584,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           tab: (id) => onMenu(id),
           inventory: () => openCombatArmoury('rack'),
           character: () => openCombatArmoury('grid'),
-          ...(onLoad ? { load: () => onLoad() } : {}),
+          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
     });

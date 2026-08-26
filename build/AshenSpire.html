@@ -768,6 +768,42 @@ body.hide-hints .hint-bar { display: none; }
    `body.hide-hints` above is the player's own switch and is untouched. */
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
+/* ---------- shared confirmation ---------- */
+.confirmation-veil {
+  z-index: 1200; box-sizing: border-box; padding: 2%;
+}
+.confirmation-veil.confirmation-input-shield {
+  padding: 0; background: transparent;
+}
+.confirmation-modal {
+  width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
+  display: grid; gap: 1.2rem; overflow: auto;
+  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.62);
+}
+.confirmation-modal header { display: grid; gap: 0.35rem; }
+.confirmation-modal h2 { margin: 0; color: var(--parchment); }
+.confirmation-eyebrow {
+  font-size: 0.85rem; letter-spacing: 0.16em;
+}
+.confirmation-eyebrow,
+.confirmation-modal .confirmation-confirm {
+  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
+  color: var(--parchment);
+}
+.confirmation-copy { color: var(--parchment); line-height: 1.5; }
+.confirmation-copy > :first-child { margin-top: 0; }
+.confirmation-copy > :last-child { margin-bottom: 0; }
+.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 0.7rem; }
+.confirmation-modal footer button {
+  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;
+}
+.confirmation-modal.danger { border-color: var(--blood); }
+@media (max-width: 540px) {
+  .confirmation-veil { padding: 3%; }
+  .confirmation-modal { max-width: 100%; padding: 1.2rem; }
+  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
+}
+
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -7470,6 +7506,7 @@ const { mountEquipment, resetArmouryTraySession } = require("src/ui/screens/equi
 const { openOverlay, closeOverlay } = require("src/ui/components/overlay.js");
 const { setQuickNav } = require("src/ui/components/quicknav.js");
 const { showBossIntro } = require("src/ui/components/intro.js");
+const { openConfirmationModal } = require("src/ui/components/confirmationModal.js");
 const { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } = require("src/ui/input.js");
 const { mountStartupGate } = require("src/ui/components/startupGate.js");
 const { startupGateModel } = require("src/ui/models/StartupGateModels.js");
@@ -8327,18 +8364,38 @@ function resumeRun(slot = 1) {
   }
 }
 
-function loadActiveSlot() {
-  if (!window.confirm('Load the active slot? Unsaved progress in this session will be lost.')) return false;
-  resumeRun(activeSlot);
-  return true;
+function loadActiveSlot({ returnFocusElement } = {}) {
+  openConfirmationModal({
+    title: `Load slot ${activeSlot}?`,
+    message: 'The saved run will replace changes made since your last save.',
+    confirmLabel: 'Load saved run',
+    consequence: 'DISCARDS UNSAVED CHANGES',
+    tone: 'danger',
+    returnFocusElement,
+    onConfirm: () => {
+      closeOverlay();
+      resumeRun(activeSlot);
+    },
+  });
+  return false;
 }
 
-function quitWithoutSaving() {
-  if (!window.confirm('Quit without saving? Changes since the last save will be lost.')) return false;
-  audio.stopMusic();
-  run = null;
-  showTitle();
-  return true;
+function quitWithoutSaving({ returnFocusElement } = {}) {
+  openConfirmationModal({
+    title: 'Quit without saving?',
+    message: 'Changes since your last save will be lost. Your existing save slot will remain available.',
+    confirmLabel: 'Quit without saving',
+    consequence: 'LEAVES THE RUN',
+    tone: 'danger',
+    returnFocusElement,
+    onConfirm: () => {
+      closeOverlay();
+      audio.stopMusic();
+      run = null;
+      showTitle();
+    },
+  });
+  return false;
 }
 
 // ---- screens --------------------------------------------------------------------
@@ -37718,6 +37775,9 @@ const UI_COMPONENTS = Object.freeze({
   menuFooter: 'menu-footer',
   saveGameControl: 'save-game-control',
   saveQuitControl: 'save-quit-control',
+  confirmationModal: 'confirmation-modal',
+  confirmationCancel: 'confirmation-cancel-control',
+  confirmationAction: 'confirmation-action',
   crimsonFlaskControl: 'crimson-flask-control',
   azureFlaskControl: 'azure-flask-control',
   inventoryBelt: 'inventory-belt',
@@ -41029,7 +41089,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '41b67b338b';
+const SOURCE = '14fa81f2e2';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41063,7 +41123,7 @@ const SOURCE = '41b67b338b';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1371';
+const ORDINAL = '1376';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -52419,10 +52479,10 @@ function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, 
         actions: {
           tab: (id) => onMenu(id),
           ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-          ...(onLoad ? { load: () => onLoad() } : {}),
+          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
     });
@@ -56696,10 +56756,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           tab: (id) => onMenu(id),
           inventory: () => openCombatArmoury('rack'),
           character: () => openCombatArmoury('grid'),
-          ...(onLoad ? { load: () => onLoad() } : {}),
+          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
           ...(onSave ? { save: saveAction(onSave) } : {}),
           ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave() } : {}),
+          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
         },
       });
     });
@@ -60288,6 +60348,7 @@ const { menuTabs } = require("src/ui/uiContent.js");
 const { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } = require("src/ui/components/quicknav.js");
 const { statProjection } = require("src/model/statProjection.js");
 const { closeFlaskActionMenu } = require("src/ui/components/flask.js");
+const { topVeil } = require("src/ui/components/veil.js");
 const { menuOverlayModel } = require("src/ui/models/MenuModels.js");
 const { renderMenuOverlay, updateMenuSelection } = require("src/ui/components/menuComponents.js");
 
@@ -60501,10 +60562,10 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
       actions: {
         tab: (id) => selectTab(id),
         ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-        ...(onLoad ? { load: () => { const loaded = onLoad(); if (loaded) closeOverlay(); return loaded; } } : {}),
+        ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
         ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
-        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave(); if (quit) closeOverlay(); return quit; } } : {}),
+        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
       },
     });
   const overlayHead = veil.querySelector('.overlay-head');
@@ -60555,6 +60616,9 @@ function openOverlay({ registries, run, meta, saves = null, onSettingsChange, on
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
+      // A confirmation opened above this overlay owns Escape. Without this
+      // paint-order guard one press cancels the confirmation and the menu below.
+      if (topVeil() !== openVeil) return;
       // Esc peels ONE layer. With the mirrored list open over the overlay, the
       // list is the layer the player is looking at; closing both would take away
       // a screen they never asked to leave.
@@ -60759,6 +60823,189 @@ function showBossIntro({ name, act }, { hold = false } = {}) {
 
 
 Object.assign(module.exports, { showBossIntro });
+
+},
+"src/ui/components/confirmationModal.js": function (module, exports, require) {
+// Shared themed confirmation surface for reversible, potentially destructive
+// choices. The action is not committed until the primary button is pressed.
+
+const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
+
+let activeClose = null;
+const CONFIRMATION_COMMIT_EVENT = 'ashenspire:confirmation-commit';
+const CONFIRMATION_INPUT_SHIELD_MS = 600;
+
+function holdNavigationInputShield({ veil, durationMs }) {
+  veil.className += ' confirmation-input-shield';
+  veil.setAttribute('aria-hidden', 'true');
+
+  let timer = null;
+  let released = false;
+  const shieldEvents = ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'click', 'dblclick', 'touchstart', 'touchend'];
+  const keyEvents = ['keydown', 'keyup'];
+  const release = () => {
+    if (released) return;
+    released = true;
+    if (timer != null) clearTimeout(timer);
+    shieldEvents.forEach((type) => veil.removeEventListener(type, consume, true));
+    keyEvents.forEach((type) => window.removeEventListener(type, consume, true));
+    veil.remove();
+  };
+  const consume = (event) => {
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+    // A real second physical click may carry detail 2 even though the original
+    // button was removed. Release only after that activation has landed on the
+    // shield; otherwise the timeout covers the platform double-click window.
+    if (event.type === 'click' && Number(event.detail) > 1) queueMicrotask(release);
+  };
+  shieldEvents.forEach((type) => veil.addEventListener(type, consume, true));
+  keyEvents.forEach((type) => window.addEventListener(type, consume, true));
+
+  const armRelease = () => { timer = setTimeout(release, Math.max(0, Number(durationMs) || 0)); };
+  const afterDestinationPaint = () => {
+    if (typeof window.requestAnimationFrame !== 'function') return armRelease();
+    window.requestAnimationFrame(() => window.requestAnimationFrame(armRelease));
+  };
+  return Object.freeze({ release, afterDestinationPaint });
+}
+
+function closeConfirmationModal({ restoreFocus = false } = {}) {
+  activeClose?.({ restoreFocus });
+}
+
+function openConfirmationModal({
+  title,
+  message,
+  confirmLabel = 'Continue',
+  cancelLabel = 'Back',
+  consequence = '',
+  tone = 'normal',
+  onConfirm,
+  onCancel = () => {},
+  returnFocusElement = document.activeElement,
+  component = UI.confirmationModal,
+  inputShieldMs = CONFIRMATION_INPUT_SHIELD_MS,
+} = {}) {
+  // One service, one active decision. Repeated activation replaces the stale
+  // surface without committing or reporting a cancellation that was not made.
+  closeConfirmationModal();
+
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil confirmation-veil';
+
+  const dialog = document.createElement('section');
+  dialog.className = `modal confirmation-modal${tone === 'danger' ? ' danger' : ''}`;
+  dialog.setAttribute('role', tone === 'danger' ? 'alertdialog' : 'dialog');
+  dialog.setAttribute('aria-modal', 'true');
+  dialog.setAttribute('aria-labelledby', 'confirmation-modal-title');
+  dialog.setAttribute('aria-describedby', 'confirmation-modal-copy');
+  dialog.tabIndex = -1;
+  markUiComponent(dialog, component, tone);
+
+  const header = document.createElement('header');
+  const eyebrow = document.createElement('span');
+  eyebrow.className = 'confirmation-eyebrow';
+  eyebrow.textContent = consequence;
+  eyebrow.hidden = !consequence;
+  const heading = document.createElement('h2');
+  heading.id = 'confirmation-modal-title';
+  heading.textContent = title || 'Confirm action';
+  header.append(eyebrow, heading);
+
+  const copy = document.createElement('p');
+  copy.id = 'confirmation-modal-copy';
+  copy.className = 'confirmation-copy';
+  copy.textContent = message || '';
+
+  const footer = document.createElement('footer');
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.className = 'subtle confirmation-cancel';
+  cancelButton.textContent = cancelLabel;
+  markUiComponent(cancelButton, UI.confirmationCancel, 'neutral');
+  const confirmButton = document.createElement('button');
+  confirmButton.type = 'button';
+  confirmButton.className = `subtle confirmation-confirm${tone === 'danger' ? ' danger' : ''}`;
+  confirmButton.textContent = confirmLabel;
+  markUiComponent(confirmButton, UI.confirmationAction, tone);
+  footer.append(cancelButton, confirmButton);
+  dialog.append(header, copy, footer);
+  veil.appendChild(dialog);
+  document.body.appendChild(veil);
+
+  let closed = false;
+  const close = ({ restoreFocus = true, retainInputShield = false } = {}) => {
+    if (closed) return;
+    closed = true;
+    window.removeEventListener('keydown', onKeydown, true);
+    if (retainInputShield) dialog.remove();
+    else veil.remove();
+    if (activeClose === close) activeClose = null;
+    if (restoreFocus && returnFocusElement instanceof HTMLElement && returnFocusElement.isConnected) {
+      returnFocusElement.focus({ preventScroll: true });
+    }
+  };
+  activeClose = close;
+
+  const cancel = () => {
+    if (closed) return;
+    close();
+    onCancel();
+  };
+
+  function onKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      cancel();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const controls = [cancelButton, confirmButton];
+    const at = controls.indexOf(document.activeElement);
+    if (event.shiftKey && at <= 0) {
+      event.preventDefault();
+      confirmButton.focus({ preventScroll: true });
+    } else if (!event.shiftKey && at === controls.length - 1) {
+      event.preventDefault();
+      cancelButton.focus({ preventScroll: true });
+    }
+  }
+
+  cancelButton.addEventListener('click', cancel);
+  confirmButton.addEventListener('click', () => {
+    if (closed) return;
+    close({ restoreFocus: false, retainInputShield: true });
+    const shield = holdNavigationInputShield({ veil, durationMs: inputShieldMs });
+    window.dispatchEvent(new CustomEvent(CONFIRMATION_COMMIT_EVENT, {
+      detail: { component, tone },
+    }));
+    try {
+      onConfirm?.();
+    } finally {
+      // Destination callbacks synchronously replace the app surface today.
+      // Two paints let its hit-test tree settle before the bounded shield timer
+      // begins; a physical second click is swallowed and may release it sooner.
+      shield.afterDestinationPaint();
+    }
+  });
+  veil.addEventListener('click', (event) => {
+    if (event.target === veil) cancel();
+  });
+  window.addEventListener('keydown', onKeydown, true);
+  // Quick-menu actions close their list after awaiting the controller result,
+  // and that close restores focus to the launcher. Run after that microtask so
+  // the standing confirmation, not the covered screen, owns final focus.
+  setTimeout(() => {
+    if (!closed) cancelButton.focus({ preventScroll: true });
+  }, 0);
+
+  return Object.freeze({ veil, dialog, cancelButton, confirmButton, close, cancel });
+}
+
+
+Object.assign(module.exports, { CONFIRMATION_COMMIT_EVENT, CONFIRMATION_INPUT_SHIELD_MS, closeConfirmationModal, openConfirmationModal });
 
 },
 "src/ui/components/startupGate.js": function (module, exports, require) {
