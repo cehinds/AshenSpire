@@ -117,46 +117,74 @@ function powershellPath() {
   return existsSync(legacy) ? legacy : 'powershell.exe';
 }
 
-function scopedProcessIds(scope) {
+function decodeWindowsCensus(result) {
+  if (result.error) return { ok: false, reason: `powershell error: ${result.error.code || result.error.message}` };
+  if (result.signal) return { ok: false, reason: `powershell signal: ${result.signal}` };
+  if (!Number.isInteger(result.status)) return { ok: false, reason: 'powershell nonterminal status' };
+  if (result.status !== 0) return { ok: false, reason: `powershell abnormal status ${result.status}` };
+  const stderr = `${result.stderr || ''}`.trim();
+  if (stderr) return { ok: false, reason: `powershell stderr: ${stderr.slice(0, 160)}` };
+  const stdout = `${result.stdout || ''}`.trim();
+  if (!stdout) return { ok: false, reason: 'powershell empty census output' };
+  let value;
+  try { value = JSON.parse(stdout); } catch { return { ok: false, reason: 'powershell unparsable census output' }; }
+  const keys = value && typeof value === 'object' && !Array.isArray(value)
+    ? Object.keys(value).sort().join(',') : '';
+  if (keys !== 'kind,listenerCount,processIds' || value.kind !== 'qa18-resource-census-v1'
+    || !Array.isArray(value.processIds) || !Number.isInteger(value.listenerCount) || value.listenerCount < 0
+    || value.processIds.some((pid) => !Number.isInteger(pid) || pid <= 0)) {
+    return { ok: false, reason: 'powershell unexpected census shape' };
+  }
+  return {
+    ok: true,
+    pids: [...new Set(value.processIds)].filter((pid) => pid !== process.pid),
+    listeners: value.listenerCount,
+  };
+}
+
+function scopedResourceSnapshot(scope) {
   if (process.platform === 'win32') {
+    // Windows PowerShell 5.1 has String.IndexOf(String, StringComparison), not
+    // the two-argument Contains overload. Errors are terminating, and the only
+    // accepted stdout is one versioned JSON object; stderr or ambiguity is UNKNOWN.
     const script = [
+      "$ErrorActionPreference='Stop'",
+      "$ProgressPreference='SilentlyContinue'",
+      "$WarningPreference='Stop'",
       '$scope=$env:QA18_SCOPE',
-      "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($scope,[System.StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { $_.ProcessId }",
+      "if ([String]::IsNullOrWhiteSpace($scope)) { throw 'QA18_SCOPE is empty' }",
+      '$ids=@(Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($scope,[System.StringComparison]::OrdinalIgnoreCase) -ge 0 } | ForEach-Object { [int]$_.ProcessId } | Sort-Object -Unique)',
+      '$listenerCount=0',
+      'if ($ids.Count -gt 0) { $listenerCount=@(Get-NetTCPConnection -State Listen -ErrorAction Stop | Where-Object { $ids -contains [int]$_.OwningProcess }).Count }',
+      "$answer=[ordered]@{kind='qa18-resource-census-v1';processIds=@($ids);listenerCount=[int]$listenerCount}",
+      '$answer | ConvertTo-Json -Compress -Depth 3',
     ].join('; ');
     const result = spawnSync(powershellPath(), ['-NoProfile', '-NonInteractive', '-Command', script], {
       encoding: 'utf8', windowsHide: true, env: { ...process.env, QA18_SCOPE: scope }, timeout: 15000,
     });
-    if (result.status !== 0) return null;
-    return `${result.stdout || ''}`.split(/\s+/).map(Number).filter((pid) => Number.isInteger(pid) && pid > 0 && pid !== process.pid);
+    return decodeWindowsCensus(result);
   }
   const result = spawnSync('ps', ['-eo', 'pid=,args='], { encoding: 'utf8', timeout: 15000 });
-  if (result.status !== 0) return null;
-  return `${result.stdout || ''}`.split('\n').filter((line) => line.includes(scope))
+  if (result.error || result.signal || result.status !== 0 || `${result.stderr || ''}`.trim()
+    || !`${result.stdout || ''}`.trim()) {
+    return { ok: false, reason: 'process census command failed or returned no trustworthy output' };
+  }
+  const pids = `${result.stdout}`.split('\n').filter((line) => line.includes(scope))
     .map((line) => Number(/^\s*(\d+)/.exec(line)?.[1])).filter((pid) => pid > 0 && pid !== process.pid);
-}
-
-function scopedListenerCount(pids) {
-  if (!pids || !pids.length) return 0;
-  if (process.platform !== 'win32') return null;
-  const script = '$ids=($env:QA18_PIDS -split \",\") | ForEach-Object {[int]$_}; @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue | Where-Object {$ids -contains $_.OwningProcess}).Count';
-  const result = spawnSync(powershellPath(), ['-NoProfile', '-NonInteractive', '-Command', script], {
-    encoding: 'utf8', windowsHide: true, env: { ...process.env, QA18_PIDS: pids.join(',') }, timeout: 15000,
-  });
-  if (result.status !== 0) return null;
-  const count = Number(`${result.stdout || ''}`.trim());
-  return Number.isInteger(count) ? count : null;
+  return { ok: true, pids: [...new Set(pids)], listeners: 0 };
 }
 
 function resourceCensus(scope) {
-  const pids = scopedProcessIds(scope);
+  const snapshot = scopedResourceSnapshot(scope);
   const entries = existsSync(scope) ? readdirSync(scope) : [];
   return {
-    processes: pids == null ? null : pids.length,
-    pids: pids || [],
-    listeners: scopedListenerCount(pids),
+    processes: snapshot.ok ? snapshot.pids.length : null,
+    pids: snapshot.ok ? snapshot.pids : [],
+    listeners: snapshot.ok ? snapshot.listeners : null,
     profiles: entries.filter((name) => name.startsWith('rebind-capture-')).length,
     entries: entries.length,
     scopeExists: existsSync(scope),
+    unknown: snapshot.ok ? null : snapshot.reason,
   };
 }
 
@@ -171,7 +199,9 @@ function killTree(child) {
 }
 
 function killScoped(scope) {
-  for (const pid of scopedProcessIds(scope) || []) {
+  const snapshot = scopedResourceSnapshot(scope);
+  if (!snapshot.ok) throw new Error(`scoped resource census UNKNOWN: ${snapshot.reason}`);
+  for (const pid of snapshot.pids) {
     if (process.platform === 'win32') spawnSync('taskkill.exe', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore', timeout: 15000 });
     else { try { process.kill(pid, 'SIGKILL'); } catch { /* already gone */ } }
   }
@@ -237,7 +267,7 @@ async function stopWatchdog(run) {
 function cleanupActiveSelftests() {
   for (const run of [...activeSelftestRuns]) {
     killTree(run.child);
-    killScoped(run.scope);
+    try { killScoped(run.scope); } catch { /* watchdog still owns this exact child/root on parent exit */ }
     try { removePrivate(run.scope, run.privateRoot); } catch { /* exit-path receipt cannot throw */ }
   }
   for (const root of [...activeSelftestRoots]) {
@@ -256,16 +286,18 @@ function installSelftestCleanupGuards() {
 async function cleanupRun(run) {
   const before = resourceCensus(run.scope);
   killTree(run.child);
-  killScoped(run.scope);
+  try { killScoped(run.scope); } catch (error) { run.cleanupError = error; }
   await wait(500);
-  try { removePrivate(run.scope, run.privateRoot); } catch (error) { run.cleanupError = error; }
+  try { removePrivate(run.scope, run.privateRoot); } catch (error) { run.cleanupError ||= error; }
   const watchdogAlive = await stopWatchdog(run);
   await wait(250);
   const after = resourceCensus(run.scope);
   return { before, after, watchdogAlive, error: run.cleanupError || null };
 }
 
-function runScopedTool({ root, privateRoot, scope, timeoutMs, env = {}, executable = process.execPath }) {
+function runScopedTool({
+  root, privateRoot, scope, timeoutMs, env = {}, executable = process.execPath, liveCensusMarker = null,
+}) {
   mkdirSync(scope, { recursive: true });
   return new Promise((done) => {
     const started = Date.now();
@@ -279,6 +311,8 @@ function runScopedTool({ root, privateRoot, scope, timeoutMs, env = {}, executab
     let stdout = '';
     let stderr = '';
     let finished = false;
+    let liveCensus = null;
+    let liveCensusObserved = false;
     let timer;
     let forceTimer;
     const finish = async (code = null, signal = null) => {
@@ -292,7 +326,7 @@ function runScopedTool({ root, privateRoot, scope, timeoutMs, env = {}, executab
       if (run) activeSelftestRuns.delete(run);
       done({
         code, signal, timedOut, terminal, spawnError, out: `${stdout}\n${stderr}`,
-        elapsedMs: Date.now() - started, cleanup,
+        elapsedMs: Date.now() - started, cleanup, liveCensus, liveCensusObserved,
       });
     };
     try {
@@ -313,7 +347,16 @@ function runScopedTool({ root, privateRoot, scope, timeoutMs, env = {}, executab
     }
     const run = { child, scope, privateRoot, ...(child.pid ? startWatchdog(child, scope, privateRoot) : {}) };
     activeSelftestRuns.add(run);
-    child.stdout?.on('data', (data) => { stdout += data; });
+    child.stdout?.on('data', (data) => {
+      stdout += data;
+      if (liveCensusMarker && !liveCensusObserved && stdout.includes(liveCensusMarker)) {
+        liveCensusObserved = true;
+        liveCensus = resourceCensus(scope);
+        clearTimeout(timer);
+        killTree(child);
+        forceTimer = setTimeout(() => { void finish(); }, 10000);
+      }
+    });
     child.stderr?.on('data', (data) => { stderr += data; });
     child.once('error', (error) => { spawnError = error; void finish(); });
     child.once('close', (code, signal) => { void finish(code, signal); });
@@ -349,7 +392,8 @@ function cleanChild(result) {
 
 function cleanupIsZero(cleanup) {
   const a = cleanup.after;
-  return !cleanup.error && !cleanup.watchdogAlive && a.processes === 0 && a.listeners === 0
+  return !cleanup.error && !cleanup.watchdogAlive && !cleanup.before.unknown && !a.unknown
+    && a.processes === 0 && a.listeners === 0
     && a.profiles === 0 && a.entries === 0 && !a.scopeExists;
 }
 
@@ -411,6 +455,27 @@ async function selftest() {
       if (ok) passed++; else failed++;
     }
 
+    const censusGood = {
+      error: null, signal: null, status: 0, stderr: '',
+      stdout: '{"kind":"qa18-resource-census-v1","processIds":[17],"listenerCount":2}',
+    };
+    const timeoutError = new Error('controlled timeout');
+    timeoutError.code = 'ETIMEDOUT';
+    const censusDecoderGuards = [
+      decodeWindowsCensus(censusGood).ok,
+      !decodeWindowsCensus({ ...censusGood, error: new Error('controlled spawn error') }).ok,
+      !decodeWindowsCensus({ ...censusGood, error: timeoutError }).ok,
+      !decodeWindowsCensus({ ...censusGood, signal: 'SIGTERM' }).ok,
+      !decodeWindowsCensus({ ...censusGood, status: null }).ok,
+      !decodeWindowsCensus({ ...censusGood, status: 7 }).ok,
+      !decodeWindowsCensus({ ...censusGood, stderr: 'MethodException' }).ok,
+      !decodeWindowsCensus({ ...censusGood, stdout: '' }).ok,
+      !decodeWindowsCensus({ ...censusGood, stdout: 'not json' }).ok,
+      !decodeWindowsCensus({ ...censusGood, stdout: '{"kind":"qa18-resource-census-v1","processIds":"17","listenerCount":0}' }).ok,
+    ];
+    const censusDecoderOk = censusDecoderGuards.every(Boolean);
+    console.log(`${censusDecoderOk ? 'PASS' : 'RED '} CENSUS DECODER: ${censusDecoderGuards.filter(Boolean).length}/${censusDecoderGuards.length} good/error/timeout/signal/nonterminal/abnormal/stderr/empty/unparsable/shape guards held`);
+
     const spawnScope = join(privateRoot, `r${++childIndex}-spawn-failure`);
     const spawnControl = await runScopedTool({
       root, privateRoot, scope: spawnScope, timeoutMs: 5000,
@@ -420,6 +485,21 @@ async function selftest() {
     const spawnOk = spawnClass.kind === 'SPAWN-FAILURE' && spawnClass.fatal && cleanupIsZero(spawnControl.cleanup);
     console.log(childLine(`${spawnOk ? 'PASS' : 'RED '} CONTROL spawn-failure`, spawnControl, spawnClass));
     if (spawnOk) passed++; else failed++;
+
+    const censusScope = join(privateRoot, `r${++childIndex}-live-census`);
+    const censusControl = await runScopedTool({
+      root, privateRoot, scope: censusScope, timeoutMs: SELFTEST_CONTROL_TIMEOUT_MS,
+      env: { QA18_REBIND_SELFTEST_CONTROL: 'census-after-browser' },
+      liveCensusMarker: 'QA18 CENSUS READY',
+    });
+    const live = censusControl.liveCensus;
+    const liveKnown = censusControl.liveCensusObserved && live && !live.unknown
+      && live.processes > 0 && live.listeners > 0 && live.profiles > 0;
+    const censusOk = censusDecoderOk && liveKnown && censusControl.terminal
+      && !censusControl.spawnError && !censusControl.timedOut && cleanupIsZero(censusControl.cleanup);
+    console.log(childLine(`${censusOk ? 'PASS' : 'RED '} CONTROL live-census`, censusControl, { kind: 'LIVE-CENSUS' })
+      + `; observed before p/l/profile=${live?.processes ?? 'UNKNOWN'}/${live?.listeners ?? 'UNKNOWN'}/${live?.profiles ?? 'UNKNOWN'}`);
+    if (censusOk) passed++; else failed++;
 
     const controlScope = join(privateRoot, `r${++childIndex}-timeout`);
     const timeoutControl = await runScopedTool({
@@ -538,9 +618,13 @@ try {
   cdp = connectCdp(launched.wsUrl);
   await cdp.ready;
   // The validator's own cleanup controls enter only through its private
-  // selftest environment. Both wait until the real server, Chrome process
+  // selftest environment. Each waits until the real server, Chrome process
   // tree, DevTools listener and profile exist, so the parent observes cleanup
   // over the same resources the eight copied-tree children use.
+  if (process.env.QA18_REBIND_SELFTEST_CONTROL === 'census-after-browser') {
+    console.log('QA18 CENSUS READY - server/browser/profile/listener are live');
+    await new Promise(() => {});
+  }
   if (process.env.QA18_REBIND_SELFTEST_CONTROL === 'hang-after-browser') {
     console.error('RED REBIND-CONTROL-TIMEOUT - controlled expected RED text before a live-child timeout');
     console.log('QA18 CONTROL READY - server/browser/profile/listener are live');
