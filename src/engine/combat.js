@@ -151,6 +151,11 @@ export function createCombat({
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
+    ...(c.equipmentPlanFingerprint ? { equipmentPlanFingerprint: c.equipmentPlanFingerprint } : {}),
+    ...(c.sourceHand ? { sourceHand: c.sourceHand } : {}),
+    ...(c.weaponId ? { weaponId: c.weaponId } : {}),
+    ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
   const shuffled = rng.shuffle('shuffle', deck);
   const innate = [];
@@ -570,7 +575,12 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // mutation asks the same function. Two questions, one home, no second copy.
   const activeBefore = combat.loadout.active[slotId];
   const poolBefore = runMods(combat.registries, combat.loadout, p.classId);
-  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, { meta: {}, inCombat: true })) {
+  if (!cycleSet(combat.registries, combat.loadout, slotId, setIndex, {
+    meta: {},
+    inCombat: true,
+    classId: p.classId,
+    onEquipmentChanged: (event) => combat.emit('equipmentChanged', event),
+  })) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
@@ -590,10 +600,10 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   if (cfg.swapCostKind === 'allowance') combat.swapsLeft -= 1;
   else p.energy -= price.cost;
 
-  // The new numbers reach the draw and discard piles always; the hand only if
-  // the config says a swap re-arms what you are already holding.
-  const piles = [combat.piles.draw, combat.piles.discard];
-  if (cfg.restampHand) piles.push(combat.piles.hand);
+  // Stable generated attack slots rebind wherever combat currently holds them.
+  // The intent resolves before this mutation, so no in-flight card changes
+  // underneath its own effects.
+  const piles = [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust];
   const run = { deck: [], loadout: combat.loadout, class: p.classId, attributes: combat.attributes, equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot };
   for (const pile of piles) stampDeck(combat.registries, run, pile);
 

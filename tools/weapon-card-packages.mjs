@@ -1,0 +1,271 @@
+import { readFileSync, writeFileSync, unlinkSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, resolve } from 'node:path';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { createRunState } from '../src/model/state.js';
+import { equipmentSurfaceReceipt } from '../src/model/equipmentPresentation.js';
+import {
+  WeaponDeckCompositionService,
+  buildEquippedWeaponCardPlan,
+  cycleSet,
+  equipPiece,
+  stampDeck,
+} from '../src/model/loadout.js';
+import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
+import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createRng } from '../src/engine/rng.js';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const baseRegistries = createRegistries(contentBundle);
+const ownsEverything = { has: () => true };
+const atCamp = { inCombat: false, classId: 'reaver', attributes: { strength: 20, dexterity: 20, constitution: 20, wisdom: 20, intelligence: 20 } };
+let failed = 0;
+let checks = 0;
+
+function check(ok, name, detail = '') {
+  checks += 1;
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
+  if (!ok) failed += 1;
+}
+
+function throwsNamed(fn, pattern) {
+  try { fn(); } catch (error) { return pattern.test(error.message); }
+  return false;
+}
+
+function registriesWith({ armamentPatches = {}, extraCards = [], attackCopies = undefined } = {}) {
+  const armaments = contentBundle.equipment.armaments.map((piece) => ({ ...piece, ...(armamentPatches[piece.id] || {}) }));
+  const balance = attackCopies === undefined ? contentBundle.balance : {
+    ...contentBundle.balance,
+    startingDeckSize: contentBundle.balance.startingDeckSize + attackCopies - contentBundle.balance.equipment.roleCopies.attack,
+    equipment: {
+      ...contentBundle.balance.equipment,
+      roleCopies: { ...contentBundle.balance.equipment.roleCopies, attack: attackCopies },
+    },
+  };
+  return createRegistries({
+    ...contentBundle,
+    cards: [...contentBundle.cards, ...extraCards],
+    balance,
+    equipment: { ...contentBundle.equipment, armaments },
+  });
+}
+
+function makeRun(registries, rightHand, leftHand) {
+  const run = createRunState({
+    seed: 0x1e57,
+    classId: 'reaver',
+    registries,
+  });
+  run.loadout.sets.rightHand[0] = rightHand;
+  run.loadout.sets.leftHand[0] = leftHand;
+  run.loadout.storage = [];
+  stampDeck(registries, run);
+  return run;
+}
+
+const attacks = (run) => run.deck.filter((card) => card.equipmentRole === 'attack');
+const profiles = (run) => attacks(run).map((card) => card.profileId);
+const hands = (run) => attacks(run).map((card) => card.sourceHand || null);
+
+function sameCombatProjection(left, right) {
+  const project = (card) => ({
+    cardId: card.cardId,
+    profileId: card.profileId,
+    profileReceipt: card.profileReceipt,
+    damageSchool: card.damageSchool,
+    exposureBuildupPerHit: card.exposureBuildupPerHit,
+    mods: card.mods,
+  });
+  return JSON.stringify(attacks(left).map(project)) === JSON.stringify(attacks(right).map(project));
+}
+
+async function runKnownBadPlant() {
+  const sourcePath = resolve(root, 'src/model/loadout.js');
+  const source = readFileSync(sourcePath, 'utf8');
+  const anchor = 'const eligible = [right, left].filter((source) => source.package);';
+  if (!source.includes(anchor)) {
+    check(false, 'known-bad right-only plant is armed', 'source anchor drifted');
+    return;
+  }
+  const mutantPath = resolve(root, `src/model/.weapon-card-package-mutant-${process.pid}.mjs`);
+  writeFileSync(mutantPath, source.replace(anchor, 'const eligible = [right].filter((source) => source.package);'));
+  try {
+    const mutant = await import(`${pathToFileURL(mutantPath).href}?mutant=${Date.now()}`);
+    const leftOnly = makeRun(baseRegistries, null, 'straightSword');
+    const plan = mutant.buildEquippedWeaponCardPlan(baseRegistries, leftOnly.loadout, 'reaver');
+    check(plan.slots.every((slot) => slot.profileId !== 'bladeAttack'), 'known-bad right-only lookup turns the left-only fixture RED');
+  } finally {
+    unlinkSync(mutantPath);
+  }
+}
+
+if (process.argv.includes('--selftest')) {
+  await runKnownBadPlant();
+  console.log(`RESULT: ${failed ? `${failed}/${checks} known-bad plant check(s) failed.` : `${checks}/${checks} known-bad plant check(s) passed.`}`);
+  process.exit(failed ? 1 : 0);
+}
+
+const empty = makeRun(baseRegistries, null, null);
+const shieldRight = makeRun(baseRegistries, 'roundShield', null);
+const swordRight = makeRun(baseRegistries, 'straightSword', null);
+const swordLeft = makeRun(baseRegistries, null, 'straightSword');
+const daggerLeft = makeRun(baseRegistries, null, 'dagger');
+const dual = makeRun(baseRegistries, 'straightSword', 'dagger');
+const creationLeft = createRunState({
+  seed: 0xc2ea,
+  classId: 'reaver',
+  registries: baseRegistries,
+  startingHands: { rightHand: null, leftHand: 'straightSword' },
+});
+
+check(profiles(empty).every((id) => id === 'unarmedAttack'), 'zero weapons produce Unarmed in all authored attack slots', profiles(empty).join(','));
+check(profiles(shieldRight).every((id) => id === 'unarmedAttack'), 'a right-hand shield consumes zero attack slots', profiles(shieldRight).join(','));
+check(profiles(swordRight).every((id) => id === 'bladeAttack'), 'right-only Straight Sword owns all authored attack slots', profiles(swordRight).join(','));
+check(profiles(swordLeft).every((id) => id === 'bladeAttack'), 'left-only Straight Sword owns all authored attack slots', profiles(swordLeft).join(','));
+check(profiles(creationLeft).every((id) => id === 'bladeAttack'), 'run creation invokes the same left-hand composition service');
+check(sameCombatProjection(swordLeft, swordRight), 'left-only and right-only outputs are combat-identical except provenance');
+check(hands(swordLeft).every((hand) => hand === 'left') && hands(swordRight).every((hand) => hand === 'right'), 'single-weapon provenance records the owning hand');
+check(profiles(daggerLeft).every((id) => id === 'daggerPierceAttack'), 'left-only Dagger owns all authored attack slots', profiles(daggerLeft).join(','));
+check(JSON.stringify(profiles(dual)) === JSON.stringify(['bladeAttack', 'bladeAttack', 'daggerPierceAttack', 'daggerPierceAttack']), 'dual wield is a deterministic right/left 2+2 split', profiles(dual).join(','));
+check(attacks(dual).slice(0, 2).every((card) => !(card.mods || []).includes('hits=2'))
+  && attacks(dual).slice(2).every((card) => (card.mods || []).includes('hits=2')), 'weapon-specific effects stay on their source package');
+const preview = equipmentSurfaceReceipt(baseRegistries, swordRight, {
+  candidate: { slotId: 'leftHand', setIndex: 0, pieceId: 'dagger' },
+}).candidate;
+check(JSON.stringify(preview.attackPackageChanges.map((row) => [row.name, row.beforeCount, row.afterCount]))
+  === JSON.stringify([['Slashing Strike', 4, 2], ['Piercing Flurry', 0, 2]]), 'Armoury comparison exposes exact before/after package counts');
+
+const oddPlan = buildEquippedWeaponCardPlan(baseRegistries, dual.loadout, 'reaver', { attackSlotCount: 5 });
+check(JSON.stringify(oddPlan.slots.map((slot) => slot.sourceHand)) === JSON.stringify(['right', 'right', 'right', 'left', 'left']), 'odd N favors right by exactly one slot');
+const oddLeftPlan = buildEquippedWeaponCardPlan(baseRegistries, swordLeft.loadout, 'reaver', { attackSlotCount: 5 });
+check(oddLeftPlan.slots.length === 5 && oddLeftPlan.slots.every((slot) => slot.sourceHand === 'left'), 'left-only owns every odd-N slot');
+
+const strike = contentBundle.cards.find((card) => card.id === 'strike');
+const uniqueRegistries = registriesWith({
+  extraCards: [{ ...strike, id: 'testLunge', name: 'Lunge' }],
+  armamentPatches: {
+    straightSword: {
+      weaponCardPackage: {
+        handsRequired: 1,
+        priorityAttackRefs: ['testLunge'],
+        fillerAttackProfileId: 'bladeAttack',
+        compatibility: 'attack-v1',
+      },
+    },
+  },
+});
+const uniqueDual = makeRun(uniqueRegistries, 'straightSword', 'dagger');
+check(JSON.stringify(attacks(uniqueDual).map((card) => card.cardId)) === JSON.stringify(['testLunge', 'strike', 'strike', 'strike']), 'right unique ref precedes right filler, then left filler');
+
+const twoHandedRegistries = registriesWith({ armamentPatches: { greatsword: { handsRequired: 2 } } });
+const twoHanded = makeRun(twoHandedRegistries, 'greatsword', null);
+check(profiles(twoHanded).every((id) => id === 'bladeAttack') && hands(twoHanded).every((hand) => hand === 'right'), 'explicit two-handed weapon receives every attack slot');
+const invalidTwoHanded = structuredClone(twoHanded.loadout);
+invalidTwoHanded.sets.leftHand[0] = 'dagger';
+check(throwsNamed(() => buildEquippedWeaponCardPlan(twoHandedRegistries, invalidTwoHanded, 'reaver'), /two-handed weapon conflicts/), 'restored two-handed plus offhand state fails closed');
+const greatsword = baseRegistries.equipment.armaments.find((piece) => piece.id === 'greatsword');
+check(greatsword.handsRequired === undefined && WeaponDeckCompositionService.buildEquippedWeaponCardPlan(baseRegistries, makeRun(baseRegistries, 'greatsword', null).loadout, 'reaver').slots.length === 4, 'Greatsword stays one-handed/either unless handsRequired is explicit');
+
+const duplicate = structuredClone(swordRight.loadout);
+duplicate.sets.leftHand[0] = 'straightSword';
+check(throwsNamed(() => buildEquippedWeaponCardPlan(baseRegistries, duplicate, 'reaver'), /duplicate equipped armament/), 'same piece id in both hands fails without equipment-instance identity');
+const corruptRegistries = registriesWith({ armamentPatches: { straightSword: { weaponCardPackage: { handsRequired: 1, priorityAttackRefs: [], fillerAttackProfileId: 'missingProfile', compatibility: 'attack-v1' } } } });
+check(throwsNamed(() => makeRun(corruptRegistries, 'straightSword', null), /missing attack profile/), 'claimed package with missing filler/profile is content-invalid, never Unarmed');
+
+const mutable = makeRun(baseRegistries, 'straightSword', null);
+const unrelatedBefore = JSON.stringify(mutable.deck.filter((card) => card.equipmentRole !== 'attack'));
+const attackIdentityBefore = attacks(mutable).map((card, index) => {
+  card.upgraded = index === 0;
+  card.acquiredAt = `floor-${index}`;
+  return { instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, upgraded: card.upgraded, acquiredAt: card.acquiredAt };
+});
+const events = [];
+mutable.loadout.storage.push('dagger');
+check(equipPiece(baseRegistries, mutable.loadout, 'leftHand', 0, 'dagger', ownsEverything, { ...atCamp, onEquipmentChanged: (event) => events.push(event) }), 'equip commits through the loadout mutation gate');
+const mutablePlan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(baseRegistries, mutable.loadout, mutable.class);
+WeaponDeckCompositionService.applyEquippedWeaponCardPlan(mutablePlan, mutable.deck);
+check(JSON.stringify(mutable.deck.filter((card) => card.equipmentRole !== 'attack')) === unrelatedBefore, 'weapon-plan apply leaves signature/guard/technique bytes unchanged');
+stampDeck(baseRegistries, mutable);
+const once = JSON.stringify(mutable.deck);
+stampDeck(baseRegistries, mutable);
+check(JSON.stringify(mutable.deck) === once, 'compose/apply twice is byte-identical after the first pass');
+check(mutable.deck.length === 10 && attacks(mutable).length === 4, 'equip preserves deck size and authored attack count');
+check(JSON.stringify(attacks(mutable).map((card) => ({ instanceId: card.instanceId, equipmentAttackSlotId: card.equipmentAttackSlotId, upgraded: card.upgraded, acquiredAt: card.acquiredAt }))) === JSON.stringify(attackIdentityBefore), 'slot ids, instance ids, upgrades, and acquisition metadata survive rebind');
+check(events.length === 1 && events[0].reason === 'equip' && events[0].changedPositions.length > 0, 'equip emits one post-commit equipmentChanged receipt');
+
+check(equipPiece(baseRegistries, mutable.loadout, 'rightHand', 0, null, ownsEverything, { ...atCamp, onEquipmentChanged: (event) => events.push(event) }), 'unequip commits through the same gate');
+stampDeck(baseRegistries, mutable);
+check(profiles(mutable).every((id) => id === 'daggerPierceAttack'), 'removing one of two gives every slot to the survivor');
+check(equipPiece(baseRegistries, mutable.loadout, 'leftHand', 0, null, ownsEverything, atCamp), 'removing the last weapon commits');
+stampDeck(baseRegistries, mutable);
+check(profiles(mutable).every((id) => id === 'unarmedAttack'), 'removing the last weapon clears stale refs to Unarmed');
+
+const moved = makeRun(baseRegistries, null, 'dagger');
+const moveEvents = [];
+check(equipPiece(baseRegistries, moved.loadout, 'rightHand', 0, 'dagger', ownsEverything, { ...atCamp, onEquipmentChanged: (event) => moveEvents.push(event) }), 'hand move commits atomically');
+stampDeck(baseRegistries, moved);
+check(hands(moved).every((hand) => hand === 'right') && moveEvents.length === 1 && moveEvents[0].reason === 'move', 'hand move recomposes provenance and emits move');
+
+const swapped = makeRun(baseRegistries, 'straightSword', null);
+swapped.loadout.sets.rightHand[1] = 'dagger';
+const swapEvents = [];
+check(cycleSet(baseRegistries, swapped.loadout, 'rightHand', 1, { meta: {}, inCombat: false, classId: 'reaver', onEquipmentChanged: (event) => swapEvents.push(event) }), 'active-set swap commits');
+stampDeck(baseRegistries, swapped);
+check(profiles(swapped).every((id) => id === 'daggerPierceAttack') && swapEvents.length === 1 && swapEvents[0].reason === 'swapSet', 'active-set swap recomposes and emits one swapSet receipt');
+
+const storage = createMemoryStorage();
+const saves = createSaveManager(storage);
+const legacy = makeRun(baseRegistries, null, 'dagger');
+for (const card of attacks(legacy)) {
+  delete card.equipmentAttackSlotId;
+  delete card.equipmentPlanFingerprint;
+  delete card.sourceHand;
+  delete card.weaponId;
+  card.cardId = 'strike';
+  card.profileId = 'unarmedAttack';
+}
+storage.setItem(RUN_KEY, JSON.stringify(legacy));
+const loaded = saves.loadRun(baseRegistries);
+check(loaded && JSON.stringify(attacks(loaded).map((card) => card.equipmentAttackSlotId)) === JSON.stringify(['attack:0', 'attack:1', 'attack:2', 'attack:3']), 'legacy role-only attacks migrate once in deck order without append');
+check(profiles(loaded).every((id) => id === 'daggerPierceAttack'), 'load/continue recomposes from the restored left-hand weapon');
+saves.saveRun(loaded);
+const loadedAgain = saves.loadRun(baseRegistries);
+check(JSON.stringify(loadedAgain) === JSON.stringify(loaded), 'save round-trip is deterministic after migration');
+
+const combatRun = makeRun(baseRegistries, 'straightSword', null);
+combatRun.loadout.sets.rightHand[1] = 'dagger';
+const combat = createCombat({
+  registries: baseRegistries,
+  rng: createRng(0x5157),
+  player: {
+    classId: combatRun.class,
+    attributes: combatRun.attributes,
+    maxHp: combatRun.maxHp,
+    hp: combatRun.hp,
+    maxMana: combatRun.maxMana,
+    mana: combatRun.mana,
+    maxStamina: combatRun.maxStamina,
+    stamina: combatRun.stamina,
+    energyMax: combatRun.energyMax,
+    drawPerTurn: combatRun.drawPerTurn,
+    deck: combatRun.deck,
+    relicIds: combatRun.relics,
+    loadout: combatRun.loadout,
+    equipmentProfileRuleSnapshot: combatRun.equipmentProfileRuleSnapshot,
+  },
+  enemyIds: ['fellWarden'],
+});
+const pileNames = ['hand', 'draw', 'discard', 'exhaust'];
+const generated = pileNames.flatMap((name) => combat.piles[name]).filter((card) => card.equipmentRole === 'attack');
+for (const name of pileNames) combat.piles[name] = combat.piles[name].filter((card) => card.equipmentRole !== 'attack');
+generated.forEach((card, index) => combat.piles[pileNames[index % pileNames.length]].push(card));
+const swapResult = dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+const liveAttacks = pileNames.flatMap((name) => combat.piles[name]).filter((card) => card.equipmentRole === 'attack');
+check(liveAttacks.length === 4 && liveAttacks.every((card) => card.profileId === 'daggerPierceAttack'), 'combat swap rebinds stable attacks in hand/draw/discard/exhaust');
+check(swapResult.events.filter((event) => event.type === 'equipmentChanged').length === 1, 'combat swap emits exactly one equipmentChanged event');
+check(liveAttacks.every((card) => resolveCard(baseRegistries, card).name === 'Piercing Flurry'), 'live pile cards resolve through their new package immediately after swap');
+
+console.log(`RESULT: ${failed ? `${failed}/${checks} weapon-card-package check(s) failed.` : `${checks}/${checks} weapon-card-package checks passed.`}`);
+process.exit(failed ? 1 : 0);
