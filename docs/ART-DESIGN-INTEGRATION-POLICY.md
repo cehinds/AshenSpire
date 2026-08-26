@@ -1,14 +1,28 @@
-# Proposed automatic Art Design Integration Policy
+# Automatic Art Design Integration Policy
 
-Status: **local proposal; not approved, pushed, merged, or published**.
+Status: **Proposal**.
+
+## Policy lifecycle
+
+- **Proposal** — the text is under review and creates no delivery obligation.
+- **Approved** — the authorized decision is recorded and the adoption change is
+  prepared with its effective scope and date.
+- **Active** — the adopted policy is present in the canonical branch and applies
+  to art suggestions approved on or after its effective date.
+
+The adoption change updates this status and the README wording. Repository
+publication, policy approval, and policy activation are separate states.
 
 ## Outcome
 
-When an art suggestion is explicitly approved, its integration package becomes
-mandatory automatically. Approval does not itself authorize runtime
+While this policy is **Active**, an explicitly approved art suggestion
+automatically requires its integration package. Suggestion approval does not
+itself authorize runtime
 implementation, changes to shared paths, a push, merge, release, publication,
-board mutation, or product-scope expansion. Main records the approval, assigns
-one owner per path, and routes each part through the existing authority gates.
+board mutation, or product-scope expansion. Help Desk records and routinely
+routes the work. Main decides exceptions, resolves ambiguity, assigns contested
+or shared paths, and owns integration decisions under the existing authority
+gates.
 
 An art suggestion is not integration-ready until the package below is complete,
 internally consistent, and traceable to the approved suggestion. Missing items
@@ -18,29 +32,32 @@ green screenshot alone.
 ## Trigger and routing
 
 1. Help Desk records the suggestion, evidence, affected surfaces, exact
-   build/SHA when known, status, dependencies, and smallest next action.
-2. Main performs technical triage and routes every question, ambiguity,
-   approval request, design selection, scope decision, and blocker. Teams do
-   not ask Constantine directly or create a second decision channel.
-3. Before approval, Art may prepare bounded proposals and comparison evidence.
-   No proposal may claim new mechanics, lore, component ownership, or delivery
-   authority.
-4. After explicit approval, Main records the approved option and scope. That
-   approval triggers the required integration package, with named owners and
-   exact paths, but grants no unrecorded implementation or remote-mutation
-   authority.
-5. Help Desk tracks the package and handoffs. It records status and ownership
-   but does not implement, approve, sequence, or mutate delivery state.
+   build/SHA when known, status, dependencies, and smallest next action. It
+   handles routine questions, routing, acknowledgements, and status receipts.
+2. Help Desk forms or updates a temporary delivery pod from the needed
+   capability pools: Art / Tech Art, Engineering, Game Systems, Experience
+   Design, QA Guild, and Platform / Release.
+3. Before approval, Art / Tech Art may prepare bounded proposals and comparison
+   evidence. No proposal may claim new mechanics, lore, component ownership,
+   or delivery authority.
+4. Main handles approval, design or scope decisions, exceptions, contested
+   ownership, blockers that routine routing cannot resolve, and integration.
+   Questions for Constantine go only through Main.
+5. After explicit approval, Help Desk records the approved option and scope and
+   tracks the required package. The trigger grants no unrecorded implementation
+   or remote-mutation authority.
 
-When a decision is needed, the owning lead sends Main the exact evidence, two
-or three materially different options when applicable, a recommendation and
-trade-off, the smallest next action, and the exact authority needed or `No new
-authority`.
+Routine questions and status go to Help Desk. When a decision, exception, scope
+choice, unresolved blocker, or integration ruling is needed, the pod lead sends
+Main the exact evidence, two or three materially different options when
+applicable, a recommendation and trade-off, the smallest next action, and the
+exact authority needed or `No new authority`.
 
 ## Required integration package
 
-Every approved art suggestion must produce all of the following. Use `Not
-applicable` only with a short reason and Main's recorded acceptance.
+While this policy is **Active**, every approved art suggestion must produce all
+of the following. Use `Not applicable` only with a short reason and Main's
+recorded acceptance.
 
 ### 1. Stable model and component IDs
 
@@ -69,13 +86,15 @@ result and Main's recorded architecture decision.
 
 Inventory every added, changed, replaced, or removed binary asset.
 
-| Asset ID | Repository path | Format | Dimensions or duration | Size | Variants | Source/provenance | Licence | Consumers |
-|---|---|---|---|---|---|---|---|---|
-| _required_ | _required_ | _PNG/WebP/SVG/audio/etc._ | _required_ | _required_ | _required or none_ | _required_ | _required_ | _stable IDs_ |
+| Asset ID | Path | Format | Dimensions/duration | Bytes | SHA-256 | Source/export recipe and tool version | Pivot/anchor | Runtime budget/optimization | Fallback ID | Provenance/licence | Consumers |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _required_ | _stable IDs_ |
 
 The manifest must identify source files and derived/exported files, supported
-formats, naming rules, optimization expectations, and replacement/removal
-effects. Binary files may not become the only record of design intent.
+formats, variants, naming rules, content hashes, reproducible source/export
+recipes and tool versions, pivot/anchor metadata, runtime size/performance
+budgets and optimizations, fallback identity, and replacement/removal effects.
+Binary files may not become the only record of design intent.
 
 ### 4. Config and model reference contract
 
@@ -101,8 +120,12 @@ implementation authority.
 
 ### 6. Catalog entries and accurate previews
 
-- Add or update the machine-readable component registry and every canonical
-  human-facing catalog in the same origin-bound implementation change.
+- Isolated art production records the planned stable IDs, catalog entries,
+  runtime references, and preview needs in its handoff; it does not edit the
+  canonical catalog, registry, or runtime source.
+- Add or update the machine-readable component registry, runtime references,
+  and every canonical human-facing catalog only in the eventual origin-bound
+  implementation change.
 - Each entry names the stable ID, model/factory, renderer, source owner,
   selectors or host contract, variants/states, reuse surfaces, and asset IDs.
 - Provide labelled previews from the exact reviewed head for every material
@@ -112,37 +135,39 @@ implementation authority.
   stale captures, and conceptual mockups must be labelled as such and cannot be
   presented as runtime evidence.
 
-### 7. Game Design contract when behavior is affected
+### 7. Game Systems contract when behavior is affected
 
 If the art communicates or changes an unlock, state, affordance, targeting
-rule, timing, reward, availability, or other player behavior, Game Design must
+rule, timing, reward, availability, or other player behavior, Game Systems must
 provide the authoritative unlock/behavior contract and acceptance conditions.
-Art and Writing may clarify that contract but must not invent a mechanic to
-complete the package. The App Team implements only the approved contract.
+Art / Tech Art and Experience Design may clarify that contract but must not
+invent a mechanic to complete the package. Engineering implements only the
+approved contract.
 
 Purely presentational work records `No behavior change` and cites the current
 engine/content behavior it preserves.
 
-### 8. App integration handoff
+### 8. Engineering integration handoff
 
-Substantial runtime wiring is routed by Main to an App Team. The handoff names:
+Help Desk routes substantial runtime wiring to an Engineering-backed delivery
+pod. Main resolves integration decisions and exceptions. The handoff names:
 
 - the approved suggestion and owning Help Desk ticket or issue;
 - exact base/head and claimed source, config, test, evidence, and generated
   paths;
 - stable IDs, reuse matrix, asset manifest, and reference contract;
-- required states, fallbacks, migrations, and Game Design contract;
+- required states, fallbacks, migrations, and Game Systems contract;
 - unresolved decisions and the exact authority already granted; and
 - the expected return receipt and QA entry condition.
 
-The handoff does not transfer Art's visual-source ownership or silently expand
-the App Team's product scope.
+The handoff does not transfer Art / Tech Art's visual-source ownership or
+silently expand the delivery pod's product scope.
 
-### 9. QA plan and evidence
+### 9. QA Guild plan and evidence
 
 The plan must identify functional checks, discriminating negative/RED evidence,
-asset failure/fallback checks, and exact-head visual review. QA verifies that
-the intended asset is reachable through the real player flow and that the
+asset failure/fallback checks, and exact-head visual review. QA Guild verifies
+that the intended asset is reachable through the real player flow and that the
 runtime behavior matches the approved contract; screenshots prove pixels, not
 behavior.
 
@@ -189,7 +214,9 @@ merge, deployment, or release before those states are independently verified.
 
 ## Completion receipt
 
-The owning lead returns one package receipt to Help Desk and Main containing:
+The temporary delivery pod lead returns one package receipt to Help Desk.
+Help Desk routes it to Main only for a decision, exception, unresolved blocker,
+or integration ruling. The receipt contains:
 
 1. approved suggestion, scope, owner, ticket/issue, and decision reference;
 2. exact base and reviewed head;
@@ -197,14 +224,16 @@ The owning lead returns one package receipt to Help Desk and Main containing:
 4. binary manifest and config/model reference contract;
 5. service decision and any approved exception;
 6. catalog paths and labelled preview evidence;
-7. Game Design contract or `No behavior change` evidence;
-8. App integration handoff and acknowledgement state;
-9. QA results, including negative and desktop/mobile evidence;
+7. Game Systems contract or `No behavior change` evidence;
+8. Engineering integration handoff and acknowledgement state;
+9. QA Guild results, including negative and desktop/mobile evidence;
 10. accessibility, responsive, provenance, and licensing results;
 11. documentation and changelog paths; and
 12. unresolved blockers, smallest next action, and exact authority needed.
 
 `READY FOR QA`, `READY FOR MAIN`, a local commit, a pushed branch, a merged PR,
-a deployed preview, and a release are separate states. Only Main sequences the
-handoffs and decisions. Existing repository review, generated-artifact,
-publication, board, and Constantine-only release gates remain unchanged.
+a deployed preview, and a release are separate states. Help Desk handles routine
+routing and tracking; Main owns decisions, exceptions, and integration.
+Platform / Release acts only within separately recorded authority. Existing
+repository review, generated-artifact, publication, board, and Constantine-only
+release gates remain unchanged.

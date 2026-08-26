@@ -10,16 +10,19 @@ or a change to release readiness.
 
 ## Authority and ownership
 
-- **Main** is the AshenSpire coordinator, mandatory question and decision hub,
-  senior developer, and the only routine liaison between Constantine and the
-  delivery teams. Main receives work, performs technical triage, classifies and
-  sequences it, protects one-maker ownership, reviews architecture and
-  integration risks, brokers handoffs, collects team-lead receipts, and
-  returns decisions to the owning lane.
-- Every delivery team has one lead and may use up to three supporting agents.
-  The lead may work directly, but remains accountable for the team's bounded
-  scope, evidence, internal coordination, and one concise report to Main.
-  Supporting agents do not become separate coordinators or decision channels.
+- **Help Desk** is the routine intake, routing, acknowledgement, and status
+  channel. It records work and forms temporary delivery pods from the needed
+  capability pools without becoming an implementation or approval authority.
+- **Main** is the AshenSpire decision, exception, and integration hub, senior
+  developer, and the only liaison to Constantine. Main resolves ambiguity,
+  approval and scope choices, contested ownership, architecture and integration
+  risks, and blockers that routine routing cannot resolve.
+- Work is staffed from capability pools into temporary delivery pods. Each pod
+  has one lead and may use up to three supporting agents. The lead remains
+  accountable for bounded scope, evidence, internal coordination, and one
+  concise Help Desk receipt. A pod dissolves after its accepted handoff; pools
+  provide capabilities and do not become standing work units or parallel
+  authorities.
 - Aurora and Marina may assign and approve routine development work after the
   work has a named owner, bounded scope, current-base evidence, required tests,
   player-facing evidence where applicable, and an independent review.
@@ -35,47 +38,48 @@ or a change to release readiness.
   a time. Generated root/build/dist/buildordinal output is regenerated once,
   after source freeze, by the owner of that serialized lane.
 
-## Main question and decision hub
+## Routine routing and Main decision hub
 
-Every team sends every question, ambiguity, approval request, design choice,
-scope choice, blocker, or authority request to Main. Teams do not ask
-Constantine directly and do not create a second decision channel through
-another team, issue, pull request, or chat.
+Routine questions, intake, routing, acknowledgements, and status receipts go to
+Help Desk. Main receives decision and exception packets: ambiguity that changes
+the work, approval requests, design or scope choices, contested ownership,
+integration rulings, unresolved blockers, and authority requests. Capability
+pools and delivery pods do not ask Constantine directly or create a second
+decision channel through another pool, issue, pull request, or chat.
 
-Teams continue safe work that is already authorized. They pause only the part
+Pods continue safe work that is already authorized. They pause only the part
 that actually depends on the unresolved decision. Each escalation to Main must
 contain:
 
 1. the exact evidence and current state;
 2. two or three materially different options when options are applicable;
-3. the team's recommendation and its trade-off;
+3. the pod's recommendation and its trade-off;
 4. the smallest next action after a decision; and
 5. the exact authority needed, or `No new authority`.
 
 Main answers within existing recorded authority when it can. When Constantine's
 decision is required, Main presents the bounded packet, records the answer, and
-returns it to the owning team. A direct instruction from Constantine may
-override the ordinary routing order, but the receiving team still reports the
+returns it to the owning pod. A direct instruction from Constantine may
+override the ordinary routing order, but the receiving pod still reports the
 instruction and its resulting scope to Main before ownership or shared paths
 change. This routing rule grants no push, merge, release, publication, board
 mutation, or product-scope authority.
 
-## Team operating model
+## Capability pools and temporary delivery pods
 
-Main uses the following routing order. A direct instruction from Constantine
-may override the ordinary route, but the override must be recorded in the
-assignment receipt.
+Help Desk uses the following routine routing map. A ticket may draw from
+multiple pools, but Main records any contested ownership or integration
+decision. A direct instruction from Constantine may override the ordinary
+route, but the override must be recorded in the assignment receipt.
 
-| Team | Primary responsibility | Idle maintenance, coordinated through Main |
+| Capability pool | Primary responsibility | Stewardship between delivery pods |
 |---|---|---|
-| **Help Desk** | ServiceNow-style intake and ticket tracking. Records incidents, defects, service requests, features, art/design/writing requests, evidence, severity, status, owner, dependencies, and next action. It routes every decision through Main and never becomes a second technical or approval authority. | Reconcile ticket receipts with current issues, PRs, status, and team acknowledgements; identify duplicates, missing evidence, stale waiting states, and unowned requests. Propose corrections to Main without closing, deleting, assigning shared paths, or changing product scope. |
-| **IT Support 1, 2, 3** | First stop for defects, regressions, broken builds, diagnostics, repair, and recovery. IT Support may fix a defect in-house or ask Main to route feature-sized construction to an App Team. | Audit stale issues and sessions; prepare safe archive candidates; reconcile old context with current `dev`; refresh README, changelog, status, catalog, and backlog receipts; improve regression coverage and propose memory consolidation. Never delete history or broaden product scope merely because the team is idle. |
-| **App Team 1, 2** | Build new features, applications, architecture slices, and feature-sized implementation delegated by Main. They may accept construction escalated from IT Support, but do not self-assign defects from an IT lane. | Improve the current iteration only: reduce local code debt, align models/components/services, strengthen tests, refresh implementation documentation, and prepare bounded current-iteration proposals. Do not invent a new product initiative. |
-| **Game Design Team** | Own gameplay-system proposals, player loops, balance intent, UX rules, data contracts, acceptance criteria, and design reviews. It defines what the experience should do; App Teams implement substantial code. | Audit the current iteration for rule conflicts, unclear feedback, balance drift, unreachable content, and missing acceptance criteria. Keep proposals data-driven and traceable to SPEC/GDD decisions. |
-| **Writing Team** | Own narrative, names, UI copy, tutorial text, tooltips, player-facing explanations, changelog prose, and documentation clarity. Keep canonical terminology consistent and localization-ready. | Review current-iteration copy for contradictions, obsolete language, unexplained jargon, duplicate wording, and documentation drift. Do not change canonical lore or mechanics without approval. |
-| **QA Team 1** | Functional, regression, persistence, input, combat, and exact-head automated/browser verification. Maintains discriminating RED plants and tests behavior, not screenshots alone. | Maintain the QA playbook, known-bad corpus, test fixtures, reproducible saves, and evidence index; audit current `dev` for untested critical paths. |
-| **QA Team 2** | Independent UX, accessibility, responsive, touch, cross-resolution, and player-flow review. Provides the non-maker review for visible work and checks desktop plus phone evidence. | Maintain viewport/device matrices, accessibility checks, screenshot comparisons, usability heuristics, and current-iteration exploratory charters. |
-| **Art Team 1, 2** | Own non-programming visual production and the visual asset system: model appearance, asset consistency, component miniatures/icons, current-build assets, polish, and reusable/data-driven visual definitions. Similar models must reference shared components rather than duplicate them. | Audit the current build and component catalog for mismatched models, duplicate assets, inconsistent icons, weak visual miniatures, missing credits/licences, and hard-coded art. Prepare or refine relevant assets and catalog evidence. Substantive runtime wiring is routed through Main to an App Team. |
+| **Art / Tech Art** | Visual direction, asset production and optimization, model appearance, shared visual definitions, asset manifests, previews, and provenance/licensing. | Audit asset reuse, visual consistency, hard-coded art, missing credits, and runtime budgets; prepare bounded assets and handoffs without editing canonical runtime/catalog paths. |
+| **Engineering** | Defect diagnosis and repair, feature implementation, application architecture, shared models/components/services, tooling, and substantial runtime wiring. | Reconcile current code, reduce bounded debt, strengthen tests and contracts, and prepare current-iteration proposals without inventing product scope. |
+| **Game Systems** | Gameplay rules, loops, balance intent, unlock/behavior contracts, data contracts, and acceptance criteria. | Audit rule conflicts, balance drift, unreachable content, unclear feedback, and missing acceptance criteria against SPEC/GDD truth. |
+| **Experience Design** | UX flows, interaction intent, narrative, canonical names, UI copy, tutorials, tooltips, accessibility text, player explanations, changelog prose, and documentation clarity. | Audit usability and language for obsolete terms, unexplained jargon, duplicate copy, accessibility gaps, and documentation drift; do not change lore or mechanics without approval. |
+| **QA Guild** | Functional, regression, persistence, input, browser, accessibility, responsive, touch, cross-resolution, and player-flow verification, including independent non-maker review. | Maintain QA playbooks, RED plants, known-bad cases, fixtures, saves, viewport matrices, evidence indexes, and exploratory charters. |
+| **Platform / Release** | Build and deployment infrastructure, CI, generated-artifact lanes, environments, release staging, and operational readiness within explicit authority. | Audit tooling, CI, provenance, environment drift, and release evidence; never infer push, deployment, promotion, or release authority. |
 
 ### Help Desk ticket contract
 
@@ -86,9 +90,10 @@ severity/priority, status, owner, dependencies, and smallest next action.
 
 The shared statuses are `NEW`, `TRIAGED`, `ASSIGNED`, `IN PROGRESS`,
 `WAITING ON MAIN`, `READY FOR QA`, `READY FOR MAIN`, `RESOLVED`, `STALE`, and
-`CLOSED`. Help Desk records routing and acknowledgements; Main owns technical
-triage, sequencing, cross-team arbitration, and decision relays. A ticket
-status never grants implementation or remote-mutation authority.
+`CLOSED`. Help Desk owns routine routing and acknowledgements. Main owns
+decisions, exceptions, contested sequencing or ownership, integration rulings,
+and relays to Constantine. A ticket status never grants implementation or
+remote-mutation authority.
 
 ### Intake and handoff sequence
 
@@ -96,45 +101,45 @@ status never grants implementation or remote-mutation authority.
 request / observation
     |
     v
- Help Desk -- record evidence, type, severity, status, and dependencies
+ Help Desk -- record, classify, route, acknowledge, and track
     |
     v
-  Main -- senior technical triage, classify, sequence, and name one lead
+ temporary delivery pod -- one lead + required capability pools
+    |       Art / Tech Art       Engineering       Game Systems
+    |       Experience Design    QA Guild          Platform / Release
     |
-    +-- defect / regression -----------------> IT Support
-    |                                             |
-    |                              feature-sized build request
-    |                                             v
-    +-- feature / application ----------------> App Team
-    +-- mechanics / balance / UX rules --------> Game Design
-    +-- narrative / copy / documentation ------> Writing
-    +-- artwork / illustration / visual assets -> Art Team
-    +-- verification / independent review -----> QA Team 1 or 2
-                                                  |
-                                                  v
-                    lead receipt -> Help Desk status -> Main decision hub
-                                                  |
-                           Constantine decision only when required
-                                                  |
-                                                  v
-                              existing integration/release gates
+    +-- routine question/status ----------------------> Help Desk
+    |
+    +-- decision/exception/integration/blocker --------> Main
+    |                                                       |
+    |                              Constantine only when required
+    |                                                       |
+    v                                                       v
+ pod receipt -> Help Desk status             recorded decision -> owning pod
+    |
+    v
+ existing integration/release gates
 ```
 
-Teams communicate cross-team needs through Main. An IT lead may recommend an
-App Team handoff, an Art or Design lead may request implementation support, and
-an App lead may request copy, art, or QA, but none of those requests silently
-changes ownership. Main records the new owner, exact paths, base/head, blocked
-dependencies, and handoff state before work changes lanes.
+Pools and pods send routine cross-capability needs through Help Desk. Help Desk
+may add a capability to a pod or route a normal handoff, but none of those
+actions silently changes shared-path ownership or product scope. Main records
+contested ownership, exceptions, and integration decisions before work changes
+those lanes.
 
-After an art suggestion is explicitly approved, the proposed
+When the
 [automatic Art Design Integration Policy](ART-DESIGN-INTEGRATION-POLICY.md)
-makes its complete integration package mandatory: stable IDs, reuse and asset
-contracts, catalog evidence, applicable Game Design rules, App and QA handoffs,
+is Active, an explicitly approved art suggestion requires its complete
+integration package: stable IDs, reuse and asset contracts, catalog evidence,
+applicable Game Systems rules, Engineering and QA Guild handoffs,
 accessibility, provenance, and documentation. The trigger creates obligations,
-not implementation or remote-mutation authority.
+not implementation or remote-mutation authority; canonical catalog and runtime
+edits wait for the eventual origin-bound implementation.
 
 Idle work is maintenance, not free product scope. It begins with a read-only
-audit, stays in an isolated lane, and returns a proposal or patch to Main.
+audit, stays in an isolated lane, and returns a proposal or patch through Help
+Desk. Help Desk involves Main only when it needs a decision, exception, or
+integration ruling.
 Completed Codex sessions may be archived only after their result and pending
 decisions are captured in the canonical issue, pull request, status page, or
 handoff receipt. Durable memory changes still require Constantine's explicit
@@ -181,7 +186,7 @@ URL. A report must verify that the preview corresponds to the exact current
 
 ## Feedback and decision refresh
 
-Before a team escalates a decision, requests review, or repeats an unanswered
+Before a pod escalates a decision, requests review, or repeats an unanswered
 request, it sends Main the required escalation packet. Main refreshes the full
 comment thread on the owning issue and linked pull request before reporting
 `WAITING ON CONSTANTINE` or presenting the question. Main processes every
