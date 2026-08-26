@@ -53,6 +53,21 @@ A rejection records whether the cause is behavior, experience, evidence,
 contract, or environment. It includes the smallest reproducible failure and
 likely owner but does not authorize QA to repair maker-owned paths.
 
+## Dev-delivery independence
+
+Before Main chooses delivery to `dev`, the exact-head record must classify each
+condition in [decision 0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md):
+resolved dependencies, independence from unfinished work, shared-path and
+serialized-lane collisions, maker completion, immutable head, required
+independent QA and gates, fresh `dev`/head/PR/mergeability/CI, unchanged scope,
+and durable exact evidence. The combined result is `PASS` only when every item
+passes. `FAIL` or `UNKNOWN` requires `WAIT`.
+
+Main may still choose `WAIT` after `PASS`. That receipt records the integration
+or sequencing rationale, retry trigger, and smallest next action. It does not
+create authority for idle implementation. Delivery uses a normal reviewable PR;
+this policy does not authorize direct pushes to `dev`.
+
 ## Evidence freshness and hosted proof
 
 Each receipt includes evidence time and head SHA. Before integration, refresh
@@ -66,6 +81,23 @@ activation head. Test that exact head against the fresh live `dev` SHA with
 `git merge-base --is-ancestor`: exit `0` proves Active, exit `1` proves
 Approved, and any other result is `UNKNOWN` and blocking. Integration does not
 require a version or lifecycle-text mutation.
+
+## Promotion and Pages proof
+
+A test/release candidate packet requires strong QA playtest at the exact
+candidate, fresh branch heads, exact artifact path/SHA-256/build/source,
+generation and byte-identity evidence, all required independent review, and an
+itemized unresolved-finding/exception record. Main may call the packet ready for
+Constantine review; only Constantine may approve or perform promotion or final
+release-readiness actions.
+
+The desired future Pages source is `main`, but no source switch is implied.
+Before an authorized change window, record the exact candidate on `main`, the
+current and desired Pages sources, the prior-source rollback, and the requested
+authority. The change is green only after the intended Pages deployment and
+hosted smoke/playtest match the exact artifact/hash/build/source. Deployment
+failure, hosted mismatch, or stale configuration is blocking and uses the
+recorded rollback; a successful Pages job alone is insufficient.
 
 ## Rollback
 

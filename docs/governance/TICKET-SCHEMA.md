@@ -29,6 +29,10 @@ schema but must not replace it.
 | `evidence` | Exact command/flow, result, SHA, environment, timestamp, and durable link/path. |
 | `decisions` | Decision ID/link, owner, options, answer, scope effect, and timestamp. |
 | `policy_activation_head` | For policy work, the exact governance head named by successful independent policy QA; canonical `dev` containment derives Approved versus Active. |
+| `independence_check` | Itemized `PASS`, `FAIL`, or `UNKNOWN` result for dependencies, unfinished-work independence, shared-path/serialized-lane collision, maker completion, immutable head, QA/gates, fresh base/head/PR/mergeability/CI, unchanged scope, and exact evidence. |
+| `delivery_disposition` | Main's `WAIT`, `DELIVER TO DEV`, or `NOT YET DECIDED` result with exact head and timestamp. A `PASS` permits discretion but creates no duty. |
+| `wait_rationale` | When disposition is `WAIT`: evidence-based reason, owner, retry trigger, safe work if any, and smallest next action. |
+| `promotion_packet` | When promotion review is proposed: decision/action requested; fresh branch heads; candidate/PR/review/CI; dependencies and independence result; scope/paths; maker and QA evidence; artifact path/hash/build/source/provenance; strong playtest; current/desired Pages source and deploy/hosted proof; rollback target/procedure/trigger/actor/authority; recommendation and exact Constantine request. |
 | `delivery_facts` | Separate local, pushed, PR, integrated, hosted, resolved, and released facts. |
 | `next` / `block` | Smallest next action; blocker owner and retry trigger. |
 

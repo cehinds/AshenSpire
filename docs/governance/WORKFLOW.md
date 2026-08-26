@@ -2,7 +2,8 @@
 
 Policy version: `1.0.0`
 
-Decision: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-legacy-mapping.md)
+Decisions: [0002 — Lifecycle and legacy mapping](DECISIONS/0002-lifecycle-and-legacy-mapping.md)
+and [0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md)
 
 ## Lifecycle
 
@@ -68,13 +69,27 @@ existed.
    BLOCK / NEXT / AUTH` receipts.
 5. The candidate freezes once. Functional QA, then Experience QA when
    applicable, use the same head. A changed candidate reopens verification.
-6. Main performs or authorizes integration only after `READY FOR MAIN` and a
-   current-base check. Help Desk records each resulting fact without collapsing
-   integration, hosting, resolution, or release.
+6. At `READY FOR MAIN`, Main records the itemized independence result and
+   chooses `WAIT` or normal-PR delivery to `dev` under
+   [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md). A `PASS` permits
+   discretion; it does not create a duty. `FAIL` or `UNKNOWN` requires `WAIT`.
+   Every wait records its rationale and retry trigger.
+7. Help Desk records each resulting fact without collapsing integration,
+   hosting, resolution, promotion-packet readiness, or release.
 
 Cross-family handoffs retain distinct `SENT`, `RECEIVED`, and `ACKNOWLEDGED`
 events. A failed transport does not prove receipt or acceptance and must not
 create a duplicate assignment.
+
+## Promotion readiness
+
+After strong QA playtest at an exact candidate, Main may record
+`PROMOTION PACKET READY` and submit the exact packet to Constantine. This is a
+delivery fact, not a lifecycle state, promotion, release-readiness approval, or
+authority to mutate `test`, `release`, `main`, Pages, tags, or releases. The
+packet fields and Pages conditions are defined by
+[decision 0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md) and the
+[ticket schema](TICKET-SCHEMA.md).
 
 ## Context and repository hygiene
 

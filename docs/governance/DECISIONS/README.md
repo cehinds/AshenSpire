@@ -9,6 +9,7 @@ record that names what it supersedes; do not silently rewrite history.
 | [0002](0002-lifecycle-and-legacy-mapping.md) | Lifecycle and legacy mapping | Approved | Active under the same branch-containment rule |
 | [0003](0003-control-plane-pools-pods-and-wip.md) | Control plane, pools, pods, routing, and WIP | Approved | Active under the same branch-containment rule |
 | [0004](0004-art-policy-adoption.md) | Art policy canonical adoption | Approved | Art policy is Active under the same branch-containment rule |
+| [0005](0005-dev-delivery-promotion-and-pages.md) | Dev delivery, promotion readiness, and Pages source | Approved | Active under the same branch-containment rule; dated branch/Pages values remain snapshot evidence |
 
 Approval, local preparation, canonical merge, policy activation, and release
 are separate facts. Decision status remains historical; policy activation is

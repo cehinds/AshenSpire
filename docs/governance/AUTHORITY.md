@@ -2,7 +2,8 @@
 
 Policy version: `1.0.0`
 
-Decision: [0001 — Typed truth and authority](DECISIONS/0001-typed-truth-and-authority.md)
+Decisions: [0001 — Typed truth and authority](DECISIONS/0001-typed-truth-and-authority.md)
+and [0005 — Dev delivery, promotion readiness, and Pages source](DECISIONS/0005-dev-delivery-promotion-and-pages.md)
 
 ## Permanent control plane
 
@@ -26,9 +27,11 @@ tickets. Neither creates a competing decision channel.
 | Implement locally | Named maker/pod lead | `CONTRACT READY`, explicit implementation scope, fresh base, exclusive paths. |
 | Resolve ambiguity, scope, exception, ownership, architecture, or integration | Main | Decision packet and recorded answer. |
 | Perform independent QA | Assigned non-maker QA | Frozen exact head and applicable gate contract. |
-| Push, open/update PR, or mutate Project | Separately named authority | Explicit action-specific authority; local readiness does not imply it. |
-| Integrate to `dev` | Main within recorded repository authority | Reviewed exact head, required QA, current base, branch rules. |
-| Promote to `release`/`main`, tag, publish a release, or declare release readiness | Constantine | Separate release decision and release runbook. |
+| Push a genuinely independent completed topic head and open/update its normal PR to `dev` | Main at its discretion under [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md), or separately named authority | Itemized independence `PASS`, immutable exact head, required QA/gates, fresh base/head/PR/mergeability, unchanged scope, and recorded evidence. |
+| Integrate to `dev` through the normal reviewable PR process | Main at its discretion under [0005](DECISIONS/0005-dev-delivery-promotion-and-pages.md) | The same `PASS` evidence plus current required review and CI. `READY FOR MAIN` creates no duty to deliver. |
+| Mutate Project | Separately named authority | Explicit action-specific authority; local readiness does not imply it. |
+| Declare a test/release promotion packet ready for Constantine review | Main | Strong QA playtest at the exact candidate and a complete promotion packet; this is not release-readiness approval. |
+| Mutate `test`/`release`/`main`, change Pages source, tag, publish a release, or declare final release readiness | Constantine | Separate action-specific decision, complete promotion/rollback packet, and release runbook. |
 | Archive or delete a task, worktree, branch, artifact, or evidence | Main/user as applicable | Durable capture, exact targets, recovery consequence, explicit authority. |
 
 ## Decision and exception packets
