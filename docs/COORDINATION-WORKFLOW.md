@@ -10,6 +10,14 @@ or a change to release readiness.
 
 ## Authority and ownership
 
+- **Main** is the AshenSpire coordinator and the only routine liaison between
+  Constantine and the delivery teams. Main receives work, classifies it,
+  brokers assignments, protects sequencing and one-maker ownership, collects
+  the team leads' receipts, and presents approval decisions to Constantine.
+- Every delivery team has one lead and may use up to three supporting agents.
+  The lead may implement work directly, but remains accountable for scope,
+  integration inside the team's lane, verification, and one concise report to
+  Main. Supporting agents do not become separate coordinators.
 - Aurora and Marina may assign and approve routine development work after the
   work has a named owner, bounded scope, current-base evidence, required tests,
   player-facing evidence where applicable, and an independent review.
@@ -24,6 +32,60 @@ or a change to release readiness.
 - One maker owns each source, test, screenshot, and serialized-artifact path at
   a time. Generated root/build/dist/buildordinal output is regenerated once,
   after source freeze, by the owner of that serialized lane.
+
+## Team operating model
+
+Main uses the following routing order. A direct instruction from Constantine
+may override the ordinary route, but the override must be recorded in the
+assignment receipt.
+
+| Team | Primary responsibility | Idle maintenance, coordinated through Main |
+|---|---|---|
+| **IT Support 1, 2, 3** | First stop for defects, regressions, broken builds, diagnostics, repair, and recovery. IT Support may fix a defect in-house or ask Main to route feature-sized construction to an App Team. | Audit stale issues and sessions; prepare safe archive candidates; reconcile old context with current `dev`; refresh README, changelog, status, catalog, and backlog receipts; improve regression coverage and propose memory consolidation. Never delete history or broaden product scope merely because the team is idle. |
+| **App Team 1, 2** | Build new features, applications, architecture slices, and feature-sized implementation delegated by Main. They may accept construction escalated from IT Support, but do not self-assign defects from an IT lane. | Improve the current iteration only: reduce local code debt, align models/components/services, strengthen tests, refresh implementation documentation, and prepare bounded current-iteration proposals. Do not invent a new product initiative. |
+| **Game Design Team** | Own gameplay-system proposals, player loops, balance intent, UX rules, data contracts, acceptance criteria, and design reviews. It defines what the experience should do; App Teams implement substantial code. | Audit the current iteration for rule conflicts, unclear feedback, balance drift, unreachable content, and missing acceptance criteria. Keep proposals data-driven and traceable to SPEC/GDD decisions. |
+| **Writing Team** | Own narrative, names, UI copy, tutorial text, tooltips, player-facing explanations, changelog prose, and documentation clarity. Keep canonical terminology consistent and localization-ready. | Review current-iteration copy for contradictions, obsolete language, unexplained jargon, duplicate wording, and documentation drift. Do not change canonical lore or mechanics without approval. |
+| **QA Team 1** | Functional, regression, persistence, input, combat, and exact-head automated/browser verification. Maintains discriminating RED plants and tests behavior, not screenshots alone. | Maintain the QA playbook, known-bad corpus, test fixtures, reproducible saves, and evidence index; audit current `dev` for untested critical paths. |
+| **QA Team 2** | Independent UX, accessibility, responsive, touch, cross-resolution, and player-flow review. Provides the non-maker review for visible work and checks desktop plus phone evidence. | Maintain viewport/device matrices, accessibility checks, screenshot comparisons, usability heuristics, and current-iteration exploratory charters. |
+| **Art Team 1, 2** | Own non-programming visual production and the visual asset system: model appearance, asset consistency, component miniatures/icons, current-build assets, polish, and reusable/data-driven visual definitions. Similar models must reference shared components rather than duplicate them. | Audit the current build and component catalog for mismatched models, duplicate assets, inconsistent icons, weak visual miniatures, missing credits/licences, and hard-coded art. Prepare or refine relevant assets and catalog evidence. Substantive runtime wiring is routed through Main to an App Team. |
+
+### Intake and handoff sequence
+
+```text
+Constantine
+    |
+    v
+  Main -- classify, sequence, and name one lead
+    |
+    +-- defect / regression -----------------> IT Support
+    |                                             |
+    |                              feature-sized build request
+    |                                             v
+    +-- feature / application ----------------> App Team
+    +-- mechanics / balance / UX rules --------> Game Design
+    +-- narrative / copy / documentation ------> Writing
+    +-- artwork / illustration / visual assets -> Art Team
+    +-- verification / independent review -----> QA Team 1 or 2
+                                                  |
+                                                  v
+                        lead receipt -> Main -> Constantine approval
+                                                  |
+                                                  v
+                                     approved integration by Main
+```
+
+Teams communicate cross-team needs through Main. An IT lead may recommend an
+App Team handoff, an Art or Design lead may request implementation support, and
+an App lead may request copy, art, or QA, but none of those requests silently
+changes ownership. Main records the new owner, exact paths, base/head, blocked
+dependencies, and handoff state before work changes lanes.
+
+Idle work is maintenance, not free product scope. It begins with a read-only
+audit, stays in an isolated lane, and returns a proposal or patch to Main.
+Completed Codex sessions may be archived only after their result and pending
+decisions are captured in the canonical issue, pull request, status page, or
+handoff receipt. Durable memory changes still require Constantine's explicit
+request.
 
 ## Routine development gate
 
@@ -96,10 +158,16 @@ existing handoff is unresolved.
 
 ## Release boundary
 
+Main may push and merge explicitly approved, verified routine work to
+`origin/dev`. Main may execute an explicitly approved merge from `release` to
+`main` after Constantine has accepted the release candidate. These are
+integration permissions, not standing approval for an individual change or a
+release decision.
+
 The following remain Constantine-only:
 
-- promotion to `release` or `main`;
-- release-branch merges;
+- promotion or merge into `release`;
+- authorization for a `release` to `main` promotion;
 - tags and release publication;
 - public deployment or promotion beyond the development preview; and
 - final release-quality control and release-readiness approval.
