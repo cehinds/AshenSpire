@@ -2,6 +2,11 @@
 
 Status: **Approved**.
 
+Policy version: `1.0.0-candidate`. History source:
+`edc726bc50a9f86bd2c2e615915bc69bd0f61351`. Decision:
+[0004 — Art policy canonical adoption](../DECISIONS/0004-art-policy-adoption.md).
+It becomes **Active** only after a separately authorized canonical merge.
+
 ## Policy lifecycle
 
 - **Proposal** — the text is under review and creates no delivery obligation.
@@ -233,9 +238,10 @@ or integration ruling. The receipt contains:
 11. documentation and changelog paths; and
 12. unresolved blockers, smallest next action, and exact authority needed.
 
-`READY FOR QA`, `READY FOR MAIN`, a local commit, a pushed branch, a merged PR,
-a deployed preview, and a release are separate states. Help Desk handles routine
-routing and tracking; Main owns decisions, exceptions, and integration.
+`CANDIDATE FROZEN`, `FUNCTIONAL QA`, applicable `EXPERIENCE QA`,
+`READY FOR MAIN`, a local commit, a pushed branch, a merged PR, a deployed
+preview, and a release are separate states. Help Desk handles routine routing
+and tracking; Main owns decisions, exceptions, and integration.
 Platform / Release acts only within separately recorded authority. Existing
 repository review, generated-artifact, publication, board, and Constantine-only
 release gates remain unchanged.
