@@ -35,11 +35,9 @@
 // contents are correct (Vira). And the standing caveat holds: dvh/svh/lvh all
 // read 759.59 headless, so every below-the-fold number UNDER-states the truth.
 
-import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { mkdtempSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
@@ -61,6 +59,38 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const useSrc = args.includes('--src');
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+if (args.includes('--selftest')) {
+  if (!browserPath) {
+    console.error('settingsreach --selftest: no Chrome found — pass --browser PATH or set $CHROME');
+    process.exit(2);
+  }
+  const { doorSelftest } = await import('./doorplant.mjs');
+  process.exit(await doorSelftest({
+    tool: 'settingsreach.mjs',
+    args: ['--src', '--browser', browserPath],
+    timeoutMs: 600000,
+    extraCopy: ['dist'],
+    plants: [
+      {
+        name: 'the cold Title door omits the complete startup input release',
+        file: 'tools/settingsreach.mjs',
+        find: "    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, S);",
+        replace: '    await Promise.resolve(); // settingsreach selftest plant: startup release omitted',
+        all: true,
+        expectRed: /settingsreach: RED — TITLE DOOR: startup input release did not reveal Title/,
+      },
+      {
+        name: 'the Map door omits Quick Menu Settings-row activation',
+        file: 'tools/settingsreach.mjs',
+        find: "    await clickSelector(QUICK_SETTINGS, 'MAP DOOR: Quick Menu Settings row missing');",
+        replace: '    await Promise.resolve(); // settingsreach selftest plant: Quick Menu Settings row not activated',
+        all: true,
+        expectRed: /settingsreach: RED — MAP DOOR: Quick Menu Settings row activation did not open menu overlay/,
+      },
+    ],
+  }));
+}
+
 const SHAPES = [
   { tag: '390x844', w: 390, h: 844, dsf: 2 },
   { tag: '1200x730', w: 1200, h: 730, dsf: 1 },
@@ -70,6 +100,18 @@ const SHAPES = [
 const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
 const TAP_FLOOR = 44; // device px, AFTER --ui-zoom. Card #37.
 const DRAG = 0.6;     // one thumb drag = 60% of the scroller's client height.
+const STARTUP_GATE = '[data-component="startup-gate"]';
+const TITLE_SCREEN = '.title-screen';
+const TITLE_SETTINGS = '[data-title-action="settings"]';
+const SETTINGS_HOST = '[data-settings-host]';
+// Component Models are exposed in the DOM through markUiComponent(), whose
+// public attribute is data-ui-component (the catalog name remains unchanged).
+const QUICK_MENU = '[data-ui-component="quick-menu-panel"]';
+const QUICK_SETTINGS = '[data-ui-component="quick-menu-row"][data-tab="settings"]';
+const MENU_OVERLAY = '[data-ui-component="menu-overlay"]';
+const MENU_SETTINGS = '[data-ui-component="menu-tab"][data-member="settings"]';
+
+class CheckFailure extends Error {}
 
 // The scroller is `.modal` on the title door and `.overlay-body` on the in-run
 // one — asked of the DOM rather than assumed, because a wrong scroller makes
@@ -124,10 +166,10 @@ const EDGE_LONG = `(() => { const n=(v)=>+(+v).toFixed(2);
   const host=document.querySelector('[data-settings-host]');
   if(!host) return {error:'settings never opened'};
   const t=[...host.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Display');
-  if (t) t.click();
-  let sc=host.parentElement;
-  while (sc && sc!==document.body && !(sc.scrollHeight > sc.clientHeight + 1)) sc=sc.parentElement;
-  if (!sc || sc===document.body) sc = host.closest('.modal, .overlay-body') || host;
+  if (!t) return {error:'Display settings tab is missing'};
+  t.click();
+  const sc=host.querySelector('.set-panel');
+  if (!sc) return {error:'Display content scroll owner .set-panel is missing'};
   const rows=[...host.querySelectorAll('.set-row')];
   if (!rows.length) return {error:'no rows in Display'};
   const scrolls = sc.scrollHeight > sc.clientHeight + 1;
@@ -138,8 +180,9 @@ const EDGE_LONG = `(() => { const n=(v)=>+(+v).toFixed(2);
   // And the strip must still be there once you are at the bottom — a taxonomy
   // that scrolls away at row sixteen is the defect again, one screenful later.
   const strip=host.querySelector('.set-tabs');
-  const stripStill = strip ? (() => { const r=strip.getBoundingClientRect();
-    return r.bottom>Math.max(port.top,0)+0.5 && r.top<Math.min(port.bottom,innerHeight)-0.5; })() : null;
+  const stripStill = strip ? (() => { const r=strip.getBoundingClientRect(); const h=host.getBoundingClientRect();
+    return r.bottom>Math.max(h.top,0)+0.5 && r.top<Math.min(h.bottom,innerHeight)-0.5
+      && r.right>Math.max(h.left,0)+0.5 && r.left<Math.min(h.right,innerWidth)-0.5; })() : null;
   sc.scrollTop = 0;
   return { rows: rows.length, scrolls, lastRowArrives: arrived,
     lastBottom: n(last.bottom), portBottom: n(Math.min(port.bottom,innerHeight)),
@@ -158,28 +201,90 @@ function connectCdp(wsUrl) {
 }
 
 async function main() {
-  if (!browserPath) { console.error('settingsreach: no Chrome found — pass --browser PATH or set $CHROME'); process.exit(2); }
-  const s = await serve({ root: ROOT, port: 8503, open: false });
-  const BASE = useSrc ? `http://localhost:${s.port}/` : `http://localhost:${s.port}/dist/AshenSpire.html`;
-  console.log(`settingsreach — ${BASE}${useSrc ? '  (source tree)' : '  (the shipped single-file bundle)'}`);
+  if (!browserPath) throw new Error('no Chrome found — pass --browser PATH or set $CHROME');
+  let s = null;
+  let cdp = null;
+  let dropBrowser = async () => {};
+  let cleaned = false;
+  const cleanup = async () => {
+    if (cleaned) return;
+    cleaned = true;
+    try { cdp?.close(); } catch { /* already closed */ }
+    try { await dropBrowser(); } catch { /* browser already gone */ }
+    try { s?.server?.close(); } catch { /* server already gone */ }
+  };
+  const signalHandlers = new Map();
+  for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143]]) {
+    const handler = () => { cleanup().finally(() => process.exit(code)); };
+    signalHandlers.set(signal, handler);
+    process.once(signal, handler);
+  }
 
-  // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
-  // Chrome's own TMPDIR inside it, and removes it whatever happens.
-  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
-    prefix: 'setreach-', browser: browserPath,
-    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
-    timeoutMs: 12000,
-  });
-  const cdp = connectCdp(wsUrl); await cdp.ready;
-  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
-  const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
-  await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
-  const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
-    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw'); return r.result.value; };
+  try {
+    s = await serve({ root: ROOT, port: 8503, open: false });
+    const BASE = useSrc ? `http://localhost:${s.port}/` : `http://localhost:${s.port}/dist/AshenSpire.html`;
+    console.log(`settingsreach — ${BASE}${useSrc ? '  (source tree)' : '  (the shipped single-file bundle)'}`);
 
-  const fails = []; let cells = 0;
-  const openSettings = `(()=>{ const b=[...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent));
-    if(!b) return 'no Settings button'; b.click(); return true; })()`;
+    // ONE HOME for launching a browser: tools/browser.mjs owns the profile,
+    // pins Chrome's TMPDIR inside it, and removes it on every exit path.
+    const launched = await launchBrowser({
+      prefix: 'setreach-', browser: browserPath,
+      args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+      timeoutMs: 12000,
+    });
+    dropBrowser = launched.close;
+    cdp = connectCdp(launched.wsUrl); await cdp.ready;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw'); return r.result.value; };
+    const fail = (message) => { throw new CheckFailure(message); };
+    const until = async (expression, message, timeoutMs = 6000) => {
+      const started = Date.now();
+      while (Date.now() - started < timeoutMs) {
+        if (await ev(expression).catch(() => false)) return;
+        await wait(100);
+      }
+      fail(message);
+    };
+    const clickSelector = async (selector, message) => {
+      const clicked = await ev(`(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el) return false; el.click(); return true; })()`);
+      if (!clicked) fail(message);
+    };
+    const releaseStartupGate = async () => {
+      await until(`!!document.querySelector(${JSON.stringify(STARTUP_GATE)})`, 'TITLE DOOR: cold startup gate did not render');
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, S);
+      await wait(60);
+      await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }, S);
+      await until(`!!document.querySelector(${JSON.stringify(TITLE_SCREEN)}) && !document.querySelector(${JSON.stringify(STARTUP_GATE)})`,
+        'TITLE DOOR: startup input release did not reveal Title');
+    };
+    const openTitleSettingsFromTitle = async (scope) => {
+      await until(`!!document.querySelector(${JSON.stringify(TITLE_SCREEN)})`, `${scope}: Title screen missing`);
+      await clickSelector(TITLE_SETTINGS, `${scope}: stable Settings control missing`);
+      await until(`!!document.querySelector(${JSON.stringify(SETTINGS_HOST)})`, `${scope}: Settings host did not render`);
+    };
+    const openColdTitleSettings = async (scope) => {
+      await releaseStartupGate();
+      await openTitleSettingsFromTitle(scope);
+    };
+    const openMapSettings = async () => {
+      await clickSelector('#open-menu', 'MAP DOOR: #open-menu is missing');
+      await until(`!!document.querySelector(${JSON.stringify(QUICK_MENU)})`, 'MAP DOOR: default Quick Menu did not open');
+      await clickSelector(QUICK_SETTINGS, 'MAP DOOR: Quick Menu Settings row missing');
+      await until(`!!document.querySelector(${JSON.stringify(MENU_OVERLAY)})`,
+        'MAP DOOR: Quick Menu Settings row activation did not open menu overlay');
+      await clickSelector(MENU_SETTINGS, 'MAP DOOR: menu overlay Settings tab missing');
+      await until(`!!document.querySelector(${JSON.stringify(SETTINGS_HOST)})`, 'MAP DOOR: Settings host did not render');
+    };
+
+    const fails = []; let cells = 0;
+
+    // Establish the localhost origin once so every matrix cell can write the
+    // same persisted setting the cold boot reads before the next navigation.
+    await cdp.send('Page.navigate', { url: BASE }, S);
+    await until(`!!document.querySelector(${JSON.stringify(STARTUP_GATE)})`, 'TITLE DOOR: initial cold startup gate did not render');
 
   console.log('\nshape      text  kind      names on screen / total   drags to last   deepest px   tab floor(dev px)   strip h');
   for (const sh of SHAPES) {
@@ -190,13 +295,12 @@ async function main() {
       // the app reads at boot — never by writing html{font-size} from outside.
       await ev(`localStorage.setItem('sote_meta_v1', JSON.stringify({settings:{textSize:${JSON.stringify(size)}}}))`).catch(() => {});
       await cdp.send('Page.navigate', { url: BASE }, S);
-      await wait(1500);
-      const opened = await ev(openSettings);
-      if (opened !== true) { fails.push(`${sh.tag}/${size}: ${opened}`); continue; }
+      await openColdTitleSettings(`TITLE DOOR ${sh.tag}/${size}`);
       await wait(450);
       const r = await ev(READ);
       cells++;
       if (r.error) { fails.push(`${sh.tag}/${size}: ${r.error}`); continue; }
+      if (!r.total) fail(`TITLE DOOR ${sh.tag}/${size}: Settings category count is zero`);
       const floorTxt = r.floor === null ? '     n/a          '
         : `${String(r.floor).padEnd(6)}${r.floor + 0.5 < TAP_FLOOR ? 'UNDER 44' : 'ok'}`.padEnd(18);
       console.log(`${sh.tag.padEnd(10)} ${size.padEnd(5)} ${r.kind.padEnd(9)} `
@@ -265,7 +369,7 @@ async function main() {
   if (controls.negative.shown !== false) fails.push('RULER BROKEN: the negative control shows a tooltip — this probe answers yes to anything');
 
   await cdp.send('Page.navigate', { url: BASE }, S); await wait(1500);
-  await ev(openSettings); await wait(400);
+  await openColdTitleSettings('TITLE DOOR tooltip pass'); await wait(400);
   const tips = await ev(`(async () => { ${FIRE}
     const out = { tabs: [] };
     for (const b of document.querySelectorAll('.set-tab')) {
@@ -274,6 +378,7 @@ async function main() {
     return out;
   })()`);
   const tabTips = tips.tabs || [];
+  if (!tabTips.length) fail('TITLE DOOR tooltip pass: Settings category count is zero');
   const hoverOk = tabTips.filter((t) => t.hover.shown).length;
   const padOk = tabTips.filter((t) => t.pad.shown).length;
   console.log(`  ${hoverOk}/${tabTips.length} tabs answer on HOVER, ${padOk}/${tabTips.length} on the PAD focus cursor`);
@@ -285,7 +390,7 @@ async function main() {
   console.log('\nLaw 3 — the ring, and the answer when two tab sets are on screen');
   const ringDoor1 = await ev(`(() => {
     const names=[...document.querySelectorAll('.set-tab')].map(e=>e.dataset.member);
-    if (!names.length) return {skip:'no tab strip on this tree'};
+    if (!names.length) return {error:'Settings tab strip is empty'};
     const sel=()=> (document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
     const key=(k)=>document.dispatchEvent(new KeyboardEvent('keydown',{key:k,bubbles:true}));
     const seq=[sel()];
@@ -295,8 +400,8 @@ async function main() {
       wrapsForward: seq[seq.length-1]===seq[0] && new Set(seq).size===names.length,
       wrapsBackward: back[back.length-1]===back[0] && new Set(back).size===names.length };
   })()`);
-  if (ringDoor1.skip) console.log(`  SKIP door 1 — ${ringDoor1.skip}`);
-  else {
+  if (ringDoor1.error) fail(`TITLE DOOR ring: ${ringDoor1.error}`);
+  {
     console.log(`  door 1 (title modal, settings IS the surface): ] → ${ringDoor1.forward.join(' → ')}`);
     console.log(`                                                 [ → ${ringDoor1.backward.join(' → ')}`);
     console.log(`  wraps forward=${ringDoor1.wrapsForward}  wraps backward=${ringDoor1.wrapsBackward}`);
@@ -308,13 +413,8 @@ async function main() {
   // bumpers. The ruling is the OUTER strip keeps them, so ] must move the
   // OVERLAY tab and leave the settings tab where it was.
   await cdp.send('Page.navigate', { url: BASE + '?shot=map' }, S); await wait(1800);
+  await openMapSettings();
   const door2 = await ev(`(async () => {
-    const m=[...document.querySelectorAll('button')].find(b=>/menu|☰/i.test(b.textContent)||b.classList.contains('open-menu'));
-    if(!m) return {skip:'no menu button on the map'};
-    m.click(); await new Promise(r=>setTimeout(r,600));
-    const t=[...document.querySelectorAll('.ov-tab')].find(b=>/^settings$/i.test(b.textContent.trim()));
-    if(!t) return {skip:'no Settings tab in the overlay'};
-    t.click(); await new Promise(r=>setTimeout(r,600));
     const setBefore=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
     const ovBefore=(document.querySelector('.ov-tab.on')||{}).textContent;
     // READ THE COUNT BEFORE PRESSING. The first run of this file read it after,
@@ -328,8 +428,8 @@ async function main() {
     const setAfter=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
     return { setBefore, setAfter, ovBefore, ovAfter, settingsTabsPresent };
   })()`);
-  if (door2.skip) console.log(`  SKIP door 2 — ${door2.skip}`);
-  else {
+  if (!door2.settingsTabsPresent) fail('MAP DOOR: Settings tab strip is empty after the real door opened');
+  {
     console.log(`  door 2 (overlay → Settings): ${door2.settingsTabsPresent} settings tabs on screen inside ${'the overlay strip'}`);
     console.log(`     ] moved the OVERLAY tab  ${JSON.stringify(door2.ovBefore)} → ${JSON.stringify(door2.ovAfter)}`);
     console.log(`     and left the SETTINGS tab ${JSON.stringify(door2.setBefore)} → ${JSON.stringify(door2.setAfter)}`);
@@ -352,18 +452,23 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: sh.w, height: sh.h, deviceScaleFactor: sh.dsf, mobile: sh.dsf > 1 }, S);
     await ev(`localStorage.removeItem('sote_meta_v1')`).catch(() => {});
     await cdp.send('Page.navigate', { url: BASE }, S); await wait(1600);
-    await ev(openSettings); await wait(450);
+    await openColdTitleSettings(`TITLE DOOR strip stability ${sh.tag}`); await wait(450);
     const move = await ev(`(async () => { const n=(v)=>+(+v).toFixed(2);
+      const buttons=[...document.querySelectorAll('.set-tab')];
+      if (!buttons.length) return {error:'Settings tab strip is empty', tops:[]};
       const tops=[];
-      for (const b of [...document.querySelectorAll('.set-tab')]) {
+      for (const b of buttons) {
         b.click(); await new Promise(r=>setTimeout(r,260));
         const s=document.querySelector('.set-tabs');
+        if (!s) return {error:'Settings tab strip disappeared during selection', tops};
         tops.push({ cat: b.dataset.member, top: n(s.getBoundingClientRect().top) });
       }
-      return tops; })()`);
-    const ys = move.map((m) => m.top);
+      return {error:null, tops}; })()`);
+    if (move.error || !move.tops.length) fail(`TITLE DOOR strip stability ${sh.tag}: ${move.error || 'no tab positions measured'}`);
+    const positions = move.tops;
+    const ys = positions.map((m) => m.top);
     const spread = +(Math.max(...ys) - Math.min(...ys)).toFixed(2);
-    console.log(`  ${sh.tag}  strip top per section: ${move.map((m) => `${m.cat}=${m.top}`).join('  ')}`);
+    console.log(`  ${sh.tag}  strip top per section: ${positions.map((m) => `${m.cat}=${m.top}`).join('  ')}`);
     console.log(`  ${sh.tag}  worst jump = ${spread}px`);
     if (spread > 1) fails.push(`${sh.tag}: the tab strip moves ${spread}px between sections — the control jumps after you press it`);
   }
@@ -375,34 +480,37 @@ async function main() {
   // every other setting uses — no save-schema change. Observed BOTH ways.
   console.log('\npersistence — the section you were on, and the section that no longer exists');
   await cdp.send('Page.navigate', { url: BASE }, S); await wait(1600);
-  const persist = await ev(`(async () => {
-    const open = () => [...document.querySelectorAll('button')].find(x=>/settings/i.test(x.textContent)).click();
-    const close = () => { const b=document.getElementById('set-close'); if(b) b.click(); };
-    open(); await new Promise(r=>setTimeout(r,500));
-    const first=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
-    [...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Audio').click();
-    await new Promise(r=>setTimeout(r,300));
-    const stored=(JSON.parse(localStorage.getItem('sote_meta_v1')||'{}').settings||{}).settingsCategory;
-    close(); await new Promise(r=>setTimeout(r,300));
-    open(); await new Promise(r=>setTimeout(r,500));
-    const reopened=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
-    close(); await new Promise(r=>setTimeout(r,200));
-    // The wrong-name edge: a stored category nothing files under any more.
-    const meta=JSON.parse(localStorage.getItem('sote_meta_v1')||'{}');
+  await openColdTitleSettings('TITLE DOOR persistence initial open');
+  const first = await ev(`(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member`);
+  await clickSelector('.set-tab[data-member="Audio"]', 'TITLE DOOR persistence: Audio tab missing');
+  await wait(300);
+  const stored = await ev(`(JSON.parse(localStorage.getItem('sote_meta_v1')||'{}').settings||{}).settingsCategory`);
+  await clickSelector('#set-close', 'TITLE DOOR persistence: Done control missing after Audio');
+  await wait(300);
+  await openTitleSettingsFromTitle('TITLE DOOR persistence reopen');
+  const reopened = await ev(`(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member`);
+  await clickSelector('#set-close', 'TITLE DOOR persistence: Done control missing after reopen');
+  await wait(200);
+  // The wrong-name edge: a stored category nothing files under any more.
+  await ev(`(() => { const meta=JSON.parse(localStorage.getItem('sote_meta_v1')||'{}');
     meta.settings=meta.settings||{}; meta.settings.settingsCategory='Lore';
-    localStorage.setItem('sote_meta_v1', JSON.stringify(meta));
-    open(); await new Promise(r=>setTimeout(r,500));
-    const afterBogus=(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member;
-    const tabsAfterBogus=document.querySelectorAll('.set-tab').length;
-    const panelText=(document.querySelector('.set-panel')||{innerText:''}).innerText.trim().length;
-    return { first, stored, reopened, afterBogus, tabsAfterBogus, panelText };
-  })()`);
+    localStorage.setItem('sote_meta_v1', JSON.stringify(meta)); return true; })()`);
+  await cdp.send('Page.navigate', { url: BASE }, S);
+  await openColdTitleSettings('TITLE DOOR persistence bogus-category cold reload');
+  const bogus = await ev(`(() => ({
+    afterBogus:(document.querySelector('.set-tab.on')||{dataset:{}}).dataset.member,
+    tabsAfterBogus:document.querySelectorAll('.set-tab').length,
+    panelText:(document.querySelector('.set-panel')||{innerText:''}).innerText.trim().length,
+  }))()`);
+  const persist = { first, stored, reopened, ...bogus };
   console.log(`  opened on ${JSON.stringify(persist.first)} · tapped Audio · stored ${JSON.stringify(persist.stored)} · reopened on ${JSON.stringify(persist.reopened)}`);
   console.log(`  stored "Lore" (a category nothing files under) → opens on ${JSON.stringify(persist.afterBogus)}, ${persist.tabsAfterBogus} tabs, ${persist.panelText} chars in the panel`);
   if (persist.stored !== 'Audio') fails.push(`persistence: the choice was not written to meta.settings (got ${JSON.stringify(persist.stored)})`);
   if (persist.reopened !== 'Audio') fails.push(`persistence: reopened on ${JSON.stringify(persist.reopened)} instead of Audio`);
   if (persist.afterBogus !== 'Display' || !persist.panelText) fails.push('EDGE: a stored category that no longer exists did not fall back to the first tab with a full panel');
 
+  const expectedCells = SHAPES.length * Object.keys(TEXT).length;
+  if (cells !== expectedCells) fail(`MATRIX: measured ${cells}/${expectedCells} declared cells`);
   console.log(`\n${cells} cells measured (2 shapes x 4 text sizes).`);
   if (fails.length) {
     console.log(`\nsettingsreach: ${fails.length} finding(s)`);
@@ -416,7 +524,23 @@ async function main() {
   console.log('  no gamepad attached (the ring is driven by [ and ], which is the same code path input.js runs for LB/RB);');
   console.log('  dvh/svh/lvh all read 759.59 headless, so every below-the-fold number here UNDER-states the truth.');
 
-  cdp.close(); await dropBrowser(); s.server.close();
-  process.exit(fails.length ? 1 : 0);
+    return fails.length ? 1 : 0;
+  } finally {
+    for (const [signal, handler] of signalHandlers) process.removeListener(signal, handler);
+    await cleanup();
+  }
 }
-main().catch((e) => { console.error(e); process.exit(2); });
+
+let exitCode = 2;
+try {
+  exitCode = await main();
+} catch (error) {
+  if (error instanceof CheckFailure) {
+    console.error(`settingsreach: RED — ${error.message}`);
+    exitCode = 1;
+  } else {
+    console.error(`settingsreach: UNKNOWN — ${error.stack || error.message}`);
+    exitCode = 2;
+  }
+}
+process.exitCode = exitCode;
