@@ -473,5 +473,30 @@ const missingAttackLoad = loadStoredRun(baseRegistries, missingAttackSnapshot);
 check(rejectedWithPreservedRaw(missingAttackLoad, /attack instance count 0 does not match authored 4/),
   'snapshot with all generated attacks removed fails closed and archives exact raw bytes', missingAttackLoad.saves.runStatus().reason || 'loaded');
 
+const wrongClassGrantSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+wrongClassGrantSnapshot.combatEntered.snapshot.loadout.creationArmourGrant = { classId: 'rogue', id: 'default' };
+const wrongClassGrantLoad = loadStoredRun(baseRegistries, wrongClassGrantSnapshot);
+check(rejectedWithPreservedRaw(wrongClassGrantLoad, /loadout\.creationArmourGrant\.classId.*rogue.*player\.classId.*reaver/),
+  'wrong-class snapshot creationArmourGrant fails closed and archives exact raw bytes', wrongClassGrantLoad.saves.runStatus().reason || 'loaded');
+
+const unknownGrantSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+unknownGrantSnapshot.combatEntered.snapshot.loadout.creationArmourGrant = { classId: 'reaver', id: 'noSuchArmour' };
+const unknownGrantLoad = loadStoredRun(baseRegistries, unknownGrantSnapshot);
+check(rejectedWithPreservedRaw(unknownGrantLoad, /loadout\.creationArmourGrant\.id.*noSuchArmour/),
+  'unknown snapshot creationArmourGrant id fails closed and archives exact raw bytes', unknownGrantLoad.saves.runStatus().reason || 'loaded');
+
+const duplicateStorageSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+duplicateStorageSnapshot.combatEntered.snapshot.loadout.storage = ['dagger', 'dagger'];
+const duplicateStorageLoad = loadStoredRun(baseRegistries, duplicateStorageSnapshot);
+check(rejectedWithPreservedRaw(duplicateStorageLoad, /loadout\.storage\[1\].*dagger.*loadout\.storage\[0\]/),
+  'duplicate snapshot storage location fails closed and archives exact raw bytes', duplicateStorageLoad.saves.runStatus().reason || 'loaded');
+
+const duplicateInactiveHandsSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+duplicateInactiveHandsSnapshot.combatEntered.snapshot.loadout.sets.rightHand[1] = 'dagger';
+duplicateInactiveHandsSnapshot.combatEntered.snapshot.loadout.sets.leftHand[1] = 'dagger';
+const duplicateInactiveHandsLoad = loadStoredRun(baseRegistries, duplicateInactiveHandsSnapshot);
+check(rejectedWithPreservedRaw(duplicateInactiveHandsLoad, /loadout\.sets\.leftHand\[1\].*dagger.*loadout\.sets\.rightHand\[1\]/),
+  'duplicate inactive cross-hand snapshot armament fails closed and archives exact raw bytes', duplicateInactiveHandsLoad.saves.runStatus().reason || 'loaded');
+
 console.log(`RESULT: ${failed ? `${failed}/${checks} weapon-card-package check(s) failed.` : `${checks}/${checks} weapon-card-package checks passed.`}`);
 process.exit(failed ? 1 : 0);
