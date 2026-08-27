@@ -54,11 +54,9 @@
 // nothing about Windows, about a real finger, about whether 24 is WISE, or
 // about any control that is not one of the four.
 
-import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
-import { existsSync, mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
-import { join, resolve, dirname } from 'node:path';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
@@ -110,6 +108,19 @@ if (process.argv.includes('--selftest')) {
         // tree, so the loose form called a provenance note a catch. A red for
         // the wrong reason is not a catch.
         expectRed: /FAIL — \d+ finding\(s\) of \d+ cell\(s\)/,
+      },
+      {
+        // The route changed when Quick Menu became default-on. Omitting the
+        // Settings-row activation must fail at the named postcondition; merely
+        // seeing the Quick Menu is not evidence that the settings surface was
+        // reached.
+        name: 'the Quick Menu Settings row is found but never activated',
+        file: 'tools/tapsize.mjs',
+        // Split so doorplant cannot accidentally mutate this descriptor's own
+        // string instead of the executable browser-expression source below.
+        find: ['target.click();', ' // SELFTEST PLANT: omit this activation'].join(''),
+        replace: 'void target; // SELFTEST PLANT: omit this activation',
+        expectRed: /RED TAPSIZE-D10-SETTINGS-SURFACE/,
       },
     ],
   }));
@@ -186,20 +197,33 @@ const BROWSERS = [process.env.CHROME, '/usr/bin/chromium', '/usr/bin/google-chro
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl); let nextId = 1; const pending = new Map();
-  ws.addEventListener('message', (ev) => {
+  const onMessage = (ev) => {
     const m = JSON.parse(ev.data);
     if (m.id && pending.has(m.id)) {
       const { res, rej } = pending.get(m.id); pending.delete(m.id);
       if (m.error) rej(new Error(`${m.error.message} (${m.error.code})`)); else res(m.result);
     }
-  });
+  };
+  ws.addEventListener('message', onMessage);
   return {
     ready: new Promise((res, rej) => { ws.addEventListener('open', res); ws.addEventListener('error', rej); }),
     send(method, params = {}, sessionId) {
       const id = nextId++;
       return new Promise((res, rej) => { pending.set(id, { res, rej }); ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) })); });
     },
-    close: () => ws.close(),
+    async close() {
+      const outstanding = pending.size;
+      ws.removeEventListener('message', onMessage);
+      if (ws.readyState !== WebSocket.CLOSED) {
+        const closed = new Promise((res) => {
+          ws.addEventListener('close', res, { once: true });
+          ws.addEventListener('error', res, { once: true });
+        });
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) ws.close();
+        await Promise.race([closed, wait(2000)]);
+      }
+      return { closed: ws.readyState === WebSocket.CLOSED, pending: outstanding };
+    },
   };
 }
 
@@ -209,26 +233,68 @@ async function open() {
   if (!browser) throw new Error('no Chromium/Chrome found — set CHROME=<path>');
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.
-  const { child, wsUrl, profile, close: dropBrowser } = await launchBrowser({
-    prefix: 'tapsize-', browser: browser,
-    args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
-    timeoutMs: 20000,
-  });
-  const cdp = connectCdp(wsUrl); await cdp.ready;
-  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
-  const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
-  await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
-  const ev = async (e) => {
-    const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
-    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw');
-    return r.result.value;
-  };
-  const until = async (x, what, ms = 20000) => {
-    const t = Date.now();
-    while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return true; await wait(120); }
-    throw new Error(`timed out waiting for ${what}`);
-  };
-  return { cdp, S, ev, until, close: () => { cdp.close(); dropBrowser(); } };
+  let launched = null;
+  let cdp = null;
+  try {
+    launched = await launchBrowser({
+      prefix: 'tapsize-', browser: browser,
+      args: ['--allow-file-access-from-files', '--disable-background-timer-throttling'],
+      timeoutMs: 20000,
+    });
+    const { child, wsUrl, close: dropBrowser } = launched;
+    cdp = connectCdp(wsUrl); await cdp.ready;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    const ev = async (e) => {
+      const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw');
+      return r.result.value;
+    };
+    const until = async (x, what, ms = 20000) => {
+      const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return true; await wait(120); }
+      throw new Error(`timed out waiting for ${what}`);
+    };
+    return {
+      cdp, S, ev, until,
+      async close() {
+        const socket = await cdp.close();
+        const profile = await dropBrowser();
+        return {
+          cdpClosed: socket.closed,
+          pending: socket.pending,
+          browserStopped: child.exitCode !== null || child.signalCode !== null,
+          profileRemoved: profile.removed,
+        };
+      },
+    };
+  } catch (error) {
+    if (cdp) await cdp.close().catch(() => {});
+    if (launched) await launched.close().catch(() => {});
+    throw error;
+  }
+}
+
+async function requireDoor(b, id, expression, description, ms = 6000) {
+  try {
+    await b.until(expression, description, ms);
+  } catch (error) {
+    throw new Error(`RED ${id} — ${description}; ${error.message}`);
+  }
+}
+
+async function clickExactlyOne(b, id, selector, description, plantable = false) {
+  const receipt = await b.ev(`(() => {
+    const matches = [...document.querySelectorAll(${JSON.stringify(selector)})];
+    const target = matches[0];
+    if (matches.length !== 1 || !target || target.disabled) return { count: matches.length, disabled: !!target?.disabled, clicked: false };
+    ${plantable ? 'target.click(); // SELFTEST PLANT: omit this activation' : 'target.click();'}
+    return { count: matches.length, disabled: false, clicked: true };
+  })()`);
+  if (receipt.count !== 1 || receipt.disabled || !receipt.clicked) {
+    throw new Error(`RED ${id} — ${description}; count=${receipt.count}, disabled=${receipt.disabled}, clicked=${receipt.clicked}`);
+  }
 }
 
 // The read. Every number is a RENDERED number: rects for device px, offsetHeight
@@ -276,38 +342,36 @@ async function cell(b, href, w, h, ui, tx, tap) {
   const q = encodeURIComponent(JSON.stringify(shotSettings));
   await b.cdp.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: w < 700 }, b.S);
   await b.cdp.send('Page.navigate', { url: `${href}?shot=map&shotSettings=${q}` }, b.S);
-  await b.until(`!!document.querySelector('.map-node')`, 'the map');
+  await requireDoor(b, 'TAPSIZE-D1-MAP', `!!document.querySelector('.map-node')`, 'the Map surface');
   await wait(400);
 
   // Door 1 — the armoury, for `.region-fold`. Opened FIRST because it closes
   // again; the overlay does not.
-  await b.ev(`(() => { const x = document.querySelector('#open-armoury'); if (x) x.click(); return !!x; })()`);
-  await b.until(`!!document.querySelector('.armoury')`, 'the armoury');
+  await clickExactlyOne(b, 'TAPSIZE-D2-ARMOURY-TRIGGER', '#open-armoury', 'the Map Armoury trigger');
+  await requireDoor(b, 'TAPSIZE-D3-ARMOURY-SURFACE', `!!document.querySelector('.armoury')`, 'the Armoury surface');
+  await requireDoor(b, 'TAPSIZE-D4-REGION-FOLDS', `!!document.querySelector('.armoury .region-fold')`, 'at least one Armoury region fold');
   await wait(300);
   const fold = await b.ev(READ(({ regionFold: SELECTORS.regionFold })));
-  await b.ev(`(() => { const bs = [...document.querySelectorAll('.armoury button')]
-    .find((x) => /close|✕|×/i.test(x.textContent || x.title || '')); if (bs) bs.click(); return 1; })()`);
-  await wait(300);
+  await clickExactlyOne(b, 'TAPSIZE-D5-ARMOURY-CLOSE', '.armoury .armoury-close', 'the Armoury close control');
+  await requireDoor(b, 'TAPSIZE-D6-ARMOURY-CLOSED', `!document.querySelector('.armoury')`, 'the Armoury to close');
 
-  // Door 2 — the ☰ overlay and its Settings tab, for the other three.
-  await b.ev(`(() => { const bs = [...document.querySelectorAll('button')];
-    const m = bs.find((x) => /☰/.test(x.textContent)) || bs.find((x) => /menu/i.test(x.getAttribute('aria-label') || ''));
-    if (m) m.click(); return !!m; })()`);
-  await b.until(`!!document.querySelector('.overlay-tabs .ov-tab')`, 'the overlay strip');
-  await wait(250);
-  await b.ev(`(() => { const t = [...document.querySelectorAll('.overlay-tabs .ov-tab')].find((x) => /settings/i.test(x.textContent));
-    if (t) t.click(); return !!t; })()`);
-  await b.until(`!!document.querySelector('.set-tabs .set-tab')`, 'the settings strip');
+  // Door 2 — current Map route: #open-menu -> default Quick Menu Settings row
+  // -> overlay/settings surface. Every hop is exact and fail-closed by name.
+  await clickExactlyOne(b, 'TAPSIZE-D7-MENU-TRIGGER', '#open-menu', 'the Map Quick Menu trigger');
+  await requireDoor(b, 'TAPSIZE-D8-QUICK-MENU', `!!document.querySelector('.qn-panel')`, 'the default Quick Menu surface');
+  await clickExactlyOne(b, 'TAPSIZE-D9-SETTINGS-ROW', '.qn-panel .qn-row[data-act="tab"][data-tab="settings"]', 'the Quick Menu Settings row', true);
+  await requireDoor(b, 'TAPSIZE-D10-SETTINGS-SURFACE', `!!document.querySelector('.overlay-modal .overlay-body[data-settings-host]') && !!document.querySelector('.overlay-tabs .ov-tab[data-member="settings"]') && !!document.querySelector('.set-tabs .set-tab')`, 'the overlay Settings surface after Quick Menu activation');
   await wait(250);
   // Onto Accessibility, where the row lives — the chips must be on screen for
   // `.choice` to have anything to measure and for the cost line to exist.
-  await b.ev(`(() => { const t = [...document.querySelectorAll('.set-tabs .set-tab')].find((x) => /accessibility/i.test(x.textContent));
-    if (t) t.click(); return !!t; })()`);
-  if (!LEGACY) await b.until(`!!document.querySelector('[data-applied="tapFloor"]')`, 'the tap-size row');
+  await clickExactlyOne(b, 'TAPSIZE-D11-ACCESSIBILITY-TAB', '.set-tabs .set-tab[data-member="Accessibility"]', 'the Accessibility settings tab');
+  if (!LEGACY) await requireDoor(b, 'TAPSIZE-D12-TAP-FLOOR-ROW', `!!document.querySelector('[data-applied="tapFloor"]')`, 'the tap-size setting row');
   await wait(250);
 
   const main = await b.ev(READ(({ setTab: SELECTORS.setTab, ovTab: SELECTORS.ovTab, choice: SELECTORS.choice })));
   const cost = await b.ev(READ_COST);
+  await clickExactlyOne(b, 'TAPSIZE-D13-OVERLAY-CLOSE', '.overlay-modal #ov-close', 'the Settings overlay close control');
+  await requireDoor(b, 'TAPSIZE-D14-OVERLAY-CLOSED', `!document.querySelector('.overlay-modal') && !document.querySelector('.qn-panel') && !document.querySelector('[data-settings-host]')`, 'all Menu and Settings surfaces to close');
   return {
     key: LEGACY ? `${w}x${h}/ui${ui}/text${tx}` : `${w}x${h}/ui${ui}/text${tx}/tap${tap}`,
     w, h, ui, tx, tap,
@@ -336,6 +400,8 @@ const MIN_CELLS = EXPECT_CELLS;
 // never typed, so it cannot drift from what a full run would actually measure.
 const FULL_CELLS = 3 * 5 * 2 * SIZES.length; // 3 shapes x 5 UI sizes x 2 text sizes
 const NARROWED = [QUICK ? '--quick' : null, MOBILE_ONLY ? '--mobile' : null].filter(Boolean).join(' + ');
+const PLATFORM = process.platform === 'win32' ? 'Windows' : process.platform === 'darwin' ? 'macOS' : process.platform;
+const OTHER_PLATFORMS = process.platform === 'win32' ? 'macOS or Linux' : process.platform === 'darwin' ? 'Windows or Linux' : 'Windows or macOS';
 
 const href = pathToFileURL(resolve(TREE, 'dist/AshenSpire.html')).href;
 if (!existsSync(resolve(TREE, 'dist/AshenSpire.html'))) {
@@ -350,6 +416,8 @@ printArtifactProvenance(resolve(TREE, 'dist/AshenSpire.html'), TREE);
 const findings = LEGACY ? [] : [...stylesheetHoldsNoConstant(SIZES)];
 const rows = [];
 const b = await open();
+let runError = null;
+let cleanup = null;
 try {
   for (const [w, h] of SHAPES) {
     for (const ui of UISIZES) {
@@ -358,17 +426,28 @@ try {
       }
     }
   }
+} catch (error) {
+  runError = error;
 } finally {
-  b.close();
+  try {
+    cleanup = await b.close();
+  } catch (error) {
+    cleanup = { cdpClosed: false, pending: -1, browserStopped: false, profileRemoved: false, error: error.message };
+  }
 }
+const cleanupOk = cleanup?.cdpClosed && cleanup.pending === 0 && cleanup.browserStopped && cleanup.profileRemoved;
+console.log(`  CLEANUP TAPSIZE-CLEANUP — cdp=${cleanup?.cdpClosed ? 'closed' : 'OPEN'} pending=${cleanup?.pending ?? 'UNKNOWN'} browser=${cleanup?.browserStopped ? 'stopped' : 'LIVE'} profile=${cleanup?.profileRemoved ? 'removed' : 'PRESENT'} server=not-started`);
+if (!cleanupOk) console.error(`RED TAPSIZE-CLEANUP — deterministic browser/CDP/profile teardown failed${cleanup?.error ? `: ${cleanup.error}` : ''}`);
+if (runError) throw runError;
+if (!cleanupOk) process.exit(1);
 
 // ---- the denominator, before any verdict ----------------------------------
 console.log(`\ntapsize — ${TREE}`);
 console.log(`  space          : ${SHAPES.length} shape(s) x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s) x ${SIZES.length} tap size(s)`);
 console.log(`  cells expected : ${EXPECT_CELLS}${NARROWED ? ` of ${FULL_CELLS} in the full space (${NARROWED})` : ''}`);
 console.log(`  cells measured : ${rows.length}`);
-if (rows.length < MIN_CELLS) {
-  console.log(`\n  EMPTY OR SHORT — measured ${rows.length} of ${EXPECT_CELLS} cells. Nothing below is a verdict.`);
+if (rows.length !== MIN_CELLS) {
+  console.log(`\n  RED TAPSIZE-G1-CELL-CENSUS — measured ${rows.length} of exactly ${EXPECT_CELLS} cells. Nothing below is a verdict.`);
   process.exit(1);
 }
 
@@ -376,17 +455,19 @@ if (rows.length < MIN_CELLS) {
 // measured three rules and would otherwise look identical to a clean one.
 const RULES = Object.keys(SELECTORS);
 let controlsSeen = 0;
+let selectorSlotsSeen = 0;
 for (const r of rows) {
   for (const k of RULES) {
     const g = r.groups[k];
-    if (!g || !g.count) findings.push(`${r.key}: found NO ${k} (${SELECTORS[k]}) — an unmeasured rule, not a clean one`);
-    else controlsSeen += g.count;
+    if (!g || !g.count) findings.push(`RED TAPSIZE-G2-SELECTOR-CENSUS — ${r.key}: found NO ${k} (${SELECTORS[k]}) — an unmeasured rule, not a clean one`);
+    else { controlsSeen += g.count; selectorSlotsSeen++; }
   }
-  if (!LEGACY && r.target !== `${r.tap}px`) findings.push(`${r.key}: --tap-target is '${r.target}', expected '${r.tap}px' — the setting did not reach the page`);
+  if (!LEGACY && r.target !== `${r.tap}px`) findings.push(`RED TAPSIZE-G3-TARGET — ${r.key}: --tap-target is '${r.target}', expected '${r.tap}px' — the setting did not reach the page`);
 }
-console.log(`  controls read  : ${controlsSeen} across ${rows.length * RULES.length} (cell x rule) slots`);
-if (!controlsSeen) {
-  console.log('\n  MEASURED NOTHING. No verdict.');
+console.log(`  selector slots : ${selectorSlotsSeen}/${rows.length * RULES.length} nonzero (cell x rule)`);
+console.log(`  controls read  : ${controlsSeen}`);
+if (!controlsSeen || selectorSlotsSeen !== rows.length * RULES.length) {
+  console.log(`\n  RED TAPSIZE-G2-SELECTOR-CENSUS — ${selectorSlotsSeen}/${rows.length * RULES.length} declared selector slots were nonzero. No verdict.`);
   process.exit(1);
 }
 
@@ -410,7 +491,7 @@ for (const r of top) {
   if (Math.abs(r.floorDevice - MAX) > 0.51) findings.push(`${r.key}: floor measured ${r.floorDevice} device px, expected ${MAX}`);
   for (const k of RULES) {
     const g = r.groups[k];
-    if (g && g.count && g.hMin < MAX - 0.51) findings.push(`${r.key}: ${k} shrank to ${g.hMin} at the ${MAX} setting — the default is not today`);
+    if (g && g.count && g.hMin < MAX - 0.51) findings.push(`RED TAPSIZE-G4-DEFAULT-MINIMUM — ${r.key}: ${k} shrank to ${g.hMin} at the ${MAX} setting — the default is not >=${MAX}px`);
   }
 }
 
@@ -472,11 +553,11 @@ if (jsonFile) {
 console.log(`\n  ${findings.length ? `FAIL — ${findings.length} finding(s) of ${rows.length} cell(s)` : `PASS — ${rows.length}/${rows.length} cells: the floor is the setting, ${MAX} is unchanged, ${MIN} renders`}`);
 for (const f of findings) console.log(`    - ${f}`);
 console.log(`
-BOUNDARY: headless Chromium on Linux, dist/AshenSpire.html, ${SHAPES.length} shape(s)
+BOUNDARY: headless Chromium on ${PLATFORM}, dist/AshenSpire.html, ${SHAPES.length} shape(s)
           x ${UISIZES.length} UI size(s) x ${TEXT.length} text size(s), phone shapes first
-          (his ordering, 2026-08-08)${MOBILE_ONLY ? '; --mobile, so 1200x730 was NOT measured and this run is silent about desktop' : ''}${QUICK ? `; --quick, so this is ${EXPECT_CELLS} of ${FULL_CELLS} cells and a PASS here is a pass over a TENTH of the space, not over it` : ''}. Every height is a
+          (his ordering, 2026-08-08)${MOBILE_ONLY ? '; --mobile, so 1200x730 was NOT measured and this run is silent about desktop' : ''}${QUICK ? `; --quick, so this is ${EXPECT_CELLS} of ${FULL_CELLS} cells and a PASS here is a pass over ${EXPECT_CELLS}/${FULL_CELLS} of the space, not over it` : ''}. Every height is a
           RENDERED rect; the floor is a probe element the browser sized, never
-          a parsed calc() token. It says nothing about Windows, about a real
+          a parsed calc() token. It says nothing about ${OTHER_PLATFORMS}, about a real
           finger on real glass, about whether ${MIN} is WISE rather than legal,
           or about any control outside the four selectors above — the toggles,
           the sliders and the ✕ buttons are still under the floor and are still
