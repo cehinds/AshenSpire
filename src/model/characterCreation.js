@@ -1,7 +1,7 @@
 // Pure character-creation configuration reads and validation.
 
 const SIDES = Object.freeze(['left', 'right']);
-const CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
+const REQUIRED_CLASS_FIELDS = Object.freeze(['armourIds', 'handIds', 'relicIds']);
 const CHOICE_VIEWS = Object.freeze(['list', 'grid']);
 const EQUIPMENT_SECTION_KINDS = Object.freeze(['armour', 'hand', 'slot', 'relic']);
 
@@ -9,12 +9,30 @@ function config(source) {
   return (source && source.characterCreation) || source || {};
 }
 
+function rows(source, key) {
+  const value = source && source[key];
+  return value && typeof value.all === 'function' ? value.all() : (Array.isArray(value) ? value : []);
+}
+
+function creationSlotFields(cfg) {
+  return (Array.isArray(cfg.equipmentSections) ? cfg.equipmentSections : [])
+    .filter((row) => row && row.kind === 'slot' && typeof row.id === 'string' && row.id)
+    .map((row) => `${row.id}Ids`);
+}
+
 export function characterCreationProblems(source) {
   const cfg = config(source);
   const problems = [];
-  const allowedRoot = new Set(['spritePreviewSide', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
+  const allowedRoot = new Set(['spritePreviewSide', 'visibleModeIds', 'layout', 'equipmentSections', 'classes', 'keepsakes']);
   for (const key of Object.keys(cfg || {})) if (!allowedRoot.has(key)) problems.push(`characterCreation.${key}: Unknown field`);
   if (!SIDES.includes(cfg.spritePreviewSide)) problems.push(`characterCreation.spritePreviewSide: must be ${SIDES.join('|')}`);
+  const modeIds = new Set(rows(source, 'creationModes').filter((row) => row && typeof row.id === 'string').map((row) => row.id));
+  if (!Array.isArray(cfg.visibleModeIds) || cfg.visibleModeIds.length < 1) {
+    problems.push('characterCreation.visibleModeIds: must contain at least one creation mode');
+  } else {
+    if (new Set(cfg.visibleModeIds).size !== cfg.visibleModeIds.length) problems.push('characterCreation.visibleModeIds: contains duplicate ids');
+    for (const id of cfg.visibleModeIds) if (!modeIds.has(id)) problems.push(`characterCreation.visibleModeIds: unknown creation mode '${id}'`);
+  }
   const layout = cfg.layout;
   if (!layout || typeof layout !== 'object' || Array.isArray(layout)) {
     problems.push('characterCreation.layout: must be an object');
@@ -47,6 +65,7 @@ export function characterCreationProblems(source) {
       if (typeof row.label !== 'string' || !row.label) problems.push(`${path}.label: must be non-empty`);
       if (!EQUIPMENT_SECTION_KINDS.includes(row.kind)) problems.push(`${path}.kind: must be ${EQUIPMENT_SECTION_KINDS.join('|')}`);
       if (row.kind === 'hand' && !['leftHand', 'rightHand'].includes(row.slot)) problems.push(`${path}.slot: hand sections require leftHand|rightHand`);
+      if (row.kind === 'slot' && (typeof row.slot !== 'string' || !row.slot)) problems.push(`${path}.slot: slot sections require a target equipment slot`);
     }
     const requireExactlyOne = (role, matches) => {
       const count = sections.filter((row) => row && typeof row === 'object' && !Array.isArray(row) && matches(row)).length;
@@ -74,9 +93,18 @@ export function characterCreationProblems(source) {
   const relicIds = new Set(relics);
   const armaments = Array.isArray(equipment.armaments) ? equipment.armaments : [];
   const armour = Array.isArray(equipment.armour) ? equipment.armour : [];
+  const slots = Array.isArray(equipment.slots) ? equipment.slots : [];
   const armamentIds = new Set(armaments
     .filter((row) => row && typeof row === 'object')
     .map((row) => row.id));
+  const slotFields = creationSlotFields(cfg);
+  const classFields = new Set([...REQUIRED_CLASS_FIELDS, ...slotFields]);
+  for (const [index, section] of (Array.isArray(sections) ? sections : []).entries()) {
+    if (!section || section.kind !== 'slot' || typeof section.slot !== 'string') continue;
+    if (!slots.some((row) => row && row.id === section.slot)) {
+      problems.push(`characterCreation.equipmentSections.${index}.slot: unknown equipment slot '${section.slot}'`);
+    }
+  }
   for (const [classId, row] of Object.entries(cfg.classes)) {
     const path = `characterCreation.classes.${classId}`;
     if (!classIds.has(classId)) problems.push(`${path}: unknown class`);
@@ -84,14 +112,19 @@ export function characterCreationProblems(source) {
       problems.push(`${path}: must be an object`);
       continue;
     }
-    for (const key of Object.keys(row)) if (!CLASS_FIELDS.includes(key)) problems.push(`${path}.${key}: Unknown field`);
-    for (const field of CLASS_FIELDS) {
+    for (const key of Object.keys(row)) if (!classFields.has(key)) problems.push(`${path}.${key}: Unknown field`);
+    for (const field of REQUIRED_CLASS_FIELDS) {
       const values = row[field];
       if (!Array.isArray(values) || values.length < 2) {
         problems.push(`${path}.${field}: must contain at least two choices`);
         continue;
       }
       if (new Set(values).size !== values.length) problems.push(`${path}.${field}: contains duplicate ids`);
+    }
+    for (const field of slotFields) {
+      const values = row[field];
+      if (!Array.isArray(values)) problems.push(`${path}.${field}: must be an array`);
+      else if (new Set(values).size !== values.length) problems.push(`${path}.${field}: contains duplicate ids`);
     }
     const armourIds = Array.isArray(row.armourIds) ? row.armourIds : [];
     const handIds = Array.isArray(row.handIds) ? row.handIds : [];
@@ -102,6 +135,17 @@ export function characterCreationProblems(source) {
       }
     }
     for (const id of handIds) if (!armamentIds.has(id)) problems.push(`${path}.handIds: unknown armament '${id}'`);
+    for (const section of sections.filter((candidate) => candidate && candidate.kind === 'slot')) {
+      const field = `${section.id}Ids`;
+      const targetSlot = slots.find((candidate) => candidate && candidate.id === section.slot);
+      for (const id of Array.isArray(row[field]) ? row[field] : []) {
+        const piece = armaments.find((candidate) => candidate && candidate.id === id);
+        if (!piece) problems.push(`${path}.${field}: unknown armament '${id}'`);
+        else if (!fitsCreationHandSlot({ equipment: { slots } }, section.slot, piece)) {
+          problems.push(`${path}.${field}: armament '${id}' does not fit slot '${section.slot}'`);
+        }
+      }
+    }
     for (const id of configuredRelicIds) if (!relicIds.has(id)) problems.push(`${path}.relicIds: unknown relic '${id}'`);
     const baselineKit = (Array.isArray(equipment.startingKits) ? equipment.startingKits : [])
       .find((candidate) => candidate && candidate.classId === classId && candidate.baseline === true);
@@ -134,6 +178,16 @@ export function classCreationConfig(registries, classId) {
   return row;
 }
 
+export function creationModeViews(registries) {
+  const ids = config(registries).visibleModeIds;
+  if (!Array.isArray(ids) || !ids.length) throw new Error('characterCreation.visibleModeIds: must contain at least one creation mode');
+  return ids.map((id) => {
+    const mode = rows(registries, 'creationModes').find((row) => row && row.id === id);
+    if (!mode) throw new Error(`characterCreation.visibleModeIds: creation mode '${id}' does not resolve`);
+    return mode;
+  });
+}
+
 export function creationArmourChoices(registries, classId) {
   const ids = classCreationConfig(registries, classId).armourIds;
   return ids.map((id) => (registries.equipment.armour || []).find((row) => row.classId === classId && row.id === id));
@@ -155,6 +209,56 @@ export function creationHandChoices(registries, classId, slotId = null) {
 
 export function creationRelicChoices(registries, classId) {
   return classCreationConfig(registries, classId).relicIds.map((id) => registries.relics.get(id));
+}
+
+function strictArmamentChoices(registries, classId, field) {
+  return (classCreationConfig(registries, classId)[field] || []).map((id) => {
+    const piece = (registries.equipment.armaments || []).find((row) => row && row.id === id);
+    if (!piece) throw new Error(`characterCreation.classes.${classId}.${field}: '${id}' does not resolve`);
+    return piece;
+  });
+}
+
+/**
+ * Pure projection for the Starting Equipment disclosure. Authored order is
+ * preserved, but a section is visible only when every authored id resolves and
+ * at least one legal choice remains. `nextId` therefore owns auto-advance and
+ * focus order after empty sections are removed.
+ */
+export function creationEquipmentSectionViews(registries, classId, { armourChoices = null } = {}) {
+  const sections = config(registries).equipmentSections;
+  if (!Array.isArray(sections)) throw new Error('characterCreation.equipmentSections: must be an array');
+  const projected = sections.map((section) => {
+    let choices;
+    if (section.kind === 'armour') {
+      choices = armourChoices || creationArmourChoices(registries, classId);
+      for (const piece of choices) {
+        if (!piece || piece.classId !== classId) throw new Error(`characterCreation.classes.${classId}.armourIds: choice does not resolve for class '${classId}'`);
+      }
+    } else if (section.kind === 'hand') {
+      choices = strictArmamentChoices(registries, classId, 'handIds')
+        .filter((piece) => fitsCreationHandSlot(registries, section.slot, piece));
+    } else if (section.kind === 'relic') {
+      choices = creationRelicChoices(registries, classId);
+    } else if (section.kind === 'slot') {
+      const field = `${section.id}Ids`;
+      const slot = (registries.equipment.slots || []).find((row) => row && row.id === section.slot);
+      if (!slot) throw new Error(`characterCreation.equipmentSections.${section.id}.slot: '${section.slot}' does not resolve`);
+      choices = strictArmamentChoices(registries, classId, field);
+      for (const piece of choices) {
+        if (!fitsCreationHandSlot(registries, section.slot, piece)) {
+          throw new Error(`characterCreation.classes.${classId}.${field}: '${piece.id}' does not fit equipment slot '${section.slot}'`);
+        }
+      }
+    } else {
+      throw new Error(`characterCreation.equipmentSections.${section.id || '?'}: unknown kind '${section.kind}'`);
+    }
+    return Object.freeze({ ...section, choices: Object.freeze([...choices]) });
+  }).filter((section) => section.choices.length > 0);
+  return Object.freeze(projected.map((section, index) => Object.freeze({
+    ...section,
+    nextId: projected[index + 1]?.id || null,
+  })));
 }
 
 export function selectStartingHand(current, targetHand, itemId) {
