@@ -213,52 +213,152 @@ const { spawnSync } = require('node:child_process');
 const parentPid = Number(process.env.QA18_WATCH_PARENT);
 const childPid = Number(process.env.QA18_WATCH_CHILD);
 const scope = process.env.QA18_WATCH_SCOPE;
-const privateRoot = process.env.QA18_WATCH_ROOT;
-const donePath = process.env.QA18_WATCH_DONE;
+const watchPath = process.env.QA18_WATCH_PATH;
+let forcedRemoveFailures = Number(process.env.QA18_WATCH_FORCE_REMOVE_FAILURES || 0);
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 const sleep = (ms) => { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch {} };
 const kill = () => {
+  if (!(childPid > 0)) return;
   if (process.platform === 'win32') spawnSync('taskkill.exe', ['/PID', String(childPid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
   else { try { process.kill(-childPid, 'SIGKILL'); } catch { try { process.kill(childPid, 'SIGKILL'); } catch {} } }
 };
+const remove = () => {
+  if (forcedRemoveFailures > 0) {
+    forcedRemoveFailures -= 1;
+    throw new Error('controlled watchdog deletion failure');
+  }
+  rmSync(watchPath, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 });
+};
 setInterval(() => {
-  if (existsSync(donePath) || !existsSync(privateRoot)) process.exit(0);
+  if (!existsSync(watchPath)) process.exit(0);
   if (alive(parentPid)) return;
   kill();
   sleep(750);
-  try { rmSync(privateRoot, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 }); } catch {}
-  // A child that escaped the first tree kill can recreate its profile. Sweep
-  // once more after removal, then remove the exact private root again.
+  try { remove(); } catch {}
+  // A child that escaped the first tree kill can recreate its profile. Keep
+  // ownership and retry until the watched scope/root is durably absent. The
+  // process must never exit merely because a bounded deletion attempt failed.
   kill();
   sleep(250);
-  try { rmSync(privateRoot, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 }); } catch {}
-  process.exit(0);
+  try { remove(); } catch {}
+  if (!existsSync(watchPath) && !alive(childPid)) process.exit(0);
 }, 200);
 `;
 
-function startWatchdog(child, scope, privateRoot) {
-  const donePath = join(privateRoot, `.watchdog-${child.pid}.done`);
+function startWatchdog(child, scope, privateRoot, { forceRemoveFailures = 0, watchPath = scope } = {}) {
   const watchdog = spawn(process.execPath, ['--input-type=commonjs', '--eval', WATCHDOG_SCRIPT], {
     detached: true, windowsHide: true, stdio: 'ignore',
     env: {
       ...process.env,
       QA18_WATCH_PARENT: String(process.pid), QA18_WATCH_CHILD: String(child.pid),
-      QA18_WATCH_SCOPE: scope, QA18_WATCH_ROOT: privateRoot, QA18_WATCH_DONE: donePath,
+      QA18_WATCH_SCOPE: scope, QA18_WATCH_ROOT: privateRoot, QA18_WATCH_PATH: watchPath,
+      QA18_WATCH_FORCE_REMOVE_FAILURES: String(forceRemoveFailures),
     },
   });
   watchdog.unref();
-  return { watchdog, donePath };
+  return { watchdog, watchPath };
 }
+
+const WATCHDOG_PLANT_CHILD = String.raw`
+const { mkdirSync, writeFileSync } = require('node:fs');
+const { join } = require('node:path');
+const net = require('node:net');
+const scope = process.argv[1];
+mkdirSync(join(scope, 'rebind-capture-watchdog-plant'), { recursive: true });
+const server = net.createServer(() => {});
+server.listen(0, '127.0.0.1', () => {
+  writeFileSync(join(scope, 'watchdog-child.ready'), String(server.address().port));
+});
+setInterval(() => {}, 1000);
+`;
+
+async function watchdogPlantParent(scope) {
+  mkdirSync(scope, { recursive: true });
+  const child = spawn(process.execPath, ['--eval', WATCHDOG_PLANT_CHILD, scope], {
+    detached: true, windowsHide: true, stdio: 'ignore',
+    env: { ...process.env, TEMP: scope, TMP: scope, TMPDIR: scope },
+  });
+  startWatchdog(child, scope, scope, { forceRemoveFailures: 2 });
+  for (let i = 0; i < 100; i += 1) {
+    const live = resourceCensus(scope);
+    if (!live.unknown && live.processes > 0 && live.listeners > 0 && live.profiles > 0) {
+      console.log(`QA18 WATCHDOG PLANT READY p/l/profile=${live.processes}/${live.listeners}/${live.profiles}`);
+      await new Promise(() => {});
+    }
+    await wait(100);
+  }
+  throw new Error('watchdog plant child resources never became observable');
+}
+
+async function watchdogInterruptionPlant() {
+  const scope = mkdtempSync(join(tmpdir(), 'q18-watchdog-'));
+  let stdout = '';
+  let code = null;
+  let signal = null;
+  let fallbackCleanup = false;
+  const parent = spawn(process.execPath, [fileURLToPath(import.meta.url), `--qa18-watchdog-parent=${scope}`], {
+    detached: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  parent.stdout.on('data', (data) => { stdout += data; });
+  parent.stderr.on('data', (data) => { stdout += data; });
+  const closed = new Promise((done) => parent.once('close', (exitCode, exitSignal) => {
+    code = exitCode; signal = exitSignal; done();
+  }));
+  try {
+    for (let i = 0; i < 150 && !stdout.includes('QA18 WATCHDOG PLANT READY'); i += 1) await wait(100);
+    const before = resourceCensus(scope);
+    const observed = stdout.includes('QA18 WATCHDOG PLANT READY') && !before.unknown
+      && before.processes > 0 && before.listeners > 0 && before.profiles > 0 && before.entries > 0;
+    if (process.platform === 'win32') {
+      spawnSync('taskkill.exe', ['/PID', String(parent.pid), '/F'], { windowsHide: true, stdio: 'ignore', timeout: 15000 });
+    } else {
+      try { process.kill(parent.pid, 'SIGKILL'); } catch { /* already gone */ }
+    }
+    await Promise.race([closed, wait(10000)]);
+    let after = resourceCensus(scope);
+    for (let i = 0; i < 100 && (after.unknown || after.processes || after.listeners || after.profiles || after.entries || after.scopeExists); i += 1) {
+      await wait(100);
+      after = resourceCensus(scope);
+    }
+    const nonzeroParent = signal || (Number.isInteger(code) && code !== 0);
+    const durableZero = !after.unknown && after.processes === 0 && after.listeners === 0
+      && after.profiles === 0 && after.entries === 0 && !after.scopeExists;
+    const ok = observed && nonzeroParent && durableZero;
+    console.log(`${ok ? 'PASS' : 'RED '} WATCHDOG INTERRUPTION/CLEANUP-FAILURE: parent code=${code ?? 'null'} signal=${signal || '-'}; `
+      + `before p/l/profile/entries=${before.processes ?? 'UNKNOWN'}/${before.listeners ?? 'UNKNOWN'}/${before.profiles}/${before.entries}; `
+      + `after=${after.processes ?? 'UNKNOWN'}/${after.listeners ?? 'UNKNOWN'}/${after.profiles}/${after.entries}; root=${after.scopeExists ? 'PRESENT' : 'absent'}; forced deletion failures=2`);
+    return ok;
+  } finally {
+    const beforeFallback = resourceCensus(scope);
+    if (beforeFallback.unknown || beforeFallback.processes || beforeFallback.listeners || beforeFallback.profiles || beforeFallback.entries || beforeFallback.scopeExists) {
+      fallbackCleanup = true;
+      try { killScoped(scope); } catch { /* exact fresh plant root only */ }
+      try { removePrivate(scope, scope); } catch { /* surfaced by final census below */ }
+    }
+    const finalCensus = resourceCensus(scope);
+    console.log(`WATCHDOG PLANT FINAL: fallback=${fallbackCleanup ? 'yes' : 'no'}; p/l/profile/entries=${finalCensus.processes ?? 'UNKNOWN'}/${finalCensus.listeners ?? 'UNKNOWN'}/${finalCensus.profiles}/${finalCensus.entries}; root=${finalCensus.scopeExists ? 'PRESENT' : 'absent'}`);
+  }
+}
+
+const watchdogParentArg = process.argv.find((arg) => arg.startsWith('--qa18-watchdog-parent='));
+if (watchdogParentArg) {
+  await watchdogPlantParent(watchdogParentArg.slice('--qa18-watchdog-parent='.length));
+  process.exit(0);
+}
+if (process.argv.includes('--watchdog-selftest')) process.exit(await watchdogInterruptionPlant() ? 0 : 1);
 
 function processAlive(child) {
   if (!child?.pid) return false;
   try { process.kill(child.pid, 0); return true; } catch { return false; }
 }
 
-async function stopWatchdog(run) {
+async function stopWatchdog(run, durableZero) {
   if (!run?.watchdog) return false;
-  try { writeFileSync(run.donePath, 'done\n'); } catch { /* root may already be gone */ }
-  for (let i = 0; i < 10 && processAlive(run.watchdog); i += 1) await wait(100);
+  if (!durableZero) return processAlive(run.watchdog);
+  // No acknowledgement file exists. The owner observes its watched path gone
+  // and exits; only after the parent has independently proved a trustworthy
+  // zero census may a slow watcher be stopped.
+  for (let i = 0; i < 30 && processAlive(run.watchdog); i += 1) await wait(100);
   if (processAlive(run.watchdog)) { try { run.watchdog.kill('SIGKILL'); } catch { /* already gone */ } }
   await wait(100);
   return processAlive(run.watchdog);
@@ -289,10 +389,12 @@ async function cleanupRun(run) {
   try { killScoped(run.scope); } catch (error) { run.cleanupError = error; }
   await wait(500);
   try { removePrivate(run.scope, run.privateRoot); } catch (error) { run.cleanupError ||= error; }
-  const watchdogAlive = await stopWatchdog(run);
   await wait(250);
   const after = resourceCensus(run.scope);
-  return { before, after, watchdogAlive, error: run.cleanupError || null };
+  const durableZero = !run.cleanupError && !after.unknown && after.processes === 0 && after.listeners === 0
+    && after.profiles === 0 && after.entries === 0 && !after.scopeExists;
+  const watchdogAlive = await stopWatchdog(run, durableZero);
+  return { before, after, watchdogAlive, durableZero, error: run.cleanupError || null };
 }
 
 function runScopedTool({
@@ -323,7 +425,7 @@ function runScopedTool({
       terminal = code != null || signal != null;
       const run = [...activeSelftestRuns].find((item) => item.child === child);
       const cleanup = await cleanupRun(run || { child, scope, privateRoot });
-      if (run) activeSelftestRuns.delete(run);
+      if (run && cleanup.durableZero) activeSelftestRuns.delete(run);
       done({
         code, signal, timedOut, terminal, spawnError, out: `${stdout}\n${stderr}`,
         elapsedMs: Date.now() - started, cleanup, liveCensus, liveCensusObserved,
@@ -392,7 +494,7 @@ function cleanChild(result) {
 
 function cleanupIsZero(cleanup) {
   const a = cleanup.after;
-  return !cleanup.error && !cleanup.watchdogAlive && !cleanup.before.unknown && !a.unknown
+  return cleanup.durableZero && !cleanup.error && !cleanup.watchdogAlive && !cleanup.before.unknown && !a.unknown
     && a.processes === 0 && a.listeners === 0
     && a.profiles === 0 && a.entries === 0 && !a.scopeExists;
 }
@@ -436,6 +538,7 @@ async function selftest() {
   installSelftestCleanupGuards();
   const privateRoot = mkdtempSync(join(tmpdir(), 'q18-'));
   activeSelftestRoots.add(privateRoot);
+  const rootWatchdog = startWatchdog({ pid: 0 }, privateRoot, privateRoot, { watchPath: privateRoot });
   const root = copySelftestTree(privateRoot);
   let passed = 0;
   let failed = 0;
@@ -475,6 +578,9 @@ async function selftest() {
     ];
     const censusDecoderOk = censusDecoderGuards.every(Boolean);
     console.log(`${censusDecoderOk ? 'PASS' : 'RED '} CENSUS DECODER: ${censusDecoderGuards.filter(Boolean).length}/${censusDecoderGuards.length} good/error/timeout/signal/nonterminal/abnormal/stderr/empty/unparsable/shape guards held`);
+
+    const watchdogPlantOk = await watchdogInterruptionPlant();
+    if (watchdogPlantOk) passed++; else failed++;
 
     const spawnScope = join(privateRoot, `r${++childIndex}-spawn-failure`);
     const spawnControl = await runScopedTool({
@@ -557,8 +663,16 @@ async function selftest() {
     }
   } finally {
     cleanupActiveSelftests();
-    removePrivate(privateRoot, privateRoot);
-    activeSelftestRoots.delete(privateRoot);
+    let rootCleanupError = null;
+    try { removePrivate(privateRoot, privateRoot); } catch (error) { rootCleanupError = error; }
+    const rootAfter = resourceCensus(privateRoot);
+    const rootDurableZero = !rootCleanupError && !rootAfter.unknown && rootAfter.processes === 0
+      && rootAfter.listeners === 0 && rootAfter.profiles === 0 && rootAfter.entries === 0 && !rootAfter.scopeExists;
+    const rootWatchdogAlive = await stopWatchdog(rootWatchdog, rootDurableZero);
+    const rootCleanupOk = rootDurableZero && !rootWatchdogAlive;
+    console.log(`${rootCleanupOk ? 'PASS' : 'RED '} ROOT CLEANUP OWNER: p/l/profile/entries=${rootAfter.processes ?? 'UNKNOWN'}/${rootAfter.listeners ?? 'UNKNOWN'}/${rootAfter.profiles}/${rootAfter.entries}; root=${rootAfter.scopeExists ? 'PRESENT' : 'absent'}; watchdog=${rootWatchdogAlive ? 'LIVE' : 'gone'}`);
+    if (!rootCleanupOk) failed++;
+    else activeSelftestRoots.delete(privateRoot);
   }
   const total = passed + failed;
   console.log(`RESOURCE CENSUS: active children=${activeSelftestRuns.size}; private root absent=${!existsSync(privateRoot)}`);
