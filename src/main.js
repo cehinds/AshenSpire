@@ -1107,13 +1107,16 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(initialView = '') {
+function showArmoury(request = '') {
+  const initialView = typeof request === 'string' ? request : '';
+  const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
     meta: armouryMeta,
+    destination,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {

@@ -118,6 +118,18 @@ const LAYOUTS = {
   'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
 };
 
+const ARMOURY_DESTINATIONS = Object.freeze({
+  cards: Object.freeze({ view: 'grid', region: 'cards' }),
+  equipment: Object.freeze({ view: 'rack', region: null }),
+  character: Object.freeze({ view: 'grid', region: null }),
+});
+
+/** Translate a semantic action destination inside the Armoury boundary. */
+export function armouryDestinationPlan(destination) {
+  if (typeof destination !== 'string' || !Object.hasOwn(ARMOURY_DESTINATIONS, destination)) return null;
+  return { ...ARMOURY_DESTINATIONS[destination] };
+}
+
 /** Every declared view id, in authored order. The one enumeration. */
 export function viewIds() {
   return (CFG().views || []).map((v) => (v && typeof v === 'object' ? v.id : v));
@@ -586,8 +598,13 @@ function inventoryReveal(registries, row, {
  *             route the change through the engine intent that charges for it
  */
 export function mountEquipment(host, {
-  registries, run, meta = {}, inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
+  registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquipmentChanged,
 }) {
+  const destinationPlan = destination ? armouryDestinationPlan(destination) : null;
+  if (destination && !destinationPlan) {
+    console.error(`mountEquipment(): unknown action destination ${JSON.stringify(destination)}; refusing to open.`);
+    return null;
+  }
   closeFlaskActionMenu({ cancelled: true });
   // THE DEFAULT THAT DECIDED WHAT THE MUTATION WAS TOLD (#98, Vira). This read
   // `inCombat = false`. #95 moved the gate off the screen and onto the mutation
@@ -658,7 +675,7 @@ export function mountEquipment(host, {
     console.warn(`[armoury] saved view ${JSON.stringify(stored)} is no longer declared`
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
-  let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
+  let view = destinationPlan?.view || ((stored && IDS.includes(stored)) ? stored : shapeDefault);
   const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
@@ -674,6 +691,7 @@ export function mountEquipment(host, {
     ? Object.fromEntries(armouryTraySession.folded) : null;
   const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
   folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
+  if (destinationPlan?.region) folded.set(destinationPlan.region, false);
   const clampTrayHeight = (value) => Math.min(
     layout.trays.maximumHeightRatio,
     Math.max(layout.trays.minimumHeightRatio, Number(value)),
@@ -2079,6 +2097,17 @@ export function mountEquipment(host, {
   };
   document.addEventListener('keydown', onKey);
 
+  const focusArmouryDestination = () => {
+    if (!destinationPlan || !wrap.isConnected) return;
+    const target = destinationPlan.region
+      ? wrap.querySelector(`[data-fold="${destinationPlan.region}"]`)
+      : wrap.querySelector(`[data-surface="armouryView"] [data-member="${destinationPlan.view}"]`);
+    if (!target) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  };
+
   draw();
+  if (destinationPlan) queueMicrotask(focusArmouryDestination);
   return { close, redraw: draw };
 }

@@ -28,7 +28,7 @@ import { passiveFlag } from '../../model/registries.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { veilIsOpen } from '../components/veil.js';
-import { matchAction, isEngaged, focusFirst, actionHint } from '../input.js';
+import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, actionHint } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { classGlyph, tintCss } from '../assets.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
@@ -350,10 +350,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       if (onMenu) onMenu('settings');
-    } else if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
-      if (onArmoury) onArmoury();
+    } else if (armouryAction) {
+      if (onArmoury) onArmoury(armouryAction);
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
