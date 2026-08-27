@@ -174,6 +174,12 @@ post-commit `equipmentChanged` event carries the loadout signatures and changed 
 combat, save, and future presentation consumers share the same transition instead of adding
 Rogue-, weapon-, or screen-specific controllers.
 
+Exact combat restoration stays on this same boundary: after the existing snapshot shape and
+reference validators accept the stored record, save migration composes one plan from the
+snapshot's authoritative loadout and applies it to the combined `draw`/`hand`/`discard`/`exhaust`
+attack instances. The result replaces the stale top-level loadout projection before resume. No
+snapshot-specific package rules, renderer controller, or second composition service exists.
+
 ## Migration order
 
 1. Contracts, validators, renderer registry, and behavior binder.

@@ -28,7 +28,7 @@
 //      for lost.
 
 import { serializeRun, deserializeRun, initializeRunDerivedStats, initializeRunFlaskCharges, RUN_SCHEMA_VERSION } from '../model/state.js';
-import { createLoadout, normalizeArmamentLocations, stampDeck } from '../model/loadout.js';
+import { createLoadout, normalizeArmamentLocations, stampDeck, WeaponDeckCompositionService } from '../model/loadout.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
 import { openLedger, closeLedger, note, readLedger } from '../model/healLedger.js';
@@ -61,6 +61,51 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
 function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
+}
+
+const COMBAT_SNAPSHOT_PILE_ORDER = Object.freeze(['draw', 'hand', 'discard', 'exhaust']);
+
+/**
+ * Migrate one exact active-combat snapshot through the same weapon-package
+ * composer as an ordinary run. The snapshot loadout is authoritative while a
+ * combat is active; the top-level run loadout is only its persisted projection.
+ * Work on a clone so a refused plan cannot leave a partially rebound snapshot.
+ */
+function migrateCombatSnapshotWeaponCards(registries, run) {
+  const stored = run.combatEntered?.snapshot;
+  if (!stored) return;
+  const snapshot = structuredClone(stored);
+  const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
+  const attacks = cards.filter((card) => card.equipmentRole === 'attack');
+
+  if (snapshot.loadout === null) {
+    if (attacks.length) throw new Error('combat snapshot has generated attack slots but no authoritative loadout');
+    return;
+  }
+
+  const classId = snapshot.player?.classId || run.class;
+  const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
+  if (attacks.length) {
+    // Full-pile order is the one legacy assignment door: draw, hand, discard,
+    // exhaust. No card moves; missing ids bind once to attack:0..N-1.
+    WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
+    stampDeck(registries, {
+      class: classId,
+      loadout: snapshot.loadout,
+      attributes: snapshot.attributes || run.attributes,
+      equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
+      equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
+      deck: cards,
+    }, cards, {
+      adoptEquipmentBonuses: false,
+      reconcileEquipmentPools: false,
+    });
+  }
+
+  // Commit only after validation and every pile rebind succeed. Resume then
+  // observes the exact same loadout in run state and restored combat state.
+  run.combatEntered.snapshot = snapshot;
+  run.loadout = structuredClone(snapshot.loadout);
 }
 
 /**
@@ -465,6 +510,7 @@ export function createSaveManager(storage) {
       // already owns a rules snapshot is only validated; a legacy run resolves
       // the current host rules and preserves existing HP/Mana deficits.
       try {
+        migrateCombatSnapshotWeaponCards(registries, run);
         initializeRunDerivedStats(run, registries, { preserveDeficits: true });
         // Every load crosses the same deterministic composition door. This is
         // also the one-time migration for legacy role-only attack instances:
