@@ -312,6 +312,13 @@ review action, and proves exact snapshot identity at 1200×730 and 390×844.
 Its `--selftest` corpus plants a restarted encounter, a missing commit, and a
 restore that drops the saved hand through copied real source doors.
 
+Weapon-package migration adds no component ID or renderer family. At the load
+door, an active exact snapshot keeps its saved loadout authoritative and reuses
+`WeaponDeckCompositionService` across the stable generated attacks in draw,
+hand, discard, and exhaust. The player-facing Armoury remains the existing
+`armoury.cardsCard`, `armoury.cardRow`, and `equipment-comparison` composition;
+snapshot migration is model/service state only.
+
 Load and Quit Without Saving use `confirmation-modal` rather than the browser's
 native prompt. `node tools/confirmation-modal.mjs` proves both commands from Map
 and Combat, cancellation/focus restoration, layered Escape, exact-once commit,

@@ -145,6 +145,7 @@ export function createCombat({
     instanceId: c.instanceId,
     cardId: c.cardId,
     upgraded: !!c.upgraded,
+    ...(c.acquiredAt !== undefined ? { acquiredAt: structuredClone(c.acquiredAt) } : {}),
     // Equipment numbers ride on the instance (model/loadout.js) — copy them in
     // or every card would come back to its bare-handed self at combat start.
     ...(c.mods && c.mods.length ? { mods: [...c.mods] } : {}),

@@ -14,6 +14,7 @@ import {
 } from '../src/model/loadout.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
+import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,6 +69,77 @@ function makeRun(registries, rightHand, leftHand) {
 const attacks = (run) => run.deck.filter((card) => card.equipmentRole === 'attack');
 const profiles = (run) => attacks(run).map((card) => card.profileId);
 const hands = (run) => attacks(run).map((card) => card.sourceHand || null);
+const pileNames = ['draw', 'hand', 'discard', 'exhaust'];
+
+function makeCombatFromRun(registries, run, seed = 0x5157) {
+  return createCombat({
+    registries,
+    rng: createRng(seed),
+    player: {
+      classId: run.class,
+      attributes: run.attributes,
+      maxHp: run.maxHp,
+      hp: run.hp,
+      maxMana: run.maxMana,
+      mana: run.mana,
+      maxStamina: run.maxStamina,
+      stamina: run.stamina,
+      energyMax: run.energyMax,
+      drawPerTurn: run.drawPerTurn,
+      deck: run.deck,
+      relicIds: run.relics,
+      loadout: run.loadout,
+      equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
+    },
+    enemyIds: ['fellWarden'],
+  });
+}
+
+function spreadGeneratedAttacksAcrossPiles(combat) {
+  const generated = pileNames.flatMap((name) => combat.piles[name]).filter((card) => card.equipmentRole === 'attack');
+  for (const name of pileNames) combat.piles[name] = combat.piles[name].filter((card) => card.equipmentRole !== 'attack');
+  generated.forEach((card, index) => combat.piles[pileNames[index % pileNames.length]].push(card));
+  return generated;
+}
+
+function snapshotAttackRows(snapshot) {
+  return pileNames.flatMap((pile) => (snapshot.piles[pile] || [])
+    .filter((card) => card.equipmentRole === 'attack')
+    .map((card) => ({ pile, card })));
+}
+
+function snapshotIdentity(snapshot) {
+  return snapshotAttackRows(snapshot).map(({ pile, card }) => ({
+    pile,
+    instanceId: card.instanceId,
+    upgraded: card.upgraded,
+    acquiredAt: card.acquiredAt,
+  }));
+}
+
+function activeSnapshotRun(registries, snapshotRight, snapshotLeft, topRight = snapshotRight, topLeft = snapshotLeft) {
+  const source = makeRun(registries, snapshotRight, snapshotLeft);
+  attacks(source).forEach((card, index) => {
+    card.upgraded = index % 2 === 0;
+    card.acquiredAt = `snapshot-floor-${index}`;
+  });
+  const combat = makeCombatFromRun(registries, source);
+  spreadGeneratedAttacksAcrossPiles(combat);
+  const run = makeRun(registries, topRight, topLeft);
+  run.combatEntered = {
+    nodeId: 'weapon-snapshot-node',
+    encounterId: 'weapon-snapshot-encounter',
+    snapshot: serializeCombatSnapshot(combat),
+  };
+  return run;
+}
+
+function loadStoredRun(registries, run) {
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  storage.setItem(RUN_KEY, JSON.stringify(run));
+  return { storage, saves, loaded: saves.loadRun(registries) };
+}
 
 function sameCombatProjection(left, right) {
   const project = (card) => ({
@@ -257,7 +329,6 @@ const combat = createCombat({
   },
   enemyIds: ['fellWarden'],
 });
-const pileNames = ['hand', 'draw', 'discard', 'exhaust'];
 const generated = pileNames.flatMap((name) => combat.piles[name]).filter((card) => card.equipmentRole === 'attack');
 for (const name of pileNames) combat.piles[name] = combat.piles[name].filter((card) => card.equipmentRole !== 'attack');
 generated.forEach((card, index) => combat.piles[pileNames[index % pileNames.length]].push(card));
@@ -266,6 +337,94 @@ const liveAttacks = pileNames.flatMap((name) => combat.piles[name]).filter((card
 check(liveAttacks.length === 4 && liveAttacks.every((card) => card.profileId === 'daggerPierceAttack'), 'combat swap rebinds stable attacks in hand/draw/discard/exhaust');
 check(swapResult.events.filter((event) => event.type === 'equipmentChanged').length === 1, 'combat swap emits exactly one equipmentChanged event');
 check(liveAttacks.every((card) => resolveCard(baseRegistries, card).name === 'Piercing Flurry'), 'live pile cards resolve through their new package immediately after swap');
+
+const currentSnapshotRun = activeSnapshotRun(baseRegistries, 'straightSword', 'dagger');
+currentSnapshotRun.streamCounters.enemyAI = 7;
+currentSnapshotRun.streamCounters.shuffle = 11;
+const currentCountersBefore = JSON.stringify(currentSnapshotRun.streamCounters);
+const currentSnapshotBefore = JSON.stringify(currentSnapshotRun.combatEntered.snapshot);
+const currentSnapshotIdentity = JSON.stringify(snapshotIdentity(currentSnapshotRun.combatEntered.snapshot));
+check(JSON.stringify(snapshotAttackRows(currentSnapshotRun.combatEntered.snapshot).map(({ card }) => card.acquiredAt).sort())
+  === JSON.stringify(['snapshot-floor-0', 'snapshot-floor-1', 'snapshot-floor-2', 'snapshot-floor-3']), 'combat creation carries acquisition metadata into live generated attack piles');
+const currentSnapshotLoad = loadStoredRun(baseRegistries, currentSnapshotRun);
+check(!!currentSnapshotLoad.loaded, 'current combat snapshot passes the ordinary load/continue door');
+if (currentSnapshotLoad.loaded) {
+  const loadedSnapshot = currentSnapshotLoad.loaded.combatEntered.snapshot;
+  check(JSON.stringify(loadedSnapshot) === currentSnapshotBefore, 'current combat snapshot migration is byte-identical on first pass');
+  check(JSON.stringify(snapshotIdentity(loadedSnapshot)) === currentSnapshotIdentity, 'current snapshot preserves pile, instance, upgrade, and acquisition identity');
+  check(JSON.stringify(currentSnapshotLoad.loaded.streamCounters) === currentCountersBefore, 'snapshot migration preserves every named RNG stream counter');
+  const restoredRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
+  const controlRng = createRng(currentSnapshotLoad.loaded.seed, currentSnapshotLoad.loaded.streamCounters);
+  const normalizedCountersBeforeRestore = JSON.stringify(controlRng.getCounters());
+  const restored = restoreCombatSnapshot({ registries: baseRegistries, rng: restoredRng, snapshot: loadedSnapshot });
+  check(JSON.stringify(serializeCombatSnapshot(restored)) === currentSnapshotBefore, 'current snapshot restores without replaying combat or consuming state');
+  const countersAfterRestore = JSON.stringify(restoredRng.getCounters());
+  const restoredNextEnemyAi = restoredRng.float('enemyAI');
+  const controlNextEnemyAi = controlRng.float('enemyAI');
+  check(countersAfterRestore === normalizedCountersBeforeRestore && restoredNextEnemyAi === controlNextEnemyAi,
+    'snapshot restore consumes no RNG and preserves the next deterministic result',
+    `counters=${countersAfterRestore} next=${restoredNextEnemyAi}/${controlNextEnemyAi}`);
+  currentSnapshotLoad.saves.saveRun(currentSnapshotLoad.loaded);
+  const loadedAgain = currentSnapshotLoad.saves.loadRun(baseRegistries);
+  check(JSON.stringify(loadedAgain?.combatEntered?.snapshot) === JSON.stringify(loadedSnapshot), 'current snapshot composition is idempotent across a second save/load');
+}
+
+const legacySnapshotRun = activeSnapshotRun(baseRegistries, null, 'dagger', 'straightSword', null);
+const legacySnapshot = legacySnapshotRun.combatEntered.snapshot;
+const legacyStableState = JSON.stringify({
+  turn: legacySnapshot.turn,
+  phase: legacySnapshot.phase,
+  result: legacySnapshot.result,
+  player: legacySnapshot.player,
+  enemies: legacySnapshot.enemies,
+  eventLog: legacySnapshot.eventLog,
+  triggerState: legacySnapshot.triggerState,
+  idCounter: legacySnapshot.idCounter,
+});
+const legacyIdentity = JSON.stringify(snapshotIdentity(legacySnapshot));
+for (const { card } of snapshotAttackRows(legacySnapshot)) {
+  delete card.equipmentAttackSlotId;
+  delete card.equipmentPlanFingerprint;
+  delete card.sourceHand;
+  delete card.weaponId;
+  card.cardId = 'strike';
+  card.profileId = 'unarmedAttack';
+}
+const legacySnapshotLoad = loadStoredRun(baseRegistries, legacySnapshotRun);
+check(!!legacySnapshotLoad.loaded, 'legacy left-only combat snapshot migrates through load/continue');
+if (legacySnapshotLoad.loaded) {
+  const migrated = legacySnapshotLoad.loaded.combatEntered.snapshot;
+  const rows = snapshotAttackRows(migrated);
+  check(JSON.stringify(rows.map(({ card }) => card.equipmentAttackSlotId)) === JSON.stringify(['attack:0', 'attack:1', 'attack:2', 'attack:3']), 'legacy snapshot slots map once in draw/hand/discard/exhaust order');
+  check(rows.every(({ card }) => card.profileId === 'daggerPierceAttack' && card.sourceHand === 'left'), 'legacy snapshot uses its authoritative left-hand Dagger instead of stale top-level loadout');
+  check(JSON.stringify(snapshotIdentity(migrated)) === legacyIdentity, 'legacy snapshot keeps pile, instance, upgrade, and acquisition identity');
+  check(JSON.stringify({
+    turn: migrated.turn,
+    phase: migrated.phase,
+    result: migrated.result,
+    player: migrated.player,
+    enemies: migrated.enemies,
+    eventLog: migrated.eventLog,
+    triggerState: migrated.triggerState,
+    idCounter: migrated.idCounter,
+  }) === legacyStableState, 'snapshot migration preserves turn, combatants, events, triggers, and id counter');
+  check(JSON.stringify(legacySnapshotLoad.loaded.loadout) === JSON.stringify(migrated.loadout), 'authoritative active snapshot loadout replaces the stale top-level run loadout');
+}
+
+const invalidTwoHandedSnapshot = activeSnapshotRun(twoHandedRegistries, 'greatsword', null);
+invalidTwoHandedSnapshot.combatEntered.snapshot.loadout.sets.leftHand[0] = 'dagger';
+const invalidTwoHandedLoad = loadStoredRun(twoHandedRegistries, invalidTwoHandedSnapshot);
+check(invalidTwoHandedLoad.loaded === null && /two-handed weapon conflicts/.test(invalidTwoHandedLoad.saves.runStatus().reason || ''), 'invalid two-handed plus offhand snapshot fails closed by name');
+
+const invalidDuplicateSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+invalidDuplicateSnapshot.combatEntered.snapshot.loadout.sets.leftHand[0] = 'straightSword';
+const invalidDuplicateLoad = loadStoredRun(baseRegistries, invalidDuplicateSnapshot);
+check(invalidDuplicateLoad.loaded === null && /duplicate equipped armament/.test(invalidDuplicateLoad.saves.runStatus().reason || ''), 'invalid duplicate snapshot loadout fails closed by name');
+
+const danglingSnapshotRun = activeSnapshotRun(baseRegistries, null, 'dagger');
+snapshotAttackRows(danglingSnapshotRun.combatEntered.snapshot)[0].card.cardId = 'removedByContentPatch';
+const danglingSnapshotLoad = loadStoredRun(baseRegistries, danglingSnapshotRun);
+check(danglingSnapshotLoad.loaded === null && /piles\.draw\.cardId/.test(danglingSnapshotLoad.saves.runStatus().reason || ''), 'existing d163 snapshot reference validation runs before composition can mask an unknown card');
 
 console.log(`RESULT: ${failed ? `${failed}/${checks} weapon-card-package check(s) failed.` : `${checks}/${checks} weapon-card-package checks passed.`}`);
 process.exit(failed ? 1 : 0);

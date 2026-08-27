@@ -329,6 +329,14 @@ from tags, names, art, or kind. A conflicting off-hand, duplicate piece without 
 instance identity, or a claimed but invalid package fails closed; Unarmed is only the valid
 zero-weapon plan.
 
+An exact active-combat snapshot uses its own saved loadout as the authority. After snapshot shape
+and content-reference validation, the same service migrates the complete generated attack set in
+the fixed pile order `draw`, `hand`, `discard`, `exhaust`; no card moves between piles. The migrated
+snapshot loadout replaces the stale top-level run projection before continue. Package migration
+must not replay combat, consume RNG, reset turn/enemy/event/trigger state, or mask an unknown card
+reference. Invalid duplicate or explicit two-handed-plus-offhand snapshot loadouts are archived
+fail-closed rather than normalized or replaced with Unarmed.
+
 ### 3.9 Action queue
 
 Combat resolves through a FIFO **action queue** (mirrors StS's GameActionManager). Playing a card enqueues its opcodes as actions; each executed action may emit events; triggers (§3.6) may enqueue further actions. The queue drains fully before control returns to the UI.
