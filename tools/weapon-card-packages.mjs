@@ -12,7 +12,7 @@ import {
   equipPiece,
   stampDeck,
 } from '../src/model/loadout.js';
-import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
+import { createSaveManager, createMemoryStorage, RUN_ARCHIVE_KEY, RUN_KEY } from '../src/engine/save.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { createRng } from '../src/engine/rng.js';
@@ -137,8 +137,18 @@ function activeSnapshotRun(registries, snapshotRight, snapshotLeft, topRight = s
 function loadStoredRun(registries, run) {
   const storage = createMemoryStorage();
   const saves = createSaveManager(storage);
-  storage.setItem(RUN_KEY, JSON.stringify(run));
-  return { storage, saves, loaded: saves.loadRun(registries) };
+  const raw = JSON.stringify(run);
+  storage.setItem(RUN_KEY, raw);
+  const loaded = saves.loadRun(registries);
+  const archive = JSON.parse(storage.getItem(RUN_ARCHIVE_KEY) || '{"entries":[]}');
+  const archivedRaw = (archive.entries || []).some((entry) => entry.save === raw);
+  return { storage, saves, loaded, raw, archivedRaw };
+}
+
+function rejectedWithPreservedRaw(receipt, reason) {
+  return receipt.loaded === null
+    && receipt.archivedRaw
+    && reason.test(receipt.saves.runStatus().reason || '');
 }
 
 function sameCombatProjection(left, right) {
@@ -425,6 +435,43 @@ const danglingSnapshotRun = activeSnapshotRun(baseRegistries, null, 'dagger');
 snapshotAttackRows(danglingSnapshotRun.combatEntered.snapshot)[0].card.cardId = 'removedByContentPatch';
 const danglingSnapshotLoad = loadStoredRun(baseRegistries, danglingSnapshotRun);
 check(danglingSnapshotLoad.loaded === null && /piles\.draw\.cardId/.test(danglingSnapshotLoad.saves.runStatus().reason || ''), 'existing d163 snapshot reference validation runs before composition can mask an unknown card');
+
+const unknownArmamentSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+unknownArmamentSnapshot.combatEntered.snapshot.loadout.sets.rightHand[0] = 'noSuchArmament';
+const unknownArmamentLoad = loadStoredRun(baseRegistries, unknownArmamentSnapshot);
+check(rejectedWithPreservedRaw(unknownArmamentLoad, /loadout\.sets\.rightHand\[0\].*noSuchArmament/),
+  'unknown active snapshot armament fails closed and archives exact raw bytes', unknownArmamentLoad.saves.runStatus().reason || 'loaded');
+
+const missingRightHandSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+delete missingRightHandSnapshot.combatEntered.snapshot.loadout.sets.rightHand;
+const missingRightHandLoad = loadStoredRun(baseRegistries, missingRightHandSnapshot);
+check(rejectedWithPreservedRaw(missingRightHandLoad, /loadout\.sets\.rightHand must be an array/),
+  'missing snapshot rightHand set fails closed and archives exact raw bytes', missingRightHandLoad.saves.runStatus().reason || 'loaded');
+
+const activeIndexSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+activeIndexSnapshot.combatEntered.snapshot.loadout.active.rightHand = 99;
+const activeIndexLoad = loadStoredRun(baseRegistries, activeIndexSnapshot);
+check(rejectedWithPreservedRaw(activeIndexLoad, /loadout\.active\.rightHand.*in range/),
+  'out-of-range snapshot active index fails closed and archives exact raw bytes', activeIndexLoad.saves.runStatus().reason || 'loaded');
+
+const rolelessAttackSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+for (const { card } of snapshotAttackRows(rolelessAttackSnapshot.combatEntered.snapshot)) {
+  for (const field of ['equipmentRole', 'equipmentAttackSlotId', 'equipmentPlanFingerprint', 'sourceHand', 'sourceEquipmentInstanceId', 'weaponId', 'profileId', 'profileReceipt']) {
+    delete card[field];
+  }
+}
+const rolelessAttackLoad = loadStoredRun(baseRegistries, rolelessAttackSnapshot);
+check(rejectedWithPreservedRaw(rolelessAttackLoad, /attack instance count 0 does not match authored 4/),
+  'snapshot attacks stripped of role/package fields fail closed and archive exact raw bytes', rolelessAttackLoad.saves.runStatus().reason || 'loaded');
+
+const missingAttackSnapshot = activeSnapshotRun(baseRegistries, 'straightSword', null);
+for (const pile of pileNames) {
+  missingAttackSnapshot.combatEntered.snapshot.piles[pile] = missingAttackSnapshot.combatEntered.snapshot.piles[pile]
+    .filter((card) => card.equipmentRole !== 'attack');
+}
+const missingAttackLoad = loadStoredRun(baseRegistries, missingAttackSnapshot);
+check(rejectedWithPreservedRaw(missingAttackLoad, /attack instance count 0 does not match authored 4/),
+  'snapshot with all generated attacks removed fails closed and archives exact raw bytes', missingAttackLoad.saves.runStatus().reason || 'loaded');
 
 console.log(`RESULT: ${failed ? `${failed}/${checks} weapon-card-package check(s) failed.` : `${checks}/${checks} weapon-card-package checks passed.`}`);
 process.exit(failed ? 1 : 0);
