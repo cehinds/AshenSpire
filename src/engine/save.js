@@ -85,22 +85,21 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
 
   const classId = snapshot.player?.classId || run.class;
   const plan = WeaponDeckCompositionService.buildEquippedWeaponCardPlan(registries, snapshot.loadout, classId);
-  if (attacks.length) {
-    // Full-pile order is the one legacy assignment door: draw, hand, discard,
-    // exhaust. No card moves; missing ids bind once to attack:0..N-1.
-    WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
-    stampDeck(registries, {
-      class: classId,
-      loadout: snapshot.loadout,
-      attributes: snapshot.attributes || run.attributes,
-      equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
-      equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
-      deck: cards,
-    }, cards, {
-      adoptEquipmentBonuses: false,
-      reconcileEquipmentPools: false,
-    });
-  }
+  // Full-pile order is the one legacy assignment door: draw, hand, discard,
+  // exhaust. No card moves; missing ids bind once to attack:0..N-1. Applying
+  // even when zero attacks were recognized keeps the authored count fail closed.
+  WeaponDeckCompositionService.applyEquippedWeaponCardPlan(plan, cards);
+  stampDeck(registries, {
+    class: classId,
+    loadout: snapshot.loadout,
+    attributes: snapshot.attributes || run.attributes,
+    equipmentProfileRuleSnapshot: snapshot.equipmentProfileRuleSnapshot || run.equipmentProfileRuleSnapshot,
+    equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
+    deck: cards,
+  }, cards, {
+    adoptEquipmentBonuses: false,
+    reconcileEquipmentPools: false,
+  });
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
