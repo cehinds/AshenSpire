@@ -138,6 +138,12 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
     const armourForClass = new Map((equipment.armour || [])
       .filter((piece) => piece.classId === snapshot.player?.classId)
       .map((piece) => [piece.id, piece]));
+    const armamentLocations = new Map();
+    const locateArmament = (id, path) => {
+      const first = armamentLocations.get(id);
+      if (first) problems.push(`${path} '${id}' is a duplicate equipped armament/location identity; first appears at ${first}`);
+      else armamentLocations.set(id, path);
+    };
     const validatePiece = (id, slot, path) => {
       if (id === null) return;
       if (!nonEmptyString(id)) {
@@ -157,6 +163,7 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
       if (slot.hand && (piece.hand === 'left' || piece.hand === 'right') && piece.hand !== slot.hand) {
         problems.push(`${path} '${id}' hand '${piece.hand}' is invalid for slot hand '${slot.hand}'`);
       }
+      if (!armourSlot) locateArmament(id, path);
     };
 
     for (const slot of slots) {
@@ -180,7 +187,25 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
         const path = `loadout.storage[${index}]`;
         if (!nonEmptyString(id)) problems.push(`${path} must be a non-empty armament id`);
         else if (!armamentById.has(id)) problems.push(`${path} '${id}' is unknown armament`);
+        else locateArmament(id, path);
       });
+    }
+    const grant = loadout.creationArmourGrant;
+    if (grant != null) {
+      if (!record(grant)) {
+        problems.push('loadout.creationArmourGrant must be an object or null');
+      } else {
+        if (!nonEmptyString(grant.classId)) {
+          problems.push('loadout.creationArmourGrant.classId must be a non-empty string');
+        } else if (grant.classId !== snapshot.player?.classId) {
+          problems.push(`loadout.creationArmourGrant.classId '${grant.classId}' does not match player.classId '${snapshot.player?.classId}'`);
+        }
+        if (!nonEmptyString(grant.id)) {
+          problems.push('loadout.creationArmourGrant.id must be a non-empty string');
+        } else if (!((equipment.armour || []).some((piece) => piece.classId === grant.classId && piece.id === grant.id))) {
+          problems.push(`loadout.creationArmourGrant.id '${grant.id}' is unknown armour for class '${grant.classId}'`);
+        }
+      }
     }
   }
   return problems;
