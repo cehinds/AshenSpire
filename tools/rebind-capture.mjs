@@ -4,11 +4,13 @@
 // resets at every view entry, and keeps every rebind target finger-sized.
 
 import {
-  cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync,
+  cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync,
+  realpathSync, rmSync, symlinkSync, writeFileSync,
 } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve, sep } from 'node:path';
+import { basename, dirname, join, parse, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
@@ -101,14 +103,108 @@ const SELFTEST_PLANTS = [
   },
 ];
 
-function removePrivate(path, privateRoot) {
-  if (!path || !privateRoot) return;
-  const target = resolve(path);
-  const root = resolve(privateRoot);
-  if (target !== root && !target.startsWith(`${root}${sep}`)) {
-    throw new Error(`refusing cleanup outside private selftest root: ${target}`);
+const OWNERSHIP_KIND = 'qa18-cleanup-ownership-v1';
+const OWNERSHIP_DIR = '.qa18-cleanup-owners';
+const NONCE_PATTERN = /^[a-f0-9]{32}$/;
+
+function rootIdentity(path) {
+  const stat = lstatSync(path);
+  return { dev: String(stat.dev), ino: String(stat.ino), birthtimeMs: String(stat.birthtimeMs) };
+}
+
+function sameRootIdentity(left, right) {
+  return left?.dev === right?.dev && left?.ino === right?.ino && left?.birthtimeMs === right?.birthtimeMs;
+}
+
+function assertNoReparse(root, target) {
+  const rel = relative(root, target);
+  const parts = rel ? rel.split(/[\\/]+/).filter(Boolean) : [];
+  let cursor = root;
+  if (lstatSync(cursor).isSymbolicLink()) throw new Error('owned root is a reparse/symlink path');
+  for (const part of parts) {
+    cursor = join(cursor, part);
+    if (lstatSync(cursor).isSymbolicLink()) throw new Error(`owned target crosses a reparse/symlink path: ${cursor}`);
   }
-  rmSync(target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+}
+
+function validateOwnedLocation(rootPath, targetPath) {
+  const temp = realpathSync(tmpdir());
+  const rootLexical = resolve(rootPath);
+  if (lstatSync(rootLexical).isSymbolicLink()) throw new Error('owned root is a reparse/symlink path');
+  const root = realpathSync(rootLexical);
+  if (root === temp || dirname(root) !== temp || !basename(root).startsWith('q18-')) {
+    throw new Error(`owned root is not a fresh q18 temp child: ${root}`);
+  }
+  if (root === parse(root).root) throw new Error('filesystem root can never be cleanup-owned');
+  const targetLexical = resolve(targetPath);
+  if (targetLexical !== rootLexical && !targetLexical.startsWith(`${rootLexical}${sep}`)) {
+    throw new Error(`owned target lexically escapes cleanup root: ${targetLexical}`);
+  }
+  assertNoReparse(rootLexical, targetLexical);
+  const target = realpathSync(targetLexical);
+  if (target !== root && !target.startsWith(`${root}${sep}`)) {
+    throw new Error(`owned target escapes cleanup root: ${target}`);
+  }
+  if (target === temp || target === parse(target).root) throw new Error('temp/filesystem root can never be a cleanup target');
+  return { root, target };
+}
+
+function validateOwnership(ownership) {
+  if (!ownership || ownership.kind !== OWNERSHIP_KIND) throw new Error('missing cleanup ownership capability');
+  if (!NONCE_PATTERN.test(ownership.nonce || '')) throw new Error('invalid cleanup ownership nonce');
+  const { root, target } = validateOwnedLocation(ownership.root, ownership.target);
+  const ownerDir = join(root, OWNERSHIP_DIR);
+  const expectedMarker = join(ownerDir, `${ownership.nonce}.json`);
+  if (resolve(ownership.marker) !== expectedMarker) throw new Error('cleanup ownership marker path mismatch');
+  if (lstatSync(ownerDir).isSymbolicLink() || lstatSync(expectedMarker).isSymbolicLink()) {
+    throw new Error('cleanup ownership marker crosses a reparse/symlink path');
+  }
+  let marker;
+  try { marker = JSON.parse(readFileSync(expectedMarker, 'utf8')); }
+  catch (error) { throw new Error(`cleanup ownership marker unreadable: ${error.message}`); }
+  if (marker.kind !== OWNERSHIP_KIND || marker.nonce !== ownership.nonce) throw new Error('cleanup ownership marker nonce/kind mismatch');
+  if (marker.root !== root || marker.target !== target) throw new Error('cleanup ownership marker root/target mismatch');
+  if (String(marker.childPid) !== String(ownership.childPid)) throw new Error('cleanup ownership child binding mismatch');
+  if (!sameRootIdentity(marker.rootIdentity, rootIdentity(root))) throw new Error('cleanup ownership root identity is stale');
+  return { ...ownership, root, target, marker: expectedMarker };
+}
+
+function createOwnership(rootPath, targetPath, childPid = 0) {
+  const { root, target } = validateOwnedLocation(rootPath, targetPath);
+  const nonce = randomBytes(16).toString('hex');
+  const ownerDir = join(root, OWNERSHIP_DIR);
+  mkdirSync(ownerDir, { recursive: true });
+  const marker = join(ownerDir, `${nonce}.json`);
+  const record = {
+    kind: OWNERSHIP_KIND, nonce, root, target, childPid: Number(childPid) || 0,
+    rootIdentity: rootIdentity(root),
+  };
+  writeFileSync(marker, `${JSON.stringify(record)}\n`, { flag: 'wx' });
+  return validateOwnership({ ...record, marker });
+}
+
+function ownershipEnv(prefix, ownership) {
+  return {
+    [`${prefix}_KIND`]: ownership.kind,
+    [`${prefix}_NONCE`]: ownership.nonce,
+    [`${prefix}_ROOT`]: ownership.root,
+    [`${prefix}_TARGET`]: ownership.target,
+    [`${prefix}_MARKER`]: ownership.marker,
+    [`${prefix}_CHILD_PID`]: String(ownership.childPid),
+  };
+}
+
+function ownershipFromEnv(prefix, env = process.env) {
+  return validateOwnership({
+    kind: env[`${prefix}_KIND`], nonce: env[`${prefix}_NONCE`], root: env[`${prefix}_ROOT`],
+    target: env[`${prefix}_TARGET`], marker: env[`${prefix}_MARKER`],
+    childPid: Number(env[`${prefix}_CHILD_PID`]),
+  });
+}
+
+function removeOwnedPrivate(ownership) {
+  const owned = validateOwnership(ownership);
+  rmSync(owned.target, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
 
 function powershellPath() {
@@ -208,55 +304,116 @@ function killScoped(scope) {
 }
 
 const WATCHDOG_SCRIPT = String.raw`
-const { existsSync, rmSync } = require('node:fs');
+const { existsSync, lstatSync, readFileSync, realpathSync, rmSync } = require('node:fs');
 const { spawnSync } = require('node:child_process');
+const { tmpdir } = require('node:os');
+const { basename, dirname, join, parse, relative, resolve, sep } = require('node:path');
 const parentPid = Number(process.env.QA18_WATCH_PARENT);
 const childPid = Number(process.env.QA18_WATCH_CHILD);
-const scope = process.env.QA18_WATCH_SCOPE;
-const watchPath = process.env.QA18_WATCH_PATH;
 let forcedRemoveFailures = Number(process.env.QA18_WATCH_FORCE_REMOVE_FAILURES || 0);
+const KIND = 'qa18-cleanup-ownership-v1';
+const OWNER_DIR = '.qa18-cleanup-owners';
+const NONCE = /^[a-f0-9]{32}$/;
+const ownership = {
+  kind: process.env.QA18_WATCH_KIND,
+  nonce: process.env.QA18_WATCH_NONCE,
+  root: process.env.QA18_WATCH_ROOT,
+  target: process.env.QA18_WATCH_TARGET,
+  marker: process.env.QA18_WATCH_MARKER,
+  childPid: Number(process.env.QA18_WATCH_CHILD_PID),
+};
 const alive = (pid) => { try { process.kill(pid, 0); return true; } catch { return false; } };
 const sleep = (ms) => { try { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms); } catch {} };
+const identity = (path) => { const s = lstatSync(path); return { dev: String(s.dev), ino: String(s.ino), birthtimeMs: String(s.birthtimeMs) }; };
+const sameIdentity = (a, b) => a && a.dev === b.dev && a.ino === b.ino && a.birthtimeMs === b.birthtimeMs;
+const validate = () => {
+  try {
+    if (ownership.kind !== KIND || !NONCE.test(ownership.nonce || '')) throw new Error('missing or invalid ownership capability');
+    const temp = realpathSync(tmpdir());
+    const rootLexical = resolve(ownership.root);
+    if (lstatSync(rootLexical).isSymbolicLink()) throw new Error('root is reparse/symlink');
+    const root = realpathSync(rootLexical);
+    if (root === temp || dirname(root) !== temp || !basename(root).startsWith('q18-') || root === parse(root).root) throw new Error('root is not an owned q18 temp child');
+    const targetLexical = resolve(ownership.target);
+    if (targetLexical !== rootLexical && !targetLexical.startsWith(rootLexical + sep)) throw new Error('target lexically escapes owned root');
+    const lexicalRel = relative(rootLexical, targetLexical);
+    let lexicalCursor = rootLexical;
+    for (const part of (lexicalRel ? lexicalRel.split(/[\\/]+/).filter(Boolean) : [])) {
+      lexicalCursor = join(lexicalCursor, part);
+      if (lstatSync(lexicalCursor).isSymbolicLink()) throw new Error('target crosses reparse/symlink');
+    }
+    const target = realpathSync(targetLexical);
+    if (target !== root && !target.startsWith(root + sep)) throw new Error('target escapes owned root');
+    if (target === temp || target === parse(target).root) throw new Error('temp/filesystem root is forbidden');
+    const ownerDir = join(root, OWNER_DIR);
+    const markerPath = join(ownerDir, ownership.nonce + '.json');
+    if (resolve(ownership.marker) !== markerPath) throw new Error('marker path mismatch');
+    if (lstatSync(ownerDir).isSymbolicLink() || lstatSync(markerPath).isSymbolicLink()) throw new Error('marker is reparse/symlink');
+    const marker = JSON.parse(readFileSync(markerPath, 'utf8'));
+    if (marker.kind !== KIND || marker.nonce !== ownership.nonce) throw new Error('marker nonce/kind mismatch');
+    if (marker.root !== root || marker.target !== target) throw new Error('marker root/target mismatch');
+    if (String(marker.childPid) !== String(ownership.childPid) || String(childPid) !== String(ownership.childPid)) throw new Error('child binding mismatch');
+    if (!sameIdentity(marker.rootIdentity, identity(root))) throw new Error('stale root identity');
+    return { root, target, marker: markerPath };
+  } catch (error) {
+    error.code = 'QA18_OWNERSHIP';
+    throw error;
+  }
+};
 const kill = () => {
   if (!(childPid > 0)) return;
   if (process.platform === 'win32') spawnSync('taskkill.exe', ['/PID', String(childPid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
   else { try { process.kill(-childPid, 'SIGKILL'); } catch { try { process.kill(childPid, 'SIGKILL'); } catch {} } }
 };
 const remove = () => {
+  const owned = validate();
   if (forcedRemoveFailures > 0) {
     forcedRemoveFailures -= 1;
-    throw new Error('controlled watchdog deletion failure');
+    const error = new Error('controlled watchdog deletion failure');
+    error.code = 'QA18_FORCED_REMOVE';
+    throw error;
   }
-  rmSync(watchPath, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 });
+  rmSync(owned.target, { recursive: true, force: true, maxRetries: 8, retryDelay: 100 });
 };
+try {
+  const owned = validate();
+  if (process.env.QA18_WATCH_VALIDATE_ONLY === '1') {
+    process.stdout.write('OWNERSHIP OK ' + owned.target + '\n');
+    process.exit(0);
+  }
+} catch (error) {
+  process.stderr.write('OWNERSHIP REFUSED: ' + error.message + '\n');
+  process.exit(2);
+}
 setInterval(() => {
-  if (!existsSync(watchPath)) process.exit(0);
+  if (!existsSync(ownership.target)) process.exit(0);
   if (alive(parentPid)) return;
   kill();
   sleep(750);
-  try { remove(); } catch {}
+  try { remove(); } catch (error) { if (error.code === 'QA18_OWNERSHIP') process.exit(2); }
   // A child that escaped the first tree kill can recreate its profile. Keep
   // ownership and retry until the watched scope/root is durably absent. The
   // process must never exit merely because a bounded deletion attempt failed.
   kill();
   sleep(250);
-  try { remove(); } catch {}
-  if (!existsSync(watchPath) && !alive(childPid)) process.exit(0);
+  try { remove(); } catch (error) { if (error.code === 'QA18_OWNERSHIP') process.exit(2); }
+  if (!existsSync(ownership.target) && !alive(childPid)) process.exit(0);
 }, 200);
 `;
 
 function startWatchdog(child, scope, privateRoot, { forceRemoveFailures = 0, watchPath = scope } = {}) {
+  const ownership = createOwnership(privateRoot, watchPath, child.pid);
   const watchdog = spawn(process.execPath, ['--input-type=commonjs', '--eval', WATCHDOG_SCRIPT], {
     detached: true, windowsHide: true, stdio: 'ignore',
     env: {
       ...process.env,
       QA18_WATCH_PARENT: String(process.pid), QA18_WATCH_CHILD: String(child.pid),
-      QA18_WATCH_SCOPE: scope, QA18_WATCH_ROOT: privateRoot, QA18_WATCH_PATH: watchPath,
+      ...ownershipEnv('QA18_WATCH', ownership),
       QA18_WATCH_FORCE_REMOVE_FAILURES: String(forceRemoveFailures),
     },
   });
   watchdog.unref();
-  return { watchdog, watchPath };
+  return { watchdog, watchPath, watchdogOwnership: ownership };
 }
 
 const WATCHDOG_PLANT_CHILD = String.raw`
@@ -272,8 +429,8 @@ server.listen(0, '127.0.0.1', () => {
 setInterval(() => {}, 1000);
 `;
 
-async function watchdogPlantParent(scope) {
-  mkdirSync(scope, { recursive: true });
+async function watchdogPlantParent(launchOwnership) {
+  const scope = validateOwnership(launchOwnership).target;
   const child = spawn(process.execPath, ['--eval', WATCHDOG_PLANT_CHILD, scope], {
     detached: true, windowsHide: true, stdio: 'ignore',
     env: { ...process.env, TEMP: scope, TMP: scope, TMPDIR: scope },
@@ -292,12 +449,14 @@ async function watchdogPlantParent(scope) {
 
 async function watchdogInterruptionPlant() {
   const scope = mkdtempSync(join(tmpdir(), 'q18-watchdog-'));
+  const launchOwnership = createOwnership(scope, scope, 0);
   let stdout = '';
   let code = null;
   let signal = null;
   let fallbackCleanup = false;
-  const parent = spawn(process.execPath, [fileURLToPath(import.meta.url), `--qa18-watchdog-parent=${scope}`], {
+  const parent = spawn(process.execPath, [fileURLToPath(import.meta.url), '--qa18-watchdog-parent'], {
     detached: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, ...ownershipEnv('QA18_LAUNCH', launchOwnership) },
   });
   parent.stdout.on('data', (data) => { stdout += data; });
   parent.stderr.on('data', (data) => { stdout += data; });
@@ -333,19 +492,189 @@ async function watchdogInterruptionPlant() {
     if (beforeFallback.unknown || beforeFallback.processes || beforeFallback.listeners || beforeFallback.profiles || beforeFallback.entries || beforeFallback.scopeExists) {
       fallbackCleanup = true;
       try { killScoped(scope); } catch { /* exact fresh plant root only */ }
-      try { removePrivate(scope, scope); } catch { /* surfaced by final census below */ }
+      try { removeOwnedPrivate(launchOwnership); } catch { /* surfaced by final census below */ }
     }
     const finalCensus = resourceCensus(scope);
     console.log(`WATCHDOG PLANT FINAL: fallback=${fallbackCleanup ? 'yes' : 'no'}; p/l/profile/entries=${finalCensus.processes ?? 'UNKNOWN'}/${finalCensus.listeners ?? 'UNKNOWN'}/${finalCensus.profiles}/${finalCensus.entries}; root=${finalCensus.scopeExists ? 'PRESENT' : 'absent'}`);
   }
 }
 
-const watchdogParentArg = process.argv.find((arg) => arg.startsWith('--qa18-watchdog-parent='));
-if (watchdogParentArg) {
-  await watchdogPlantParent(watchdogParentArg.slice('--qa18-watchdog-parent='.length));
+async function rawCallerPathRefusalPlant() {
+  const privateRoot = mkdtempSync(join(tmpdir(), 'q18-ownership-red-'));
+  const target = join(privateRoot, 'caller-supplied-target');
+  const sentinel = join(target, 'must-survive.txt');
+  mkdirSync(target, { recursive: true });
+  const cleanupOwnership = createOwnership(privateRoot, privateRoot, 0);
+  writeFileSync(sentinel, 'caller supplied paths are never cleanup authority\n');
+  let stdout = '';
+  let code = null;
+  let signal = null;
+  const parent = spawn(process.execPath, [fileURLToPath(import.meta.url), `--qa18-watchdog-parent=${target}`], {
+    detached: true, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  parent.stdout.on('data', (data) => { stdout += data; });
+  parent.stderr.on('data', (data) => { stdout += data; });
+  const closed = new Promise((done) => parent.once('close', (exitCode, exitSignal) => {
+    code = exitCode; signal = exitSignal; done();
+  }));
+  try {
+    for (let i = 0; i < 50 && !stdout.includes('QA18 WATCHDOG PLANT READY') && code == null && signal == null; i += 1) await wait(100);
+    if (processAlive(parent)) {
+      if (process.platform === 'win32') spawnSync('taskkill.exe', ['/PID', String(parent.pid), '/F'], { windowsHide: true, stdio: 'ignore', timeout: 15000 });
+      else { try { process.kill(parent.pid, 'SIGKILL'); } catch { /* already gone */ } }
+    }
+    await Promise.race([closed, wait(10000)]);
+    const reachedReady = stdout.includes('QA18 WATCHDOG PLANT READY');
+    for (let i = 0; i < 50 && reachedReady && existsSync(sentinel); i += 1) await wait(100);
+    const refused = Number.isInteger(code) && code !== 0 && existsSync(sentinel);
+    console.log(`${refused ? 'PASS' : 'RED '} OWNERSHIP arbitrary caller path: code=${code ?? 'null'} signal=${signal || '-'}; sentinel=${existsSync(sentinel) ? 'preserved' : 'DELETED'}`);
+    return refused;
+  } finally {
+    try { killScoped(privateRoot); } catch { /* exact fresh plant root only */ }
+    try { removeOwnedPrivate(cleanupOwnership); } catch { /* final census below owns the verdict */ }
+    const final = resourceCensus(privateRoot);
+    console.log(`OWNERSHIP PLANT FINAL: p/l/profile/entries=${final.processes ?? 'UNKNOWN'}/${final.listeners ?? 'UNKNOWN'}/${final.profiles}/${final.entries}; root=${final.scopeExists ? 'PRESENT' : 'absent'}`);
+  }
+}
+
+function validateWatchdogOwnership(ownership) {
+  return spawnSync(process.execPath, ['--input-type=commonjs', '--eval', WATCHDOG_SCRIPT], {
+    windowsHide: true, encoding: 'utf8', timeout: 15000,
+    env: {
+      ...process.env,
+      QA18_WATCH_PARENT: String(process.pid), QA18_WATCH_CHILD: String(ownership.childPid),
+      ...ownershipEnv('QA18_WATCH', ownership), QA18_WATCH_VALIDATE_ONLY: '1',
+    },
+  });
+}
+
+async function ownershipGuardPlants() {
+  const privateRoot = mkdtempSync(join(tmpdir(), 'q18-ownership-guards-'));
+  const rootCleanup = createOwnership(privateRoot, privateRoot, 0);
+  const outsideRoot = mkdtempSync(join(tmpdir(), 'q18-ownership-outside-'));
+  const outsideCleanup = createOwnership(outsideRoot, outsideRoot, 0);
+  const cleanupLinks = [];
+  let passed = 0;
+  let failed = 0;
+  let index = 0;
+  const makeOwnedTarget = (label) => {
+    const target = join(privateRoot, `${++index}-${label}`);
+    mkdirSync(target, { recursive: true });
+    const sentinel = join(target, 'must-survive.txt');
+    writeFileSync(sentinel, `${label}\n`);
+    return { ownership: createOwnership(privateRoot, target, 0), sentinel, target };
+  };
+  const expect = (name, fixture, { valid = false } = {}) => {
+    const result = validateWatchdogOwnership(fixture.ownership);
+    const terminal = Number.isInteger(result.status) && !result.signal && !result.error;
+    const verdict = valid
+      ? terminal && result.status === 0 && /OWNERSHIP OK/.test(result.stdout || '')
+      : terminal && result.status === 2 && /OWNERSHIP REFUSED:/.test(result.stderr || '');
+    const sentinelSafe = existsSync(fixture.sentinel);
+    const ok = verdict && sentinelSafe;
+    console.log(`${ok ? 'PASS' : 'RED '} OWNERSHIP ${name}: status=${result.status ?? 'null'} signal=${result.signal || '-'}; sentinel=${sentinelSafe ? 'preserved' : 'DELETED'}; ${(result.stderr || result.stdout || '').trim().slice(0, 180)}`);
+    if (ok) passed++; else failed++;
+  };
+  try {
+    expect('valid owned child control', makeOwnedTarget('valid-control'), { valid: true });
+
+    const ownerDir = join(privateRoot, OWNERSHIP_DIR);
+    const ownerCountBefore = readdirSync(ownerDir).length;
+    let creationRefused = false;
+    try { createOwnership(privateRoot, outsideRoot, 0); } catch { creationRefused = true; }
+    const ownerCountAfter = readdirSync(ownerDir).length;
+    const creationNoMutation = creationRefused && ownerCountAfter === ownerCountBefore;
+    console.log(`${creationNoMutation ? 'PASS' : 'RED '} OWNERSHIP invalid creation is mutation-free: refused=${creationRefused}; owner markers ${ownerCountBefore}->${ownerCountAfter}`);
+    if (creationNoMutation) passed++; else failed++;
+
+    const outside = makeOwnedTarget('outside-target');
+    outside.ownership = { ...outside.ownership, target: outsideRoot };
+    expect('outside target refused', outside);
+
+    const parent = makeOwnedTarget('parent-target');
+    parent.ownership = { ...parent.ownership, target: dirname(privateRoot) };
+    expect('temp parent refused', parent);
+
+    const filesystem = makeOwnedTarget('filesystem-root');
+    filesystem.ownership = { ...filesystem.ownership, target: parse(privateRoot).root };
+    expect('filesystem root refused', filesystem);
+
+    const reparse = makeOwnedTarget('reparse-child');
+    const reparseLink = join(privateRoot, `${++index}-reparse-link`);
+    symlinkSync(reparse.target, reparseLink, 'junction');
+    cleanupLinks.push(reparseLink);
+    reparse.ownership = { ...reparse.ownership, target: reparseLink };
+    expect('reparse child refused', reparse);
+
+    const missing = makeOwnedTarget('missing-marker');
+    rmSync(missing.ownership.marker, { force: true });
+    expect('missing marker refused', missing);
+
+    const malformed = makeOwnedTarget('malformed-marker');
+    writeFileSync(malformed.ownership.marker, '{not-json\n');
+    expect('malformed marker refused', malformed);
+
+    const wrongKind = makeOwnedTarget('wrong-kind');
+    const wrongKindRecord = JSON.parse(readFileSync(wrongKind.ownership.marker, 'utf8'));
+    wrongKindRecord.kind = 'caller-chosen-kind';
+    writeFileSync(wrongKind.ownership.marker, `${JSON.stringify(wrongKindRecord)}\n`);
+    expect('wrong marker kind refused', wrongKind);
+
+    const wrongNonce = makeOwnedTarget('wrong-nonce');
+    wrongNonce.ownership = { ...wrongNonce.ownership, nonce: '0'.repeat(32) };
+    expect('wrong nonce refused', wrongNonce);
+
+    const stale = makeOwnedTarget('stale-marker');
+    const staleRecord = JSON.parse(readFileSync(stale.ownership.marker, 'utf8'));
+    staleRecord.rootIdentity = { ...staleRecord.rootIdentity, ino: `${staleRecord.rootIdentity.ino}-stale` };
+    writeFileSync(stale.ownership.marker, `${JSON.stringify(staleRecord)}\n`);
+    expect('stale root identity refused', stale);
+
+    const mismatch = makeOwnedTarget('target-mismatch');
+    const otherTarget = join(privateRoot, `${++index}-other-target`);
+    mkdirSync(otherTarget, { recursive: true });
+    mismatch.ownership = { ...mismatch.ownership, target: otherTarget };
+    expect('marker target mismatch refused', mismatch);
+
+    const wrongChild = makeOwnedTarget('wrong-child');
+    wrongChild.ownership = { ...wrongChild.ownership, childPid: 17 };
+    expect('wrong child binding refused', wrongChild);
+
+    const wrongMarkerPath = makeOwnedTarget('wrong-marker-path');
+    wrongMarkerPath.ownership = { ...wrongMarkerPath.ownership, marker: join(privateRoot, 'caller-marker.json') };
+    expect('wrong marker path refused', wrongMarkerPath);
+  } finally {
+    for (const link of cleanupLinks) { try { rmSync(link, { force: true }); } catch { /* root cleanup owns final verdict */ } }
+    try { removeOwnedPrivate(outsideCleanup); } catch { /* final census below */ }
+    try { removeOwnedPrivate(rootCleanup); } catch { /* final census below */ }
+  }
+  const rootFinal = resourceCensus(privateRoot);
+  const outsideFinal = resourceCensus(outsideRoot);
+  const cleanupOk = !rootFinal.unknown && !outsideFinal.unknown
+    && rootFinal.processes === 0 && rootFinal.listeners === 0 && rootFinal.profiles === 0 && rootFinal.entries === 0 && !rootFinal.scopeExists
+    && outsideFinal.processes === 0 && outsideFinal.listeners === 0 && outsideFinal.profiles === 0 && outsideFinal.entries === 0 && !outsideFinal.scopeExists;
+  console.log(`${cleanupOk ? 'PASS' : 'RED '} OWNERSHIP GUARD CLEANUP: roots/processes/listeners/profiles/entries=0 required; root=${rootFinal.scopeExists ? 'PRESENT' : 'absent'} outside=${outsideFinal.scopeExists ? 'PRESENT' : 'absent'}`);
+  if (cleanupOk) passed++; else failed++;
+  console.log(`ownership guards: ${passed}/${passed + failed} cases passed`);
+  return failed ? 1 : 0;
+}
+
+const rawWatchdogParentArg = process.argv.find((arg) => arg.startsWith('--qa18-watchdog-parent='));
+if (rawWatchdogParentArg) {
+  console.error('OWNERSHIP REFUSED: caller-supplied watchdog paths are not accepted');
+  process.exit(2);
+}
+if (process.argv.includes('--qa18-watchdog-parent')) {
+  try { await watchdogPlantParent(ownershipFromEnv('QA18_LAUNCH')); }
+  catch (error) { console.error(`OWNERSHIP REFUSED: ${error.message}`); process.exit(2); }
   process.exit(0);
 }
 if (process.argv.includes('--watchdog-selftest')) process.exit(await watchdogInterruptionPlant() ? 0 : 1);
+if (process.argv.includes('--ownership-selftest')) {
+  const rawRefused = await rawCallerPathRefusalPlant();
+  const guardStatus = await ownershipGuardPlants();
+  process.exit(rawRefused && guardStatus === 0 ? 0 : 1);
+}
 
 function processAlive(child) {
   if (!child?.pid) return false;
@@ -364,14 +693,16 @@ async function stopWatchdog(run, durableZero) {
   return processAlive(run.watchdog);
 }
 
-function cleanupActiveSelftests() {
+function cleanupActiveSelftests({ includeRoots = true } = {}) {
   for (const run of [...activeSelftestRuns]) {
     killTree(run.child);
     try { killScoped(run.scope); } catch { /* watchdog still owns this exact child/root on parent exit */ }
-    try { removePrivate(run.scope, run.privateRoot); } catch { /* exit-path receipt cannot throw */ }
+    try { removeOwnedPrivate(run.cleanupOwnership); } catch { /* exit-path receipt cannot throw */ }
   }
-  for (const root of [...activeSelftestRoots]) {
-    try { removePrivate(root, root); } catch { /* exit-path receipt cannot throw */ }
+  if (includeRoots) {
+    for (const rootRun of [...activeSelftestRoots]) {
+      try { removeOwnedPrivate(rootRun.cleanupOwnership); } catch { /* exit-path receipt cannot throw */ }
+    }
   }
 }
 
@@ -388,7 +719,7 @@ async function cleanupRun(run) {
   killTree(run.child);
   try { killScoped(run.scope); } catch (error) { run.cleanupError = error; }
   await wait(500);
-  try { removePrivate(run.scope, run.privateRoot); } catch (error) { run.cleanupError ||= error; }
+  try { removeOwnedPrivate(run.cleanupOwnership); } catch (error) { run.cleanupError ||= error; }
   await wait(250);
   const after = resourceCensus(run.scope);
   const durableZero = !run.cleanupError && !after.unknown && after.processes === 0 && after.listeners === 0
@@ -401,6 +732,7 @@ function runScopedTool({
   root, privateRoot, scope, timeoutMs, env = {}, executable = process.execPath, liveCensusMarker = null,
 }) {
   mkdirSync(scope, { recursive: true });
+  const cleanupOwnership = createOwnership(privateRoot, scope, 0);
   return new Promise((done) => {
     const started = Date.now();
     const args = executable === process.execPath
@@ -424,7 +756,7 @@ function runScopedTool({
       clearTimeout(forceTimer);
       terminal = code != null || signal != null;
       const run = [...activeSelftestRuns].find((item) => item.child === child);
-      const cleanup = await cleanupRun(run || { child, scope, privateRoot });
+      const cleanup = await cleanupRun(run || { child, scope, privateRoot, cleanupOwnership });
       if (run && cleanup.durableZero) activeSelftestRuns.delete(run);
       done({
         code, signal, timedOut, terminal, spawnError, out: `${stdout}\n${stderr}`,
@@ -447,7 +779,7 @@ function runScopedTool({
       void finish();
       return;
     }
-    const run = { child, scope, privateRoot, ...(child.pid ? startWatchdog(child, scope, privateRoot) : {}) };
+    const run = { child, scope, privateRoot, cleanupOwnership, ...(child.pid ? startWatchdog(child, scope, privateRoot) : {}) };
     activeSelftestRuns.add(run);
     child.stdout?.on('data', (data) => {
       stdout += data;
@@ -537,8 +869,10 @@ async function selftest() {
   console.log('Timeout, nonterminal, signal, spawn failure, and abnormal exit are fatal before expected-RED matching.');
   installSelftestCleanupGuards();
   const privateRoot = mkdtempSync(join(tmpdir(), 'q18-'));
-  activeSelftestRoots.add(privateRoot);
+  const rootCleanupOwnership = createOwnership(privateRoot, privateRoot, 0);
   const rootWatchdog = startWatchdog({ pid: 0 }, privateRoot, privateRoot, { watchPath: privateRoot });
+  const rootRun = { cleanupOwnership: rootCleanupOwnership, ...rootWatchdog };
+  activeSelftestRoots.add(rootRun);
   const root = copySelftestTree(privateRoot);
   let passed = 0;
   let failed = 0;
@@ -578,6 +912,11 @@ async function selftest() {
     ];
     const censusDecoderOk = censusDecoderGuards.every(Boolean);
     console.log(`${censusDecoderOk ? 'PASS' : 'RED '} CENSUS DECODER: ${censusDecoderGuards.filter(Boolean).length}/${censusDecoderGuards.length} good/error/timeout/signal/nonterminal/abnormal/stderr/empty/unparsable/shape guards held`);
+
+    const rawCallerRefused = await rawCallerPathRefusalPlant();
+    if (rawCallerRefused) passed++; else failed++;
+    const ownershipGuardStatus = await ownershipGuardPlants();
+    if (ownershipGuardStatus === 0) passed++; else failed++;
 
     const watchdogPlantOk = await watchdogInterruptionPlant();
     if (watchdogPlantOk) passed++; else failed++;
@@ -662,9 +1001,9 @@ async function selftest() {
       console.error(`  tail: ${clean.out.trim().split('\n').slice(-8).join(' | ')}`);
     }
   } finally {
-    cleanupActiveSelftests();
+    cleanupActiveSelftests({ includeRoots: false });
     let rootCleanupError = null;
-    try { removePrivate(privateRoot, privateRoot); } catch (error) { rootCleanupError = error; }
+    try { removeOwnedPrivate(rootCleanupOwnership); } catch (error) { rootCleanupError = error; }
     const rootAfter = resourceCensus(privateRoot);
     const rootDurableZero = !rootCleanupError && !rootAfter.unknown && rootAfter.processes === 0
       && rootAfter.listeners === 0 && rootAfter.profiles === 0 && rootAfter.entries === 0 && !rootAfter.scopeExists;
@@ -672,7 +1011,7 @@ async function selftest() {
     const rootCleanupOk = rootDurableZero && !rootWatchdogAlive;
     console.log(`${rootCleanupOk ? 'PASS' : 'RED '} ROOT CLEANUP OWNER: p/l/profile/entries=${rootAfter.processes ?? 'UNKNOWN'}/${rootAfter.listeners ?? 'UNKNOWN'}/${rootAfter.profiles}/${rootAfter.entries}; root=${rootAfter.scopeExists ? 'PRESENT' : 'absent'}; watchdog=${rootWatchdogAlive ? 'LIVE' : 'gone'}`);
     if (!rootCleanupOk) failed++;
-    else activeSelftestRoots.delete(privateRoot);
+    else activeSelftestRoots.delete(rootRun);
   }
   const total = passed + failed;
   console.log(`RESOURCE CENSUS: active children=${activeSelftestRuns.size}; private root absent=${!existsSync(privateRoot)}`);
