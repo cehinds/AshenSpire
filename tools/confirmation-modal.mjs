@@ -293,13 +293,25 @@ try {
       await ev(`window.__confirmationPad.set(0,true)`); await wait(100);
       await ev(`window.__confirmationPad.set(0,false)`); await wait(220);
     };
-    const touchHold = async (selector, durationMs, { cancel = false } = {}) => {
+    const touchHold = async (selector, durationMs, { cancel = false, probeAfterMs = 0 } = {}) => {
       const point = await center(selector);
       const touch = [{ x: point.x, y: point.y, radiusX: 1, radiusY: 1, force: 1, id: 1 }];
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: touch }, sessionId);
-      await wait(durationMs);
+      const probeDelay = Math.min(Math.max(0, probeAfterMs), durationMs);
+      await wait(probeDelay);
+      const probe = probeAfterMs > 0 ? await ev(`(() => {
+        const button = document.querySelector(${JSON.stringify(selector)});
+        return {
+          hold: button?.dataset.hold || null,
+          progress: Number(button?.dataset.holdProgress || 0),
+          confirmation: !!document.querySelector('.confirmation-modal'),
+          title: document.querySelector('#confirmation-modal-title')?.textContent || null
+        };
+      })()`) : null;
+      await wait(durationMs - probeDelay);
       await cdp.send('Input.dispatchTouchEvent', { type: cancel ? 'touchCancel' : 'touchEnd', touchPoints: [] }, sessionId);
       await wait(220);
+      return probe;
     };
     const screenshot = async (name) => {
       mkdirSync(SHOT_DIR, { recursive: true });
@@ -396,7 +408,10 @@ try {
     await touchHold(`[data-slot-pick="${touchSlot}"]`, 180, { cancel: true });
     check(await ev(`!document.querySelector('.confirmation-modal') && !!document.querySelector('[data-component="title-save-slot-list"]')`),
       `CONFIRMATION-${label}-LOAD-HOLD-CANCEL`, 'cancelled touch hold leaves selection open and commits nothing');
-    await touchHold(`[data-slot-pick="${touchSlot}"]`, 720);
+    const rearmedHold = await touchHold(`[data-slot-pick="${touchSlot}"]`, 720, { probeAfterMs: 650 });
+    check(rearmedHold?.hold === 'done' && !rearmedHold.confirmation,
+      `CONFIRMATION-${label}-LOAD-HOLD-RELEASE-BOUNDARY`,
+      `the rearmed hold reaches its threshold while the selector retains the live touch until release (${JSON.stringify(rearmedHold)})`);
     await until(`!!document.querySelector('.confirmation-modal')`, 'rearmed touch hold confirmation');
     check((await modalState()).title === `Load slot ${touchSlot}?`,
       `CONFIRMATION-${label}-LOAD-HOLD-REARM`, 'rearmed configured hold opens the exact-slot confirmation');

@@ -43,6 +43,11 @@ export function openSaveSlotSelector({
   let activatedLoadSlot = null;
   let loadReviewSlot = null;
   let closed = false;
+  let holdCleanups = [];
+
+  const clearSlotHolds = () => {
+    for (const cleanup of holdCleanups.splice(0)) cleanup();
+  };
 
   const model = () => saveSlotSelectionModel(slots, { kind: 'load', selectedSlot });
   const selectedButton = () => veil.querySelector(`[data-slot-pick="${selectedSlot}"]`);
@@ -61,6 +66,7 @@ export function openSaveSlotSelector({
   const close = ({ restoreFocus = true } = {}) => {
     if (closed) return;
     closed = true;
+    clearSlotHolds();
     hideTooltip();
     veil.remove();
     if (activeSelector?.veil === veil) activeSelector = null;
@@ -93,6 +99,7 @@ export function openSaveSlotSelector({
 
   const render = () => {
     if (closed) return;
+    clearSlotHolds();
     if (inlineReview && loadReviewSlot != null) {
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
       if (record?.summary) {
@@ -133,16 +140,49 @@ export function openSaveSlotSelector({
       const record = slots.find((candidate) => candidate.slot === slot);
       attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
         + `Tap once to select. Tap the selected slot again to review. Hold to ${inlineReview ? 'load now' : 'review this load'}.`);
-      armHold(button, {
+      let clearPendingRelease = null;
+      const disarmHold = armHold(button, {
         ms: holdMs,
         id: 'loadSave',
         pointerOnly: true,
         hintHost: button,
         onTap: () => activateSlot(slot),
-        onConfirm: () => {
+        onConfirm: (startEvent) => {
           hideTooltip();
-          requestLoad(slot, 'hold');
+          if (inlineReview) {
+            requestLoad(slot, 'hold');
+            return;
+          }
+
+          // armHold completes while the pointer is still down. Opening the
+          // Quick Menu confirmation at that instant lets the trailing touch
+          // release hit-test the new veil and cancel it. Retain this selector
+          // as the input owner until the same pointer ends, then cross the
+          // navigation boundary on the next task after its click is swallowed.
+          const pointerId = startEvent?.pointerId;
+          if (!Number.isInteger(pointerId)) return;
+          const clear = () => {
+            button.removeEventListener('pointerup', release);
+            button.removeEventListener('pointercancel', cancel);
+            if (clearPendingRelease === clear) clearPendingRelease = null;
+          };
+          const release = (endEvent) => {
+            if (endEvent.pointerId !== pointerId) return;
+            clear();
+            setTimeout(() => { if (!closed) requestLoad(slot, 'hold'); }, 0);
+          };
+          const cancel = (endEvent) => {
+            if (endEvent.pointerId === pointerId) clear();
+          };
+          clearPendingRelease?.();
+          clearPendingRelease = clear;
+          button.addEventListener('pointerup', release);
+          button.addEventListener('pointercancel', cancel);
         },
+      });
+      holdCleanups.push(() => {
+        clearPendingRelease?.();
+        disarmHold();
       });
     });
 
