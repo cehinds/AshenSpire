@@ -6,7 +6,8 @@ import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from './holdconfirm.js';
-import { attachTooltip, esc, hideTooltip } from './tooltip.js';
+import { esc, hideTooltip } from './tooltip.js';
+import { mountTitleSaveSlotTooltip } from './titleSaveSlotTooltip.js';
 
 let activeSelector = null;
 
@@ -44,6 +45,7 @@ export function openSaveSlotSelector({
   let loadReviewSlot = null;
   let closed = false;
   let holdCleanups = [];
+  let tooltipCleanup = null;
 
   const clearSlotHolds = () => {
     for (const cleanup of holdCleanups.splice(0)) cleanup();
@@ -67,6 +69,8 @@ export function openSaveSlotSelector({
     if (closed) return;
     closed = true;
     clearSlotHolds();
+    tooltipCleanup?.();
+    tooltipCleanup = null;
     hideTooltip();
     veil.remove();
     if (activeSelector?.veil === veil) activeSelector = null;
@@ -100,6 +104,8 @@ export function openSaveSlotSelector({
   const render = () => {
     if (closed) return;
     clearSlotHolds();
+    tooltipCleanup?.();
+    tooltipCleanup = null;
     if (inlineReview && loadReviewSlot != null) {
       const record = slots.find(({ slot }) => slot === loadReviewSlot);
       if (record?.summary) {
@@ -137,9 +143,6 @@ export function openSaveSlotSelector({
     const holdMs = Number.isFinite(duration) && duration > 0 ? duration : 600;
     veil.querySelectorAll('.title-slot-pick.is-filled').forEach((button) => {
       const slot = Number(button.dataset.slotPick);
-      const record = slots.find((candidate) => candidate.slot === slot);
-      attachTooltip(button, () => `<div class="tt-title">Slot ${slot} · ${esc(record?.summary?.className || 'Saved climb')}</div>`
-        + `Tap once to select. Tap the selected slot again to review. Hold to ${inlineReview ? 'load now' : 'review this load'}.`);
       let clearPendingRelease = null;
       const disarmHold = armHold(button, {
         ms: holdMs,
@@ -199,6 +202,11 @@ export function openSaveSlotSelector({
         button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
       });
     }
+
+    tooltipCleanup = mountTitleSaveSlotTooltip({
+      root: veil,
+      owner: selectedButton(),
+    });
   };
 
   const activateSlot = (slot) => {
