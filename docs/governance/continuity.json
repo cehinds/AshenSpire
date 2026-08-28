@@ -1,0 +1,392 @@
+{
+  "$schema": "./continuity.schema.json",
+  "formatVersion": "1.0.0",
+  "updatedAt": "2026-08-28T04:35:56Z",
+  "repository": {
+    "slug": "cehinds/AshenSpire",
+    "remote": "origin",
+    "defaultBranch": "dev",
+    "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+    "observedAt": "2026-08-28T04:35:56Z",
+    "governance": [
+      {
+        "path": "docs/governance/README.md",
+        "blob": "ea9ecbb65cab54ab3d04be4f5ba594e0747ebd54"
+      },
+      {
+        "path": "docs/governance/AUTHORITY.md",
+        "blob": "4e047d9d50e9366c3a10766f8a386e9b3b998174"
+      },
+      {
+        "path": "docs/governance/WORKFLOW.md",
+        "blob": "f3cf50ff22c822a6314b5f74666ad164dcce791c"
+      },
+      {
+        "path": "docs/governance/QUALITY-GATES.md",
+        "blob": "3f52f4c971926d321b55a3a3b87df29b906e672f"
+      },
+      {
+        "path": "docs/governance/TICKET-SCHEMA.md",
+        "blob": "b911ae8a3351d40df89c3698435ffe81c2b67286"
+      },
+      {
+        "path": "docs/COORDINATION-WORKFLOW.md",
+        "blob": "579c2c1837eb353a7068133c37ade808526e70cc"
+      }
+    ],
+    "branches": [
+      {
+        "name": "dev",
+        "role": "integration",
+        "sha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "test",
+        "role": "playtest",
+        "sha": "d163fd2c53e72705d12f78f8652bf93acd9fc0e8",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "release",
+        "role": "release-staging",
+        "sha": "c0713d34d1777c2719bb780b3f7c4b1715bb2dc5",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      },
+      {
+        "name": "main",
+        "role": "stable",
+        "sha": "ba2716979dc099129183f7153f47c6da7a6c60b8",
+        "policyProtected": true,
+        "githubProtectionObserved": false,
+        "currentness": "must-match-remote"
+      }
+    ]
+  },
+  "authority": {
+    "technicalRelay": "IT Manager III, Integration & Delivery",
+    "releaseOwner": "Constantine",
+    "workflowTruth": "GitHub Project #4 Status",
+    "directDevMutationAllowed": false,
+    "remoteActionsRequireSeparateAuthority": true
+  },
+  "budgets": {
+    "maxBytes": 40000,
+    "maxEstimatedTokens": 10000,
+    "maxSnapshotAgeHours": 48,
+    "maxLanes": 24,
+    "maxNextActions": 12,
+    "maxTombstones": 24
+  },
+  "generatedArtifacts": {
+    "status": "idle",
+    "owner": "unassigned until IT Manager III reserves the serialized lane",
+    "command": "node tools/launch.mjs --build-only",
+    "order": [
+      "buildordinal.json",
+      "build/AshenSpire.html",
+      "AshenSpire.html",
+      "dist/AshenSpire.html"
+    ],
+    "verification": [
+      "node tools/verify-shipped.mjs",
+      "node tools/rebuild-matches.mjs",
+      "git diff --check"
+    ],
+    "directEditsAllowed": false
+  },
+  "bootstrap": {
+    "clone": [
+      "git clone https://github.com/cehinds/AshenSpire.git",
+      "git fetch --all --tags"
+    ],
+    "setup": [
+      "git switch dev",
+      "node tools/continuity.mjs --check",
+      "node tools/continuity.mjs --audit"
+    ],
+    "build": [
+      "No dependency install or source build is required for index.html",
+      "After an authorized source freeze only: node tools/launch.mjs --build-only"
+    ],
+    "tests": [
+      "Run the lane-targeted check and its same-door --selftest",
+      "node tools/testnumbers.mjs --raw when numbered tests change",
+      "node tests/run-node.mjs",
+      "node tools/verify-shipped.mjs when generated artifacts change",
+      "git diff --check"
+    ],
+    "pages": {
+      "developmentUrl": "https://cehinds.github.io/AshenSpire/AshenSpire.html",
+      "observedSource": "dev branch repository root",
+      "proofRequired": [
+        "record deployed commit and Pages run",
+        "verify hosted artifact identity",
+        "run the intended hosted player flow"
+      ],
+      "releaseFact": false
+    },
+    "recovery": [
+      "Stop on a stale SHA, missing object, dependency, or collision finding",
+      "Preserve the branch, worktree, artifacts, and evidence until exact-target deletion authority exists",
+      "Recreate a clean worktree from the recorded base or frozen head; never reset a protected or dirty checkout",
+      "Regenerate derived artifacts from restored source authority; never hand-edit them"
+    ]
+  },
+  "lanes": [
+    {
+      "id": "continuity-control-plane",
+      "branch": "codex/migration-continuity-control-plane",
+      "status": "active",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "claimedPaths": [
+        "docs/governance/CONTINUITY.md",
+        "docs/governance/continuity.schema.json",
+        "docs/governance/continuity.json",
+        "tools/continuity.mjs",
+        ".github/workflows/continuity-maintenance.yml"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Validate, run the deterministic known-bad corpus, run repository gates, and freeze one local commit for independent policy QA.",
+      "rollback": "Revert the one bounded continuity commit before activation."
+    },
+    {
+      "id": "k15-content-door",
+      "branch": "codex/migration-k15-content-door",
+      "status": "active",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Code Quality & Modernization temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "claimedPaths": [
+        "tools/content-build.mjs"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Reconstruct only the approved K15 correction and same-door self-tests against the recorded base.",
+      "rollback": "Revert the bounded K15 commit; do not alter generated content."
+    },
+    {
+      "id": "character-creation",
+      "branch": "codex/migration-character-creation",
+      "status": "active",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "claimedPaths": [
+        "content/source/characterCreation.json",
+        "src/model/characterCreation.js",
+        "src/ui/screens/customize.js",
+        "tests/run-node.mjs"
+      ],
+      "dependencies": [],
+      "block": null,
+      "next": "Reconstruct approved source, model, UI, and focused engine tests; defer generated artifacts to the serialized source freeze.",
+      "rollback": "Revert the bounded character-creation commit and regenerate only after restored source is frozen."
+    },
+    {
+      "id": "save-equipment-actionregistry",
+      "branch": "codex/migration-save-equipment-actionregistry",
+      "status": "queued",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod pending acknowledgement",
+        "acknowledged": false,
+        "acknowledgedAt": null
+      },
+      "claimedPaths": [
+        "src/model/loadout.js",
+        "src/engine/save.js",
+        "src/main.js",
+        "src/ui/screens/equipment.js",
+        "tests/run-node.mjs"
+      ],
+      "dependencies": [
+        "k15-content-door"
+      ],
+      "block": "Wait for K15 contract currentness and an acknowledged exclusive-path assignment.",
+      "next": "Reconcile stable equipment/save identities first, then add the D/R/T ActionRegistry destinations.",
+      "rollback": "Revert the bounded save/equipment commit without rewriting existing player data."
+    },
+    {
+      "id": "title-save-slot",
+      "branch": "codex/migration-title-save-slot",
+      "status": "blocked",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Feature / Architecture temporary pod pending acknowledgement",
+        "acknowledged": false,
+        "acknowledgedAt": null
+      },
+      "claimedPaths": [
+        "src/main.js",
+        "src/ui/components/saveSlotSelection.js",
+        "src/ui/screens/title.js",
+        "tests/run-node.mjs"
+      ],
+      "dependencies": [
+        "save-equipment-actionregistry"
+      ],
+      "block": "src/main.js ownership is serialized behind save-equipment-actionregistry.",
+      "next": "After the dependency freezes, reconstruct the shared save-slot selector and title tooltip against that exact head.",
+      "rollback": "Revert the bounded title/save-slot commit; preserve save payloads."
+    },
+    {
+      "id": "controls-gates",
+      "branch": "codex/migration-controls-gates",
+      "status": "queued",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "Incident / Defect temporary pod pending acknowledgement",
+        "acknowledged": false,
+        "acknowledgedAt": null
+      },
+      "claimedPaths": [
+        "src/ui/screens/settings.js",
+        "src/ui/input.js",
+        "tools/settingsreach.mjs",
+        "tools/tapsize.mjs"
+      ],
+      "dependencies": [
+        "k15-content-door"
+      ],
+      "block": "Wait for the K15-compatible gate contract and an acknowledged exclusive-path assignment.",
+      "next": "Consolidate overlay lifecycle, 44px targets, rebind validation, Settings reach, tapsize, and their known-bad gates.",
+      "rollback": "Revert the bounded controls/gates commit and retain its failing fixtures as evidence."
+    },
+    {
+      "id": "equipment-rogue-adjudication",
+      "branch": "codex/migration-equipment-rogue-adjudication",
+      "status": "waiting-decision",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": null,
+      "availability": "local-only",
+      "owner": {
+        "role": "IT Manager III decision relay; maker unassigned",
+        "acknowledged": false,
+        "acknowledgedAt": null
+      },
+      "claimedPaths": [
+        "content/source",
+        "src/content",
+        "src/model/loadout.js",
+        "src/engine/save.js",
+        "assets"
+      ],
+      "dependencies": [
+        "save-equipment-actionregistry",
+        "character-creation"
+      ],
+      "block": "IT Manager III must adjudicate mechanics, save/loadout, asset-manifest, provenance, and generated-content conflicts before source assignment.",
+      "next": "Submit EVIDENCE / OPTIONS / REC / NEXT / AUTH; implement only the paths and mechanics selected in the recorded decision.",
+      "rollback": "Retain evidence and revert only an approved bounded source commit; regenerate derived content from restored source."
+    }
+  ],
+  "collisions": [
+    {
+      "resource": "src/main.js",
+      "lanes": [
+        "save-equipment-actionregistry",
+        "title-save-slot"
+      ],
+      "resolution": "Freeze save-equipment-actionregistry first; rebase or reconstruct title-save-slot against that exact accepted head.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "src/model/loadout.js and src/engine/save.js",
+      "lanes": [
+        "save-equipment-actionregistry",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "Settle stable identity and compatibility before any Rogue/equipment mechanics assignment.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
+      "resource": "generated root/build/dist/buildordinal lane",
+      "lanes": [
+        "character-creation",
+        "save-equipment-actionregistry",
+        "title-save-slot",
+        "controls-gates",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "One owner freezes all accepted source, runs the generator once, then verifies provenance and byte identity; no hand merge of generated files.",
+      "owner": "IT Manager III, Integration & Delivery"
+    }
+  ],
+  "nextActions": [
+    {
+      "order": 1,
+      "lane": "continuity-control-plane",
+      "action": "Freeze and independently policy-QA the repository continuity packet.",
+      "authority": "Existing local implementation authority; separate authority for push, PR, integration, or Project mutation."
+    },
+    {
+      "order": 2,
+      "lane": "k15-content-door",
+      "action": "Freeze the isolated K15 correction with its deterministic self-test.",
+      "authority": "Existing local implementation authority; independent non-maker QA still required."
+    },
+    {
+      "order": 3,
+      "lane": "character-creation",
+      "action": "Freeze approved character-creation source and tests without generated artifacts.",
+      "authority": "Existing local implementation authority; source acceptance and generated-lane authority remain separate."
+    },
+    {
+      "order": 4,
+      "lane": "save-equipment-actionregistry",
+      "action": "Acknowledge the exclusive-path assignment, then reconstruct stable save/equipment identity and D/R/T destinations.",
+      "authority": "IT Manager III assignment acknowledgement and collision sequencing."
+    },
+    {
+      "order": 5,
+      "lane": "title-save-slot",
+      "action": "Reconstruct after the exact ActionRegistry dependency freezes.",
+      "authority": "IT Manager III clears src/main.js ownership after dependency evidence."
+    },
+    {
+      "order": 6,
+      "lane": "controls-gates",
+      "action": "Consolidate controls behavior and discriminating gates after K15 currentness is known.",
+      "authority": "IT Manager III assignment acknowledgement; binding-conflict scope requires its own recorded decision."
+    },
+    {
+      "order": 7,
+      "lane": "equipment-rogue-adjudication",
+      "action": "Resolve mechanics, compatibility, assets, provenance, and generated-content ownership before assigning source.",
+      "authority": "IT Manager III decision; Constantine retains release and publication authority."
+    }
+  ],
+  "tombstones": [],
+  "forensicEvidence": []
+}
