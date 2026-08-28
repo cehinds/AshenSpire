@@ -95,6 +95,13 @@ if (process.argv.includes('--selftest')) {
         replace: '  color: var(--ember); /* confirmation-modal selftest plant */\n}\n.confirmation-copy',
         expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-CONTRAST/,
       },
+      {
+        name: 'an unrelated load-save SFX failure stays diagnostic-red',
+        file: 'src/ui/components/saveSlotSelector.js',
+        find: "        id: 'loadSave',",
+        replace: "        id: 'loadSave_unrelated', // confirmation-modal selftest plant",
+        expectRed: /RED CONFIRMATION-(?:WIDE|MOBILE|COMPACT)-DIAGNOSTICS/,
+      },
     ],
   });
   process.exit(code);
@@ -214,6 +221,18 @@ try {
   if (!browserPath) throw new Error('no supported Chrome or Edge binary found');
   const served = await serve({ root: ROOT, port: 8254, open: false });
   server = served.server;
+  const expectedLoadSaveSfx404Urls = new Set([
+    `http://127.0.0.1:${served.port}/assets/sfx/holdTick_loadSave.ogg`,
+    `http://127.0.0.1:${served.port}/assets/sfx/holdCommit_loadSave.ogg`,
+  ]);
+  const expectedInfrastructure404Urls = new Set([
+    `http://127.0.0.1:${served.port}/favicon.ico`,
+    `http://127.0.0.1:${served.port}/api/lan/info`,
+  ]);
+  const isExactConsole404For = (entry, urls) => /^error: Failed to load resource: the server responded with a status of 404(?: \([^)]+\))? /.test(entry)
+    && [...urls].some((url) => entry.endsWith(` ${url}`));
+  const isExpectedLoadSaveSfx404 = (entry) => [...expectedLoadSaveSfx404Urls].some((url) => entry === `404 ${url}`)
+    || isExactConsole404For(entry, expectedLoadSaveSfx404Urls);
   const launched = await launchBrowser({ prefix: 'confirmation-modal-', browser: browserPath, headless: '--headless=new', timeoutMs: 20000 });
   closeBrowser = launched.close;
   cdp = connectCdp(launched.wsUrl);
@@ -244,7 +263,8 @@ try {
         diagnostics.console.push(`${message.params.type}: ${message.params.args.map((arg) => arg.value ?? arg.description ?? '').join(' ')}`);
       }
       if (message.method === 'Log.entryAdded' && ['warning', 'error'].includes(message.params.entry.level)) {
-        diagnostics.console.push(`${message.params.entry.level}: ${message.params.entry.text}`);
+        const { level, text, url } = message.params.entry;
+        diagnostics.console.push(`${level}: ${text}${url ? ` ${url}` : ''}`);
       }
       if (message.method === 'Network.responseReceived' && message.params.response.status >= 400) {
         diagnostics.network.push(`${message.params.response.status} ${message.params.response.url}`);
@@ -557,9 +577,11 @@ try {
       `the second hit-tested activation landed on the transient shield and reached no Title control (${JSON.stringify(combatQuitDouble)})`);
 
     const unexpectedConsole = diagnostics.console.filter((entry) => !entry.includes('AudioContext was not allowed to start')
-      && !entry.includes('Failed to load resource: the server responded with a status of 404'));
+      && !isExpectedLoadSaveSfx404(entry)
+      && !isExactConsole404For(entry, expectedInfrastructure404Urls));
     const unexpectedNetwork = diagnostics.network.filter((entry) => !/\/favicon\.ico(?:\s|$)/.test(entry)
-      && !/\/api\/lan\/info(?:\s|$)/.test(entry));
+      && !/\/api\/lan\/info(?:\s|$)/.test(entry)
+      && !isExpectedLoadSaveSfx404(entry));
     check(unexpectedConsole.length === 0 && unexpectedNetwork.length === 0,
       `CONFIRMATION-${label}-DIAGNOSTICS`, `captured console warnings/errors ${diagnostics.console.length}`
         + ` (${unexpectedConsole.length} unexpected); network failures ${diagnostics.network.length}`
