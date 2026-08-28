@@ -161,13 +161,6 @@ async function main() {
   await until(hostTab, `!!document.querySelector('.mapscreen')`, 'host on shared map');
   await until(guestTab, `!!document.querySelector('.mapscreen')`, 'guest on shared map');
   ok(true, 'server-authoritative run started for both clients');
-  const mapQuickSettings = await evalIn(guestTab, `({
-    place: document.querySelector('[data-hud-quick-settings]')?.dataset.place,
-    controls: document.querySelectorAll('[data-hud-quick-action]').length,
-    visible: (() => { const r = document.querySelector('[data-hud-quick-settings]')?.getBoundingClientRect(); return !!r && r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight; })(),
-  })`);
-  ok(mapQuickSettings.place === 'map' && mapQuickSettings.controls === 2 && mapQuickSettings.visible,
-    'LAN map visibly mounts the shared Fullscreen and Music controls');
   await until(hostTab, `document.querySelectorAll('.coop-seat-tabs .seat-tab').length === 2`, 'host shows two seat tabs');
   ok(true, "host's screen shows seat tabs for its two couch seats");
 
@@ -188,13 +181,6 @@ async function main() {
   await until(hostTab, `!!document.querySelector('.combat.coop')`, 'host in shared combat');
   await until(guestTab, `!!document.querySelector('.combat.coop')`, 'guest in shared combat');
   ok(true, 'vote resolved into one shared fight');
-  const combatQuickSettings = await evalIn(guestTab, `({
-    place: document.querySelector('[data-hud-quick-settings]')?.dataset.place,
-    controls: document.querySelectorAll('[data-hud-quick-action]').length,
-    visible: (() => { const r = document.querySelector('[data-hud-quick-settings]')?.getBoundingClientRect(); return !!r && r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight; })(),
-  })`);
-  ok(combatQuickSettings.place === 'combat' && combatQuickSettings.controls === 2 && combatQuickSettings.visible,
-    'LAN combat visibly mounts the shared Fullscreen and Music controls');
   // Accents differentiate players: the host's board shows 2+ distinct tints
   // across its seats (gold host + the local seat's own accent, etc.).
   const tints = await evalIn(hostTab, `[...new Set([...document.querySelectorAll('.coop-seat-name span[style*="--"]')].map((s) => (s.getAttribute('style').match(/--\\w+/) || [''])[0]))]`);

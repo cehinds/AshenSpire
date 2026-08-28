@@ -2,17 +2,10 @@ import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 
-const DEFAULT_REGIONS = Object.freeze([
-  Object.freeze({ id: 'slots', label: 'Slots', count: 0, unit: 'slot', edge: 'bottom', expanded: true }),
-  Object.freeze({ id: 'inventory', label: 'Inventory', count: 0, unit: 'item', edge: 'bottom', expanded: false }),
-  Object.freeze({ id: 'cards', label: 'Cards', count: 0, unit: 'card', edge: 'bottom', expanded: false }),
-  Object.freeze({ id: 'stats', label: 'Stats', count: 0, unit: 'stat', edge: 'bottom', expanded: false }),
-]);
-
-function armouryViewSwitcherModel({ views, activeView, viewLabels = {} }) {
+function armouryViewSwitcherModel({ views, activeView }) {
   return componentModel(UI.armouryViewSwitcher, {
     variant: activeView,
-    properties: { views: views.map((id) => ({ id, label: viewLabels[id] || id, active: id === activeView })) },
+    properties: { views: views.map((id) => ({ id, active: id === activeView })) },
     accessibility: { role: 'tablist', label: 'Armoury view' },
     behaviors: views.map((id) => behaviorModel(`select-armoury-${id}`, {
       event: 'click',
@@ -22,11 +15,11 @@ function armouryViewSwitcherModel({ views, activeView, viewLabels = {} }) {
   });
 }
 
-function armouryHeaderModel({ views, activeView, viewLabels = {} }) {
+function armouryHeaderModel({ views, activeView }) {
   return componentModel(UI.armouryHeader, {
     properties: { title: 'ARMOURY' },
     behaviors: [behaviorModel('close-armoury', { event: 'click', command: 'close-armoury' })],
-    children: [armouryViewSwitcherModel({ views, activeView, viewLabels })],
+    children: [armouryViewSwitcherModel({ views, activeView })],
   });
 }
 
@@ -37,36 +30,25 @@ function armouryBodyModel({ view, figure, slots }) {
   });
 }
 
-export function armouryInventoryModel() {
+function armouryInventoryModel() {
   return componentModel(UI.armouryInventory, {
     accessibility: { role: 'region', label: 'Inventory' },
   });
 }
 
-export function armouryStatsPanelModel() {
+function armouryStatsPanelModel() {
   return componentModel(UI.armouryStatsPanel, {
     accessibility: { role: 'region', label: 'Attributes and resources' },
   });
 }
 
-export function armouryCardStripModel() {
+function armouryCardStripModel() {
   return componentModel(UI.armouryCardStrip, {
     accessibility: { role: 'region', label: 'Equipment cards' },
   });
 }
 
-export function armouryPanelModel({ view, views, viewLabels = {}, layout, subject = 'slots', regions = DEFAULT_REGIONS, picking = false, notice = '' }) {
-  const content = Object.freeze({
-    slots: armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
-    inventory: armouryInventoryModel(),
-    cards: armouryCardStripModel(),
-    stats: armouryStatsPanelModel(),
-  });
-  const regionModels = regions.map((region) => {
-    const item = content[region.id];
-    if (!item) throw new Error(`Unknown Armoury region model: ${region.id}`);
-    return item;
-  });
+export function armouryPanelModel({ view, views, layout, picking = false, notice = '' }) {
   return componentModel(UI.armouryPanel, {
     variant: view,
     properties: {
@@ -75,12 +57,14 @@ export function armouryPanelModel({ view, views, viewLabels = {}, layout, subjec
       notice,
       figure: !!layout?.figure,
       slots: layout?.slots || 'none',
-      subject,
     },
     accessibility: { role: 'dialog', label: 'Armoury', modal: true },
     children: [
-      armouryHeaderModel({ views, activeView: view, viewLabels }),
-      ...regionModels,
+      armouryHeaderModel({ views, activeView: view }),
+      armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
+      armouryInventoryModel(),
+      armouryStatsPanelModel(),
+      armouryCardStripModel(),
     ],
   });
 }
@@ -120,7 +104,7 @@ export function equipmentSlotModel({ slotId, label, rule, cells }) {
   });
 }
 
-export function inventoryItemCardModel(row, { selected = false, draggable = false, classModel = null } = {}) {
+export function inventoryItemCardModel(row, { selected = false, draggable = false } = {}) {
   return componentModel(UI.inventoryItemCard, {
     variant: row.category,
     properties: {
@@ -132,7 +116,6 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
       equippedLabels: [...row.equippedLabels],
       selected,
       draggable,
-      holdAction: classModel?.holdAction === true,
     },
     behaviors: [behaviorModel(`inspect-${row.key}`, {
       event: 'click',
@@ -142,7 +125,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
   });
 }
 
-export function inventoryDetailCardModel({ row, art, description, mods, instruction = '', classModel = null }) {
+export function inventoryDetailCardModel({ row, art, description, mods, instruction = '' }) {
   return componentModel(UI.inventoryDetailCard, {
     variant: row.category,
     properties: {
@@ -156,7 +139,6 @@ export function inventoryDetailCardModel({ row, art, description, mods, instruct
       instruction,
       art,
       fallbackIcon: row.item.icon || '◆',
-      holdAction: classModel?.holdAction === true,
     },
   });
 }

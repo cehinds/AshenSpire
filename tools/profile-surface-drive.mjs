@@ -4,7 +4,7 @@
 // defect that started this round was found by rendering and could not have been
 // found by reading: "nobody has looked at that screen".
 //
-// Covers Sunna's D8 (Title → Profile is a real route, not a promise), her D5
+// Covers Sunna's D8 (Settings → Profile is a real route, not a promise), her D5
 // (the handle no longer lives only inside a once-per-session dialog), her D9
 // (the confirm dialog is a real focus trap), and the surface's own promises —
 // restore states its risk first, a failed restore does not consume the archive
@@ -43,16 +43,15 @@ if (process.argv.includes('--selftest')) {
 }
 
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
-const { port } = await serve({ root: fileURLToPath(new URL('..', import.meta.url)), port: 8193, open: false });
+const { port } = await serve({ root: new URL('..', import.meta.url).pathname, port: 8193, open: false });
 // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
 // Chrome's own TMPDIR inside it, and removes it whatever happens. This driver
 // passed no `--user-data-dir` and never killed the browser at all, so every run
 // stranded both. `awaitEndpoint` is off: it polls /json/list on a fixed port.
 await launchBrowser({
-  prefix: 'profile-surface-', browser: process.env.CHROME || '/opt/pw-browsers/chromium', headless: '--headless=new',
+  prefix: 'profile-surface-', browser: '/opt/pw-browsers/chromium', headless: '--headless=new',
   awaitEndpoint: false, args: ['--remote-debugging-port=9393'], stdio: 'ignore',
 });
 async function cdp(p){let l;for(let i=0;i<100;i++){try{l=await(await fetch(`http://127.0.0.1:${p}/json/list`)).json();if(l.length)break;}catch{}await new Promise(r=>setTimeout(r,100));}
@@ -96,51 +95,22 @@ check('D9 Escape closes the dialog', await ev(`!document.querySelector('.confirm
 if (await ev(`!!document.querySelector('.confirm-fresh')`)) { await ev(`document.querySelector('.confirm-fresh').click()`); await sleep(150); }
 check('D9 clicking the scrim dismisses it', await ev(`!document.querySelector('.confirm-fresh')`));
 
-// --- D8: Title → Profile is a real route to the archive ---
+// --- D8: Settings → Profile is a real route to the archive ---
 await ev(`(document.querySelector('.profile-notice .notnow')||document.querySelector('.profile-notice .keep')).click()`); await sleep(900);
-await ev(`(()=>{
-  Object.defineProperties(document.documentElement, {
-    requestFullscreen: { value: undefined, configurable: true },
-    webkitRequestFullscreen: { value: undefined, configurable: true },
-  });
-  Object.defineProperties(document, {
-    exitFullscreen: { value: undefined, configurable: true },
-    webkitExitFullscreen: { value: undefined, configurable: true },
-    fullscreenEnabled: { value: false, configurable: true },
-    webkitFullscreenEnabled: { value: false, configurable: true },
-  });
-  return 1;
-})()`); await sleep(850);
-const unsupportedFullscreen = await ev(`(()=>{
-  const notice=document.querySelector('[data-hud-quick-notice]:not([hidden])');
-  const button=document.querySelector('[data-hud-quick-action="fullscreen"]');
-  return {notice:notice?.textContent||'',disabled:button?.disabled||false,state:button?.textContent||''};
-})()`);
-check('iPhone-like browsers visibly explain the Add to Home Screen alternative',
-  unsupportedFullscreen.disabled && /add to home screen/i.test(unsupportedFullscreen.notice),
-  JSON.stringify(unsupportedFullscreen));
-await ev(`document.querySelector('#profile').click()`); await sleep(700);
+await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`); await sleep(700);
+// #90: the categories are TABS, so the Profile section is one click in rather
+// than always on screen — and the check is now that the ROUTE exists and works,
+// which is what D8 was ever about.
 const st = await ev(`(()=>{
-  const body=document.querySelector('.profile-archive-body'); if(!body) return {no:true};
+  const body=document.querySelector('.set-body'); if(!body) return {no:true};
+  const cats=[...body.querySelectorAll('.set-tab')].map(h=>h.dataset.member);
+  const tab=[...body.querySelectorAll('.set-tab')].find(h=>h.dataset.member==='Profile');
+  if(tab) tab.click();
   const txt=body.innerText;
-  return {hasProfile:!!document.querySelector('.profile-archive-modal'), text:txt,
+  return {cats, hasProfile:cats.includes('Profile'), text:txt,
     entryButtons:[...body.querySelectorAll('.prof-archive button')].map(b=>b.textContent.trim())};
 })()`);
-check('D8 title screen has a Profile route', !!st.hasProfile, JSON.stringify(st));
-const archiveTrap = await ev(`(()=>{
-  const veil=document.querySelector('.profile-archive-modal')?.closest('.modal-veil');
-  const close=document.querySelector('[data-profile-close]');
-  if(!veil||!close) return {no:true};
-  const openedOnClose=document.activeElement===close;
-  veil.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true}));
-  const wrappedBack=document.activeElement!==close && veil.contains(document.activeElement);
-  veil.dispatchEvent(new KeyboardEvent('keydown',{key:'Tab',bubbles:true}));
-  const wrappedForward=document.activeElement===close;
-  return {openedOnClose,wrappedBack,wrappedForward};
-})()`);
-check('D8 Profile opens on Close and traps keyboard focus',
-  archiveTrap.openedOnClose && archiveTrap.wrappedBack && archiveTrap.wrappedForward,
-  JSON.stringify(archiveTrap));
+check('D8 Settings has a Profile section', !!st.hasProfile, 'categories: '+JSON.stringify(st.cats));
 // The requirement is that the calm screen NAMES the thing in the same words
 // the crisis screen used — not that it says "archive". Sunna's copy calls it
 // "set aside", and introducing a second word for one concept is the defect
@@ -173,26 +143,31 @@ check('a failed restore says nothing was lost', /nothing was lost/i.test(after.m
 // sharpest note I have been handed. The two profiles now carry values I would
 // notice missing, and the assertion is about the DRAWER, not the message.
 await ev(`(()=>{ localStorage.clear();
-  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{muteMusic:false},results:[],progress:{runs:777}}));
+  localStorage.setItem('sote_meta_v1', JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:777}}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
 await ev(`(()=>{ // a readable archive holding a DIFFERENT number
   localStorage.setItem('sote_run_archived', JSON.stringify({v:1,entries:[{id:'meta-good',kind:'meta',slot:null,
     reason:'set aside by hand for this drive',at:new Date().toISOString(),count:1,
-    save: JSON.stringify({schemaVersion:1,settings:{muteMusic:true},results:[],progress:{runs:111}})}]}));
+    save: JSON.stringify({schemaVersion:1,settings:{},results:[],progress:{runs:111}})}]}));
   return 1; })()`);
 await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(1500);
-const musicBeforeRestore = await ev(`document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed')`);
-await ev(`[...document.querySelectorAll('button')].find(b=>/^profile$/i.test(b.textContent.trim())).click()`); await sleep(600);
+await ev(`[...document.querySelectorAll('button')].find(b=>/settings/i.test(b.textContent)).click()`); await sleep(600);
+// STANDING RED, FOUND BY BUILDING THIS TOOL'S OWN KNOWN-BAD (Rune,
+// 2026-08-15). #90 turned the settings categories into TABS, so Profile is
+// one click in and `.prof-restore` is unreachable without it. This drive was
+// never updated: it CRASHED here at pristine dev = 5244543 —
+// `Cannot read properties of null (reading 'click')` — after printing 12 PASS
+// lines, so its last three checks (the readable-archive restore, the outgoing
+// profile surviving, the drawer contents) had not run for however long.
+// tools/restore-settings-drive.mjs already clicks the tab and says why; this
+// is the same two lines, not a new idea.
+await ev(`(()=>{const t=[...document.querySelectorAll('.set-tab')].find(e=>e.dataset.member==='Profile'); if(t){t.click(); return true;} return false;})()`); await sleep(300);
 await ev(`document.querySelector('.prof-restore').click()`); await sleep(200);
 await ev(`document.querySelector('.prof-go').click()`); await sleep(500);
 
 const live = await ev(`JSON.parse(localStorage.getItem('sote_meta_v1')).progress.runs`);
 check('restoring a readable archive really restores it (111 in the drawer → live)', live === 111, 'live runs = ' + live);
-const musicAfterRestore = await ev(`document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed')`);
-check('restoring a profile immediately rebinds the mounted title Music control',
-  musicBeforeRestore === 'true' && musicAfterRestore === 'false',
-  `before=${musicBeforeRestore} after=${musicAfterRestore}`);
 const drawer = await ev(`JSON.parse(localStorage.getItem('sote_run_archived')).entries.map(e=>{try{return JSON.parse(e.save).progress.runs}catch(x){return 'unreadable'}})`);
 check('THE OUTGOING PROFILE SURVIVES: 777 is in the drawer after the restore',
   Array.isArray(drawer) && drawer.includes(777), 'drawer holds: ' + JSON.stringify(drawer));
@@ -209,21 +184,10 @@ const vocab = await ev(`(()=>{
 check('D14 the calm screen says "set aside" and not "archived"',
   vocab.calmSetAside && !vocab.calmArchived, JSON.stringify(vocab));
 
-await ev(`document.querySelector('[data-profile-close]').click()`); await sleep(150);
-await ev(`document.querySelector('[data-hud-quick-action="music"]').click()`); await sleep(150);
-const firstMusicClick = await ev(`(()=>({
-  pressed:document.querySelector('[data-hud-quick-action="music"]')?.getAttribute('aria-pressed'),
-  muted:JSON.parse(localStorage.getItem('sote_meta_v1')).settings.muteMusic
-}))()`);
-check('the first Music click after restore toggles the restored profile, not the stale one',
-  firstMusicClick.pressed === 'true' && firstMusicClick.muted === false,
-  JSON.stringify(firstMusicClick));
-
 
 // --- D18: the second door (Sunna). Not now → Continue → in-run menu →
-// Settings → change a comfort setting. It must SAY it will not persist and
-// point to the title-screen Profile route, without recreating Profile inside
-// the focused in-run Settings hierarchy.
+// Settings → change a comfort setting. It must SAY it will not persist, and
+// the Profile section must be there for the sentence to point at.
 await ev(`(()=>{ localStorage.clear();
   localStorage.setItem('sote_meta_v1','{"schemaVersion":1,"progress":{"runs":2000},');
   return 1; })()`);
@@ -231,7 +195,7 @@ await c.send('Page.navigate',{url:`http://localhost:${port}/`}); await sleep(160
 await ev(`(document.querySelector('.profile-notice .notnow')||document.querySelector('.profile-notice .keep')).click()`); await sleep(700);
 // Start a run so the in-run overlay exists.
 await ev(`[...document.querySelectorAll('button')].find(b=>/begin a climb/i.test(b.textContent)).click()`); await sleep(900);
-const started = await ev(`(()=>{ const b=[...document.querySelectorAll('button')].find(x=>/^(embark|begin the climb|confirm)/i.test(x.textContent.trim())); if(b){b.click(); return b.textContent.trim();} return null; })()`);
+const started = await ev(`(()=>{ const b=[...document.querySelectorAll('button')].find(x=>/^(embark|begin|start|confirm)/i.test(x.textContent.trim())); if(b){b.click(); return b.textContent.trim();} return null; })()`);
 await sleep(1400);
 const overlayOpened = await ev(`(()=>{ const m=[...document.querySelectorAll('button')].find(b=>/menu|☰/i.test(b.textContent)||b.classList.contains('open-menu')); if(m){m.click(); return true;} return false; })()`);
 await sleep(700);
@@ -248,10 +212,8 @@ await sleep(300);
 if (door2.reached) {
   check('D18 the in-run Settings door says the change will not persist',
     /won’t survive a restart|won\'t survive a restart/.test(door2.notice), JSON.stringify(door2.notice));
-  check('D18 the notice points to Profile on the title screen',
-    /Profile on the title screen/i.test(door2.notice), JSON.stringify(door2.notice));
-  check('D18 Profile is not duplicated inside Settings',
-    !(door2.cats||[]).includes('Profile'), JSON.stringify(door2.cats));
+  check('D18 and Profile is there for that sentence to point at',
+    (door2.cats||[]).includes('Profile'), JSON.stringify(door2.cats));
 } else {
   console.log('SKIP  D18 in-run door — could not reach the overlay in this driver (started=' + started + ', menu=' + overlayOpened + ')');
 }

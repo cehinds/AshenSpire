@@ -5,42 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AshenSpire · Component Catalog</title>
   <style>
-    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; --catalog-card-min:285px; }
+    :root { color-scheme: dark; --bg:#100e0c; --panel:#1b1713; --panel2:#241e18; --ink:#f5ead7; --muted:#b7a991; --gold:#c9a227; --red:#a43c35; --blue:#315c9b; --green:#4d7a45; --line:#665536; }
     * { box-sizing:border-box; }
     body { margin:0; background:radial-gradient(circle at 50% -10%,#33261a 0,#100e0c 48rem); color:var(--ink); font:14px/1.45 ui-sans-serif,system-ui,sans-serif; }
     main { width:min(1500px,calc(100% - 32px)); margin:0 auto; padding:28px 0 56px; }
     header { display:flex; justify-content:space-between; gap:24px; align-items:end; border-bottom:1px solid var(--line); padding-bottom:20px; }
     h1 { margin:0; font:700 clamp(24px,4vw,42px)/1.1 Georgia,serif; letter-spacing:.03em; }
     h1 span { color:var(--gold); }
-    .title-link { display:inline-block; padding:5px 8px 7px; margin:-5px -8px 0; border:1px solid transparent; border-radius:8px; color:var(--ink); text-decoration:none; }
-    .title-link:hover,.title-link:focus-visible { border-color:var(--gold); background:color-mix(in srgb,var(--panel) 78%,transparent); }
-    .title-link:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
-    .title-link h1::after { content:' ↗'; color:var(--muted); font:16px ui-sans-serif,system-ui,sans-serif; vertical-align:middle; }
     .lede { max-width:720px; color:var(--muted); margin:10px 0 0; }
     .meta { text-align:right; color:var(--muted); font-size:12px; }
     .meta a { color:var(--gold); }
-    .catalog-nav { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
-    .catalog-nav a { min-height:36px; display:inline-flex; align-items:center; padding:6px 9px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); text-decoration:none; font-size:12px; }
-    .catalog-nav a:hover,.catalog-nav a:focus-visible { border-color:var(--gold); color:var(--gold); }
     .tools { display:flex; flex-wrap:wrap; gap:10px; padding:18px 0; position:sticky; top:0; z-index:2; background:color-mix(in srgb,var(--bg) 92%,transparent); backdrop-filter:blur(8px); }
     input, select { border:1px solid var(--line); border-radius:6px; background:var(--panel); color:var(--ink); padding:9px 11px; }
     input { flex:1 1 260px; }
     .count { color:var(--muted); align-self:center; }
-    .catalog-controls { display:flex; align-items:center; gap:4px; min-height:44px; padding:3px; border:1px solid var(--line); border-radius:7px; background:var(--panel); }
-    .catalog-controls > span { padding:0 5px; color:var(--muted); font-size:11px; white-space:nowrap; }
-    .catalog-controls button { min-width:36px; height:36px; padding:0 9px; border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:var(--ink); cursor:pointer; }
-    .catalog-controls button:hover,.catalog-controls button:focus-visible,.catalog-controls button[aria-pressed="true"] { border-color:var(--gold); color:var(--gold); }
-    .catalog-controls button:disabled { opacity:.4; cursor:not-allowed; }
-    .tool-button { min-height:44px; padding:7px 11px; border:1px solid var(--line); border-radius:7px; background:var(--panel); color:var(--ink); cursor:pointer; }
-    .tool-button:hover,.tool-button:focus-visible { border-color:var(--gold); color:var(--gold); }
-    .density-readout { min-width:84px; text-align:center; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,var(--catalog-card-min)),1fr)); gap:14px; }
-    .grid[data-view="list"] { display:flex; flex-direction:column; }
-    .grid[data-view="list"] article { display:grid; grid-template-columns:minmax(170px,260px) 1fr; }
-    .grid[data-view="list"] .visual { min-height:132px; border:0; border-right:1px solid #3d3022; }
-    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(285px,1fr)); gap:14px; }
+    article { background:linear-gradient(145deg,var(--panel2),var(--panel)); border:1px solid #483b29; border-radius:10px; overflow:hidden; transition:.15s ease; }
     article:hover { border-color:var(--gold); transform:translateY(-2px); }
-    article:focus-visible { outline:2px solid var(--gold); outline-offset:3px; }
     article[hidden] { display:none; }
     .visual { min-height:112px; display:grid; place-items:center; padding:14px; background:#0c0b09; border-bottom:1px solid #3d3022; }
     .body { padding:13px 14px 15px; }
@@ -127,54 +108,17 @@
     .equip-square { height:38px; border:1px solid #78643e; border-radius:5px; display:grid; place-items:center; color:var(--muted); font-size:9px; }
     .inventory-list-demo { width:200px; display:grid; gap:3px; } .inventory-list-demo div { display:grid; grid-template-columns:1fr auto; padding:5px 7px; border:1px solid #584a34; border-radius:4px; font-size:9px; }
     .comparison-demo { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; font:10px ui-monospace,monospace; } .comparison-demo div { padding:7px; border:1px solid #665536; border-radius:5px; }
-    .tray-icon { width:220px; height:82px; display:grid; grid-template-columns:31px 1fr 31px; grid-template-rows:25px 1fr 25px; gap:3px; color:var(--gold); font:700 13px ui-monospace,monospace; }
-    .tray-icon .edge { display:grid; place-items:center; border:1px solid #6f5b35; border-radius:5px; background:#17120e; }
-    .tray-icon .top { grid-column:2; grid-row:1; } .tray-icon .right { grid-column:3; grid-row:2; }
-    .tray-icon .bottom { grid-column:2; grid-row:3; } .tray-icon .left { grid-column:1; grid-row:2; }
-    .tray-icon .core { grid-column:2; grid-row:2; display:grid; place-items:center; border:1px solid #947936; border-radius:5px; background:linear-gradient(#251e15,#120f0c); color:var(--ink); font:10px Georgia,serif; letter-spacing:.1em; }
-    .detail-backdrop { position:fixed; inset:0; z-index:20; background:#0009; opacity:0; pointer-events:none; transition:opacity .18s ease; }
-    .detail-drawer { position:fixed; inset:0 0 0 auto; z-index:21; width:min(48rem,94vw); padding:2rem; overflow:auto; border-left:1px solid var(--line); background:linear-gradient(155deg,#241e18,#100e0c 72%); box-shadow:-14px 0 34px #000b; transform:translateX(102%); transition:transform .2s ease; }
-    body.detail-open .detail-backdrop { opacity:1; pointer-events:auto; }
-    body.detail-open .detail-drawer { transform:translateX(0); }
-    .detail-head { display:flex; align-items:start; justify-content:space-between; gap:1rem; padding-bottom:1.4rem; border-bottom:1px solid var(--line); }
-    .detail-head h2 { margin:.4rem 0 0; font-size:2.4rem; }
-    .detail-close { flex:0 0 44px; width:44px; height:44px; border:1px solid var(--line); border-radius:7px; background:#17120e; color:var(--ink); cursor:pointer; font-size:18px; }
-    .detail-close:hover,.detail-close:focus-visible { border-color:var(--gold); color:var(--gold); }
-    .detail-visual { min-height:180px; display:grid; place-items:center; margin:1.6rem 0; padding:1.6rem; border:1px solid #483b29; border-radius:9px; background:#0c0b09; }
-    .detail-fields { display:grid; grid-template-columns:9rem 1fr; gap:.8rem 1rem; margin:0; }
-    .detail-fields dt { color:var(--muted); } .detail-fields dd { margin:0; }
-    .detail-section { margin-top:1.8rem; } .detail-section h3 { margin:0 0 .7rem; color:var(--gold); font:700 1.4rem Georgia,serif; }
-    .detail-related { display:flex; flex-wrap:wrap; gap:.5rem; }
-    .detail-related button,.detail-gallery-link { border:1px solid #5c4c31; border-radius:5px; background:#17120e; color:#e9d59d; padding:.55rem .75rem; cursor:pointer; text-decoration:none; }
-    .detail-related button:hover,.detail-gallery-link:hover { border-color:var(--gold); }
-    .open-detail { display:inline-block; margin:10px 0 0 8px; color:var(--muted); font-size:11px; }
-    @media (max-width:620px) {
-      main { width:min(100% - 18px,1500px); padding-top:16px; }
-      header { align-items:start; flex-direction:column; }
-      .meta { text-align:left; }
-      .tools { gap:6px; }
-      .catalog-controls { flex:1 1 auto; }
-      .grid[data-view="list"] article { grid-template-columns:1fr; }
-      .grid[data-view="list"] .visual { border-right:0; border-bottom:1px solid #3d3022; }
-    }
-    @media (prefers-reduced-motion:reduce) { article,.detail-backdrop,.detail-drawer { transition:none; } }
   </style>
 </head>
 <body>
 <main>
   <header>
-    <div><a class="title-link" href="https://github.com/cehinds/AshenSpire/blob/dev/README.md" aria-label="Open the AshenSpire GitHub README"><h1>Ashen<span>Spire</span> component catalog</h1></a><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p><nav class="catalog-nav" aria-label="AshenSpire project links"><a href="https://github.com/cehinds/AshenSpire">Repository</a><a href="https://github.com/cehinds/AshenSpire/blob/dev/README.md">README</a><a href="https://github.com/cehinds/AshenSpire/issues">Issues</a><a href="https://github.com/cehinds/AshenSpire/issues/183">Daily Status</a><a href="https://cehinds.github.io/AshenSpire/AshenSpire.html">Preview</a></nav></div>
-    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="ASSET-COMPONENTS.md">Open Asset Components</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
+    <div><h1>Ashen<span>Spire</span> component catalog</h1><p class="lede">Reusable presentation vocabulary for Map, Combat, Inventory, and future screens. Each card shows the stable component ID, model/factory home, renderer, and reuse surface.</p></div>
+    <div class="meta">Library reference<br><a href="COMPONENT-CATALOG.md">Open Markdown catalog</a><br><a href="../src/ui/models/UiComponentId.js">Open ID enum</a></div>
   </header>
-  <div class="tools"><input id="search" type="search" placeholder="Search ID, model, view, role, or child…  (press /)" aria-label="Search components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="creation">Character Creation</option><option value="shrine">Shrine</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury semantics</option><option value="armoury-assets">Rendered Armoury assets</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><select id="kind" aria-label="Filter component kind"><option value="all">All kinds</option><option value="composite">Composite only</option><option value="leaf">Leaf only</option></select><select id="sort" aria-label="Sort components"><option value="id-asc">ID: A–Z</option><option value="id-desc">ID: Z–A</option><option value="group">Group, then ID</option><option value="model">Model, then ID</option><option value="view">View, then ID</option></select><button class="tool-button" id="clear-filters" type="button">Clear</button><button class="tool-button" id="copy-view" type="button">Copy view link</button><div class="catalog-controls" aria-label="Catalog card size"><span>Card size</span><button id="density-less" type="button" aria-label="Smaller cards and more columns">−</button><button id="density-reset" class="density-readout" type="button" aria-label="Reset card size">Medium</button><button id="density-more" type="button" aria-label="Larger cards and fewer columns">+</button></div><div class="catalog-controls" aria-label="Catalog view"><button id="view-grid" type="button" aria-pressed="true">Grid</button><button id="view-list" type="button" aria-pressed="false">List</button></div><span class="count" id="count" role="status"></span></div>
-  <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px (1 px on narrow screens) · vital-row gap 2 px. Narrow Quick Access removes panel padding while preserving every control target. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
+  <div class="tools"><input id="search" type="search" placeholder="Filter by ID, model, view, or purpose…" aria-label="Filter components"><select id="group" aria-label="Filter group"><option value="all">All groups</option><option value="hud">Shared HUD</option><option value="menu">Menus</option><option value="armoury">Armoury</option><option value="inventory">Inventory</option><option value="combat">Combat</option><option value="primitive">Primitives</option></select><span class="count" id="count"></span></div>
+  <p class="catalog-footer">Current shared HUD tuning: portrait scale 70% · primary-row gap 8 px · Quick Access card gap 2 px · vital-row gap 2 px. Values are data-owned in <code>balance.ui.hudPresentation</code>.</p>
   <p class="catalog-footer"><strong>Run-header contract:</strong> <code>identity-cluster</code>, centered <code>cinders-counter</code>, and right <code>build-metadata-trail</code> negotiate in one row. Cinders and metadata cap at 30vw; Act/Floor show current values by default, while totals and lower-priority metadata are configurable/progressive.</p>
-  <p class="catalog-footer"><strong>Quick Menu / overlay contract:</strong> Quick Menu uses the stable production caption and resolves absent or invalid preferences to <strong>Mirror</strong>; legacy <code>off</code> and <code>switcher</code> remain explicit modes. Its groups are Settings / Controls; Fullscreen / Music; Inventory / Character; then Load / Save / Save and Quit / Quit Without Saving. Lifecycle actions confirm destructive unsaved changes. The in-run overlay keeps only Settings and Controls as tabs, with Save Game and Save and Quit in its persistent footer.</p>
-  <p class="catalog-footer"><strong>Armoury contract:</strong> Player labels are Character / Inventory / Hybrid (internal compatibility keys remain <code>grid</code> / <code>rack</code> / <code>hybrid</code>). Armaments, Inventory, Cards, and Stats share the Folding Tray shell. Armaments is non-resizable; resize handles are optional expanded capabilities, and Inventory exposes one only in supporting-tray contexts. The enabled <code>inventoryItem.holdAction</code> makes folded and expanded equipment items one whole-card action/progress surface; comparison remains a separate delayed hover/focus tooltip or inline receipt. <a href="ASSET-COMPONENTS.md">Open the rendered Asset Components reference.</a></p>
-  <section class="token-panel" aria-labelledby="armoury-assets-heading">
-    <h2 id="armoury-assets-heading">Asset Components / Rendered Armoury</h2>
-    <p>The interactive catalog includes every dotted ID from <code>assets/components/armoury.json</code>: player views, Character stat cards, the non-resizable Armaments tray, procedural equipment-position subcomponents, Inventory hold/comparison surfaces, and optional supporting-tray handles. Choose <strong>Rendered Armoury assets</strong> in the group filter, or <a href="ASSET-COMPONENTS.md">open the full selector and ownership reference</a>.</p>
-  </section>
   <section class="token-panel" aria-labelledby="token-heading">
     <h2 id="token-heading">Data-driven HUD tokens</h2>
     <p>Defaults live in <code>balance.ui.hudPresentation</code>; <code>src/main.js</code> validates and projects them once for the shared Map/Combat HUD.</p>
@@ -188,27 +132,15 @@
         <tr><td><code>primaryRowGapPx</code></td><td>8</td><td><code>--hud-primary-row-gap-px</code></td><td>Vitals/Quick Access gap</td></tr>
         <tr><td><code>controlGapPx</code></td><td>2</td><td><code>--hud-control-gap-px</code></td><td>Quick Access grid gap</td></tr>
         <tr><td><code>resourceRowGapPx</code></td><td>2</td><td><code>--hud-resource-row-gap-px</code></td><td>HP/MP/SP vertical gap</td></tr>
-        <tr><td><code>panelPadPx / mobilePanelPadPx</code></td><td>4 / 0</td><td><code>--hud-panel-pad-px / --hud-mobile-panel-pad-px</code></td><td>Quick Access host padding without resizing controls</td></tr>
-        <tr><td><code>mobileControlGapPx</code></td><td>1</td><td><code>--hud-mobile-control-gap-px</code></td><td>Narrow Quick Access cell gap</td></tr>
-        <tr><td><code>mobileOuterPadPx / mobileRowGapPx</code></td><td>4 / 3</td><td><code>--hud-mobile-outer-pad-px / --hud-mobile-row-gap-px</code></td><td>Narrow shared-HUD vertical density</td></tr>
         <tr><td><code>cindersMaxWidthPct</code></td><td>30</td><td><code>--hud-cinders-max-width</code></td><td>Centered Cinders track cap</td></tr>
         <tr><td><code>metadataMaxWidthPct</code></td><td>30</td><td><code>--hud-metadata-max-width</code></td><td>Right metadata-trail cap</td></tr>
         <tr><td><code>metadataShowTotals</code></td><td>false</td><td><code>data-hud-metadata-show-totals</code></td><td>Act/Floor total visibility</td></tr>
       </tbody>
     </table></div>
   </section>
-  <section class="grid" id="grid" data-view="grid" aria-live="polite"></section>
+  <section class="grid" id="grid" aria-live="polite"></section>
   <p class="catalog-footer">Source of truth: <code>src/ui/models/UiComponentId.js</code>. The miniatures are reference diagrams; production renderers remain in <code>src/ui/components/</code> and screens remain in <code>src/ui/screens/</code>.</p>
 </main>
-<div class="detail-backdrop" id="detail-backdrop"></div>
-<aside class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
-  <div class="detail-head"><div><div class="id" id="detail-id"></div><h2 id="detail-title"></h2></div><button class="detail-close" id="detail-close" type="button" aria-label="Close component details">✕</button></div>
-  <div class="detail-visual" id="detail-visual"></div>
-  <dl class="detail-fields" id="detail-fields"></dl>
-  <div class="detail-section" id="detail-composition"></div>
-  <div class="detail-section"><h3>Related components</h3><div class="detail-related" id="detail-related"></div></div>
-  <div class="detail-section" id="detail-actions"></div>
-</aside>
 <script>
 const V = {
   sharedHud:'<div class="mini mini-stack" style="width:100%"><div class="mini-header"><b>◎ REAVER</b><i>⛁ 42</i><span>ACT 1 · FLOOR 1</span></div><div class="panel-parts"><div class="mini-bars"><div class="mini-bar">HP<div class="track"><div class="fill"></div></div></div><div class="mini-bar">MP<div class="track"><div class="fill blue"></div></div></div><div class="mini-bar">SP<div class="track"><div class="fill green"></div></div></div></div><div class="mini-quick"><div class="mini-btn">⚒</div><div class="mini-btn">☰</div><div class="mini-slot">♥</div><div class="mini-slot">◆</div></div></div><div class="split-belt"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div>',
@@ -229,49 +161,39 @@ const V = {
   hotkeyBadge:'<div class="mini mini-stack"><div class="mini-slot key-demo">♥<span class="key">F</span></div><div class="mini-label">hotkey badge</div></div>',
   armouryControl:'<div class="mini mini-stack"><div class="mini-btn">⚒</div><div class="mini-label">open armoury</div></div>',
   quickMenuControl:'<div class="mini mini-stack"><div class="mini-btn">☰</div><div class="mini-label">quick menu</div></div>',
-  hudQuickSettings:'<div class="mini mini-stack" style="align-items:flex-end"><div style="display:grid;justify-items:end;gap:2px"><div class="mini-btn" style="font-size:28px">⛶</div><div class="mini-btn" style="font-size:28px;color:var(--gold)">♫</div></div><div class="mini-label">40px faces · 44px targets · 28px icons</div></div>',
-  fullscreenControl:'<div class="mini mini-stack"><div class="mini-btn" style="font-size:28px">⛶</div><div class="mini-label">expand / collapse action · live browser state</div></div>',
-  musicControl:'<div class="mini mini-stack"><div class="mini-btn" style="font-size:28px;color:var(--gold)">♫</div><div class="mini-label">♫ on · ♫̸ off · shared settings owner</div></div>',
-  quickMenuPanel:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div><div class="row"><span>⛶ Fullscreen</span><b>OFF</b></div><div class="row"><span>♪ Music</span><b>ON · 35%</b></div><div class="row"><span>⚒ Armoury</span><span>›</span></div><div class="row"><span>⚙ Settings</span><span>›</span></div><div class="row"><span>💾 Save</span><span>✓</span></div><div class="row"><span>⏻ Save &amp; Quit</span><span>›</span></div></div></div>',
-  quickMenuCaption:'<div class="mini mini-stack"><div class="menu-demo"><div class="caption">QUICK MENU</div></div><div class="mini-label">stable production caption · Mirror default</div></div>',
-  quickMenuRow:'<div class="mini mini-stack"><div class="menu-demo"><div class="row"><span>♪ Music</span><b>ON · 35%</b></div></div><div class="mini-label">destination, action, or synchronized switch</div></div>',
-  menuOverlay:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">SETTINGS</span><span>CONTROLS</span></div><div class="mini-panel" style="width:210px;height:48px">ACTIVE MENU PANEL</div><div class="tab-demo"><span>SAVE GAME</span><span>SAVE &amp; QUIT</span></div></div>',
-  menuTabStrip:'<div class="mini"><div class="tab-demo"><span class="on">SETTINGS</span><span>CONTROLS</span></div></div>',
-  menuTab:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">SETTINGS</span></div><div class="mini-label">one menu tab</div></div>',
-  menuPanel:'<div class="mini mini-stack"><div class="mini-panel" style="width:210px"><div>GAME · AUDIO · ACCESSIBILITY</div><div class="mini-label">tab-selected content</div></div></div>',
-  menuFooter:'<div class="mini"><div class="tab-demo"><span>SAVE GAME</span><span>SAVE &amp; QUIT</span></div></div>',
-  saveGameControl:'<div class="mini"><div class="mini-slot" style="width:100px">SAVE GAME</div></div>',
-  saveQuitControl:'<div class="mini"><div class="mini-slot" style="width:130px;border-color:#9f4038">SAVE &amp; QUIT</div></div>',
+  quickMenuPanel:'<div class="mini"><div class="menu-demo"><div class="caption">QUICK MENU</div><div class="row"><span>🂠 Deck</span><span>24</span></div><div class="row"><span>◆ Relics</span><span>›</span></div><div class="row"><span>⚙ Settings</span><span>›</span></div></div></div>',
+  quickMenuCaption:'<div class="mini"><div class="menu-demo"><div class="caption">TEST · Quick menu: switcher</div></div></div>',
+  quickMenuRow:'<div class="mini"><div class="menu-demo"><div class="row"><span>⚒ Armoury</span><span>›</span></div></div></div>',
+  menuOverlay:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span></div><div class="mini-panel" style="width:210px;height:48px">ACTIVE MENU PANEL</div></div>',
+  menuTabStrip:'<div class="mini"><div class="tab-demo"><span class="on">DECK</span><span>RELICS</span><span>STATS</span><span>SETTINGS</span></div></div>',
+  menuTab:'<div class="mini mini-stack"><div class="tab-demo"><span class="on">RELICS &amp; FLASKS</span></div><div class="mini-label">one menu tab</div></div>',
+  menuPanel:'<div class="mini mini-stack"><div class="mini-panel" style="width:210px"><div>🂠 🂠 🂠</div><div class="mini-label">tab-selected content</div></div></div>',
   crimsonFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#d95a50">♥<span class="key">F</span></div><div class="mini-label">crimson flask · 3</div></div>',
   azureFlask:'<div class="mini mini-stack"><div class="mini-slot key-demo" style="color:#6e9fe5">◆<span class="key">G</span></div><div class="mini-label">azure flask · 1</div></div>',
   inventoryBelt:'<div class="mini mini-stack" style="width:100%"><div class="split-belt"><div><div class="mini-label">relics</div><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✦</div><div class="mini-slot">✦</div></div></div><div><div class="mini-label" style="text-align:right">potions</div><div class="mini-belt"><div class="mini-slot">◉</div><div class="mini-slot">◉</div></div></div></div></div>',
   itemTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">1</div><div class="mini-slot">2</div><div class="mini-slot slot-empty">3</div><div class="mini-slot slot-empty">4</div></div><div class="mini-label">horizontal item tray</div></div>',
   itemSlot:'<div class="mini mini-stack"><div class="mini-slot slot-empty">+</div><div class="mini-label">generic item slot</div></div>',
-  foldingTray:'<div class="mini mini-stack"><div class="tray-icon"><span class="edge top">v</span><span class="edge right">&lt;</span><span class="edge bottom">^</span><span class="edge left">&gt;</span><span class="core">FOLDING<br>TRAY</span></div><div class="mini-label">four anchored disclosure edges</div></div>',
-  trayHeader:'<div class="mini"><div class="menu-demo" style="width:220px"><div class="row"><span>^ CARDS</span><span>×3 cards</span></div></div></div>',
-  trayContent:'<div class="mini"><div class="inventory-list-demo"><div><span>tray item component</span><b>×1</b></div><div><span>tray item component</span><b>×2</b></div></div></div>',
   relicTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">✦</div><div class="mini-slot">✺</div><div class="mini-slot">♜</div></div><div class="mini-label">relic tray · left anchored</div></div>',
   relicSlot:'<div class="mini mini-stack"><div class="mini-slot">🏅</div><div class="mini-label">one relic slot</div></div>',
   potionTray:'<div class="mini mini-stack"><div class="mini-belt"><div class="mini-slot">🟢</div><div class="mini-slot">🔴</div><div class="mini-slot slot-empty">+</div></div><div class="mini-label">potion tray · right anchored</div></div>',
   potionControl:'<div class="mini mini-stack"><div class="mini-slot key-demo">🟢<span class="key">H</span></div><div class="mini-label">utility potion</div></div>',
-  armouryOverlay:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY</span><span>CHARACTER · INVENTORY · HYBRID ✕</span></div><div class="ab"><div class="equip-square">LEFT</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">⚔</div><div class="equip-square">RIGHT</div></div></div></div>',
+  armouryOverlay:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY</span><span>GRID · RACK · HYBRID ✕</span></div><div class="ab"><div class="equip-square">LEFT</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">⚔</div><div class="equip-square">RIGHT</div></div></div></div>',
   armouryPanel:'<div class="mini"><div class="armoury-demo"><div class="ah"><span>ARMOURY PANEL</span><span>✕</span></div><div class="ab"><div class="equip-square">SLOT</div><div class="mini-panel" style="width:auto;height:44px">FIGURE</div><div class="equip-square">SLOT</div></div></div></div>',
-  armouryHeader:'<div class="mini"><div class="armoury-demo"><div class="ah" style="margin:0"><span>ARMOURY</span><span>CHARACTER · INVENTORY · HYBRID · ✕</span></div></div></div>',
-  armouryViewSwitcher:'<div class="mini"><div class="tab-demo"><span class="on">CHARACTER</span><span>INVENTORY</span><span>HYBRID</span></div></div>',
+  armouryHeader:'<div class="mini"><div class="armoury-demo"><div class="ah" style="margin:0"><span>ARMOURY</span><span>GRID · RACK · HYBRID · ✕</span></div></div></div>',
+  armouryViewSwitcher:'<div class="mini"><div class="tab-demo"><span class="on">GRID</span><span>RACK</span><span>HYBRID</span></div></div>',
   armouryBody:'<div class="mini"><div class="armoury-demo"><div class="ab"><div class="equip-square">ARMOUR</div><div class="sprite-demo" style="width:48px;height:58px;margin:auto">♟</div><div class="equip-square">HAND</div></div></div></div>',
   armouryFigure:'<div class="mini mini-stack"><div class="sprite-demo">♟</div><div class="mini-label">equipped figure layers</div></div>',
   equipmentSlot:'<div class="mini mini-stack"><div class="armoury-demo" style="width:150px"><div class="mini-label">RIGHT HAND</div><div class="equip-square">ACTIVE SET</div></div></div>',
   equipmentSetCell:'<div class="mini mini-stack"><div class="equip-square" style="width:64px">🗡<br>SWORD</div><div class="mini-label">one equipment cell</div></div>',
   armouryInventory:'<div class="mini"><div class="inventory-list-demo"><div><span>Longsword · Weapon</span><b>×1</b></div><div><span>Gold Sigil · Relic</span><b>×1</b></div><div><span>Greenburst · Potion</span><b>×2</b></div></div></div>',
-  inventoryItemCard:'<div class="mini"><div class="inventory-list-demo"><div style="background:linear-gradient(90deg,#7d5d214d 58%,transparent 58%)"><span><b>Longsword</b><br>Weapon · Equipped: Right · HOLD</span><strong>×1</strong></div></div><div class="mini-label">whole-card hold/progress · release early to abort</div></div>',
-  inventoryDetailCard:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:9px;background:linear-gradient(90deg,#7d5d214d 58%,transparent 58%)"><b>LONGSWORD · HOLD</b><br><span class="mini-label">Weapon · common · 1 owned</span><br>Strike +2 · Blade<br><span class="mini-label">Equip label belongs to this same card action</span></div></div>',
+  inventoryItemCard:'<div class="mini"><div class="inventory-list-demo"><div><span><b>Longsword</b><br>Weapon · Equipped: Right</span><strong>×1</strong></div></div></div>',
+  inventoryDetailCard:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:9px"><b>LONGSWORD</b><br><span class="mini-label">Weapon · common · 1 owned</span><br>Strike +2 · Blade</div></div>',
   equipmentComparison:'<div class="mini"><div class="comparison-demo"><div>STRIKE<br><b>5</b></div><span>→</span><div>STRIKE<br><b style="color:var(--gold)">7</b></div></div></div>',
   armouryStatsPanel:'<div class="mini"><div class="mini-panel" style="width:210px;height:auto;padding:8px"><b>ATTRIBUTES &amp; RESOURCES</b><br><span class="mini-label">STR 13 · DEX 11 · HP 56</span></div></div>',
   armouryCardStrip:'<div class="mini mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div></div>',
   armouryRegionHeader:'<div class="mini"><div class="menu-demo"><div class="row"><span>▾ INVENTORY</span><span>12 items</span></div></div></div>',
-  trayResizeHandle:'<div class="mini mini-stack"><div style="position:relative;width:150px;height:44px;border:1px dashed var(--line-soft)"><span style="position:absolute;left:50%;top:50%;width:48px;height:2px;border-radius:99px;background:var(--gold);transform:translate(-50%,-50%)"></span></div><div class="mini-label">44px drag / hold surface</div></div>',
-  battlefieldStage:'<div class="mini mini-stack"><div class="stage"><div class="combat-card player"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span></div><div class="mini-stack"><span class="intent">7 DMG</span><div class="combat-card enemy"><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span></div></div><div class="mini-stack"><span class="intent">3×2</span><div class="combat-card enemy"><strong>◆</strong><span>ENEMY</span><span class="card-hp"></span></div></div></div><div class="mini-label">centered safe corridor · 3vh HUD/hand buffers</div></div>',
-  combatantFrame:'<div class="mini mini-stack"><span class="intent">INTENT</span><div class="combat-card neutral large"><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">attached intent · responsive card scale</div></div>',
+  battlefieldStage:'<div class="mini"><div class="stage"><div class="combat-card player"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">7 DMG</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span></div><div class="combat-card enemy"><span class="intent">3×2</span><strong>◆</strong><span>ENEMY</span><span class="card-hp"></span></div></div></div>',
+  combatantFrame:'<div class="mini mini-stack"><div class="combat-card neutral large"><span class="intent">INTENT</span><strong>◎</strong><span>COMBATANT</span><span class="card-hp"></span><span>STATUS</span></div><div class="mini-label">shared card frame</div></div>',
   playerFrame:'<div class="mini mini-stack"><div class="combat-card player large"><strong>⚔</strong><span>PLAYER</span><span class="card-hp"></span><span>SP 2/2</span></div><div class="mini-label">player card · blue</div></div>',
   enemyFrame:'<div class="mini mini-stack"><div class="combat-card enemy large"><span class="intent">⚔ 7</span><strong>☠</strong><span>ENEMY</span><span class="card-hp"></span><span>POISE 3</span></div><div class="mini-label">enemy card · red</div></div>',
   combatantSprite:'<div class="mini mini-stack"><div class="sprite-demo">⚔</div><div class="mini-label">combatant sprite</div></div>',
@@ -288,87 +210,10 @@ const V = {
   guardedDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-guard">8</span></div><div class="mini-label">damage absorbed by guard</div></div>',
   healthDamage:'<div class="mini mini-stack"><div class="damage-pair"><span class="damage-direct">−12</span></div><div class="mini-label">damage reaching health</div></div>',
   playerHand:'<div class="mini mini-stack"><div class="mini-hand"><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div><div class="card"></div></div><div class="mini-label">fanned player hand tray</div></div>',
-  actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>',
-  characterDisclosure:'<div class="mini mini-stack"><div class="menu-demo" style="width:230px"><div class="row"><span>PRIMARY STATS</span><b>Standard</b></div><div class="row"><span>SPRITE</span><b>Rendered</b></div><div class="row"><span>KEEPSAKE</span><b>Old Cinder</b></div></div></div>',
-  classPreviewPane:'<div class="mini mini-stack"><div class="mini-title">REAVER</div><div class="sprite-demo">CLASS ART</div><div class="mini-label">resources + relic</div></div>',
-  classResourceGrid:'<div class="mini"><div class="mini-header" style="grid-template-columns:repeat(5,1fr)"><b>HP<br>90</b><b>MP<br>2</b><b>SP<br>2</b><b>ACT<br>3</b><b>DRAW<br>5</b></div></div>',
-  classChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>REAVER</b><br><span class="mini-label">Class art, name, and summary</span></div></div>',
-  viewModeToggle:'<div class="mini"><div class="tab-demo"><span class="on">LIST</span><span>GRID</span></div></div>',
-  booleanSettingToggle:'<div class="mini"><div class="menu-demo"><div class="row"><span>AUTO-ADVANCE</span><b>ON</b></div></div></div>',
-  selectionSectionFace:'<div class="mini"><div class="menu-demo"><div class="row"><span>STARTING ARMOUR</span><b>ASHEN VIGIL</b></div></div></div>',
-  primaryStatCard:'<div class="mini mini-stack"><div class="mini-panel" style="width:260px;height:auto;padding:9px"><b>STR</b><span class="mini-label" style="margin-left:10px">Raw force.</span><b style="float:right">13</b></div><div class="mini-panel" style="width:260px;height:auto;padding:9px"><b>STRENGTH</b><br><span class="mini-label">Raw force. Heavy armaments ask for it.</span><br><span class="mini-label">• Strike scaling<br>• Armament requirements</span></div></div>',
-  statAllocationRow:'<div class="mini mini-stack"><div class="mini-header" style="grid-template-columns:minmax(0,1fr) auto auto auto;width:270px"><b>STR</b><span>−</span><b>13</b><span>+</span></div><div class="mini-panel" style="width:270px;height:auto;padding:9px;text-align:left"><b>STRENGTH</b><br><span class="mini-label">Description and every derived benefit span the full control row.</span></div></div>',
-  shrineOptionCard:'<div class="mini mini-stack"><div class="mini-panel" style="width:270px;height:48px;padding:9px;text-align:left"><b>♨ REST</b><span class="mini-label" style="margin-left:8px">Heal and restore Mana</span></div><div class="mini-panel" style="width:270px;height:48px;padding:9px;text-align:left"><b>⚒ SMITH</b><span class="mini-label" style="margin-left:8px">Upgrade a card</span></div><div class="mini-label">one data-owned folded footprint</div></div>',
-  smithUpgradeModal:'<div class="mini mini-stack"><div class="mini-panel" style="width:280px;height:auto;padding:10px;text-align:left"><div style="display:flex;justify-content:space-between;gap:8px"><b>SMITH</b><span class="mini-label" style="color:#d9785f">LEAVES SHRINE</span></div><div class="comparison-demo" style="margin:8px 0"><div>CARD<br><b>7</b></div><span>→</span><div>UPGRADE<br><b style="color:var(--gold)">10</b></div></div><div class="tab-demo"><span>BACK TO SHRINE</span><span class="on">CONFIRM</span></div></div></div>',
-  smithCandidateCard:'<div class="mini mini-stack"><div class="card" style="width:82px;height:112px;outline:3px solid var(--gold);outline-offset:4px"></div><div class="mini-label">one selected eligible card</div></div>',
-  smithUpgradePreview:'<div class="mini"><div class="comparison-demo"><div>CURRENT<br><b>7</b></div><span>→</span><div>UPGRADED<br><b style="color:var(--gold)">10</b></div></div></div>',
-  resourceStrip:'<div class="mini"><div class="mini-header" style="grid-template-columns:repeat(3,1fr)"><b>HP 90</b><b>Mana 2</b><b>Poise 9</b></div></div>',
-  modeChoice:'<div class="mini"><div class="tab-demo"><span class="on">STANDARD</span><span>ASSIGN POINTS</span></div></div>',
-  spriteChoice:'<div class="mini"><div class="tab-demo"><span class="on">RENDERED</span><span>CLASSIC</span></div></div>',
-  tintChoice:'<div class="mini"><div class="mini-belt"><div class="mini-slot" style="background:#c8a83c"></div><div class="mini-slot" style="background:#c95a38"></div><div class="mini-slot" style="background:#86a9c8"></div></div></div>',
-  sigilChoice:'<div class="mini"><div class="mini-belt"><div class="mini-slot">SIGIL</div><div class="mini-slot">ALT</div></div></div>',
-  keepsakeChoice:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>OLD CINDER</b><br><span class="mini-label">Begin the climb with 5 cinders.</span></div></div>',
-  startupGate:'<div class="mini mini-stack"><div class="mini-panel" style="width:230px;height:120px;padding:12px"><div class="mini-stack"><div class="mini-title">ASHEN SPIRE</div><div class="mini-label">A ROGUELIKE DECKBUILDER</div><div class="mini-rule"></div><div class="mini-label">PRESS ANY KEY TO CONTINUE</div></div></div></div>',
-  startupAshField:'<div class="mini"><div class="mini-panel" style="width:220px;height:90px;position:relative"><span style="position:absolute;left:12%;bottom:15%">·</span><span style="position:absolute;left:36%;bottom:62%">•</span><span style="position:absolute;left:61%;bottom:32%">·</span><span style="position:absolute;left:84%;bottom:76%">•</span></div></div>',
-  startupAshParticle:'<div class="mini"><div class="mini-slot" style="width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#c9a227;font-size:22px">•</div></div>',
-  startupMark:'<div class="mini mini-stack"><div class="mini-title">ASHEN SPIRE</div><div class="mini-label">A ROGUELIKE DECKBUILDER</div><div class="mini-rule"></div><div class="mini-label">PRESS ANY KEY TO CONTINUE</div></div>',
-  startupWordmark:'<div class="mini"><div class="mini-title" style="font-size:24px;letter-spacing:.14em">ASHEN SPIRE</div></div>',
-  startupSubtitle:'<div class="mini"><div class="mini-label" style="letter-spacing:.24em">A ROGUELIKE DECKBUILDER</div></div>',
-  startupDivider:'<div class="mini"><div class="mini-rule" style="width:220px"></div></div>',
-  startupPrompt:'<div class="mini"><div class="mini-btn" style="width:220px">PRESS ENTER OR SPACE</div></div>',
-  titleBrandLockup:'<div class="mini mini-stack"><div class="mini-title">ASHEN SPIRE</div><div class="mini-label">A ROGUELIKE DECKBUILDER</div><div class="mini-rule"></div></div>',
-  titleWordmark:'<div class="mini"><div class="mini-title" style="font-size:24px;letter-spacing:.14em">ASHEN SPIRE</div></div>',
-  titleSubtitle:'<div class="mini"><div class="mini-label" style="letter-spacing:.24em">A ROGUELIKE DECKBUILDER</div></div>',
-  titleDivider:'<div class="mini"><div class="mini-rule" style="width:220px"></div></div>',
-  titleMenu:'<div class="mini mini-stack"><div class="menu-demo" style="width:220px"><div class="caption">ASHEN SPIRE</div><div class="row"><span>CONTINUE</span><b>◇</b></div><div class="row"><span>LOAD</span><b>◇</b></div><div class="row"><span>NEW</span><b>◇</b></div><div class="row"><span>COLLECTION</span><b>◇</b></div><div class="row"><span>SETTINGS</span><b>◇</b></div><div class="row"><span>QUIT</span><b>◇</b></div></div></div>',
-  titleMenuItem:'<div class="mini"><div class="mini-btn" style="width:220px">CONTINUE <b style="float:right">◇</b></div></div>',
-  titleMenuGem:'<div class="mini"><div style="color:#c9a227;font-size:28px">◇</div></div>',
-  titleTagline:'<div class="mini"><div class="mini-label" style="letter-spacing:.18em">THE EMBER FLOWS UPWARD. FOLLOW IT.</div></div>',
-  titleMenuModal:'<div class="mini mini-stack"><div class="mini-panel" style="width:230px;height:auto;padding:10px"><b>LOAD GAME</b><div class="row"><span>SLOT 1 · Reaver</span><b>READY</b></div><div class="row"><span>SLOT 2 · Empty</span><b>EMPTY</b></div><div class="row"><span>BACK</span><b>CONTINUE</b></div></div></div>',
-  titleModalClose:'<div class="mini"><div class="mini-btn" style="width:48px;height:48px;display:grid;place-items:center">×</div></div>',
-  titleModalHeading:'<div class="mini"><div class="mini-title">LOAD GAME</div></div>',
-  titleModalDivider:'<div class="mini"><div class="mini-rule" style="width:200px"></div></div>',
-  titleSaveSlotList:'<div class="mini mini-stack"><div class="mini-panel" style="width:220px;height:38px"></div><div class="mini-panel" style="width:220px;height:38px"></div><div class="mini-panel" style="width:220px;height:38px"></div></div>',
-  titleSaveSlot:'<div class="mini"><div class="mini-panel" style="width:230px;height:auto;padding:10px"><b>SLOT 1 · Reaver</b><br><span class="mini-label">Act 1 · Floor 0 · 62/62 HP</span></div></div>',
-  titleSaveSlotCopy:'<div class="mini mini-stack"><b>SLOT 1 · Reaver</b><span class="mini-label">Act 1 · Floor 0 · 62/62 HP</span><span class="mini-label">SEED 1RFRFS8</span></div>',
-  titleSaveSlotState:'<div class="mini"><div class="mini-btn" style="width:120px">READY</div></div>',
-  titleSaveSlotDelete:'<div class="mini"><div class="mini-btn" style="width:48px;height:48px;display:grid;place-items:center">×</div></div>',
-  titleModalActions:'<div class="mini"><div class="tab-demo"><span>BACK</span><span class="on">CONTINUE</span></div></div>',
-  titleModalBack:'<div class="mini"><div class="mini-btn" style="width:160px">BACK</div></div>',
-  titleModalContinue:'<div class="mini"><div class="mini-btn" style="width:160px;border-color:#c9a227;color:#d6b84b">CONTINUE</div></div>',
-  equipmentChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>ASHEN VIGIL</b><br><span class="mini-label">Defend Block +2 · GUARD · ASH</span></div></div>',
-  relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
+  actionRail:'<div class="mini mini-rail rail-wide"><div class="mini-btn">DECK</div><div class="mini-btn">END</div><div class="mini-btn">RELIC</div><div class="mini-btn">?</div></div>'
 };
-const SEMANTIC_COMPONENTS = [
- ['startup-gate','startupGateModel','startupGate.mountStartupGate','screen','Cold boot','Input-gated wordmark, deterministic ash, family prompt, and shared build receipt. Title is not mounted behind it.','startupGate'],
- ['startup-ash-field','startupGateModel.properties.particles','startupGate.mountStartupGate','primitive','Startup Gate','Decorative particle host removed with the gate.','startupAshField'],
- ['startup-ash-particle','deterministic particle record','startupGate.mountStartupGate','primitive','Startup Ash Field','One data-driven ash mote with authored position, delay, duration, and size.','startupAshParticle'],
- ['startup-mark','startup copy + responsive presentation','startupGate.mountStartupGate','screen','Startup Gate','Centered folded-title group with a fully transparent phone backing.','startupMark'],
- ['startup-wordmark','startupGateModel.properties.wordmark','startupGate.mountStartupGate','primitive','Startup Mark','Replaceable Ashen Spire wordmark.','startupWordmark'],
- ['startup-subtitle','startupGateModel.properties.subtitle','startupGate.mountStartupGate','primitive','Startup Mark','Replaceable genre subtitle.','startupSubtitle'],
- ['startup-divider','semantic child','startupGate.mountStartupGate','primitive','Startup Mark','Decorative gold rule between title copy and prompt.','startupDivider'],
- ['startup-prompt','input-family prompt record','startupGate.mountStartupGate','primitive','Startup Mark','Polite live invitation for pointer, touch, keyboard, or controller.','startupPrompt'],
- ['title-brand-lockup','title content records','title.mountTitle','screen','Title screen','Centered wordmark, subtitle, and divider composition.','titleBrandLockup'],
- ['title-wordmark','title content record','title.mountTitle','primitive','Title Brand Lockup','Main Ashen Spire title text.','titleWordmark'],
- ['title-subtitle','title content record','title.mountTitle','primitive','Title Brand Lockup','Main title genre subtitle.','titleSubtitle'],
- ['title-divider','semantic child','title.mountTitle','primitive','Title Brand Lockup','Gold rule and diamond under the title.','titleDivider'],
- ['title-menu','title content records','title.mountTitle','screen','Title screen','Centered unfurled main menu with Continue, Load, New, Collection, Settings, and Quit.','titleMenu'],
- ['title-menu-item','action content record + availability','title.mountTitle','menu','Title Menu','One keyboard, pointer, touch, and controller-ready menu action.','titleMenuItem'],
- ['title-menu-gem','semantic child','title.mountTitle','primitive','Title Menu Item','Decorative diamond separator under a menu label.','titleMenuGem'],
- ['title-tagline','title content record','title.mountTitle','primitive','Title screen','Replaceable centered closing line beneath the main menu.','titleTagline'],
- ['title-menu-modal','saveSlotSelectionModel + save-slot records','title.mountTitle','menu','Title screen','Reusable Load/New dialog whose selected card, accessibility state, and primary action target share one immutable projection; load-review confirms a twice-activated save.','titleMenuModal'],
- ['title-modal-close-control','modal action record + authored tap floor','title.mountTitle','menu','Title Menu Modal','Tap-floor-sized close control that restores title-menu focus.','titleModalClose'],
- ['title-modal-heading','modal-kind projection','title.mountTitle','primitive','Title Menu Modal','LOAD GAME or NEW GAME accessible dialog heading.','titleModalHeading'],
- ['title-modal-divider','semantic child','title.mountTitle','primitive','Title Menu Modal','Gold rule and diamond beneath the dialog heading.','titleModalDivider'],
- ['title-save-slot-list','saveSlotSelectionModel','title.mountTitle','menu','Title Menu Modal','Immutable Load/New selection aggregate whose children identify the selected slot and semantic select command.','titleSaveSlotList'],
- ['title-save-slot','saveSlotSelectionModel child + save summary + titleLoadHold','title.mountTitle','menu','Load/New modal','New Game keeps focus and selected styling on one empty slot; occupied Load slots retain one-tap selection, second-activation review, and pointer/touch hold-to-load.','titleSaveSlot'],
- ['title-save-slot-copy','save summary record','title.mountTitle','primitive','Title Save Slot','Slot number, class, act, floor, HP, and seed receipt, or Empty copy.','titleSaveSlotCopy'],
- ['title-save-slot-state','slot availability projection','title.mountTitle','primitive','Title Save Slot','READY or EMPTY trailing state label.','titleSaveSlotState'],
- ['title-save-slot-delete','slot id + hold-confirm behavior + authored tap floor','title.mountTitle','menu','Occupied Title Save Slot','Tap-floor-sized destructive action with shared hold-confirm timing.','titleSaveSlotDelete'],
- ['title-modal-actions','saveSlotSelectionModel action projection + modal kind','title.mountTitle','menu','Title Menu Modal','Responsive Back/Continue group whose Continue stays enabled for and targets the selected slot; load-review becomes Back to Saves / Load Save.','titleModalActions'],
- ['title-modal-back-control','modal action record','title.mountTitle','menu','Title Modal Actions','Returns to title, or from load-review to the selected Load Game slot.','titleModalBack'],
- ['title-modal-continue-control','saveSlotSelectionModel action child','title.mountTitle','menu','Title Modal Actions','Carries the selected slot as its semantic load/create command payload; load-review exposes the positive Load Save action.','titleModalContinue'],
- ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Expanded and remembered 132px Razor Strip compositions of header, resources, controls, and belt.','sharedHud'],
+const C = [
+ ['shared-run-hud','runHudViewModel','hudmeta.sharedRunHudHtml','hud','Map + Combat','Shared composition of header, resources, controls, and belt.','sharedHud'],
  ['run-header-strip','runHeaderModel','hudmeta.runHeaderStripHtml','hud','Map + Combat','Identity, cinders, and prioritized metadata.','runHeader'],
  ['identity-cluster','identityClusterModel','hudmeta.identityClusterHtml','hud','Map + Combat','Character identity cluster.','identityCluster'],
  ['portrait-badge','componentModel child','hudmeta.identityClusterHtml','primitive','Map + Combat','Character glyph/badge.','portraitBadge'],
@@ -386,34 +231,18 @@ const SEMANTIC_COMPONENTS = [
  ['hotkey-badge','componentModel semantic ID','view-owned','primitive','HUD controls','Configurable key hint badge.','hotkeyBadge'],
  ['armoury-control','actionControlModel','quick access view','hud','Map + Combat','Opens Armoury.','armouryControl'],
  ['quick-menu-control','actionControlModel','quick access view','hud','Map + Combat','Opens Quick Menu.','quickMenuControl'],
- ['hud-quick-settings','hudQuickSettingsModel','hudQuickSettingsHtml + wireHudQuickSettings','hud','Title + Map + Combat','Right-anchored Fullscreen/Music rail with 32px phone faces (20% smaller), unchanged 44px targets, and compact placement below potions.','hudQuickSettings'],
- ['hud-mode-grip','hudModeGripModel','sharedRunHudHtml + wireHudModeGrip','hud','Map + Combat','Remembered Expanded/Razor Strip snap control with an 18x3 visible notch inside a 44x44 target.','hudModeGrip'],
- ['fullscreen-control','componentModel child','hudQuickSettingsHtml','primitive','HUD Quick Settings','Live browser-state action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API.','fullscreenControl'],
- ['music-control','componentModel child','hudQuickSettingsHtml','primitive','HUD Quick Settings','Positive-state toggle mirrored by Quick Menu and Settings and persisted by the shared settings owner.','musicControl'],
- ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Mirror-default Quick Menu with four stable navigation, comfort, Armoury, and lifecycle bands.','quickMenuPanel'],
- ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Stable production Quick Menu caption; no test or experiment copy.','quickMenuCaption'],
- ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','Contextual destination/action or synchronized Fullscreen/Music switch.','quickMenuRow'],
- ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Settings/Controls dialog with persistent run-action footer.','menuOverlay'],
+ ['quick-menu-panel','quickMenuPanelModel','menuComponents.renderQuickMenu','menu','Map + Combat + Overlay','Contextual Quick Menu dropdown.','quickMenuPanel'],
+ ['quick-menu-caption','quickMenuCaptionModel','menuComponents.renderQuickMenu','menu','Quick Menu','Variant/status caption.','quickMenuCaption'],
+ ['quick-menu-row','quickMenuRowModel','menuComponents.renderQuickMenu','menu','Quick Menu','One context-specific menu action.','quickMenuRow'],
+ ['menu-overlay','menuOverlayModel','menuComponents.renderMenuOverlay','menu','Map + Combat','Full tabbed in-run menu.','menuOverlay'],
  ['menu-tab-strip','menuTabStripModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Shared tab navigation strip.','menuTabStrip'],
- ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Settings or Controls tab.','menuTab'],
+ ['menu-tab','menuTabModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','One Deck/Relics/Stats/Save/Settings/Controls tab.','menuTab'],
  ['menu-panel','menuPanelModel','menuComponents.updateMenuSelection','menu','Menu Overlay','Active tab content host.','menuPanel'],
- ['menu-footer','menuFooterModel','menuComponents.renderMenuOverlay','menu','Menu Overlay','Persistent run-action footer.','menuFooter'],
- ['save-game-control','componentModel child + CombatSnapshotService command','menuComponents.renderMenuOverlay','menu','Menu Footer','Save the exact committed combat turn to the active slot and remain in the run. Browser evidence: tools/combat-save.mjs at 1200x730 and 390x844.','saveGameControl'],
- ['save-quit-control','componentModel child + CombatSnapshotService command','menuComponents.renderMenuOverlay','menu','Menu Footer','Save the exact committed combat turn and return to the title screen. Browser evidence: tools/combat-save.mjs at 1200x730 and 390x844.','saveQuitControl'],
- ['confirmation-modal','ConfirmationService state + semantic callbacks','confirmationModal.openConfirmationModal','menu','Map + Combat Load / Quit Without Saving','Shared themed alertdialog; neutral Back is focused first, cancellation restores the launcher, layered Escape preserves the covered menu, and a bounded top-layer input shield prevents physical double-click click-through during navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested and computed-contrast browser evidence runs at 1200x730, 390x844, and 320x640.','menuOverlay'],
- ['confirmation-cancel-control','confirmation cancel command','confirmationModal.openConfirmationModal','menu','Confirmation Modal','Stable neutral Back action; owns initial focus for danger decisions, restores the launcher, and never mutates game state.','menuTab'],
- ['confirmation-action','confirmation commit command','confirmationModal.openConfirmationModal','menu','Confirmation Modal','Explicit danger action whose parchment text clears 4.5:1 while its border retains blood/ember; commits exactly once and never before activation.','saveQuitControl'],
- ['controls-rebind-capture','rebind-capture-service state','controls.renderControls','menu','Controls','Keyboard/pad binding surface. Armed keyboard capture owns its keydown before the surrounding overlay.','controlsRebindCapture'],
- ['controls-key-rebind-control','action id + capture state','controls.renderControls','primitive','Controls Rebind Capture','Stable keyboard rebind action. Escape cancels Press… without mutation and restores focus; re-arm accepts a free key.','controlsKeyRebindControl'],
  ['crimson-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Health charge flask.','crimsonFlask'],
  ['azure-flask-control','componentModel','flask.flaskPresentation','hud','Map + Combat','Mana charge flask.','azureFlask'],
  ['inventory-belt','inventoryBeltModel','hudmeta.inventoryBeltHtml','inventory','Map + Combat','Shared relic/potion belt.','inventoryBelt'],
  ['item-tray','itemTrayModel child','belt view','primitive','Inventory','Shared horizontal tray behavior.','itemTray'],
  ['item-slot','componentModel semantic ID','item view','primitive','Inventory','Generic item slot contract.','itemSlot'],
- ['folding-tray','trayModel','trayComponents.renderTray','primitive','Armoury + future menus','Edge-aware disclosure composition. Armoury instances open at 45vh, retain 30vh per expanded tray, snap 30–90vh, and remember geometry for this play session only.','foldingTray'],
- ['tray-header','trayHeaderModel child','trayComponents.renderTray','primitive','Folding Tray','Directional fold action, name, quantity, and optional sort.','trayHeader'],
- ['tray-resize-handle','trayResizeHandleModel child','trayComponents.renderTray','primitive','Resizable expanded Folding Tray','Optional 44px mouse, touch-hold, and keyboard resize surface; emitted only when enabled.','trayResizeHandle'],
- ['tray-content','trayContentModel child','trayComponents.renderTray','primitive','Folding Tray','Pluggable item-model content host.','trayContent'],
  ['relic-tray','itemTrayModel','belt view','inventory','Map + Combat','Relics under SP.','relicTray'],
  ['relic-slot','componentModel semantic ID','item view','primitive','Map + Combat','Individual relic tile.','relicSlot'],
  ['potion-tray','itemTrayModel','belt view','inventory','Map + Combat','Utility potion tray, right anchored.','potionTray'],
@@ -421,41 +250,20 @@ const SEMANTIC_COMPONENTS = [
  ['armoury-overlay','armouryOverlayModel','armouryComponents.renderArmouryOverlay','armoury','Map + Combat','Modal Armoury veil and focus scope.','armouryOverlay'],
  ['armoury-panel','armouryPanelModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Complete Armoury surface.','armouryPanel'],
  ['armoury-header','armouryHeaderModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Title, view controls, and close action.','armouryHeader'],
- ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Player labels are Character / Inventory / Hybrid; compatibility keys remain grid / rack / hybrid.','armouryViewSwitcher'],
- ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive Character and Armaments workspace selected by the current player view.','armouryBody'],
+ ['armoury-view-switcher','armouryViewSwitcherModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Grid/Rack/Hybrid view selector.','armouryViewSwitcher'],
+ ['armoury-body','armouryBodyModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Responsive figure and slot workspace.','armouryBody'],
  ['armoury-figure','componentModel semantic ID','equipment.js + assets.js','armoury','Armoury','Layered equipped character figure.','armouryFigure'],
  ['equipment-slot','equipmentSlotModel','armouryComponents.renderEquipmentSlot','armoury','Armoury','One named equipment socket and its sets.','equipmentSlot'],
  ['equipment-set-cell','equipmentSetCellModel','armouryComponents.renderEquipmentSetCell','armoury','Equipment Slot','One active, empty, or locked set cell.','equipmentSetCell'],
- ['armoury-inventory','armouryInventoryModel','equipment.js inside renderTray','armoury','Armoury','Inventory tray content and the single carried-item list.','armouryInventory'],
- ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','The current inventoryItem class enables holdAction. Folded and expanded states share one whole-card action/progress surface; early release aborts.','inventoryItemCard'],
- ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded art, tags, mods, and action label inside the same whole-card hold surface; there is no second action button while hold confirmation owns it.','inventoryDetailCard'],
- ['equipment-comparison','semantic child model + armouryUi.layout.comparison','equipmentReceipts.js in tooltip or item card','armoury','Armoury Inventory','Full before/after receipt, separate from action hold; authored presentation chooses delayed hover/focus tooltip or inline content.','equipmentComparison'],
- ['armoury-stats-panel','armouryStatsPanelModel','equipment.js inside renderTray','armoury','Armoury','Stats tray content: attributes, combat values, resources, and relic summary.','armouryStatsPanel'],
- ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js inside renderTray','armoury','Armoury','Cards tray content: equipment-associated card rewrites in list or grid presentation.','armouryCardStrip'],
- ['armoury-region-header','compatibility semantic ID','replaced by tray-header','armoury','Armoury','Historical Armoury-only fold-header name.','armouryRegionHeader'],
- ['character-disclosure','disclosure entries','disclosure.mountDisclosure','creation','Character Creation + catalog','One-open nested picker shell.','characterDisclosure'],
- ['class-preview-pane','class preview presentation','creationCards.classPreviewPane','creation','Character Creation + catalog','Selected class art, resources, and relic preview.','classPreviewPane'],
- ['class-resource-grid','statProjection.derived[]','creationCards.classResourceGrid','creation','Class preview + catalog','Starting HP, Mana, Stamina, Actions, and Draw.','classResourceGrid'],
- ['class-choice-card','class row + selected/locked state','creationCards.classChoiceCard','creation','Class selection + catalog','Reusable class option card.','classChoiceCard'],
- ['view-mode-toggle','view mode state','creationCards.viewModeToggle','creation','Class/Equipment + catalog','List and Grid presentation switch.','viewModeToggle'],
- ['boolean-setting-toggle','boolean setting state','creationCards.booleanSettingToggle','creation','Equipment + future settings','Reusable accessible setting switch.','booleanSettingToggle'],
- ['selection-section-face','label/value/visual receipt','creationCards.selectionSectionFace','creation','Equipment disclosure + catalog','Collapsed selection subcard receipt.','selectionSectionFace'],
- ['primary-stat-card','creationBrief.attributeCardModels entry','creationCards.primaryStatCard + disclosure.mountDisclosure','creation','Character Creation + Shrine + Armoury + catalog','Folded label, one-line summary, and value; click or tooltip reveals the authored description and model-derived benefits.','primaryStatCard'],
- ['stat-allocation-row','one attribute allocation row','statAllocationCard.renderStatAllocationCard','creation','Character Creation + Shrine allocation + catalog','Invisible parent composition for the stat face, value, decrement/increment controls, and a full-row reveal.','statAllocationRow'],
- ['shrine-option-card','balance.ui.shrinePresentation + option plan','rest.mountRest','shrine','Shrine of Ember','Rest, Smith, Flask Allocation, and Level Up share one data-owned folded viewport footprint.','shrineOptionCard'],
- ['smith-upgrade-modal','SmithSelectionModel','smithUpgradeModal.mountSmithUpgradeModal','shrine','Shrine Smith','Dedicated dialog and focus scope for reversible choose/review state, Back, and explicit Confirm.','smithUpgradeModal'],
- ['smith-candidate-card','SmithSelectionModel.properties.candidates[]','card.renderCard inside smithUpgradeModal','shrine','Smith upgrade modal','One keyboard/touch-selectable eligible deck card; selection does not mutate the run.','smithCandidateCard'],
- ['smith-upgrade-preview','SmithSelectionModel.properties.selected','card.upgradePreviewHtml inside smithUpgradeModal','shrine','Smith upgrade modal','Current-versus-upgraded comparison; empty prompt before selection.','smithUpgradePreview'],
- ['resource-strip','derived rows + Poise receipt','creationCards.resourceStrip','creation','Character stats + catalog','HP, Mana, Stamina, Actions, Draw, and Poise.','resourceStrip'],
- ['mode-choice','creation mode + selected state','creationCards.modeChoiceButton','creation','Character stats + catalog','Standard or Assign Points choice.','modeChoice'],
- ['sprite-choice','sprite style + selected state','creationCards.spriteChoiceButton','creation','Appearance + catalog','Asset-backed sprite style choice.','spriteChoice'],
- ['tint-choice','tint row + selected state','creationCards.tintChoiceButton','creation','Appearance + catalog','Asset tint selection.','tintChoice'],
- ['sigil-choice','glyph + selected state','creationCards.sigilChoiceButton','creation','Appearance + catalog','Sigil overlay selection.','sigilChoice'],
- ['keepsake-choice','keepsake row + selected state','creationCards.keepsakeChoiceButton','creation','Keepsake + catalog','Starting keepsake card.','keepsakeChoice'],
- ['equipment-choice-card','equipment row + selected state','equipment.pieceChip','creation','Starting Equipment + Armoury/catalog','Armour or armament option card.','equipmentChoiceCard'],
- ['relic-choice-card','relic row + selected state','creationCards.relicChoiceButton','creation','Starting Equipment + catalog','Starting relic option card.','relicChoiceCard'],
- ['battlefield-stage','battlefieldStageModel','battlefieldStage.js + combat.js','combat','Combat','Data-driven protected corridor that centers combatants between the HUD and hand.','battlefieldStage'],
- ['combatant-frame','combatantFrame','combatantFrame.js + battlefieldStage.js','combat','Combat','Shared intent-and-card stack with responsive card-only scaling.','combatantFrame'],
+ ['armoury-inventory','armouryInventoryModel','armouryComponents.renderArmouryPanel','armoury','Armoury','Shared carried-item inventory region.','armouryInventory'],
+ ['inventory-item-card','inventoryItemCardModel','armouryComponents.renderInventoryItemCard','armoury','Armoury Inventory','Collapsed carried-item summary.','inventoryItemCard'],
+ ['inventory-detail-card','inventoryDetailCardModel','armouryComponents.renderInventoryDetailCard','armoury','Armoury Inventory','Expanded item art, tags, mods, and action.','inventoryDetailCard'],
+ ['equipment-comparison','componentModel semantic ID','equipmentReceipts.js','armoury','Armoury Inventory','Before/after equipment receipt.','equipmentComparison'],
+ ['armoury-stats-panel','armouryStatsPanelModel','equipment.js','armoury','Armoury','Attributes and derived resource projection.','armouryStatsPanel'],
+ ['armoury-card-strip','armouryCardStripModel','equipment.js + card.js','armoury','Armoury','Live card rewrites from equipped pieces.','armouryCardStrip'],
+ ['armoury-region-header','componentModel semantic ID','equipment.js','armoury','Armoury','Fold control and region item count.','armouryRegionHeader'],
+ ['battlefield-stage','componentModel','combat.js','combat','Combat','Combat scene/stage host.','battlefieldStage'],
+ ['combatant-frame','combatantFrame','combatantFrame.js','combat','Combat','Shared combatant card geometry.','combatantFrame'],
  ['player-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Player combatant card.','playerFrame'],
  ['enemy-combatant-frame','combatantFrame variant','combatantFrame.js','combat','Combat','Enemy combatant card.','enemyFrame'],
  ['combatant-sprite','combatantFrame child','combatantFrame.js + assets.js','combat','Combat cards','Rendered player or enemy figure.','combatantSprite'],
@@ -474,205 +282,23 @@ const SEMANTIC_COMPONENTS = [
  ['player-hand-tray','componentModel','combat.js + hand.js','combat','Combat','Player card hand.','playerHand'],
  ['combat-action-rail','componentModel','combat.js','combat','Combat','End-turn/action controls.','actionRail']
 ].map(([id,model,owner,group,reuse,purpose,visual]) => ({id,model,owner,group,reuse,purpose,visual}));
-const RENDERED_ARMOURY_COMPONENTS = [
- ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],
- ["armoury.viewSwitcher",".armoury-views","Armoury shell and view routing","Character/Inventory/Hybrid player selector; grid/rack/hybrid remain internal compatibility keys","armouryViewSwitcher"],
- ["armoury.characterView",".armoury[data-pane='character']","Armoury shell and view routing","full-width Character view surface with identity/sprite left and stats right","armouryFigure"],
- ["armoury.inventoryView",".armoury[data-pane='inventory']","Armoury shell and view routing","Inventory view surface with Armaments and Inventory panes","armouryPanel"],
- ["armoury.hybridView",".armoury[data-pane='both']","Armoury shell and view routing","Hybrid view surface with vertical Character pane and Armaments pane","armouryPanel"],
- ["armoury.characterViewButton",".armoury-views [data-member='grid']","Armoury shell and view routing","opens the player-labeled Character view through the grid compatibility key","armouryViewSwitcher"],
- ["armoury.inventoryViewButton",".armoury-views [data-member='rack']","Armoury shell and view routing","opens the player-labeled Inventory view through the rack compatibility key","armouryViewSwitcher"],
- ["armoury.hybridViewButton",".armoury-views [data-member='hybrid']","Armoury shell and view routing","opens the player-labeled Hybrid view through the hybrid compatibility key","armouryViewSwitcher"],
- ["armoury.characterPane",".armoury-character","Character and Hybrid views","full Character surface or vertical left Hybrid pane","armouryFigure"],
- ["armoury.spritePane",".armoury-sprite-pane","Character and Hybrid views","shrink-to-fit character sprite","armouryFigure"],
- ["armoury.characterSummary",".character-summary","Character and Hybrid views","name, class description, and level","armouryStatsPanel"],
- ["armoury.combatPowerCard",".character-info-card.combatPowerCard","Character and Hybrid views","foldable Combat Power group card with summary values","armouryStatsPanel"],
- ["armoury.combatPowerGroup",".character-power-cards","Character and Hybrid views","vertical Combat Power detail group","armouryStatsPanel"],
- ["armoury.combatPowerMetric",".character-power-cards .disc-face","Character and Hybrid views","Strike, Magic, or Defense card with responsive bonus line","armouryStatsPanel"],
- ["armoury.attributesCard",".character-info-card.attributesCard","Character and Hybrid views","foldable Attributes group card with summary values","armouryStatsPanel"],
- ["armoury.attributeCard",".character-attributes .disc-face","Character and Hybrid views","one expandable attribute","armouryStatsPanel"],
- ["armoury.relicsCard",".character-info-card.relicsCard","Character and Hybrid views","foldable Relics group card with count and name summary","armouryStatsPanel"],
- ["armoury.equipmentPane",".armoury-equipment","Inventory and Hybrid Armaments","vertical armaments pane; left in Inventory and right in Hybrid","equipmentSlot"],
- ["armoury.armamentsCard",".armoury-equipment[data-component='armoury.armamentsCard']","Inventory and Hybrid Armaments","non-resizable Armaments member of the shared Folding Tray family, with configurable outer border","equipmentSlot"],
- ["armoury.armamentsHeader",".armoury-equipment-head","Inventory and Hybrid Armaments","shared Tray header for Armaments with fold state, item count, and expanded-only view control","equipmentSlot"],
- ["armoury.armamentsFoldButton",".armoury-equipment-head [data-fold='armaments']","Inventory and Hybrid Armaments","folds or unfolds Armaments content","equipmentSlot"],
- ["armoury.armamentsExpanded",".armoury-equipment[data-collapsed='0']","Inventory and Hybrid Armaments","expanded Armaments tray state with List/Grid control","equipmentSlot"],
- ["armoury.armamentsFolded",".armoury-equipment[data-collapsed='1']","Inventory and Hybrid Armaments","folded Armaments tray state with compact name and item count","equipmentSlot"],
- ["armoury.armamentViewToggle",".armoury-armament-view-toggle","Inventory and Hybrid Armaments","Armaments list/grid presentation toggle","equipmentSlot"],
- ["armoury.hybridPaneSplitter",".armoury-hybrid-splitter","Inventory and Hybrid Armaments","Hybrid Character/Armaments drag and keyboard divider","trayResizeHandle"],
- ["armoury.equipmentPositionCard",".armoury-position-card","Inventory and Hybrid Armaments","one complete data-driven card for each visible equipment position","equipmentSlot"],
- ["armoury.occupiedPositionCard",".armoury-position-card.is-occupied","Inventory and Hybrid Armaments","occupied position with item summary and expandable details","equipmentSlot"],
- ["armoury.emptyPositionCard",".armoury-position-card.is-empty","Inventory and Hybrid Armaments","unlocked empty position and drop target","equipmentSlot"],
- ["armoury.lockedPositionCard",".armoury-position-card.is-locked","Inventory and Hybrid Armaments","next locked equipment position and authored unlock refusal","equipmentSlot"],
- ["armoury.positionLabelPane",".armoury-position-label-pane","Inventory and Hybrid Armaments","authored position label and short position code","equipmentSlot"],
- ["armoury.positionSpritePane",".armoury-position-sprite-pane","Inventory and Hybrid Armaments","item, empty, or locked position art","equipmentSlot"],
- ["armoury.summaryDivider",".armoury-position-sprite-pane","Inventory and Hybrid Armaments","right edge of the sprite pane and left boundary of the item summary","armouryPanel"],
- ["armoury.positionSummaryPane",".armoury-position-summary-pane","Inventory and Hybrid Armaments","category, item name, combat, tags, weight, and equipment state","equipmentSlot"],
- ["armoury.positionAction",".armoury-position-action","Inventory and Hybrid Armaments","Equip or green Equipped state action","equipmentSlot"],
- ["armoury.armamentItemCard",".armoury-position-detail","Inventory and Hybrid Armaments","expanded lore, effects, bonus, value, weight, and tag details","inventoryDetailCard"],
- ["armoury.armamentDetailPane",".armoury-armament-details","Inventory and Hybrid Armaments","expanded item detail pane below the compact position summary","inventoryDetailCard"],
- ["armoury.armamentGridGroup",".armoury-position-grid-group","Inventory and Hybrid Armaments","one authored equipment group in Armaments grid mode","equipmentSlot"],
- ["armoury.positionGridCard",".armoury-position-grid-card","Inventory and Hybrid Armaments","compact position code, sprite, and item name tile","equipmentSlot"],
- ["armoury.occupiedPositionGridCard",".armoury-position-grid-card.is-occupied","Inventory and Hybrid Armaments","occupied Armaments grid tile","equipmentSlot"],
- ["armoury.emptyPositionGridCard",".armoury-position-grid-card.is-empty","Inventory and Hybrid Armaments","empty Armaments grid tile and drop target","equipmentSlot"],
- ["armoury.lockedPositionGridCard",".armoury-position-grid-card.is-locked","Inventory and Hybrid Armaments","locked Armaments grid tile","equipmentSlot"],
- ["armoury.armamentGridDetails",".armoury-position-grid-detail","Inventory and Hybrid Armaments","shared selected-position Details area below Armaments grid groups","inventoryDetailCard"],
- ["armoury.inventoryCard",".armoury-inventory","Inventory item workflow","Inventory member of the four shared Folding Tray families; owns the single carried-item list","inventoryItemCard"],
- ["armoury.paneSplitter",".armoury-pane-splitter","Armoury panes","drag and keyboard pane resizer with data-authored snap points","trayResizeHandle"],
- ["armoury.itemCard",".inventory-face, .equip-chip.as-face","Inventory item workflow","folded face of the unified inventory item card; expands in place and shares its action/progress state with the reveal","inventoryItemCard"],
- ["armoury.inventoryItemClass","[data-card-class='inventoryItem']","Inventory item workflow","Inventory item class with holdAction enabled; folded and expanded states are one action surface","inventoryItemCard"],
- ["armoury.itemReveal",".inventory-detail, .disc-reveal","Inventory item workflow","expanded item details within the same whole-card hold/progress surface; its action label is not a second button","inventoryDetailCard"],
- ["armoury.comparisonTooltipAnchor",".inventory-detail[data-component='armoury.comparisonTooltipAnchor']","Inventory item workflow","comparison anchor separate from action hold; authored presentation chooses delayed hover/focus tooltip or inline receipt","equipmentComparison"],
- ["armoury.equipmentComparison","[data-ui-component='equipment-comparison']","Inventory item workflow","full equipment comparison receipt rendered as delayed hover/focus tooltip or inline content","equipmentComparison"],
- ["armoury.inventoryTrayResizeHandle","[data-component='armoury.inventoryTrayResizeHandle']","Inventory supporting tray","optional expanded Inventory height handle; omitted when Inventory fills its pane","trayResizeHandle"],
- ["armoury.cardsCard",".armoury-strip","Equipment Cards tray","Cards member of the four shared Folding Tray families with expanded-only list/grid control","armouryCardStrip"],
- ["armoury.cardList",".armoury-card-list","Equipment Cards tray","configurable vertical list or grid of equipment cards","armouryCardStrip"],
- ["armoury.cardRow",".armoury-card-row","Equipment Cards tray","folded equipment card row with count and cost","armouryCardStrip"],
- ["armoury.cardDetail",".armoury-card-row-detail","Equipment Cards tray","expanded card icon and detail panes","armouryCardStrip"],
- ["armoury.cardViewToggle",".armoury-card-view-toggle","Equipment Cards tray","list/grid presentation toggle","armouryCardStrip"],
- ["armoury.cardsTrayResizeHandle","[data-component='armoury.cardsTrayResizeHandle']","Equipment Cards tray","optional expanded Cards tray height drag and keyboard handle","trayResizeHandle"],
- ["armoury.statsTray",".armoury-stats-tray","Stats supporting tray","Stats member of the four shared Folding Tray families with Inventory-view character data","armouryStatsPanel"],
- ["armoury.statsSummary",".armoury-stats-summary","Stats supporting tray","class, level, combat, attributes, resources, and relic summary","armouryStatsPanel"],
- ["armoury.statsTrayResizeHandle","[data-component='armoury.statsTrayResizeHandle']","Stats supporting tray","optional expanded Stats tray height drag and keyboard handle","trayResizeHandle"],
- ["armoury.disclosure",".disc-face, .disc-reveal","Rendered Armoury","shared progressive-disclosure primitive","foldingTray"]
-].map(([id,owner,reuse,purpose,visual]) => ({
-  id, model:'assets/components/armoury.json', owner, group:'armoury-assets', reuse, purpose, visual,
-}));
-const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
 const COMPOSITION = Object.freeze({
-  'startup-gate':['startup-ash-field','startup-mark'],
-  'startup-ash-field':['startup-ash-particle × N'],
-  'startup-mark':['startup-wordmark','startup-subtitle','startup-divider','startup-prompt'],
-  'title-brand-lockup':['title-wordmark','title-subtitle','title-divider'],
-  'title-menu':['title-menu-item × 6'],
-  'title-menu-item':['title-menu-gem'],
-  'title-menu-modal':['title-modal-close-control','title-modal-heading','title-modal-divider','title-save-slot-list','title-modal-actions'],
-  'title-save-slot-list':['title-save-slot × N'],
-  'title-save-slot':['title-save-slot-copy','title-save-slot-state','title-save-slot-delete (occupied only)'],
-  'title-modal-actions':['title-modal-back-control','title-modal-continue-control'],
-  'quick-menu-panel':['quick-menu-caption','quick-menu-row × 10 (Settings/Controls; Fullscreen/Music; Inventory/Character; Load/Save/Save and Quit/Quit Without Saving)'],
-  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel','menu-footer','save-game-control','save-quit-control'],
-  'confirmation-modal':['confirmation-cancel-control','confirmation-action'],
-  'controls-rebind-capture':['controls-key-rebind-control × N'],
+  'quick-menu-panel':['quick-menu-caption','quick-menu-row × N'],
+  'menu-overlay':['menu-tab-strip','menu-tab × N','menu-panel'],
   'armoury-overlay':['armoury-panel'],
-  'folding-tray':['tray-header','tray-resize-handle (optional; expanded when enabled)','tray-content → context region component','Armoury session geometry: 45vh default · 30–90vh snap stops'],
-  'armoury-panel':['armoury-header','armoury-view-switcher (Character / Inventory / Hybrid)','responsive subject region (armoury-body)','shared folding-tray families: Armaments / Inventory / Cards / Stats'],
+  'armoury-panel':['armoury-header','armoury-view-switcher','armoury-body','armoury-inventory','armoury-stats-panel','armoury-card-strip'],
   'armoury-body':['armoury-figure','equipment-slot × N'],
   'equipment-slot':['equipment-set-cell × N'],
-  'armoury-inventory':['inventory-item-card × N (folded + expanded whole-card hold surface)','inventory-detail-card (same action surface)','equipment-comparison (separate delayed tooltip/focus or inline receipt)'],
+  'armoury-inventory':['armoury-region-header','inventory-item-card × N','inventory-detail-card','equipment-comparison'],
   'battlefield-stage':['component-background','player-combatant-frame','enemy-combatant-frame × N'],
   'combatant-frame':['component-background','combatant-sprite','combatant-nameplate','health-status-bar','poise-status-bar','proc-status-bar','arcane-exposure-bar','status-effect-tray','intent-indicator','block-badge'],
   'player-combatant-frame':['combatant-frame'],
   'enemy-combatant-frame':['combatant-frame','intent-indicator'],
   'damage-feedback':['guarded-damage-indicator','health-damage-indicator']
-  ,'class-preview-pane':['class-resource-grid']
-  ,'character-disclosure':['mode-choice','primary-stat-card × N','stat-allocation-row × N in Assign Points','resource-strip','sprite-choice','sigil-choice','tint-choice','keepsake-choice']
-  ,'stat-allocation-row':['primary-stat-card','current value','decrement/increment controls','full-width disclosure reveal']
-  ,'smith-upgrade-modal':['smith-candidate-card × eligible deck cards','smith-upgrade-preview','Back to Shrine / Escape','Confirm selected card']
-  ,'armoury.shell':['armoury.viewSwitcher','armoury.characterView','armoury.inventoryView','armoury.hybridView']
-  ,'armoury.characterView':['armoury.characterPane','armoury.spritePane','armoury.characterSummary','armoury.combatPowerCard','armoury.attributesCard','armoury.relicsCard']
-  ,'armoury.inventoryView':['armoury.armamentsCard','armoury.inventoryCard','armoury.cardsCard','armoury.statsTray']
-  ,'armoury.hybridView':['armoury.characterPane','armoury.hybridPaneSplitter','armoury.armamentsCard']
-  ,'armoury.armamentsCard':['armoury.armamentsHeader','armoury.equipmentPositionCard × N','armoury.armamentGridDetails','non-resizable']
-  ,'armoury.equipmentPositionCard':['armoury.positionLabelPane','armoury.positionSpritePane','armoury.summaryDivider','armoury.positionSummaryPane','armoury.positionAction','armoury.armamentDetailPane']
-  ,'armoury.inventoryCard':['armoury.itemCard × N','armoury.inventoryTrayResizeHandle (optional supporting context)']
-  ,'armoury.itemCard':['armoury.itemReveal','armoury.comparisonTooltipAnchor','armoury.equipmentComparison']
-  ,'armoury.cardsCard':['armoury.cardList','armoury.cardRow × N','armoury.cardDetail','armoury.cardsTrayResizeHandle (optional)']
-  ,'armoury.statsTray':['armoury.statsSummary','armoury.statsTrayResizeHandle (optional)']
 });
-const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), kind=document.querySelector('#kind'), sort=document.querySelector('#sort'), count=document.querySelector('#count');
-const drawer=document.querySelector('#detail-drawer'), backdrop=document.querySelector('#detail-backdrop'), closeDetailButton=document.querySelector('#detail-close');
-const clearFilters=document.querySelector('#clear-filters'), copyView=document.querySelector('#copy-view');
-const densityLess=document.querySelector('#density-less'), densityReset=document.querySelector('#density-reset'), densityMore=document.querySelector('#density-more');
-const viewGrid=document.querySelector('#view-grid'), viewList=document.querySelector('#view-list');
-const DENSITY_STEPS=[205,245,285,335,395,465], DEFAULT_DENSITY=2, DENSITY_KEY='ashenspire.ui.component-catalog-density', VIEW_KEY='ashenspire.ui.component-catalog-view';
-const stored=(key,fallback)=>{try{return localStorage.getItem(key)??fallback;}catch{return fallback;}};
-const save=(key,value)=>{try{localStorage.setItem(key,String(value));}catch{}};
-let densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,Number(stored(DENSITY_KEY,DEFAULT_DENSITY))||0));
-let catalogView=stored(VIEW_KEY,'grid')==='list'?'list':'grid', wheelLocked=false;
-let detailReturnFocus=null;
-const params=new URLSearchParams(location.search);
-search.value=params.get('q')||''; group.value=params.get('group')||'all'; kind.value=params.get('kind')||'all'; sort.value=params.get('sort')||'id-asc';
-if(!group.value) group.value='all'; if(!kind.value) kind.value='all'; if(!sort.value) sort.value='id-asc';
-function actualColumns(){
-  const cards=[...grid.querySelectorAll('article')]; if(!cards.length||catalogView==='list') return 1;
-  const firstTop=cards[0].getBoundingClientRect().top;
-  return cards.filter(card=>Math.abs(card.getBoundingClientRect().top-firstTop)<2).length||1;
-}
-function updateDensityUi(){
-  document.documentElement.style.setProperty('--catalog-card-min',`${DENSITY_STEPS[densityIndex]}px`);
-  densityLess.disabled=catalogView==='list'||densityIndex===0; densityMore.disabled=catalogView==='list'||densityIndex===DENSITY_STEPS.length-1; densityReset.disabled=catalogView==='list';
-  requestAnimationFrame(()=>{densityReset.textContent=catalogView==='list'?'List':`${actualColumns()} col · ${DENSITY_STEPS[densityIndex]}px`;});
-}
-function setDensity(next){densityIndex=Math.max(0,Math.min(DENSITY_STEPS.length-1,next));save(DENSITY_KEY,densityIndex);updateDensityUi();}
-function setView(next){
-  catalogView=next==='list'?'list':'grid'; grid.dataset.view=catalogView; save(VIEW_KEY,catalogView);
-  viewGrid.setAttribute('aria-pressed',String(catalogView==='grid')); viewList.setAttribute('aria-pressed',String(catalogView==='list')); updateDensityUi();
-}
-function syncUrl(){
-  const next=new URLSearchParams(location.search); ['q','group','kind','sort'].forEach(key=>next.delete(key));
-  if(search.value.trim()) next.set('q',search.value.trim()); if(group.value!=='all') next.set('group',group.value); if(kind.value!=='all') next.set('kind',kind.value); if(sort.value!=='id-asc') next.set('sort',sort.value);
-  const query=next.toString(); history.replaceState(null,'',`${location.pathname}${query?`?${query}`:''}${location.hash}`);
-}
-function relatedIds(id){
-  const related=new Set((COMPOSITION[id]||[]).map(value=>value.split(/\s×|\s→/)[0]).filter(value=>C.some(c=>c.id===value)));
-  for(const [parent,children] of Object.entries(COMPOSITION)) if(children.some(value=>value.includes(id))) related.add(parent);
-  return [...related].filter(value=>value!==id);
-}
-function closeDetails(){
-  document.body.classList.remove('detail-open'); drawer.setAttribute('aria-hidden','true');
-  detailReturnFocus?.focus(); detailReturnFocus=null;
-}
-function openDetails(id,trigger=null){
-  const c=C.find(item=>item.id===id); if(!c) return;
-  detailReturnFocus=trigger||document.activeElement;
-  document.querySelector('#detail-id').textContent=c.id;
-  document.querySelector('#detail-title').textContent=c.id.replaceAll('-',' ');
-  document.querySelector('#detail-visual').innerHTML=V[c.visual];
-  document.querySelector('#detail-fields').innerHTML=`<dt>Model</dt><dd><code>${c.model}</code></dd><dt>Renderer / View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Group</dt><dd>${c.group}</dd><dt>Role</dt><dd>${c.purpose}</dd>`;
-  const parts=COMPOSITION[c.id]||[];
-  document.querySelector('#detail-composition').innerHTML=parts.length?`<h3>Composition</h3><div class="composition">${parts.map(value=>`<code>${value}</code>`).join('')}</div>`:'<h3>Composition</h3><p class="lede">No child composition is currently cataloged.</p>';
-  const related=relatedIds(c.id);
-  document.querySelector('#detail-related').innerHTML=related.length?related.map(value=>`<button type="button" data-related="${value}">${value}</button>`).join(''):'<span class="lede">No related component is currently cataloged.</span>';
-  document.querySelector('#detail-actions').innerHTML=`<button class="copy" type="button" data-detail-copy="${c.id}">Copy component ID</button>${['folding-tray','tray-header','tray-resize-handle','tray-content'].includes(c.id)?'<a class="detail-gallery-link" href="tray-gallery.html">Open folded + unfolded gallery</a>':''}${c.group==='armoury-assets'?'<a class="detail-gallery-link" href="ASSET-COMPONENTS.md">Open Asset Components reference</a>':''}`;
-  drawer.setAttribute('aria-hidden','false'); document.body.classList.add('detail-open'); closeDetailButton.focus();
-  drawer.querySelectorAll('[data-related]').forEach(button=>button.onclick=()=>openDetails(button.dataset.related,detailReturnFocus));
-  drawer.querySelector('[data-detail-copy]').onclick=async(event)=>{ await navigator.clipboard?.writeText(c.id); event.currentTarget.textContent='Copied'; setTimeout(()=>event.currentTarget.textContent='Copy component ID',900); };
-}
-function render(){
-  const terms=search.value.trim().toLowerCase().split(/\s+/).filter(Boolean), g=group.value, k=kind.value;
-  const shown=C.filter(c=>{
-    const composite=Boolean(COMPOSITION[c.id]?.length), haystack=[...Object.values(c),...(COMPOSITION[c.id]||[])].join(' ').toLowerCase();
-    return (g==='all'||c.group===g)&&(k==='all'||(k==='composite')===composite)&&terms.every(term=>haystack.includes(term));
-  });
-  const compareText=(a,b)=>String(a).localeCompare(String(b),undefined,{sensitivity:'base'});
-  shown.sort((a,b)=>sort.value==='id-desc'?compareText(b.id,a.id):sort.value==='group'?compareText(a.group,b.group)||compareText(a.id,b.id):sort.value==='model'?compareText(a.model,b.model)||compareText(a.id,b.id):sort.value==='view'?compareText(a.owner,b.owner)||compareText(a.id,b.id):compareText(a.id,b.id));
-  grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}" data-component="${c.id}" role="button" tabindex="0" aria-label="Open details for ${c.id}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replace(/[-.]/g,' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">${parts?'composite':'leaf'}</span><span class="chip">reusable</span></div><span class="open-detail">Open details →</span></div></article>`}).join('');
-  count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-component]').forEach(card=>{card.onclick=()=>openDetails(card.dataset.component,card);card.onkeydown=(event)=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();openDetails(card.dataset.component,card);}};}); syncUrl(); updateDensityUi();
-}
-closeDetailButton.onclick=closeDetails; backdrop.onclick=closeDetails;
-document.addEventListener('keydown',event=>{
-  if(!document.body.classList.contains('detail-open')) return;
-  if(event.key==='Escape'){closeDetails();return;}
-  if(event.key==='Tab'){
-    const focusable=[...drawer.querySelectorAll('button,a[href]')].filter(node=>!node.disabled);
-    const first=focusable[0],last=focusable.at(-1);
-    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
-  }
-});
-search.oninput=render; group.onchange=render; kind.onchange=render; sort.onchange=render;
-clearFilters.onclick=()=>{search.value='';group.value='all';kind.value='all';sort.value='id-asc';render();search.focus();};
-copyView.onclick=async()=>{try{await navigator.clipboard.writeText(location.href);copyView.textContent='Copied';setTimeout(()=>copyView.textContent='Copy view link',900);}catch{copyView.textContent='Copy unavailable';}};
-densityLess.onclick=()=>setDensity(densityIndex-1); densityMore.onclick=()=>setDensity(densityIndex+1); densityReset.onclick=()=>setDensity(DEFAULT_DENSITY);
-viewGrid.onclick=()=>setView('grid'); viewList.onclick=()=>setView('list');
-document.addEventListener('wheel',event=>{
-  if(catalogView!=='grid'||(!event.ctrlKey&&!event.metaKey)) return;
-  event.preventDefault(); if(wheelLocked) return; wheelLocked=true;
-  setDensity(densityIndex+(event.deltaY<0?1:-1)); setTimeout(()=>wheelLocked=false,120);
-},{passive:false});
-document.addEventListener('keydown',event=>{if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){event.preventDefault();search.focus();}else if(event.key==='Escape'&&document.activeElement===search&&search.value){search.value='';render();}});
-window.addEventListener('resize',updateDensityUi); setView(catalogView); render();
+const grid=document.querySelector('#grid'), search=document.querySelector('#search'), group=document.querySelector('#group'), count=document.querySelector('#count');
+function render(){ const q=search.value.trim().toLowerCase(), g=group.value; const shown=C.filter(c=>(g==='all'||c.group===g)&&(!q||Object.values(c).some(v=>String(v).toLowerCase().includes(q))||(COMPOSITION[c.id]||[]).some(v=>v.toLowerCase().includes(q)))); grid.innerHTML=shown.map(c=>{const parts=COMPOSITION[c.id];return `<article data-group="${c.group}"><div class="visual">${V[c.visual]}</div><div class="body"><div class="id">${c.id}</div><h2>${c.id.replaceAll('-',' ')}</h2><dl><dt>Model</dt><dd><code>${c.model}</code></dd><dt>View</dt><dd><code>${c.owner}</code></dd><dt>Reuse</dt><dd>${c.reuse}</dd><dt>Role</dt><dd>${c.purpose}</dd></dl>${parts?`<div class="composition"><strong>Shown with</strong>${parts.map(id=>`<code>${id}</code>`).join('')}</div>`:''}<div class="chips"><span class="chip">${c.group}</span><span class="chip">reusable</span></div><button class="copy" data-copy="${c.id}">Copy component ID</button></div></article>`}).join(''); count.textContent=`${shown.length} of ${C.length} components`; document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{await navigator.clipboard?.writeText(b.dataset.copy); const old=b.textContent; b.textContent='Copied'; setTimeout(()=>b.textContent=old,900);}); }
+search.oninput=render; group.onchange=render; render();
 </script>
 </body>
 </html>
