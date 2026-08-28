@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "ashenspire.continuity.team.v1",
+  "id": "coordination",
+  "name": "AshenSpire Coordination",
+  "owner": {
+    "role": "IT Manager III",
+    "taskId": "01a02bc1-1611-7a22-9803-8c5e617ab711"
+  },
+  "writerPolicy": "ONE_WRITER_PER_PATH",
+  "activeTicketIds": [
+    "COORDINATION-STRUCTURE-RESET"
+  ]
+}

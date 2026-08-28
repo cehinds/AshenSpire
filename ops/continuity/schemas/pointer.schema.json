@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.pointer.v1",
+  "title": "AshenSpire continuity pointer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "revision", "current", "updatedAtUtc"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.pointer.v1" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "updatedAtUtc": { "type": "string", "format": "date-time" },
+    "previousHistoryId": { "type": ["string", "null"] },
+    "current": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["teamId", "ticketId", "team", "ticket", "history", "evidence"],
+      "properties": {
+        "teamId": { "type": "string", "minLength": 1 },
+        "ticketId": { "type": "string", "minLength": 1 },
+        "team": { "$ref": "#/$defs/fileRef" },
+        "ticket": { "$ref": "#/$defs/fileRef" },
+        "history": { "$ref": "#/$defs/fileRef" },
+        "evidence": { "$ref": "#/$defs/fileRef" }
+      }
+    }
+  },
+  "$defs": {
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" }
+      }
+    }
+  }
+}

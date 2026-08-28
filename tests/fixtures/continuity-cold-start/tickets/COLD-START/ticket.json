@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "ashenspire.continuity.ticket.v1",
+  "id": "COLD-START",
+  "title": "Cold-start continuity fixture",
+  "priority": "T0",
+  "status": "ENTERED_WORK",
+  "teamId": "coordination",
+  "owner": {
+    "role": "Fixture Owner",
+    "taskId": "fixture-task"
+  },
+  "scope": {
+    "allowedRoots": [
+      "tests/fixtures/continuity-cold-start"
+    ],
+    "forbiddenActions": [
+      "mutation"
+    ]
+  },
+  "migrationBoundary": "FIXTURE_ONLY",
+  "historyIds": [
+    "000001-cold-start-entered"
+  ]
+}

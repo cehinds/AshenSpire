@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "ashenspire.continuity.pointer.v1",
+  "revision": 1,
+  "updatedAtUtc": "2026-08-28T00:00:00Z",
+  "previousHistoryId": null,
+  "current": {
+    "teamId": "coordination",
+    "ticketId": "COLD-START",
+    "team": {
+      "path": "teams/coordination/team.json",
+      "sha256": "DB3778220678DA2A1FD40BD8CA6F9FA48FFB3AECBA8484A05B94EC3A2D552C7C"
+    },
+    "ticket": {
+      "path": "tickets/COLD-START/ticket.json",
+      "sha256": "890567B216EED56DD8F5EEEE7589649BD3B7ECD2C5D249EBDA7F66C4DE85BB52"
+    },
+    "history": {
+      "path": "history/000001-cold-start-entered.json",
+      "sha256": "96BAAA8FBBD6AC8211F54D77250BDF3474AE069F8FE2576E728E42BEE8C51EB3"
+    },
+    "evidence": {
+      "path": "evidence/entered-work.md",
+      "sha256": "C8AA53472C11B3FFEEB53C6B2A8745DB4A55887A6C93FA35AB0AE2FBD9278CB5"
+    }
+  }
+}

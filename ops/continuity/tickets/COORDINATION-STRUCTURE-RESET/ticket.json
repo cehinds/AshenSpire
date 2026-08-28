@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "ashenspire.continuity.ticket.v1",
+  "id": "COORDINATION-STRUCTURE-RESET",
+  "title": "Repository-native coordination structure reset",
+  "priority": "T0",
+  "status": "ENTERED_WORK",
+  "teamId": "coordination",
+  "owner": {
+    "role": "IT Manager III",
+    "taskId": "01a02bc1-1611-7a22-9803-8c5e617ab711"
+  },
+  "scope": {
+    "allowedRoots": [
+      "ops/continuity",
+      "tools/continuity-reconcile.mjs",
+      "tests/continuity-reconcile.test.mjs",
+      "tests/fixtures/continuity-cold-start",
+      "tests/run-node.mjs"
+    ],
+    "forbiddenActions": [
+      "destructive-migration",
+      "external-ledger-rewrite",
+      "push",
+      "pull-request",
+      "merge",
+      "deployment",
+      "release"
+    ]
+  },
+  "migrationBoundary": "ADDITIVE_BOOTSTRAP_ONLY",
+  "historyIds": [
+    "000001-coordination-structure-reset-entered"
+  ]
+}

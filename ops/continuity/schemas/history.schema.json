@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.history.v1",
+  "title": "AshenSpire continuity history event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "sequence", "recordedAtUtc", "teamId", "ticketId", "event", "evidence"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.history.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "recordedAtUtc": { "type": "string", "format": "date-time" },
+    "teamId": { "type": "string", "minLength": 1 },
+    "ticketId": { "type": "string", "minLength": 1 },
+    "event": { "type": "string", "minLength": 1 },
+    "supersedesHistoryId": { "type": ["string", "null"] },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" }
+      }
+    }
+  }
+}

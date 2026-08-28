@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "ashenspire.continuity.history.v1",
+  "id": "000001-coordination-structure-reset-entered",
+  "sequence": 1,
+  "recordedAtUtc": "2026-08-28T07:03:38Z",
+  "teamId": "coordination",
+  "ticketId": "COORDINATION-STRUCTURE-RESET",
+  "event": "ENTERED_WORK",
+  "supersedesHistoryId": null,
+  "evidence": {
+    "path": "evidence/coordination-structure-reset-entered-work-2026-08-28.md",
+    "sha256": "06B689272A3D78449E8764B12F663FC895B367FD9EDAADC33B79CAB1113192D7"
+  }
+}
