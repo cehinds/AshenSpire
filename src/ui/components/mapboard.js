@@ -137,7 +137,7 @@ function indexNodes(nodes) {
 }
 
 /**
- * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
+ * mountMapBoard(host, { act, viewer, chromeHtml }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
  *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
@@ -163,8 +163,6 @@ function indexNodes(nodes) {
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
  * of the viewport, so once the zoom bar stopped floating the two claimed one
  * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
- * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
- * omits it because that screen has no matching legend popover.
  *
  * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
  * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
@@ -172,7 +170,7 @@ function indexNodes(nodes) {
  * and a second listener living in here would be the third thing stepping the
  * zoom twice.
  */
-export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendControl = false }) {
+export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   const byId = indexNodes(act.nodes);
   const nodes = Object.values(byId);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -337,7 +335,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          cannot disagree. Still no backticks. -->
     <p class="map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
-         The zoom controls used to be the last child of .map-scroll,
+         These three buttons used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
          canvas. WHICH piece is a coincidence of shape x map zoom x pan offset x
          seed, and at 412x915 the coincidence was two map nodes a player could
@@ -348,7 +346,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
       <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
       <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
-      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');
@@ -566,7 +563,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   }
 
   function emitViewState(commit = false, snapshot = viewSnapshot()) {
-    if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.
@@ -1058,20 +1054,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   let sy = 0;
   let sl = 0;
   let st = 0;
-  let activeMousePointerId = null;
   scroll.addEventListener('pointerdown', (ev) => {
-    // Touch and pen belong to the browser's native vertical scroll path. If
-    // this handler captures either one, native pan and our scrollTop writes
-    // race each other. A second mouse pointer also cannot replace the origin
-    // of the gesture already in flight.
-    if (ev.pointerType !== 'mouse' || ev.button !== 0 || activeMousePointerId !== null) return;
     // The `.map-zoom` half of this guard went with the overlay (EldenSpire#28).
     // This listener is on .map-scroll and the buttons are no longer inside it,
     // so a press on one cannot reach here to be excluded. Left in, it would be
     // a line that reads like protection and can never run — and the next reader
     // would take it as evidence the buttons are still in the scrollport.
     if (ev.target.closest('.map-node.reachable')) return;
-    activeMousePointerId = ev.pointerId;
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
@@ -1086,7 +1075,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the pan exactly as release does — a pan has nothing to abandon.
     trackGesture(ev, {
       onMove: (mv) => {
-        if (!panning || mv.pointerId !== activeMousePointerId) return;
+        if (!panning) return;
         // The horizontal write is INERT BY CONSTRUCTION, kept for the day a
         // wide layout earns a horizontal extent back: scrollWidth equals
         // clientWidth on every shape now (see apply), so the browser clamps
@@ -1095,9 +1084,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         scroll.scrollLeft = sl - (mv.clientX - sx);
         scroll.scrollTop = st - (mv.clientY - sy);
       },
-      onEnd: (end) => {
-        if (end.pointerId !== activeMousePointerId) return;
-        activeMousePointerId = null;
+      onEnd: () => {
         panning = false;
         scroll.classList.remove('grabbing');
         emitViewState(true);

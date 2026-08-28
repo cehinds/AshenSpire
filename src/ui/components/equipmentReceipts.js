@@ -24,7 +24,7 @@ export function renderRoleCopies(surface) {
     + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
 }
 
-export function renderCandidateComparison(candidate, { expanded = false } = {}) {
+export function renderCandidateComparison(candidate) {
   const requirements = candidate.requirement ? renderEquipmentRequirements([candidate.requirement]) : renderEquipmentRequirements([]);
   const roleRows = candidate.roles.map((row) => `<li data-role="${esc(row.role)}"><b>${esc(row.beforeName)} → ${esc(row.afterName)}</b> <span>${row.beforeValue} → <strong>${row.afterValue}</strong></span><small>${esc(row.afterSchool)}${row.afterTags.length ? ` · ${row.afterTags.map(esc).join(' · ')}` : ''}</small></li>`).join('');
   const effects = candidate.addedEffects.length
@@ -37,7 +37,7 @@ export function renderCandidateComparison(candidate, { expanded = false } = {}) 
     // `swapPriceChanges`). Absent on every row that has nothing to decline.
     ? candidate.resourceChanges.map((row) => `<li class="equip-resource-change">${esc(row.label)} ${row.before} → <strong>${row.after}</strong>${row.note ? `<small>${esc(row.note)}</small>` : ''}</li>`).join('')
     : '<li class="equip-resource-change none">No resource changes.</li>';
-  return `<details class="equip-candidate-comparison"${expanded ? ' open' : ''}><summary>Compare cards and receipts</summary>`
+  return `<details class="equip-candidate-comparison"><summary>Compare cards and receipts</summary>`
     + `<ul class="equip-card-changes">${roleRows}</ul>${requirements}`
     + `<section><b>Explicit added effects</b><ul>${effects}</ul></section>`
     + `<section><b>Resource changes</b><ul>${resources}</ul></section>`

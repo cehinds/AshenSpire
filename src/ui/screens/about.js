@@ -6,66 +6,14 @@
 // it. A sentence typed into this file would be the second copy the arrangement
 // exists to prevent.
 //
-// About stays inside Settings; the Profile archive is now a title-screen route.
+// Follows the Profile section's pattern (profileArchive.js): a section rendered
+// into the Settings modal rather than a screen of its own.
 
 import { esc } from '../components/tooltip.js';
 import { AI_DISCLOSURE, disclosureAsText } from '../../content/aiDisclosure.js';
 import { ABOUT_BUILD_LINE, BUILD_VERSION, RUN_PATH } from '../../buildversion.js';
-import { CHANGELOG, PROJECT_REPOSITORY_URL } from '../../content/changelog.js';
 
-/**
- * A source-server build is development by construction. A standalone bundle
- * is ambiguous until its host is known: the canonical GitHub Pages host is the
- * current-dev preview, while a file:// bundle is a release-shaped artifact and
- * must not silently gain a repository action.
- */
-export function shouldLinkDebugVersion({ runPath = RUN_PATH, locationLike = globalThis.location } = {}) {
-  if (runPath === 'source tree') return true;
-  return runPath === 'standalone file'
-    && locationLike?.protocol === 'https:'
-    && locationLike?.hostname === 'cehinds.github.io';
-}
-export function shouldLinkChangelog(options = {}) {
-  return shouldLinkDebugVersion(options);
-}
-function changelogHtml(entries, { linkExternal = false } = {}) {
-  let group = null;
-  return entries.map((entry) => {
-    const heading = entry.group === group ? '' : `<h3>${esc(entry.group)}</h3>`;
-    group = entry.group;
-    return `${heading}
-      <details class="about-change" data-change-id="${esc(entry.id)}">
-        <summary class="region-fold">
-          <span class="rf-label">${esc(entry.summary)}</span>
-          <span class="region-count">${esc(entry.build)}</span>
-        </summary>
-        <p class="set-note">${esc(entry.detail)}</p>
-        <p class="set-note">${linkExternal
-          ? `<a class="about-change-pr" href="${esc(entry.url)}" target="_blank" rel="noopener noreferrer">Pull request #${entry.pullRequest}</a>`
-          : `<span class="about-change-pr" aria-label="Pull request #${entry.pullRequest}; external navigation unavailable in this artifact">Pull request #${entry.pullRequest}</span>`}</p>
-      </details>`;
-  }).join('');
-}
-
-export function renderChangelogSection(container, {
-  changelog = CHANGELOG,
-  runPath = RUN_PATH,
-  locationLike = globalThis.location,
-} = {}) {
-  const changeLinks = shouldLinkChangelog({ runPath, locationLike });
-  container.innerHTML = `
-    <section class="about-changelog" aria-labelledby="advanced-changelog-title">
-      <h2 id="advanced-changelog-title">What changed</h2>
-      <p class="set-note">Newest changes are first. Open an entry for the player-facing detail.</p>
-      ${changelogHtml(changelog, { linkExternal: changeLinks })}
-    </section>`;
-}
-
-export function renderAboutSection(container, {
-  disclosure = AI_DISCLOSURE,
-  runPath = RUN_PATH,
-  locationLike = globalThis.location,
-} = {}) {
+export function renderAboutSection(container, { disclosure = AI_DISCLOSURE } = {}) {
   const sections = disclosure.sections
     .map(
       (s) => `
@@ -107,9 +55,6 @@ export function renderAboutSection(container, {
   // MOVES EVERY BUILD. That is the point — a screenshot pins the tree — and it
   // is also the reason the About footer is no longer a stable string anyone can
   // eyeball for "did anything change".
-  const buildLine = shouldLinkDebugVersion({ runPath, locationLike })
-    ? `<a class="about-debug-version" href="${PROJECT_REPOSITORY_URL}" target="_blank" rel="noopener noreferrer" aria-label="Open the AshenSpire source repository for development build ${esc(BUILD_VERSION)}">${esc(ABOUT_BUILD_LINE)}</a>`
-    : esc(ABOUT_BUILD_LINE);
   container.innerHTML = `
     <div class="about-ai">
       ${lead}
@@ -118,7 +63,7 @@ export function renderAboutSection(container, {
         <button class="about-copy">Save this to a file</button>
       </div>
       <p class="about-result" role="status"></p>
-      <p class="set-note about-ver">${buildLine}<br>${esc(runPath)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
+      <p class="set-note about-ver">${esc(ABOUT_BUILD_LINE)}<br>${esc(RUN_PATH)} · acknowledgement last updated ${esc(disclosure.updated)}</p>
     </div>`;
 
   // The player can keep a copy of what they were told. Same instinct as the

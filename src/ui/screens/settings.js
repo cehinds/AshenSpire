@@ -9,8 +9,9 @@
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { setTabRing, hasTabRing } from '../input.js';
-import { renderAboutSection, renderChangelogSection } from './about.js';
-import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
+import { renderProfileSection } from './profileArchive.js';
+import { renderAboutSection } from './about.js';
+import { AUDIO_DEFAULTS } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT } from '../../model/mapview.js';
@@ -59,7 +60,6 @@ function graceRefillRows() {
   const cap = flaskSlotCap(balance);
   return graceRefillTable(balance).map((row) => ({
     cat: 'Advanced',
-    advancedGroup: 'Tuning',
     key: GRACE_REFILL_KEY(row.kind),
     type: 'choice',
     def: String(row.count),
@@ -77,11 +77,7 @@ function graceRefillRows() {
 }
 
 const ROWS = [
-  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
-  // Fullscreen and Music are persistent quick controls on Title, Map, and
-  // Combat. Settings does not duplicate them with a second stateful surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'useSprites', def: true, label: 'Character sprites',
+  { cat: 'Display', key: 'useSprites', def: true, label: 'Character sprites',
     note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
   { cat: 'Display', key: 'animSpeed', type: 'choice', def: 'normal',
     choices: ['slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
@@ -154,7 +150,7 @@ const ROWS = [
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
   // higher (settings for customization)"). The ladder itself is CSS
   // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
+  { cat: 'Display', key: 'walkedFade', type: 'choice', def: 'half',
     choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
     note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold',
@@ -163,26 +159,28 @@ const ROWS = [
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
+  { cat: 'Display', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
     choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
     note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal',
+  { cat: 'Display', key: 'cardMotifStrength', type: 'choice', def: 'normal',
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
   { cat: 'Display', key: 'screenShake', def: true, label: 'Screen shake',
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
+  { cat: 'Display', key: 'ambient', type: 'choice', def: 'normal',
     choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
     note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: 'Control hints',
+  { cat: 'Display', key: 'controlHints', def: true, label: 'Control hints',
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Display', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
+  { cat: 'Display', key: 'mapHeaderRelics', def: true, label: 'Relics in map header',
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
+  { cat: 'Display', key: 'mapHeaderSeed', def: true, label: 'Seed in map header',
     note: 'Show the run seed in the map header bar.' },
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
+    note: 'Fill the screen (also toggles with F11 in most browsers).' },
   // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
   //
   //   "rotating to horizontal should work again. I hate that it tells me to
@@ -219,22 +217,35 @@ const ROWS = [
   // one is found by a player who has just been refused, mid-annoyance, on a phone
   // — and the gate's own copy now points at it by name. A switch you need because
   // something is in your way does not live in the debugging surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: true, label: 'Short-screen warning',
+  { cat: 'Display', key: 'uprightGate', def: true, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
-  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
-    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
-    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
+  // THE QUICK-MENU EXPERIMENT (EldenSpire#34). Three things are compared by
+  // being PLAYED rather than looked at: today, and two readings of "the ☰ button
+  // should offer everywhere you can go from here".
+  //
+  // DEFAULT IS OFF, and off is today exactly — nobody who does not opt in sees a
+  // pixel move. It ships in the build rather than hiding behind a URL flag
+  // because the question it asks is a PHONE question (the menu's tab strip wraps
+  // to two rows at 390 px, measured), and a dev flag is not reachable on a phone.
+  //
+  // The note carries the way back, and so does the list itself: it names the
+  // variant and points here every time it opens. An experiment that outlives the
+  // memory of switching it on has stopped being an experiment and become a bug
+  // report.
+  { cat: 'Display', key: 'quickNav', type: 'choice', def: 'off',
+    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu (test)',
+    note: 'A test — OFF is the game as it shipped. MIRROR: the ☰ button opens a list of everywhere you can go from this screen, and the menu keeps its row of tabs. SWITCHER: the same list, but on a narrow screen the menu\'s tab row folds into one button naming the tab you are on. The list says which one you picked, every time it opens.' },
+  { cat: 'Display', key: 'quickNavFixedEnds', def: true, label: 'Quick menu · fixed ends',
+    note: 'Only does anything while Quick menu is on. ON keeps rows in the same places on every screen — this screen\'s own tools at the top, Save and Save & Quit always last, everything else between. OFF orders the whole list by what the screen is, so a row can sit somewhere else in combat than it does on the map.' },
 
-  { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
-    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
-  { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
-    note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
+  { cat: 'Audio', key: 'muteAudio', def: false, label: 'Mute all audio',
+    note: 'Silence music and sound effects.' },
   { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume',
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects',
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
+  { cat: 'Audio', key: 'musicFolder', type: 'text', def: '', label: 'Music folder',
     placeholder: 'e.g. music/ or https://…',
     note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
 
@@ -246,9 +257,9 @@ const ROWS = [
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
   { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
     note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
-  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'L', 'XL'], label: 'Text size',
-    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },
+  { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'M',
+    choices: ['S', 'M', 'L', 'XL'], label: 'Text size',
+    note: 'Scale all interface text and sizing together (sets the root size). M is default; L/XL aid readability. Stacks with UI size.' },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
@@ -287,16 +298,8 @@ const ROWS = [
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+  { cat: 'Advanced', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
-  // E2 (#247): the recorded answer on the row — Sell is its own bar at the
-  // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
-  // and the bar is ABSENT (not greyed) when off. shop.js reads it through
-  // settingOn so the default's polarity has one home, here. ONE ROW, appended
-  // on purpose while another seat serializes this file for E3 — named in the
-  // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shopSell', def: true, label: 'Merchant buys back',
-    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -320,7 +323,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
   // speed is a row there and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+  { cat: 'Advanced', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
     choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
     // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
     // tonight was that a long note plus a chip strip squeezes the text column
@@ -328,23 +331,6 @@ const ROWS = [
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
     note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
-  // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
-  // ALWAYS pressable and a setting decides what it means — auto-collect ON
-  // takes everything, picking at random where there is a choice; OFF gives
-  // only what was chosen, no nagging." The meanings live in
-  // model/rewardplan.js resolveContinue (test 61); this row only picks the
-  // word. ADVANCED for the Hold-to-confirm precedent one row up: a knob about
-  // what an interaction MEANS, tried by playing.
-  //
-  // `choices` and `def` are DERIVED from balance.ui.rewardCollect — a third
-  // mode is a row there and nothing here. THE ROW ARRIVED LATE, ON A RULING:
-  // it shipped one PR behind the dial because this file was under E3's live
-  // claim at authoring; Saga's #290 review ruled it owed the moment Marina
-  // released that claim ("manual has a reader and no writer a player can
-  // reach").
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
-    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
-    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
@@ -359,7 +345,7 @@ const ROWS = [
   // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
   // carried four of a six-step ladder for a night because someone typed the
   // list; a fourth rule row is a row in balance.js and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+  { cat: 'Advanced', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
     choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
     // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
     // a long note squeezes the text column beside a chip strip. Three chips,
@@ -389,11 +375,11 @@ const ROWS = [
   // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
   // `derivedStatRules.defaults` — its one home, one import away, so this row
   // cannot drift from the rule it turns.
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
+  { cat: 'Advanced', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level at a shrine grants — type any whole number from 1 to 20. Takes effect on the next level you buy, in any run, including one already in progress.' },
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
+  { cat: 'Advanced', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
     min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
     label: 'Stat points per tier', applied: numberAppliedHtml,
     // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
@@ -425,9 +411,11 @@ const ROWS = [
 // Adding a settings row under a brand-new category needs NO edit here: the
 // heading appears, after the ordered ones, in the order its first row appears.
 //
-// SECTIONS are categories whose contents are code rather than rows.
-// Profile is a title-screen route; Settings no longer duplicates that drawer.
-// About carries the AI-use acknowledgement, rendered from its one home in
+// SECTIONS are the two categories whose contents are code rather than rows.
+// 'Profile' is the calm-moment route to set-aside profiles and runs (#67); its
+// mount renders only when a save manager is passed in — a section that promises
+// a drawer it cannot open would be the same broken promise one layer down.
+// 'About' carries the AI-use acknowledgement, rendered from its one home in
 // src/content/aiDisclosure.js — the same text the store page shows (#69).
 //
 // `tip` IS THE ONE THING A SECTION HAS TO WRITE, and it is the honest edge of
@@ -437,33 +425,16 @@ const ROWS = [
 // is Law 0 clause 2 exactly: a section is a WORD, not a row, and a word costs
 // an edit. Say it out loud rather than pretend the whole screen is free.
 const SECTIONS = {
-  Changelog: { mount: 'set-changelog-mount', needs: null,
-    tip: 'Newest player-visible changes first.' },
+  Profile: { mount: 'set-profile-mount', needs: 'saves',
+    tip: 'Set-aside profiles and runs — export, restore, start fresh.' },
   About: { mount: 'set-about-mount', needs: null,
     tip: 'Version, credits, and how AI was used to make this game.' },
 };
 
-const ADVANCED_GROUPS = Object.freeze([
-  { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
-  { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
-  { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
-  { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-]);
-
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
-const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
 
-export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Advanced', 'Changelog', 'About'];
-
-const CATEGORY_LABELS = {
-  Display: 'Game',
-  Accessibility: 'Accessibility',
-};
-
-function categoryLabel(cat) {
-  return CATEGORY_LABELS[cat] || cat;
-}
+export const CATEGORY_ORDER = ['Display', 'Audio', 'Accessibility', 'Profile', 'Advanced', 'About'];
 
 /**
  * categoryHandler(cat) → what will render under that heading, or null.
@@ -517,7 +488,6 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -529,35 +499,7 @@ export function categoryTip(cat) {
 
 // Resolve a stored value against its default (defaults keep settings sparse).
 function valueOf(settings, row) {
-  if (row.resolve) return row.resolve(settings);
   return row.def ? settings[row.key] !== false : settings[row.key] === true;
-}
-
-export function musicEnabledCondition(settings = {}) {
-  if (!resolveMusicEnabled(settings)) return 'Music off · sound effects unchanged.';
-  if (settings.muteAudio === true) return 'Music on · all audio muted.';
-  const volume = typeof settings.musicVolume === 'number'
-    ? settings.musicVolume
-    : AUDIO_DEFAULTS.musicVolume;
-  return `Music on · volume ${volume}%.`;
-}
-
-function rowNote(settings, row) {
-  return typeof row.note === 'function' ? row.note(settings) : row.note;
-}
-
-function refreshConditionNotes(container, settings) {
-  container.querySelectorAll('[data-setting-condition]').forEach((node) => {
-    const row = ROWS.find((candidate) => candidate.key === node.dataset.settingCondition);
-    if (row) node.textContent = rowNote(settings, row);
-  });
-}
-
-// Save data keeps legacy negative keys such as `muteAudio`; controls should
-// still describe the positive effect players are choosing. Invert only here.
-function controlOn(settings, row) {
-  const storedOn = valueOf(settings, row);
-  return row.positiveWhen === false ? !storedOn : storedOn;
 }
 
 /**
@@ -589,19 +531,11 @@ export function settingOn(settings, key) {
   return valueOf(settings || {}, row);
 }
 
-export function settingsRowHtml(settings, r, doc = globalThis.document) {
-  const note = rowNote(settings, r);
-  const condition = typeof r.note === 'function'
-    ? ` data-setting-condition="${r.key}" aria-live="polite"`
-    : '';
-  const status = r.type === 'action'
-    ? ` id="set-${r.key}-status" data-fullscreen-status aria-live="polite"`
-    : condition;
-  const help = `<details class="set-help"><summary>Details</summary><p class="set-note"${status}>${note}</p></details>`;
+function rowHtml(settings, r) {
   if (r.type === 'text') {
     const val = typeof settings[r.key] === 'string' ? settings[r.key] : r.def;
     return `<div class="set-row set-row-wide">
-        <div><b>${r.label}</b>${help}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <input type="text" class="set-text" spellcheck="false" data-key="${r.key}" value="${(val || '').replace(/"/g, '&quot;')}" placeholder="${r.placeholder || ''}">
       </div>`;
   }
@@ -646,7 +580,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'number') {
     const val = resolveNumberRow(settings, r);
     return `<div class="set-row">
-        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
         <div class="num-wrap">
           <input type="number" class="set-num" data-key="${r.key}" value="${val}"
                  min="${r.min}" max="${r.max}" step="1" inputmode="numeric"
@@ -662,7 +596,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
     return `<div class="set-row">
-        <div><b>${r.label}</b>${help}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <div class="range-wrap">
           <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
           <span class="range-val" data-for="${r.key}">${val}</span>
@@ -671,7 +605,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   }
   if (r.type === 'button') {
     return `<div class="set-row">
-        <div><b>${r.label}</b>${help}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
         <button class="subtle" data-btn="${r.key}">${r.btn || 'Open'}</button>
       </div>`;
   }
@@ -681,23 +615,15 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
       .map((c) => `<button class="choice${c === cur ? ' on' : ''}" data-key="${r.key}" data-val="${c}">${c.toUpperCase()}</button>`)
       .join('');
     return `<div class="set-row">
-        <div><b>${r.label}</b>${help}${appliedSlot(settings, r)}</div>
+        <div><b>${r.label}</b><p class="set-note">${r.note}</p>${appliedSlot(settings, r)}</div>
         <div class="choice-group"${r.resizesWhilePressed ? ' data-resizes-while-pressed="1"' : ''}>${opts}</div>
       </div>`;
   }
-  if (r.type === 'action' && !fullscreenCapability(doc).supported) {
-    const unsupportedHelp = `<details class="set-help"><summary>Details</summary><p class="set-note">${note}</p></details>`;
-    return `<div class="set-row set-row-unavailable" data-action-row="${r.key}">
-      <div><b>${r.label}</b>${unsupportedHelp}<p class="set-note" id="set-${r.key}-status" data-fullscreen-status aria-live="polite">On iPhone, Add to Home Screen provides the closest app-like view.</p></div>
-      <button class="toggle" data-key="${r.key}" data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status" role="switch" aria-checked="false" disabled aria-disabled="true">
-        <span class="knob"></span>
-      </button>
-    </div>`;
-  }
-  const on = r.type === 'action' ? isFullscreen(doc) : controlOn(settings, r);
+  // 'action' rows (e.g. fullscreen) render as a live toggle reflecting state.
+  const on = r.type === 'action' ? isFullscreen() : valueOf(settings, r);
   return `<div class="set-row">
-      <div><b>${r.label}</b>${help}</div>
-      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : ''} role="switch" aria-checked="${on}">
+      <div><b>${r.label}</b><p class="set-note">${r.note}</p></div>
+      <button class="toggle ${on ? 'on' : ''}" data-key="${r.key}"${r.type === 'action' ? ' data-action="1"' : ''} role="switch" aria-checked="${on}">
         <span class="knob"></span>
       </button>
     </div>`;
@@ -1100,38 +1026,16 @@ function anchorPressed(container, btn, wasAt) {
   }
 }
 
-export function fullscreenCapability(doc = globalThis.document) {
-  const root = doc && doc.documentElement;
-  const request = root && (root.requestFullscreen || root.webkitRequestFullscreen);
-  const exit = doc && (doc.exitFullscreen || doc.webkitExitFullscreen);
-  const enabled = doc && (doc.fullscreenEnabled ?? doc.webkitFullscreenEnabled);
-  return {
-    supported: !!(root && request && exit && enabled !== false),
-    root,
-    enter: request,
-    request,
-    exit,
-  };
+function isFullscreen() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
 }
 
-export function isFullscreen(doc = globalThis.document) {
-  return !!(doc && (doc.fullscreenElement || doc.webkitFullscreenElement));
-}
-
-export async function toggleFullscreen(doc = globalThis.document) {
-  const capability = fullscreenCapability(doc);
-  if (!capability.supported) return { ok: false, reason: 'unsupported' };
-  try {
-    if (isFullscreen(doc)) await capability.exit.call(doc);
-    else await capability.request.call(doc.documentElement);
-    return { ok: true, active: isFullscreen(doc), reason: '' };
-  } catch (error) {
-    return {
-      ok: false,
-      reason: 'refused',
-      message: 'The browser refused fullscreen. Try again from its own page menu.',
-      error: error && error.message ? error.message : String(error || 'Fullscreen request refused.'),
-    };
+function toggleFullscreen() {
+  const el = document.documentElement;
+  if (isFullscreen()) {
+    (document.exitFullscreen || document.webkitExitFullscreen || (() => {})).call(document);
+  } else {
+    (el.requestFullscreen || el.webkitRequestFullscreen || (() => {})).call(el);
   }
 }
 
@@ -1158,29 +1062,8 @@ function categoryHtml(cat, settings, saves) {
       + ' Give it a row (<code>cat:</code>) or a section, or take it out of'
       + ' CATEGORY_ORDER in src/ui/screens/settings.js.</p>';
   }
-  const heading = `<header class="set-section-head"><p>Settings</p><h2>${esc(categoryLabel(cat))}</h2>`
-    + `<span>${esc(categoryTip(cat))}</span></header>`;
-  if (cat === 'Advanced') {
-    const stored = settings[ADVANCED_CAT_KEY];
-    const active = ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
-    const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
-      + ` type="button" role="tab" aria-selected="${group.id === active}"`
-      + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
-    const groups = ADVANCED_GROUPS.map((group) => {
-      const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + '><div class="set-changelog-mount"></div></section>';
-      }
-      const rows = h.rows.filter((row) => (row.advancedGroup || 'Gameplay') === group.id);
-      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `><p class="set-note set-advanced-tip">${esc(group.tip)}</p>`
-        + `<div class="set-card-list">${rows.map((row) => settingsRowHtml(settings, row)).join('')}</div></section>`;
-    }).join('');
-    return `${heading}<div class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</div>${groups}`;
-  }
-  if (h.mount) return `${heading}<div class="${h.mount}"></div>`;
-  return `${heading}<div class="set-card-list">${h.rows.map((r) => settingsRowHtml(settings, r)).join('')}</div>`;
+  if (h.mount) return `<div class="${h.mount}"></div>`;
+  return h.rows.map((r) => rowHtml(settings, r)).join('');
 }
 
 /**
@@ -1206,7 +1089,7 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null }) {
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onProfileRestored = null }) {
   let html = '';
   let cats = [];
   let current = null;
@@ -1237,39 +1120,17 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       // to fix in this file.
       const tabs = cats.map((cat) => `<button class="set-tab${cat === current ? ' on' : ''}"`
         + ` role="tab" id="set-tab-${esc(cat)}" aria-selected="${cat === current}"`
-        + ` aria-controls="set-panel" data-member="${esc(cat)}"><span class="set-tab-face">${esc(categoryLabel(cat))}</span></button>`).join('');
+        + ` aria-controls="set-panel" data-member="${esc(cat)}">${esc(cat)}</button>`).join('');
       html = `<div class="set-tabs" role="tablist" aria-label="Settings sections"`
         + ` data-surface="settingsCategory">${tabs}</div>`
         + `<div class="set-panel" id="set-panel" role="tabpanel"`
         + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div>`;
     }
   } else {
-    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.map((r) => rowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
   container.setAttribute('data-settings-host', '');
-  // The overlay reuses one connected `.overlay-body` between tabs. A sentinel
-  // belongs to this render, so clearing Settings for Deck disconnects it and
-  // releases listeners even while the shared container remains on the page.
-  const lifecycleSentinel = document.createComment('settings-render-lifecycle');
-  container.appendChild(lifecycleSentinel);
-
-  const syncFullscreen = (message = '') => {
-    const btn = container.querySelector('.toggle[data-key="fullscreen"][data-action]');
-    if (!btn) return;
-    const capability = fullscreenCapability();
-    const on = isFullscreen();
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-checked', String(on));
-    btn.disabled = !capability.supported;
-    btn.setAttribute('aria-disabled', String(!capability.supported));
-    const status = btn.closest('.set-row')?.querySelector('[data-fullscreen-status]');
-    if (status) {
-      status.textContent = message || (capability.supported
-        ? 'Fill the screen when this browser allows it.'
-        : 'Fullscreen is unavailable in this browser. On iPhone, Add to Home Screen provides the closest app-like view.');
-    }
-  };
 
   // ---- everything below wires ONE PANEL'S controls -------------------------
   // It used to run once over the whole column, because the whole column was on
@@ -1278,29 +1139,29 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // accumulates. The one listener that is NOT per-panel (the resize handler for
   // the applied-zoom readout) is installed once per open, below.
   const wire = () => {
+  const profileMount = container.querySelector('.set-profile-mount');
+  // onRestored was a parameter renderProfileSection accepted, called — and that
+  // NOBODY EVER PASSED, on either door (#68 D22). So a restore swapped the
+  // profile and left the screen wearing the old one's accessibility settings:
+  // high contrast stored on and off on screen, reduced motion stored off and on
+  // on screen, text size unmoved. The player who most needs those settings is
+  // the player who just lost a save.
+  if (profileMount && saves) {
+    renderProfileSection(profileMount, {
+      saves,
+      onRestored: () => {
+        // Re-read from the manager rather than trusting the closed-over
+        // `settings` object: the restore replaced the profile, so the settings
+        // this screen was built from are the OLD ones.
+        const restored = (saves.loadMeta().settings) || {};
+        if (onProfileRestored) onProfileRestored(restored);
+      },
+    });
+  }
+
   // The acknowledgement needs no manager and no settings — it always renders.
   const aboutMount = container.querySelector('.set-about-mount');
   if (aboutMount) renderAboutSection(aboutMount);
-  const changelogMount = container.querySelector('.set-changelog-mount');
-  if (changelogMount) renderChangelogSection(changelogMount);
-
-  container.querySelectorAll('.set-subtab').forEach((button) => {
-    button.addEventListener('click', () => {
-      const group = button.dataset.advancedGroup;
-      settings[ADVANCED_CAT_KEY] = group;
-      onChange({ [ADVANCED_CAT_KEY]: group });
-      container.querySelectorAll('.set-subtab').forEach((candidate) => {
-        const selected = candidate.dataset.advancedGroup === group;
-        candidate.classList.toggle('on', selected);
-        candidate.setAttribute('aria-selected', String(selected));
-      });
-      container.querySelectorAll('.set-advanced-group').forEach((panel) => {
-        panel.hidden = panel.dataset.advancedPanel !== group;
-      });
-      const panel = container.querySelector('.set-panel');
-      if (panel) panel.scrollTop = 0;
-    });
-  });
 
   container.querySelectorAll('.set-text').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
@@ -1394,22 +1255,22 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   container.querySelectorAll('.toggle').forEach((btn) => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', () => {
       if (btn.dataset.action) {
-        const result = await toggleFullscreen();
-        syncFullscreen(result.ok || result.reason === 'unsupported'
-          ? ''
-          : 'Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
+        toggleFullscreen();
+        // Reflect the new state shortly after the API resolves.
+        setTimeout(() => {
+          const on = isFullscreen();
+          btn.classList.toggle('on', on);
+          btn.setAttribute('aria-checked', String(on));
+        }, 60);
         return;
       }
       const now = !btn.classList.contains('on');
       btn.classList.toggle('on', now);
       btn.setAttribute('aria-checked', String(now));
-      const row = ROWS.find((candidate) => candidate.key === btn.dataset.key);
-      const stored = row && row.positiveWhen === false ? !now : now;
-      settings[btn.dataset.key] = stored;
-      onChange({ [btn.dataset.key]: stored });
-      refreshConditionNotes(container, settings);
+      settings[btn.dataset.key] = now;
+      onChange({ [btn.dataset.key]: now });
     });
   });
   }; // ---- end wire() ---------------------------------------------------
@@ -1426,22 +1287,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // collect four handlers that all write the same number.
   const onResize = () => refreshApplied(container, settings);
   window.addEventListener('resize', onResize);
-  const onFullscreenChange = () => syncFullscreen();
-  const onFullscreenError = () => syncFullscreen('Fullscreen was refused by the browser. Try again from this button or use the browser controls.');
-  document.addEventListener('fullscreenchange', onFullscreenChange);
-  document.addEventListener('webkitfullscreenchange', onFullscreenChange);
-  document.addEventListener('fullscreenerror', onFullscreenError);
-  document.addEventListener('webkitfullscreenerror', onFullscreenError);
   // The settings container is rebuilt on every open, so the listener is dropped
   // with it rather than accumulating one per visit. Same observer releases the
   // bumpers if this strip took them.
   const obs = new MutationObserver(() => {
-    if (lifecycleSentinel.isConnected) return;
+    if (container.isConnected) return;
     window.removeEventListener('resize', onResize);
-    document.removeEventListener('fullscreenchange', onFullscreenChange);
-    document.removeEventListener('webkitfullscreenchange', onFullscreenChange);
-    document.removeEventListener('fullscreenerror', onFullscreenError);
-    document.removeEventListener('webkitfullscreenerror', onFullscreenError);
     if (claimedRing) setTabRing(null);
     obs.disconnect();
   });
@@ -1483,7 +1334,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     b.addEventListener('click', () => selectCategory(b.dataset.member));
     // Law 3 clause 4: hover AND the pad/keyboard focus cursor. `title=` alone
     // does not satisfy it — touch and gamepad players never see one.
-    attachTooltip(b, () => `<b>${esc(categoryLabel(b.dataset.member))}</b><br>${esc(categoryTip(b.dataset.member))}`);
+    attachTooltip(b, () => `<b>${esc(b.dataset.member)}</b><br>${esc(categoryTip(b.dataset.member))}`);
   });
 
   // Law 3 clauses 1 + 1a: RB → next, LB → previous, wrap at BOTH ends, over the
@@ -1528,7 +1379,7 @@ export function showSettingsNotice(msg) {
   el.textContent = msg;
 }
 
-export function openSettings({ meta, onChange, saves = null }) {
+export function openSettings({ meta, onChange, saves = null, onProfileRestored = null }) {
   const settings = meta.settings || (meta.settings = {});
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
@@ -1539,7 +1390,7 @@ export function openSettings({ meta, onChange, saves = null }) {
       <div class="set-actions"><button id="set-close">Done</button></div>
     </div>`;
   document.body.appendChild(veil);
-  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves });
+  renderSettings(veil.querySelector('.set-body'), { settings, onChange, saves, onProfileRestored });
 
   const close = () => veil.remove();
   veil.addEventListener('click', (e) => {

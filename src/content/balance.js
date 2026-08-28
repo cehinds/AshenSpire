@@ -16,9 +16,10 @@ export const balance = {
   handMax: 10,
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
-  flaskCapacity: 4,
-  // The approved base is four; future unlocks may still grow the total. The
-  // first live growth rung is data: Golden Sprout
+  flaskCapacity: 3,
+  // PROVISIONAL — the first live unlock rung of D19's parenthesis
+  // ("3 total (with future unlocks for larger total amount)", Constantine,
+  // 2026-08-13; C1 — CLOSED: POOL). The seed grows the vessel: Golden Sprout
   // is the Golden Seed homage, and carrying it grows the pool by one Crimson
   // charge. One row, amount 1, deliberately modest — the M3 balance pass owns
   // the number, and a retune is this row, nothing else: the tooltip clause
@@ -62,14 +63,6 @@ export const balance = {
     flaskCost: [50, 80],
     removeBase: 75,
     removeStep: 25,
-    // E2 (#247): the merchant's buy-back, as a FRACTION of the low end of the
-    // same cost table his own stock rolls from (relicCost[rarity][0] /
-    // flaskCost[0]) — so a possession is always worth less than the cheapest
-    // he would sell one for, and the same item fetches the same cinders every
-    // visit, no rng. OUR number, labelled as ours: half, rounded down at the
-    // price, one word flips it. 0 turns the buy-back off at the table without
-    // touching the Settings toggle that owns the feature's visibility.
-    sellFraction: 0.5,
   },
 
   shrine: { healPct: 35 },
@@ -134,8 +127,8 @@ export const balance = {
   // single global reaching into all three would be collapsing three
   // distinctions into one number because it is tidier.
   levelUp: {
-    firstCost: 800,
-    costStep: 200,
+    firstCost: 20,
+    costStep: 4,
     pointsPerLevel: 1,
     maxLevels: null,
     // What a level GRANTS — the DOMAIN, not a ladder. Constantine rejected the
@@ -242,93 +235,8 @@ export const balance = {
     //
     // Flipping either boolean is a one-number data edit and needs no code.
     hudBars: {
-      // The shared map/combat resource reference track may occupy at most this
-      // share of the visual viewport. main.js projects it to one CSS variable;
-      // the stylesheet carries no second numeric copy.
-      // The shared solo HUD uses this share of the room left after its action
-      // cells. The old 40vw cap typed a viewport answer before those controls
-      // had taken their space; 82% keeps a deliberate gutter without making a
-      // second breakpoint. Co-op still consumes maxViewportPct below.
-      main: { scaleByMax: true, maxViewportPct: 40, availableWidthPct: 82 },
+      main: { scaleByMax: true },
       model: { scaleByMax: false },
-    },
-    // Shared HUD presentation tokens. These are screen-pixel intentions;
-    // main.js projects them through --ui-zoom so Map and Combat consume the
-    // same answer. Component backgrounds are transparent by current design,
-    // while borders and the contents inside each panel remain visible.
-    hudPresentation: {
-      componentBackgroundOpacityPct: 0,
-      metadataFontPx: 11,
-      beltItemGapPx: 2,
-      // Shared HUD spacing/scale tokens. Portraits shrink to 70% of the
-      // legacy badge; the primary row, control grid, and vital rows each own
-      // their own gap so responsive layouts do not hide a second copy.
-      portraitScale: 0.58,
-      primaryRowGapPx: 4,
-      controlGapPx: 0,
-      resourceRowGapPx: 2,
-      panelPadPx: 0,
-      mobilePanelPadPx: 0,
-      mobileControlGapPx: 1,
-      mobileOuterPadPx: 4,
-      mobileRowGapPx: 3,
-      // Header columns negotiate inside one grid: the center Cinders track and
-      // right metadata trail each cap at 30% of the viewport. Act/Floor show
-      // their current values by default; totals remain an opt-in.
-      cindersMaxWidthPct: 30,
-      metadataMaxWidthPct: 30,
-      metadataShowTotals: false,
-    },
-    // The two always-nearby comfort controls are one shared component on the
-    // title, map, and combat surfaces. Places and spacing are authored here so
-    // a future surface or denser theme does not require another renderer.
-    hudQuickSettings: {
-      places: ['title', 'map', 'combat'],
-      edgeGapPx: 4,
-      stackGapPx: 0,
-      // One visual card on every device. The 40px face sits inside the shared
-      // tap floor, while its 28px icon occupies 70% of the authored face.
-      cardSizePx: 40,
-      glyphSizePx: 28,
-      stateDotPx: 6,
-      activeTintPct: 14,
-      showCardBackground: true,
-      showLabels: false,
-    },
-    // BattlefieldStageModel owns the protected vertical corridor between the
-    // shared run HUD and the hand. Percentages are viewport-height shares on
-    // the glass; intentGapPx is the visible device-pixel attachment distance.
-    combatantStage: {
-      hudClearanceViewportPct: 3,
-      actionClearanceViewportPct: 3,
-      intentGapPx: 6,
-      centerPct: 50,
-    },
-    // Contextual explanations point back toward the readable centre instead of
-    // blindly choosing the first side with room. Combatants add a persistent,
-    // foldable edge inspector while the shared floating tooltip remains the
-    // short-lived hover/tap explanation.
-    tooltipPlacement: {
-      hoverDelayMs: 500,
-      topBandViewportPct: 25,
-      sideBandViewportPct: 30,
-    },
-    combatantInspector: {
-      widthRem: 20,
-      mobileWidthViewportPct: 62,
-    },
-    // Shrine options default to one vertical list. `grid` preserves the
-    // horizontal wide-screen composition as an authored alternative; narrow
-    // screens still collapse it to a list for touch and readable labels.
-    shrinePresentation: {
-      optionLayout: 'list', // list | grid
-      // The four option faces share one folded footprint. Percentages own the
-      // responsive size; the bounds preserve the 44 px interaction floor and
-      // keep a wide monitor from turning a choice into a banner.
-      foldedCardWidthViewportPct: 88,
-      foldedCardMaxWidthRem: 44,
-      foldedCardHeightViewportPct: 10,
-      foldedCardMaxHeightRem: 7,
     },
     // Accent themes → --gold plus its rgb form (focus glow / halos).
     accents: {
@@ -359,40 +267,29 @@ export const balance = {
       // 430x780 is a portrait-phone board: at 390x844 it wants 0.907 (local
       // 430x930), at 412x915 0.958, at 360x640 0.821 (local 438x780).
       //
-      // narrowMax is the viewport width, in visual px, at or below which the
-      // narrow layout is used. Height may change the zoom, never this mode.
+      // narrowMax is the width, in LOCAL px, at or below which the narrow
+      // layout is used. It lives HERE and nowhere else.
       //
-      // It used to live in styles/combat.css as a container query. main.js now
-      // owns the width decision and writes `data-layout` on <html>; the
-      // stylesheets follow it and measure nothing. Height can change the zoom,
-      // but cannot make a browser-chrome or keyboard resize flip the mode.
+      // It used to live in styles/combat.css instead, as `@container app
+      // (max-width: 520px)`, because a container query condition cannot read a
+      // custom property. That was a correct single-home argument and Vira
+      // verified it — and it was not the point. The stylesheet asking the
+      // question at all made TWO deciders out of one decision: the zoom judged
+      // innerWidth/innerHeight against 430x780, the layout judged the
+      // container's local width against 520, and nothing made them agree. On a
+      // tablet they disagreed and the fight became unadvanceable (#24).
+      // main.js now decides once and writes `data-layout` on <html>; the
+      // stylesheets follow it and measure nothing. One decider, one home, and
+      // CSS needs no copy of this number.
       narrowW: 430,
       narrowH: 780,
       narrowMax: 520,
-      // The compact wide composition's rendered lower edge. Text XL is the
-      // tallest cell: at 844x340 its complete HUD, combatants, cards, hint row
-      // and action controls are on glass; at 844x339 at least one required
-      // region crosses its owning row. Derived at one-pixel resolution by
-      // tools/short-landscape-support.mjs before this value is consulted, so
-      // moving the number without moving the rendered premise goes red.
-      shortWideMinH: 340,
-      // THE SHORT-WIDE BAND'S UPPER EDGE (src/main.js, #27). At or above this
-      // viewport height, the established wide composition remains. Below it,
-      // main.js selects the compact composition down through shortWideMinH;
-      // only heights below that rendered floor are refused. Thus the complete
-      // current answer is:
-      //
-      //   h >= 465                 standard wide composition
-      //   340 <= h < 465           compact wide composition (when width fits)
-      //   h < 340                  truthful upright/resize refusal
+      // THE ORIENTATION GATE'S ONE NUMBER (src/ui/components/upright.js, R-32).
+      // Below this viewport HEIGHT in device px, the game refuses the shape and
+      // says so, instead of drawing a board whose END TURN no gesture reaches.
       //
       // IT IS A MEASUREMENT, NOT A TASTE, and it is in data because it is a
       // layout fact that will move when the board does.
-      //
-      // HISTORICAL PRE-#27 RECORD BELOW. It explains why 465 was originally
-      // derived as the refusal threshold. #27 keeps that exact measured upper
-      // edge but inserts a supported composition below it; statements below
-      // about 368..464 being refused describe the former runtime, not today.
       //
       // THE MEASUREMENT IS A DERIVATION OVER AN ENUMERATED SET, AND SAYING THAT
       // OUT LOUD IS WHY THIS NUMBER SURVIVED HAVING ITS QUESTION CHANGED. It was
@@ -528,9 +425,8 @@ export const balance = {
       // `--text S` is the standing check on what this number costs.
       gateBelowH: 465,
     },
-    // Text size → root font-size %. Auto owns the browser stylesheet baseline;
-    // M remains a legacy data alias for old saves and geometry tools. It scales
-    // readable type and line metrics; component and sprite geometry is separate.
+    // Text size → root font-size %. Because type + dimensions are rem, one
+    // value rescales the whole UI (styles/base.css).
     textSize: { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' },
     // MINIMUM TAP SIZE (Settings → Accessibility). THE ONE HOME OF THE 44.
     //
@@ -587,24 +483,14 @@ export const balance = {
     // ELSE. That is the falsifier for Law 0 on this control, and it is the same
     // sentence tapSize above already ships.
     //
-    // `off` is the default: a card class may advertise the capability without
-    // silently changing anybody's controls. If the player enables the dial,
-    // `normal` is 600 ms because a long-press people already know is ~400-500
-    // ms (Android's own threshold) and a CONFIRM wants to sit just past reflex
-    // without becoming a chore. `short` is for players who find the wait
-    // irritating, `long` for hands that need the room. `off` is 0 and means
-    // the pre-hold behaviour, byte for byte: one tap commits.
+    // The durations: 600 ms is the default because a long-press people already
+    // know is ~400-500 ms (Android's own threshold) and a CONFIRM wants to sit
+    // just past reflex without becoming a chore. `short` is for players who
+    // find the wait irritating, `long` for hands that need the room. `off` is
+    // 0 and means the pre-hold behaviour, byte for byte: one tap commits.
     holdConfirm: {
-      def: 'off',
+      def: 'normal',
       steps: { off: 0, short: 350, normal: 600, long: 1000 },
-    },
-    // TITLE SAVE SLOT QUICK LOAD. This is a pointer/touch convenience gesture,
-    // not the irreversible-action safety dial above: a short activation still
-    // selects/reviews the save, while a stationary hold loads it directly.
-    // Keeping the duration here lets the interaction be tuned without changing
-    // the title screen's event wiring.
-    titleLoadHold: {
-      ms: 600,
     },
     // THE HOLD'S BEAT — WHERE IN THE FILL A SOUND LANDS. One home for the
     // fractions; the sounds themselves are recipes in content/sfx.js and the
@@ -677,30 +563,6 @@ export const balance = {
     inspectHold: {
       ms: 400,
     },
-    // REWARD COLLECTION (E11, #256). THE ONE HOME OF THE WORD.
-    //
-    // Constantine, 2026-08-15 (the E11 card): Continue on the reward menu is
-    // ALWAYS pressable and a setting decides what it means — "auto-collect ON
-    // takes everything, picking at random where there is a choice; OFF gives
-    // only what was chosen, no nagging".
-    //
-    // `auto` is the default, and the reason is which mistake costs more: under
-    // auto a distracted Continue still banks the cinders and the relic (an
-    // explicit SKIP on a row is respected — deck discipline survives the
-    // setting); under manual a distracted Continue walks away from everything.
-    // Losing rewards you never saw is the worse silence. The cost of the
-    // default, stated: auto's card pick adds a card a deliberate player may
-    // not have wanted — one tap (Skip on the card row) prevents it.
-    //
-    // NO SETTINGS ROW DERIVES FROM THIS YET, ON PURPOSE — settings.js is under
-    // E3's live claim (#248); adding the row later is a data edit there, not a
-    // redesign (the handLayout precedent, three rows down). Until then the
-    // dial is this row and meta.settings.rewardCollect overrides it when a
-    // row exists to write it.
-    rewardCollect: {
-      def: 'auto',
-      modes: ['auto', 'manual'],
-    },
     // HAND LAYOUT (C2). THE ONE HOME OF THE WORD.
     //
     // Constantine, 2026-08-13: "overlap and paging (maybe a toggleable
@@ -767,7 +629,7 @@ export const balance = {
     // The beds carry their own gain staging on top of this bus (music.js,
     // gains 0.34–0.6), so 50 is clearly audible from first boot without
     // crowding the feedback layer.
-    audio: { musicEnabled: true, musicVolume: 50, sfxVolume: 75 },
+    audio: { musicVolume: 50, sfxVolume: 75 },
   },
 
   // ---- Armaments & armour (equipment) ---------------------------------------
@@ -792,7 +654,7 @@ export const balance = {
     },
     roleSources: {
       attack: [{ slot: 'rightHand' }],
-      guard: [{ slot: 'leftHand' }, { slot: 'rightHand' }],
+      guard: [{ slot: 'leftHand', kinds: ['shield'] }, { slot: 'rightHand' }],
       technique: [{ slot: 'rightHand' }],
     },
     unarmedProfiles: {
@@ -818,21 +680,7 @@ export const balance = {
     // What `persistence` genuinely cannot say is the other half of his sentence
     // — the few pieces that are nobody's to FIND because they are everybody's —
     // and that is `basicTag` below.
-    // HIS WORD, 2026-08-21: *"it should only show armory you actually picked
-    // up mid run"*. That is this line and nothing else — the three values were
-    // already the closed set and 'perRun' is already documented above as "what
-    // you find is yours for this run only". Law 0's falsifier, answered by the
-    // machinery that was already here: an entry describes, the machinery
-    // derives, and the whole of item 1 is one word in a content table.
-    //
-    // WHAT THIS DOES NOT TOUCH, said out loud because it is the half of his
-    // sentence this word cannot reach: `basicTag` below still exempts the few
-    // pieces that are everybody's from the found gate, so three `basic`
-    // armaments remain on the shelf in a run that has picked up nothing. That
-    // is HIS OWN earlier ask (A7, 2026-08-08) and the two instructions meet
-    // here. It is flagged on the PR rather than averaged: if he wants a truly
-    // empty shelf, `basicTag: ''` is the second word and it is his to say.
-    persistence: 'perRun',
+    persistence: 'both',
 
     // ---- A FEW BASIC WEAPONS, AVAILABLE FOR ALL --------------------------
     // The tag that means "this is everybody's". It answers the FOUND gate only
@@ -848,33 +696,7 @@ export const balance = {
     // universal shelf off entirely; a value naming a tag no armament carries is
     // a hard validation failure, because a setting that silently does nothing
     // is the one failure mode worse than a missing one.
-    //
-    // KILLED BY HIM, 2026-08-21: *"kill 3 basic weapons on self unless it's a
-    // starting kit armory weapon shown on character creation. the armory should
-    // not show weapons not collected in run. it should not show items not
-    // available at character creation."*
-    //
-    // THE UNLESS-CLAUSE NEEDED NO CODE, AND THAT IS A MEASUREMENT, NOT A HOPE.
-    // The worry was that clearing this tag would also hide the pieces the player
-    // STARTED with — his exemption is the starting kit, not a category. It does
-    // not, because the kit is WORN: `carriedIds(loadout)` is storage plus every
-    // set, and `createRunState` puts the kit in the sets. Measured across all
-    // three shipped classes at this ref:
-    //
-    //   reaver    carries straightSword, roundShield, default
-    //   starseer  carries ashStaff, default
-    //   herald    carries boneSceptre, default
-    //
-    // So with `persistence: 'perRun'` the shelf is already exactly KIT ∪ WHAT
-    // THIS RUN PICKED UP, per class, following the player rather than a tag —
-    // which is his sentence. What the tag was adding on top is the part he
-    // killed: it handed the starseer a straightSword and a roundShield it was
-    // never shown, and the herald all three.
-    //
-    // '' is the documented off value, not an invention (see the paragraph
-    // above); a value naming a tag no armament carries is still a hard
-    // validation failure, so this cannot rot into a silent no-op.
-    basicTag: '',
+    basicTag: 'basic',
 
     // Swapping a hand mid-fight. 'energy' spends from the turn's pool;
     // 'allowance' gives a separate per-turn budget that energy never touches.

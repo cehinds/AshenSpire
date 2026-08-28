@@ -47,9 +47,10 @@
 // count is content and moves without anyone touching CSS. The defect returns on
 // a data edit, and this is the only thing that would notice.
 //
-// TEXT SIZE IS NOT DECORATION. Text and line metrics grow, so content can still
-// push outward even though the control floor no longer derives from rem. Every
-// S/M/L/XL value is read from balance.ui.textSize rather than typed here.
+// TEXT SIZE IS NOT DECORATION. The row is sized in rem so it grows with the
+// setting (Law 2), which means the setting can push the content out — so S/M/L/XL
+// are applied exactly as main.js applies them (a root font-size %, the values
+// from balance.ui.textSize) rather than assumed harmless.
 //
 // Usage
 //   node tools/actionreach.mjs                 source tree via tools/serve.mjs
@@ -98,7 +99,6 @@ import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { serve } from './serve.mjs';
-import { balance } from '../src/content/balance.js';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
 // rendered arrival screen, served from this tree and measured in a real
@@ -216,8 +216,10 @@ const SHAPES = [
   [480, 900], [512, 900], [560, 900], [580, 900], [600, 900],
   [844, 390], [1200, 730], [1366, 768], [1920, 1080],
 ];
-// One home: actionreach imports the exact setting map the product applies.
-const TEXT = balance.ui.textSize;
+// balance.ui.textSize. Read from the bundle would be better; typed here is a
+// second copy and it is called out rather than hidden — it is the ONE value in
+// this file that can drift, and clause 2 of Law 1 says so out loud.
+const TEXT = { S: '56.25%', M: '62.5%', L: '68.75%', XL: '75%' };
 
 const args = process.argv.slice(2);
 const argOf = (f) => { const i = args.indexOf(f); return i >= 0 ? args[i + 1] : null; };
@@ -427,9 +429,10 @@ async function main() {
   against the pre-fix build, which was never measured in that mode either.
   "No worse than before" was a comparison of two unmeasured things.
 
-  TAP FLOOR IS NOT A TEXT METRIC. btnH above is device px after --ui-zoom;
-  Text size may grow the row when content needs it, but cannot change the
-  ergonomic floor. Minimum tap size and UI size own that number.`);
+  4.4rem IS 44 LOCAL PX, NOT 44 DEVICE PX. btnH above is device px: at
+  --ui-zoom 0.9 the row measures 39.59 and only clears 44 at Text size L. The
+  gap is real and is Sunna's open card from 2026-07-31, not something a green
+  here closes.`);
 
   console.log(`\n  ${fails.length ? `FAIL — ${fails.length} finding(s) of ${cells} cell(s)` : `PASS — ${cells}/${cells} cells: the action is whole on arrival, does not move, and no option set orphans a row`}`);
   for (const f of fails) console.log(`    - ${f}`);

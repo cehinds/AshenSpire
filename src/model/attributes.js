@@ -91,10 +91,6 @@ export function creationMode(source, modeId = defaultCreationModeId(source)) {
   return mode;
 }
 
-export function creationModeSnapshot(source, modeId = defaultCreationModeId(source)) {
-  return structuredClone(creationMode(source, modeId));
-}
-
 export function allocationTotal(source, modeId = defaultCreationModeId(source)) {
   const mode = creationMode(source, modeId);
   return mode.baseline * orderedAttributes(source).length + mode.bonusPool;
@@ -105,13 +101,10 @@ function retiredNames(t) {
   return plainObject(map) ? map : {};
 }
 
-function allocationProblems(t, classId, modeId, values, path, granted = 0, modeSnapshot = undefined) {
+function allocationProblems(t, classId, modeId, values, path, granted = 0) {
   const problems = [];
   const attrs = t.attributes.slice().sort((a, b) => a.order - b.order);
-  const mode = modeSnapshot || t.creationModes.find((m) => m && m.id === modeId);
-  if (modeSnapshot && (!plainObject(modeSnapshot) || modeSnapshot.id !== modeId)) {
-    problems.push({ path: 'attributeModeSnapshot', msg: `must be a snapshot for creation mode '${modeId}'` });
-  }
+  const mode = t.creationModes.find((m) => m && m.id === modeId);
   if (!mode) problems.push({ path: 'attributeMode', msg: `unknown creation mode '${modeId}'` });
   if (!t.classes.some((c) => c && c.id === classId)) problems.push({ path: 'class', msg: `unknown class '${classId}'` });
   if (!plainObject(values)) {
@@ -160,8 +153,8 @@ function allocationProblems(t, classId, modeId, values, path, granted = 0, modeS
   return problems;
 }
 
-export function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes', granted = 0, modeSnapshot = undefined) {
-  return allocationProblems(tables(source), classId, modeId, values, path, granted, modeSnapshot);
+export function attributeAllocationProblems(source, classId, modeId, values, path = 'attributes', granted = 0) {
+  return allocationProblems(tables(source), classId, modeId, values, path, granted);
 }
 
 export function classAttributePreset(source, classId, modeId = defaultCreationModeId(source)) {
@@ -251,12 +244,10 @@ export function normalizeRunAttributes(run, registries) {
   const modeAbsent = run.attributeMode === undefined;
   const valuesAbsent = run.attributes === undefined;
   if (modeAbsent !== valuesAbsent) throw new Error('attributeMode and attributes must both be present or both be absent');
-  if (modeAbsent && run.attributeModeSnapshot !== undefined) throw new Error('attributeModeSnapshot requires attributeMode and attributes');
   migrateRetiredAttributeNames(run, registries);
   if (modeAbsent) {
     run.attributeMode = defaultCreationModeId(registries);
     run.attributes = classAttributePreset(registries, run.class, run.attributeMode);
-    run.attributeModeSnapshot = creationModeSnapshot(registries, run.attributeMode);
     // ONE OF THE THREE UNGATED HEALS, and the one that started this: the pair is
     // optional in RUN_SHAPE with no schemaVersion gate, so a CURRENT-schema save
     // whose allocation is gone comes back wearing the class preset. Somebody
@@ -272,24 +263,13 @@ export function normalizeRunAttributes(run, registries) {
     });
     return run;
   }
-  if (run.attributeModeSnapshot === undefined) {
-    run.attributeModeSnapshot = creationModeSnapshot(registries, run.attributeMode);
-    note(run, {
-      kind: 'heal',
-      site: 'attributes.js:normalizeRunAttributes(mode snapshot)',
-      field: 'attributeModeSnapshot',
-      was: undefined,
-      now: structuredClone(run.attributeModeSnapshot),
-      why: `pre-snapshot save: creation rules for '${run.attributeMode}' were captured once before validation`,
-    });
-  }
   // THE ALLOCATION IS JUDGED AGAINST CREATION PLUS WHAT WAS LEVELLED. A run
   // that has bought no levels is judged by exactly the rules it always was —
   // `granted` is 0 and every message is byte-for-byte the one it printed
   // before.
   const problems = attributeAllocationProblems(
     registries, run.class, run.attributeMode, run.attributes, 'attributes',
-    grantedAttributePoints(run), run.attributeModeSnapshot,
+    grantedAttributePoints(run),
   );
   if (problems.length) throw new Error(problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
   run.attributes = Object.fromEntries(orderedAttributes(registries).map((def) => [def.id, run.attributes[def.id]]));

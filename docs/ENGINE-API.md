@@ -380,34 +380,6 @@ Powers leave play entirely when played (they appear in **no** pile — StS
 behavior). `combat.queue`, `triggerState`, `_`-prefixed fields, and the
 `emit`/`enqueue`/`nextInstanceId` methods are engine-internal.
 
-### Exact combat saves — `src/engine/combatSnapshot.js`
-
-```js
-import {
-  serializeCombatSnapshot,
-  restoreCombatSnapshot,
-  commitCombatSnapshot,
-} from './src/engine/combatSnapshot.js';
-```
-
-- `serializeCombatSnapshot(combat)` returns a versioned, JSON-safe copy of one
-  fully committed combat state. It refuses while the action queue or event
-  buffer is live rather than writing a torn turn.
-- `restoreCombatSnapshot({ registries, rng, snapshot })` validates the stored
-  model, clones it, and reconnects registries, RNG, the trigger map, and runtime
-  methods without replaying combat setup.
-- `commitCombatSnapshot({ run, combat, nodeId, encounterId })` is the Save Game
-  command boundary. It writes `run.combatEntered.snapshot` and projects the
-  same live HP, resource maxima, flask charges, loadout, and equipment-pool
-  deficits into the run-level slot summary.
-
-The closed persisted model and field-addressed validation live in
-`src/model/combatSnapshot.js`. After the ordinary run-shape door, `save.js`
-also validates every snapshot content reference against the live registries;
-malformed or dangling snapshots are refused and their original bytes archived.
-An older `combatEntered` record without `snapshot` remains a supported
-deterministic encounter checkpoint.
-
 ### `dispatch(combat, intent)` → `{ events }`
 
 Combat intents (closed set for M1):
