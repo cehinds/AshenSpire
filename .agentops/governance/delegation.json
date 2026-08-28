@@ -1,0 +1,46 @@
+{
+  "schema": "agentops/delegation/v1",
+  "policy_version": "1.0.0",
+  "non_amplification_rule": "effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time. A delegatee never receives an action the delegator lacks, never an action the Owner intent excludes from the deputy, and never a longer life or deeper subdelegation than its parent envelope.",
+  "envelopes": [
+    {
+      "id": "itm-to-maker-feature",
+      "parent_id": null,
+      "delegator_role": "it-manager-iii",
+      "delegatee_role": "maker",
+      "delegated_actions": ["implement-locally", "run-tests-and-builds", "commit-on-isolated-branch"],
+      "scope_paths": ["src/**", ".agentops/tools/**"],
+      "max_subdelegation_depth": 1,
+      "effective": "2026-01-01T00:00:00Z",
+      "expiry": "2026-12-31T23:59:59Z"
+    },
+    {
+      "id": "maker-to-helper-disjoint",
+      "parent_id": "itm-to-maker-feature",
+      "delegator_role": "maker",
+      "delegatee_role": "maker",
+      "delegated_actions": ["run-tests-and-builds"],
+      "scope_paths": ["tests/**"],
+      "max_subdelegation_depth": 0,
+      "effective": "2026-01-01T00:00:00Z",
+      "expiry": "2026-06-30T23:59:59Z"
+    },
+    {
+      "id": "itm-to-qa-review",
+      "parent_id": null,
+      "delegator_role": "it-manager-iii",
+      "delegatee_role": "qa-independent",
+      "delegated_actions": ["perform-independent-qa"],
+      "scope_paths": [],
+      "max_subdelegation_depth": 0,
+      "effective": "2026-01-01T00:00:00Z",
+      "expiry": "2026-12-31T23:59:59Z"
+    }
+  ],
+  "rules": {
+    "subset_of_parent": "A child envelope's delegated_actions must be a subset of its parent envelope's delegated_actions.",
+    "depth_decreases": "A child envelope's max_subdelegation_depth must be strictly less than its parent's.",
+    "deputy_cannot_delegate_excluded": "The deputy (it-manager-iii) must not delegate any action listed in owner-intent.deputy.excluded_actions.",
+    "time_bound": "Every envelope has effective and expiry; expiry must be strictly after effective."
+  }
+}

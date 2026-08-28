@@ -3,7 +3,7 @@
 
 # AgentOps governance (generated view)
 
-Project: **AshenSpire** — policy version `1.0.0` — installed stage: `governance-kernel`
+Project: **AshenSpire** — policy version `1.0.0` — installed stage: `operational-governance`
 
 This Markdown is a projection of validated JSON contracts. It carries no
 authority of its own and is regenerated deterministically from
@@ -165,4 +165,95 @@ One writer per overlapping path or ref. Generated artifacts are serialized behin
 | `docs/reconstruction/**` | it-manager-iii | reconstruction |
 
 Collision rule: Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues.
+
+## RACI (exactly one Accountable per item)
+
+Exactly one Accountable per deliverable or decision. Responsible executes; Accountable owns the outcome and the go/no-go; Consulted give bounded input; Informed receive the result. Accountable is never the sole Responsible for its own independent-QA acceptance.
+
+| Item | Kind | Responsible | Accountable | Consulted | Informed |
+|---|---|---|---|---|---|
+| feature-implementation | deliverable | maker | it-manager-iii | data-architecture-lead | help-desk, project-management-lead |
+| independent-qa-acceptance | decision | qa-independent | qa-independent | it-manager-iii | help-desk, project-management-lead |
+| dev-integration | decision | it-manager-iii | it-manager-iii | data-architecture-lead, qa-independent | help-desk, project-management-lead |
+| data-contract-review | decision | data-architecture-lead | data-architecture-lead | it-manager-iii | help-desk |
+| portfolio-sequencing | decision | project-management-lead | it-manager-iii | project-management-lead, data-architecture-lead | help-desk |
+| release-and-publication | decision | owner | owner | it-manager-iii, qa-independent | project-management-lead, help-desk |
+
+## Delegation envelopes (non-amplifying)
+
+Rule: `effective grant = delegator grant ∩ task ∩ resource/ref/path ∩ action ∩ time. A delegatee never receives an action the delegator lacks, never an action the Owner intent excludes from the deputy, and never a longer life or deeper subdelegation than its parent envelope.`
+
+| Envelope | Parent | Delegator → Delegatee | Actions | Max subdepth | Effective → Expiry |
+|---|---|---|---|---|---|
+| itm-to-maker-feature | — | it-manager-iii → maker | implement-locally, run-tests-and-builds, commit-on-isolated-branch | 1 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+| maker-to-helper-disjoint | itm-to-maker-feature | maker → maker | run-tests-and-builds | 0 | 2026-01-01T00:00:00Z → 2026-06-30T23:59:59Z |
+| itm-to-qa-review | — | it-manager-iii → qa-independent | perform-independent-qa | 0 | 2026-01-01T00:00:00Z → 2026-12-31T23:59:59Z |
+
+## Escalation (time requests a decision, never authority)
+
+Elapsed time changes routing only, never truth, evidence, or authority. A time-based escalation requests a decision from a higher owner; it never silently enlarges the escalating actor's authority. No blocker remains inert or ownerless past its SLA.
+
+| Class | Attempts | SLA (min) | Route | Wake | Authority effect | Continues work |
+|---|---|---|---|---|---|---|
+| technical-blocker | 1 | 5 | help-desk → it-manager-iii | it-manager-iii | request-decision | yes |
+| data-contract-withhold | 1 | 5 | data-architecture-lead → it-manager-iii | it-manager-iii | request-decision | yes |
+| deputy-overdue | 1 | 10 | it-manager-iii → constantine | constantine | request-decision | yes |
+| owner-exclusive-now | 0 | 0 | constantine | constantine | request-decision | no |
+
+## Lifecycle transitions and permitted actors
+
+States: `proposed` → `assigned` → `in-progress` → `local` → `qa-review` → `accepted` → `pushed` → `pr-open` → `dev-integrated` → `hosted-verified` → `resolved` → `released`
+
+Protected states: `pushed`, `pr-open`, `dev-integrated`, `hosted-verified`, `released`
+
+| From | To | Guard | Permitted actors | Protected |
+|---|---|---|---|---|
+| proposed | assigned | contract-ready + acknowledged | help-desk, it-manager-iii | no |
+| assigned | in-progress | writer-lease-held + exclusive-paths | maker | no |
+| in-progress | local | local-commit-on-isolated-branch | maker | no |
+| local | qa-review | frozen-exact-head | maker, it-manager-iii | no |
+| qa-review | accepted | independent-qa-pass at exact head | qa-independent | no |
+| accepted | pushed | independence-PASS + fresh-base | it-manager-iii | yes |
+| pushed | pr-open | normal-reviewable-PR | it-manager-iii | yes |
+| pr-open | dev-integrated | required-review + CI-green | it-manager-iii | yes |
+| dev-integrated | hosted-verified | exact-SHA hosted evidence | it-manager-iii | yes |
+| hosted-verified | resolved | five-role acceptance ledger | it-manager-iii, project-management-lead | no |
+| resolved | released | Gate-F promotion packet + owner decision | owner | yes |
+
+## Information access and context loading
+
+Minimal sufficient context. A cold-start agent loads only what the current action needs: a bounded startup set, then on-demand retrieval by exact ID/path/hash. Restricted classes require explicit authority; forbidden classes are never loaded into model context at all.
+
+- **Startup** (≤ 3, target 1200 / hard 1500 tokens): `.agentops/BOOTSTRAP.md`, `.agentops/project.json`, `the-single-contract-the-current-action-touches`
+- **On demand:** an exact governance contract under .agentops/governance/; the current work capsule for the active ticket; an exact evidence pointer by id/path/hash; one extra hop from an exact reference
+- **Restricted:** credential, token, or secret material; owner private decision context; another writer's in-flight uncommitted workspace
+- **Forbidden (never loaded):** full-git-history; full-backlog-or-portfolio; all-chat-transcripts; raw-tool-logs; whole-diffs-or-screenshot-sets; unrelated-source-trees; the-reconstruction-installer-bundle-at-startup
+
+## QA independence and risk-selected gates
+
+QA is risk-selected and independent. The verifier of an exact object is never its maker. Only applicable checks run; independent checks run in parallel unless data dependencies require order; every verdict binds to the exact object and a changed identity invalidates only dependent evidence. A waiver is a recorded owner/deputy decision, never a maker's.
+
+| Risk class | Required suites | Independent QA |
+|---|---|---|
+| low | unit | no |
+| standard | unit, regression, deterministic-view | yes |
+| high | unit, regression, deterministic-view, security, accessibility, playtest | yes |
+
+| Gate | Risk | Verifier | Independent of maker | Waiver authority | Required evidence |
+|---|---|---|---|---|---|
+| accept-standard-object | standard | qa-independent | yes | it-manager-iii | test-run-receipt, generated-view-drift-check |
+| accept-high-risk-object | high | qa-independent | yes | owner | test-run-receipt, security-scan-receipt, hosted-verification-receipt |
+| data-contract-clearance | standard | data-architecture-lead | yes | it-manager-iii | data-lineage-receipt |
+
+## Evidence responsibility
+
+Evidence is a manifest or exact pointer, not another ledger. Each evidence type names its producer, the exact object it binds to, its verifier, its freshness rule, and the keys whose change invalidates it. A receipt is an event or evidence manifest; reads, polls, and repeated acknowledgements produce none.
+
+| Evidence | Producer | Exact object | Verifier | Invalidation keys |
+|---|---|---|---|---|
+| test-run-receipt | maker | commit OID + tree | qa-independent | head_oid, tree_oid |
+| generated-view-drift-check | generator | .agentops/generated/* vs its JSON sources | it-manager-iii | source_json_hash |
+| security-scan-receipt | qa-independent | commit OID | it-manager-iii | head_oid |
+| data-lineage-receipt | data-architecture-lead | schema/id/lineage manifest hash | it-manager-iii | schema_version, manifest_hash |
+| hosted-verification-receipt | qa-independent | deployed commit SHA + hosted URL | it-manager-iii | hosted_sha |
 

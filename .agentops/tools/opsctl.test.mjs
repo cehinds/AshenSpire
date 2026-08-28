@@ -24,14 +24,14 @@ function check(name, cond, detail = '') {
 {
   const { contracts, errors } = runValidate();
   check('real corpus validates with zero errors', errors.length === 0, errors.join(' | '));
-  check('all six contracts loaded', Object.keys(contracts).length === 6, Object.keys(contracts).join(','));
+  check('all thirteen contracts loaded', Object.keys(contracts).length === 13, Object.keys(contracts).join(','));
 }
 
 // 2. Every negative plant is caught through the live entry points.
 {
   const s = runSelftest();
   check('selftest ok (all plants caught)', s.ok, s.detail.join(' | '));
-  check('selftest exercises >= 12 plants', s.results.length >= 12, String(s.results.length));
+  check('selftest exercises >= 20 plants', s.results.length >= 20, String(s.results.length));
 }
 
 // 3. The committed generated view has no drift from validated JSON.

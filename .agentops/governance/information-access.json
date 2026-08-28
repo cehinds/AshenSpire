@@ -1,0 +1,38 @@
+{
+  "schema": "agentops/information-access/v1",
+  "policy_version": "1.0.0",
+  "principle": "Minimal sufficient context. A cold-start agent loads only what the current action needs: a bounded startup set, then on-demand retrieval by exact ID/path/hash. Restricted classes require explicit authority; forbidden classes are never loaded into model context at all.",
+  "max_startup_items": 3,
+  "startup_token_target": 1200,
+  "startup_token_hard_limit": 1500,
+  "startup": [
+    ".agentops/BOOTSTRAP.md",
+    ".agentops/project.json",
+    "the-single-contract-the-current-action-touches"
+  ],
+  "on_demand": [
+    "an exact governance contract under .agentops/governance/",
+    "the current work capsule for the active ticket",
+    "an exact evidence pointer by id/path/hash",
+    "one extra hop from an exact reference"
+  ],
+  "restricted": [
+    "credential, token, or secret material",
+    "owner private decision context",
+    "another writer's in-flight uncommitted workspace"
+  ],
+  "forbidden": [
+    "full-git-history",
+    "full-backlog-or-portfolio",
+    "all-chat-transcripts",
+    "raw-tool-logs",
+    "whole-diffs-or-screenshot-sets",
+    "unrelated-source-trees",
+    "the-reconstruction-installer-bundle-at-startup"
+  ],
+  "rules": {
+    "startup_bounded": "startup has at most max_startup_items entries.",
+    "no_forbidden_preload": "No forbidden class may appear in startup or on_demand.",
+    "retrieval_order": "Retrieve by exact ID/path/hash first, keyword second, semantic fallback last; never recursively read all linked material; default maximum is one extra hop."
+  }
+}
