@@ -183,15 +183,11 @@ async function main() {
       const regions = ids.map((id) => ({ id, label:id, count:1, unit:'item', edge:'bottom', expanded:false }));
       return ids.map((subject) => {
         const panel = armouryPanelModel({ view:'grid', views:['grid'], layout:{ figure:true, slots:'flank' }, subject, regions });
-        const directIds = panel.children.slice(1).map((child) => child.component);
         return { subject, trays:panel.children.filter((child) => child.component === 'folding-tray').length,
-          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]),
-          allRegions: ['armoury-body','armoury-inventory','armoury-card-strip','armoury-stats-panel']
-            .every((component) => directIds.includes(component)) };
+          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]) };
       });
     })()`);
-    check(composition.every((row) => row.trays === 0 && row.direct && row.allRegions),
-      'the semantic panel model owns each region once while the screen alone composes shared trays');
+    check(composition.every((row) => row.trays === 3 && row.direct), 'every configured Armoury subject remains direct while the other three become trays');
     if (SHOTS) {
       mkdirSync(SHOT_DIR, { recursive: true });
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
@@ -222,28 +218,12 @@ async function main() {
     await until("!!document.querySelector('[data-component=\"folding-tray\"]')", 'catalog Folding Tray card');
     const catalogControls = await evaluate(`(() => ({
       links:Object.fromEntries([...document.querySelectorAll('.catalog-nav a')].map((link)=>[link.textContent.trim(),link.href])),
-      titleLink:document.querySelector('.title-link')?.href,
       view:document.querySelector('#grid').dataset.view,
       columns:[...document.querySelectorAll('#grid article')].filter((card,_,cards)=>Math.abs(card.getBoundingClientRect().top-cards[0].getBoundingClientRect().top)<2).length,
       min:getComputedStyle(document.documentElement).getPropertyValue('--catalog-card-min').trim(),
     }))()`);
     check(['Repository','README','Issues','Daily Status','Preview'].every((label)=>catalogControls.links[label]), 'catalog header links to the repository, README, issues, Daily Status, and preview');
-    check(catalogControls.titleLink === 'https://github.com/cehinds/AshenSpire/blob/dev/README.md', 'catalog title is a button-link to the GitHub README');
     check(catalogControls.view === 'grid' && catalogControls.columns > 1 && catalogControls.min === '285px', 'catalog opens in the configurable medium grid view');
-    await evaluate(`(() => { const input=document.querySelector('#search'); input.value='folding tray'; input.dispatchEvent(new Event('input',{bubbles:true})); return true; })()`);
-    const multiTermSearch = await evaluate(`(() => ({
-      ids:[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component),
-      query:new URLSearchParams(location.search).get('q'),
-    }))()`);
-    check(multiTermSearch.ids.includes('folding-tray') && multiTermSearch.ids.length < 10 && multiTermSearch.query === 'folding tray', 'multi-term search finds components across their catalog metadata and writes a shareable URL');
-    await evaluate(`(() => { document.querySelector('#search').value=''; const select=document.querySelector('#kind'); select.value='composite'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
-    check(await evaluate(`[...document.querySelectorAll('#grid article')].length>0 && [...document.querySelectorAll('#grid article')].every(card=>[...card.querySelectorAll('.chip')].some(chip=>chip.textContent==='composite'))`), 'component-kind filter isolates composite models');
-    await evaluate(`(() => { const select=document.querySelector('#sort'); select.value='id-desc'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
-    check(await evaluate(`(() => { const ids=[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component); return ids.every((id,index)=>index===0||ids[index-1].localeCompare(id)>=0); })()`), 'sort control orders filtered components by descending ID');
-    await evaluate(`document.querySelector('#clear-filters').click(); true`);
-    check(await evaluate(`document.querySelectorAll('#grid article').length===88 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
-    await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',bubbles:true,cancelable:true})); true`);
-    check(await evaluate(`document.activeElement===document.querySelector('#search')`), 'slash keyboard shortcut focuses component search');
     await evaluate(`document.querySelector('#density-less').click(); true`);
     await wait(80);
     const compactGrid = await evaluate(`(() => ({

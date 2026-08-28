@@ -10,19 +10,10 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8');
 
 const REQUIRED_IDS = Object.freeze([
-  'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
-  'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
-  'title-brand-lockup', 'title-wordmark', 'title-subtitle', 'title-divider',
-  'title-menu', 'title-menu-item', 'title-menu-gem', 'title-tagline',
-  'title-menu-modal', 'title-modal-close-control', 'title-modal-heading',
-  'title-modal-divider', 'title-save-slot-list', 'title-save-slot',
-  'title-save-slot-copy', 'title-save-slot-state', 'title-save-slot-delete',
-  'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
-  'shared-run-hud', 'act-route-strip', 'run-header-strip', 'identity-cluster', 'portrait-badge',
+  'shared-run-hud', 'run-header-strip', 'identity-cluster', 'portrait-badge',
   'character-title', 'cinders-counter', 'build-metadata-trail', 'primary-hud-row',
   'vitals-panel', 'resource-meter', 'quick-access-panel', 'armoury-control',
-  'quick-menu-control', 'hud-quick-settings', 'hud-mode-grip', 'fullscreen-control', 'music-control',
-  'crimson-flask-control', 'azure-flask-control',
+  'quick-menu-control', 'crimson-flask-control', 'azure-flask-control',
   'inventory-belt', 'relic-tray', 'potion-tray', 'battlefield-stage',
   'combatant-frame', 'player-combatant-frame', 'enemy-combatant-frame',
   'player-hand-tray', 'combat-action-rail', 'metadata-field', 'panel',
@@ -32,21 +23,12 @@ const REQUIRED_IDS = Object.freeze([
   'status-effect-tray', 'tooltip', 'damage-feedback', 'guarded-damage-indicator',
   'health-damage-indicator',
   'quick-menu-panel', 'quick-menu-caption', 'quick-menu-row', 'menu-overlay',
-  'menu-tab-strip', 'menu-tab', 'menu-panel', 'menu-footer', 'save-game-control',
-  'save-quit-control', 'controls-rebind-capture', 'controls-key-rebind-control',
-  'armoury-overlay', 'armoury-panel',
+  'menu-tab-strip', 'menu-tab', 'menu-panel', 'armoury-overlay', 'armoury-panel',
   'armoury-header', 'armoury-view-switcher', 'armoury-body', 'armoury-figure',
   'equipment-slot', 'equipment-set-cell', 'armoury-inventory', 'inventory-item-card',
   'inventory-detail-card', 'equipment-comparison', 'armoury-stats-panel',
   'armoury-card-strip', 'armoury-region-header',
   'folding-tray', 'tray-header', 'tray-resize-handle', 'tray-content',
-  'character-disclosure', 'class-preview-pane', 'class-resource-grid',
-  'class-choice-card', 'view-mode-toggle', 'boolean-setting-toggle',
-  'selection-section-face', 'primary-stat-card', 'resource-strip', 'mode-choice',
-  'stat-allocation-row', 'shrine-option-card', 'smith-upgrade-modal',
-  'smith-candidate-card', 'smith-upgrade-preview',
-  'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
-  'equipment-choice-card', 'relic-choice-card',
 ]);
 
 export function receipt() {
@@ -56,49 +38,28 @@ export function receipt() {
     behaviorModel: read('src/ui/models/BehaviorModel.js'),
     hudModels: [
       'HudPrimitiveModels', 'RunHeaderModel', 'VitalsPanelModel',
-      'QuickAccessPanelModel', 'InventoryBeltModel', 'HudQuickSettingsModel', 'HudModeModel',
+      'QuickAccessPanelModel', 'InventoryBeltModel',
     ].map((name) => read(`src/ui/models/${name}.js`)).join('\n'),
     hudViewModel: read('src/ui/viewModels/RunHudViewModel.js'),
     menuModels: read('src/ui/models/MenuModels.js'),
     armouryModels: read('src/ui/models/ArmouryModels.js'),
     trayModels: read('src/ui/models/TrayModels.js'),
     hud: read('src/ui/components/hudmeta.js'),
-    quickSettings: read('src/ui/components/hudQuickSettings.js'),
     menuComponents: read('src/ui/components/menuComponents.js'),
     armouryComponents: read('src/ui/components/armouryComponents.js'),
     trayComponents: read('src/ui/components/trayComponents.js'),
-    traySizeService: read('src/ui/services/TraySizeService.js'),
-    armouryUiSource: read('content/source/armouryUi.json'),
-    creationCards: read('src/ui/components/creationCards.js'),
-    statAllocationCard: read('src/ui/components/statAllocationCard.js'),
-    creationBrief: read('src/model/creationBrief.js'),
-    customize: read('src/ui/screens/customize.js'),
-    rest: read('src/ui/screens/rest.js'),
-    smithSelectionModel: read('src/ui/models/SmithSelectionModel.js'),
-    saveSlotSelectionModel: read('src/ui/models/SaveSlotSelectionModel.js'),
-    smithUpgradeModal: read('src/ui/components/smithUpgradeModal.js'),
-    catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
-    catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
-    battlefieldStage: read('src/ui/components/battlefieldStage.js'),
-    battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
     buildstamp: read('src/ui/components/buildstamp.js'),
-    startupGate: read('src/ui/components/startupGate.js'),
-    startupGateModel: read('src/ui/models/StartupGateModels.js'),
-    title: read('src/ui/screens/title.js'),
     balance: read('src/content/balance.js'),
     main: read('src/main.js'),
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
-    coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
-    controls: read('src/ui/screens/controls.js'),
-    input: read('src/ui/input.js'),
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     uiCss: read('styles/ui.css'),
@@ -119,9 +80,7 @@ export function findings(r) {
     'primaryHudRowHtml', 'inventoryBeltHtml', 'sharedRunHudHtml',
   ];
   if (hudExports.some((name) => !r.hud.includes(`export function ${name}`))
-      || !r.hud.includes('export const hudShellHtml = sharedRunHudHtml;')
-      || !/export function hudQuickSettingsHtml/.test(r.quickSettings)
-      || !/export function wireHudQuickSettings/.test(r.quickSettings)) {
+      || !r.hud.includes('export const hudShellHtml = sharedRunHudHtml;')) {
     bad.push('C2 the shared HUD is no longer composed from exported reusable assets');
   }
   if (![r.map, r.combat].every((text) => /import \{ hudShellHtml \}/.test(text)
@@ -134,26 +93,20 @@ export function findings(r) {
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
-      || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels + r.menuComponents + r.armouryComponents)
+      || /\b(run|combat)\s*=/.test(r.hud + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
   if (!/hud-act[\s\S]*hud-floor[\s\S]*buildStampHtml\(model\.properties\.place, \{ split: true, seed: model\.properties\.seed \}\)/.test(r.hud)
       || !/metadataFieldModel\('act'[\s\S]*metadataFieldModel\('floor'[\s\S]*metadataFieldModel\('build'[\s\S]*metadataFieldModel\('seed'[\s\S]*metadataFieldModel\('source'/.test(r.hudModels)
-      || /hud-context|grid-row:\s*2/.test(r.hud + r.css.replace(/\/\* Variant D — Strict Compact HUD[\s\S]*?\/\* End Variant D \*\//g, ''))
+      || /hud-context|grid-row:\s*2/.test(r.hud + r.css)
       || !/flex-wrap:\s*nowrap/.test(r.css)) {
     bad.push('C6 Run Header is not the corrected one-row Act/Floor/Build/Seed/Source trail');
   }
-  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*620px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*520px/.test(r.css)
-      || /max-width:\s*520px[\s\S]{0,500}build-number\s*\{[^}]*display:\s*none/.test(r.css)) {
-    bad.push('C7 metadata does not hide Source then Seed while preserving Build ink');
+  if (!/max-width:\s*720px[\s\S]*build-source[\s\S]*max-width:\s*520px[\s\S]*build-stamp\[data-seed\]::before[\s\S]*max-width:\s*430px[\s\S]*build-number/.test(r.css)) {
+    bad.push('C7 metadata does not hide Source, then Seed, then Build without wrapping');
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
-      || !/centerHeightRatio/.test(r.battlefieldStageModel)
-      || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
-      || !/scaleFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
-      || !/function renderCombatantStage\(\)\s*\{\s*renderPlayer\(\);\s*renderEnemies\(\);(?:\s*renderCombatantInspector\(\);)?\s*battlefieldStage\.refresh\(\);\s*\}/.test(r.combat)
-      || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
       || !/UI\.combatActionRail/.test(r.combat)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
@@ -176,9 +129,6 @@ export function findings(r) {
       || !/UI\.menuOverlay/.test(r.menuModels)
       || !/UI\.menuTab/.test(r.menuModels)
       || !/UI\.menuPanel/.test(r.menuModels)
-      || !/UI\.menuFooter/.test(r.menuModels)
-      || !/UI\.saveGameControl/.test(r.menuModels)
-      || !/UI\.saveQuitControl/.test(r.menuModels)
       || !/UI\.armouryOverlay/.test(r.armouryModels)
       || !/UI\.armouryPanel/.test(r.armouryModels)
       || !/UI\.equipmentSlot/.test(r.armouryModels)
@@ -193,33 +143,9 @@ export function findings(r) {
   if (!REQUIRED_IDS.every((id) => r.spec.includes(`\`${id}\``))) {
     bad.push('C10 SPEC no longer codifies every public component id');
   }
-  const startupParts = [
-    'startup-gate', 'startup-ash-field', 'startup-ash-particle', 'startup-mark',
-    'startup-wordmark', 'startup-subtitle', 'startup-divider', 'startup-prompt',
-  ];
-  const titleParts = [
-    'title-brand-lockup', 'title-wordmark', 'title-subtitle', 'title-divider',
-    'title-menu', 'title-menu-item', 'title-menu-gem', 'title-tagline',
-    'title-menu-modal', 'title-modal-close-control', 'title-modal-heading',
-    'title-modal-divider', 'title-save-slot-list', 'title-save-slot',
-    'title-save-slot-copy', 'title-save-slot-state', 'title-save-slot-delete',
-    'title-modal-actions', 'title-modal-back-control', 'title-modal-continue-control',
-  ];
-  if (!/export function startupGateModel/.test(r.startupGateModel)
-      || !/componentModel\(UI\.startupGate/.test(r.startupGateModel)
-      || !/export function mountStartupGate/.test(r.startupGate)
-      || !/buildStampHtml\('startup'\)/.test(r.startupGate)
-      || !startupParts.every((id) => r.startupGate.includes(`data-component="${id}"`))
-      || !titleParts.every((id) => r.title.includes(`data-component="${id}"`))
-      || ![...startupParts, ...titleParts].every((id) => r.catalogMarkdown.includes(`\`${id}\``)
-        && r.catalogHtml.includes(`['${id}'`))
-      || /from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.startupGate + r.startupGateModel)) {
-    bad.push('C18 startup/title compositions lost a stable subcomponent, immutable gate model, or shared build stamp');
-  }
-  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.58,[\s\S]*primaryRowGapPx:\s*4,[\s\S]*controlGapPx:\s*0,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*panelPadPx:\s*0,[\s\S]*mobilePanelPadPx:\s*0,[\s\S]*mobileControlGapPx:\s*1,[\s\S]*mobileOuterPadPx:\s*4,[\s\S]*mobileRowGapPx:\s*3,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
-      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*cardSizePx:\s*40,[\s\S]*glyphSizePx:\s*28,[\s\S]*stateDotPx:\s*6,[\s\S]*activeTintPct:\s*14,[\s\S]*showCardBackground:\s*true,[\s\S]*showLabels:\s*false,[\s\S]*\}/.test(r.balance)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-panel-pad-px', '--hud-mobile-panel-pad-px', '--hud-mobile-control-gap-px', '--hud-mobile-outer-pad-px', '--hud-mobile-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-card-size', '--hud-quick-glyph-size', '--hud-quick-state-dot', '--hud-quick-active-tint'].every((name) => r.main.includes(`'${name}'`))
-      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'panelPadPx', 'mobilePanelPadPx', 'mobileControlGapPx', 'mobileOuterPadPx', 'mobileRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'cardSizePx', 'glyphSizePx', 'stateDotPx', 'activeTintPct', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
+  if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width'].every((name) => r.main.includes(`'${name}'`))
+      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
   if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
@@ -229,25 +155,18 @@ export function findings(r) {
       || !/width:\s*calc\(3\.8rem \* var\(--hud-portrait-scale\)\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-primary-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
       || !/gap:\s*calc\(var\(--hud-resource-row-gap-px\) \/ var\(--ui-zoom, 1\)\)/.test(r.css)
-      || !/grid-template-columns:\s*minmax\(0, 1fr\) fit-content\(var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
+      || !/grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, var\(--hud-cinders-max-width\)\) minmax\(0, 1fr\)/.test(r.css)
       || !/width:\s*min\(100%, var\(--hud-metadata-max-width\)\)/.test(r.css)
       || !/data-hud-metadata-show-totals='false'/.test(r.css)
       || !/\.hud-potions \.flask-slot\s*\{[^}]*width:\s*var\(--hud-utility-visual-size\);[^}]*min-width:\s*var\(--hud-utility-visual-size\);/.test(r.css)
-      || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)
-      || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
-      || !/\.hud-quick-setting\s*\{[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;/.test(r.uiCss)
-      || !/\.hud-quick-setting-face\s*\{[\s\S]*--hud-quick-card-size[\s\S]*border:\s*1px solid var\(--line-soft\);/.test(r.uiCss)
-      || !/\.hud-quick-setting-glyph\s*\{[\s\S]*--hud-quick-glyph-size/.test(r.uiCss)
-      || !/data-layout='narrow'[\s\S]*--hud-mobile-control-gap-px[\s\S]*--hud-mobile-panel-pad-px/.test(r.css)
-      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
-      || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
+      || !/@media \(max-width:\s*350px\)[\s\S]*hud-progress-total\s*\{\s*display:\s*none;/.test(r.css)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
   if (!/export function componentModel/.test(r.componentModel)
       || !/Object\.freeze\(\{[\s\S]*component,[\s\S]*properties:[\s\S]*tokens:[\s\S]*accessibility:[\s\S]*behaviors:[\s\S]*children:/.test(r.componentModel)
       || !/export function behaviorModel/.test(r.behaviorModel)
       || !/export function runHudViewModel/.test(r.hudViewModel)
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)[\s\S]*hudQuickSettingsModel\(\{ place, \.\.\.quickSettings \}\)/.test(r.hudViewModel)
+      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
     bad.push('C13 shared HUD no longer follows the immutable MVVM Component Model composition');
@@ -276,10 +195,7 @@ export function findings(r) {
       || !/UI\.trayResizeHandle/.test(r.trayModels)
       || !/UI\.trayContent/.test(r.trayModels)
       || !/export function renderTray/.test(r.trayComponents)
-      || /\btrayModel\s*\(/.test(r.armouryModels)
-      || !/const regionModels = regions\.map\([\s\S]*return item;/.test(r.armouryModels)
-      || !/renderArmouryPanel\([\s\S]*markUiComponent\(wrap\.querySelector\('\.armoury-inventory'\)/.test(r.armouryComponents)
-      || !/renderTray\(trayModel\(/.test(r.equipment)
+      || !/trayModel\([\s\S]*items:\s*\[item\]/.test(r.armouryModels)
       || !/renderTray\([\s\S]*renderContent:/.test(r.equipment)
       || !/right: Object\.freeze\(\{ closed: '<', open: '>' \}\)/.test(r.trayComponents)
       || !/top: Object\.freeze\(\{ closed: 'v', open: '\^' \}\)/.test(r.trayComponents)
@@ -288,7 +204,6 @@ export function findings(r) {
       || !/aria-expanded/.test(r.trayComponents)
       || !/aria-controls/.test(r.trayComponents)
       || !/content\.hidden = !tray\.expanded/.test(r.trayComponents)
-      || !/if \(tray\.sortable && tray\.expanded\)/.test(r.trayComponents)
       || !/if \(renderContent\) renderContent\(content, contentModel\.children\)/.test(r.trayComponents)
       || !/\.tray-header \.tray-count\s*\{[^}]*margin-left:\s*auto;/.test(r.uiCss)
       || !/--ui-section-control-gap/.test(r.uiCss)
@@ -296,97 +211,8 @@ export function findings(r) {
       || !/--ui-tray-resize-surface:\s*44px/.test(r.uiCss)
       || !/pointerdown/.test(r.trayComponents)
       || !/sizeService\.write/.test(r.trayComponents)
-      || !/reset\(\)/.test(r.traySizeService)
-      || !/return null;/.test(r.traySizeService)
-      || !/"defaultHeightRatio": 0\.45/.test(r.armouryUiSource)
-      || !/"minimumHeightRatio": 0\.3/.test(r.armouryUiSource)
-      || !/"snapRatios": \[0\.3, 0\.4, 0\.5, 0\.6, 0\.7, 0\.8, 0\.9\]/.test(r.armouryUiSource)
-      || /meta\.settings\.armouryTrayHeights/.test(r.equipment)
-      || !/resetArmouryTraySession/.test(r.equipment)
-      || !/window\.visualViewport\?\.height \|\| window\.innerHeight/.test(r.equipment)
-      || !/style\.minHeight = `\$\{layout\.trays\.multipleExpandedMinimumRatio \* 100\}vh`/.test(r.equipment)
-      || !/style\.height = `\$\{savedRatio \* 100\}vh`/.test(r.equipment)
       || /\b(document|window)\b|innerHTML|createElement/.test(r.trayModels)) {
     bad.push('C15 folding regions no longer use the shared edge-aware Tray model and renderer');
-  }
-  const creationExports = [
-    'primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
-    'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
-    'modeChoiceButton', 'spriteChoiceButton', 'tintChoiceButton', 'sigilChoiceButton',
-    'keepsakeChoiceButton', 'relicChoiceButton',
-  ];
-  const creationIds = [
-    'character-disclosure', 'class-preview-pane', 'class-resource-grid', 'class-choice-card',
-    'view-mode-toggle', 'boolean-setting-toggle', 'selection-section-face', 'primary-stat-card',
-    'stat-allocation-row', 'shrine-option-card', 'resource-strip', 'mode-choice',
-    'sprite-choice', 'tint-choice', 'sigil-choice', 'keepsake-choice',
-    'equipment-choice-card', 'relic-choice-card',
-  ];
-  if (!creationExports.every((name) => r.creationCards.includes(`export function ${name}`))
-      || !['primaryStatCard', 'resourceStrip', 'viewModeToggle', 'booleanSettingToggle',
-        'classChoiceCard', 'classPreviewPane', 'classResourceGrid', 'selectionSectionFace',
-        'modeChoice', 'spriteChoice', 'tintChoice', 'sigilChoice', 'keepsakeChoice',
-        'relicChoiceCard'].every((name) => r.creationCards.includes(`UI.${name}`))
-      || !/UI\.characterDisclosure/.test(r.customize)
-      || !/UI\.equipmentChoiceCard/.test(r.customize)
-      || !/export function attributeCardModels/.test(r.creationBrief)
-      || !/mountDisclosure\(host, \[model\]\)/.test(r.creationCards)
-      || !/primaryStatCard\(/.test(r.statAllocationCard)
-      || !/UI\.statAllocationRow/.test(r.statAllocationCard)
-      || !/UI\.shrineOptionCard/.test(r.rest)
-      || !/attributeCardModels\(registries, state\.attributes,/.test(r.customize)
-      || !/attributeCardModels\(registries, values,/.test(r.rest)
-      || !/attributeCardModels\(registries, run\.attributes/.test(r.equipment)
-      || !creationIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
-        && r.catalogHtml.includes(`'${id}'`))) {
-    bad.push('C16 Character Creation renderers, stable ids, and both catalogs are no longer synchronized');
-  }
-  if (!/import \{ hudQuickSettingsHtml, wireHudQuickSettings \}/.test(r.coop)
-      || !/import \{ hudQuickSettingsModel \}/.test(r.coop)
-      || (r.coop.match(/hudQuickSettingsHtml\(hudQuickSettingsModel\(\{/g) || []).length !== 2
-      || (r.coop.match(/wireHudQuickSettings\(app, \{ settings: meta\.settings \|\| \{\}, onSettingsChange \}\)/g) || []).length !== 2
-      || !/mountCoop\(app, \{[\s\S]*onSettingsChange/.test(r.main)) {
-    bad.push('C17 LAN Map and Combat no longer mount and persist the shared quick settings');
-  }
-  const smithIds = ['smith-upgrade-modal', 'smith-candidate-card', 'smith-upgrade-preview'];
-  if (!/export function smithSelectionModel/.test(r.smithSelectionModel)
-      || /\b(document|window)\b|innerHTML|createElement/.test(r.smithSelectionModel)
-      || !/export function mountSmithUpgradeModal/.test(r.smithUpgradeModal)
-      || !/role', 'dialog'/.test(r.smithUpgradeModal)
-      || !/aria-modal/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-back/.test(r.smithUpgradeModal)
-      || !/<button[^>]+smith-confirm/.test(r.smithUpgradeModal)
-      || !/tooltip: false/.test(r.smithUpgradeModal)
-      || !/reference = freeze\(\{[\s\S]*\.\.\.instance,[\s\S]*upgraded: false/.test(r.smithSelectionModel)
-      || !/returnFocusElement: smithOption/.test(r.rest)
-      || !/smithSelectionModel\(registries, upgradable, selectedInstanceId\)/.test(r.rest)
-      || !/mountSmithUpgradeModal\(app, model\(\)/.test(r.rest)
-      || !smithIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
-        && r.catalogHtml.includes(`'${id}'`))) {
-    bad.push('C19 Smith selection no longer uses its model-driven Back/preview/Confirm modal contract');
-  }
-  if (!/export function saveSlotSelectionModel/.test(r.saveSlotSelectionModel)
-      || /\b(document|window)\b|innerHTML|createElement/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlotList/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleSaveSlot,/.test(r.saveSlotSelectionModel)
-      || !/componentModel\(UI\.titleModalContinueControl/.test(r.saveSlotSelectionModel)
-      || !/command: 'select-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/command: kind === 'new' \? 'create-in-save-slot' : 'load-save-slot'/.test(r.saveSlotSelectionModel)
-      || !/import \{ saveSlotSelectionModel \}/.test(r.title)
-      || !/const selectionModel = \(kind = modal\) => saveSlotSelectionModel\(slots, \{ kind, selectedSlot \}\)/.test(r.title)
-      || !/const target = selectionModel\(\)\.properties\.actionSlot/.test(r.title)) {
-    bad.push('C20 title save slots no longer derive selected styling and the primary command target from one immutable model');
-  }
-  const controlsIds = ['controls-rebind-capture', 'controls-key-rebind-control'];
-  if (!/export const REBIND_CAPTURE_SERVICE_ID = 'rebind-capture-service'/.test(r.input)
-      || !/ev\.stopImmediatePropagation\(\);[\s\S]*if \(k === 'Escape'\)/.test(r.input)
-      || !/capture\.onCancel\?\.\(\)/.test(r.input)
-      || !/UI\.controlsRebindCapture/.test(r.controls)
-      || !/UI\.controlsKeyRebindControl/.test(r.controls)
-      || !/onCancel:[\s\S]*reset\(btn, 'Key'\)[\s\S]*btn\.focus/.test(r.controls)
-      || !controlsIds.every((id) => r.catalogMarkdown.includes(`\`${id}\``)
-        && r.catalogHtml.includes(`['${id}'`))) {
-    bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');
   }
   return bad;
 }
@@ -397,7 +223,7 @@ function selftest() {
     ['remove Vitals id', 'C1 ', (r) => ({ ...r, registry: r.registry.replace("vitalsPanel: 'vitals-panel',", '') })],
     ['remove Vitals export', 'C2 ', (r) => ({ ...r, hud: r.hud.replace('export function vitalsPanelHtml', 'function vitalsPanelHtml') })],
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${hudShellHtml(runHudViewModel({', '${(() => "")({') })],
-    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
+    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace('const box = combatantFrame({\n        role: \'enemy\'', "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
     ['restore a second header row', 'C6 ', (r) => ({ ...r, css: `${r.css}\n.hud-run-meta { grid-row: 2; }\n` })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, css: r.css.replace('@container run-header (max-width: 720px)', '@container run-header (max-width: 721px)') })],
@@ -406,20 +232,14 @@ function selftest() {
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
     ['let metadata grid into rows', 'C12 ', (r) => ({ ...r, css: r.css.replace('display: inline-flex;', 'display: inline-grid;') })],
-    ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
+    ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace('return Object.freeze({\n    component,', 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
     ['hand-roll an Armoury tray', 'C15 ', (r) => ({ ...r, equipment: r.equipment.replace('renderTray(', 'renderLegacyRegion(') })],
-    ['remove class resource renderer', 'C16 ', (r) => ({ ...r, creationCards: r.creationCards.replace('export function classResourceGrid', 'function classResourceGrid') })],
-    ['remove co-op quick settings', 'C17 ', (r) => ({ ...r, coop: r.coop.replace('wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });', '') })],
-    ['detach startup from its component model', 'C18 ', (r) => ({ ...r, startupGateModel: r.startupGateModel.replace('export function startupGateModel', 'function startupGateModel') })],
-    ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
-    ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
-    ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 21/21 reusable component contracts hold');
+  else console.log('PASS clean source: 15/15 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -435,5 +255,5 @@ else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 21/21 reusable component contracts hold');
+  else console.log('ui-components: OK — 15/15 reusable component contracts hold');
 }

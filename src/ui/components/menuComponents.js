@@ -27,15 +27,8 @@ export function renderQuickMenu(model, { onActivate }) {
     button.className = `qn-row${row.tone ? ` ${row.tone}` : ''}${row.active ? ' on' : ''}`;
     button.dataset.act = row.act;
     button.dataset.member = row.act;
-    button.setAttribute('role', rowModel.accessibility.role);
-    if (row.control === 'switch') button.setAttribute('aria-checked', String(row.checked));
-    if (row.disabled) {
-      button.disabled = true;
-      button.setAttribute('aria-disabled', 'true');
-    }
     if (row.tab) button.dataset.tab = row.tab;
     button.innerHTML = `<span class="qn-ic">${esc(row.icon)}</span><span class="qn-label">${esc(row.label)}</span>`
-      + (row.control === 'switch' ? `<span class="qn-condition" aria-live="polite">${esc(row.condition)}</span><span class="qn-state">${row.checked ? 'ON' : 'OFF'}</span>` : '')
       + (row.badge ? `<span class="qn-badge">${esc(row.badge)}</span>` : '');
     markUiComponent(button, rowModel.component, rowModel.variant);
     if (row.tip) attachTooltip(button, () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
@@ -51,7 +44,6 @@ export function renderQuickMenu(model, { onActivate }) {
 
 export function renderMenuOverlay(model) {
   const stripModel = childModel(model, UI.menuTabStrip);
-  const footerModel = childModel(model, UI.menuFooter);
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
@@ -67,27 +59,16 @@ export function renderMenuOverlay(model) {
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
-      <footer class="overlay-footer">
-        <span class="overlay-footer-note">Progress saves to the active slot.</span>
-        <div class="overlay-footer-actions">
-          <button class="subtle" id="ov-save" type="button">Save Game</button>
-          <button class="subtle danger" id="ov-quit" type="button">Save and Quit</button>
-        </div>
-      </footer>
     </div>`;
   const overlay = veil.querySelector('.overlay-modal');
   const strip = veil.querySelector('.overlay-tabs');
   const body = veil.querySelector('.overlay-body');
-  const footer = veil.querySelector('.overlay-footer');
   markUiComponent(overlay, model.component, model.variant);
   markUiComponent(strip, stripModel.component, stripModel.variant);
   stripModel.children.forEach((tabModel, index) => {
     markUiComponent(veil.querySelectorAll('.ov-tab')[index], tabModel.component, tabModel.variant);
   });
   markUiComponent(body, UI.menuPanel, model.properties.activeId);
-  markUiComponent(footer, footerModel.component, footerModel.variant);
-  markUiComponent(veil.querySelector('#ov-save'), childModel(footerModel, UI.saveGameControl).component);
-  markUiComponent(veil.querySelector('#ov-quit'), childModel(footerModel, UI.saveQuitControl).component);
   return { veil, overlay, strip, body };
 }
 
