@@ -1179,6 +1179,15 @@ button.rs-reset {
     padding: 0; justify-content: center;
   }
   .hud-quick-setting-glyph { display: block; }
+  /* Keep the two 44px target boxes distinct, but pull their visible glyphs
+     inward to the authored center gap. For the 44/28 default this is 8px per
+     glyph, giving compact ink without overlapping touch ownership. */
+  .hud-quick-setting[data-hud-quick-action='fullscreen'] .hud-quick-setting-glyph {
+    transform: translateY(calc((var(--tap-floor) - (var(--hud-quick-mobile-ink-gap, 28px) / var(--ui-zoom, 1))) / 2));
+  }
+  .hud-quick-setting[data-hud-quick-action='music'] .hud-quick-setting-glyph {
+    transform: translateY(calc((var(--tap-floor) - (var(--hud-quick-mobile-ink-gap, 28px) / var(--ui-zoom, 1))) / -2));
+  }
   .hud-quick-setting-label {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
   }

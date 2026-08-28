@@ -163,9 +163,9 @@ export function findings(r) {
     bad.push('C10 SPEC no longer codifies every public component id');
   }
   if (!/hudPresentation:\s*\{[\s\S]*componentBackgroundOpacityPct:\s*0,[\s\S]*metadataFontPx:\s*11,[\s\S]*beltItemGapPx:\s*2,[\s\S]*portraitScale:\s*0\.7,[\s\S]*primaryRowGapPx:\s*8,[\s\S]*controlGapPx:\s*2,[\s\S]*resourceRowGapPx:\s*2,[\s\S]*cindersMaxWidthPct:\s*30,[\s\S]*metadataMaxWidthPct:\s*30,[\s\S]*metadataShowTotals:\s*false,[\s\S]*\}/.test(r.balance)
-      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*wideControlHeightPx:\s*24,[\s\S]*labelFontPx:\s*10,[\s\S]*glyphSizePx:\s*14,[\s\S]*stateDotPx:\s*5,[\s\S]*showCardBackground:\s*false,[\s\S]*showLabels:\s*true,[\s\S]*\}/.test(r.balance)
-      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-wide-control-height', '--hud-quick-label-font', '--hud-quick-glyph-size', '--hud-quick-state-dot'].every((name) => r.main.includes(`'${name}'`))
-      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'wideControlHeightPx', 'labelFontPx', 'glyphSizePx', 'stateDotPx', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
+      || !/hudQuickSettings:\s*\{[\s\S]*places:\s*\['title', 'map', 'combat'\],[\s\S]*edgeGapPx:\s*4,[\s\S]*stackGapPx:\s*0,[\s\S]*wideControlHeightPx:\s*24,[\s\S]*mobileInkGapPx:\s*28,[\s\S]*labelFontPx:\s*10,[\s\S]*glyphSizePx:\s*14,[\s\S]*stateDotPx:\s*5,[\s\S]*showCardBackground:\s*false,[\s\S]*showLabels:\s*true,[\s\S]*\}/.test(r.balance)
+      || !['--hud-component-background-opacity', '--hud-metadata-font-px', '--hud-belt-item-gap-px', '--hud-portrait-scale', '--hud-primary-row-gap-px', '--hud-control-gap-px', '--hud-resource-row-gap-px', '--hud-cinders-max-width', '--hud-metadata-max-width', '--hud-quick-edge-gap', '--hud-quick-stack-gap', '--hud-quick-wide-control-height', '--hud-quick-mobile-ink-gap', '--hud-quick-label-font', '--hud-quick-glyph-size', '--hud-quick-state-dot'].every((name) => r.main.includes(`'${name}'`))
+      || !['componentBackgroundOpacityPct', 'metadataFontPx', 'beltItemGapPx', 'portraitScale', 'primaryRowGapPx', 'controlGapPx', 'resourceRowGapPx', 'cindersMaxWidthPct', 'metadataMaxWidthPct', 'metadataShowTotals', 'hudQuickSettings', 'edgeGapPx', 'stackGapPx', 'wideControlHeightPx', 'mobileInkGapPx', 'labelFontPx', 'glyphSizePx', 'stateDotPx', 'showCardBackground', 'showLabels'].every((name) => r.validate.includes(name))) {
     bad.push('C11 HUD presentation defaults are no longer data-owned, projected, and validated');
   }
   if (!/build-stamp\[data-seed\]\s*\{[^}]*display:\s*inline-flex;[^}]*align-items:\s*center;[^}]*flex-wrap:\s*nowrap;/.test(r.css)
@@ -183,6 +183,7 @@ export function findings(r) {
       || !/\.hud-quick-settings\s*\{[\s\S]*flex-direction:\s*column;/.test(r.uiCss)
       || !/\.hud-quick-setting\s*\{[\s\S]*border:\s*0;[\s\S]*background:\s*transparent;/.test(r.uiCss)
       || !/@media \(min-width:\s*421px\) and \(pointer:\s*fine\)[\s\S]*--hud-quick-wide-control-height/.test(r.uiCss)
+      || !/@media \(max-width:\s*420px\)[\s\S]*--hud-quick-mobile-ink-gap/.test(r.uiCss)
       || !/@media \(max-width:\s*420px\)[\s\S]*\.hud-quick-settings\s*\{\s*width:\s*var\(--tap-floor\);/.test(r.uiCss)
       || !/overlayHtml:\s*`\$\{legendHtml\}\$\{entranceOrientation\}`/.test(r.map)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');

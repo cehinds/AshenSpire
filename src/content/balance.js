@@ -284,6 +284,9 @@ export const balance = {
       // Fine-pointer wide screens can use compact rows; touch/coarse-pointer
       // surfaces keep the authored tap floor regardless of viewport width.
       wideControlHeightPx: 24,
+      // Mobile keeps 44px hit regions, but pulls the two primary glyphs toward
+      // one another so their visible centers do not inherit that full gap.
+      mobileInkGapPx: 28,
       labelFontPx: 10,
       glyphSizePx: 14,
       stateDotPx: 5,

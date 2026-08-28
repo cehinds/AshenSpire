@@ -25,6 +25,7 @@ export function hudQuickSettingsModel({ place, presentation = {}, settings = {} 
       edgeGapPx: Number.isFinite(presentation.edgeGapPx) ? presentation.edgeGapPx : 4,
       stackGapPx: Number.isFinite(presentation.stackGapPx) ? presentation.stackGapPx : 0,
       wideControlHeightPx: Number.isFinite(presentation.wideControlHeightPx) ? presentation.wideControlHeightPx : 24,
+      mobileInkGapPx: Number.isFinite(presentation.mobileInkGapPx) ? presentation.mobileInkGapPx : 28,
       labelFontPx: Number.isFinite(presentation.labelFontPx) ? presentation.labelFontPx : 10,
       glyphSizePx: Number.isFinite(presentation.glyphSizePx) ? presentation.glyphSizePx : 14,
       stateDotPx: Number.isFinite(presentation.stateDotPx) ? presentation.stateDotPx : 5,

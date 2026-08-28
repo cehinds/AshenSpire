@@ -267,6 +267,7 @@ for (const [key, cssName] of [
   ['edgeGapPx', '--hud-quick-edge-gap'],
   ['stackGapPx', '--hud-quick-stack-gap'],
   ['wideControlHeightPx', '--hud-quick-wide-control-height'],
+  ['mobileInkGapPx', '--hud-quick-mobile-ink-gap'],
   ['labelFontPx', '--hud-quick-label-font'],
   ['glyphSizePx', '--hud-quick-glyph-size'],
   ['stateDotPx', '--hud-quick-state-dot'],

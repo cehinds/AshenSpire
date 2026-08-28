@@ -41,6 +41,7 @@ function findings(r) {
   if (r.buttonGap > 1) bad.push(`control gap is ${r.buttonGap.toFixed(2)}px`);
   if (!r.phone && r.stack.height > 49) bad.push(`wide rail is still ${r.stack.height.toFixed(2)}px tall`);
   if (r.phone && r.glyphPx > 14.5) bad.push(`phone glyph is ${r.glyphPx.toFixed(2)}px`);
+  if (r.phone && (r.glyphCenterGap < 27.5 || r.glyphCenterGap > 28.5)) bad.push(`phone glyph-center gap is ${r.glyphCenterGap.toFixed(2)}px, expected 28px`);
   if (!r.phone && r.labelPx > 10.5) bad.push(`desktop label is ${r.labelPx.toFixed(2)}px`);
   if (r.orientationOverlap > 0.5) bad.push(`rail covers ${r.orientationOverlap.toFixed(2)}px² of the entrance-to-boss receipt`);
   if (r.infoOverlap > 0.5) bad.push(`rail covers ${r.infoOverlap.toFixed(2)}px² of the run header`);
@@ -122,6 +123,7 @@ try {
           const buttons=[...stack.querySelectorAll('.hud-quick-setting')];
           const painted=buttons.map((el)=>{const c=getComputedStyle(el),r=box(el);return {...r,border:c.borderTopWidth,background:c.backgroundColor,shadow:c.boxShadow}});
           const glyph=stack.querySelector('.hud-quick-setting-glyph');
+          const glyphBoxes=[...stack.querySelectorAll('.hud-quick-setting-glyph')].map(box);
           const label=stack.querySelector('.hud-quick-setting-label');
           const orientation=document.querySelector('.map-entrance-orientation');
           const info=document.querySelector('.hud-info-row');
@@ -132,6 +134,7 @@ try {
             rightGap:innerWidth-sr.right,
             buttonGap:painted.length===2?painted[1].top-painted[0].bottom:999,
             glyphPx:glyph?parseFloat(getComputedStyle(glyph).fontSize)*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'))||1):0,
+            glyphCenterGap:glyphBoxes.length===2?Math.abs((glyphBoxes[1].top+glyphBoxes[1].bottom-glyphBoxes[0].top-glyphBoxes[0].bottom)/2):999,
             labelPx:label?parseFloat(getComputedStyle(label).fontSize)*(parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'))||1):0,
             orientationOverlap:(${intersection.toString()})(sr,box(orientation)),
             infoOverlap:(${intersection.toString()})(sr,box(info)),
