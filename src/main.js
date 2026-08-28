@@ -958,7 +958,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
       closeOverlay();
       audio.stopMusic();
       run = null;
-      showTitle();
+      showCollapsedTitle();
     },
   });
   return false;
@@ -1012,16 +1012,24 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   });
 }
 
+// Returning from a climb is a new arrival at the main menu, so it lands on the
+// folded title threshold. Ordinary title sub-pages (Settings, Collection,
+// character creation) still return to the already-open menu via showTitle().
+function showCollapsedTitle() {
+  startupGatePending = true;
+  showTitle();
+}
+
 function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
-  if (startupGatePending && !skipStartup) {
-    showStartupGate();
-    return;
-  }
   audio.music('title');
   resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
+  if (startupGatePending && !skipStartup) {
+    showStartupGate();
+    return;
+  }
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
@@ -1040,6 +1048,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onProfile: showProfile,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
+    onCollapse: showCollapsedTitle,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -1183,7 +1192,7 @@ function quitGame() {
   if (back) {
     back.addEventListener('click', () => {
       clearTimeout(closeTimer); // changed their mind before the window closed
-      showTitle();
+      showCollapsedTitle();
     });
   }
 }
@@ -1222,7 +1231,7 @@ function showOverlay(initialTab = 'settings') {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -1407,7 +1416,7 @@ function showMap() {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -1642,7 +1651,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
-      showTitle();
+      showCollapsedTitle();
     },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
