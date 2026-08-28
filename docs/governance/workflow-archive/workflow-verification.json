@@ -1,0 +1,12 @@
+{
+  "schema": "ashenspire.workflow-snapshot-verification.v2",
+  "verified_at_utc": "2026-08-28T09:13:50.6153767+00:00",
+  "plan_sha256": "33E66244961676FD5DA049A3DC2568DEBC4AEC22397C2D70F384EDA47E18EC0D",
+  "expected_count": 220,
+  "remote_workflow_ref_count": 220,
+  "pass_count": 220,
+  "failure_count": 0,
+  "extra_count": 0,
+  "failures": [],
+  "extras": []
+}
