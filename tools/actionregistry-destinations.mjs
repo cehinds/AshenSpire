@@ -10,7 +10,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const BASE = '2197721b80e4ae279c1bf11d8db5da27b4f57b39';
+const TOOL_PATH = 'tools/actionregistry-destinations.mjs';
 const CEILING = [
   'src/main.js',
   'src/ui/input.js',
@@ -62,7 +62,15 @@ const functionBlock = (source, start, end) => {
 
 function changedPaths() {
   try {
-    const committed = execFileSync('git', ['diff', '--name-only', `${BASE}...HEAD`], { cwd: ROOT, encoding: 'utf8' })
+    // The historical source commit used a different parent. Find the parent of
+    // the commit that added this gate so a current-dev replay measures only the
+    // ActionRegistry lane and any later repairs, not its prerequisite series.
+    const addition = execFileSync('git', ['log', '--diff-filter=A', '-n', '1', '--format=%H', '--', TOOL_PATH], {
+      cwd: ROOT,
+      encoding: 'utf8',
+    }).trim();
+    if (!addition) return ['<actionregistry-addition-unavailable>'];
+    const committed = execFileSync('git', ['diff', '--name-only', `${addition}^...HEAD`], { cwd: ROOT, encoding: 'utf8' })
       .trimEnd().split(/\r?\n/).filter(Boolean);
     const working = execFileSync('git', ['status', '--porcelain=v1', '--untracked-files=all'], { cwd: ROOT, encoding: 'utf8' })
       .trimEnd().split(/\r?\n/).filter(Boolean).map((line) => line.slice(3));
