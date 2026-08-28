@@ -310,6 +310,7 @@ export const balance = {
     // short-lived hover/tap explanation.
     tooltipPlacement: {
       hoverDelayMs: 500,
+      autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
     },

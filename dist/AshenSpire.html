@@ -330,11 +330,24 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip { transition: none !important; } }
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
 #tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip[data-tooltip-variant='enemy-context'] {
+  --place-gap: 6px;
+  max-width: 21rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 1rem;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.1rem; font-size: 1rem; line-height: 1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
   display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
@@ -4554,13 +4567,14 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
+.title-stack { width: min(94%, 90rem); margin-inline: auto; text-align: center; align-self: center; }
 .title-screen .title-big {
   margin: 0;
   color: var(--parchment);
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
+  text-indent: 0.02em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4693,7 +4707,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -5383,6 +5397,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   z-index: 20;
   overflow: visible;
 }
+/* #045 current-build density delta: reclaim only dead vertical room on the
+   combat surface. Controls retain their authored tap floors and ordering. */
+.combat > .topbar.combat-hud.shared-hud {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud .hud-top {
+  gap: calc(1px / var(--ui-zoom, 1));
+}
 /* Kept for the map header's bottom row, which still draws a .who column. THE `.hpbar` PAIR
    THAT LIVED HERE IS GONE (E9 / #254): the map header drew the last `.hpbar`
    inside any `.topbar`, and this rule set its height and its fill colour while
@@ -5602,6 +5624,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 }
 /* End Variant D */
 
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] {
+  padding-block: calc(1px / var(--ui-zoom, 1));
+}
+.combat > .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
+  column-gap: calc(6px / var(--ui-zoom, 1));
+  row-gap: calc(1px / var(--ui-zoom, 1));
+}
 .topbar.combat-hud.shared-hud .hud-quick-settings {
   right: calc(8px / var(--ui-zoom, 1));
 }
@@ -6742,6 +6771,10 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
 @keyframes sprite-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; }
 .combatant.enemy .sprite > img { animation-duration: 2.6s; }
+.combatant.enemy.context-selected .combatant-card {
+  filter: drop-shadow(0 0 5px rgba(201, 162, 39, 0.72));
+}
+.combatant.enemy.context-selected .nm { color: var(--gold); }
 .combatant:nth-child(2) .sprite > img { animation-delay: -0.9s; }
 .combatant:nth-child(3) .sprite > img { animation-delay: -1.7s; }
 .combatant:nth-child(4) .sprite > img { animation-delay: -2.3s; }
@@ -6888,10 +6921,18 @@ body.pad-mode .flask-slot .flask-key { border-radius: 999px; }
     gap: calc(var(--hud-mobile-row-gap-px) / var(--ui-zoom, 1));
     padding: calc(var(--hud-mobile-outer-pad-px) / var(--ui-zoom, 1)) 1rem;
   }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud {
+    gap: 0;
+    padding-block: 0;
+  }
+  :root[data-layout='narrow'] .combat > .topbar.combat-hud.shared-hud .hud-top {
+    gap: 0;
+  }
   /* Keep the reusable header on one row. Container queries above progressively
      remove Source, Seed, then Build; Act/Floor never wrap into a second row. */
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-info-row {
     gap: calc(5px / var(--ui-zoom, 1));
+    line-height: 1;
   }
   :root[data-layout='narrow'] .topbar.combat-hud.shared-hud .hud-top {
     --hud-control-gap: calc(var(--hud-mobile-control-gap-px) / var(--ui-zoom, 1));
@@ -9039,6 +9080,17 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
   }
+  if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
+    // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
+    // shot boot uses memory storage, and this host-state fixture is applied
+    // before mount so the browser proves real status presentation without
+    // fabricating or editing DOM after render.
+    const subject = combat.enemies.find((enemy) => enemy.alive);
+    if (!subject || !registries.statuses.has('crimsonBlight')) {
+      throw new Error('?shotEnemyContext=status needs a living enemy and Crimson Blight');
+    }
+    subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
@@ -10345,6 +10397,7 @@ const balance = {
     // short-lived hover/tap explanation.
     tooltipPlacement: {
       hoverDelayMs: 500,
+      autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
     },
@@ -21244,6 +21297,22 @@ function validateContent(bundle) {
       if (typeof combatantStage.centerPct !== 'number' || !Number.isFinite(combatantStage.centerPct)
         || combatantStage.centerPct < 25 || combatantStage.centerPct > 75) {
         err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
+      }
+    }
+    const tooltipPlacement = ui.tooltipPlacement;
+    if (!tooltipPlacement || typeof tooltipPlacement !== 'object' || Array.isArray(tooltipPlacement)) {
+      err('balance.ui.tooltipPlacement', 'must be an object with hover, fade, and safe-placement tokens');
+    } else {
+      for (const [key, min, max] of [
+        ['hoverDelayMs', 0, 600000],
+        ['autoFadeMs', 0, 600000],
+        ['topBandViewportPct', 0, 50],
+        ['sideBandViewportPct', 0, 50],
+      ]) {
+        const value = tooltipPlacement[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.tooltipPlacement.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
       }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
@@ -36350,6 +36419,41 @@ const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComp
 
 let tipEl = null;
 let showTimer = null;
+let autoHideTimer = null;
+let fadeTimer = null;
+
+function conceal() {
+  if (!tipEl) return;
+  tipEl.style.display = 'none';
+  tipEl.setAttribute('aria-hidden', 'true');
+}
+
+function clearAutoHide() {
+  clearTimeout(autoHideTimer);
+  clearTimeout(fadeTimer);
+  autoHideTimer = null;
+  fadeTimer = null;
+  if (tipEl) tipEl.classList.remove('is-fading');
+}
+
+function scheduleAutoHide(autoHideMs) {
+  clearAutoHide();
+  if (!(autoHideMs > 0)) return;
+  autoHideTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const systemReducedMotion = typeof matchMedia === 'function'
+      && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (document.body.classList.contains('reduced-motion') || systemReducedMotion) {
+      conceal();
+      return;
+    }
+    tipEl.classList.add('is-fading');
+    fadeTimer = setTimeout(() => {
+      conceal();
+      clearAutoHide();
+    }, 160);
+  }, autoHideMs);
+}
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -36415,10 +36519,17 @@ function ensure() {
   if (!tipEl) {
     tipEl = document.createElement('div');
     tipEl.id = 'tooltip';
+    tipEl.setAttribute('role', 'tooltip');
+    tipEl.setAttribute('aria-hidden', 'true');
     markUiComponent(tipEl, UI.tooltip);
     document.body.appendChild(tipEl);
   }
   return tipEl;
+}
+
+/** Ensure the singleton exists before a control references it with aria-describedby. */
+function ensureTooltip() {
+  return ensure();
 }
 
 // Container: THE VIEWPORT. #tooltip is `position: fixed` (ui.css:5), so the
@@ -36472,12 +36583,13 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
   // place is an ordinary tooltip again unless its own hold sticks it.
   unstick();
+  clearAutoHide();
   const t = ensure();
   t.innerHTML = html;
   t.style.removeProperty('width');
@@ -36495,10 +36607,16 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     t.style.width = `${widthPx}px`;
     t.style.maxWidth = `${Math.max(0, room.width - 16)}px`;
   }
+  if (appearance?.maxWidthRem) {
+    const rootFontPx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    const maxWidthPx = Math.max(0, Math.min(appearance.maxWidthRem * rootFontPx, room.width - 16));
+    t.style.maxWidth = `${maxWidthPx}px`;
+  }
   if (appearance?.maxHeightRatio) {
     t.style.maxHeight = `${Math.max(0, room.height * appearance.maxHeightRatio)}px`;
   }
   t.style.display = 'block';
+  t.setAttribute('aria-hidden', 'false');
   // THE INTENT, NAMED HERE. 'beside' is the tooltip's whole placement rule: it
   // explains a control, so it may not sit on it, and any of the four sides that
   // fits is an acceptable answer.
@@ -36509,6 +36627,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
@@ -36520,7 +36639,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -36542,7 +36661,7 @@ function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -36552,7 +36671,7 @@ function attachTooltip(el, contentFn, {
     // tooltip is no reason to let a half-started hover fire behind it.
     clearTimeout(showTimer);
     if (stuck) return; // E8: a completed hold outlives the pointer leaving
-    if (tipEl) tipEl.style.display = 'none';
+    conceal();
   });
   el.addEventListener('gpfocus', () => {
     clearTimeout(showTimer);
@@ -36568,9 +36687,17 @@ function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
+function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showTooltipForRect(el.getBoundingClientRect(), html, {
+    intent, clear: clear || el.parentElement, appearance, placementModel, autoHideMs,
+  });
+}
+
+/** Show the shared tooltip against a caller-owned measured subject rectangle. */
+function showTooltipForRect(anchor, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
+  if (!anchor) return false;
+  return showWith(html, anchor, clear, intent, appearance, placementModel, autoHideMs);
 }
 
 /**
@@ -36646,8 +36773,9 @@ function hideTooltip() {
   // change. A stuck tooltip is not a stronger tooltip; it is one that ignores
   // the pointer leaving, and nothing else.
   unstick();
+  clearAutoHide();
   clearTimeout(showTimer);
-  if (tipEl) tipEl.style.display = 'none';
+  conceal();
 }
 
 function esc(s) {
@@ -36655,7 +36783,7 @@ function esc(s) {
 }
 
 
-Object.assign(module.exports, { attachTooltip, showTooltipFor, stickTooltip, showTooltipAt, hideTooltip, esc });
+Object.assign(module.exports, { ensureTooltip, attachTooltip, showTooltipFor, showTooltipForRect, stickTooltip, showTooltipAt, hideTooltip, esc });
 
 },
 "src/ui/fx.js": function (module, exports, require) {
@@ -36918,10 +37046,12 @@ function placeAnchored(el, anchor, {
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
     const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
+    const aboveLeft = { left: a.left - b.width - gap, top: above.top };
+    const aboveRight = { left: a.left + a.width + gap, top: above.top };
     const right = { left: a.left + a.width + gap, top: slideY };
     const left = { left: a.left - b.width - gap, top: slideY };
     const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, under]
+      : intent === 'above' ? [above, aboveLeft, aboveRight, under]
         : intent === 'left' ? [left, right, under, above]
           : intent === 'right' ? [right, left, under, above] : [
       right,
@@ -36931,14 +37061,17 @@ function placeAnchored(el, anchor, {
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
-      const c = anchorLocalBox(layer, clear);
+      const clearBoxes = (Array.isArray(clear) ? clear : [clear])
+        .filter(Boolean)
+        .map((candidate) => anchorLocalBox(layer, candidate));
       // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
       // where the group fills the room, and "no answer" resolves to the bound,
       // which lands ON the group — worse than the candidate that grazes it.
       let best = usable[0];
-      let bestArea = overlapArea(box(best), c);
+      const blockedArea = (candidate) => clearBoxes.reduce((sum, clearBox) => sum + overlapArea(box(candidate), clearBox), 0);
+      let bestArea = blockedArea(best);
       for (const p of usable.slice(1)) {
-        const area = overlapArea(box(p), c);
+        const area = blockedArea(p);
         if (area < bestArea) { best = p; bestArea = area; }
       }
       at0 = best;
@@ -37876,6 +38009,7 @@ function tooltipPlacementModel(presentation = {}) {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
       topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
       sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
     },
@@ -41102,7 +41236,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f3aedc1ad1';
+const SOURCE = '704205cc46';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41136,7 +41270,7 @@ const SOURCE = 'f3aedc1ad1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1378';
+const ORDINAL = '1395';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41163,7 +41297,7 @@ const ORDINAL = '1378';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-26';
+const BUILT = '2026-08-28';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -55017,7 +55151,7 @@ function observeCardFrames(wrap) {
  * `tooltipExtra(bar)` may return extra tooltip HTML for a bar (the poise bar
  * wants Stagger's own text, which is content and not this file's to know).
  */
-function resourceBars(plan, { surface, tooltipExtra } = {}) {
+function resourceBars(plan, { surface, tooltipExtra, tooltips = true } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'resbars';
   wrap.dataset.surface = surface || 'main';
@@ -55031,7 +55165,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     for (const group of groupByBand(plan)) {
       const line = document.createElement('div');
       line.className = 'resline';
-      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra));
+      for (const bar of group) line.appendChild(hybridUnit(bar, tooltipExtra, tooltips));
       wrap.appendChild(line);
     }
     // The full unit is the invisible reference track. The bordered card behind
@@ -55040,7 +55174,7 @@ function resourceBars(plan, { surface, tooltipExtra } = {}) {
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => syncCardFrames(wrap));
     observeCardFrames(wrap);
   } else {
-    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra));
+    for (const bar of plan) wrap.appendChild(stripBar(bar, tooltipExtra, tooltips));
   }
   return wrap;
 }
@@ -55056,7 +55190,7 @@ function groupByBand(plan) {
 }
 
 /** The hybrid unit: [plate "HP 86/86"][track > pill trough]. */
-function hybridUnit(bar, tooltipExtra) {
+function hybridUnit(bar, tooltipExtra, tooltips) {
   const unit = document.createElement('div');
   unit.className = 'resunit';
   unit.dataset.res = bar.id;
@@ -55113,7 +55247,7 @@ function hybridUnit(bar, tooltipExtra) {
   track.appendChild(troughEl(bar));
   unit.appendChild(track);
 
-  attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(unit, () => tooltipHtml(bar, tooltipExtra));
   return unit;
 }
 
@@ -55132,7 +55266,7 @@ function syncCardFrames(root) {
 }
 
 /** The under-model strip bar: trough with the label inside (unchanged shape). */
-function stripBar(bar, tooltipExtra) {
+function stripBar(bar, tooltipExtra, tooltips) {
   const el = troughEl(bar);
   const label = document.createElement('div');
   label.className = 'label';
@@ -55141,7 +55275,7 @@ function stripBar(bar, tooltipExtra) {
     `<span class="l-num">${esc(bar.glyph)} ${bar.cur}/${bar.max}</span>` +
     `<span class="l-glyph">${esc(bar.glyph)}</span>`;
   el.appendChild(label);
-  attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
+  if (tooltips) attachTooltip(el, () => tooltipHtml(bar, tooltipExtra));
   return el;
 }
 
@@ -55192,11 +55326,11 @@ Object.assign(module.exports, { resourceBars });
 const { dispatch, previewCard, previewIntent, getEntity } = require("src/engine/combat.js");
 const { resolveCard } = require("src/model/registries.js");
 const { openPileModal } = require("src/ui/components/piles.js");
-const { attachTooltip, hideTooltip, showTooltipFor, esc } = require("src/ui/components/tooltip.js");
+const { attachTooltip, ensureTooltip, hideTooltip, showTooltipForRect, esc } = require("src/ui/components/tooltip.js");
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -55226,8 +55360,6 @@ const { wireHudModeGrip } = require("src/ui/components/hudModeGrip.js");
 const { battlefieldStageModel } = require("src/ui/models/BattlefieldStageModel.js");
 const { wireBattlefieldStage } = require("src/ui/components/battlefieldStage.js");
 const { tooltipPlacementModel } = require("src/ui/models/TooltipPlacementModel.js");
-const { combatantInspectorModel } = require("src/ui/models/CombatantInspectorModel.js");
-const { mountCombatantInspector } = require("src/ui/components/combatantInspector.js");
 
 function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
@@ -55272,7 +55404,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
-        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
         <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
@@ -55344,8 +55475,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
-  let inspectedCombatant = null; // { role, id } for the persistent edge tray
-  let inspectorExpanded = true;
+  let selectedEnemyId = null; // contextual reading selection; never combat targeting
+  let enemyTooltipDelayTimer = null;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -55358,6 +55489,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
   // is a separately owned Folding Tray and remains until its label is folded.
   combatEl.addEventListener('click', (event) => {
     if (event.target.closest('.combatant, .combatant-inspector-host')) return;
+    clearTimeout(enemyTooltipDelayTimer);
+    selectedEnemyId = null;
+    combatEl.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+    combatEl.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
     hideTooltip();
   });
 
@@ -55497,7 +55632,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const def = registries.statuses.get(statusId);
       if (!def) return [];
       const presentation = statusInstancePresentation(def, instance);
-      return [{ name: presentation.label, detail: presentation.tooltip }];
+      return [{ name: def.name, detail: presentation.tooltip }];
     });
   }
 
@@ -55566,71 +55701,66 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     };
   }
 
-  function foldedCombatantTooltip(subject) {
+  function enemyContextTooltip(subject) {
     const hp = subject.resources.find((row) => row.label === 'HP');
     const poise = subject.resources.find((row) => row.label === 'Poise');
+    const effects = subject.statuses.map((row) => row.name).join(', ') || 'None';
     return `<div class="tt-title">${esc(subject.name)}</div>`
-      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
-      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
-      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
+      + `<div class="tt-combatant-line"><b>HP</b> ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Poise</b> ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</div>`
+      + `<div class="tt-combatant-line"><b>Effects</b> ${esc(effects)}</div>`;
   }
 
-  function expandedCombatantTooltip(subject, role) {
-    const live = subject.intent || subject.skills.find((row) => row.active);
-    return `${foldedCombatantTooltip(subject)}`
-      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
-      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
+  function showEnemyContext(box, enemy) {
+    clearTimeout(enemyTooltipDelayTimer);
+    if (!box.isConnected || !enemy.alive) return false;
+    const card = box.querySelector('.combatant-card')?.getBoundingClientRect();
+    if (!card) return false;
+    showTooltipForRect(card, enemyContextTooltip(combatantSubject('enemy', enemy)), {
+      intent: 'above',
+      clear: [box.querySelector('.intent'), app.querySelector('.topbar.combat-hud')],
+      appearance: { variant: 'enemy-context', maxWidthRem: 21 },
+      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+    });
+    return true;
   }
 
-  function renderCombatantInspector() {
-    const host = $('.combatant-inspector-host');
-    if (!host || !inspectedCombatant) {
-      if (host) host.hidden = true;
+  function restoreSelectedEnemyContext(exceptId = null) {
+    if (!selectedEnemyId || selectedEnemyId === exceptId) {
+      hideTooltip();
       return;
     }
-    const entity = inspectedCombatant.role === 'player'
-      ? combat.player : getEntity(combat, inspectedCombatant.id);
-    if (!entity) {
-      host.hidden = true;
-      return;
-    }
-    const model = combatantInspectorModel({
-      role: inspectedCombatant.role,
-      expanded: inspectorExpanded,
-      subject: combatantSubject(inspectedCombatant.role, entity),
-      presentation: registries.balance.ui.combatantInspector,
-    });
-    mountCombatantInspector(host, model, {
-      onToggle: (expanded) => {
-        inspectorExpanded = expanded;
-        renderCombatantInspector();
-      },
-    });
+    const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+    const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+    if (!selectedBox || !showEnemyContext(selectedBox, selectedEntity)) hideTooltip();
   }
 
-  function inspectCombatant(role, entity, box) {
-    inspectedCombatant = { role, id: entity.id };
-    inspectorExpanded = true;
-    const subject = combatantSubject(role, entity);
-    renderCombatantInspector();
-    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-expanded' },
-    });
-  }
-
-  function wireCombatantReading(box, role, entity) {
-    const subject = () => combatantSubject(role, entity);
+  function wireEnemyContext(box, enemy) {
+    ensureTooltip();
     box.classList.add('inspectable');
     box.dataset.focusable = '';
-    box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
-      delayMs: tooltipPlacement.tokens.hoverDelayMs,
-      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
+    box.tabIndex = -1;
+    box.setAttribute('role', 'button');
+    box.setAttribute('aria-pressed', selectedEnemyId === enemy.id ? 'true' : 'false');
+    box.setAttribute('aria-describedby', 'tooltip');
+    box.setAttribute('aria-label', `Select ${combatantSubject('enemy', enemy).name} for combat details`);
+    box.addEventListener('pointerenter', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('pointerleave', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
+    });
+    box.addEventListener('gpfocus', () => {
+      clearTimeout(enemyTooltipDelayTimer);
+      enemyTooltipDelayTimer = setTimeout(() => showEnemyContext(box, enemy), tooltipPlacement.tokens.hoverDelayMs);
+    });
+    box.addEventListener('gpblur', () => {
+      if (selectedEnemyId === enemy.id) return;
+      clearTimeout(enemyTooltipDelayTimer);
+      restoreSelectedEnemyContext(enemy.id);
     });
     box.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -55775,9 +55905,22 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
 
   // ---------- rendering ----------
   function renderCombatantStage() {
+    clearTimeout(enemyTooltipDelayTimer);
+    hideTooltip();
+    if (selected || selectedFlask != null) selectedEnemyId = null;
+    if (selectedEnemyId && !combat.enemies.some((enemy) => enemy.id === selectedEnemyId && enemy.alive)) selectedEnemyId = null;
     renderPlayer();
     renderEnemies();
-    renderCombatantInspector();
+    if (selectedEnemyId) {
+      const selectedEntity = combat.enemies.find((enemy) => enemy.id === selectedEnemyId && enemy.alive);
+      const selectedBox = selectedEntity && app.querySelector(`.combatant.enemy[data-eid="${CSS.escape(selectedEnemyId)}"]`);
+      if (selectedBox) {
+        enemyTooltipDelayTimer = setTimeout(
+          () => showEnemyContext(selectedBox, selectedEntity),
+          tooltipPlacement.tokens.hoverDelayMs,
+        );
+      }
+    }
     battlefieldStage.refresh();
   }
 
@@ -55789,6 +55932,9 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     refreshAim(); // re-apply the target glow after the board rebuilds
     // Hint bar context: while aiming, show Confirm/Cancel instead of zone keys.
     setHintMode(selected || selectedFlask != null || selfArm ? 'targeting' : null);
+  }
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('shot')) {
+    window.__renderCombatForShot = render;
   }
 
   function renderTopbar() {
@@ -55897,7 +56043,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     });
   }
 
-  function statusRow(entity) {
+  function statusRow(entity, { tooltips = true } = {}) {
     const row = document.createElement('div');
     row.className = 'statuses';
     markUiComponent(row, UI.statusEffectTray, entity.kind);
@@ -55928,12 +56074,14 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       // turns); every other pip keeps its stack count.
       const shown = def.resists && inst.duration != null ? inst.duration : presentation.valueText;
       el.innerHTML = `${esc(def.icon || '?')}<span class="stk">${shown}</span>`;
-      attachTooltip(el, () => {
-        let extra = '';
-        if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
-        if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
-        return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
-      });
+      if (tooltips) {
+        attachTooltip(el, () => {
+          let extra = '';
+          if (inst.meter) extra = `<br>Build-up: ${inst.meter.value} / ${inst.meter.max}`;
+          if (inst.duration != null) extra += `<br>Turns left: ${inst.duration}`;
+          return `<div class="tt-title">${esc(presentation.label)}</div>${esc(presentation.tooltip)}${extra}`;
+        });
+      }
       row.appendChild(el);
     }
     return row;
@@ -55959,7 +56107,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     };
   }
 
-  function meterBars(entity) {
+  function meterBars(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     const wrap = document.createElement('div');
     wrap.className = 'meters';
@@ -55971,7 +56119,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     // shows health and poise exactly as the enemies' do — and a zero-threshold
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
-    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
+    const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind), tooltips });
     for (const bar of plan) {
       const el = bars.querySelector(`[data-res="${bar.id}"]`);
       if (!el) continue;
@@ -55988,7 +56136,7 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     }
     while (bars.firstChild) wrap.appendChild(bars.firstChild);
     if (entity.kind === 'enemy') {
-      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents);
+      const arcane = renderArcaneExposure(registries, v, disp ? disp.arcaneEvents : recentArcaneEvents, { tooltips });
       if (arcane) wrap.appendChild(arcane);
       // #61 M1/M4: the shipped bleedbar, generalized into the one grammar —
       // a thin bar per threshold-proc row (max two, procDisplayPlan's cap),
@@ -56011,21 +56159,21 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
         bar.innerHTML =
           `<div class="fill" style="width:${Math.min(100, (inst.meter.value / inst.meter.max) * 100)}%"></div>` +
           `<span class="glyph">${esc(def.icon || '?')}</span>`; // hue is never the only channel
-        attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
+        if (tooltips) attachTooltip(bar, () => `<div class="tt-title">${esc(def.name)}</div>${inst.meter.value} / ${inst.meter.max}. ${esc(statusTooltipText(def))}`);
         wrap.appendChild(bar);
       }
     }
     return wrap;
   }
 
-  function blockBadge(entity) {
+  function blockBadge(entity, { tooltips = true } = {}) {
     const v = dv(entity);
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
     markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
-    attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
+    if (tooltips) attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
   }
 
@@ -56039,25 +56187,23 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
-      attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
       trailing.push(chip);
     }
-    trailing.push(statusRow(p));
+    trailing.push(statusRow(p, { tooltips: false }));
     const box = combatantFrame({
       role: 'player',
       entityId: 'player',
       classNames: selfArm ? ['armed'] : [],
       sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
-      blockBadge: blockBadge(p),
-      meters: meterBars(p),
+      blockBadge: blockBadge(p, { tooltips: false }),
+      meters: meterBars(p, { tooltips: false }),
       trailing,
     });
-    wireCombatantReading(box, 'player', p);
     // When a self/buff card is armed, the player is a confirmable target.
     box.addEventListener('click', (event) => {
       event.stopPropagation();
       if (selfArm) playCard(selfArm, null);
-      else inspectCombatant('player', p, box);
+      else hideTooltip();
     });
     zone.appendChild(box);
   }
@@ -56069,7 +56215,6 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     el.className = `intent ${badge.cls}`;
     markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
   }
 
@@ -56098,21 +56243,36 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       const box = combatantFrame({
         role: 'enemy',
         entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
+        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : '', selectedEnemyId === enemy.id ? 'context-selected' : ''],
         leading,
         sprite: enemySprite(def),
-        blockBadge: blockBadge(enemy),
+        blockBadge: blockBadge(enemy, { tooltips: false }),
         name: nm,
-        meters: meterBars(enemy),
-        trailing: [statusRow(enemy)],
+        meters: meterBars(enemy, { tooltips: false }),
+        trailing: [statusRow(enemy, { tooltips: false })],
       });
-      wireCombatantReading(box, 'enemy', enemy);
       if (enemy.alive) {
+        wireEnemyContext(box, enemy);
         box.addEventListener('click', (event) => {
           event.stopPropagation();
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else inspectCombatant('enemy', enemy, box);
+          else {
+            selectedEnemyId = enemy.id;
+            row.querySelectorAll('.combatant.enemy').forEach((candidate) => {
+              const current = candidate === box;
+              candidate.classList.toggle('context-selected', current);
+              candidate.setAttribute('aria-pressed', current ? 'true' : 'false');
+            });
+            clearTimeout(enemyTooltipDelayTimer);
+            // Selection state answers immediately through aria-pressed and the
+            // selected treatment; its contextual reading uses the same configured,
+            // cancellable delay as pointer and focus preview.
+            enemyTooltipDelayTimer = setTimeout(
+              () => showEnemyContext(box, enemy),
+              tooltipPlacement.tokens.hoverDelayMs,
+            );
+          }
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -56491,6 +56651,13 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
           : null;
         if (cancelledCard) focusElement(cancelledCard);
         else focusHandDefault();
+      }
+      if (selectedEnemyId) {
+        clearTimeout(enemyTooltipDelayTimer);
+        selectedEnemyId = null;
+        hideTooltip();
+        app.querySelectorAll('.combatant.enemy.context-selected').forEach((enemy) => enemy.classList.remove('context-selected'));
+        app.querySelectorAll('.combatant.enemy[aria-pressed="true"]').forEach((enemy) => enemy.setAttribute('aria-pressed', 'false'));
       }
       return;
     }
@@ -57269,7 +57436,7 @@ function eventHtml(event, registries) {
   return '';
 }
 
-function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
+function renderArcaneExposure(registries, enemySnapshot, recentEvents = [], { tooltips = true } = {}) {
   const receipt = arcaneExposureReceipt(registries, enemySnapshot, recentEvents);
   if (!receipt) return null;
   const el = document.createElement('div');
@@ -57279,7 +57446,7 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
     el.setAttribute('aria-label', `${receipt.label} — ${receipt.badge}`);
     el.innerHTML = `<span class="arcane-exposure-glyph" aria-hidden="true">${receipt.glyph}</span><span>${esc(receipt.label)} — ${esc(receipt.badge)}</span>${eventHtml(receipt.event, registries)}`;
     markUiComponent(el, UI.arcaneExposureBar, 'immune');
-    attachTooltip(el, () => esc(receipt.tooltip));
+    if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
     return el;
   }
   el.className = `arcane-exposure-meter${receipt.locked ? ' locked' : ''}`;
@@ -57290,7 +57457,7 @@ function renderArcaneExposure(registries, enemySnapshot, recentEvents = []) {
     + `<div class="arcane-exposure-track"><span style="width:${receipt.fillPercent}%"></span></div>`
     + (receipt.status ? `<div class="magic-vulnerable-receipt">${esc(receipt.status.label)} ${receipt.status.value}% · ${receipt.status.duration} turns</div>` : '')
     + eventHtml(receipt.event, registries);
-  attachTooltip(el, () => esc(receipt.tooltip));
+  if (tooltips) attachTooltip(el, () => esc(receipt.tooltip));
   return el;
 }
 
@@ -57779,117 +57946,6 @@ function wireBattlefieldStage(field, model) {
 
 
 Object.assign(module.exports, { wireBattlefieldStage });
-
-},
-"src/ui/models/CombatantInspectorModel.js": function (module, exports, require) {
-const { componentModel } = require("src/ui/models/ComponentModel.js");
-const { trayModel } = require("src/ui/models/TrayModels.js");
-const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
-
-function combatantInspectorModel({
-  role,
-  expanded = true,
-  subject,
-  presentation = {},
-} = {}) {
-  if (role !== 'player' && role !== 'enemy') throw new Error(`Unknown combatant inspector role: ${role}`);
-  if (!subject?.name) throw new Error('Combatant inspector requires a named subject');
-  const edge = role === 'player' ? 'left' : 'right';
-  const tray = trayModel({
-    id: `combatant-inspector-${role}`,
-    name: subject.name,
-    summary: expanded ? (subject.subtitle || (role === 'player' ? 'Player' : 'Enemy')) : '',
-    edge,
-    expanded,
-    resizable: false,
-    items: [],
-  });
-  return componentModel(UI.combatantInspector, {
-    variant: edge,
-    properties: {
-      role,
-      edge,
-      expanded,
-      subject,
-    },
-    tokens: {
-      widthRem: Number.isFinite(presentation.widthRem) ? presentation.widthRem : 20,
-      mobileWidthViewportPct: Number.isFinite(presentation.mobileWidthViewportPct)
-        ? presentation.mobileWidthViewportPct : 62,
-    },
-    accessibility: {
-      label: `${subject.name} details`,
-    },
-    children: [tray],
-  });
-}
-
-
-Object.assign(module.exports, { combatantInspectorModel });
-
-},
-"src/ui/components/combatantInspector.js": function (module, exports, require) {
-const { childModel } = require("src/ui/models/ComponentModel.js");
-const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComponents.js");
-const { renderTray } = require("src/ui/components/trayComponents.js");
-const { esc } = require("src/ui/components/tooltip.js");
-
-function resourceRows(resources) {
-  return (resources || []).map((row) => `
-    <div class="combatant-inspector-resource">
-      <span>${esc(row.label)}</span>
-      <strong>${esc(row.value)}${row.max == null ? '' : ` / ${esc(row.max)}`}</strong>
-    </div>`).join('');
-}
-
-function detailRows(title, rows, empty) {
-  const body = (rows || []).length
-    ? rows.map((row) => `
-      <li${row.active ? ' class="active"' : ''}>
-        <strong>${esc(row.name)}</strong>
-        ${row.detail ? `<span>${esc(row.detail)}</span>` : ''}
-      </li>`).join('')
-    : `<li class="empty">${esc(empty)}</li>`;
-  return `<section class="combatant-inspector-section"><h4>${esc(title)}</h4><ul>${body}</ul></section>`;
-}
-
-function mountCombatantInspector(host, model, { onToggle = null } = {}) {
-  if (!host) throw new Error('Combatant inspector requires a host');
-  if (!model || model.component !== UI.combatantInspector) throw new Error('Combatant inspector requires its Component Model');
-  const tray = childModel(model, UI.foldingTray);
-  host.innerHTML = '';
-  host.hidden = false;
-  host.className = `combatant-inspector-host ${model.properties.edge}`;
-  host.style.setProperty('--combatant-inspector-width-rem', String(model.tokens.widthRem));
-  host.style.setProperty('--combatant-inspector-mobile-vw', `${model.tokens.mobileWidthViewportPct}vw`);
-  host.setAttribute('aria-label', model.accessibility.label);
-  markUiComponent(host, model.component, model.variant);
-
-  const rendered = renderTray(tray, {
-    onToggle: () => onToggle?.(!model.properties.expanded),
-    renderContent: (content) => {
-      const subject = model.properties.subject;
-      content.innerHTML = `
-        <div class="combatant-inspector-summary">
-          <div>
-            <strong>${esc(subject.name)}</strong>
-            <span>${esc(subject.subtitle || '')}</span>
-          </div>
-          <div class="combatant-inspector-resources">${resourceRows(subject.resources)}</div>
-        </div>
-        ${subject.intent ? detailRows('Current intent', [subject.intent], 'No current intent.') : ''}
-        ${detailRows(subject.skillLabel || 'Skills', subject.skills, 'No active skills.')}
-        ${detailRows('Active effects', subject.statuses, 'No active effects.')}`;
-    },
-  });
-  rendered.element.dataset.role = 'context';
-  host.appendChild(rendered.element);
-  host.addEventListener('click', (event) => event.stopPropagation());
-  return rendered;
-}
-
-
-Object.assign(module.exports, { mountCombatantInspector });
 
 },
 "src/ui/screens/reward.js": function (module, exports, require) {

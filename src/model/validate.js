@@ -815,6 +815,22 @@ export function validateContent(bundle) {
         err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
       }
     }
+    const tooltipPlacement = ui.tooltipPlacement;
+    if (!tooltipPlacement || typeof tooltipPlacement !== 'object' || Array.isArray(tooltipPlacement)) {
+      err('balance.ui.tooltipPlacement', 'must be an object with hover, fade, and safe-placement tokens');
+    } else {
+      for (const [key, min, max] of [
+        ['hoverDelayMs', 0, 600000],
+        ['autoFadeMs', 0, 600000],
+        ['topBandViewportPct', 0, 50],
+        ['sideBandViewportPct', 0, 50],
+      ]) {
+        const value = tooltipPlacement[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+          err(`balance.ui.tooltipPlacement.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
+        }
+      }
+    }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;
     const wellFormedMs = ih != null && typeof ih === 'object' && !Array.isArray(ih)
