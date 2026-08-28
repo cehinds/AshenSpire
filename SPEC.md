@@ -23,7 +23,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
-| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open at Settings → Profile (§3.12) |
+| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
@@ -402,7 +402,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player at **Settings → Profile**
+   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
@@ -837,14 +837,22 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
-  `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
+  `run-header-strip`, `primary-hud-row`, `inventory-belt`, and `hud-quick-settings`.
+  Its reusable children are
   `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
   `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
-  `armoury-control`, `quick-menu-control`, `crimson-flask-control`, `azure-flask-control`,
+  `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`,
+  `crimson-flask-control`, `azure-flask-control`,
   `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
+  `hud-quick-settings` is shared by Title, Map, and Combat. It anchors beneath the top-right
+  HUD edge as a vertical pair, exposes live positive-state Fullscreen and Music controls,
+  persists Music through the profile settings service, and reads Fullscreen from the browser
+  instead of storing a duplicate flag. On narrow screens it keeps the same composition but
+  presents 44px square glyph controls so enemy intent remains unobscured. Browsers without a
+  fullscreen API expose the Fullscreen control as unavailable rather than drawing a dead switch.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,
@@ -862,7 +870,8 @@ Screen router in `main.js`; each screen module exports `mount(state, dispatch)` 
   components; the catalog may expand other components later without declaring them leaves.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
-  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, and `menu-panel`. The equipment
+  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
+  the footer composes `save-game-control` and `save-quit-control`. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,

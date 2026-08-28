@@ -44,6 +44,7 @@ export function renderQuickMenu(model, { onActivate }) {
 
 export function renderMenuOverlay(model) {
   const stripModel = childModel(model, UI.menuTabStrip);
+  const footerModel = childModel(model, UI.menuFooter);
   const veil = document.createElement('div');
   veil.className = 'modal-veil';
   veil.innerHTML = `
@@ -54,27 +55,32 @@ export function renderMenuOverlay(model) {
         </div>
         ${model.properties.folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
         <div class="overlay-actions">
-          <div class="overlay-settings-actions" data-settings-quick-actions hidden>
-            <button class="subtle ov-quick-action" id="ov-fullscreen" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen" aria-pressed="false"><span aria-hidden="true">⛶</span><span class="ov-qa-label">Fullscreen</span></button>
-            <button class="subtle ov-quick-action" id="ov-music" type="button" title="Toggle music" aria-label="Turn music off" aria-pressed="true"><span aria-hidden="true">♪</span><span class="ov-qa-label" data-music-label>Music: On</span></button>
-            <button class="subtle ov-quick-action" id="ov-save-quick" type="button" title="Save now" aria-label="Save now"><span aria-hidden="true">▣</span><span class="ov-qa-label" data-save-label>Save</span></button>
-            <button class="subtle danger ov-quick-action" id="ov-exit-quick" type="button" title="Save and quit the game" aria-label="Save and quit the game"><span aria-hidden="true" data-exit-icon>⏻</span><span class="ov-qa-label" data-exit-label>Quit</span></button>
-          </div>
           ${model.properties.mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
           <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
         </div>
       </div>
       <div class="overlay-body" role="tabpanel"></div>
+      <footer class="overlay-footer">
+        <span class="overlay-footer-note">Progress saves to the active slot.</span>
+        <div class="overlay-footer-actions">
+          <button class="subtle" id="ov-save" type="button">Save Game</button>
+          <button class="subtle danger" id="ov-quit" type="button">Save &amp; Quit to Title</button>
+        </div>
+      </footer>
     </div>`;
   const overlay = veil.querySelector('.overlay-modal');
   const strip = veil.querySelector('.overlay-tabs');
   const body = veil.querySelector('.overlay-body');
+  const footer = veil.querySelector('.overlay-footer');
   markUiComponent(overlay, model.component, model.variant);
   markUiComponent(strip, stripModel.component, stripModel.variant);
   stripModel.children.forEach((tabModel, index) => {
     markUiComponent(veil.querySelectorAll('.ov-tab')[index], tabModel.component, tabModel.variant);
   });
   markUiComponent(body, UI.menuPanel, model.properties.activeId);
+  markUiComponent(footer, footerModel.component, footerModel.variant);
+  markUiComponent(veil.querySelector('#ov-save'), childModel(footerModel, UI.saveGameControl).component);
+  markUiComponent(veil.querySelector('#ov-quit'), childModel(footerModel, UI.saveQuitControl).component);
   return { veil, overlay, strip, body };
 }
 

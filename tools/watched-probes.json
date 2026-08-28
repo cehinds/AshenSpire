@@ -179,12 +179,12 @@
   {
    "id": "M2",
    "by": "Bjorn",
-   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/settings.js (Profile category)",
+   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/title.js (Profile route)",
    "anchors": [
-    "set-profile-mount",
+    "openProfileArchive",
     "renderProfileSection"
    ],
-   "screen": "Settings › Profile",
+   "screen": "Title › Profile",
    "reach": [
     {
      "op": "goto",
@@ -192,20 +192,16 @@
     },
     {
      "op": "click",
-     "sel": "#settings"
-    },
-    {
-     "op": "click",
-     "sel": ".set-tab[data-member=\"Profile\"]"
+     "sel": "#profile"
     }
    ],
-   "focus": "#set-profile-mount, .set-panel",
+   "focus": ".profile-archive-modal, .profile-archive-body",
    "expect": {
     "present": {
-     "the profile drawer": "#set-profile-mount, .set-panel"
+     "the profile drawer": ".profile-archive-modal, .profile-archive-body"
     },
     "measure": {
-     "stateLine": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,80)"
+     "stateLine": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,80)"
     }
    }
   },
@@ -217,7 +213,7 @@
     "ensureProfile",
     "the moment you begin your first climb"
    ],
-   "screen": "Settings › Profile, on a device that has never played",
+   "screen": "Title › Profile, on a device that has never played",
    "why-drive": "localStorage is cleared and the game booted fresh — the exact state a new player opens it in. Then the run is STARTED (class, name, BEGIN THE CLIMB) and storage is read again.",
    "reach": [
     {
@@ -262,22 +258,18 @@
     },
     {
      "op": "click",
-     "sel": "#settings"
-    },
-    {
-     "op": "click",
-     "sel": ".set-tab[data-member=\"Profile\"]"
+     "sel": "#profile"
     }
    ],
-   "focus": ".set-panel",
+   "focus": ".profile-archive-body",
    "expect": {
     "present": {
-     "the Profile section": ".set-panel"
+     "the Profile section": ".profile-archive-body"
     },
     "measure": {
      "storageTrace": "sessionStorage.getItem('__m7')",
      "profileExistedWhenTheRunBegan": "sessionStorage.getItem('__m7profile')",
-     "whatTheScreenSays": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,95)"
+     "whatTheScreenSays": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,95)"
     },
     "wrong": [
      {
@@ -285,7 +277,7 @@
       "why": "THE CLIMB BEGAN AND THERE IS NO PROFILE. After class, name and BEGIN THE CLIMB, localStorage holds sote_run_v1 and no sote_meta_v1 — the profile is still not created"
      },
      {
-      "js": "/finish your first run/.test(document.querySelector('.set-panel').innerText)",
+      "js": "/finish your first run/.test(document.querySelector('.profile-archive-body').innerText)",
       "why": "and the screen says it out loud: 'No profile yet - one is created when you finish your first run.' That sentence IS the behaviour he asked us to change, printed back at him"
      }
     ]

@@ -39,6 +39,7 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { hudShellHtml } from '../components/hudmeta.js';
 import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
+import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
@@ -64,7 +65,7 @@ let liveMapKeys = null;
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onSettingsChange, onMenu, onArmoury }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -126,9 +127,14 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           menuId: 'open-menu',
           menuHint: actionHint('menu'),
         },
+        quickSettings: {
+          presentation: registries.balance.ui.hudQuickSettings,
+          settings: meta.settings || {},
+        },
         overlayHtml: legendHtml,
       }))}
     </div>`;
+  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
@@ -298,7 +304,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const menuBtn = app.querySelector('#open-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('deck');
+      if (quickNavMode() === 'off') return onMenu('settings');
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
@@ -324,7 +330,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Deck, stats, settings, controls and saving.'
+      ? 'Armoury, settings, controls and saving.'
       : 'Everywhere you can go from here.')}`);
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
@@ -344,12 +350,10 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
-      if (onMenu) onMenu('deck');
-    } else if (matchAction(ev, 'relics')) {
+    if (matchAction(ev, 'menu')) {
+      if (onMenu) onMenu('settings');
+    } else if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
       if (onArmoury) onArmoury();
-    } else if (matchAction(ev, 'stats')) {
-      if (onMenu) onMenu('stats');
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
