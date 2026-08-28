@@ -124,46 +124,12 @@ MenuModels.js                         ArmouryModels.js
                                      └─ InventoryDetailCardModel
 ```
 
-`menuComponents.js` owns the extracted menu markup.
-`armouryComponents.js` owns the Armoury shell, inventory-card, equipment-slot,
-semantic marker, and accessibility markup that has migrated. `equipment.js`
-remains the composition host and still renders domain-specific Character,
-Armaments, Cards, Stats, and receipt content while binding lifecycle and domain
-commands. Those screen-owned fragments are not a second implementation of the
-extracted shell or inventory cards. Presentation Models import neither the DOM
-nor simulation state, and all properties remain serializable and deeply
-frozen.
-
-## Shared Folding Tray aggregate
-
-Armaments, Inventory, Cards, and Stats no longer author separate disclosure
-headers. Each mounted instance uses the edge-aware presentation aggregate:
-
-```text
-trayModel → Folding Tray Component Model
-├─ trayHeaderModel
-│  └─ toggle behavior + optional sort behavior
-└─ trayContentModel
-   └─ caller-owned Component Models × N
-```
-
-The `trayModel` factory owns the stable id, name, edge, expanded state, total
-quantity, item-type noun, optional sort intent, and resize contract.
-`trayComponents.renderTray` owns the shared header, directional arrow,
-`aria-expanded`/`aria-controls`, content host, edge classes, and the sort and
-resize affordances when the model opts into them; those affordances render only
-while expanded. `TraySizeService` remembers the expanded size by stable tray id
-and edge for resizable instances; folded rendering ignores that size, and
-reopening restores it. Domain-specific item behavior stays with the item models. The full
-Top/Right/Bottom/Left contract is in `docs/TRAY-COMPONENTS.md`.
-
-Inventory cards use one additional reusable capability boundary. The
-`inventoryItem` class in `armouryUi.json` explicitly enables `holdAction`.
-`inventoryItemCardModel` and `inventoryDetailCardModel` project the same flag to
-the folded face and expanded reveal; the shared hold-confirm binder delegates
-one progress state to both visible regions. Comparison is a separate semantic
-child whose tooltip/inline presentation is data-owned, so reading a comparison
-cannot become a second action path.
+`menuComponents.js` and `armouryComponents.js` own markup, semantic component
+markers, and accessibility attributes. `quicknav.js`, `overlay.js`, and
+`equipment.js` remain screen hosts: they own lifecycles and translate semantic
+commands into the existing callbacks, but no longer author the extracted
+component markup. Presentation Models import neither the DOM nor simulation
+state, and all properties remain serializable and deeply frozen.
 
 ## Migration order
 

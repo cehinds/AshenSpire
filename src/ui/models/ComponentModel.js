@@ -63,22 +63,3 @@ export function childModel(parent, component, variant = null) {
   if (!child) throw new Error(`${parent.component} is missing child ${component}${variant == null ? '' : `:${variant}`}`);
   return child;
 }
-
-export function descendantModel(parent, component, variant = null) {
-  if (!isComponentModel(parent)) throw new Error('Parent must be a Component Model');
-  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
-  for (const child of parent.children) {
-    const found = descendantModelOrNull(child, component, variant);
-    if (found) return found;
-  }
-  throw new Error(`${parent.component} is missing descendant ${component}${variant == null ? '' : `:${variant}`}`);
-}
-
-function descendantModelOrNull(parent, component, variant) {
-  if (parent.component === component && (variant == null || parent.variant === variant)) return parent;
-  for (const child of parent.children) {
-    const found = descendantModelOrNull(child, component, variant);
-    if (found) return found;
-  }
-  return null;
-}
