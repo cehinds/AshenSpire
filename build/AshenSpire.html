@@ -1729,12 +1729,28 @@ button.rs-reset {
   72% { opacity: 0.28; }
   100% { transform: translate3d(1.4rem, -78vh, 0); opacity: 0; }
 }
-.startup-mark {
+.startup-anchor {
+  position: absolute;
   z-index: 1;
+  top: 0;
+  bottom: 0;
+  /* body is zoomed by --ui-zoom; viewport lengths are not. Divide the shared
+     50vw ruler back into body-local coordinates so it still renders on the
+     physical viewport center at every responsive UI scale. */
+  left: calc(50vw / var(--ui-zoom, 1));
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  width: min(calc(94vw / var(--ui-zoom, 1)), calc(72rem / var(--ui-zoom, 1)));
+  transform: translateX(-50%);
+  background: transparent;
+}
+.startup-mark {
+  place-self: center;
   display: grid;
   justify-items: center;
   gap: 1rem;
-  width: min(92vw, 72rem);
+  width: 100%;
   padding: 2rem;
   text-align: center;
   animation: startupMarkIn 520ms ease-out both;
@@ -1772,12 +1788,10 @@ button.rs-reset {
 }
 @keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
 .startup-gate .build-stamp {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  width: 100%;
+  position: static;
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: max(1rem, env(safe-area-inset-bottom));
   transform: none;
   color: var(--parchment);
   text-align: center;
@@ -4762,7 +4776,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%);
 }
 .startup-mark {
-  width: min(94vw, 72rem);
+  width: 100%;
   padding: 8.2rem 2.8rem 5.2rem;
   border: 0;
   background: transparent;
@@ -41768,7 +41782,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '74d3722a46';
+const SOURCE = '426a43b2b1';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41802,7 +41816,7 @@ const SOURCE = '74d3722a46';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1448';
+const ORDINAL = '1453';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -62341,14 +62355,16 @@ function mountStartupGate(app, {
     <section class="screen startup-gate" data-component="startup-gate" data-input-family="${esc(properties.inputFamily)}" tabindex="0"
       role="${esc(accessibility.role)}" aria-label="${esc(accessibility.label)}">
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
-      <div class="startup-mark" data-component="startup-mark">
-        ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
-        <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
-        ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
-        <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
-        <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+      <div class="startup-anchor">
+        <div class="startup-mark" data-component="startup-mark">
+          ${properties.overline ? `<p class="startup-overline">${esc(properties.overline)}</p>` : ''}
+          <h1 class="startup-wordmark" data-component="startup-wordmark">${esc(properties.wordmark)}</h1>
+          ${properties.subtitle ? `<p class="startup-subtitle" data-component="startup-subtitle">${esc(properties.subtitle)}</p>` : ''}
+          <div class="startup-rule" data-component="startup-divider" aria-hidden="true"><span></span></div>
+          <p class="startup-prompt" data-component="startup-prompt" aria-live="${esc(accessibility.promptLive)}">${esc(properties.prompts[properties.inputFamily])}</p>
+        </div>
+        ${buildStampHtml('startup')}
       </div>
-      ${buildStampHtml('startup')}
     </section>`;
 
   const root = app.querySelector('.startup-gate');

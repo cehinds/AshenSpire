@@ -752,11 +752,13 @@ async function assertShape(shape, textSize) {
   const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{const b=x.getBoundingClientRect();return [x.className||x.dataset.place,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
+    const centerDeltas=boxes.map(([name,left,,right])=>[name,Math.round((((left+right)/2)-(innerWidth/2))*100)/100]);
+    const centered=centerDeltas.every(([,delta])=>Math.abs(delta)<=1);
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, centered, centerDeltas, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
   const expectedFont = textSize === 'M' ? '10px' : '12px';
-  verdict(fact.font === expectedFont && !fact.overflow && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  verdict(fact.font === expectedFont && !fact.overflow && fact.centered && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, centered=${fact.centered}, centerDeltas=${JSON.stringify(fact.centerDeltas)}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
   await p.close();
 }
 
