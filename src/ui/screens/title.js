@@ -8,11 +8,13 @@ import { esc } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { openSaveSlotSelector } from '../components/saveSlotSelector.js';
+import { closeSaveSlotSelector, openSaveSlotSelector } from '../components/saveSlotSelector.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
+
+let releaseActiveTitleBack = null;
 
 export function focusTitleDefault(app, { showCursor = true } = {}) {
   const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
@@ -42,6 +44,7 @@ export function mountTitle(app, {
   onProfile,
   onSettings,
   onSettingsChange,
+  onCollapse,
   onQuit,
   onCustom,
   onLan,
@@ -50,6 +53,20 @@ export function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+
+  // Only one title mount may own the global Cancel action. render() replaces
+  // the title DOM in place, so this listener lives for the mount rather than
+  // for one rendered root and is released when another screen replaces it.
+  releaseActiveTitleBack?.();
+  const titleBackAbort = new AbortController();
+  let titleBackObserver = null;
+  const releaseTitleBack = () => {
+    titleBackAbort.abort();
+    titleBackObserver?.disconnect();
+    titleBackObserver = null;
+    if (releaseActiveTitleBack === releaseTitleBack) releaseActiveTitleBack = null;
+  };
+  releaseActiveTitleBack = releaseTitleBack;
 
   const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
 
@@ -181,6 +198,7 @@ export function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
+        event.stopImmediatePropagation();
         closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
@@ -228,4 +246,37 @@ export function mountTitle(app, {
   }
 
   render();
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+
+    // Controller Cancel is synthesized at window rather than at the focused
+    // element. Give the title's own modal and the shared Load selector the same
+    // priority they receive from a physical keyboard press.
+    if (modal) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeModal();
+      return;
+    }
+    if (document.querySelector('.title-modal-veil')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeSaveSlotSelector();
+      return;
+    }
+
+    // Other dialogs and selectors own Back before the expanded title does.
+    if (document.querySelector('[aria-modal="true"]') || typeof onCollapse !== 'function') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    onCollapse();
+  }, { signal: titleBackAbort.signal });
+
+  titleBackObserver = new MutationObserver(() => {
+    queueMicrotask(() => {
+      if (!app.querySelector('.title-screen')) releaseTitleBack();
+    });
+  });
+  titleBackObserver.observe(app, { childList: true });
 }

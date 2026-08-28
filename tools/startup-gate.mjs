@@ -572,6 +572,45 @@ async function assertReturnBypass() {
   await p.close();
 }
 
+async function assertContextualTitleBack() {
+  const keyboard = await page({ query: '?shot=title' });
+  await keyboard.until(`!!document.querySelector('.title-screen')`, 'expanded title for keyboard Back');
+  const releaseEscape = await keyboard.key('Escape'); await releaseEscape();
+  await keyboard.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after keyboard Back');
+  verdict(await keyboard.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-BACK-COLLAPSE', 'Escape folds the expanded title back to the startup threshold');
+  await keyboard.close();
+
+  const modal = await page({ query: '?shot=title' });
+  await modal.until(`!!document.querySelector('[data-title-action="new"]')`, 'expanded title for modal precedence');
+  await modal.click('[data-title-action="new"]');
+  await modal.until(`!!document.querySelector('.title-menu-modal')`, 'title modal before Back');
+  const releaseModalEscape = await modal.key('Escape'); await releaseModalEscape();
+  verdict(await modal.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.title-screen') && !document.querySelector('.startup-gate')`),
+    'A8.TITLE-MODAL-PRECEDENCE', 'Escape closes the title modal without also folding the title');
+  await modal.close();
+
+  const pad = await page({ pad: true });
+  await pad.ev(`window.__startupPad.set(0,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(0,false)`); await wait(260);
+  await pad.until(`!!document.querySelector('.title-screen')`, 'expanded title for controller Back');
+  await pad.ev(`window.__startupPad.set(1,true)`); await wait(100);
+  await pad.ev(`window.__startupPad.set(1,false)`); await wait(260);
+  verdict(await pad.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen')`),
+    'A8.TITLE-CANCEL-COLLAPSE', 'controller Cancel folds the expanded title back to the startup threshold');
+  await pad.close();
+
+  const quit = await page({ query: '?shot=map' });
+  await quit.until(`!!document.querySelector('.mapscreen')`, 'map before Save and Quit');
+  const releaseMenu = await quit.key('m'); await releaseMenu();
+  await quit.until(`!!document.querySelector('#ov-quit')`, 'run menu before Save and Quit');
+  await quit.click('#ov-quit');
+  await quit.until(`!!document.querySelector('.startup-gate')`, 'collapsed title after Save and Quit');
+  verdict(await quit.ev(`!!document.querySelector('.startup-gate') && !document.querySelector('.title-screen,.mapscreen')`),
+    'A8.QUIT-COLLAPSE', 'Save and Quit leaves the run at the folded title threshold');
+  await quit.close();
+}
+
 async function assertLoadSlotSelection() {
   const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
     const rect = (selector) => {
@@ -782,6 +821,7 @@ async function main() {
   await assertGamepad(9);
   await assertInterruptedPresses();
   await assertReturnBypass();
+  await assertContextualTitleBack();
   await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();

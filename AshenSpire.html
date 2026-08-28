@@ -8504,7 +8504,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
       closeOverlay();
       audio.stopMusic();
       run = null;
-      showTitle();
+      showCollapsedTitle();
     },
   });
   return false;
@@ -8558,16 +8558,24 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   });
 }
 
+// Returning from a climb is a new arrival at the main menu, so it lands on the
+// folded title threshold. Ordinary title sub-pages (Settings, Collection,
+// character creation) still return to the already-open menu via showTitle().
+function showCollapsedTitle() {
+  startupGatePending = true;
+  showTitle();
+}
+
 function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
-  if (startupGatePending && !skipStartup) {
-    showStartupGate();
-    return;
-  }
   audio.music('title');
   resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
+  if (startupGatePending && !skipStartup) {
+    showStartupGate();
+    return;
+  }
   const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
@@ -8586,6 +8594,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onProfile: showProfile,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
+    onCollapse: showCollapsedTitle,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -8729,7 +8738,7 @@ function quitGame() {
   if (back) {
     back.addEventListener('click', () => {
       clearTimeout(closeTimer); // changed their mind before the window closed
-      showTitle();
+      showCollapsedTitle();
     });
   }
 }
@@ -8768,7 +8777,7 @@ function showOverlay(initialTab = 'settings') {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -8953,7 +8962,7 @@ function showMap() {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -9188,7 +9197,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
-      showTitle();
+      showCollapsedTitle();
     },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {
@@ -36704,11 +36713,13 @@ const { esc } = require("src/ui/components/tooltip.js");
 const { beatArmer } = require("src/ui/components/holdconfirm.js");
 const { buildStampHtml } = require("src/ui/components/buildstamp.js");
 const { hudQuickSettingsHtml, wireHudQuickSettings } = require("src/ui/components/hudQuickSettings.js");
-const { openSaveSlotSelector } = require("src/ui/components/saveSlotSelector.js");
+const { closeSaveSlotSelector, openSaveSlotSelector } = require("src/ui/components/saveSlotSelector.js");
 const { hudQuickSettingsModel } = require("src/ui/models/HudQuickSettingsModel.js");
 const { saveSlotSelectionModel } = require("src/ui/models/SaveSlotSelectionModel.js");
 const { UI_COMPONENTS: UI } = require("src/ui/models/UiComponentId.js");
 const { focusElement } = require("src/ui/input.js");
+
+let releaseActiveTitleBack = null;
 
 function focusTitleDefault(app, { showCursor = true } = {}) {
   const control = app?.querySelector('.title-menu .slot-continue:not([disabled]), .title-menu .slot-new:not([disabled]), .title-menu button:not([disabled])');
@@ -36738,6 +36749,7 @@ function mountTitle(app, {
   onProfile,
   onSettings,
   onSettingsChange,
+  onCollapse,
   onQuit,
   onCustom,
   onLan,
@@ -36746,6 +36758,20 @@ function mountTitle(app, {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
   let selectedSlot = null;
+
+  // Only one title mount may own the global Cancel action. render() replaces
+  // the title DOM in place, so this listener lives for the mount rather than
+  // for one rendered root and is released when another screen replaces it.
+  releaseActiveTitleBack?.();
+  const titleBackAbort = new AbortController();
+  let titleBackObserver = null;
+  const releaseTitleBack = () => {
+    titleBackAbort.abort();
+    titleBackObserver?.disconnect();
+    titleBackObserver = null;
+    if (releaseActiveTitleBack === releaseTitleBack) releaseActiveTitleBack = null;
+  };
+  releaseActiveTitleBack = releaseTitleBack;
 
   const selectionModel = (kind = modal) => saveSlotSelectionModel(slots, { kind, selectedSlot });
 
@@ -36877,6 +36903,7 @@ function mountTitle(app, {
     root.addEventListener('keydown', (event) => {
       if (event.key === 'Escape' && modal) {
         event.preventDefault();
+        event.stopImmediatePropagation();
         closeModal();
       } else if (event.key === 'Tab' && modal) {
         const controls = [...root.querySelectorAll('.title-menu-modal button:not([disabled])')];
@@ -36924,6 +36951,39 @@ function mountTitle(app, {
   }
 
   render();
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
+
+    // Controller Cancel is synthesized at window rather than at the focused
+    // element. Give the title's own modal and the shared Load selector the same
+    // priority they receive from a physical keyboard press.
+    if (modal) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeModal();
+      return;
+    }
+    if (document.querySelector('.title-modal-veil')) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeSaveSlotSelector();
+      return;
+    }
+
+    // Other dialogs and selectors own Back before the expanded title does.
+    if (document.querySelector('[aria-modal="true"]') || typeof onCollapse !== 'function') return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    onCollapse();
+  }, { signal: titleBackAbort.signal });
+
+  titleBackObserver = new MutationObserver(() => {
+    queueMicrotask(() => {
+      if (!app.querySelector('.title-screen')) releaseTitleBack();
+    });
+  });
+  titleBackObserver.observe(app, { childList: true });
 }
 
 
@@ -41782,7 +41842,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = '426a43b2b1';
+const SOURCE = 'b528329672';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41816,7 +41876,7 @@ const SOURCE = '426a43b2b1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1453';
+const ORDINAL = '1454';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
