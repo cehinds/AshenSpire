@@ -11,7 +11,7 @@ import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/t
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
-import { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
+import { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { openQuickNav, quickNavMode, saveAction } from '../components/quicknav.js';
 import { sfx } from '../sfx.js';
 import { mountTutorial } from '../components/tutorial.js';
@@ -390,6 +390,26 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
   }
 
+  function enemyContextTooltip(subject) {
+    const hp = subject.resources.find((row) => row.label === 'HP');
+    const poise = subject.resources.find((row) => row.label === 'Poise');
+    const statuses = subject.statuses.map((status) => status.name).join(' · ') || 'None';
+    return `<div class="tt-title">${esc(subject.name)}</div>`
+      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
+      + ` · <b>Poise ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</b></div>`
+      + `<div class="tt-enemy-statuses"><b>Status</b> ${esc(statuses)}</div>`;
+  }
+
+  function showEnemyContextTooltip(box, entity) {
+    const subject = combatantSubject('enemy', entity);
+    showTooltipFor(box, enemyContextTooltip(subject), {
+      intent: 'above',
+      clear: [box.querySelector('.combatant-leading'), $('.topbar.combat-hud')],
+      appearance: { variant: 'enemy-context', widthRem: 18, maxHeightRatio: 0.4 },
+      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+    });
+  }
+
   function expandedCombatantTooltip(subject, role) {
     const live = subject.intent || subject.skills.find((row) => row.active);
     return `${foldedCombatantTooltip(subject)}`
@@ -428,6 +448,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     inspectorExpanded = true;
     const subject = combatantSubject(role, entity);
     renderCombatantInspector();
+    if (role === 'enemy') {
+      showEnemyContextTooltip(box, entity);
+      return;
+    }
     showTooltipFor(box, expandedCombatantTooltip(subject, role), {
       placementModel: tooltipPlacement,
       clear: box.parentElement,
@@ -440,12 +464,15 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     box.classList.add('inspectable');
     box.dataset.focusable = '';
     box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
+    const enemy = role === 'enemy';
+    attachTooltip(box, () => enemy ? enemyContextTooltip(subject()) : foldedCombatantTooltip(subject()), {
+      intent: enemy ? 'above' : 'beside',
       delayMs: tooltipPlacement.tokens.hoverDelayMs,
       focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
+      placementModel: enemy ? null : tooltipPlacement,
+      clear: enemy ? [box.querySelector('.combatant-leading'), $('.topbar.combat-hud')] : box.parentElement,
+      appearance: enemy ? { variant: 'enemy-context', widthRem: 18, maxHeightRatio: 0.4 } : { variant: 'combatant-folded' },
+      autoHideMs: enemy ? tooltipPlacement.tokens.autoFadeMs : 0,
     });
     box.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -884,7 +911,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     el.className = `intent ${badge.cls}`;
     markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
+    // Enemy reading is temporarily consolidated into the one compact context
+    // tooltip on the combatant frame. The intent badge remains visual only.
     return el;
   }
 

@@ -6,6 +6,8 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 let tipEl = null;
 let showTimer = null;
+let autoHideTimer = null;
+let autoHideEndTimer = null;
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -65,6 +67,31 @@ let stuckWatch = null;
 function unstick() {
   stuck = false;
   if (stuckWatch) { stuckWatch.disconnect(); stuckWatch = null; }
+}
+
+function clearAutoHide() {
+  clearTimeout(autoHideTimer);
+  clearTimeout(autoHideEndTimer);
+  autoHideTimer = null;
+  autoHideEndTimer = null;
+  if (tipEl) tipEl.classList.remove('tooltip-auto-fading');
+}
+
+function scheduleAutoHide(ms) {
+  clearAutoHide();
+  if (!(ms > 0) || !tipEl) return;
+  autoHideTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const reduced = document.documentElement.classList.contains('reduced-motion')
+      || document.body?.classList.contains('reduced-motion')
+      || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      hideTooltip();
+      return;
+    }
+    tipEl.classList.add('tooltip-auto-fading');
+    autoHideEndTimer = setTimeout(hideTooltip, 180);
+  }, ms);
 }
 
 function ensure() {
@@ -128,7 +155,7 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -165,6 +192,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
@@ -176,7 +204,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 export function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -198,7 +226,7 @@ export function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -224,9 +252,9 @@ export function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
+export function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
 }
 
 /**
@@ -303,6 +331,7 @@ export function hideTooltip() {
   // the pointer leaving, and nothing else.
   unstick();
   clearTimeout(showTimer);
+  clearAutoHide();
   if (tipEl) tipEl.style.display = 'none';
 }
 

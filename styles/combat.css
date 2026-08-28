@@ -89,7 +89,7 @@
   height: auto;
   min-height: 0;
   gap: 0;
-  padding: calc(5px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
   justify-content: start;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
@@ -819,6 +819,10 @@
   display: block;
   overflow: visible;
 }
+/* One compact enemy context tooltip owns combatant reading during the T0 repair.
+   The frame stays the hit target; its nested intent/status/tray affordances do
+   not independently summon competing floating tooltips. */
+.combatant.enemy .combatant-stack { pointer-events: none; }
 .combatant-stack {
   position: absolute;
   left: 50%;

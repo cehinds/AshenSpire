@@ -329,12 +329,21 @@ button.subtle { border-color: var(--line-soft); color: var(--parchment); font-si
   background: #14100c; border: 1px solid var(--gold); border-radius: 8px;
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
+  opacity: 1; transition: opacity 180ms ease;
 }
+#tooltip.tooltip-auto-fading { opacity: 0; }
+:is(body.reduced-motion, html.reduced-motion) #tooltip { transition: none; }
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
 #tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip[data-tooltip-variant='enemy-context'] {
+  max-width: min(18rem, calc(100vw - 1rem));
+  padding: 0.65rem 0.8rem;
+  line-height: 1.35;
+}
+#tooltip .tt-enemy-statuses { margin-top: 0.45rem; color: var(--muted); font-size: 0.88em; }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
   display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
@@ -4561,6 +4570,9 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
+  /* Letter spacing adds a trailing measure after the final glyph. Matching it
+     with text-indent centres the visible wordmark, not the invisible tail. */
+  text-indent: 0.04em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4693,7 +4705,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.015em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -5446,7 +5458,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   height: auto;
   min-height: 0;
   gap: 0;
-  padding: calc(5px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
+  padding: calc(1px / var(--ui-zoom, 1)) calc(8px / var(--ui-zoom, 1));
   justify-content: start;
 }
 .topbar.combat-hud.shared-hud[data-hud-mode='compact'] .hud-top {
@@ -6176,6 +6188,10 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
   display: block;
   overflow: visible;
 }
+/* One compact enemy context tooltip owns combatant reading during the T0 repair.
+   The frame stays the hit target; its nested intent/status/tray affordances do
+   not independently summon competing floating tooltips. */
+.combatant.enemy .combatant-stack { pointer-events: none; }
 .combatant-stack {
   position: absolute;
   left: 50%;
@@ -10345,6 +10361,7 @@ const balance = {
     // short-lived hover/tap explanation.
     tooltipPlacement: {
       hoverDelayMs: 500,
+      autoFadeMs: 5000,
       topBandViewportPct: 25,
       sideBandViewportPct: 30,
     },
@@ -36350,6 +36367,8 @@ const { UI_COMPONENTS: UI, markUiComponent } = require("src/ui/components/uiComp
 
 let tipEl = null;
 let showTimer = null;
+let autoHideTimer = null;
+let autoHideEndTimer = null;
 
 // ---------------------------------------------------------------------------
 // E8 — THE TOOLTIP STAYS UP UNTIL SOMETHING REPLACES IT. Constantine, verbatim:
@@ -36409,6 +36428,31 @@ let stuckWatch = null;
 function unstick() {
   stuck = false;
   if (stuckWatch) { stuckWatch.disconnect(); stuckWatch = null; }
+}
+
+function clearAutoHide() {
+  clearTimeout(autoHideTimer);
+  clearTimeout(autoHideEndTimer);
+  autoHideTimer = null;
+  autoHideEndTimer = null;
+  if (tipEl) tipEl.classList.remove('tooltip-auto-fading');
+}
+
+function scheduleAutoHide(ms) {
+  clearAutoHide();
+  if (!(ms > 0) || !tipEl) return;
+  autoHideTimer = setTimeout(() => {
+    if (!tipEl) return;
+    const reduced = document.documentElement.classList.contains('reduced-motion')
+      || document.body?.classList.contains('reduced-motion')
+      || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      hideTooltip();
+      return;
+    }
+    tipEl.classList.add('tooltip-auto-fading');
+    autoHideEndTimer = setTimeout(hideTooltip, 180);
+  }, ms);
 }
 
 function ensure() {
@@ -36472,7 +36516,7 @@ function ensure() {
  * tooltip for a hand card should not sit on the other hand cards, and no
  * geometry in fx.js can work that out from the card alone.
  */
-function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null) {
+function showWith(html, anchor, clear = null, intent = 'beside', appearance = null, placementModel = null, autoHideMs = 0) {
   if (!html) return false;
   // "…until SOMETHING REPLACES IT." This is that something, and it is the only
   // place the word is spoken: whatever was stuck is now gone, and what takes its
@@ -36509,6 +36553,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
     : intent;
   t.dataset.tooltipPlacement = resolvedIntent;
   placeAnchored(t, anchor, { intent: resolvedIntent, clear });
+  scheduleAutoHide(autoHideMs);
   return true;
 }
 
@@ -36520,7 +36565,7 @@ function showWith(html, anchor, clear = null, intent = 'beside', appearance = nu
  * every tooltip a mouse would.
  */
 function attachTooltip(el, contentFn, {
-  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null,
+  intent = 'beside', clear = null, delayMs = 140, focusDelayMs = 160, appearance = null, placementModel = null, autoHideMs = 0,
 } = {}) {
   // Both input paths anchor to the ELEMENT, which is what they are both
   // explaining. The pointermove listener that used to drag the tooltip back
@@ -36542,7 +36587,7 @@ function attachTooltip(el, contentFn, {
   // card in `.hand`, a face in `.disc-faces`, a topbar button in its bar), and it
   // is a PREFERENCE, not a constraint: where the group fills the room, the
   // placement is exactly what it was before this line.
-  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  const show = () => showWith(contentFn(), el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
   el.addEventListener('pointerenter', () => {
     clearTimeout(showTimer);
     showTimer = setTimeout(show, delayMs);
@@ -36568,9 +36613,9 @@ function attachTooltip(el, contentFn, {
 }
 
 /** Show the shared tooltip for a non-hover gesture, using the same placement. */
-function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null } = {}) {
+function showTooltipFor(el, html, { intent = 'beside', clear = null, appearance = null, placementModel = null, autoHideMs = 0 } = {}) {
   if (!el) return false;
-  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel);
+  return showWith(html, el.getBoundingClientRect(), clear || el.parentElement, intent, appearance, placementModel, autoHideMs);
 }
 
 /**
@@ -36647,6 +36692,7 @@ function hideTooltip() {
   // the pointer leaving, and nothing else.
   unstick();
   clearTimeout(showTimer);
+  clearAutoHide();
   if (tipEl) tipEl.style.display = 'none';
 }
 
@@ -36852,8 +36898,9 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      with. Only 'under' reads it; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
- *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
- *           named at the call site. Of the candidates that fit, the one that
+ *   clear   an element, box, or small list of them to KEEP OFF IF IT CAN — the
+ *           anchor's own group and any screen-level protected chrome named at
+ *           the call site. Of the candidates that fit, the one that
  *           overlaps this least wins; ties fall to the declared order, so a
  *           caller that passes nothing gets exactly `first that fits`. It is a
  *           PREFERENCE and never a veto: when no candidate can clear the group,
@@ -36931,14 +36978,14 @@ function placeAnchored(el, anchor, {
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
-      const c = anchorLocalBox(layer, clear);
+      const clearItems = Array.isArray(clear) ? clear.filter(Boolean) : [clear];
       // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
       // where the group fills the room, and "no answer" resolves to the bound,
       // which lands ON the group — worse than the candidate that grazes it.
       let best = usable[0];
-      let bestArea = overlapArea(box(best), c);
+      let bestArea = clearItems.reduce((area, item) => area + overlapArea(box(best), anchorLocalBox(layer, item)), 0);
       for (const p of usable.slice(1)) {
-        const area = overlapArea(box(p), c);
+        const area = clearItems.reduce((sum, item) => sum + overlapArea(box(p), anchorLocalBox(layer, item)), 0);
         if (area < bestArea) { best = p; bestArea = area; }
       }
       at0 = best;
@@ -37876,6 +37923,7 @@ function tooltipPlacementModel(presentation = {}) {
     variant: 'edge-aware',
     tokens: {
       hoverDelayMs: Math.max(0, finite(presentation.hoverDelayMs, 500)),
+      autoFadeMs: Math.max(0, finite(presentation.autoFadeMs, 5000)),
       topBandViewportPct: clampPct(presentation.topBandViewportPct, 25),
       sideBandViewportPct: clampPct(presentation.sideBandViewportPct, 30),
     },
@@ -41102,7 +41150,7 @@ const RELEASE = contentBundle.version;
 // alarming: nothing derived the digest, so nothing is claimed.
 // ---------------------------------------------------------------------------
 /* BUILD_SOURCE_START */
-const SOURCE = 'f3aedc1ad1';
+const SOURCE = '3d6eb42062';
 /* BUILD_SOURCE_END */
 
 // ---------------------------------------------------------------------------
@@ -41136,7 +41184,7 @@ const SOURCE = 'f3aedc1ad1';
 // with a sort order.
 // ---------------------------------------------------------------------------
 /* BUILD_ORDINAL_START */
-const ORDINAL = '1378';
+const ORDINAL = '1395';
 /* BUILD_ORDINAL_END */
 
 // ---------------------------------------------------------------------------
@@ -41163,7 +41211,7 @@ const ORDINAL = '1378';
 // date that belongs to an older build is a lie a reader has no way to check.
 // ---------------------------------------------------------------------------
 /* BUILD_DATE_START */
-const BUILT = '2026-08-26';
+const BUILT = '2026-08-28';
 /* BUILD_DATE_END */
 
 // ---------------------------------------------------------------------------
@@ -55196,7 +55244,7 @@ const { attachTooltip, hideTooltip, showTooltipFor, esc } = require("src/ui/comp
 const { relicText } = require("src/ui/components/card.js");
 const { enemySprite, playerSprite, classGlyph, tintCss } = require("src/ui/assets.js");
 const { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } = require("src/ui/fx.js");
-const { intentBadge, intentTooltip, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
+const { intentBadge, backdropClass, MENU, statusTooltipText, statusInstancePresentation, statusInstanceSemanticAttrs } = require("src/ui/uiContent.js");
 const { openQuickNav, quickNavMode, saveAction } = require("src/ui/components/quicknav.js");
 const { sfx } = require("src/ui/sfx.js");
 const { mountTutorial } = require("src/ui/components/tutorial.js");
@@ -55575,6 +55623,26 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
       + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
   }
 
+  function enemyContextTooltip(subject) {
+    const hp = subject.resources.find((row) => row.label === 'HP');
+    const poise = subject.resources.find((row) => row.label === 'Poise');
+    const statuses = subject.statuses.map((status) => status.name).join(' · ') || 'None';
+    return `<div class="tt-title">${esc(subject.name)}</div>`
+      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
+      + ` · <b>Poise ${esc(poise?.value ?? '—')}/${esc(poise?.max ?? '—')}</b></div>`
+      + `<div class="tt-enemy-statuses"><b>Status</b> ${esc(statuses)}</div>`;
+  }
+
+  function showEnemyContextTooltip(box, entity) {
+    const subject = combatantSubject('enemy', entity);
+    showTooltipFor(box, enemyContextTooltip(subject), {
+      intent: 'above',
+      clear: [box.querySelector('.combatant-leading'), $('.topbar.combat-hud')],
+      appearance: { variant: 'enemy-context', widthRem: 18, maxHeightRatio: 0.4 },
+      autoHideMs: tooltipPlacement.tokens.autoFadeMs,
+    });
+  }
+
   function expandedCombatantTooltip(subject, role) {
     const live = subject.intent || subject.skills.find((row) => row.active);
     return `${foldedCombatantTooltip(subject)}`
@@ -55613,6 +55681,10 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     inspectorExpanded = true;
     const subject = combatantSubject(role, entity);
     renderCombatantInspector();
+    if (role === 'enemy') {
+      showEnemyContextTooltip(box, entity);
+      return;
+    }
     showTooltipFor(box, expandedCombatantTooltip(subject, role), {
       placementModel: tooltipPlacement,
       clear: box.parentElement,
@@ -55625,12 +55697,15 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     box.classList.add('inspectable');
     box.dataset.focusable = '';
     box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
+    const enemy = role === 'enemy';
+    attachTooltip(box, () => enemy ? enemyContextTooltip(subject()) : foldedCombatantTooltip(subject()), {
+      intent: enemy ? 'above' : 'beside',
       delayMs: tooltipPlacement.tokens.hoverDelayMs,
       focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
+      placementModel: enemy ? null : tooltipPlacement,
+      clear: enemy ? [box.querySelector('.combatant-leading'), $('.topbar.combat-hud')] : box.parentElement,
+      appearance: enemy ? { variant: 'enemy-context', widthRem: 18, maxHeightRatio: 0.4 } : { variant: 'combatant-folded' },
+      autoHideMs: enemy ? tooltipPlacement.tokens.autoFadeMs : 0,
     });
     box.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
@@ -56069,7 +56144,8 @@ function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTut
     el.className = `intent ${badge.cls}`;
     markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
-    attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
+    // Enemy reading is temporarily consolidated into the one compact context
+    // tooltip on the combatant frame. The intent badge remains visual only.
     return el;
   }
 

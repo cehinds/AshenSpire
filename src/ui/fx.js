@@ -191,8 +191,9 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      with. Only 'under' reads it; 'beside' slides the free axis
  *                      to stay on screen, which is what made three of its
  *                      candidates usable at all.
- *   clear   an element or box to KEEP OFF IF IT CAN — the anchor's own group,
- *           named at the call site. Of the candidates that fit, the one that
+ *   clear   an element, box, or small list of them to KEEP OFF IF IT CAN — the
+ *           anchor's own group and any screen-level protected chrome named at
+ *           the call site. Of the candidates that fit, the one that
  *           overlaps this least wins; ties fall to the declared order, so a
  *           caller that passes nothing gets exactly `first that fits`. It is a
  *           PREFERENCE and never a veto: when no candidate can clear the group,
@@ -270,14 +271,14 @@ export function placeAnchored(el, anchor, {
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
-      const c = anchorLocalBox(layer, clear);
+      const clearItems = Array.isArray(clear) ? clear.filter(Boolean) : [clear];
       // LEAST OVERLAP, NOT "MUST CLEAR". A veto would have no answer on the shape
       // where the group fills the room, and "no answer" resolves to the bound,
       // which lands ON the group — worse than the candidate that grazes it.
       let best = usable[0];
-      let bestArea = overlapArea(box(best), c);
+      let bestArea = clearItems.reduce((area, item) => area + overlapArea(box(best), anchorLocalBox(layer, item)), 0);
       for (const p of usable.slice(1)) {
-        const area = overlapArea(box(p), c);
+        const area = clearItems.reduce((sum, item) => sum + overlapArea(box(p), anchorLocalBox(layer, item)), 0);
         if (area < bestArea) { best = p; bestArea = area; }
       }
       at0 = best;
