@@ -1,13 +1,13 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T18:06:03Z",
+  "updatedAt": "2026-08-28T18:45:28Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
     "defaultBranch": "dev",
     "baseSha": "5af802e619ec5093a058c50511e14e97ea99bf12",
-    "observedAt": "2026-08-28T18:06:03Z",
+    "observedAt": "2026-08-28T18:45:28Z",
     "governance": [
       {
         "path": "docs/governance/README.md",
@@ -38,7 +38,7 @@
       {
         "name": "dev",
         "role": "integration",
-        "sha": "5af802e619ec5093a058c50511e14e97ea99bf12",
+        "sha": "3e4bf419d78f1807ff3b2790d4ac8af70dfcc1ca",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
@@ -62,7 +62,7 @@
       {
         "name": "main",
         "role": "stable",
-        "sha": "ba2716979dc099129183f7153f47c6da7a6c60b8",
+        "sha": "ab9dd4bf51ae99569c0b11484b25649097d28ee2",
         "policyProtected": true,
         "githubProtectionObserved": false,
         "currentness": "must-match-remote"
