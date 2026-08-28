@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "ashenspire.continuity.authority.delegations.v1",
+  "ticketId": "AS-HD-20260826-049",
+  "soleWriter": "/root/ticket_dedupe",
+  "branch": "codex/coordination-structure-reset-current",
+  "worktree": "C:\\repos\\AshenSpire-coordination-reset-current",
+  "base": "5af802e619ec5093a058c50511e14e97ea99bf12",
+  "reviewers": ["/root/qa_harness_audit"],
+  "projectionOnlyPaths": ["tickets/AS-HD-20260826-049", "teams/coordination", "features/AS-HD-20260826-049"]
+}

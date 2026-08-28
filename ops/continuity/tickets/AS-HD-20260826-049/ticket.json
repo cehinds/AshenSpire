@@ -14,13 +14,13 @@
   },
   "entry": {
     "agentSession": "/root/ticket_dedupe",
-    "branch": "codex/coordination-structure-reset",
-    "worktree": "C:\\repos\\AshenSpire-coordination-reset",
-    "base": "a110ac9d6472faeb979f010949315e8374ddb01a",
-    "candidateHeadAtEntry": "7d48610f4b7054e1f5ec4680829aab33214ed176",
+    "branch": "codex/coordination-structure-reset-current",
+    "worktree": "C:\\repos\\AshenSpire-coordination-reset-current",
+    "base": "5af802e619ec5093a058c50511e14e97ea99bf12",
+    "candidateHeadAtEntry": "3baed3d380468b4738ee9fcd6d1b1500f98cde23",
     "objective": "Reversibly establish canonical continuity records and origin-backed per-feature commit-pointer promotion channels.",
-    "firstAction": "Implemented pointer, schemas, ticket/team/history/evidence structures, bounded validation, cold start, then began adversarial-gap correction.",
-    "evidenceTarget": "Frozen correction commit, full suite, cold reconstruction, and stable-TEST promotion pilot.",
+    "firstAction": "Entered the current-base lane, bounded escalation reads against traversal and oversized records, then added canonical compatibility projections.",
+    "evidenceTarget": "Frozen current-base correction commit, full suite, canonical cold reconstruction, and traversal/oversize refusal plants.",
     "nextHandoff": "Exact frozen commit to independent QA."
   },
   "scope": {
@@ -29,6 +29,7 @@
       "tools/continuity-reconcile.mjs",
       "tools/continuity-feature-channels.mjs",
       "tools/continuity-escalation.mjs",
+      "tools/continuity-canonical-projection.mjs",
       "tests/continuity-reconcile.test.mjs",
       "tests/fixtures/continuity-cold-start",
       "tests/fixtures/continuity-feature-pilot",
@@ -100,6 +101,11 @@
       "id": "000004-AS-HD-20260826-049-correction-unverified-timeout",
       "path": "history/000004-AS-HD-20260826-049-correction-unverified-timeout.json",
       "sha256": "61787F9F8B051A63CC95C1864F5763526A60DECD1F9824204D3D0C619F47ED34"
+    },
+    {
+      "id": "000005-AS-HD-20260826-049-current-base-security-canonical-projection",
+      "path": "history/000005-AS-HD-20260826-049-current-base-security-canonical-projection.json",
+      "sha256": "EDBE76217115B258DC78F67F761E5B993D5033AA95EF5DDC1A327EAFE47F1F79"
     }
   ]
 }

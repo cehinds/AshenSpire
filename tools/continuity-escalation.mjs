@@ -1,5 +1,5 @@
-import { cpSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { cpSync, existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 
@@ -9,6 +9,8 @@ const PILOT_ROOT = resolve(REPO_ROOT, 'tests/fixtures/continuity-escalation-pilo
 const CLASSIFICATIONS = ['NEEDS_CONSTANTINE_NOW', 'ITM3_DECISION_OVERDUE', 'TEAM_REMEDIABLE_BLOCKER'];
 const ITEM_KEYS = ['schemaVersion', 'id', 'helpDeskTicketId', 'dedupKey', 'classification', 'status', 'enteredAtUtc', 'lastReviewedAtUtc', 'ageSeconds', 'attempts', 'wake', 'continuingWork', 'guard', 'ownerPacket', 'closure'];
 const HISTORY_KEYS = ['schemaVersion', 'sequence', 'atUtc', 'itemId', 'event', 'classification', 'status', 'attemptCount', 'guardCode', 'detail'];
+const MAX_FILE_BYTES = 1024 * 1024;
+const SAFE_COMPONENT = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
 const isObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const isNonEmpty = (value) => typeof value === 'string' && value.length > 0;
@@ -22,10 +24,29 @@ function exact(value, label, keys, findings) {
   return true;
 }
 
-function readJson(path, label, findings) {
+function inside(root, candidate) {
+  const rel = relative(root, candidate);
+  return rel === '' || (!rel.startsWith(`..${sep}`) && rel !== '..' && !isAbsolute(rel));
+}
+
+function readBounded(rootPath, refPath) {
+  if (!isNonEmpty(refPath) || isAbsolute(refPath) || /^[A-Za-z]:/.test(refPath) || refPath.includes('\\') || refPath.split('/').some((part) => !part || part === '.' || part === '..')) throw new Error('path must use safe relative components');
+  const root = realpathSync(rootPath);
+  let cursor = root;
+  for (const segment of refPath.split('/')) {
+    cursor = join(cursor, segment);
+    if (!existsSync(cursor)) throw new Error('does not exist');
+    if (lstatSync(cursor).isSymbolicLink()) throw new Error('symbolic links are forbidden');
+  }
+  const target = realpathSync(cursor);
+  if (!inside(root, target) || !lstatSync(target).isFile()) throw new Error('must be a regular file inside escalation root');
+  if (lstatSync(target).size > MAX_FILE_BYTES) throw new Error(`exceeds ${MAX_FILE_BYTES} byte limit`);
+  return readFileSync(target, 'utf8');
+}
+
+function readJson(root, refPath, label, findings) {
   try {
-    if (lstatSync(path).isSymbolicLink()) throw new Error('symbolic links are forbidden');
-    return JSON.parse(readFileSync(path, 'utf8'));
+    return JSON.parse(readBounded(root, refPath));
   } catch (error) { findings.push(`${label}: ${error.message}`); return null; }
 }
 
@@ -63,7 +84,7 @@ function validateCell(cell, findings) {
 
 function validateItem(item, findings, label) {
   if (!exact(item, label, ITEM_KEYS, findings)) return;
-  if (item.schemaVersion !== 'ashenspire.escalation.item.v1' || !isNonEmpty(item.id) || !isNonEmpty(item.helpDeskTicketId) || !isNonEmpty(item.dedupKey)) findings.push(`${label}: identity fields invalid`);
+  if (item.schemaVersion !== 'ashenspire.escalation.item.v1' || !isNonEmpty(item.id) || !SAFE_COMPONENT.test(item.helpDeskTicketId || '') || !isNonEmpty(item.dedupKey)) findings.push(`${label}: identity fields invalid; helpDeskTicketId must be one safe filename component`);
   if (!CLASSIFICATIONS.includes(item.classification) || !['ACTIVE', 'ESCALATED', 'CLOSED'].includes(item.status)) findings.push(`${label}: classification or status invalid`);
   if (!isUtcDate(item.enteredAtUtc) || !isUtcDate(item.lastReviewedAtUtc) || !Number.isInteger(item.ageSeconds) || item.ageSeconds < 0) findings.push(`${label}: timestamps/age invalid`);
   else {
@@ -88,10 +109,9 @@ function validateItem(item, findings, label) {
   } else if (item.closure !== null) findings.push(`${label}.closure: must be null until CLOSED`);
 }
 
-function readHistory(path, findings, label) {
+function readHistory(root, refPath, findings, label) {
   try {
-    if (lstatSync(path).isSymbolicLink()) throw new Error('symbolic links are forbidden');
-    const records = readFileSync(path, 'utf8').split(/\r?\n/).filter(Boolean).map(JSON.parse);
+    const records = readBounded(root, refPath).split(/\r?\n/).filter(Boolean).map(JSON.parse);
     if (records.length < 1 || records.length > 1024) findings.push(`${label}: expected 1-1024 records`);
     return records;
   } catch (error) { findings.push(`${label}: ${error.message}`); return []; }
@@ -110,7 +130,7 @@ function validateHistory(records, item, findings, label) {
 export function reconcileEscalationRoot(rootPath) {
   const root = resolve(rootPath);
   const findings = [];
-  const cell = readJson(join(root, 'cell.json'), 'cell.json', findings);
+  const cell = readJson(root, 'cell.json', 'cell.json', findings);
   if (cell) validateCell(cell, findings);
   let queueEntries = [];
   try {
@@ -121,11 +141,12 @@ export function reconcileEscalationRoot(rootPath) {
   const items = [];
   for (const entry of queueEntries) {
     if (!entry.isFile() || entry.isSymbolicLink() || !entry.name.endsWith('.json')) { findings.push(`queue/${entry.name}: expected regular JSON file`); continue; }
-    const item = readJson(join(root, 'queue', entry.name), `queue/${entry.name}`, findings);
+    const item = readJson(root, `queue/${entry.name}`, `queue/${entry.name}`, findings);
     if (!item) continue;
     validateItem(item, findings, `queue/${entry.name}`);
+    if (!SAFE_COMPONENT.test(item.helpDeskTicketId || '')) { items.push(item); continue; }
     const historyName = `${item.helpDeskTicketId}.jsonl`;
-    const records = readHistory(join(root, 'history', historyName), findings, `history/${historyName}`);
+    const records = readHistory(root, `history/${historyName}`, findings, `history/${historyName}`);
     validateHistory(records, item, findings, `history/${historyName}`);
     items.push(item);
   }
@@ -208,6 +229,8 @@ export function runEscalationSelfTest() {
       source.id = 'PILOT-001/SECOND'; source.dedupKey = 'PILOT-001:SECOND';
       writeFileSync(join(root, 'queue/PILOT-002.json'), `${JSON.stringify(source, null, 2)}\n`);
     }, /more than one active item links the same Help Desk ticket/],
+    ['traversing Help Desk ticket component is refused before history access', (root) => mutateItem(root, (item) => { item.helpDeskTicketId = '../../outside'; }), /one safe filename component/],
+    ['oversized escalation item is refused by the bounded reader', (root) => mutateItem(root, (item) => { item.ownerPacket.hazard = 'x'.repeat(MAX_FILE_BYTES + 1); }), /exceeds 1048576 byte limit/],
   ];
   for (const [name, mutate, expected] of plants) {
     const root = copyPilot(name.replace(/\W+/g, '-'));
@@ -216,7 +239,7 @@ export function runEscalationSelfTest() {
   const transitions = copyPilot('transitions');
   try {
     const closed = JSON.parse(readFileSync(join(transitions, 'queue/PILOT-001.json'), 'utf8'));
-    const entered = readHistory(join(transitions, 'history/PILOT-001.jsonl'), [], 'pilot');
+    const entered = readHistory(transitions, 'history/PILOT-001.jsonl', [], 'pilot');
     closed.status = 'ACTIVE'; closed.closure = null; closed.lastReviewedAtUtc = closed.enteredAtUtc; closed.ageSeconds = 0; closed.attempts = [];
     const attempt = transitionEscalationItem(closed, entered.slice(0, 1), { type: 'ATTEMPT', atUtc: '2026-08-28T00:01:00Z', actor: 'pilot-resolution', action: 'repair', outcome: 'retry ready' });
     const closure = transitionEscalationItem(attempt.item, attempt.history, { type: 'CLOSE', atUtc: '2026-08-28T00:02:00Z', actor: 'pilot-resolution', outcome: 'resolved', evidence: 'pilot://closure' });

@@ -22,6 +22,11 @@ not import, replace, or silently supersede projectless Help Desk/team ledgers.
 - `escalation/` stores the three-seat blocker cell, deduplicated Help Desk
   queue, exact promotion guards, owner packets, attempts, age, wake, safe
   continuing work, and append-only escalation/closure history.
+- `authority/`, canonical `tickets/`, `teams/`, plural `features/`, and
+  `migrations/` provide the operating-model layout. The migration manifest is
+  pointer-selected evidence and hash-locks compatibility projections. A
+  projection contains only its canonical identity and `authoritySource`; it
+  never copies current authority, lifecycle, assignment, or channel state.
 
 ## Update rule
 

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "ashenspire.continuity.authority.roles.v1",
+  "roles": [
+    { "id": "OWNER_MAIN", "authority": "DIRECTIVE_AND_SCOPE", "mayDelegate": true },
+    { "id": "TRIAGE", "authority": "QUEUE_TRIAGE_ONLY", "mayDelegate": false },
+    { "id": "RESOLUTION", "authority": "ASSIGNED_RESOLUTION_PATHS_ONLY", "mayDelegate": false },
+    { "id": "DECISION_AND_ESCALATION", "authority": "BOUNDED_ITM3_DECISIONS", "mayDelegate": false }
+  ]
+}

@@ -11,7 +11,7 @@ export function runContinuityReconcileContract() {
   return {
     ok,
     detail: ok
-      ? `current revision ${current.revision} reconciled with ${current.integrityLinks} integrity links, ${current.featureChannels} feature channel(s), and ${current.escalationItems} escalation item(s); cold-start and refusal corpus ${corpus.passed}/${corpus.cases.length}`
+      ? `current revision ${current.revision} reconciled with ${current.integrityLinks} integrity links, ${current.featureChannels} feature channel(s), ${current.escalationItems} escalation item(s), and ${current.canonicalFiles} canonical manifest file(s); cold-start and refusal corpus ${corpus.passed}/${corpus.cases.length}`
       : `current findings: ${current.findings.join('; ') || 'none'}; corpus failures: ${corpus.cases.filter((entry) => !entry.passed).map((entry) => entry.name).join(', ') || 'none'}`,
   };
 }

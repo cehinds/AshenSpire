@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "ashenspire.continuity.history.v2",
+  "id": "000005-AS-HD-20260826-049-current-base-security-canonical-projection",
+  "sequence": 5,
+  "recordedAtUtc": "2026-08-28T08:49:34Z",
+  "teamId": "coordination",
+  "ticketId": "AS-HD-20260826-049",
+  "event": "CURRENT_BASE_SECURITY_CANONICAL_PROJECTION",
+  "supersedesHistoryId": "000004-AS-HD-20260826-049-correction-unverified-timeout",
+  "lifecycle": {
+    "from": "CANDIDATE FROZEN",
+    "to": "CANDIDATE FROZEN",
+    "legacyFrom": null
+  },
+  "evidence": {
+    "path": "evidence/AS-HD-20260826-049-current-base-security-canonical-projection-2026-08-28.md",
+    "sha256": "D36F385EE2D5DD441F15A6FDECFCDA7BCA3219766EBF7A04DDE8E837D5F732FB"
+  }
+}

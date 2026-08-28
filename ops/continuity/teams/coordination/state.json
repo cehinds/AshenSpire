@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "ashenspire.continuity.projection.v1",
+  "projectionOnly": true,
+  "canonicalPath": "teams/coordination/state.json",
+  "authoritySource": "teams/coordination/team.json",
+  "authoritySourceSha256": "2748E0E7DB7188CF72F8828E82C26A8487A739FA5BF4382084C16012778BD4AC",
+  "projectionKind": "TEAM_STATE",
+  "ticketId": "AS-HD-20260826-049"
+}

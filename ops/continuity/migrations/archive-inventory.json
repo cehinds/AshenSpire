@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "ashenspire.continuity.archive-inventory.v1",
+  "historicalNoncurrent": [
+    {
+      "path": "tickets/COORDINATION-STRUCTURE-RESET/ticket.json",
+      "sha256": "F1231549885B83A4AD5739599483B3A13AA922AAA315EA5A4B3BCFB406A054D0",
+      "status": "HISTORICAL_NONCURRENT",
+      "supersededBy": "AS-HD-20260826-049"
+    }
+  ],
+  "cleanup": {
+    "action": "RETAIN_IN_PLACE",
+    "archivePath": "tickets/COORDINATION-STRUCTURE-RESET/ticket.json",
+    "reason": "Preserve committed bootstrap bytes and lineage; POINTER does not select this ticket."
+  },
+  "automation": {
+    "currentState": "MANUAL_READ_ONLY_RECONCILER",
+    "scheduled": false,
+    "externalAutomation": "UNKNOWN",
+    "entrypoint": "tools/continuity-reconcile.mjs"
+  }
+}

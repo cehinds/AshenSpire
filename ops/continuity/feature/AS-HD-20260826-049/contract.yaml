@@ -22,10 +22,10 @@
     "preWorkApprovalLoop": false,
     "currentEntry": {
       "agentSession": "/root/ticket_dedupe",
-      "branch": "codex/coordination-structure-reset",
-      "worktree": "C:\\repos\\AshenSpire-coordination-reset",
-      "base": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "firstAction": "Implement continuity pointer/schema/migration/validator and correct adversarial gaps.",
+      "branch": "codex/coordination-structure-reset-current",
+      "worktree": "C:\\repos\\AshenSpire-coordination-reset-current",
+      "base": "5af802e619ec5093a058c50511e14e97ea99bf12",
+      "firstAction": "Repair escalation containment/size boundaries and add hash-bound canonical compatibility projections on current origin/dev.",
       "nextHandoff": "Exact frozen commit to independent QA.",
       "soleWriter": true
     }

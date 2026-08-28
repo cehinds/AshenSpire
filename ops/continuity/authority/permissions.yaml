@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "ashenspire.continuity.authority.permissions.v1",
+  "oneWriterPerPath": true,
+  "localActions": ["implementation", "tests", "evidence", "commit"],
+  "separateTransitions": ["origin-dev", "test-promotion", "release-promotion", "reviewed-pr", "merge", "publication", "deployment", "release"],
+  "hardStops": ["SECURITY_FAILURE", "DESTRUCTIVE_DATA_FAILURE", "TECHNICAL_BRANCH_PROTECTION_FAILURE"]
+}

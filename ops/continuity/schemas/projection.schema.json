@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.projection.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectionOnly", "canonicalPath", "authoritySource", "authoritySourceSha256", "projectionKind", "ticketId"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.projection.v1" },
+    "projectionOnly": { "const": true },
+    "canonicalPath": { "type": "string", "minLength": 1 },
+    "authoritySource": { "type": "string", "minLength": 1 },
+    "authoritySourceSha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" },
+    "projectionKind": { "enum": ["TICKET_CONTRACT", "TICKET_STATE", "TICKET_EVIDENCE_INDEX", "TICKET_HISTORY_INDEX", "TEAM_STATE", "TEAM_ASSIGNMENTS", "FEATURE_DEV", "FEATURE_TEST", "FEATURE_RELEASE", "FEATURE_HISTORY"] },
+    "ticketId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" }
+  }
+}

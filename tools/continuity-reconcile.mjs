@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { reconcileFeatureDirectory, runFeatureChannelSelfTest } from './continuity-feature-channels.mjs';
 import { reconcileEscalationRoot, runEscalationSelfTest } from './continuity-escalation.mjs';
+import { reconcileCanonicalProjectionFromPointer, runCanonicalProjectionSelfTest } from './continuity-canonical-projection.mjs';
 
 const SELF = fileURLToPath(import.meta.url);
 const REPO_ROOT = resolve(dirname(SELF), '..');
@@ -174,16 +175,18 @@ function validateOwner(owner, label, findings) {
 function validatePointer(pointer, findings) {
   const keys = ['schemaVersion', 'revision', 'updatedAtUtc', 'previousHistoryId', 'current'];
   if (!exactObject(pointer, 'POINTER.json', keys, keys, findings)) return;
-  if (pointer.schemaVersion !== 'ashenspire.continuity.pointer.v2') findings.push('POINTER.json: unsupported schemaVersion');
+  if (!['ashenspire.continuity.pointer.v2', 'ashenspire.continuity.pointer.v3'].includes(pointer.schemaVersion)) findings.push('POINTER.json: unsupported schemaVersion');
   if (!Number.isInteger(pointer.revision) || pointer.revision < 1) findings.push('POINTER.json: revision must be an integer >= 1');
   if (!isUtcDate(pointer.updatedAtUtc)) findings.push('POINTER.json: updatedAtUtc must be an ISO UTC timestamp');
   if (pointer.revision === 1 && pointer.previousHistoryId !== null) findings.push('POINTER.json: revision 1 must have previousHistoryId null');
   if (pointer.revision > 1 && !isNonEmpty(pointer.previousHistoryId)) findings.push('POINTER.json: revision >1 requires previousHistoryId');
-  const currentKeys = ['teamId', 'ticketId', 'team', 'ticket', 'history', 'evidence'];
+  const currentKeys = pointer.schemaVersion === 'ashenspire.continuity.pointer.v3'
+    ? ['teamId', 'ticketId', 'team', 'ticket', 'history', 'evidence', 'migration']
+    : ['teamId', 'ticketId', 'team', 'ticket', 'history', 'evidence'];
   if (!exactObject(pointer.current, 'POINTER.json current', currentKeys, currentKeys, findings)) return;
   if (!isNonEmpty(pointer.current.teamId)) findings.push('POINTER.json: current.teamId is required');
   if (!isNonEmpty(pointer.current.ticketId)) findings.push('POINTER.json: current.ticketId is required');
-  for (const name of ['team', 'ticket', 'history', 'evidence']) validateFileRef(pointer.current[name], `POINTER.json current.${name}`, findings);
+  for (const name of currentKeys.slice(2)) validateFileRef(pointer.current[name], `POINTER.json current.${name}`, findings);
 }
 
 function validateTeam(team, findings, label = 'team') {
@@ -385,7 +388,7 @@ export function reconcileContinuityRoot(rootPath = DEFAULT_ROOT) {
 
   validatePointer(pointer, findings);
   if (!isObject(pointer.current)) return { ok: false, findings, root, pointer };
-  for (const name of ['team', 'ticket', 'history', 'evidence']) verifyIntegrity(root, pointer.current[name], `current.${name}`, findings);
+  for (const name of ['team', 'ticket', 'history', 'evidence', ...(pointer.current.migration ? ['migration'] : [])]) verifyIntegrity(root, pointer.current[name], `current.${name}`, findings);
 
   const team = parseJsonRecord(root, pointer.current.team?.path || '', findings);
   validateTeam(team, findings);
@@ -399,7 +402,7 @@ export function reconcileContinuityRoot(rootPath = DEFAULT_ROOT) {
   }
 
   const activeTickets = [];
-  let integrityLinks = 4;
+  let integrityLinks = pointer.current.migration ? 5 : 4;
   if (Array.isArray(team.activeTickets)) {
     for (const [index, ref] of team.activeTickets.entries()) {
       verifyIntegrity(root, ref, `team activeTickets[${index}]`, findings);
@@ -460,6 +463,13 @@ export function reconcileContinuityRoot(rootPath = DEFAULT_ROOT) {
     escalationItems = escalationResult.items;
     for (const finding of escalationResult.findings) findings.push(`escalation: ${finding}`);
   }
+  let canonicalFiles = 0;
+  const canonicalStructureExists = existsSync(join(root, 'authority')) || existsSync(join(root, 'features')) || existsSync(join(root, 'migrations/000001-canonical-layout-projection.json'));
+  if (pointer.current.migration) {
+    const canonicalResult = reconcileCanonicalProjectionFromPointer(root);
+    canonicalFiles = canonicalResult.files;
+    for (const finding of canonicalResult.findings) findings.push(`canonical projection: ${finding}`);
+  } else if (canonicalStructureExists) findings.push('canonical projection: current canonical structure requires POINTER current.migration path/SHA');
 
   return {
     ok: findings.length === 0,
@@ -472,6 +482,7 @@ export function reconcileContinuityRoot(rootPath = DEFAULT_ROOT) {
     historyRecords: frontierByPath.size,
     featureChannels,
     escalationItems,
+    canonicalFiles,
     integrityLinks,
   };
 }
@@ -617,6 +628,8 @@ export function runContinuitySelfTest() {
   for (const entry of feature.cases) cases.push({ ...entry, name: `feature channel: ${entry.name}` });
   const escalation = runEscalationSelfTest();
   for (const entry of escalation.cases) cases.push({ ...entry, name: `escalation cell: ${entry.name}` });
+  const canonical = runCanonicalProjectionSelfTest();
+  for (const entry of canonical.cases) cases.push({ ...entry, name: `canonical projection: ${entry.name}` });
 
   const failed = cases.filter((entry) => !entry.passed);
   return { ok: failed.length === 0, cases, passed: cases.length - failed.length, failed: failed.length };
@@ -634,7 +647,7 @@ function printResult(result, json) {
     return;
   }
   if (result.ok) {
-    console.log(`RESULT: continuity current graph valid — revision ${result.revision}, team ${result.teamId}, ticket ${result.ticketId}, ${result.activeTickets} active ticket(s), ${result.historyRecords} history record(s), ${result.featureChannels} feature channel(s), ${result.escalationItems} escalation item(s), ${result.integrityLinks} integrity links, 0 findings.`);
+    console.log(`RESULT: continuity current graph valid — revision ${result.revision}, team ${result.teamId}, ticket ${result.ticketId}, ${result.activeTickets} active ticket(s), ${result.historyRecords} history record(s), ${result.featureChannels} feature channel(s), ${result.escalationItems} escalation item(s), ${result.canonicalFiles} canonical manifest file(s), ${result.integrityLinks} integrity links, 0 findings.`);
   } else {
     for (const finding of result.findings) console.error(`FINDING: ${finding}`);
     console.log(`RESULT: continuity current graph invalid — ${result.findings.length} finding(s).`);

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.migration.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "atUtc", "mode", "pointerEntry", "securityFix", "verificationBoundary", "files", "coldStart", "rollback"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.migration.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "atUtc": { "type": "string", "format": "date-time" },
+    "mode": { "const": "COMPATIBILITY_PROJECTION" },
+    "pointerEntry": { "const": "POINTER.json" },
+    "securityFix": { "type": "string", "minLength": 1 },
+    "verificationBoundary": { "type": "string", "minLength": 1 },
+    "files": { "type": "array", "minItems": 15, "maxItems": 15, "uniqueItems": true, "items": { "$ref": "#/$defs/ref" } },
+    "coldStart": { "type": "string", "minLength": 1 },
+    "rollback": { "type": "string", "minLength": 1 }
+  },
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" }
+      }
+    }
+  }
+}

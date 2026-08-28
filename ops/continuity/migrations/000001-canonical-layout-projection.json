@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "ashenspire.continuity.migration.v1",
+  "id": "000001-canonical-layout-projection",
+  "atUtc": "2026-08-28T08:44:34Z",
+  "mode": "COMPATIBILITY_PROJECTION",
+  "pointerEntry": "POINTER.json",
+  "securityFix": "Escalation item and history reads require safe ticket-id filename components, realpath containment, regular files, no symlinks, and a 1 MiB bound.",
+  "verificationBoundary": "Cold reconstruction and refusal plants are repository tests; independent exact-head QA remains a separate result.",
+  "files": [
+    { "path": "authority/roles.yaml", "sha256": "427C7A30520CED3DBDF464F7F8624B5B4749883A97D19328AD0C8F97C541210C" },
+    { "path": "authority/permissions.yaml", "sha256": "1D48ABAC8451701A67F9C239683B021872A97A3D4CCDB90F8284386834CA322C" },
+    { "path": "authority/delegations.json", "sha256": "00573D659A82B1A803DFDEEB5760C87C6572B9F2C3ADDA364BC40B89559FFC61" },
+    { "path": "authority/owner-directives.jsonl", "sha256": "ABD30352FCA963112ED3B404058240FB51601DCC20AB0F0EE0FEC78BEA21C721" },
+    { "path": "tickets/AS-HD-20260826-049/contract.yaml", "sha256": "E70FCC87D869FE731954AF96CF6AFAA03C43E970579A2A9B987D702B2A141FD2" },
+    { "path": "tickets/AS-HD-20260826-049/state.json", "sha256": "3D4F29777B61684EE59EC6A8E2479CCFC132B34917DBBF5DD825EB39962D49C8" },
+    { "path": "tickets/AS-HD-20260826-049/evidence/INDEX.json", "sha256": "C8BB0F7841B5C0FD4699F581756D661A667D04DA84C07211BAFD457110EF4115" },
+    { "path": "tickets/AS-HD-20260826-049/history.jsonl", "sha256": "92CE5A3D3B5F5F06E31CCFAD8D863BC98F05FB620F892B9B94E6BD18B5E75E1D" },
+    { "path": "teams/coordination/state.json", "sha256": "2AFEDAF68B6078DF38840970BE39B94130D0A9419B007FB355126F309E8A8908" },
+    { "path": "teams/coordination/assignments.json", "sha256": "6027D776A373205169BBF02BD838517A9A5CBD239844DEFA32997C9006039B1F" },
+    { "path": "features/AS-HD-20260826-049/dev.json", "sha256": "498A446C2C04CA86298E33F76D268785A9B24B7154E89D8EC79A6C22244B62EA" },
+    { "path": "features/AS-HD-20260826-049/test.json", "sha256": "174DBF47505AD0B4211771A378EAB9F83DEDFFF83C8E263E20E360DE6FFE8EB3" },
+    { "path": "features/AS-HD-20260826-049/release.json", "sha256": "84C78CD5FF1DC08D1F2BAA6C4FDEEF346C3EF93B71FE98B5C00A1E155E87643E" },
+    { "path": "features/AS-HD-20260826-049/history.jsonl", "sha256": "BC4F34A2B3CEB964B549C3C7F827A4D3E7F54DC5C9CCC75B4DA22ABFA1A46881" },
+    { "path": "migrations/archive-inventory.json", "sha256": "F96177CC8A107A7A48B23054227A6C22E77339DC589FFAE6B800626763878FA3" }
+  ],
+  "coldStart": "Read POINTER.json, verify its selected migration evidence, then verify every manifest ref and follow projection authoritySource paths; no chat or memory is required.",
+  "rollback": "Append a later correction selecting a replacement manifest; never rewrite history or delete the only authoritative source or origin ref."
+}

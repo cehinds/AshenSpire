@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "ashenspire.continuity.projection.v1",
+  "projectionOnly": true,
+  "canonicalPath": "teams/coordination/assignments.json",
+  "authoritySource": "escalation/cell.json",
+  "authoritySourceSha256": "C01CA1ACD0867817BD58E70DFDE30960B6EA52353FC8E51FE45E82213171B205",
+  "projectionKind": "TEAM_ASSIGNMENTS",
+  "ticketId": "AS-HD-20260826-049"
+}

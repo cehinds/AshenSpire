@@ -7,7 +7,7 @@
   "properties": {
     "schemaVersion": { "const": "ashenspire.escalation.item.v1" },
     "id": { "type": "string", "minLength": 1 },
-    "helpDeskTicketId": { "type": "string", "minLength": 1 },
+    "helpDeskTicketId": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
     "dedupKey": { "type": "string", "minLength": 1 },
     "classification": { "enum": ["NEEDS_CONSTANTINE_NOW", "ITM3_DECISION_OVERDUE", "TEAM_REMEDIABLE_BLOCKER"] },
     "status": { "enum": ["ACTIVE", "ESCALATED", "CLOSED"] },
