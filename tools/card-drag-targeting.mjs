@@ -174,7 +174,7 @@ async function main() {
       }))()`);
 
       const shotSettings = encodeURIComponent(JSON.stringify({ textSize }));
-      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotSettings=${shotSettings}` }, S);
+      await cdp.send('Page.navigate', { url: `${base}?shot=combat&shotHand=10&shotSettings=${shotSettings}` }, S);
       await until(`!!document.querySelector('.combat .hand .card')`, 'combat'); await wait(350);
       console.log(`\n  ${shape} · Text ${textSize}`);
       const controls = await ev(`(() => { const hs=[...document.querySelectorAll('.hand-page')]; return {n:hs.length, labels:hs.map(x=>x.getAttribute('aria-label')), rects:hs.map(x=>{const r=x.getBoundingClientRect();return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}), on:hs.every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})}; })()`);
