@@ -88,8 +88,7 @@ async function main() {
   };
 
   try {
-    const shotSettings = encodeURIComponent(JSON.stringify({ holdConfirm: 'normal' }));
-    const appUrl = `http://localhost:${server.port}${SHIPPED ? '/dist/AshenSpire.html' : '/'}?shot=map&shotSettings=${shotSettings}`;
+    const appUrl = `http://localhost:${server.port}${SHIPPED ? '/dist/AshenSpire.html' : '/'}?shot=map`;
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 1200, height: 730, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
@@ -158,12 +157,7 @@ async function main() {
       const firstToggle = await evaluate(`(() => {
         const face = document.querySelector('[data-region="inventory"] .disc-face');
         if (!face) return null;
-        const rect = face.getBoundingClientRect();
-        const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
-          bubbles: true, cancelable: true, pointerId: 315, pointerType: 'mouse', button: 0, detail: 1,
-          clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-        }));
-        event('pointerdown'); event('pointerup'); event('click', MouseEvent);
+        face.click();
         const reveal = document.querySelector('[data-region="inventory"] .disc-reveal:not([hidden])');
         const model = reveal?.querySelector('.inventory-model');
         const revealRect = reveal?.getBoundingClientRect();
@@ -173,25 +167,18 @@ async function main() {
           panels: document.querySelectorAll('[data-region="inventory"] .disc-face[aria-expanded="true"]').length,
           model: !!model,
           information: !!document.querySelector('[data-region="inventory"] .inventory-information'),
-          comparisonAnchor: !!reveal?.querySelector('.inventory-detail[data-component="armoury.comparisonTooltipAnchor"]'),
+          comparison: !!reveal?.querySelector('.equip-candidate-comparison'),
           modelShare: revealRect?.width && modelRect?.width ? modelRect.width / revealRect.width : null,
         };
       })()`);
       check(firstToggle?.open === 'true' && firstToggle.panels === 1 && firstToggle.model && firstToggle.information,
         'an Inventory item opens one model-and-information panel');
-      check(firstToggle?.comparisonAnchor && firstToggle.modelShare <= 0.22,
-        `expanded equipment Inventory exposes comparison and a narrow model (${firstToggle?.modelShare == null ? 'absent' : `${Math.round(firstToggle.modelShare * 100)}%`})`);
+      check(firstToggle?.comparison && firstToggle.modelShare <= 0.22,
+        `expanded equipment Inventory matches selector data with a narrow model (${firstToggle?.modelShare == null ? 'absent' : `${Math.round(firstToggle.modelShare * 100)}%`})`);
       await screenshot('desktop-inventory-expanded');
       const closed = await evaluate(`(() => {
         const face = document.querySelector('[data-region="inventory"] .disc-face');
-        if (face) {
-          const rect = face.getBoundingClientRect();
-          const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
-            bubbles: true, cancelable: true, pointerId: 316, pointerType: 'mouse', button: 0, detail: 1,
-            clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-          }));
-          event('pointerdown'); event('pointerup'); event('click', MouseEvent);
-        }
+        face?.click();
         return face?.getAttribute('aria-expanded') || null;
       })()`);
       check(closed === 'false', 'clicking the Inventory item title again refolds it');
@@ -215,98 +202,42 @@ async function main() {
     await evaluate("document.querySelector('[data-fold=cards]')?.click()");
 
     await evaluate(`(() => {
-      document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
+      const slot = [...document.querySelectorAll('.equip-slot')].find((element) => element.querySelector('.es-label')?.textContent === 'Right Hand');
+      slot?.querySelector('.es-cell.on')?.click();
     })()`);
-    await until("!!document.querySelector('[data-region=inventory][data-collapsed=\"0\"] .ep-list .disc-face')", 'filtered Inventory item cards');
+    await until("!!document.querySelector('.equip-picker .ep-list .disc-face')", 'hand item cards');
     const collapsedCards = await evaluate(`(() => ({
-      faces: document.querySelectorAll('[data-region=inventory] .ep-list .disc-face').length,
-      outsideActions: document.querySelectorAll('[data-region=inventory] .ep-list > [data-act], [data-region=inventory] .ep-list > .disc-faces > [data-act]').length,
-      visibleActions: [...document.querySelectorAll('[data-region=inventory] .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length,
+      faces: document.querySelectorAll('.equip-picker .ep-list .disc-face').length,
+      outsideActions: document.querySelectorAll('.equip-picker .ep-list > [data-act], .equip-picker .ep-list > .disc-faces > [data-act]').length,
+      visibleActions: [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length,
       inventoryPresent: !!document.querySelector('[data-region="inventory"]'),
-      filteredFor: document.querySelector('[data-region=inventory] .ep-list')?.dataset.filteredFor || null,
-      sharedFaces: document.querySelectorAll('[data-region=inventory] .inventory-face').length,
-      legacyFaces: document.querySelectorAll('[data-region=inventory] .equip-chip.as-face').length,
+      sharedFaces: document.querySelectorAll('.equip-picker .inventory-face').length,
+      legacyFaces: document.querySelectorAll('.equip-picker .equip-chip.as-face').length,
     }))()`);
     check(collapsedCards.faces > 0, `selected hand draws folded item cards (${collapsedCards.faces})`);
-    check(collapsedCards.inventoryPresent && collapsedCards.filteredFor === 'rightHand:0',
-      `Inventory remains available and filters for the selected socket (${collapsedCards.filteredFor || 'none'})`);
+    check(collapsedCards.inventoryPresent, 'Inventory remains available while a slot is selected');
     check(collapsedCards.sharedFaces === collapsedCards.faces && collapsedCards.legacyFaces === 0,
       `slot selection reuses the Inventory card face (${collapsedCards.sharedFaces}/${collapsedCards.faces}, legacy ${collapsedCards.legacyFaces})`);
     check(collapsedCards.outsideActions === 0 && collapsedCards.visibleActions === 0,
       `collapsed item cards expose no action controls (outside ${collapsedCards.outsideActions}, visible ${collapsedCards.visibleActions})`);
 
     const expandedCard = await evaluate(`(() => {
-      const face = document.querySelector('[data-region=inventory] .ep-list .disc-face');
-      const rect = face.getBoundingClientRect();
-      const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
-        bubbles: true, cancelable: true, pointerId: 317, pointerType: 'mouse', button: 0, detail: 1,
-        clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-      }));
-      event('pointerdown'); event('pointerup'); event('click', MouseEvent);
-      const visible = [...document.querySelectorAll('[data-region=inventory] .ep-list [data-act]')].filter((element) => element.offsetParent !== null);
+      const face = document.querySelector('.equip-picker .ep-list .disc-face');
+      face.click();
+      const visible = [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null);
       return {
         open: face.getAttribute('aria-expanded'),
         actions: visible.length,
         actionInsideReveal: visible.length === 1 && !!visible[0].closest('.disc-reveal'),
-        instruction: document.querySelector('[data-region=inventory] .inventory-detail')?.getAttribute('aria-label') || '',
-        focusable: document.querySelector('[data-region=inventory] .inventory-detail')?.dataset.focusable || '',
-        role: document.querySelector('[data-region=inventory] .inventory-detail')?.getAttribute('role') || '',
+        attackAfter: Number(visible[0]?.closest('.disc-reveal')?.querySelector('[data-role=attack] strong')?.textContent || NaN),
       };
     })()`);
     check(expandedCard.open === 'true' && expandedCard.actions === 1 && expandedCard.actionInsideReveal,
       `expanded item card reveals exactly one in-card action (${expandedCard.actions})`);
-    check(/hover or focus.+comparison/i.test(expandedCard.instruction)
-      && !/hold to show comparison/i.test(expandedCard.instruction)
-      && /(press and hold|activate this card) to (equip|unequip)/i.test(expandedCard.instruction),
-    `an action-owning card distinguishes comparison access from its equipment action (${JSON.stringify(expandedCard.instruction)})`);
-    check(expandedCard.focusable === 'true' && expandedCard.role === 'button',
-      'the expanded whole-card action participates in the shared keyboard/gamepad focus cursor');
-    const wholeCardFill = await evaluate(`(async () => {
-      const source = document.querySelector('[data-region=inventory] .inventory-detail');
-      const reveal = source?.closest('.disc-reveal');
-      const face = [...(source?.closest('.disc-faces')?.children || [])]
-        .find((candidate) => candidate.dataset?.face === source?.dataset.inventoryItem)
-        ?.querySelector('.inventory-face');
-      const rect = source?.getBoundingClientRect();
-      if (!source || !rect) return null;
-      const pointer = (type) => source.dispatchEvent(new PointerEvent(type, {
-        bubbles: true, cancelable: true, pointerId: 320, pointerType: 'touch', button: 0,
-        clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-      }));
-      pointer('pointerdown');
-      await new Promise((done) => setTimeout(done, 260));
-      const result = {
-        delegated: source.dataset.holdFeedback === 'delegated',
-        faceProgress: Number(face?.dataset.holdProgress || 0),
-        revealProgress: Number(reveal?.dataset.holdProgress || 0),
-        faceFill: getComputedStyle(face).backgroundImage,
-        revealFill: getComputedStyle(reveal).backgroundImage,
-        actionTag: source.querySelector('[data-act]')?.tagName || '',
-        actionButtons: source.querySelectorAll('button[data-act]').length,
-      };
-      pointer('pointerup');
-      return result;
-    })()`);
-    check(wholeCardFill?.delegated
-      && wholeCardFill.faceProgress > 0 && wholeCardFill.revealProgress > 0
-      && /linear-gradient/i.test(wholeCardFill.faceFill)
-      && /linear-gradient/i.test(wholeCardFill.revealFill),
-    `an expanded hold fills its title and reveal as one card (${JSON.stringify(wholeCardFill)})`);
-    check(wholeCardFill?.actionTag === 'SPAN' && wholeCardFill.actionButtons === 0,
-      `the expanded whole-card hold has one action surface, not a second button (${JSON.stringify(wholeCardFill)})`);
-    await evaluate(`document.querySelector('[data-region=inventory] .inventory-detail')
-      ?.dispatchEvent(new PointerEvent('pointerenter'))`);
-    await wait(650);
-    const comparisonTip = await evaluate(`(() => {
-      const tip = document.querySelector('#tooltip[data-tooltip-variant="equipment-comparison"]');
-      const comparison = tip?.querySelector('[data-ui-component="equipment-comparison"]');
-      const rect = tip?.getBoundingClientRect();
-      return { visible: !!tip && getComputedStyle(tip).display !== 'none', comparison: !!comparison, width: rect?.width || 0 };
-    })()`);
-    check(comparisonTip.visible && comparisonTip.comparison && comparisonTip.width >= 500,
-      `hover delay reveals the full wide comparison tooltip (${Math.round(comparisonTip.width)}px)`);
+    check(Number.isFinite(expandedCard.attackAfter) && expandedCard.attackAfter >= 0,
+      `an equipped card previews its data-derived Unequip result (${expandedCard.attackAfter})`);
     const actionReach = await evaluate(`(() => {
-      const action = document.querySelector('[data-region=inventory] .ep-list [data-act]');
+      const action = document.querySelector('.equip-picker .ep-list [data-act]');
       action?.scrollIntoView({ block: 'center' });
       const rect = action?.getBoundingClientRect();
       return {
@@ -318,16 +249,8 @@ async function main() {
       'the expanded card action can be scrolled into the viewport without leaving its reveal');
     await screenshot('desktop-card-expanded');
     const afterRefold = await evaluate(`(() => {
-      const face = document.querySelector('[data-region=inventory] .ep-list .disc-face');
-      if (face) {
-        const rect = face.getBoundingClientRect();
-        const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
-          bubbles: true, cancelable: true, pointerId: 318, pointerType: 'mouse', button: 0, detail: 1,
-          clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-        }));
-        event('pointerdown'); event('pointerup'); event('click', MouseEvent);
-      }
-      return [...document.querySelectorAll('[data-region=inventory] .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length;
+      document.querySelector('.equip-picker .ep-list .disc-face')?.click();
+      return [...document.querySelectorAll('.equip-picker .ep-list [data-act]')].filter((element) => element.offsetParent !== null).length;
     })()`);
     check(afterRefold === 0, 'refolding the item hides its action again');
 
@@ -335,11 +258,11 @@ async function main() {
       const fold = document.querySelector('[data-fold=inventory]');
       if (fold?.getAttribute('aria-expanded') === 'false') fold.click();
       const dragItem = (id, label) => {
-        const fold = document.querySelector('[data-fold=inventory]');
-        if (fold?.getAttribute('aria-expanded') === 'false') fold.click();
         const source = [...document.querySelectorAll('[data-region=inventory] [data-inventory-item]')]
           .find((element) => element.dataset.itemId === id);
-        const target = document.querySelector('[data-slot-position="' + label + ':0"]');
+        const slot = [...document.querySelectorAll('.equip-slot')]
+          .find((element) => element.querySelector('.es-label')?.textContent === label);
+        const target = slot?.querySelector('.es-cell.on');
         if (!source || !target) return false;
         const data = new DataTransfer();
         source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: data }));
@@ -348,9 +271,11 @@ async function main() {
         source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: data }));
         return true;
       };
-      const swordMoved = dragItem('straightSword', 'leftHand');
-      const shieldMoved = dragItem('roundShield', 'rightHand');
-      const slotTitle = (slotId) => document.querySelector('[data-slot-position="' + slotId + ':0"] .armoury-position-values strong')?.textContent || null;
+      const swordMoved = dragItem('straightSword', 'Left Hand');
+      const shieldMoved = dragItem('roundShield', 'Right Hand');
+      const slotTitle = (label) => [...document.querySelectorAll('.equip-slot')]
+        .find((element) => element.querySelector('.es-label')?.textContent === label)
+        ?.querySelector('.es-cell.on')?.title || null;
       const layers = [...document.querySelectorAll('.armoury-figure .equipped-figure > img')]
         .map((element) => ({
           z: element.style.zIndex || '',
@@ -360,8 +285,8 @@ async function main() {
         draggable: !!document.querySelector('[data-region=inventory] [data-inventory-item]')?.draggable,
         swordMoved,
         shieldMoved,
-        left: slotTitle('leftHand'),
-        right: slotTitle('rightHand'),
+        left: slotTitle('Left Hand'),
+        right: slotTitle('Right Hand'),
         swordMirror: layers.find((layer) => layer.z === '2')?.transform || null,
         shieldMirror: layers.find((layer) => layer.z === '3')?.transform || null,
       };
@@ -383,15 +308,7 @@ async function main() {
       await evaluate(`(() => {
         const fold = document.querySelector('[data-fold=inventory]');
         if (fold?.getAttribute('aria-expanded') === 'false') fold.click();
-        const face = document.querySelector('[data-region=inventory] .disc-face');
-        if (face) {
-          const rect = face.getBoundingClientRect();
-          const event = (type, EventType = PointerEvent) => face.dispatchEvent(new EventType(type, {
-            bubbles: true, cancelable: true, pointerId: 319, pointerType: 'touch', button: 0, detail: 1,
-            clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2,
-          }));
-          event('pointerdown'); event('pointerup'); event('click', MouseEvent);
-        }
+        document.querySelector('[data-region=inventory] .disc-face')?.click();
       })()`);
       const phone = await evaluate(`(() => {
         const panel = document.querySelector('.armoury');
@@ -441,7 +358,9 @@ async function main() {
     })()`);
     if (!SHIPPED) await until("!!document.querySelector('.armoury')", 'full-Inventory Armoury fixture');
     if (!SHIPPED) await evaluate(`(() => {
-      document.querySelector('[data-slot-position="rightHand:0"] .armoury-position-action')?.click();
+      const slot = [...document.querySelectorAll('.equip-slot')]
+        .find((element) => element.querySelector('.es-label')?.textContent === 'Right Hand');
+      slot?.querySelector('.es-cell.on')?.click();
       const face = [...document.querySelectorAll('.ep-list .disc-face')]
         .find((element) => element.querySelector('.ec-name')?.textContent === 'Straight Sword');
       face?.click();

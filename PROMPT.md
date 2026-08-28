@@ -109,11 +109,8 @@ use the issue—not this summary—for exact acceptance:
 3. **Armoury is one equipment owner with configurable presentations.** Inventory,
    relic, flask, weapon, armour, and card surfaces share typed models and actions.
    Radial shortcuts versus fixed HUD are presentation configuration, not duplicate
-   state or duplicated dispatch. Folded and expanded faces of one selectable card
-   are one action surface and one progress state; a class-model capability opts
-   that behavior in, while comparison/inspection remains a separate presentation
-   concern. Keep every target reachable, at the tap floor, clear of safe areas,
-   and truthful across pointer, touch, keyboard, and gamepad.
+   state or duplicated dispatch. Keep every target reachable, at the tap floor,
+   clear of safe areas, and truthful across pointer, touch, keyboard, and gamepad.
 4. **Targeting is a policy over the current board.** Do not encode only `self` and
    enemy defaults. [#313](https://github.com/cehinds/AshenSpire/issues/313) exposes
    `ally` and `mixed` legal sets that can change with living/connected seats. A

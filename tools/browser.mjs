@@ -134,7 +134,6 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 // A UNIX socket path is capped at 108 bytes and Chrome puts `SingletonSocket`
 // inside the profile. 90 leaves room for that name and for the mkdtemp suffix.
@@ -529,7 +528,7 @@ const SCENARIOS = [
 async function selftest() {
   const { mkdtempSync: mk, writeFileSync, rmSync: rm, mkdirSync } = await import('node:fs');
   const { spawnSync } = await import('node:child_process');
-  const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
+  const HERE = resolve(new URL('.', import.meta.url).pathname);
   const BIN = resolveBrowser();
   if (!BIN) { console.error('browser --selftest: no Chrome/Chromium found — set CHROME'); process.exit(2); }
   console.log(`browser --selftest — ${BIN}\n`);

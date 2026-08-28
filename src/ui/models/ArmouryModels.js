@@ -1,6 +1,7 @@
 import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { trayModel } from './TrayModels.js';
 
 const DEFAULT_REGIONS = Object.freeze([
   Object.freeze({ id: 'slots', label: 'Slots', count: 0, unit: 'slot', edge: 'bottom', expanded: true }),
@@ -9,10 +10,10 @@ const DEFAULT_REGIONS = Object.freeze([
   Object.freeze({ id: 'stats', label: 'Stats', count: 0, unit: 'stat', edge: 'bottom', expanded: false }),
 ]);
 
-function armouryViewSwitcherModel({ views, activeView, viewLabels = {} }) {
+function armouryViewSwitcherModel({ views, activeView }) {
   return componentModel(UI.armouryViewSwitcher, {
     variant: activeView,
-    properties: { views: views.map((id) => ({ id, label: viewLabels[id] || id, active: id === activeView })) },
+    properties: { views: views.map((id) => ({ id, active: id === activeView })) },
     accessibility: { role: 'tablist', label: 'Armoury view' },
     behaviors: views.map((id) => behaviorModel(`select-armoury-${id}`, {
       event: 'click',
@@ -22,11 +23,11 @@ function armouryViewSwitcherModel({ views, activeView, viewLabels = {} }) {
   });
 }
 
-function armouryHeaderModel({ views, activeView, viewLabels = {} }) {
+function armouryHeaderModel({ views, activeView }) {
   return componentModel(UI.armouryHeader, {
     properties: { title: 'ARMOURY' },
     behaviors: [behaviorModel('close-armoury', { event: 'click', command: 'close-armoury' })],
-    children: [armouryViewSwitcherModel({ views, activeView, viewLabels })],
+    children: [armouryViewSwitcherModel({ views, activeView })],
   });
 }
 
@@ -55,7 +56,7 @@ export function armouryCardStripModel() {
   });
 }
 
-export function armouryPanelModel({ view, views, viewLabels = {}, layout, subject = 'slots', regions = DEFAULT_REGIONS, picking = false, notice = '' }) {
+export function armouryPanelModel({ view, views, layout, subject = 'slots', regions = DEFAULT_REGIONS, picking = false, notice = '' }) {
   const content = Object.freeze({
     slots: armouryBodyModel({ view, figure: layout?.figure, slots: layout?.slots || 'none' }),
     inventory: armouryInventoryModel(),
@@ -65,7 +66,17 @@ export function armouryPanelModel({ view, views, viewLabels = {}, layout, subjec
   const regionModels = regions.map((region) => {
     const item = content[region.id];
     if (!item) throw new Error(`Unknown Armoury region model: ${region.id}`);
-    return item;
+    if (region.id === subject) return item;
+    return trayModel({
+      id: region.id,
+      name: region.label,
+      count: region.count,
+      itemType: region.unit,
+      edge: region.edge || 'bottom',
+      expanded: !!region.expanded,
+      sortable: !!region.sortable,
+      items: [item],
+    });
   });
   return componentModel(UI.armouryPanel, {
     variant: view,
@@ -79,7 +90,7 @@ export function armouryPanelModel({ view, views, viewLabels = {}, layout, subjec
     },
     accessibility: { role: 'dialog', label: 'Armoury', modal: true },
     children: [
-      armouryHeaderModel({ views, activeView: view, viewLabels }),
+      armouryHeaderModel({ views, activeView: view }),
       ...regionModels,
     ],
   });
@@ -120,7 +131,7 @@ export function equipmentSlotModel({ slotId, label, rule, cells }) {
   });
 }
 
-export function inventoryItemCardModel(row, { selected = false, draggable = false, classModel = null } = {}) {
+export function inventoryItemCardModel(row, { selected = false, draggable = false } = {}) {
   return componentModel(UI.inventoryItemCard, {
     variant: row.category,
     properties: {
@@ -132,7 +143,6 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
       equippedLabels: [...row.equippedLabels],
       selected,
       draggable,
-      holdAction: classModel?.holdAction === true,
     },
     behaviors: [behaviorModel(`inspect-${row.key}`, {
       event: 'click',
@@ -142,7 +152,7 @@ export function inventoryItemCardModel(row, { selected = false, draggable = fals
   });
 }
 
-export function inventoryDetailCardModel({ row, art, description, mods, instruction = '', classModel = null }) {
+export function inventoryDetailCardModel({ row, art, description, mods, instruction = '' }) {
   return componentModel(UI.inventoryDetailCard, {
     variant: row.category,
     properties: {
@@ -156,7 +166,6 @@ export function inventoryDetailCardModel({ row, art, description, mods, instruct
       instruction,
       art,
       fallbackIcon: row.item.icon || '◆',
-      holdAction: classModel?.holdAction === true,
     },
   });
 }

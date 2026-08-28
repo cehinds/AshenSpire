@@ -183,15 +183,11 @@ async function main() {
       const regions = ids.map((id) => ({ id, label:id, count:1, unit:'item', edge:'bottom', expanded:false }));
       return ids.map((subject) => {
         const panel = armouryPanelModel({ view:'grid', views:['grid'], layout:{ figure:true, slots:'flank' }, subject, regions });
-        const directIds = panel.children.slice(1).map((child) => child.component);
         return { subject, trays:panel.children.filter((child) => child.component === 'folding-tray').length,
-          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]),
-          allRegions: ['armoury-body','armoury-inventory','armoury-card-strip','armoury-stats-panel']
-            .every((component) => directIds.includes(component)) };
+          direct:panel.children.some((child) => child.component === ({ slots:'armoury-body', inventory:'armoury-inventory', cards:'armoury-card-strip', stats:'armoury-stats-panel' })[subject]) };
       });
     })()`);
-    check(composition.every((row) => row.trays === 0 && row.direct && row.allRegions),
-      'the semantic panel model owns each region once while the screen alone composes shared trays');
+    check(composition.every((row) => row.trays === 3 && row.direct), 'every configured Armoury subject remains direct while the other three become trays');
     if (SHOTS) {
       mkdirSync(SHOT_DIR, { recursive: true });
       const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false }, sessionId);
@@ -241,7 +237,7 @@ async function main() {
     await evaluate(`(() => { const select=document.querySelector('#sort'); select.value='id-desc'; select.dispatchEvent(new Event('change',{bubbles:true})); return true; })()`);
     check(await evaluate(`(() => { const ids=[...document.querySelectorAll('#grid article')].map(card=>card.dataset.component); return ids.every((id,index)=>index===0||ids[index-1].localeCompare(id)>=0); })()`), 'sort control orders filtered components by descending ID');
     await evaluate(`document.querySelector('#clear-filters').click(); true`);
-    check(await evaluate(`document.querySelectorAll('#grid article').length===88 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
+    check(await evaluate(`document.querySelectorAll('#grid article').length===72 && !new URLSearchParams(location.search).has('q') && document.querySelector('#kind').value==='all' && document.querySelector('#sort').value==='id-asc'`), 'Clear restores every component and removes discovery filters from the URL');
     await evaluate(`document.body.focus(); document.dispatchEvent(new KeyboardEvent('keydown',{key:'/',bubbles:true,cancelable:true})); true`);
     check(await evaluate(`document.activeElement===document.querySelector('#search')`), 'slash keyboard shortcut focuses component search');
     await evaluate(`document.querySelector('#density-less').click(); true`);
