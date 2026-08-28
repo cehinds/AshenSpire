@@ -4850,7 +4850,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // and a new reward field is one ORDER entry, not a screen redesign.
 
     // EDGE 1 — THE EMPTY OFFER: no rows, and Continue still resolves.
-    let plan = rewardPlan({}, { flaskSlotsFree: 1 });
+    let plan = rewardPlan({}, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 0, 'an empty offer derives an empty menu');
     let res = resolveContinue(plan, {}, 'auto', () => 0);
     eq(res.take.length, 0, 'auto-collect over nothing takes nothing');
@@ -4864,7 +4864,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       relicId: 'forsakenMedallion',
       armamentId: 'greatsword',
     };
-    plan = rewardPlan(offer, { flaskSlotsFree: 1 });
+    plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     eq(plan.rows.length, 5, 'five reward kinds derive five rows');
     eq(plan.rows.map((r) => r.kind).join(','), REWARD_KIND_ORDER.filter((k) => plan.rows.some((r) => r.kind === k)).join(','),
       'rows come out in the one declared order');
@@ -4874,9 +4874,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE FLASK BLOCK IS DERIVED, NOT DISCOVERED AT APPLY TIME: zero free
     // slots make the row blocked with a TOKEN reason (the levelUpPlan
     // precedent — a label switches on a word, never on two numbers).
-    const full = rewardPlan(offer, { flaskSlotsFree: 0 });
+    const full = rewardPlan(offer, { flaskSlotsFree: 0, armamentSlotsFree: 1 });
     eq(full.rows.find((r) => r.kind === 'flask').blockedBy, 'slots', 'a full belt blocks the flask row by name');
     eq(plan.rows.find((r) => r.kind === 'flask').blockedBy, null, 'a free slot does not');
+
+    // The same derivation owns armament capacity: a full storage cannot be
+    // discovered only after Take claims success.
+    const fullStorage = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 0 });
+    eq(fullStorage.rows.find((r) => r.kind === 'armament').blockedBy, 'storage',
+      'a full Armoury blocks the armament row by name');
+    eq(plan.rows.find((r) => r.kind === 'armament').blockedBy, null, 'a free armament slot does not');
 
     // AUTO takes everything not explicitly skipped — and picks the card by the
     // SEEDED rng handed in, never its own randomness.
@@ -4901,9 +4908,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     res = resolveContinue(full, {}, 'auto', () => 0);
     eq(res.take.some((t) => t.kind === 'flask'), false, 'auto does not force a flask into a full belt');
     eq(res.leave.find((l) => l.kind === 'flask').blockedBy, 'slots', 'the leave list carries the reason');
+    res = resolveContinue(fullStorage, {}, 'auto', () => 0);
+    eq(res.take.some((t) => t.kind === 'armament'), false, 'auto does not claim an armament when storage is full');
+    eq(res.leave.find((l) => l.kind === 'armament').blockedBy, 'storage', 'the armament leave carries the capacity reason');
 
     // THE SINGLE-CARD OFFER IS NOT A CHOICE — one card auto-takes as itself.
-    const one = rewardPlan({ cardIds: ['stomp'] }, { flaskSlotsFree: 1 });
+    const one = rewardPlan({ cardIds: ['stomp'] }, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
     res = resolveContinue(one, {}, 'auto', () => 0);
     eq(res.take.find((t) => t.kind === 'card').cardId, 'stomp', 'a one-card row needs no pick');
 

@@ -65,7 +65,12 @@ const KINDS = {
     // `stored: true` because rollDrop persisted at roll time; that flag and
     // the defect it described died together (#290 at f29d468).
     row: (r) => ({ armamentId: r.armamentId }),
-    blocked: () => null,
+    // Storage capacity is a collection fact, not a click-time surprise. A
+    // full Armoury must be visible before Take/auto-collect can claim success;
+    // the collector still re-checks defensively at the mutation seam.
+    // Treat an omitted fact as "unknown/available" for older callers; only an
+    // explicit zero closes the row.
+    blocked: (r, facts) => (facts.armamentSlotsFree === 0 ? 'storage' : null),
   },
   relic: {
     present: (r) => !!r.relicId,
@@ -76,8 +81,8 @@ const KINDS = {
 
 /**
  * rewardPlan(rewards, facts) → { rows }
- * `facts` carries the few run-derived numbers a row needs (today just
- * `flaskSlotsFree`); the offer stays pure data.
+ * `facts` carries the few run-derived numbers a row needs (`flaskSlotsFree`
+ * and `armamentSlotsFree`); the offer stays pure data.
  */
 export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0 }) {
   const rows = [];

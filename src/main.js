@@ -1101,8 +1101,12 @@ function rollDrop(source) {
  * or left-behind piece stays out of meta.found and can drop again.
  */
 function collectArmament(id, source) {
-  if (!id) return;
-  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8);
+  if (!id) return false;
+  // The store owns the capacity/duplicate gate. Nothing durable may advance
+  // unless the piece actually entered this run: otherwise a ninth item is
+  // permanently marked found, excluded from future drops, and shown Carried
+  // while the player never received it.
+  if (!addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8)) return false;
   if ((registries.balance.equipment.drops || {}).permanentOnFind) {
     const meta = saves.loadMeta();
     if (!(meta.found || []).includes(id)) {
@@ -1115,6 +1119,7 @@ function collectArmament(id, source) {
       saves.saveMeta(recorded.meta);
     }
   }
+  return true;
 }
 
 function finishRun(victory) {
@@ -1847,6 +1852,7 @@ if (shotState) {
   // state. Read-only, shot boots only; a player never has it.
   window.__spoils = () => ({
     found: [...((saves.loadMeta() || {}).found || [])],
+    discoveryReceipts: [...((saves.loadMeta() || {}).discoveryReceipts || [])],
     storage: [...(((run || {}).loadout || {}).storage || [])],
     map: run && run.mapGraph
       ? Object.values(run.mapGraph.nodes).map((n) => ({ id: n.id, floor: n.floor, type: n.type, next: [...(n.next || [])] }))
@@ -1884,6 +1890,24 @@ if (shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotS
   // NOT a fresh location.search read, which the note up there forbids, for the
   // reason it gives: that const IS the gate's reach.
   newRun({ classId: 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', slot: 1 });
+  // `?shotStorage=full` plants only the PRECONDITION for the real reward door:
+  // eight distinct, valid pieces in the run's storage. The drive still clicks
+  // a real map node, rolls through rollDrop, and mounts the production reward
+  // screen. Shot boots use memory storage, so this can never alter a real run.
+  const shotStorage = shotState === 'map' ? shotParams.get('shotStorage') : null;
+  if (shotStorage != null) {
+    if (shotStorage !== 'full') throw new Error(`?shotStorage=${shotStorage}: expected 'full'`);
+    const cap = registries.balance.equipment.storageSlots || 8;
+    const alreadyCarried = new Set(carriedIds(run.loadout));
+    const fillers = (registries.equipment.armaments || [])
+      .map((piece) => piece.id)
+      .filter((id) => !alreadyCarried.has(id))
+      .slice(0, cap);
+    if (fillers.length !== cap) throw new Error(`?shotStorage=full: need ${cap} distinct filler armaments, found ${fillers.length}`);
+    for (const id of fillers) {
+      if (!addToStorage(run.loadout, id, cap)) throw new Error(`?shotStorage=full: could not store '${id}'`);
+    }
+  }
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map

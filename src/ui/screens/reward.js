@@ -54,8 +54,10 @@ const KIND_GLYPHS = { cinders: '◉', card: '🂠', flask: '⚗', armament: '⚔
 // also STORE nothing itself. A caller that hands none gets reveal-only rows —
 // no such caller exists today; the boundary is named, not covered.
 export function mountRewards(app, { registries, run, rewards, onDone, saves = null, rng = null, onCollectArmament = null }) {
+  const armamentCap = registries.balance.equipment.storageSlots || 8;
   const plan = rewardPlan(rewards, {
     flaskSlotsFree: Math.max(0, flaskSlotCap(registries.balance) - run.flasks.length),
+    armamentSlotsFree: Math.max(0, armamentCap - (((run.loadout || {}).storage || []).length),
   });
   const states = {}; // kind → 'taken' | 'skipped' (absent = pending)
   let chosenCardId = null;
@@ -85,28 +87,41 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
 
   // ---- one apply function per kind — tap and auto-collect share them -------
   const apply = {
-    cinders(row) { run.cinders += row.amount; },
+    cinders(row) { run.cinders += row.amount; return true; },
     card(row) {
       run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       recordSeen('card', [row.cardId]);
+      return true;
     },
     flask(row) {
       run.flasks.push({ flaskId: row.flaskId });
       recordSeen('flask', [row.flaskId]);
+      return true;
     },
     relic(row) {
       run.relics.push(row.relicId);
       syncFlaskGrowth(registries, run); // growth chain: a relic source binds the moment it is held
       recordSeen('relic', [row.relicId]);
+      return true;
     },
-    armament(row) { if (onCollectArmament) onCollectArmament(row.armamentId); },
+    armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
   };
 
-  function take(row, viaKind) {
-    apply[row.kind](row);
+  function accept(row) {
+    if (apply[row.kind](row) === false) {
+      // The mutation seam refused (capacity changed or a duplicate reached a
+      // caller that should have excluded it). Fail closed: no Taken state, no
+      // sound, and the row tells the player why instead of claiming Carried.
+      states[row.kind] = 'blocked';
+      return false;
+    }
     states[row.kind] = 'taken';
-    sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
+    return true;
+  }
+
+  function take(row, viaKind) {
+    if (accept(row)) sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.kind);
   }
 
@@ -134,6 +149,9 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
         // so "Carried" before a take would be the f29d468 lie re-worded.
         const a = (registries.equipment.armaments || []).find((x) => x.id === row.armamentId);
         const name = a ? `<b>${esc(a.name)}</b> — ${esc((a.mods || []).join(', ') || 'plain steel')}` : 'An armament.';
+        if (row.blockedBy === 'storage' || state === 'blocked') {
+          return { title: 'Armament', body: `${name}<br><span style="color:var(--muted)">Armament storage is full. Make room before taking another piece.</span>` };
+        }
         return {
           title: 'Armament',
           body: state === 'taken'
@@ -176,19 +194,22 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
         ${plan.rows.length ? '<p class="subtitle">CLAIM YOUR SPOILS</p>' : ''}
         <div class="class-row reward-menu">
           ${plan.rows.map((row) => {
-            const state = states[row.kind] || (row.blockedBy ? 'blocked' : 'pending');
+            const blockedBy = row.blockedBy || (states[row.kind] === 'blocked' ? 'storage' : '');
+            const state = states[row.kind] || (blockedBy ? 'blocked' : 'pending');
             const { title, body } = rowBody(row);
             return `
             <div class="class-pick reward-kind${state === 'taken' || state === 'blocked' ? ' locked' : ''}"
                  data-kind="${esc(row.kind)}" data-state="${esc(state)}"
-                 data-blocked-by="${esc(row.blockedBy || '')}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
+                 data-blocked-by="${esc(blockedBy)}" data-new="${isNew(row) && state !== 'taken' ? '1' : '0'}">
               <div class="glyph">${KIND_GLYPHS[row.kind] || '?'}</div>
-              <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
-              <p>${body}</p>
-              ${state === 'taken' ? '<span class="chip">Taken</span>'
-                : state === 'blocked' ? '<span class="chip">Full</span>'
-                : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
-                : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+              <div class="cp-body">
+                <h3>${esc(title)}${isNew(row) && state !== 'taken' ? ' <span class="chip reward-new">NEW</span>' : ''}</h3>
+                <p>${body}</p>
+                ${state === 'taken' ? '<span class="chip">Taken</span>'
+                  : state === 'blocked' ? '<span class="chip">Full</span>'
+                  : state === 'skipped' ? '<span class="chip">Skipped — tap to reconsider</span>'
+                  : `<button class="subtle reward-skip" data-skip="${esc(row.kind)}" data-focusable="true">Skip</button>`}
+              </div>
             </div>`;
           }).join('')}
         </div>
@@ -204,6 +225,9 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       // cursor. The blocked row's tooltip carries the REASON (blockedBy), so
       // the label switches on the model's token, never on a re-derivation.
       attachTooltip(el, () => {
+        if (state === 'blocked' && el.dataset.blockedBy === 'storage') {
+          return `<div class="tt-title">Armament storage full</div>${esc('Make room in the Armoury before taking another piece.')}`;
+        }
         if (state === 'blocked') return `<div class="tt-title">Flask slots full</div>${esc('Drink or make room; this one stays in the mud.')}`;
         if (state === 'taken') return `<div class="tt-title">Taken</div>`;
         if (row.kind === 'card') return `<div class="tt-title">${row.choice ? 'Choose a card' : 'Take the card'}</div>${esc('Opens the offer; Back returns here.')}`;
@@ -236,11 +260,11 @@ export function mountRewards(app, { registries, run, rewards, onDone, saves = nu
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
       const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
+      let accepted = 0;
       for (const row of toTake) {
-        apply[row.kind](row);
-        states[row.kind] = 'taken';
+        if (accept(row)) accepted++;
       }
-      if (toTake.length) sfx.play('rewardTake');
+      if (accepted) sfx.play('rewardTake');
       onDone(chosenCardId);
     });
 

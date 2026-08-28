@@ -80,6 +80,25 @@ if (process.argv.includes('--selftest')) {
         replace: '        /* planted: the badge is built and never attached — data-new back to inert pixels */',
         expectRed: /FAIL\s+S5 chooser: an unseen card wears a visible NEW badge/,
       },
+      {
+        // The max edge the original drive could not reach: if collection
+        // ignores addToStorage(false), the ninth piece becomes found/receipted
+        // even though this run never receives it.
+        name: 'collection ignores the storage-cap refusal and advances discovery anyway',
+        file: 'src/main.js',
+        find: '  if (!addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8)) return false;',
+        replace: '  addToStorage(run.loadout, id, registries.balance.equipment.storageSlots || 8); // planted: ignore full storage',
+        expectRed: /FAIL\s+S7 full storage: Continue writes no discovery receipt/,
+      },
+      {
+        // The narrow shared class-pick contract: without the one text-column
+        // wrapper, heading, prose and Skip become three competing flex cells.
+        name: 'reward rows omit the shared narrow text-column wrapper',
+        file: 'src/ui/screens/reward.js',
+        find: '              <div class="cp-body">',
+        replace: '              <div class="reward-body-plant">',
+        expectRed: /FAIL\s+S8 narrow rows use the shared glyph-plus-text composition/,
+      },
     ],
   }));
 }
@@ -162,9 +181,10 @@ console.log(`door: treasure ${door.treasure} (floor ${door.floor}) via ${door.pa
 // at the parent, then the REAL click on the REAL treasure node. `settings`
 // seeds meta through ?shotSettings — the same saveMeta door a player's
 // Settings tap writes.
-async function bootTreasure({ settings = null } = {}) {
+async function bootTreasure({ settings = null, storage = null } = {}) {
   const s = settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '';
-  await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${door.parent}${s}`);
+  const st = storage ? `&shotStorage=${encodeURIComponent(storage)}` : '';
+  await nav(`${base}?shot=map&shotSeed=${SEED}&shotAt=${door.parent}${s}${st}`);
   await waitFor(`!!document.querySelector('[data-node="${door.treasure}"]')`, 'the treasure node on the map');
   const clicked = await ev(clickSel(`[data-node="${door.treasure}"]`));
   if (!clicked) throw new Error('treasure node vanished before the click');
@@ -222,6 +242,40 @@ await sleep(200);
 s = await spoils();
 check('S4 manual Continue leaves an untaken armament unowned (meta.found) — only what the player chose', s.found.length === 0, `meta.found is [${s.found}]`);
 check('S4 manual Continue leaves run storage empty', s.storage.length === 0, `storage is [${s.storage}]`);
+
+// ---- S7: full storage blocks the ninth piece before collection ------------
+await bootTreasure({ storage: 'full' });
+s = await spoils();
+check('S7 full storage: the production precondition holds at eight distinct pieces',
+  s.storage.length === 8 && new Set(s.storage).size === 8, `storage is [${s.storage}]`);
+check('S7 full storage: the offered armament is visibly blocked by storage capacity',
+  await ev(`(()=>{const el=document.querySelector('.reward-kind[data-kind="armament"]');return el&&el.dataset.state==='blocked'&&el.dataset.blockedBy==='storage'&&!el.querySelector('[data-skip="armament"]')})()`));
+await ev(clickSel('#reward-continue'));
+await sleep(200);
+s = await spoils();
+check('S7 full storage: Continue leaves the eight stored pieces unchanged',
+  s.storage.length === 8 && new Set(s.storage).size === 8, `storage is [${s.storage}]`);
+check('S7 full storage: Continue does not mark the refused armament found',
+  s.found.length === 0, `meta.found is [${s.found}]`);
+check('S7 full storage: Continue writes no discovery receipt',
+  s.discoveryReceipts.length === 0, `receipts are ${JSON.stringify(s.discoveryReceipts)}`);
+
+// ---- S8: phone rows use the shared glyph + one text-column composition ----
+await c.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
+await bootTreasure();
+check('S8 narrow rows use the shared glyph-plus-text composition',
+  await ev(`(()=>{
+    const row=document.querySelector('.reward-kind[data-kind="armament"]');
+    const body=row&&row.querySelector(':scope > .cp-body');
+    if(!row||!body||document.documentElement.dataset.layout!=='narrow') return false;
+    const direct=[...row.children];
+    const skip=body.querySelector('[data-skip="armament"]');
+    const rb=row.getBoundingClientRect(), bb=body.getBoundingClientRect();
+    return direct.length===2 && direct[0].classList.contains('glyph') && direct[1]===body &&
+      !!body.querySelector('h3') && !!body.querySelector('p') && !!skip &&
+      bb.width>0 && bb.left>=rb.left-1 && bb.right<=rb.right+1;
+  })()`), 'missing .cp-body or competing direct flex children on the phone row');
+await c.send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 730, deviceScaleFactor: 1, mobile: false });
 
 // ---- S5: the card chooser wears a VISIBLE NEW badge (pose door — a renderer
 // fact; the treasure offer carries no cards, so the chooser's one home is the
