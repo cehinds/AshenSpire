@@ -13,27 +13,9 @@ Allowed licenses: CC0, CC BY 3.0/4.0 (with attribution), SIL OFL (fonts).
 
 ## Assets in use
 
-**v1 ships zero *third-party* asset files.** The `.webp` files under `assets/` are this project's own, rendered by the Blender pipelines listed below — first-party, CC0, and each with a row here. Every visual is generated at
-runtime by `src/ui/assets.js` — the style guide's placeholder recipe (a tinted,
-rounded panel + a Unicode glyph + the entity's name). This is a deliberate design
-choice (SPEC §2.4): the game is fully playable and visually coherent with no
-downloads, and real art can be swapped in later by mapping an id to a URL with a
-row in the table below — no game-code changes.
-
 | Asset | Used for | Source | Author | License |
 |---|---|---|---|---|
-| Generated placeholder sprites | enemy / player / card / relic art (`src/ui/assets.js`) | original to this project | AshenSpire | CC0 |
-| Rendered class sprites (`assets/sprites/*.webp`) | player figures, one WebP per class × accent tint; inline-SVG fallback when unavailable | procedurally modeled + rendered by this repo's own Blender pipeline (`tools/sprites-blender.py`, headless; regenerate with `blender --background --factory-startup --python tools/sprites-blender.py -- assets/sprites`) | AshenSpire | CC0 |
-| Act backdrops (`assets/bg/bg_act{1,2,3}.webp`) | act-map and combat backgrounds | procedurally modeled + rendered by this repo's own Blender pipeline (`tools/backdrops-blender.py`, headless; regenerate with `blender --background --factory-startup --python tools/backdrops-blender.py -- assets/bg`) | AshenSpire | CC0 |
-| Equipment + armour-set art (`assets/equipment/*.webp`) | weapon layers and per-class/per-set bodies, composited at runtime | procedurally modeled + rendered by this repo's own Blender pipeline (`tools/equipment-blender.py`, headless, reading the same `content/source/weapons.csv` + `outfits.csv` the game reads; regenerate with `blender --background --factory-startup --python tools/equipment-blender.py -- assets/equipment`) | AshenSpire | CC0 |
-| Unicode emoji glyphs (⚔ 🩸 💎 ☄ …) | card/relic/status/enemy icons, sigils | Unicode standard; rendered by the player's OS/browser emoji font | Unicode / OS vendor | Not embedded — system-rendered |
-| Cinzel (display), Inter (body) | typography | referenced by `font-family` with robust system fallbacks (Georgia / system-ui); **not bundled** in v1 | Google Fonts | SIL OFL (when self-hosted) |
-
-> When real art lands: download from a **Planned source** above, place it under
-> `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
-> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
-> an `@font-face` block and a row here — the fallbacks keep the game readable
-> until then.
+| *(none yet — assets land with M1/M4)* | | | | |
 
 ## Code
 
@@ -43,4 +25,4 @@ row in the table below — no game-code changes.
 
 ## Non-affiliation
 
-AshenSpire is an original fan-inspired work. It contains no assets, music, text, or proper nouns from Elden Ring, and is not affiliated with, endorsed by, or sponsored by FromSoftware Inc. or Bandai Namco Entertainment. Elden Ring is a trademark of its respective owners.
+EldenSpire is an original fan-inspired work. It contains no assets, music, text, or proper nouns from Elden Ring, and is not affiliated with, endorsed by, or sponsored by FromSoftware Inc. or Bandai Namco Entertainment. Elden Ring is a trademark of its respective owners.
