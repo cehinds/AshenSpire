@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.escalation.history.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "atUtc", "itemId", "event", "classification", "status", "attemptCount", "guardCode", "detail"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.escalation.history.v1" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "atUtc": { "type": "string", "format": "date-time" },
+    "itemId": { "type": "string", "minLength": 1 },
+    "event": { "enum": ["ENTERED", "ATTEMPTED", "REVIEWED", "ESCALATED", "CLOSED", "PERMANENT_TAKEOVER"] },
+    "classification": { "enum": ["NEEDS_CONSTANTINE_NOW", "ITM3_DECISION_OVERDUE", "TEAM_REMEDIABLE_BLOCKER"] },
+    "status": { "enum": ["ACTIVE", "ESCALATED", "CLOSED"] },
+    "attemptCount": { "type": "integer", "minimum": 0 },
+    "guardCode": { "type": "string", "minLength": 1 },
+    "detail": { "type": "string", "minLength": 1 }
+  }
+}

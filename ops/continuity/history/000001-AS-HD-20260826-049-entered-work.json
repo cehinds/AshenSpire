@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "ashenspire.continuity.history.v2",
+  "id": "000001-AS-HD-20260826-049-entered-work",
+  "sequence": 1,
+  "recordedAtUtc": "2026-08-28T07:27:44Z",
+  "teamId": "coordination",
+  "ticketId": "AS-HD-20260826-049",
+  "event": "ENTERED_WORK",
+  "supersedesHistoryId": null,
+  "lifecycle": {
+    "from": null,
+    "to": "IN PROGRESS",
+    "legacyFrom": null
+  },
+  "evidence": {
+    "path": "evidence/AS-HD-20260826-049-entered-work-2026-08-28.md",
+    "sha256": "65E84FA0EFC94C49A49E1FD4DCEDBE0B8890D60FAF8E527E9A5C8D9A286BE8B3"
+  }
+}

@@ -1,13 +1,17 @@
 {
-  "schemaVersion": "ashenspire.continuity.team.v1",
+  "schemaVersion": "ashenspire.continuity.team.v2",
   "id": "coordination",
-  "name": "AshenSpire Coordination",
+  "name": "Repository Coordination",
   "owner": {
-    "role": "IT Manager III",
+    "role": "IT Manager III / Main",
     "taskId": "01a02bc1-1611-7a22-9803-8c5e617ab711"
   },
   "writerPolicy": "ONE_WRITER_PER_PATH",
-  "activeTicketIds": [
-    "COORDINATION-STRUCTURE-RESET"
+  "activeTickets": [
+    {
+      "id": "AS-HD-20260826-049",
+      "path": "tickets/AS-HD-20260826-049/ticket.json",
+      "sha256": "666604A32C5DB41ADF822422F40A076D1820D958FB518B6C37F8BE69FC9B81F8"
+    }
   ]
 }

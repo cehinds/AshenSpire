@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "ashenspire.continuity.history.v2",
+  "id": "000002-AS-HD-20260826-049-terminal-local-candidate",
+  "sequence": 2,
+  "recordedAtUtc": "2026-08-28T07:54:55Z",
+  "teamId": "coordination",
+  "ticketId": "AS-HD-20260826-049",
+  "event": "TERMINAL_LOCAL_CANDIDATE",
+  "supersedesHistoryId": "000001-AS-HD-20260826-049-entered-work",
+  "lifecycle": {
+    "from": "IN PROGRESS",
+    "to": "CANDIDATE FROZEN",
+    "legacyFrom": null
+  },
+  "evidence": {
+    "path": "evidence/AS-HD-20260826-049-terminal-local-candidate-2026-08-28.md",
+    "sha256": "8B8D40DAE3358F7F090E6B97BB6D01704A2C662D26BD9786728B67E060BB7C0F"
+  }
+}

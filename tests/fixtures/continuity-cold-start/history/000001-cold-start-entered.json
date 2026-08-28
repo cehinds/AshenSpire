@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "ashenspire.continuity.history.v1",
+  "schemaVersion": "ashenspire.continuity.history.v2",
   "id": "000001-cold-start-entered",
   "sequence": 1,
   "recordedAtUtc": "2026-08-28T00:00:00Z",
@@ -7,6 +7,11 @@
   "ticketId": "COLD-START",
   "event": "ENTERED_WORK",
   "supersedesHistoryId": null,
+  "lifecycle": {
+    "from": null,
+    "to": "IN PROGRESS",
+    "legacyFrom": null
+  },
   "evidence": {
     "path": "evidence/entered-work.md",
     "sha256": "C8AA53472C11B3FFEEB53C6B2A8745DB4A55887A6C93FA35AB0AE2FBD9278CB5"

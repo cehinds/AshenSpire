@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.escalation.item.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "helpDeskTicketId", "dedupKey", "classification", "status", "enteredAtUtc", "lastReviewedAtUtc", "ageSeconds", "attempts", "wake", "continuingWork", "guard", "ownerPacket", "closure"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.escalation.item.v1" },
+    "id": { "type": "string", "minLength": 1 },
+    "helpDeskTicketId": { "type": "string", "minLength": 1 },
+    "dedupKey": { "type": "string", "minLength": 1 },
+    "classification": { "enum": ["NEEDS_CONSTANTINE_NOW", "ITM3_DECISION_OVERDUE", "TEAM_REMEDIABLE_BLOCKER"] },
+    "status": { "enum": ["ACTIVE", "ESCALATED", "CLOSED"] },
+    "enteredAtUtc": { "type": "string", "format": "date-time" },
+    "lastReviewedAtUtc": { "type": "string", "format": "date-time" },
+    "ageSeconds": { "type": "integer", "minimum": 0 },
+    "attempts": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["atUtc", "actor", "action", "outcome"],
+        "properties": {
+          "atUtc": { "type": "string", "format": "date-time" },
+          "actor": { "type": "string", "minLength": 1 },
+          "action": { "type": "string", "minLength": 1 },
+          "outcome": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "wake": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trigger", "nextAction"],
+      "properties": {
+        "trigger": { "type": "string", "minLength": 1 },
+        "nextAction": { "type": "string", "minLength": 1 }
+      }
+    },
+    "continuingWork": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "guard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "blocks", "doesNotBlock"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1 },
+        "blocks": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "doesNotBlock": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "ownerPacket": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hazard", "attempts", "options", "recommendation", "delayConsequence", "exactAuthority"],
+      "properties": {
+        "hazard": { "type": "string", "minLength": 1 },
+        "attempts": { "type": "string", "minLength": 1 },
+        "options": { "type": "array", "minItems": 2, "maxItems": 3, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "recommendation": { "type": "string", "minLength": 1 },
+        "delayConsequence": { "type": "string", "minLength": 1 },
+        "exactAuthority": { "type": "string", "minLength": 1 }
+      }
+    },
+    "closure": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["atUtc", "actor", "outcome", "evidence"],
+          "properties": {
+            "atUtc": { "type": "string", "format": "date-time" },
+            "actor": { "type": "string", "minLength": 1 },
+            "outcome": { "type": "string", "minLength": 1 },
+            "evidence": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

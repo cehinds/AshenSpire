@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.feature.history.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "sequence", "atUtc", "event", "ticketId", "actor", "devRevision", "testRevision", "releaseRevision", "commit", "qaResult", "guardCode", "evidence", "detail"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.feature.history.v1" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "atUtc": { "type": "string", "format": "date-time" },
+    "event": { "enum": ["ENTERED_WORK", "DEV_CHECKPOINT", "TEST_PROMOTION", "TEST_QA", "RELEASE_PROMOTION", "TERMINAL_LOCAL_CANDIDATE"] },
+    "ticketId": { "type": "string", "minLength": 1 },
+    "actor": { "type": "string", "minLength": 1 },
+    "devRevision": { "type": "integer", "minimum": 0 },
+    "testRevision": { "type": "integer", "minimum": 0 },
+    "releaseRevision": { "type": "integer", "minimum": 0 },
+    "commit": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$" },
+    "qaResult": { "enum": ["PASS", "FAIL", null] },
+    "guardCode": { "type": ["string", "null"] },
+    "evidence": { "type": "string", "minLength": 1 },
+    "detail": { "type": "string", "minLength": 1 }
+  }
+}

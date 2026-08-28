@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "ashenspire.continuity.team.v1",
+  "schemaVersion": "ashenspire.continuity.team.v2",
   "id": "coordination",
   "name": "Cold Start Coordination",
   "owner": {
@@ -7,7 +7,11 @@
     "taskId": "fixture-task"
   },
   "writerPolicy": "ONE_WRITER_PER_PATH",
-  "activeTicketIds": [
-    "COLD-START"
+  "activeTickets": [
+    {
+      "id": "COLD-START",
+      "path": "tickets/COLD-START/ticket.json",
+      "sha256": "03584124C551BA2BD2AA5181947A3AB4C76157313AD30D5F4A86505CB6AB5842"
+    }
   ]
 }

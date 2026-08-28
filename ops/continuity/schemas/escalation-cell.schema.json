@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.escalation.cell.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "name", "ticketSystem", "seats", "fallbackHistory", "classifications", "queuePolicy"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.escalation.cell.v1" },
+    "name": { "const": "ITM3 Decision and Escalation Cell" },
+    "ticketSystem": { "const": "HELP_DESK_DEDUPLICATED" },
+    "seats": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "assignment", "agentSession", "ticketRow", "evidence", "wake", "writerAuthority", "qaVerdictAuthority", "responsibility"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1 },
+          "assignment": { "type": "string", "minLength": 1 },
+          "agentSession": { "type": ["string", "null"] },
+          "ticketRow": { "type": "string", "minLength": 1 },
+          "evidence": { "type": "string", "minLength": 1 },
+          "wake": { "type": "string", "minLength": 1 },
+          "writerAuthority": { "type": "string", "minLength": 1 },
+          "qaVerdictAuthority": { "type": "boolean" },
+          "responsibility": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "fallbackHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "agentSession", "ticketRow", "status", "writerAuthority", "qaVerdictAuthority", "evidence", "wake"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1 },
+          "agentSession": { "type": "string", "minLength": 1 },
+          "ticketRow": { "type": "string", "minLength": 1 },
+          "status": { "const": "HISTORICAL_TEMPORARY_HANDOFF" },
+          "writerAuthority": { "const": "NONE" },
+          "qaVerdictAuthority": { "const": false },
+          "evidence": { "type": "string", "minLength": 1 },
+          "wake": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "classifications": { "const": ["NEEDS_CONSTANTINE_NOW", "ITM3_DECISION_OVERDUE", "TEAM_REMEDIABLE_BLOCKER"] },
+    "queuePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["oneActiveItemPerDedupKey", "ownerPacketRequired", "attemptsAndAgeRequired", "wakeAndContinuingWorkRequired", "exactGuardOnly", "noAcknowledgementLoop", "overdueFallbackSeconds", "overdueClassification"],
+      "properties": {
+        "oneActiveItemPerDedupKey": { "const": true },
+        "ownerPacketRequired": { "const": true },
+        "attemptsAndAgeRequired": { "const": true },
+        "wakeAndContinuingWorkRequired": { "const": true },
+        "exactGuardOnly": { "const": true },
+        "noAcknowledgementLoop": { "const": true },
+        "overdueFallbackSeconds": { "const": 900 },
+        "overdueClassification": { "const": "ITM3_DECISION_OVERDUE" }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "ashenspire.escalation.item.v1",
+  "id": "AS-HD-20260826-049/DEV-ORIGIN-CUSTODY",
+  "helpDeskTicketId": "AS-HD-20260826-049",
+  "dedupKey": "AS-HD-20260826-049:DEV-ORIGIN-CUSTODY",
+  "classification": "TEAM_REMEDIABLE_BLOCKER",
+  "status": "ACTIVE",
+  "enteredAtUtc": "2026-08-28T07:27:44Z",
+  "lastReviewedAtUtc": "2026-08-28T07:27:44Z",
+  "ageSeconds": 0,
+  "attempts": [],
+  "wake": {
+    "trigger": "Correction and self-review pass at one coherent commit.",
+    "nextAction": "Push that commit to codex/feature/AS-HD-20260826-049/dev and record origin currentness."
+  },
+  "continuingWork": [
+    "continuity-contract-correction",
+    "feature-channel-validator",
+    "cold-reconstruction-pilot",
+    "full-suite-verification"
+  ],
+  "guard": {
+    "code": "DEV_ORIGIN_REF_ABSENT",
+    "blocks": ["TEST_PROMOTION"],
+    "doesNotBlock": ["LOCAL_IMPLEMENTATION", "LOCAL_TESTS", "LOCAL_COMMIT"]
+  },
+  "ownerPacket": {
+    "hazard": "The local worktree cannot be sole custody and no origin DEV checkpoint is yet recorded.",
+    "attempts": "No push attempted before correction and self-review, by explicit sequencing rule.",
+    "options": [
+      "Complete correction and self-review, then push one coherent DEV checkpoint.",
+      "Continue local reversible work while keeping TEST promotion guarded."
+    ],
+    "recommendation": "Complete correction and self-review, then establish exact origin DEV custody.",
+    "delayConsequence": "TEST promotion remains unavailable; local repair and evidence work continue safely.",
+    "exactAuthority": "Existing #049 authority permits a coherent DEV checkpoint after self-review; no TEST, RELEASE, integration, merge, publication, deployment, or release action follows automatically."
+  },
+  "closure": null
+}

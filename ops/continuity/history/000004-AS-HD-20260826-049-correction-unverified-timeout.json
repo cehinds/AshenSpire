@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "ashenspire.continuity.history.v2",
+  "id": "000004-AS-HD-20260826-049-correction-unverified-timeout",
+  "sequence": 4,
+  "recordedAtUtc": "2026-08-28T08:13:14Z",
+  "teamId": "coordination",
+  "ticketId": "AS-HD-20260826-049",
+  "event": "CORRECTION_UNVERIFIED_TIMEOUT",
+  "supersedesHistoryId": "000003-AS-HD-20260826-050-manager-cycle-takeover",
+  "lifecycle": {
+    "from": "CANDIDATE FROZEN",
+    "to": "CANDIDATE FROZEN",
+    "legacyFrom": null
+  },
+  "evidence": {
+    "path": "evidence/AS-HD-20260826-049-correction-unverified-timeout-2026-08-28.md",
+    "sha256": "7919FB9FA2B162DCA5BA6DF2C802C95E852854E3A8B93FF3F071219B37EF9320"
+  }
+}

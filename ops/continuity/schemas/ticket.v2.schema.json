@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.continuity.ticket.v2",
+  "title": "AshenSpire continuity ticket v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "title", "priority", "status", "teamId", "owner", "entry", "scope", "authority", "blocker", "deliveryFacts", "migrationBoundary", "historyRefs"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.continuity.ticket.v2" },
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "priority": { "enum": ["T0", "T1", "T2", "T3", "T4"] },
+    "status": { "$ref": "#/$defs/status" },
+    "teamId": { "type": "string", "minLength": 1 },
+    "owner": { "$ref": "#/$defs/owner" },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agentSession", "branch", "worktree", "base", "candidateHeadAtEntry", "objective", "firstAction", "evidenceTarget", "nextHandoff"],
+      "properties": {
+        "agentSession": { "type": "string", "minLength": 1 },
+        "branch": { "type": "string", "minLength": 1 },
+        "worktree": { "type": "string", "minLength": 1 },
+        "base": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "candidateHeadAtEntry": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "objective": { "type": "string", "minLength": 1 },
+        "firstAction": { "type": "string", "minLength": 1 },
+        "evidenceTarget": { "type": "string", "minLength": 1 },
+        "nextHandoff": { "type": "string", "minLength": 1 }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedRoots", "serializedLanes", "forbiddenActions"],
+      "properties": {
+        "allowedRoots": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "serializedLanes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "forbiddenActions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "blocker": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["condition", "owner", "retryTrigger", "safeWork"],
+          "properties": {
+            "condition": { "type": "string", "minLength": 1 },
+            "owner": { "$ref": "#/$defs/owner" },
+            "retryTrigger": { "type": "string", "minLength": 1 },
+            "safeWork": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowedActions", "withheldActions"],
+      "properties": {
+        "allowedActions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "withheldActions": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "deliveryFacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["localCandidate", "pushed", "pullRequest", "devIntegrated", "hostedVerified", "resolved", "released"],
+      "properties": {
+        "localCandidate": { "$ref": "#/$defs/fact" },
+        "pushed": { "$ref": "#/$defs/fact" },
+        "pullRequest": { "$ref": "#/$defs/fact" },
+        "devIntegrated": { "$ref": "#/$defs/fact" },
+        "hostedVerified": { "$ref": "#/$defs/fact" },
+        "resolved": { "$ref": "#/$defs/fact" },
+        "released": { "$ref": "#/$defs/fact" }
+      }
+    },
+    "migrationBoundary": { "type": "string", "minLength": 1 },
+    "historyRefs": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": { "$ref": "#/$defs/historyRef" }
+    }
+  },
+  "$defs": {
+    "owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "taskId"],
+      "properties": {
+        "role": { "type": "string", "minLength": 1 },
+        "taskId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "atUtc"],
+      "properties": {
+        "value": { "enum": ["NEW", "TRIAGED", "CONTRACT READY", "ASSIGNED", "IN PROGRESS", "CANDIDATE FROZEN", "FUNCTIONAL QA", "EXPERIENCE QA", "READY FOR MAIN", "DEV INTEGRATED", "HOSTED VERIFIED", "RESOLVED", "WAITING ON DECISION", "BLOCKED", "STALE", "CANCELLED"] },
+        "atUtc": { "type": "string", "format": "date-time" }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "atUtc", "evidence"],
+      "properties": {
+        "value": { "type": "boolean" },
+        "atUtc": { "type": ["string", "null"], "format": "date-time" },
+        "evidence": { "type": ["string", "null"] }
+      }
+    },
+    "historyRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[A-F0-9]{64}$" }
+      }
+    }
+  }
+}

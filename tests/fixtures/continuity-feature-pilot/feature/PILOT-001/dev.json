@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "ashenspire.feature.dev.v1",
+  "ticketId": "PILOT-001",
+  "channel": "DEV",
+  "ref": "codex/feature/PILOT-001/dev",
+  "revision": 2,
+  "mutable": true,
+  "commit": "2222222222222222222222222222222222222222",
+  "originObservedCommit": "2222222222222222222222222222222222222222",
+  "observedAtUtc": "2026-08-28T00:05:00Z",
+  "currentness": "CURRENT",
+  "guard": null
+}

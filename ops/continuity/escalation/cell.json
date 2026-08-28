@@ -1,0 +1,87 @@
+{
+  "schemaVersion": "ashenspire.escalation.cell.v1",
+  "name": "ITM3 Decision and Escalation Cell",
+  "ticketSystem": "HELP_DESK_DEDUPLICATED",
+  "seats": [
+    {
+      "role": "TRIAGE",
+      "assignment": "PERMANENT",
+      "agentSession": "/root/ui_code_audit",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Classify new or aged queue evidence without creating a duplicate Help Desk ticket.",
+      "writerAuthority": "QUEUE_TRIAGE_ONLY",
+      "qaVerdictAuthority": false,
+      "responsibility": "Deduplicate intake, classify urgency, and preserve exact attempts, age, wake, and continuing work."
+    },
+    {
+      "role": "RESOLUTION",
+      "assignment": "PERMANENT",
+      "agentSession": "/root/qa_harness_audit",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Take independently assigned resolution or QA work only after the exact candidate and claimed paths are frozen.",
+      "writerAuthority": "ASSIGNED_RESOLUTION_PATHS_ONLY",
+      "qaVerdictAuthority": true,
+      "responsibility": "Resolve team-remediable blockers or independently verify the exact frozen candidate without overlapping the maker."
+    },
+    {
+      "role": "DECISION_AND_ESCALATION",
+      "assignment": "PERMANENT",
+      "agentSession": "/root/ticket_dedupe",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Decide bounded ITM3 hazards immediately or route Constantine-only authority with an owner packet.",
+      "writerAuthority": "AS-HD-20260826-049_SOLE_IMPLEMENTATION_WRITER",
+      "qaVerdictAuthority": false,
+      "responsibility": "Classify hazards, produce owner packets, make bounded ITM3 decisions, and hand the frozen commit to independent QA."
+    }
+  ],
+  "fallbackHistory": [
+    {
+      "role": "TEMPORARY_TRIAGE",
+      "agentSession": "/root/qa_029_gate",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "status": "HISTORICAL_TEMPORARY_HANDOFF",
+      "writerAuthority": "NONE",
+      "qaVerdictAuthority": false,
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Historical handoff complete; no live authority unless explicitly re-entered on a collision-free row."
+    },
+    {
+      "role": "TEMPORARY_RESOLUTION",
+      "agentSession": "/root/qa_backlog_priority",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "status": "HISTORICAL_TEMPORARY_HANDOFF",
+      "writerAuthority": "NONE",
+      "qaVerdictAuthority": false,
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Historical handoff complete; no live authority unless explicitly re-entered on a collision-free row."
+    },
+    {
+      "role": "TEMPORARY_DECISION_AND_ESCALATION",
+      "agentSession": "/root/qa_ledger_pointer",
+      "ticketRow": "AS-HD-20260826-050/MANAGER-CYCLE",
+      "status": "HISTORICAL_TEMPORARY_HANDOFF",
+      "writerAuthority": "NONE",
+      "qaVerdictAuthority": false,
+      "evidence": "evidence/AS-HD-20260826-050-manager-cycle-permanent-takeover-2026-08-28.md",
+      "wake": "Historical handoff complete; no live authority unless explicitly re-entered on a collision-free row."
+    }
+  ],
+  "classifications": [
+    "NEEDS_CONSTANTINE_NOW",
+    "ITM3_DECISION_OVERDUE",
+    "TEAM_REMEDIABLE_BLOCKER"
+  ],
+  "queuePolicy": {
+    "oneActiveItemPerDedupKey": true,
+    "ownerPacketRequired": true,
+    "attemptsAndAgeRequired": true,
+    "wakeAndContinuingWorkRequired": true,
+    "exactGuardOnly": true,
+    "noAcknowledgementLoop": true,
+    "overdueFallbackSeconds": 900,
+    "overdueClassification": "ITM3_DECISION_OVERDUE"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ashenspire.feature.dev.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "ticketId", "channel", "ref", "revision", "mutable", "commit", "originObservedCommit", "observedAtUtc", "currentness", "guard"],
+  "properties": {
+    "schemaVersion": { "const": "ashenspire.feature.dev.v1" },
+    "ticketId": { "type": "string", "minLength": 1 },
+    "channel": { "const": "DEV" },
+    "ref": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 0 },
+    "mutable": { "const": true },
+    "commit": { "$ref": "#/$defs/commit" },
+    "originObservedCommit": { "$ref": "#/$defs/commit" },
+    "observedAtUtc": { "type": ["string", "null"], "format": "date-time" },
+    "currentness": { "enum": ["ORIGIN_REF_ABSENT", "CURRENT", "STALE"] },
+    "guard": { "$ref": "#/$defs/guardOrNull" }
+  },
+  "$defs": {
+    "commit": { "type": ["string", "null"], "pattern": "^[a-f0-9]{40}$" },
+    "guardOrNull": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "blocks", "retryTrigger", "safeWork"],
+          "properties": {
+            "code": { "type": "string", "minLength": 1 },
+            "blocks": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "retryTrigger": { "type": "string", "minLength": 1 },
+            "safeWork": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+          }
+        }
+      ]
+    }
+  }
+}

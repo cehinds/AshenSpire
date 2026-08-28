@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "ashenspire.feature.dev.v1",
+  "ticketId": "AS-HD-20260826-049",
+  "channel": "DEV",
+  "ref": "codex/feature/AS-HD-20260826-049/dev",
+  "revision": 0,
+  "mutable": true,
+  "commit": null,
+  "originObservedCommit": null,
+  "observedAtUtc": null,
+  "currentness": "ORIGIN_REF_ABSENT",
+  "guard": {
+    "code": "DEV_ORIGIN_REF_ABSENT",
+    "blocks": ["TEST_PROMOTION"],
+    "retryTrigger": "A coherent self-reviewed DEV checkpoint exists on the exact origin DEV ref.",
+    "safeWork": ["local-implementation", "local-tests", "local-evidence"]
+  }
+}

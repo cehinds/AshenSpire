@@ -906,7 +906,8 @@ console.log('          76 drives the shared confirmation component in a minimal 
 console.log('          the two controller call sites. It proves cancellation/commit semantics,');
 console.log('          focus containment/return, and native-prompt removal; it does not paint');
 console.log('          the dialog or prove responsive geometry in a real browser.');
-console.log('          77 reads one repository-local pointer graph and its refusal corpus. It');
-console.log('          does not import projectless ledgers, observe a live task or board, or');
-console.log('          authorize migration, integration, publication, deployment, or release.');
+console.log('          77 reads repository-local pointer, feature-channel, and escalation graphs');
+console.log('          plus their refusal corpora. It proves origin-snapshot commit-pointer and');
+console.log('          revision contracts, not a live remote ref, task, board, integration,');
+console.log('          publication, deployment, or release outcome.');
 process.exit(failed + zoomExtra > 0 ? 1 : 0);
