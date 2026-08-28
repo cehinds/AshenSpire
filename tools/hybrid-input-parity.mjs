@@ -67,7 +67,6 @@ const PRODUCT_PATHS = [
   'src/ui/input.js',
   'src/ui/screens/combat.js',
   'src/ui/screens/equipment.js',
-  'styles/combat.css',
   'styles/ui.css',
 ];
 const TOOL_PATH = 'tools/hybrid-input-parity.mjs';
@@ -665,10 +664,10 @@ async function main() {
         }
         throw new Error(`${shape}: timeout waiting for ${label}`);
       };
-      const openCombat = async ({ artifact = standalone, textSize = 'M', hand = 5 } = {}) => {
+      const openCombat = async ({ artifact = standalone, textSize = 'M' } = {}) => {
         const settings = encodeURIComponent(JSON.stringify({ textSize }));
         const page = artifact ? 'AshenSpire.html' : 'index.html';
-        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?shot=combat&shotHand=${hand}&shotSettings=${settings}` }, sessionId);
+        await cdp.send('Page.navigate', { url: `${base.replace(/index\.html$/, page)}?shot=combat&shotSettings=${settings}` }, sessionId);
         await until(`!!document.querySelector('.combat .hand .card') && !!window.__parityPad`, 'combat + gamepad shim');
         await wait(350);
       };
@@ -906,7 +905,7 @@ async function main() {
         const selectors=['.hand-prev','.hand-next','.end-turn','.energy-orb','.hand-area'];
         const box=(selector)=>{const node=document.querySelector(selector);if(!node)return null;const r=node.getBoundingClientRect();return {selector,left:+r.left.toFixed(2),top:+r.top.toFixed(2),right:+r.right.toFixed(2),bottom:+r.bottom.toFixed(2),width:+r.width.toFixed(2),height:+r.height.toFixed(2)};};
         const rects=selectors.map(box);
-        const controls=rects.filter((row)=>row&&row.width>0&&row.height>0&&['.hand-prev','.hand-next','.end-turn'].includes(row.selector));
+        const controls=rects.filter((row)=>row&&['.hand-prev','.hand-next','.end-turn'].includes(row.selector));
         const onGlass=rects.every((row)=>row&&row.left>=0&&row.top>=0&&row.right<=innerWidth&&row.bottom<=innerHeight);
         const hit=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
         const pages=controls.filter((row)=>row.selector!=='.end-turn');
@@ -914,7 +913,7 @@ async function main() {
         const hand=document.querySelector('.hand').getBoundingClientRect();
         const cards=[...document.querySelectorAll('.hand .card')].map((node)=>{const r=node.getBoundingClientRect();return {left:Math.max(r.left,hand.left),top:Math.max(r.top,hand.top),right:Math.min(r.right,hand.right),bottom:Math.min(r.bottom,hand.bottom)};}).filter((row)=>row.right>Math.max(0,row.left)&&row.bottom>row.top&&row.left<innerWidth);
         const overlap=pages.some((page)=>fixed.some((item)=>hit(page,item))||cards.some((card)=>hit(page,card)));
-        return {viewport:{width:innerWidth,height:innerHeight},rects,minimumTap:controls.length?Math.min(...controls.map((row)=>Math.min(row.width,row.height))):null,onGlass,overlap};
+        return {viewport:{width:innerWidth,height:innerHeight},rects,minimumTap:Math.min(...controls.map((row)=>Math.min(row.width,row.height))),onGlass,overlap};
       })()`);
 
       console.log(`\n  ${shape} — ${evidenceDoor} real page input parity`);
@@ -926,9 +925,9 @@ async function main() {
       check(sourceLayout.onGlass && !sourceLayout.overlap, 'primary controls stay on glass without paging overlap', JSON.stringify(sourceLayout));
       const axTree = await cdp.send('Accessibility.getFullAXTree', {}, sessionId);
       const axButtons = axTree.nodes.filter((node) => node.role?.value === 'button').map((node) => node.name?.value || '');
-      check(['Previous card', 'Next card'].every((name) => !axButtons.includes(name))
+      check(['Previous card', 'Next card'].every((name) => axButtons.includes(name))
         && axButtons.some((name) => /^END TURN/.test(name)),
-      'five-card AX tree omits Previous/Next and retains End Turn', JSON.stringify(axButtons));
+      'AX tree exposes named Previous, Next, and End Turn buttons', JSON.stringify(axButtons));
       await screenshot('ready');
       let chosen = await card('Slashing Strike');
       if (!chosen) throw new Error(`${shape}: Slashing Strike fixture missing`);
@@ -1018,7 +1017,7 @@ async function main() {
       // first have to focus the pager button itself. Exercise the full wrap;
       // a one-step check cannot distinguish a remembered cursor from "always
       // jump to the first card".
-      await openCombat({ hand: 8 });
+      await openCombat();
       await pad(15); const pageBefore = await state();
       await screenshot('paging-before');
       await tap('.hand-next'); const pageAfter = await state();
@@ -1032,7 +1031,7 @@ async function main() {
       await screenshot('paging-return');
 
       const pagerSequence = async (mode, direction) => {
-        await openCombat({ hand: 8 });
+        await openCombat();
         const initial = await state();
         const ids = initial.cards.map((entry) => entry.id);
         const seen = [];

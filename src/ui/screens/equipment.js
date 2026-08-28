@@ -3,9 +3,11 @@
 // Three views of the same loadout, because the two obvious layouts are both
 // right for different things and neither should have to win:
 //
-//   grid    the full-width Character surface — summary/sprite left, stats right
-//   rack    the full-width Inventory surface — armaments left, inventory right
-//   hybrid  the shared 40/60 character and armaments shell
+//   grid    the figure in the middle, slots as squares around it — you are
+//           looking at a PERSON, and the kit hangs off them
+//   rack    a dense two-column armament rack — you are looking at a LIST, and
+//           you want to compare eight shields quickly
+//   hybrid  the rack, with the figure and its slot squares alongside
 //
 // The panel builds itself from registries.equipment.slots, so a new row in
 // equipSlots.csv appears here with no change to this file. The card strip at
@@ -15,50 +17,22 @@
 import { balance } from '../../content/balance.js';
 import { resolveCard } from '../../model/registries.js';
 import {
-  canSwap, canEquip, cycleSet, equipPiece, equipTransitionReceipt, fitsSlot, cardMods, figureSpec,
-  ownership, openedSets, visibleSets, rungFor, setCellState, slotHand, equippedPieces,
+  canSwap, canEquip, cycleSet, equipPiece, fitsSlot, cardMods, runMods, loadoutTags, figureSpec,
+  ownership, openedSets, visibleSets, rungFor, setCellState,
 } from '../../model/loadout.js';
 import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
-import { inventoryRows, inventoryItemCount } from '../../model/inventoryPresentation.js';
-import { equippedTagColor } from '../../model/equipmentUi.js';
-import { renderCard, relicText } from '../components/card.js';
-import { renderCandidateComparison } from '../components/equipmentReceipts.js';
-import { esc, attachTooltip, showTooltipFor, stickTooltip } from '../components/tooltip.js';
-import { armHold, holdMs, HOLD_POINTER_SLOP } from '../components/holdconfirm.js';
+import { renderCard } from '../components/card.js';
+import { renderCandidateComparison, renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
+import { esc, attachTooltip } from '../components/tooltip.js';
 import { refuses } from '../components/refusal.js';
 import { playerSprite, equippedFigure } from '../assets.js';
 import { assetUrl } from '../assetmap.js';
 import { sfx } from '../sfx.js';
 import { statProjection } from '../../model/statProjection.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
-import { mountDisclosure } from '../components/disclosure.js';
-import {
-  equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
-  orderArmourySlots,
-} from '../../model/armouryLayout.js';
-import {
-  armouryOverlayModel, armouryPanelModel, equipmentSetCellModel, equipmentSlotModel,
-  inventoryItemCardModel, inventoryDetailCardModel,
-} from '../models/ArmouryModels.js';
-import {
-  renderArmouryOverlay, renderArmouryPanel, renderEquipmentSlot,
-  renderInventoryItemCard, renderInventoryDetailCard,
-} from '../components/armouryComponents.js';
-import { trayModel } from '../models/TrayModels.js';
-import { renderTray } from '../components/trayComponents.js';
-import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
-import { traySizeService } from '../services/TraySizeService.js';
 
 const CFG = () => balance.equipment;
-const armouryTraySession = { folded: new Map(), heights: new Map() };
-
-export function resetArmouryTraySession() {
-  armouryTraySession.folded.clear();
-  armouryTraySession.heights.clear();
-  traySizeService.reset();
-}
 
 // ---- the view set: a row DESCRIBES a layout, and the CELL is the vocabulary --
 //
@@ -113,9 +87,9 @@ function cellKey(row) {
 // one key here plus its rule in ui.css: the DOM builder below already obeys
 // `figure` on both branches, so the table really is the only decider.
 const LAYOUTS = {
-  'figure:1|slots:flank': buildArmoury, // Grid keeps the shared shell
-  'figure:1|slots:list': buildArmoury, // Hybrid keeps the shared shell
-  'figure:0|slots:list': buildArmoury, // Rack keeps the shared shell
+  'figure:1|slots:flank': buildFlank, // 'grid'   — the person, kit hanging off them
+  'figure:1|slots:list': buildList, // 'hybrid' — the rack with the figure beside it
+  'figure:0|slots:list': buildList, // 'rack'   — the list, no figure
 };
 
 /** Every declared view id, in authored order. The one enumeration. */
@@ -189,26 +163,11 @@ const REGIONS = [
     unit: 'slot',
   },
   {
-    id: 'inventory',
-    label: 'Inventory',
-    sel: '.armoury-inventory',
-    count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
-      .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
-    unit: 'item',
-  },
-  {
     id: 'cards',
     label: 'Cards',
     sel: '.armoury-strip',
-    count: (el) => el.querySelectorAll('[data-card-row]').length,
+    count: (el) => el.querySelectorAll('.equip-cards > .equip-card-with-count').length,
     unit: 'card',
-  },
-  {
-    id: 'stats',
-    label: 'Stats',
-    sel: '.armoury-stats-tray',
-    count: () => null,
-    unit: 'summary',
   },
 ];
 
@@ -259,42 +218,14 @@ export function contextRegions() {
  *
  * THE SAME THREE TERMS THE VIEW ALREADY USES, and reusing them is why this
  * bought no new field (see mountEquipment below): the player's own stored
- * choice, always, on every shape; otherwise the shape's default.
- *
- * THE SHAPE'S DEFAULT FOR CONTEXT IS *COLLAPSED*, ON EVERY SHAPE — Constantine's
- * ruling, 2026-08-21: *the Armoury opens with the figure, and CARDS is one click
- * away.* It used to be `!!narrow` — collapsed on a phone only — and the cost of
- * that was measured, not argued, at dev `456b8ea`, 1440x860, `?shot=combat`:
- *
- *     arrival, CARDS expanded   .armoury-figure VISIBLE 260x139  (area 36140)
- *     after one CARDS click     .armoury-figure VISIBLE 260x330  (area 85800)
- *
- * THE LAYOUT BOX IS 260x330 BOTH TIMES AND THAT IS THE TRAP. `getBoundingClientRect`
- * on the figure never moves; what moves is `.armoury-left`, its scroll parent,
- * which is 275x139 with the strip open and 260x628 with it shut. Reading the
- * figure's own rect says "nothing changed" while 58% of the figure is behind a
- * clipped, scrolling edge. The number this rule is answerable to is therefore the
- * VISIBLE area — the rect intersected with every clipping ancestor — and it is
- * measured that way in tools/armoury-arrival-figure.mjs, both edges, both shapes.
- *
- * NARROW IS NOT CONSULTED ANY MORE, AND DROPPING IT IS THE POINT, NOT AN OVERSIGHT.
- * `narrow` here was a SECOND decider of what arrives open, on top of
- * `narrowDefaultView` — which already answers "what does a phone open on" and
- * answers it with `rack`, the view whose whole job is to have no figure. Measured
- * at 390x844: `.armoury-figure` is ABSENT, so on a phone there was never a figure
- * for the strip to squeeze, and this rule changes NOTHING there — the phone
- * already opened folded. Keeping the parameter would have left two rules that can
- * disagree about one screen, which is #24's shape.
- *
- * The parameter is gone from the signature rather than left unread: an argument
- * nothing consults is the next reader's false lead, and mountEquipment is its one
- * caller.
+ * choice, always, on every shape; otherwise the shape's default. The shape's
+ * default for CONTEXT is *collapsed on a phone* — which is the honest form of
+ * "which pane a phone opens on" once panes can fold.
  */
-export function opensCollapsed(regionId, stored, mode = null) {
+export function opensCollapsed(regionId, stored, narrow) {
   const s = stored && stored[regionId];
   if (typeof s === 'boolean') return s;
-  if (mode && typeof mode[regionId] === 'string') return mode[regionId] !== 'expanded';
-  return true;
+  return !!narrow;
 }
 
 // ---- the builders ----------------------------------------------------------
@@ -307,79 +238,34 @@ export function opensCollapsed(regionId, stored, mode = null) {
 // above true: adding `figure:0|slots:flank` to LAYOUTS is one key and one rule
 // in ui.css, because nothing here would have to change.
 
-function buildArmoury(L, ui) {
-  // Character is a character-only surface. Inventory is the Skyrim-like
-  // equipment/inventory split. Hybrid is the authored 40/60 shell.
-  if (ui.viewMode.pane === 'character' || ui.viewMode.pane === 'both') ui.left.appendChild(ui.character());
-
-  const ordered = orderArmourySlots(ui.blocks.map((block) => block.slot), ui.layout);
-  const positionsBySlot = ordered.map((slot) => ({
-    slot,
-    positions: ui.positions(slot).filter((position) => position.modelState !== 'hidden'),
-  }));
-  const itemCount = positionsBySlot.reduce((sum, row) => (
-    sum + row.positions.filter((position) => position.state === 'occupied').length
-  ), 0);
-  const slots = document.createElement('div');
-  slots.className = 'equip-slots armoury-position-list';
-  if (!ui.armamentsFolded && ui.armamentView === 'list') {
-    for (const { slot, positions } of positionsBySlot) {
-      slots.appendChild(ui.positionGroup(slot, positions, 'list'));
-    }
-  } else if (!ui.armamentsFolded) {
-    slots.classList.add('armoury-position-grid-groups');
-    slots.style.setProperty('--armoury-position-grid-columns', String(ui.armamentGridColumns));
-    for (const { slot, positions } of positionsBySlot) {
-      const group = document.createElement('section');
-      group.className = 'armoury-position-grid-group';
-      group.dataset.equipmentGroup = slot.id;
-      group.innerHTML = `<h4>${esc(slot.label)}</h4>`;
-      const tiles = document.createElement('div');
-      tiles.className = 'armoury-position-grid-tiles';
-      tiles.appendChild(ui.positionGroup(slot, positions, 'grid'));
-      group.appendChild(tiles);
-      slots.appendChild(group);
-    }
-    slots.appendChild(ui.armamentGridDetail(ordered));
-  }
-  const rendered = renderTray(trayModel({
-    id: 'armaments',
-    name: ui.layout.equipment.groupLabel,
-    count: itemCount,
-    itemType: 'item',
-    edge: 'bottom',
-    expanded: !ui.armamentsFolded,
-    sortable: true,
-    sortLabel: `Show Armaments as ${ui.armamentView === 'list' ? 'grid' : 'list'}`,
-    resizable: false,
-    items: [],
-  }), {
-    onToggle: ui.toggleArmaments,
-    onSort: ui.toggleArmamentView,
-    renderContent: (content) => content.appendChild(slots),
+function buildFlank(L, ui) {
+  // The figure in the middle with its kit hanging off it, hands on the side they
+  // are actually held: the sprite carries the right-hand armament at screen
+  // right, so the Right Hand column is the right one.
+  const cols = { l: document.createElement('div'), r: document.createElement('div') };
+  cols.l.className = 'ag-col';
+  cols.r.className = 'ag-col';
+  ui.blocks.forEach(({ slot, el: b }, i) => {
+    const id = slot.id.toLowerCase();
+    const side = id.includes('right') ? 'r' : id.includes('left') ? 'l' : (i % 2 ? 'r' : 'l');
+    cols[side].appendChild(b);
   });
-  const equipment = rendered.element;
-  equipment.classList.add('armoury-equipment');
-  equipment.dataset.component = 'armoury.armamentsCard';
-  equipment.dataset.armamentView = ui.armamentView;
-  equipment.dataset.collapsed = ui.armamentsFolded ? '1' : '0';
-  if (!ui.layout.equipment.outerBorder) equipment.dataset.outerBorder = 'off';
-  rendered.header.classList.add('armoury-equipment-head');
-  rendered.header.dataset.component = 'armoury.armamentsHeader';
-  attachTooltip(rendered.fold, () => `<div class="tt-title">${ui.armamentsFolded ? 'Show' : 'Hide'} ${esc(ui.layout.equipment.groupLabel)}</div>`
-    + `<p>${itemCount} equipped item${itemCount === 1 ? '' : 's'} across the authored equipment positions.</p>`);
-  if (rendered.sort) {
-    const next = ui.armamentView === 'list' ? 'grid' : 'list';
-    rendered.sort.classList.add('armoury-card-view-toggle', 'armoury-armament-view-toggle');
-    rendered.sort.dataset.component = 'armoury.armamentViewToggle';
-    rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-      + (ui.armamentView === 'list'
-        ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-        : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
-    attachTooltip(rendered.sort, () => `<div class="tt-title">${esc(next === 'grid' ? 'Grid view' : 'List view')}</div><p>${esc(next === 'grid' ? 'Show compact position tiles and one shared Details pane.' : 'Show every equipment position as a full detail row.')}</p>`);
-  }
-  if (ui.viewMode.pane === 'inventory') ui.left.appendChild(equipment);
-  if (ui.viewMode.pane === 'both') ui.right.appendChild(equipment);
+  ui.left.appendChild(cols.l);
+  if (L.figure) ui.left.appendChild(ui.figure());
+  ui.left.appendChild(cols.r);
+  ui.right.appendChild(ui.picker());
+}
+
+function buildList(L, ui) {
+  // One column of slots beside the figure — or without it, when the row says
+  // `figure: false`. The id is not consulted: 'rack' is simply the row that
+  // asks for no figure.
+  if (L.figure) ui.left.appendChild(ui.figure());
+  const slotWrap = document.createElement('div');
+  slotWrap.className = 'equip-slots';
+  for (const b of ui.blocks) slotWrap.appendChild(b.el);
+  ui.right.appendChild(slotWrap);
+  ui.right.appendChild(ui.picker());
 }
 
 /**
@@ -435,146 +321,18 @@ function modSummary(registries, piece) {
 // passed as false: a dead argument is a second copy of a decision, and the next
 // author to see `locked: false` at every call site would reasonably conclude the
 // picker still has a locked state to reach.
-//
-// TWO WRAPPERS, ONE MARKUP (Viki, 2026-08-21). The card is now BOTH a control in
-// its own right and the face of a disclosure — and a <button> inside a <button>
-// is not a thing the parser keeps, so the face wants the same card built out of
-// phrasing content instead. That is a second SHAPE, and it must not become a
-// second MARKUP: `pieceChipHtml` is the one home, and the two functions below
-// differ only in the element they hang it on.
-function pieceChipHtml(registries, piece) {
-  const mods = modSummary(registries, piece);
-  return `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">`
-    + `<span class="ec-name">${esc(piece.name)}</span>`
-    + `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>`
-    + `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
-}
-
-/** The art element dies quietly if the file is missing — the single-file dist
- *  and file:// play both depend on this and it is easy to drop in a refactor. */
-function dropArtOnError(el) {
-  const art = el.querySelector('.ec-art');
-  if (art) art.addEventListener('error', () => art.remove());
-  return el;
-}
-
-export function pieceChip(registries, piece, { selected }) {
+function pieceChip(registries, piece, { selected }) {
   const el = document.createElement('button');
   el.className = `equip-chip rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
   el.type = 'button';
-  el.innerHTML = pieceChipHtml(registries, piece);
-  return dropArtOnError(el);
-}
-
-/** The same card as phrasing content, for use INSIDE the disclosure face. */
-function pieceFace(registries, piece, { selected, equippedLabel = '' }) {
-  const el = document.createElement('span');
-  el.className = `equip-chip as-face rarity-${piece.rarity || 'common'}${selected ? ' on' : ''}`;
-  el.innerHTML = pieceChipHtml(registries, piece);
-  if (equippedLabel) {
-    const tags = el.querySelector('.ec-tags');
-    const badge = document.createElement('em');
-    badge.className = 'ec-equipped';
-    badge.textContent = equippedLabel;
-    tags.appendChild(badge);
-  }
-  return dropArtOnError(el);
-}
-
-function inventoryFace(row, {
-  selected = false, draggable = false, actionLabel = '', classModel = null,
-} = {}) {
-  const el = renderInventoryItemCard(inventoryItemCardModel(row, {
-    selected, draggable, classModel,
-  }));
-  if (actionLabel) el.insertAdjacentHTML('beforeend', `<strong class="inventory-inline-action">${esc(actionLabel)}</strong>`);
-  return el;
-}
-
-function inventoryReveal(registries, row, {
-  comparison = null, action = null, instruction = '', holdDuration = 0,
-  registerHold = null, classModel = null, onClassAction = null, comparisonConfig = null,
-} = {}) {
-  const item = row.item;
-  let art;
-  if (row.category === 'Armour' || ['Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) {
-    art = { kind: 'image', value: thumbSrc(item) };
-  } else if (item.artAsset) {
-    art = { kind: 'image', value: assetUrl(item.artAsset) };
-  } else {
-    art = { kind: 'icon', value: item.icon || '◆' };
-  }
-  const description = row.category === 'Relic'
-    ? relicText(item, registries)
-    : (item.blurb || item.textTemplate || 'No additional information.');
-  const mods = modSummary(registries, item);
-  const detailModel = inventoryDetailCardModel({ row, art, description, mods, instruction, classModel });
-  const comparisonPresentation = comparisonConfig?.presentation || 'tooltip';
-  const comparisonHtml = comparison
-    ? `<div data-ui-component="${UI.equipmentComparison}" data-ui-variant="${comparisonPresentation}"><div class="tt-title">Compare ${esc(item.name)}</div>${renderCandidateComparison(comparison, { expanded: true })}</div>`
-    : '';
-  const el = renderInventoryDetailCard(detailModel, {
-    comparisonHtml: comparisonPresentation === 'inline' ? comparisonHtml : '',
-    action,
-  });
-  el.dataset.inventoryItem = row.key;
-  const cardOwnsAction = classModel?.holdAction === true && Boolean(onClassAction);
-  if (comparison) {
-    el.dataset.component = 'armoury.comparisonTooltipAnchor';
-    el.tabIndex = 0;
-    const actionVerb = action?.textContent?.trim() || 'equip this item';
-    const actionInstruction = cardOwnsAction
-      ? (holdDuration > 0
-        ? ` Press and hold this card to ${actionVerb}.`
-        : ` Activate this card to ${actionVerb}.`)
-      : '';
-    el.setAttribute('aria-label', comparisonPresentation === 'inline'
-      ? `Compare ${item.name}. Comparison shown in this card.${actionInstruction}`
-      : `Compare ${item.name}. Hover or focus this card to show comparison.${actionInstruction}`);
-    const clear = el.closest('.disc-faces') || el.parentElement;
-    const appearance = {
-      variant: 'equipment-comparison',
-      widthRem: comparisonConfig?.tooltipWidthRem,
-      maxHeightRatio: comparisonConfig?.tooltipMaxHeightRatio,
-    };
-    if (comparisonPresentation === 'tooltip') attachTooltip(el, () => comparisonHtml, {
-      intent: 'above',
-      clear,
-      delayMs: comparisonConfig?.hoverDelayMs,
-      appearance,
-    });
-    if (comparisonPresentation === 'tooltip' && !cardOwnsAction) {
-      const disarm = armHold(el, {
-        ms: holdDuration,
-        id: 'compareEquipment',
-        onConfirm: () => {
-          showTooltipFor(el, comparisonHtml, { intent: 'above', clear, appearance });
-          stickTooltip(el);
-        },
-      });
-      if (registerHold) registerHold(disarm);
-    }
-  }
-  if (cardOwnsAction) {
-    // Expanded cards are div-based composite controls, so opt them into the
-    // same keyboard/gamepad focus cursor that already reaches folded buttons.
-    // armHold then supplies the identical gppress/gprelease action contract.
-    el.dataset.focusable = 'true';
-    el.setAttribute('role', 'button');
-    const disarm = armHold(el, {
-      ms: holdDuration,
-      id: 'equipInventory',
-      onConfirm: onClassAction,
-      feedbackHosts: () => {
-        const reveal = el.closest('.disc-reveal');
-        const faces = el.closest('.disc-faces');
-        const faceButton = [...(faces?.children || [])]
-          .find((candidate) => candidate.dataset?.face === row.key);
-        return [reveal, faceButton?.querySelector('.inventory-face')];
-      },
-    });
-    if (registerHold) registerHold(disarm);
-  }
+  const mods = modSummary(registries, piece);
+  el.innerHTML =
+    `<img class="ec-art" src="${esc(thumbSrc(piece))}" alt="">` +
+    `<span class="ec-name">${esc(piece.name)}</span>` +
+    `<span class="ec-tags">${(piece.tags || []).map((t) => `<em>${esc(t)}</em>`).join('')}</span>` +
+    `<span class="ec-mods">${mods.length ? mods.map(esc).join(' · ') : '—'}</span>`;
+  const art = el.querySelector('.ec-art');
+  art.addEventListener('error', () => art.remove());
   return el;
 }
 
@@ -613,7 +371,6 @@ export function mountEquipment(host, {
   // seat is for, and it would be a strange one to introduce while closing this.
   const inCombat = typeof inCombatArg === 'boolean' ? inCombatArg : true;
   const eq = registries.equipment;
-  const layout = normalizeArmouryLayout(eq.armouryUi && eq.armouryUi.layout);
   const cz = (meta.settings && meta.settings.customization) || run.customization || {};
   // WHICH VIEW A PHONE OPENS ON — EldenSpire#38, and the order of these three
   // terms is the whole rule:
@@ -659,7 +416,6 @@ export function mountEquipment(host, {
       + ` — opening on ${JSON.stringify(shapeDefault)}.`);
   }
   let view = (stored && IDS.includes(stored)) ? stored : shapeDefault;
-  const viewMode = () => layout.viewModes[view] || { label: view, pane: 'both', character: 'folded', armaments: 'folded', inventory: 'folded', cards: 'folded' };
   // WHICH PANES ARE FOLDED (#90). A preference about how you like your screen is
   // a preference, so it lives where preferences live — `meta.settings`, the same
   // free bag `equipView` rides in, keyed by region id. NO SAVE-SCHEMA CHANGE:
@@ -670,43 +426,10 @@ export function mountEquipment(host, {
   // a synthetic `meta` and no `onChange`, so there is nothing to read and nothing
   // to write — collapse is per-mount there. That is not new and it is not mine:
   // `equipView` is already per-mount at that call site for the same reason.
-  const storedFolds = armouryTraySession.folded.size
-    ? Object.fromEntries(armouryTraySession.folded) : null;
-  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, viewMode())]));
-  folded.set('armaments', opensCollapsed('armaments', storedFolds, viewMode()));
-  const clampTrayHeight = (value) => Math.min(
-    layout.trays.maximumHeightRatio,
-    Math.max(layout.trays.minimumHeightRatio, Number(value)),
-  );
-  const trayHeights = new Map(contextRegions().map((region) => [
-    region.id,
-    clampTrayHeight(Number.isFinite(Number(armouryTraySession.heights.get(region.id)))
-      ? Number(armouryTraySession.heights.get(region.id)) : layout.trays.defaultHeightRatio),
-  ]));
-  let cardView = layout.cards.defaultView;
-  const storedArmamentView = meta.settings && meta.settings.armouryArmamentView;
-  let armamentView = ['list', 'grid'].includes(storedArmamentView)
-    ? storedArmamentView : layout.equipment.defaultView;
-  let armamentGridSelection = null;
+  const storedFolds = (meta.settings && meta.settings.armouryCollapsed) || null;
+  const folded = new Map(contextRegions().map((r) => [r.id, opensCollapsed(r.id, storedFolds, narrow)]));
   let picking = null; // { slotId, setIndex }
   let notice = ''; // a refusal to show in place, cleared on the next draw
-  const clampPaneRatio = (value) => Math.min(
-    layout.inventorySplit.maximumArmamentsRatio,
-    Math.max(layout.inventorySplit.minimumArmamentsRatio, Number(value)),
-  );
-  const savedPaneRatio = meta.settings && Number(meta.settings.armouryPaneRatio);
-  let paneRatio = clampPaneRatio(Number.isFinite(savedPaneRatio)
-    ? savedPaneRatio : layout.inventorySplit.defaultArmamentsRatio);
-  const savedHybridRatio = meta.settings && Number(meta.settings.armouryHybridRatio);
-  let hybridRatio = clampPaneRatio(Number.isFinite(savedHybridRatio)
-    ? savedHybridRatio : layout.shell.characterRatio);
-  let paneObserver = null;
-  let inventoryDisclosure = null;
-  let holdDisarms = [];
-  const clearHoldDisarms = () => {
-    for (const disarm of holdDisarms.splice(0)) disarm();
-  };
-  const registerHold = (disarm) => holdDisarms.push(disarm);
 
   // A `.modal-veil`, and not for the dimming — the same sentence `.qn-veil`
   // carries four files away, for the same reason. This panel mounts on <body>,
@@ -731,27 +454,11 @@ export function mountEquipment(host, {
   // mount — so paint order and DOM order agree everywhere I could reach. If a
   // future screen opens one over the other, the focus cursor will drive the
   // panel underneath. Named here because the class is what makes it possible.
-  const customEquippedTagColor = equippedTagColor(eq.armouryUi);
-  const overlayPanelModel = armouryPanelModel({
-    view,
-    views: viewIds(),
-    viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
-    layout: viewLayout(view),
-    subject: 'slots',
-  });
-  const wrap = renderArmouryOverlay(armouryOverlayModel({
-    panel: overlayPanelModel,
-    equippedTagColor: customEquippedTagColor,
-  }));
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-veil armoury-overlay';
   host.appendChild(wrap);
 
-  // One teardown home for the listener this mount owns outside its subtree.
-  // The 2026-08-23 disclosure correction removed the hold grips and their
-  // window listeners; Escape still has to leave through every close road.
   const close = () => {
-    document.removeEventListener('keydown', onKey);
-    if (paneObserver) paneObserver.disconnect();
-    clearHoldDisarms();
     wrap.remove();
     if (onClose) onClose();
   };
@@ -776,13 +483,7 @@ export function mountEquipment(host, {
   // `ev.target === wrap` is load-bearing: a click that started on the panel
   // and bubbled must not close it.
   wrap.addEventListener('click', (ev) => {
-    if (ev.target === wrap) { close(); return; }
-    if (!picking) return;
-    if (ev.target.closest('.armoury-close, [data-surface="armouryView"]')) return;
-    if (ev.target.closest('.armoury-inventory, [data-slot-position]')) return;
-    clearInventorySelection();
-    if (onChange) onChange(run.loadout, foldSettings());
-    draw();
+    if (ev.target === wrap) close();
   });
 
 
@@ -802,7 +503,6 @@ export function mountEquipment(host, {
   // moves ids between storage and sets while this panel is open.
   const owned = () => ownership(registries, { meta, loadout: run.loadout });
   const ladderCtx = () => ({ meta, loadout: run.loadout });
-  let draggingItemId = null;
 
   /** Every piece the CONTENT has for this slot, owned or not. Does it exist? */
   function authoredFor(slot) {
@@ -811,940 +511,256 @@ export function mountEquipment(host, {
       : (eq.armaments || []).filter((a) => fitsSlot(slot, a));
   }
 
-  const foldSettings = () => {
-    for (const [id, value] of folded) armouryTraySession.folded.set(id, value);
-    return null;
-  };
-  const openInventoryForSelection = (slotId, setIndex) => {
-    picking = { slotId, setIndex };
-    folded.set('inventory', false);
-  };
-  const clearInventorySelection = () => {
-    picking = null;
-    // A replacement flow always gives the equipment pane back after commit,
-    // even in the Inventory view whose arrival preset normally opens this
-    // tray. Leaving it expanded redraws a fresh actionable row underneath the
-    // still-held pointer; the release click can then perform a second action.
-    // Collapsing is both Constantine's requested return state and the gesture
-    // boundary that keeps one completed hold equal to one mutation.
-    folded.set('inventory', true);
-  };
-
-  /** One mutation path for the shared Inventory buttons, holds, and drag/drop. */
-  function applyEquipmentChange(slotId, setIndex, pieceId, actionLabel) {
-    const hadSelection = !!picking;
-    const changed = equipPiece(
-      registries, run.loadout, slotId, setIndex, pieceId, owned(),
-      { inCombat, attributes: run.attributes }
-    );
-    if (!changed) {
-      notice = `${actionLabel} was refused. The loadout was not changed.`;
-      draw();
-      return false;
-    }
-    if (hadSelection) clearInventorySelection();
-    sfx.play('cardPlay');
-    commit(hadSelection ? foldSettings() : null);
-    return true;
+  /** Every piece you may put in it right now. Do you have it? */
+  function eligible(slot) {
+    // fitsSlot is the model's gate, and the same one equipPiece enforces — the
+    // picker must never offer a piece the mutation will refuse. Ownership is now
+    // the second half of that same sentence.
+    const mine = owned();
+    return authoredFor(slot).filter((p) => mine.has(p));
   }
 
-  function comparisonFor(slotId, setIndex, pieceId) {
-    return equipmentSurfaceReceipt(registries, run, {
-      candidate: { slotId, setIndex, pieceId },
-      meta,
-    }).candidate;
-  }
-
-  /** A selected compatible position wins; otherwise use the item's current or first valid position. */
-  function inventoryTarget(row) {
-    if (!row || !row.item || !['Armour', 'Weapon', 'Shield', 'Staff', 'Armament'].includes(row.category)) return null;
-    const slots = (eq.slots || []).filter((slot) => fitsSlot(slot, row.item));
-    if (!slots.length) return null;
-    const selected = picking && slots.find((slot) => slot.id === picking.slotId);
-    if (selected) {
-      const equippedPositions = slots.flatMap((slot) => (run.loadout.sets[slot.id] || []).map((itemId, setIndex) => ({
-        slotId: slot.id, setIndex, itemId,
-      })));
-      const action = inventorySelectionAction({
-        itemId: row.id,
-        selectedSlotId: selected.id,
-        selectedSetIndex: picking.setIndex,
-        selectedItemId: (run.loadout.sets[selected.id] || [])[picking.setIndex] || null,
-        equippedPositions,
-      });
-      return { ...action, slot: selected, equipped: action.kind === 'unequip' };
-    }
-    for (const slot of slots) {
-      const index = (run.loadout.sets[slot.id] || []).findIndex((id) => id === row.id);
-      if (index >= 0) return { slot, setIndex: index, pieceId: null, equipped: true, kind: 'unequip' };
-    }
-    const slot = slots[0];
-    return {
-      slot,
-      setIndex: run.loadout.active[slot.id] || 0,
-      pieceId: row.id,
-      equipped: false,
-      kind: 'equip',
-    };
-  }
-
-  function activatePosition(slot, position, { openPicker = false } = {}) {
+  function slotBlock(slot) {
+    const box = document.createElement('div');
+    box.className = 'equip-slot';
     const rule = canSwap(registries, slot.id, { inCombat });
-    if (!position.active) {
-      if (!rule.ok) { notice = rule.reason; draw(); return; }
-      if (onSwap) {
-        const refused = onSwap(slot.id, position.index);
-        if (refused) { notice = refused; draw(); }
+    box.innerHTML =
+      `<div class="es-head"><span class="es-label">${esc(slot.label)}</span>` +
+      // The badge word comes from the verdict it belongs to (#98). It was the
+      // literal 'sealed' typed here while canSwap supplied only the tooltip, so
+      // the one word a player reads had no home and nothing could compare it to
+      // canEquip's sentence — which is exactly how the two came to share it.
+      (rule.ok ? '' : `<span class="es-sealed" title="${esc(rule.reason)}">${esc(rule.word)}</span>`) +
+      `</div><div class="es-sets"></div>`;
+    const sets = box.querySelector('.es-sets');
+
+    // THE LADDER (#90). `open` · `next` · `hidden`, derived from two integers
+    // against the cell's index — never written on a cell. The model owns the
+    // arithmetic (setCellState); this loop only draws what it is told, which is
+    // why there is no state here that the model cannot produce.
+    const opened = openedSets(registries, slot, ladderCtx());
+    const visible = visibleSets(registries, slot, ladderCtx());
+
+    (run.loadout.sets[slot.id] || []).forEach((itemId, i) => {
+      const state = setCellState(i, opened, visible);
+      if (state === 'hidden') return;
+      if (state === 'next') {
+        // THE ONE REFUSAL LEFT IN THIS SCREEN once the picker holds only what
+        // you own. Its words are the RUNG'S OWN — `name` and `hint` from
+        // unlocks.csv — because a reason invented here would be a sentence with
+        // no author and no home. visibleSets() only shows this cell when a rung
+        // exists, so refuses() can never be handed an empty reason.
+        const rung = rungFor(registries, slot, i);
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'es-cell locked';
+        cell.innerHTML = `<span class="es-lock">🔒</span><span>${esc(rung.name)}</span>`;
+        refuses(cell, () => rung.hint);
+        sets.appendChild(cell);
         return;
       }
-      if (!cycleSet(registries, run.loadout, slot.id, position.index, { meta, inCombat })) return;
-      if (openPicker) openInventoryForSelection(slot.id, position.index);
-      sfx.play('cardPlay');
-      commit(openPicker ? foldSettings() : null);
-      return;
-    }
-    if (picking && picking.slotId === slot.id && picking.setIndex === position.index) clearInventorySelection();
-    else openInventoryForSelection(slot.id, position.index);
-    if (onChange) onChange(run.loadout, foldSettings());
-    draw();
-  }
+      const active = (run.loadout.active[slot.id] || 0) === i;
+      const piece = itemId
+        ? (slot.kinds.includes('armor')
+          ? (eq.armour || []).find((o) => o.classId === run.class && o.id === itemId)
+          : (eq.armaments || []).find((a) => a.id === itemId))
+        : null;
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = `es-cell${active ? ' on' : ''}${piece ? '' : ' empty'}`;
+      cell.title = piece ? piece.name : 'Empty';
+      cell.innerHTML = piece
+        ? `<img src="${esc(thumbSrc(piece))}" alt=""><span>${esc(piece.name)}</span>`
+        : `<span class="es-empty">＋</span>`;
+      const im = cell.querySelector('img');
+      if (im) im.addEventListener('error', () => { im.replaceWith(Object.assign(document.createElement('span'), { textContent: '⚔' })); });
 
-  function attachPositionDropTarget(target, slot, position) {
-    target.addEventListener('dragover', (ev) => {
-      const dragged = (eq.armaments || []).find((candidate) => candidate.id === draggingItemId)
-        || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === draggingItemId);
-      if (!dragged || !fitsSlot(slot, dragged)) return;
-      ev.preventDefault();
-      if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
-      target.classList.add('drop-ready');
-    });
-    target.addEventListener('dragleave', () => target.classList.remove('drop-ready'));
-    target.addEventListener('drop', (ev) => {
-      target.classList.remove('drop-ready');
-      const pieceId = (ev.dataTransfer && (ev.dataTransfer.getData('application/x-ashenspire-item')
-        || ev.dataTransfer.getData('text/plain'))) || draggingItemId;
-      const dragged = (eq.armaments || []).find((candidate) => candidate.id === pieceId)
-        || (eq.armour || []).find((candidate) => candidate.classId === run.class && candidate.id === pieceId);
-      if (!dragged || !fitsSlot(slot, dragged)) return;
-      ev.preventDefault();
-      openInventoryForSelection(slot.id, position.index);
-      applyEquipmentChange(slot.id, position.index, pieceId, `Equip ${dragged.name} to ${position.label}`);
-    });
-  }
-
-  function positionLabelHtml(position) {
-    return `<span class="armoury-position-label-pane"><strong>${esc(position.label)}</strong>`
-      + `<em>${esc(position.code)}</em></span>`;
-  }
-
-  function positionCard(slot, position) {
-    const selected = picking && picking.slotId === slot.id && picking.setIndex === position.index;
-    if (position.state === 'locked') {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'armoury-position-card is-locked';
-      card.dataset.component = 'armoury.lockedPositionCard';
-      card.dataset.slotPosition = `${slot.id}:${position.index}`;
-      card.innerHTML = positionLabelHtml(position)
-        + `<span class="armoury-position-locked-pane"><span aria-hidden="true">🔒</span>`
-        + `<strong>Locked</strong><small>${esc(position.rung?.name || 'Locked position')}</small></span>`;
-      refuses(card, () => position.rung?.hint || 'This equipment position is locked.');
-      attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}: Locked</div><p>${esc(position.rung?.hint || 'This equipment position is not unlocked yet.')}</p>`);
-      return card;
-    }
-
-    if (position.state === 'empty') {
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = `armoury-position-card is-empty${selected ? ' is-selected' : ''}`;
-      card.dataset.component = 'armoury.emptyPositionCard';
-      card.dataset.slotPosition = `${slot.id}:${position.index}`;
-      card.innerHTML = positionLabelHtml(position)
-        + '<span class="armoury-position-sprite-pane"><span class="armoury-position-empty-icon">＋</span></span>'
-        + '<span class="armoury-position-summary-pane"><span class="armoury-position-headings"><small>Category</small><small>Name</small><small>Combat</small></span>'
-        + '<span class="armoury-position-values"><em>Empty</em><strong>Empty position</strong><span>—</span></span>'
-        + '<span class="armoury-position-footer"><span class="armoury-position-empty-hint">Select or drop a compatible item</span></span></span>';
-      card.addEventListener('click', () => activatePosition(slot, position, { openPicker: true }));
-      attachPositionDropTarget(card, slot, position);
-      attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}: Empty</div><p>Select this position, then choose an item from Inventory, or drag a compatible item here.</p>`);
-      return card;
-    }
-
-    const card = document.createElement('details');
-    card.className = `armoury-position-card is-occupied${position.active ? ' is-active' : ''}${selected ? ' is-selected' : ''}`;
-    card.dataset.component = 'armoury.equipmentPositionCard';
-    card.dataset.slotPosition = `${slot.id}:${position.index}`;
-    card.dataset.positionState = position.action;
-    const head = document.createElement('summary');
-    head.className = 'armoury-position-summary';
-    const tags = position.summary.tags.map((tag) => `<em>${esc(tag)}</em>`).join('') || '<em>untagged</em>';
-    const actionLabel = position.action === 'equipped'
-      ? `Equipped: ${position.equippedLabel}` : 'Equip';
-    head.innerHTML = positionLabelHtml(position)
-      + `<span class="armoury-position-sprite-pane"><img src="${esc(thumbSrc(position.summary.item))}" alt=""></span>`
-      + '<span class="armoury-position-summary-pane"><span class="armoury-position-headings"><small>Category</small><small>Name</small><small>Combat</small></span>'
-      + `<span class="armoury-position-values"><em>${esc(position.summary.category)}</em><strong>${esc(position.summary.name)}</strong><span>${esc(position.summary.bonus)}</span></span>`
-      + `<span class="armoury-position-footer"><span class="armoury-position-tags">${tags}</span>`
-      + `<span class="armoury-position-weight">${esc(position.summary.weight)}</span>`
-      + `<button type="button" class="armoury-position-action ${position.action}">${esc(actionLabel)}</button></span></span>`;
-    const image = head.querySelector('img');
-    image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: position.summary.item.icon || '◆' })));
-    const action = head.querySelector('.armoury-position-action');
-    action.addEventListener('click', (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      activatePosition(slot, position, { openPicker: position.action === 'equipped' });
-    });
-    card.append(head, armamentDetail(slot, position.summary));
-    attachPositionDropTarget(card, slot, position);
-    attachTooltip(head, () => `<div class="tt-title">${esc(`${position.label}: ${position.summary.name}`)}</div><p>${esc(position.summary.bonus)} · ${esc(position.summary.weight)}. Click to show or hide full item details.</p>`);
-    return card;
-  }
-
-  function toggleArmamentView() {
-    const next = armamentView === 'list' ? 'grid' : 'list';
-    armamentView = next;
-    if (onChange) onChange(run.loadout, { armouryArmamentView: armamentView });
-    draw();
-    wrap.querySelector('.armoury-armament-view-toggle')?.focus();
-  }
-
-  function positionGridCard(slot, position) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = `armoury-position-grid-card is-${position.state}`;
-    card.dataset.component = `armoury.${position.state}PositionGridCard`;
-    card.dataset.slotPosition = `${slot.id}:${position.index}`;
-    if (!armamentGridSelection && position.active && position.state === 'occupied') {
-      armamentGridSelection = { slotId: slot.id, index: position.index };
-    }
-    const selected = armamentGridSelection
-      && armamentGridSelection.slotId === slot.id
-      && armamentGridSelection.index === position.index;
-    if (selected) card.classList.add('is-selected');
-    let art = '<span aria-hidden="true">＋</span>';
-    if (position.state === 'locked') art = '<span aria-hidden="true">🔒</span>';
-    else if (position.summary.item) art = `<img src="${esc(thumbSrc(position.summary.item))}" alt="">`;
-    card.innerHTML = `<strong>${esc(position.code)}</strong><span class="armoury-position-grid-sprite">${art}</span>`
-      + `<span class="armoury-position-grid-name">${esc(position.state === 'locked' ? 'Locked' : position.summary.name)}</span>`;
-    const image = card.querySelector('img');
-    if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: position.summary.item?.icon || '◆' })));
-    if (position.state === 'locked') {
-      refuses(card, () => position.rung?.hint || 'This equipment position is locked.');
-    } else {
-      card.addEventListener('click', () => {
-        armamentGridSelection = { slotId: slot.id, index: position.index };
-        draw();
-        wrap.querySelector(`[data-slot-position="${CSS.escape(`${slot.id}:${position.index}`)}"]`)?.focus();
-      });
-      attachPositionDropTarget(card, slot, position);
-    }
-    attachTooltip(card, () => `<div class="tt-title">${esc(position.label)}</div><p>${esc(position.state === 'locked' ? 'This position is locked.' : `${position.summary.name}. Select to show its details below.`)}</p>`);
-    return card;
-  }
-
-  function armamentGridDetail(orderedSlots) {
-    const positions = orderedSlots.flatMap((slot) => slotPositions(slot)
-      .filter((position) => position.modelState !== 'hidden')
-      .map((position) => ({ slot, position })));
-    let selected = armamentGridSelection
-      ? positions.find(({ slot, position }) => slot.id === armamentGridSelection.slotId && position.index === armamentGridSelection.index)
-      : null;
-    if (!selected) selected = positions.find(({ position }) => position.active && position.state === 'occupied')
-      || positions.find(({ position }) => position.state !== 'locked') || positions[0] || null;
-    if (selected) armamentGridSelection = { slotId: selected.slot.id, index: selected.position.index };
-    const detail = document.createElement('section');
-    detail.className = 'armoury-position-grid-detail';
-    detail.dataset.component = 'armoury.armamentGridDetails';
-    detail.innerHTML = '<h4>Details</h4>';
-    if (!selected) detail.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment positions are available.</p>');
-    else if (selected.position.state === 'occupied') detail.appendChild(armamentDetail(selected.slot, selected.position.summary));
-    else detail.insertAdjacentHTML('beforeend', `<p class="ep-hint">${esc(selected.position.label)} is ${esc(selected.position.state)}.</p>`);
-    return detail;
-  }
-
-  /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
-  function inventoryBlock() {
-    const box = document.createElement('div');
-    box.className = 'inventory-list ep-list';
-    const selectedSlot = picking ? eq.slots.find((slot) => slot.id === picking.slotId) : null;
-    const allRows = inventoryRows(registries, run, meta);
-    const rows = selectedSlot
-      ? allRows.filter((row) => row.item && fitsSlot(selectedSlot, row.item))
-      : allRows;
-    const holdDuration = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
-    const inventoryItemClass = layout.cardClasses.inventoryItem;
-    const faceActions = new Map();
-    const draggableRows = new Map();
-    // In combat the inventory stays readable, but every equipment action is
-    // sealed. Keep that refusal on the action itself so opening an equipped
-    // item explains why it cannot move instead of trying to bind a live act.
-    const sealChip = (element, reason) => {
-      element.classList.add('locked');
-      refuses(element, () => reason);
-      return element;
-    };
-    const attachInventoryDrag = (element, row) => {
-      let pointerDrag = null;
-      let suppressClick = false;
-      const clearDropReady = () => {
-        for (const cell of wrap.querySelectorAll('.armoury-position-card.drop-ready')) cell.classList.remove('drop-ready');
-      };
-      const dropAt = (x, y) => {
-        const card = document.elementFromPoint(x, y)?.closest?.('[data-slot-position]');
-        if (!card || card.classList.contains('is-locked')) return null;
-        const [slotId, rawIndex] = String(card.dataset.slotPosition || '').split(':');
-        const setIndex = Number(rawIndex);
-        const slot = (eq.slots || []).find((candidate) => candidate.id === slotId);
-        if (!slot || !Number.isInteger(setIndex) || !fitsSlot(slot, row.item)) return null;
-        return { card, slot, setIndex };
-      };
-      const detachPointerTracking = () => {
-        document.removeEventListener('pointermove', onPointerMove, true);
-        document.removeEventListener('pointerup', onPointerUp, true);
-        document.removeEventListener('pointercancel', onPointerCancel, true);
-      };
-      const finishPointerTracking = () => {
-        detachPointerTracking();
-        pointerDrag = null;
-        element.classList.remove('dragging');
-        clearDropReady();
-      };
-      const onPointerMove = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        if (!pointerDrag.dragging
-          && Math.hypot(event.clientX - pointerDrag.x, event.clientY - pointerDrag.y) <= HOLD_POINTER_SLOP) return;
-        if (!pointerDrag.dragging) element.dispatchEvent(new CustomEvent('carddragstart'));
-        pointerDrag.dragging = true;
-        event.preventDefault();
-        element.classList.add('dragging');
-        clearDropReady();
-        pointerDrag.drop = dropAt(event.clientX, event.clientY);
-        if (pointerDrag.drop) pointerDrag.drop.card.classList.add('drop-ready');
-      };
-      const onPointerUp = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        const completed = pointerDrag.dragging;
-        const drop = pointerDrag.drop || (completed ? dropAt(event.clientX, event.clientY) : null);
-        finishPointerTracking();
-        if (!completed) return;
-        suppressClick = true;
-        event.preventDefault();
-        event.stopPropagation();
-        if (drop) {
-          openInventoryForSelection(drop.slot.id, drop.setIndex);
-          applyEquipmentChange(drop.slot.id, drop.setIndex, row.id, `Equip ${row.name} to ${drop.slot.label}`);
-        }
-      };
-      const onPointerCancel = (event) => {
-        if (!pointerDrag || pointerDrag.id !== event.pointerId) return;
-        finishPointerTracking();
-      };
-      element.draggable = true;
-      element.addEventListener('dragstart', (ev) => {
-        element.dispatchEvent(new CustomEvent('carddragstart'));
-        detachPointerTracking();
-        pointerDrag = null;
-        draggingItemId = row.id;
-        element.classList.add('dragging');
-        if (ev.dataTransfer) {
-          ev.dataTransfer.effectAllowed = 'move';
-          ev.dataTransfer.setData('application/x-ashenspire-item', row.id);
-          ev.dataTransfer.setData('text/plain', row.id);
-        }
-      });
-      element.addEventListener('dragend', () => {
-        draggingItemId = null;
-        element.classList.remove('dragging');
-        clearDropReady();
-      });
-      // HTML drag/drop is retained for mouse browsers. Pointer drag is the
-      // shared card path for touch and for browser surfaces that do not start
-      // an HTML DragEvent from a disclosure button. Moving beyond the hold's
-      // own slop cancels that hold and becomes a drag; a tap remains a tap.
-      element.addEventListener('pointerdown', (event) => {
-        if (!event.isPrimary || (event.pointerType === 'mouse' && event.button !== 0)) return;
-        detachPointerTracking();
-        pointerDrag = { id: event.pointerId, x: event.clientX, y: event.clientY, dragging: false, drop: null };
-        try { element.setPointerCapture(event.pointerId); } catch { /* capture is a progressive enhancement */ }
-        document.addEventListener('pointermove', onPointerMove, true);
-        document.addEventListener('pointerup', onPointerUp, true);
-        document.addEventListener('pointercancel', onPointerCancel, true);
-      });
-      element.addEventListener('click', (event) => {
-        if (!suppressClick) return;
-        suppressClick = false;
-        event.preventDefault();
-        event.stopImmediatePropagation();
-      }, true);
-    };
-    if (selectedSlot) {
-      box.dataset.filteredFor = `${selectedSlot.id}:${picking.setIndex}`;
-      box.setAttribute('aria-label', `Inventory items compatible with ${selectedSlot.label}`);
-    }
-    const entries = rows.map((row) => {
-      const target = inventoryTarget(row);
-      const draggable = !!target;
-      const actionLabel = target
-        ? (target.kind === 'unequip'
-          ? 'Unequip'
-          : `${target.kind === 'move' ? 'Move' : 'Equip'} to ${target.slot.label}`)
-        : '';
-      const face = inventoryFace(row, {
-        draggable,
-        actionLabel: selectedSlot ? actionLabel : '',
-        classModel: inventoryItemClass,
-      });
-      if (draggable) draggableRows.set(row.key, row);
-      let actionButton = null;
-      if (target) {
-        const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
-        const seal = canEquip(registries, target.slot.id, { inCombat });
-        const transition = equipTransitionReceipt(
-          registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
-        );
-        const wholeCardHold = inventoryItemClass.holdAction && holdDuration > 0 && seal.ok && transition.ok;
-        actionButton = document.createElement(wholeCardHold ? 'span' : 'button');
-        if (!wholeCardHold) actionButton.type = 'button';
-        actionButton.className = target.kind === 'unequip' ? 'ep-equip danger' : 'ep-equip';
-        actionButton.dataset.act = target.kind;
-        actionButton.textContent = actionLabel;
-        if (wholeCardHold) {
-          actionButton.classList.add('inventory-card-action-label');
-          actionButton.setAttribute('aria-hidden', 'true');
+      cell.addEventListener('click', () => {
+        // Clicking a set you're not in switches to it; clicking the one you're
+        // already in opens the picker. Same square, two jobs, no extra chrome.
+        if (!active) {
+          if (!rule.ok) { notice = rule.reason; draw(); return; }
+          if (onSwap) {
+            // In combat the swap is the engine's to allow or refuse — it may
+            // say no because the energy isn't there, and the player should be
+            // told that in the panel rather than in the console.
+            const refused = onSwap(slot.id, i);
+            if (refused) { notice = refused; draw(); }
+            return;
+          }
+          cycleSet(registries, run.loadout, slot.id, i, { meta, inCombat });
+          sfx.play('cardPlay');
+          commit();
         } else {
-          actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
-          actionButton.addEventListener('click', (event) => event.stopPropagation());
+          // OPENING THE PICKER IS NOT A MUTATION (#95). Constantine: "I think you
+          // should be able to see your inventory in combat, just have the slots
+          // locked in combat only." This branch used to read `else if (!inCombat)`
+          // — the picker simply never opened mid-fight, so the inventory was not
+          // hidden by a rule, it was hidden by an omission, and the same omission
+          // was the ONLY thing stopping a mid-fight re-arm. Both halves are now
+          // separated: the panel opens and shows you everything you own, and the
+          // seal lives on the mutation (canEquip → equipPiece in model/loadout.js).
+          picking = picking && picking.slotId === slot.id && picking.setIndex === i ? null : { slotId: slot.id, setIndex: i };
+          draw();
         }
-        if (!seal.ok) sealChip(actionButton, seal.reason);
-        else if (!transition.ok) {
-          actionButton.classList.add('locked');
-          refuses(actionButton, () => transition.reason);
-        } else if (wholeCardHold) {
-          faceActions.set(row.key, act);
-        } else {
-          const disarm = armHold(actionButton, {
-            ms: inventoryItemClass.holdAction ? holdDuration : 0,
-            id: 'equipInventory',
-            onConfirm: act,
-          });
-          registerHold(disarm);
-          faceActions.set(row.key, act);
-        }
-      }
-      return {
-        key: row.key,
-        kind: 'item',
-        disclosure: 'face',
-        face: {
-          label: row.name,
-          node: face,
-          className: 'inventoryItem',
-          classModel: inventoryItemClass,
-        },
-        reveal: {
-          node: inventoryReveal(registries, row, {
-            comparison: target ? comparisonFor(target.slot.id, target.setIndex, target.pieceId) : null,
-            action: actionButton,
-            instruction: selectedSlot
-              ? `${target?.kind === 'unequip' ? 'Unequip from' : 'Equip or drag to'} ${selectedSlot.label}.`
-              : (target ? 'Drag this item onto a compatible equipment position.' : ''),
-            holdDuration,
-            registerHold,
-            classModel: inventoryItemClass,
-            comparisonConfig: layout.comparison,
-            onClassAction: (selectedSlot || holdDuration > 0) ? (faceActions.get(row.key) || null) : null,
-          }),
-          sense: `${row.name}. ${row.category}. ${row.count} owned.`,
-        },
-      };
+      });
+      sets.appendChild(cell);
     });
-    inventoryDisclosure = mountDisclosure(box, entries, {
-      moreLabel: 'more items',
-      armFace: ({ button, entry, onTap }) => {
-        const draggableRow = draggableRows.get(entry.key);
-        if (draggableRow) attachInventoryDrag(button, draggableRow);
-        if (entry.face?.classModel?.holdAction !== true) return false;
-        const act = faceActions.get(entry.key);
-        if (!act) return false;
-        button.dataset.cardClass = entry.face.className;
-        button.dataset.holdCapable = 'true';
-        if (holdDuration > 0) {
-          const disarm = armHold(button, {
-            ms: holdDuration,
-            id: 'equipInventory',
-            onConfirm: act,
-            onTap,
-            hintHost: button.querySelector('.inventory-face'),
-            hintBefore: button.querySelector('.inventory-category'),
-            feedbackHosts: () => {
-              const reveal = [...(button.parentElement?.children || [])]
-                .find((candidate) => candidate.dataset?.revealFor === entry.key);
-              return [button.querySelector('.inventory-face'), reveal];
-            },
-          });
-          registerHold(disarm);
-        } else if (selectedSlot) {
-          button.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            act();
-          });
-        } else {
-          return false;
-        }
-        return true;
-      },
-    });
-    box.dataset.inventoryCount = String(inventoryItemCount(rows));
-    if (!entries.length) box.insertAdjacentHTML('beforeend', selectedSlot
-      ? `<p class="ep-hint">Nothing in Inventory fits ${esc(selectedSlot.label)}.</p>`
-      : '<p class="ep-hint">Inventory is empty.</p>');
     return box;
   }
 
-  /** The equipment-derived cards this loadout produces right now. */
+  function pickerBlock() {
+    const box = document.createElement('div');
+    box.className = 'equip-picker';
+    if (!picking) {
+      // DERIVED FROM STATE, NOT AUTHORED (#90 follow-on, Freja). The picker with
+      // no selection holds one italic line and, once the context pane folds, up
+      // to 420 CSS px of nothing under it. `data-empty` is that condition said
+      // once, here, where it is already known — the stylesheet then gives the
+      // region a shape instead of a top edge. It cannot be set when a list is
+      // present, which is the whole reason it is not a class someone maintains.
+      box.dataset.empty = '1';
+      box.innerHTML = inCombat
+        ? '<p class="ep-hint">Pick a slot above to see what you are carrying.</p>'
+        : '<p class="ep-hint">Pick a slot above to change what is in it.</p>';
+      return box;
+    }
+    const slot = eq.slots.find((s) => s.id === picking.slotId);
+    // ONE SENTENCE, ONE HOME. The seal's words are the model's (canEquip), the
+    // same place the mutation reads them from, so the reason a chip gives when
+    // it is tapped and the reason printed over the list cannot come apart. This
+    // header line is the sentence said ONCE for the whole list — sixteen chips
+    // each repeating it is a wall, and the chips still answer a tap individually
+    // through refuses(), which is the property that actually failed on his phone.
+    const seal = canEquip(registries, picking.slotId, { inCombat });
+    box.innerHTML = `<h4>${esc(slot.label)} · set ${picking.setIndex + 1}</h4>`
+      + (seal.ok ? '' : `<p class="ep-hint">${esc(seal.reason)}</p>`)
+      + '<div class="ep-list"></div>';
+    const list = box.querySelector('.ep-list');
+
+    // A CHIP IS DRAWN THE SAME WAY WHETHER OR NOT IT REFUSES, and the refusal is
+    // added here rather than passed in. #90 deleted pieceChip's `locked`/`hint`
+    // arguments because a dead argument is a second copy of a decision; putting
+    // them back would be that copy with a caller. So pieceChip still only knows
+    // how to draw a piece, and this function — which is where the seal is known —
+    // decorates. `.equip-chip.locked` in styles/ui.css has styled nothing since
+    // #90; it is the rule for "a chip you can see and cannot use", which is
+    // exactly this, so it is reused rather than joined by a second one.
+    const sealChip = (el) => {
+      el.classList.add('locked');
+      refuses(el, () => seal.reason);
+      return el;
+    };
+
+    const bare = document.createElement('button');
+    bare.type = 'button';
+    bare.className = 'equip-chip bare';
+    bare.innerHTML = '<span class="ec-name">Bare</span><span class="ec-mods">Nothing at all</span>';
+    if (seal.ok) {
+      bare.addEventListener('click', () => {
+        equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, null, owned(), { inCombat, attributes: run.attributes });
+        commit();
+      });
+    } else sealChip(bare);
+    list.appendChild(bare);
+
+    // EVERY CHIP HERE IS OWNED (#90) — a piece you do not own is not in
+    // `eligible()`, so it is not a chip. WHETHER YOU MAY ACT ON IT IS A SECOND
+    // QUESTION (#95) and it is the fight's, not the profile's. The two states
+    // must not read alike or the screen lies about why it said no:
+    //   · a rung you have not earned  → a CELL in the rack, 🔒 and the rung's
+    //     name, refusing with the rung's own hint out of unlocks.csv;
+    //   · a piece sealed by a fight   → a CHIP in the picker, the piece's own art
+    //     and name, dimmed, refusing with the slot's seal sentence.
+    // Different container, different content, different sentence, different
+    // author of the sentence. Nothing here says "locked" at the player.
+    const current = (run.loadout.sets[picking.slotId] || [])[picking.setIndex];
+    for (const piece of eligible(slot)) {
+      const chip = pieceChip(registries, piece, { selected: piece.id === current });
+      if (seal.ok) {
+        chip.addEventListener('click', () => {
+          equipPiece(registries, run.loadout, picking.slotId, picking.setIndex, piece.id, owned(), { inCombat, attributes: run.attributes });
+          sfx.play('cardPlay');
+          commit();
+        });
+      } else sealChip(chip);
+      const row = document.createElement('div');
+      row.className = 'equip-candidate-row';
+      row.appendChild(chip);
+      // `meta` is handed over because the swap-price rows are priced with the
+      // LIVE rule (Settings › Advanced › Weapon swap cost). Omitting it would
+      // price them with the shipping default and read as plausible — the row
+      // carries the rule it used (`ruleId`) so that stays readable either way.
+      const comparison = equipmentSurfaceReceipt(registries, run, {
+        candidate: { slotId: picking.slotId, setIndex: picking.setIndex, pieceId: piece.id },
+        meta,
+      }).candidate;
+      row.insertAdjacentHTML('beforeend', renderCandidateComparison(comparison));
+      list.appendChild(row);
+    }
+    return box;
+  }
+
+  /** The rewrites, live: the actual cards this loadout produces right now. */
   function cardStrip() {
     const box = document.createElement('div');
-    box.className = 'equip-cards armoury-card-list';
-    box.dataset.cardView = cardView;
-    const gridColumns = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? layout.responsive.phone.cardsGridColumns
-      : layout.cards.gridColumns;
-    box.style.setProperty('--armoury-card-grid-columns', String(gridColumns));
+    box.className = 'equip-cards';
     const surface = equipmentSurfaceReceipt(registries, run);
     const shown = new Set();
     for (const inst of run.deck || []) {
-      // This tray is the equipment-card surface. Class/signature cards do not
-      // belong here; they have no armament source to inspect or compare.
-      if (!inst.equipmentRole) continue;
-      const key = inst.equipmentRole;
+      const key = inst.equipmentRole || `signature:${inst.cardId}`;
       if (shown.has(key)) continue;
       shown.add(key);
-      const rendered = renderCard(registries, inst, {});
-      const def = resolveCard(registries, inst);
-      const copyCount = inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies;
-      const art = rendered.querySelector('.art')?.textContent || '❖';
-      const type = rendered.querySelector('.ctype')?.textContent || def.type;
-      const cost = rendered.querySelector('.cost')?.textContent || String(def.cost);
-      const mana = rendered.querySelector('.mana-cost');
-      const tags = rendered.querySelector('.ctags');
-      const text = rendered.querySelector('.ctext');
-      const fullText = text ? text.textContent.trim() : '';
-      const combatText = fullText.match(/^.*?[.!?](?:\s|$)/)?.[0].trim() || fullText;
-
-      const row = document.createElement('details');
-      row.className = 'armoury-card-row';
-      row.dataset.cardRow = '1';
-      const summary = document.createElement('summary');
-      summary.className = 'armoury-card-row-summary';
-      summary.innerHTML = '<span class="armoury-card-row-caret" aria-hidden="true">▸</span>'
-        + `<span class="armoury-card-row-icon" aria-hidden="true">${esc(art)}</span>`
-        + `<strong class="armoury-card-row-name">${esc(def.name)}</strong>`
-        + `<span class="armoury-card-row-type">${esc(type)}</span>`
-        + `<span class="armoury-card-row-cost">◆ ${esc(cost)}${mana ? ` ${esc(mana.textContent.trim())}` : ''}</span>`
-        + `<span class="armoury-card-row-tags">${tags ? tags.textContent.trim() : ''}</span>`
-        + `<em class="armoury-card-row-count">x${esc(String(copyCount))}</em>`;
-      attachTooltip(summary, () => `<div class="tt-title">${esc(def.name)}</div><p>Tap to expand the card details.</p>`);
-
-      const detail = document.createElement('div');
-      detail.className = 'armoury-card-row-detail';
-      const iconPane = document.createElement('div');
-      iconPane.className = 'armoury-card-icon-pane';
-      iconPane.innerHTML = `<div class="armoury-card-art" aria-hidden="true">${esc(art)}</div>`
-        + '<span class="armoury-card-combat-label">Combat data</span>'
-        + `<div class="armoury-card-combat">${esc(combatText || 'No combat data authored.')}</div>`;
-      if (tags) {
-        const tagClone = tags.cloneNode(true);
-        tagClone.className = 'armoury-card-detail-tags';
-        iconPane.appendChild(tagClone);
-      }
-      const detailsPane = document.createElement('div');
-      detailsPane.className = 'armoury-card-details-pane';
-      detailsPane.innerHTML = `<h4>${esc(def.name)}</h4><p class="armoury-card-detail-meta">${esc(type)} · ◆ ${esc(cost)}${mana ? ` · ${esc(mana.textContent.trim())}` : ''} · x${esc(String(copyCount))}</p>`;
-      if (text) {
-        const textClone = text.cloneNode(true);
-        textClone.className = 'armoury-card-detail-text';
-        detailsPane.appendChild(textClone);
-      }
-      if (def.flavor) detailsPane.insertAdjacentHTML('beforeend', `<p class="armoury-card-detail-flavor">${esc(def.flavor)}</p>`);
-      detail.append(iconPane, detailsPane);
-      row.append(summary, detail);
-      box.appendChild(row);
+      const card = document.createElement('div');
+      card.className = 'equip-card-with-count';
+      card.appendChild(renderCard(registries, inst, { small: true }));
+      const count = document.createElement('em');
+      count.className = 'role-copy-count';
+      count.textContent = `x${inst.equipmentRole ? surface.roleCopies[inst.equipmentRole] : surface.signature.copies}`;
+      card.appendChild(count);
+      box.appendChild(card);
     }
-    if (!shown.size) box.insertAdjacentHTML('beforeend', '<p class="ep-hint">No equipment cards are active.</p>');
+    const receipt = document.createElement('div');
+    receipt.className = 'equip-role-receipts';
+    receipt.innerHTML = surface.roles.map((row) => `<div data-role="${esc(row.role)}"><b>${esc(row.profile.displayName)} <em class="role-copy-count">x${row.copies}</em></b>`
+      + `<span>${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier}`
+      + ` + ${row.receipt.rarityBonus} rarity = <strong>${row.receipt.value}</strong></span>`
+      + `<small>${esc(row.profile.damageSchool)} · ${(row.profile.tags || []).map(esc).join(' · ')}</small></div>`).join('');
+    receipt.insertAdjacentHTML('beforeend', renderEquipmentRequirements(surface.requirements));
+    receipt.insertAdjacentHTML('beforeend', renderPlayerPoise(surface.poise));
+    box.appendChild(receipt);
+    const rm = runMods(registries, run.loadout, run.class);
+    const bits = [];
+    if (rm.maxHp) bits.push(`Max HP ${rm.maxHp > 0 ? '+' : ''}${rm.maxHp}`);
+    for (const s of rm.startStatuses) bits.push(`${registries.statuses.get(s.status).name} ${s.stacks}`);
+    const tags = loadoutTags(registries, run.loadout, run.class);
+    const foot = document.createElement('div');
+    foot.className = 'equip-foot';
+    foot.innerHTML =
+      `<span class="ef-tags">${tags.map((t) => `<em>${esc(t)}</em>`).join('') || '<em class="none">no tags</em>'}</span>` +
+      (bits.length ? `<span class="ef-run">${bits.map(esc).join(' · ')}</span>` : '');
+    box.appendChild(foot);
     return box;
   }
 
-  /** A compact, separate Stats tray; Cards owns no stat receipts. */
   function statsComparison() {
     const projection = statProjection(registries, run);
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const cls = registries.classes.get(run.class);
-    const valueFor = (role) => surface.roles.find((row) => row.role === role)?.receipt.value ?? 0;
-    const labelFor = (role) => layout.combatPower.cards.find((card) => card.role === role)?.label || role;
-    const derived = (id) => projection.derived.find((row) => row.id === id)?.value ?? '—';
-    const box = document.createElement('div');
-    box.className = 'armoury-stats-summary';
-    box.dataset.component = 'armoury.statsSummary';
-    const attributes = projection.attributes.map((row) => `${row.shortLabel || row.label} ${row.value}`).join(' · ');
-    const relicNames = (run.relics || []).map((id) => registries.relics.get(id)?.name || id);
-    const runStats = run.stats || {};
-    box.innerHTML = `<section class="armoury-stats-identity"><strong>${esc(cls?.name || run.class)}</strong><span>Level ${esc(String(run.level || 1))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Combat</b><span>Strike ${esc(String(valueFor('attack')))}</span>`
-      + `<span>${esc(labelFor('technique'))} ${esc(String(valueFor('technique')))}</span>`
-      + `<span>Defense ${esc(String(valueFor('guard')))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Attributes</b><span>${esc(attributes || 'No attributes')}</span></section>`
-      + `<section class="armoury-stats-group"><b>Resources</b><span>Actions ${esc(String(derived('energy')))}</span>`
-      + `<span>Hand ${esc(String(derived('draw')))}</span><span>Resistance —</span></section>`
-      + `<section class="armoury-stats-group"><b>Run</b><span>Fights won ${esc(String(runStats.fightsWon || 0))}</span>`
-      + `<span>Damage dealt ${esc(String(runStats.damageDealt || 0))}</span>`
-      + `<span>Damage taken ${esc(String(runStats.damageTaken || 0))}</span></section>`
-      + `<section class="armoury-stats-group"><b>Relics</b><span>${esc(relicNames.length ? `${relicNames.length}: ${relicNames.join(' · ')}` : '0 equipped')}</span></section>`;
-    return box;
-  }
-
-  function characterPowerEntries() {
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const role = (card) => {
-      const row = surface.roles.find((candidate) => candidate.role === card.role);
-      const value = row ? row.receipt.value : 0;
-      const formula = row
-        ? `${row.receipt.base} base + ${row.receipt.tier} tier × ${row.receipt.gainPerTier} tier gain + ${row.receipt.rarityBonus} rarity`
-        : 'No armament receipt is active.';
-      const face = document.createElement('span');
-      face.className = 'combat-power-face';
-      face.innerHTML = `<span class="combat-power-label">${esc(card.label)}</span>`
-        + `<span class="combat-power-bonus">${esc(row ? `+${row.receipt.rarityBonus} gear` : '—')}</span>`
-        + `<strong class="combat-power-value">${esc(String(value))}</strong>`;
-      return {
-        key: card.id,
-        kind: 'power',
-        disclosure: 'face',
-        face: { label: card.fullLabel, value: String(value), node: face },
-        reveal: { title: card.fullLabel, sense: `${card.fullLabel}. Tap to expand the calculation.`, lines: [formula] },
-      };
-    };
-    return layout.combatPower.cards.map(role);
-  }
-
-  function relicEntries() {
-    return (run.relics || []).map((id) => {
-      const relic = registries.relics.get(id);
-      return {
-        key: id,
-        kind: 'relic',
-        disclosure: 'face',
-        face: { label: relic.name, value: 'Equipped' },
-        reveal: { title: relic.name, sense: relicText(relic, registries), lines: [relic.flavor || 'A relic carried into the Spire.'] },
-      };
-    });
-  }
-
-  function characterStatsPanel() {
     const box = document.createElement('section');
-    box.className = 'armoury-character-stats';
-    const projection = statProjection(registries, run);
-    const expanded = viewMode().character === 'expanded';
-
-    function informationCard({ id, label, summary, body }) {
-      const card = document.createElement('details');
-      card.className = `character-info-card ${id}`;
-      card.dataset.component = `armoury.${id}`;
-      card.open = expanded;
-      const head = document.createElement('summary');
-      head.innerHTML = `<span class="character-info-label">${esc(label)}</span>`
-        + `<span class="character-info-summary">${esc(summary)}</span>`;
-      attachTooltip(head, () => `<div class="tt-title">${esc(label)}</div><p>${esc(card.open ? `Fold ${label}.` : `Expand ${label} for its full calculation and details.`)}</p>`);
-      card.append(head, body);
-      return card;
-    }
-
-    const powers = document.createElement('section');
-    powers.className = 'character-power-cards';
-    powers.dataset.component = 'armoury.combatPowerGroup';
-    const powerEntries = characterPowerEntries();
-    mountDisclosure(powers, powerEntries, { moreLabel: 'more powers' });
-    box.appendChild(informationCard({
-      id: 'combatPowerCard',
-      label: layout.combatPower.groupLabel,
-      summary: powerEntries.map((entry) => `${entry.face.node?.querySelector('.combat-power-label')?.textContent || entry.face.label} ${entry.face.value}`).join(' · '),
-      body: powers,
-    }));
-
-    const attributes = document.createElement('section');
-    attributes.className = 'character-attributes';
-    const attributeHost = document.createElement('div');
-    const attributeRows = attributeCardModels(registries, run.attributes, {
-      projection,
-      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    });
-    mountDisclosure(attributeHost, attributeRows, { moreLabel: 'more attributes' });
-    attributes.appendChild(attributeHost);
-    box.appendChild(informationCard({
-      id: 'attributesCard',
-      label: 'Attributes',
-      summary: attributeRows.map((entry) => `${entry.face.label} ${entry.face.value}`).join(' · '),
-      body: attributes,
-    }));
-
-    const relics = document.createElement('section');
-    relics.className = 'character-relics';
-    const relicHost = document.createElement('div');
-    const entries = relicEntries();
-    if (entries.length) mountDisclosure(relicHost, entries, { moreLabel: 'more relics' });
-    else relicHost.innerHTML = '<p class="ep-hint">No relics equipped.</p>';
-    relics.appendChild(relicHost);
-    box.appendChild(informationCard({
-      id: 'relicsCard',
-      label: 'Relics',
-      summary: entries.length ? `${entries.length} equipped · ${entries.map((entry) => entry.face.label).join(' · ')}` : '0 equipped',
-      body: relics,
-    }));
+    box.className = 'armoury-stats';
+    box.innerHTML = '<h3>ATTRIBUTES &amp; RESOURCES</h3>'
+      + `<div class="armoury-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="armoury-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`;
     return box;
   }
 
-  function characterSummaryPanel() {
-    const cls = registries.classes.get(run.class);
-    const box = document.createElement('header');
-    box.className = 'character-summary';
-    box.innerHTML = `<p class="character-kicker">FORSAKEN · ${esc(cls.name.toUpperCase())} · LEVEL ${Number(run.level || 1)}</p>`
-      + `<h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p>`;
-    return box;
-  }
-
-  function slotSummary(slot, setIndex = run.loadout.active?.[slot.id] || 0) {
-    const itemId = (run.loadout.sets[slot.id] || [])[setIndex];
-    const item = slot.kinds.includes('armor')
-      ? (eq.armour || []).find((piece) => piece.classId === run.class && piece.id === itemId)
-      : (eq.armaments || []).find((piece) => piece.id === itemId);
-    const surface = equipmentSurfaceReceipt(registries, run);
-    const roleLabels = new Map(layout.combatPower.cards.map((card) => [card.role, card.label]));
-    const isActive = setIndex === (run.loadout.active?.[slot.id] || 0);
-    const roleBonuses = item && isActive
-      ? surface.roles
-        .filter((row) => row.piece?.id === item.id && Number(row.receipt.value) !== 0)
-        .map((row) => `${roleLabels.get(row.role) || row.role} ${row.receipt.value}`)
-      : [];
-    const authoredBonuses = item ? modSummary(registries, item) : [];
-    const poise = item && Number.isFinite(Number(item.poiseThreshold)) ? `Poise ${Number(item.poiseThreshold)}` : '';
-    const bonus = item
-      ? [...roleBonuses, ...authoredBonuses, poise].filter(Boolean).slice(0, 2).join(' · ') || 'No combat bonus authored'
-      : 'Empty socket';
-    const weight = item && item.weight != null ? `Weight ${item.weight}` : 'Weight —';
-    return {
-      item,
-      name: item ? item.name : 'Empty socket',
-      category: item ? (slot.kinds.includes('armor') ? 'Armour' : `${item.kind || 'Armament'}`.replace(/^./, (c) => c.toUpperCase())) : 'Empty',
-      bonus,
-      weight,
-      tags: item && Array.isArray(item.tags) ? item.tags : (item?.tags ? [item.tags] : []),
-      instruction: item ? 'Click to expand the equipped item and socket details.' : 'Click to expand this empty socket.',
-    };
-  }
-
-  function slotPositions(slot) {
-    const opened = openedSets(registries, slot, ladderCtx());
-    const visible = visibleSets(registries, slot, ladderCtx());
-    return (run.loadout.sets[slot.id] || []).map((itemId, index) => {
-      const modelState = setCellState(index, opened, visible);
-      const summary = slotSummary(slot, index);
-      const cardState = equipmentPositionCardState({
-        slot,
-        index,
-        modelState,
-        item: summary.item,
-        activeIndex: run.loadout.active?.[slot.id] || 0,
-      });
-      return {
-        index,
-        itemId,
-        modelState,
-        ...cardState,
-        summary,
-        rung: modelState === 'next' ? rungFor(registries, slot, index) : null,
-      };
-    });
-  }
-
-  function positionGroup(slot, positions, presentation = 'list') {
-    const cells = positions.map((position) => equipmentSetCellModel({
-      slotId: slot.id,
-      index: position.index,
-      state: position.modelState === 'next' ? 'next' : position.state,
-      active: position.active,
-      piece: position.summary.item ? {
-        id: position.summary.item.id,
-        name: position.summary.name,
-        image: thumbSrc(position.summary.item),
-      } : null,
-      rung: position.rung,
-    }));
-    const model = equipmentSlotModel({
-      slotId: slot.id,
-      label: slot.label,
-      rule: canSwap(registries, slot.id, { inCombat }),
-      cells,
-    });
-    return renderEquipmentSlot(model, {
-      showHeader: false,
-      renderCell: (cellModel) => {
-        const position = positions.find((candidate) => candidate.index === cellModel.properties.index);
-        return presentation === 'grid' ? positionGridCard(slot, position) : positionCard(slot, position);
-      },
-    }).element;
-  }
-
-  function armamentDetail(slot, summaryItem) {
-    const card = document.createElement('article');
-    card.className = 'armoury-position-detail';
-    card.dataset.component = 'armoury.armamentItemCard';
-    const item = summaryItem.item;
-    if (!item) {
-      card.innerHTML = '<p class="armoury-armament-empty">No item is assigned to this equipment position.</p>';
-      return card;
-    }
-
-    const tags = Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []);
-    const tagRows = tags.map((tagId) => {
-      const tag = (registries.tags || []).find((row) => row.id === tagId);
-      return { id: tagId, label: tag?.label || tagId, description: tag?.blurb || 'Equipment classification.' };
-    });
-    const mods = modSummary(registries, item);
-    const value = item.value != null ? String(item.value) : '—';
-    const weight = item.weight != null ? String(item.weight) : '—';
-
-    const detail = document.createElement('section');
-    detail.className = 'armoury-armament-details';
-    detail.dataset.component = 'armoury.armamentDetailPane';
-    detail.innerHTML = `<h4>${esc(item.name)} details</h4>`
-      + `<p class="armoury-armament-lore">${esc(item.blurb || 'No lore text authored.')}</p>`
-      + `<dl><div><dt>Type</dt><dd>${esc(summaryItem.category)} · ${esc(item.rarity || 'standard')}</dd></div>`
-      + `<div><dt>Effects</dt><dd>${esc(mods.length ? mods.join(' · ') : 'No additional equipment effects authored.')}</dd></div>`
-      + `<div><dt>Combat bonuses</dt><dd>${esc(summaryItem.bonus)}</dd></div>`
-      + `<div><dt>Value</dt><dd>${esc(value)}</dd></div>`
-      + `<div><dt>Weight</dt><dd>${esc(weight)}</dd></div></dl>`
-      + `<div class="armoury-armament-tag-details">${tagRows.map((tag) => `<p><strong>${esc(tag.label)}</strong><span>${esc(tag.description)}</span></p>`).join('') || '<p><strong>Tags</strong><span>No tags authored.</span></p>'}</div>`;
-    card.append(detail);
-    attachTooltip(card, () => `<div class="tt-title">${esc(`${slot.label}: ${item.name}`)}</div><p>${esc(summaryItem.bonus)} · ${esc(summaryItem.weight)}</p>`);
-    return card;
-  }
-
-  function characterPanel() {
-    const panel = document.createElement('section');
-    panel.className = 'armoury-character';
-    panel.appendChild(characterSummaryPanel());
-    const sprite = document.createElement('div');
-    sprite.className = 'armoury-sprite-pane';
-    sprite.appendChild(figureFor(registries, run, cz));
-    panel.appendChild(sprite);
-    panel.appendChild(characterStatsPanel());
-    return panel;
-  }
-
-  function commit(settingChange = null) {
+  function commit() {
     // Every loadout mutation lands here, so this is the one wire for the
     // growth chain's talisman source (model/flaskgrowth.js): a worn growth
     // talisman grows the maximum on equip and shrinks it back on unequip.
     // Idempotent, and a no-op until the first talisman growth row is authored.
     syncFlaskGrowth(registries, run);
-    if (onChange) onChange(run.loadout, settingChange || undefined);
+    if (onChange) onChange(run.loadout);
     draw();
-  }
-
-  function regionTray(r) {
-    const source = wrap.querySelector(r.sel);
-    if (!source) return null;
-    const shut = folded.get(r.id) === true;
-    const fillsInventoryPane = r.id === 'inventory' && viewMode().pane === 'inventory';
-    const count = r.count(source);
-    const summary = r.id === 'stats' ? (() => {
-      const identity = source.querySelector('.armoury-stats-identity span')?.textContent?.replace(/^Level\s+/i, 'Lv. ') || '';
-      const groups = [...source.querySelectorAll('.armoury-stats-group')];
-      return [identity, ...groups.slice(0, 1).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent)),
-        ...groups.slice(2, 3).flatMap((group) => [...group.querySelectorAll('span')].map((span) => span.textContent))]
-        .filter(Boolean).join(' · ');
-    })() : '';
-    const savedRatio = trayHeights.get(r.id) || layout.trays.defaultHeightRatio;
-    const viewportHeight = () => Math.max(1, window.visualViewport?.height || window.innerHeight || 1);
-    const model = trayModel({
-      id: r.id,
-      name: r.label,
-      count: count == null ? 0 : count,
-      itemType: r.unit,
-      summary,
-      edge: 'bottom',
-      expanded: !shut,
-      sortable: r.id === 'cards',
-      sortLabel: `Toggle ${r.label} list or grid`,
-      resizable: !fillsInventoryPane,
-      minExpandedSize: Math.max(96, Math.round(layout.trays.minimumHeightRatio * viewportHeight())),
-      items: [],
-    });
-    const snapRatio = (raw) => {
-      const bounded = clampTrayHeight(raw);
-      const nearest = layout.trays.snapRatios.reduce((best, value) => (
-        Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-      ), layout.trays.snapRatios[0]);
-      return Math.abs(nearest - bounded) <= layout.trays.snapTolerance ? nearest : bounded;
-    };
-    const rendered = renderTray(model, {
-      sizeService: {
-        read: () => null,
-        write: (_id, _edge, size) => size,
-      },
-      onToggle: () => {
-        folded.set(r.id, !folded.get(r.id));
-        armouryTraySession.folded.set(r.id, folded.get(r.id));
-        draw();
-        wrap.querySelector(`[data-fold="${r.id}"]`)?.focus();
-      },
-      onSort: r.id === 'cards' ? () => {
-        cardView = cardView === 'list' ? 'grid' : 'list';
-        draw();
-        wrap.querySelector('[data-tray-id="cards"] .tray-sort')?.focus();
-      } : null,
-      onResize: (_id, size) => {
-        const next = snapRatio(size / viewportHeight());
-        trayHeights.set(r.id, next);
-        armouryTraySession.heights.set(r.id, next);
-        rendered.element.style.height = `${next * 100}vh`;
-      },
-      renderContent: (content) => {
-        while (source.firstChild) content.appendChild(source.firstChild);
-      },
-    });
-    rendered.element.classList.add(...source.classList);
-    rendered.element.dataset.region = r.id;
-    rendered.element.dataset.role = 'context';
-    rendered.element.dataset.cardView = r.id === 'cards' ? cardView : '';
-    source.replaceWith(rendered.element);
-    if (!shut && !fillsInventoryPane) {
-      rendered.element.dataset.sized = '1';
-      rendered.element.style.minHeight = `${layout.trays.multipleExpandedMinimumRatio * 100}vh`;
-      rendered.element.style.maxHeight = `${layout.trays.maximumHeightRatio * 100}vh`;
-      rendered.element.style.height = `${savedRatio * 100}vh`;
-    }
-    if (r.id === 'cards' && rendered.sort) {
-      const next = cardView === 'list' ? 'grid' : 'list';
-      rendered.sort.classList.add('armoury-card-view-toggle');
-      rendered.sort.innerHTML = `<span class="armoury-view-mode-label">${esc(next === 'grid' ? 'Grid' : 'List')}</span>`
-        + (cardView === 'list'
-          ? '<span class="card-view-glyph grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>'
-          : '<span class="card-view-glyph list" aria-hidden="true"><i></i><i></i><i></i></span>');
-    }
-    attachTooltip(rendered.fold, () => `<div class="tt-title">${shut ? 'Show' : 'Hide'} ${esc(r.label)}</div><p>${shut
-      ? esc(summary || `${count || 0} ${r.unit}${count === 1 ? '' : 's'} in here.`)
-      : `Fold ${esc(r.label)} back to its compact header.`}</p>`);
-    if (rendered.resizeHandle) {
-      rendered.resizeHandle.dataset.component = `armoury.${r.id}TrayResizeHandle`;
-      attachTooltip(rendered.resizeHandle, () => `<div class="tt-title">Resize ${esc(r.label)}</div><p>Drag the shared tray edge. The expanded height snaps to the authored stops; folding remembers it.</p>`, { intent: 'above' });
-    }
-    return rendered.element;
-  }
-
-  function mountRegionTrays() {
-    for (const region of contextRegions()) regionTray(region);
   }
 
   /**
@@ -1771,64 +787,76 @@ export function mountEquipment(host, {
    * own members. The convention has no answer for a set that contains another
    * set, and the armoury is where that first bites.
    */
+  function dressRegions() {
+    const subject = subjectRegion();
+    for (const r of REGIONS) {
+      const el = wrap.querySelector(r.sel);
+      if (!el) continue;
+      el.dataset.region = r.id;
+      const isSubject = !!subject && r.id === subject.id;
+      el.dataset.role = isSubject ? 'subject' : 'context';
+      if (isSubject) { delete el.dataset.collapsed; continue; }
+      const shut = folded.get(r.id) === true;
+      el.dataset.collapsed = shut ? '1' : '0';
+
+      const head = document.createElement('div');
+      head.className = 'region-head';
+      const n = r.count(el);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'region-fold';
+      btn.dataset.fold = r.id;
+      btn.setAttribute('aria-expanded', shut ? 'false' : 'true');
+      // LAW 3 CLAUSE 4 — a control ships with a contextual tooltip or it is a
+      // defect, and `title=` alone does NOT satisfy it: touch and gamepad players
+      // never see one. The law's own words, and I wrote `data-tip` here first —
+      // an attribute NOTHING in this tree reads, under a comment claiming the
+      // clause was met. attachTooltip is the mechanism (pointer AND the pad's
+      // gpfocus), so this is the mechanism, not an attribute that looks like it.
+      const say = () => `<div class="tt-title">${esc(shut ? `Show ${r.label}` : `Hide ${r.label}`)}</div>`
+        + esc(shut
+          ? `${r.count(el)} ${r.unit}${r.count(el) === 1 ? '' : 's'} in here.`
+          : `Folds away, so ${subject ? subject.label.toLowerCase() : 'the main pane'} get the room.`);
+      btn.title = shut ? `Show ${r.label.toLowerCase()}` : `Hide ${r.label.toLowerCase()}`;
+      attachTooltip(btn, say);
+      btn.innerHTML = `<span class="rf-caret">${shut ? '▸' : '▾'}</span>`
+        + `<span class="rf-label">${esc(r.label)}</span>`
+        + `<span class="rf-count">${n} ${esc(r.unit)}${n === 1 ? '' : 's'}</span>`;
+      btn.addEventListener('click', () => {
+        folded.set(r.id, !folded.get(r.id));
+        // The whole map goes back, not just the one that moved: a partial write
+        // would make `meta.settings.armouryCollapsed` disagree with the screen
+        // for every other region. One fact, one home.
+        if (onChange) onChange(run.loadout, { armouryCollapsed: Object.fromEntries(folded) });
+        draw();
+      });
+      head.appendChild(btn);
+      el.insertBefore(head, el.firstChild);
+    }
+  }
+
   function draw() {
-    if (paneObserver) paneObserver.disconnect();
-    clearHoldDisarms();
     // The layout is READ off the row, never inferred from the id. `data-surface`
     // / `data-member` are the house convention for a navigable set (#78): the
     // host names the set, each control names its member, so an instrument can
     // enumerate this from the rendered page without importing anything.
     const L = viewLayout(view);
-    const panelModel = armouryPanelModel({
-      view,
-      views: viewIds(),
-      viewLabels: Object.fromEntries(Object.entries(layout.viewModes).map(([id, mode]) => [id, mode.label || id])),
-      layout: L,
-      subject: 'slots',
-      picking: !!picking,
-      notice,
-      regions: REGIONS.map((region) => ({
-        id: region.id,
-        label: region.label,
-        count: region.id === 'inventory' ? inventoryItemCount(inventoryRows(registries, run, meta)) : 0,
-        unit: region.unit,
-        edge: 'bottom',
-        expanded: folded.get(region.id) !== true,
-        sortable: region.id === 'cards',
-      })),
-    });
-    const rendered = renderArmouryPanel(panelModel, wrap);
-    const panel = rendered.panel;
-    panel.dataset.viewMode = viewMode().label;
-    panel.dataset.pane = viewMode().pane;
-    panel.dataset.characterState = viewMode().character;
-    panel.dataset.composition = 'character-equipment';
-    panel.dataset.responsive = typeof window !== 'undefined' && window.innerWidth <= layout.responsive.breakpoint
-      ? 'phone' : 'desktop';
-    const applyHybridRatio = () => {
-      panel.style.setProperty('--armoury-character-ratio', `${hybridRatio}fr`);
-      panel.style.setProperty('--armoury-equipment-ratio', `${1 - hybridRatio}fr`);
-      panel.querySelector('.armoury-hybrid-splitter')?.setAttribute('aria-valuenow', String(Math.round(hybridRatio * 100)));
-    };
-    applyHybridRatio();
-    panel.style.setProperty('--armoury-gap', `${layout.shell.gapRem}rem`);
-    panel.style.setProperty('--armoury-sprite-ratio', `${layout.character.spriteRatio}fr`);
-    panel.style.setProperty('--armoury-stats-ratio', `${layout.character.statsRatio}fr`);
-    panel.style.setProperty('--armoury-stats-pane-ratio', `${layout.character.statsPaneRatio}fr`);
-    panel.style.setProperty('--armoury-summary-pane-ratio', `${1 - layout.character.statsPaneRatio}fr`);
-    panel.style.setProperty('--armoury-phone-character-ratio', `${layout.responsive.phone.characterRatio}fr`);
-    panel.style.setProperty('--armoury-phone-equipment-ratio', `${layout.responsive.phone.equipmentRatio}fr`);
-    panel.style.setProperty('--armoury-tray-content-gap', `${layout.trays.contentGapRem}rem`);
-    const applyPaneRatio = () => {
-      panel.style.setProperty('--armoury-armaments-pane-width', `${paneRatio}fr`);
-      panel.style.setProperty('--armoury-inventory-pane-width', `${1 - paneRatio}fr`);
-      const splitter = panel.querySelector('.armoury-pane-splitter');
-      if (splitter) {
-        splitter.setAttribute('aria-valuenow', String(Math.round(paneRatio * 100)));
-        splitter.setAttribute('aria-orientation', panel.dataset.responsive === 'phone' ? 'horizontal' : 'vertical');
-      }
-    };
-    applyPaneRatio();
+    wrap.innerHTML = `
+      <div class="armoury${picking ? ' picking' : ''}" data-figure="${L && L.figure ? '1' : '0'}" data-slots="${esc((L && L.slots) || 'none')}" data-view="${esc(view)}">
+        <header class="armoury-head">
+          <h2>ARMOURY</h2>
+          <div class="armoury-views" data-surface="armouryView">
+            ${viewIds().map((v) => `<button type="button" data-member="${esc(v)}" class="${v === view ? 'on' : ''}">${esc(v)}</button>`).join('')}
+          </div>
+          <button type="button" class="armoury-close" title="Close (Esc)">✕</button>
+        </header>
+        ${notice ? `<p class="armoury-notice">${esc(notice)}</p>` : ''}
+        <div class="armoury-body">
+          <div class="armoury-left"></div>
+          <div class="armoury-right"></div>
+        </div>
+        <div class="armoury-strip"></div>
+      </div>`;
 
     const left = wrap.querySelector('.armoury-left');
     const right = wrap.querySelector('.armoury-right');
@@ -1838,8 +866,9 @@ export function mountEquipment(host, {
       // read as broken rather than as a promise. It appears the day a talisman
       // row exists.
       //
-      // AND THIS TEST HAD TO SPLIT IN TWO (#90). It used to ask for the pieces
-      // currently owned. That hid the Right Hand from a fresh
+      // AND THIS TEST HAD TO SPLIT IN TWO (#90). It used to ask `eligible(slot)`,
+      // which then meant "pieces that fit, locked ones included". Once eligible()
+      // means "pieces you OWN", the same line hides the Right Hand from a fresh
       // profile — because an empty inventory owns nothing — and the armoury
       // Constantine called *"more like an empty inventory"* would render with no
       // inventory in it. Two different questions had been sharing one call:
@@ -1851,7 +880,7 @@ export function mountEquipment(host, {
       // An empty square is the point of the screen; a square for a kind of thing
       // that does not exist yet is the defect the original line was written for.
       .filter((slot) => authoredFor(slot).length)
-      .map((slot) => ({ slot }));
+      .map((slot) => ({ slot, el: slotBlock(slot) }));
 
     // A LOOKUP, NOT A BRANCH. There is no `else` left to fall into: the cell
     // either has a builder or it has none, and none is a named failure. The
@@ -1862,26 +891,8 @@ export function mountEquipment(host, {
     if (build) {
       build(L, {
         left, right, blocks,
-        layout,
-        armamentView,
-        armamentGridColumns: panel.dataset.responsive === 'phone'
-          ? layout.responsive.phone.armamentGridColumns : layout.equipment.gridColumns,
-        armamentsFolded: folded.get('armaments') === true,
-        toggleArmaments: () => {
-          folded.set('armaments', !folded.get('armaments'));
-          armouryTraySession.folded.set('armaments', folded.get('armaments'));
-          draw();
-          wrap.querySelector('[data-fold="armaments"]')?.focus();
-        },
-        viewMode: viewMode(),
-        positions: slotPositions,
-        positionGroup,
-        positionCard,
-        positionGridCard,
-        armamentGridDetail,
-        toggleArmamentView,
         figure: () => figureFor(registries, run, cz),
-        character: () => characterPanel(),
+        picker: () => pickerBlock(),
       });
     } else {
       console.error(`[content] the armoury view ${JSON.stringify(view)} has no layout`
@@ -1892,171 +903,23 @@ export function mountEquipment(host, {
       dead.textContent = `The "${view}" view is declared but has no layout. Pick another view above.`;
       right.appendChild(dead);
     }
-    const inventory = wrap.querySelector('.armoury-inventory');
-    if (inventory) inventory.appendChild(inventoryBlock());
+    wrap.querySelector('.armoury-strip').appendChild(statsComparison());
     wrap.querySelector('.armoury-strip').appendChild(cardStrip());
-    const statsTray = wrap.querySelector('.armoury-stats-tray');
-    if (viewMode().pane === 'inventory') statsTray.appendChild(statsComparison());
-    else statsTray.remove();
-    mountRegionTrays();
-
-    const applyPaneDensity = () => {
-      const equipmentPane = panel.querySelector('.armoury-equipment');
-      const inventoryPane = panel.querySelector('.armoury-inventory');
-      if (!equipmentPane) return;
-      const equipmentWidth = equipmentPane.getBoundingClientRect().width;
-      const inventoryWidth = inventoryPane ? inventoryPane.getBoundingClientRect().width : 0;
-      panel.dataset.armamentDensity = equipmentWidth < layout.inventorySplit.foldGroupsBelowPx
-        ? 'minimal' : equipmentWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
-      panel.dataset.inventoryDensity = viewMode().pane === 'inventory' && inventoryWidth < layout.inventorySplit.compactItemsBelowPx ? 'compact' : 'comfortable';
-      // At phone width both panes stack, so a reveal left open before the
-      // breakpoint would otherwise consume the inventory tray and push the
-      // folded rows out of reach. Folding is presentation only; the player may
-      // immediately reopen any item once the full-width tray has settled.
-      if (panel.dataset.responsive === 'phone' && inventoryDisclosure) inventoryDisclosure.close();
-      const cards = panel.querySelectorAll('details.armoury-position-card');
-      if (equipmentWidth < layout.inventorySplit.foldSubcardsBelowPx) {
-        for (const card of cards) {
-          if (card.open) card.dataset.autoFolded = '1';
-          card.open = false;
-        }
-      } else {
-        for (const card of cards) {
-          if (card.dataset.autoFolded === '1') card.open = true;
-          delete card.dataset.autoFolded;
-        }
-      }
-    };
-
-    const splitter = panel.querySelector('.armoury-pane-splitter');
-    if (splitter) {
-      const snap = (raw) => {
-        const bounded = clampPaneRatio(raw);
-        const nearest = layout.inventorySplit.snapRatios.reduce((best, value) => (
-          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-        ), layout.inventorySplit.snapRatios[0]);
-        return Math.abs(nearest - bounded) <= layout.inventorySplit.snapTolerance ? nearest : bounded;
-      };
-      const setFromPointer = (event) => {
-        const content = panel.querySelector('.armoury-content');
-        const rect = content.getBoundingClientRect();
-        const phone = panel.dataset.responsive === 'phone';
-        paneRatio = snap(phone
-          ? (event.clientY - rect.top) / Math.max(1, rect.height)
-          : (event.clientX - rect.left) / Math.max(1, rect.width));
-        applyPaneRatio();
-        applyPaneDensity();
-      };
-      splitter.addEventListener('pointerdown', (event) => {
-        splitter.setPointerCapture(event.pointerId);
-        splitter.classList.add('dragging');
-        setFromPointer(event);
-      });
-      splitter.addEventListener('pointermove', (event) => {
-        if (!splitter.hasPointerCapture(event.pointerId)) return;
-        setFromPointer(event);
-      });
-      const finishResize = (event) => {
-        if (splitter.hasPointerCapture(event.pointerId)) splitter.releasePointerCapture(event.pointerId);
-        splitter.classList.remove('dragging');
-        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
-      };
-      splitter.addEventListener('pointerup', finishResize);
-      splitter.addEventListener('pointercancel', finishResize);
-      splitter.addEventListener('keydown', (event) => {
-        const phone = panel.dataset.responsive === 'phone';
-        const directional = phone ? ['ArrowUp', 'ArrowDown'] : ['ArrowLeft', 'ArrowRight'];
-        if (![...directional, 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        if (event.key === 'Home') paneRatio = layout.inventorySplit.minimumArmamentsRatio;
-        else if (event.key === 'End') paneRatio = layout.inventorySplit.maximumArmamentsRatio;
-        else paneRatio = snap(paneRatio + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 0.05 : -0.05));
-        applyPaneRatio();
-        applyPaneDensity();
-        if (onChange) onChange(run.loadout, { armouryPaneRatio: paneRatio });
-      });
-      attachTooltip(splitter, () => panel.dataset.responsive === 'phone'
-        ? '<div class="tt-title">Resize panes</div><p>Drag up or down. The divider snaps to the authored size stops.</p>'
-        : '<div class="tt-title">Resize panes</div><p>Drag left or right. The divider snaps to the authored width stops.</p>');
-    }
-    const hybridSplitter = panel.querySelector('.armoury-hybrid-splitter');
-    if (hybridSplitter && viewMode().pane === 'both') {
-      const snap = (raw) => {
-        const bounded = clampPaneRatio(raw);
-        const nearest = layout.inventorySplit.snapRatios.reduce((best, value) => (
-          Math.abs(value - bounded) < Math.abs(best - bounded) ? value : best
-        ), layout.inventorySplit.snapRatios[0]);
-        return Math.abs(nearest - bounded) <= layout.inventorySplit.snapTolerance ? nearest : bounded;
-      };
-      const setFromClientX = (clientX) => {
-        const rect = panel.querySelector('.armoury-body').getBoundingClientRect();
-        hybridRatio = snap((clientX - rect.left) / Math.max(1, rect.width));
-        applyHybridRatio();
-        applyPaneDensity();
-      };
-      hybridSplitter.addEventListener('pointerdown', (event) => {
-        hybridSplitter.setPointerCapture(event.pointerId);
-        hybridSplitter.classList.add('dragging');
-        setFromClientX(event.clientX);
-      });
-      hybridSplitter.addEventListener('pointermove', (event) => {
-        if (hybridSplitter.hasPointerCapture(event.pointerId)) setFromClientX(event.clientX);
-      });
-      const finishHybridResize = (event) => {
-        if (hybridSplitter.hasPointerCapture(event.pointerId)) hybridSplitter.releasePointerCapture(event.pointerId);
-        hybridSplitter.classList.remove('dragging');
-        if (onChange) onChange(run.loadout, { armouryHybridRatio: hybridRatio });
-      };
-      hybridSplitter.addEventListener('pointerup', finishHybridResize);
-      hybridSplitter.addEventListener('pointercancel', finishHybridResize);
-      hybridSplitter.addEventListener('keydown', (event) => {
-        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-        event.preventDefault();
-        if (event.key === 'Home') hybridRatio = layout.inventorySplit.minimumArmamentsRatio;
-        else if (event.key === 'End') hybridRatio = layout.inventorySplit.maximumArmamentsRatio;
-        else hybridRatio = snap(hybridRatio + (event.key === 'ArrowRight' ? 0.05 : -0.05));
-        applyHybridRatio();
-        applyPaneDensity();
-        if (onChange) onChange(run.loadout, { armouryHybridRatio: hybridRatio });
-      });
-      attachTooltip(hybridSplitter, () => '<div class="tt-title">Resize Hybrid panes</div><p>Drag left or right. The divider snaps to the authored width stops.</p>');
-    }
-    applyPaneDensity();
-    if (typeof ResizeObserver !== 'undefined') {
-      paneObserver = new ResizeObserver(applyPaneDensity);
-      const content = panel.querySelector('.armoury-content');
-      if (content) paneObserver.observe(content);
-      const equipment = panel.querySelector('.armoury-equipment');
-      if (equipment) paneObserver.observe(equipment);
-    }
 
     notice = '';
+    dressRegions();
     wrap.querySelector('.armoury-close').addEventListener('click', close);
     for (const b of wrap.querySelectorAll('[data-surface="armouryView"] [data-member]')) {
       b.addEventListener('click', () => {
-        picking = null;
         view = b.dataset.member;
-        // A view is a presentation preset, not a second saved preference.
-        // Explicit per-region choices still win; untouched regions adopt the
-        // newly selected Character/Inventory/Hybrid defaults.
-        for (const region of contextRegions()) {
-          if (!(storedFolds && typeof storedFolds[region.id] === 'boolean')) {
-            folded.set(region.id, opensCollapsed(region.id, null, viewMode()));
-          }
-        }
-        if (!(storedFolds && typeof storedFolds.armaments === 'boolean')) {
-          folded.set('armaments', opensCollapsed('armaments', null, viewMode()));
-        }
         if (onChange) onChange(run.loadout, { equipView: view });
         draw();
       });
     }
   }
 
-  // The removal moved INTO `close()` — see the block there. Leaving a copy here
-  // would be two homes for one teardown, disagreeing on every path but this one.
   const onKey = (e) => {
-    if (e.key === 'Escape') close();
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
   };
   document.addEventListener('keydown', onKey);
 

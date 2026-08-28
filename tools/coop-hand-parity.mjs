@@ -87,9 +87,8 @@ import { launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
-import { setCombatStartStateForTools } from './session.mjs';
 
 const TOOLS = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const args = process.argv.slice(2);
@@ -108,26 +107,6 @@ const browserPath = argOf('--browser') || BROWSERS.find((p) => existsSync(p));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const W = 390, H = 844, DPR = 3;
 
-if (args.includes('--selftest-friendly-confirm')) {
-  if (!browserPath) { console.error('coop-hand-parity selftest: no Chrome found'); process.exit(2); }
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const status = await doorSelftest({
-    tool: 'coop-hand-parity.mjs',
-    args: ['--browser', browserPath, '--only', 'overlap'],
-    timeoutMs: 180000,
-    plants: [{
-      name: 'friendly self card keeps the stale one-click test assumption',
-      file: 'tools/coop-hand-parity.mjs',
-      // Split the mutation anchor so doorplant cannot replace this recipe's
-      // own quoted copy and report a false armed plant.
-      find: '      friendlyTarget.dispatchEvent' + "(new MouseEvent('click', { bubbles: true }));",
-      replace: '      /* planted: required friendly target confirmation skipped */',
-      expectRed: /armed friendly card receives its required target confirmation/,
-    }],
-  });
-  process.exit(status);
-}
-
 const fails = [];
 let ran = 0;
 const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); if (!cond) fails.push(msg); };
@@ -137,7 +116,7 @@ const ok = (cond, msg) => { console.log(`    ${cond ? '✓' : '✗'} ${msg}`); i
 // its mode axis from. Typed here it would be a second copy that outlives the
 // feature; derived, it dies loudly with its home.
 async function appHandModes() {
-  const { balance } = await import(pathToFileURL(join(ROOT, 'src/content/balance.js')).href);
+  const { balance } = await import(`file://${join(ROOT, 'src/content/balance.js')}`);
   return (balance.ui.handLayoutModes || []).slice();
 }
 
@@ -246,12 +225,6 @@ async function main() {
   let port = 8291;
   for (const mode of swept) {
     ran++;
-    // Make the #209 confirmation beat deterministic instead of depending on
-    // a seeded starter draw containing a self-only card. This enters through
-    // the validated test-only session fixture used by the focused #209 gate.
-    setCombatStartStateForTools({
-      name: 'Wren', hp: 42, block: 0, extraHand: ['ironSkin'],
-    });
     // ONE SERVER PER MODE, and it is not tidiness. `lan: true` starts the real
     // LAN server beside the file server — it is what the client's own
     // WebSocket connects to and what lights the LAN door. That server keeps
@@ -359,30 +332,12 @@ async function main() {
     await ev(host, click('.combatant.enemy:not(.dead)'));
     await wait(150);
     const clicked = await ev(host, `(() => {
-      const affordable = [...document.querySelectorAll('.combat.coop .hand .card')].filter((c) => !c.classList.contains('unaffordable'));
-      // Prefer a real self-only guard so the #209 second confirmation is a
-      // deterministic part of both mode cells, not an accident of draw order.
-      const card = affordable.find((c) => /Defend|Gain\s+\d+\s+Block/i.test(c.textContent)) || affordable[0];
-      if (!card) return { clicked: false };
+      const card = [...document.querySelectorAll('.combat.coop .hand .card')].find((c) => !c.classList.contains('unaffordable'));
+      if (!card) return false;
       card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      return { clicked: true, name: card.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) };
+      return true;
     })()`);
-    ok(clicked?.clicked, 'an affordable card was clicked on the co-op hand');
-    // #209 adds an intentional second beat for friendly cards: self-only is a
-    // blue caster target, ally-only is green teammates, mixed is both. The
-    // hand parity gate still owns the same wire assertion; it now completes
-    // that public interaction before reading the wire instead of treating the
-    // absence of a one-click play as a network failure.
-    const friendlyConfirm = await ev(host, `(() => {
-      const friendlyTarget = document.querySelector('.coop-seat[data-friendly-target]');
-      if (!friendlyTarget) return { armed: false, confirmed: false };
-      const relationship = friendlyTarget.dataset.friendlyTarget;
-      friendlyTarget.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      return { armed: true, confirmed: !document.querySelector('.coop-seat[data-friendly-target]'), relationship };
-    })()`);
-    ok(!friendlyConfirm?.armed || friendlyConfirm.confirmed,
-      `armed friendly card receives its required target confirmation${friendlyConfirm?.relationship ? ` (${friendlyConfirm.relationship})` : ''}`);
-    await wait(150);
+    ok(clicked, 'an affordable card was clicked on the co-op hand');
     // The frame, off the wire the client actually wrote to.
     const frames = await ev(host, `window.__wire.map((f) => { try { return JSON.parse(f); } catch (e) { return null; } }).filter(Boolean)`);
     const plays = (frames || []).filter((f) => f && f.t === 'playCard');

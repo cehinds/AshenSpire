@@ -6,7 +6,7 @@
 //
 //   · Vira: three fields are optional in RUN_SHAPE with NO schemaVersion gate,
 //     so a heal written for old saves fires on a CURRENT-schema save too. Delete
-//     the allocation from a current-schema save and it loads with the class preset. Silently.
+//     the allocation from a v4 save and it loads with the class preset. Silently.
 //   · Sten: a planted double-count in the max-HP chain was SWALLOWED, because
 //     `reconcileRunLoadoutHp` is the LAST writer at run creation. His instrument
 //     went green on a real defect.
@@ -226,7 +226,7 @@ function groupB(registries) {
 const HEALS = [
   {
     name: 'the allocation',
-    damage: (o) => { delete o.attributes; delete o.attributeMode; delete o.attributeModeSnapshot; },
+    damage: (o) => { delete o.attributes; delete o.attributeMode; },
     site: 'attributes.js:normalizeRunAttributes',
     field: 'attributes+attributeMode',
   },

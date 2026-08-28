@@ -47,7 +47,6 @@
 // Usage:
 //   node tools/buildstamp-shot.mjs [--root DIR] [--out DIR]
 //   node tools/buildstamp-shot.mjs --selftest     the known-bad corpus
-//   node tools/buildstamp-shot.mjs --source-selftest  shared-owner discriminator; no browser
 //
 // BOUNDARY: this proves the stamp puts pixels inside its own box, at two
 // viewport shapes, in one browser, on the SOURCE tree this server serves. It
@@ -67,7 +66,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
 
 const SHOTS = [
-  { place: 'title', query: '?shot=title', what: 'the main menu — his first word' },
+  { place: 'title', query: '', what: 'the main menu — his first word' },
   { place: 'map', query: '?shot=map', what: 'the act map' },
   { place: 'combat', query: '?shot=combat', what: 'a fight' },
 ];
@@ -269,10 +268,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs')], { stdio: 'inherit' });
     process.exit(r.status == null ? 2 : r.status);
   }
-  if (args.includes('--source-selftest')) {
-    const r = spawnSync(process.execPath, [resolve(HERE, 'buildstamp-shot-selftest.mjs'), '--source-selftest'], { stdio: 'inherit' });
-    process.exit(r.status == null ? 2 : r.status);
-  }
 
   const at = (flag, def) => { const i = args.indexOf(flag); return i >= 0 && args[i + 1] ? args[i + 1] : def; };
   const root = resolve(at('--root', REPO_ROOT));
@@ -288,10 +283,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
     for (const m of misses) console.log(`  · ${m}`);
     process.exit(1);
   }
-  // #12: the counted claim terminates the line; the surfaces and the stamp
-  // text are commentary and print below it.
-  console.log(`buildstamp-shot: OK — ${rows.length}/${SHOTS.length * SHAPES.length} placements photographed`);
-  console.log(`  ${places.size} distinct surfaces (${[...places].join(', ')}), each reading "${expected}",`);
+  console.log(`buildstamp-shot: OK — ${rows.length}/${SHOTS.length * SHAPES.length} placements photographed, `
+    + `${places.size} distinct surfaces (${[...places].join(', ')}), each reading "${expected}",`);
   console.log('  each with pixels of its own inside its own box at both shapes.');
   console.log(`  photographs: ${out}/buildstamp-<place>-<shape>.png (+ -crop.png, the box the ink test judged)`);
   console.log('');

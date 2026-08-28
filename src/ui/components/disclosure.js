@@ -119,12 +119,11 @@ function revealHtml(entry) {
     + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
 }
 
-/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE. One home for that markup, because it is
+/** A FACE IS A LABEL AND A VALUE. One home for that markup, because it is
  *  drawn at mount and re-drawn every time a folded picker's choice changes;
  *  two spellings of it would be two answers to "what did I pick?". */
 function faceHtml(entry) {
   return `<b class="disc-name">${esc(entry.face.label)}</b>`
-    + (entry.face.summary ? `<span class="disc-summary">${esc(entry.face.summary)}</span>` : '')
     + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
 }
 
@@ -140,7 +139,7 @@ function tipHtml(entry) {
 }
 
 /**
- * mountDisclosure(host, entries, { moreLabel, armFace? })
+ * mountDisclosure(host, entries, { moreLabel })
  *   → { open(key), close(), setValue(key, value), openKey }
  *
  * `entries` is the model's list, in model order. WHICH ONES ARE DRAWN UP FRONT
@@ -151,7 +150,7 @@ function tipHtml(entry) {
  * adopted into the panel at mount and the panel starts `hidden`, so the
  * arrival screen is short and one tap opens it. Default folded — his word.
  */
-export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = null } = {}) {
+export function mountDisclosure(host, entries, { moreLabel = 'more' } = {}) {
   const rows = [...(entries || [])];
   const faces = rows.filter((entry) => entry.disclosure === 'face');
   const behind = rows.filter((entry) => entry.disclosure !== 'face');
@@ -165,46 +164,16 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
   const panel = host.querySelector('.disc-reveal');
   const buttons = new Map();
   let openKey = null;
-  // The live nodes this host folds — ONE PER ENTRY since E4 (#249), because a
-  // host with six folded pickers is the creation screen and a host with four
-  // is the shop, and "one held node per mount" was a limit of the first
-  // caller, not a rule of the mechanism. Each is adopted ONCE, at mount: a
-  // picker re-parented on every open would lose nothing visible and would
-  // still be a second renderer's habit — move it in, then only `hidden` moves.
-  // INLINE display, NOT the hidden attribute, and the choice is a measured
-  // one (E4): `[hidden]`'s UA rule is `display: none` at attribute-selector
-  // specificity, and the adopted pickers carry author display rules at the
-  // same specificity (`.cz-opts { display: flex }`, `.class-row`,
-  // `.cz-keepsakes`) — author origin wins, so `hidden` on these nodes paints
-  // ANYWAY. Watched red through creationbrief before this line: five shut
-  // sections with every option on the glass. An inline style loses to
-  // nothing but !important, which nothing here uses. The attribute is still
-  // set for what it is — semantics — while the inline style owns the paint.
-  const held = new Map();
-  const stash = (node) => { node.hidden = true; node.style.display = 'none'; };
-  const surface = (node) => { node.hidden = false; node.style.display = ''; };
-  for (const entry of rows) {
-    if (entry.reveal && entry.reveal.node) {
-      stash(entry.reveal.node);
-      held.set(entry.key, entry.reveal.node);
-      panel.appendChild(entry.reveal.node);
-    }
-  }
-  // Word reveals render HERE, never into panel.innerHTML: the panel now owns
-  // adopted nodes, and innerHTML on the shared parent would destroy them. The
-  // wrapper is invisible to every selector in ui.css (all descend from
-  // `.disc-reveal`) and to onefold.mjs's vocabulary count, checked when added.
-  const words = document.createElement('div');
-  words.className = 'disc-words';
-  words.hidden = true;
-  panel.appendChild(words);
+  // The one live node this host folds, if any. It is adopted ONCE: a picker
+  // re-parented on every open would lose nothing visible and would still be a
+  // second renderer's habit — move it in, then only `hidden` moves.
+  const held = rows.find((entry) => entry.reveal && entry.reveal.node) || null;
+  if (held) panel.appendChild(held.reveal.node);
 
   function close() {
     openKey = null;
     panel.hidden = true;
-    words.hidden = true;
-    words.innerHTML = '';
-    for (const node of held.values()) stash(node);
+    if (!held) panel.innerHTML = '';
     panel.removeAttribute('data-reveal-for');
     for (const button of buttons.values()) {
       button.setAttribute('aria-expanded', 'false');
@@ -244,12 +213,7 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     if (!entry) return;
     close();
     openKey = key;
-    const node = held.get(key);
-    if (node) surface(node);
-    else {
-      words.innerHTML = revealHtml(entry);
-      words.hidden = false;
-    }
+    if (!held) panel.innerHTML = revealHtml(entry);
     const button = buttons.get(key);
     // Placed BEFORE it is un-hidden: see placeUnderRow.
     placeUnderRow(button);
@@ -266,10 +230,6 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     const entry = rows.find((row) => row.key === key);
     const button = buttons.get(key);
     if (!entry || !button) return;
-    // A NODE FACE HAS NO VALUE SLOT — see drawFace. Rewriting innerHTML here
-    // would delete the adopted card and leave a button with a name in it, which
-    // reads as "it worked" and is the failure this seat is for.
-    if (entry.face && entry.face.node) return;
     entry.face.value = value;
     button.innerHTML = faceHtml(entry);
   }
@@ -284,30 +244,11 @@ export function mountDisclosure(host, entries, { moreLabel = 'more', armFace = n
     button.dataset.disclosure = entry.disclosure;
     button.dataset.reveal = 'closed';
     button.setAttribute('aria-expanded', 'false');
-    // A FACE MAY BE A NODE (Viki, 2026-08-21, for the Armoury's item panes).
-    // Constantine: *"it should be part of the card and is revealed pressing the
-    // card instead"* — so the CARD has to be the pressable thing, and a card is
-    // art plus four spans, not a label and a value. The alternative was a second
-    // hand-built fold in equipment.js, which is the debt tools/onefold.mjs
-    // exists to count; this keeps ONE renderer of the affordance.
-    //
-    // ADDITIVE AND GUARDED: no existing caller passes `face.node`, so both
-    // shipped callers (customize.js, shop.js) take the `faceHtml` road exactly
-    // as before. `setValue` below refuses to touch a node face rather than
-    // clobbering it — a word-reveal's value has no meaning for a face that is
-    // an object, and silently erasing the card would be the plausible failure.
-    if (entry.face && entry.face.node) button.appendChild(entry.face.node);
-    else button.innerHTML = faceHtml(entry);
-    const toggle = () => {
+    button.innerHTML = faceHtml(entry);
+    button.addEventListener('click', () => {
       hideTooltip();
       if (openKey === entry.key) close(); else open(entry.key);
-    };
-    // Composite Inventory faces use the same physical card for a short reveal
-    // tap and a configured hold action. The caller owns that action and returns
-    // true when it armed the face; every existing disclosure keeps the ordinary
-    // one-click toggle path.
-    const armed = armFace ? armFace({ button, entry, onTap: toggle }) === true : false;
-    if (!armed) button.addEventListener('click', toggle);
+    });
     if (tipHtml(entry)) attachTooltip(button, () => tipHtml(entry));
     buttons.set(entry.key, button);
     faceBox.appendChild(button);

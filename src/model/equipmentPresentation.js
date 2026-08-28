@@ -5,7 +5,6 @@
 import {
   equipmentKitReceipt,
   equipmentRequirementReceipt,
-  applyEquipTransition,
   equippedIn,
   equippedPieces,
   parseMod,
@@ -271,23 +270,21 @@ function candidateReceipt(registries, run, candidate, beforeRoles, meta) {
     throw new Error(`${slot.id}: comparison set ${setIndex} does not exist`);
   }
   const beforePiece = equippedIn(registries, run.loadout, run.class, slot.id);
-  const transitioned = applyEquipTransition(registries, loadout, slot.id, setIndex, piece ? piece.id : null);
-  if (transitioned) loadout.active[slot.id] = setIndex;
+  loadout.sets[slot.id][setIndex] = piece ? piece.id : null;
+  loadout.active[slot.id] = setIndex;
   const comparedRun = { ...run, loadout };
   const afterRoles = rolesFor(registries, comparedRun);
   const beforeByRole = new Map(beforeRoles.map((row) => [row.role, row]));
   const beforeMods = runMods(registries, run.loadout, run.class);
   const afterMods = runMods(registries, loadout, run.class);
   const resourceChanges = [];
-  for (const [id, label] of [['maxHp', 'Max HP'], ['maxMana', 'Max Mana'], ['maxStamina', 'Max Stamina']]) {
-    if (beforeMods[id] !== afterMods[id]) {
-      resourceChanges.push({
-        id,
-        label,
-        before: run[id],
-        after: run[id] + afterMods[id] - beforeMods[id],
-      });
-    }
+  if (beforeMods.maxHp !== afterMods.maxHp) {
+    resourceChanges.push({
+      id: 'maxHp',
+      label: 'Max HP',
+      before: run.maxHp,
+      after: run.maxHp + afterMods.maxHp - beforeMods.maxHp,
+    });
   }
   resourceChanges.push(...swapPriceChanges(registries, run, run.loadout, loadout, meta, slot.id, setIndex));
   const beforePoise = playerPoiseThresholdReceipt(registries, run);
