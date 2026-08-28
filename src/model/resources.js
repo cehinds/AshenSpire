@@ -171,12 +171,11 @@ function populationsFor(registries) {
  * resourceLabelCeilings(registries) → { [surfaceId]: { [rowId]: number } }
  *
  * THE WIDEST NUMBER A PLATE CAN EVER PRINT, and it is NOT the trough's
- * reference. These were one field until 2026-08-22 and his 200/20/20 ruling
+ * reference. These were one field until 2026-08-22 and his 500/50 ruling
  * (E9 / #254) pulled them apart:
  *
  *   · the TROUGH is measured against a REFERENCE — an upper mark he chose, far
- *     above anything the content can reach. `domainMax`, 200 for HP and 20
- *     for each current pool.
+ *     above anything the content can reach. `domainMax`, 500 for HP.
  *   · the PLATE reserves the width of the widest LABEL it will ever draw, so
  *     the track cannot move when a digit is gained mid-run (resbars.js's
  *     `--plate-reserve-*`, and the reason it exists is measured there). The

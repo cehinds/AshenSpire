@@ -22,44 +22,10 @@ export const armouryUi = {
       "groupLabel": "Armaments",
       "outerBorder": false,
       "slotOrder": [
-        "armor",
+        "armaments",
         "rightHand",
         "leftHand"
-      ],
-      "defaultView": "list",
-      "gridColumns": 3
-    },
-    "inventorySplit": {
-      "defaultArmamentsRatio": 0.6,
-      "minimumArmamentsRatio": 0.3,
-      "maximumArmamentsRatio": 0.8,
-      "snapRatios": [
-        0.4,
-        0.5,
-        0.6,
-        0.7
-      ],
-      "snapTolerance": 0.035,
-      "compactItemsBelowPx": 520,
-      "foldSubcardsBelowPx": 420,
-      "foldGroupsBelowPx": 260
-    },
-    "trays": {
-      "defaultHeightRatio": 0.45,
-      "minimumHeightRatio": 0.3,
-      "maximumHeightRatio": 0.9,
-      "multipleExpandedMinimumRatio": 0.3,
-      "snapRatios": [
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.8,
-        0.9
-      ],
-      "snapTolerance": 0.035,
-      "contentGapRem": 0.35
+      ]
     },
     "combatPower": {
       "groupLabel": "Combat Power",
@@ -73,8 +39,8 @@ export const armouryUi = {
         {
           "id": "potency",
           "role": "technique",
-          "label": "Magic",
-          "fullLabel": "Magic Power"
+          "label": "Potency",
+          "fullLabel": "Technique Potency"
         },
         {
           "id": "defense",
@@ -83,21 +49,6 @@ export const armouryUi = {
           "fullLabel": "Guard / Defense"
         }
       ]
-    },
-    "cards": {
-      "defaultView": "list",
-      "gridColumns": 4
-    },
-    "comparison": {
-      "presentation": "tooltip",
-      "hoverDelayMs": 550,
-      "tooltipWidthRem": 52,
-      "tooltipMaxHeightRatio": 0.8
-    },
-    "cardClasses": {
-      "inventoryItem": {
-        "holdAction": true
-      }
     },
     "viewModes": {
       "grid": {
@@ -120,7 +71,7 @@ export const armouryUi = {
         "label": "Hybrid",
         "pane": "both",
         "character": "folded",
-        "armaments": "expanded",
+        "armaments": "folded",
         "inventory": "folded",
         "cards": "folded"
       }
@@ -130,9 +81,7 @@ export const armouryUi = {
       "phone": {
         "minWidth": "0",
         "characterRatio": 0.4,
-        "equipmentRatio": 0.6,
-        "cardsGridColumns": 2,
-        "armamentGridColumns": 2
+        "equipmentRatio": 0.6
       }
     }
   }

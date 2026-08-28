@@ -7,7 +7,7 @@
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { resolveCard } from '../../model/registries.js';
 import { openPileModal } from '../components/piles.js';
-import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
+import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
@@ -33,18 +33,8 @@ import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js'
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
 import { hudShellHtml } from '../components/hudmeta.js';
-import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { combatantFrame } from '../components/combatantFrame.js';
-import { UI_COMPONENTS as UI, uiComponentAttrs, markUiComponent } from '../components/uiComponents.js';
-import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { wireHudModeGrip } from '../components/hudModeGrip.js';
-import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
-import { wireBattlefieldStage } from '../components/battlefieldStage.js';
-import { tooltipPlacementModel } from '../models/TooltipPlacementModel.js';
-import { combatantInspectorModel } from '../models/CombatantInspectorModel.js';
-import { mountCombatantInspector } from '../components/combatantInspector.js';
 
-export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, quickControls = {} }) {
+export function mountCombat(app, { registries, run, combat, label, meta, onEnd, showTutorial, onTutorialDone, onSettings, onMenu, onSave, onQuit }) {
   // THE ONE DOOR for every action on this screen that the second-beat table has
   // ruled on. This screen names actions; it does not know what a hold is and it
   // does not decide which of its buttons deserve one (model/secondbeat.js).
@@ -58,7 +48,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     <div class="combat">
       <!-- ONE HUD SHELL: map and combat supply state to hudShellHtml; neither
            screen owns row order, placement hooks, or a second copy of chrome. -->
-      ${hudShellHtml(runHudViewModel({
+      ${hudShellHtml({
         place: 'combat',
         cinders: run.cinders,
         act: run.actNumber,
@@ -78,19 +68,14 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           menuId: 'combat-menu',
           menuHint: actionHint('menu'),
         },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
-      }))}
+      })}
       <div class="${backdropClass(run.actNumber)}"></div>
-      <div class="field" ${uiComponentAttrs(UI.battlefieldStage)}>
+      <div class="field">
         <div class="player-zone"></div>
         <div class="enemy-row"></div>
-        <div class="combatant-inspector-host" hidden></div>
       </div>
       <div class="hand-area">
-        <div class="hand-overlay" ${uiComponentAttrs(UI.playerHandTray)} data-paging="false">
+        <div class="hand-overlay" data-paging="false">
           <button class="hand-page hand-prev" type="button" data-focusable hidden
             aria-controls="combat-hand" aria-label="Previous card" title="Previous card">&#8249;</button>
           <!-- The strip itself — cards, fan, key hints, the inspect hold, the
@@ -106,7 +91,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         <!-- One grid owns every persistent combat action destination. Keeping
              the optional Exhaust cell in that same grid means revealing it
              cannot shift, cover, or steal a standing control's hit box. -->
-        <div class="combat-action-row" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
+        <div class="combat-action-row" role="group" aria-label="Combat actions">
           <div class="energy-orb"></div>
           <button class="end-turn">END TURN</button>
           <div class="pile draw"><span class="n"></span><small>DRAW</small></div>
@@ -133,17 +118,12 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       </svg>
     </div>`;
 
-  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
-
   const $ = (sel) => app.querySelector(sel);
   const combatEl = $('.combat');
   // The bar ceilings, DERIVED from the content (classes + equipment for the
   // player surface, plus every enemy for the under-model one) rather than typed.
   // Once per mount: it is a fact about the content, not about the frame.
   const resDomains = resourceDomains(registries);
-  const battlefieldStage = wireBattlefieldStage($('.field'), battlefieldStageModel(registries.balance.ui.combatantStage));
-  const tooltipPlacement = tooltipPlacementModel(registries.balance.ui.tooltipPlacement);
   if (typeof window !== 'undefined') window.__combat = combat; // debug handle
   const fxCtx = {
     layer: $('.fx-layer'),
@@ -159,8 +139,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let selected = null; // card instanceId in click-targeting mode
   let selectedFlask = null; // flask slot index awaiting a target
   let selfArm = null; // self/buff card armed for a confirm (keyboard/gamepad)
-  let inspectedCombatant = null; // { role, id } for the persistent edge tray
-  let inspectorExpanded = true;
   let busy = false; // animating / resolving
   let lastTargetId = null; // remember the last enemy aimed at (keyboard/pad QoL)
   let aimScheduled = false; // debounce for the aim-highlight observer
@@ -168,13 +146,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   const HAND_PAGE_THRESHOLD = 7;
   const handOverlay = $('.hand-overlay');
   const handPages = [$('.hand-prev'), $('.hand-next')];
-
-  // A blank press dismisses only the floating explanation. The edge inspector
-  // is a separately owned Folding Tray and remains until its label is folded.
-  combatEl.addEventListener('click', (event) => {
-    if (event.target.closest('.combatant, .combatant-inspector-host')) return;
-    hideTooltip();
-  });
 
   // THE ONE HAND RENDERER (components/hand.js) — the strip, its fan, key
   // hints, the inspect hold, the overlap arm of balance.ui.handLayout and the
@@ -297,162 +268,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   let disp = null;
   let recentArcaneEvents = [];
   const dv = (ent) => (disp && disp.ents[ent.id]) || ent;
-
-  const words = (value) => String(value || '')
-    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-    .replace(/[_-]+/g, ' ')
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-
-  function statusDetails(entity) {
-    const v = dv(entity);
-    return Object.entries(v.statuses || {}).flatMap(([statusId, instance]) => {
-      if (!instance) return [];
-      const amount = instance.meter ? instance.meter.value : instance.stacks;
-      if (!(amount > 0)) return [];
-      const def = registries.statuses.get(statusId);
-      if (!def) return [];
-      const presentation = statusInstancePresentation(def, instance);
-      return [{ name: presentation.label, detail: presentation.tooltip }];
-    });
-  }
-
-  function moveDetail(move, preview = null) {
-    const source = preview || move || {};
-    const pieces = [];
-    if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
-    if (source.block != null) pieces.push(`${source.block} Block`);
-    for (const effect of move?.effects || []) {
-      if (effect.op === 'applyStatus') pieces.push(`applies ${words(effect.status)}`);
-      else if (effect.op === 'heal') pieces.push('heals');
-      else if (effect.op === 'addCard') pieces.push(`adds ${words(effect.card)}`);
-      else pieces.push(words(effect.op));
-    }
-    return pieces.join(' · ') || words(source.kind || move?.intent || 'Unknown action');
-  }
-
-  function combatantSubject(role, entity) {
-    const v = dv(entity);
-    if (role === 'player') {
-      const classDef = registries.classes.get(run.class);
-      const stance = entity.stanceId ? registries.stances.get(entity.stanceId) : null;
-      const skills = [];
-      if (stance) skills.push({ name: stance.name, detail: stance.tooltip || 'Current stance.', active: true });
-      skills.push({ name: classDef.name, detail: classDef.description || 'Current combat role.', active: true });
-      return {
-        name: (run.customization?.name || classDef.name).toUpperCase(),
-        subtitle: `${classDef.name} · Level ${run.level}`,
-        resources: [
-          { label: 'HP', value: v.hp, max: entity.maxHp },
-          { label: 'MP', value: v.mana, max: entity.maxMana },
-          { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
-          { label: 'Block', value: v.block || 0 },
-        ],
-        skillLabel: 'Active skills & stance',
-        skills,
-        statuses: statusDetails(entity),
-      };
-    }
-
-    const def = registries.enemies.get(entity.enemyId);
-    const intent = previewIntent(combat, entity.id);
-    const currentMoveId = intent.moveId;
-    const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
-      name: words(moveId),
-      detail: moveDetail(move, moveId === currentMoveId ? intent : null),
-      active: moveId === currentMoveId,
-    }));
-    const current = currentMoveId && def.moves?.[currentMoveId];
-    return {
-      name: def.name,
-      subtitle: (def.tags || []).map(words).join(' · ') || 'Enemy',
-      resources: [
-        { label: 'HP', value: v.hp, max: entity.maxHp },
-        { label: 'Poise', value: v.poiseMeter?.value || 0, max: v.poiseMeter?.max || entity.poiseMeter?.max || 0 },
-        { label: 'Block', value: v.block || 0 },
-      ],
-      intent: {
-        name: currentMoveId ? words(currentMoveId) : words(intent.kind || 'Unknown'),
-        detail: moveDetail(current, intent),
-        active: true,
-      },
-      skillLabel: 'Move set',
-      skills,
-      statuses: statusDetails(entity),
-    };
-  }
-
-  function foldedCombatantTooltip(subject) {
-    const hp = subject.resources.find((row) => row.label === 'HP');
-    const poise = subject.resources.find((row) => row.label === 'Poise');
-    return `<div class="tt-title">${esc(subject.name)}</div>`
-      + `<div class="tt-combatant-line">${esc(subject.subtitle || '')}</div>`
-      + `<div class="tt-kw"><b>HP ${esc(hp?.value ?? '—')}/${esc(hp?.max ?? '—')}</b>`
-      + `${poise ? ` · Poise ${esc(poise.value)}/${esc(poise.max)}` : ''}</div>`;
-  }
-
-  function expandedCombatantTooltip(subject, role) {
-    const live = subject.intent || subject.skills.find((row) => row.active);
-    return `${foldedCombatantTooltip(subject)}`
-      + (live ? `<div class="tt-combatant-focus"><b>${esc(live.name)}</b><span>${esc(live.detail || '')}</span></div>` : '')
-      + `<div class="tt-combatant-hint">Full details opened in the ${role === 'player' ? 'left' : 'right'} inspector.</div>`;
-  }
-
-  function renderCombatantInspector() {
-    const host = $('.combatant-inspector-host');
-    if (!host || !inspectedCombatant) {
-      if (host) host.hidden = true;
-      return;
-    }
-    const entity = inspectedCombatant.role === 'player'
-      ? combat.player : getEntity(combat, inspectedCombatant.id);
-    if (!entity) {
-      host.hidden = true;
-      return;
-    }
-    const model = combatantInspectorModel({
-      role: inspectedCombatant.role,
-      expanded: inspectorExpanded,
-      subject: combatantSubject(inspectedCombatant.role, entity),
-      presentation: registries.balance.ui.combatantInspector,
-    });
-    mountCombatantInspector(host, model, {
-      onToggle: (expanded) => {
-        inspectorExpanded = expanded;
-        renderCombatantInspector();
-      },
-    });
-  }
-
-  function inspectCombatant(role, entity, box) {
-    inspectedCombatant = { role, id: entity.id };
-    inspectorExpanded = true;
-    const subject = combatantSubject(role, entity);
-    renderCombatantInspector();
-    showTooltipFor(box, expandedCombatantTooltip(subject, role), {
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-expanded' },
-    });
-  }
-
-  function wireCombatantReading(box, role, entity) {
-    const subject = () => combatantSubject(role, entity);
-    box.classList.add('inspectable');
-    box.dataset.focusable = '';
-    box.setAttribute('aria-label', `Inspect ${subject().name}`);
-    attachTooltip(box, () => foldedCombatantTooltip(subject()), {
-      delayMs: tooltipPlacement.tokens.hoverDelayMs,
-      focusDelayMs: tooltipPlacement.tokens.hoverDelayMs,
-      placementModel: tooltipPlacement,
-      clear: box.parentElement,
-      appearance: { variant: 'combatant-folded' },
-    });
-    box.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      box.click();
-    });
-  }
   // The snapshot is the PACED state the whole HUD renders from. It must carry
   // every value the board draws, or that layer silently renders post-state
   // while the rest plays back (Sunna's PX gate: meters were missing, so the
@@ -589,16 +404,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   }
 
   // ---------- rendering ----------
-  function renderCombatantStage() {
-    renderPlayer();
-    renderEnemies();
-    renderCombatantInspector();
-    battlefieldStage.refresh();
-  }
-
   function render() {
     renderTopbar();
-    renderCombatantStage();
+    renderPlayer();
+    renderEnemies();
     renderHand();
     renderControls();
     refreshAim(); // re-apply the target glow after the board rebuilds
@@ -624,7 +433,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const el = document.createElement('div');
       el.className = 'relic';
       el.dataset.relicId = rid;
-      markUiComponent(el, UI.relicSlot);
       el.textContent = def.icon || '◆';
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
       relics.appendChild(el);
@@ -635,29 +443,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const potions = $('.topbar .hud-potions');
     chargeFlasks.innerHTML = '';
     potions.innerHTML = '';
-    const appendFlaskHotkey = (el, hotkeySlot) => {
-      if (hotkeySlot >= 3) return;
-      el.dataset.flaskHotkeySlot = String(hotkeySlot);
-      const kb = document.createElement('span');
-      kb.className = 'flask-key';
-      const id = `flask${hotkeySlot + 1}`;
-      kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
-      el.appendChild(kb);
-    };
-    for (const [hotkeySlot, kind] of CHARGE_FLASK_KINDS.entries()) {
+    for (const kind of CHARGE_FLASK_KINDS) {
       const def = chargeFlaskDefinition(registries, kind);
       const current = p.flaskCharges ? p.flaskCharges[`${kind}Current`] : 0;
       const el = document.createElement('button');
       el.className = 'relic flask-slot flask-charge';
       el.type = 'button';
-      markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
       el.setAttribute('aria-disabled', String(current <= 0));
       el.appendChild(flaskPresentation(def, { showName: false }));
       const count = document.createElement('b');
       count.className = 'flask-charge-count';
       count.textContent = String(current);
       el.appendChild(count);
-      appendFlaskHotkey(el, hotkeySlot);
       attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { chargeKind: kind, remaining: current }));
       chargeFlasks.appendChild(el);
@@ -667,15 +464,18 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       const el = document.createElement('button');
       el.type = 'button';
       el.className = 'relic flask-slot';
-      markUiComponent(el, UI.potionControl);
       el.dataset.flaskSlot = String(slot);
       el.style.cursor = 'pointer';
       if (selectedFlask === slot) el.style.borderColor = 'var(--parchment)';
       el.appendChild(flaskPresentation(def, { showName: false }));
-      // Health and Mana own the first two HUD flask shortcuts. The first
-      // carried potion receives the third; every remaining potion stays
-      // reachable through ordinary spatial focus.
-      appendFlaskHotkey(el, CHARGE_FLASK_KINDS.length + slot);
+      // Quick-use key badge (F/G/H by default; pad glyph while a pad drives).
+      if (slot < 3) {
+        const kb = document.createElement('span');
+        kb.className = 'flask-key';
+        const id = `flask${slot + 1}`;
+        kb.textContent = hasGamepad() ? padLabel(id) || keyLabel(id) : keyLabel(id);
+        el.appendChild(kb);
+      }
       // THE LABEL READS THE BEAT, IT DOES NOT RESTATE IT. `data-beat` is written
       // by the machinery from the table, so the sentence a player reads and the
       // gesture the button actually wants cannot drift — and the icon is far too
@@ -685,7 +485,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       el.addEventListener('click', () => openCombatFlaskMenu(el, def, { slot }));
       potions.appendChild(el);
     });
-    potions.closest('.shared-hud').dataset.hasUtilityPotions = potions.children.length ? 'true' : 'false';
   }
 
   // #61 M4 — ONE meter grammar for every threshold-proc row, data-driven so a
@@ -715,7 +514,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   function statusRow(entity) {
     const row = document.createElement('div');
     row.className = 'statuses';
-    markUiComponent(row, UI.statusEffectTray, entity.kind);
     const plan = entity.kind === 'enemy' ? procDisplayPlan(entity) : { bars: [], pips: [] };
     for (const [sid, inst] of Object.entries(dv(entity).statuses || {})) {
       const def = registries.statuses.get(sid);
@@ -787,12 +585,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // entity still refuses (no meter → ABSENT).
     const plan = resourceBarPlan(registries, 'model', v, entity, resDomains);
     const bars = resourceBars(plan, { surface: 'model', tooltipExtra: poiseTip(entity.kind) });
-    for (const bar of plan) {
-      const el = bars.querySelector(`[data-res="${bar.id}"]`);
-      if (!el) continue;
-      if (bar.id === 'hp') markUiComponent(el, UI.healthStatusBar, entity.kind);
-      if (bar.id === 'poise') markUiComponent(el, UI.poiseStatusBar, entity.kind);
-    }
     // The 0.75 pulse is a per-row display rule, not a resource fact; it stays
     // on this screen rather than moving into the shared renderer.
     for (const bar of plan) {
@@ -817,7 +609,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         const def = registries.statuses.get(sid);
         const bar = document.createElement('div');
         bar.className = 'bar procbar';
-        markUiComponent(bar, UI.procStatusBar, sid);
         bar.dataset.status = sid;
         // S2: an active resistance dims the meter — the state reads without
         // opening a tooltip.
@@ -838,7 +629,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     if (v.block <= 0) return null;
     const b = document.createElement('div');
     b.className = 'block-badge';
-    markUiComponent(b, UI.blockBadge);
     b.textContent = v.block;
     attachTooltip(b, () => `<div class="tt-title">Block ${v.block}</div>Absorbs attack damage. Expires at the start of the owner's turn.`);
     return b;
@@ -848,32 +638,33 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const zone = $('.player-zone');
     zone.innerHTML = '';
     const p = combat.player;
-    const trailing = [];
+    const box = document.createElement('div');
+    box.className = `combatant player${selfArm ? ' armed' : ''}`;
+    box.dataset.eid = 'player';
+    // When a self/buff card is armed, the player is a confirmable target.
+    if (selfArm) {
+      box.dataset.focusable = '';
+      box.style.cursor = 'pointer';
+      box.addEventListener('click', () => {
+        if (selfArm) playCard(selfArm, null);
+      });
+    }
+    const sprite = document.createElement('div');
+    sprite.className = 'sprite';
+    sprite.appendChild(playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)));
+    const badge = blockBadge(p);
+    if (badge) sprite.appendChild(badge);
+    box.appendChild(sprite);
+    box.appendChild(meterBars(p));
     if (p.stanceId) {
       const st = registries.stances.get(p.stanceId);
       const chip = document.createElement('div');
       chip.className = `stance-chip ${p.stanceId}`;
       chip.innerHTML = `${esc(st.icon || '')} ${esc(st.name)}`;
       attachTooltip(chip, () => `<div class="tt-title">${esc(st.name)}</div>${esc(st.tooltip || '')}`);
-      trailing.push(chip);
+      box.appendChild(chip);
     }
-    trailing.push(statusRow(p));
-    const box = combatantFrame({
-      role: 'player',
-      entityId: 'player',
-      classNames: selfArm ? ['armed'] : [],
-      sprite: playerSprite(run.customization || {}, run.class, figureSpec(registries, run.loadout, run.class)),
-      blockBadge: blockBadge(p),
-      meters: meterBars(p),
-      trailing,
-    });
-    wireCombatantReading(box, 'player', p);
-    // When a self/buff card is armed, the player is a confirmable target.
-    box.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (selfArm) playCard(selfArm, null);
-      else inspectCombatant('player', p, box);
-    });
+    box.appendChild(statusRow(p));
     zone.appendChild(box);
   }
 
@@ -882,7 +673,6 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const el = document.createElement('div');
     const badge = intentBadge(iv);
     el.className = `intent ${badge.cls}`;
-    markUiComponent(el, UI.intentIndicator, badge.cls);
     el.innerHTML = badge.html;
     attachTooltip(el, () => intentTooltip(iv)); // solo → 'you'
     return el;
@@ -895,8 +685,10 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     const living = combat.enemies.filter((e) => e.alive);
     for (const enemy of combat.enemies) {
       const def = registries.enemies.get(enemy.enemyId);
-      const leading = [];
-      if (enemy.alive) leading.push(intentEl(enemy));
+      const box = document.createElement('div');
+      box.className = `combatant enemy${dv(enemy).alive ? '' : ' dead'}${targeting ? ' targetable' : ''}`;
+      box.dataset.eid = enemy.id;
+      if (enemy.alive) box.appendChild(intentEl(enemy));
       // Target-number badge for keyboard targeting (SPEC §7.3).
       if (enemy.alive && targeting) {
         const idx = living.indexOf(enemy);
@@ -904,30 +696,25 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
           const kh = document.createElement('span');
           kh.className = 'enemy-key';
           kh.textContent = idx + 1;
-          leading.push(kh);
+          box.appendChild(kh);
         }
       }
+      const sprite = document.createElement('div');
+      sprite.className = 'sprite';
+      sprite.appendChild(enemySprite(def));
+      const badge = blockBadge(enemy);
+      if (badge) sprite.appendChild(badge);
+      box.appendChild(sprite);
       const nm = document.createElement('div');
       nm.className = 'nm';
       nm.textContent = def.name;
-      const box = combatantFrame({
-        role: 'enemy',
-        entityId: enemy.id,
-        classNames: [dv(enemy).alive ? '' : 'dead', targeting ? 'targetable' : ''],
-        leading,
-        sprite: enemySprite(def),
-        blockBadge: blockBadge(enemy),
-        name: nm,
-        meters: meterBars(enemy),
-        trailing: [statusRow(enemy)],
-      });
-      wireCombatantReading(box, 'enemy', enemy);
+      box.appendChild(nm);
+      box.appendChild(meterBars(enemy));
+      box.appendChild(statusRow(enemy));
       if (enemy.alive) {
-        box.addEventListener('click', (event) => {
-          event.stopPropagation();
+        box.addEventListener('click', () => {
           if (selected) playCard(selected, enemy.id);
           else if (selectedFlask != null) useFlask(selectedFlask, enemy.id);
-          else inspectCombatant('enemy', enemy, box);
         });
         box.addEventListener('pointerenter', () => (selected || selectedFlask != null) && box.classList.add('hover-target'));
         box.addEventListener('pointerleave', () => box.classList.remove('hover-target'));
@@ -1280,17 +1067,13 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
     // the in-combat Armoury, both shapes: tools/veil-owns-input.mjs.
     if (veilIsOpen()) return;
 
-    // The menu key opens Settings. The legacy Deck/Stats/Relics bindings all
-    // land in Armoury now that it owns every run-information surface.
-    if (matchAction(ev, 'menu')) {
-      ev.preventDefault();
-      if (onMenu) onMenu('settings');
-      return;
-    }
-    if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
-      ev.preventDefault();
-      $('#combat-armoury').click();
-      return;
+    // Dedicated (rebindable) overlay keys: Menu → Deck, plus jump-to-tab keys.
+    for (const [id, tab] of [['menu', 'deck'], ['deck', 'deck'], ['relics', 'relics'], ['stats', 'stats']]) {
+      if (matchAction(ev, id)) {
+        ev.preventDefault();
+        if (onMenu) onMenu(tab);
+        return;
+      }
     }
 
     if (ev.key === 'Escape') {
@@ -1317,11 +1100,11 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
       return;
     }
 
-    // Flask keys activate the numbered visible HUD control; they never auto-use.
+    // Flask keys select a slot and open its menu; they never auto-use.
     for (let slot = 0; slot < 3; slot++) {
       if (matchAction(ev, `flask${slot + 1}`)) {
         ev.preventDefault();
-        const slotEl = $(`.flask-slot[data-flask-hotkey-slot="${slot}"]`);
+        const slotEl = $(`.flask-slot[data-flask-slot="${slot}"]`);
         if (slotEl) slotEl.click();
         return;
       }
@@ -1416,7 +1199,8 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         onBeatApplied: (beat) => {
           applyBeatToDisp(beat);
           renderTopbar();
-          renderCombatantStage();
+          renderPlayer();
+          renderEnemies();
           renderHand();
           renderControls();
         },
@@ -1574,45 +1358,44 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
   const menuBtn = $('#combat-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('settings');
+      if (quickNavMode() === 'off') return onMenu('deck');
       e.stopPropagation();
       openQuickNav(menuBtn, 'combat', {
         counts: { deck: run.deck.length, draw: combat.piles.draw.length, discard: combat.piles.discard.length },
         hasSave: !!(onSave || onQuit),
-        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          inventory: () => openCombatArmoury('rack'),
-          character: () => openCombatArmoury('grid'),
-          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          armoury: () => $('#combat-armoury').click(), // the button's own handler, not a copy of it
+          draw: () => showDraw(),
+          discard: () => showDiscard(),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
         },
       });
     });
   }
 
   // Law 3 clause 4 — real tooltips on the two topbar buttons, text from the same
-  // MENU table. Armoury is the canonical equipment name in every context.
+  // MENU table. Note the label: the ⚒ glyph is "Armoury" on the map and
+  // "Armaments" here, and it was ALREADY context-specific before anyone asked.
   {
     const row = (MENU.combat || []).find((r) => r.act === 'armoury');
     if (row) attachTooltip($('#combat-armoury'), () => `<div class="tt-title">${esc(row.label)}</div>${esc(row.tip)}`);
     attachTooltip(menuBtn, () =>
       `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-        ? 'Armoury, settings, controls and saving.'
+        ? 'Deck, relics, stats, settings and saving.'
         : 'Everywhere you can go from here.')}`);
   }
 
   // The Armoury mid-fight is the SAME panel, told it is in combat: armour and
   // storage seal themselves, and picking another hand set routes through the
   // engine intent that charges for it instead of mutating the loadout here.
-  function openCombatArmoury(equipView = '') {
+  $('#combat-armoury').addEventListener('click', () => {
     if (!registries.balance.equipment.enabled) return;
     const panel = mountEquipment(document.body, {
       registries,
       run,
-      meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
+      meta: { settings: { customization: run.customization } },
       inCombat: true,
       onSwap: (slotId, setIndex) => {
         let out;
@@ -1628,8 +1411,7 @@ export function mountCombat(app, { registries, run, combat, label, meta, onEnd, 
         afterDispatch(out.events);
       },
     });
-  }
-  $('#combat-armoury').addEventListener('click', (event) => openCombatArmoury(event.currentTarget.dataset.equipView || ''));
+  });
 
   render();
 

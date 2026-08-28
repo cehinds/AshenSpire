@@ -4,7 +4,7 @@
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 export const derivedStatRules = {
-  rulesetVersion: 4,
+  rulesetVersion: 3,
   defaults: {
     pointsPerTier: 5,
     rounding: 'floor',
@@ -12,28 +12,93 @@ export const derivedStatRules = {
   },
   rules: {
     energy: {
-      base: 2,
+      base: 1,
       sourceStat: 'dexterity',
-      pointsPerTier: 10,
       gainPerTier: 1,
       cap: null,
     },
     draw: {
-      base: 4,
+      base: 3,
       sourceStat: 'intelligence',
-      pointsPerTier: 10,
       gainPerTier: 1,
       cap: null,
     },
     hp: {
-      // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
-      // generic derived-stat engine express the per-point coefficient exactly.
-      // Relic resource.flat rows fold into base; equipment max-HP mods and the
-      // persisted adjustment remain the two external addends at the run door.
-      base: 30,
+      // E6 — Constantine, 2026-08-16, his own words: "50 + (con/5) + other
+      // bonuses". WHAT THAT SENTENCE MOVED IS THE CON TERM: a tier is worth
+      // ONE, with no class coefficient multiplying it. His answer on the
+      // read-back page settles the rounding in the same breath — ALWAYS FLOOR,
+      // "CON 14 gives +2, not +3" — which is `defaults.rounding` and is why
+      // this row does not restate it.
+      //
+      // THE CLASS CONTRIBUTION STAYS, AND THE BASE IS WHERE IT LIVES. Marina's
+      // ruling, 2026-08-17 (`56c90d2`), against my own first reading of this
+      // row: "other bonuses" is exactly the slot a class contribution lives in,
+      // his words never said the three classes are the same, and MR-241 holds —
+      // a new word does not silently delete an old one. So the base is the
+      // class's own authored number again and `classes.js` is LIVE, not a knob
+      // whose value is ignored. My reading was that a base is not a bonus and
+      // that his literal 50 should therefore appear in this file; it does not
+      // appear anywhere now, and that is the stated cost of her call, recorded
+      // here rather than argued.
+      base: { strategy: 'classField', field: 'maxHp' },
       sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 2,
+      // `pointsPerTier: 5` WAS HERE AND IS DELETED — it restated
+      // `defaults.pointsPerTier`, which is also 5, so it moved no number today
+      // and was a second copy with a live consequence tomorrow (Law 1 clause 2).
+      //
+      // WHAT IT COSTS, MEASURED RATHER THAN ASSUMED — and my first draft of this
+      // comment was WRONG, which is why it says what it says now. A row's own
+      // value beats the defaults it is merged over
+      // (`resolveDerivedStatRules`), so turning `defaults.pointsPerTier` IN
+      // THIS FILE moves Mana, Actions, Draw and Stamina and LEAVES HP ALONE —
+      // silently, and HP is the stat a tier dial is for.
+      //
+      // WHAT IT DOES **NOT** AFFECT, and I claimed it did until a plant said
+      // otherwise: Constantine's Settings → Advanced tier dial. That arrives as
+      // an override LAYER, and a layer's `defaults` is assigned over every row
+      // (same function), so it reached HP with the restatement present.
+      // Restoring the line leaves all 91 tests green.
+      //
+      // So this deletion is a SECOND-COPY fix and not a bug fix: it closes the
+      // OTHER door — the one a designer uses when they edit this file directly
+      // — where the two doors gave two different answers. `tests/engine.test.js`
+      // 60c pins that door, so the copy can now go red instead of being
+      // remembered.
+      gainPerTier: 1,
+      // WHAT "OTHER BONUSES" COVERS, and it is not a list anyone maintains.
+      // Every HP bonus in this tree already arrives through a declared tag or
+      // a declared mod field, and both are summed by machinery, not by name:
+      //   · relic `resource.flat` / `resource.attributeTier` rows targeting
+      //     resource 'hp' (model/relicModifiers.js — relic ids never appear in
+      //     code) fold into THIS row's base and gainPerTier at snapshot time;
+      //   · equipment `self.maxHp=+N` mods, selected by the equipMods field
+      //     spec `apply: 'maxHp'`, scope 'run' (model/loadout.js runMods), are
+      //     added outside the derived value.
+      // A new HP bonus of either kind needs a row, never a code edit, so this
+      // lane builds NO private tag scheme (Law 0 clause 1, Law 1 clause 7).
+      //
+      // WHAT HIS SENTENCE IS SILENT ON, kept as it was rather than invented:
+      // `run.maxHpAdjustment` (the permanent event-curse residual — a
+      // subtraction, not a bonus), the `Math.max(1, …)` floor on the pool, and
+      // the mode/run/explicit override layers.
+      //
+      // ONE DEAD KNOB REMAINS AND IT IS NAMED RATHER THAN QUIETLY LEFT.
+      // `classes.js` also authors `hpPerConTier` (4/5/6) and NOTHING READS IT
+      // at this ref. Making it live means multiplying the CON tier by it, which
+      // is D22's shape — "why isn't hp + classlevel hp bonus* floor(con/5)" —
+      // and D22/`F9` is `waiting-on-him`. NOBODY BUILDS EITHER READING OF F9,
+      // so the knob stays authored, unread, and OWED HIS ONE WORD. If he says
+      // D22, this row's `gainPerTier: 1` becomes
+      // `{ strategy: 'classField', field: 'hpPerConTier' }` and the knob is
+      // live again — one data line, no schema act. That is why it was not
+      // deleted, and Law 0 clause 3 is the reason the reversal costs one line
+      // in either direction.
+      //
+      // THE COST, STATED: a CON tier is now worth 1 for every class instead of
+      // 4/5/6, so the spread BETWEEN classes is now their authored bases and
+      // their starting relics' tagged rows, and CON is worth the same to
+      // everyone. Enemy numbers did not move.
     },
     stamina: {
       base: 0,

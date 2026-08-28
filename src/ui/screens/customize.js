@@ -1,830 +1,678 @@
-// Character creation: four progressive sections backed by validated content.
+// src/ui/screens/customize.js — character creation: class selection, name,
+// sigil + tint (cosmetic), keepsake (starting boon), seed.
+//
+// Everything chosen here lands on run.customization (cosmetics), the class id,
+// and one keepsake whose run-level effects apply at run start (content/keepsakes.js).
 
 import { LOCKED_CLASSES } from '../../content/index.js';
+import { KEEPSAKES } from '../../content/keepsakes.js';
 import { PORTRAIT_GLYPHS, PORTRAIT_TINTS, SPRITE_STYLES, tintCss, classGlyph, classSprite, spritesAreEnabled } from '../assets.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { focusElement } from '../input.js';
 import { mountDisclosure } from '../components/disclosure.js';
+import { creationBrief } from '../../model/creationBrief.js';
+import { relicText } from '../components/card.js';
 import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
-import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { statProjection } from '../../model/statProjection.js';
+import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
+import { renderEquipmentRequirements, renderPlayerPoise } from '../components/equipmentReceipts.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
 import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
-import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
-import {
-  creationHandChoices, creationRelicChoices,
-  selectStartingHand,
-} from '../../model/characterCreation.js';
-import { pieceChip } from './equipment.js';
-import { relicText } from '../components/card.js';
-import { renderStatAllocationCard } from '../components/statAllocationCard.js';
-import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
-import {
-  primaryStatCard, resourceStrip, modeChoiceButton, spriteChoiceButton,
-  tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
-  booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
-  selectionSectionFace,
-} from '../components/creationCards.js';
+import { equipmentRequirementReceipt } from '../../model/loadout.js';
 
-export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
-  const firstClass = registries.classes.all()[0];
-  const creationLayout = registries.characterCreation.layout || {};
+export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart }) {
   const state = {
-    classId: firstClass.id,
+    classId: 'reaver',
     name: 'Forsaken',
     glyph: PORTRAIT_GLYPHS[0],
     tint: PORTRAIT_TINTS[0].id,
     spriteStyle: 'rendered',
-    keepsakeId: registries.characterCreation.keepsakes[0].id,
+    keepsakeId: 'none',
     startingKitId: null,
-    startingHands: { leftHand: null, rightHand: null },
+    // E5 (#250): the set you begin wearing, and how your stats are laid.
+    // `attributes` is live only in pointbuy; in standard the preset is the
+    // allocation and the model owns it (createRunState reads the preset when
+    // `attributes` is not passed — one home, no copy here).
     startingArmourId: null,
-    startingRelicId: firstClass.startingRelic,
     attributeMode: defaultCreationModeId(registries),
     attributes: null,
-    classChoiceView: creationLayout.classChoiceView,
-    equipmentChoiceView: creationLayout.equipmentChoiceView,
-    classPreviewPercent: creationLayout.classPreviewPercent,
-    equipmentAutoAdvance: creationLayout.equipmentAutoAdvance,
   };
+  // THE PREVIEW'S ALLOCATION — the last LEGAL one. A pointbuy allocation is
+  // illegal every moment the pool is part-spent (fixedTotal), and createRunState
+  // rightly throws on it; a preview must never be built from a state the run
+  // could not start from. The editor and the START refusal carry the mid-edit
+  // truth; the receipts describe the run the last legal allocation would start.
   let previewAttributes = null;
-  let pointBuyOverlay = null;
-  let pointBuyReturnFocus = null;
-  let pointBuyKeydown = null;
-  let refreshSectionFaces = () => {};
-  let refreshCharacterFaces = () => {};
-  let refreshSpriteFaces = () => {};
-  let refreshEquipmentFaces = () => {};
-  const refreshFaces = () => { refreshSectionFaces(); refreshCharacterFaces(); refreshSpriteFaces(); refreshEquipmentFaces(); };
-  let updateStartRefusal = () => {};
 
+  // WHY THIS MARKUP LOOKS THE WAY IT DOES — EldenSpire#29 slice 2, out of
+  // Sunna's read of the fixed screen (2026-08-01): "reachable, and still not
+  // finished." Three shapes here, and each answers one of her findings.
+  //
+  // 1. THE SCREEN NO LONGER SCROLLS — a child does. `.cz-scroll` holds
+  //    everything that can go off the bottom and `.cz-actions` is its sibling,
+  //    so the way OUT of character creation is on screen the moment the screen
+  //    is. Measured before: BEGIN THE CLIMB arrived 374 device px below the fold
+  //    at 390x844 with no footer and no affordance, on a screen that looks
+  //    finished where it stops. The height of the bar is the buttons' own — see
+  //    styles/ui.css for why there is no reserved length anywhere.
+  //
+  // 2. THE ORDER IS THE DECISIONS FIRST. `.cz-fields` now runs CLASS, KEEPSAKE,
+  //    then the three cosmetics, and the identity pane (portrait + name + seed)
+  //    comes after all of it in the DOM. Sunna measured 17% of the arrival
+  //    screen going to a name most players never change and a seed most never
+  //    read, above the only choice that changes the run, with keepsakes last and
+  //    wholly below the fold. The wide layout keeps its authored framing
+  //    (portrait left) through `row-reverse` — the one place where DOM order and
+  //    visual order disagree, and it is named in the stylesheet, not hidden.
+  //
+  // 3. THE NAME FIELD HAS A NAME. It had no label element, no placeholder and no
+  //    aria-label — measured, not inferred — while displaying "Forsaken" under a
+  //    heading reading PREPARE YOUR FORSAKEN, so it read as an echo of the title
+  //    rather than something you type in. A real <label for>, a placeholder that
+  //    invites (the value starts EMPTY so the placeholder is actually reachable —
+  //    a blank field already resolves to 'Forsaken' below, so nothing is lost),
+  //    and `type="text"`, which is not cosmetic: input.js's FOCUS_SELECTOR
+  //    matches `input[type="text"]` by ATTRIBUTE, so neither text field on this
+  //    screen was reachable by the pad or keyboard cursor at all.
+  //
+  // 4. ALL SIX ROWS FOLD (E4 / #249, superseding MR-151/170/171/189's one-row
+  //    scope — see "THE FOLD" below for why their reasons moved rather than
+  //    died). The six wrappers and their `<p class="cz-label">`s written here
+  //    are BUILD SCAFFOLDING: the pickers are constructed inside them, then
+  //    one mountDisclosure over `.cz-fields` replaces the lot with six faces
+  //    (label + current choice in words) and adopts every picker into the one
+  //    reveal panel. CLASS arrives open — his words. The markup here is what
+  //    the screen starts as, never what it arrives as.
+  //
+  // NOT TOUCHED, deliberately: the 2-then-1 class card wrap. Sunna named it and
+  // it is gated on Constantine's word, which he has not given.
   app.innerHTML = `
-    <div class="screen customize${catalog ? ' component-catalog' : ''}">
+    <div class="screen customize">
       <div class="cz-scroll">
-        ${catalog ? '' : '<p class="cz-kicker">DIVIDED OATH</p>'}
-        <h2 class="cz-title">${catalog ? 'CHARACTER CREATION COMPONENTS' : 'PREPARE YOUR FORSAKEN'}</h2>
-        ${catalog ? '' : '<p class="cz-subtitle">Choose your path. The spire remembers.</p>'}
-        ${catalog ? '<p class="cc-catalog-intro">Interactive production specimens for every creation section, nested disclosure, and reusable selector card.</p>' : ''}
-        <div class="cz-flow cz-disc">
-          <section id="cz-class-panel" class="cz-stage">
-            <div class="cc-class-split" style="--cc-class-preview-share:${state.classPreviewPercent}%">
-              <div id="cz-class-preview-host" class="cc-class-preview-host"></div>
-              <button type="button" class="cc-class-divider" role="separator" aria-label="Resize class preview" aria-orientation="vertical" aria-valuemin="22" aria-valuemax="45" aria-valuenow="${state.classPreviewPercent}"></button>
-              <div class="cc-class-selection">
-                <header class="cc-stage-toolbar"><h3>CLASS SELECTION</h3><div id="cz-class-view-toggle"></div></header>
-                <div id="cz-classes" class="class-row cc-choice-collection" data-view="${state.classChoiceView}"></div>
-                <button type="button" class="cz-next" data-next="character">Continue to Character</button>
-              </div>
-            </div>
-          </section>
-          <section id="cz-character-panel" class="cz-stage">
-            <div class="cc-character-grid" data-sprite-side="${esc(registries.characterCreation.spritePreviewSide)}">
-              <div class="cc-stats-side">
-                <label class="cc-name-row" for="cz-name"><span>NAME</span><input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false" autocomplete="off" value="Forsaken"></label>
-                <div id="cz-character-fold" class="cc-character-fold cz-disc">
-                  <section id="cz-primary-group" class="cc-character-picker">
-                    <div id="cz-statedit" class="cz-statedit"></div>
-                    <div id="cz-primary-stats" class="cc-primary-stats"></div>
-                    <div id="cz-derived" class="cc-derived" aria-label="Derived resources"></div>
-                  </section>
-                  <section id="cz-sprite-group" class="cc-character-picker">
-                    <div id="cz-styles" class="cz-opts"></div>
-                    <div id="cz-sprite-fold" class="cc-sprite-fold cz-disc">
-                      <section id="cz-sigil-group" class="cc-character-picker"><div id="cz-glyphs" class="cz-opts"></div></section>
-                      <section id="cz-tint-group" class="cc-character-picker"><div id="cz-tints" class="cz-opts"></div></section>
-                    </div>
-                  </section>
-                  <section id="cz-keepsake-group" class="cc-character-picker"><div id="cz-keepsakes" class="cz-keepsakes"></div></section>
-                </div>
-              </div>
-              <div class="cc-preview-side">
-                <div id="cz-portrait" class="cz-portrait" aria-label="Live character preview"></div>
-              </div>
-            </div>
-            <button type="button" class="cz-next" data-next="equipment">Continue to Starting Equip</button>
-          </section>
-          <section id="cz-equipment-panel" class="cz-stage">
-            <header class="cc-stage-toolbar"><h3>STARTING EQUIPMENT</h3><div class="cc-stage-tools"><div id="cz-auto-advance-toggle"></div><div id="cz-equipment-view-toggle"></div></div></header>
-            <div id="cz-equipment-fold" class="cc-equipment-fold cz-disc"></div>
-            <p class="cc-move-note">An armament is one carried object. Choosing it for the other hand moves it.</p>
-            <button type="button" class="cz-next" data-next="seed">Continue to Seed</button>
-          </section>
-          <section id="cz-seed-panel" class="cz-stage">
+        <h2 class="cz-title">PREPARE YOUR FORSAKEN</h2>
+
+        <div class="cz-cols">
+          <div class="cz-fields">
+            <div><p class="cz-label">CLASS</p><div id="cz-classes" class="class-row"></div></div>
+            <div><p class="cz-label">STARTING KIT</p><div id="cz-kits" class="cz-opts"></div></div>
+            <!-- E5 (#250). Both rows arrive OPEN, and that is a ruling being
+                 honoured rather than a fold being forgotten: MR-189 scopes the
+                 fold to rows whose face buys words their options cannot, and
+                 rows that CHANGE THE RUN never fold — "folding them would hide
+                 the choosing behind a choice." Armour and stat points change
+                 the run. MR-183 withdrew the length argument; vertical scroll
+                 is the sanctioned cost. -->
+            <div><p class="cz-label">STARTING ARMOUR</p><div id="cz-armours" class="cz-opts"></div></div>
+            <div><p class="cz-label">STAT POINTS</p><div id="cz-statedit" class="cz-statedit"></div></div>
+            <div><p class="cz-label">KEEPSAKE</p><div id="cz-keepsakes" class="cz-keepsakes"></div></div>
+            <div><p class="cz-label">SIGIL</p><div id="cz-glyphs" class="cz-opts"></div></div>
+            <div><p class="cz-label">TINT</p><div id="cz-tints" class="cz-opts"></div></div>
+            <div><p class="cz-label">SPRITE</p><div id="cz-styles" class="cz-opts"></div></div>
+          </div>
+
+          <div class="preview-pane">
+            <div id="cz-portrait" class="cz-portrait"></div>
+            <!-- D26's SHORT FORM, and it is the DEFAULT view: starting stats,
+                 starting armaments, nothing else. Everything that used to sit
+                 here as prose is one tap down. The ATTRIBUTES & RESOURCES
+                 details below keeps the full receipts and is now the third
+                 tier, not the first — the panel
+                 he called bad is still reachable, still exact, and no longer in
+                 the way of picking a class. -->
+            <section class="cz-brief" data-surface="creationBrief">
+              <p class="cz-label">STARTING STATS</p>
+              <div id="cz-brief-stats" class="cz-disc"></div>
+              <p class="cz-label">STARTING ARMAMENTS</p>
+              <div id="cz-brief-armaments" class="cz-disc"></div>
+            </section>
+            <details class="cz-stats"><summary>ATTRIBUTES &amp; RESOURCES</summary><div id="cz-stat-projection"></div></details>
+            <label class="cz-label cz-name-label" for="cz-name">NAME</label>
+            <input id="cz-name" class="cz-name" type="text" maxlength="16" spellcheck="false"
+                   autocomplete="off" placeholder="Forsaken" value="">
             <label class="seed-line" for="seed-input">Seed <input id="seed-input" type="text" value="${esc(defaultSeedString)}"></label>
-            <p class="cc-seed-note">The same seed produces the same climb.</p>
-          </section>
+          </div>
         </div>
       </div>
+
       <div class="cz-actions">
         <button class="subtle" id="cz-back">Back</button>
-        <button id="cz-start">Begin</button>
+        <button id="cz-start">BEGIN THE CLIMB</button>
       </div>
     </div>`;
 
-  const $ = (selector) => app.querySelector(selector);
-  const customizeScreen = $('.screen.customize');
-  const classBox = $('#cz-classes');
-  const statBox = $('#cz-statedit');
-  const STANDARD = 'standard';
-  const POINTBUY = 'pointbuy';
-  const equipmentSections = registries.characterCreation.equipmentSections;
-  const equipmentNodes = new Map();
-  for (const section of equipmentSections) {
-    const node = document.createElement('section');
-    node.className = 'cc-equip-group';
-    node.dataset.equipmentSection = section.id;
-    const choices = document.createElement('div');
-    choices.className = 'cc-card-selectors cc-choice-collection';
-    choices.dataset.view = state.equipmentChoiceView;
-    if (section.kind === 'armour') choices.id = 'cz-armours';
-    else if (section.kind === 'relic') choices.id = 'cz-relics';
-    else if (section.kind === 'hand') choices.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
-    else choices.id = `cz-${section.id}`;
-    node.appendChild(choices);
-    equipmentNodes.set(section.id, node);
-  }
-  let equipmentFold = null;
+  const $ = (s) => app.querySelector(s);
 
-  function setClassPreviewPercent(percent) {
-    state.classPreviewPercent = Math.max(22, Math.min(45, Math.round(percent)));
-    $('.cc-class-split').style.setProperty('--cc-class-preview-share', `${state.classPreviewPercent}%`);
-    const divider = $('.cc-class-divider');
-    divider.setAttribute('aria-valuenow', String(state.classPreviewPercent));
-  }
-
-  const classDivider = $('.cc-class-divider');
-  classDivider.addEventListener('keydown', (event) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-    event.preventDefault();
-    if (event.key === 'Home') setClassPreviewPercent(22);
-    else if (event.key === 'End') setClassPreviewPercent(45);
-    else setClassPreviewPercent(state.classPreviewPercent + (event.key === 'ArrowRight' ? 2 : -2));
-  });
-  classDivider.addEventListener('pointerdown', (event) => {
-    if (matchMedia('(max-width: 760px)').matches) return;
-    const split = $('.cc-class-split');
-    const move = (moveEvent) => {
-      const rect = split.getBoundingClientRect();
-      setClassPreviewPercent(((moveEvent.clientX - rect.left) / rect.width) * 100);
-    };
-    const finish = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', finish);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', finish, { once: true });
-    move(event);
-  });
-
-  function renderViewToggles() {
-    $('#cz-class-view-toggle').replaceChildren(viewModeToggle(state.classChoiceView, (mode) => {
-      state.classChoiceView = mode;
-      renderClasses();
-    }, 'Class choice view'));
-    $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
-      state.equipmentChoiceView = mode;
-      for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
-      renderViewToggles();
-    }, 'Starting equipment choice view'));
-    $('#cz-auto-advance-toggle').replaceChildren(booleanSettingToggle('Auto-advance on valid choice', state.equipmentAutoAdvance, (value) => {
-      state.equipmentAutoAdvance = value;
-      renderViewToggles();
-    }));
+  function renderPortrait() {
+    const p = $('#cz-portrait');
+    p.style.borderColor = tintCss(state.tint);
+    p.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
+    p.innerHTML = '';
+    // With sprites on, preview the class figure you'll actually play; otherwise
+    // the chosen sigil (which is what combat shows when sprites are off).
+    const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
+      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
+      : null;
+    if (sprite) p.appendChild(sprite);
+    else p.textContent = state.glyph;
+    const preview = createRunState({
+      seed: 0, classId: state.classId, registries, startingKitId: state.startingKitId,
+      startingArmourId: state.startingArmourId, attributeMode: state.attributeMode,
+      // Standard passes no allocation — the model reads its own preset (one
+      // home). Pointbuy passes the last LEGAL allocation; see previewAttributes.
+      ...(state.attributeMode === 'pointbuy' && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
+      profileMeta: meta,
+    });
+    // THE SHORT FORM FIRST, and it is drawn from the same preview run the
+    // receipts below use — one read of the run, two tiers of the same truth.
+    const brief = creationBrief(registries, preview);
+    // The relic's authored sentence is filled by the shared relic renderer
+    // (#38's token rule); the model composes everything derivable and keeps no
+    // copy of the token machinery.
+    for (const entry of brief.armaments) {
+      if (entry.kind !== 'relic') continue;
+      entry.reveal.sense = relicText(registries.relics.get(entry.id), registries);
+    }
+    mountDisclosure($('#cz-brief-stats'), brief.stats, { moreLabel: 'more' });
+    mountDisclosure($('#cz-brief-armaments'), brief.armaments, { moreLabel: 'more' });
+    const projection = statProjection(registries, preview);
+    const surface = equipmentSurfaceReceipt(registries, preview);
+    const kit = surface.roles;
+    const signature = surface.signature;
+    const copies = surface.roleCopies;
+    // The SAME two lines the Armoury strip prints (ui/screens/equipment.js
+    // statsComparison) — same read model, same markup, one stylesheet home
+    // (`.statproj-*`). They used to differ by a literal space here and a
+    // <span> there, which is how the same block ended up separated on one
+    // screen and welded on the other.
+    $('#cz-stat-projection').innerHTML = `<div class="statproj-attributes">${projection.attributes.map((row) => `<span><b>${esc(row.shortLabel)}</b> ${row.value}</span>`).join('')}</div>`
+      + `<div class="statproj-derived">${projection.derived.map((row) => `<div data-stat="${esc(row.id)}"><b>${esc(row.label)}</b><span>${esc(row.formula)}</span>${row.note ? `<small>${esc(row.note)}</small>` : ''}</div>`).join('')}</div>`
+      + renderEquipmentRequirements(surface.requirements)
+      + renderPlayerPoise(surface.poise)
+      + `<details class="cz-kit"><summary>Starting kit · ${registries.balance.startingDeckSize} cards</summary><ul>`
+      + kit.map((row) => `<li><b>${esc(row.profile.displayName)}</b> ×${copies[row.role]} <span>${row.receipt.base}+${row.receipt.value - row.receipt.base}=${row.receipt.value} · ${esc(row.profile.damageSchool)}</span></li>`).join('')
+      + `<li><b>${esc(signature.name)}</b> ×${copies.signature} <span>class signature</span></li></ul></details>`;
   }
 
-  function baseKit() {
+  // ---- class row (real classes + locked M3 silhouettes) ----
+  const classes = $('#cz-classes');
+  const kitBox = $('#cz-kits');
+  function renderKits() {
     const views = startingKitViews(registries, state.classId, meta);
-    return views.find((row) => row.baseline) || views.find((row) => row.available) || views[0];
+    if (!views.some((row) => row.id === state.startingKitId)) state.startingKitId = (views.find((row) => row.baseline) || views[0]).id;
+    kitBox.innerHTML = '';
+    for (const kit of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${kit.id === state.startingKitId ? ' chosen' : ''}`;
+      button.dataset.startingKitId = kit.id;
+      button.textContent = kit.label;
+      button.addEventListener('click', () => {
+        state.startingKitId = kit.id;
+        renderKits();
+        renderPortrait();
+      });
+      kitBox.appendChild(button);
+    }
+  }
+  // ---- E5 (#250): starting armour + stat points -------------------------
+  // STARTING-ELIGIBLE ARMOUR = the class's free set plus every set this
+  // profile has EARNED (model/startingKits.js, the same meta.unlocked ledger
+  // the Armoury reads). A fresh profile sees one button; each prize won adds
+  // one. No copy of that rule lives here.
+  const armourBox = $('#cz-armours');
+  function renderArmours() {
+    const views = startingArmourViews(registries, state.classId, meta);
+    if (!views.some((row) => row.id === state.startingArmourId)) {
+      state.startingArmourId = (views.find((row) => row.free) || views[0]).id;
+    }
+    armourBox.innerHTML = '';
+    for (const set of views) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `cz-opt${set.id === state.startingArmourId ? ' chosen' : ''}`;
+      button.dataset.startingArmourId = set.id;
+      button.textContent = set.label;
+      // Law 3 clause 4 — the blurb is the set's own authored sentence, read
+      // from the row, never retyped.
+      attachTooltip(button, () => esc(set.blurb || set.label));
+      button.addEventListener('click', () => {
+        state.startingArmourId = set.id;
+        renderArmours();
+        renderPortrait();
+      });
+      armourBox.appendChild(button);
+    }
   }
 
-  function armourChoices() {
-    return startingArmourViews(registries, state.classId, meta).map((view) =>
-      registries.equipment.armour.find((row) => row.classId === state.classId && row.id === view.id));
-  }
-
+  // THE STAT EDITOR. Every number on it is READ from the mode row in
+  // content/attributes.js (pool, floor, ceiling, labels) — a figure typed here
+  // would be a copy nothing syncs (Law 1 clause 2). His ruling, from the card:
+  // 10 points; dropped points come back (fixedTotal does that by construction);
+  // floor 8 is the reclaim limit; 15 caps creation, not the character (the
+  // model already raises the ceiling by levelled points).
+  const statBox = $('#cz-statedit');
+  const POINTBUY = 'pointbuy';
+  function pointbuyMode() { return creationMode(registries, POINTBUY); }
   function resetAttributes() {
     state.attributes = { ...classAttributePreset(registries, state.classId, POINTBUY) };
     previewAttributes = { ...state.attributes };
   }
-
-  function resetClassChoices() {
-    const kit = baseKit();
-    state.startingKitId = kit.id;
-    state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
-    state.startingArmourId = armourChoices()[0].id;
-    state.startingRelicId = registries.classes.get(state.classId).startingRelic;
-    if (state.attributeMode === POINTBUY) resetAttributes();
-  }
-
-  function pointbuyMode() { return creationMode(registries, POINTBUY); }
   function remainingPoints() {
-    if (!state.attributes) return pointbuyMode().bonusPool;
-    return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
+    const total = Object.values(state.attributes).reduce((a, b) => a + b, 0);
+    return allocationTotal(registries, POINTBUY) - total;
   }
+  /** The one sentence START refuses with, or null. Pool first, then the kit. */
   function statsProblem() {
-    let attributes = classAttributePreset(registries, state.classId, state.attributeMode);
-    if (state.attributeMode === POINTBUY && state.attributes) {
-      const remaining = remainingPoints();
-      if (remaining !== 0) return remaining > 0
-        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
-        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-      const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
-      if (problems.length) return problems[0].msg;
-      attributes = state.attributes;
+    // No allocation yet (a pointbuy mode nobody has edited) is the preset by
+    // construction — createRunState reads it from content — so nothing refuses.
+    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    const remaining = remainingPoints();
+    if (remaining !== 0) {
+      return remaining > 0
+        ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign — every point lands before the climb.`
+        : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool — drop a stat to reclaim.`;
     }
-    const rejected = startingHandsRequirementFailure(registries, state.startingHands, attributes);
-    if (rejected) return `${rejected.piece.name} needs ${rejected.failure.attributeId} ${rejected.failure.required} — you have ${rejected.failure.actual}.`;
+    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    if (problems.length) return problems[0].msg;
+    // A legal allocation can still starve the chosen kit: requirements are the
+    // model's own receipt, asked here so the refusal lands at the button
+    // instead of as a throw inside the preview.
+    const kitRow = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId);
+    for (const pieceId of (kitRow && kitRow.pieceIds) || []) {
+      const piece = (registries.equipment.armaments || []).find((row) => row.id === pieceId);
+      const receipt = equipmentRequirementReceipt(registries, piece, state.attributes);
+      if (!receipt.ok) {
+        const failed = receipt.failures[0];
+        return `${piece.name || piece.id} needs ${failed.attributeId} ${failed.required} — you have ${failed.actual}.`;
+      }
+    }
     return null;
   }
-
-  function previewRun() {
-    const attributes = state.attributeMode === POINTBUY && previewAttributes
-      ? previewAttributes
-      : classAttributePreset(registries, state.classId, state.attributeMode);
-    return createRunState({
-      seed: 0, classId: state.classId, registries,
-      startingKitId: state.startingKitId,
-      startingHands: previewCompatibleHands(registries, state.startingHands, attributes),
-      startingArmourId: state.startingArmourId,
-      startingRelicId: state.startingRelicId,
-      attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && previewAttributes ? { attributes: { ...previewAttributes } } : {}),
-      profileMeta: meta,
-    });
-  }
-
-  function renderCharacterPreview() {
-    const portrait = $('#cz-portrait');
-    portrait.style.borderColor = tintCss(state.tint);
-    portrait.style.boxShadow = `0 0 34px color-mix(in srgb, ${tintCss(state.tint)} 35%, transparent)`;
-    portrait.innerHTML = '';
-    const sprite = spritesAreEnabled() && state.spriteStyle !== 'glyph'
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, state.spriteStyle)
-      : null;
-    if (sprite) portrait.appendChild(sprite); else portrait.textContent = state.glyph;
-
-    const run = previewRun();
-    const projection = statProjection(registries, run);
-    $('#cz-primary-stats').replaceChildren(...attributeCardModels(registries, run.attributes, {
-      projection,
-      equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-    }).map(primaryStatCard));
-    const poise = playerPoiseThresholdReceipt(registries, run);
-    const resources = resourceStrip(projection.derived, poise);
-    $('#cz-derived').replaceChildren(...resources.childNodes);
-    renderClassPreview();
-  }
-
-  function renderClassPreview() {
-    const cls = registries.classes.get(state.classId);
-    const run = previewRun();
-    const projection = statProjection(registries, run);
-    const sprite = spritesAreEnabled()
-      ? classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered')
-      : null;
-    const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
-    const pane = classPreviewPane({
-      cls, sprite,
-      resources: classResourceGrid(projection.derived.slice(0, 5)),
-      relic,
-      relicDescription: relicText(relic, registries),
-    });
-    $('#cz-class-preview-host').replaceChildren(pane);
-  }
-
-  function renderModes() {
+  function renderStats() {
+    const mode = pointbuyMode();
     statBox.innerHTML = '';
-    const modes = document.createElement('div');
-    modes.className = 'se-modes';
-    for (const mode of registries.creationModes.all()) {
-      const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
-        state.attributeMode = mode.id;
-        if (mode.id === POINTBUY) {
-          if (!state.attributes) resetAttributes();
-          openPointBuy();
-        } else {
-          closePointBuy();
-          previewAttributes = null;
-        }
-        renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+    // The mode chips — labels from the content rows, like the sprite chips.
+    const chips = document.createElement('div');
+    chips.className = 'se-modes';
+    for (const m of registries.creationModes.all()) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = `cz-opt se-mode${state.attributeMode === m.id ? ' chosen' : ''}`;
+      chip.textContent = m.label;
+      attachTooltip(chip, () => (m.id === POINTBUY
+        ? `Lay your own stats: ${m.bonusPool} points over baseline ${m.baseline}.<br>`
+          + `Floor ${m.minimum} — dropped points come back. Cap ${m.maximum} at creation; levels raise it later.`
+        : 'The class’s authored allocation — pick and climb.'));
+      chip.addEventListener('click', () => {
+        if (state.attributeMode === m.id) return;
+        state.attributeMode = m.id;
+        if (m.id === POINTBUY && !state.attributes) resetAttributes();
+        if (m.id === POINTBUY) previewAttributes = statsProblem() ? previewAttributes : { ...state.attributes };
+        renderStats();
+        renderPortrait();
+        seedRefusal();
       });
-      modes.appendChild(button);
+      chips.appendChild(chip);
     }
-    statBox.appendChild(modes);
-  }
-
-  function closePointBuy({ restoreFocus = true } = {}) {
-    if (!pointBuyOverlay) return;
-    if (pointBuyKeydown) window.removeEventListener('keydown', pointBuyKeydown, true);
-    pointBuyOverlay.remove();
-    customizeScreen.inert = false;
-    pointBuyOverlay = null;
-    pointBuyKeydown = null;
-    if (restoreFocus) {
-      const target = pointBuyReturnFocus?.isConnected
-        ? pointBuyReturnFocus
-        : statBox.querySelector('.se-mode.chosen');
-      if (target) { target.focus(); focusElement(target); }
-    }
-    pointBuyReturnFocus = null;
-  }
-
-  function openPointBuy() {
-    closePointBuy({ restoreFocus: false });
-    pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-veil cc-stat-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-labelledby', 'cc-stat-title');
-    pointBuyOverlay = overlay;
-    app.appendChild(overlay);
-    customizeScreen.inert = true;
-    let needsInitialFocus = true;
-    pointBuyKeydown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault(); event.stopPropagation();
-        overlay.querySelector('[data-stat-cancel]')?.click();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const focusable = [...overlay.querySelectorAll('button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])')]
-        .filter((element) => !element.hidden && element.getClientRects().length);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault(); event.stopPropagation(); last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault(); event.stopPropagation(); first.focus();
-      } else if (!overlay.contains(document.activeElement)) {
-        event.preventDefault(); event.stopPropagation(); (event.shiftKey ? last : first).focus();
-      }
-    };
-    window.addEventListener('keydown', pointBuyKeydown, true);
-
-    const draw = () => {
-      const focusedStep = overlay.querySelector('.se-step.gp-focus')
-        || (overlay.contains(document.activeElement) ? document.activeElement.closest('.se-step') : null);
-      const preservedFocus = focusedStep ? {
-        statId: focusedStep.dataset.statId,
-        action: focusedStep.dataset.statAction,
-        dom: document.activeElement === focusedStep,
-        cursor: focusedStep.classList.contains('gp-focus'),
-      } : null;
-      const mode = pointbuyMode();
-      const remaining = remainingPoints();
-      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
-      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
-      const allocation = renderStatAllocationCard(overlay, {
-        title: 'ASSIGN POINTS',
-        remaining,
-        modal: true,
-        cancelLabel: 'Standard',
-        rows: orderedAttributes(registries).map((def) => ({
-          id: def.id,
-          label: def.label,
-          shortLabel: def.shortLabel,
-          value: state.attributes[def.id],
-          card: cards.get(def.id),
-          canDecrease: state.attributes[def.id] > mode.minimum,
-          canIncrease: state.attributes[def.id] < mode.maximum && remaining > 0,
-        })),
-        onDecrease: (id) => {
-          state.attributes[id] -= 1;
+    statBox.appendChild(chips);
+    if (state.attributeMode !== POINTBUY) return;
+    if (!state.attributes) resetAttributes();
+    // Five rows and a pool line. Steppers refuse at the row's own edges with
+    // aria-disabled (never `disabled` — an unfocusable control is unaskable).
+    const remaining = remainingPoints();
+    const pool = document.createElement('p');
+    pool.className = 'se-pool';
+    pool.textContent = `Points to assign: ${remaining}`;
+    attachTooltip(pool, () => `${mode.bonusPool} over baseline ${mode.baseline}, floor ${mode.minimum}, cap ${mode.maximum} at creation.`);
+    statBox.appendChild(pool);
+    for (const def of orderedAttributes(registries)) {
+      const row = document.createElement('div');
+      row.className = 'se-row';
+      const value = state.attributes[def.id];
+      const atFloor = value <= mode.minimum;
+      const atCeil = value >= mode.maximum || remaining <= 0;
+      row.innerHTML = `<span class="se-name" title="${esc(def.label)}">${esc(def.shortLabel)}</span>`
+        + `<span class="se-value">${value}</span>`;
+      const mk = (sign, refused, tip) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'se-step';
+        b.textContent = sign;
+        if (refused) b.setAttribute('aria-disabled', 'true');
+        attachTooltip(b, tip);
+        b.addEventListener('click', () => {
+          if (b.getAttribute('aria-disabled') === 'true') return;
+          state.attributes[def.id] = value + (sign === '+' ? 1 : -1);
           if (!statsProblem()) previewAttributes = { ...state.attributes };
-          draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-        onIncrease: (id) => {
-          state.attributes[id] += 1;
-          if (!statsProblem()) previewAttributes = { ...state.attributes };
-          draw(); renderCharacterPreview(); updateStartRefusal();
-        },
-      });
-      const done = allocation.done;
-      refusesWhen(done, statsProblem, 'Apply these stats');
-      done.addEventListener('click', () => {
-        if (statsProblem()) return;
-        previewAttributes = { ...state.attributes };
-        closePointBuy(); renderCharacterPreview(); focusElement(statBox.querySelector('.se-mode.chosen'));
-      });
-      allocation.cancel.addEventListener('click', () => {
-        state.attributeMode = STANDARD;
-        previewAttributes = null;
-        closePointBuy(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        const standard = statBox.querySelector('.se-mode.chosen');
-        standard?.focus(); focusElement(standard);
-      });
-      if (preservedFocus) {
-        const replacement = [...overlay.querySelectorAll('.se-step')].find((button) => (
-          button.dataset.statId === preservedFocus.statId && button.dataset.statAction === preservedFocus.action
-        ));
-        if (replacement) {
-          if (preservedFocus.dom) replacement.focus();
-          if (preservedFocus.cursor) focusElement(replacement);
-        }
-      } else if (needsInitialFocus) {
-        needsInitialFocus = false;
-        queueMicrotask(() => overlay.querySelector('.cc-stat-modal')?.focus());
-      }
-    };
-    draw();
-  }
-
-  function renderClasses() {
-    classBox.innerHTML = '';
-    classBox.dataset.view = state.classChoiceView;
-    for (const cls of registries.classes.all()) {
-      const button = classChoiceCard(cls, {
-        selected: cls.id === state.classId,
-        visual: classGlyph(cls.id),
-        onChoose: () => {
-        if (state.classId === cls.id) return;
-        state.classId = cls.id; resetClassChoices();
-        renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-        },
-      });
-      classBox.appendChild(button);
-    }
-    for (const cls of LOCKED_CLASSES) {
-      classBox.appendChild(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
-    }
-    renderViewToggles();
-  }
-
-  function renderAppearance() {
-    const styleBox = $('#cz-styles');
-    styleBox.innerHTML = '';
-    for (const style of SPRITE_STYLES) {
-      const button = spriteChoiceButton(style, style.id === state.spriteStyle, () => {
-        state.spriteStyle = style.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      styleBox.appendChild(button);
-    }
-    const tintBox = $('#cz-tints');
-    tintBox.innerHTML = '';
-    for (const tint of PORTRAIT_TINTS) {
-      const button = tintChoiceButton(tint, tint.id === state.tint, () => {
-        state.tint = tint.id; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      tintBox.appendChild(button);
-    }
-    const glyphBox = $('#cz-glyphs');
-    glyphBox.innerHTML = '';
-    for (const glyph of PORTRAIT_GLYPHS) {
-      const button = sigilChoiceButton(glyph, glyph === state.glyph, () => {
-        state.glyph = glyph; renderAppearance(); renderCharacterPreview(); refreshFaces();
-      });
-      glyphBox.appendChild(button);
-    }
-    const keepsakeBox = $('#cz-keepsakes');
-    keepsakeBox.innerHTML = '';
-    for (const keepsake of registries.characterCreation.keepsakes) {
-      const button = keepsakeChoiceButton(keepsake, keepsake.id === state.keepsakeId, () => {
-        state.keepsakeId = keepsake.id; renderAppearance(); refreshFaces();
-      });
-      keepsakeBox.appendChild(button);
-    }
-  }
-
-  function renderEquipment() {
-    const armourBox = $('#cz-armours');
-    armourBox.innerHTML = '';
-    for (const piece of armourChoices()) {
-      const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
-      button.dataset.startingArmourId = piece.id;
-      button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
-      button.addEventListener('click', () => {
-        state.startingArmourId = piece.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('armour');
-      });
-      armourBox.appendChild(button);
-    }
-    for (const hand of ['leftHand', 'rightHand']) {
-      const box = $(`#cz-${hand === 'leftHand' ? 'left' : 'right'}-hand`);
-      box.innerHTML = '';
-      for (const piece of creationHandChoices(registries, state.classId, hand)) {
-        const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
-        markUiComponent(button, UI.equipmentChoiceCard, hand);
-        button.dataset.hand = hand; button.dataset.armamentId = piece.id;
-        button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
-        button.addEventListener('click', () => {
-          state.startingHands = selectStartingHand(state.startingHands, hand, piece.id);
-          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(hand);
+          renderStats();
+          renderPortrait();
+          seedRefusal();
         });
-        box.appendChild(button);
-      }
+        return b;
+      };
+      row.appendChild(mk('−', atFloor,
+        () => `−1 ${esc(def.label)} — floor ${mode.minimum}; a dropped point returns to the pool.`));
+      row.appendChild(mk('+', atCeil,
+        () => (remaining <= 0
+          ? 'The pool is spent — drop another stat to reclaim a point.'
+          : `+1 ${esc(def.label)} — cap ${mode.maximum} at creation; levels raise it later.`)));
+      statBox.appendChild(row);
     }
-    const relicBox = $('#cz-relics');
-    relicBox.innerHTML = '';
-    for (const relic of creationRelicChoices(registries, state.classId)) {
-      const button = relicChoiceButton(relic, relicText(relic, registries), relic.id === state.startingRelicId, () => {
-        state.startingRelicId = relic.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('relic');
-      });
-      relicBox.appendChild(button);
-    }
-    for (const section of equipmentSections.filter((row) => row.kind === 'slot')) {
-      const box = equipmentNodes.get(section.id).querySelector('.cc-card-selectors');
-      if (!box.childElementCount) {
-        const empty = document.createElement('p');
-        empty.className = 'cc-empty-slot';
-        empty.textContent = 'No starting options in this build. Content added to this slot will appear here.';
-        box.appendChild(empty);
-      }
-    }
-    for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = state.equipmentChoiceView;
-    refreshEquipmentFaces();
   }
 
-  function advanceEquipment(sectionId) {
-    if (!state.equipmentAutoAdvance || !equipmentFold) return;
-    const index = equipmentSections.findIndex((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
-    const next = equipmentSections.slice(index + 1).find((section) => section.kind !== 'slot');
-    if (!next) return;
-    equipmentFold.open(next.id);
-    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
-  }
-
-  const selectedRow = (id, rows) => rows.find((row) => row.id === id);
-  const spriteRows = [
-    { key: 'sigil', label: 'SIGIL', node: $('#cz-sigil-group'), value: () => state.glyph },
-    { key: 'tint', label: 'TINT', node: $('#cz-tint-group'), value: () => (
-      selectedRow(state.tint, PORTRAIT_TINTS)?.name || state.tint
-    ) },
-  ];
-  const spriteFold = mountDisclosure($('#cz-sprite-fold'), spriteRows.map((row) => ({
-    key: row.key, kind: 'pick', disclosure: 'face',
-    face: { label: row.label, value: row.value() },
-    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
-  refreshSpriteFaces = () => {
-    for (const row of spriteRows) spriteFold.setValue(row.key, row.value());
-  };
-
-  const characterRows = [
-    { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
-      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
-    ) },
-    { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
-      selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
-    ) },
-    { key: 'keepsake', label: 'KEEPSAKE', node: $('#cz-keepsake-group'), value: () => (
-      selectedRow(state.keepsakeId, registries.characterCreation.keepsakes)?.name || state.keepsakeId
-    ) },
-  ];
-  const characterFold = mountDisclosure($('#cz-character-fold'), characterRows.map((row) => ({
-    key: row.key, kind: 'pick', disclosure: 'face',
-    face: { label: row.label, value: row.value() },
-    reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-  })));
-  markUiComponent($('#cz-character-fold'), UI.characterDisclosure);
-  refreshCharacterFaces = () => {
-    for (const row of characterRows) characterFold.setValue(row.key, row.value());
-  };
-  characterFold.open('primary');
-
-  const equipmentValue = (section) => {
-    if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
-      row.classId === state.classId && row.id === state.startingArmourId
-    ))?.name || 'None';
-    if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
-    if (section.kind === 'slot') return 'None';
-    const id = state.startingHands[section.slot];
-    return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
-  };
-  const equipmentFaces = new Map(equipmentSections.map((section) => [
-    section.id, selectionSectionFace(section.label, equipmentValue(section)),
-  ]));
-  equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSections.map((section) => ({
-    key: section.id, kind: 'pick', disclosure: 'face',
-    face: { node: equipmentFaces.get(section.id).node },
-    reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-  })));
-  refreshEquipmentFaces = () => {
-    for (const section of equipmentSections) equipmentFaces.get(section.id).setValue(equipmentValue(section));
-  };
-  equipmentFold.open(equipmentSections[0].id);
-
-  resetClassChoices();
-  renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
-
-  const panels = {
-    class: $('#cz-class-panel'), character: $('#cz-character-panel'),
-    equipment: $('#cz-equipment-panel'), seed: $('#cz-seed-panel'),
-  };
-  const selectedName = (id, rows, fallback = '—') => (rows.find((row) => row.id === id) || {}).name || fallback;
-  const sectionRows = [
-    { key: 'class', label: 'CLASS', node: panels.class, value: () => registries.classes.get(state.classId).name },
-    { key: 'character', label: 'CHARACTER', node: panels.character, value: () => state.name || 'Forsaken' },
-    { key: 'equipment', label: 'STARTING EQUIP', node: panels.equipment, value: () => {
-      const arms = registries.equipment.armaments;
-      return `${selectedName(state.startingHands.leftHand, arms, 'Empty')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty')}`;
-    } },
-    { key: 'seed', label: 'SEED', node: panels.seed, value: () => $('#seed-input').value.trim() || '—' },
-  ];
-  let fold = null;
-  if (catalog) {
-    const flow = $('.cz-flow');
-    const fragment = document.createDocumentFragment();
-    const appendCatalogItem = (row, kind) => {
-      const article = document.createElement('article');
-      article.className = 'cc-catalog-item';
-      article.dataset.catalogComponent = row.key;
-      const headingId = `cc-catalog-${row.key}`;
-      article.innerHTML = `<header class="cc-catalog-head"><h3 id="${headingId}">${esc(row.label)}</h3><span>${esc(kind)}</span></header>`;
-      row.node.setAttribute('aria-labelledby', headingId);
-      article.appendChild(row.node);
-      fragment.appendChild(article);
-    };
-    for (const row of sectionRows) appendCatalogItem(row, 'LIVE SECTION');
-
-    const choiceSpecimen = (className, choices, idFor, renderer, initial) => {
-      const host = document.createElement('div');
-      host.className = `cc-catalog-specimen ${className}`;
-      let selected = initial;
-      const draw = () => host.replaceChildren(...choices.map((choice) => renderer(
-        choice, idFor(choice) === selected, () => { selected = idFor(choice); draw(); },
-      )));
-      draw();
-      return host;
-    };
-    const specimenRun = previewRun();
-    const specimenProjection = statProjection(registries, specimenRun);
-    const specimenAttributes = attributeCardModels(registries, specimenRun.attributes, {
-      projection: specimenProjection,
-      equipmentProfiles: specimenRun.equipmentProfileRuleSnapshot?.profiles,
+  for (const cls of registries.classes.all()) {
+    const el = document.createElement('div');
+    el.className = 'class-pick cz-class';
+    el.dataset.classId = cls.id;
+    // The chip's HP is the DERIVED total from the run's own home (state.js via
+    // createRunState: class base + attribute tiers + kit gear), never bare
+    // cls.maxHp — that is a component posing as a total, and it sat two scrolls
+    // above a ledger saying 96 while claiming 84 (Bjorn's gate, 2026-08-14).
+    // Same read the ledger stands on, default kit: the class's honest advert.
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description || '')}</p><span class="chip">HP ${createRunState({ seed: 0, classId: cls.id, registries, profileMeta: meta }).maxHp} · ${registries.balance.startingDeckSize} cards</span></div>`;
+    el.addEventListener('click', () => {
+      state.classId = cls.id;
+      state.startingKitId = null;
+      // E5: a class carries its own armour rows and its own preset — both
+      // choices are re-derived for the new class, exactly as the kit is.
+      state.startingArmourId = null;
+      if (state.attributeMode === POINTBUY) resetAttributes();
+      classes.querySelectorAll('.cz-class').forEach((x) => x.classList.toggle('chosen', x === el));
+      renderKits();
+      renderArmours();
+      renderStats();
+      renderPortrait();
+      seedRefusal();
     });
-    const disclosureHost = document.createElement('div');
-    disclosureHost.className = 'cc-character-fold cc-catalog-specimen cz-disc';
-    const disclosureStat = document.createElement('div');
-    disclosureStat.className = 'cc-character-picker';
-    disclosureStat.appendChild(primaryStatCard(specimenAttributes[0]));
-    const disclosureKeepsake = document.createElement('div');
-    disclosureKeepsake.className = 'cc-character-picker cz-keepsakes';
-    let disclosureKeepsakeId = registries.characterCreation.keepsakes[0].id;
-    const drawDisclosureKeepsakes = () => disclosureKeepsake.replaceChildren(...registries.characterCreation.keepsakes.slice(0, 2).map((keepsake) => keepsakeChoiceButton(
-      keepsake, keepsake.id === disclosureKeepsakeId,
-      () => { disclosureKeepsakeId = keepsake.id; drawDisclosureKeepsakes(); },
-    )));
-    drawDisclosureKeepsakes();
-    const disclosureSpecimen = mountDisclosure(disclosureHost, [
-      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
-      { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
-    ]);
-    markUiComponent(disclosureHost, UI.characterDisclosure);
-    disclosureSpecimen.open('sample-primary');
-    const statHost = document.createElement('div');
-    statHost.className = 'cc-primary-stats cc-catalog-specimen';
-    statHost.append(...specimenAttributes.map(primaryStatCard));
-    const classChoiceSpecimen = document.createElement('div');
-    classChoiceSpecimen.className = 'cc-class-selection cc-catalog-specimen';
-    const classChoiceHost = document.createElement('div');
-    classChoiceHost.className = 'class-row';
-    classChoiceHost.dataset.view = 'list';
-    let specimenClassId = state.classId;
-    const drawClassChoices = () => classChoiceHost.replaceChildren(...registries.classes.all().slice(0, 2).map((cls) => classChoiceCard(cls, {
-      selected: cls.id === specimenClassId,
-      visual: classGlyph(cls.id),
-      onChoose: () => { specimenClassId = cls.id; drawClassChoices(); },
-    })));
-    drawClassChoices();
-    classChoiceSpecimen.appendChild(classChoiceHost);
-    const previewRelic = registries.relics.get(state.startingRelicId);
-    const classPreviewHost = classPreviewPane({
-      cls: registries.classes.get(state.classId),
-      sprite: classSprite(state.classId, tintCss(state.tint), state.glyph, state.tint, 'rendered'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
-      relic: previewRelic,
-      relicDescription: relicText(previewRelic, registries),
-    });
-    classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
-    classResourceSpecimen.classList.add('cc-catalog-specimen');
-    let viewToggleHost = null;
-    const setCatalogView = (mode) => {
-      const next = viewModeToggle(mode, setCatalogView, 'Catalog view choice');
-      next.classList.add('cc-catalog-specimen');
-      if (viewToggleHost) viewToggleHost.replaceWith(next);
-      viewToggleHost = next;
-    };
-    setCatalogView('list');
-    let autoAdvanceSpecimen = null;
-    const setCatalogAutoAdvance = (value) => {
-      const next = booleanSettingToggle('Auto-advance on valid choice', value, setCatalogAutoAdvance);
-      next.classList.add('cc-catalog-specimen');
-      if (autoAdvanceSpecimen) autoAdvanceSpecimen.replaceWith(next);
-      autoAdvanceSpecimen = next;
-    };
-    setCatalogAutoAdvance(true);
-    const armourSpecimen = document.createElement('div');
-    armourSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
-    armourSpecimen.dataset.view = 'list';
-    const specimenArmours = armourChoices().slice(0, 2);
-    let specimenArmourId = specimenArmours[0].id;
-    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const button = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      button.setAttribute('aria-pressed', piece.id === specimenArmourId ? 'true' : 'false');
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
-      button.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return button;
-    }));
-    drawArmourChoices();
-    const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
-    const relicSpecimen = document.createElement('div');
-    relicSpecimen.className = 'cc-card-selectors cc-catalog-specimen';
-    let specimenRelicId = specimenRelics[0].id;
-    const drawRelicChoices = () => relicSpecimen.replaceChildren(...specimenRelics.map((relic) => relicChoiceButton(
-      relic, relicText(relic, registries), relic.id === specimenRelicId,
-      () => { specimenRelicId = relic.id; drawRelicChoices(); },
-    )));
-    drawRelicChoices();
-    const selectionFaceSpecimen = selectionSectionFace('STARTING ARMOUR', 'Ashen Vigil').node;
-    selectionFaceSpecimen.classList.add('cc-catalog-specimen');
-    const specimens = [
-      { key: 'character-disclosure', label: 'CHARACTER SUB-DISCLOSURE', node: disclosureHost },
-      { key: 'class-preview-pane', label: 'CLASS PREVIEW PANE', node: classPreviewHost },
-      { key: 'class-resource-grid', label: 'CLASS RESOURCE GRID', node: classResourceSpecimen },
-      { key: 'class-choice-card', label: 'CLASS CHOICE CARD', node: classChoiceSpecimen },
-      { key: 'view-mode-toggle', label: 'LIST / GRID TOGGLE', node: viewToggleHost },
-      { key: 'boolean-setting-toggle', label: 'BOOLEAN SETTING TOGGLE', node: autoAdvanceSpecimen },
-      { key: 'selection-section-face', label: 'SELECTION SUBCARD FACE', node: selectionFaceSpecimen },
-      { key: 'primary-stat-card', label: 'PRIMARY STAT CARD', node: statHost },
-      { key: 'resource-strip', label: 'RESOURCE STRIP', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
-      ) },
-      { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
-        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
-      ) },
-      { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
-        'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,
-      ) },
-      { key: 'tint-choice', label: 'TINT SWATCH', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_TINTS, (row) => row.id, tintChoiceButton, state.tint,
-      ) },
-      { key: 'sigil-choice', label: 'SIGIL CHOICE', node: choiceSpecimen(
-        'cz-opts', PORTRAIT_GLYPHS, (glyph) => glyph, sigilChoiceButton, state.glyph,
-      ) },
-      { key: 'keepsake-choice', label: 'KEEPSAKE CARD', node: choiceSpecimen(
-        'cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
-      ) },
-      { key: 'equipment-choice-card', label: 'EQUIPMENT CHOICE CARD', node: armourSpecimen },
-      { key: 'relic-choice-card', label: 'RELIC CHOICE CARD', node: relicSpecimen },
-    ];
-    for (const row of specimens) appendCatalogItem(row, 'REUSABLE COMPONENT');
-    flow.replaceChildren(fragment);
-  } else {
-    fold = mountDisclosure($('.cz-flow'), sectionRows.map((row) => ({
-      key: row.key, kind: 'pick', disclosure: 'face',
-      face: { label: row.label, value: row.value() },
-      reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })));
-    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
-    fold.open('class');
+    classes.appendChild(el);
   }
+  for (const cls of LOCKED_CLASSES) {
+    const el = document.createElement('div');
+    el.className = 'class-pick locked';
+    el.innerHTML = `<div class="glyph">${classGlyph(cls.id)}</div><div class="cp-body"><h3>${esc(cls.name)}</h3><p>${esc(cls.description)}</p><span class="chip">ARRIVES IN ${esc(cls.milestone)}</span></div>`;
+    classes.appendChild(el);
+  }
+  classes.querySelector('.cz-class').classList.add('chosen');
+  renderKits();
+  renderArmours();
+  renderStats();
 
-  app.querySelectorAll('.cz-next').forEach((button) => button.addEventListener('click', () => {
-    if (catalog) {
-      const target = app.querySelector(`[data-catalog-component="${button.dataset.next}"]`);
-      target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-      focusElement(target?.querySelector('button, input'));
-      return;
-    }
-    fold.open(button.dataset.next);
-    const target = app.querySelector(`[data-face="${button.dataset.next}"]`);
-    if (target) focusElement(target);
-  }));
-
-  const name = $('#cz-name');
-  name.addEventListener('input', () => { state.name = name.value.trim() || 'Forsaken'; refreshFaces(); });
-  attachTooltip(name, () => `Your character's name. Up to ${name.maxLength} characters.`);
-  const seed = attachSeedField($('#seed-input'));
-  seed.onChange(() => { refreshFaces(); updateStartRefusal(); });
-
-  updateStartRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
-    const cls = registries.classes.get(state.classId);
-    const keepsake = registries.characterCreation.keepsakes.find((row) => row.id === state.keepsakeId);
-    return `Begin as <b>${esc(cls.name)}</b> with <b>${esc(keepsake.name)}</b>.`;
+  // ---- sigil + tint pickers ----
+  const glyphBox = $('#cz-glyphs');
+  PORTRAIT_GLYPHS.forEach((g, i) => {
+    const b = document.createElement('div');
+    b.className = `cz-opt${i === 0 ? ' chosen' : ''}`;
+    b.textContent = g;
+    b.addEventListener('click', () => {
+      state.glyph = g;
+      glyphBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
+      renderPortrait();
+    });
+    glyphBox.appendChild(b);
   });
+  const tintBox = $('#cz-tints');
+  PORTRAIT_TINTS.forEach((t, i) => {
+    const b = document.createElement('div');
+    b.className = `cz-opt tint${i === 0 ? ' chosen' : ''}`;
+    b.style.background = t.css;
+    // Law 3 clause 4: a native `title=` does not satisfy the tooltip floor —
+    // touch and gamepad players never see one. A tint swatch is pure colour with
+    // no text of its own, so it is the one option row here that says NOTHING
+    // without this. `title` is kept for the desktop mouse habit, not relied on.
+    // AND `attachTooltip` ANSWERS HOVER AND PAD-FOCUS ONLY — never a thumb. That
+    // is why TINT is the row that stays folded: see "THE FOLD" below, where the
+    // face is what finally says this colour's name on the glass, in words.
+    b.title = t.name;
+    attachTooltip(b, () => esc(t.name));
+    b.addEventListener('click', () => {
+      state.tint = t.id;
+      tintBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
+      renderPortrait();
+    });
+    tintBox.appendChild(b);
+  });
+
+  // ---- sprite style (rendered art / classic silhouette / sigil glyph) ----
+  const styleBox = $('#cz-styles');
+  SPRITE_STYLES.forEach((st, i) => {
+    const b = document.createElement('div');
+    b.className = `cz-opt style${i === 0 ? ' chosen' : ''}`;
+    b.textContent = st.name;
+    b.style.cssText = 'width:auto;padding:0 12px;font-size:12px;letter-spacing:.08em;';
+    b.addEventListener('click', () => {
+      state.spriteStyle = st.id;
+      styleBox.querySelectorAll('.cz-opt').forEach((x) => x.classList.toggle('chosen', x === b));
+      renderPortrait();
+    });
+    styleBox.appendChild(b);
+  });
+
+  // ---- keepsakes ----
+  const ksBox = $('#cz-keepsakes');
+  KEEPSAKES.forEach((ks, i) => {
+    const el = document.createElement('div');
+    el.className = `cz-keepsake${i === 0 ? ' chosen' : ''}`;
+    el.innerHTML = `<span class="ks-icon">${esc(ks.icon)}</span><div><b>${esc(ks.name)}</b><p>${esc(ks.desc)}</p></div>`;
+    el.addEventListener('click', () => {
+      state.keepsakeId = ks.id;
+      ksBox.querySelectorAll('.cz-keepsake').forEach((x) => x.classList.toggle('chosen', x === el));
+    });
+    ksBox.appendChild(el);
+  });
+
+  // ---- THE FOLD, NOW THE WHOLE COLUMN (E4 / #249) -------------------------
+  // Constantine, 2026-08-15, verbatim: "all the options to be panel buttons
+  // that expand to show more details... the top menu (class) should be
+  // expanded. once selected(short hold) then it collapses and the next section
+  // auto opens... keep options minimum in detail with tool tips on hold or
+  // hover." Filed as E4; dealt to this seat by Marina's wave-two (family
+  // f30e1ca) as one pattern with B9/B10 and E2's shop bars.
+  //
+  // THIS SUPERSEDES MR-151/170/171/189's ONE-ROW SCOPE, AND THEIR REASONS MOVE
+  // RATHER THAN DIE. MR-189 judged each row's fold on what its face buys in
+  // words ON A STACKED SCREEN, where every other row sat open beside it — and
+  // there it was right: folding KEEPSAKE hid the one choice that changes the
+  // run behind a row reading `KEEPSAKE Nothing`. E4 replaces the stacked
+  // screen with a TURN-TAKING one. Each section is auto-opened AT ITS TURN, so
+  // its options get the glass they had when unfolded — nothing is hidden
+  // behind a choice, it is scheduled — and after its turn the face is the
+  // RECEIPT of the pick in words (`KEEPSAKE Old Cinder`), which is the exact
+  // thing MR-171 measured as missing. SIGIL's face value is still the glyph:
+  // his own sketch is `<icon> <option name>`, and the glyph IS that option's
+  // name. tools/creationbrief.mjs's roster moved with this table (its rule:
+  // one line here + one line there, red at both edges until both exist).
+  //
+  // THE GESTURES, per the recorded answer on the E4 row: TAP selects; HOLD /
+  // HOVER explains (attachTooltip, the affordance this screen already speaks
+  // on every face and option). His "short hold to select" is NOT built and NOT
+  // discarded — the recorded answer defers it to a Settings option, and
+  // settings.js is deliberately untouched from this lane while E3 serializes
+  // that file under another seat. Wiring the option when that lane lands is
+  // one listener swap in the advance below.
+  //
+  // ONE MOUNT, SIX ENTRIES — one panel at a time is the mount's own rule, so
+  // "one section open" needs no coordination code. The mechanism's per-entry
+  // live reveal is components/disclosure.js's E4 generalization; there is
+  // still no fold code in this file, and tools/onefold.mjs still counts one.
+  //
+  // AUTO-ADVANCE IS A PICK, NEVER A TAP. Tapping a face only opens or closes
+  // it — "can be re collapsed back", his message 4 — so a player can revisit
+  // any section without being marched forward. Picking an OPTION inside the
+  // open panel is what advances: the listener sits on the adopted box at the
+  // bubbling tail, so every option's own state-writing handler has already run
+  // when the faces refresh, and a locked option advances nothing.
+  const SECTIONS = [
+    { key: 'pick:class', label: 'CLASS', box: classes, tip: 'Choose who climbs. Tap a class to select it.',
+      value: () => { const c = registries.classes.all().find((x) => x.id === state.classId); return c ? c.name : state.classId; } },
+    { key: 'pick:kit', label: 'STARTING KIT', box: kitBox, tip: 'The gear you begin with. Tap to change it.',
+      value: () => { const v = startingKitViews(registries, state.classId, meta).find((row) => row.id === state.startingKitId); return v ? v.label : '—'; } },
+    { key: 'pick:keepsake', label: 'KEEPSAKE', box: ksBox, tip: 'One starting boon. Hold an option to read what it does.',
+      value: () => { const k = KEEPSAKES.find((x) => x.id === state.keepsakeId); return k ? k.name : 'Nothing'; } },
+    { key: 'pick:sigil', label: 'SIGIL', box: glyphBox, tip: 'The mark combat shows when sprites are off.',
+      value: () => state.glyph },
+    { key: 'pick:tint', label: 'TINT', box: tintBox, tip: 'Tap to change your colour.',
+      value: () => (PORTRAIT_TINTS.find((t) => t.id === state.tint) || {}).name || '—' },
+    { key: 'pick:sprite', label: 'SPRITE', box: styleBox, tip: 'How your figure is drawn on the board.',
+      value: () => { const s = SPRITE_STYLES.find((x) => x.id === state.spriteStyle); return s ? s.name : '—'; } },
+  ];
+  const fields = app.querySelector('.cz-fields');
+  fields.classList.add('cz-disc');
+  // THE ROWS THE MOUNT DOES NOT TAKE ARE STILL THE SCREEN'S, AND THEY GO BACK
+  // (E5 / #250 — the defect this repairs is mine, and it shipped nothing).
+  //
+  // `mountDisclosure` sets `host.innerHTML`, so mounting over `.cz-fields`
+  // DESTROYS every row in it. The six sections survive because SECTIONS holds
+  // their boxes by reference and the mount re-adopts them into its one panel.
+  // STARTING ARMOUR and STAT POINTS are not in SECTIONS — deliberately, below
+  // — so nothing held them and nothing brought them back: two rows this file
+  // writes were absent from the document from 9676d9a to aefc356, on a screen
+  // every gate called green.
+  //
+  // NEITHER ROW BECOMES A FACE. That is the design answer, and it is not the
+  // one-line one:
+  //   · MR-189's rule, still live in the comment beside their markup — a row
+  //     that CHANGES THE RUN never folds, because folding it hides the
+  //     choosing behind a choice. Armour and stat points change the run.
+  //   · Vira's replay item (d): the stat editor is a MULTI-CLICK surface, not
+  //     a pick-once choice. Every face here carries auto-advance — one pick
+  //     inside the open panel opens the next section — so a stepper's first
+  //     `+` would march a player off a row they had not finished. A face gives
+  //     this row that semantics BY CONSTRUCTION; there is no opting out of it.
+  // So both arrive OPEN, as themselves, under the fold row: the six picks read
+  // as one compact chooser, and the two rows you EDIT sit below it.
+  //
+  // DERIVED, NEVER LISTED. The open set is *every row of `.cz-fields` that
+  // does not hold a registered picker* — read off this template and SECTIONS,
+  // so no third hand-written list exists to fall out of step with the other
+  // two (Law 0 clause 4, which is the whole disease here). The derivation also
+  // inverts the failure: a future row added to the markup with no SECTIONS
+  // entry now APPEARS, open, instead of vanishing. Wrong-and-visible beats
+  // absent-and-green.
+  //
+  // READ BEFORE THE MOUNT — after it runs the adopted pickers live in the
+  // panel and no row contains its own box, so the test loses its referent.
+  const openRows = [...fields.children].filter((row) => !SECTIONS.some((s) => row.contains(s.box)));
+  const fold = mountDisclosure(fields, SECTIONS.map((row) => ({
+    key: row.key, kind: 'pick', disclosure: 'face',
+    face: { label: row.label, value: row.value() },
+    reveal: { node: row.box, sense: row.tip },
+  })));
+  // ...and back into the host the mount just emptied, in the order the
+  // template wrote them, after the fold row.
+  for (const row of openRows) fields.appendChild(row);
+  // One call after any pick — the faces are the screen's answer to "what did I
+  // choose?", so they are re-read from `state`, never written twice.
+  const refreshFolds = () => { for (const row of SECTIONS) fold.setValue(row.key, row.value()); };
+  SECTIONS.forEach((row, i) => {
+    // THE CURSOR'S CLAIM IS READ AT CAPTURE — before any option's own listener
+    // can rebuild the box. KIT's does (renderKits), and after the rebuild the
+    // `.gp-focus` element is detached: a document query at the bubbling tail
+    // finds nothing and cannot tell "the pick came through the cursor" from
+    // "no cursor was ever summoned". Decided the moment the press lands.
+    let cursorWasInside = false;
+    row.box.addEventListener('click', () => {
+      const cursor = document.querySelector('.gp-focus');
+      cursorWasInside = !!cursor && row.box.contains(cursor);
+    }, true);
+    row.box.addEventListener('click', (ev) => {
+      // OWNERSHIP IS THE DISPATCH, NOT THE TREE (Vira's P1 on #288, found by
+      // Codex). This listener sits ON row.box, so any event it hears travelled
+      // through this box when it was dispatched — that is the whole ownership
+      // question. The old `row.box.contains(picked)` re-asked it of the tree
+      // as it stands NOW, and KIT is the one section whose own pick listener
+      // rebuilds its box (renderKits) before this bubbling tail runs: the
+      // clicked button was detached, contains() said no, and the flow stalled
+      // at its second section on every kit pick.
+      const picked = ev.target.closest('.cz-opt, .cz-class, .cz-keepsake');
+      refreshFolds();
+      if (!picked || picked.classList.contains('locked')) return;
+      const next = SECTIONS[i + 1];
+      if (next) fold.open(next.key); else fold.close();
+      // A PICK THAT HIDES THE CURSOR'S ELEMENT OWES THE CURSOR A DESTINATION
+      // (Vira's P2 on #288, found by Codex). The advance just stashed this row
+      // — or renderKits detached its buttons outright — so a keyboard/pad
+      // player's next Confirm would fall back to the first focusable, the
+      // CLASS face, and march them back to section one on every pick. The
+      // destination is the flow's own next step: the just-opened section's
+      // current choice (or its first option) — so Confirm-Confirm walks the
+      // whole flow accepting defaults — and BEGIN THE CLIMB when the flow
+      // completes. A mouse pick with the cursor elsewhere transfers nothing:
+      // a player who never summoned the cursor is not handed one.
+      if (!cursorWasInside) return;
+      const dest = next
+        ? (next.box.querySelector('.chosen') || next.box.querySelector('.cz-opt, .cz-class, .cz-keepsake'))
+        : app.querySelector('#cz-start');
+      if (dest) focusElement(dest);
+    });
+  });
+  // "the top menu (class) should be expanded" — his words, and the arrival
+  // state creationbrief.mjs's roster names for exactly one key.
+  fold.open('pick:class');
+
+  const nameEl = $('#cz-name');
+  nameEl.addEventListener('input', (ev) => {
+    state.name = ev.target.value.trim() || 'Forsaken';
+  });
+
+  // ---- the pinned action row: tooltips (Law 3 clause 4) ----
+  // Every one of these fires for hover AND for the pad/keyboard focus cursor —
+  // attachTooltip listens for the gpfocus/gpblur input.js dispatches, which is
+  // the half a native `title=` never reaches.
+  //
+  // THE BUMPER ANSWER, written down because clause 6 says an undefined context
+  // is a defect found by the player's thumb: this screen has NO tab set. There
+  // is no strip, no folded switcher, nothing that cycles. RB/LB therefore keep
+  // their global bindings here and the answer is "nothing here" — stated, not
+  // left to be discovered. The action row is two buttons reached by the focus
+  // cursor, exactly as a vertical list is (clause 6's corollary).
+  //
+  // The number in the name tooltip is READ OFF THE FIELD, never typed: maxlength
+  // lives in the markup above and a prose copy of it is a defect under Law 1
+  // clause 2 even in a tooltip.
+  attachTooltip(nameEl, () => `Your character's name — the one the death screen uses.<br>`
+    + `Up to ${nameEl.maxLength} characters. Leave it blank and you climb as Forsaken.`);
+  // The seed field's rules — length, vocabulary, the promise above, and the
+  // refusal when the promise cannot be kept — all live in components/seedfield.js
+  // and are read from engine/rng.js. The tooltip that used to be typed here is
+  // now SEED_PROMISE, said by all three seed fields instead of one.
+  const seed = attachSeedField($('#seed-input'));
   attachTooltip($('#cz-back'), () => 'Back to the title screen. Nothing here is saved.');
+  // Names, never numbers, and computed at show time — so the pinned row is also
+  // the answer to "what did I pick?" for a player whose choices have scrolled
+  // out of sight above it. That is half the affordance the bar is here to be.
+  // BEGIN THE CLIMB refuses while the seed is not a seed, and the reason is the
+  // field's own sentence — one home, so the button and the field can never say
+  // two different things. It is marked with `aria-disabled` + `data-refusal`
+  // (never `disabled`, which would make it unfocusable and unaskable) so a
+  // player who presses it hears why at the place they pressed.
+  // E5: the button refuses for the seed OR the stats, and each names itself —
+  // the stat sentence is statsProblem()'s own, derived beside the editor.
+  const seedRefusal = refusesWhen($('#cz-start'), () => seed.problem() || statsProblem(), () => {
+    const cls = registries.classes.all().find((c) => c.id === state.classId);
+    const ks = KEEPSAKES.find((k) => k.id === state.keepsakeId);
+    return `Begin the climb as <b>${esc(cls ? cls.name : state.classId)}</b>`
+      + (ks && ks.id !== 'none' ? `, carrying <b>${esc(ks.name)}</b>.` : ', carrying no keepsake.')
+      + '<br>Scroll up to change any of it.';
+  });
+  seed.onChange(() => seedRefusal());
+
   $('#cz-back').addEventListener('click', onBack);
   $('#cz-start').addEventListener('click', () => {
-    if (seed.problem() || statsProblem()) return;
+    if (seed.problem() || statsProblem()) return; // the refusal already said why, at the button
     onStart({
       classId: state.classId,
       seedString: $('#seed-input').value.trim(),
       customization: { name: state.name, glyph: state.glyph, tint: state.tint, spriteStyle: state.spriteStyle },
       keepsakeId: state.keepsakeId,
       startingKitId: state.startingKitId,
-      startingHands: { ...state.startingHands },
       startingArmourId: state.startingArmourId,
-      startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
+      // Standard sends no allocation: the model's preset is the one home.
       ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
-  updateStartRefusal();
+
+  renderPortrait();
 }
