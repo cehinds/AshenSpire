@@ -119,12 +119,11 @@ function revealHtml(entry) {
     + (entry.reveal.receipt ? `<p class="disc-receipt">${esc(entry.reveal.receipt)}</p>` : '');
 }
 
-/** A FACE IS A LABEL, AN OPTIONAL ONE-LINE SUMMARY, AND A VALUE. One home for that markup, because it is
+/** A FACE IS A LABEL AND A VALUE. One home for that markup, because it is
  *  drawn at mount and re-drawn every time a folded picker's choice changes;
  *  two spellings of it would be two answers to "what did I pick?". */
 function faceHtml(entry) {
   return `<b class="disc-name">${esc(entry.face.label)}</b>`
-    + (entry.face.summary ? `<span class="disc-summary">${esc(entry.face.summary)}</span>` : '')
     + (entry.face.value === '' || entry.face.value == null ? '' : `<span class="disc-value">${esc(entry.face.value)}</span>`);
 }
 

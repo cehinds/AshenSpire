@@ -25,35 +25,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
-| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark, deterministic ash, family prompt, and shared build receipt; Title is not mounted behind it. |
-| `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |
-| `startup-ash-particle` | deterministic particle record | `startupGate.mountStartupGate` | Startup Ash Field | One data-driven ash mote with position, delay, duration, and size. |
-| `startup-mark` | startup copy + responsive presentation | `startupGate.mountStartupGate` | Startup Gate | Centered folded-title content group; its phone backing is fully transparent. |
-| `startup-wordmark` | `startupGateModel.properties.wordmark` | `startupGate.mountStartupGate` | Startup Mark | Replaceable Ashen Spire wordmark text. |
-| `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
-| `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
-| `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
-| `title-brand-lockup` | title content records | `title.mountTitle` | Title screen | Centered wordmark, subtitle, and divider composition. |
-| `title-wordmark` | title content record | `title.mountTitle` | Title Brand Lockup | Main Ashen Spire title text. |
-| `title-subtitle` | title content record | `title.mountTitle` | Title Brand Lockup | Main title genre subtitle. |
-| `title-divider` | semantic child | `title.mountTitle` | Title Brand Lockup | Gold rule and diamond under the title. |
-| `title-menu` | title content records | `title.mountTitle` | Title screen | Centered unfurled Continue / Load / New / Collection / Settings / Quit menu. |
-| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
-| `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
-| `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
-| `title-menu-modal` | `saveSlotSelectionModel` + save-slot records | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; selected card, accessibility state, and primary action target share one immutable projection, while `load-review` confirms a twice-activated save before loading. |
-| `title-modal-close-control` | modal action record + authored tap floor | `title.mountTitle` | Title Menu Modal | Tap-floor-sized close control that restores focus to the title menu. |
-| `title-modal-heading` | modal-kind projection | `title.mountTitle` | Title Menu Modal | LOAD GAME or NEW GAME accessible dialog heading. |
-| `title-modal-divider` | semantic child | `title.mountTitle` | Title Menu Modal | Gold rule and diamond beneath the dialog heading. |
-| `title-save-slot-list` | `saveSlotSelectionModel` | `title.mountTitle` | Title Menu Modal | Immutable Load/New selection aggregate whose child records identify the selected slot and semantic select command. |
-| `title-save-slot` | `saveSlotSelectionModel` child + save summary + `balance.ui.titleLoadHold` | `title.mountTitle` | Load/New modal | Occupied, empty, selected, focused, disabled, and hoverable slot surface; New Game keeps focus and selected styling on the same empty slot, while occupied Load slots support one-tap selection, second-activation review, and pointer/touch hold-to-load. |
-| `title-save-slot-copy` | save summary record | `title.mountTitle` | Title Save Slot | Slot number, class, act, floor, HP, and seed receipt, or Empty copy. |
-| `title-save-slot-state` | slot availability projection | `title.mountTitle` | Title Save Slot | READY or EMPTY trailing state label. |
-| `title-save-slot-delete` | slot id + hold-confirm behavior + authored tap floor | `title.mountTitle` | Occupied Title Save Slot | Tap-floor-sized destructive control with shared hold-confirm timing. |
-| `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
-| `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
-| `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
-| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition with remembered Expanded and Razor Strip snap states. |
+| `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
 | `portrait-badge` | `componentModel` child | `hudmeta.identityClusterHtml` | Map + Combat | Character glyph/badge. |
@@ -71,10 +43,6 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
-| `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Phone faces are 32px (20% smaller) inside unchanged 44px touch targets; compact HUD anchors the pair below potions. |
-| `hud-mode-grip` | `hudModeGripModel` | `sharedRunHudHtml` + `wireHudModeGrip` | Map + Combat | Two-state HUD snap control: an 18x3 visible border notch within a 44x44 pointer/keyboard/drag target. |
-| `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
-| `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
 | `crimson-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Health charge flask. |
 | `azure-flask-control` | `componentModel` | `flask.flaskPresentation` | Map + Combat | Mana charge flask. |
 | `inventory-belt` | `inventoryBeltModel` | `inventoryBeltHtml` | Map + Combat | Shared relic/potion belt. |
@@ -88,8 +56,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
 | `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Data-driven protected corridor that centers combatants between the HUD and hand. |
-| `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. |
+| `battlefield-stage` | `componentModel` | `combat.js` | Combat | Combat scene/stage host. |
+| `combatant-frame` | `combatantFrame` | `combatantFrame.js` | Combat | Shared combatant card geometry. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
 | `combatant-sprite` | `combatantFrame` child | `combatantFrame.js` + `assets.js` | Combat cards | Rendered player or enemy figure. |
@@ -127,46 +95,6 @@ shared-run-hud
 Map and Combat mount the same shared HUD model. Combat adds the Battlefield
 Stage, Combatant Frames, Player Hand Tray, and Combat Action Rail.
 
-## Startup and Title components
-
-The folded startup surface and the full title menu are separate compositions.
-The startup gate consumes the first complete input and unmounts before Title is
-created. Title then owns the reusable Load/New shell and supplies its save-slot
-content as records, so changing art or copy does not require separate modal
-markup.
-
-```text
-startup-gate
-├─ startup-ash-field
-│  └─ startup-ash-particle × N
-└─ startup-mark
-   ├─ startup-wordmark
-   ├─ startup-subtitle
-   ├─ startup-divider
-   └─ startup-prompt
-
-title screen
-├─ title-brand-lockup
-│  ├─ title-wordmark
-│  ├─ title-subtitle
-│  └─ title-divider
-├─ title-menu
-│  └─ title-menu-item × 6
-│     └─ title-menu-gem
-├─ title-tagline
-└─ title-menu-modal
-   ├─ title-modal-close-control
-   ├─ title-modal-heading + title-modal-divider
-   ├─ title-save-slot-list
-   │  └─ title-save-slot × N
-   │     ├─ title-save-slot-copy
-   │     ├─ title-save-slot-state
-   │     └─ title-save-slot-delete (occupied slots only)
-   └─ title-modal-actions
-      ├─ title-modal-back-control
-      └─ title-modal-continue-control
-```
-
 ## Character Creation components
 
 These components are the production renderers used by Character Creation and
@@ -183,8 +111,7 @@ custom art does not require a second card implementation.
 | `view-mode-toggle` | view-mode state | `creationCards.viewModeToggle` | Class/Equipment + catalog |
 | `boolean-setting-toggle` | boolean setting state | `creationCards.booleanSettingToggle` | Auto-advance + future settings |
 | `selection-section-face` | label/value/visual receipt | `creationCards.selectionSectionFace` | Equipment disclosures + catalog |
-| `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
-| `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
+| `primary-stat-card` | attribute projection row | `creationCards.primaryStatCard` | Character stats + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog |
@@ -202,126 +129,30 @@ character-disclosure
 ├─ mode-choice + primary-stat-card × N + resource-strip
 ├─ sprite-choice + sigil-choice + tint-choice
 └─ keepsake-choice
-
-stat-allocation-row (invisible composition parent)
-├─ primary-stat-card + current value + decrement/increment controls
-└─ unfolded reveal spans the full row width
-
-primary-stat-card
-├─ folded: short label + one-line summary + current value
-└─ unfolded/tooltip: authored description + derived benefits and equipment gates
 ```
-
-## Shrine components
-
-| Stable ID | Model | Renderer | Reuse |
-|---|---|---|---|
-| `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up |
-| `smith-upgrade-modal` | `SmithSelectionModel` | `smithUpgradeModal.mountSmithUpgradeModal` | Dedicated Smith choose/review transaction |
-| `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` inside Smith modal | Upgrade-eligible deck card |
-| `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | shared `card.upgradePreviewHtml` inside Smith modal | Current-versus-upgraded review |
-
-The default Shrine presentation is one vertical list. Every folded option uses
-the same data-owned viewport footprint: width and height percentages come from
-`balance.ui.shrinePresentation`, with accessible and wide-screen bounds. Opening
-Flask Allocation or Level Up expands only that card's content below its unchanged
-folded face.
-
-Smith is a modal composition rather than an inline card dump:
-
-```text
-smith-upgrade-modal
-├─ smith-candidate-card × eligible deck cards
-├─ smith-upgrade-preview
-├─ Back to Shrine (also Escape)
-└─ Confirm selected card (disabled until selection)
-```
-
-Selection is reversible presentation state. Back and Escape restore the Shrine
-without mutation; Confirm upgrades exactly one card and leaves the Shrine.
-
-## Folding Tray session geometry
-
-Armoury supporting instances of `folding-tray` open at the data-authored 45vh
-default, preserve at least 30vh for every expanded tray, and snap to 30, 40, 50,
-60, 70, 80, or 90vh after drag or keyboard resizing. Fold and expanded-size
-memory is keyed by tray ID for the current play session only; new/resumed runs
-and returning to Title reset it. `tray-resize-handle` remains the shared 44px
-mouse, touch-hold, and keyboard surface, while `tray-content` owns scrolling.
 
 ## Menu components
 
-The production Quick Menu has one stable **Quick Menu** caption and defaults to
-**Mirror** when the stored value is absent or invalid. Mirror keeps the
-Settings/Controls tab strip and adds the contextual dropdown; legacy `off` and
-`switcher` values remain explicit presentation modes. Settings and Controls lead,
-followed by Fullscreen and Music, Inventory and Character, then Load, Save,
-Save and Quit, and Quit Without Saving. The Quick Menu rows, Settings rows, and
-`hud-quick-settings` controls project the same Fullscreen and Music owners; none
-of those renderers keeps a second copy of browser or audio state.
-
-PR #344's in-run overlay remains a separate composition: its only tabs are
-Settings and Controls, while Save Game and Save and Quit stay in the persistent
-footer. Fullscreen and Music remain the first relevant controls in Settings, so
-the complete configuration surface and the two quick-control surfaces stay in
-sync without duplicating persistence.
-
 | Component ID | Model | Renderer | Purpose |
 |---|---|---|---|
-| `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Mirror-default contextual dropdown opened from Map, Combat, or the mirrored overlay launcher. |
-| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Stable production **Quick Menu** caption; no test/experiment copy. |
-| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | Contextual destination/action or synchronized `role="switch"` Fullscreen/Music row with live state and condition copy. |
-| `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | In-run Settings/Controls dialog with persistent run-action footer. |
-| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Settings/Controls navigation. |
+| `quick-menu-panel` | `quickMenuPanelModel` | `menuComponents.renderQuickMenu` | Contextual dropdown opened from the HUD. |
+| `quick-menu-caption` | `quickMenuCaptionModel` | `menuComponents.renderQuickMenu` | Active Quick Menu variant/status caption. |
+| `quick-menu-row` | `quickMenuRowModel` | `menuComponents.renderQuickMenu` | One contextual destination or action. |
+| `menu-overlay` | `menuOverlayModel` | `menuComponents.renderMenuOverlay` | Full in-run tabbed menu. |
+| `menu-tab-strip` | `menuTabStripModel` | `menuComponents.renderMenuOverlay` | Shared Deck/Relics/Stats/Save/Settings/Controls navigation. |
 | `menu-tab` | `menuTabModel` | `menuComponents.renderMenuOverlay` | One declared tab control. |
 | `menu-panel` | `menuPanelModel` | `menuComponents.updateMenuSelection` | Content host for the selected tab. |
-| `menu-footer` | `menuFooterModel` | `menuComponents.renderMenuOverlay` | Persistent run-action footer beneath Settings/Controls. |
-| `save-game-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn to the active slot and remain in the run. |
-| `save-quit-control` | `componentModel` child + `CombatSnapshotService` command | `menuComponents.renderMenuOverlay` | Save the exact committed combat turn and return to the title screen. |
-| `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested behavior and computed contrast are covered from Map and Combat at 1200×730, 390×844, and 320×640. |
-| `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
-| `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; parchment text clears 4.5:1 while the danger border retains blood/ember, and the destructive callback runs exactly once and never before activation. |
-| `controls-rebind-capture` | `rebind-capture-service` state | `controls.renderControls` | Controls keyboard/pad binding surface. An armed keyboard capture owns its keydown before the surrounding overlay. |
-| `controls-key-rebind-control` | action id + capture state | `controls.renderControls` | Stable keyboard rebind action. Press… is cancelled by Escape without mutation, then focus returns to this control; re-arming accepts a free key. |
 
 ```text
 quick-menu-panel
 ├─ quick-menu-caption
-├─ quick-menu-row × 2: Settings + Controls
-├─ quick-menu-row × 2: Fullscreen + Music
-├─ quick-menu-row × 2: Inventory + Character
-└─ quick-menu-row × 4: Load + Save + Save and Quit + Quit Without Saving
+└─ quick-menu-row × N
 
 menu-overlay
 ├─ menu-tab-strip
 │  └─ menu-tab × N
-├─ menu-panel
-└─ menu-footer
-   ├─ save-game-control
-   └─ save-quit-control
-
-confirmation-modal
-├─ confirmation-cancel-control
-└─ confirmation-action
+└─ menu-panel
 ```
-
-Both lifecycle controls enter the same `commitCombatSnapshot` boundary. The
-focused rendered contract (`node tools/combat-save.mjs`) advances beyond combat
-entry, saves in place, uses Save and Quit, loads through the occupied-slot
-review action, and proves exact snapshot identity at 1200×730 and 390×844.
-Its `--selftest` corpus plants a restarted encounter, a missing commit, and a
-restore that drops the saved hand through copied real source doors.
-
-Load and Quit Without Saving use `confirmation-modal` rather than the browser's
-native prompt. `node tools/confirmation-modal.mjs` proves both commands from Map
-and Combat, cancellation/focus restoration, layered Escape, exact-once commit,
-real coordinate-based double activation without Title/enemy click-through,
-computed action/eyebrow contrast of at least 4.5:1, viewport fit, 44px actions,
-and captured console/network diagnostics at
-1200×730, 390×844, and 320×640. Its `--selftest` corpus plants bypass, unsafe
-initial focus, underlying-overlay Escape, cancel mutation, double commit, broken
-focus return, target/overflow regressions, premature input-shield removal, and
-low-contrast danger text.
 
 ## Armoury components
 

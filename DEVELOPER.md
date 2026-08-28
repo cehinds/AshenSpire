@@ -180,25 +180,6 @@ node tools/tray-components.mjs
 node tests/run-node.mjs
 ```
 
-Cold-boot startup changes additionally run the rendered input contract and its
-same-door known-bad corpus:
-
-```bash
-node tools/startup-gate.mjs
-node tools/startup-gate.mjs --selftest
-```
-
-Exact combat-save changes additionally run the real Save / Save and Quit /
-Load-review path at desktop and phone sizes, plus its copied-tree known-bad
-corpus:
-
-```bash
-node tools/combat-save.mjs
-node tools/combat-save.mjs --selftest
-# after the one authorized artifact regeneration:
-node tools/combat-save.mjs --artifact --screenshots
-```
-
 ## Add a card (one file: `src/content/cards/<class>.js`)
 
 ```js
@@ -417,20 +398,6 @@ second copy of their markup or content. Select **Assign Points** to inspect its
 live dialog and refusal states. `node tools/character-creation-check.mjs`
 verifies the catalog at desktop and 390×844 mobile sizes alongside the player
 flow.
-
-## Standalone build (`build/AshenSpire.html`)
-
-## Shared Load / Quit confirmation
-
-`node tools/confirmation-modal.mjs` drives Load and Quit Without Saving from
-both Map and Combat through the real Quick Menu at 1200×730, 390×844, and
-320×640. It verifies the themed
-`alertdialog`, neutral initial focus, cancellation and launcher restoration,
-one-layer Escape behavior over Settings, explicit commit, viewport fit, and
-44px action targets, while capturing overflow plus console/network diagnostics.
-Add `--selftest` for its seven-plant copied-tree known-bad corpus; add
-`--artifact --screenshots` only after the serialized standalone build has been
-regenerated from frozen source.
 
 ## Standalone build (`build/AshenSpire.html`)
 

@@ -23,7 +23,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | Title | **Ashen Spire** (`AshenSpire` — the bundle name; title screen `src/ui/screens/title.js:47`) |
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
-| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
+| Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open at Settings → Profile (§3.12) |
 | Entry point | `index.html` opened directly or via any static server |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
@@ -351,14 +351,9 @@ persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`
 drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
 id only (§3.3).
 
-- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
-  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
-  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
-  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
-  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
-  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
-  records without a snapshot remain compatible and restart the encounter deterministically.
+- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**:
+  only `combatEntered` is saved — reload restarts that combat from its start with the same
+  shuffle-stream state (StS behaviour). Abandoning mid-combat = same.
 - An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
@@ -407,7 +402,7 @@ five durability properties (#66/#67), each of which is a claim a command can fal
    filename. While in that state the profile is **quarantined**: the next ordinary settings
    write cannot overwrite the original bytes, which are the evidence of every other failure.
 5. **The drawer has a handle.** `listArchives()` / `getArchive()` / `exportArchive()` /
-   `replacePrimaryWith()` are reachable by the player from **Profile on the title screen**
+   `replacePrimaryWith()` are reachable by the player at **Settings → Profile**
    (`ui/screens/profileArchive.js`): inspect, export to a file, or promote an archive back to
    primary — which archives the outgoing one and clears the quarantine. An archive nothing can
    open is a promise, not a feature.
@@ -806,22 +801,13 @@ Rewards after combat: runes (Monster 15–25, Elite 35–50, Boss 75–90) + car
 ### 7.1 Screens & flow
 
 ```
-Cold Boot ──► Startup Gate ──► Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
-                              │                                        ▲              │
-                              └── Continue (if save exists)            └──────────────┘ (reward screens between)
+Title ──► Class Select (+ seed entry) ──► Map ──► [Combat | Shrine | Shop | Event | Treasure]
+  │                                        ▲              │
+  └── Continue (if save exists)            └──────────────┘ (reward screens between)
 Death/Victory ──► run summary (seed, floor, runes, kills, deck) ──► Title
 ```
 
 Screen router in `main.js`; each screen module exports `mount(state, dispatch)` / `unmount()`. **Arriving at a Shrine refills flasks automatically before the Rest/Smith choice is offered** (§5.5.1); the screen reports what it was handed and what the slots could not hold, and is silent when there is nothing to say.
-
-Cold boot mounts the `startup-gate` component before the Title DOM exists. It contains only the
-Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source
-stamp. Click/tap, Enter, Space, controller A/Cross, and controller Start/Menu are consumed by the
-gate and reveal Title exactly once; that physical press cannot activate a Title control. Prompt
-copy follows the most recent pointer, touch, keyboard, or controller family. Profile quarantine
-and recovery notices outrank the gate. After reveal, focus lands on Title's first available save
-slot action, and every later return to Title in that boot bypasses the gate. Reduced-motion mode
-keeps the same state and focus contract without meaningful animation.
 
 ### 7.2 Shared run HUD and combat layout (1280×720 reference)
 
@@ -851,71 +837,22 @@ keeps the same state and focus contract without meaningful animation.
   shape, accessibility contract, token ownership, or behavior vocabulary.
 - **Reusable component contract.** UI pieces are referenced by stable semantic ids rather than
   screen-specific markup. The shared composition is `shared-run-hud`, containing
-  `run-header-strip`, `primary-hud-row`, `inventory-belt`, `hud-quick-settings`, and
-  `hud-mode-grip`. The grip remembers either the Expanded HUD or the 132px Razor Strip.
-  Its reusable children are
+  `run-header-strip`, `primary-hud-row`, and `inventory-belt`. Its reusable children are
   `identity-cluster`, `portrait-badge`, `character-title`, `cinders-counter`,
   `build-metadata-trail`, `vitals-panel`, `resource-meter`, `quick-access-panel`,
-  `armoury-control`, `quick-menu-control`, `fullscreen-control`, `music-control`,
-  `crimson-flask-control`, `azure-flask-control`,
+  `armoury-control`, `quick-menu-control`, `crimson-flask-control`, `azure-flask-control`,
   `relic-tray`, and `potion-tray`. Combat additionally composes `battlefield-stage`,
   `combatant-frame` (`player-combatant-frame` or `enemy-combatant-frame`),
   `player-hand-tray`, and `combat-action-rail`. A component owns structure and accessibility;
   its screen supplies state and callbacks. UI components never own simulation state.
-  `act-route-strip` is a Map-only sibling below `shared-run-hud`, never one of its children and
-  never mounted by Combat. On narrow Map layouts it occupies about 80% of the viewport while
-  reserving the HUD utility-control gutter on the right.
-  `hud-quick-settings` is shared by Title, Map, and Combat. It anchors beneath the top-right
-  HUD edge as a vertical pair, exposes live positive-state Fullscreen and Music controls,
-  persists Music through the profile settings service, and reads Fullscreen from the browser
-  instead of storing a duplicate flag. On narrow screens it keeps the same composition but
-  presents 44px square glyph controls so enemy intent remains unobscured. Browsers without a
-  fullscreen API expose the Fullscreen control as unavailable rather than drawing a dead switch.
-- **Startup Gate Component Model.** `startup-gate` is a boot-scoped presentation component, not a
-  variant of the Title screen. Its immutable model supplies wordmark copy, input-family prompts,
-  deterministic decorative-particle records, accessibility metadata, and the named reveal
-  behavior. Its renderer owns layout and temporary event binding, consumes the one first-input
-  owner supplied by the composition root, and uses the shared build-stamp renderer. It never
-  imports simulation state, persists dismissal, or mounts Title controls behind itself.
-  The gate composes `startup-ash-field` → `startup-ash-particle` and `startup-mark` →
-  `startup-wordmark`, `startup-subtitle`, `startup-divider`, and `startup-prompt`. The mark's
-  phone backing is transparent; the content remains centered and opaque.
-- **Title Menu components.** The revealed Title composes `title-brand-lockup` from
-  `title-wordmark`, `title-subtitle`, and `title-divider`; `title-menu` from six
-  `title-menu-item` controls, each with a `title-menu-gem`; and the independent
-  `title-tagline`. Load and New reuse one `title-menu-modal`, composed from
-  `title-modal-close-control`, `title-modal-heading`, `title-modal-divider`,
-  `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
-  `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
-  occupied; the action group supplies `title-modal-back-control` and
-  `title-modal-continue-control`. The DOM-free `saveSlotSelectionModel` projects Load and New
-  from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
-  the selected-focus restoration target, primary-action availability, and the load/create
-  command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
-  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
+  `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `resource-strip`,
   `mode-choice`, `sprite-choice`, `tint-choice`, `sigil-choice`, `keepsake-choice`,
   `equipment-choice-card`, and `relic-choice-card`. `class-preview-pane` composes
   `class-resource-grid`; `character-disclosure` composes the stat, appearance, and keepsake
-  choices. `primary-stat-card` is one shared attribute model and disclosure renderer across
-  Character Creation, Shrine point assignment, and the Armoury: its folded face carries the
-  short label, one-line summary, and current value; its reveal and focus/hover tooltip carry the
-  authored description plus benefits derived from stat rules and equipment gates. Art and copy
-  arrive through content/asset inputs, while screens own mutable selection state and callbacks.
-  In Assign Points surfaces, `stat-allocation-row` is the invisible composition parent for the
-  attribute face, current value, decrement/increment controls, and a reveal that spans the whole
-  row instead of inheriting the face column width.
-- **Shrine components.** `shrine-option-card` is the shared folded option footprint for Rest,
-  Smith, Flask Allocation, and Level Up. Its viewport-relative width and height are data-owned by
-  `balance.ui.shrinePresentation`; expanding a disclosure adds its content below the uniform face.
-  Smith opens the dedicated `smith-upgrade-modal`, composed from
-  `smith-candidate-card` and `smith-upgrade-preview`. Opening the modal and
-  choosing a candidate are presentation-only operations. `Back to Shrine` and
-  Escape close it without changing the run; only enabled `Confirm` upgrades one
-  selected card and leaves the Shrine. The DOM-free `SmithSelectionModel` owns
-  the choose/review state and player-facing consequence copy.
+  choices. Art and copy arrive through content/asset inputs, while screens own mutable selection
+  state and callbacks.
 - **Combatant Component Model.** `combatant-frame` may compose `component-background`,
   `combatant-sprite`, `combatant-nameplate`, `intent-indicator`, `block-badge`,
   `health-status-bar`, `poise-status-bar`, `proc-status-bar`, `arcane-exposure-bar`, and
@@ -925,18 +862,7 @@ keeps the same state and focus contract without meaningful animation.
   components; the catalog may expand other components later without declaring them leaves.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
-  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
-  the footer composes `save-game-control` and `save-quit-control`. Potentially destructive
-  Load and Quit Without Saving commands enter one shared `confirmation-modal`, whose
-  `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
-  focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
-  without mutation and restore the invoking control. When it is stacked over the in-run menu,
-  one Escape removes only the top confirmation. After a commit, the service retains an empty
-  top-layer input shield for the bounded navigation activation window (600 ms by default) so a
-  physical second click cannot activate a newly rendered Title control or combatant beneath the
-  removed action; the shield releases after the destination paint settles. Danger borders retain
-  the blood/ember palette, while confirmation action and eyebrow text use the authored parchment
-  token and must measure at least 4.5:1 against their computed backgrounds. The equipment
+  `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, and `menu-panel`. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
@@ -970,13 +896,10 @@ keeps the same state and focus contract without meaningful animation.
   their tray is expanded. Closed arrows point inward and open arrows point back to the anchored
   edge, including the open Right Tray form `> TRAY NAME`. A tray that declares the optional resize
   capability exposes a 44px mouse, touch-hold, and keyboard surface: Top/Bottom resize vertically
-  and Left/Right resize horizontally. Size is remembered in memory by stable tray id and edge for
-  the current play session only; folding always returns to the standard bar or rail, reopening
-  restores the last expanded size, and starting/resuming a run or returning to Title resets the
-  authored default. Armoury supporting trays open at 45vh, retain at least 30vh when another tray
-  is expanded, and snap at every 10vh stop from 30vh through 90vh. The generic component may hug
-  content before its first resize, while Armoury supporting trays intentionally apply the
-  configured default ratio immediately. Armaments
+  and Left/Right resize horizontally. Size is remembered by stable tray id and edge for those
+  resizable instances; folding always returns to the standard bar or rail, and reopening restores
+  the last expanded size. The generic component may hug content before its first resize, while
+  Armoury supporting trays intentionally apply the configured default ratio immediately. Armaments
   is non-resizable, and Inventory disables height resizing while it fills the Inventory-view pane.
   Bottom trays remain bottom-anchored and grow upward.
 
@@ -1066,14 +989,6 @@ keeps the same state and focus contract without meaningful animation.
 
 - **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
-- **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
-  ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
-  `controls-key-rebind-control` from Press… to Key with focus intact, performs
-  no binding mutation, and suppresses the same event before the covered menu can
-  close. With no capture armed, Escape retains its ordinary one-layer Back
-  behavior. A later re-arm accepts a free key; occupied-key conflict resolution
-  is a separate policy and is not implied by this contract. The containing
-  `controls-rebind-capture` is the stable Controls component surface.
 - Ordinary interactive elements expose their concise tooltip within 150 ms of
   hover: cards (with nested keyword tooltips), statuses (name, current math),
   intents (exact damage after modifiers), relics, flasks, and map nodes.

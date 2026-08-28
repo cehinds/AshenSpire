@@ -119,14 +119,8 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
 
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/${profileMeta ? '' : '?shot=customize'}` }, sessionId);
   if (profileMeta) {
-    await until(`!!document.querySelector('.startup-gate') || !!document.querySelector('.slot-new')`, 'startup gate or title screen for veteran profile');
-    if (await evaluate(`!!document.querySelector('.startup-gate')`)) {
-      await click('.startup-gate');
-    }
     await until(`!!document.querySelector('.slot-new')`, 'title screen for veteran profile');
     await click('.slot-new');
-    await until(`!!document.querySelector('.title-menu-modal [data-title-action="modal-continue"]:not([disabled])')`, 'new-run slot selection');
-    await click('.title-menu-modal [data-title-action="modal-continue"]');
   }
   await until(`document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4`, 'four creation sections');
   await wait(250);
@@ -168,18 +162,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
       `${width}x${height}: Class separator supports Arrow, Home, and End keyboard resizing`);
   }
   await click('#cz-class-view-toggle [data-view-mode="grid"]');
-  const classGrid = await evaluate(`(() => {
-    const host = document.querySelector('#cz-classes');
-    const cards = [...host.querySelectorAll('.class-pick')];
-    return {
-      view: host.dataset.view,
-      display: getComputedStyle(host).display,
-      sameRow: cards.length > 1 && Math.abs(cards[0].getBoundingClientRect().top - cards[1].getBoundingClientRect().top) <= 1,
-      overflow: host.scrollWidth > host.clientWidth + 1,
-    };
-  })()`);
-  assert(classGrid.view === 'grid' && classGrid.display === 'grid' && !classGrid.overflow && classGrid.sameRow,
-    `${width}x${height}: Class Grid changes the rendered collection geometry (${JSON.stringify(classGrid)})`);
+  assert((await evaluate(`document.querySelector('#cz-classes').dataset.view`)) === 'grid', `${width}x${height}: Class list/grid component changes the live collection`);
   await click('#cz-class-view-toggle [data-view-mode="list"]');
   assert(await noOverflow(), `${width}x${height}: Class has no horizontal overflow`);
 
@@ -193,30 +176,6 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   }
 
   await open('character');
-  const attributeCards = await evaluate(`(() => ({
-    count: document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"]').length,
-    buttons: [...document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"]')].every((card) => card.tagName === 'BUTTON'),
-    summaries: [...document.querySelectorAll('#cz-primary-stats [data-face^="attribute:"] .disc-summary')].map((node) => node.textContent.trim()),
-  }))()`);
-  assert(attributeCards.count === 5 && attributeCards.buttons && attributeCards.summaries.length === 5,
-    `${width}x${height}: five model-driven attribute cards expose folded summaries (${JSON.stringify(attributeCards)})`);
-  await click('#cz-primary-stats [data-face="attribute:strength"]');
-  const strengthReveal = await evaluate(`(() => {
-    const reveal = document.querySelector('#cz-primary-stats [data-reveal-for="attribute:strength"]');
-    return { shown: !!reveal && !reveal.hidden, title: reveal?.querySelector('h4')?.textContent || '', bullets: reveal?.querySelectorAll('li').length || 0 };
-  })()`);
-  assert(strengthReveal.shown && strengthReveal.title === 'Strength' && strengthReveal.bullets > 0,
-    `${width}x${height}: Strength unfolds beneath its card with model-derived benefits (${JSON.stringify(strengthReveal)})`);
-  await evaluate(`document.querySelector('#cz-primary-stats').scrollIntoView({block:'center'})`);
-  await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, sessionId);
-  await wait(180);
-  const attributeShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-  writeFileSync(join(OUT, `attribute-cards-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(attributeShot.data, 'base64'));
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
-  await wait(180);
-  assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Dexterity/.test(document.querySelector('#tooltip')?.textContent || '')`),
-    `${width}x${height}: folded attributes expose the same description by tooltip`);
-  await evaluate(`document.querySelector('#cz-primary-stats [data-face="attribute:dexterity"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
   const characterFold = await evaluate(`(() => ({
     labels:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face .disc-name')].map(e=>e.textContent.trim()),
     open:[...document.querySelectorAll('#cz-character-fold > .disc-faces > .disc-face[aria-expanded="true"]')].map(e=>e.dataset.face),
@@ -228,29 +187,6 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   `${width}x${height}: Character uses one-open nested disclosures with modes, stats, then resources`);
   await click('#cz-statedit .se-mode[data-creation-mode="pointbuy"]');
   await until(`!!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points overlay');
-  assert((await evaluate(`document.querySelectorAll('.cc-stat-overlay [data-face^="attribute:"]').length`)) === 5,
-    `${width}x${height}: Assign Points reuses five foldout attribute cards`);
-  await click('.cc-stat-overlay [data-face="attribute:strength"]');
-  const allocationGeometry = await evaluate(`(() => {
-    const row = document.querySelector('.cc-stat-overlay .se-row');
-    const face = row?.querySelector('.cc-primary-stat');
-    const controls = row?.querySelector('.se-controls');
-    const reveal = row?.querySelector('.disc-reveal:not([hidden])');
-    const rect = (node) => { const box = node?.getBoundingClientRect(); return box ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width } : null; };
-    return { component: row?.dataset.uiComponent || '', row: rect(row), face: rect(face), controls: rect(controls), reveal: rect(reveal) };
-  })()`);
-  assert(allocationGeometry.component === 'stat-allocation-row'
-      && allocationGeometry.reveal?.left <= allocationGeometry.row.left + 1
-      && allocationGeometry.reveal?.right >= allocationGeometry.row.right - 1
-      && Math.abs(allocationGeometry.face?.top - allocationGeometry.controls?.top) <= 1,
-    `${width}x${height}: Assign Points disclosure spans the invisible stat-and-controls parent (${JSON.stringify(allocationGeometry)})`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerenter', {bubbles:true})); true`);
-  await wait(180);
-  assert(await evaluate(`document.querySelector('#tooltip')?.style.display === 'block' && /Constitution/.test(document.querySelector('#tooltip')?.textContent || '')`),
-    `${width}x${height}: Assign Points exposes the shared attribute tooltip`);
-  await evaluate(`document.querySelector('.cc-stat-overlay [data-face="attribute:constitution"]').dispatchEvent(new PointerEvent('pointerleave', {bubbles:true})); true`);
-  const allocationShot = await cdp.send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false }, sessionId);
-  writeFileSync(join(OUT, `attribute-assignment-${width < 700 ? 'mobile' : 'desktop'}.png`), Buffer.from(allocationShot.data, 'base64'));
   assert(await evaluate(`document.querySelector('.screen.customize').inert === true && document.activeElement?.matches('.cc-stat-modal')`), `${width}x${height}: Assign Points scopes the screen and announces the focused dialog`);
   await evaluate(`document.querySelector('.cc-stat-overlay').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);
   await until(`!document.querySelector('.cc-stat-overlay')`, 'Reaver Assign Points Escape close');
@@ -328,18 +264,7 @@ async function exercise(width, height, screenshotName, screenshotSection, profil
   assert(await noOverflow(), `${width}x${height}: Starting Equip has no horizontal overflow`);
   assert((await evaluate(`document.querySelector('#cz-equipment-view-toggle [data-view-mode="list"]').getAttribute('aria-pressed')`)) === 'true', `${width}x${height}: Starting Equip defaults to configured list view`);
   await click('#cz-equipment-view-toggle [data-view-mode="grid"]');
-  const equipmentGrid = await evaluate(`(() => {
-    const host = document.querySelector('#cz-armours');
-    const cards = [...host.querySelectorAll('.equip-chip')];
-    return {
-      view: host.dataset.view,
-      display: getComputedStyle(host).display,
-      sameRow: cards.length > 1 && Math.abs(cards[0].getBoundingClientRect().top - cards[1].getBoundingClientRect().top) <= 1,
-      overflow: host.scrollWidth > host.clientWidth + 1,
-    };
-  })()`);
-  assert(equipmentGrid.view === 'grid' && equipmentGrid.display === 'grid' && !equipmentGrid.overflow && (width < 700 || equipmentGrid.sameRow),
-    `${width}x${height}: equipment Grid changes every subcard collection's rendered geometry (${JSON.stringify(equipmentGrid)})`);
+  assert((await evaluate(`document.querySelector('#cz-armours').dataset.view`)) === 'grid', `${width}x${height}: equipment list/grid component changes every subcard collection`);
   await click('#cz-equipment-view-toggle [data-view-mode="list"]');
   assert((await evaluate(`document.querySelectorAll('#cz-armours .equip-chip').length`)) >= 2, `${width}x${height}: at least two armour cards are direct selectors`);
   assert((await evaluate(`document.querySelectorAll('#cz-left-hand .equip-chip').length`)) >= 2, `${width}x${height}: Left Hand has direct armament cards`);

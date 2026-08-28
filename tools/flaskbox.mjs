@@ -445,23 +445,15 @@ async function main() {
     const shrineList = await ev(`(() => {
       const list = document.querySelector('.shrine-option-list');
       const cards = [...document.querySelectorAll('.shrine-option-list > .class-pick')].map((x) => x.getBoundingClientRect());
-      const components = [...document.querySelectorAll('.shrine-option-list > .class-pick')].map((x) => x.dataset.uiComponent || '');
       return {
         authoredLayout: list?.dataset.optionLayout || null,
         count: cards.length,
         vertical: cards.every((box, i) => i === 0 || box.top >= cards[i - 1].bottom),
-        aligned: cards.every((box) => Math.abs(box.left - cards[0].left) < 1 && Math.abs(box.right - cards[0].right) < 1),
-        uniformFoldedHeight: cards.every((box) => Math.abs(box.height - cards[0].height) < 1),
-        components,
-        widthToken: getComputedStyle(document.querySelector('.screen')).getPropertyValue('--shrine-folded-card-width').trim(),
-        heightToken: getComputedStyle(document.querySelector('.screen')).getPropertyValue('--shrine-folded-card-height').trim()
+        aligned: cards.every((box) => Math.abs(box.left - cards[0].left) < 1 && Math.abs(box.right - cards[0].right) < 1)
       };
     })()`);
-    if (shrineList.authoredLayout !== 'list' || shrineList.count !== 4 || !shrineList.vertical || !shrineList.aligned
-      || !shrineList.uniformFoldedHeight || shrineList.components.some((id) => id !== 'shrine-option-card')
-      || !/vw$/.test(shrineList.widthToken) || !/vh$/.test(shrineList.heightToken)) {
-      bad('B4', shape, `the authored shrine default is not one uniform viewport-sized vertical list (${JSON.stringify(shrineList)})`);
-    } else ok('B4', shape, 'all four shrine options share one viewport-sized folded card in one aligned vertical list');
+    if (shrineList.authoredLayout !== 'list' || shrineList.count !== 4 || !shrineList.vertical || !shrineList.aligned) bad('B4', shape, `the authored shrine default is not one aligned vertical list (${JSON.stringify(shrineList)})`);
+    else ok('B4', shape, 'all four shrine options stay in one aligned vertical list');
     if (folds.details !== 5 || folds.plus !== 5) bad('B4', shape, `the shared level allocator drew ${folds.details} minus and ${folds.plus} plus controls instead of five of each`);
     else ok('B4', shape, 'the shrine level card uses the five-row shared stat allocator');
     const assignment = await ev(`(() => {

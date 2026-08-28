@@ -18,13 +18,11 @@ import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../sr
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
-import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY, RUN_ARCHIVE_KEY, META_KEY, META_BACKUP_KEY, META_SCHEMA_VERSION } from '../src/engine/save.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
-import { attributeCardModels } from '../src/model/creationBrief.js';
 import { resourceBarPlan, resourceDomains } from '../src/model/resources.js';
 import { reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { HUD_REFERENCE_MAX } from '../src/content/resources.js';
@@ -76,11 +74,6 @@ import {
   orderArmourySlots, trayPresentationState,
 } from '../src/model/armouryLayout.js';
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
-import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
-import { battlefieldStageModel } from '../src/ui/models/BattlefieldStageModel.js';
-import {
-  hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
-} from '../src/ui/components/hudQuickSettings.js';
 import {
   characterCreationProblems, creationArmourChoices, creationHandChoices,
   creationRelicChoices, selectStartingHand, resolveCreationHands,
@@ -95,7 +88,7 @@ import { levelUpPlan, applyLevelUp, levelCost, levelsAffordable } from '../src/m
 // default now lives, so a default is testable headlessly. settings.js reaches no
 // DOM at module scope (verified — it imports cleanly under plain Node), so the
 // "no DOM access" rule at the top of this file still holds.
-import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
+import { settingOn, resolveTapSize, resolveLevelUpValue, resolveStatTierSize, derivedStatDialOptions, settingsRow, settingsRowHtml, categoryHandler, fullscreenCapability } from '../src/ui/screens/settings.js';
 // The second UI import, and the same deliberateness: LOCK_COPY is the words for
 // a closed set the MODEL declares, so "every route has a sentence" is a join
 // this suite can check. uiContent.js is data and touches no DOM at module scope.
@@ -1109,7 +1102,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
   // His ask: "profile should be able to be created before first run, not after".
   // Bjorn's walk on the shipped bundle at cd3da94: cleared storage, picked a
   // class, typed a name, pressed BEGIN THE CLIMB — `sote_run_v1` written,
-  // `sote_meta_v1` absent, and Title → Profile printing his own sentence back
+  // `sote_meta_v1` absent, and Settings → Profile printing his own sentence back
   // at him. Every assertion below was observed RED at dev cd3da94 by running
   // this file against that tree; the screen half — the same walk in a real
   // browser, on the shipped bundle — is tools/profile-first-run.mjs.
@@ -5176,72 +5169,29 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(c.offerable, false, 'either block closes the offer');
   });
 
-  test('61. Fullscreen and Music share one canonical state across Settings, Quick Menu, and HUD', () => {
+  test('61. Fullscreen is the first Display row — his ordering, asserted at the one home', () => {
+    // E3 (#248), his words 2026-08-15: "the full screen option toggle should be
+    // the first option in the display". Order on the screen IS array order in
+    // ROWS — categoryHandler() filters without sorting, rowHtml renders in
+    // sequence — so this reads through the same door the renderer uses, not a
+    // copy of the table.
     const display = categoryHandler('Display').rows;
-    const audio = categoryHandler('Audio').rows;
-    eq(display[0].key, 'fullscreen', 'Fullscreen remains the first Display row in the canonical table');
+    eq(display[0].key, 'fullscreen', 'the FIRST Display row is the Fullscreen toggle — his ordering');
     eq(display.filter((r) => r.key === 'fullscreen').length, 1,
-      'Fullscreen moved to the first seat without being duplicated');
-    assert(display.findIndex((r) => r.key === 'animSpeed') > 0,
-      'Combat pacing remains available behind Fullscreen');
-    eq(display.some((r) => r.key === 'fullscreen'), true,
-      'Settings exposes the browser-owned Fullscreen state');
-    eq(audio.some((r) => r.key === 'musicEnabled'), true,
-      'Settings exposes the canonical Music preference');
-    eq(audio.some((r) => r.key === 'muteMusic'), false,
-      'Settings does not introduce a second Music preference');
-
-    const presentation = REG.balance.ui.hudQuickSettings;
-    eq(presentation.places.join(','), 'title,map,combat',
-      'one data row places the shared controls on all three requested surfaces');
-    eq(`${presentation.edgeGapPx}/${presentation.stackGapPx}`, '4/0',
-      'the shared utility rail is right-edge close and has no authored inter-control gap');
-    eq(`${presentation.cardSizePx}/${presentation.glyphSizePx}/${presentation.stateDotPx}/${presentation.activeTintPct}`, '40/28/6/14',
-      'the shared face, 70%-scale glyph, state dot, and active tint are data-owned');
-    eq(presentation.showCardBackground, true,
-      'the quick utilities default to one consistent compact card on every device');
-    eq(presentation.showLabels, false,
-      'visible words yield to the larger universal icons while accessible names remain');
-    const model = hudQuickSettingsModel({ place: 'combat', presentation, settings: {} });
-    eq(model.children.length, 2, 'the shared component owns exactly Fullscreen and Music');
-    const html = hudQuickSettingsHtml(model);
-    assert(/aria-label="Enter fullscreen"/.test(html), 'Fullscreen keeps an accessible label');
-    assert(/aria-label="Turn music off"/.test(html), 'Music keeps an accessible stateful label');
-    assert(/data-card-background="true"/.test(html), 'the compact card presentation reaches the shared renderer');
-    assert(/--hud-quick-card-size:40px/.test(html)
-      && /--hud-quick-glyph-size:28px/.test(html) && /--hud-quick-state-dot:6px/.test(html)
-      && /--hud-quick-active-tint:14%/.test(html),
-      'the data-owned compact visual sizes reach CSS without a second renderer');
-    assert(/hud-fullscreen-enter/.test(html) && /hud-fullscreen-exit/.test(html),
-      'Fullscreen renders the conventional enter and exit action icons');
-    assert(/♫/.test(html) && /&#x0338;/.test(html),
-      'Music renders the authored on and slashed-off symbols');
-
-    const audibleMusic = musicQuickSettingsPlan({});
-    eq(audibleMusic.active, true, 'Music is enabled by default');
-    eq(audibleMusic.change.musicEnabled, false, 'the active quick control disables Music alone');
-    const musicMuted = musicQuickSettingsPlan({ muteMusic: true });
-    eq(musicMuted.active, false, 'the quick control migrates an explicit legacy Music mute');
-    eq(musicMuted.change.musicEnabled, true, 'the quick control writes the canonical preference when re-enabled');
-    const audioMuted = musicQuickSettingsPlan({ muteAudio: true, muteMusic: false });
-    eq(audioMuted.active, true, 'master Audio mute stays distinct from the Music preference');
-    eq(audioMuted.stateLabel, 'On · Audio muted', 'master mute is named without rewriting Music state');
-    eq(audioMuted.change.musicEnabled, false, 'the Music control changes only the canonical preference');
-    eq('muteAudio' in audioMuted.change, false, 'the Music control never releases global Audio mute');
-
-    const restoredSettings = { muteMusic: true };
-    const binding = { settings: {} };
-    eq(updateHudQuickSettingsBinding(binding, restoredSettings), restoredSettings,
-      'a restored profile replaces the settings object owned by the mounted HUD');
-    let refreshEvent = null;
-    eq(refreshHudQuickSettings({ querySelector: () => ({ dispatchEvent: (event) => { refreshEvent = event; } }) }, restoredSettings), true,
-      'the title can refresh its mounted HUD without remounting the Profile dialog');
-    eq(refreshEvent?.detail?.settings, restoredSettings,
-      'the refresh carries the restored profile settings object');
+      'and it appears exactly once — the row MOVED, it was not copied');
+    // The other edge: a move re-orders, it must not shrink. The row that held
+    // first place is still filed, just no longer first.
+    const sprites = display.findIndex((r) => r.key === 'useSprites');
+    assert(sprites > 0, 'Character sprites is still a Display row, behind Fullscreen');
+    // And the toggle kept its shape in transit: same type, same label, so the
+    // renderer draws the same control in the new seat.
+    const fs = display[0];
+    eq(fs.type, 'action', 'still an action row — the move changed WHERE, not WHAT');
+    eq(fs.label, 'Fullscreen', 'same label');
 
     const quick = display.find((r) => r.key === 'quickNav');
-    eq(quick.def, 'mirror', 'fresh Quick Menu state promotes Mirror while preserving explicit legacy choices');
-    eq(quick.choices.join(','), 'off,mirror,switcher', 'Quick menu exposes legacy Off plus Mirror and Switcher');
+    eq(quick.def, 'switcher', 'the compact Switcher is the default quick-menu shape');
+    eq(quick.choices.join(','), 'mirror,switcher', 'Quick menu exposes only Mirror or Switcher');
     eq(display.some((r) => r.key === 'quickNavFixedEnds'), false,
       'the internal row order is not exposed as a redundant second setting');
 
@@ -5282,42 +5232,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fullscreenCapability(webkit).supported, true,
       'the prefixed fullscreen API remains a supported route');
 
-    eq(MENU_TABS.map((tab) => tab.id).join(','), 'settings,controls',
-      'the in-run overlay keeps only Settings and Controls');
-    assert(!MENU_TABS.some((tab) => ['deck', 'stats', 'save'].includes(tab.id)),
-      'Deck, Stats, and Save are not duplicated as overlay tabs');
-  });
-
-  test('61b. the combatant stage owns one validated safe-corridor model', () => {
-    const presentation = REG.balance.ui.combatantStage;
-    eq(`${presentation.hudClearanceViewportPct}/${presentation.actionClearanceViewportPct}`, '3/3',
-      'the HUD and hand each reserve three percent of viewport height');
-    eq(`${presentation.intentGapPx}/${presentation.centerPct}`, '6/50',
-      'intent attachment and battlefield center are data-owned');
-    const model = battlefieldStageModel(presentation);
-    eq(model.component, 'battlefield-stage', 'the shared battlefield component owns the model');
-    eq(`${model.tokens.hudClearanceViewportPct}/${model.tokens.actionClearanceViewportPct}/${model.tokens.intentGapPx}/${model.tokens.centerPct}`,
-      '3/3/6/50', 'all four authored tokens reach the immutable Component Model');
-    eq(battlefieldStageModel({ centerPct: 25 }).tokens.centerHeightRatio, 0.5,
-      'an upper-quarter stage center only exposes the symmetric half-height corridor');
-    eq(battlefieldStageModel({ centerPct: 75 }).tokens.centerHeightRatio, 0.5,
-      'a lower-quarter stage center receives the same collision-safe height limit');
-    eq(battlefieldStageModel({ centerPct: 50 }).tokens.centerHeightRatio, 1,
-      'the default midpoint can use the full protected corridor');
-
-    const malformed = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: {
-          ...contentBundle.balance.ui,
-          combatantStage: { ...contentBundle.balance.ui.combatantStage, hudClearanceViewportPct: Infinity },
-        },
-      },
-    };
-    const validation = validateContent(malformed);
-    assert(!validation.ok && validation.errors.some((error) => error.path === 'balance.ui.combatantStage.hudClearanceViewportPct'),
-      'an unreadable safe clearance fails the real boot validator by name');
+    const fullscreenHtml = settingsRowHtml({}, settingsRow('fullscreen'), unsupported);
+    assert(/aria-label="Fullscreen"/.test(fullscreenHtml),
+      'the fullscreen switch has an accessible name');
+    assert(/aria-describedby="set-fullscreen-status"/.test(fullscreenHtml)
+      && /id="set-fullscreen-status"/.test(fullscreenHtml),
+    'the switch is associated with its support or refusal explanation');
+    assert(/disabled aria-disabled="true"/.test(fullscreenHtml)
+      && /Add to Home Screen/.test(fullscreenHtml),
+    'an unsupported iPhone-shaped browser gets a truthful disabled fallback');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
@@ -5710,46 +5633,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'a hand roster that omits the baseline kit is refused by armament id before customization boots');
   });
 
-  test('71b. attribute cards derive their summaries, benefits, and gates from model data', () => {
-    const run = createRunState({ seed: 0x71b, classId: 'reaver', registries: REG });
-    const cards = attributeCardModels(REG, run.attributes, {
-      projection: statProjection(REG, run),
-      equipmentProfiles: run.equipmentProfileRuleSnapshot.profiles,
-    });
-    eq(cards.length, REG.attributes.ids().length, 'one card is projected for every authored attribute');
-    eq(cards.map((card) => card.key).join(','), REG.attributes.ids().map((id) => `attribute:${id}`).join(','),
-      'stable attribute ids drive every card key');
-    const constitution = cards.find((card) => card.id === 'constitution');
-    eq(constitution.face.summary, 'What your body takes before the climb ends.',
-      'the folded summary is derived from the authored description');
-    assert(constitution.reveal.lines.some((line) => /^HP \+2 every 1 point$/.test(line))
-      && constitution.reveal.lines.some((line) => /^Stamina \+1 every 5 points$/.test(line)),
-    'multiple mechanical benefits are projected as separate bullets');
-    assert(cards.find((card) => card.id === 'strength').reveal.lines.includes('Physical attacks +1 every 1 point'),
-      'the active run profile projects Strength attack scaling without copied UI prose');
-
-    const changed = {
-      ...contentBundle,
-      derivedStatRules: structuredClone(contentBundle.derivedStatRules),
-      equipment: {
-        ...contentBundle.equipment,
-        armaments: structuredClone(contentBundle.equipment.armaments),
-      },
-    };
-    changed.derivedStatRules.rules.hp.gainPerTier = 7;
-    changed.equipment.armaments.find((piece) => piece.id === 'greatsword').requirements.attributes.strength = 14;
-    const changedRegistries = createRegistries(changed);
-    const changedRun = createRunState({ seed: 0x71b, classId: 'reaver', registries: changedRegistries });
-    const changedCards = attributeCardModels(changedRegistries, changedRun.attributes, {
-      projection: statProjection(changedRegistries, changedRun),
-      equipmentProfiles: changedRun.equipmentProfileRuleSnapshot.profiles,
-    });
-    assert(changedCards.find((card) => card.id === 'constitution').reveal.lines.includes('HP +7 every 1 point'),
-      'changing the HP rule changes the Constitution bullet without UI prose edits');
-    assert(changedCards.find((card) => card.id === 'strength').reveal.lines.includes('Greatsword asks 14'),
-      'changing an equipment gate changes the Strength bullet without UI prose edits');
-  });
-
   test('72. Armoury layout is authored, stable, and responsive', () => {
     assert(contentBundle.equipment.armouryUi.layout.trays,
       'the generated content bundle carries the authored tray contract rather than recreating it from model defaults');
@@ -5778,11 +5661,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(layout.viewModes.hybrid.armaments, 'expanded', 'Hybrid preserves its currently approved visible Armaments pane');
     eq(layout.inventorySplit.snapRatios.join(','), '0.4,0.5,0.6,0.7', 'Inventory pane widths snap to authored ratios');
     eq(layout.inventorySplit.foldSubcardsBelowPx, 420, 'narrow armament subcards fold at an authored pane width');
-    eq(layout.trays.defaultHeightRatio, 0.45, 'a supporting tray opens at the authored 45vh play-session default');
-    eq(layout.trays.minimumHeightRatio, 0.3, 'tray resize keeps the authored 30vh minimum visible');
+    eq(layout.trays.defaultHeightRatio, 0.1, 'each expanded tray starts at the authored ten-percent height');
+    eq(layout.trays.minimumHeightRatio, 0.1, 'tray resize keeps the authored minimum visible');
     eq(layout.trays.maximumHeightRatio, 0.9, 'a tray can scale to the authored near-full-panel maximum');
-    eq(layout.trays.multipleExpandedMinimumRatio, 0.3, 'each additional expanded tray retains at least 30vh');
-    eq(layout.trays.snapRatios.join(','), '0.3,0.4,0.5,0.6,0.7,0.8,0.9', 'independent tray heights snap every 10vh from 30 through 90');
+    eq(layout.trays.snapRatios.join(','), '0.1,0.3,0.5,0.7,0.9', 'independent tray heights snap to authored stops');
     eq(layout.trays.contentGapRem, 0.35, 'Inventory tray content keeps one authored row gap across resolutions');
     assert(layout.cardClasses.inventoryItem.holdAction === true,
       'the Inventory item card class explicitly opts into the shared hold action on both folded and unfolded faces');
@@ -5823,19 +5705,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
     eq(contentBundle.balance.ui.holdConfirm.def, 'off',
       'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
-    eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
-      'the title quick-load hold duration is authored as 600 ms');
-    const malformedTitleLoadHold = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
-      },
-    };
-    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
-    assert(!titleLoadHoldValidation.ok
-      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
-    'a non-positive title quick-load duration is refused by its authored path');
     const expandedTray = trayPresentationState({
       collapsed: false,
       savedHeightRatio: 0.7,
@@ -5873,9 +5742,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       'the selected position turns its currently equipped Inventory item into Unequip');
     for (const badTrays of [
       { ...layout.trays, defaultHeightRatio: 0.95 },
-      { ...layout.trays, multipleExpandedMinimumRatio: 0.2 },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.95] },
-      { ...layout.trays, snapRatios: [0.3, 0.5, 0.5] },
+      { ...layout.trays, snapRatios: [0.1, 0.3, 0.95] },
+      { ...layout.trays, snapRatios: [0.1, 0.3, 0.3] },
       { ...layout.trays, contentGapRem: 0 },
     ]) {
       let named = '';
@@ -5907,95 +5775,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
-  });
-
-  test('75. an explicit save resumes the exact committed combat state and RNG continuation', () => {
-    const seed = 0x7503;
-    const original = makeCombat({
-      seed,
-      deck: ['strike', 'defend', 'strike', 'defend', 'strike', 'defend', 'strike', 'defend'],
-      enemies: ['tHitter'],
-      hp: 61,
-      maxHp: 78,
-    });
-    playFromHand(original, 'strike');
-
-    const counters = original.rng.getCounters();
-    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(original)));
-    const restored = restoreCombatSnapshot({
-      registries: REG,
-      rng: createRng(seed, counters),
-      snapshot: stored,
-    });
-
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(stored),
-      'storage round-trip restores the exact committed turn, entities, intents, piles, and event receipts');
-    assert(restored.triggerState instanceof Map, 'trigger receipts restore to their runtime Map shape');
-    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
-      'runtime-only combat methods are reattached');
-
-    dispatch(original, { type: 'endTurn' });
-    dispatch(restored, { type: 'endTurn' });
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(serializeCombatSnapshot(original)),
-      'the next turn resolves identically instead of replaying combat setup');
-    eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
-      'restored combat consumes the same named RNG streams');
-
-    const runProjection = {};
-    commitCombatSnapshot({ run: runProjection, combat: restored, nodeId: 'node-75', encounterId: 'encounter-75' });
-    eq(runProjection.hp, restored.player.hp, 'slot-summary HP projects the exact combat state');
-    eq(runProjection.flaskCharges?.hpCurrent, restored.player.flaskCharges?.hpCurrent,
-      'slot-summary flask charges project the exact combat state');
-    eq(JSON.stringify(runProjection.combatEntered.snapshot), JSON.stringify(serializeCombatSnapshot(restored)),
-      'one committed snapshot owns both the resume record and run-level summary projection');
-
-    restored.queue.push({ planted: true });
-    let resolvingReason = '';
-    try { serializeCombatSnapshot(restored); } catch (error) { resolvingReason = error.message; }
-    restored.queue.pop();
-    assert(/still resolving/.test(resolvingReason), 'a live action queue must refuse a torn combat save');
-
-    const malformed = structuredClone(stored);
-    malformed.phase = 'refunded-restart';
-    let malformedReason = '';
-    try {
-      restoreCombatSnapshot({
-        registries: REG,
-        rng: createRng(seed, counters),
-        snapshot: malformed,
-      });
-    } catch (error) {
-      malformedReason = error.message;
-    }
-    assert(/phase/.test(malformedReason),
-      `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
-
-    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
-    const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, serializeRun(malformedRun));
-    const saves = createSaveManager(storage);
-    eq(saves.loadRun(REG), null, 'the real load door refuses a malformed exact snapshot');
-    assert(/phase/.test(saves.runStatus().reason || ''), 'the archived refusal names the malformed snapshot phase');
-    assert(storage.getItem(RUN_ARCHIVE_KEY)?.includes('refunded-restart'), 'the original malformed bytes remain recoverable in the archive');
-
-    const dangling = structuredClone(stored);
-    dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
-    const danglingStorage = createMemoryStorage();
-    danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
-    const danglingSaves = createSaveManager(danglingStorage);
-    eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
-
-    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
-    const checkpointStorage = createMemoryStorage();
-    checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
-    assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
-      'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
 
   const passed = results.filter((r) => r.ok).length;

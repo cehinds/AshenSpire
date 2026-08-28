@@ -21,22 +21,14 @@
 
 import { shrineHealAmount } from '../../engine/encounters.js';
 import { levelUpPlan, applyLevelUp } from '../../model/levelup.js';
-import { attributeCardModels } from '../../model/creationBrief.js';
 import { passiveFlag, resolveCard } from '../../model/registries.js';
+import { renderCard, upgradePreviewHtml } from '../components/card.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../components/holdconfirm.js';
 import { sfx } from '../sfx.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { chargeFlaskDefinition, flaskChargePlan, moveFlaskCharge } from '../../model/gracerefill.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
-import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
-import { smithSelectionModel } from '../models/SmithSelectionModel.js';
-import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
-
-const boundedNumber = (value, fallback, minimum, maximum) => {
-  const parsed = Number(value);
-  return Math.min(maximum, Math.max(minimum, Number.isFinite(parsed) ? parsed : fallback));
-};
 
 // THE REFILL LINE. `refill` is the plan engine/encounters.js ALREADY APPLIED on
 // arrival — this screen reports, it never decides, and it is passed the plan
@@ -101,16 +93,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // pricing, caps, persistence, and pool reconciliation; the screen only fixes
   // the size of this one interaction.
   const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
-  const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
-  const authoredShrineLayout = shrinePresentation.optionLayout;
+  const authoredShrineLayout = registries.balance?.ui?.shrinePresentation?.optionLayout;
   const shrineLayout = authoredShrineLayout === 'grid' ? 'grid' : 'list';
-  const foldedCardWidthViewportPct = boundedNumber(shrinePresentation.foldedCardWidthViewportPct, 88, 60, 100);
-  const foldedCardMaxWidthRem = boundedNumber(shrinePresentation.foldedCardMaxWidthRem, 44, 24, 72);
-  const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
-  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
 
   app.innerHTML = `
-    <div class="screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
+    <div class="screen">
       <h2 style="color:var(--gold);font-size:26px">SHRINE OF EMBER</h2>
       <p class="subtitle">THE GOLD LIGHT HOLDS, FOR NOW</p>
       ${refillLineHtml(registries, refill)}
@@ -122,9 +109,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${noRest ? 'The Wyrm Heart will not let you rest.' : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
           </div>
         </div>
-        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt"
-             role="button" tabindex="${upgradable.length ? '0' : '-1'}"
-             aria-disabled="${upgradable.length ? 'false' : 'true'}">
+        <div class="class-pick${upgradable.length ? '' : ' locked'}" id="smith-opt">
           <div class="glyph">⚒</div>
           <div class="cp-body">
             <h3>Smith</h3>
@@ -227,12 +212,8 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
         </details>
       </div>
+      <div id="smith-grid" class="deck-strip" style="display:none;max-width:900px"></div>
     </div>`;
-
-  for (const [selector, variant] of [
-    ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
-    ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
-  ]) markUiComponent(app.querySelector(selector), UI.shrineOptionCard, variant);
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
@@ -293,13 +274,6 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     const drawLevelCard = () => {
       const result = app.querySelector('#level-opt [data-level-cinder-result]');
       if (result) result.hidden = !pendingAttribute;
-      const values = Object.fromEntries(level.attributes.map((attr) => [
-        attr.id,
-        run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
-      ]));
-      const cards = new Map(attributeCardModels(registries, values, {
-        equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
-      }).map((card) => [card.id, card]));
       renderStatAllocationCard(mount, {
         title: 'ASSIGN 1 POINT',
         remaining: pendingAttribute ? 0 : 1,
@@ -311,8 +285,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           id: attr.id,
           label: attr.label,
           shortLabel: attr.shortLabel,
-          value: values[attr.id],
-          card: cards.get(attr.id),
+          value: run.attributes[attr.id] + (pendingAttribute === attr.id ? 1 : 0),
           canDecrease: false,
           canIncrease: !pendingAttribute,
         })),
@@ -330,36 +303,35 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     drawLevelCard();
   }
   if (upgradable.length) {
-    // Smith is a reversible modal transaction until its explicit Confirm.
-    // Opening and selecting mutate presentation state only. Back and Escape
-    // return to the Shrine with the run byte-for-byte untouched; Confirm is
-    // the one permanent upgrade and the one path that leaves the Shrine.
-    const smithOption = app.querySelector('#smith-opt');
-    const openSmith = () => {
-      let selectedInstanceId = null;
-      const model = () => smithSelectionModel(registries, upgradable, selectedInstanceId);
-      const modal = mountSmithUpgradeModal(app, model(), {
-        registries,
-        returnFocusElement: smithOption,
-        onSelect: (instanceId) => {
-          selectedInstanceId = instanceId;
-          modal.update(model());
-        },
-        onBack: () => {},
-        onConfirm: (instanceId) => {
-          const inst = upgradable.find((candidate) => candidate.instanceId === instanceId);
-          if (!inst) return;
-          inst.upgraded = true;
-          sfx.play('shrine');
-          onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
-        },
-      });
-    };
-    smithOption.addEventListener('click', openSmith);
-    smithOption.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault();
-      openSmith();
+    // OPENING THE GRID IS NOT AN ACTION THE TABLE RULES ON, and the asymmetry
+    // is the point: this button commits nothing — it reveals the candidates,
+    // and the player can walk away or rest instead. Rest commits. Same screen,
+    // same shape of panel, different characteristics, different answer.
+    app.querySelector('#smith-opt').addEventListener('click', () => {
+      const grid = app.querySelector('#smith-grid');
+      if (grid.style.display !== 'none') return;
+      grid.style.display = 'flex';
+      grid.style.gap = '14px';
+      grid.style.flexWrap = 'wrap';
+      grid.style.justifyContent = 'center';
+      for (const inst of upgradable) {
+        // Hover/focus a candidate to preview exactly what the upgrade changes.
+        const el = renderCard(registries, inst, { small: true, tooltipFn: () => upgradePreviewHtml(registries, inst) });
+        arm(el, 'smithUpgrade', {
+          question: `Smith ${resolveCard(registries, inst).name}? This is permanent.`,
+          // THE SAME PREVIEW THE TOOLTIP CARRIES, ON THE SCREEN. One home — a
+          // second rendering of "what this upgrade does" is the second copy
+          // this house exists to catch, and it would be the copy a phone reads.
+          detailHtml: upgradePreviewHtml(registries, inst),
+          confirmLabel: 'SMITH IT',
+          onConfirm: () => {
+            inst.upgraded = true;
+            sfx.play('shrine');
+            onDone(`Smithed: ${esc(resolveCard(registries, inst).name)}.`);
+          },
+        });
+        grid.appendChild(el);
+      }
     });
   }
 }

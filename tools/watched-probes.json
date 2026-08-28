@@ -179,12 +179,12 @@
   {
    "id": "M2",
    "by": "Bjorn",
-   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/title.js (Profile route)",
+   "read": "src/ui/screens/profileArchive.js (the drawer) · src/ui/screens/settings.js (Profile category)",
    "anchors": [
-    "openProfileArchive",
+    "set-profile-mount",
     "renderProfileSection"
    ],
-   "screen": "Title › Profile",
+   "screen": "Settings › Profile",
    "reach": [
     {
      "op": "goto",
@@ -192,16 +192,20 @@
     },
     {
      "op": "click",
-     "sel": "#profile"
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
     }
    ],
-   "focus": ".profile-archive-modal, .profile-archive-body",
+   "focus": "#set-profile-mount, .set-panel",
    "expect": {
     "present": {
-     "the profile drawer": ".profile-archive-modal, .profile-archive-body"
+     "the profile drawer": "#set-profile-mount, .set-panel"
     },
     "measure": {
-     "stateLine": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,80)"
+     "stateLine": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,80)"
     }
    }
   },
@@ -213,7 +217,7 @@
     "ensureProfile",
     "the moment you begin your first climb"
    ],
-   "screen": "Title › Profile, on a device that has never played",
+   "screen": "Settings › Profile, on a device that has never played",
    "why-drive": "localStorage is cleared and the game booted fresh — the exact state a new player opens it in. Then the run is STARTED (class, name, BEGIN THE CLIMB) and storage is read again.",
    "reach": [
     {
@@ -258,18 +262,22 @@
     },
     {
      "op": "click",
-     "sel": "#profile"
+     "sel": "#settings"
+    },
+    {
+     "op": "click",
+     "sel": ".set-tab[data-member=\"Profile\"]"
     }
    ],
-   "focus": ".profile-archive-body",
+   "focus": ".set-panel",
    "expect": {
     "present": {
-     "the Profile section": ".profile-archive-body"
+     "the Profile section": ".set-panel"
     },
     "measure": {
      "storageTrace": "sessionStorage.getItem('__m7')",
      "profileExistedWhenTheRunBegan": "sessionStorage.getItem('__m7profile')",
-     "whatTheScreenSays": "document.querySelector('.profile-archive-body').innerText.split('\\n')[0].slice(0,95)"
+     "whatTheScreenSays": "document.querySelector('.set-panel').innerText.split('\\n')[0].slice(0,95)"
     },
     "wrong": [
      {
@@ -277,7 +285,7 @@
       "why": "THE CLIMB BEGAN AND THERE IS NO PROFILE. After class, name and BEGIN THE CLIMB, localStorage holds sote_run_v1 and no sote_meta_v1 — the profile is still not created"
      },
      {
-      "js": "/finish your first run/.test(document.querySelector('.profile-archive-body').innerText)",
+      "js": "/finish your first run/.test(document.querySelector('.set-panel').innerText)",
       "why": "and the screen says it out loud: 'No profile yet - one is created when you finish your first run.' That sentence IS the behaviour he asked us to change, printed back at him"
      }
     ]
@@ -523,13 +531,13 @@
   {
    "id": "S1",
    "by": "Bjorn",
-   "read": "src/ui/components/smithUpgradeModal.js (smith-preview-region: explicit choose/review dialog) · src/ui/models/SmithSelectionModel.js (smithSelectionModel: selection state and instance-preserving upgrade pair)",
+   "read": "src/ui/screens/rest.js (tooltipFn: upgradePreviewHtml) · src/ui/components/tooltip.js (pointerenter / gpfocus)",
    "anchors": [
-    "smith-preview-region",
-    "smithSelectionModel"
+    "upgradePreviewHtml",
+    "tooltipFn"
    ],
    "screen": "the Shrine › Smith, a card previewed",
-   "why-drive": "The Smith preview is now explicit modal state. Selecting one candidate must paint its current and upgraded forms without committing the upgrade.",
+   "why-drive": "The preview is a TOOLTIP, so it has to be fired the way a finger fires it. pointerenter is what a tap dispatches first on this browser.",
    "reach": [
     {
      "op": "goto",
@@ -541,24 +549,24 @@
      "sel": "#smith-opt"
     },
     {
-     "op": "click",
+     "op": "js",
      "ms": 400,
-     "sel": ".smith-candidate-card"
+     "code": "const c=document.querySelector('#smith-grid .card'); c.scrollIntoView({block:'center'}); c.dispatchEvent(new PointerEvent('pointerenter',{bubbles:true,clientX:20,clientY:20})); await sleep(420); return true;"
     }
    ],
-   "focus": ".smith-preview-region",
+   "focus": "#tooltip",
    "expect": {
     "present": {
-     "the upgrade preview": ".smith-preview-region .smith-upgrade-preview",
-     "the smith candidates": ".smith-candidate-card"
+     "the upgrade preview": "#tooltip",
+     "the smith grid": "#smith-grid .card"
     },
     "measure": {
-     "preview": "(document.querySelector('.smith-preview-region')||{}).innerText.replace(/\\s+/g,' ').slice(0,180)"
+     "preview": "(document.getElementById('tooltip')||{}).innerText.replace(/\\s+/g,' ').slice(0,110)"
     },
     "wrong": [
      {
-      "js": "!/→|becomes|upgrade/i.test((document.querySelector('.smith-preview-region')||{}).innerText||'')",
-      "why": "the modal preview says nothing about what the permanent upgrade changes"
+      "js": "!/→|becomes|upgrade/i.test((document.getElementById('tooltip')||{}).innerText||'')",
+      "why": "the tooltip fired but says nothing about what the upgrade CHANGES — he asked to see the upgrade, not the card"
      }
     ]
    }

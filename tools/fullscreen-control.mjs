@@ -3,7 +3,6 @@
 // fake documents exercise API absence, standard/WebKit support, enter/exit, and
 // a rejected request so every capability state has a named result.
 
-import { readFileSync } from 'node:fs';
 import { fullscreenCapability, isFullscreen, toggleFullscreen } from '../src/ui/screens/settings.js';
 
 if (process.argv.includes('--selftest')) {
@@ -33,23 +32,9 @@ if (process.argv.includes('--selftest')) {
         replace: "reason: 'unsupported',",
         expectRed: /rejected request should return a visible refusal state/,
       },
-      {
-        name: 'the HUD-local refusal notice stays hidden',
-        file: 'src/ui/components/hudQuickSettings.js',
-        find: 'notice.hidden = false;',
-        replace: 'notice.hidden = true;',
-        expectRed: /quick-control refusal should render into its own visible notice/,
-      },
-      {
-        name: 'unsupported fullscreen loses its visible iPhone guidance',
-        file: 'src/ui/components/hudQuickSettings.js',
-        find: "showHudNotice(stack, 'Fullscreen is unavailable here. On iPhone, use Add to Home Screen.', 'unsupported');",
-        replace: "hideHudNotice(stack);",
-        expectRed: /unsupported Fullscreen should visibly explain the iPhone alternative/,
-      },
     ],
   });
-  if (selftestCode === 0) console.log('fullscreen-control-selftest: OK — 5 checks passed');
+  if (selftestCode === 0) console.log('fullscreen-control-selftest: OK — 3 checks passed');
   process.exit(selftestCode);
 }
 
@@ -95,13 +80,5 @@ const refused = {
 const refusal = await toggleFullscreen(refused);
 check(refusal.ok === false && refusal.reason === 'refused' && /gesture refused/.test(refusal.error),
   'a rejected request should return a visible refusal state');
-
-const quickControlSource = readFileSync(new URL('../src/ui/components/hudQuickSettings.js', import.meta.url), 'utf8');
-check(/data-hud-quick-notice/.test(quickControlSource)
-  && /notice\.textContent\s*=/.test(quickControlSource)
-  && /notice\.hidden\s*=\s*false/.test(quickControlSource),
-  'quick-control refusal should render into its own visible notice');
-check(/showHudNotice\(stack, 'Fullscreen is unavailable here\. On iPhone, use Add to Home Screen\.', 'unsupported'\);/.test(quickControlSource),
-  'unsupported Fullscreen should visibly explain the iPhone alternative');
 
 console.log(`fullscreen-control: OK — ${checks} checks passed`);

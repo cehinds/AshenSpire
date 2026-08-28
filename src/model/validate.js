@@ -623,18 +623,6 @@ export function validateContent(bundle) {
       }
     }
   }
-  // balance.ui.titleLoadHold — the title slot's quick-load gesture. A malformed
-  // value would otherwise fall back inside the view and make the authored row
-  // decorative rather than authoritative, so fail by the row's own name.
-  if (b.balance && b.balance.ui && b.balance.ui.titleLoadHold != null) {
-    const lh = b.balance.ui.titleLoadHold;
-    if (typeof lh !== 'object' || Array.isArray(lh)) {
-      err('balance.ui.titleLoadHold', 'must be an object { ms }');
-    } else if (typeof lh.ms !== 'number' || !Number.isFinite(lh.ms) || lh.ms <= 0) {
-      err('balance.ui.titleLoadHold.ms', `must be a positive number of milliseconds — got ${JSON.stringify(lh.ms)}. `
-        + `The title quick-load gesture needs a real hold boundary distinct from an ordinary tap.`);
-    }
-  }
   // balance.ui.holdBeat — THE SAME FAILURE SHAPE AS holdConfirm, one control
   // over. The beat is the only feedback a held control has once a thumb is on
   // top of the fill, and every way this row can be wrong is SILENT: a fraction
@@ -729,7 +717,7 @@ export function validateContent(bundle) {
     const ui = b.balance.ui;
     const hp = ui.hudPresentation;
     if (!hp || typeof hp !== 'object' || Array.isArray(hp)) {
-      err('balance.ui.hudPresentation', 'must be an object with shared HUD spacing, sizing, metadata, and mobile density tokens');
+      err('balance.ui.hudPresentation', 'must be an object with componentBackgroundOpacityPct, metadataFontPx, beltItemGapPx, portraitScale, primaryRowGapPx, controlGapPx, resourceRowGapPx, cindersMaxWidthPct, metadataMaxWidthPct, and metadataShowTotals');
     } else {
       for (const [key, min, max] of [
         ['componentBackgroundOpacityPct', 0, 100],
@@ -739,11 +727,6 @@ export function validateContent(bundle) {
         ['primaryRowGapPx', 0, 24],
         ['controlGapPx', 0, 12],
         ['resourceRowGapPx', 0, 12],
-        ['panelPadPx', 0, 12],
-        ['mobilePanelPadPx', 0, 12],
-        ['mobileControlGapPx', 0, 12],
-        ['mobileOuterPadPx', 0, 12],
-        ['mobileRowGapPx', 0, 12],
         ['cindersMaxWidthPct', 20, 40],
         ['metadataMaxWidthPct', 20, 40],
       ]) {
@@ -761,59 +744,6 @@ export function validateContent(bundle) {
       err('balance.ui.shrinePresentation', 'must be an object with optionLayout');
     } else if (!['list', 'grid'].includes(shrinePresentation.optionLayout)) {
       err('balance.ui.shrinePresentation.optionLayout', `must be 'list' or 'grid' — got ${JSON.stringify(shrinePresentation.optionLayout)}`);
-    }
-    const quickSettings = ui.hudQuickSettings;
-    const quickPlaces = ['title', 'map', 'combat'];
-    if (!quickSettings || typeof quickSettings !== 'object' || Array.isArray(quickSettings)) {
-      err('balance.ui.hudQuickSettings', 'must be an object with places, spacing, visual sizing, background, and label settings');
-    } else {
-      if (!Array.isArray(quickSettings.places)
-        || quickSettings.places.some((place) => !quickPlaces.includes(place))
-        || new Set(quickSettings.places).size !== quickSettings.places.length) {
-        err('balance.ui.hudQuickSettings.places', `must contain unique values from ${quickPlaces.join(', ')} — got ${JSON.stringify(quickSettings.places)}`);
-      }
-      for (const key of ['edgeGapPx', 'stackGapPx']) {
-        const value = quickSettings[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 24) {
-          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [0, 24] — got ${JSON.stringify(value)}`);
-        }
-      }
-      for (const [key, min, max] of [
-        ['cardSizePx', 32, 44],
-        ['glyphSizePx', 16, 32],
-        ['stateDotPx', 3, 12],
-        ['activeTintPct', 0, 30],
-      ]) {
-        const value = quickSettings[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
-          err(`balance.ui.hudQuickSettings.${key}`, `must be a finite number in [${min}, ${max}] — got ${JSON.stringify(value)}`);
-        }
-      }
-      if (typeof quickSettings.showCardBackground !== 'boolean') {
-        err('balance.ui.hudQuickSettings.showCardBackground', `must be boolean — got ${JSON.stringify(quickSettings.showCardBackground)}`);
-      }
-      if (typeof quickSettings.showLabels !== 'boolean') {
-        err('balance.ui.hudQuickSettings.showLabels', `must be boolean — got ${JSON.stringify(quickSettings.showLabels)}`);
-      }
-    }
-    const combatantStage = ui.combatantStage;
-    if (!combatantStage || typeof combatantStage !== 'object' || Array.isArray(combatantStage)) {
-      err('balance.ui.combatantStage', 'must be an object with viewport clearances, intent gap, and center position');
-    } else {
-      for (const key of ['hudClearanceViewportPct', 'actionClearanceViewportPct']) {
-        const value = combatantStage[key];
-        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 25) {
-          err(`balance.ui.combatantStage.${key}`, `must be a finite viewport percentage in [0, 25] — got ${JSON.stringify(value)}`);
-        }
-      }
-      if (typeof combatantStage.intentGapPx !== 'number' || !Number.isFinite(combatantStage.intentGapPx)
-        || combatantStage.intentGapPx < 0 || combatantStage.intentGapPx > 24) {
-        err('balance.ui.combatantStage.intentGapPx', `must be a finite device-pixel gap in [0, 24] — got ${JSON.stringify(combatantStage.intentGapPx)}`);
-      }
-      if (typeof combatantStage.centerPct !== 'number' || !Number.isFinite(combatantStage.centerPct)
-        || combatantStage.centerPct < 25 || combatantStage.centerPct > 75) {
-        err('balance.ui.combatantStage.centerPct', `must be a finite center percentage in [25, 75] — got ${JSON.stringify(combatantStage.centerPct)}`);
-      }
     }
     const offersOverlap = Array.isArray(ui.handLayoutModes) && ui.handLayoutModes.includes('overlap');
     const ih = ui.inspectHold;

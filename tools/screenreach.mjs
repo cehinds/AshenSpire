@@ -110,11 +110,11 @@ if (process.argv.includes('--selftest')) {
         expectRed: /Shrine choice cards missing their shared \.cp-body composition/,
       },
       {
-        name: 'controls inside collapsed disclosures are counted as visible targets',
-        file: 'tools/screenreach.mjs',
-        find: "\n      && !e.closest('details:not([open])')",
-        replace: '',
-        expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
+        name: 'the narrow combatant frame gains a large vertical gap and crosses a HUD band',
+        file: 'styles/combat.css',
+        find: ":root[data-layout='narrow'] .combatant { gap: 0; }",
+        replace: ":root[data-layout='narrow'] .combatant { gap: 4rem; }",
+        expectRed: /frame paints under the HUD/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -126,8 +126,8 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'the fullscreen switch loses its accessible name',
         file: 'src/ui/screens/settings.js',
-        find: ' ? ` data-action="1" aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"` : \'\'}',
-        replace: ' ? ` data-action="1" aria-describedby="set-${r.key}-status"` : \'\'}',
+        find: ' aria-label="${esc(r.label)}" aria-describedby="set-${r.key}-status"',
+        replace: ' aria-describedby="set-${r.key}-status"',
         expectRed: /fullscreen switch lacks an accessible name or description/,
       },
       {
@@ -186,15 +186,8 @@ const SETTINGS_CYCLE = `(async () => {
   window.addEventListener('error', recordLifecycleError);
   const pause = () => new Promise((resolve) => setTimeout(resolve, 80));
   document.querySelector('#open-menu')?.click(); await pause();
-  if (document.querySelector('.qn-panel')) {
-    document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')?.click();
-    await pause();
-  }
   const tab = (id) => document.querySelector('.ov-tab[data-member="' + id + '"]');
-  tab('controls')?.click(); await pause();
-  const baseline = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
-  tab('settings')?.click();
-  await pause();
+  tab('settings')?.click(); await pause();
   const fullscreen = document.querySelector('.toggle[data-key="fullscreen"]');
   const described = fullscreen?.getAttribute('aria-describedby');
   window.__fullscreenA11y = !!(fullscreen?.getAttribute('aria-label')
@@ -204,11 +197,10 @@ const SETTINGS_CYCLE = `(async () => {
   await pause();
   window.__fullscreenLifecycleErrors = lifecycleErrors;
   window.removeEventListener('error', recordLifecycleError);
-  tab('controls')?.click(); await pause();
+  tab('deck')?.click(); await pause();
   tab('settings')?.click(); await pause();
-  tab('controls')?.click(); await pause();
-  window.__settingsListenerBalance = Object.fromEntries([...live]
-    .map(([type, listeners]) => [type, listeners.size - (baseline[type] || 0)]));
+  tab('deck')?.click(); await pause();
+  window.__settingsListenerBalance = Object.fromEntries([...live].map(([type, listeners]) => [type, listeners.size]));
   document.querySelector('#ov-close')?.click(); await pause();
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true })); await pause();
   window.__armouryShortcutOpened = !!document.querySelector('.armoury-overlay');
@@ -220,8 +212,7 @@ const SETTINGS_CYCLE = `(async () => {
 // design and it is listed with `overlay: true` rather than left out — a screen
 // missing from a sweep is invisible, and a screen present with a reason is not.
 const SCREENS = [
-  { name: 'startup', q: '?shot=startup', ready: `!!document.querySelector('.startup-gate')` },
-  { name: 'title', q: '?shot=title', ready: `!!document.querySelector('#app button')` },
+  { name: 'title', q: '', ready: `!!document.querySelector('#app button')` },
   { name: 'map', q: '?shot=map', ready: `!!document.querySelector('.map-node')` },
   { name: 'menu-cycle', q: '?shot=map', ready: `!!document.querySelector('.map-node')`, setup: SETTINGS_CYCLE,
     overlay: 'the Armoury opened by the preserved equipment shortcut covers the map on purpose' },
@@ -299,8 +290,7 @@ const PROBE = `(() => {
   const covered = [], scrolledOut = [];
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
-    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
-      && !e.closest('details:not([open])');
+    return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden';
   });
   for (const c of all) {
     const r = c.getBoundingClientRect();
@@ -363,8 +353,7 @@ const PROBE = `(() => {
   // width that happens to fit today's copy.
   if (document.querySelector('#flask-reallocate')) {
     const bare = [...document.querySelectorAll('.screen > .class-row > .class-pick')]
-      .filter((card) => !card.matches('details.shrine-fold')
-        && !card.querySelector(':scope > .cp-body'));
+      .filter((card) => !card.querySelector(':scope > .cp-body'));
     if (bare.length) visual.push('Shrine choice cards missing their shared .cp-body composition: ' + bare.length);
   }
   // A tall enemy can be centred through the flexible battlefield boundary.

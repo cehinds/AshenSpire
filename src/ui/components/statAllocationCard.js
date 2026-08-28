@@ -2,8 +2,6 @@
 // provide policy (limits, remaining points, commit); this component owns the
 // common card, controls, semantics, and interaction shape.
 import { esc } from './tooltip.js';
-import { primaryStatCard } from './creationCards.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 export function renderStatAllocationCard(host, {
   title = 'ASSIGN POINTS',
@@ -34,12 +32,7 @@ export function renderStatAllocationCard(host, {
   for (const rowModel of rows) {
     const row = document.createElement('div');
     row.className = 'se-row';
-    markUiComponent(row, UI.statAllocationRow);
-    const attribute = primaryStatCard({
-      ...rowModel.card,
-      face: { ...rowModel.card.face, value: '' },
-    });
-    attribute.classList.add('se-attribute-card');
+    row.innerHTML = `<span class="se-name" title="${esc(rowModel.label)}">${esc(rowModel.shortLabel || rowModel.label)}</span>`;
     const minus = document.createElement('button');
     minus.type = 'button'; minus.className = 'se-step'; minus.textContent = '−';
     minus.dataset.statId = rowModel.id; minus.dataset.statAction = 'decrease';
@@ -58,10 +51,7 @@ export function renderStatAllocationCard(host, {
     plus.addEventListener('click', () => {
       if (rowModel.canIncrease && onIncrease) onIncrease(rowModel.id);
     });
-    const controls = document.createElement('div');
-    controls.className = 'se-controls';
-    controls.append(minus, number, plus);
-    row.append(attribute, controls);
+    row.append(minus, number, plus);
     rowsHost.appendChild(row);
   }
 

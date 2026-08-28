@@ -21,27 +21,20 @@ models. `renderTray` owns the shared DOM and accessibility contract.
 The Armoury does not maintain a parallel pane-header system. Its four content
 families compose the same base component:
 
-| Tray | Content model | Optional expanded action | Session size |
+| Tray | Content model | Optional expanded action | Saved size |
 |---|---|---|---|
 | Armaments | Procedural occupied/empty/locked equipment positions | List/Grid | Not resizable in the current Armoury |
-| Inventory | One authoritative carried-item list | Contextual filter/action only | Remembered by stable ID while it is a supporting tray; disabled while it fills Inventory view |
-| Cards | Equipment-associated card list | List/Grid | Remembered by stable Cards tray ID |
-| Stats | Class, level, combat, attributes, resources, relics | None | Remembered by stable Stats tray ID |
+| Inventory | One authoritative carried-item list | Contextual filter/action only | Saved when mounted as a resizable supporting tray; disabled while it fills Inventory view |
+| Cards | Equipment-associated card list | List/Grid | By stable Cards tray ID |
+| Stats | Class, level, combat, attributes, resources, relics | None | By stable Stats tray ID |
 
 Not every presentation mounts all four at once. Character uses its full-width
 character surface without a duplicate Stats tray; Inventory pairs Armaments and
 Inventory and exposes Stats; Hybrid pairs the compact Character pane and
 Armaments with Inventory and Cards as supporting trays. The shared structure
 and arrow rule remain identical wherever a tray is mounted. Sorting and
-resizing are optional capabilities declared by each instance; session-size
+resizing are optional capabilities declared by each instance; saved-size
 behavior is identical among the instances that enable resizing.
-
-Armoury supporting trays use viewport-relative vertical sizing. Their first
-expanded height is 45vh, every additionally expanded tray retains at least
-30vh of visible height, and drag/keyboard release snaps to 30, 40, 50, 60, 70,
-80, or 90vh. The maximum is 90vh. Fold state and expanded size live only for
-the current play session; starting or resuming a run, or returning to Title,
-clears that state so the next session begins at the authored 45vh default.
 
 ## Direction rule
 
@@ -171,14 +164,9 @@ Responsive and access rules:
   with the shared `--ui-tray-side-margin` token.
 - Start resizing immediately with a mouse, or after a short deliberate hold on
   touch. Arrow keys resize a focused handle in 16px steps.
-- For a resizable instance, remember expanded size by stable tray id and edge
-  for the current play session only.
+- For a resizable instance, remember expanded size by stable tray id and edge.
   Folding always returns to the standard bar/rail; reopening restores the last
   expanded size.
-- Armoury supporting trays default to 45vh, preserve a 30vh minimum for each
-  expanded tray, cap at 90vh, and snap at every 10vh stop from 30vh to 90vh.
-- Clear fold and size memory at the play-session boundary (new/resumed run or
-  return to Title); do not persist it in the save slot or browser profile.
 - Before the player resizes it, the generic component may hug its header and
   visible contents. Armoury supporting trays intentionally opt into the
   data-authored default height ratio immediately.

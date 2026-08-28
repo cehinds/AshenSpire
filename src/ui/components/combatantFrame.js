@@ -30,13 +30,10 @@ export function combatantFrame({
     ? UI.playerCombatantFrame
     : UI.enemyCombatantFrame;
 
-  const stack = document.createElement('div');
-  stack.className = 'combatant-stack';
-
   const leadingHost = document.createElement('div');
   leadingHost.className = 'combatant-leading';
   appendAll(leadingHost, leading);
-  stack.appendChild(leadingHost);
+  frame.appendChild(leadingHost);
 
   const card = document.createElement('div');
   card.className = 'combatant-card';
@@ -54,7 +51,6 @@ export function combatantFrame({
   }
   if (meters) card.appendChild(meters);
   appendAll(card, trailing);
-  stack.appendChild(card);
-  frame.appendChild(stack);
+  frame.appendChild(card);
   return frame;
 }
