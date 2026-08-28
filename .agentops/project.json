@@ -1,0 +1,37 @@
+{
+  "schema": "agentops/project/v1",
+  "policy_version": "1.0.0",
+  "project_name": "AshenSpire",
+  "repository": "https://github.com/cehinds/AshenSpire.git",
+  "default_branch": "main",
+  "development_branch": "dev",
+  "engine_stack": "node-esm-stdlib; browser single-file HTML build",
+  "providers": "PROVIDER_NEUTRAL",
+  "risk_profile": "STANDARD",
+  "startup_token_target": 1200,
+  "startup_token_hard_limit": 1500,
+  "blocker_routing_sla_minutes": 5,
+  "pages_owner_hud": "PLANNED",
+  "owner_command_path": "WORKFLOW_FORMS",
+  "control_plane_root": ".agentops",
+  "installed_stage": "governance-kernel",
+  "installed_contracts": [
+    "governance/owner-intent.json",
+    "governance/hierarchy.json",
+    "governance/roles.json",
+    "governance/authority.json",
+    "governance/git-ownership.json"
+  ],
+  "deferred_next_stages": [
+    "governance/raci.json",
+    "governance/delegation.json",
+    "governance/escalation.json",
+    "governance/transitions.json",
+    "governance/information-access.json",
+    "governance/qa.json",
+    "wake-compiler (opsctl wake)",
+    "work/event/evidence/lease capsules",
+    "owner-command workflows",
+    "pages owner HUD"
+  ]
+}

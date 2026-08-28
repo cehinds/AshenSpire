@@ -2,49 +2,70 @@
 
 ## Outcome
 
-AshenSpire is migrating toward a .NET-inspired Clean Architecture with an MVVM
-presentation layer. Every migrated View is rendered from immutable Component
-Models. Models compose other models, including shared primitives and Behavior
-Models. Domain state never owns DOM and renderers never decide game rules.
+AshenSpire uses a composition/component-based architecture with explicit
+presenter and observer-style boundaries for presentation. .NET and Dimitar's
+naming and coding practices guide vocabulary and consistency; no .NET runtime,
+MVC framework, or MVVM folder structure is required.
+
+Every migrated screen is rendered from immutable Component Models. Screen hosts
+serve as presenters: they project domain snapshots, compose models, request DOM
+from renderer components, and bind semantic commands. Observer-style adapters
+are reserved for lifecycle, refresh, input, and browser events. Domain state
+never owns DOM and renderers never decide game rules.
+
+The architecture is intentionally hybrid: Composition/Component-Based is the
+core structure, MVP is the presentation role assignment, Observer is the event
+notification technique, and JSON/CSV plus data-driven class objects are the
+content boundary.
 
 ## Layers and dependency direction
 
 ```text
-Composition Root
-      │
-      ├── Infrastructure ──implements──► Application Interfaces
-      │                                      ▲
-      └── Presentation ──uses───────────────┤
-                         Application Services ──uses──► Domain Models
-
-Presentation View
-      └── Screen ViewModel
-            └── Component Models
-                  ├── shared primitive Component Models
-                  └── Behavior Models
+Composition Root (`src/main.js`)
+├── Headless simulation (`src/engine/`)
+│   └── Domain state and contracts (`src/model/`)
+├── Data boundary (`src/content/`, `content/source/`)
+│   └── JSON/CSV definitions interpreted by reusable rules
+├── Transport adapter (`src/net/lan.js`)
+└── Screen hosts / presenters (`src/ui/screens/`)
+    ├── Screen projections (`src/ui/viewModels/`)
+    ├── Component Models (`src/ui/models/`)
+    │   └── shared primitive and Behavior Models
+    └── DOM components and observer adapters (`src/ui/components/`)
 ```
 
-Dependencies point inward. Domain code imports none of Application,
-Infrastructure, or Presentation. Application Services depend on Domain Models
-and Interfaces, not browser adapters. Infrastructure implements Interfaces.
-Presentation projects snapshots and semantic commands; it does not mutate the
-Domain directly.
+Dependencies point toward pure rules and data. Domain code does not import
+presentation or browser adapters. Engine code remains headless. Presenters
+project snapshots and semantic commands; they do not mutate the Domain
+directly. Renderers and observers translate those commands at the DOM boundary.
 
-| .NET-style responsibility | Current/incremental home | Target responsibility |
+| Composition/component responsibility | Current home | Boundary |
 |---|---|---|
-| Domain Models | `src/model/` | Pure state, rules, plans, receipts |
-| Application Interfaces | `src/application/interfaces/` | Storage, audio, clock, navigation, networking ports |
-| Application Services | `src/application/services/` | Use-case orchestration over Domain and Interfaces |
-| Infrastructure | `src/infrastructure/` | Browser/local-storage/audio/network adapters |
-| Presentation Models | `src/ui/models/` | Frozen Component and Behavior records |
-| Presentation ViewModels | `src/ui/viewModels/` | Domain-to-screen projection and composition |
-| Views | `src/ui/screens/` | Thin screen hosts during migration |
-| Components | `src/ui/components/` | DOM renderers only |
-| Behaviors | `src/ui/behaviors/` | Command, focus, tooltip, hold, refusal, and lifecycle binders |
+| Domain models and contracts | `src/model/` | Pure state, rules, plans, receipts; no DOM |
+| Headless simulation/services | `src/engine/` | Use-case orchestration, RNG, combat, encounters, and saves |
+| Content boundary | `src/content/`, `content/source/` | Data-driven class objects, JSON, and CSV; no screen markup |
+| Screen presenters | `src/ui/screens/` | Screen composition, projection calls, command/lifecycle binding |
+| Presentation projections | `src/ui/viewModels/` | Domain-to-screen composition for migrated slices |
+| Component and behavior records | `src/ui/models/` | Frozen, serializable trees and semantic interaction records |
+| Views and observer adapters | `src/ui/components/` | DOM rendering, refresh, focus, hold, tooltip, and browser-event seams |
 | Composition Root | `src/main.js` | Construction and dependency wiring only |
 
-The target folders are introduced only when a migrated slice needs them. Bulk
-moves are forbidden; public imports remain compatible until consumers migrate.
+The current tree is transitional by slice: some screens still own legacy markup
+while migrated aggregates use the component boundary. Do not bulk-move those
+files. Add one compatibility seam, migrate its consumers, prove the same-door
+behavior, and remove the adapter only after repository-wide consumer proof.
+
+## Core invariants
+
+- The renderer is never the source of truth for simulation state.
+- Component Models carry data and semantic behavior descriptions, never DOM
+  nodes, callbacks, or mutable run objects.
+- Presenter code may observe state and translate input, but game rules stay in
+  `src/model/` and `src/engine/`.
+- Content changes prefer JSON/CSV and reusable interpreters over per-entity
+  imperative branches.
+- The architecture refresh routine updates only the current-dev inventory; it
+  cannot replace this contract or silently change the redesign goals.
 
 ## Immutable records
 
@@ -164,6 +185,21 @@ the folded face and expanded reveal; the shared hold-confirm binder delegates
 one progress state to both visible regions. Comparison is a separate semantic
 child whose tooltip/inline presentation is data-owned, so reading a comparison
 cannot become a second action path.
+
+Equipment-driven attack cards use the same model/service boundary. The pure
+`WeaponDeckCompositionService.buildEquippedWeaponCardPlan()` projects equipped hand models into
+an immutable `EquippedWeaponCardPlan`; `applyEquippedWeaponCardPlan()` rebinds only the stable
+generated attack instances. Screens consume the resulting comparison/card-strip models and issue
+semantic equipment commands; they do not select weapon packages or resize the deck. One
+post-commit `equipmentChanged` event carries the loadout signatures and changed positions so
+combat, save, and future presentation consumers share the same transition instead of adding
+Rogue-, weapon-, or screen-specific controllers.
+
+Exact combat restoration stays on this same boundary: after the existing snapshot shape and
+reference validators accept the stored record, save migration composes one plan from the
+snapshot's authoritative loadout and applies it to the combined `draw`/`hand`/`discard`/`exhaust`
+attack instances. The result replaces the stale top-level loadout projection before resume. No
+snapshot-specific package rules, renderer controller, or second composition service exists.
 
 ## Migration order
 

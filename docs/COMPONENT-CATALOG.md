@@ -312,6 +312,13 @@ review action, and proves exact snapshot identity at 1200×730 and 390×844.
 Its `--selftest` corpus plants a restarted encounter, a missing commit, and a
 restore that drops the saved hand through copied real source doors.
 
+Weapon-package migration adds no component ID or renderer family. At the load
+door, an active exact snapshot keeps its saved loadout authoritative and reuses
+`WeaponDeckCompositionService` across the stable generated attacks in draw,
+hand, discard, and exhaust. The player-facing Armoury remains the existing
+`armoury.cardsCard`, `armoury.cardRow`, and `equipment-comparison` composition;
+snapshot migration is model/service state only.
+
 Load and Quit Without Saving use `confirmation-modal` rather than the browser's
 native prompt. `node tools/confirmation-modal.mjs` proves both commands from Map
 and Combat, cancellation/focus restoration, layered Escape, exact-once commit,
@@ -338,9 +345,9 @@ low-contrast danger text.
 | `armoury-inventory` | `armouryInventoryModel` | `equipment.js` inside `renderTray` | Inventory tray content and the single carried-item list. |
 | `inventory-item-card` | `inventoryItemCardModel` | `armouryComponents.renderInventoryItemCard` | Folded carried-item face. The current `inventoryItem` class explicitly enables `holdAction`; its folded and expanded states are one action/progress surface, and an early release aborts without changing equipment. |
 | `inventory-detail-card` | `inventoryDetailCardModel` | `armouryComponents.renderInventoryDetailCard` | Expanded art, tags, mods, and action label inside the same whole-card hold surface; the label is not a second action button while hold confirmation owns the action. |
-| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, separate from the action hold. Authored presentation chooses delayed hover/focus tooltip or inline content, with data-owned delay, width, and viewport cap. |
+| `equipment-comparison` | semantic child model + `armouryUi.layout.comparison` | `equipmentReceipts.js` in shared tooltip or item card | Full before/after receipt, including exact weapon-package card counts and slot-bound upgrade changes, separate from the action hold. Authored presentation chooses delayed hover/focus tooltip or inline content, with data-owned delay, width, and viewport cap. |
 | `armoury-stats-panel` | `armouryStatsPanelModel` | `equipment.js` inside `renderTray` | Stats tray content: attributes, combat values, resources, and relic summary. |
-| `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: equipment-associated card rewrites in list or grid presentation. |
+| `armoury-card-strip` | `armouryCardStripModel` | `equipment.js` + `card.js` inside `renderTray` | Cards tray content: exact equipment-associated card counts grouped by card/profile in list or grid presentation. |
 | `armoury-region-header` | compatibility semantic ID | replaced by `tray-header` | Historical Armoury-only fold header name. |
 
 ```text

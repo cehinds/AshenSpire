@@ -30,11 +30,24 @@
   padding: 1rem 1.2rem; font-size: 1.2rem; line-height: 1.5; color: var(--parchment);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.7); display: none;
 }
+#tooltip.is-fading { opacity: 0; transition: opacity 160ms ease-out; }
+.reduced-motion #tooltip { transition: none !important; }
+@media (prefers-reduced-motion: reduce) { #tooltip { transition: none !important; } }
 #tooltip .tt-title { color: var(--gold); font-family: var(--font-display); font-size: 1.3rem; margin-bottom: 0.4rem; }
 #tooltip .tt-kw { border-top: 1px solid var(--line); margin-top: 0.6rem; padding-top: 0.6rem; color: var(--muted); }
 #tooltip .tt-kw b { color: var(--parchment); }
 #tooltip[data-tooltip-variant='combatant-folded'] { max-width: 19rem; padding: 0.75rem 0.9rem; }
 #tooltip[data-tooltip-variant='combatant-expanded'] { max-width: 24rem; }
+#tooltip[data-tooltip-variant='enemy-context'] {
+  --place-gap: 6px;
+  max-width: 31.5rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+#tooltip[data-tooltip-variant='enemy-context'] .tt-title { margin-bottom: 0.15rem; font-size: 1.5rem; line-height: 1.1; }
+#tooltip[data-tooltip-variant='enemy-context'] .tt-combatant-line b { color: var(--gold); }
 #tooltip .tt-combatant-line { color: var(--muted); font-size: 0.9em; }
 #tooltip .tt-combatant-focus {
   display: grid; gap: 0.25rem; margin-top: 0.65rem; padding-top: 0.65rem;
@@ -507,6 +520,10 @@ body.hide-hints .hint-bar { display: none; }
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+.rebind-btn {
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  height: auto;
+}
 .pad-btn {
   min-width: 6.2rem; text-align: center; padding: 0.4rem 0.8rem; border-radius: 6px;
   background: var(--panel); border: 1px solid var(--gold); color: var(--gold);
@@ -1412,12 +1429,28 @@ button.rs-reset {
   72% { opacity: 0.28; }
   100% { transform: translate3d(1.4rem, -78vh, 0); opacity: 0; }
 }
-.startup-mark {
+.startup-anchor {
+  position: absolute;
   z-index: 1;
+  top: 0;
+  bottom: 0;
+  /* body is zoomed by --ui-zoom; viewport lengths are not. Divide the shared
+     50vw ruler back into body-local coordinates so it still renders on the
+     physical viewport center at every responsive UI scale. */
+  left: calc(50vw / var(--ui-zoom, 1));
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  justify-items: center;
+  width: min(calc(94vw / var(--ui-zoom, 1)), calc(72rem / var(--ui-zoom, 1)));
+  transform: translateX(-50%);
+  background: transparent;
+}
+.startup-mark {
+  place-self: center;
   display: grid;
   justify-items: center;
   gap: 1rem;
-  width: min(92vw, 72rem);
+  width: 100%;
   padding: 2rem;
   text-align: center;
   animation: startupMarkIn 520ms ease-out both;
@@ -1455,13 +1488,14 @@ button.rs-reset {
 }
 @keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
 .startup-gate .build-stamp {
-  position: absolute;
-  z-index: 2;
-  left: 50%;
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  position: static;
+  width: max-content;
+  max-width: 100%;
+  margin-bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: none;
   color: var(--parchment);
   text-align: center;
+  text-indent: 0.02em;
 }
 @media (max-width: 30rem) {
   .startup-mark { width: 94vw; padding-inline: 0.8rem; }
@@ -4254,13 +4288,24 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 }
 .title-screen > * { position: relative; z-index: 1; }
 .title-screen > .hud-quick-settings { position: absolute; z-index: 80; }
-.title-stack { width: min(94%, 90rem); margin: 0 auto; text-align: center; }
+.title-stack {
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  margin-inline: 0;
+  text-align: center;
+  align-self: center;
+}
 .title-screen .title-big {
-  margin: 0;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
   color: var(--parchment);
   font-size: 5.8rem;
   line-height: 0.95;
   letter-spacing: 0.04em;
+  text-indent: 0.02em;
   white-space: nowrap;
   text-shadow: 0 2px 24px rgba(var(--accent-rgb), 0.28);
 }
@@ -4393,7 +4438,7 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
-  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; }
+  .title-screen .title-big { font-size: calc(4.6rem / var(--ui-zoom, 1)); letter-spacing: 0.015em; text-indent: 0.0075em; }
   .title-screen .subtitle { font-size: calc(0.9rem / var(--ui-zoom, 1)); letter-spacing: 0.2em; }
   .title-rule { width: 90%; margin-top: 1.4rem; }
   .title-menu { width: min(calc(36rem / var(--ui-zoom, 1)), 94%); margin-top: calc(2.2rem / var(--ui-zoom, 1)); }
@@ -4431,14 +4476,25 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   background: radial-gradient(ellipse at 50% 20%, transparent 0, rgba(0, 0, 0, 0.12) 42%, rgba(0, 0, 0, 0.66) 100%);
 }
 .startup-mark {
-  width: min(86%, 62rem);
+  width: 100%;
   padding: 8.2rem 2.8rem 5.2rem;
   border: 0;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
-  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);
+  background: transparent;
+  box-shadow: none;
 }
-.startup-wordmark { color: var(--parchment); font-size: 7rem; line-height: 0.95; letter-spacing: 0.04em; text-indent: 0.04em; white-space: nowrap; }
-.startup-subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; white-space: nowrap; }
+.startup-wordmark {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  color: var(--parchment);
+  font-size: clamp(3rem, 6vw, 7rem);
+  line-height: 0.95;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-indent: 0.02em;
+  white-space: nowrap;
+}
+.startup-subtitle { width: 100%; margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; text-align: center; text-indent: 0.16em; white-space: nowrap; }
 .startup-rule { position: relative; width: min(46rem, 86%); height: 1px; margin-top: 1.6rem; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
 .startup-rule span { position: absolute; left: 50%; top: 50%; width: 0.9rem; height: 0.9rem; transform: translate(-50%, -50%) rotate(45deg); border: 1px solid var(--gold); background: var(--bg); }
 .startup-prompt { margin-top: 3.2rem; }

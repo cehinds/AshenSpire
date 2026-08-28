@@ -1,0 +1,43 @@
+{
+  "schema": "agentops/hierarchy/v1",
+  "policy_version": "1.0.0",
+  "nodes": [
+    {
+      "actor_id": "constantine",
+      "role": "owner",
+      "escalation_parent": null,
+      "owns_escalations": ["owner-exclusive", "release", "publication", "intent-conflict", "safety", "final-override"]
+    },
+    {
+      "actor_id": "it-manager-iii",
+      "role": "it-manager-iii",
+      "escalation_parent": "constantine",
+      "owns_escalations": ["technical-scope", "ownership-contest", "integration", "sequencing", "incident-p0", "unresolved-technical-blocker", "exception"]
+    },
+    {
+      "actor_id": "project-management-lead",
+      "role": "project-management-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": ["portfolio-sequencing-recommendation", "dependency-and-capacity-visibility", "completion-council"]
+    },
+    {
+      "actor_id": "data-architecture-lead",
+      "role": "data-architecture-lead",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": ["data-contract-withhold", "schema-lineage", "migration-compatibility"]
+    },
+    {
+      "actor_id": "help-desk",
+      "role": "help-desk",
+      "escalation_parent": "it-manager-iii",
+      "owns_escalations": ["intake", "routing", "contract-completeness", "status-hygiene"]
+    }
+  ],
+  "escalation_routing": {
+    "default_sla_minutes": 5,
+    "deputy_custody_at_minutes": 5,
+    "deputy_overdue_to_owner_at_minutes": 10,
+    "immediate_owner_classes": ["owner-exclusive", "safety", "credential", "irreversible", "intent-conflict"],
+    "note": "Elapsed time changes routing only, never truth, evidence, or authority. FYIs remain dashboard-only and are not escalations."
+  }
+}

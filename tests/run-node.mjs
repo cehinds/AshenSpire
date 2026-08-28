@@ -779,6 +779,34 @@ let zoomPassed = 0; // counted, because "35 passed" over 37 printed lines is the
   );
   if (urlPathTree.code !== 0 || !urlPathTreeV.text) zoomExtra++;
   else zoomPassed++;
+
+  // 77/78 — fixed attack-slot composition. The first line proves the old
+  // right-hand-only lookup is still discriminating; the second runs the full
+  // 0/1/2 weapon, persistence, mutation, and live-pile matrix.
+  const runWeaponPackages = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/weapon-card-packages.mjs', ...args], { cwd, encoding: 'utf8' }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  const weaponSelf = runWeaponPackages(['--selftest']);
+  const weaponSelfV = quote(weaponSelf.out);
+  console.log(
+    `${weaponSelf.code === 0 && weaponSelfV.text ? 'PASS' : 'FAIL'}  77. the weapon-package check catches the right-hand-only lookup` +
+      ` — ${weaponSelfV.text || `weapon-card-packages --selftest (exit ${weaponSelf.code}): ${weaponSelfV.why}`}`
+  );
+  if (weaponSelf.code !== 0 || !weaponSelfV.text) zoomExtra++;
+  else zoomPassed++;
+
+  const weaponTree = runWeaponPackages([]);
+  const weaponTreeV = quote(weaponTree.out);
+  console.log(
+    `${weaponTree.code === 0 && weaponTreeV.text ? 'PASS' : 'FAIL'}  78. equipped weapons deterministically rebind the fixed authored attack slots` +
+      ` — ${weaponTreeV.text || `weapon-card-packages (exit ${weaponTree.code}): ${weaponTreeV.why}`}`
+  );
+  if (weaponTree.code !== 0 || !weaponTreeV.text) zoomExtra++;
+  else zoomPassed++;
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.

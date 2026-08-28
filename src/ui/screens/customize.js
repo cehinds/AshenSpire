@@ -11,10 +11,10 @@ import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, defaultCreationModeId } from '../../model/attributes.js';
+import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal } from '../../model/attributes.js';
 import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
 import {
-  creationHandChoices, creationRelicChoices,
+  creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
 import { pieceChip } from './equipment.js';
@@ -31,6 +31,7 @@ import {
 export function mountCustomize(app, { registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false }) {
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
+  const visibleModes = creationModeViews(registries);
   const state = {
     classId: firstClass.id,
     name: 'Forsaken',
@@ -40,9 +41,10 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     keepsakeId: registries.characterCreation.keepsakes[0].id,
     startingKitId: null,
     startingHands: { leftHand: null, rightHand: null },
+    startingSlotChoices: {},
     startingArmourId: null,
     startingRelicId: firstClass.startingRelic,
-    attributeMode: defaultCreationModeId(registries),
+    attributeMode: visibleModes[0].id,
     attributes: null,
     classChoiceView: creationLayout.classChoiceView,
     equipmentChoiceView: creationLayout.equipmentChoiceView,
@@ -129,22 +131,8 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
   const statBox = $('#cz-statedit');
   const STANDARD = 'standard';
   const POINTBUY = 'pointbuy';
-  const equipmentSections = registries.characterCreation.equipmentSections;
-  const equipmentNodes = new Map();
-  for (const section of equipmentSections) {
-    const node = document.createElement('section');
-    node.className = 'cc-equip-group';
-    node.dataset.equipmentSection = section.id;
-    const choices = document.createElement('div');
-    choices.className = 'cc-card-selectors cc-choice-collection';
-    choices.dataset.view = state.equipmentChoiceView;
-    if (section.kind === 'armour') choices.id = 'cz-armours';
-    else if (section.kind === 'relic') choices.id = 'cz-relics';
-    else if (section.kind === 'hand') choices.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
-    else choices.id = `cz-${section.id}`;
-    node.appendChild(choices);
-    equipmentNodes.set(section.id, node);
-  }
+  let equipmentSectionViews = [];
+  let equipmentNodes = new Map();
   let equipmentFold = null;
 
   function setClassPreviewPercent(percent) {
@@ -213,6 +201,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     const kit = baseKit();
     state.startingKitId = kit.id;
     state.startingHands = { leftHand: kit.leftHand || null, rightHand: kit.rightHand || null };
+    state.startingSlotChoices = {};
     state.startingArmourId = armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
     if (state.attributeMode === POINTBUY) resetAttributes();
@@ -298,7 +287,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     statBox.innerHTML = '';
     const modes = document.createElement('div');
     modes.className = 'se-modes';
-    for (const mode of registries.creationModes.all()) {
+    for (const mode of visibleModes) {
       const button = modeChoiceButton(mode, state.attributeMode === mode.id, () => {
         state.attributeMode = mode.id;
         if (mode.id === POINTBUY) {
@@ -489,64 +478,76 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     }
   }
 
-  function renderEquipment() {
-    const armourBox = $('#cz-armours');
-    armourBox.innerHTML = '';
-    for (const piece of armourChoices()) {
-      const button = pieceChip(registries, piece, { selected: piece.id === state.startingArmourId });
-      markUiComponent(button, UI.equipmentChoiceCard, 'armour');
-      button.dataset.startingArmourId = piece.id;
-      button.setAttribute('aria-pressed', piece.id === state.startingArmourId ? 'true' : 'false');
-      button.addEventListener('click', () => {
-        state.startingArmourId = piece.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('armour');
-      });
-      armourBox.appendChild(button);
-    }
-    for (const hand of ['leftHand', 'rightHand']) {
-      const box = $(`#cz-${hand === 'leftHand' ? 'left' : 'right'}-hand`);
-      box.innerHTML = '';
-      for (const piece of creationHandChoices(registries, state.classId, hand)) {
-        const button = pieceChip(registries, piece, { selected: state.startingHands[hand] === piece.id });
-        markUiComponent(button, UI.equipmentChoiceCard, hand);
-        button.dataset.hand = hand; button.dataset.armamentId = piece.id;
-        button.setAttribute('aria-pressed', state.startingHands[hand] === piece.id ? 'true' : 'false');
+  function renderEquipment(preferredOpenId = null) {
+    equipmentSectionViews = creationEquipmentSectionViews(registries, state.classId, { armourChoices: armourChoices() });
+    equipmentNodes = new Map();
+    for (const section of equipmentSectionViews) {
+      const node = document.createElement('section');
+      node.className = 'cc-equip-group';
+      node.dataset.equipmentSection = section.id;
+      const box = document.createElement('div');
+      box.className = 'cc-card-selectors cc-choice-collection';
+      box.dataset.view = state.equipmentChoiceView;
+      if (section.kind === 'armour') box.id = 'cz-armours';
+      else if (section.kind === 'relic') box.id = 'cz-relics';
+      else if (section.kind === 'hand') box.id = `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`;
+      else box.id = `cz-${section.id}`;
+      node.appendChild(box);
+      equipmentNodes.set(section.id, node);
+
+      for (const piece of section.choices) {
+        if (section.kind === 'relic') {
+          const button = relicChoiceButton(piece, relicText(piece, registries), piece.id === state.startingRelicId, () => {
+            state.startingRelicId = piece.id;
+            renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); advanceEquipment(section.id);
+          });
+          box.appendChild(button);
+          continue;
+        }
+        const selected = section.kind === 'armour'
+          ? piece.id === state.startingArmourId
+          : section.kind === 'hand'
+            ? state.startingHands[section.slot] === piece.id
+            : state.startingSlotChoices[section.id] === piece.id;
+        const button = pieceChip(registries, piece, { selected });
+        markUiComponent(button, UI.equipmentChoiceCard, section.id);
+        if (section.kind === 'armour') button.dataset.startingArmourId = piece.id;
+        else if (section.kind === 'hand') { button.dataset.hand = section.slot; button.dataset.armamentId = piece.id; }
+        else button.dataset.startingSlotItemId = piece.id;
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
         button.addEventListener('click', () => {
-          state.startingHands = selectStartingHand(state.startingHands, hand, piece.id);
-          renderEquipment(); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(hand);
+          if (section.kind === 'armour') state.startingArmourId = piece.id;
+          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
+          else state.startingSlotChoices[section.id] = piece.id;
+          renderEquipment(section.id); renderCharacterPreview(); refreshFaces(); updateStartRefusal(); advanceEquipment(section.id);
         });
         box.appendChild(button);
       }
     }
-    const relicBox = $('#cz-relics');
-    relicBox.innerHTML = '';
-    for (const relic of creationRelicChoices(registries, state.classId)) {
-      const button = relicChoiceButton(relic, relicText(relic, registries), relic.id === state.startingRelicId, () => {
-        state.startingRelicId = relic.id;
-        renderEquipment(); renderCharacterPreview(); refreshFaces(); advanceEquipment('relic');
-      });
-      relicBox.appendChild(button);
-    }
-    for (const section of equipmentSections.filter((row) => row.kind === 'slot')) {
-      const box = equipmentNodes.get(section.id).querySelector('.cc-card-selectors');
-      if (!box.childElementCount) {
-        const empty = document.createElement('p');
-        empty.className = 'cc-empty-slot';
-        empty.textContent = 'No starting options in this build. Content added to this slot will appear here.';
-        box.appendChild(empty);
-      }
-    }
-    for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = state.equipmentChoiceView;
-    refreshEquipmentFaces();
+
+    const equipmentFaces = new Map(equipmentSectionViews.map((section) => [
+      section.id, selectionSectionFace(section.label, equipmentValue(section)),
+    ]));
+    equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSectionViews.map((section) => ({
+      key: section.id, kind: 'pick', disclosure: 'face',
+      face: { node: equipmentFaces.get(section.id).node },
+      reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
+    })));
+    refreshEquipmentFaces = () => {
+      for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
+    };
+    const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
+      ? preferredOpenId
+      : equipmentSectionViews[0]?.id;
+    if (openId) equipmentFold.open(openId);
   }
 
   function advanceEquipment(sectionId) {
     if (!state.equipmentAutoAdvance || !equipmentFold) return;
-    const index = equipmentSections.findIndex((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
-    const next = equipmentSections.slice(index + 1).find((section) => section.kind !== 'slot');
-    if (!next) return;
-    equipmentFold.open(next.id);
-    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${next.id}"]`)));
+    const current = equipmentSectionViews.find((section) => section.id === sectionId || section.slot === sectionId || section.kind === sectionId);
+    if (!current?.nextId) return;
+    equipmentFold.open(current.nextId);
+    queueMicrotask(() => focusElement(app.querySelector(`[data-face="${current.nextId}"]`)));
   }
 
   const selectedRow = (id, rows) => rows.find((row) => row.id === id);
@@ -567,7 +568,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
 
   const characterRows = [
     { key: 'primary', label: 'PRIMARY STATS', node: $('#cz-primary-group'), value: () => (
-      selectedRow(state.attributeMode, registries.creationModes.all())?.label || state.attributeMode
+      selectedRow(state.attributeMode, visibleModes)?.label || state.attributeMode
     ) },
     { key: 'sprite', label: 'SPRITE', node: $('#cz-sprite-group'), value: () => (
       selectedRow(state.spriteStyle, SPRITE_STYLES)?.name || state.spriteStyle
@@ -591,24 +592,11 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
     if (section.kind === 'armour') return registries.equipment.armour.find((row) => (
       row.classId === state.classId && row.id === state.startingArmourId
     ))?.name || 'None';
-    if (section.kind === 'relic') return creationRelicChoices(registries, state.classId).find((row) => row.id === state.startingRelicId)?.name || 'None';
-    if (section.kind === 'slot') return 'None';
+    if (section.kind === 'relic') return section.choices.find((row) => row.id === state.startingRelicId)?.name || 'None';
+    if (section.kind === 'slot') return section.choices.find((row) => row.id === state.startingSlotChoices[section.id])?.name || 'None';
     const id = state.startingHands[section.slot];
     return registries.equipment.armaments.find((row) => row.id === id)?.name || 'Empty';
   };
-  const equipmentFaces = new Map(equipmentSections.map((section) => [
-    section.id, selectionSectionFace(section.label, equipmentValue(section)),
-  ]));
-  equipmentFold = mountDisclosure($('#cz-equipment-fold'), equipmentSections.map((section) => ({
-    key: section.id, kind: 'pick', disclosure: 'face',
-    face: { node: equipmentFaces.get(section.id).node },
-    reveal: { node: equipmentNodes.get(section.id), sense: `Choose ${section.label.toLowerCase()}.` },
-  })));
-  refreshEquipmentFaces = () => {
-    for (const section of equipmentSections) equipmentFaces.get(section.id).setValue(equipmentValue(section));
-  };
-  equipmentFold.open(equipmentSections[0].id);
-
   resetClassChoices();
   renderClasses(); renderModes(); renderAppearance(); renderEquipment(); renderCharacterPreview(); renderViewToggles(); refreshFaces();
 
@@ -757,7 +745,7 @@ export function mountCustomize(app, { registries, meta = {}, defaultSeedString, 
         specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
       { key: 'mode-choice', label: 'STANDARD / ASSIGN POINTS', node: choiceSpecimen(
-        'se-modes', registries.creationModes.all(), (row) => row.id, modeChoiceButton, state.attributeMode,
+        'se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
       ) },
       { key: 'sprite-choice', label: 'SPRITE CHOICE', node: choiceSpecimen(
         'cz-opts', SPRITE_STYLES, (row) => row.id, spriteChoiceButton, state.spriteStyle,

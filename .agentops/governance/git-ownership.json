@@ -1,0 +1,74 @@
+{
+  "schema": "agentops/git-ownership/v1",
+  "policy_version": "1.0.0",
+  "principle": "One writer per overlapping path or ref. Generated artifacts are serialized behind their single generator. Overlap between two active owners is a collision that must be serialized before either proceeds.",
+  "refs": [
+    {
+      "ref": "main",
+      "owner_role": "owner",
+      "mutation": "protected",
+      "note": "Release/publication only; owner-exclusive."
+    },
+    {
+      "ref": "dev",
+      "owner_role": "it-manager-iii",
+      "mutation": "pr-only",
+      "note": "Integration through the normal reviewable PR process; no direct push."
+    },
+    {
+      "ref": "test",
+      "owner_role": "it-manager-iii",
+      "mutation": "gate-c-fast-forward-only",
+      "note": "Exact fast-forward to hosted-verified dev SHA; non-release."
+    },
+    {
+      "ref": "claude/*",
+      "owner_role": "maker",
+      "mutation": "isolated-continuation",
+      "note": "Isolated agent continuation branches; reversible local work."
+    }
+  ],
+  "paths": [
+    {
+      "glob": ".agentops/governance/**",
+      "owner_role": "it-manager-iii",
+      "serialized_lane": "governance",
+      "note": "Machine-readable governance contracts; one documentation maker per path."
+    },
+    {
+      "glob": ".agentops/schemas/**",
+      "owner_role": "it-manager-iii",
+      "serialized_lane": "governance",
+      "note": "Contract schemas evolve with contracts under the same lane."
+    },
+    {
+      "glob": ".agentops/tools/**",
+      "owner_role": "maker",
+      "serialized_lane": "agentops-tooling",
+      "note": "Validator and future wake compiler."
+    },
+    {
+      "glob": ".agentops/generated/**",
+      "owner_role": "generator",
+      "serialized_lane": "governance",
+      "note": "Generated views only; never hand-edited. Written solely by opsctl render behind the governance lane."
+    },
+    {
+      "glob": ".agentops/work/**",
+      "owner_role": "maker",
+      "serialized_lane": "per-ticket",
+      "note": "One current work capsule per ticket; the ticket's writer lease owns it."
+    },
+    {
+      "glob": "docs/reconstruction/**",
+      "owner_role": "it-manager-iii",
+      "serialized_lane": "reconstruction",
+      "note": "Reconstruction bundle is read-only authority for installation; changes are protected."
+    }
+  ],
+  "generated_serialization": {
+    "lane": "governance",
+    "rule": "A generated view is regenerated from validated JSON and never edited by hand. opsctl render is the sole writer; opsctl render --check proves the committed view matches its sources with no drift."
+  },
+  "collision_rule": "Two active owners whose path globs overlap, or two writers on the same ref, are a collision. The affected transition fails closed and the owning role serializes the lane before either proceeds; unrelated reversible work continues."
+}

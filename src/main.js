@@ -53,6 +53,7 @@ import { openOverlay, closeOverlay } from './ui/components/overlay.js';
 import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
+import { openSaveSlotSelector } from './ui/components/saveSlotSelector.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
 import { startupGateModel } from './ui/models/StartupGateModels.js';
@@ -910,9 +911,19 @@ function resumeRun(slot = 1) {
   }
 }
 
-function loadActiveSlot({ returnFocusElement } = {}) {
+function saveSlotRecords() {
+  return saves.listSlots().map(({ slot, summary }) => ({
+    slot,
+    summary: summary && {
+      ...summary,
+      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
+    },
+  }));
+}
+
+function confirmSlotLoad(slot, { returnFocusElement } = {}) {
   openConfirmationModal({
-    title: `Load slot ${activeSlot}?`,
+    title: `Load slot ${slot}?`,
     message: 'The saved run will replace changes made since your last save.',
     confirmLabel: 'Load saved run',
     consequence: 'DISCARDS UNSAVED CHANGES',
@@ -920,8 +931,17 @@ function loadActiveSlot({ returnFocusElement } = {}) {
     returnFocusElement,
     onConfirm: () => {
       closeOverlay();
-      resumeRun(activeSlot);
+      resumeRun(slot);
     },
+  });
+}
+
+function loadActiveSlot({ returnFocusElement } = {}) {
+  openSaveSlotSelector({
+    slots: saveSlotRecords(),
+    registries,
+    returnFocusElement,
+    onRequestLoad: (slot) => confirmSlotLoad(slot, { returnFocusElement }),
   });
   return false;
 }
@@ -938,7 +958,7 @@ function quitWithoutSaving({ returnFocusElement } = {}) {
       closeOverlay();
       audio.stopMusic();
       run = null;
-      showTitle();
+      showCollapsedTitle();
     },
   });
   return false;
@@ -992,23 +1012,25 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   });
 }
 
+// Returning from a climb is a new arrival at the main menu, so it lands on the
+// folded title threshold. Ordinary title sub-pages (Settings, Collection,
+// character creation) still return to the already-open menu via showTitle().
+function showCollapsedTitle() {
+  startupGatePending = true;
+  showTitle();
+}
+
 function showTitle({ skipStartup = false, focusDefault = false, focusCursor = true } = {}) {
   if (showProfileNoticeIfNeeded()) return;
-  if (startupGatePending && !skipStartup) {
-    showStartupGate();
-    return;
-  }
   audio.music('title');
   resetArmouryTraySession();
   run = null;
   dropLanLink(); // a LAN session spans one run; back at the title it's over
-  const slots = saves.listSlots().map(({ slot, summary }) => ({
-    slot,
-    summary: summary && {
-      ...summary,
-      className: registries.classes.has(summary.class) ? registries.classes.get(summary.class).name : summary.class,
-    },
-  }));
+  if (startupGatePending && !skipStartup) {
+    showStartupGate();
+    return;
+  }
+  const slots = saveSlotRecords();
   mountTitle(app, {
     slots,
     // The delete beat rides the shared machinery now: the armer reads the
@@ -1026,6 +1048,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
     onProfile: showProfile,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,
+    onCollapse: showCollapsedTitle,
     onQuit: quitGame,
     onCustom: () => {
       const empty = slots.find((s) => !s.summary);
@@ -1107,13 +1130,16 @@ function showSettings() {
  * The Armoury. Outside combat it edits the loadout directly and re-stamps the
  * deck; the chosen view is a setting so it survives the session.
  */
-function showArmoury(initialView = '') {
+function showArmoury(request = '') {
+  const initialView = typeof request === 'string' ? request : '';
+  const destination = request && typeof request === 'object' ? request.destination || '' : '';
   const armouryMeta = saves.loadMeta();
   if (initialView) armouryMeta.settings.equipView = initialView;
   mountEquipment(document.body, {
     registries,
     run,
     meta: armouryMeta,
+    destination,
     inCombat: false,
     onChange: (loadout, settingChange) => {
       if (settingChange) {
@@ -1166,7 +1192,7 @@ function quitGame() {
   if (back) {
     back.addEventListener('click', () => {
       clearTimeout(closeTimer); // changed their mind before the window closed
-      showTitle();
+      showCollapsedTitle();
     });
   }
 }
@@ -1205,7 +1231,7 @@ function showOverlay(initialTab = 'settings') {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -1390,7 +1416,7 @@ function showMap() {
     },
     onQuit: () => {
       persist(); // the run is resumable from its slot via Continue
-      showTitle();
+      showCollapsedTitle();
     },
   });
 }
@@ -1585,6 +1611,17 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     combat.enemies[1].arcaneExposure = { ...structuredClone(authored), value: Math.max(1, Math.floor(authored.threshold / 2)) };
     delete combat.enemies[2].arcaneExposure;
   }
+  if (shotState === 'combat' && shotParams.get('shotEnemyContext') === 'status') {
+    // Dev-only rendered-evidence pose for the contextual enemy tooltip. The
+    // shot boot uses memory storage, and this host-state fixture is applied
+    // before mount so the browser proves real status presentation without
+    // fabricating or editing DOM after render.
+    const subject = combat.enemies.find((enemy) => enemy.alive);
+    if (!subject || !registries.statuses.has('crimsonBlight')) {
+      throw new Error('?shotEnemyContext=status needs a living enemy and Crimson Blight');
+    }
+    subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
+  }
   const label =
     enc.pool === 'boss'
       ? registries.enemies.get(enc.enemies[0]).name.toUpperCase()
@@ -1614,7 +1651,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     onQuit: () => {
       commitCombatSnapshot({ run, combat, nodeId, encounterId });
       persist();
-      showTitle();
+      showCollapsedTitle();
     },
     showTutorial: !saves.loadMeta().settings.seenTutorial,
     onTutorialDone: () => {

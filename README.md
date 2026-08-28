@@ -8,8 +8,9 @@ A single-player roguelike deckbuilder for the browser. Mechanically faithful to 
 
 **[Play AshenSpire in your browser](https://cehinds.github.io/AshenSpire/AshenSpire.html)**
 
-**[AshenSpire Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)** —
-the latest project status appears first, with timestamped updates and Daily Briefs below it.
+**[AshenSpire Project #4](https://github.com/users/cehinds/projects/4)** owns
+workflow status. **[Status & Daily Briefs](https://github.com/cehinds/AshenSpire/issues/183)**
+is the readable projection, with timestamped updates and Daily Briefs.
 
 **[AshenSpire UI Component Catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** —
 the interactive reference for stable component IDs, model and renderer names,
@@ -25,9 +26,21 @@ player-facing changes. The current Smith modal write-up is
 **[CHANGELOG.md](CHANGELOG.md)** — what changed, newest first, each entry
 naming the pull request that landed it and the build number it shipped in.
 
-**[Development coordination workflow](docs/COORDINATION-WORKFLOW.md)** — the
-shared rules for routine ownership, evidence, status reporting, cross-family
-handoffs, and the boundary between development approval and release authority.
+**[Development governance](docs/governance/README.md)** — the versioned
+authority, lifecycle, ticket, quality, decision, and runbook control plane.
+The legacy **[coordination workflow](docs/COORDINATION-WORKFLOW.md)** remains a
+compatibility entry point. The **[Art integration runbook](docs/governance/RUNBOOKS/art.md)**
+defines the Proposal → Approved → Active lifecycle and, when active, the
+mandatory integration package triggered by an approved art suggestion without
+granting implementation, publication, or release authority. Its independently
+reviewed governance head is Approved before canonical integration and Active
+when that exact head is contained in canonical `dev`; no merge-time status or
+version edit is required.
+
+**[Architecture map](docs/ARCHITECTURE-MAP.md)** — the stable
+composition/component redesign contract. The [current-`dev` architecture
+snapshot](docs/ARCHITECTURE-CURRENT-DEV.md) is refreshed automatically after
+every push to `dev` without rewriting the core contract.
 
 That stable GitHub Pages URL publishes the repository-root `AshenSpire.html`
 from the default `dev` branch and follows the newest reviewed development build
@@ -136,7 +149,7 @@ No install, no framework, no build step for the source.
 - **A run:** pick a class → traverse a branching map across 3 acts → fight enemies with a deck of cards → collect relics, flasks, and cinders → beat the final boss or die trying (seeded, reproducible runs).
 - **Four distinct classes:** Reaver leads with strike damage, Rogue with defense and actions, Starseer with magic, and Herald with a balanced martial-support kit. Their starting attributes and equipment are data-owned and validated through the shared character-creation flow.
 - **One reusable run HUD:** Map and Combat compose the same model-driven header, vitals, Quick Access, relic, and potion components. Stable IDs and tuning tokens are documented in the component catalog so UI changes name the exact surface they affect.
-- **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping.
+- **One data-driven Armoury:** Character, Inventory, and Hybrid are presentations of the same equipment owner. Character places the contained figure beside expandable Combat Power, Attributes, and Relics; Inventory pairs procedural Armaments with the one shared carried-item list; Hybrid keeps the compact Character stack beside Armaments. Armaments, Inventory, Cards, and Stats use the shared Folding Tray grammar. Equipment cards drag as one surface and, when hold-confirm is enabled, fill across the whole folded or expanded card while equipping, moving, or unequipping. The fixed authored attack slots rebind in place to the active weapon package: a lone left- or right-hand weapon owns all of them, dual wield splits them right-first without deck growth, and the comparison receipt shows the exact before/after counts.
 - **Faithful StS mechanics:** 3 energy / draw 5 turns, block that expires, telegraphed enemy intents, exhaust/ethereal/retain keywords, exact StS damage-order math.
 - **Elden Ring flavor with real mechanics:** Bleed as a build-up meter that bursts for %-max-HP damage, Crimson Blight as a non-decaying timed DoT, and a Poise/Stagger system that skips enemy turns and opens damage windows.
 - **Character creation, one panel at a time:** six folded picks — class, starting kit, keepsake, sigil, tint, sprite — each pick opens the next, and the column reads your choices back in words. Below them, **starting armour** and **stat points** sit open as rows of their own: both change the run, so neither folds, and editing them never marches you on to the next section. Mouse, keyboard, and pad all walk the same flow; pressing Confirm repeatedly accepts the defaults.

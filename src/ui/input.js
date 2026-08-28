@@ -92,9 +92,9 @@ const CHROME = '.topbar, .pile, .map-buttons, .map-zoom, .map-side, .end-turn, .
 //   'key'    — the canonical binding is the keyboard key; screens match it via
 //              matchAction(ev, id). A pad press dispatches that same key, so the
 //              screens' own handlers run for controller + keyboard alike.
-// The Deck and Stats actions jump the in-run overlay straight to those tabs.
-// The stable legacy `relics` action id now opens Armoury, preserving existing
-// bindings while giving equipment and carried items one canonical destination.
+// Deck, Relics, and Stats keep their stable action ids and bindings while their
+// `destination` names only the semantic place the player asked for. Raw
+// Armoury views, trays, selectors, and focus stay in equipment.js.
 export const ACTIONS = [
   // confirm (Enter) and cancel (Esc) keep FIXED keyboard keys so cursor-activate
   // and overlay-close always work; only their pad button is rebindable.
@@ -102,15 +102,25 @@ export const ACTIONS = [
   { id: 'cancel', label: 'Cancel / Back', short: 'Cancel', kind: 'key', key: 'Escape', keyHint: 'Esc', defBtn: 1 },
   { id: 'endTurn', label: 'End Turn', short: 'End Turn', kind: 'key', defKey: 'e', defBtn: 2 },
   { id: 'menu', label: 'Open Menu', short: 'Menu', kind: 'key', defKey: 'm', defBtn: 9 },
-  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3 },
-  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4 },
-  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5 },
+  { id: 'deck', label: 'Open Armoury (Deck)', short: 'Armoury', kind: 'key', defKey: 'd', defBtn: 3, destination: 'cards' },
+  { id: 'relics', label: 'Open Armoury', short: 'Armoury', kind: 'key', defKey: 'r', defBtn: 4, destination: 'equipment' },
+  { id: 'stats', label: 'Open Armoury (Stats)', short: 'Armoury', kind: 'key', defKey: 't', defBtn: 5, destination: 'character' },
   // Flask quick-use (StS2 gives pads a potion shortcut but keyboards nothing —
   // we give both a rebindable key per slot).
   { id: 'flask1', label: 'Use Flask 1', short: 'Flask 1', kind: 'key', defKey: 'f', defBtn: 6 },
   { id: 'flask2', label: 'Use Flask 2', short: 'Flask 2', kind: 'key', defKey: 'g', defBtn: 7 },
   { id: 'flask3', label: 'Use Flask 3', short: 'Flask 3', kind: 'key', defKey: 'h', defBtn: 10 },
 ];
+
+const ACTION_DESTINATIONS = new Set(['cards', 'equipment', 'character']);
+
+/** One exact semantic destination or null. Duplicate, dangling, and unknown
+ * registry rows fail closed rather than silently opening a generic Armoury. */
+export function actionDestination(id) {
+  const rows = ACTIONS.filter((action) => action.id === id && action.destination);
+  if (rows.length !== 1 || !ACTION_DESTINATIONS.has(rows[0].destination)) return null;
+  return rows[0].destination;
+}
 
 // Confirm's keyboard key, read off its own row rather than typed here. It is
 // FIXED (cursor-activate must always work, see the comment in ACTIONS), which is
@@ -250,6 +260,16 @@ export function matchAction(ev, id) {
   const k = keyBindings[id];
   if (!k) return false;
   return (ev.key || '').toLowerCase() === k.toLowerCase();
+}
+
+/** Resolve the one destination-bearing action matched by this live binding.
+ * Pads and hint chips synthesize that same current key, so every input source
+ * converges here without a second destination table. */
+export function actionDestinationForEvent(ev) {
+  const matches = ACTIONS.filter((action) => action.destination && matchAction(ev, action.id));
+  if (matches.length !== 1) return null;
+  const destination = actionDestination(matches[0].id);
+  return destination ? Object.freeze({ actionId: matches[0].id, destination }) : null;
 }
 
 // Compact standard-mapping button glyphs for the hint bar / on-screen prompts.
@@ -405,10 +425,11 @@ function setFocus(el, remember = true) {
   }
   if (el) {
     el.classList.add('gp-focus');
-    // A real menu owns both the visual gamepad cursor and DOM focus. Keyboard
-    // arrows already move the latter through the menu's key handler; keeping
-    // it aligned here gives D-pad navigation the same accessible focus state.
-    if (el.closest && el.closest('[role="menu"]') && document.activeElement !== el
+    // ARIA menus and button-like custom controls own both the visual cursor and
+    // DOM focus.  Keeping the two aligned lets the browser deliver native
+    // keyboard activation keys (notably Space) to a role=button reached with
+    // Arrow/D-pad navigation, while Enter/A still uses the unified press path.
+    if (el.closest && (el.closest('[role="menu"]') || el.matches?.('[role="button"]')) && document.activeElement !== el
       && typeof el.focus === 'function') el.focus();
     if (typeof el.scrollIntoView === 'function') el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     if (prev !== el) el.dispatchEvent(new CustomEvent('gpfocus'));
