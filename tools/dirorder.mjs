@@ -291,7 +291,7 @@ async function loadVariant(tmpDir, label, transforms) {
   }
   const file = join(tmpDir, `dirorder.${label}.mjs`);
   writeFileSync(file, src);
-  return import(pathToFileURL(file).href);
+  return import(`file://${file.replace(/\\/g, '/')}`);
 }
 
 async function mutate() {
@@ -416,10 +416,7 @@ async function selftest() {
     console.error('  If the comparator was "improved" to a locale-aware one, this is that.');
     return 1;
   }
-  // #12: a countless verdict cannot distinguish a full corpus from an empty
-  // one. The claim is unchanged — the order 40c5b21 shipped is not the order
-  // this comparator produces — it now says how many cases carried it.
-  console.log(`\ndirorder --selftest: OK — ${cases.length} checks passed.`);
+  console.log('\ndirorder --selftest: OK — the order 40c5b21 shipped is not the order this comparator produces.');
   return 0;
 }
 

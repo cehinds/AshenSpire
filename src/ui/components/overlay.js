@@ -1,25 +1,23 @@
 // src/ui/components/overlay.js — the in-run tabbed overlay menu (SPEC §7.2).
 //
-// The in-run overlay is intentionally narrow: Settings and Controls only.
-// Deck, Stats, equipment, relics, and flasks live in Armoury. Opened from a button or hotkey on the map and
+// One overlay hosts every in-run menu as a tab: Deck, Relics & Flasks, Stats
+// (run telemetry), and Settings. Opened from a button or hotkey on the map and
 // in combat; combat is turn-based, so it needs no real "pause". Esc / the ✕ /
 // clicking the veil closes it.
 
+import { renderCard } from './card.js';
 import { renderSettings } from '../screens/settings.js';
 import { renderControls } from '../screens/controls.js';
 import { attachTooltip, esc } from './tooltip.js';
+import { relicText } from './card.js';
 import { isEngaged, focusFirst, setTabRing } from '../input.js';
 import { menuTabs } from '../uiContent.js';
 import { openQuickNav, closeQuickNav, quickNavIsOpen, quickNavMode, quickNavFolds, saveAction } from './quicknav.js';
 import { statProjection } from '../../model/statProjection.js';
-import { closeFlaskActionMenu } from './flask.js';
-import { topVeil } from './veil.js';
-import { menuOverlayModel } from '../models/MenuModels.js';
-import { renderMenuOverlay, updateMenuSelection } from './menuComponents.js';
+import { flaskIdentityHtml } from './flask.js';
 
 let openVeil = null;
 let escHandler = null;
-let overlayCleanup = [];
 
 // ---- the panels: ONE name per tab, not two (#78) ---------------------------
 //
@@ -38,9 +36,15 @@ let overlayCleanup = [];
 // one. Each takes (container, ctx) — the same bag openOverlay builds once — so
 // they can live at module scope where the check can see them.
 const PANELS = {
+  deck: (host, ctx) => renderDeck(host, ctx),
+  relics: (host, ctx) => renderRelics(host, ctx),
+  stats: (host, ctx) => renderStats(host, ctx),
+  save: (host, ctx) => renderSave(host, ctx),
   settings: (host, ctx) => renderSettings(host, {
     settings: ctx.settings,
     onChange: ctx.onSettingsChange || (() => {}),
+    saves: ctx.saves,
+    onProfileRestored: ctx.onProfileRestored,
   }),
   controls: (host, ctx) => renderControls(host, {
     settings: ctx.settings,
@@ -51,6 +55,87 @@ const PANELS = {
 /** panelFor(id) → the renderer for a tab, or undefined. The one join. */
 export function panelFor(id) {
   return PANELS[id];
+}
+
+// ---- the panel bodies, at module scope so PANELS can name them -------------
+// Each takes (container, ctx) and reads the bag openOverlay builds once. They
+// used to be closures inside openOverlay, which is where the if-chain could
+// hide: a function only reachable through a comparison on an id.
+
+function renderDeck(container, ctx) {
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  if (!ctx.run.deck.length) {
+    grid.innerHTML = '<div style="color:var(--muted);padding:20px">Empty.</div>';
+  } else {
+    for (const inst of ctx.run.deck) grid.appendChild(renderCard(ctx.registries, inst, { small: true }));
+  }
+  container.appendChild(grid);
+}
+
+function renderRelics(container, ctx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ov-relics';
+  const rTitle = document.createElement('h3');
+  rTitle.className = 'set-cat';
+  rTitle.textContent = `Relics (${ctx.run.relics.length})`;
+  wrap.appendChild(rTitle);
+  const rGrid = document.createElement('div');
+  rGrid.className = 'ov-relic-grid';
+  for (const rid of ctx.run.relics) {
+    const def = ctx.registries.relics.get(rid);
+    const el = document.createElement('div');
+    el.className = 'ov-relic';
+    el.innerHTML = `<span class="ov-relic-ic">${esc(def.icon || '◆')}</span><div><b>${esc(def.name)}</b><p>${esc(relicText(def, ctx.registries))}</p></div>`;
+    rGrid.appendChild(el);
+  }
+  if (!ctx.run.relics.length) rGrid.innerHTML = '<div style="color:var(--muted)">None yet.</div>';
+  wrap.appendChild(rGrid);
+
+  const fTitle = document.createElement('h3');
+  fTitle.className = 'set-cat';
+  fTitle.textContent = `Flasks (${ctx.run.flasks.length})`;
+  wrap.appendChild(fTitle);
+  const fGrid = document.createElement('div');
+  fGrid.className = 'ov-relic-grid';
+  for (const f of ctx.run.flasks) {
+    const def = ctx.registries.flasks.get(f.flaskId);
+    const el = document.createElement('div');
+    el.className = 'ov-relic';
+    el.innerHTML = `${flaskIdentityHtml(def)}<div><p>${esc(def.textTemplate || '')}</p></div>`;
+    fGrid.appendChild(el);
+  }
+  if (!ctx.run.flasks.length) fGrid.innerHTML = '<div style="color:var(--muted)">None.</div>';
+  wrap.appendChild(fGrid);
+  container.appendChild(wrap);
+}
+
+// Save tab: save to the current slot, save-and-quit to title, or quit the app.
+// (In-run slot switching is intentionally left to the title's Continue.)
+function renderSave(container, ctx) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ov-save-tab';
+  wrap.innerHTML = `
+    <h3 class="set-cat">Save</h3>
+    <p class="set-note" style="max-width:420px">Your climb is written to its save slot. You can resume it later from the title screen's Continue.</p>
+    <div class="ov-save-actions">
+      ${ctx.onSave ? '<button class="subtle" id="ovs-save">Save now</button>' : ''}
+      ${ctx.onQuit ? '<button class="subtle" id="ovs-quit">Save &amp; Quit to Title</button>' : ''}
+      ${ctx.onExit ? '<button class="subtle danger" id="ovs-exit">Quit Game</button>' : ''}
+    </div>`;
+  container.appendChild(wrap);
+  const s = wrap.querySelector('#ovs-save');
+  if (s && ctx.onSave) {
+    s.addEventListener('click', () => {
+      const slot = ctx.onSave();
+      s.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
+      setTimeout(() => (s.textContent = 'Save now'), 1500);
+    });
+  }
+  const q = wrap.querySelector('#ovs-quit');
+  if (q && ctx.onQuit) q.addEventListener('click', () => { closeOverlay(); ctx.onQuit(); });
+  const e = wrap.querySelector('#ovs-exit');
+  if (e && ctx.onExit) e.addEventListener('click', () => { closeOverlay(); ctx.onExit(); });
 }
 
 export function hybridStatsPlan(ctx) {
@@ -79,6 +164,16 @@ export function hybridStatsPlan(ctx) {
   ];
 }
 
+function renderStats(container, ctx) {
+  const rows = hybridStatsPlan(ctx);
+  const el = document.createElement('div');
+  el.className = 'ov-stats';
+  el.innerHTML = rows
+    .map(([k, v]) => `<div class="ov-stat"><span>${esc(String(k))}</span><b>${esc(String(v))}</b></div>`)
+    .join('');
+  container.appendChild(el);
+}
+
 // `overlayIsOpen()` USED TO LIVE HERE and is deleted rather than widened.
 //
 // It read this module's own `openVeil` handle, so it answered for ONE of the
@@ -102,20 +197,18 @@ export function closeOverlay() {
     removeEventListener('keydown', escHandler, true);
     escHandler = null;
   }
-  for (const release of overlayCleanup.splice(0)) release();
 }
 
 /**
  * openOverlay({ registries, run, meta, onSettingsChange, onSave, initialTab })
  * onSave (optional) → returns the slot number saved to (adds a Save action).
  */
-export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave, quickControls = {}, initialTab = 'settings' }) {
-  closeFlaskActionMenu({ cancelled: true });
+export function openOverlay({ registries, run, meta, saves = null, onSettingsChange, onProfileRestored, onSave, onQuit, onExit, initialTab = 'deck' }) {
   closeOverlay();
   closeQuickNav(); // opened FROM the list on map/combat: it has done its job
   const settings = meta.settings || (meta.settings = {});
 
-  const hasSave = !!(onSave || onQuit);
+  const hasSave = !!(onSave || onQuit || onExit);
   // The strip is DERIVED, not restated. It and the quick-nav dropdown are two
   // presentations of one table (uiContent.js MENU_TABS) — the hardcoded list
   // that used to live here is exactly the second copy Law 1 catches.
@@ -126,11 +219,26 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   const folded = quickNavFolds();
   const mirrored = quickNavMode() === 'mirror';
 
-  const initialId = TABS.some((tab) => tab.id === initialTab) ? initialTab : 'settings';
-  const model = menuOverlayModel({ tabs: TABS, activeId: initialId, folded, mirrored });
-  const { veil, body } = renderMenuOverlay(model);
+  const veil = document.createElement('div');
+  veil.className = 'modal-veil';
+  veil.innerHTML = `
+    <div class="modal overlay-modal">
+      <div class="overlay-head">
+        <div class="overlay-tabs" data-surface="overlayTab"${folded ? ' hidden' : ''}>
+          ${TABS.map((t) => `<button class="ov-tab" data-member="${t.id}">${esc(t.label)}</button>`).join('')}
+        </div>
+        ${folded ? '<button class="ov-switch" id="ov-switch" aria-haspopup="menu"></button>' : ''}
+        <div class="overlay-actions">
+          ${mirrored ? '<button class="subtle" id="ov-quicknav" title="Go to…">☰</button>' : ''}
+          <button class="subtle" id="ov-close" title="Close (Esc)">✕</button>
+        </div>
+      </div>
+      <div class="overlay-body"></div>
+    </div>`;
   document.body.appendChild(veil);
   openVeil = veil;
+
+  const body = veil.querySelector('.overlay-body');
   let currentTab = null;
 
   // ONE bag, built once, handed to whichever panel the tab names. Everything a
@@ -150,28 +258,18 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   // save: runs live in their own slot keys.
   const ctx = {
     registries, run, meta, settings, saves,
-    onSettingsChange, onSave, onQuit, onArmoury, onLoad, onQuitWithoutSave,
+    onSettingsChange, onProfileRestored, onSave, onQuit, onExit,
   };
-
-  const saveButton = veil.querySelector('#ov-save');
-  const quitButton = veil.querySelector('#ov-quit');
-  if (!onSave && saveButton) saveButton.hidden = true;
-  if (!onQuit && quitButton) quitButton.hidden = true;
-  saveButton?.addEventListener('click', () => {
-    const slot = onSave?.();
-    saveButton.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';
-    clearTimeout(saveButton._labelTimer);
-    saveButton._labelTimer = setTimeout(() => { saveButton.textContent = 'Save Game'; }, 1500);
-  });
-  quitButton?.addEventListener('click', () => {
-    closeOverlay();
-    onQuit?.();
-  });
 
   function selectTab(id) {
     currentTab = id;
-    veil.querySelector('.overlay-modal')?.classList.toggle('settings-surface', id === 'settings');
-    updateMenuSelection(veil, TABS, id);
+    veil.querySelectorAll('.ov-tab').forEach((b) => b.classList.toggle('on', b.dataset.member === id));
+    const sw = veil.querySelector('#ov-switch');
+    if (sw) {
+      const t = TABS.find((x) => x.id === id);
+      sw.textContent = `${t ? t.label : id} \u25be`;
+    }
+    body.innerHTML = '';
     // NO if-chain, and no trailing `else` that quietly renders nothing. A tab
     // declared in MENU_TABS with no entry in PANELS names itself here, and
     // assertSurfaces() has already failed the boot, so a player never meets it.
@@ -211,79 +309,21 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
       counts: { deck: run.deck.length },
       current: currentTab,
       hasSave,
-      controls: {
-        ...quickControls,
-        ...(quickControls.music ? {
-          music: {
-            ...quickControls.music,
-            activate: async (...args) => {
-              const result = await quickControls.music.activate(...args);
-              if (currentTab === 'settings' && result?.changed) panelFor('settings')(body, ctx);
-              return result;
-            },
-          },
-        } : {}),
-      },
       actions: {
+        close: () => closeOverlay(),
         tab: (id) => selectTab(id),
-        ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-        ...(onLoad ? { load: () => { const loaded = onLoad({ returnFocusElement: anchor }); if (loaded) closeOverlay(); return loaded; } } : {}),
         ...(onSave ? { save: saveAction(onSave) } : {}),
-        ...(onQuit ? { saveQuit: () => { closeOverlay(); onQuit(); } } : {}),
-        ...(onQuitWithoutSave ? { quit: () => { const quit = onQuitWithoutSave({ returnFocusElement: anchor }); if (quit) closeOverlay(); return quit; } } : {}),
+        ...(onQuit ? { quit: () => { closeOverlay(); onQuit(); } } : {}),
       },
     });
-  const overlayHead = veil.querySelector('.overlay-head');
-  const syncQuickLauncher = () => {
-    if (!overlayHead) return;
-    const tabs = overlayHead.querySelector('.overlay-tabs');
-    const actions = overlayHead.querySelector('.overlay-actions');
-    const foldedNow = quickNavFolds();
-    if (tabs) tabs.hidden = foldedNow;
-    let switcher = overlayHead.querySelector('#ov-switch');
-    if (foldedNow && !switcher) {
-      switcher = document.createElement('button');
-      switcher.className = 'subtle ov-switch';
-      switcher.id = 'ov-switch';
-      switcher.setAttribute('aria-haspopup', 'menu');
-      actions?.before(switcher);
-    } else if (!foldedNow) {
-      switcher?.remove();
-      switcher = null;
-    }
-    if (switcher) switcher.textContent = `${TABS.find((tab) => tab.id === currentTab)?.label || currentTab} ▾`;
-    let quickButton = overlayHead.querySelector('#ov-quicknav');
-    if (quickNavMode() === 'mirror' && !quickButton) {
-      quickButton = document.createElement('button');
-      quickButton.className = 'subtle';
-      quickButton.id = 'ov-quicknav';
-      quickButton.title = 'Go to…';
-      quickButton.textContent = '☰';
-      actions?.prepend(quickButton);
-    } else if (quickNavMode() !== 'mirror') {
-      quickButton?.remove();
-    }
-  };
-  const onQuickLauncherClick = (event) => {
-    const anchor = event.target.closest('#ov-quicknav, #ov-switch');
-    if (!anchor || !overlayHead.contains(anchor)) return;
-    event.stopPropagation();
-    openHere(anchor);
-  };
-  overlayHead?.addEventListener('click', onQuickLauncherClick);
-  window.addEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
-  overlayCleanup.push(() => {
-    overlayHead?.removeEventListener('click', onQuickLauncherClick);
-    window.removeEventListener('ashenspire:quicknav-mode-change', syncQuickLauncher);
-  });
-  syncQuickLauncher();
+  const qnBtn = veil.querySelector('#ov-quicknav');
+  if (qnBtn) qnBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(qnBtn); });
+  const swBtn = veil.querySelector('#ov-switch');
+  if (swBtn) swBtn.addEventListener('click', (e) => { e.stopPropagation(); openHere(swBtn); });
 
   // Esc closes the overlay, captured before screen-level key handlers see it.
   escHandler = (ev) => {
     if (ev.key === 'Escape') {
-      // A confirmation opened above this overlay owns Escape. Without this
-      // paint-order guard one press cancels the confirmation and the menu below.
-      if (topVeil() !== openVeil) return;
       // Esc peels ONE layer. With the mirrored list open over the overlay, the
       // list is the layer the player is looking at; closing both would take away
       // a screen they never asked to leave.
@@ -295,7 +335,7 @@ export function openOverlay({ registries, run, meta, saves = null, onSettingsCha
   };
   addEventListener('keydown', escHandler, true);
 
-  selectTab(initialId);
+  selectTab(TABS.some((t) => t.id === initialTab) ? initialTab : 'deck');
 
   // Smart default (keyboard/gamepad): land on the active tab so arrows can move
   // to its content or across tabs, rather than leaving focus nowhere.

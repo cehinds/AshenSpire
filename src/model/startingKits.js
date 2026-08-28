@@ -1,7 +1,5 @@
 // Starting-kit discovery: one data table, one eligibility gate, one profile receipt.
 
-import { classCreationConfig } from './characterCreation.js';
-
 export const PROGRESSION_MODES = Object.freeze(['normal', 'custom', 'debug', 'showcase']);
 export const UNDISCOVERED_PRESENTATIONS = Object.freeze(['hidden', 'silhouette']);
 
@@ -124,7 +122,6 @@ export function startingKitSnapshot(kit) {
     classId: kit.classId,
     rightHand: kit.rightHand || null,
     leftHand: kit.leftHand || null,
-    ...(kit.customized ? { customized: true } : {}),
   });
 }
 
@@ -138,94 +135,12 @@ export function validateRunStartingKit(run, registries, meta = {}, { legacy = fa
   }
   if (typeof run.startingKitId !== 'string') throw new Error('run startingKitId is required');
   if (!run.startingKitSnapshot || typeof run.startingKitSnapshot !== 'object') throw new Error('run startingKitSnapshot is required');
-  const armourGrant = run.loadout && run.loadout.creationArmourGrant;
-  if (armourGrant != null) {
-    if (!armourGrant || typeof armourGrant !== 'object' || Array.isArray(armourGrant)
-      || armourGrant.classId !== run.class || typeof armourGrant.id !== 'string') {
-      throw new Error('run creationArmourGrant is malformed');
-    }
-    if (!armourRows(registries, run.class).some((piece) => piece && piece.id === armourGrant.id)) {
-      throw new Error(`run creationArmourGrant names unknown armour '${armourGrant.id}'`);
-    }
-  }
-  if (run.startingKitSnapshot.customized === true) {
-    if (run.startingKitSnapshot.id !== run.startingKitId || run.startingKitSnapshot.classId !== run.class) {
-      throw new Error(`startingKitId '${run.startingKitId}' disagrees with customized startingKitSnapshot identity`);
-    }
-    const hands = ['leftHand', 'rightHand'].map((slotId) => [slotId, run.startingKitSnapshot[slotId] || null]);
-    if (hands[0][1] && hands[0][1] === hands[1][1]) {
-      throw new Error(`startingKitId '${run.startingKitId}' duplicates armament '${hands[0][1]}' across both hands`);
-    }
-    for (const [slotId, pieceId] of hands) {
-      if (!pieceId) continue;
-      const piece = armament(registries, pieceId);
-      if (!piece) throw new Error(`startingKitId '${run.startingKitId}' names unknown armament '${pieceId}'`);
-      if (!fitsKitSlot(slot(registries, slotId), piece)) {
-        throw new Error(`startingKitId '${run.startingKitId}' armament '${pieceId}' does not fit ${slotId}`);
-      }
-    }
-    return run;
-  }
   const row = resolveStartingKit(registries, run.class, run.startingKitId, meta);
   const expected = startingKitSnapshot(row);
   if (JSON.stringify(run.startingKitSnapshot) !== JSON.stringify(expected)) {
     throw new Error(`startingKitId '${run.startingKitId}' disagrees with persisted startingKitSnapshot`);
   }
   return run;
-}
-
-// ---------------------------------------------------------------------------
-// Starting armour (E5 / #250) — the same discovery shape as kits, for the set
-// you begin the climb wearing.
-//
-// STARTING-ELIGIBLE = the class's free set (unlock === '') PLUS any set whose
-// unlock the profile has EARNED (meta.unlocked — the same ledger the Armoury
-// reads via model/unlocks.js). No content edit widens this list: outfits.csv
-// keeps its "exactly one free set per class" contract and loadout.js keeps the
-// check that enforces it. What a player has won becomes a starting choice;
-// what they have not stays a prize.
-//
-// WHY meta AND NOT A NEW TABLE: the kit chooser above already answers "what
-// may this profile start with" from profile meta. Two eligibility ledgers for
-// two rows of the same screen would be two deciders — the #24 class of defect.
-// ---------------------------------------------------------------------------
-
-function armourRows(registries, classId) {
-  return (((registries || {}).equipment || {}).armour || []).filter((o) => o.classId === classId);
-}
-
-function armourIsStartingEligible(row, meta, registries, classId) {
-  if (!row) return false;
-  if (row.unlock === '') return true;
-  if ((classCreationConfig(registries, classId).armourIds || []).includes(row.id)) return true;
-  return new Set((meta && meta.unlocked) || []).has(row.unlock);
-}
-
-/** The sets this profile may begin in, authoring order, free set first-eligible. */
-export function startingArmourViews(registries, classId, meta = {}) {
-  return armourRows(registries, classId)
-    .filter((row) => armourIsStartingEligible(row, meta, registries, classId))
-    .map((row) => ({ id: row.id, label: row.name, blurb: row.blurb, free: row.unlock === '' }));
-}
-
-/**
- * The row the run starts wearing. `requestedId` absent → the class's free set,
- * which is exactly what createLoadout always chose — a caller that never heard
- * of this function gets yesterday's behaviour. A requested set that is not
- * this class's, or not earned, is refused BY NAME, never silently swapped:
- * a wrong-but-plausible fallback is the Law 0 clause 5 defect.
- */
-export function resolveStartingArmour(registries, classId, requestedId, meta = {}) {
-  const rows = armourRows(registries, classId);
-  const free = rows.find((row) => row.unlock === '');
-  if (!requestedId) {
-    if (!free) throw new Error(`class '${classId}' has no free starting armour set`);
-    return free;
-  }
-  const row = rows.find((entry) => entry.id === requestedId);
-  if (!row) throw new Error(`starting armour '${requestedId}' is unavailable to class '${classId}'`);
-  if (!armourIsStartingEligible(row, meta, registries, classId)) throw new Error(`starting armour '${requestedId}' is not unlocked`);
-  return row;
 }
 
 export function recordArmamentDiscovery(meta, pieceId, {

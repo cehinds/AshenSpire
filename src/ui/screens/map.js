@@ -37,15 +37,7 @@ import { mountMapBoard } from '../components/mapboard.js';
 import { flaskActionPlan } from '../../model/flaskActions.js';
 import { flaskPresentation, mountFlaskActionMenu } from '../components/flask.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
-import { hudShellHtml } from '../components/hudmeta.js';
-import { actRouteStripHtml } from '../components/actRouteStrip.js';
-import { runHudViewModel } from '../viewModels/RunHudViewModel.js';
-import { wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { wireHudModeGrip } from '../components/hudModeGrip.js';
-import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
-import { resourceBars } from '../components/resbars.js';
-import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
-import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
+import { buildStampHtml } from '../components/buildstamp.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -66,9 +58,8 @@ let liveMapKeys = null;
 // re-centre a scrollport this mount is about to replace; leaving them running is
 // the same leak the handler above was written for, one object over.
 let liveMapBoard = null;
-let liveMapViewportRelease = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onSettings, onMenu, onArmoury }) {
   // Before anything is drawn: the previous mount's keyboard handler, if this is
   // a re-mount. See `liveMapKeys` above.
   if (liveMapKeys) {
@@ -79,8 +70,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     liveMapBoard.teardown();
     liveMapBoard = null;
   }
-  liveMapViewportRelease?.();
-  liveMapViewportRelease = null;
   const map = run.mapGraph;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
@@ -91,73 +80,51 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const fog = mode === 'fog';
 
   const cz = run.customization || {};
+  const hpPct = Math.max(0, Math.min(100, Math.round((run.hp / Math.max(1, run.maxHp)) * 100)));
   const className = registries.classes.get(run.class).name;
   const heroName = (cz.name || className).toUpperCase();
+  const hasRelics = run.relics.length > 0;
+  const hasFlasks = run.flasks.length > 0;
   const atEntrance = !run.mapNodeId;
-  const legendHtml = `<div class="map-legend-pop" hidden>
-    ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
-  </div>`;
+  const entranceStart = atEntrance && map.startIds.length ? map.nodes[map.startIds[0]] : null;
+  const entranceBoss = atEntrance ? Object.values(map.nodes).find((n) => n.type === 'boss') : null;
+  const entranceOrientation = entranceStart && entranceBoss
+    ? `<div class="map-entrance-orientation" data-composition="orientation-strip" role="note" aria-label="${esc(actTitle(run.actNumber))} orientation: entrance to boss">
+        <strong>${esc(actTitle(run.actNumber))}</strong>
+        <span class="map-orientation-progress" aria-hidden="true">
+          <small data-role="start">ENTRANCE</small><span class="map-orientation-rail"></span><small data-role="boss">BOSS</small>
+        </span>
+      </div>`
+    : '';
 
   app.innerHTML = `
     <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
-      <!-- ONE HUD SHELL: this is the same component combat mounts. -->
-      ${hudShellHtml(runHudViewModel({
-        place: 'map',
-        headerClass: 'map-header',
-        cinders: run.cinders,
-        act: run.actNumber,
-        actTotal: run.actNumber > 3 ? null : 3,
-        floor: run.floor,
-        floorTotal: map.floors,
-        seed: run.seedString,
-        identity: {
-          name: heroName,
-          classLabel: className.toUpperCase(),
-          glyph: cz.glyph || classGlyph(run.class),
-          tint: tintCss(cz.tint),
-          context: actTitle(run.actNumber),
-        },
-        controls: {
-          armouryId: 'open-armoury',
-          menuId: 'open-menu',
-          menuHint: actionHint('menu'),
-        },
-        quickSettings: {
-          presentation: registries.balance.ui.hudQuickSettings,
-          settings: meta.settings || {},
-        },
-        overlayHtml: legendHtml,
-      }))}
-      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
+      <header class="topbar map-header">
+        <div class="portrait" style="border-color:${tintCss(cz.tint)}">${esc(cz.glyph || classGlyph(run.class))}</div>
+        <div class="who">
+          <span class="nm">${esc(heroName)} · ${esc(className.toUpperCase())}</span>
+          <div class="bar hpbar"><div class="fill" style="width:${hpPct}%"></div><div class="label">HP ${run.hp} / ${run.maxHp}</div></div>
+        </div>
+        <span class="mh-stat cinders">⛁ ${run.cinders}</span>
+        <span class="mh-stat mh-prog">${run.actNumber > 3 ? `Act ${run.actNumber}` : `Act ${run.actNumber} / 3`} · Floor ${run.floor} / ${map.floors}</span>
+        <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(run.seedString)}</span>
+        ${buildStampHtml('map')}
+        <div class="mh-actions">
+          <button class="topbar-btn" id="open-armoury" title="Armoury">⚒</button>
+          <button class="topbar-btn" id="map-legend" title="Map legend">?</button>
+          <button class="topbar-btn" id="open-menu" data-action-hint="menu" title="${esc(actionHint('menu'))}" aria-label="${esc(actionHint('menu'))}">☰</button>
+        </div>
+        <div class="map-legend-pop" hidden>
+          ${legendEntries().map((e) => `<div><span class="ic"${e.tint ? ` style="color:${e.tint}"` : ''}>${esc(e.icon)}</span>${esc(e.name)}</div>`).join('')}
+        </div>
+      </header>
+      <div class="map-substrip${hasFlasks ? '' : ' no-flasks'}"${hasRelics || hasFlasks ? '' : ' hidden'}>
+        <div class="mh-flasks"></div>
+        ${hasFlasks && hasRelics ? '<span class="mh-div"></span>' : ''}
+        <div class="relics mh-relics"></div>
+      </div>
     </div>`;
-  wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
-  wireHudModeGrip(app, { settings: meta.settings || {}, onSettingsChange });
-
-  // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
-  //
-  // E9 / #254, his words: "I'd like the hud to look the same both combat and
-  // map". ONE renderer for both — ui/components/resbars.js — fed by the one
-  // plan builder, model/resources.js `resourceBarPlan(…, 'main', …)`, which is
-  // the identical call combat.js:435 and coop.js:460 make. So:
-  //
-  //   · WHICH rows appear is content/resources.js's business, not this
-  //     screen's. HP, then Mana, then Stamina — the map does
-  //     not get its own list and cannot drift from combat's.
-  //   · TROUGH LENGTH is `scale(max)/scale(reference)` against the SAME
-  //     reference table (HUD_REFERENCE_MAX, his 200/20/20), so each pool's length
-  //     means the same thing on both screens.
-  //   · The `run` IS the view and the entity here, exactly as it is in
-  //     tools/hybridstats.mjs — the readers take current/max off it and a row
-  //     whose reader returns null is ABSENT, never a lying 0/0 trough. Poise is
-  //     model-surface-only on the combat character card, so it never enters
-  //     this shared main-surface plan on either screen.
-  //   · the shared component writes the exact max/reference percentage; there
-  //     is no screen-specific floor or post-layout correction.
-  const resHost = app.querySelector('.map-header .resbars-host');
-  if (resHost) {
-    const mapPlan = resourceBarPlan(registries, 'main', run, run, resourceDomains(registries));
-    resHost.appendChild(resourceBars(mapPlan, { surface: 'main' }));
-  }
+  app.querySelector('.mapscreen').insertAdjacentHTML('beforeend', entranceOrientation);
 
   // ---- THE BOARD -------------------------------------------------------
   //
@@ -175,7 +142,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // green — this was only ever visible to an eye.
   const board = mountMapBoard(app.querySelector('.mapscreen'), {
     act: { nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId },
-    showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
       current: run.mapNodeId || null,
@@ -191,57 +157,22 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     chromeHtml: hintBarHtml('map'),
   });
 
-  const strip = app.querySelector('.hud-relics');
+  const strip = app.querySelector('.mh-relics');
   for (const rid of run.relics) {
     const def = registries.relics.get(rid);
     const el = document.createElement('div');
     el.className = 'relic';
-    markUiComponent(el, UI.relicSlot);
     el.textContent = def.icon || '◆';
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(relicText(def, registries))}`);
     strip.appendChild(el);
   }
 
-  const chargeWrap = app.querySelector('.hud-charge-flasks');
-  for (const kind of CHARGE_FLASK_KINDS) {
-    const def = chargeFlaskDefinition(registries, kind);
-    if (!def) continue;
-    const current = run.flaskCharges ? run.flaskCharges[`${kind}Current`] : 0;
-    const el = document.createElement('button');
-    el.type = 'button';
-    el.className = 'relic flask-slot flask-charge';
-    el.dataset.flaskKind = kind;
-    markUiComponent(el, kind === 'hp' ? UI.crimsonFlaskControl : UI.azureFlaskControl);
-    el.setAttribute('aria-disabled', String(current <= 0));
-    el.appendChild(flaskPresentation(def, { showName: false }));
-    const count = document.createElement('b');
-    count.className = 'flask-charge-count';
-    count.textContent = String(current);
-    el.appendChild(count);
-    attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}<br>${current} charge${current === 1 ? '' : 's'} remaining.`);
-    el.addEventListener('click', () => {
-      const plan = flaskActionPlan({
-        context: 'run',
-        canUse: false,
-        useReason: 'Healing and mana flasks can only be used in combat',
-        canDrop: false,
-        dropReason: 'Charge flasks stay with the run',
-      });
-      mountFlaskActionMenu(el, { def, plan, onCancel: () => {}, onAction: () => {} });
-    });
-    chargeWrap.appendChild(el);
-  }
-
-  const flaskWrap = app.querySelector('.hud-potions');
+  const flaskWrap = app.querySelector('.mh-flasks');
   for (const f of run.flasks) {
     const def = registries.flasks.get(f.flaskId);
     const el = document.createElement('button');
     el.type = 'button';
-    // The shared HUD lives inside CHROME, so `.flask-slot` is the deliberate
-    // unified-cursor exception in input.js. Keep utility flasks reachable by
-    // keyboard/gamepad Confirm as well as pointer click.
-    el.className = 'mh-flask flask-slot';
-    markUiComponent(el, UI.potionControl);
+    el.className = 'mh-flask';
     el.appendChild(flaskPresentation(def, { showName: false }));
     attachTooltip(el, () => `<div class="tt-title">${esc(def.name)}</div>${esc(def.textTemplate || '')}`);
     el.addEventListener('click', () => {
@@ -260,13 +191,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           const at = run.flasks.indexOf(f);
           if (at >= 0) run.flasks.splice(at, 1);
           el.remove();
-          flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
         },
       });
     });
     flaskWrap.appendChild(el);
   }
-  flaskWrap.closest('.shared-hud').dataset.hasUtilityPotions = flaskWrap.children.length ? 'true' : 'false';
 
   const armouryBtn = app.querySelector('#open-armoury');
   if (onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
@@ -302,19 +231,17 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const menuBtn = app.querySelector('#open-menu');
   if (onMenu) {
     menuBtn.addEventListener('click', (e) => {
-      if (quickNavMode() === 'off') return onMenu('settings');
+      if (quickNavMode() === 'off') return onMenu('deck');
       e.stopPropagation();
       openQuickNav(menuBtn, 'map', {
         counts: { deck: run.deck.length },
         hasSave: !!(onSave || onQuit),
-        controls: quickControls,
         actions: {
           tab: (id) => onMenu(id),
-          ...(onArmoury ? { inventory: () => onArmoury('rack'), character: () => onArmoury('grid') } : {}),
-          ...(onLoad ? { load: () => onLoad({ returnFocusElement: menuBtn }) } : {}),
+          ...(onArmoury ? { armoury: () => onArmoury() } : {}),
+          legend: () => toggleLegend(),
           ...(onSave ? { save: saveAction(onSave) } : {}),
-          ...(onQuit ? { saveQuit: () => onQuit() } : {}),
-          ...(onQuitWithoutSave ? { quit: () => onQuitWithoutSave({ returnFocusElement: menuBtn }) } : {}),
+          ...(onQuit ? { quit: () => onQuit() } : {}),
         },
       });
     });
@@ -330,7 +257,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   }
   attachTooltip(menuBtn, () =>
     `<div class="tt-title">Menu</div>${esc(quickNavMode() === 'off'
-      ? 'Armoury, settings, controls and saving.'
+      ? 'Deck, relics, stats, settings and saving.'
       : 'Everywhere you can go from here.')}`);
 
   // Keyboard: M opens the menu overlay; + / − / 0 zoom; a standing veil owns
@@ -350,10 +277,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (matchAction(ev, 'menu')) {
-      if (onMenu) onMenu('settings');
-    } else if (matchAction(ev, 'deck') || matchAction(ev, 'relics') || matchAction(ev, 'stats')) {
-      if (onArmoury) onArmoury();
+    if (matchAction(ev, 'menu') || matchAction(ev, 'deck')) {
+      if (onMenu) onMenu('deck');
+    } else if (matchAction(ev, 'relics')) {
+      if (onMenu) onMenu('relics');
+    } else if (matchAction(ev, 'stats')) {
+      if (onMenu) onMenu('stats');
     } else if (ev.key === '+' || ev.key === '=') {
       board.stepZoom(1);
     } else if (ev.key === '-' || ev.key === '_') {
@@ -369,27 +298,6 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // cursor lands once it has (only when the player is using keyboard/gamepad, so
   // mouse players get no stray ring).
   board.recenter(() => { if (isEngaged()) focusFirst('.map-node.reachable'); });
-  let frameA = 0;
-  let frameB = 0;
-  const recenterAfterSettle = () => {
-    cancelAnimationFrame(frameA);
-    cancelAnimationFrame(frameB);
-    frameA = requestAnimationFrame(() => {
-      frameB = requestAnimationFrame(() => {
-        if (app.querySelector('.mapscreen')) board.recenter();
-      });
-    });
-  };
-  const viewport = window.visualViewport;
-  for (const type of ['resize', 'ashenspire:hud-mode-change']) window.addEventListener(type, recenterAfterSettle);
-  for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(type, recenterAfterSettle);
-  viewport?.addEventListener('resize', recenterAfterSettle);
-  liveMapViewportRelease = () => {
-    cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
-    for (const type of ['resize', 'ashenspire:hud-mode-change']) window.removeEventListener(type, recenterAfterSettle);
-    for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
-    viewport?.removeEventListener('resize', recenterAfterSettle);
-  };
   liveMapBoard = board;
 }
 

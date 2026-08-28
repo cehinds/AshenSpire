@@ -168,28 +168,6 @@ export const equipMods = [
     "blurb": "Added to your maximum HP for the run."
   },
   {
-    "field": "maxMana",
-    "scope": "run",
-    "apply": "maxMana",
-    "op": "",
-    "effTarget": "",
-    "status": "",
-    "label": "Max Mana",
-    "clause": "",
-    "blurb": "Added to your maximum Mana for the run."
-  },
-  {
-    "field": "maxStamina",
-    "scope": "run",
-    "apply": "maxStamina",
-    "op": "",
-    "effTarget": "",
-    "status": "",
-    "label": "Max Stamina",
-    "clause": "",
-    "blurb": "Added to your maximum Stamina for the run."
-  },
-  {
     "field": "swapCost",
     "scope": "run",
     "apply": "swapCost",

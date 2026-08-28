@@ -37,10 +37,10 @@
 
 import { enemySprite, playerSprite, classGlyph, tintCss } from '../assets.js';
 import { renderCard, upgradePreviewHtml } from '../components/card.js';
-import { attachTooltip, hideTooltip, esc } from '../components/tooltip.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
+import { attachTooltip, esc } from '../components/tooltip.js';
+import { anchorLocalBox } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentBadge, intentTooltip, backdropClass, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
-import { resolveCard, passiveSum } from '../../model/registries.js';
+import { resolveCard } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure } from '../components/arcaneExposure.js';
@@ -50,13 +50,8 @@ import { flaskIdentityHtml, mountFlaskActionMenu } from '../components/flask.js'
 import { beatArmer } from '../components/holdconfirm.js';
 import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefill.js';
 import { mountHand } from '../components/hand.js';
-import { focusElement, focusFirst, isEngaged, matchAction, setScreenKeyClaim } from '../input.js';
-import { decorateFriendlyTarget } from '../components/friendlyTargets.js';
-import { friendlyTargetPlan } from '../../model/friendlyTargets.js';
-import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 
-export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
+export function mountCoop(app, { registries, conn, myId, myIds, meta, onLeave }) {
   const resourceDomainTable = resourceDomains(registries);
   const arm = beatArmer(meta, registries);
   let snap = null;
@@ -66,14 +61,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let me = seats[0];
   let selectedEnemy = null;
   let armedFlask = null; // non-offensive flask slot awaiting a throw seat
-  let armedFriendlyCard = null; // friendly-targeted card instanceId awaiting a legal seat
+  let armedAllyCard = null; // ally-targeted card instanceId awaiting a seat
   let prevCombat = null; // last combat scene, for snapshot-diff FX
   let pacing = false; // an enemy-turn replay is holding the render
-  let pendingSnaps = []; // every unrendered authoritative frame, causal order
-  let latestWireSnap = null; // newest wire state, even while the old board paces
-  let receivedSnapshots = 0;
-  let lastReceiptSeq = 0; // rendered authoritative combat receipt identity
-  let guardCoopTool = null; // query-gated real-wire browser control
+  let pendingSnap = null; // newest snapshot that arrived while pacing
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let handStrip = null; // the live hand strip (components/hand.js), same discipline
   // The beat is the same on pointer, keyboard and pad since S7 went wide
@@ -115,7 +106,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         if (actionId !== 'use') return;
         if (chargeKind) sendFlaskUse({ chargeKind });
         else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
-        else { armedFlask = armedFlask === slot ? null : slot; armedFriendlyCard = null; render(); }
+        else { armedFlask = armedFlask === slot ? null : slot; armedAllyCard = null; render(); }
       },
     });
   }
@@ -125,42 +116,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     seatIdx = i;
     me = seats[i];
     armedFlask = null;
-    armedFriendlyCard = null;
+    armedAllyCard = null;
     render();
-  }
-
-  function cancelFriendlyTargeting({ restoreFocus = true } = {}) {
-    const cardId = armedFriendlyCard;
-    if (!cardId) return false;
-    armedFriendlyCard = null;
-    hideTooltip();
-    render();
-    if (restoreFocus) {
-      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(cardId)}"]`);
-      if (card) focusElement(card);
-    }
-    return true;
-  }
-
-  function cardAffordableFromSnapshot(def, player) {
-    if (!def || !player || player.ended || !player.alive || !player.connected) return false;
-    let energyCost = def.cost === 'X' ? 1 : def.cost;
-    if (def.type === 'power') {
-      energyCost = Math.max(0, energyCost - passiveSum(registries, player.relicIds, 'powerCostReduction'));
-    }
-    return player.energy >= energyCost && player.mana >= (def.manaCost || 0);
-  }
-
-  function armFriendlyTargeting(cardInstanceId) {
-    if (armedFriendlyCard === cardInstanceId) {
-      cancelFriendlyTargeting();
-      return;
-    }
-    armedFriendlyCard = cardInstanceId;
-    armedFlask = null;
-    hideTooltip();
-    render();
-    focusFirst('.coop-seat[data-friendly-target]');
   }
 
   // A seat has something to do in the current scene (drives the tab pips).
@@ -199,55 +156,29 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }
 
   // ---- couch input: keyboard drives the active seat; pads own their seats ---
-  const matchedFlaskSlot = (ev) => {
-    for (let slot = 0; slot < 3; slot++) {
-      if (matchAction(ev, `flask${slot + 1}`)) return slot;
-    }
-    return -1;
-  };
-  const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
-  const flaskKeyHandler = (ev) => {
-    if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
-    if (!snap || snap.scene.kind !== 'combat') return;
-    const meP = snap.scene.players.find((p) => p.id === me);
-    if (!meP || !meP.alive || !meP.connected) return;
-    const slot = matchedFlaskSlot(ev);
-    if (slot >= 0) {
-      ev.preventDefault();
-      ev.stopImmediatePropagation();
-      if (meP.flasks && meP.flasks[slot]) app.querySelector(`[data-coop-flask-slot="${slot}"]`)?.click();
-      return;
-    }
-  };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
-    if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
-      ev.preventDefault();
-      if (!cancelFriendlyTargeting()) { armedFlask = null; render(); }
-      return;
-    }
     if (!snap || snap.scene.kind !== 'combat') return;
     const sc = snap.scene;
     const meP = sc.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
     if (ev.key === 'e' || ev.key === 'E') { if (!meP.ended) send({ t: 'endTurn' }); return; }
+    const fl = { f: 0, g: 1, h: 2 }[ev.key.toLowerCase()];
+    if (fl != null && meP.flasks && meP.flasks[fl]) {
+      app.querySelector(`[data-coop-flask-slot="${fl}"]`)?.click();
+      return;
+    }
     const idx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (idx >= 0 && meP.hand[idx]) {
+    if (idx >= 0 && !meP.ended && meP.hand[idx]) {
       const c = meP.hand[idx];
       const def = cardDef(c);
-      if (!cardAffordableFromSnapshot(def, meP)) return;
-      if (friendlyTargetPlan(def, me, sc.players).active) { armFriendlyTargeting(c.instanceId); return; }
+      if ((def.effects || []).some((e) => e.target === 'ally')) { armedAllyCard = c.instanceId; render(); return; }
       const needs = (def.effects || []).some((e) => e.target === 'enemy');
       send({ t: 'playCard', cardInstanceId: c.instanceId, targetId: needs ? selectedEnemy : undefined });
     }
   };
-  // input.js owns a capture listener and may stop a configured action before
-  // it bubbles. Co-op flasks therefore listen at that same capture boundary;
-  // controller-synthesized and rebound keyboard keys traverse one door. The
-  // remaining screen keys stay on the ordinary bubble path.
-  addEventListener('keydown', flaskKeyHandler, true);
-  addEventListener('keydown', keyHandler);
+  document.addEventListener('keydown', keyHandler);
   // Gamepads: pad 0 → seat 2, pad 1 → seat 3, … (keyboard/mouse keep seat 1).
   // A pad's first button press pulls the active seat to its own; navigation
   // then flows through the global focus system like solo play.
@@ -269,56 +200,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   }, 120);
 
   function teardown() {
-    releaseFlaskKeyClaim();
-    removeEventListener('keydown', flaskKeyHandler, true);
-    removeEventListener('keydown', keyHandler);
+    document.removeEventListener('keydown', keyHandler);
     clearInterval(padTimer);
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     removeSeatTabs();
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
-    if (typeof window !== 'undefined' && window.__guardCoopTool === guardCoopTool) delete window.__guardCoopTool;
   }
   const myMember = () => (snap ? snap.party.find((p) => p.id === me) : null);
   const cardDef = (c) => resolveCard(registries, { cardId: c.cardId, upgraded: c.upgraded, mods: c.mods });
-  guardCoopTool = typeof window !== 'undefined' && new URLSearchParams(location.search).has('guardTool') ? {
-    resync: () => send({ t: 'resync' }),
-    playFirstFromLatest: () => {
-      const sc = latestWireSnap?.scene;
-      const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
-      const card = player?.hand.find((entry) => {
-        const def = cardDef(entry);
-        return (def.effects || []).some((effect) => effect.target === 'enemy')
-          && player.energy >= (def.cost === 'X' ? 1 : def.cost)
-          && player.mana >= (def.manaCost || 0);
-      });
-      const enemy = sc?.enemies.find((entry) => entry.alive);
-      if (!card || !enemy) return null;
-      send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: enemy.id });
-      return { cardId: card.cardId, receiptSeq: sc.receiptSeq };
-    },
-    playCardOnAllyFromLatest: (cardId, allyId) => {
-      const sc = latestWireSnap?.scene;
-      const player = sc?.kind === 'combat' ? sc.players.find((entry) => entry.id === me) : null;
-      const card = player?.hand.find((entry) => entry.cardId === cardId);
-      const ally = sc?.players.find((entry) => entry.id === allyId && entry.alive && entry.connected);
-      if (!card || !ally) return null;
-      send({ t: 'playCard', cardInstanceId: card.instanceId, targetId: ally.id });
-      return { cardId: card.cardId, allyId: ally.id, receiptSeq: sc.receiptSeq };
-    },
-    state: () => ({
-      pacing, receivedSnapshots, lastReceiptSeq,
-      latestReceiptSeq: latestWireSnap?.scene?.receiptSeq || 0,
-      pendingReceiptSeqs: pendingSnaps.map((entry) => entry.scene?.receiptSeq || 0),
-    }),
-  } : null;
-  if (guardCoopTool) window.__guardCoopTool = guardCoopTool;
   const wireLeave = () => { const b = app.querySelector('#coop-leave'); if (b) b.addEventListener('click', () => { teardown(); conn.close(); onLeave(); }); };
 
   function render() {
     if (!snap) return;
-    if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     const mm = myMember();
@@ -403,32 +298,16 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // ---- combat (parity board) ------------------------------------------------
   function renderCombat() {
     const sc = snap.scene;
-    const focusedFriendlySeat = (app.querySelector('.coop-seat[data-friendly-target].gp-focus')
-      || document.activeElement?.closest?.('.coop-seat[data-friendly-target]'))?.dataset.seat || null;
-    let restoreFriendlyCardFocus = null;
     const living = sc.enemies.filter((e) => e.hp > 0);
     if (selectedEnemy == null || !living.find((e) => e.id === selectedEnemy)) selectedEnemy = living[0] ? living[0].id : null;
     const meP = sc.players.find((p) => p.id === me);
-    let armedCardDef = armedFriendlyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedFriendlyCard); return c ? cardDef(c) : null; })() : null;
-    if (armedFriendlyCard && !armedCardDef) armedFriendlyCard = null; // card left the hand
-    let targetPlan = armedCardDef ? friendlyTargetPlan(armedCardDef, me, sc.players) : null;
-    const focusedFriendlyInvalid = focusedFriendlySeat && targetPlan && !targetPlan.legalIds.includes(focusedFriendlySeat);
-    if (armedFriendlyCard && targetPlan && (targetPlan.targets.length === 0 || focusedFriendlyInvalid)) {
-      restoreFriendlyCardFocus = armedFriendlyCard;
-      armedFriendlyCard = null;
-      armedCardDef = null;
-      targetPlan = null;
-    }
-    const arming = armedFlask != null || armedFriendlyCard != null;
+    const arming = armedFlask != null || armedAllyCard != null;
+    const armedCardDef = armedAllyCard && meP ? (() => { const c = meP.hand.find((h) => h.instanceId === armedAllyCard); return c ? cardDef(c) : null; })() : null;
+    if (armedAllyCard && !armedCardDef) armedAllyCard = null; // card left the hand
 
     app.innerHTML = `
       <div class="combat coop">
         <header class="topbar combat-hud">
-          ${hudQuickSettingsHtml(hudQuickSettingsModel({
-            place: 'combat',
-            presentation: registries.balance.ui.hudQuickSettings,
-            settings: meta.settings || {},
-          }))}
           <div class="hud-top">
             <div class="resbars-host"></div>
             <span class="fight-label">${esc(actTitle(snap.actNumber))} · FLOOR ${snap.floor} · SEED ${esc(snap.seedString)}</span>
@@ -442,7 +321,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         </div>
         ${meP && ((meP.flasks && meP.flasks.length) || meP.flaskCharges) ? '<div class="coop-flasks"></div>' : ''}
         ${armedFlask != null ? `<div class="coop-arm">Throwing <b>${esc(registries.flasks.get(meP.flasks[armedFlask].flaskId).name)}</b> — click a hero seat to give it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
-        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — choose a highlighted hero. <button class="subtle" id="coop-cancel-target">Cancel</button></div>` : ''}
+        ${armedCardDef ? `<div class="coop-arm">Playing <b>${esc(armedCardDef.name)}</b> — click the hero who receives it. <button class="subtle" id="coop-cancel-flask">Cancel</button></div>` : ''}
         <div class="hand-area">
           <div class="energy-orb">${meP ? `${meP.energy}/${meP.energyMax}` : ''}</div>
           <!-- The strip is components/hand.js — THE one hand renderer, the same
@@ -459,7 +338,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         </div>
         <div class="fx-layer"></div>
       </div>`;
-    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     // The active seat gets the same main-HUD plan as solo. Values come only
     // from the host snapshot; a missing current/max pair produces no bar.
@@ -474,8 +352,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     for (const p of sc.players) {
       const m = snap.party.find((x) => x.id === p.id) || {};
       const box = document.createElement('div');
-      const friendly = targetPlan && targetPlan.targets.find((target) => target.id === p.id);
-      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${armedFlask != null && p.alive && p.connected ? ' throw-target' : ''}`;
+      box.className = `combatant player coop-seat${p.id === me ? ' me' : ''}${p.ended ? ' ended' : ''}${p.alive ? '' : ' down'}${p.connected ? '' : ' away'}${arming && p.alive && p.connected ? ' throw-target' : ''}`;
       box.dataset.seat = p.id;
       const sprite = document.createElement('div');
       sprite.className = 'sprite';
@@ -490,22 +367,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if (p.id === me) sprite.style.filter = `drop-shadow(0 0 6px ${tintCss(m.tint)})`;
       box.appendChild(meterBars(p, false));
       box.appendChild(statusRow(p.statuses));
-      if (friendly) {
-        decorateFriendlyTarget(box, { relationship: friendly.relationship, label: m.name || p.id });
-        box.addEventListener('click', () => {
-          const cardInstanceId = armedFriendlyCard;
-          if (!cardInstanceId) return;
-          armedFriendlyCard = null;
-          hideTooltip();
-          render();
-          send({ t: 'playCard', cardInstanceId, targetId: p.id });
-        });
-      } else if (armedFlask != null && p.alive && p.connected) {
-        box.addEventListener('click', () => {
-          sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id });
-          armedFlask = null;
-        });
-      }
+      if (arming && p.alive && p.connected) box.addEventListener('click', () => {
+        if (armedAllyCard) { send({ t: 'playCard', cardInstanceId: armedAllyCard, targetId: p.id }); armedAllyCard = null; }
+        else { sendFlaskUse({ slot: armedFlask, targetId: p.id === me ? undefined : p.id }); armedFlask = null; }
+      });
       zone.appendChild(box);
     }
 
@@ -545,8 +410,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
         el.addEventListener('click', () => {
           if (!entry.affordable) return;
           const effects = entry.def.effects || [];
-          if (friendlyTargetPlan(entry.def, me, sc.players).active) {
-            armFriendlyTargeting(entry.inst.instanceId);
+          if (effects.some((ef) => ef.target === 'ally')) {
+            armedAllyCard = armedAllyCard === entry.inst.instanceId ? null : entry.inst.instanceId;
+            armedFlask = null;
+            render();
             return;
           }
           const needs = effects.some((ef) => ef.target === 'enemy');
@@ -560,7 +427,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const def = cardDef(c);
           const energyAffordable = def.cost === 'X' ? meP.energy > 0 : meP.energy >= def.cost;
           const manaAffordable = meP.mana >= (def.manaCost || 0);
-          const affordable = cardAffordableFromSnapshot(def, meP);
+          const affordable = !meP.ended && energyAffordable && manaAffordable;
           // The spelled-out reason is this viewer's data: a co-op client reads
           // a snapshot, not the engine, so the card itself says why it is grey.
           const reason = affordable ? null
@@ -569,7 +436,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           return {
             inst: { cardId: c.cardId, upgraded: c.upgraded, instanceId: c.instanceId, mods: c.mods },
             def, name: def.name, affordable, reason,
-            selected: c.instanceId === armedFriendlyCard,
+            selected: c.instanceId === armedAllyCard,
           };
         }),
       });
@@ -617,17 +484,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       },
     });
     endTurnBeat.refresh();
-    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedFriendlyCard = null; render(); });
-    const ct = app.querySelector('#coop-cancel-target'); if (ct) ct.addEventListener('click', () => cancelFriendlyTargeting());
-    if (restoreFriendlyCardFocus) {
-      const card = app.querySelector(`.hand .card[data-instance-id="${CSS.escape(restoreFriendlyCardFocus)}"]`);
-      if (card) focusElement(card);
-    } else if (armedFriendlyCard && isEngaged()) {
-      const preservedTarget = focusedFriendlySeat && targetPlan?.legalIds.includes(focusedFriendlySeat)
-        ? app.querySelector(`.coop-seat[data-friendly-target][data-seat="${CSS.escape(focusedFriendlySeat)}"]`)
-        : null;
-      if (!preservedTarget || !focusElement(preservedTarget)) focusFirst('.coop-seat[data-friendly-target]');
-    }
+    const cf = app.querySelector('#coop-cancel-flask'); if (cf) cf.addEventListener('click', () => { armedFlask = null; armedAllyCard = null; render(); });
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
@@ -651,11 +508,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
-          ${hudQuickSettingsHtml(hudQuickSettingsModel({
-            place: 'map',
-            presentation: registries.balance.ui.hudQuickSettings,
-            settings: meta.settings || {},
-          }))}
           <span class="mh-stat mh-prog">${snap.actNumber > 3 ? `Act ${snap.actNumber}` : `Act ${snap.actNumber} / 3`} · Floor ${snap.floor}</span>
           <span class="mh-stat mh-seed" title="Run seed">SEED ${esc(snap.seedString)}</span>
           ${voteLine}
@@ -663,7 +515,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           <div class="mh-actions"><button class="subtle coop-leave" id="coop-leave">Leave</button></div>
         </header>
       </div>`;
-    wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
     if (mapBoard) mapBoard.teardown();
     mapBoard = mountMapBoard(app.querySelector('.mapscreen'), {
@@ -835,14 +686,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function receiveSnapshot(s) {
-    latestWireSnap = s;
-    receivedSnapshots += 1;
-    if (pacing) {
-      const seq = s.scene?.kind === 'combat' ? Number(s.scene.receiptSeq) || 0 : 0;
-      const duplicate = seq > 0 && pendingSnaps.some((entry) => entry.scene?.receiptSeq === seq);
-      if (!duplicate) pendingSnaps.push(s);
-      return;
-    }
+    if (pacing) { pendingSnap = s; return; }
     const sc = s.scene;
     const moves = sc && sc.kind === 'combat' && sc.events ? sc.events.filter((e) => e.type === 'enemyMoveStarted') : [];
     if (moves.length && prevCombat && sc.turn > prevCombat.turn && app.querySelector('.combat.coop')) {
@@ -868,28 +712,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }
       await sleep(160);
     } finally {
-      const frames = [s, ...pendingSnaps];
-      pendingSnaps = [];
-      const unique = [];
-      const seenReceiptSeqs = new Set();
-      for (const frame of frames) {
-        const seq = frame.scene?.kind === 'combat' ? Number(frame.scene.receiptSeq) || 0 : 0;
-        if (seq > 0 && seenReceiptSeqs.has(seq)) continue;
-        if (seq > 0) seenReceiptSeqs.add(seq);
-        unique.push(frame);
-      }
-      const latest = unique[unique.length - 1] || s;
-      const combatFrames = unique.filter((frame) => frame.scene?.kind === 'combat');
-      snap = combatFrames.length === unique.length && combatFrames.length > 1
-        ? {
-            ...latest,
-            scene: {
-              ...latest.scene,
-              events: combatFrames.flatMap((frame) => frame.scene.events || []),
-            },
-          }
-        : latest;
       pacing = false;
+      snap = pendingSnap || s;
+      pendingSnap = null;
       render();
       if (snap.scene.kind === 'combat') banner(`TURN ${snap.scene.turn}`, true);
     }
@@ -911,7 +736,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!prev) return;
     const layer = app.querySelector('.fx-layer');
     if (!layer) return;
-    const put = (sel, cls, text, dy = 0.35, dx = 0, receiptRow = null) => {
+    const put = (sel, cls, text, dy = 0.35) => {
       const anchor = app.querySelector(sel);
       if (!anchor) return;
       // Convert the anchor's on-screen box into the layer's local (pre-zoom)
@@ -921,122 +746,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const el = document.createElement('div');
       el.className = cls;
       el.textContent = text;
-      const centre = b.left + b.width / 2 + dx;
-      const top = b.top + b.height * dy;
-      el.style.left = `${centre}px`;
-      el.style.top = `${top}px`;
+      el.style.left = `${b.left + b.width / 2}px`;
+      el.style.top = `${b.top + b.height * dy}px`;
       layer.appendChild(el);
-      const half = el.offsetWidth / 2;
-      const at = clampBox(
-        { left: centre - half, top, width: el.offsetWidth, height: el.offsetHeight },
-        anchorLocalBox(layer, layer),
-        { pad: 6 },
-      );
-      el.style.left = `${at.left + half}px`;
-      if (receiptRow) {
-        receiptRow.baseTop = top;
-        receiptRow.items.push(el);
-      } else {
-        el.style.top = `${at.top}px`;
-      }
       setTimeout(() => el.remove(), 1100);
-      return el;
-    };
-    const maxAnimationScale = (el) => {
-      let scale = 1;
-      for (const animation of el.getAnimations()) {
-        for (const frame of animation.effect?.getKeyframes?.() || []) {
-          if (!frame.transform || frame.transform === 'none') continue;
-          try {
-            const matrix = new DOMMatrixReadOnly(frame.transform);
-            scale = Math.max(scale, Math.hypot(matrix.a, matrix.b), Math.hypot(matrix.c, matrix.d));
-          } catch { /* an unparseable transform cannot reduce the measured box */ }
-        }
-      }
-      return scale;
-    };
-    const layoutReceiptRows = (rowsByTarget) => {
-      const view = anchorLocalBox(layer, layer);
-      for (const rows of rowsByTarget.values()) {
-        const all = rows.flatMap((row) => row.items);
-        const gap = Math.max(2, ...all.map((el) => (parseFloat(getComputedStyle(el).fontSize) || 0) * 0.12));
-        for (const row of rows) {
-          row.height = Math.max(...row.items.map((el) => el.offsetHeight * maxAnimationScale(el)));
-        }
-        const height = rows.reduce((sum, row) => sum + row.height, 0) + gap * Math.max(0, rows.length - 1);
-        let cursor = clampBox(
-          { left: 0, top: rows[0].baseTop - height / 2, width: 0, height },
-          view,
-          { pad: 6 },
-        ).top;
-        for (const row of rows) {
-          for (const el of row.items) el.style.top = `${cursor + row.height - el.offsetHeight}px`;
-          cursor += row.height + gap;
-        }
-      }
     };
     const recoil = (sel, heavy) => {
       const box = app.querySelector(sel);
       if (box) box.classList.add('hitflash', heavy ? 'hit-heavy' : 'hit');
     };
-    // Authoritative receipts own hit floats. Snapshot deltas remain the home
-    // for healing, guard gain and legacy non-attack HP changes only.
-    const receiptLossByTarget = new Map();
-    const receiptHealByTarget = new Map();
-    // JSON resync creates a new object for an unchanged scene. The host's
-    // receiptSeq, not local object identity, owns whether these receipts are new.
-    const receiptSeq = Number(now.receiptSeq) || 0;
-    const hasNewReceipts = receiptSeq > lastReceiptSeq;
-    const receipts = (hasNewReceipts ? (now.events || []) : [])
-      .filter((ev) => ev.type === 'damageDealt' || ev.type === 'healed' || (ev.type === 'hpLost' && ev.cause !== 'attack'))
-      .map((ev) => {
-        const playerId = ev.playerId || (ev.targetId !== 'player' ? null : ev.targetId);
-        const enemy = now.enemies.find((entry) => entry.id === ev.targetId);
-        const sel = enemy ? `[data-eid="${enemy.id}"]` : playerId ? `[data-seat="${playerId}"]` : null;
-        const targetKey = enemy ? `enemy:${enemy.id}` : playerId ? `player:${playerId}` : null;
-        return { ev, sel, targetKey };
-      })
-      .filter((row) => row.sel && row.targetKey);
-    const receiptRowsByTarget = new Map();
-    for (const { ev, sel, targetKey } of receipts) {
-      const receiptRow = { baseTop: 0, items: [], height: 0 };
-      if (ev.type === 'healed') {
-        const amount = Math.max(0, Number(ev.amount) || 0);
-        if (!amount) continue;
-        receiptHealByTarget.set(targetKey, (receiptHealByTarget.get(targetKey) || 0) + amount);
-        put(sel, 'float-num heal', `+${amount}`, 0.35, 0, receiptRow);
-      } else if (ev.type === 'hpLost') {
-        const amount = Math.max(0, Number(ev.amount) || 0);
-        if (!amount) continue;
-        const part = guardHitFloatParts({ amount, blocked: 0 }).damage;
-        receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + amount);
-        put(sel, `float-num ${part.cls}`, part.text, 0.35, 0, receiptRow);
-        recoil(`${sel} .sprite`, amount >= 12);
-      } else {
-        const parts = guardHitFloatParts(ev);
-        receiptLossByTarget.set(targetKey, (receiptLossByTarget.get(targetKey) || 0) + parts.residual);
-        const paired = !!(parts.guard && parts.damage);
-        if (parts.guard) put(sel, `float-num ${parts.guard.cls}`, parts.guard.text, 0.35, paired ? -26 : 0, receiptRow);
-        if (parts.damage) {
-          put(sel, `float-num ${parts.damage.cls}`, parts.damage.text, 0.35, paired ? 26 : 0, receiptRow);
-          recoil(`${sel} .sprite`, parts.residual >= 12);
-        }
-      }
-      if (receiptRow.items.length) {
-        if (!receiptRowsByTarget.has(targetKey)) receiptRowsByTarget.set(targetKey, []);
-        receiptRowsByTarget.get(targetKey).push(receiptRow);
-      }
-    }
-    layoutReceiptRows(receiptRowsByTarget);
-    if (hasNewReceipts) lastReceiptSeq = receiptSeq;
     for (const e of now.enemies) {
       const pe = prev.enemies.find((x) => x.id === e.id);
       if (!pe) continue;
       const dmg = Math.max(0, pe.hp - e.hp);
-      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`enemy:${e.id}`) || 0));
-      if (unreceipted > 0) {
-        put(`[data-eid="${e.id}"]`, unreceipted >= 12 ? 'float-num crit' : 'float-num dmg', `-${unreceipted}`);
-        recoil(`[data-eid="${e.id}"] .sprite`, unreceipted >= 12);
+      if (dmg > 0) {
+        put(`[data-eid="${e.id}"]`, dmg >= 12 ? 'float-num crit' : 'float-num dmg', `-${dmg}`);
+        recoil(`[data-eid="${e.id}"] .sprite`, dmg >= 12);
       }
       if ((e.block || 0) > (pe.block || 0)) put(`[data-eid="${e.id}"]`, 'float-num blk small', `+${e.block - (pe.block || 0)}`);
       if (pe.hp > 0 && e.hp <= 0) {
@@ -1048,14 +773,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const pp = prev.players.find((x) => x.id === p.id);
       if (!pp) continue;
       const dmg = Math.max(0, pp.hp - p.hp);
-      const unreceipted = Math.max(0, dmg - (receiptLossByTarget.get(`player:${p.id}`) || 0));
-      if (unreceipted > 0) {
-        put(`[data-seat="${p.id}"]`, unreceipted >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${unreceipted}`);
-        recoil(`[data-seat="${p.id}"] .sprite`, unreceipted >= 12);
+      if (dmg > 0) {
+        put(`[data-seat="${p.id}"]`, dmg >= 12 ? 'float-num heavy dmg' : 'float-num dmg', `-${dmg}`);
+        recoil(`[data-seat="${p.id}"] .sprite`, dmg >= 12);
       }
-      const heal = Math.max(0, p.hp - pp.hp);
-      const unreceiptedHeal = Math.max(0, heal - (receiptHealByTarget.get(`player:${p.id}`) || 0));
-      if (unreceiptedHeal > 0) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${unreceiptedHeal}`);
+      if (p.hp > pp.hp) put(`[data-seat="${p.id}"]`, 'float-num heal', `+${p.hp - pp.hp}`);
       if ((p.block || 0) > (pp.block || 0)) put(`[data-seat="${p.id}"]`, 'float-num blk small', `+${p.block - (pp.block || 0)}`);
     }
   }

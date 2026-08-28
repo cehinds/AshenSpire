@@ -6,7 +6,6 @@
 
 import { sfx } from './sfx.js';
 import { dlog } from './debuglog.js';
-import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 
 const STEP_MS = 80;
 
@@ -177,13 +176,6 @@ const overlapArea = (a, b) => Math.max(0, Math.min(a.left + a.width, b.left + b.
  *                      A ZERO-EXTENT anchor (a tap has no element) degenerates to
  *                      the offset-from-the-point rule, per-axis flip and all —
  *                      arithmetic, not a second branch at the call site.
- *           'left'   — toward the centre from a right-edge anchor, falling
- *                      through right / below / above only when it cannot fit.
- *           'right'  — toward the centre from a left-edge anchor, with the
- *                      mirrored fallback order.
- *           'above'  — above it when possible, otherwise under it. This is the
- *                      card/tray instruction intent: keep the explanation out
- *                      of the component being held or resized.
  *           'under'  — under it, and only under it. When it does not fit, the
  *                      bound answers; that is the caller's declared preference,
  *                      not a failure to consider the alternatives.
@@ -211,8 +203,8 @@ export function placeAnchored(el, anchor, {
   pad = 4,
   keep = Infinity,
 } = {}) {
-  if (!['beside', 'left', 'right', 'above', 'under'].includes(intent)) {
-    throw new Error(`placeAnchored: intent must be 'beside', 'left', 'right', 'above', or 'under', got ${JSON.stringify(intent)}`);
+  if (intent !== 'beside' && intent !== 'under') {
+    throw new Error(`placeAnchored: intent must be 'beside' or 'under', got ${JSON.stringify(intent)}`);
   }
   const room = view || viewportLocalBox();
   const gap = placeGap(el);
@@ -256,17 +248,11 @@ export function placeAnchored(el, anchor, {
     const slideX = Math.min(Math.max(pad, a.left), Math.max(pad, room.width - pad * 2 - b.width));
     const slideY = Math.min(Math.max(pad, a.top), Math.max(pad, room.height - pad * 2 - b.height));
     const under = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top + a.height + gap };
-    const above = { left: align === 'end' ? a.left + a.width - b.width : slideX, top: a.top - b.height - gap };
-    const right = { left: a.left + a.width + gap, top: slideY };
-    const left = { left: a.left - b.width - gap, top: slideY };
-    const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, under]
-        : intent === 'left' ? [left, right, under, above]
-          : intent === 'right' ? [right, left, under, above] : [
-      right,
-      left,
+    const candidates = intent === 'under' ? [under] : [
+      { left: a.left + a.width + gap, top: slideY },  // right of it
+      { left: a.left - b.width - gap, top: slideY },  // left of it
       { left: slideX, top: a.top + a.height + gap },  // below it
-      above,
+      { left: slideX, top: a.top - b.height - gap },  // above it
     ];
     const usable = candidates.filter(fits);
     if (clear && usable.length > 1) {
@@ -302,19 +288,11 @@ export function placeAnchored(el, anchor, {
  * strings that were measured clipping, rather than a copy of it that would
  * agree with itself (#69).
  */
-export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
+export function floatNum(layer, anchor, text, cls, tint) {
   if (!layer || !anchor) return;
-  const x = Number.isFinite(placement.x) ? placement.x : 0;
-  const y = Number.isFinite(placement.y) ? placement.y : 0;
-  const jitter = placement.jitter !== false;
   const b = anchorLocalBox(layer, anchor);
   const el = document.createElement('div');
   el.className = `float-num ${cls}`;
-  const feedbackComponent = /\bblk\b/.test(cls)
-    ? UI.guardedDamageIndicator
-    : (/\bdmg\b/.test(cls) ? UI.healthDamageIndicator : UI.damageFeedback);
-  markUiComponent(el, feedbackComponent);
-  el.dataset.uiParentComponent = UI.damageFeedback;
   el.textContent = text;
   if (tint) el.style.color = tint; // #61: proc floats carry their row's tint
   // CENTRED BY CSS, NOT BY ARITHMETIC. `left` is the float's CENTRE and
@@ -329,8 +307,8 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   // `translate` is the standalone property on purpose: num-pop animates
   // `transform`, and a `transform: translateX(-50%)` here would be overwritten
   // by the first keyframe. The two compose.
-  const centre = b.left + b.width / 2 + x + (jitter ? Math.random() * 26 - 13 : 0);
-  const top = b.top + b.height * 0.25 + y;
+  const centre = b.left + b.width / 2 + (Math.random() * 26 - 13);
+  const top = b.top + b.height * 0.25;
   el.style.left = `${centre}px`;
   el.style.top = `${top}px`;
   layer.appendChild(el);
@@ -348,25 +326,6 @@ export function floatNum(layer, anchor, text, cls, tint, placement = {}) {
   );
   el.style.left = `${at.left + half}px`;
   setTimeout(() => el.remove(), 600);
-  return el;
-}
-
-/**
- * One semantic split for every attack hit, shared by solo and co-op.
- * `amount` is the authoritative pre-block total; `blocked` is guard consumed.
- * Guard consumption is unsigned. Guard gain remains the separate +N channel.
- */
-export function guardHitFloatParts(event) {
-  const amount = Math.max(0, Number(event && event.amount) || 0);
-  const blocked = Math.min(amount, Math.max(0, Number(event && event.blocked) || 0));
-  const residual = amount - blocked;
-  return {
-    amount,
-    blocked,
-    residual,
-    guard: blocked > 0 ? { text: String(blocked), cls: 'blk small' } : null,
-    damage: residual > 0 ? { text: `-${residual}`, cls: dmgClass(residual) } : null,
-  };
 }
 
 // Damage magnitude → size tier: crit (big hits pop hardest), heavy, normal, chip.
@@ -643,24 +602,21 @@ export function playTimeline(events, ctx, done) {
 function visualFor(e, beatKind) {
   switch (e.type) {
     case 'damageDealt':
-      // One event owns both visible channels: unsigned guard consumed, then
-      // only the HP residual as damage. Paired results sit side-by-side without
-      // relying on random jitter, so phone and desktop read the same grammar.
-      return (ctx) => {
-        const parts = guardHitFloatParts(e);
-        const anchor = ctx.anchorFor(e.targetId);
-        const paired = !!(parts.guard && parts.damage);
-        if (parts.guard) {
+      // Fully blocked: a frost spark and a BLOCKED float — the armor held, so
+      // no flinch, no shake, no slash.
+      if (e.amount === 0 && e.blocked > 0) {
+        return (ctx) => {
           sfx.play('block');
+          const anchor = ctx.anchorFor(e.targetId);
           spawnFx(ctx.layer, anchor, 'fx-spark', 320, '✦');
-          floatNum(ctx.layer, anchor, parts.guard.text, parts.guard.cls, null,
-            { x: paired ? -26 : 0, jitter: false });
-        }
-        if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
+          floatNum(ctx.layer, anchor, 'BLOCKED', 'blk small');
+        };
+      }
+      return (ctx) => {
         sfx.play('hit');
-        const heavy = parts.residual >= 15;
-        floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
-          { x: paired ? 26 : 0, jitter: !paired });
+        const anchor = ctx.anchorFor(e.targetId);
+        const heavy = e.amount >= 15;
+        floatNum(ctx.layer, anchor, `-${e.amount}`, dmgClass(e.amount));
         // Attack impacts slash; the victim flashes + recoils (CSS); heavy hits
         // recoil further (hit-heavy) and kick the screen.
         if (beatKind === 'attack') spawnFx(ctx.layer, anchor, 'fx-slash', 300);

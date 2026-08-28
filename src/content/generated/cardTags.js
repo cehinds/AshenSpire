@@ -106,19 +106,5 @@ export const cardTags = [
     "color": "C9A227",
     "glyph": "◎",
     "blurb": "Deliberate aim and finesse; presentation only."
-  },
-  {
-    "id": "guile",
-    "label": "Guile",
-    "color": "647B73",
-    "glyph": "◇",
-    "blurb": "Preparation, misdirection, and stolen openings."
-  },
-  {
-    "id": "venom",
-    "label": "Venom",
-    "color": "7FAF63",
-    "glyph": "☠",
-    "blurb": "Poisons that punish enemies over time."
   }
 ];

@@ -137,7 +137,7 @@ function indexNodes(nodes) {
 }
 
 /**
- * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
+ * mountMapBoard(host, { act, viewer, chromeHtml }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
  *   `nodes` may be the run's object or the snapshot's array (see `indexNodes`).
@@ -163,8 +163,6 @@ function indexNodes(nodes) {
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
  * of the viewport, so once the zoom bar stopped floating the two claimed one
  * band and the hint pill sat on top of the − and the ⊙ (map.css:47).
- * `showLegendControl` adds the solo map's help control to the bottom row. Co-op
- * omits it because that screen has no matching legend popover.
  *
  * Returns `{ scroll, svg, counts, recenter, stepZoom, resetFraming, teardown }`.
  * KEYS ARE NOT OWNED HERE. Each screen wires its own — the solo map's handler
@@ -172,7 +170,7 @@ function indexNodes(nodes) {
  * and a second listener living in here would be the third thing stepping the
  * zoom twice.
  */
-export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLegendControl = false }) {
+export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '' }) {
   const byId = indexNodes(act.nodes);
   const nodes = Object.values(byId);
   const maxFloor = Math.max(...nodes.map((n) => n.floor));
@@ -337,7 +335,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
          cannot disagree. Still no backticks. -->
     <p class="map-clipnote" hidden></p>
     <!-- OUTSIDE the scrollport, and that is the whole fix (EldenSpire#28).
-         The zoom controls used to be the last child of .map-scroll,
+         These three buttons used to be the last child of .map-scroll,
          absolutely positioned over it, so they covered a piece of the pannable
          canvas. WHICH piece is a coincidence of shape x map zoom x pan offset x
          seed, and at 412x915 the coincidence was two map nodes a player could
@@ -348,7 +346,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       <button class="zbtn zoom-out" id="zoom-out" title="Zoom out">−</button>
       <button class="zbtn zoom-reset" id="zoom-reset" title="Reset / center">⊙</button>
       <button class="zbtn zoom-in" id="zoom-in" title="Zoom in">+</button>
-      ${showLegendControl ? '<button class="zbtn map-legend-btn" id="map-legend" title="Map legend" aria-label="Map legend">?</button>' : ''}
     </div>`);
 
   const scroll = host.querySelector('.map-scroll');
@@ -566,7 +563,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   }
 
   function emitViewState(commit = false, snapshot = viewSnapshot()) {
-    if (!scroll.isConnected) return; // the player left the map while a commit was pending
     if (viewer.onViewStateChange) viewer.onViewStateChange(snapshot, { commit });
   }
   // TWICE, ON PURPOSE, and this is the one non-obvious line in the change.

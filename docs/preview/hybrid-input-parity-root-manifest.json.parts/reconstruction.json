@@ -1,0 +1,34 @@
+{
+  "schema": "ashenspire.oversized-git-object-recovery.v1",
+  "original_path": "docs/preview/hybrid-input-parity-root-manifest.json",
+  "original_git_blob": "10f215a53624c32eb00bdf1e1d6069f7f4ab6897",
+  "original_bytes": 132629648,
+  "original_sha256": "E18B17FD189BA07933191C22AB40AF723F522BC88AA8E77615DF25635461EDDF",
+  "encoding": "raw-byte-concatenation-in-part-name-order",
+  "parts": [
+    {
+      "name": "part-0001.bin",
+      "bytes": 33554432,
+      "sha256": "4039F34E40501FEFD006A0B52FB77BA0618BF8888438AE4C276062B8E37A2848",
+      "git_blob": "682a8abe0f5b81b4fd99749a2ab9c5672db5cd53"
+    },
+    {
+      "name": "part-0002.bin",
+      "bytes": 33554432,
+      "sha256": "BF3D0C8A6C2D978F60BC51522467CFBE222AA3352D4859A7B963626357667FF7",
+      "git_blob": "ae998c56382f47d051141989b8212df07b3c8d83"
+    },
+    {
+      "name": "part-0003.bin",
+      "bytes": 33554432,
+      "sha256": "4B05E8888FC31FCC1D3744B3B39EEDB2CBAE7CC39FA553E2A6DF0DE3774606FF",
+      "git_blob": "e7bc6a881ec3f2a1b192664cc80fa85bc7eb4902"
+    },
+    {
+      "name": "part-0004.bin",
+      "bytes": 31966352,
+      "sha256": "DE9A80338AB0E6D503C26EB40C6502871919C9937F8649C58B27775646B969C0",
+      "git_blob": "58988d3828815f1633b6c3aa227334c9710fc503"
+    }
+  ]
+}

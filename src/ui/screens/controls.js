@@ -18,7 +18,6 @@ import {
   cancelKeyCapture,
 } from '../input.js';
 import { padName } from '../uiContent.js';
-import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
 
 // Standard-mapping button labels (navigator gamepad "standard" layout).
 // Button names come from the shared PAD_BUTTONS table (uiContent.js) — this
@@ -41,7 +40,7 @@ export function renderControls(container, { settings, onChange }) {
     <div class="rebind-list"></div>
     <p class="set-note" style="margin-top:10px">Click a <b>Rebind</b>, then press a key or controller button. Arrow keys / D-pad always navigate.</p>`;
 
-  const list = markUiComponent(container.querySelector('.rebind-list'), UI.controlsRebindCapture);
+  const list = container.querySelector('.rebind-list');
   const bindings = getBindings();
   const keyBindings = getKeyBindings();
 
@@ -62,8 +61,6 @@ export function renderControls(container, { settings, onChange }) {
         <button class="subtle rebind-btn rebind-pad" data-action="${a.id}">Pad</button>
       </div>`;
     list.appendChild(row);
-    const keyControl = row.querySelector('.rebind-key');
-    if (keyControl) markUiComponent(keyControl, UI.controlsKeyRebindControl, a.id);
   }
 
   let capturing = null; // the armed <button>, or null
@@ -124,12 +121,7 @@ export function renderControls(container, { settings, onChange }) {
         if (badge) badge.textContent = keyLabel(id);
         reset(btn, 'Key');
         capturing = null;
-        btn.focus({ preventScroll: true });
-      }, { onCancel: () => {
-        reset(btn, 'Key');
-        btn.focus({ preventScroll: true });
-        capturing = null;
-      } });
+      });
     });
   });
 }
