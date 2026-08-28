@@ -1,7 +1,7 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T05:06:23Z",
+  "updatedAt": "2026-08-28T05:21:15Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
@@ -150,14 +150,32 @@
     {
       "id": "continuity-control-plane",
       "branch": "codex/migration-continuity-control-plane",
-      "status": "active",
+      "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
-      "headSha": null,
+      "headSha": "c29d5f9d3aa355fb191cc3f662f03991ef426e90",
+      "treeSha": "ae0488fc72fde5777f8239b5446a9e74c142d370",
+      "evidenceOnlySuccessors": [
+        "16aa7fccdba53aafd7980d517b811ab609284d5d",
+        "92b3ed0b80ee48936364edcd7e89e751fedbbbc9",
+        "96b9f5b23fa47eb5cc39a36a8a2939a1177b38e7"
+      ],
       "availability": "local-only",
       "owner": {
         "role": "Feature / Architecture temporary pod",
         "acknowledged": true,
         "acknowledgedAt": "2026-08-28T04:35:56Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T05:01:26Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tools/continuity.mjs --check", "counts": "1 packet; exit 0", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --audit", "counts": "4/4 remote branch heads current; exit 0", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --selftest", "counts": "18/18", "result": "PASS" },
+          { "command": "node tools/workflow-lint.mjs", "counts": "226 checks; 0 findings", "result": "PASS" },
+          { "command": "git diff --check", "counts": "0 findings; exit 0", "result": "PASS" }
+        ],
+        "boundary": ["c29d5f9d3aa355fb191cc3f662f03991ef426e90 is the immutable original candidate; composition carries evidence-only successors without moving that identity.", "Project #4, Pages, and independent QA facts remain UNKNOWN until their typed owners record them."]
       },
       "claimedPaths": [
         "docs/governance/CONTINUITY.md",
@@ -168,7 +186,7 @@
       ],
       "dependencies": [],
       "block": null,
-      "next": "Validate, run the deterministic known-bad corpus, run repository gates, and freeze one local commit for independent policy QA.",
+      "next": "Keep original candidate c29d5f9d3aa355fb191cc3f662f03991ef426e90 and tree ae0488fc72fde5777f8239b5446a9e74c142d370 immutable; the composition branch carries continuity-only evidence successors for final independent QA.",
       "rollback": "Revert the one bounded continuity commit before activation."
     },
     {
@@ -177,6 +195,14 @@
       "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
       "headSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
+      "treeSha": "9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c1",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "7759f0bfebb514ff8ae0dd046593d8a18528d581",
+        "patchId": "bef165e986bfc8a041552240e96fb82095eb3653"
+      },
       "availability": "local-only",
       "owner": {
         "role": "Code Quality & Modernization temporary pod",
@@ -201,7 +227,7 @@
       ],
       "dependencies": [],
       "block": null,
-      "next": "Keep tree 9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c immutable for independent QA and an IT Manager III composition decision; focused, self-test, workflow, test-number, and full-suite gates are green.",
+      "next": "Keep tree 9c4146f9a3818d71742ca01ac3b8c34b3fe7d0c1 immutable; its patch-equivalent composition replay is recorded for final independent QA.",
       "rollback": "Revert the bounded K15 commit; do not alter generated content."
     },
     {
@@ -210,6 +236,14 @@
       "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
       "headSha": "5d43b042ace212387d59c068e54c1f0265e306a0",
+      "treeSha": "e93deb0851b35197afa128a4217c127171915eaf",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "5d43b042ace212387d59c068e54c1f0265e306a0",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "06941412dfa01fe510d50fc81259e44301eb9b33",
+        "patchId": "49d7a0de556d043519c51669e61b81026d9aaeb5"
+      },
       "availability": "local-only",
       "owner": {
         "role": "Feature / Architecture temporary pod",
@@ -234,7 +268,7 @@
       ],
       "dependencies": [],
       "block": null,
-      "next": "Keep tree e93deb0851b35197afa128a4217c127171915eaf immutable for independent QA and composition; source/model/UI gates are green and one generated projection intentionally waits for the serialized generation lane.",
+      "next": "Keep tree e93deb0851b35197afa128a4217c127171915eaf immutable; its patch-equivalent replay and completed generated projection are recorded in the frozen composition candidate.",
       "rollback": "Revert the bounded character-creation commit and regenerate only after restored source is frozen."
     },
     {
@@ -243,6 +277,14 @@
       "status": "candidate-frozen",
       "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
       "headSha": "a2e832d9b5fd799592d7697f64289592c324b525",
+      "treeSha": "4d7c2148c0f7715316ec4e21a566988edc1ab118",
+      "compositionReplay": {
+        "mode": "literal-ancestor",
+        "originalHead": "a2e832d9b5fd799592d7697f64289592c324b525",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": null,
+        "patchId": null
+      },
       "availability": "local-only",
       "owner": {
         "role": "Feature / Architecture temporary pod",
@@ -300,6 +342,14 @@
       "status": "candidate-frozen",
       "baseSha": "a2e832d9b5fd799592d7697f64289592c324b525",
       "headSha": "91947b7621345e8b7b54ab87e041e3e165cfe308",
+      "treeSha": "39c5371b29ba42ea46c2b63e155d1e7d61234b27",
+      "compositionReplay": {
+        "mode": "literal-ancestor",
+        "originalHead": "91947b7621345e8b7b54ab87e041e3e165cfe308",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": null,
+        "patchId": null
+      },
       "availability": "local-only",
       "owner": {
         "role": "Feature / Architecture temporary pod",
@@ -341,6 +391,14 @@
       "status": "candidate-frozen",
       "baseSha": "187deb2f7e8b017b61897e6a24dfa4503027f56d",
       "headSha": "abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb",
+      "treeSha": "ec6264dcf1d8e432df5128e24d55a32a1c1fb2ac",
+      "compositionReplay": {
+        "mode": "patch-equivalent",
+        "originalHead": "abddb5fa45787048ae7dcb6c3ac3a4f02cbb50cb",
+        "compositionHead": "8671379bbc6dc5043caeccabb0380396f4412e20",
+        "replayCommit": "0458ae909561f91af83a9154f315959e3b52a347",
+        "patchId": "13cbd12afefd667bf244c717a731a4afc7bb420b"
+      },
       "availability": "local-only",
       "owner": {
         "role": "Incident / Defect temporary pod",
@@ -508,63 +566,27 @@
   "nextActions": [
     {
       "order": 1,
-      "lane": "continuity-control-plane",
-      "action": "Freeze and independently policy-QA the repository continuity packet.",
-      "authority": "Existing local implementation authority; separate authority for push, PR, integration, or Project mutation."
+      "lane": "continuity-integration",
+      "action": "Run final independent non-maker functional, policy, data-contract, and generated-artifact QA against immutable source/artifact head 8671379bbc6dc5043caeccabb0380396f4412e20; the local candidate and generated artifacts are frozen and generation is complete.",
+      "authority": "Independent QA assignment only. Project #4, Pages, and QA facts remain UNKNOWN until their typed owners record them; acceptance does not authorize remote mutation."
     },
     {
       "order": 2,
-      "lane": "k15-content-door",
-      "action": "Keep the exact K15 candidate immutable and obtain independent non-maker QA before any composition.",
-      "authority": "Independent QA assignment; IT Manager III decides composition or delivery."
+      "lane": "continuity-integration",
+      "action": "After independent QA, route exact-head push and normal-PR sequencing to IT Manager III using the recorded original-to-composition lineage.",
+      "authority": "IT Manager III must separately authorize push and PR; merge, Project mutation, Pages, publication, and release remain ungranted."
     },
     {
       "order": 3,
-      "lane": "character-creation",
-      "action": "Keep the exact character-creation candidate immutable; carry its pending projection into the final serialized generation pass.",
-      "authority": "Independent QA and source acceptance; generated-lane authority remains separate."
+      "lane": "continuity-integration",
+      "action": "Only after authorized integration to dev and an actual Pages deployment, capture hosted proof: deployed commit, Pages run, artifact identity, and intended player flow.",
+      "authority": "Hosted proof requires separate integration and Pages authority and is not release approval; all hosted facts are currently UNKNOWN."
     },
     {
       "order": 4,
-      "lane": "save-equipment-actionregistry",
-      "action": "Keep the exact save/equipment/ActionRegistry candidate immutable and validate its composition order.",
-      "authority": "Independent QA; IT Manager III decides composition and shared-path sequencing."
-    },
-    {
-      "order": 5,
-      "lane": "title-save-slot",
-      "action": "Keep the exact title/save-slot candidate immutable on its recorded save/equipment base and validate the composed pair.",
-      "authority": "Independent QA; IT Manager III decides composition or delivery."
-    },
-    {
-      "order": 6,
-      "lane": "controls-gates",
-      "action": "Keep the exact controls candidate immutable on its K15 base and obtain independent non-maker QA before composition.",
-      "authority": "Independent QA assignment; binding-conflict scope still requires its own decision."
-    },
-    {
-      "order": 7,
       "lane": "equipment-rogue-adjudication",
-      "action": "Resolve mechanics, compatibility, assets, provenance, and generated-content ownership before assigning source.",
-      "authority": "IT Manager III decision; Constantine retains release and publication authority."
-    },
-    {
-      "order": 8,
-      "lane": "continuity-integration",
-      "action": "Run final clean-room validation at exact source/artifact head 8671379b: ancestry/tree, targeted gates, Node suite, generated digest/ordinal/provenance, byte identity, and diff cleanliness.",
-      "authority": "Independent clean-room validation authority only; no regeneration or remote mutation."
-    },
-    {
-      "order": 9,
-      "lane": "continuity-integration",
-      "action": "Obtain independent non-maker functional, policy, data-contract, and generated-artifact QA against the unchanged 8671379b identity.",
-      "authority": "Independent QA assignment; acceptance does not authorize push, PR, integration, Pages, or release."
-    },
-    {
-      "order": 10,
-      "lane": "continuity-integration",
-      "action": "After clean-room and independent QA pass, route exact-head push and normal-PR sequencing to IT Manager III.",
-      "authority": "IT Manager III must separately authorize push and PR; merge, Project mutation, Pages, and release remain ungranted."
+      "action": "Resolve Equipment/Rogue mechanics, compatibility, assets, provenance, and generated-content ownership as a separate external decision before assigning source.",
+      "authority": "IT Manager III decision; Constantine retains publication and release authority."
     }
   ],
   "tombstones": [],

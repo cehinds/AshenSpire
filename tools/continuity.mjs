@@ -139,6 +139,7 @@ export function invariantErrors(doc, raw) {
   const errors = [];
   const laneIds = doc.lanes?.map((lane) => lane.id) || [];
   const laneSet = new Set(laneIds);
+  const compositionHead = doc.lanes?.find((lane) => lane.id === 'continuity-integration')?.headSha || null;
   const branchNames = doc.repository?.branches?.map((branch) => branch.name) || [];
 
   for (const id of duplicates(laneIds)) errors.push(`$.lanes: duplicate lane id ${id}`);
@@ -171,6 +172,17 @@ export function invariantErrors(doc, raw) {
     }
     if (lane.owner?.acknowledged === true && !lane.owner?.acknowledgedAt) {
       errors.push(`$.lanes.${lane.id}: acknowledged owner needs acknowledgedAt`);
+    }
+    if (lane.compositionReplay) {
+      const replay = lane.compositionReplay;
+      if (replay.originalHead !== lane.headSha) errors.push(`$.lanes.${lane.id}.compositionReplay: originalHead must equal lane headSha`);
+      if (replay.compositionHead !== compositionHead) errors.push(`$.lanes.${lane.id}.compositionReplay: compositionHead must equal continuity-integration headSha`);
+      if (replay.mode === 'patch-equivalent' && (!replay.replayCommit || !replay.patchId)) {
+        errors.push(`$.lanes.${lane.id}.compositionReplay: patch-equivalent mapping needs replayCommit and patchId`);
+      }
+      if (replay.mode === 'literal-ancestor' && (replay.replayCommit !== null || replay.patchId !== null)) {
+        errors.push(`$.lanes.${lane.id}.compositionReplay: literal-ancestor mapping cannot carry replayCommit or patchId`);
+      }
     }
   }
   if (hasCycle(doc.lanes || [])) errors.push('$.lanes: dependency graph contains a cycle');
@@ -240,6 +252,12 @@ export function repositoryErrors(doc, adapter) {
   for (const lane of doc.lanes) {
     commits.add(lane.baseSha);
     if (lane.headSha) commits.add(lane.headSha);
+    if (lane.compositionReplay) {
+      commits.add(lane.compositionReplay.originalHead);
+      commits.add(lane.compositionReplay.compositionHead);
+      if (lane.compositionReplay.replayCommit) commits.add(lane.compositionReplay.replayCommit);
+    }
+    for (const successor of lane.evidenceOnlySuccessors || []) commits.add(successor);
   }
   for (const sha of commits) if (!adapter.objectExists(sha, 'commit')) errors.push(`git object: missing commit ${sha}`);
 
@@ -254,6 +272,23 @@ export function repositoryErrors(doc, adapter) {
     const actual = adapter.commitTree(lane.headSha);
     if (!actual) errors.push(`git object: cannot resolve tree for ${lane.id}@${lane.headSha}`);
     else if (actual !== lane.treeSha) errors.push(`git object: tree drift for ${lane.id} ${lane.treeSha} -> ${actual}`);
+  }
+  for (const lane of doc.lanes) {
+    const replay = lane.compositionReplay;
+    if (!replay) continue;
+    if (replay.mode === 'literal-ancestor') {
+      if (!adapter.isAncestor?.(replay.originalHead, replay.compositionHead)) {
+        errors.push(`composition replay: ${lane.id} original head is not a literal ancestor of ${replay.compositionHead}`);
+      }
+      continue;
+    }
+    const originalPatch = adapter.patchId?.(replay.originalHead);
+    const composedPatch = adapter.patchId?.(replay.replayCommit);
+    if (originalPatch !== replay.patchId) errors.push(`composition replay: ${lane.id} original patch-id ${originalPatch || 'UNKNOWN'} != ${replay.patchId}`);
+    if (composedPatch !== replay.patchId) errors.push(`composition replay: ${lane.id} replay patch-id ${composedPatch || 'UNKNOWN'} != ${replay.patchId}`);
+    if (!adapter.isAncestor?.(replay.replayCommit, replay.compositionHead)) {
+      errors.push(`composition replay: ${lane.id} replay commit is not an ancestor of ${replay.compositionHead}`);
+    }
   }
   const artifact = doc.generatedArtifacts.artifact;
   if (artifact && adapter.fileIdentity) {
@@ -312,6 +347,23 @@ function realAdapter(root) {
     commitTree(sha) {
       const result = git(root, ['rev-parse', `${sha}^{tree}`]);
       return result.status === 0 ? result.stdout : null;
+    },
+    isAncestor(ancestor, descendant) {
+      return git(root, ['merge-base', '--is-ancestor', ancestor, descendant]).status === 0;
+    },
+    patchId(sha) {
+      const shown = spawnSync('git', ['-C', root, 'show', '--pretty=format:', '--binary', sha], {
+        encoding: null,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        maxBuffer: 32 * 1024 * 1024,
+      });
+      if (shown.status !== 0) return null;
+      const result = spawnSync('git', ['patch-id', '--stable'], {
+        input: shown.stdout,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+      });
+      return result.status === 0 ? result.stdout.trim().split(/\s+/)[0] || null : null;
     },
     fileIdentity(path) {
       const absolute = resolve(root, path);
@@ -401,15 +453,35 @@ async function selftest(doc, raw, schema) {
     doc.repository.baseSha,
     ...doc.repository.branches.map((row) => row.sha),
     ...doc.repository.governance.map((row) => row.blob),
-    ...doc.lanes.flatMap((row) => [row.baseSha, row.headSha].filter(Boolean)),
+    ...doc.lanes.flatMap((row) => [
+      row.baseSha,
+      row.headSha,
+      row.compositionReplay?.originalHead,
+      row.compositionReplay?.compositionHead,
+      row.compositionReplay?.replayCommit,
+      ...(row.evidenceOnlySuccessors || []),
+    ].filter(Boolean)),
   ]);
   const expectedHashes = new Map(doc.repository.governance.map((row) => [row.path, row.blob]));
   const expectedTrees = new Map(doc.lanes.filter((row) => row.headSha && row.treeSha).map((row) => [row.headSha, row.treeSha]));
+  const expectedPatchIds = new Map();
+  const expectedAncestors = new Set();
+  for (const row of doc.lanes) {
+    const replay = row.compositionReplay;
+    if (!replay) continue;
+    expectedAncestors.add(`${replay.mode === 'patch-equivalent' ? replay.replayCommit : replay.originalHead}|${replay.compositionHead}`);
+    if (replay.patchId) {
+      expectedPatchIds.set(replay.originalHead, replay.patchId);
+      expectedPatchIds.set(replay.replayCommit, replay.patchId);
+    }
+  }
   const remoteHeads = new Map(doc.repository.branches.map((row) => [row.name, row.sha]));
   const adapter = {
     objectExists: (sha) => expectedObjects.has(sha),
     hashFile: (path) => expectedHashes.get(path) || null,
     commitTree: (sha) => expectedTrees.get(sha) || null,
+    isAncestor: (ancestor, descendant) => expectedAncestors.has(`${ancestor}|${descendant}`),
+    patchId: (sha) => expectedPatchIds.get(sha) || null,
     fileIdentity: () => doc.generatedArtifacts.artifact
       ? { bytes: doc.generatedArtifacts.artifact.bytes, sha256: doc.generatedArtifacts.artifact.sha256.toUpperCase() }
       : null,
@@ -421,7 +493,7 @@ async function selftest(doc, raw, schema) {
     ['malformed SHA', (x) => { x.repository.baseSha = 'short'; }, 'does not match'],
     ['unknown dependency', (x) => { x.lanes[0].dependencies = ['missing-lane']; }, 'unknown dependency'],
     ['dependency cycle', (x) => { x.lanes[0].dependencies = [x.lanes[1].id]; x.lanes[1].dependencies = [x.lanes[0].id]; }, 'contains a cycle'],
-    ['unacknowledged active owner', (x) => { x.lanes[0].owner.acknowledged = false; x.lanes[0].owner.acknowledgedAt = null; }, 'active lane is not acknowledged'],
+    ['unacknowledged owned lane', (x) => { x.lanes[0].owner.acknowledged = false; x.lanes[0].owner.acknowledgedAt = null; }, 'lane is not acknowledged'],
     ['frozen head omitted', (x) => { x.lanes[0].status = 'candidate-frozen'; x.lanes[0].headSha = null; }, 'needs an exact headSha'],
     ['packet over byte budget', (x) => { x.budgets.maxBytes = 4096; }, 'packet is'],
     ['direct dev mutation enabled', (x) => { x.authority.directDevMutationAllowed = true; }, 'directDevMutationAllowed'],

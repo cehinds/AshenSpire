@@ -216,6 +216,18 @@
         "sourceDigest": { "type": "string", "pattern": "^[0-9a-f]{10}$" }
       }
     },
+    "compositionReplay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "originalHead", "compositionHead", "replayCommit", "patchId"],
+      "properties": {
+        "mode": { "enum": ["patch-equivalent", "literal-ancestor"] },
+        "originalHead": { "$ref": "#/$defs/sha" },
+        "compositionHead": { "$ref": "#/$defs/sha" },
+        "replayCommit": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+        "patchId": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" }
+      }
+    },
     "laneVerification": {
       "type": "object",
       "additionalProperties": false,
@@ -243,6 +255,12 @@
         "baseSha": { "$ref": "#/$defs/sha" },
         "headSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
         "treeSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+        "compositionReplay": { "$ref": "#/$defs/compositionReplay" },
+        "evidenceOnlySuccessors": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/sha" }
+        },
         "availability": { "enum": ["local-only", "origin-branch", "integrated"] },
         "owner": { "$ref": "#/$defs/owner" },
         "verification": { "$ref": "#/$defs/laneVerification" },
