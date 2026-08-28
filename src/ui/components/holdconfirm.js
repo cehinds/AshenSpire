@@ -121,8 +121,7 @@ import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
-export const HOLD_POINTER_SLOP = 12;
-const SLOP = HOLD_POINTER_SLOP;
+const SLOP = 12;
 
 /**
  * THE CUE VOCABULARY — six phases, one family. Exported so Vega can author
@@ -148,66 +147,28 @@ export function beatCue(phase, id, form) {
 }
 
 /**
- * armHold(btn, { ms, onConfirm, onTap?, id }) -> disarm() (with .refresh())
+ * armHold(btn, { ms, onConfirm, id }) -> disarm() (with .refresh())
  *
  * `ms` may be a NUMBER or a FUNCTION returning one, read at the moment the
  * finger lands. The function form remains available to rows whose state can
  * change while a screen is mounted; End Turn itself is deliberately constant.
  *
- * `ms <= 0` is the "off" position of the dial: one completed press commits.
- * It is not a hold with a zero timer, and it does not depend on a trailing
- * click that a mobile browser may suppress after a stationary long press.
+ * `ms <= 0` is the "off" position of the dial and it is the pre-hold behaviour
+ * byte for byte: one tap commits. Not a hold with a zero timer.
  */
-export function armHold(btn, {
-  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
-  feedbackHosts = null, pointerOnly = false,
-}) {
+export function armHold(btn, { ms, onConfirm, id = null }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
   let raf = 0;
   let armed = false;
   let fired = false;
-  let committedThisPress = false;
-  let offPointerPress = false;
-  let activeFeedback = [];
-  // Set at pointerdown, read at the click that may follow it: did the shared
-  // press door already own this pointer? Rule 1 and off-mode deduplication both
-  // live on this flag.
+  // Set at pointerdown, read at the click that follows it: did this press start
+  // a hold? Rule 1 lives on this flag, and so does the ms<=0 passthrough.
   let heldThisPress = false;
 
   const paint = (p) => {
-    for (const target of [btn, ...activeFeedback]) {
-      target.style.setProperty('--hold', String(p));
-      target.dataset.holdProgress = p.toFixed(3);
-    }
-  };
-
-  const resolveFeedback = () => {
-    const requested = typeof feedbackHosts === 'function' ? feedbackHosts() : feedbackHosts;
-    return [...new Set((Array.isArray(requested) ? requested : [requested])
-      .filter((target) => target && target !== btn && target.style && target.dataset))];
-  };
-
-  const dressFeedback = (targets) => {
-    for (const target of targets) {
-      target.classList.add('beat-hold');
-      target.dataset.holdFeedback = 'card';
-      target.dataset.hold = 'holding';
-      if (id) target.dataset.holdAction = id;
-      target.style.setProperty('--hold', '0');
-    }
-  };
-
-  const clearFeedback = () => {
-    for (const target of activeFeedback) {
-      target.classList.remove('beat-hold');
-      delete target.dataset.holdFeedback;
-      delete target.dataset.hold;
-      delete target.dataset.holdAction;
-      delete target.dataset.holdProgress;
-      target.style.removeProperty('--hold');
-    }
-    activeFeedback = [];
+    btn.style.setProperty('--hold', String(p));
+    btn.dataset.holdProgress = p.toFixed(3);
   };
 
   /**
@@ -220,7 +181,6 @@ export function armHold(btn, {
     const now = msOf();
     if (now > 0) {
       btn.classList.add('beat-hold');
-      if (feedbackHosts) btn.dataset.holdFeedback = 'delegated';
       if (id) btn.dataset.holdAction = id;
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
       btn.dataset.holdMs = String(now);
@@ -232,16 +192,10 @@ export function armHold(btn, {
         const hint = document.createElement('span');
         hint.className = 'hold-hint';
         hint.textContent = 'HOLD';
-        // Disclosure faces are armed before their button is inserted into the
-        // document. A valid authored hint host may therefore be deliberately
-        // detached at dress time; connectivity is not capability.
-        const host = hintHost && typeof hintHost.appendChild === 'function' ? hintHost : btn;
-        if (hintBefore && hintBefore.parentElement === host) host.insertBefore(hint, hintBefore);
-        else host.appendChild(hint);
+        btn.appendChild(hint);
       }
     } else {
       btn.classList.remove('beat-hold');
-      delete btn.dataset.holdFeedback;
       delete btn.dataset.hold;
       delete btn.dataset.holdAction;
       delete btn.dataset.holdMs;
@@ -258,7 +212,6 @@ export function armHold(btn, {
     armed = false;
     if (btn.dataset.hold) btn.dataset.hold = state;
     paint(0);
-    clearFeedback();
   }
 
   function begin(origin, track) {
@@ -267,53 +220,17 @@ export function armHold(btn, {
     // it is the dial — read fresh, for every press, on every input.
     //
     // `heldThisPress` IS A POINTER FACT AND ONLY A POINTER FACT. It exists so
-    // the `click` a lifted finger may generate can be swallowed after either a
-    // real hold or an off-mode release commit. A key or pad generates NO click
-    // here — input.js owns its activation — so it must never set this flag.
-    // Some holds are a pointer/touch shortcut rather than a safety beat. They
-    // must not turn keyboard or controller activation into a timed gesture:
-    // declining those sources here lets the ordinary focused-control click
-    // keep its authored meaning. Safety beats leave pointerOnly false and
-    // retain the three-input parity described at the top of this file.
-    if (pointerOnly && origin.source !== 'pointer') return false;
-    if (offPointerPress || fired || armed) return false;
+    // the `click` a lifted finger generates can be swallowed (rule 1). A key or
+    // pad press generates NO click — input.js holds the activation and asks
+    // `onEnd` directly — so setting it for those sources would leave a live
+    // swallow flag with no click to eat, and the next real TAP would pay for
+    // it. That is F3's shape, which armInspect below learned once already.
     heldThisPress = false;
-    committedThisPress = false;
-    offPointerPress = false;
     const ms0 = msOf();
-    // A pointer activation normally ends in a click, but mobile browsers may
-    // suppress that click after a long press. When the dial is off, own the
-    // pointer lifecycle and commit once on release so tap and long-press have
-    // the same meaning. Key and pad retain their immediate activation path.
-    if (!(ms0 > 0)) {
-      if (origin.source !== 'pointer') return false;
-      heldThisPress = true;
-      offPointerPress = true;
-      let moved = false;
-      const x0 = origin.x;
-      const y0 = origin.y;
-      track({
-        onMove: (mv) => {
-          if (Math.hypot(mv.clientX - x0, mv.clientY - y0) > SLOP) moved = true;
-        },
-        onEnd: (ev, { cancelled }) => {
-          if (!offPointerPress) return true;
-          offPointerPress = false;
-          if (cancelled || moved) {
-            heldThisPress = false;
-            committedThisPress = false;
-            return true;
-          }
-          committedThisPress = true;
-          onConfirm(ev);
-          return true;
-        },
-      });
-      return true;
-    }
-    clearFeedback();
-    activeFeedback = resolveFeedback();
-    dressFeedback(activeFeedback);
+    // The dial is off, or this state of this action owes no beat. Let the
+    // click through untouched — that is the pre-hold behaviour, byte for byte.
+    if (!(ms0 > 0)) return false;
+    if (fired || armed) return false;
     heldThisPress = origin.source === 'pointer';
     armed = true;
     btn.dataset.hold = 'holding';
@@ -331,7 +248,6 @@ export function armHold(btn, {
         // thumb is still down, which is the confirmation; waiting for the lift
         // would make a completed hold feel like it did nothing.
         fired = true;
-        committedThisPress = true;
         stop('done');
         onConfirm(ev);
         // A control that survives its own commit (End Turn does — the screen
@@ -385,52 +301,26 @@ export function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    if (!heldThisPress) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    const tapped = !committedThisPress;
+    if (ev.detail === 0) { onConfirm(ev); return; }
+    if (!heldThisPress) { onConfirm(ev); return; }
     heldThisPress = false;
-    committedThisPress = false;
     ev.preventDefault();
     ev.stopPropagation();
-    // A composite card may owe two SAFE meanings to the same pointer: a short
-    // tap reveals its details while a completed hold commits its action. The
-    // ordinary irreversible controls pass no onTap and retain the universal
-    // early-release abort byte for byte.
-    if (tapped && onTap) onTap(ev);
   };
 
   const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
-  const onCardDragStart = () => { if (armed) stop('idle'); };
-  const onContextMenu = (ev) => {
-    if (armed || offPointerPress) ev.preventDefault();
-  };
 
   dress();
   const disarmPress = armPress(btn, begin);
   btn.addEventListener('click', onClick);
-  btn.addEventListener('carddragstart', onCardDragStart);
-  btn.addEventListener('contextmenu', onContextMenu);
-  if (!pointerOnly) addEventListener('keydown', onKeyEsc);
+  addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
-    offPointerPress = false;
-    heldThisPress = false;
-    committedThisPress = false;
     fired = true;
     disarmPress();
     btn.removeEventListener('click', onClick);
-    btn.removeEventListener('carddragstart', onCardDragStart);
-    btn.removeEventListener('contextmenu', onContextMenu);
-    if (!pointerOnly) removeEventListener('keydown', onKeyEsc);
+    removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
