@@ -78,6 +78,7 @@ import {
 import { inventoryItemCardModel, inventoryDetailCardModel } from '../src/ui/models/ArmouryModels.js';
 import { hudQuickSettingsModel, musicQuickSettingsPlan } from '../src/ui/models/HudQuickSettingsModel.js';
 import { battlefieldStageModel } from '../src/ui/models/BattlefieldStageModel.js';
+import { tooltipPlacementModel } from '../src/ui/models/TooltipPlacementModel.js';
 import {
   hudQuickSettingsHtml, refreshHudQuickSettings, updateHudQuickSettingsBinding,
 } from '../src/ui/components/hudQuickSettings.js';
@@ -5319,6 +5320,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const validation = validateContent(malformed);
     assert(!validation.ok && validation.errors.some((error) => error.path === 'balance.ui.combatantStage.hudClearanceViewportPct'),
       'an unreadable safe clearance fails the real boot validator by name');
+
+    const tooltipPresentation = REG.balance.ui.tooltipPlacement;
+    eq(`${tooltipPresentation.hoverDelayMs}/${tooltipPresentation.autoFadeMs}`, '500/5000',
+      'enemy context delay and auto-fade are authored in milliseconds');
+    const tooltipModel = tooltipPlacementModel(tooltipPresentation);
+    eq(`${tooltipModel.tokens.hoverDelayMs}/${tooltipModel.tokens.autoFadeMs}`, '500/5000',
+      'tooltip timing reaches the immutable Component Model');
+    const malformedTooltip = {
+      ...contentBundle,
+      balance: {
+        ...contentBundle.balance,
+        ui: { ...contentBundle.balance.ui, tooltipPlacement: { ...tooltipPresentation, autoFadeMs: Infinity } },
+      },
+    };
+    const tooltipValidation = validateContent(malformedTooltip);
+    assert(!tooltipValidation.ok && tooltipValidation.errors.some((error) => error.path === 'balance.ui.tooltipPlacement.autoFadeMs'),
+      'a non-finite auto-fade fails the real boot validator by name');
   });
 
   test('62. rewards are a MENU derived from the offer, and Continue always has a meaning (E11)', () => {
