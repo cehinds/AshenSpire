@@ -239,9 +239,23 @@ if (args.includes('--selftest')) {
         replace: "document.body.classList.toggle('reduced-motion', false); // startup-gate selftest plant",
         expectRed: /RED A10\.REDUCED-MOTION/,
       },
+      {
+        name: 'desktop startup restores the opaque plate and shadow',
+        file: 'styles/ui.css',
+        find: '  background: transparent;\n  box-shadow: none;\n}\n.startup-wordmark',
+        replace: '  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));\n  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);\n}\n.startup-wordmark',
+        expectRed: /RED A11\.DESKTOP-PRESENTATION/,
+      },
+      {
+        name: 'startup title group drifts off the viewport center',
+        file: 'styles/ui.css',
+        find: '.startup-mark {\n  width: min(86%, 62rem);',
+        replace: '.startup-mark {\n  width: min(86%, 62rem);\n  transform: translateX(12px);',
+        expectRed: /RED A11\.STARTUP-GROUP-CENTER/,
+      },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 25 plants, 25 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 27 plants, 27 caught');
   process.exit(code);
 }
 
@@ -750,13 +764,19 @@ async function assertShape(shape, textSize) {
   const p = await page({ query: `?shot=startup&shotInput=keyboard&shotSettings=${settings}`, width: shape.w, height: shape.h, mobile: shape.w <= 390 });
   await p.until(`!!document.querySelector('.startup-gate')`, `${shape.tag} Text ${textSize}`);
   const fact = await p.ev(`(() => { const e=document.querySelector('.startup-gate'); const r=e.getBoundingClientRect();
+    const mark=document.querySelector('.startup-mark'); const mr=mark.getBoundingClientRect(); const ms=getComputedStyle(mark);
     const critical=[document.querySelector('.startup-wordmark'),document.querySelector('.startup-prompt'),document.querySelector('[data-place="startup"]')].filter(Boolean);
     const boxes=critical.map(x=>{const b=x.getBoundingClientRect();return [x.className||x.dataset.place,Math.round(b.left),Math.round(b.top),Math.round(b.right),Math.round(b.bottom)]});
     const outside=boxes.some(([,l,t,right,bottom])=>l < -1 || t < -1 || right > innerWidth+1 || bottom > innerHeight+1);
-    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes, upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
+    return {font:getComputedStyle(document.documentElement).fontSize, overflow:outside, documentWidth:document.documentElement.scrollWidth, box:[Math.round(r.width),Math.round(r.height)], boxes,
+      mark:{centerDelta:Math.abs((mr.left+mr.right)/2-innerWidth/2),backgroundImage:ms.backgroundImage,backgroundColor:ms.backgroundColor,boxShadow:ms.boxShadow},
+      upright:!!document.querySelector('.upright-veil:not([hidden])')}; })()`);
   const shot = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, p.sessionId);
   const expectedFont = textSize === 'M' ? '10px' : '12px';
   verdict(fact.font === expectedFont && !fact.overflow && !fact.upright && shot.data.length > 5000, 'A11.RESPONSIVE-SHAPE', `${shape.tag} Text ${textSize}: font=${fact.font}, box=${fact.box.join('x')}, criticalOutside=${fact.overflow}, documentWidth=${fact.documentWidth}, upright=${fact.upright}, capture=${shot.data.length}b64 chars, critical=${JSON.stringify(fact.boxes)}`);
+  const plateFree = fact.mark.backgroundImage === 'none' && fact.mark.backgroundColor === 'rgba(0, 0, 0, 0)' && fact.mark.boxShadow === 'none';
+  if (shape.w > 480) verdict(fact.mark.centerDelta <= 1, 'A11.STARTUP-GROUP-CENTER', `${shape.tag} Text ${textSize}: title-group center delta=${fact.mark.centerDelta.toFixed(3)}px`);
+  verdict(plateFree, shape.w > 480 ? 'A11.DESKTOP-PRESENTATION' : 'A11.MOBILE-PRESENTATION', `${shape.tag} Text ${textSize}: backgroundImage=${fact.mark.backgroundImage}, backgroundColor=${fact.mark.backgroundColor}, boxShadow=${fact.mark.boxShadow}`);
   await p.close();
 }
 

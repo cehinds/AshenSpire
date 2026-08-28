@@ -4434,8 +4434,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   width: min(86%, 62rem);
   padding: 8.2rem 2.8rem 5.2rem;
   border: 0;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 88%, transparent), color-mix(in srgb, var(--bg) 94%, transparent));
-  box-shadow: 0 2rem 7rem rgba(0, 0, 0, 0.58);
+  background: transparent;
+  box-shadow: none;
 }
 .startup-wordmark { color: var(--parchment); font-size: 7rem; line-height: 0.95; letter-spacing: 0.04em; text-indent: 0.04em; white-space: nowrap; }
 .startup-subtitle { margin: 0.2rem 0 0; color: var(--muted); font-size: 1.7rem; line-height: 1.2; letter-spacing: 0.32em; white-space: nowrap; }
