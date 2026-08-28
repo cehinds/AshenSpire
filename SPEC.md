@@ -351,14 +351,9 @@ persisted field list is **declared as data** — `RUN_SHAPE` in `model/state.js`
 drifts. It is a **floor, not a whitelist**: unlisted keys pass through untouched. Instances by
 id only (§3.3).
 
-- Saved after **every** committed player choice (node chosen, reward taken). Entering combat
-  first writes a deterministic `combatEntered` recovery checkpoint. Choosing **Save Game** or
-  **Save and Quit** during a fully resolved combat replaces that checkpoint with a versioned
-  `CombatSnapshotService` record of the exact committed turn: phase, resources, hand and all
-  piles, enemies and intents, statuses, triggers, equipment state, and event log. Loading that
-  record restores it without replaying combat start, draws, or enemy rolls. A live action queue
-  or event buffer is not a committed boundary and refuses the save. Older `combatEntered`
-  records without a snapshot remain compatible and restart the encounter deterministically.
+- Saved after **every** committed player choice (node chosen, reward taken). **Mid-combat**:
+  only `combatEntered` is saved — reload restarts that combat from its start with the same
+  shuffle-stream state (StS behaviour). Abandoning mid-combat = same.
 - An unknown `schemaVersion`, a parseable-but-malformed shape, or a `contentVersion` mismatch
   with a dangling id → the save is **refused and archived**, never silently repaired. A run
   saved before equipment existed is the one healed case: it gets a fresh loadout and a
@@ -888,11 +883,8 @@ keeps the same state and focus contract without meaningful animation.
   `title-save-slot-list`, and `title-modal-actions`. Each `title-save-slot` supplies
   `title-save-slot-copy` and `title-save-slot-state`, plus `title-save-slot-delete` only when
   occupied; the action group supplies `title-modal-back-control` and
-  `title-modal-continue-control`. The DOM-free `saveSlotSelectionModel` projects Load and New
-  from the same immutable slot records and Behavior Models: selected styling, `aria-pressed`,
-  the selected-focus restoration target, primary-action availability, and the load/create
-  command payload all resolve to one slot. Save data and callbacks remain screen inputs rather
-  than being owned by these presentation components.
+  `title-modal-continue-control`. Save data and callbacks remain screen inputs rather than being
+  owned by these presentation components.
 - **Character Creation components.** The reusable creation family is `character-disclosure`,
   `class-preview-pane`, `class-resource-grid`, `class-choice-card`, `view-mode-toggle`,
   `boolean-setting-toggle`, `selection-section-face`, `primary-stat-card`, `stat-allocation-row`, `resource-strip`,
@@ -926,17 +918,7 @@ keeps the same state and focus contract without meaningful animation.
 - **Menu and Armoury Component Models.** The contextual launcher is `quick-menu-panel`,
   composed from `quick-menu-caption` and `quick-menu-row`; the full in-run menu is
   `menu-overlay`, composed from `menu-tab-strip`, `menu-tab`, `menu-panel`, and `menu-footer`;
-  the footer composes `save-game-control` and `save-quit-control`. Potentially destructive
-  Load and Quit Without Saving commands enter one shared `confirmation-modal`, whose
-  `confirmation-action` is the only commit door. It is an `alertdialog` for danger variants,
-  focuses the neutral `confirmation-cancel-control` Back action first, traps Tab, and lets Escape, Back, or the scrim cancel
-  without mutation and restore the invoking control. When it is stacked over the in-run menu,
-  one Escape removes only the top confirmation. After a commit, the service retains an empty
-  top-layer input shield for the bounded navigation activation window (600 ms by default) so a
-  physical second click cannot activate a newly rendered Title control or combatant beneath the
-  removed action; the shield releases after the destination paint settles. Danger borders retain
-  the blood/ember palette, while confirmation action and eyebrow text use the authored parchment
-  token and must measure at least 4.5:1 against their computed backgrounds. The equipment
+  the footer composes `save-game-control` and `save-quit-control`. The equipment
   family is `armoury-overlay` → `armoury-panel`, with `armoury-header`,
   `armoury-view-switcher`, `armoury-body`, `armoury-figure`, `equipment-slot`,
   `equipment-set-cell`, `armoury-inventory`, `inventory-item-card`, `inventory-detail-card`,
@@ -1066,14 +1048,6 @@ keeps the same state and focus contract without meaningful animation.
 
 - **Both** targeting modes: (a) drag card onto a target/board, (b) click card → targeting arrow → click target. Esc/right-click cancels. Non-targeted cards: drag anywhere above the hand or click-then-click the board.
 - Full playability with mouse only. Keyboard shortcuts (nice-to-have, M4): 1–9 select card, E end turn.
-- **Controls rebind capture owns its armed keydown.** `rebind-capture-service`
-  ignores lone modifiers. Escape cancels an armed keyboard capture, restores the
-  `controls-key-rebind-control` from Press… to Key with focus intact, performs
-  no binding mutation, and suppresses the same event before the covered menu can
-  close. With no capture armed, Escape retains its ordinary one-layer Back
-  behavior. A later re-arm accepts a free key; occupied-key conflict resolution
-  is a separate policy and is not implied by this contract. The containing
-  `controls-rebind-capture` is the stable Controls component surface.
 - Ordinary interactive elements expose their concise tooltip within 150 ms of
   hover: cards (with nested keyword tooltips), statuses (name, current math),
   intents (exact damage after modifiers), relics, flasks, and map nodes.

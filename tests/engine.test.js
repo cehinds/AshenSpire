@@ -18,7 +18,6 @@ import { rewardPlan, resolveContinue, unseenIds, REWARD_KIND_ORDER } from '../sr
 import { beatFor } from '../src/model/secondbeat.js';
 import { createRng, seedFromString, seedToString, seedProblem, SEED_MAX_LEN, sweepSeed } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, getEntity } from '../src/engine/combat.js';
-import { commitCombatSnapshot, serializeCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { computeAttackDamage, applyLoseHp } from '../src/engine/actions.js';
 import * as S from '../src/engine/statuses.js';
 import { generateActMap, sampleActShape } from '../src/engine/mapgen.js';
@@ -5823,19 +5822,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     'the shared unfolded Inventory card model remains hold-safe without an opted-in class');
     eq(contentBundle.balance.ui.holdConfirm.def, 'off',
       'the universal hold setting defaults off and arms opted-in card classes only after the player enables it');
-    eq(contentBundle.balance.ui.titleLoadHold.ms, 600,
-      'the title quick-load hold duration is authored as 600 ms');
-    const malformedTitleLoadHold = {
-      ...contentBundle,
-      balance: {
-        ...contentBundle.balance,
-        ui: { ...contentBundle.balance.ui, titleLoadHold: { ms: 0 } },
-      },
-    };
-    const titleLoadHoldValidation = validateContent(malformedTitleLoadHold);
-    assert(!titleLoadHoldValidation.ok
-      && titleLoadHoldValidation.errors.some((error) => error.path === 'balance.ui.titleLoadHold.ms'),
-    'a non-positive title quick-load duration is refused by its authored path');
     const expandedTray = trayPresentationState({
       collapsed: false,
       savedHeightRatio: 0.7,
@@ -5907,95 +5893,6 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     }).state, 'empty', 'an unlocked unfilled position is a first-class empty card');
     eq(layout.responsive.phone.minWidth, '0', 'phone layout keeps a visible character pane at every width');
     assert(layout.responsive.breakpoint >= 640, 'responsive breakpoint is a named, usable content value');
-  });
-
-  test('75. an explicit save resumes the exact committed combat state and RNG continuation', () => {
-    const seed = 0x7503;
-    const original = makeCombat({
-      seed,
-      deck: ['strike', 'defend', 'strike', 'defend', 'strike', 'defend', 'strike', 'defend'],
-      enemies: ['tHitter'],
-      hp: 61,
-      maxHp: 78,
-    });
-    playFromHand(original, 'strike');
-
-    const counters = original.rng.getCounters();
-    const stored = JSON.parse(JSON.stringify(serializeCombatSnapshot(original)));
-    const restored = restoreCombatSnapshot({
-      registries: REG,
-      rng: createRng(seed, counters),
-      snapshot: stored,
-    });
-
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(stored),
-      'storage round-trip restores the exact committed turn, entities, intents, piles, and event receipts');
-    assert(restored.triggerState instanceof Map, 'trigger receipts restore to their runtime Map shape');
-    assert(typeof restored.emit === 'function' && typeof restored.enqueue === 'function' && typeof restored.nextInstanceId === 'function',
-      'runtime-only combat methods are reattached');
-
-    dispatch(original, { type: 'endTurn' });
-    dispatch(restored, { type: 'endTurn' });
-    eq(JSON.stringify(serializeCombatSnapshot(restored)), JSON.stringify(serializeCombatSnapshot(original)),
-      'the next turn resolves identically instead of replaying combat setup');
-    eq(JSON.stringify(restored.rng.getCounters()), JSON.stringify(original.rng.getCounters()),
-      'restored combat consumes the same named RNG streams');
-
-    const runProjection = {};
-    commitCombatSnapshot({ run: runProjection, combat: restored, nodeId: 'node-75', encounterId: 'encounter-75' });
-    eq(runProjection.hp, restored.player.hp, 'slot-summary HP projects the exact combat state');
-    eq(runProjection.flaskCharges?.hpCurrent, restored.player.flaskCharges?.hpCurrent,
-      'slot-summary flask charges project the exact combat state');
-    eq(JSON.stringify(runProjection.combatEntered.snapshot), JSON.stringify(serializeCombatSnapshot(restored)),
-      'one committed snapshot owns both the resume record and run-level summary projection');
-
-    restored.queue.push({ planted: true });
-    let resolvingReason = '';
-    try { serializeCombatSnapshot(restored); } catch (error) { resolvingReason = error.message; }
-    restored.queue.pop();
-    assert(/still resolving/.test(resolvingReason), 'a live action queue must refuse a torn combat save');
-
-    const malformed = structuredClone(stored);
-    malformed.phase = 'refunded-restart';
-    let malformedReason = '';
-    try {
-      restoreCombatSnapshot({
-        registries: REG,
-        rng: createRng(seed, counters),
-        snapshot: malformed,
-      });
-    } catch (error) {
-      malformedReason = error.message;
-    }
-    assert(/phase/.test(malformedReason),
-      `a malformed exact snapshot must be refused by its field, got ${JSON.stringify(malformedReason)}`);
-
-    const malformedRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    malformedRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: malformed };
-    const storage = createMemoryStorage();
-    storage.setItem(RUN_KEY, serializeRun(malformedRun));
-    const saves = createSaveManager(storage);
-    eq(saves.loadRun(REG), null, 'the real load door refuses a malformed exact snapshot');
-    assert(/phase/.test(saves.runStatus().reason || ''), 'the archived refusal names the malformed snapshot phase');
-    assert(storage.getItem(RUN_ARCHIVE_KEY)?.includes('refunded-restart'), 'the original malformed bytes remain recoverable in the archive');
-
-    const dangling = structuredClone(stored);
-    dangling.piles.hand[0].cardId = 'removedByContentPatch';
-    const danglingRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    danglingRun.combatEntered = { nodeId: 'node-75', encounterId: 'encounter-75', snapshot: dangling };
-    const danglingStorage = createMemoryStorage();
-    danglingStorage.setItem(RUN_KEY, serializeRun(danglingRun));
-    const danglingSaves = createSaveManager(danglingStorage);
-    eq(danglingSaves.loadRun(REG), null, 'the real load door refuses dangling exact-snapshot content');
-    assert(/piles\.hand\.cardId/.test(danglingSaves.runStatus().reason || ''),
-      'the dangling exact-snapshot refusal names the affected card pile');
-
-    const checkpointRun = createRunState({ seed, classId: 'reaver', registries: REG });
-    checkpointRun.combatEntered = { nodeId: 'node-75', encounterId: REG.encounters.ids()[0] };
-    const checkpointStorage = createMemoryStorage();
-    checkpointStorage.setItem(RUN_KEY, serializeRun(checkpointRun));
-    assert(createSaveManager(checkpointStorage).loadRun(REG)?.combatEntered?.snapshot === undefined,
-      'older encounter-only checkpoints remain loadable and explicitly lack an exact snapshot');
   });
 
   const passed = results.filter((r) => r.ok).length;

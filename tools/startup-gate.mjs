@@ -8,7 +8,7 @@
 //        node tools/startup-gate.mjs --selftest
 // Exit: 0 all contracts green · 1 product finding · 2 unavailable/tool failure
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
@@ -20,8 +20,6 @@ const ROOT = resolve(HERE, '..');
 const args = process.argv.slice(2);
 const ONLY = (() => { const i = args.indexOf('--only'); return i >= 0 ? args[i + 1] : ''; })();
 const SELFTEST_LANE = ONLY === 'selftest';
-const CAPTURE_SHOTS = args.includes('--screenshots');
-const SHOT_DIR = resolve(ROOT, 'docs', 'preview');
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
 
 const browserPath = [
@@ -121,55 +119,6 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.RETURN-BYPASS/,
       },
       {
-        name: 'load slot presses read a missing data attribute',
-        file: 'src/ui/screens/title.js',
-        find: '        onTap: () => activateSlot(slot),',
-        replace: '        onTap: () => activateSlot(Number.NaN), // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-RESELECT/,
-      },
-      {
-        name: 'second activation no longer opens the load review',
-        file: 'src/ui/screens/title.js',
-        find: '        loadReviewSlot = slot;',
-        replace: '        loadReviewSlot = null; // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-REVIEW/,
-      },
-      {
-        name: 'Escape closes the whole load flow instead of returning to saves',
-        file: 'src/ui/screens/title.js',
-        find: '        if (loadReviewSlot != null) closeLoadReview();',
-        replace: '        if (loadReviewSlot != null) closeModal(); // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-REVIEW-ESCAPE/,
-      },
-      {
-        name: 'completed save-slot hold selects instead of loading',
-        file: 'src/ui/screens/title.js',
-        find: '        onConfirm: () => { hideTooltip(); onContinue(slot); },',
-        replace: '        onConfirm: () => activateSlot(slot), // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-HOLD/,
-      },
-      {
-        name: 'quick-load hold captures keyboard and controller presses',
-        file: 'src/ui/screens/title.js',
-        find: '        pointerOnly: true,',
-        replace: '        pointerOnly: false, // startup-gate selftest plant',
-        expectRed: /RED A8\.LOAD-SLOT-(?:KEY|PAD)-REVIEW/,
-      },
-      {
-        name: 'title modal Close drops below the authored tap floor',
-        file: 'styles/ui.css',
-        find: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor);',
-        replace: '.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; /* startup-gate selftest plant */',
-        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
-      },
-      {
-        name: 'occupied-slot Delete loses its tap-floor height',
-        file: 'styles/ui.css',
-        find: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }',
-        replace: '.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; /* startup-gate selftest plant */ }',
-        expectRed: /RED A8\.LOAD-SLOT-TARGETS-(?:MOBILE|DESKTOP)/,
-      },
-      {
         name: 'startup outranks the corrupt-profile crisis notice',
         file: 'src/main.js',
         find: '  if (showProfileNoticeIfNeeded()) return;',
@@ -241,7 +190,7 @@ if (args.includes('--selftest')) {
       },
     ],
   });
-  if (code === 0) console.log('startup-gate-selftest: OK — 25 plants, 25 caught');
+  if (code === 0) console.log('startup-gate-selftest: OK — 18 plants, 18 caught');
   process.exit(code);
 }
 
@@ -374,29 +323,6 @@ async function page({
       await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
       await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
       await wait(120);
-    },
-    async hold(selector, durationMs, { touch = mobile } = {}) {
-      const point = await ev(`(() => { const e=document.querySelector(${JSON.stringify(selector)}); if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2}; })()`);
-      if (!point) throw new Error(`missing ${selector}`);
-      if (touch) {
-        await cdp.send('Input.dispatchTouchEvent', {
-          type: 'touchStart', touchPoints: [{ x: point.x, y: point.y, id: 1, radiusX: 8, radiusY: 8, force: 1 }],
-        }, sessionId);
-        await wait(durationMs);
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }, sessionId);
-      } else {
-        await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-        await wait(durationMs);
-        await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
-      }
-      await wait(160);
-    },
-    async screenshot(name) {
-      mkdirSync(SHOT_DIR, { recursive: true });
-      const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
-      const path = resolve(SHOT_DIR, name);
-      writeFileSync(path, Buffer.from(data, 'base64'));
-      return path;
     },
     async close() { await cdp.send('Target.closeTarget', { targetId }); },
   };
@@ -572,136 +498,6 @@ async function assertReturnBypass() {
   await p.close();
 }
 
-async function assertLoadSlotSelection() {
-  const titleTargetRects = (targetPage) => targetPage.ev(`(() => {
-    const rect = (selector) => {
-      const element=document.querySelector(selector);
-      if (!element) return null;
-      const box=element.getBoundingClientRect();
-      return {width:Math.round(box.width*10)/10,height:Math.round(box.height*10)/10};
-    };
-    return {
-      close:rect('[data-component="title-modal-close-control"]'),
-      delete:rect('[data-component="title-save-slot-delete"]')
-    };
-  })()`);
-  const clearsTapFloor = (targets) => ['close', 'delete'].every((key) => targets[key]
-    && targets[key].width >= 44 && targets[key].height >= 44);
-
-  const p = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
-  await p.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title with an occupied save');
-  await p.click('[data-title-action="load"]');
-  await p.until(`!!document.querySelector('.title-menu-modal')`, 'mobile Load Game slot picker');
-
-  const initial = await p.ev(`(() => {
-    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
-    const focused=document.querySelector('[data-slot-pick].gp-focus');
-    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
-      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
-  })()`);
-  verdict(initial.selected === '1' && initial.focused === '1' && initial.continueEnabled,
-    'A8.LOAD-SLOT-INITIAL', `Load visibly focuses its selected occupied slot and enables Continue (${JSON.stringify(initial)})`);
-  const mobileTargets = await titleTargetRects(p);
-  verdict(clearsTapFloor(mobileTargets), 'A8.LOAD-SLOT-TARGETS-MOBILE',
-    `390x844 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(mobileTargets)})`);
-  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-list-mobile-390x844.png');
-
-  await p.click('[data-slot-pick="1"]');
-  const reselected = await p.ev(`(() => {
-    const selected=document.querySelector('[data-slot-pick][aria-pressed="true"]');
-    const focused=document.querySelector('[data-slot-pick].gp-focus');
-    return {selected:selected?.dataset.slotPick||null, focused:focused?.dataset.slotPick||null,
-      continueEnabled:document.querySelector('[data-title-action="modal-continue"]')?.disabled===false};
-  })()`);
-  verdict(reselected.selected === '1' && reselected.focused === '1' && reselected.continueEnabled,
-    'A8.LOAD-SLOT-RESELECT', `pressing the visibly selected occupied slot is idempotent and leaves Continue enabled (${JSON.stringify(reselected)})`);
-
-  await p.click('[data-slot-pick="1"]');
-  const review = await p.ev(`(() => ({
-    review:document.querySelector('.title-load-review')?.dataset.variant||'',
-    heading:document.querySelector('.title-load-review h2')?.textContent.trim()||'',
-    load:document.querySelector('[data-title-action="review-load"]')?.textContent.trim()||'',
-    back:document.querySelector('[data-title-action="review-back"]')?.textContent.trim()||''
-  }))()`);
-  verdict(review.review === 'load-review' && review.heading === 'LOAD SLOT 1?' && review.load === 'LOAD SAVE' && review.back === 'BACK TO SAVES',
-    'A8.LOAD-SLOT-REVIEW', `second activation opens the selected save review with explicit Load and Back actions (${JSON.stringify(review)})`);
-  if (CAPTURE_SHOTS) await p.screenshot('qa-load-slot-review-mobile-390x844.png');
-
-  await p.click('[data-title-action="review-back"]');
-  const returned = await p.ev(`(() => ({
-    picker:!!document.querySelector('.title-slot-list'),
-    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
-    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
-  }))()`);
-  verdict(returned.picker && returned.selected === '1' && returned.focused === '1',
-    'A8.LOAD-SLOT-REVIEW-BACK', `Back returns to Load Game with selection and focus preserved (${JSON.stringify(returned)})`);
-
-  await p.click('[data-slot-pick="1"]');
-  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review before Escape');
-  const escapeRelease = await p.key('Escape'); await escapeRelease();
-  const escaped = await p.ev(`(() => ({
-    picker:!!document.querySelector('.title-slot-list'),
-    selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null,
-    focused:document.querySelector('[data-slot-pick].gp-focus')?.dataset.slotPick||null
-  }))()`);
-  verdict(escaped.picker && escaped.selected === '1' && escaped.focused === '1',
-    'A8.LOAD-SLOT-REVIEW-ESCAPE', `Escape returns to Load Game with selection and focus preserved (${JSON.stringify(escaped)})`);
-
-  await p.click('[data-slot-pick="1"]');
-  await p.until(`!!document.querySelector('[data-title-action="review-load"]')`, 'load review after Back');
-  await p.click('[data-title-action="review-load"]');
-  await p.until(`!!document.querySelector('.mapscreen')`, 'review-confirmed save load');
-  verdict(await p.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
-    'A8.LOAD-SLOT-REVIEW-COMMIT', 'Load Save leaves the title and opens the selected run');
-  await p.close();
-
-  const held = await page({ query: '?shot=title', width: 390, height: 844, mobile: true });
-  await held.until(`!!document.querySelector('[data-title-action="load"]')`, 'mobile title for hold-to-load');
-  await held.click('[data-title-action="load"]');
-  await held.until(`!!document.querySelector('[data-slot-pick="1"][data-hold-ms="600"]')`, 'data-driven held save slot');
-  const hint = await held.ev(`(() => {
-    const e=document.querySelector('[data-slot-pick="1"]');
-    return {title:e?.title||'', aria:e?.getAttribute('aria-label')||'', hold:e?.dataset.holdMs||'', word:e?.querySelector('.hold-hint')?.textContent||''};
-  })()`);
-  verdict(hint.hold === '600' && hint.word === 'HOLD' && /Hold to load now/i.test(`${hint.title} ${hint.aria}`),
-    'A8.LOAD-SLOT-HOLD-HINT', `slot exposes the authored hold duration and visible/accessible instruction (${JSON.stringify(hint)})`);
-  await held.hold('[data-slot-pick="1"]', 720, { touch: true });
-  verdict(await held.ev(`!document.querySelector('.title-menu-modal') && !!document.querySelector('.mapscreen')`),
-    'A8.LOAD-SLOT-HOLD', 'a completed mobile touch hold loads the save directly without opening review');
-  await held.close();
-
-  const keyed = await page({ query: '?shot=title' });
-  await keyed.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for keyboard review');
-  await keyed.click('[data-title-action="load"]');
-  const desktopTargets = await titleTargetRects(keyed);
-  verdict(clearsTapFloor(desktopTargets), 'A8.LOAD-SLOT-TARGETS-DESKTOP',
-    `1200x730 Close and occupied-slot Delete each render at least 44x44 (${JSON.stringify(desktopTargets)})`);
-  const firstKeyRelease = await keyed.key('Enter'); await firstKeyRelease();
-  const keyedFirst = await keyed.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
-  verdict(!keyedFirst.review && keyedFirst.selected === '1', 'A8.LOAD-SLOT-KEY-FIRST',
-    `keyboard activation selects without bypassing review (${JSON.stringify(keyedFirst)})`);
-  const secondKeyRelease = await keyed.key('Enter'); await secondKeyRelease();
-  verdict(await keyed.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-KEY-REVIEW', 'a second keyboard activation opens the same review used by pointer input');
-  if (CAPTURE_SHOTS) await keyed.screenshot('qa-load-slot-review-wide-1200x730.png');
-  await keyed.close();
-
-  const padded = await page({ query: '?shot=title' });
-  await padded.until(`!!document.querySelector('[data-title-action="load"]')`, 'desktop title for controller review');
-  await padded.ev(`window.__startupPad.connect()`); await wait(250);
-  await padded.click('[data-title-action="load"]');
-  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
-  const padFirst = await padded.ev(`({review:!!document.querySelector('.title-load-review'), selected:document.querySelector('[data-slot-pick][aria-pressed="true"]')?.dataset.slotPick||null})`);
-  verdict(!padFirst.review && padFirst.selected === '1', 'A8.LOAD-SLOT-PAD-FIRST',
-    `controller activation selects without becoming a timed hold (${JSON.stringify(padFirst)})`);
-  await padded.ev(`window.__startupPad.set(0,true)`); await wait(100);
-  await padded.ev(`window.__startupPad.set(0,false)`); await wait(180);
-  verdict(await padded.ev(`!!document.querySelector('.title-load-review [data-title-action="review-load"]')`),
-    'A8.LOAD-SLOT-PAD-REVIEW', 'a second controller activation deterministically opens the same review');
-  await padded.close();
-}
-
 async function assertCrisisPrecedence() {
   const p = await page({ corruptProfile: true });
   await p.until(`!!document.querySelector('.profile-notice, .startup-gate')`, 'crisis or startup');
@@ -780,7 +576,6 @@ async function main() {
   await assertGamepad(9);
   await assertInterruptedPresses();
   await assertReturnBypass();
-  await assertLoadSlotSelection();
   await assertCrisisPrecedence();
   await assertReducedMotion();
   if (!SELFTEST_LANE) {

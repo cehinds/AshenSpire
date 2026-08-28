@@ -468,42 +468,6 @@ body.hide-hints .hint-bar { display: none; }
    `body.hide-hints` above is the player's own switch and is untouched. */
 :root[data-layout='narrow'] .hint-bar { display: none; }
 
-/* ---------- shared confirmation ---------- */
-.confirmation-veil {
-  z-index: 1200; box-sizing: border-box; padding: 2%;
-}
-.confirmation-veil.confirmation-input-shield {
-  padding: 0; background: transparent;
-}
-.confirmation-modal {
-  width: 36rem; max-width: 96%; max-height: 86%; padding: 1.6rem;
-  display: grid; gap: 1.2rem; overflow: auto;
-  box-shadow: 0 1.6rem 5rem rgba(0, 0, 0, 0.62);
-}
-.confirmation-modal header { display: grid; gap: 0.35rem; }
-.confirmation-modal h2 { margin: 0; color: var(--parchment); }
-.confirmation-eyebrow {
-  font-size: 0.85rem; letter-spacing: 0.16em;
-}
-.confirmation-eyebrow,
-.confirmation-modal .confirmation-confirm {
-  /* Blood/ember stays on the danger borders; prose uses the authored AA token. */
-  color: var(--parchment);
-}
-.confirmation-copy { color: var(--parchment); line-height: 1.5; }
-.confirmation-copy > :first-child { margin-top: 0; }
-.confirmation-copy > :last-child { margin-bottom: 0; }
-.confirmation-modal footer { display: flex; justify-content: flex-end; gap: 0.7rem; }
-.confirmation-modal footer button {
-  min-height: var(--tap-floor); height: auto; padding: 0.55rem 1rem;
-}
-.confirmation-modal.danger { border-color: var(--blood); }
-@media (max-width: 540px) {
-  .confirmation-veil { padding: 3%; }
-  .confirmation-modal { max-width: 100%; padding: 1.2rem; }
-  .confirmation-modal footer { display: grid; grid-template-columns: 1fr 1fr; }
-}
-
 /* ---------- controls / rebinds ---------- */
 .rebind-list { display: flex; flex-direction: column; }
 .rebind-row .rebind-ctl { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
@@ -4362,12 +4326,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.18), 0 2rem 6rem rgba(0, 0, 0, 0.7), inset 0 0 3rem rgba(var(--accent-rgb), 0.04);
 }
 .title-menu-modal h2 { margin: 0; color: var(--parchment); font-size: 4rem; line-height: 1; letter-spacing: 0.08em; text-align: center; }
-.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
+.title-modal-close { position: absolute; top: 1.4rem; right: 1.6rem; min-width: 3rem; min-height: 3rem; padding: 0; border: 1px solid var(--line-soft); border-radius: 50%; background: transparent; color: var(--parchment); font-size: 2rem; line-height: 1; }
 .title-modal-close:hover, .title-modal-close:focus-visible { border-color: var(--gold); outline: 2px solid color-mix(in srgb, var(--gold) 42%, transparent); outline-offset: 2px; }
 .title-modal-rule { width: min(38.3rem, 74%); margin-top: 1.7rem; }
 .title-slot-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; }
 .title-slot-row { display: flex; align-items: stretch; gap: 0.8rem; }
-.title-slot-pick { position: relative; display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
+.title-slot-pick { display: flex; align-items: center; justify-content: space-between; flex: 1 1 auto; min-width: 0; min-height: 8.6rem; padding: 1.5rem 2rem; border: 1px solid var(--line-soft); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); color: var(--parchment); text-align: left; }
 .title-slot-pick:hover, .title-slot-pick:focus-visible, .title-slot-row.is-selected .title-slot-pick { border-color: var(--gold); box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 32%, transparent); outline: none; }
 .title-slot-pick:disabled { cursor: default; opacity: 0.74; }
 .title-slot-copy { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -4378,18 +4342,12 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
 .title-slot-seed { font-family: monospace; }
 .title-slot-state { flex: 0 0 auto; color: var(--muted); font-size: 0.9rem; letter-spacing: 0.14em; }
 .title-slot-row.is-selected .title-slot-state { color: var(--gold); }
-.title-slot-pick > .hold-hint { position: absolute; right: 1.8rem; bottom: 0.72rem; margin: 0; }
-.title-slot-delete { align-self: center; min-width: var(--tap-floor); min-height: var(--tap-floor); padding-inline: 0.8rem; }
+.title-slot-delete { align-self: center; min-width: var(--tap-floor); padding-inline: 0.8rem; }
 .title-modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin: 2.3rem 1.3rem 0; }
 .title-modal-actions button { min-height: 4.8rem; border-radius: 1.1rem; font-size: 1.35rem; }
 .title-modal-back { border-color: var(--line-soft); color: var(--parchment); }
 .title-modal-continue { border-color: var(--gold); color: var(--gold); }
 .title-modal-actions button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-.title-load-review { width: min(52rem, 94%); }
-.title-load-review-slot { display: block; margin-top: 2rem; padding: 1.6rem 2rem; border: 1px solid var(--gold); border-radius: 1.4rem; background: color-mix(in srgb, var(--bg) 84%, transparent); }
-.title-load-review-copy { margin: 1.2rem 0 0; color: var(--muted); font-size: 1.08rem; text-align: center; }
-.title-load-review-confirm { border-color: var(--green); color: var(--green); }
-.title-load-review-confirm:hover, .title-load-review-confirm:focus-visible { background: color-mix(in srgb, var(--green) 14%, transparent); border-color: var(--green); color: var(--green); }
 
 @media (max-width: 30rem) {
   .title-screen { padding: 1.2rem 0.8rem 1rem; }
@@ -4409,11 +4367,8 @@ input[type='range'].set-range { width: 12rem; accent-color: var(--gold); cursor:
   .title-slot-tag, .title-slot-seed { font-size: calc(0.82rem / var(--ui-zoom, 1)); }
   .title-slot-meta { font-size: calc(1.1rem / var(--ui-zoom, 1)); }
   .title-slot-state { display: none; }
-  .title-slot-pick > .hold-hint { display: block; right: calc(1.2rem / var(--ui-zoom, 1)); bottom: calc(0.55rem / var(--ui-zoom, 1)); }
   .title-modal-actions { gap: calc(1rem / var(--ui-zoom, 1)); margin: calc(2rem / var(--ui-zoom, 1)) 0 0; }
   .title-modal-actions button { min-height: calc(5rem / var(--ui-zoom, 1)); padding-inline: calc(0.8rem / var(--ui-zoom, 1)); font-size: calc(1.2rem / var(--ui-zoom, 1)); }
-  .title-load-review-slot { margin-top: calc(1.8rem / var(--ui-zoom, 1)); padding: calc(1.4rem / var(--ui-zoom, 1)); }
-  .title-load-review-copy { font-size: calc(1rem / var(--ui-zoom, 1)); }
 }
 
 /* Folded companion to the title hall: the first interaction reveals the

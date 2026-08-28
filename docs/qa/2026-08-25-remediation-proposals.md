@@ -1,26 +1,10 @@
-# AshenSpire QA remediation proposals — item #4 active from live dev
+# AshenSpire QA remediation proposals — updated against build 0.4.0.1362
 
 ## Status
 
 The baseline findings came from build `0.4.0.1356`. Four bounded remediations
 are now implemented in the integrated delivery candidate, build `0.4.0.1362`
 (`20424f3657`) on `origin/dev@16d9181d`. All remaining rows are proposals.
-
-Item #1 is integrated through PR #352 at
-`origin/dev@9a37d67f567b7dca0b17977872b4b504bccb6a16`; Pages run 32935267281
-succeeded and the hosted artifact is byte-identical to the reviewed build
-`0.4.0.1366` (`5063bac9f8`). Item #2 is integrated through PR #353 at
-`origin/dev@d6318d063fe47419d263f7d3a5a6041d7c0fdade`; Pages run 32940030088
-succeeded and the hosted artifact is byte-identical to reviewed build
-`0.4.0.1368` (`ebdc7c0ea9`). Item #3 is integrated through PR #354 at
-`origin/dev@03bf280d1bcce8ce1f00529e5e41af90cf8b108d`; its hosted build
-`0.4.0.1371` (`41b67b338b`) is verified. Item #4 is active locally on
-`codex/qa-04-confirmations`, deliberately rebased onto that exact item #3 merge;
-item #5 remains blocked. Receipts:
-[item #1](2026-08-25-load-slot-remediation.md) and
-[item #2](2026-08-25-new-slot-remediation.md),
-[item #3](2026-08-25-combat-save-remediation.md); the item #4 maker receipt is
-[in progress](2026-08-26-confirmation-remediation.md).
 
 | Local remediation | State | Evidence still required before delivery |
 |---|---|---|
@@ -31,16 +15,16 @@ item #5 remains blocked. Receipts:
 
 ### Current verification boundary
 
-- Exact local item #4 Node suite: `112 passed, 0 failed`.
+- Exact integrated Node suite: `110 passed, 0 failed`.
 - Shipped aliases: `6/6` byte/provenance checks passed and the root/build/dist
-  artifacts are byte-identical for build `0.4.0.1374` (`9ee533f12e`).
-- Confirmation source and shipped browser doors: `45/45` each across Map and
-  Combat at 1200×730, 390×844, and 320×640; modal overflow is zero, actions are
-  at least 44×44, and captured unexpected console/network events are zero.
-- Confirmation same-door corpus: `7/7` planted regressions caught, followed by
-  a clean copied-tree run.
-- Component contract: `20/20`; link contract: `363/363`. Independent QA and
-  delivery remain pending; screenshots alone do not close behavior review.
+  artifacts are byte-identical for build `0.4.0.1362` (`20424f3657`).
+- Smith exact-build browser recheck: desktop transaction flow and 390x844
+  geometry PASS; Back/Escape restore focus; Confirm leaves the Shrine; zero
+  warning/error console entries.
+- Component contract check: one pre-existing unrelated failure remains:
+  `C8 combat composition lacks stable Battlefield/Frame/Hand/Action references`.
+- The phone viewport matrix and tray interaction transitions are still pending;
+  screenshots alone do not close those behavior gates.
 
 Evidence comes from the Codex in-app-browser QA pass documented in `2026-08-25-build-0.4.0.1356.md`. Screenshots prove visible state; behavior acceptance also requires state-transition assertions.
 
@@ -108,11 +92,11 @@ Renderers own DOM and CSS. Models own labels, ordering, selection, availability,
 
 | # | Observation | Proposed owner | Reusable proposal | Evidence |
 |---:|---|---|---|---|
-| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | **Integrated in PR #352 / build 1366:** deterministic selection/review/hold flow and shared 44x44 title tap targets; [receipt](2026-08-25-load-slot-remediation.md) | `23-load-active-slot-can-deselect.png`; `qa-load-slot-list-mobile-390x844.png`; `qa-load-slot-review-mobile-390x844.png`; `qa-load-slot-review-wide-1200x730.png` |
-| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | **Integrated in PR #353 / build 1368:** immutable Load/New slot projection keeps selected styling, accessibility state, focus restoration, action availability, and command target on one slot; Pages and hosted byte identity pass; [receipt](2026-08-25-new-slot-remediation.md) | `02-main-menu.png`; `qa-new-slot-selected-mobile-390x844.png`; `qa-new-slot-selected-wide-1200x730.png`; behavior trace |
-| 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | **Integrated in PR #354 / build 1371:** versioned exact committed-turn snapshot; malformed/dangling snapshots refuse and archive; older entry checkpoints remain compatible; hosted artifact verified; [receipt](2026-08-25-combat-save-remediation.md) | `22-continue-restarts-combat-resources.png`; `qa-combat-save-before-wide-1200x730.png`; `qa-combat-save-resumed-wide-1200x730.png`; phone pair; behavior trace |
-| 4 | Quit confirmation uses an inconsistent native prompt | `ConfirmationService` | **Local build 1376 contrast repair candidate:** Load and Quit Without Saving share one themed reversible alertdialog with stable neutral Back, exact-once danger commit, launcher restoration, one-layer Escape, a bounded post-commit input shield, and parchment action/eyebrow text measuring 15.46:1/17.15:1 while blood/ember remains on borders; source/shipped Map+Combat evidence is green at desktop, phone, and compact-phone viewports; independent QA rerun pending; [receipt](2026-08-26-confirmation-remediation.md) | `qa-confirmation-load-wide-1200x730.png`; `qa-confirmation-load-mobile-390x844.png`; `qa-confirmation-load-compact-320x640.png`; Quit and Combat counterparts; real hit-tested behavior and computed-color trace |
-| 5 | Escape can bind End Turn and close Controls | `RebindCaptureService` | **Local candidate:** armed Escape cancels capture before same-target overlay dispatch, restores the focused control, and performs zero binding mutation; [receipt](2026-08-26-rebind-capture-remediation.md) | `13-controls-escape-binding-conflict.png`; `qa-rebind-escape-cancel-wide-1200x730.png`; `qa-rebind-escape-cancel-mobile-390x844.png` |
+| 1 | Load slot looks selected while Continue is disabled | `LoadSelectionModel` | Required single-select card group; selected click is idempotent | `23-load-active-slot-can-deselect.png` |
+| 2 | New-game slot loses selected styling | `SaveSlotSelectionModel` | Same selection card and state contract as Load | `02-main-menu.png` plus behavior trace |
+| 3 | Combat Save resumes a restarted/refunded encounter | `CombatSnapshotService` | Versioned exact snapshot or explicitly renamed checkpoint contract | `22-continue-restarts-combat-resources.png` |
+| 4 | Quit confirmation uses an inconsistent native prompt | `ConfirmationService` | Shared themed destructive confirmation overlay | behavior trace; screenshot blocked by native dialog |
+| 5 | Escape can bind End Turn and close Controls | `RebindCaptureService` | Reserved-key cancellation before menu dispatch | `13-controls-escape-binding-conflict.png` |
 | 6 | Binding conflicts have no explicit resolution | `BindingConflictModel` | Choose another / replace / cancel dialog | `13-controls-escape-binding-conflict.png` |
 | 7 | D, R, and T all read “Armoury” | `ActionRegistry` | One label/accessibility registry for hints and Controls | `08-new-run-map-controls.png` |
 | 8 | Wide Controls wastes space | `ControlsScreenModel` | Centered, clamped action/keyboard/pad table | `13-controls-escape-binding-conflict.png` |

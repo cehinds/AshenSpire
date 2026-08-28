@@ -160,7 +160,7 @@ export function beatCue(phase, id, form) {
  */
 export function armHold(btn, {
   ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
-  feedbackHosts = null, pointerOnly = false,
+  feedbackHosts = null,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
 
@@ -270,12 +270,6 @@ export function armHold(btn, {
     // the `click` a lifted finger may generate can be swallowed after either a
     // real hold or an off-mode release commit. A key or pad generates NO click
     // here — input.js owns its activation — so it must never set this flag.
-    // Some holds are a pointer/touch shortcut rather than a safety beat. They
-    // must not turn keyboard or controller activation into a timed gesture:
-    // declining those sources here lets the ordinary focused-control click
-    // keep its authored meaning. Safety beats leave pointerOnly false and
-    // retain the three-input parity described at the top of this file.
-    if (pointerOnly && origin.source !== 'pointer') return false;
     if (offPointerPress || fired || armed) return false;
     heldThisPress = false;
     committedThisPress = false;
@@ -385,16 +379,8 @@ export function armHold(btn, {
     // file can see the next one. What sees it is the page — every armed control
     // carries `data-beat-action`, and tools/holdconfirm.mjs drives the real
     // keys and the real pad rather than trusting this comment.
-    if (ev.detail === 0) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
-    if (!heldThisPress) {
-      if (pointerOnly && onTap) onTap(ev);
-      else onConfirm(ev);
-      return;
-    }
+    if (ev.detail === 0) { onConfirm(ev); return; }
+    if (!heldThisPress) { onConfirm(ev); return; }
     const tapped = !committedThisPress;
     heldThisPress = false;
     committedThisPress = false;
@@ -418,7 +404,7 @@ export function armHold(btn, {
   btn.addEventListener('click', onClick);
   btn.addEventListener('carddragstart', onCardDragStart);
   btn.addEventListener('contextmenu', onContextMenu);
-  if (!pointerOnly) addEventListener('keydown', onKeyEsc);
+  addEventListener('keydown', onKeyEsc);
 
   const disarm = function disarm() {
     stop('idle');
@@ -430,7 +416,7 @@ export function armHold(btn, {
     btn.removeEventListener('click', onClick);
     btn.removeEventListener('carddragstart', onCardDragStart);
     btn.removeEventListener('contextmenu', onContextMenu);
-    if (!pointerOnly) removeEventListener('keydown', onKeyEsc);
+    removeEventListener('keydown', onKeyEsc);
   };
   // Re-read the dial and the action's state. Cheap, idempotent, and the only
   // way a control whose own screen rewrites its innerHTML keeps its dressing.
