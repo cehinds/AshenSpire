@@ -4,8 +4,8 @@
 > `dev`; the stable redesign contract remains in [`ARCHITECTURE-MAP.md`](./ARCHITECTURE-MAP.md)
 > and [`COMPONENT-MODEL-ARCHITECTURE.md`](./COMPONENT-MODEL-ARCHITECTURE.md).
 
-- Source branch: `dev`
-- Source commit: `67b3b938f68bce1503005a4fa30ef132e0e19dbd`
+- Source branch: `codex/migration-continuity-integration-current`
+- Source commit: `1bef1e2a7a6d58bab5c40277dc6e85c8440c1280`
 - Boundary status: **PASS**
 
 ## Core architecture that this refresh must preserve
@@ -21,17 +21,17 @@
 
 | Area | Path | Tracked files |
 |---|---|---:|
-| Domain models and contracts | `src/model/` | 32 |
-| Headless simulation/services | `src/engine/` | 10 |
+| Domain models and contracts | `src/model/` | 33 |
+| Headless simulation/services | `src/engine/` | 11 |
 | Screen presenters/hosts | `src/ui/screens/` | 21 |
 | Presentation projections | `src/ui/viewModels/` | 1 |
-| Component models and behavior records | `src/ui/models/` | 13 |
-| DOM components and observer adapters | `src/ui/components/` | 33 |
+| Component models and behavior records | `src/ui/models/` | 19 |
+| DOM components and observer adapters | `src/ui/components/` | 41 |
 | Code-side content adapters | `src/content/` | 51 |
 | Authoritative JSON/CSV content | `content/source/` | 15 |
 | Transport | `src/net/` | 1 |
-| Tests | `tests/` | 18 |
-| Architecture/tooling | `tools/` | 317 |
+| Tests | `tests/` | 19 |
+| Architecture/tooling | `tools/` | 385 |
 
 ## Current implementation signals
 
@@ -51,8 +51,8 @@
 
 ## File-shape summary
 
-Tracked files: **1339**.
-Extensions: `.bat` 1, `.css` 4, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 10, `.js` 185, `.json` 23, `.md` 34, `.mjs` 171, `.png` 747, `.py` 4, `.sh` 4, `.svg` 10, `.txt` 21, `.webp` 106, `.yml` 2, `(none)` 1.
+Tracked files: **2762**.
+Extensions: `.bat` 1, `.css` 116, `.csv` 13, `.gitattributes` 1, `.gitignore` 2, `.html` 27, `.jpg` 4, `.js` 1056, `.json` 25, `.md` 70, `.mjs` 183, `.nojekyll` 1, `.png` 940, `.py` 4, `.sh` 4, `.svg` 12, `.txt` 129, `.webp` 106, `.woff2` 64, `.yml` 3, `(none)` 1.
 
 This file is an inventory, not architecture authority. A refresh may update
 the counts, source commit, and observed signals, but it must not rewrite the
