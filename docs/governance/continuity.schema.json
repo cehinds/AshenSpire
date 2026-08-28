@@ -147,8 +147,9 @@
       "additionalProperties": false,
       "required": ["status", "owner", "command", "order", "verification", "directEditsAllowed"],
       "properties": {
-        "status": { "enum": ["idle", "reserved", "running", "frozen"] },
+        "status": { "enum": ["idle", "reserved", "running", "frozen", "candidate-frozen"] },
         "owner": { "$ref": "#/$defs/nonEmpty" },
+        "artifact": { "$ref": "#/$defs/artifactIdentity" },
         "command": { "const": "node tools/launch.mjs --build-only" },
         "order": {
           "type": "array",
@@ -203,6 +204,18 @@
         "result": { "enum": ["PASS", "FAIL", "UNKNOWN"] }
       }
     },
+    "artifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "buildOrdinal", "sourceDigest"],
+      "properties": {
+        "path": { "const": "build/AshenSpire.html" },
+        "bytes": { "type": "integer", "minimum": 1 },
+        "sha256": { "type": "string", "pattern": "^[0-9A-Fa-f]{64}$" },
+        "buildOrdinal": { "type": "integer", "minimum": 1 },
+        "sourceDigest": { "type": "string", "pattern": "^[0-9a-f]{10}$" }
+      }
+    },
     "laneVerification": {
       "type": "object",
       "additionalProperties": false,
@@ -229,6 +242,7 @@
         "status": { "enum": ["queued", "active", "waiting-decision", "blocked", "candidate-frozen", "complete", "tombstoned"] },
         "baseSha": { "$ref": "#/$defs/sha" },
         "headSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
+        "treeSha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$" },
         "availability": { "enum": ["local-only", "origin-branch", "integrated"] },
         "owner": { "$ref": "#/$defs/owner" },
         "verification": { "$ref": "#/$defs/laneVerification" },

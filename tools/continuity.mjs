@@ -7,7 +7,8 @@
 // snapshot with the remote. Maintenance modes only report; they never edit Git,
 // delete records, commit, push, or mutate dev.
 
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -204,6 +205,9 @@ export function invariantErrors(doc, raw) {
   if (doc.authority?.directDevMutationAllowed !== false) errors.push('$.authority.directDevMutationAllowed: direct dev mutation is forbidden');
   if (doc.authority?.remoteActionsRequireSeparateAuthority !== true) errors.push('$.authority: remote actions must require separate authority');
   if (doc.generatedArtifacts?.directEditsAllowed !== false) errors.push('$.generatedArtifacts.directEditsAllowed: generated files cannot be hand edited');
+  if (doc.generatedArtifacts?.status === 'candidate-frozen' && !doc.generatedArtifacts.artifact) {
+    errors.push('$.generatedArtifacts: candidate-frozen status needs exact artifact identity');
+  }
   for (const tombstone of doc.tombstones || []) if (tombstone.deletionAuthorized !== false) errors.push(`$.tombstones.${tombstone.id}: packet cannot authorize deletion`);
 
   everyString(doc, (text, at) => {
@@ -244,6 +248,21 @@ export function repositoryErrors(doc, adapter) {
     const actual = adapter.hashFile(source.path);
     if (!actual) errors.push(`governance ${source.path}: file missing or unreadable`);
     else if (actual !== source.blob) errors.push(`governance ${source.path}: blob drift ${source.blob} -> ${actual}`);
+  }
+  for (const lane of doc.lanes) {
+    if (!lane.headSha || !lane.treeSha || !adapter.commitTree) continue;
+    const actual = adapter.commitTree(lane.headSha);
+    if (!actual) errors.push(`git object: cannot resolve tree for ${lane.id}@${lane.headSha}`);
+    else if (actual !== lane.treeSha) errors.push(`git object: tree drift for ${lane.id} ${lane.treeSha} -> ${actual}`);
+  }
+  const artifact = doc.generatedArtifacts.artifact;
+  if (artifact && adapter.fileIdentity) {
+    const actual = adapter.fileIdentity(artifact.path);
+    if (!actual) errors.push(`generated artifact: missing ${artifact.path}`);
+    else {
+      if (actual.bytes !== artifact.bytes) errors.push(`generated artifact: size drift ${artifact.bytes} -> ${actual.bytes}`);
+      if (actual.sha256 !== artifact.sha256.toUpperCase()) errors.push(`generated artifact: SHA-256 drift ${artifact.sha256.toUpperCase()} -> ${actual.sha256}`);
+    }
   }
   if (adapter.documentationErrors) errors.push(...adapter.documentationErrors());
   return errors;
@@ -289,6 +308,19 @@ function realAdapter(root) {
       if (!existsSync(resolve(root, path))) return null;
       const result = git(root, ['hash-object', '--', path]);
       return result.status === 0 ? result.stdout : null;
+    },
+    commitTree(sha) {
+      const result = git(root, ['rev-parse', `${sha}^{tree}`]);
+      return result.status === 0 ? result.stdout : null;
+    },
+    fileIdentity(path) {
+      const absolute = resolve(root, path);
+      const rel = relative(root, absolute);
+      if (rel.startsWith('..') || isAbsolute(rel) || !existsSync(absolute)) return null;
+      return {
+        bytes: statSync(absolute).size,
+        sha256: createHash('sha256').update(readFileSync(absolute)).digest('hex').toUpperCase(),
+      };
     },
     documentationErrors() {
       if (!existsSync(DEFAULT_DOC)) return [`documentation ${relative(root, DEFAULT_DOC)}: file missing`];
@@ -372,10 +404,15 @@ async function selftest(doc, raw, schema) {
     ...doc.lanes.flatMap((row) => [row.baseSha, row.headSha].filter(Boolean)),
   ]);
   const expectedHashes = new Map(doc.repository.governance.map((row) => [row.path, row.blob]));
+  const expectedTrees = new Map(doc.lanes.filter((row) => row.headSha && row.treeSha).map((row) => [row.headSha, row.treeSha]));
   const remoteHeads = new Map(doc.repository.branches.map((row) => [row.name, row.sha]));
   const adapter = {
     objectExists: (sha) => expectedObjects.has(sha),
     hashFile: (path) => expectedHashes.get(path) || null,
+    commitTree: (sha) => expectedTrees.get(sha) || null,
+    fileIdentity: () => doc.generatedArtifacts.artifact
+      ? { bytes: doc.generatedArtifacts.artifact.bytes, sha256: doc.generatedArtifacts.artifact.sha256.toUpperCase() }
+      : null,
     documentationErrors: () => [],
   };
   const now = new Date(doc.repository.observedAt);

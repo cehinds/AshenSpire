@@ -1,7 +1,7 @@
 {
   "$schema": "./continuity.schema.json",
   "formatVersion": "1.0.0",
-  "updatedAt": "2026-08-28T05:01:26Z",
+  "updatedAt": "2026-08-28T05:06:23Z",
   "repository": {
     "slug": "cehinds/AshenSpire",
     "remote": "origin",
@@ -85,8 +85,15 @@
     "maxTombstones": 24
   },
   "generatedArtifacts": {
-    "status": "idle",
-    "owner": "unassigned until IT Manager III reserves the serialized lane",
+    "status": "candidate-frozen",
+    "owner": "Data Architecture & Systems Lead, single local writer",
+    "artifact": {
+      "path": "build/AshenSpire.html",
+      "bytes": 4206957,
+      "sha256": "56AA0206BA2A8662D284BCA80E0C493D17838177DC7BCCFCB9A19405B7FF7D31",
+      "buildOrdinal": 1407,
+      "sourceDigest": "62920f5895"
+    },
     "command": "node tools/launch.mjs --build-only",
     "order": [
       "buildordinal.json",
@@ -366,6 +373,51 @@
       "rollback": "Revert the bounded controls/gates commit and retain its failing fixtures as evidence."
     },
     {
+      "id": "continuity-integration",
+      "branch": "codex/migration-continuity-integration",
+      "status": "candidate-frozen",
+      "baseSha": "a110ac9d6472faeb979f010949315e8374ddb01a",
+      "headSha": "8671379bbc6dc5043caeccabb0380396f4412e20",
+      "treeSha": "7721891b2590378020486318b46ae7e526d0a959",
+      "availability": "local-only",
+      "owner": {
+        "role": "Data Architecture & Systems Lead, composed-source and generated-artifact writer",
+        "acknowledged": true,
+        "acknowledgedAt": "2026-08-28T05:06:23Z"
+      },
+      "verification": {
+        "observedAt": "2026-08-28T05:06:23Z",
+        "result": "LOCAL_GATES_PASS_EXTERNAL_QA_PENDING",
+        "checks": [
+          { "command": "node tests/run-node.mjs", "counts": "114 passed; 0 failed", "result": "PASS" },
+          { "command": "node tools/content-build.mjs --check", "counts": "15/15 generated projections current", "result": "PASS" },
+          { "command": "node tools/buildversion.mjs --check", "counts": "8/8", "result": "PASS" },
+          { "command": "node tools/verify-shipped.mjs", "counts": "6/6", "result": "PASS" },
+          { "command": "node tools/rebuild-matches.mjs", "counts": "1 deterministic rebuild; GREEN", "result": "PASS" },
+          { "command": "node tools/continuity.mjs --selftest", "counts": "18/18", "result": "PASS" }
+        ],
+        "boundary": ["8671379bbc6dc5043caeccabb0380396f4412e20 is the immutable source/artifact head; this branch may carry evidence-only continuity successors after it without moving that identity.", "Local composition evidence only; independent non-maker QA is not recorded and Equipment/Rogue remains an external decision."]
+      },
+      "claimedPaths": [
+        "src/content/generated/characterCreation.js",
+        "buildordinal.json",
+        "build/AshenSpire.html",
+        "AshenSpire.html",
+        "dist/AshenSpire.html"
+      ],
+      "dependencies": [
+        "k15-content-door",
+        "character-creation",
+        "save-equipment-actionregistry",
+        "title-save-slot",
+        "controls-gates",
+        "continuity-control-plane"
+      ],
+      "block": null,
+      "next": "Keep source/artifact head 8671379bbc6dc5043caeccabb0380396f4412e20 and tree 7721891b2590378020486318b46ae7e526d0a959 immutable through final clean-room validation and independent QA; later continuity-only commits do not replace them.",
+      "rollback": "On a clean rollback candidate, revert exact generated commit 8671379bbc6dc5043caeccabb0380396f4412e20 to restore parent 0458ae909561f91af83a9154f315959e3b52a347; test the inverse and commit only with rollback authority. Source-lane rollbacks remain owned by their recorded ranges."
+    },
+    {
       "id": "equipment-rogue-adjudication",
       "branch": "codex/migration-equipment-rogue-adjudication",
       "status": "waiting-decision",
@@ -431,15 +483,25 @@
       "owner": "IT Manager III, Integration & Delivery"
     },
     {
+      "resource": "src/content/generated/characterCreation.js within the broader src/content claim",
+      "lanes": [
+        "continuity-integration",
+        "equipment-rogue-adjudication"
+      ],
+      "resolution": "The frozen composed candidate owns the generated projection; Equipment/Rogue remains external until IT Manager III narrows or sequences its broader src/content claim.",
+      "owner": "IT Manager III, Integration & Delivery"
+    },
+    {
       "resource": "generated root/build/dist/buildordinal lane",
       "lanes": [
         "character-creation",
         "save-equipment-actionregistry",
         "title-save-slot",
         "controls-gates",
-        "equipment-rogue-adjudication"
+        "equipment-rogue-adjudication",
+        "continuity-integration"
       ],
-      "resolution": "One owner freezes all accepted source, runs the generator once, then verifies provenance and byte identity; no hand merge of generated files.",
+      "resolution": "Data Architecture & Systems Lead completed the single local generation transaction at 8671379b; keep those bytes frozen and permit no hand merge or second writer.",
       "owner": "IT Manager III, Integration & Delivery"
     }
   ],
@@ -488,15 +550,21 @@
     },
     {
       "order": 8,
-      "lane": "character-creation",
-      "action": "After source acceptance and one assigned owner, run the root/build/dist/buildordinal generation transaction exactly once for the composed source freeze.",
-      "authority": "IT Manager III assigns the serialized generated-artifact lane; no direct edits or publication."
+      "lane": "continuity-integration",
+      "action": "Run final clean-room validation at exact source/artifact head 8671379b: ancestry/tree, targeted gates, Node suite, generated digest/ordinal/provenance, byte identity, and diff cleanliness.",
+      "authority": "Independent clean-room validation authority only; no regeneration or remote mutation."
     },
     {
       "order": 9,
-      "lane": "continuity-control-plane",
-      "action": "Validate the final composed candidate from a clean clone: exact ancestry, object/tree identity, targeted gates, Node suite, generated provenance/byte identity, and diff cleanliness.",
-      "authority": "Independent clean-room QA; push, PR, integration, Pages, and release remain separately authorized."
+      "lane": "continuity-integration",
+      "action": "Obtain independent non-maker functional, policy, data-contract, and generated-artifact QA against the unchanged 8671379b identity.",
+      "authority": "Independent QA assignment; acceptance does not authorize push, PR, integration, Pages, or release."
+    },
+    {
+      "order": 10,
+      "lane": "continuity-integration",
+      "action": "After clean-room and independent QA pass, route exact-head push and normal-PR sequencing to IT Manager III.",
+      "authority": "IT Manager III must separately authorize push and PR; merge, Project mutation, Pages, and release remain ungranted."
     }
   ],
   "tombstones": [],
